@@ -30,13 +30,25 @@ class RpcClient(object):
                 "params": params}
 
     def send(self, data):
+        res = requests.post(self.url,
+                            data=json.dumps(data),
+                            headers=self.headers).json()
+
+    def call(self, method, params):
+        data = self.makeRequest(method, params)
         try:
-            res = requests.post(self.url,
-                                data=json.dumps(data),
-                                headers=self.headers).json()
+            res = self.send(data)
         except Exception as e:
-            time.sleep(1)
-            res = requests.post(self.url,
-                                data=json.dumps(data),
-                                headers=self.headers).json()
+            # print e
+            time.sleep(1) # wait 1 seconds
+            res = self.send(data)
         return res
+
+    def callBatch(self, requests):
+        if not isinstance(requests, dict):
+            return []
+        requests = [self.makeRequest(request.get('method', ''),
+                                     request.get('params', ''))
+                    for request in requests]
+
+        return [self.call(request) for request in requests]
