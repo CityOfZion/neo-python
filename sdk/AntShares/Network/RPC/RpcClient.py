@@ -35,7 +35,7 @@ class RpcClient(object):
                             headers=self.headers).json()
 
     def call(self, method, params):
-        data = self.makeRequest(method, params)
+        data = self.makeRequest(method, params)
         try:
             res = self.send(data)
         except Exception as e:
@@ -45,9 +45,9 @@ class RpcClient(object):
         return res
 
     def callBatch(self, requests):
-        if not isinstance(requests, dict):
+        if not isinstance(requests, dict):
             return []
-        requests = [self.makeRequest(request.get('method', ''),
+        requests = [self.makeRequest(request.get('method', ''),
                                      request.get('params', ''))
                     for request in requests]
 

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 Description:
-    ECC Curve
+    Wallet
 Usage:
     from AntShares.Wallets.Wallet import Wallet
 """
