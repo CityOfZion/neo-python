@@ -61,6 +61,28 @@ class BinaryWriter(object):
     def writeDouble(self, value):
         return self.pack('d', value)
 
+    def writeVarInt(self, value):
+        if not isinstance(value ,int):
+            raise TypeError, '%s not int type.' % value
+
+        if value < 0:
+            raise Exception, '%d too small.' % value
+
+        elif value < 0xfd:
+            return self.writeByte(value)
+
+        elif value <= 0xffff:
+            self.writeByte(0xfd)
+            return self.writeUInt16(value)
+
+        elif value <= 0xFFFFFFFF:
+            self.writeByte(0xfd)
+            return self.writeUInt32(value)
+
+        else:
+            self.writeByte(0xff)
+            return self.writeUInt64(value)
+
     def writeString(self, value):
         length = len(value)
         self.writeUInt8(length)
@@ -71,8 +93,10 @@ if __name__ == '__main__':
     from MemoryStream import MemoryStream
     a = MemoryStream()
     b = BinaryWriter(a)
-    b.writeByte(0x40)
-    Name = '测试'
-    b.writeString("[{{'lang':'zh-CN','name':'%s'}}]" % Name)
+    Age = 18
+    Name = 'Jack'
+
+    b.writeString(Name)
+    b.writeUInt8(Age)
     print 'a -> ',
     print repr(a.toArray())

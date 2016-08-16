@@ -26,5 +26,4 @@ class MemoryStream(BytesIO):
         return self.writable
 
     def toArray(self):
-        self.seek(0)
-        return hexlify(self.read())
+        return hexlify(self.getvalue())

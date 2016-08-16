@@ -3,7 +3,7 @@
 Description:
     ScriptOp Code
 Usage:
-    from AntShare.Core.Scripts.ScriptOp import ScriptOp
+    from AntShares.Core.Scripts.ScriptOp import ScriptOp
 """
 
 class ScriptOp(object):

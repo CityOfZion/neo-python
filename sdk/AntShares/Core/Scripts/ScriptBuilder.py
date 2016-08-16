@@ -3,23 +3,23 @@
 Description:
     ScriptBuilder in AntShares, to create redeem script
 Usage:
-    from AntShares.Core.Scripts.ScriptBuilder import ScriptBuilder as sb
+    from AntShares.Core.Scripts.ScriptBuilder import ScriptBuilder
 """
 
-from AntShare.Core.Scripts.ScriptOp import ScriptOp
-
+from AntShares.Core.Scripts.ScriptOp import ScriptOp
+from AntShares.IO.MemoryStream import MemoryStream
 
 class ScriptBuilder(object):
     """docstring for ScriptBuilder"""
     def __init__(self):
         super(ScriptBuilder, self).__init__()
-        self.ms = bytearray()  # MemoryStream
+        self.ms = MemoryStream()  # MemoryStream
 
     def add(self, op):
-        if type(op) == 'int':
-            self.ms.append(op)
+        if isinstance(op, int):
+            self.ms.write(chr(op))
         else:
-            self.ms.extend(op)
+            self.ms.write(op)
         return
 
     def push(self, data):
@@ -33,29 +33,39 @@ class ScriptBuilder(object):
             elif data > 0 and data <= 16:
                 return self.add(ScriptOp.OP_1 - 1 + data)
             else:
-                return self.push(bytearray([data]))
+                return self.push(bytes(data))
         else:
             buf = data
             if len(buf) <= ScriptOp.OP_PUSHBYTES75:
-                self.add(buf.length())
+                self.add(len(buf))
                 self.add(buf)
             elif len(buf) < 0x100:
                 self.add(ScriptOp.OP_PUSHDATA1)
-                self.add(buf.length())
+                self.add(len(buf))
                 self.add(buf)
             elif len(buf) < 0x10000:
                 self.add(ScriptOp.OP_PUSHDATA2)
-                self.add(buf.length() & 0xff)
-                self.add(buf.length() >> 8)
+                self.add(len(buf) & 0xff)
+                self.add(len(buf) >> 8)
                 self.add(buf)
             elif len(buf) < 0x100000000:
                 self.add(ScriptOp.OP_PUSHDATA4)
-                self.add(buf.length() & 0xff)
-                self.add((buf.length() >> 8) & 0xff)
-                self.add((buf.length() >> 16) & 0xff)
-                self.add(buf.length() >> 24)
+                self.add(len(buf) & 0xff)
+                self.add((len(buf) >> 8) & 0xff)
+                self.add((len(buf) >> 16) & 0xff)
+                self.add(len(buf) >> 24)
                 self.add(buf)
         return
 
-    def toArrary(self):
-        return bytes(self.ms)
+    def toArray(self):
+        return self.ms.toArray()
+
+
+if __name__ == '__main__':
+    from bitcoin import privkey_to_pubkey
+    pubkey = privkey_to_pubkey('L1RrT1f4kXJGnF2hESU1AbaQQG82WqLsmWQWEPGm2fbrNLwdrAV9')
+    sb = ScriptBuilder()
+    sb.add(21)
+    sb.push(pubkey)
+    sb.add(ScriptOp.OP_CHECKSIG)
+    print sb.toArray()
