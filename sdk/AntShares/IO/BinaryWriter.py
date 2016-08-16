@@ -87,16 +87,3 @@ class BinaryWriter(object):
         length = len(value)
         self.writeUInt8(length)
         return self.pack(str(length) + 's', value)
-
-
-if __name__ == '__main__':
-    from MemoryStream import MemoryStream
-    a = MemoryStream()
-    b = BinaryWriter(a)
-    Age = 18
-    Name = 'Jack'
-
-    b.writeString(Name)
-    b.writeUInt8(Age)
-    print 'a -> ',
-    print repr(a.toArray())

@@ -17,7 +17,7 @@ class BinaryReader(object):
         self.stream = stream
 
     def readByte(self):
-        return self.stream.read(1)
+        return ord(self.stream.read(1))
 
     def readBytes(self, length):
         return self.stream.read(length)
@@ -62,5 +62,18 @@ class BinaryReader(object):
         return self.unpack('d', 8)
 
     def readString(self):
-        length = self.readUInt16()
+        length = self.readUInt8()
         return self.unpack(str(length) + 's', length)
+
+    def readVarInt(self):
+        fb = self.readByte()
+        value = 0
+        if fb == 0xfd:
+            value = self.readUInt16()
+        elif fb == 0xfe:
+            value = self.readUInt32()
+        elif fb = 0xff:
+            value = int(self.readUInt64())
+        else:
+            value = fb
+        return value
