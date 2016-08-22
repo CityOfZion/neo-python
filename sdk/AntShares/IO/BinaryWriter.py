@@ -87,3 +87,11 @@ class BinaryWriter(object):
         length = len(value)
         self.writeUInt8(length)
         return self.pack(str(length) + 's', value)
+
+    def writeSerializableArray(self, array):
+        self.writeVarInt(len(array))
+        for item in array:
+            item.serialize(self)
+
+    def writeFixed8(self, value):
+        return self.writeBytes(value.getData())

@@ -8,6 +8,8 @@ Usage:
 
 
 from AntShares.IO.ISerializable import ISerializable
+from AntShares.Core.Helper import *
+from AntShares.Fixed8 import Fixed8
 
 
 class TransactionOutput(ISerializable):
@@ -15,14 +17,14 @@ class TransactionOutput(ISerializable):
     def __init__(self, AssetId, Value, ScriptHash):
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
-        self.Value = Value
+        self.Value = Fixed8(Value)
         self.ScriptHash = ScriptHash
 
     def serialize(self, writer):
         # Serialize
-        writer.writeString(self.AssetId)
-        writer.writeFloat(self.Value)
-        writer.writeString(self.ScriptHash)
+        writer.writeBytes(big_or_little(self.AssetId))
+        writer.writeFixed8(self.Value)
+        writer.writeBytes(self.ScriptHash)
 
     def deserialize(self, reader):
         # Deserialize
