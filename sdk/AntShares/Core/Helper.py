@@ -6,9 +6,6 @@ Usage:
 """
 
 
-def name_to_hex(name):
-    return ''.join([hex(ord(x))[2:] for x in name])
-
 def big_or_little(string):
     arr = bytearray(string)
     length = len(arr)
@@ -18,7 +15,3 @@ def big_or_little(string):
         else:
             arr[idx], arr[length - idx] = arr[length - idx], arr[idx]
     return bytes(arr)
-
-def float_2_hex(f):
-    base = 0x10000000000000000
-    return hex(base + int(f/0.00000001))[-17:-1]

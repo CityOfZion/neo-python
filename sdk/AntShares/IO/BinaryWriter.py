@@ -83,6 +83,11 @@ class BinaryWriter(object):
             self.writeByte(0xff)
             return self.writeUInt64(value)
 
+    def writeVarBytes(self, value):
+        length = len(value)
+        self.writeVarInt(length)
+        return self.writeBytes(value)
+
     def writeString(self, value):
         length = len(value)
         self.writeUInt8(length)

@@ -8,6 +8,7 @@ Usage:
 
 from AntShares.Core.AssetType import AssetType
 from AntShares.Core.Helper import *
+from AntShares.Fixed8 import Fixed8
 
 
 class Transaction(object):
@@ -31,9 +32,9 @@ class Transaction(object):
 
     def getSystemFee(self):
         if self.AssetType == AssetType.RegisterTransaction:  # 0x40
-            return 100
+            return Fixed8(100)
         else:
-            return 0
+            return Fixed8(0)
 
     def serialize(self, writer):
         self.serializeUnsigned(writer)
