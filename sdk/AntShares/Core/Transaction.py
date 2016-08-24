@@ -28,13 +28,51 @@ class Transaction(object):
 
     def getReference(self):
         inputs = self.getAllInputs()
+
         # TODO
+        # Blockchain.getTransaction
+        txs = [Blockchain.getTransaction(_input.prevHash) for _input in inputs]
+        if inputs == []:
+            raise Exception, 'No Inputs.'
+        else:
+            res = {}
+            for _input in inputs:
+                i = inputs.index(_input)
+                res.update({_input.toString(): txs[i].outputs[_input.prevIndex]})
+
+            return res
 
     def getSystemFee(self):
         if self.AssetType == AssetType.RegisterTransaction:  # 0x40
             return Fixed8(100)
         else:
             return Fixed8(0)
+
+    def getScriptHashesForVerifying(self):
+        """Get ScriptHash From SignatureContract"""
+        hashes = {}
+        result = self.getReference()
+
+        if result == None:
+            raise Exception, 'getReference None.'
+
+        for _input in self.inputs:
+            _hash = result.get(_input.toString()).scriptHash
+            hashes.update({_hash.toString(), _hash})
+
+        # TODO
+        # Blockchain.getTransaction
+        txs = [Blockchain.getTransaction(output.AssetId) for output in self.outputs]
+        for output in self.outputs:
+            tx = txs[self.outputs.index(output)]
+            if tx == None:
+                raise Exception, "Tx == None"
+            else:
+                if tx.AssetType & AssetType.DutyFlag:
+                    hashes.update(output.ScriptHash.toString(), output.ScriptHash)
+
+                    array = sorted(hashes.keys())
+                    return array
 
     def serialize(self, writer):
         self.serializeUnsigned(writer)
