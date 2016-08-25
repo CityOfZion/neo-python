@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 Description:
-    ScriptOp Code
+    Script OP Code
 Usage:
     from AntShares.Core.Scripts.ScriptOp import ScriptOp
 """

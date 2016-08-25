@@ -1,9 +1,9 @@
 # -*- coding:utf-8 -*-
 """
 Description:
-    Base58 method
+    Cryptography Helper
 Usage:
-    from AntShares.Cryptography.account import *
+    from AntShares.Cryptography.Helper import *
 """
 
 

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 Description:
-    ScriptBuilder in AntShares, to create redeem script
+    ScriptBuilder in AntShares, to create scripts
 Usage:
     from AntShares.Core.Scripts.ScriptBuilder import ScriptBuilder
 """

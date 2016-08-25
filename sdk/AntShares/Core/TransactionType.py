@@ -1,9 +1,9 @@
 # -*- coding:utf-8 -*-
 """
 Description:
-    Asset Type in AntShares
+    Transaction Type in AntShares
 Usage:
-    from AntShares.Core.AssetType import AssetType
+    from AntShares.Core.TransactionType import TransactionType
 """
 
 class TransactionType(object):

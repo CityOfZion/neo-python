@@ -10,19 +10,18 @@ Usage:
 import binascii
 
 
-from AntShares.Cryptography.account import *
+from AntShares.Cryptography.Helper import *
 
 
 class Account(object):
     """docstring for Account"""
-    def __init__(self, privkey=None):
+    def __init__(self, privateKey=None):
         super(Account, self).__init__()
-        self.privkey = privkey
-        self.pubkey = None
+        if privateKey == None:
+            self.privateKey = random_to_priv(random_key())
 
-    def create(self):
-        if self.privkey == None:
-            self.privkey = random_to_priv(random_key())
+        self.publicKey = None
+        self.publicKeyHash = None
 
         self.pubkey = privkey_to_pubkey(self.privkey)
         redeemscript = pubkey_to_redeem(self.pubkey)
