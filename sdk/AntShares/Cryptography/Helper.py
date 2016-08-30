@@ -13,6 +13,8 @@ import random
 import hashlib
 import binascii
 
+from AntShares.Cryptography.ECCurve import ECCurve
+
 # Elliptic curve parameters (secp256r1)
 curve = ECCurve('secp256r1')
 
@@ -228,12 +230,7 @@ def bytes_to_hex_string(b):
 
 def bin_hash160(string):
     intermed = hashlib.sha256(string).digest()
-    digest = ''
-    try:
-        digest = hashlib.new('ripemd160', intermed).digest()
-    except:
-        digest = RIPEMD160(intermed).digest()
-    return digest
+    return hashlib.new('ripemd160', intermed).digest()
 
 def bin_sha256(string):
     binary_data = string if isinstance(string, bytes) else bytes(string, 'utf-8')
@@ -247,4 +244,4 @@ def random_key():
     return sha256(entropy)
 
 def random_to_priv(key):
-    return binascii.hexlify(key)
+    return binascii.hexlify(key)[::2]

@@ -29,7 +29,7 @@ class RemoteNode(object):
         """
         return self.rpc.call(method="getbestblockhash",
                              params=[]).get("result", "")
-.
+
     def getBlock(self, blockhash=None, index=None, verbose=0):
         """
         Get Block from chain with hash or index

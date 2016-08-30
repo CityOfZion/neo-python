@@ -24,10 +24,12 @@ from AntShares.IO.MemoryStream import MemoryStream
 from AntShares.IO.BinaryWriter import BinaryWriter
 
 # Create Outputs
-Outputs = TransactionOutput(
+Outputs = [TransactionOutput(
             AssetId='f252a09a24591e8da31deec970871cc7678cb55023db049551e91f7bac28e27b',
             Value='100',
-            ScriptHash='9c17b4ee1441676e36d77a141dd77869d271381d')
+            ScriptHash='9c17b4ee1441676e36d77a141dd77869d271381d')]
+
+
 
 
 
