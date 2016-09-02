@@ -7,41 +7,73 @@ Usage:
     from AntShares.Wallets.Contract import Contract
 """
 
-from AntShares.Cryptography.account import from_int_to_byte, bin_hash160, bin_to_b58check
+from AntShares.Cryptography.Helper import *
+from AntShares.IO.ISerializable import ISerializable
+from AntShares.Wallets.ContractParameterType import ContractParameterType
+from AntShares.Core.Scripts.ScriptBuilder import ScriptBuilder, ScriptOp
 
 
-class Contract(object):
+class Contract(ISerializable):
     """docstring for Contract"""
     def __init__(self):
         super(Contract, self).__init__()
-        self.redeemscript = None  # Contract script
-        self.publickeyhash = None  # Hash value of publick key
-        self._address = None  # Contract address
-        self.contract_parameter_type = None  # Parameters list of Contract Type
-        self.scripthash = None
+        self.redeemScript = None  # Contract script
+        self.parameterList = []  # Parameters list of Contract Type
+        self.publicKeyHash = None
+        self.scriptHash = None
 
-    def get_address(self):
-        if self._address == None:
-            self._address = self.scripthash_to_address(self.scripthash)
-        return self._address
+    def create(self, publicKeyHash, parameterList, redeemScript):
+        self.redeemScript = redeemScript
+        self.parameterList = parameterList
+        self.publicKeyHash = publicKeyHash
+        self.scriptHash = self.redeem_to_scripthash(redeemScript)
+
+    def createSignatureContract(self, publicKey):
+        result = self.redeem_to_scripthash(self.pubkey_to_redeem(publicKey))
+        return self.create(result, [ContractParameterType.Signature], self.createSignatureRedeemScript(publicKey))
+
+    def createSignatureRedeemScript(self. publicKey):
+        sb = ScriptBuilder()
+        sb.push(publicKey)
+        sb.add(ScriptOp.OP_CHECKSIG)
+        return sb.toArray()
 
     def equals(self, other):
         if id(self) == id(other):
             return True
         if not isinstance(other, Contract):
             return False
-        return self.scripthash == other.scripthash
+        return self.scriptHash == other.scriptHash
 
-    def get_hashcode(self):
-        if self.scripthash == None:
-            self.scripthash = self.redeem_to_scripthash(self.redeem)
+    def getAddress(self):
+        # TODO
+        return Wallet.toAddress(self.scriptHash)
+
+    def getHashCode(self):
+        if self.scriptHash == None:
+            self.scriptHash = self.redeem_to_scripthash(self.redeemScript)
         return scripthash
+
+    def isStandard(self):
+        if len(self.redeemScript) / 2 != 35:
+            return False
+        array = self.redeemScript[:]
+        if array[:2] != '21' or array[-2:] != 'ac':
+            return False
+        return True
+
+    def serialize(self, writer):
+        writer.writeBytes(self.scriptHash)
+        writer.writeBytes(self.publicKeyHash)
+        writer.writeVarBytes(self.parameterList[0])  # TODO need check
+        writer.writeVarBytes(self.redeemScript)
+
+    def deserialize(self, reader):
+        # TODO
+        pass
 
     def pubkey_to_redeem(self, pubkey):
         return binascii.unhexlify('21'+ pubkey) + from_int_to_byte(int('ac',16))
 
     def redeem_to_scripthash(self, redeem):
         return binascii.hexlify(bin_hash160(redeem))
-
-    def scripthash_to_address(self, scripthash):
-        return bin_to_b58check(binascii.unhexlify(scripthash),int('17',16))
