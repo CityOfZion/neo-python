@@ -20,7 +20,7 @@ class RpcClient(object):
         self.headers = {'content-type': 'application/json'}
 
     def get_id(self):
-        self.no = random.randint(1000)
+        self.no = randint(0,1000)
         return str(self.no)
 
     def makeRequest(self, method, params):
@@ -33,15 +33,18 @@ class RpcClient(object):
         res = requests.post(self.url,
                             data=json.dumps(data),
                             headers=self.headers).json()
+        return res
 
     def call(self, method, params):
         data = self.makeRequest(method, params)
         try:
             res = self.send(data)
+            #print res
         except Exception as e:
-            # print e
+            #print e
             time.sleep(1) # wait 1 seconds
             res = self.send(data)
+        #print res
         return res
 
     def callBatch(self, requests):
@@ -52,3 +55,4 @@ class RpcClient(object):
                     for request in requests]
 
         return [self.call(request) for request in requests]
+

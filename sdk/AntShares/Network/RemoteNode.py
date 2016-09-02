@@ -7,7 +7,8 @@ Usage:
 """
 
 
-from AntShares.Network.RPC.RpcClient import RpcClient
+#from AntShares.Network.RPC.RpcClient import RpcClient
+from RPC.RpcClient import RpcClient
 
 
 class RemoteNode(object):
