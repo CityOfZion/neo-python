@@ -8,7 +8,7 @@ Usage:
 
 
 from AntShares.IO.ISerializable import ISerializable
-from AntShares.Core.Helper import big_or_little
+from AntShares.Helper import big_or_little
 from AntShares.Fixed8 import Fixed8
 
 

@@ -7,7 +7,8 @@ Usage:
 """
 
 from AntShares.Core.AssetType import AssetType
-from AntShares.Core.Helper import *
+from AntShares.Core.TransactionType import TransactionType
+from AntShares.Helper import *
 from AntShares.Fixed8 import Fixed8
 
 
@@ -19,7 +20,7 @@ class Transaction(object):
         self.outputs = outputs
         self.attributes = []
         self.scripts = []
-        self.AssetType = None
+        self.TransactionType = TransactionType.ContractTransaction
         self.InventoryType = 0x01  # InventoryType TX 0x01
         self.systemFee = self.getSystemFee()
 
@@ -43,7 +44,7 @@ class Transaction(object):
             return res
 
     def getSystemFee(self):
-        if self.AssetType == AssetType.RegisterTransaction:  # 0x40
+        if self.TransactionType == TransactionType.RegisterTransaction:  # 0x40
             return Fixed8(100)
         else:
             return Fixed8(0)
@@ -79,11 +80,11 @@ class Transaction(object):
         writer.writeSerializableArray(self.scripts)
 
     def serializeUnsigned(self, writer):
-        self.writer.writeByte(self.AssetType)
+        writer.writeByte(self.TransactionType)
         self.serializeExclusiveData(writer)
-        self.writer.writeSerializableArray(self.attributes)
-        self.writer.writeSerializableArray(self.inputs)
-        self.writer.writeSerializableArray(self.outputs)
+        writer.writeSerializableArray(self.attributes)
+        writer.writeSerializableArray(self.inputs)
+        writer.writeSerializableArray(self.outputs)
 
     def serializeExclusiveData(self, writer):
         pass

@@ -8,6 +8,7 @@ Usage:
 
 
 import struct
+import binascii
 
 
 class BinaryWriter(object):
@@ -20,6 +21,10 @@ class BinaryWriter(object):
         self.stream.write(chr(value))
 
     def writeBytes(self, value):
+        try:
+            value = binascii.unhexlify(value)
+        except TypeError:
+            pass
         self.stream.write(value)
 
     def pack(self, fmt, data):
@@ -84,12 +89,12 @@ class BinaryWriter(object):
             return self.writeUInt64(value)
 
     def writeVarBytes(self, value):
-        length = len(value)
+        length = len(binascii.unhexlify(value))
         self.writeVarInt(length)
         return self.writeBytes(value)
 
     def writeString(self, value):
-        length = len(value)
+        length = len(binascii.unhexlify(value))
         self.writeUInt8(length)
         return self.pack(str(length) + 's', value)
 

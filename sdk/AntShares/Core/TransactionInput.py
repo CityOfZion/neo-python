@@ -8,6 +8,7 @@ Usage:
 
 
 from AntShares.IO.ISerializable import ISerializable
+from AntShares.Helper import big_or_little
 
 
 class TransactionInput(ISerializable):
@@ -15,12 +16,12 @@ class TransactionInput(ISerializable):
     def __init__(self, prevHash, prevIndex):
         super(TransactionInput, self).__init__()
         self.prevHash = prevHash
-        self.prevIndex = prevIndex
+        self.prevIndex = int(prevIndex)
 
     def serialize(self, writer):
         # Serialize
-        writer.writeBytes(self.prevHash)
-        writer.writeUInt16(self.ScriptHash)
+        writer.writeBytes(big_or_little(self.prevHash))
+        writer.writeUInt16(self.prevIndex)
 
     def deserialize(self, reader):
         # Deserialize
