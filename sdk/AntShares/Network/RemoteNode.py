@@ -31,23 +31,15 @@ class RemoteNode(object):
         return self.rpc.call(method="getbestblockhash",
                              params=[]).get("result", "")
 
-    def getBlock(self, blockhash=None, index=None, verbose=0):
+    def getBlock(self, hint, verbose=1):
         """
         Get Block from chain with hash or index
+        hint : blockhash or index
         Verbose: 0-Simple, 1-Verbose
         """
         if verbose not in (0, 1):
             raise ValueError, 'verbose, should be 0 or 1.'
-        if blockhash and index:
-            raise ValueError, 'Only accept one param.'
-        elif blockhash:
-            return self.rpc.call(method="getblock",
-                                 params=[blockhash, verbose])
-        elif index:
-            return self.rpc.call(method="getblock",
-                                 params=[index, verbose])
-        else:
-            raise ValueError, 'Should Input at least one param.'
+        return self.rpc.call(method="getblock",params=[hint, verbose])
 
     def getBlockCount(self):
         """
