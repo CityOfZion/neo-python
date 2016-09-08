@@ -32,7 +32,7 @@ class Contract(ISerializable):
         result = self.redeem_to_scripthash(self.pubkey_to_redeem(publicKey))
         return self.create(result, [ContractParameterType.Signature], self.createSignatureRedeemScript(publicKey))
 
-    def createSignatureRedeemScript(self. publicKey):
+    def createSignatureRedeemScript(self, publicKey):
         sb = ScriptBuilder()
         sb.push(publicKey)
         sb.add(ScriptOp.OP_CHECKSIG)

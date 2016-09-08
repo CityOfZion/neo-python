@@ -17,7 +17,7 @@ class Account(object):
     """docstring for Account"""
     def __init__(self, privateKey=None):
         super(Account, self).__init__()
-        if privateKey == None or len(privateKey) != 32:
+        if privateKey == None or len(binascii.unhexlify(privateKey)) != 32:
             self.privateKey = random_to_priv(random_key())
         else:
             self.privateKey = privateKey
