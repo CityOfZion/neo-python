@@ -5,6 +5,9 @@ Description:
 Usage:
     from AntShares.Wallets.Wallet import Wallet
 """
+
+from AntShares.Cryptography.Helper import *
+
 import urllib
 import json
 import itertools
@@ -123,7 +126,7 @@ class Wallet(object):
         self.contracts.update({contract.publicKeyHash: contract})
 
     def toAddress(self, scripthash):
-        pass
+        return scripthash_to_address(scripthash)
 
     def makeTransaction(self, transaction, fee):
         pass

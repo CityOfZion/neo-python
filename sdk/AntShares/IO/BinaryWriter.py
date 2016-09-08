@@ -89,12 +89,12 @@ class BinaryWriter(object):
             return self.writeUInt64(value)
 
     def writeVarBytes(self, value):
-        length = len(value)
+        length = len(binascii.unhexlify(value))
         self.writeVarInt(length)
         return self.writeBytes(value)
 
     def writeString(self, value):
-        length = len(value)
+        length = len(binascii.unhexlify(value))
         self.writeUInt8(length)
         return self.pack(str(length) + 's', value)
 
@@ -104,5 +104,4 @@ class BinaryWriter(object):
             item.serialize(self)
 
     def writeFixed8(self, value):
-        print value.getData()
         return self.writeBytes(value.getData())

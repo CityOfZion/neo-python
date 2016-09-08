@@ -7,17 +7,21 @@ Usage:
 """
 from AntShares.Core.AssetType import AssetType
 from AntShares.Helper import *
+from AntShares.Fixed8 import Fixed8
 from AntShares.Core.Transaction import Transaction
+from AntShares.Core.TransactionType import TransactionType
+from AntShares.Cryptography.Helper import *
 
+import binascii
 
 class RegisterTransaction(Transaction):
     """docstring for RegisterTransaction"""
-    def __init__(self, assettype, assetname, amount, issuer, admin):
-        super(RegisterTransaction, self).__init__([], [])
+    def __init__(self, inputs, outputs, assettype, assetname, amount, issuer, admin):
+        super(RegisterTransaction, self).__init__(inputs, outputs)
         self.TransactionType = TransactionType.RegisterTransaction  # 0x40
 
         self.AssetType = assettype
-        self.Name = "[{'lang':'zh-CN','name':'%s'}]" % assetname
+        self.Name = binascii.hexlify("[{'lang':'zh-CN','name':'%s'}]" % str(assetname))
 
         # 发行总量，共有2种模式：
         # 1. 限量模式：当Amount为正数时，表示当前资产的最大总量为Amount，且不可修改（股权在未来可能会支持扩股或增发，会考虑需要公司签名或一定比例的股东签名认可）。
@@ -34,9 +38,14 @@ class RegisterTransaction(Transaction):
 
     def getScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""
-        hashes = {}
-        super(RegisterTransaction, self).getScriptHashesForVerifying()
-        
+        # hashes = {}
+        # super(RegisterTransaction, self).getScriptHashesForVerifying()
+        from AntShares.IO.MemoryStream import MemoryStream
+        from AntShares.IO.BinaryWriter import BinaryWriter
+        stream = MemoryStream()
+        writer = BinaryWriter(stream)
+        self.serializeUnsigned(writer)
+        return big_or_little(sha256(binascii.unhexlify(stream.toArray())))
 
 
     def serializeExclusiveData(self, writer):
