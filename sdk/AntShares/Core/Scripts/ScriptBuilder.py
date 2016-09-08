@@ -6,6 +6,8 @@ Usage:
     from AntShares.Core.Scripts.ScriptBuilder import ScriptBuilder
 """
 
+import binascii
+
 from AntShares.Core.Scripts.ScriptOp import ScriptOp
 from AntShares.IO.MemoryStream import MemoryStream
 
@@ -35,7 +37,7 @@ class ScriptBuilder(object):
             else:
                 return self.push(bytes(data))
         else:
-            buf = data
+            buf =  binascii.unhexlify(data)
             if len(buf) <= ScriptOp.OP_PUSHBYTES75:
                 self.add(len(buf))
                 self.add(buf)

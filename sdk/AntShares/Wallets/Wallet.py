@@ -100,6 +100,31 @@ def selectInputs(inputs, outputs):
     return res, _inputs, outputs + change
 
 
+class Wallet(object):
+    """docstring for Wallet"""
+    def __init__(self):
+        super(Wallet, self).__init__()
+        self.accounts = {}
+        self.contracts = {}
+        self.current_height = 0
+        self.isrunning = True
+        self.isclosed = False
+
+    def getCoinVersion(self):
+        return 0x17
+
+    def getWalletHeight(self):
+        return self.current_height
+
+    def addContract(self, contract):
+        if not self.accounts.has_key(contract.publicKeyHash):
+            raise Exception, 'RangeError'
+
+        self.contracts.update({contract.publicKeyHash: contract})
+
+    def createAccount(self):
+        pass
+
 if __name__ == '__main__':
     outputs = [{'Asset': u'AntCoin', 'Value': u'1800', 'Scripthash': '99d457043351f27a2310cb98f5e6b7bcb61f369f'},
                {'Asset': u'AntCoin', 'Value': u'9000', 'Scripthash': '9c17b4ee1441676e36d77a141dd77869d271381d'}]
