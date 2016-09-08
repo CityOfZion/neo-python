@@ -8,6 +8,7 @@ Usage:
 
 
 import struct
+import binascii
 
 
 class BinaryWriter(object):
@@ -20,6 +21,10 @@ class BinaryWriter(object):
         self.stream.write(chr(value))
 
     def writeBytes(self, value):
+        try:
+            value = binascii.unhexlify(value)
+        except TypeError:
+            pass
         self.stream.write(value)
 
     def pack(self, fmt, data):
@@ -99,4 +104,5 @@ class BinaryWriter(object):
             item.serialize(self)
 
     def writeFixed8(self, value):
+        print value.getData()
         return self.writeBytes(value.getData())

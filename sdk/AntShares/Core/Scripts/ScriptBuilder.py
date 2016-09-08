@@ -37,7 +37,7 @@ class ScriptBuilder(object):
             else:
                 return self.push(bytes(data))
         else:
-            buf =  binascii.unhexlify(data)
+            buf = binascii.unhexlify(data)
             if len(buf) <= ScriptOp.OP_PUSHBYTES75:
                 self.add(len(buf))
                 self.add(buf)

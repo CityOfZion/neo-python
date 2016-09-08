@@ -1,13 +1,13 @@
 """
 Description:
-    Core Helper
+    big_or_little
 Usage:
-    from AntShares.Core.Helper import *
+    from AntShares.Helper import *
 """
 
 
 def big_or_little(string):
-    arr = bytearray(string)
+    arr = bytearray(str(string))
     length = len(arr)
     for idx in xrange(length/2):
         if idx%2 == 0:

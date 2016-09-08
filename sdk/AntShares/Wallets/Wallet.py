@@ -122,7 +122,10 @@ class Wallet(object):
 
         self.contracts.update({contract.publicKeyHash: contract})
 
-    def createAccount(self):
+    def toAddress(self, scripthash):
+        pass
+
+    def makeTransaction(self, transaction, fee):
         pass
 
 if __name__ == '__main__':
