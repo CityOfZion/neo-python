@@ -21,8 +21,8 @@ class RemoteNode(object):
         """
         Send Transaction
         """
-        self.rpc.call(method="sendrawtransaction",
-                      params=[tx])
+        return self.rpc.call(method="sendrawtransaction",
+                             params=[tx])
 
     def getBestBlockhash(self):
         """
