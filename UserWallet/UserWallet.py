@@ -34,7 +34,6 @@ from AntShares.Wallets.Contract import Contract
 
 # Creat Account
 
-# privateKey = '7d989d02dff495cc1bbc35e891c153b98781e015a20ce276b86afc7856f85efa'
 privateKey = 'd64a2e1acf97ed7befaa3af29f43d6f0512647a627d7285a69437ea6980ff352'
 
 
@@ -75,8 +74,7 @@ tx.serializeUnsigned(writer)
 reg_tx = stream.toArray()
 
 print 'TX ->', repr(reg_tx)
-
-
+print 'TXID ->',tx.ensureHash()
 
 Redeem_script = c.redeemScript
 

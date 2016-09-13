@@ -10,9 +10,10 @@ from AntShares.Core.AssetType import AssetType
 from AntShares.Core.TransactionType import TransactionType
 from AntShares.Helper import *
 from AntShares.Fixed8 import Fixed8
+from AntShares.Network.Inventory import Inventory
 
 
-class Transaction(object):
+class Transaction(Inventory):
     """docstring for Transaction"""
     def __init__(self, inputs, outputs):
         super(Transaction, self).__init__()
@@ -87,4 +88,5 @@ class Transaction(object):
         writer.writeSerializableArray(self.outputs)
 
     def serializeExclusiveData(self, writer):
+        # ReWrite in RegisterTransaction and IssueTransaction#
         pass

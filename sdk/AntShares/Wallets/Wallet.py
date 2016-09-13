@@ -6,6 +6,10 @@ Usage:
     from AntShares.Wallets.Wallet import Wallet
 """
 
+from AntShares.Cryptography.Base58 import *
+from AntShares.Helper import big_or_little
+
+
 from AntShares.Cryptography.Helper import *
 
 import urllib
@@ -107,29 +111,34 @@ class Wallet(object):
     """docstring for Wallet"""
     def __init__(self):
         super(Wallet, self).__init__()
-        self.accounts = {}
-        self.contracts = {}
         self.current_height = 0
         self.isrunning = True
         self.isclosed = False
 
     def getCoinVersion(self):
-        return 0x17
+        return chr(0x17)
 
-    def getWalletHeight(self):
+    def getWalletHeight(self):  # Need or Not?
         return self.current_height
-
-    def addContract(self, contract):
-        if not self.accounts.has_key(contract.publicKeyHash):
-            raise Exception, 'RangeError'
-
-        self.contracts.update({contract.publicKeyHash: contract})
 
     def toAddress(self, scripthash):
         return scripthash_to_address(scripthash)
 
-    def makeTransaction(self, transaction, fee):
+    def makeTransaction(self, transaction):
         pass
+
+    def addressToScriptHash(self, address):
+        data = b58decode(address)
+        if len(data) != 25:
+            raise ValueError, 'Not correct Address, wrong length.'
+        if data[0] != self.getCoinVersion():
+            raise ValueError, 'Not correct CoivVersion'
+        scriptHash = binascii.hexlify(data[1:21])
+        if self.toAddress(scriptHash) == address:
+            return scriptHash
+        else:
+            raise ValueError, 'Not correct Address, something wrong in Address[-4:].'
+
 
 if __name__ == '__main__':
     outputs = [{'Asset': u'AntCoin', 'Value': u'1800', 'Scripthash': '99d457043351f27a2310cb98f5e6b7bcb61f369f'},

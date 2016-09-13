@@ -244,4 +244,4 @@ def random_key():
     return sha256(entropy)
 
 def random_to_priv(key):
-    return binascii.hexlify(key)[::2]
+    return binascii.hexlify(key)

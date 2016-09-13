@@ -27,4 +27,3 @@ class MemoryStream(BytesIO):
 
     def toArray(self):
         return hexlify(self.getvalue())
-        # return self.getvalue()
