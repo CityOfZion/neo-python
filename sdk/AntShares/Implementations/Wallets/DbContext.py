@@ -38,7 +38,6 @@ class Mongodb(object):
         return [r for r in result]
 
 def __test():
-    import config
     mongo = Mongodb(config.bcdb.host,config.bcdb.port)
     qry = {'txid':'123456','idx':0}
     item = {'txid':'123456','idx':0, 'value':100,'status':0}
@@ -48,5 +47,5 @@ def __test():
     print mongo.read('test',qry)
 
 if __name__ == '__main__':
+    import config
     __test()
-

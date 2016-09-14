@@ -32,11 +32,15 @@ from AntShares.Helper import *
 from AntShares.Wallets.Account import Account
 from AntShares.Wallets.Contract import Contract
 
-# Creat Account
 
-privateKey = 'd64a2e1acf97ed7befaa3af29f43d6f0512647a627d7285a69437ea6980ff352'
+# Test Params
+privateKey = '86f9c92cb1925f53df65c5638c165acb9e13fb4591f4d65c988393372f8b8572'
+target_priv = 'd07019bd2bf82846c390b176b75324c4f26c0e4562e7f2f58897fd283cefb8ca'
 
+prevHash = '358d4866a19367d01bf41ace55dd50fb4a9fbfa44aa6dce2524107de4588d98b'
+value = '100'
 
+# Get Account
 a = Account(privateKey)
 print 'PrivateKey ->', a.privateKey
 print 'PublicKey ->', a.publicKey
@@ -47,19 +51,20 @@ c = Contract()
 c.createSignatureContract(a.publicKey)
 print 'RedeemScipt ->', c.redeemScript
 
-target_priv = 'd07019bd2bf82846c390b176b75324c4f26c0e4562e7f2f58897fd283cefb8ca'
+
 b = Account(target_priv)
+print 'Target Address ->', b.address
 
 # Create Outputs
 Outputs = [TransactionOutput(
             AssetId='f252a09a24591e8da31deec970871cc7678cb55023db049551e91f7bac28e27b',
-            Value='100.0',
-            ScriptHash=b.scriptHash)]
+            Value=value,
+            ScriptHash=a.scriptHash)]
 
 # Create Inputs
 
 Inputs = [TransactionInput(
-            prevHash='10fd476b557d6347aa910e2ff57a2867479d4116b1d99838926d4bd3dc4bffb8',
+            prevHash=prevHash,
             prevIndex=0)]
 
 # Make RegisterTransaction
@@ -87,9 +92,9 @@ regtx = reg_tx + '014140' + signature + '23' + Redeem_script
 
 # sendRawTransaction
 
-node = RemoteNode(url='http://47.90.66.157:20332')
+node = RemoteNode(url='http://10.84.136.112:20332')
 # print node.getBestBlockhash()
 print 'Return Info from RPC:',
 print node.sendRawTransaction(regtx)
-# print node.getRawTransaction('82b643948ba8daeecbb228923206c7ff91bd0b893020336a19d4995134d9689f')
+# print node.getRawTransaction('a353175d2e5fdd97fa34536727b322e2a582cfd280db9e07163c259b04277b0e')
 # time.sleep(20)
