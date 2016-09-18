@@ -6,6 +6,9 @@ Usage:
     from AntShares.Wallets.Wallet import Wallet
 """
 
+import sys
+sys.path.append('/home/ecoin/antshares-python/sdk/')
+
 from AntShares.Cryptography.Base58 import b58decode
 from AntShares.Helper import big_or_little
 
@@ -138,6 +141,30 @@ class Wallet(object):
 
         return res, _inputs, outputs + change
 
+    #the simplest alg of selecting coins 
+    def selectCoins(self, coins, outputs):
+        total = sum([int(out['amount']) for out in outputs])
+        cs = sorted(coins,key=lambda c:c.value,reverse=True)
+        print total
+        inputs = []
+        # has no enough coins
+        if sum([int(c.value) for c in coins]) < total:
+            return inputs
+        for i in range(len(cs)):
+            #step 1: find the coin with value==total
+            if cs[i].value == total:
+                inputs = [cs[i],]
+                break
+            #step 2: find the min coin with value>total
+            if cs[0].value > total and cs[i].value<total:
+                inputs = [cs[i-1],]
+                break
+            #step 3: find the min(max coins) with sum(coins)>= total
+            inputs.append(cs[i])
+            if cs[0].value<total and sum([i.value for i in inputs]) >= total: 
+                break
+        return inputs
+
     def addressToScriptHash(self, address):
         data = b58decode(address)
         if len(data) != 25:
@@ -156,9 +183,36 @@ class Wallet(object):
     def getAccount(self, privKey=None):
         return Account(privKey)
 
+def __test():
+    wallet = Wallet()
+    coins = wallet.indexeddb.loadCoins(address='AYbVqnhpPUPaA886gSUYfoi2qiFeJUQZLi',asset='dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9')
+    #print coins
+    print 'test1: select the min max coin'
+    outputs = [{'work_id':'12687','amount':80},{'work_id':'12689','amount':100}]
+    inputs = wallet.selectCoins(coins,outputs)
+    for i in inputs:
+        print i
+    print 'test2: select the equal coin'    
+    outputs = [{'work_id':'12687','amount':1},]
+    inputs = wallet.selectCoins(coins,outputs)
+    for i in inputs:
+        print i
+    print 'test3: select the min(max coins)'
+    outputs = [{'work_id':'12687','amount':232},{'work_id':'12689','amount':10}]
+    inputs = wallet.selectCoins(coins,outputs)
+    for i in inputs:
+        print i
+    print 'test4: select none coin'
+    outputs = [{'work_id':'12687','amount':10000},{'work_id':'12689','amount':10}]
+    inputs = wallet.selectCoins(coins,outputs)
+    for i in inputs:
+        print i
+    print 'test5: select the min max coin'    
+    outputs = [{'work_id':'12687','amount':2},]
+    inputs = wallet.selectCoins(coins,outputs)
+    for i in inputs:
+        print i
 
 if __name__ == '__main__':
-    outputs = [{'Asset': u'AntCoin', 'Value': u'1800', 'Scripthash': '99d457043351f27a2310cb98f5e6b7bcb61f369f'},
-               {'Asset': u'AntCoin', 'Value': u'9000', 'Scripthash': '9c17b4ee1441676e36d77a141dd77869d271381d'}]
+    __test()
 
-    inputs, coins, outputs = selectInputs(getInputs(), outputs)

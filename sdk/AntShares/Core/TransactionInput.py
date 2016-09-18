@@ -7,7 +7,7 @@ Usage:
 """
 
 
-from AntShares.IO.ISerializable import ISerializable
+from AntShares.IO.Iserializable import ISerializable
 from AntShares.Helper import big_or_little
 
 

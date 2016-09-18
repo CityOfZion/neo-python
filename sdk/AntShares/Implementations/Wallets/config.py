@@ -7,5 +7,5 @@ class Mongo:
         self.usr = usr
         self.pwd = pwd
 
-bcdb = Mongo()
+bcdb = Mongo(host='10.0.74.48')
 

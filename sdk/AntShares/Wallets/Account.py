@@ -10,6 +10,8 @@ Usage:
 import binascii
 
 
+import sys
+sys.path.append('/home/ecoin/antshares-python/sdk/')
 from AntShares.Cryptography.Helper import *
 
 
@@ -26,3 +28,15 @@ class Account(object):
         redeemScript = pubkey_to_redeem(self.publicKey)
         self.scriptHash = redeem_to_scripthash(redeemScript)
         self.address = scripthash_to_address(self.scriptHash)
+
+def __test():
+    acc = Account(privateKey='e54aa6d215a97b398f7124aae578f715a6549a40b312d717c7123360832c2387')
+    print acc.publicKey
+    print acc.privateKey
+    print acc.address
+    print acc.scriptHash
+
+
+if __name__ == '__main__':
+	__test()
+
