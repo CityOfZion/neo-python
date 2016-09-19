@@ -14,6 +14,7 @@ from AntShares.Cryptography.Helper import *
 
 import binascii
 
+
 class RegisterTransaction(Transaction):
     """docstring for RegisterTransaction"""
     def __init__(self, inputs, outputs, assettype, assetname, amount, issuer, admin):
@@ -40,12 +41,7 @@ class RegisterTransaction(Transaction):
         """Get ScriptHash From SignatureContract"""
         # hashes = {}
         # super(RegisterTransaction, self).getScriptHashesForVerifying()
-        from AntShares.IO.MemoryStream import MemoryStream
-        from AntShares.IO.BinaryWriter import BinaryWriter
-        stream = MemoryStream()
-        writer = BinaryWriter(stream)
-        self.serializeUnsigned(writer)
-        return big_or_little(sha256(binascii.unhexlify(stream.toArray())))
+        pass
 
 
     def serializeExclusiveData(self, writer):

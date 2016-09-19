@@ -6,23 +6,15 @@ Usage:
     from AntShares.Wallets.Wallet import Wallet
 """
 
-import sys
-sys.path.append('/home/ecoin/antshares-python/sdk/')
 
 from AntShares.Cryptography.Base58 import b58decode
 from AntShares.Helper import big_or_little
-
-
 from AntShares.Cryptography.Helper import *
 from AntShares.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
 
 import urllib
 import json
 import itertools
-
-ADDR = 'AWHhvbKpw9bfimBTqoYQfx5obE9bUGJ2wi'
-
-URL = 'http://101.200.230.134:8080/api/v1.0/getinfo_with_address/'
 
 
 def getInputs():
@@ -141,8 +133,8 @@ class Wallet(object):
 
         return res, _inputs, outputs + change
 
-    #the simplest alg of selecting coins 
     def selectCoins(self, coins, outputs):
+        """the simplest alg of selecting coins"""
         total = sum([int(out['amount']) for out in outputs])
         cs = sorted(coins,key=lambda c:c.value,reverse=True)
         print total
@@ -161,7 +153,7 @@ class Wallet(object):
                 break
             #step 3: find the min(max coins) with sum(coins)>= total
             inputs.append(cs[i])
-            if cs[0].value<total and sum([i.value for i in inputs]) >= total: 
+            if cs[0].value<total and sum([i.value for i in inputs]) >= total:
                 break
         return inputs
 
@@ -188,11 +180,11 @@ def __test():
     coins = wallet.indexeddb.loadCoins(address='AYbVqnhpPUPaA886gSUYfoi2qiFeJUQZLi',asset='dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9')
     #print coins
     print 'test1: select the min max coin'
-    outputs = [{'work_id':'12687','amount':80},{'work_id':'12689','amount':100}]
+    outputs = [{'work_id':'12687','amount':80}, {'work_id':'12689','amount':100}]
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
         print i
-    print 'test2: select the equal coin'    
+    print 'test2: select the equal coin'
     outputs = [{'work_id':'12687','amount':1},]
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
@@ -207,12 +199,13 @@ def __test():
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
         print i
-    print 'test5: select the min max coin'    
+    print 'test5: select the min max coin'
     outputs = [{'work_id':'12687','amount':2},]
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
         print i
 
 if __name__ == '__main__':
+    import sys
+    sys.path.append('/home/ecoin/antshares-python/sdk/')
     __test()
-

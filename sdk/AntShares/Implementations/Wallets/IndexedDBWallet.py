@@ -6,8 +6,8 @@ Usage:
     from AntShares.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
 """
 
-import config
-from DbContext import Mongodb
+import AntShares.Implementations.Wallets.config
+from AntShares.Implementations.Wallets.DbContext import Mongodb
 from AntShares.Wallets.Coin import Coin
 from AntShares.Wallets.CoinState import CoinState
 
@@ -15,16 +15,17 @@ class IndexedDBWallet():
     def __init__(self):
         self.mongo = Mongodb(host=config.bcdb.host, port=config.bcdb.port)
 
-    def loadCoins(self, address,asset):
+    def loadCoins(self, address, asset):
         qry = {'address': address, 'asset':asset, 'status': CoinState.Unspent}
-        items = self.mongo.read('coins',qry)
+        items = self.mongo.read('coins', qry)
         coins = []
         for i in items:
-            c = Coin(txid=i['txid'],idx = i['idx'],value=i['value'],asset=i['asset'], address=i['address'],status=i['status'])
+            c = Coin(txid=i['txid'], idx = i['idx'], value=i['value'], asset=i['asset'],
+                     address=i['address'], status=i['status'])
             coins.append(c)
         return coins
 
-    def onSendTransaction(self,spending,incoming):
+    def onSendTransaction(self, spending, incoming):
         for c in spending:
             qry = {'txid':c.txid,'idx':c.idx}
             self.mongo.update('coins', qry,{'$set':{'status':CoinState.Spending}})
@@ -41,9 +42,9 @@ class IndexedDBWallet():
 
     def queryAccount(self, work_id):
         qry = {'work_id': work_id}
-        items = self.mongo.read('account',qry)
+        items = self.mongo.read('account', qry)
         if len(items)>0:
-            return items[0] 
+            return items[0]
         return None
 
 def __test():

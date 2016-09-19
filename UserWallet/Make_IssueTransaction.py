@@ -57,7 +57,7 @@ def Make_IssueTransaction(Prikey, Redeem_script, Outputs, Txid):
     for o in Outputs:
         IssueTransaction = IssueTransaction + big_or_little(Txid) + float_2_hex(o['value']) + big_or_little(o['scripthash'])
     sk = SigningKey.from_string(binascii.unhexlify(Prikey), curve=NIST256p, hashfunc=hashlib.sha256)
-    signature = binascii.hexlify(sk.sign(binascii.unhexlify(IssueTransaction),hashfunc=hashlib.sha256))    
+    signature = binascii.hexlify(sk.sign(binascii.unhexlify(IssueTransaction),hashfunc=hashlib.sha256))
     return IssueTransaction + '014140' + signature + '23' + Redeem_script
 
 IT = Make_IssueTransaction(Prikey, Redeem_script, Outputs, Txid)

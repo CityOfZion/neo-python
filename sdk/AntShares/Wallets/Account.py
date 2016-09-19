@@ -10,8 +10,6 @@ Usage:
 import binascii
 
 
-import sys
-sys.path.append('/home/ecoin/antshares-python/sdk/')
 from AntShares.Cryptography.Helper import *
 
 
@@ -30,7 +28,8 @@ class Account(object):
         self.address = scripthash_to_address(self.scriptHash)
 
 def __test():
-    acc = Account(privateKey='e54aa6d215a97b398f7124aae578f715a6549a40b312d717c7123360832c2387')
+    privKey = 'e54aa6d215a97b398f7124aae578f715a6549a40b312d717c7123360832c2387'
+    acc = Account(privateKey=privKey)
     print acc.publicKey
     print acc.privateKey
     print acc.address
@@ -38,5 +37,6 @@ def __test():
 
 
 if __name__ == '__main__':
-	__test()
-
+    import sys
+    sys.path.append('/home/ecoin/antshares-python/sdk/')
+    __test()
