@@ -7,12 +7,10 @@ Usage:
 """
 from AntShares.Core.AssetType import AssetType
 from AntShares.Helper import *
-from AntShares.Fixed8 import Fixed8
 from AntShares.Core.Transaction import Transaction
 from AntShares.Core.TransactionType import TransactionType
-from AntShares.Cryptography.Helper import *
 
-import binascii
+
 from random import randint
 
 
@@ -21,7 +19,6 @@ class IssueTransaction(Transaction):
     def __init__(self, inputs, outputs):
         super(IssueTransaction, self).__init__(inputs, outputs)
         self.TransactionType = TransactionType.IssueTransaction  # 0x40
-
         self.Nonce = self.genNonce()
 
     def genNonce(self):

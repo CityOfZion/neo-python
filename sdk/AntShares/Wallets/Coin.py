@@ -16,10 +16,6 @@ class Coin():
         self.address = address
         self.status = status
 
-    def __repr__(self):
-        s = 'txid:%s, idx:%d, value:%d, asset:%s, address:%s, status:%d' % (self.txid, self.idx, self.value, self.asset, self.address, self.status)
-        return s
-
     def __str__(self):
         s = 'txid:%s, idx:%d, value:%d, asset:%s, address:%s, status:%d' % (self.txid, self.idx, self.value, self.asset, self.address, self.status)
         return s

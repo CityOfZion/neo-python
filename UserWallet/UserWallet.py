@@ -154,6 +154,29 @@ def __testIssueTransaction():
                TransactionOutput(AssetId=asset, Value='1000', ScriptHash='3f36d431358296ffb50d131e952ab35a74331716')]
     makeIssueTransaction(privKey, outputs)
 
+def __testMakeTransaction():
+    wallet_db = IndexedDBWallet()
+    # step 1: get payer account
+    privKey = '86f9c92cb1925f53df65c5638c165acb9e13fb4591f4d65c988393372f8b8572'
+
+    payer_acc = Account(privKey)
+    contract = Contract()
+    contract.createSignatureContract(payer_acc.publicKey)
+
+    asset = 'f252a09a24591e8da31deec970871cc7678cb55023db049551e91f7bac28e27b'
+
+    coins = wallet_db.loadCoins(address=payer_acc.address,asset=asset)
+
+    wallet = Wallet()
+
+
+    inputs = []
+    outputs = [TransactionOutput(AssetId=asset, Value='70', ScriptHash='58d7cfe812133ca2db83b312222b9384ce08366f'),
+               TransactionOutput(AssetId=asset, Value='50', ScriptHash='3f36d431358296ffb50d131e952ab35a74331716')]
+    tx = Transaction(inputs, outputs)
+    wallet.makeTransaction(tx, payer_acc)
+
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
@@ -161,6 +184,8 @@ if __name__ == '__main__':
             __test()
         elif sys.argv[1] == 'testIssue':
             __testIssueTransaction()
+        elif sys.argv[1] == 'testMake':
+            __testMakeTransaction()
         else:
             print 'error params'
     else:

@@ -6,25 +6,30 @@ Usage:
     from AntShares.Wallets.Wallet import Wallet
 """
 
+from AntShares.Helper import big_or_little
+
+from AntShares.Core.RegisterTransaction import RegisterTransaction
+from AntShares.Core.IssueTransaction import IssueTransaction
+from AntShares.Core.TransactionOutput import TransactionOutput
+from AntShares.Core.TransactionInput import TransactionInput
 
 from AntShares.Cryptography.Base58 import b58decode
-from AntShares.Helper import big_or_little
 from AntShares.Cryptography.Helper import *
+
 from AntShares.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
 
-import urllib
-import json
+from AntShares.Wallets.Account import Account
+from AntShares.Wallets.Coin import Coin
+from AntShares.Wallets.CoinState import CoinState
+from AntShares.Wallets.Contract import Contract
+
+from AntShares.Network.RemoteNode import RemoteNode
+
+from AntShares.IO.MemoryStream import MemoryStream
+from AntShares.IO.BinaryWriter import BinaryWriter
+
 import itertools
-
-
-def getInputs():
-    html = urllib.urlopen("%s%s"%(URL,ADDR))
-    content = html.read()
-    res = json.loads(content)
-    if res.get(u'message', u'error') == u'success':
-        data = res.get(u'data', {})
-        return sorted(data.iteritems(), key=lambda x:x[1]['value'], reverse=True)
-    return res.get(u'message', u'error')
+from ecdsa import SigningKey, NIST256p
 
 
 class Wallet(object):
@@ -35,6 +40,7 @@ class Wallet(object):
         self.isrunning = True
         self.isclosed = False
         self.indexeddb = IndexedDBWallet()
+        self.node = RemoteNode(url='http://10.84.136.112:20332')
 
     def getCoinVersion(self):
         return chr(0x17)
@@ -45,93 +51,120 @@ class Wallet(object):
     def toAddress(self, scripthash):
         return scripthash_to_address(scripthash)
 
-    def getInputs(self, scriptHash):
+    def findUnSpentCoins(self, scriptHash):
         """
         :return: Coin[]"""
-        return self.indexeddb.loadCoins(self.toAddress(criptHash))
+        return self.indexeddb.findCoins(self.toAddress(scriptHash), status=CoinState.Unspent)
 
-    def makeTransaction(self, tx):
+    def makeTransaction(self, tx, account):
+        """Make Transaction"""
         if tx.outputs == None:
             raise ValueError, 'Not correct Address, wrong length.'
+
         if tx.attributes == None:
             tx.attributes = []
 
-        inputs = self.getInputs(scriptHash)
-        inputs, coins, outputs = self.selectInputs(inputs, tx.outputs)
+        coins = self.findUnSpentCoins(account.scriptHash)
+        tx.inputs, tx.outputs = self.selectInputs(tx.outputs, coins, account)
 
-    def selectInputs(self, outputs, inputs):
+        # Make transaction
+        stream = MemoryStream()
+        writer = BinaryWriter(stream)
+        tx.serializeUnsigned(writer)
+        reg_tx = stream.toArray()
+        txid = tx.ensureHash()
 
-        if len(outputs) > 1 and len(inputs) < 1:
-            raise Exception, 'Not Enought Inputs'
+        print 'TXID ->',txid
+
+        contract = Contract()
+        contract.createSignatureContract(account.publicKey)
+
+        # Add Signature
+        Redeem_script = contract.redeemScript
+        sk = SigningKey.from_string(binascii.unhexlify(account.privateKey), curve=NIST256p, hashfunc=hashlib.sha256)
+        signature = binascii.hexlify(sk.sign(binascii.unhexlify(reg_tx),hashfunc=hashlib.sha256))
+        regtx = reg_tx + '014140' + signature + '23' + Redeem_script
+
+        # sendRawTransaction
+        response = self.node.sendRawTransaction(regtx)
+        print response
+        return txid
+
+    def selectInputs(self, outputs, coins, account):
+
+        scripthash = account.scriptHash
+
+        if len(outputs) > 1 and len(coins) < 1:
+            raise Exception, 'Not Enought Coins'
 
         # Count the total amount of change
-        coin = itertools.groupby(sorted(inputs, key=lambda x: x[1]['type']), lambda x: x[1]['type'])
-        coin_total = dict([(k, sum(int(x[1]['value']) for x in g)) for k,g in coin])
+        coin = itertools.groupby(sorted(coins, key=lambda x: x.asset), lambda x: x.asset)
+        coin_total = dict([(k, sum(int(x.value) for x in g)) for k,g in coin])
 
         # Count the pay total
-        pays = itertools.groupby(sorted(outputs, key=lambda x: x['Asset']), lambda x: x['Asset'])
-        pays_total = dict([(k, sum(int(x['Value']) for x in g)) for k,g in pays])
+        pays = itertools.groupby(sorted(outputs, key=lambda x: x.AssetId), lambda x: x.AssetId)
+        pays_total = dict([(k, sum(int(x.Value) for x in g)) for k,g in pays])
 
         # Check whether there is enough change
         for asset, value in pays_total.iteritems():
             if not coin_total.has_key(asset):
-                raise Exception, 'Inputs does not contain asset {asset}.'.format(asset=asset)
+                raise Exception, 'Coins does not contain asset {asset}.'.format(asset=asset)
 
             if coin_total.get(asset) - value < 0:
-                raise Exception, 'Inputs does not have enough asset {asset}, need {amount}.'.format(asset=asset, amount=value)
+                raise Exception, 'Coins does not have enough asset {asset}, need {amount}.'.format(asset=asset, amount=value)
 
-        # res: used inputs
+        # res: used Coins
         # change: change in outpus
         res = []
         change = []
 
         # Copy the parms
-        _inputs  = inputs[:]
+        _coins  = coins[:]
 
         # Find whether have the same value of change
         for asset, value in pays_total.iteritems():
-            for _input in _inputs:
-                if asset == _input[1]['type'] and value == int(_input[1]['value']):
+            for _coin in _coins:
+                if asset == _coin.asset and value == int(_coin.value):
                     # Find the coin
-                    res.append(_input)
-                    _inputs.remove(_input)
+                    res.append(TransactionInput(prevHash=_coin.txid, prevIndex=_coin.idx))
+                    _coins.remove(_coin)
                     break
 
             else:
                 # Find the affordable change
 
-                affordable = sorted([i for i in _inputs if i[1]['type'] == asset and int(i[1]['value']) >= value],
-                                    key=lambda x: int(x[1]['value']))
+                affordable = sorted([i for i in _coins if i.asset == asset and int(i.value) >= value],
+                                    key=lambda x: int(x.value))
 
                 # Use the minimum if exists
                 if len(affordable) > 0:
-                    res.append(affordable[0])
-                    _inputs.remove(affordable[0])
+                    res.append(TransactionInput(prevHash=affordable[0].txid, prevIndex=affordable[0].idx))
+                    _coins.remove(affordable[0])
 
                     # If the amout > value, set the change
-                    amount = int(affordable[0][1]['value'])
+                    amount = int(affordable[0].value)
                     if amount > value:
-                        change.append({'Asset': asset, 'Value': str(amount-value), 'Scripthash': getChangeAddr()})
+                        change.append(TransactionOutput(AssetId=asset, Value=str(amount-value), ScriptHash=scripthash))
 
                 else:
                     # Calculate the rest of coins
-                    rest = sorted([i for i in _inputs if i[1]['type'] == asset],
-                                  key=lambda x: int(x[1]['value']),
+                    rest = sorted([i for i in _coins if i.asset == asset],
+                                  key=lambda x: int(x.value),
                                   reverse=True)
 
                     amount = 0
-                    for _input in rest:
-                        amount += int(_input[1]['value'])
-                        res.append(_input)
-                        _inputs.remove(_input)
+                    for _coin in rest:
+                        amount += int(_coin.value)
+                        res.append(TransactionInput(prevHash=_coin.txid, prevIndex=_coin.idx))
+                        _coins.remove(_coin)
                         if amount == value:
                             break
                         elif amount > value:
                             # If the amout > value, set the change
-                            change.append({'Asset': asset, 'Value': str(amount-value), 'Scripthash': getChangeAddr()})
+                            change.append(TransactionOutput(AssetId=asset, Value=str(amount-value), ScriptHash=scripthash))
                             break
 
-        return res, _inputs, outputs + change
+        return res, outputs + change
 
     def selectCoins(self, coins, outputs):
         """the simplest alg of selecting coins"""

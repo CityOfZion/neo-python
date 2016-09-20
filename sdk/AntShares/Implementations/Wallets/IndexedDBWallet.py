@@ -6,7 +6,7 @@ Usage:
     from AntShares.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
 """
 
-import AntShares.Implementations.Wallets.config
+from AntShares.Implementations.Wallets import config
 from AntShares.Implementations.Wallets.DbContext import Mongodb
 from AntShares.Wallets.Coin import Coin
 from AntShares.Wallets.CoinState import CoinState
@@ -14,6 +14,20 @@ from AntShares.Wallets.CoinState import CoinState
 class IndexedDBWallet():
     def __init__(self):
         self.mongo = Mongodb(host=config.bcdb.host, port=config.bcdb.port)
+
+    def findCoins(self, address, status=None):
+        if status:
+            qry = {'address': address, 'status': status}
+        else:
+            qry = {'address': address}
+        items = self.mongo.read('coins', qry)
+        coins = []
+        for i in items:
+            c = Coin(txid=i['txid'], idx = i['idx'], value=i['value'], asset=i['asset'],
+                     address=i['address'], status=i['status'])
+            coins.append(c)
+        return coins
+
 
     def loadCoins(self, address, asset):
         qry = {'address': address, 'asset':asset, 'status': CoinState.Unspent}
