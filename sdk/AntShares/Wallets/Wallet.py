@@ -65,22 +65,22 @@ class Wallet(object):
             tx.attributes = []
 
         coins = self.findUnSpentCoins(account.scriptHash)
-        tx.inputs, tx.outputs = self.selectInputs(tx.outputs, coins, account)
+        tx.inputs, tx.outputs = self.selectInputs(tx.outputs, coins, account, tx.systemFee)
 
         # Make transaction
         stream = MemoryStream()
         writer = BinaryWriter(stream)
         tx.serializeUnsigned(writer)
         reg_tx = stream.toArray()
-        txid = tx.ensureHash()
+        tx.ensureHash()
+        txid = tx.hash
 
-        print 'TXID ->',txid
-
+        # RedeenScript
         contract = Contract()
         contract.createSignatureContract(account.publicKey)
+        Redeem_script = contract.redeemScript
 
         # Add Signature
-        Redeem_script = contract.redeemScript
         sk = SigningKey.from_string(binascii.unhexlify(account.privateKey), curve=NIST256p, hashfunc=hashlib.sha256)
         signature = binascii.hexlify(sk.sign(binascii.unhexlify(reg_tx),hashfunc=hashlib.sha256))
         regtx = reg_tx + '014140' + signature + '23' + Redeem_script
@@ -90,7 +90,7 @@ class Wallet(object):
         print response
         return txid
 
-    def selectInputs(self, outputs, coins, account):
+    def selectInputs(self, outputs, coins, account, fee):
 
         scripthash = account.scriptHash
 
@@ -104,6 +104,12 @@ class Wallet(object):
         # Count the pay total
         pays = itertools.groupby(sorted(outputs, key=lambda x: x.AssetId), lambda x: x.AssetId)
         pays_total = dict([(k, sum(int(x.Value) for x in g)) for k,g in pays])
+
+        if int(fee.f) > 0:
+            if ANTCOIN in pays_total.iterkeys():
+                pays_total[ANTCOIN] += int(fee.f)
+            else:
+                pays_total[ANTCOIN] = int(fee.f)
 
         # Check whether there is enough change
         for asset, value in pays_total.iteritems():

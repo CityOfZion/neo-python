@@ -45,10 +45,7 @@ class Transaction(Inventory):
             return res
 
     def getSystemFee(self):
-        if self.TransactionType == TransactionType.RegisterTransaction:  # 0x40
-            return Fixed8(100)
-        else:
-            return Fixed8(0)
+        return Fixed8(0)
 
     def getScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""

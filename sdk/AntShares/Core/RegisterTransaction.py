@@ -36,6 +36,8 @@ class RegisterTransaction(Transaction):
         self.Issuer = issuer
         self.Admin = admin
 
+    def getSystemFee(self):
+        return Fixed8(100)
 
     def getScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""

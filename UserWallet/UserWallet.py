@@ -23,48 +23,161 @@ from AntShares.Core.TransactionInput import TransactionInput
 from AntShares.Core.Transaction import Transaction
 from AntShares.Core.RegisterTransaction import RegisterTransaction
 from AntShares.Core.IssueTransaction import IssueTransaction
+from AntShares.Core.AssetType import AssetType
+
 from AntShares.IO.MemoryStream import MemoryStream
 from AntShares.IO.BinaryWriter import BinaryWriter
 
+from AntShares.Wallets.Account import Account
+from AntShares.Wallets.Contract import Contract
 from AntShares.Wallets.Wallet import *
 from AntShares.Wallets.Coin import Coin
 from AntShares.Wallets.CoinState import CoinState
+
 from AntShares.Helper import *
+from AntShares.Exceptions import *
 
-
-from AntShares.Wallets.Account import Account
-from AntShares.Wallets.Contract import Contract
 from AntShares.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
 
-def makeIssueTransaction(privKey, Outputs):
 
-    payer_acc = Account(privKey)
-    contract = Contract()
-    contract.createSignatureContract(payer_acc.publicKey)
+def transfer(work_id, target_work_id, value, asset=ANTCOIN):
+    wallet_db = IndexedDBWallet()
 
-    # step 5: construct inputs
+    my_account = wallet_db.queryAccount(work_id=work_id)
+    target_account = wallet_db.queryAccount(work_id=target_work_id)
+
+    if my_account == None:
+        raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % work_id)
+    elif target_account == None:
+        raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % target_work_id)
+
+
+    part_my = Account(privateKey=my_account['pri_key'])
+    pary_target = Account(privateKey=target_account['pri_key'])
+
+    wallet = Wallet()
+
     inputs = []
+    outputs = TransactionOutput(AssetId=asset, Value=str(value), ScriptHash=pary_target.scriptHash)
+    tx = Transaction(inputs, outputs)
+    try:
+        txid = wallet.makeTransaction(tx, part_my)
+    except Exception, e:
+        print e
+        return False  # 0x0002?
 
-    # step 6: make transaction
-    tx = IssueTransaction(inputs, Outputs)
-    stream = MemoryStream()
-    writer = BinaryWriter(stream)
-    tx.serializeUnsigned(writer)
-    reg_tx = stream.toArray()
-    txid = tx.ensureHash()
-    print 'TX ->', repr(reg_tx)
-    print 'TXID ->',txid
+    # TODO: update coin status
+    pass
 
-    # step 7: Signature
-    Redeem_script = contract.redeemScript
-    sk = SigningKey.from_string(binascii.unhexlify(payer_acc.privateKey), curve=NIST256p, hashfunc=hashlib.sha256)
-    signature = binascii.hexlify(sk.sign(binascii.unhexlify(reg_tx),hashfunc=hashlib.sha256))
-    regtx = reg_tx + '014140' + signature + '23' + Redeem_script
+    return 0x0000
 
-    # step 8: sendRawTransaction
-    node = RemoteNode(url='http://10.84.136.112:20332')
-    response = node.sendRawTransaction(regtx)
-    print response
+def transfer_mult(work_id, target, asset):
+    """target format: {work_id: value}"""
+    wallet_db = IndexedDBWallet()
+
+    my_account = wallet_db.queryAccount(work_id=work_id)
+
+    if my_account == None:
+        raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % work_id)
+
+    if not isinstance(target, dict):
+        raise ValueError('Target format should be {work_id: value}.')
+
+    for target_work_id in target.iterkeys():
+        target_account = wallet_db.queryAccount(work_id=target_work_id)
+        if target_account == None:
+            raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % target_work_id)
+
+    part_my = Account(privateKey=my_account['pri_key'])
+    wallet = Wallet()
+
+    inputs = []
+    outputs = [TransactionOutput(AssetId=asset, Value=str(value),
+                                 ScriptHash=wallet_db.queryAccount(work_id=target_work_id).scriptHash)
+               for target_work_id, value in target.iteritems]
+
+    tx = Transaction(inputs, outputs)
+    try:
+        txid = wallet.makeTransaction(tx, part_my)
+    except Exception, e:
+        print e
+        return False  # 0x0002?
+
+    # TODO: update coin status
+    pass
+
+    return 0x0000
+
+def register(work_id, vote_name):
+    wallet_db = IndexedDBWallet()
+
+    my_account = wallet_db.queryAccount(work_id=work_id)
+
+    if my_account == None:
+        raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % work_id)
+
+    if wallet_db.findAssetByName(name=vote_name):
+        raise RegisterNameError('Transaction Name %s has already existed.')
+
+    part_my = Account(privateKey=my_account['pri_key'])
+    wallet = Wallet()
+
+    inputs = []
+    outputs = []
+
+    tx = RegisterTransaction(inputs, outputs, AssetType.Token,
+                             vote_name, '-0.00000001', part_my.publicKey,
+                             part_my.address)
+    try:
+        txid = wallet.makeTransaction(tx, part_my)
+    except Exception, e:
+        print e
+        return False  # 0x0002?
+
+    # TODO: update coin status
+    pass
+
+    return 0x0000
+
+def issue(work_id, target, asset_name):
+    """target format: {work_id: value}"""
+    wallet_db = IndexedDBWallet()
+
+    my_account = wallet_db.queryAccount(work_id=work_id)
+
+    if my_account == None:
+        raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % work_id)
+
+    if not isinstance(target, dict):
+        raise ValueError('Target format should be {work_id: value}.')
+
+    for target_work_id in target.iterkeys():
+        target_account = wallet_db.queryAccount(work_id=target_work_id)
+        if target_account == None:
+            raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % target_work_id)
+
+    if not wallet_db.findAssetByName(name=vote_name):
+        raise RegisterNameError('Transaction Name %s does not exist.')
+
+    part_my = Account(privateKey=my_account['pri_key'])
+    wallet = Wallet()
+
+    inputs = []
+    outputs = [TransactionOutput(AssetId=asset, Value=str(value),
+                                 ScriptHash=wallet_db.queryAccount(work_id=target_work_id).scriptHash)
+               for target_work_id, value in target.iteritems]
+
+    tx = IssueTransaction(inputs, outputs)
+    try:
+        txid = wallet.makeTransaction(tx, part_my)
+    except Exception, e:
+        print e
+        return False  # 0x0002?
+
+    # TODO: update coin status
+    pass
+
+    return 0x0000
 
 def pay(payer_id, payees, asset):
     wallet_db = IndexedDBWallet()
@@ -147,45 +260,11 @@ def __test():
     asset = 'dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9'
     pay(payer_id=payer, payees=payees, asset=asset)
 
-def __testIssueTransaction():
-    privKey = '86f9c92cb1925f53df65c5638c165acb9e13fb4591f4d65c988393372f8b8572'
-    asset = '7bc3daf1c4484483d5aeb7729c7cc9c65c19dc323c487390d435f06ebe7bb0c5'
-    outputs = [TransactionOutput(AssetId=asset, Value='1000', ScriptHash='58d7cfe812133ca2db83b312222b9384ce08366f'),
-               TransactionOutput(AssetId=asset, Value='1000', ScriptHash='3f36d431358296ffb50d131e952ab35a74331716')]
-    makeIssueTransaction(privKey, outputs)
-
-def __testMakeTransaction():
-    wallet_db = IndexedDBWallet()
-    # step 1: get payer account
-    privKey = '86f9c92cb1925f53df65c5638c165acb9e13fb4591f4d65c988393372f8b8572'
-
-    payer_acc = Account(privKey)
-    contract = Contract()
-    contract.createSignatureContract(payer_acc.publicKey)
-
-    asset = 'f252a09a24591e8da31deec970871cc7678cb55023db049551e91f7bac28e27b'
-
-    coins = wallet_db.loadCoins(address=payer_acc.address,asset=asset)
-
-    wallet = Wallet()
-
-
-    inputs = []
-    outputs = [TransactionOutput(AssetId=asset, Value='70', ScriptHash='58d7cfe812133ca2db83b312222b9384ce08366f'),
-               TransactionOutput(AssetId=asset, Value='50', ScriptHash='3f36d431358296ffb50d131e952ab35a74331716')]
-    tx = Transaction(inputs, outputs)
-    wallet.makeTransaction(tx, payer_acc)
-
-
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         if sys.argv[1] == 'test':
             __test()
-        elif sys.argv[1] == 'testIssue':
-            __testIssueTransaction()
-        elif sys.argv[1] == 'testMake':
-            __testMakeTransaction()
         else:
             print 'error params'
     else:

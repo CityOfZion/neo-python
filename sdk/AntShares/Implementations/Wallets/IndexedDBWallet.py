@@ -28,6 +28,12 @@ class IndexedDBWallet():
             coins.append(c)
         return coins
 
+    def findAssetByName(self, name, status="Registed"):
+        qry = {'name': name, 'status': status}
+        items = self.mongo.read('asset', qry)
+        if len(items)>0:
+            return items[0]
+        return None
 
     def loadCoins(self, address, asset):
         qry = {'address': address, 'asset':asset, 'status': CoinState.Unspent}
