@@ -18,6 +18,8 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 
 from AntShares.Network.RemoteNode import RemoteNode
 
+from AntShares.Core.TransactionAttribute import TransactionAttribute
+from AntShares.Core.TransactionAttributeUsage import TransactionAttributeUsage
 from AntShares.Core.TransactionOutput import TransactionOutput
 from AntShares.Core.TransactionInput import TransactionInput
 from AntShares.Core.Transaction import Transaction
@@ -34,13 +36,13 @@ from AntShares.Wallets.Wallet import *
 from AntShares.Wallets.Coin import Coin
 from AntShares.Wallets.CoinState import CoinState
 
-from AntShares.Helper import *
+from AntShares.Helper import ANTCOIN, big_or_little
 from AntShares.Exceptions import *
 
 from AntShares.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
 
 
-def transfer(work_id, target_work_id, value, asset=ANTCOIN):
+def transfer(work_id, target_work_id, value, remark=None, asset=ANTCOIN):
     wallet_db = IndexedDBWallet()
 
     my_account = wallet_db.queryAccount(work_id=work_id)
@@ -58,13 +60,16 @@ def transfer(work_id, target_work_id, value, asset=ANTCOIN):
     wallet = Wallet()
 
     inputs = []
-    outputs = TransactionOutput(AssetId=asset, Value=str(value), ScriptHash=pary_target.scriptHash)
-    tx = Transaction(inputs, outputs)
-    try:
-        txid = wallet.makeTransaction(tx, part_my)
-    except Exception, e:
-        print e
-        return False  # 0x0002?
+    outputs = [TransactionOutput(AssetId=asset, Value=str(value), ScriptHash=pary_target.scriptHash)]
+    if remark:
+        attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Remark,
+                                           data=remark)]
+    else:
+        attributes = []
+    tx = Transaction(inputs, outputs, attributes)
+
+    txid = wallet.makeTransaction(tx, part_my)
+    print txid
 
     # TODO: update coin status
     pass
@@ -108,7 +113,7 @@ def transfer_mult(work_id, target, asset):
 
     return 0x0000
 
-def register(work_id, vote_name):
+def register(work_id, asset_name):
     wallet_db = IndexedDBWallet()
 
     my_account = wallet_db.queryAccount(work_id=work_id)
@@ -116,8 +121,8 @@ def register(work_id, vote_name):
     if my_account == None:
         raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % work_id)
 
-    if wallet_db.findAssetByName(name=vote_name):
-        raise RegisterNameError('Transaction Name %s has already existed.')
+    if wallet_db.findAssetByName(name=asset_name):
+        raise RegisterNameError('Transaction Name %s has already existed.'%asset_name)
 
     part_my = Account(privateKey=my_account['pri_key'])
     wallet = Wallet()
@@ -126,10 +131,12 @@ def register(work_id, vote_name):
     outputs = []
 
     tx = RegisterTransaction(inputs, outputs, AssetType.Token,
-                             vote_name, '-0.00000001', part_my.publicKey,
+                             asset_name, '-0.00000001', part_my.publicKey,
                              part_my.address)
+
     try:
         txid = wallet.makeTransaction(tx, part_my)
+        exit()
     except Exception, e:
         print e
         return False  # 0x0002?
@@ -265,6 +272,10 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         if sys.argv[1] == 'test':
             __test()
+        elif sys.argv[1] == 'register':
+            register(work_id='tangys', asset_name='测试')
+        elif sys.argv[1] == 'transfer':
+            transfer(work_id='tangys', target_work_id='sys', value='100', remark='test')
         else:
             print 'error params'
     else:

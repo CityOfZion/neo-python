@@ -15,11 +15,11 @@ from AntShares.Network.Inventory import Inventory
 
 class Transaction(Inventory):
     """docstring for Transaction"""
-    def __init__(self, inputs, outputs):
+    def __init__(self, inputs, outputs, attributes):
         super(Transaction, self).__init__()
         self.inputs = inputs
         self.outputs = outputs
-        self.attributes = []
+        self.attributes = attributes
         self.scripts = []
         self.TransactionType = TransactionType.ContractTransaction
         self.InventoryType = 0x01  # InventoryType TX 0x01

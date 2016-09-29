@@ -6,7 +6,7 @@ Usage:
     from AntShares.Wallets.Wallet import Wallet
 """
 
-from AntShares.Helper import big_or_little
+from AntShares.Helper import ANTCOIN, big_or_little
 
 from AntShares.Core.RegisterTransaction import RegisterTransaction
 from AntShares.Core.IssueTransaction import IssueTransaction
@@ -84,9 +84,10 @@ class Wallet(object):
         sk = SigningKey.from_string(binascii.unhexlify(account.privateKey), curve=NIST256p, hashfunc=hashlib.sha256)
         signature = binascii.hexlify(sk.sign(binascii.unhexlify(reg_tx),hashfunc=hashlib.sha256))
         regtx = reg_tx + '014140' + signature + '23' + Redeem_script
-
         # sendRawTransaction
+        print regtx
         response = self.node.sendRawTransaction(regtx)
+        import json
         print response
         return txid
 

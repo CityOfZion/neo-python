@@ -99,9 +99,9 @@ def Make_IssueTransaction(Prikey, Redeem_script, Outputs, Txid):
     for o in Outputs:
         IssueTransaction = IssueTransaction + big_or_little(Txid) + float_2_hex(o['value']) + big_or_little(o['scripthash'])
     sk = SigningKey.from_string(binascii.unhexlify(Prikey), curve=NIST256p, hashfunc=hashlib.sha256)
-    signature = binascii.hexlify(sk.sign(binascii.unhexlify(IssueTransaction),hashfunc=hashlib.sha256))    
+    signature = binascii.hexlify(sk.sign(binascii.unhexlify(IssueTransaction),hashfunc=hashlib.sha256))
     return IssueTransaction + '014140' + signature + '23' + Redeem_script
-    
+
 IT = Make_IssueTransaction(Prikey, Redeem_script, Outputs, Txid)
 print sendrawtransaction(IT)
 
@@ -128,11 +128,11 @@ def Make_RegisterTransaction(Prikey, Redeem_script, Name, Issuer, Admin, Inputs,
     GetHashForSigning = big_or_little(sha256(binascii.unhexlify(RegisterTransaction)))#txid
     #print GetHashForSigning
     sk = SigningKey.from_string(binascii.unhexlify(Prikey), curve=NIST256p, hashfunc=hashlib.sha256)
-    signature = binascii.hexlify(sk.sign(binascii.unhexlify(RegisterTransaction),hashfunc=hashlib.sha256))    
+    signature = binascii.hexlify(sk.sign(binascii.unhexlify(RegisterTransaction),hashfunc=hashlib.sha256))   
     return RegisterTransaction + '014140' + signature + '23' + Redeem_script
-    
+
 #RT = Make_RegisterTransaction(Prikey, Redeem_script, Name, Issuer, Admin, Inputs, Index, Count)
 #print sendrawtransaction(RT)
 
 
-#scripthash = '1d3871d26978d71d147ad7366e674114eeb4179c'    
+#scripthash = '1d3871d26978d71d147ad7366e674114eeb4179c'
