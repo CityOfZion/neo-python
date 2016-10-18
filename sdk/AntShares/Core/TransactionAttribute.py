@@ -35,6 +35,6 @@ class TransactionAttribute(Inventory):
             writer.writeVarInt(byteLength)
 
         if self.usage == TransactionAttributeUsage.ECDH02 or self.usage == TransactionAttributeUsage.ECDH03:
-            writer.writeBytes(self.data[1:33])
+            writer.writeBytes(binascii.hexlify(self.data[1:33]))
         else:
-            writer.writeBytes(self.data)
+            writer.writeBytes(binascii.hexlify(self.data))

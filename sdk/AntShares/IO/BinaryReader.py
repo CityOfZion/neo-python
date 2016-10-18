@@ -90,4 +90,3 @@ class BinaryReader(object):
     def readSerializableArray(self):
         length = self.readVarInt()
         pass
-        

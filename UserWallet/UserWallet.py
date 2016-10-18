@@ -275,7 +275,7 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'register':
             register(work_id='tangys', asset_name='测试')
         elif sys.argv[1] == 'transfer':
-            transfer(work_id='tangys', target_work_id='sys', value='100', remark='test')
+            transfer(work_id='vote_temp', target_work_id='tangys', value='1', remark='cc', asset='dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9')
         else:
             print 'error params'
     else:
