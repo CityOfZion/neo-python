@@ -27,7 +27,7 @@ class ScriptBuilder(object):
     def push(self, data):
         if data == None:
             return
-        if type(data) == 'int':
+        if isinstance(data,int):
             if data == -1:
                 return self.add(ScriptOp.OP_1NEGATE)
             elif data == 0:
