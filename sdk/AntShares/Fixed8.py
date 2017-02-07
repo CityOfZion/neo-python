@@ -7,15 +7,17 @@ Usage:
 """
 
 
+from decimal import Decimal as D
 from AntShares.Helper import big_or_little
 
 
 class Fixed8(float):
     """docstring for Fixed8"""
     def __init__(self, number):
-        super(Fixed8, self).__init__(number)
-        self.f = float(number)
-        self.base = 0x10000000000000000
+        self.f = D(str(number))
 
     def getData(self):
-        return big_or_little(hex(self.base + int(self.f/0.00000001))[-17:-1])
+        hex_str = hex(int(self.f*D('100000000')))[2:]
+        if len(hex_str)%2:
+            hex_str = '0' + hex_str
+        return big_or_little(hex_str)
