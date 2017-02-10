@@ -11,7 +11,7 @@ from decimal import Decimal as D
 from AntShares.Helper import big_or_little
 
 
-class Fixed8(float):
+class Fixed8:
     """docstring for Fixed8"""
     def __init__(self, number):
         self.f = D(str(number))
