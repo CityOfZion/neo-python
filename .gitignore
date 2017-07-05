@@ -90,3 +90,5 @@ ENV/
 
 # Mac OS useless files
 .DS_Store
+
+.idea
