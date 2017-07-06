@@ -7,7 +7,7 @@ Usage:
 """
 
 from AntShares.Helper import ANTCOIN
-
+from AntShares.Defaults import TEST_ADDRESS
 from AntShares.Core.TransactionOutput import TransactionOutput
 from AntShares.Core.TransactionInput import TransactionInput
 
@@ -214,7 +214,7 @@ class Wallet(object):
 
 def __test():
     wallet = Wallet()
-    coins = wallet.indexeddb.loadCoins(address='AYbVqnhpPUPaA886gSUYfoi2qiFeJUQZLi',asset='dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9')
+    coins = wallet.indexeddb.loadCoins(address=TEST_ADDRESS,asset='dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9')
     #print coins
     print 'test1: select the min max coin'
     outputs = [{'work_id':'12687','amount':80}, {'work_id':'12689','amount':100}]

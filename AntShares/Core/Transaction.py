@@ -10,9 +10,15 @@ from AntShares.Core.AssetType import AssetType
 from AntShares.Core.TransactionType import TransactionType
 from AntShares.Fixed8 import Fixed8
 from AntShares.Network.Inventory import Inventory
+from AntShares.Network.Mixins import InventoryMixin
+from AntShares.Cryptography.Crypto import *
 
+class Transaction(Inventory, InventoryMixin):
 
-class Transaction(Inventory):
+    __hash = None
+
+    Type = TransactionType.RegisterTransaction
+
     """docstring for Transaction"""
     def __init__(self, inputs, outputs, attributes = {}):
         super(Transaction, self).__init__()
@@ -23,6 +29,13 @@ class Transaction(Inventory):
         self.TransactionType = TransactionType.ContractTransaction
         self.InventoryType = 0x01  # InventoryType TX 0x01
         self.systemFee = self.getSystemFee()
+
+
+    def Hash(self):
+        if not self.__hash:
+            self.__hash = Crypto.Hash256( self.GetHashData())
+        return self.__hash
+
 
     def getAllInputs(self):
         return self.inputs
