@@ -1,3 +1,4 @@
+bitarray==0.8.1
 bitcoin==1.1.42
 certifi==2017.4.17
 chardet==3.0.4
