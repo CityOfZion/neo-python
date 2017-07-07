@@ -7,7 +7,7 @@ Usage:
 """
 
 
-from AntShares.IO import ISerializable
+from AntShares.IO.Mixins import SerializableMixin
 
 
 class Script(ISerializable):

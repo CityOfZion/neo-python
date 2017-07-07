@@ -7,6 +7,7 @@ Usage:
 """
 
 from AntShares.Core.AssetType import AssetType
+from AntShares.Core.Blockchain import Blockchain
 from AntShares.Core.TransactionType import TransactionType
 from AntShares.Fixed8 import Fixed8
 from AntShares.Network.Inventory import Inventory
@@ -98,4 +99,11 @@ class Transaction(Inventory, InventoryMixin):
 
     def serializeExclusiveData(self, writer):
         # ReWrite in RegisterTransaction and IssueTransaction#
+        pass
+
+
+    def DeserializeExclusiveData(self, reader):
+        pass
+
+    def OnDeserialized(self):
         pass

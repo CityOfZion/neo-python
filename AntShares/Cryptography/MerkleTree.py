@@ -2,7 +2,7 @@
 
 from AntShares.Cryptography.Crypto import *
 from bitarray import bitarray
-
+import sys
 
 class MerkleTreeNode(object):
     Hash = None
@@ -22,6 +22,8 @@ class MerkleTreeNode(object):
     def IsRoot(self):
         return self.Parent is None
 
+    def Size(self):
+        return sys.getsizeof(self)
 
 class MerkleTree(object):
 
@@ -67,6 +69,11 @@ class MerkleTree(object):
 
         MerkleTree.__Build(parents)
 
+    # < summary >
+    # 计算根节点的值
+    # < / summary >
+    # < param name = "hashes" > 子节点列表 < / param >
+    # < returns > 返回计算的结果 < / returns >
     @staticmethod
     def ComputeRoot(hashes):
         if not len(hashes):
@@ -100,4 +107,20 @@ class MerkleTree(object):
 
     @staticmethod
     def __TrimNode(node, index, depth, flags ):
-        raise NotImplementedError()
+        if depth == 1 or node.LeftChild == None:
+            return
+
+        if depth == 2:
+            if not flags[index * 2] and not flags[index * 2 + 1]:
+                node.LeftChild = None
+                node.RightChild = None
+
+        else:
+
+            MerkleTree.__TrimNode(node.LeftChild, index * 2, depth-1, flags)
+            MerkleTree.__TrimNode(node.RightChild, index * 2, depth-1, flags)
+
+            if node.LeftChild.LeftChild is None and node.RightChild.RightChild is None:
+                node.LeftChild = None
+                node.RightChild = None
+

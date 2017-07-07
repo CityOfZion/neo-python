@@ -7,7 +7,9 @@ from AntShares.Core.Transaction import Transaction,TransactionType
 from AntShares.IO.MemoryStream import MemoryStream
 from AntShares.IO.BinaryReader import BinaryReader
 from AntShares.IO.BinaryWriter import BinaryWriter
+from AntShares.Cryptography.MerkleTree import MerkleTree
 from json import dumps
+import sys
 
 #  < summary >
 #  区块或区块头
@@ -49,9 +51,7 @@ class Block(BlockBase, InventoryMixin):
 
     def Size(self):
         s = self.Size()
-
-        ## add the size of all transactions to self size
-        #[s = s+ tx.Size() for tx in self.Transactions]
+        s = s + sys.getsizeof(self.Transactions)
 
         return s
 
@@ -69,7 +69,6 @@ class Block(BlockBase, InventoryMixin):
     #  反序列化
     #  < / summary >
     #  < param name = "reader" > 数据来源 < / param >
-
     def Deserialize(self, reader):
         super(BlockBase,self).Deserialize(reader)
         self.Transactions = [ Transaction(reader.ReadVarInt(0x10000)),]
@@ -174,7 +173,9 @@ class Block(BlockBase, InventoryMixin):
             for tx in self.Transactions:
                 if not tx.Verify():
                     pass
-                
+
+            raise NotImplementedError()
+            ## do this below!
             #foreach(Transaction tx in Transactions)
             #if (!tx.Verify(Transactions.Where(p = > !p.Hash.Equals(tx.Hash)))) return false;
             #Transaction tx_gen = Transactions.FirstOrDefault(p= > p.Type == TransactionType.MinerTransaction);
