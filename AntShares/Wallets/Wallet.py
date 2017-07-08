@@ -8,8 +8,7 @@ Usage:
 
 from AntShares.Helper import ANTCOIN
 from AntShares.Defaults import TEST_ADDRESS
-from AntShares.Core.TransactionOutput import TransactionOutput
-from AntShares.Core.TransactionInput import TransactionInput
+from AntShares.Core.TX.Transaction import TransactionOutput,TransactionInput
 
 from AntShares.Cryptography.Base58 import b58decode
 from AntShares.Cryptography.Helper import *

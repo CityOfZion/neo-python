@@ -3,10 +3,9 @@
 Description:
     Issue Transaction
 Usage:
-    from AntShares.Core.IssueTransaction import IssueTransaction
+    from AntShares.Core.TX.IssueTransaction import IssueTransaction
 """
-from AntShares.Core.Transaction import Transaction
-from AntShares.Core.TransactionType import TransactionType
+from AntShares.Core.TX.Transaction import Transaction,TransactionType
 
 import random
 

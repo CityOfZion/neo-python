@@ -1,6 +1,6 @@
 
 
-from AntShares.Core.Transaction import Transaction
+from AntShares.Core.TX.Transaction import Transaction
 import sys
 
 class MinerTransaction(Transaction):

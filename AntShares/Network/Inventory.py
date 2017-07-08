@@ -35,14 +35,14 @@ class Inventory(object):
     def getScriptHashesForVerifying(self):
         pass
 
-    def serialize(self):
+    def serialize(self, writer):
         pass
 
     def serializeUnsigned(self, writer):
         pass
 
-    def deserialize(self):
+    def deserialize(self, reader):
         pass
 
-    def deserializeUnsigned(self):
+    def deserializeUnsigned(self, reader):
         pass

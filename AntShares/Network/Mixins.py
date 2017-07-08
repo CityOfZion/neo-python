@@ -6,6 +6,6 @@ class InventoryMixin(VerifiableMixin):
     hash = None
     inventory_type = None
 
-    def Verify(self):
+    def Verify(self, mempool=None):
         pass
 

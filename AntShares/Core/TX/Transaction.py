@@ -9,16 +9,78 @@ Usage:
 from AntShares.Core.AssetType import AssetType
 from AntShares.Core.Blockchain import Blockchain
 from AntShares.Core.CoinReference import CoinReference
-from AntShares.Core.TransactionOutput import TransactionOutput
-from AntShares.Core.TransactionType import TransactionType
+from AntShares.Core.TX.TransactionAttribute import *
 from AntShares.Fixed8 import Fixed8
 from AntShares.Network.Inventory import Inventory
 from AntShares.Network.InventoryType import InventoryType
 from AntShares.Network.Mixins import InventoryMixin
 from AntShares.Cryptography.Crypto import *
+from AntShares.IO.Mixins import SerializableMixin
+from AntShares.Helper import big_or_little
+
 from AntShares.IO.MemoryStream import MemoryStream
+from AntShares.Core.Helper import Helper
 import sys
 import json
+
+
+class TransactionResult():
+    AssetId=None
+    Amount=0
+
+    def __init__(self, asset_id, amount):
+        self.AssetId = asset_id
+        self.Amount = amount
+
+class TransactionType(object):
+    MinerTransaction = 0x00
+    IssueTransaction = 0x01
+    ClaimTransaction = 0x02
+    EnrollmentTransaction = 0x20
+    VotingTransaction = 0x24
+    RegisterTransaction = 0x40
+    ContractTransaction = 0x80
+    AgencyTransaction = 0xb0
+
+
+class TransactionOutput(SerializableMixin):
+    """docstring for TransactionOutput"""
+    def __init__(self, AssetId=None, Value=None, ScriptHash=None):
+        super(TransactionOutput, self).__init__()
+        self.AssetId = AssetId
+        self.Value = Fixed8(Value)
+        self.ScriptHash = ScriptHash
+
+    def serialize(self, writer):
+        # Serialize
+        writer.writeBytes(big_or_little(self.AssetId))
+        writer.writeFixed8(self.Value)
+        writer.writeBytes(self.ScriptHash)
+
+    def deserialize(self, reader):
+        # Deserialize
+        pass
+
+class TransactionInput(SerializableMixin):
+    """docstring for TransactionInput"""
+
+    def __init__(self, prevHash, prevIndex):
+        super(TransactionInput, self).__init__()
+        self.prevHash = prevHash
+        self.prevIndex = int(prevIndex)
+
+    def serialize(self, writer):
+        # Serialize
+        writer.writeBytes(big_or_little(self.prevHash))
+        writer.writeUInt16(self.prevIndex)
+
+    def deserialize(self, reader):
+        # Deserialize
+        pass
+
+    def toString(self):
+        # to string
+        return bytes(self.prevHash) + ":" + bytes(self.prevIndex)
 
 
 class Transaction(Inventory, InventoryMixin):
@@ -260,12 +322,53 @@ class Transaction(Inventory, InventoryMixin):
         if Blockchain.Default().IsDoubleSpend(self):
             return False
 
+        for txOutput in self.outputs:
+            asset = Blockchain.Default().GetAssetState(txOutput.AssetId)
 
-#            foreach (var group in Outputs.GroupBy(p => p.AssetId))
-#            {
-#                AssetState asset = Blockchain.Default.GetAssetState(group.Key)
-#                if (asset == null) return false
-#                foreach (TransactionOutput output in group)
-#                    if (output.Value.GetData() % (long)Math.Pow(10, 8 - asset.Precision) != 0)
-#                        return false
-#            }
+            if asset is None: return False
+
+            if txOutput.Value % pow(10, 8 - asset.Precision) != 0:
+                return False
+
+        txResults = self.GetTransactionResults()
+
+        if txResults is None: return False
+
+        destroyedResults = []
+        [destroyedResults.append(tx) for tx in txResults if tx.Amount==Fixed8(0)]
+        numDestroyed = len(destroyedResults)
+        if numDestroyed > 1:
+            return False
+        if numDestroyed == 1 and destroyedResults[0].AssetId != Blockchain.SystemCoin().Hash():
+            return False
+        if self.SystemFee() > Fixed8(0) and ( numDestroyed == 0 or destroyedResults[0].Amount < self.SystemFee()):
+            return False
+
+        issuedResults = []
+
+        [issuedResults.append(tx) for tx in txResults if tx.Amount() < Fixed8(0)]
+
+        if self.Type == TransactionType.MinerTransaction or self.Type == TransactionType.ClaimTransaction:
+            for tx in issuedResults:
+                if tx.AssetId != Blockchain.SystemCoin().Hash():
+                    return False
+
+        elif self.Type == TransactionType.IssueTransaction:
+            for tx in issuedResults:
+                if tx.AssetId != Blockchain.SystemCoin().Hash():
+                    return False
+
+        else:
+            if len(issuedResults) > 0:
+                return False
+
+
+        usageECDH=0
+
+        for attr in self.Attributes:
+            if attr.Usage == TransactionAttributeUsage.ECDH02 or attr.Usage == TransactionAttributeUsage.ECDH03:
+                usageECDH = usageECDH+1
+                if usageECDH > 1:
+                    return False
+
+        return Helper.VerifyScripts(self)

@@ -2,7 +2,7 @@
 
 from AntShares.Core.Block import Block
 from AntShares.Core.AssetType import AssetType
-from AntShares.Core.RegisterTransaction import RegisterTransaction
+from AntShares.Core.TX.RegisterTransaction import RegisterTransaction
 from AntShares.Core.Witness import Witness
 from AntShares.Core.Scripts.ScriptOp import *
 from AntShares.Cryptography.ECCurve import *
