@@ -12,6 +12,9 @@ from AntShares.Helper import big_or_little
 
 
 class Fixed8:
+
+
+
     """docstring for Fixed8"""
     def __init__(self, number):
         self.f = D(str(number))
@@ -21,3 +24,7 @@ class Fixed8:
         if len(hex_str)%2:
             hex_str = '0' + hex_str
         return big_or_little(hex_str)
+
+    @staticmethod
+    def Satoshi():
+        return Fixed8(1)

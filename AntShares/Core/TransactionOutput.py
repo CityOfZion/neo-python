@@ -14,7 +14,7 @@ from AntShares.Fixed8 import Fixed8
 
 class TransactionOutput(ISerializable):
     """docstring for TransactionOutput"""
-    def __init__(self, AssetId, Value, ScriptHash):
+    def __init__(self, AssetId=None, Value=None, ScriptHash=None):
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
         self.Value = Fixed8(Value)

@@ -46,11 +46,15 @@ class Blockchain(object):
         next_consensus = Blockchain.GetConsensusAddress(StandbyValidators)
         script = Witness( bytes(0), bytes(ScriptOp.PUSHT))
 
-        mt = Min
+#        mt = Min
 
         return Block()
 
 
     @staticmethod
     def GetConsensusAddress(standby_validators):
+        raise NotImplementedError()
+
+    @staticmethod
+    def Default():
         raise NotImplementedError()
