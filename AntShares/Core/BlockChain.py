@@ -6,6 +6,9 @@ from AntShares.Core.TX.RegisterTransaction import RegisterTransaction
 from AntShares.Core.Witness import Witness
 from AntShares.Core.Scripts.ScriptOp import *
 from AntShares.Cryptography.ECCurve import *
+import threading
+import collections
+from AntShares.Fixed8 import Fixed8
 
 from datetime import datetime
 ### not sure of the origin of these
@@ -21,6 +24,10 @@ class Blockchain(object):
     DECREMENT_INTERVAL = 2000000
 
     GENERATION_AMOUNT = [ 8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
+
+    __blockchain = None
+
+    __validators = []
 
     @staticmethod
     def SystemShare():
@@ -58,3 +65,121 @@ class Blockchain(object):
     @staticmethod
     def Default():
         raise NotImplementedError()
+
+
+    @staticmethod
+    def CalculateBonus(inputs, height_end):
+        unclaimed = []
+
+
+    @staticmethod
+    def CalculateBonusInternal(unclaimed):
+        amount_claimed = Fixed8(0)
+
+        raise NotImplementedError()
+
+    def ContainsBlock(selfhash):
+        # abstract
+        pass
+
+    def ContainsTransaction(self, hash):
+        # abstract
+        pass
+
+    def ContainsUnspent(self, hash, index):
+        # abstract
+        pass
+
+    def Dispose(self):
+        # abstract
+        pass
+
+    def GetAccountState(self, script_hash):
+        # abstract
+        pass
+
+    def GetAssetState(self, assetId):
+        # abstract
+        pass
+
+    def GetBlock(self, height):
+        return self.GetBlockByHash(self.GetBlockHash(height))
+
+    def GetBlockByHash(self, hash):
+        # abstract
+        pass
+
+    def GetBlockHash(self, height):
+        # abstract
+        pass
+
+
+    def GetContract(self, hash):
+        # abstract
+        pass
+
+    def GetEnrollments(self):
+        # abstract
+        pass
+
+    def GetHeader(self, height):
+        # abstract
+        pass
+
+
+
+    @staticmethod
+    def GetConsensusAddress(validators):
+#            return Contract.CreateMultiSigRedeemScript(validators.Length - (validators.Length - 1) / 3, validators).ToScriptHash();
+        raise NotImplementedError()
+
+
+    def GetValidators(self):
+
+        raise NotImplementedError()
+
+
+
+    def GetNextBlockHash(self, hash):
+        #abstract
+        pass
+
+    def GetScript(self, script_hash):
+        return self.GetContract(script_hash)
+
+    def GetStorageItem(self, key):
+        #abstract
+        pass
+
+    def GetSysFeeAmount(self, hash):
+        #abstract
+        pass
+
+    def GetTransaction(self, hash, height=0):
+        # abstract
+        pass
+
+    def GetUnClaimed(self, hash):
+        #abstract
+        pass
+
+    def GetUnspent(self, hash, index):
+        #abstract
+        pass
+
+
+    def GetVotes(self, transactions):
+        # abstract
+        pass
+
+    def IsDoubleSpend(self, tx):
+        # abstract
+        pass
+
+    def OnPersistCompleted(self, block):
+
+        self.__validators = []
+
+    @staticmethod
+    def RegisterBlockchain(blockchain):
+        Blockchain.__blockchain = blockchain

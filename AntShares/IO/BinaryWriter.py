@@ -68,10 +68,10 @@ class BinaryWriter(object):
 
     def writeVarInt(self, value):
         if not isinstance(value ,int):
-            raise TypeError, '%s not int type.' % value
+            raise TypeError('%s not int type.' % value)
 
         if value < 0:
-            raise Exception, '%d too small.' % value
+            raise Exception('%d too small.' % value)
 
         elif value < 0xfd:
             return self.writeByte(value)

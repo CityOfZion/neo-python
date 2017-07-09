@@ -35,7 +35,7 @@ def b58encode(v):
 def b58decode(v):
     """ decode v into a string of len bytes
     """
-    long_value = 0L
+    long_value = 0
     for (i, c) in enumerate(v[::-1]):
         long_value += __b58chars.find(c) * (__b58base**i)
 

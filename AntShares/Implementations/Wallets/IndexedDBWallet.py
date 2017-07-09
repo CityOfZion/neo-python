@@ -72,7 +72,7 @@ def __test():
     address = 'Adpd2LoUndjEWvdRVrk4SDnAAJ9hM2GgYP'
     wallet = IndexedDBWallet()
     coins = wallet.loadCoins(address, AssetType.AntShare)
-    print coins
+    print(coins)
 
 if __name__ == '__main__':
     __test()

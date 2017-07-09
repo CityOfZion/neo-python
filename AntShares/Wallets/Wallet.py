@@ -55,7 +55,7 @@ class Wallet(object):
     def makeTransaction(self, tx, account):
         """Make Transaction"""
         if tx.outputs == None:
-            raise ValueError, 'Not correct Address, wrong length.'
+            raise ValueError('Not correct Address, wrong length.')
 
         if tx.attributes == None:
             tx.attributes = []
@@ -81,10 +81,10 @@ class Wallet(object):
         signature = binascii.hexlify(sk.sign(binascii.unhexlify(reg_tx),hashfunc=hashlib.sha256))
         regtx = reg_tx + '014140' + signature + '23' + Redeem_script
         # sendRawTransaction
-        print regtx
+        print(regtx)
         response = self.node.sendRawTransaction(regtx)
         import json
-        print response
+        print(response)
         return txid
 
     def selectInputs(self, outputs, coins, account, fee):
@@ -92,7 +92,7 @@ class Wallet(object):
         scripthash = account.scriptHash
 
         if len(outputs) > 1 and len(coins) < 1:
-            raise Exception, 'Not Enought Coins'
+            raise Exception('Not Enought Coins')
 
         # Count the total amount of change
         coin = itertools.groupby(sorted(coins, key=lambda x: x.asset), lambda x: x.asset)
@@ -103,18 +103,18 @@ class Wallet(object):
         pays_total = dict([(k, sum(int(x.Value) for x in g)) for k,g in pays])
 
         if int(fee.f) > 0:
-            if ANTCOIN in pays_total.iterkeys():
+            if ANTCOIN in iter(list(pays_total.keys())):
                 pays_total[ANTCOIN] += int(fee.f)
             else:
                 pays_total[ANTCOIN] = int(fee.f)
 
         # Check whether there is enough change
-        for asset, value in pays_total.iteritems():
-            if not coin_total.has_key(asset):
-                raise Exception, 'Coins does not contain asset {asset}.'.format(asset=asset)
+        for asset, value in list(pays_total.items()):
+            if asset not in coin_total:
+                raise Exception('Coins does not contain asset {asset}.'.format(asset=asset))
 
             if coin_total.get(asset) - value < 0:
-                raise Exception, 'Coins does not have enough asset {asset}, need {amount}.'.format(asset=asset, amount=value)
+                raise Exception('Coins does not have enough asset {asset}, need {amount}.'.format(asset=asset, amount=value))
 
         # res: used Coins
         # change: change in outpus
@@ -125,7 +125,7 @@ class Wallet(object):
         _coins  = coins[:]
 
         # Find whether have the same value of change
-        for asset, value in pays_total.iteritems():
+        for asset, value in list(pays_total.items()):
             for _coin in _coins:
                 if asset == _coin.asset and value == int(_coin.value):
                     # Find the coin
@@ -173,7 +173,7 @@ class Wallet(object):
         """the simplest alg of selecting coins"""
         total = sum([int(out['amount']) for out in outputs])
         cs = sorted(coins,key=lambda c:c.value,reverse=True)
-        print total
+        print(total)
         inputs = []
         # has no enough coins
         if sum([int(c.value) for c in coins]) < total:
@@ -196,14 +196,14 @@ class Wallet(object):
     def addressToScriptHash(self, address):
         data = b58decode(address)
         if len(data) != 25:
-            raise ValueError, 'Not correct Address, wrong length.'
+            raise ValueError('Not correct Address, wrong length.')
         if data[0] != self.getCoinVersion():
-            raise ValueError, 'Not correct CoivVersion'
+            raise ValueError('Not correct CoivVersion')
         scriptHash = binascii.hexlify(data[1:21])
         if self.toAddress(scriptHash) == address:
             return scriptHash
         else:
-            raise ValueError, 'Not correct Address, something wrong in Address[-4:].'
+            raise ValueError('Not correct Address, something wrong in Address[-4:].')
 
     def createAccount(self):
         return Account()
@@ -215,31 +215,31 @@ def __test():
     wallet = Wallet()
     coins = wallet.indexeddb.loadCoins(address=TEST_ADDRESS,asset='dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9')
     #print coins
-    print 'test1: select the min max coin'
+    print('test1: select the min max coin')
     outputs = [{'work_id':'12687','amount':80}, {'work_id':'12689','amount':100}]
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
-        print i
-    print 'test2: select the equal coin'
+        print(i)
+    print('test2: select the equal coin')
     outputs = [{'work_id':'12687','amount':1},]
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
-        print i
-    print 'test3: select the min(max coins)'
+        print(i)
+    print('test3: select the min(max coins)')
     outputs = [{'work_id':'12687','amount':232},{'work_id':'12689','amount':10}]
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
-        print i
-    print 'test4: select none coin'
+        print(i)
+    print('test4: select none coin')
     outputs = [{'work_id':'12687','amount':10000},{'work_id':'12689','amount':10}]
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
-        print i
-    print 'test5: select the min max coin'
+        print(i)
+    print('test5: select the min max coin')
     outputs = [{'work_id':'12687','amount':2},]
     inputs = wallet.selectCoins(coins,outputs)
     for i in inputs:
-        print i
+        print(i)
 
 if __name__ == '__main__':
     __test()

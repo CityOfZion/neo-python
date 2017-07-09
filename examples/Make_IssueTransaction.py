@@ -59,4 +59,4 @@ def Make_IssueTransaction(Prikey, Redeem_script, Outputs, Txid):
     return IssueTransaction + '014140' + signature + '23' + Redeem_script
 
 IT = Make_IssueTransaction(Prikey, Redeem_script, Outputs, Txid)
-print sendrawtransaction(IT)
+print(sendrawtransaction(IT))

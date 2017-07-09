@@ -16,7 +16,7 @@ RedeemScript = pubkey + from_int_to_byte(int('ac',16))
 #script_hash_ = binascii.hexlify(bin_hash160(RedeemScript))
 #print script_hash_
 script_hash_ = big_or_little_str('e63468c1384b94a76bf694f9a1816cc94f7c4b6f')
-print bin_to_b58check(binascii.unhexlify(script_hash_),int('17',16))
+print(bin_to_b58check(binascii.unhexlify(script_hash_),int('17',16)))
 
 
 def sendrawtransaction(tx):
@@ -30,7 +30,7 @@ def sendrawtransaction(tx):
         response = requests.post(url, data=json.dumps(payload),  timeout=3).json()
         response = response['result']
     except Exception as e:
-        print e
+        print(e)
         return 'err'
     return response
 
@@ -94,7 +94,7 @@ def Make_IssueTransaction(Prikey, Redeem_script, Outputs, Txid):
     return IssueTransaction + '014140' + signature + '23' + Redeem_script
 
 IT = Make_IssueTransaction(Prikey, Redeem_script, Outputs, Txid)
-print sendrawtransaction(IT)
+print(sendrawtransaction(IT))
 
 def Make_RegisterTransaction(Prikey, Redeem_script, Name, Issuer, Admin, Inputs, Index, Count, Amount=-0.00000001):
     '''

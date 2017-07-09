@@ -4,6 +4,8 @@ from AntShares.IO import *
 from AntShares.Wallets import *
 from .Mixins import VerifiableMixin
 from AntShares.Cryptography.Crypto import *
+from AntShares.Core.Blockchain import Blockchain
+from AntShares.Core.Helper import Helper
 import json
 import ctypes
 import hashlib
@@ -95,10 +97,11 @@ class BlockBase(VerifiableMixin):
         if self.PrevHash == None:
             return [ self.Script.VerificationScript.ToScriptHash()]
 
-        prev_header = BlockChain.Default.GetHeader(self.PrevHash)
+        prev_header = Blockchain.Default().GetHeader(self.PrevHash)
         if prev_header == None:
             raise Exception('Invalid operation')
         return [ prev_header.NextConsensus ]
+
 
 
     def Serialize(self, writer):
@@ -129,9 +132,9 @@ class BlockBase(VerifiableMixin):
     def Verify(self):
         if self.Hash == Blockchain.GenesisBlock.Hash: return True
 
-        if Blockchain.Default.ContainsBlock(self.Hash): return True
+        if Blockchain.Default().ContainsBlock(self.Hash): return True
 
-        prev_header = Blockchain.Default.GetHeader(self.PrevHash)
+        prev_header = Blockchain.Default().GetHeader(self.PrevHash)
 
         if prev_header == None: return False
 
@@ -139,7 +142,7 @@ class BlockBase(VerifiableMixin):
 
         if prev_header.Timestamp >= self.Timestamp: return False
 
-        if not self.VerifyScripts(): return False
+        if not Helper.VerifyScripts(self): return False
 
         return True
 

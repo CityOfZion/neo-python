@@ -48,7 +48,7 @@ class SingatureContext(BytesIO):
 
     def getScripts(self):
         if not self.completed:
-            raise Exception, "isCompleted == False"
+            raise Exception("isCompleted == False")
         scripts = [ None for i in len(self.signatures)]
         for script in self.scripts:
             i = self.scripts.index(script)

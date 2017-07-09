@@ -21,9 +21,9 @@ class Coin():
         return s
 
 def __test():
-    from CoinState import CoinState
+    from .CoinState import CoinState
     coin = Coin(txid='132555', idx=0, value=100, asset='asdfadfa', address='aadfadf', status=CoinState.Unspent)
-    print coin.__str__()
+    print((coin.__str__()))
 
 if __name__ == '__main__':
     __test()

@@ -37,7 +37,7 @@ class RemoteNode(object):
         Verbose: 0-Simple, 1-Verbose
         """
         if verbose not in (0, 1):
-            raise ValueError, 'verbose, should be 0 or 1.'
+            raise ValueError('verbose, should be 0 or 1.')
         return self.rpc.call(method="getblock",params=[hint, verbose])
 
     def getBlockCount(self):
@@ -74,7 +74,7 @@ class RemoteNode(object):
         Verbose: 0-Simple, 1-Verbose
         """
         if verbose not in (0, 1):
-            raise ValueError, 'verbose, should be 0 or 1.'
+            raise ValueError('verbose, should be 0 or 1.')
 
         return self.rpc.call(method="getrawtransaction",
                              params=[txid, verbose])

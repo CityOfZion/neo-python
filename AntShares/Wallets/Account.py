@@ -30,10 +30,10 @@ class Account(object):
 def __test():
     privKey = 'e54aa6d215a97b398f7124aae578f715a6549a40b312d717c7123360832c2387'
     acc = Account(privateKey=privKey)
-    print acc.publicKey
-    print acc.privateKey
-    print acc.address
-    print acc.scriptHash
+    print((acc.publicKey))
+    print((acc.privateKey))
+    print((acc.address))
+    print((acc.scriptHash))
 
 
 if __name__ == '__main__':

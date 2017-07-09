@@ -17,7 +17,7 @@ class Mongodb(object):
             collection.update(key, dict(item),upsert=True)
             return True
         except Exception as e:
-            print e
+            print(e)
             return False
 
     def update(self, col, key, item,):
@@ -26,7 +26,7 @@ class Mongodb(object):
             collection.update(key, dict(item))
             return True
         except Exception as e:
-            print e
+            print(e)
             return False
 
     def read(self, col, key, item={'_id':0}):
@@ -46,7 +46,7 @@ def __test():
     mongo.replace(qry,item,'test')
     item = {'$set':{'value':200}}
     mongo.update(qry,item,'test')
-    print mongo.read('test',qry)
+    print((mongo.read('test',qry)))
 
 if __name__ == '__main__':
     __test()

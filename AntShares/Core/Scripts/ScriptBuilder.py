@@ -70,4 +70,4 @@ if __name__ == '__main__':
     sb.add(21)
     sb.push(pubkey)
     sb.add(ScriptOp.OP_CHECKSIG)
-    print sb.toArray()
+    print((sb.toArray()))

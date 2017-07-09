@@ -28,7 +28,7 @@ class Helper(object):
 
         try:
             hashes = verifiable.GetScriptHashesForVerifying()
-        except Exception,e:
+        except Exception as e:
             return False
 
         if len(hashes) != len(verifiable.Scripts): return False

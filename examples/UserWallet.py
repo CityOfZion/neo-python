@@ -48,7 +48,7 @@ def transfer(work_id, target_work_id, value, remark=None, asset=ANTCOIN):
     tx = Transaction(inputs, outputs, attributes)
 
     txid = wallet.makeTransaction(tx, part_my)
-    print txid
+    print(txid)
 
     # TODO: update coin status
     pass
@@ -67,7 +67,7 @@ def transfer_mult(work_id, target, asset):
     if not isinstance(target, dict):
         raise ValueError('Target format should be {work_id: value}.')
 
-    for target_work_id in target.iterkeys():
+    for target_work_id in target.keys():
         target_account = wallet_db.queryAccount(work_id=target_work_id)
         if target_account == None:
             raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % target_work_id)
@@ -83,8 +83,8 @@ def transfer_mult(work_id, target, asset):
     tx = Transaction(inputs, outputs)
     try:
         txid = wallet.makeTransaction(tx, part_my)
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         return False  # 0x0002?
 
     # TODO: update coin status
@@ -116,8 +116,8 @@ def register(work_id, asset_name):
     try:
         txid = wallet.makeTransaction(tx, part_my)
         exit()
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         return False  # 0x0002?
 
     # TODO: update coin status
@@ -137,7 +137,7 @@ def issue(work_id, target, asset_name):
     if not isinstance(target, dict):
         raise ValueError('Target format should be {work_id: value}.')
 
-    for target_work_id in target.iterkeys():
+    for target_work_id in target.keys():
         target_account = wallet_db.queryAccount(work_id=target_work_id)
         if target_account == None:
             raise WorkIdError('Cannot get the corresponding %s Account in wallet_db.' % target_work_id)
@@ -156,8 +156,8 @@ def issue(work_id, target, asset_name):
     tx = IssueTransaction(inputs, outputs)
     try:
         txid = wallet.makeTransaction(tx, part_my)
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         return False  # 0x0002?
 
     # TODO: update coin status
@@ -170,7 +170,7 @@ def pay(payer_id, payees, asset):
     # step 1: get payer account
     payer = wallet_db.queryAccount(work_id=payer_id)
     if payer == None:
-        print '%s : not exist payer block chain account' % payer_id
+        print('%s : not exist payer block chain account' % payer_id)
         return 2
 
     payer_acc = Account(payer['pri_key'])
@@ -184,7 +184,7 @@ def pay(payer_id, payees, asset):
     wallet = Wallet()
     selected_coins = wallet.selectCoins(coins, payees)
     if len(selected_coins) == 0:
-        print 'no enough coins'
+        print('no enough coins')
         return 5
     change = sum([int(c.value) for c in selected_coins]) - sum([int(p['amount']) for p in payees])
 
@@ -194,7 +194,7 @@ def pay(payer_id, payees, asset):
     for p in payees:
         payee = wallet_db.queryAccount(work_id=p['work_id'])
         if payee == None:
-            print '%s : not exist payee block chain account' % payer_id
+            print('%s : not exist payee block chain account' % payer_id)
             return 3
         acc = Account(payee['pri_key'])
         output = TransactionOutput(AssetId=asset, Value=p['amount'], ScriptHash=acc.scriptHash)
@@ -216,8 +216,8 @@ def pay(payer_id, payees, asset):
     tx.serializeUnsigned(writer)
     reg_tx = stream.toArray()
     txid = tx.ensureHash()
-    print 'TX ->', repr(reg_tx)
-    print 'TXID ->',txid
+    print('TX ->', repr(reg_tx))
+    print('TXID ->',txid)
 
     # step 7: Signature
     Redeem_script = contract.redeemScript
@@ -256,6 +256,6 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'transfer':
             transfer(work_id='vote_temp', target_work_id='tangys', value='1', remark='cc', asset='dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9')
         else:
-            print 'error params'
+            print('error params')
     else:
-        print 'python UserWallet.py test for __test()'
+        print('python UserWallet.py test for __test()')
