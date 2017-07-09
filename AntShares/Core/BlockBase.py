@@ -45,6 +45,8 @@ class BlockBase(VerifiableMixin):
 
     __hash = None
 
+
+
     def Hash(self):
         if not self.__hash:
             self.__hash = Crypto.Hash256(self.GetHashData())

@@ -32,6 +32,20 @@ class Block(BlockBase, InventoryMixin):
     #  < / summary >
     InventoryType = InventoryType.Block
 
+
+    def __init__(self, prevHash, timestamp, index, consensusData, nextConsensus, script, transactions):
+
+        super(Block, self).__init__()
+
+        self.PrevHash = prevHash
+        self.Timestamp = timestamp
+        self.Index = index
+        self.ConsensusData = consensusData
+        self.NextConsensus = nextConsensus
+        self.Script = script
+        self.Transactions = transactions
+
+
     def Header(self):
         if not self.__header:
 

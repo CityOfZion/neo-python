@@ -7,74 +7,99 @@ Usage:
     from AntShares.Wallets.Contract import Contract
 """
 
+from AntShares.Core.Scripts.ScriptOp import *
 from AntShares.Cryptography.Helper import *
-from AntShares.IO.ISerializable import ISerializable
+from AntShares.Cryptography.Crypto import *
+from AntShares.IO.Mixins import SerializableMixin
 from AntShares.Wallets.ContractParameterType import ContractParameterType
 from AntShares.Core.Scripts.ScriptBuilder import ScriptBuilder, ScriptOp
 
 
-class Contract(ISerializable):
+class Contract(SerializableMixin):
     """docstring for Contract"""
-    def __init__(self):
+
+    RedeemScript=None
+    ParameterList = None
+    PubKeyHash = None
+    ScriptHash = None
+
+    def __init__(self, redeem_script, param_list, pubkey_hash, script_hash):
         super(Contract, self).__init__()
-        self.redeemScript = None  # Contract script
-        self.parameterList = []  # Parameters list of Contract Type
-        self.publicKeyHash = None
-        self.scriptHash = None
 
-    def create(self, publicKeyHash, parameterList, redeemScript):
-        self.redeemScript = redeemScript
-        self.parameterList = parameterList
-        self.publicKeyHash = publicKeyHash
-        self.scriptHash = self.redeem_to_scripthash(redeemScript)
+        self.RedeemScript = redeem_script
+        self.ParameterList = param_list
+        self.PubKeyHash = pubkey_hash
+        self.ScriptHash = script_hash
 
-    def createSignatureContract(self, publicKey):
-        result = self.redeem_to_scripthash(self.pubkey_to_redeem(publicKey))
-        return self.create(result, [ContractParameterType.Signature], self.createSignatureRedeemScript(publicKey))
 
-    def createSignatureRedeemScript(self, publicKey):
+    @staticmethod
+    def Create(publicKeyHash, parameterList, redeemScript):
+
+        return Contract(redeemScript, parameterList, publicKeyHash, Contract.RedeemToScripthash(redeemScript))
+
+
+
+    @staticmethod
+    def CreateMultiSigContract(publickKeyHash, m, publicKeys):
+        raise NotImplementedError()
+
+    @staticmethod
+    def CreateMultiSigRedeemScript(m, publicKeys):
+        raise NotImplementedError()
+
+    @staticmethod
+    def CreateSignatureContract(publicKey):
+        result = Contract.RedeemToScripthash(Contract.PubkeyToRedeem(publicKey))
+        return Contract.Create(result, [ContractParameterType.Signature], Contract.CreateSignatureRedeemScript(publicKey))
+
+    @staticmethod
+    def CreateSignatureRedeemScript(publicKey):
         sb = ScriptBuilder()
         sb.push(publicKey)
-        sb.add(ScriptOp.OP_CHECKSIG)
+        sb.add(ScriptOp.CHECKSIG)
         return sb.toArray()
 
-    def equals(self, other):
+    def Equals(self, other):
         if id(self) == id(other):
             return True
         if not isinstance(other, Contract):
             return False
-        return self.scriptHash == other.scriptHash
+        return self.ScriptHash == other.ScriptHash
 
-    def getAddress(self):
+    def GetAddress(self):
         # TODO
 #        return Wallet.toAddress(self.scriptHash)
         return None
 
-    def getHashCode(self):
-        if self.scriptHash == None:
-            self.scriptHash = self.redeem_to_scripthash(self.redeemScript)
-        return self.scriptHash
+    def GetHashCode(self):
+        if self.ScriptHash == None:
+            self.ScriptHash = Contract.RedeemToScripthash(self.RedeemScript)
+        return self.ScriptHash
 
-    def isStandard(self):
-        if len(self.redeemScript) / 2 != 35:
+    def ToScriptHash(self):
+        return Crypto.Hash160(self.ScriptHash)
+
+    def IsStandard(self):
+        if len(self.RedeemScript) / 2 != 35:
             return False
-        array = self.redeemScript[:]
+        array = self.RedeemScript[:]
         if array[:2] != '21' or array[-2:] != 'ac':
             return False
         return True
 
-    def serialize(self, writer):
-        writer.writeBytes(self.scriptHash)
-        writer.writeBytes(self.publicKeyHash)
-        writer.writeVarBytes(self.parameterList[0])  # TODO need check
-        writer.writeVarBytes(self.redeemScript)
+    def Serialize(self, writer):
+        writer.writeBytes(self.ScriptHash)
+        writer.writeBytes(self.PubKeyHash)
+        writer.writeVarBytes(self.ParameterList)  # TODO need check
+        writer.writeVarBytes(self.RedeemScript)
 
-    def deserialize(self, reader):
-        # TODO
-        pass
+    def Deserialize(self, reader):
+        raise NotImplementedError()
 
-    def pubkey_to_redeem(self, pubkey):
+    @staticmethod
+    def PubkeyToRedeem(pubkey):
         return binascii.unhexlify('21'+ pubkey) + from_int_to_byte(int('ac',16))
 
-    def redeem_to_scripthash(self, redeem):
+    @staticmethod
+    def RedeemToScripthash(redeem):
         return binascii.hexlify(bin_hash160(redeem))

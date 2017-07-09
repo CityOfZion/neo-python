@@ -11,9 +11,12 @@ import random
 
 
 class IssueTransaction(Transaction):
+
+    Nonce = None
+
     """docstring for IssueTransaction"""
-    def __init__(self, inputs, outputs):
-        super(IssueTransaction, self).__init__(inputs, outputs)
+    def __init__(self, *args, **kwargs):
+        super(IssueTransaction, self).__init__(*args, **kwargs)
         self.TransactionType = TransactionType.IssueTransaction  # 0x40
         self.Nonce = self.genNonce()
 

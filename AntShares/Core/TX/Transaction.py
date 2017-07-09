@@ -10,6 +10,9 @@ from AntShares.Core.AssetType import AssetType
 from AntShares.Core.Blockchain import Blockchain
 from AntShares.Core.CoinReference import CoinReference
 from AntShares.Core.TX.TransactionAttribute import *
+from AntShares.Core.TX.IssueTransaction import *
+from AntShares.Core.TX.MinerTransaction import *
+from AntShares.Core.TX.RegisterTransaction import *
 from AntShares.Fixed8 import Fixed8
 from AntShares.Network.Inventory import Inventory
 from AntShares.Network.InventoryType import InventoryType
@@ -44,6 +47,12 @@ class TransactionType(object):
 
 
 class TransactionOutput(SerializableMixin):
+
+
+    Value = None
+    ScriptHash = None
+    AssetId = None
+
     """docstring for TransactionOutput"""
     def __init__(self, AssetId=None, Value=None, ScriptHash=None):
         super(TransactionOutput, self).__init__()
@@ -64,15 +73,18 @@ class TransactionOutput(SerializableMixin):
 class TransactionInput(SerializableMixin):
     """docstring for TransactionInput"""
 
+    PrevHash=None
+    PrevIndex=None
+
     def __init__(self, prevHash, prevIndex):
         super(TransactionInput, self).__init__()
-        self.prevHash = prevHash
-        self.prevIndex = int(prevIndex)
+        self.PrevHash = prevHash
+        self.PrevIndex = int(prevIndex)
 
     def serialize(self, writer):
         # Serialize
-        writer.writeBytes(big_or_little(self.prevHash))
-        writer.writeUInt16(self.prevIndex)
+        writer.writeBytes(big_or_little(self.PrevHash))
+        writer.writeUInt16(self.PrevIndex)
 
     def deserialize(self, reader):
         # Deserialize
@@ -80,7 +92,7 @@ class TransactionInput(SerializableMixin):
 
     def toString(self):
         # to string
-        return bytes(self.prevHash) + ":" + bytes(self.prevIndex)
+        return bytes(self.PrevHash) + ":" + bytes(self.PrevIndex)
 
 
 class Transaction(Inventory, InventoryMixin):
@@ -90,7 +102,7 @@ class Transaction(Inventory, InventoryMixin):
 
     Version = None
 
-    Attributes = {}
+    Attributes = []
 
     inputs = []
 
@@ -106,16 +118,18 @@ class Transaction(Inventory, InventoryMixin):
 
     __hash = None
 
+    __height = 0
+
     __references = {}
 
 
     """docstring for Transaction"""
-    def __init__(self, inputs, outputs, attributes = {}, scripts=[] ):
+    def __init__(self, inputs=[], outputs=[], attributes = [], scripts=[] ):
         super(Transaction, self).__init__()
         self.inputs = inputs
         self.outputs = outputs
         self.Attributes= attributes
-        self.scripts = []
+        self.scripts = scripts
         self.TransactionType = TransactionType.ContractTransaction
         self.InventoryType = 0x01  # InventoryType TX 0x01
         self.systemFee = self.SystemFee()
@@ -158,11 +172,15 @@ class Transaction(Inventory, InventoryMixin):
         return self.__references
 
 
+
     def Size(self):
         return sys.getsizeof(self.TransactionType) + sys.getsizeof(0) \
                + sys.getsizeof(self.Attributes) + sys.getsizeof(self.inputs) + \
                     sys.getsizeof(self.outputs) + sys.getsizeof(self.scripts)
 
+
+    def Height(self):
+        return self.__height
 
     def SystemFee(self):
 
@@ -184,7 +202,19 @@ class Transaction(Inventory, InventoryMixin):
 
     @staticmethod
     def DeserializeFrom(reader):
-        raise NotImplementedError()
+        type = reader.readByte()
+        tx = None
+        if type == TransactionType.RegisterTransaction:
+            tx = RegisterTransaction()
+        elif type == TransactionType.MinerTransaction:
+            tx = MinerTransaction()
+        elif type == TransactionType.IssueTransaction:
+            tx = IssueTransaction()
+
+        tx.DeserializeUnsignedWithoutType(reader)
+        tx.scripts = reader.readSerializableArray()
+        tx.OnDeserialized()
+
 
     def DeserializeUnsigned(self, reader):
         if reader.readByte() != self.Type:

@@ -9,7 +9,7 @@ from AntShares.Fixed8 import Fixed8
 from AntShares.Core.TX.Transaction import Transaction,TransactionType
 
 import binascii
-
+from AntShares.Core.AssetType import AssetType
 
 class RegisterTransaction(Transaction):
     """
@@ -32,7 +32,7 @@ In English:
          # 3. For point coupons, you can use any pattern;
 """
 
-    def __init__(self, inputs, outputs, assettype, assetname, amount, issuer, admin):
+    def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), issuer=None, admin=None):
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.TransactionType = TransactionType.RegisterTransaction  # 0x40
 
