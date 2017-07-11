@@ -4,6 +4,7 @@ certifi==2017.4.17
 chardet==3.0.4
 ecdsa==0.13
 idna==2.5
+pycrypto==2.6.1
 pymongo==3.4.0
 requests==2.18.1
 urllib3==1.21.1

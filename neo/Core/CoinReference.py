@@ -25,6 +25,11 @@ class CoinReference(object):
         writer.writeUInt256(self.PrevHash)
         writer.writeUInt16(self.PrevIndex)
 
+    def Equals(self, other):
+        if other is None: return False
+        if other.PrevHash == self.PrevHash and other.PrevIndex == self.PrevIndex: return True
+        return False
+
     def ToJson(self):
         out = {
             'txid': self.PrevHash,

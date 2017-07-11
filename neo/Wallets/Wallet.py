@@ -8,49 +8,263 @@ Usage:
 
 from neo.Helper import ANTCOIN
 from neo.Defaults import TEST_ADDRESS
-from neo.Core.TX.Transaction import TransactionOutput,TransactionInput
-
+from neo.Core.TX.Transaction import TransactionOutput,TransactionInput,TransactionType
+from neo.Core.CoinState import CoinState
+from neo.Core.Blockchain import Blockchain
+from neo.Core.CoinReference import CoinReference
 from neo.Cryptography.Base58 import b58decode
+from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
-
 from neo.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
-
 from neo.Wallets.Account import Account
-from neo.Wallets.Coin import Coin
-from neo.Wallets.CoinState import CoinState
 from neo.Wallets.Contract import Contract
-
+from neo.Wallets.AddressState import AddressState
+from neo.Wallets.Coin import Coin
 from neo.Network.RemoteNode import RemoteNode
-
 from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryWriter import BinaryWriter
+from neo import Settings
 
 import itertools
+import hashlib
 from ecdsa import SigningKey, NIST256p
 from neo.Defaults import TEST_NODE
+from bitarray import bitarray
+
+from threading import Thread
+from threading import Lock
+
+
+from Crypto import Random
+from Crypto.Cipher import AES
 
 class Wallet(object):
+
+
+
+    AddressVersion = Settings.ADDRESS_VERSION
+
+    _path = ''
+    _iv = None
+    _master_key = None
+    _keys = {} #holds keypairs
+    _contracts = {} #holds Contracts
+
+    _watch_only = set() # holds set of hashes
+    _coins = [] #holds Coin References
+
+    _current_height=0
+
+    _is_running = True
+    _db_path = _path
+
+    _indexedDB = None
+    _node = None
+
+    _blockThread = None
+    _lock = Lock()
+
+    @property
+    def WalletHeight(self):
+        return self._current_height
+
+
+
+
     """docstring for Wallet"""
-    def __init__(self):
-        super(Wallet, self).__init__()
-        self.current_height = 0
-        self.isrunning = True
-        self.isclosed = False
-        self.indexeddb = IndexedDBWallet()
-        self.node = RemoteNode(url=TEST_NODE)
+    def __init__(self, path, passwordKey, create):
 
-    def getCoinVersion(self):
-        return chr(0x17)
+        if create:
+            self._path = path
+            self._iv = bitarray(16)
+            self._master_key = bitarray(32)
+            self._keys = []
+            self._indexedDB= IndexedDBWallet()
+            self._node = RemoteNode(url=TEST_NODE)
 
-    def getWalletHeight(self):  # Need or Not?
-        return self.current_height
+            self._current_height = Blockchain.Default().HeaderHeight + 1 if Blockchain.Default() is not None else 0
 
-    def toAddress(self, scripthash):
+            self.BuildDatabase()
+
+            self._iv = Random.new().read(self._iv)
+            self._master_key = Random.new().read(self._master_key)
+
+
+            self.SaveStoredData('PasswordHash', hashlib.sha256(passwordKey))
+            self.SaveStoredData('IV', self._iv),
+            self.SaveStoredData('MasterKey', AES.new(self._master_key, AES.MODE_CBC, self._iv))
+    #        self.SaveStoredData('Version') { Version.Major, Version.Minor, Version.Build, Version.Revision }.Select(p => BitConverter.GetBytes(p)).SelectMany(p => p).ToArray());
+            self.SaveStoredData('Height', self._current_height)
+
+        else:
+
+            passwordHash = self.LoadStoredData('PasswordHash')
+            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey):
+                raise Exception("Cryptographic exception")
+
+            self._iv = self.LoadStoredData('IV')
+            self._master_key = self.LoadStoredData('MasterKey')
+            self._keys = self.LoadKeyPair()
+            self._contracts = self.LoadContracts()
+            self._watch_only = self.LoadWatchOnly()
+            self._coins = self.LoadCoins()
+            self._current_height = self.LoadStoredData('Height')
+
+            del passwordKey
+
+            self._blockThread = Thread(target=self.ProcessBlocks, name='Wallet.ProcessBlocks')
+            self._blockThread.start()
+
+    def BuildDatabase(self):
+        #abstract
+        pass
+
+
+    def AddContract(self, contract):
+
+#        found=False
+#        for key in self._key_pair:
+#            if key.
+        raise NotImplementedError()
+
+    def SaveStoredData(self, key, value):
+
+        raise NotImplementedError()
+
+    def LoadStoredData(self, key):
+        raise NotImplementedError()
+
+    def LoadKeyPair(self):
+
+#        raise NotImplementedError()
+        return []
+
+    def LoadContracts(self):
+#        raise NotImplementedError()
+        return []
+
+
+    def LoadWatchOnly(self):
+#        raise NotImplementedError()
+        return set()
+
+    def LoadCoins(self):
+#        raise NotImplementedError()
+        return []
+
+
+    def ProcessBlocks(self):
+        while self._is_running:
+
+            while self._current_height <= Blockchain.Default().Height and self._is_running:
+
+                block = Blockchain.Default().GetBlock(self._current_height)
+
+                if block is not None:
+                    self.ProcessNewBlock(block)
+
+            for i in range(0, 20):
+                if self._is_running:
+                    time.sleep(1)
+
+    def ProcessNewBlock(self, block):
+
+        added = set()
+        changed = set()
+        deleted = set()
+
+        self._lock.acquire()
+        try:
+
+            for tx in block.Transactions:
+
+                for index,output in enumerate(tx.outputs):
+
+                    state = self.CheckAddressState(output.ScriptHash)
+
+                    if state > 0:
+                        key = CoinReference(tx.Hash, index )
+
+                        found=False
+                        for coin in self._coins:
+                            if coin.CoinRef.Equals(key):
+                                coin.State |= CoinState.Confirmed
+                                changed.add(coin)
+                                found = True
+                        if not found:
+                            newcoin = Coin.CoinFromRef(key, output, state=CoinState.Confirmed )
+                            self._coins.append(newcoin)
+                            added.add(newcoin)
+
+                        if state == AddressState.WatchOnly:
+                            for coin in self._coins:
+                                if coin.CoinRef.Equals(key):
+                                    coin.State |= CoinState.WatchOnly
+                                    changed.add(coin)
+
+            for tx in block.Transactions:
+
+                for input in tx.inputs:
+
+                    for coin in self._coins:
+                        if coin.CoinRef.Equals(input):
+
+                            if coin.TXOutput.AssetId == Blockchain.SystemShare().Hash():
+                                coin.State |= CoinState.Spent | CoinState.Confirmed
+                                changed.add(coin)
+                            else:
+                                self._coins.remove(coin)
+                                deleted.add(coin)
+
+# Need to implement ClaimTransaction
+#            for claimTx in [tx in block.Transactions if tx.Type == TransactionType.ClaimTransaction]:
+#                for ref in claimTx.C
+
+            self._current_height+=1
+            self.OnProcessNewBlock(block, added, changed, deleted)
+
+            if len(added) + len(deleted) + len(changed) > 0:
+                self.BalanceChanged()
+
+        except Exception as e:
+            print("could not process: %s " % e)
+        finally:
+            self._lock.release()
+
+
+    def Rebuild(self):
+        self._lock.acquire()
+        self._coins = []
+        self._current_height = 0
+        self._lock.release()
+
+
+
+    def OnProcessNewBlock(self, block, added, changed, deleted):
+        # abstract
+        pass
+
+    def BalanceChanged(self):
+        # abstract
+        pass
+
+    def CheckAddressState(self, script_hash):
+        for contract in self._contracts:
+            if contract.ScriptHash == script_hash:
+                return AddressState.InWallet
+        for watch in self._watch_only:
+            if watch.ScriptHash == script_hash:
+                return AddressState.WatchOnly
+        return AddressState.NoState
+
+    @staticmethod
+    def ToAddress(scripthash):
         return scripthash_to_address(scripthash)
+
 
     def findUnSpentCoins(self, scriptHash):
         """:return: Coin[]"""
-        return self.indexeddb.findCoins(self.toAddress(scriptHash), status=CoinState.Unspent)
+        return self.indexeddb.findCoins(self.ToAddress(scriptHash), status=CoinState.Unspent)
 
     def makeTransaction(self, tx, account):
         """Make Transaction"""
@@ -73,8 +287,8 @@ class Wallet(object):
 
         # RedeenScript
         contract = Contract()
-        contract.createSignatureContract(account.publicKey)
-        Redeem_script = contract.redeemScript
+        contract.CreateSignatureContract(account.publicKey)
+        Redeem_script = contract.RedeemScript
 
         # Add Signature
         sk = SigningKey.from_string(binascii.unhexlify(account.privateKey), curve=NIST256p, hashfunc=hashlib.sha256)
@@ -200,7 +414,7 @@ class Wallet(object):
         if data[0] != self.getCoinVersion():
             raise ValueError('Not correct CoivVersion')
         scriptHash = binascii.hexlify(data[1:21])
-        if self.toAddress(scriptHash) == address:
+        if self.ToAddress(scriptHash) == address:
             return scriptHash
         else:
             raise ValueError('Not correct Address, something wrong in Address[-4:].')

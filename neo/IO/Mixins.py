@@ -13,3 +13,10 @@ class SerializableMixin(object):
 
     def Deserialize(self, reader):
         pass
+
+
+class TrackableMixin(object):
+
+    Key = None
+    TrackingState = None
+

@@ -3,6 +3,7 @@
 from neo.Network.Mixins import InventoryMixin
 from neo.Network.InventoryType import InventoryType
 from neo.Core.BlockBase import BlockBase
+from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import Transaction,TransactionType
 from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryReader import BinaryReader
@@ -33,7 +34,8 @@ class Block(BlockBase, InventoryMixin):
     InventoryType = InventoryType.Block
 
 
-    def __init__(self, prevHash, timestamp, index, consensusData, nextConsensus, script, transactions):
+    def __init__(self, prevHash=None, timestamp=None, index=None,
+                 consensusData=None, nextConsensus=None, script=None, transactions=None):
 
         super(Block, self).__init__()
 
@@ -104,10 +106,10 @@ class Block(BlockBase, InventoryMixin):
 
     def Equals(self, other):
 
-#        if (ReferenceEquals(this, other)) return true;
-#        if (ReferenceEquals(null, other)) return false;
-
+        if other is None: return False
+        if other is self: return True
         return self.Hash() == other.Hash()
+
 
 
     @staticmethod
@@ -181,7 +183,7 @@ class Block(BlockBase, InventoryMixin):
             if tx.Type == TransactionType.MinerTransaction: return False
             
         if completely:
-            if self.NextConsensus != Blockchain.GetConsensusAddress(Blockchain.Default.GetValidators(self.Transactions).ToArray()):
+            if self.NextConsensus != Blockchain.GetConsensusAddress(Blockchain.Default().GetValidators(self.Transactions).ToArray()):
                 return False
             
             for tx in self.Transactions:

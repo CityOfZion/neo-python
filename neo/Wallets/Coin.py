@@ -6,24 +6,57 @@ Usage:
     from neo.Wallets.Coin import Coin
 """
 
+from neo.Core.TX.Transaction import TransactionOutput
+from neo.Core.CoinReference import CoinReference
+from neo.Wallets import Wallet
+from neo.Core.CoinState import CoinState
+from neo.IO.Mixins import TrackableMixin
+from neo.IO.TrackState import TrackState
 
-class Coin():
-    def __init__(self, txid, idx, value, asset, address, status):
-        self.txid = txid
-        self.idx = idx
-        self.value = value
-        self.asset = asset
-        self.address = address
-        self.status = status
+class Coin(TrackableMixin):
 
-    def __str__(self):
-        s = 'txid:%s, idx:%d, value:%d, asset:%s, address:%s, status:%d' % (self.txid, self.idx, self.value, self.asset, self.address, self.status)
-        return s
+    TXOutput = None
+    CoinRef = None
 
-def __test():
-    from .CoinState import CoinState
-    coin = Coin(txid='132555', idx=0, value=100, asset='asdfadfa', address='aadfadf', status=CoinState.Unspent)
-    print((coin.__str__()))
+    _address = None
+    _state = CoinState.Unconfirmed
 
-if __name__ == '__main__':
-    __test()
+    TrackingState = TrackState.NoState
+
+
+    @staticmethod
+    def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed):
+        coin = Coin(tx_output=tx_output)
+        coin.CoinRef = coin_ref
+        coin._state = state
+        return coin
+
+    def __init__(self, prev_hash=None, prev_index=None, tx_output=None, state=CoinState.Unconfirmed):
+        self.CoinRef = CoinReference(prev_hash, prev_index)
+        self.TXOutput = tx_output
+        self._state = state
+
+
+    @property
+    def Address(self):
+        if self._address is None:
+            self._address = Wallet.ToAddress(self.TXOutput.ScriptHash)
+        return self._address
+
+    @property
+    def State(self):
+        return self._state
+
+    @State.setter
+    def State(self,value):
+        if self._state != value:
+            self._state = value
+            if self.TrackingState == TrackState.NoState:
+                self.TrackingState = TrackState.Changed
+
+
+
+    def Equals(self, other):
+        if other is None or other is not self: return False
+        return True
+
