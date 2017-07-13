@@ -68,8 +68,7 @@ class Contract(SerializableMixin):
 
     def GetAddress(self):
         # TODO
-#        return Wallet.toAddress(self.scriptHash)
-        return None
+        raise NotImplementedError()
 
     def GetHashCode(self):
         if self.ScriptHash == None:

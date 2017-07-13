@@ -263,6 +263,20 @@ class Wallet(object):
     def ToAddress(scripthash):
         return scripthash_to_address(scripthash)
 
+    def ToScriptHash(self, address):
+        data = b58decode(address)
+        if len(data) != 25:
+            raise ValueError('Not correct Address, wrong length.')
+        if data[0] != self.AddressVersion:
+            raise ValueError('Not correct Coin Version')
+        scriptHash = binascii.hexlify(data[1:21])
+        if Wallet.ToAddress(scriptHash) == address:
+            return scriptHash
+        else:
+            raise ValueError('Not correct Address, something wrong in Address[-4:].')
+
+    def ValidatePassword(self, password):
+        return hashlib.sha256(password) == self.LoadStoredData('PasswordHash')
 
     def FindUnSpentCoins(self, scriptHash):
         """:return: Coin[]"""
@@ -409,21 +423,6 @@ class Wallet(object):
                 break
         return inputs
 
-
-    def ToScriptHash(self, address):
-        data = b58decode(address)
-        if len(data) != 25:
-            raise ValueError('Not correct Address, wrong length.')
-        if data[0] != self.AddressVersion:
-            raise ValueError('Not correct Coin Version')
-        scriptHash = binascii.hexlify(data[1:21])
-        if Wallet.ToAddress(scriptHash) == address:
-            return scriptHash
-        else:
-            raise ValueError('Not correct Address, something wrong in Address[-4:].')
-
-    def ValidatePassword(self, password):
-        return hashlib.sha256(password) == self.LoadStoredData('PasswordHash')
 
 def __test():
     wallet = Wallet()

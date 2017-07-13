@@ -1,11 +1,17 @@
-antshares-python: Python for Antshares
-=========================
- support Python 2.7
-# Demo 
+## antshares-python: Python for Antshares
 
-    random = random_key()
-    privkey = random_to_priv(random)
-    pubkey = privkey_to_pubkey(privkey)
-    redeemscript = pubkey_to_redeem(pubkey)
-    scripthash = redeem_to_scripthash(redeemscript)
-    address = scripthash_to_address(scripthash)
+Not really finished at the moment.  
+
+### Getting started
+
+- make a python 3 virtual environment, and activate it
+```
+python3 -m venv venv
+source venv/bin/activate
+```
+
+- install requirements
+```
+pip install -r requirements.txt
+```
+
