@@ -18,14 +18,17 @@ class IssueTransaction(Transaction):
     def __init__(self, *args, **kwargs):
         super(IssueTransaction, self).__init__(*args, **kwargs)
         self.TransactionType = TransactionType.IssueTransaction  # 0x40
-        self.Nonce = self.genNonce()
+        self.Nonce = self.GenNonce()
 
-    def genNonce(self):
+    def GenNonce(self):
         return random.randint(268435456, 4294967295)
 
-    def getScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""
         pass
 
-    def serializeExclusiveData(self, writer):
+    def DeserializeExclusiveData(self, reader):
+        reader.readUInt32()
+
+    def SerializeExclusiveData(self, writer):
         writer.writeUInt32(self.Nonce)

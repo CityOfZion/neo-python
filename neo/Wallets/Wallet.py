@@ -189,18 +189,18 @@ class Wallet(object):
                         for coin in self._coins:
                             if coin.CoinRef.Equals(key):
                                 coin.State |= CoinState.Confirmed
-                                changed.add(coin)
+                                changed.add(coin.CoinRef)
                                 found = True
                         if not found:
                             newcoin = Coin.CoinFromRef(key, output, state=CoinState.Confirmed )
                             self._coins.append(newcoin)
-                            added.add(newcoin)
+                            added.add(newcoin.CoinRef)
 
                         if state == AddressState.WatchOnly:
                             for coin in self._coins:
                                 if coin.CoinRef.Equals(key):
                                     coin.State |= CoinState.WatchOnly
-                                    changed.add(coin)
+                                    changed.add(coin.CoinRef)
 
             for tx in block.Transactions:
 
@@ -211,14 +211,16 @@ class Wallet(object):
 
                             if coin.TXOutput.AssetId == Blockchain.SystemShare().Hash():
                                 coin.State |= CoinState.Spent | CoinState.Confirmed
-                                changed.add(coin)
+                                changed.add(coin.CoinRef)
                             else:
                                 self._coins.remove(coin)
-                                deleted.add(coin)
+                                deleted.add(coin.CoinRef)
 
-# Need to implement ClaimTransaction
-#            for claimTx in [tx in block.Transactions if tx.Type == TransactionType.ClaimTransaction]:
-#                for ref in claimTx.C
+            for claimTx in [tx for tx in block.Transactions if tx.Type == TransactionType.ClaimTransaction]:
+                for ref in claimTx.Claims:
+                    if ref in self._coins:
+                        self._coins.remove(ref)
+                        deleted.add(ref)
 
             self._current_height+=1
             self.OnProcessNewBlock(block, added, changed, deleted)
@@ -262,11 +264,11 @@ class Wallet(object):
         return scripthash_to_address(scripthash)
 
 
-    def findUnSpentCoins(self, scriptHash):
+    def FindUnSpentCoins(self, scriptHash):
         """:return: Coin[]"""
         return self.indexeddb.findCoins(self.ToAddress(scriptHash), status=CoinState.Unspent)
 
-    def makeTransaction(self, tx, account):
+    def MakeTransaction(self, tx, account):
         """Make Transaction"""
         if tx.outputs == None:
             raise ValueError('Not correct Address, wrong length.')
@@ -407,23 +409,21 @@ class Wallet(object):
                 break
         return inputs
 
-    def addressToScriptHash(self, address):
+
+    def ToScriptHash(self, address):
         data = b58decode(address)
         if len(data) != 25:
             raise ValueError('Not correct Address, wrong length.')
-        if data[0] != self.getCoinVersion():
-            raise ValueError('Not correct CoivVersion')
+        if data[0] != self.AddressVersion:
+            raise ValueError('Not correct Coin Version')
         scriptHash = binascii.hexlify(data[1:21])
-        if self.ToAddress(scriptHash) == address:
+        if Wallet.ToAddress(scriptHash) == address:
             return scriptHash
         else:
             raise ValueError('Not correct Address, something wrong in Address[-4:].')
 
-    def createAccount(self):
-        return Account()
-
-    def getAccount(self, privKey=None):
-        return Account(privKey)
+    def ValidatePassword(self, password):
+        return hashlib.sha256(password) == self.LoadStoredData('PasswordHash')
 
 def __test():
     wallet = Wallet()

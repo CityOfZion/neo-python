@@ -172,7 +172,7 @@ def pay(payer_id, payees, asset):
     if payer == None:
         print('%s : not exist payer block chain account' % payer_id)
         return 2
-
+1
     payer_acc = Account(payer['pri_key'])
     contract = Contract()
     contract.createSignatureContract(payer_acc.publicKey)

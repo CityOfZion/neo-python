@@ -234,7 +234,7 @@ class Transaction(Inventory, InventoryMixin):
             return False
         return self.Hash() == other.Hash()
 
-    def getScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""
 
         return []
@@ -300,19 +300,19 @@ class Transaction(Inventory, InventoryMixin):
 #        }).Where(p= > p.Amount != Fixed8.Zero);
 
 
-    def serialize(self, writer):
-        self.serializeUnsigned(writer)
+    def Serialize(self, writer):
+        self.SerializeUnsigned(writer)
         writer.writeSerializableArray(self.scripts)
 
-    def serializeUnsigned(self, writer):
+    def SerializeUnsigned(self, writer):
         writer.writeByte(self.TransactionType)
         writer.writeByte(self.Version)
-        self.serializeExclusiveData(writer)
+        self.SerializeExclusiveData(writer)
         writer.writeSerializableArray(self.Attributes)
         writer.writeSerializableArray(self.inputs)
         writer.writeSerializableArray(self.outputs)
 
-    def serializeExclusiveData(self, writer):
+    def SerializeExclusiveData(self, writer):
         # ReWrite in RegisterTransaction and IssueTransaction#
         pass
 

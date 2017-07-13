@@ -113,6 +113,9 @@ class Blockchain(object):
         # abstract
         pass
 
+    @staticmethod
+    def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
+        raise NotImplementedError()
 
     @staticmethod
     def CalculateBonus(inputs, height_end):

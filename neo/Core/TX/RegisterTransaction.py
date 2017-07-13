@@ -46,14 +46,14 @@ In English:
     def getSystemFee(self):
         return Fixed8(100)
 
-    def getScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""
         # hashes = {}
         # super(RegisterTransaction, self).getScriptHashesForVerifying()
         pass
 
 
-    def serializeExclusiveData(self, writer):
+    def SerializeExclusiveData(self, writer):
         writer.writeByte(self.AssetType)
         writer.writeVarBytes(self.Name)
         writer.writeFixed8(self.Amount)
