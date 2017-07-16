@@ -1,6 +1,6 @@
-## antshares-python: Python for Antshares
+## neo-python: Python SDK for NEO platform
 
-Not really finished at the moment.  
+In progress, please reach out in order to contribute
 
 ### Getting started
 
