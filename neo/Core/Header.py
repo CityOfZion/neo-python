@@ -21,8 +21,8 @@ class Header(BlockBase):
         if other is self: return True
         return self.Hash() == other.Hash()
 
-
-    def FromTrimmedData(self, data, index):
+    @staticmethod
+    def FromTrimmedData(data, index):
 
         header = Header()
 
@@ -30,7 +30,7 @@ class Header(BlockBase):
 
         reader = BinaryReader(ms)
 
-        self.DeserializeUnsigned(reader)
+        header.DeserializeUnsigned(reader)
         reader.readByte()
         header.Script = reader.readSerializableArray()
 

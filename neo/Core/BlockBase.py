@@ -1,14 +1,9 @@
 # -*- coding: UTF-8 -*-
-from neo.Cryptography import *
-from neo.IO import *
-from neo.Wallets import *
 from .Mixins import VerifiableMixin
 from neo.Cryptography.Crypto import *
-from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
-import json
 import ctypes
-import hashlib
+from neo.Blockchain import GetBlockchain,GetGenesis
 
 class BlockBase(VerifiableMixin):
 
@@ -99,7 +94,7 @@ class BlockBase(VerifiableMixin):
         if self.PrevHash == None:
             return [ self.Script.VerificationScript.ToScriptHash()]
 
-        prev_header = Blockchain.Default().GetHeader(self.PrevHash)
+        prev_header = GetBlockchain().GetHeader(self.PrevHash)
         if prev_header == None:
             raise Exception('Invalid operation')
         return [ prev_header.NextConsensus ]
@@ -127,16 +122,16 @@ class BlockBase(VerifiableMixin):
         json["time"] = self.Timestamp
         json["index"] = self.Index
         json["nonce"] = self.ConsensusData.ToString("x16")
-        json["nextconsensus"] = self.Wallet.ToAddress(self.NextConsensus)
+#        json["nextconsensus"] = self.Wallet.ToAddress(self.NextConsensus)
         json["script"] = self.Script.ToJson()
         return json
 
     def Verify(self):
-        if self.Hash == Blockchain.GenesisBlock.Hash: return True
+        if self.Hash == GetGenesis().Hash: return True
 
-        if Blockchain.Default().ContainsBlock(self.Hash): return True
+        if GetBlockchain().ContainsBlock(self.Hash): return True
 
-        prev_header = Blockchain.Default().GetHeader(self.PrevHash)
+        prev_header = GetBlockchain().GetHeader(self.PrevHash)
 
         if prev_header == None: return False
 

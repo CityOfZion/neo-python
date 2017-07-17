@@ -7,7 +7,7 @@ Usage:
 """
 
 from neo.Helper import ANTCOIN
-from neo.Defaults import TEST_ADDRESS
+from neo.Defaults import TEST_ADDRESS,LDB_PATH
 from neo.Core.TX.Transaction import TransactionOutput,TransactionInput,TransactionType
 from neo.Core.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
@@ -15,15 +15,16 @@ from neo.Core.CoinReference import CoinReference
 from neo.Cryptography.Base58 import b58decode
 from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
-from neo.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
 from neo.Wallets.Account import Account
 from neo.Wallets.Contract import Contract
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
+from neo.Wallets.KeyPair import KeyPair
 from neo.Network.RemoteNode import RemoteNode
 from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryWriter import BinaryWriter
 from neo import Settings
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 
 import itertools
 import hashlib
@@ -79,7 +80,7 @@ class Wallet(object):
             self._iv = bitarray(16)
             self._master_key = bitarray(32)
             self._keys = []
-            self._indexedDB= IndexedDBWallet()
+            self._indexedDB= LevelDBBlockchain(LDB_PATH)
             self._node = RemoteNode(url=TEST_NODE)
 
             self._current_height = Blockchain.Default().HeaderHeight + 1 if Blockchain.Default() is not None else 0
@@ -122,36 +123,117 @@ class Wallet(object):
 
     def AddContract(self, contract):
 
-#        found=False
-#        for key in self._key_pair:
-#            if key.
+        for key in self._keys:
+            if not key.PublicKeyHash == contract.PublicKeyHash:
+                raise Exception('Invalid operation- public key mismatch')
+
+        self._contracts[contract.ScriptHash] = contract
+        self._watch_only.remove(contract.ScriptHash)
+
+
+    def AddWatchOnly(self, script_hash):
+
+        if script_hash in self._contracts:
+            return
+
+        self._watch_only.add(script_hash)
+
+
+    def ChangePassword(self, password_old, password_new):
+        if not self.ValidatePassword(password_old):
+            return False
+
+        password_key = hashlib.sha256(password_new)
+        self.SaveStoredData("PasswordHash", password_key)
+        self.SaveStoredData("MasterKey", AES.new(self._master_key, AES.MODE_CBC, self._iv))
+
+    def CheckAddressState(self, script_hash):
+        if script_hash in self._contracts:
+            return AddressState.InWallet
+
+        if script_hash in self._watch_only:
+            return AddressState.InWallet | AddressState.WatchOnly
+
+        return AddressState.NoState
+
+
+    def ContainsKey(self, public_key):
         raise NotImplementedError()
+
+    def ContainsKeyHash(self, public_key_hash):
+        return public_key_hash in self._keys
+
+    def ContainsAddress(self, script_hash):
+        return self.CheckAddressState(script_hash) >= AddressState.InWallet
+
+
+    def CreatePrivateKey(self):
+        private_key = bitarray(32)
+        private_key = Random.new().read(private_key)
+        return private_key
+
+    def CreateKeyPairFromPrivateKey(self, private_key):
+
+        keypair = KeyPair(private_key = private_key)
+
+        self._keys[keypair.PublicKeyHash] = keypair
+
+        return keypair
+
+    def DecryptPrivateKey(self, encrypted_private_key):
+        raise NotImplementedError()
+
+    def DeleteKey(self, public_key_hash):
+        raise NotImplementedError()
+
+    def DeleteAddress(self, script_hash):
+        raise NotImplementedError()
+
+
+
+    def FindUnspentCoins(self):
+        unspent = []
+        for coin in self._coins:
+            if coin.State == CoinState.Confirmed:
+                unspent.append(coin)
+        return unspent
+
+    def GetKey(self, public_key_hash):
+        if public_key_hash in self._keys:
+            return self._keys[public_key_hash]
+        return None
+
+    def GetAvailable(self, asset_id):
+        raise NotImplementedError()
+
+    def GetBalance(self, asset_id):
+        raise NotImplementedError()
+
 
     def SaveStoredData(self, key, value):
-
-        raise NotImplementedError()
+        # abstract
+        pass
 
     def LoadStoredData(self, key):
-        raise NotImplementedError()
+        # abstract
+        pass
 
     def LoadKeyPair(self):
-
-#        raise NotImplementedError()
-        return []
+        #abstract
+        pass
 
     def LoadContracts(self):
-#        raise NotImplementedError()
-        return []
-
+        # abstract
+        pass
 
     def LoadWatchOnly(self):
-#        raise NotImplementedError()
-        return set()
+        # abstract
+        pass
+
 
     def LoadCoins(self):
-#        raise NotImplementedError()
-        return []
-
+        # abstract
+        pass
 
     def ProcessBlocks(self):
         while self._is_running:
@@ -278,181 +360,9 @@ class Wallet(object):
     def ValidatePassword(self, password):
         return hashlib.sha256(password) == self.LoadStoredData('PasswordHash')
 
-    def FindUnSpentCoins(self, scriptHash):
-        """:return: Coin[]"""
-        return self.indexeddb.findCoins(self.ToAddress(scriptHash), status=CoinState.Unspent)
 
     def MakeTransaction(self, tx, account):
-        """Make Transaction"""
-        if tx.outputs == None:
-            raise ValueError('Not correct Address, wrong length.')
 
-        if tx.attributes == None:
-            tx.attributes = []
-
-        coins = self.findUnSpentCoins(account.scriptHash)
-        tx.inputs, tx.outputs = self.selectInputs(tx.outputs, coins, account, tx.systemFee)
-
-        # Make transaction
-        stream = MemoryStream()
-        writer = BinaryWriter(stream)
-        tx.serializeUnsigned(writer)
-        reg_tx = stream.toArray()
-        tx.ensureHash()
-        txid = tx.hash
-
-        # RedeenScript
-        contract = Contract()
-        contract.CreateSignatureContract(account.publicKey)
-        Redeem_script = contract.RedeemScript
-
-        # Add Signature
-        sk = SigningKey.from_string(binascii.unhexlify(account.privateKey), curve=NIST256p, hashfunc=hashlib.sha256)
-        signature = binascii.hexlify(sk.sign(binascii.unhexlify(reg_tx),hashfunc=hashlib.sha256))
-        regtx = reg_tx + '014140' + signature + '23' + Redeem_script
-        # sendRawTransaction
-        print(regtx)
-        response = self.node.sendRawTransaction(regtx)
-        import json
-        print(response)
-        return txid
-
-    def selectInputs(self, outputs, coins, account, fee):
-
-        scripthash = account.scriptHash
-
-        if len(outputs) > 1 and len(coins) < 1:
-            raise Exception('Not Enought Coins')
-
-        # Count the total amount of change
-        coin = itertools.groupby(sorted(coins, key=lambda x: x.asset), lambda x: x.asset)
-        coin_total = dict([(k, sum(int(x.value) for x in g)) for k,g in coin])
-
-        # Count the pay total
-        pays = itertools.groupby(sorted(outputs, key=lambda x: x.AssetId), lambda x: x.AssetId)
-        pays_total = dict([(k, sum(int(x.Value) for x in g)) for k,g in pays])
-
-        if int(fee.f) > 0:
-            if ANTCOIN in iter(list(pays_total.keys())):
-                pays_total[ANTCOIN] += int(fee.f)
-            else:
-                pays_total[ANTCOIN] = int(fee.f)
-
-        # Check whether there is enough change
-        for asset, value in list(pays_total.items()):
-            if asset not in coin_total:
-                raise Exception('Coins does not contain asset {asset}.'.format(asset=asset))
-
-            if coin_total.get(asset) - value < 0:
-                raise Exception('Coins does not have enough asset {asset}, need {amount}.'.format(asset=asset, amount=value))
-
-        # res: used Coins
-        # change: change in outpus
-        res = []
-        change = []
-
-        # Copy the parms
-        _coins  = coins[:]
-
-        # Find whether have the same value of change
-        for asset, value in list(pays_total.items()):
-            for _coin in _coins:
-                if asset == _coin.asset and value == int(_coin.value):
-                    # Find the coin
-                    res.append(TransactionInput(prevHash=_coin.txid, prevIndex=_coin.idx))
-                    _coins.remove(_coin)
-                    break
-
-            else:
-                # Find the affordable change
-
-                affordable = sorted([i for i in _coins if i.asset == asset and int(i.value) >= value],
-                                    key=lambda x: int(x.value))
-
-                # Use the minimum if exists
-                if len(affordable) > 0:
-                    res.append(TransactionInput(prevHash=affordable[0].txid, prevIndex=affordable[0].idx))
-                    _coins.remove(affordable[0])
-
-                    # If the amout > value, set the change
-                    amount = int(affordable[0].value)
-                    if amount > value:
-                        change.append(TransactionOutput(AssetId=asset, Value=str(amount-value), ScriptHash=scripthash))
-
-                else:
-                    # Calculate the rest of coins
-                    rest = sorted([i for i in _coins if i.asset == asset],
-                                  key=lambda x: int(x.value),
-                                  reverse=True)
-
-                    amount = 0
-                    for _coin in rest:
-                        amount += int(_coin.value)
-                        res.append(TransactionInput(prevHash=_coin.txid, prevIndex=_coin.idx))
-                        _coins.remove(_coin)
-                        if amount == value:
-                            break
-                        elif amount > value:
-                            # If the amout > value, set the change
-                            change.append(TransactionOutput(AssetId=asset, Value=str(amount-value), ScriptHash=scripthash))
-                            break
-
-        return res, outputs + change
-
-    def selectCoins(self, coins, outputs):
-        """the simplest alg of selecting coins"""
-        total = sum([int(out['amount']) for out in outputs])
-        cs = sorted(coins,key=lambda c:c.value,reverse=True)
-        print(total)
-        inputs = []
-        # has no enough coins
-        if sum([int(c.value) for c in coins]) < total:
-            return inputs
-        for i in range(len(cs)):
-            #step 1: find the coin with value==total
-            if cs[i].value == total:
-                inputs = [cs[i],]
-                break
-            #step 2: find the min coin with value>total
-            if cs[0].value > total and cs[i].value<total:
-                inputs = [cs[i-1],]
-                break
-            #step 3: find the min(max coins) with sum(coins)>= total
-            inputs.append(cs[i])
-            if cs[0].value<total and sum([i.value for i in inputs]) >= total:
-                break
-        return inputs
+        raise NotImplementedError()
 
 
-def __test():
-    wallet = Wallet()
-    coins = wallet.indexeddb.loadCoins(address=TEST_ADDRESS,asset='dc3d9da12d13a4866ced58f9b611ad0d1e9d5d2b5b1d53021ea55a37d3afb4c9')
-    #print coins
-    print('test1: select the min max coin')
-    outputs = [{'work_id':'12687','amount':80}, {'work_id':'12689','amount':100}]
-    inputs = wallet.selectCoins(coins,outputs)
-    for i in inputs:
-        print(i)
-    print('test2: select the equal coin')
-    outputs = [{'work_id':'12687','amount':1},]
-    inputs = wallet.selectCoins(coins,outputs)
-    for i in inputs:
-        print(i)
-    print('test3: select the min(max coins)')
-    outputs = [{'work_id':'12687','amount':232},{'work_id':'12689','amount':10}]
-    inputs = wallet.selectCoins(coins,outputs)
-    for i in inputs:
-        print(i)
-    print('test4: select none coin')
-    outputs = [{'work_id':'12687','amount':10000},{'work_id':'12689','amount':10}]
-    inputs = wallet.selectCoins(coins,outputs)
-    for i in inputs:
-        print(i)
-    print('test5: select the min max coin')
-    outputs = [{'work_id':'12687','amount':2},]
-    inputs = wallet.selectCoins(coins,outputs)
-    for i in inputs:
-        print(i)
-
-if __name__ == '__main__':
-    __test()

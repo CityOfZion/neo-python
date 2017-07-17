@@ -6,13 +6,9 @@ Usage:
     from neo.Core.Transaction import Transaction
 """
 
-from neo.Core.AssetType import AssetType
-from neo.Core.Blockchain import Blockchain
+from neo.Blockchain import *
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.TransactionAttribute import *
-from neo.Core.TX.IssueTransaction import *
-from neo.Core.TX.MinerTransaction import *
-from neo.Core.TX.RegisterTransaction import *
 from neo.Fixed8 import Fixed8
 from neo.Network.Inventory import Inventory
 from neo.Network.InventoryType import InventoryType
@@ -114,7 +110,7 @@ class Transaction(Inventory, InventoryMixin):
 
     InventoryType = InventoryType.TX
 
-    __network_fee = - Fixed8.Satoshi()
+    __network_fee = -1
 
     __hash = None
 
@@ -143,7 +139,7 @@ class Transaction(Inventory, InventoryMixin):
 
     def NetworkFee(self):
         if self.__network_fee == -Fixed8.Satoshi():
-#            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
+#            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
 #            Fixed8 output = Outputs.Where(p= > p.AssetId.Equals(Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
 #            _network_fee = input - output - SystemFee;
             pass
@@ -162,7 +158,7 @@ class Transaction(Inventory, InventoryMixin):
 
 
             for input in self.inputs:
-                tx = Blockchain.Default().GetTransaction(input.PrevHash())
+                tx = GetBlockchain().GetTransaction(input.PrevHash())
 
                 if tx is not None:
                     #this aint right yet
@@ -204,6 +200,12 @@ class Transaction(Inventory, InventoryMixin):
     def DeserializeFrom(reader):
         type = reader.readByte()
         tx = None
+
+        from neo.Core.TX.RegisterTransaction import RegisterTransaction
+        from neo.Core.TX.IssueTransaction import IssueTransaction
+        from neo.Core.TX.ClaimTransaction import ClaimTransaction
+        from neo.Core.TX.MinerTransaction import MinerTransaction
+
         if type == TransactionType.RegisterTransaction:
             tx = RegisterTransaction()
         elif type == TransactionType.MinerTransaction:
@@ -349,11 +351,11 @@ class Transaction(Inventory, InventoryMixin):
                     if ip in tx.inputs:
                         return False
 
-        if Blockchain.Default().IsDoubleSpend(self):
+        if GetBlockchain().IsDoubleSpend(self):
             return False
 
         for txOutput in self.outputs:
-            asset = Blockchain.Default().GetAssetState(txOutput.AssetId)
+            asset = GetBlockchain().GetAssetState(txOutput.AssetId)
 
             if asset is None: return False
 
@@ -369,7 +371,7 @@ class Transaction(Inventory, InventoryMixin):
         numDestroyed = len(destroyedResults)
         if numDestroyed > 1:
             return False
-        if numDestroyed == 1 and destroyedResults[0].AssetId != Blockchain.SystemCoin().Hash():
+        if numDestroyed == 1 and destroyedResults[0].AssetId != GetSystemCoin().Hash():
             return False
         if self.SystemFee() > Fixed8(0) and ( numDestroyed == 0 or destroyedResults[0].Amount < self.SystemFee()):
             return False
@@ -380,12 +382,12 @@ class Transaction(Inventory, InventoryMixin):
 
         if self.Type == TransactionType.MinerTransaction or self.Type == TransactionType.ClaimTransaction:
             for tx in issuedResults:
-                if tx.AssetId != Blockchain.SystemCoin().Hash():
+                if tx.AssetId != GetSystemCoin().Hash():
                     return False
 
         elif self.Type == TransactionType.IssueTransaction:
             for tx in issuedResults:
-                if tx.AssetId != Blockchain.SystemCoin().Hash():
+                if tx.AssetId != GetSystemCoin().Hash():
                     return False
 
         else:

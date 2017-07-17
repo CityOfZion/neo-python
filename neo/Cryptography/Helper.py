@@ -21,3 +21,6 @@ def redeem_to_scripthash(redeem):
 
 def scripthash_to_address(scripthash):
     return bin_to_b58check(binascii.unhexlify(scripthash),int('17',16))
+
+def pubkey_to_pubhash(pubkey):
+    return redeem_to_scripthash(pubkey_to_redeem(pubkey))

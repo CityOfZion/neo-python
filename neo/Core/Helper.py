@@ -45,3 +45,6 @@ class Helper(object):
 
         raise NotImplementedError()
 
+    @staticmethod
+    def IToBA(value):
+        return [1 if digit == '1' else 0 for digit in bin(value)[2:]]
