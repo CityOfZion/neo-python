@@ -29,33 +29,33 @@ class ScriptBuilder(object):
             return
         if isinstance(data,int):
             if data == -1:
-                return self.add(ScriptOp.OP_1NEGATE)
+                return self.add(ScriptOp.PUSHM1)
             elif data == 0:
-                return self.add(ScriptOp.OP_0)
+                return self.add(ScriptOp.PUSH0)
             elif data > 0 and data <= 16:
-                return self.add(ScriptOp.OP_1 - 1 + data)
+                return self.add(ScriptOp.PUSH1M1 + bytes(data))
             else:
                 return self.push(bytes(data))
         else:
             buf = binascii.unhexlify(data)
-            if len(buf) <= ScriptOp.OP_PUSHBYTES75:
-                self.add(len(buf))
+            if len(buf) <= int.from_bytes(ScriptOp.PUSHBYTES75, byteorder='big'):
+                self.add(bytes(len(buf)))
                 self.add(buf)
-            elif len(buf) < 0x100:
-                self.add(ScriptOp.OP_PUSHDATA1)
-                self.add(len(buf))
+            elif len(buf) < int.from_bytes(b'\x10\x00', byteorder='big'):
+                self.add(ScriptOp.PUSHDATA1)
+                self.add(bytes(len(buf)))
                 self.add(buf)
-            elif len(buf) < 0x10000:
-                self.add(ScriptOp.OP_PUSHDATA2)
-                self.add(len(buf) & 0xff)
-                self.add(len(buf) >> 8)
+            elif len(buf) < int.from_bytes(b'\x10\x00\x00', byteorder='big'):
+                self.add(ScriptOp.PUSHDATA2)
+                self.add(bytes(len(buf)) & 0xff)
+                self.add(bytes(len(buf)) >> 8)
                 self.add(buf)
-            elif len(buf) < 0x100000000:
-                self.add(ScriptOp.OP_PUSHDATA4)
-                self.add(len(buf) & 0xff)
-                self.add((len(buf) >> 8) & 0xff)
-                self.add((len(buf) >> 16) & 0xff)
-                self.add(len(buf) >> 24)
+            elif len(buf) < int.from_bytes(b'\x10\x00\x00\x00', byteorder='big'):
+                self.add(ScriptOp.PUSHDATA4)
+                self.add(bytes(len(buf)) & 0xff)
+                self.add((bytes(len(buf)) >> 8) & 0xff)
+                self.add((bytes(len(buf)) >> 16) & 0xff)
+                self.add(bytes(len(buf)) >> 24)
                 self.add(buf)
         return
 

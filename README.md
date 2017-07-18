@@ -31,6 +31,6 @@ if you're having an issue similar to this:
 You may need to uninstall plyvel (python libleveldb library), and reinstall with the following cflags
 
 ```
-pip uninstall plyvell
+pip uninstall plyvel
 CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel --no-cache-dir
 ```

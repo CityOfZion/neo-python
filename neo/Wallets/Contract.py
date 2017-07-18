@@ -6,15 +6,19 @@ Description:
 Usage:
     from neo.Wallets.Contract import Contract
 """
-
+from io import BytesIO,BufferedReader,BufferedWriter
 from neo.Core.Scripts.ScriptOp import *
+from neo.Core.Scripts.ScriptBuilder import ScriptBuilder
 from neo.Cryptography.Helper import *
 from neo.Cryptography.Crypto import *
 from neo.IO.Mixins import SerializableMixin
 from neo.Wallets.ContractParameterType import ContractParameterType
 from neo.Core.Scripts.ScriptBuilder import ScriptBuilder, ScriptOp
-
-
+from bitarray import bitarray
+from ecdsa.keys import VerifyingKey
+from ecdsa import curves
+import hashlib
+import binascii
 class Contract(SerializableMixin):
     """docstring for Contract"""
 
@@ -41,11 +45,33 @@ class Contract(SerializableMixin):
 
     @staticmethod
     def CreateMultiSigContract(publickKeyHash, m, publicKeys):
-        raise NotImplementedError()
+#        raise NotImplementedError()
+        pass
 
     @staticmethod
     def CreateMultiSigRedeemScript(m, publicKeys):
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        print('public keys: %s %s %s' % (len(publicKeys), m, publicKeys))
+
+        if m < 2 or m > len(publicKeys) or len(publicKeys) > 1024:
+            raise Exception('Invalid keys')
+
+        sb = ScriptBuilder()
+        sb.push(m)
+
+        for addr in publicKeys:
+            strkey = addr[2:]
+            strkey = binascii.unhexlify(strkey)
+            print("len: %s " % len(strkey))
+            key = VerifyingKey.from_string(strkey, curves.NIST256p,hashfunc=hashlib.sha256).to_string()
+
+            print("address: %s %s " % (key, len(key)))
+            sb.push( key )
+
+        sb.push(len(publicKeys))
+        sb.add(ScriptOp.CHECKMULTISIG)
+
+        return sb.toArray()
 
     @staticmethod
     def CreateSignatureContract(publicKey):

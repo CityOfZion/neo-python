@@ -10,6 +10,7 @@ from neo.Core.Witness import Witness
 from neo.Core.Scripts.ScriptOp import *
 from neo.Core.SpentCoin import SpentCoin
 from neo.Wallets.Contract import Contract
+from neo import Settings
 from collections import Counter
 from neo.Fixed8 import Fixed8
 from datetime import datetime
@@ -40,7 +41,9 @@ class Blockchain(object):
 
     @staticmethod
     def StandbyValidators():
-        raise NotImplementedError()
+        validators = Settings.STANDBY_VALIDATORS
+        print("validators %s " % validators)
+        return validators
 
     @staticmethod
     def SystemShare():
@@ -202,7 +205,7 @@ class Blockchain(object):
     @staticmethod
     def GetConsensusAddress(validators):
         vlen = len(validators)
-        return Contract.CreateMultiSigRedeemScript(vlen - ((vlen-1)/3), validators).ToScriptHash()
+        return Contract.CreateMultiSigRedeemScript(int(vlen - ((vlen-1)/3)), validators).ToScriptHash()
 
     def GetValidators(self, others):
 
