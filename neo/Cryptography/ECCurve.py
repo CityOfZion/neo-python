@@ -7,7 +7,7 @@ Usage:
 """
 import random
 from mpmath.libmp import bitcount as _bitlength
-from random import randint
+import binascii
 
 modpow = pow
 
@@ -136,15 +136,10 @@ def _lucas_sequence(n, P, Q, k):
     return U, V
 
 
-
-
 def sqrtCQ(val, CQ):
-    print("val, cq: - %s %s " % (val, CQ))
     if test_bit(CQ, 1):
         z = modpow(val, (CQ >> 2) + 1, CQ)
-        print("z is %s " % z)
         zsquare = ( z * z ) % CQ
-        print("zsquare: %s " % zsquare)
         if (z * z) % CQ == val:
             return z
         else:
@@ -241,8 +236,6 @@ class FiniteField:
     def neg(self, val): return self.value(self.p-val.value)
 
 
-
-
     def sqrt(self, val, flag):
         """
         calculate the square root modulus p
@@ -261,12 +254,9 @@ class FiniteField:
         else:
             raise Exception("modsqrt non supported for (p%8)==1")
 
-        print("res value: %s %s" % (res.value, res))
         if res.value%2==flag:
-            print("returning res")
             return res
         else:
-            print("returning negative res")
             return -res
 
     def inverse(self, value):
@@ -307,7 +297,7 @@ class EllipticCurve:
     """
     EllipticCurve implements a point on a elliptic curve
     """
-    class Point:
+    class ECPoint:
         """
         represent a value in the EllipticCurve
         this class forwards all operations to the EllipticCurve class
@@ -334,6 +324,8 @@ class EllipticCurve:
             return self.x.iszero() and self.y.iszero()
         def isoncurve(self):
             return self.curve.isoncurve(self)
+
+
 
     def __init__(self, field, a, b):
         self.field= field
@@ -400,13 +392,14 @@ class EllipticCurve:
         """
         construct a point from 2 values
         """
-        return EllipticCurve.Point(self, self.field.value(x), self.field.value(y))
+        return EllipticCurve.ECPoint(self, self.field.value(x), self.field.value(y))
 
     def isoncurve(self, p):
         """
         verifies if a point is on the curve
         """
         return p.iszero() or p.y**2 == p.x**3 + self.a*p.x + self.b
+
 
     def decompress(self, x, flag):
         """
@@ -417,6 +410,37 @@ class EllipticCurve:
         ysquare = x ** 3 + self.a * x + self.b
 
         return self.point(x, ysquare.sqrt(flag))
+
+    def decode_from_hex(self, hex_str):
+
+        ba = bytearray(binascii.unhexlify(hex_str))
+
+        cq = self.field.p
+
+        expected_byte_len = int(( _bitlength(cq) + 7 ) / 8)
+        print("expected byte length: %s " % expected_byte_len)
+
+        f = ba[0]
+
+        # these are compressed
+        if f == 2 or f == 3:
+            if len(ba) != expected_byte_len + 1:
+                raise Exception("Incorrrect length for encoding")
+            yTilde = f & 1
+            data = bytearray(ba[1:])
+            data.reverse()
+            data.append(0)
+            X1 = int.from_bytes(data, 'little')
+            print("x1, ytilde %s %s " % (X1, yTilde))
+            return self.decompress_from_curve(X1, yTilde)
+
+        #uncompressed or hybrid
+        elif f ==  4 or f == 6 or f == 7:
+            raise NotImplementedError()
+
+        raise Exception("Invalid point incoding: %s " % f)
+
+
 
     def decompress_from_curve(self, x, flag):
         """
@@ -575,58 +599,41 @@ class ECDSA:
         k= self.GFn.value(signsecret)
         return (s*k-m)/r
 
-def secp256k1():
-    """
-    create the secp256k1 curve
-    """
-    GFp= FiniteField(2**256 - 2**32 - 977) # This is P from below... aka FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
-    ec= EllipticCurve(GFp, 0, 7)
-    return ECDSA(ec, ec.point( 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798, 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8  ), 2**256 - 432420386565659656852420866394968145599)
-
-def secp256r1():
-
-    GFp = FiniteField(int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16))
-    ec = EllipticCurve(GFp, 115792089210356248762697446949407573530086143415290314195533631308867097853948, 41058363725152142129326129780047268409114441015993725554835256314039467401291 )
-    return ECDSA(GFp, ec.point(0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5), int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16) )
+    @staticmethod
+    def secp256r1():
+        """
+        create the secp256r1 curve
+        """
+        GFp = FiniteField(int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16))
+        ec = EllipticCurve(GFp, 115792089210356248762697446949407573530086143415290314195533631308867097853948,41058363725152142129326129780047268409114441015993725554835256314039467401291)
+        return ECDSA(GFp, ec.point(0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296,0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5),int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
 
 
-class ECCurveNotFound(Exception):
-    """docstring for ECCurveNotFound"""
-    def __init__(self, curve):
-        super(ECCurveNotFound, self).__init__()
-        self.curve = curve
-    def __str__(self):
-        return "ECC Curve '%s' cannot found." % self.curve
+    @staticmethod
+    def decode_secp256r1(str):
+        """
+        decode a public key on the secp256r1 curve
+        """
+        GFp = FiniteField(int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16))
+        ec = EllipticCurve(GFp, 115792089210356248762697446949407573530086143415290314195533631308867097853948,
+                           41058363725152142129326129780047268409114441015993725554835256314039467401291)
+
+        point = ec.decode_from_hex(str)
+        print("point: %s " % point)
+        if point.isoncurve():
+
+            return ECDSA(GFp, point, int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
+        else:
+            raise Exception("Could not decode string")
+
+    @staticmethod
+    def secp256k1():
+        """
+        create the secp256k1 curve
+        """
+        GFp= FiniteField(2**256 - 2**32 - 977) # This is P from below... aka FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+        ec= EllipticCurve(GFp, 0, 7)
+        return ECDSA(ec, ec.point( 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798, 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8  ), 2**256 - 432420386565659656852420866394968145599)
 
 
-class ECCurve(object):
-    """docstring for ECCurve"""
-    def __init__(self, curve='secp256r1'):
-        super(ECCurve, self).__init__()
-        self.curve = curve
-        self.get_curve()
 
-    def secp256r1(self):
-        self.P = int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16)
-        self.N = int("FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", 16)
-        self.A = int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16)
-        self.B = int("5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", 16)
-        self.Gx = int("6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296", 16)
-        self.Gy = int("4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5", 16)
-        self.G = (self.Gx, self.Gy)
-
-    def secp256k1(self):
-        self.P = int("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
-        self.N = int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16)
-        self.A = 0
-        self.B = 7
-        self.Gx = int("6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296", 16)
-        self.Gy = int("4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5", 16)
-        self.G = (self.Gx, self.Gy)
-
-    def get_curve(self):
-        try:
-            func = self.__getattribute__(self.curve)
-            func()
-        except AttributeError as e:
-            raise ECCurveNotFound(self.curve)
