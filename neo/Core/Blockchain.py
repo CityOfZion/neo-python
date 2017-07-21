@@ -11,6 +11,7 @@ from neo.Core.Scripts.ScriptOp import *
 from neo.Core.SpentCoin import SpentCoin
 from neo.Wallets.Contract import Contract
 from neo import Settings
+from neo.Cryptography.Crypto import *
 from collections import Counter
 from neo.Fixed8 import Fixed8
 from datetime import datetime
@@ -68,7 +69,7 @@ class Blockchain(object):
         index = 0
         consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
         next_consensus = Blockchain.GetConsensusAddress(Blockchain.StandbyValidators())
-        script = Witness( bitarray(0), bitarray(ScriptOp.PUSHT))
+        script = Witness( bitarray(0), [ScriptOp.PUSHT])
 
         mt = MinerTransaction()
         mt.Nonce = 2083236893
@@ -76,7 +77,7 @@ class Blockchain(object):
         output = TransactionOutput(
             AssetType.AntShare,
             Blockchain.SystemShare().Amount,
-            Contract.CreateMultiSigRedeemScript(len(Blockchain.StandbyValidators()) / 2, Blockchain.StandbyValidators()).ToScriptHash()
+            Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2), Blockchain.StandbyValidators()).ToScriptHash()
         )
 
         it = IssueTransaction([],[output],[], [script])
@@ -205,7 +206,10 @@ class Blockchain(object):
     @staticmethod
     def GetConsensusAddress(validators):
         vlen = len(validators)
-        return Contract.CreateMultiSigRedeemScript(int(vlen - ((vlen-1)/3)), validators).ToScriptHash()
+        script = Contract.CreateMultiSigRedeemScript(int(vlen - ((vlen-1)/3)), validators)
+        return Crypto.Hash160(script)
+#           return script
+#        return .ToScriptHash()
 
     def GetValidators(self, others):
 

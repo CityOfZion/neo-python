@@ -37,7 +37,7 @@ In English:
         self.TransactionType = TransactionType.RegisterTransaction  # 0x40
 
         self.AssetType = assettype
-        self.Name = binascii.hexlify("[{'lang':'zh-CN','name':'%s'}]" % str(assetname))
+        self.Name = assetname
 
         self.Amount = Fixed8(amount)  # Unlimited Mode: -0.00000001
         self.Issuer = issuer

@@ -19,6 +19,8 @@ from ecdsa.keys import VerifyingKey
 from ecdsa import curves
 import hashlib
 import binascii
+from neo.Cryptography.Helper import *
+
 class Contract(SerializableMixin):
     """docstring for Contract"""
 
@@ -51,7 +53,7 @@ class Contract(SerializableMixin):
     @staticmethod
     def CreateMultiSigRedeemScript(m, publicKeys):
         # raise NotImplementedError()
-        print('public keys: %s %s %s' % (len(publicKeys), m, publicKeys))
+
 
         if m < 2 or m > len(publicKeys) or len(publicKeys) > 1024:
             raise Exception('Invalid keys')
@@ -59,14 +61,10 @@ class Contract(SerializableMixin):
         sb = ScriptBuilder()
         sb.push(m)
 
+        # TODO: need to decode and decompress the points using scep256r1
+        #for now we dont
         for addr in publicKeys:
-            strkey = addr[2:]
-            strkey = binascii.unhexlify(strkey)
-            print("len: %s " % len(strkey))
-            key = VerifyingKey.from_string(strkey, curves.NIST256p,hashfunc=hashlib.sha256).to_string()
-
-            print("address: %s %s " % (key, len(key)))
-            sb.push( key )
+            sb.push( addr )
 
         sb.push(len(publicKeys))
         sb.add(ScriptOp.CHECKMULTISIG)
