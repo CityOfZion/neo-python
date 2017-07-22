@@ -326,6 +326,25 @@ class EllipticCurve:
             return self.curve.isoncurve(self)
 
 
+        def encode_point(self, compressed=True):
+
+            xbytes = bytearray(self.x.value.to_bytes(32,'little'))
+            xbytes.reverse()
+
+            if not compressed:
+
+                ybytes = bytearray(self.y.value.to_bytes(32, 'little'))
+                ybytes.reverse()
+
+                data = bytearray(b'\x04') + xbytes + ybytes
+                return binascii.hexlify(data)
+
+            tilde = b'\x03'
+            if self.y.value % 2 == 0:
+                tilde = b'\x02'
+
+            data = bytearray(tilde) + xbytes
+            return binascii.hexlify(data)
 
     def __init__(self, field, a, b):
         self.field= field
@@ -410,6 +429,8 @@ class EllipticCurve:
         ysquare = x ** 3 + self.a * x + self.b
 
         return self.point(x, ysquare.sqrt(flag))
+
+
 
     def decode_from_hex(self, hex_str):
 
@@ -619,9 +640,7 @@ class ECDSA:
                            41058363725152142129326129780047268409114441015993725554835256314039467401291)
 
         point = ec.decode_from_hex(str)
-        print("point: %s " % point)
         if point.isoncurve():
-
             return ECDSA(GFp, point, int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
         else:
             raise Exception("Could not decode string")
