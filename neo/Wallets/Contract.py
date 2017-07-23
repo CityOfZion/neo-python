@@ -21,6 +21,7 @@ import hashlib
 import binascii
 from neo.Cryptography.Helper import *
 
+
 class Contract(SerializableMixin):
     """docstring for Contract"""
 
@@ -59,17 +60,29 @@ class Contract(SerializableMixin):
             raise Exception('Invalid keys')
 
         sb = ScriptBuilder()
+        print("length: %s " % m)
         sb.push(m)
 
-        # TODO: need to decode and decompress the points using scep256r1
+
+        pkeys = [point for point in publicKeys]
+        pkeys.sort()
+        keys = [p.encode_point().decode() for p in pkeys]
+        print("keys:: %s " % keys)
+
         #for now we dont
-        for addr in publicKeys:
-            sb.push( addr )
+        for key in keys:
+            sb.push(key)
 
         sb.push(len(publicKeys))
         sb.add(ScriptOp.CHECKMULTISIG)
 
-        return sb.toArray()
+        toarray = sb.toArray()
+        print("type: %s" % type(toarray))
+        print("length: %s " % len(toarray))
+        print("toarray: %s " % toarray)
+        tastr = toarray.decode('utf8')
+        print("tastr: %s " % tastr)
+        return toarray
 
     @staticmethod
     def CreateSignatureContract(publicKey):

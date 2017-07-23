@@ -317,6 +317,30 @@ class EllipticCurve:
         def __eq__(self, rhs): return self.curve.eq(self, rhs)
         def __ne__(self, rhs): return not (self==rhs)
 
+        def __lt__(self, other):
+            if other == self: return False
+            elif self.x.value < other.x.value: return True
+            elif self.x.value > other.x.value: return False
+            elif self.x.value == other.x.value: return False
+
+            return self.y.value < other.y.value
+
+        def __gt__(self, other):
+            if other == self: return False
+            elif self.x.value > other.x.value: return True
+            elif self.x.value < other.x.value: return False
+            elif self.x.value == other.x.value: return False
+
+            return self.y.value > other.y.value
+
+        def __le__(self, other):
+            if other == self: return True
+            return self.__lt__(other)
+
+        def __ge__(self, other):
+            if other == self: return True
+            return self.__gt__(other)
+
         def __str__(self): return "(%s,%s)" % (self.x, self.y)
         def __neg__(self): return self.curve.neg(self)
 

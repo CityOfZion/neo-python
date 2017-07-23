@@ -19,8 +19,10 @@ class ScriptBuilder(object):
 
     def add(self, op):
         if isinstance(op, int):
-            self.ms.write(chr(op))
+            print("writing bytes: %s" % bytes([op]))
+            self.ms.write(bytes([op]))
         else:
+            print("writing op: %s " % op)
             self.ms.write(op)
         return
 
@@ -33,30 +35,30 @@ class ScriptBuilder(object):
             elif data == 0:
                 return self.add(ScriptOp.PUSH0)
             elif data > 0 and data <= 16:
-                return self.add(ScriptOp.PUSH1M1 + bytes(data))
+                return self.add(int.from_bytes(ScriptOp.PUSH1,'big') -1  + data)
             else:
                 return self.push(bytes(data))
         else:
             buf = binascii.unhexlify(data)
-            if len(buf) <= int.from_bytes(ScriptOp.PUSHBYTES75, byteorder='big'):
-                self.add(bytes(len(buf)))
-                self.add(buf)
-            elif len(buf) < int.from_bytes(b'\x10\x00', byteorder='big'):
-                self.add(ScriptOp.PUSHDATA1)
-                self.add(bytes(len(buf)))
-                self.add(buf)
-            elif len(buf) < int.from_bytes(b'\x10\x00\x00', byteorder='big'):
-                self.add(ScriptOp.PUSHDATA2)
-                self.add(bytes(len(buf)) & 0xff)
-                self.add(bytes(len(buf)) >> 8)
-                self.add(buf)
-            elif len(buf) < int.from_bytes(b'\x10\x00\x00\x00', byteorder='big'):
-                self.add(ScriptOp.PUSHDATA4)
-                self.add(bytes(len(buf)) & 0xff)
-                self.add((bytes(len(buf)) >> 8) & 0xff)
-                self.add((bytes(len(buf)) >> 16) & 0xff)
-                self.add(bytes(len(buf)) >> 24)
-                self.add(buf)
+        if len(buf) <= int.from_bytes( ScriptOp.PUSHBYTES75, 'big'):
+            self.add(len(buf))
+            self.add(buf)
+        elif len(buf) < 0x100:
+            self.add(ScriptOp.PUSH1)
+            self.add(len(buf))
+            self.add(buf)
+        elif len(buf) < 0x10000:
+            self.add(ScriptOp.PUSH2)
+            self.add(len(buf) & 0xff)
+            self.add(len(buf) >> 8)
+            self.add(buf)
+        elif len(buf) < 0x100000000:
+            self.add(ScriptOp.PUSH4)
+            self.add(len(buf) & 0xff)
+            self.add((len(buf) >> 8) & 0xff)
+            self.add((len(buf) >> 16) & 0xff)
+            self.add(len(buf) >> 24)
+            self.add(buf)
         return
 
     def toArray(self):

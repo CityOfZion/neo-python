@@ -53,7 +53,7 @@ class TransactionOutput(SerializableMixin):
     def __init__(self, AssetId=None, Value=None, ScriptHash=None):
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
-        self.Value = Fixed8(Value)
+        self.Value = Value if type(Value) is Fixed8 else Fixed8(Value)
         self.ScriptHash = ScriptHash
 
     def serialize(self, writer):

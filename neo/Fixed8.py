@@ -17,6 +17,8 @@ class Fixed8:
 
     """docstring for Fixed8"""
     def __init__(self, number):
+        print("number: %s " % number)
+        print("string number: %s " % str(number))
         self.f = D(str(number))
 
     def getData(self):

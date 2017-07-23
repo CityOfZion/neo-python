@@ -17,7 +17,6 @@ import binascii
 
 long = int
 
-from neo.Cryptography.ECCurve import ECCurve
 
 def random_to_priv(key):
     return binascii.hexlify(key)
@@ -36,16 +35,6 @@ def pubkey_to_pubhash(pubkey):
 
 
 
-# Elliptic curve parameters (secp256r1)
-curve = ECCurve('secp256r1')
-
-P = curve.P
-N = curve.N
-A = curve.A
-B = curve.B
-Gx = curve.Gx
-Gy = curve.Gy
-G = (Gx, Gy)
 
 # Extended Euclidean Algorithm
 def inv(a, n):
@@ -242,7 +231,7 @@ def bytes_to_hex_string(b):
 
 def bin_hash160(string):
     intermed = hashlib.sha256(string).digest()
-    return hashlib.new('ripemd160', intermed).digest()
+    return hashlib.new('ripemd160', intermed).hexdigest()
 
 def bin_sha256(string):
     binary_data = string if isinstance(string, bytes) else bytes(string, 'utf-8')

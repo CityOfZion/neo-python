@@ -2,15 +2,16 @@
 import hashlib
 import binascii
 from ecdsa import SigningKey, NIST256p,VerifyingKey
-
+from .Helper import *
 class Crypto(object):
 
     @staticmethod
     def Hash160(message):
-        msg = hashlib.sha256(message)
-        hash = hashlib.new('ripemd160')
-        hash.update(msg)
-        return hash.hexdigest()
+        return bin_hash160(message)
+#        msg = hashlib.sha256(message)
+#        hash = hashlib.new('ripemd160')
+#        hash.update(msg)
+#        return hash.hexdigest()
 
     @staticmethod
     def Hash256(message):

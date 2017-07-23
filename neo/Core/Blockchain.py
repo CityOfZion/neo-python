@@ -16,7 +16,8 @@ from collections import Counter
 from neo.Fixed8 import Fixed8
 from datetime import datetime
 from bitarray import bitarray
-
+from neo.Cryptography.ECCurve import ECDSA
+import math
 ### not sure of the origin of these
 #Issuer = '030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b'
 #Admin = '9c17b4ee1441676e36d77a141dd77869d271381d'
@@ -42,9 +43,13 @@ class Blockchain(object):
 
     @staticmethod
     def StandbyValidators():
-        validators = Settings.STANDBY_VALIDATORS
-        print("validators %s " % validators)
-        return validators
+        if len(Blockchain.__validators) < 1:
+            vlist = Settings.STANDBY_VALIDATORS
+            print("validators %s " % vlist)
+            for pkey in Settings.STANDBY_VALIDATORS:
+                Blockchain.__validators.append( ECDSA.decode_secp256r1(pkey).G)
+
+        return Blockchain.__validators
 
     @staticmethod
     def SystemShare():
@@ -74,10 +79,11 @@ class Blockchain(object):
         mt = MinerTransaction()
         mt.Nonce = 2083236893
 
+        print("standby validators: %s " % len(Blockchain.StandbyValidators()))
         output = TransactionOutput(
             AssetType.AntShare,
             Blockchain.SystemShare().Amount,
-            Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2), Blockchain.StandbyValidators()).ToScriptHash()
+            Crypto.Hash160( Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators()) )
         )
 
         it = IssueTransaction([],[output],[], [script])
@@ -206,10 +212,11 @@ class Blockchain(object):
     @staticmethod
     def GetConsensusAddress(validators):
         vlen = len(validators)
-        script = Contract.CreateMultiSigRedeemScript(int(vlen - ((vlen-1)/3)), validators)
-        return Crypto.Hash160(script)
-#           return script
-#        return .ToScriptHash()
+        script = Contract.CreateMultiSigRedeemScript(vlen - int((vlen - 1)/3) , validators)
+        print("Script: %s " % script)
+        hashed = Crypto.Hash160(script)
+        print("hashed: %s" % hashed)
+        return hashed
 
     def GetValidators(self, others):
 
