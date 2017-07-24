@@ -7,6 +7,8 @@ with open('protocol.json') as data_file:
 
 config = data['ProtocolConfiguration']
 
+LEVELDB_PATH= 'Chain'
+
 MAGIC = config['Magic']
 ADDRESS_VERSION = config['AddressVersion']
 STANDBY_VALIDATORS = config['StandbyValidators']

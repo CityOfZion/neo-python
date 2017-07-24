@@ -44,6 +44,7 @@ class LevelDBBlockchain(Blockchain):
         return self._header_index[self.HeaderHeight()]
 
     def HeaderHeight(self):
+        print("getting header height leveldb")
         return len(self._header_index) - 1
 
     def Height(self):

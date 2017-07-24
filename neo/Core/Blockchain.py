@@ -98,6 +98,8 @@ class Blockchain(object):
             Blockchain.__instance = Blockchain()
             Blockchain.GenesisBlock().RebuildMerkleRoot()
 
+        return Blockchain.__instance
+
 
     def CurrentBlockHash(self):
         # abstract
@@ -292,3 +294,4 @@ class Blockchain(object):
     @staticmethod
     def RegisterBlockchain(blockchain):
         Blockchain.__instance = blockchain
+        print("registered blockchain, instance is: %s " % Blockchain.__instance)

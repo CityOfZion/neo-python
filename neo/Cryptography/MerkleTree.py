@@ -32,10 +32,11 @@ class MerkleTree(object):
     Depth = 0
 
     def __init__(self, hashes):
+        print("hashes: %s %s " % (hashes, len(hashes)))
         self.Root = MerkleTree.__Build([ MerkleTreeNode(hash) for hash in hashes])
         depth=1
         i = self.Root
-
+        print("root is %s " % self.Root)
         while i.LeftChild is not None:
             depth = depth + 1
             i = i.LeftChild
@@ -43,14 +44,14 @@ class MerkleTree(object):
 
     @staticmethod
     def __Build(leaves):
-        if not len(leaves):
+        if len(leaves) < 1:
             raise Exception('Leaves must have length')
         if len(leaves) == 1:
             return leaves[0]
 
 
         num_parents = int((len(leaves) + 1) / 2)
-
+        print("num parents: %s " % num_parents)
         parents = [MerkleTreeNode() for i in range(0, num_parents)]
 
         for i in range(0, num_parents):
@@ -66,8 +67,8 @@ class MerkleTree(object):
 #            node.Hash = new UInt256(Crypto.Default.Hash256(parents[i].LeftChild.Hash.ToArray().Concat(parents[i].RightChild.Hash.ToArray()).ToArray()));
 
             node.Hash = Crypto.Hash256(node.LeftChild.Hash + node.RightChild.Hash)
-
-        MerkleTree.__Build(parents)
+        print("parents: %s " % parents)
+        return MerkleTree.__Build(parents)
 
     # < summary >
     # 计算根节点的值

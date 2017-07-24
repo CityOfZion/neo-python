@@ -30,7 +30,6 @@ import itertools
 import hashlib
 from ecdsa import SigningKey, NIST256p
 from neo.Defaults import TEST_NODE
-from bitarray import bitarray
 
 from threading import Thread
 from threading import Lock
@@ -77,23 +76,26 @@ class Wallet(object):
 
         if create:
             self._path = path
-            self._iv = bitarray(16)
-            self._master_key = bitarray(32)
+            self._iv = bytes( Random.get_random_bytes(16))
+            self._master_key = bytes(Random.get_random_bytes(32))
             self._keys = []
             self._indexedDB= LevelDBBlockchain(LDB_PATH)
             self._node = RemoteNode(url=TEST_NODE)
 
-            self._current_height = Blockchain.Default().HeaderHeight + 1 if Blockchain.Default() is not None else 0
+            self._current_height = Blockchain.Default().HeaderHeight() + 1 if Blockchain.Default() is not None else 0
 
             self.BuildDatabase()
 
-            self._iv = Random.new().read(self._iv)
-            self._master_key = Random.new().read(self._master_key)
+            print("iv::: %s " % self._iv)
+            print("mk::: A%s " % self._master_key)
 
-
-            self.SaveStoredData('PasswordHash', hashlib.sha256(passwordKey))
+            passwordHash = hashlib.sha256(passwordKey.encode('utf-8')).digest()
+            master = AES.new(self._master_key, AES.MODE_CBC, self._iv)
+            masterKey = master.encrypt(passwordHash)
+            print("hash, master key: %s %s" % (passwordHash, masterKey))
+            self.SaveStoredData('PasswordHash', passwordHash)
             self.SaveStoredData('IV', self._iv),
-            self.SaveStoredData('MasterKey', AES.new(self._master_key, AES.MODE_CBC, self._iv))
+            self.SaveStoredData('MasterKey', masterKey)
     #        self.SaveStoredData('Version') { Version.Major, Version.Minor, Version.Build, Version.Revision }.Select(p => BitConverter.GetBytes(p)).SelectMany(p => p).ToArray());
             self.SaveStoredData('Height', self._current_height)
 

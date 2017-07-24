@@ -4,7 +4,7 @@ from .PWDatabase import PWDatabase
 
 class ModelBase(Model):
     class Meta:
-        database = PWDatabase.Context()
+        database = PWDatabase.Context().DB
 
 
 class Account(ModelBase):
