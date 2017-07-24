@@ -18,12 +18,17 @@ class BinaryWriter(object):
         self.stream = stream
 
     def writeByte(self, value):
-        self.stream.write(chr(value))
+        if type(value) is bytes:
+            self.stream.write(chr(value))
+        elif type(value) is str:
+            self.stream.write(value.enconde('utf-8'))
 
     def writeBytes(self, value):
         try:
             value = binascii.unhexlify(value)
         except TypeError:
+            pass
+        except binascii.Error:
             pass
         self.stream.write(value)
 
@@ -93,10 +98,11 @@ class BinaryWriter(object):
         self.writeVarInt(length)
         return self.writeBytes(value)
 
-    def writeString(self, value):
-        length = len(binascii.unhexlify(value))
-        self.writeUInt8(length)
-        return self.pack(str(length) + 's', value)
+    def writeVarString(self, value):
+        out = bytearray(value.encode('utf-8')).hex()
+        length = len(out)
+        self.writeVarInt(length)
+        return self.writeBytes(value.encode('utf-8'))
 
     def writeSerializableArray(self, array):
         self.writeVarInt(len(array))

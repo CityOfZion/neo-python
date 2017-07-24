@@ -66,7 +66,7 @@ class LevelDBBlockchain(Blockchain):
         current_header_height = self._db.get(SYS_CurrentHeader, self._current_block_height)
 
         hashes = []
-        for key, value in self._db.iterator(IX_HeaderHashList):
+        for key, value in self._db.iterator(start=IX_HeaderHashList):
             hashes.append({'index':key, 'hash':value})
 
         sorted(hashes, key=lambda i: i['index'])
@@ -78,7 +78,7 @@ class LevelDBBlockchain(Blockchain):
 
         if self._stored_header_count == 0:
             headers = []
-            for key, value in self._db.iterator(DATA_Block):
+            for key, value in self._db.iterator(start=DATA_Block):
                 headers.append(  Header.FromTrimmedData(value, key))
             sorted(headers, key=lambda h: h.Index)
 

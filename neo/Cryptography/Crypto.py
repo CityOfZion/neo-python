@@ -15,7 +15,8 @@ class Crypto(object):
 
     @staticmethod
     def Hash256(message):
-        return hashlib.sha256(hashlib.sha256(message))
+        return bin_dbl_sha256(message)
+#        return hashlib.sha256(hashlib.sha256(message))
 
     @staticmethod
     def Sign(message, private_key, public_key):

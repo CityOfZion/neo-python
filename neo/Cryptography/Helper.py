@@ -202,7 +202,7 @@ def privkey_to_pubkey(privkey):
     return encode_pubkey(fast_multiply(G, privkey), 'hex_compressed')
 
 def from_int_to_byte(a):
-    return chr(a)
+    return a
 
 def bin_to_b58check(inp,magicbyte=0):
     inp_fmtd = chr(int(magicbyte)) + inp

@@ -19,8 +19,8 @@ from bitarray import bitarray
 from neo.Cryptography.ECCurve import ECDSA
 import math
 ### not sure of the origin of these
-#Issuer = '030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b'
-#Admin = '9c17b4ee1441676e36d77a141dd77869d271381d'
+Issuer = b'030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b'
+Admin = b'9c17b4ee1441676e36d77a141dd77869d271381d'
 
 
 class Blockchain(object):
@@ -55,15 +55,15 @@ class Blockchain(object):
     def SystemShare():
         amount =sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL
         return RegisterTransaction([],[], AssetType.AntShare,
-                                 "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
-                                 amount,None,None)
+                                 "[{\"lang\":\"en\",\"name\":\"NEO\"}]",
+                                 amount, Issuer, Admin)
 
     @staticmethod
     def SystemCoin():
         amount =sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL
         return RegisterTransaction([],[], AssetType.AntCoin,
-                                 "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
-                                 amount,None,None)
+                                 "[{\"lang\":\"en\",\"name\":\"NEOGas\"}]",
+                                 amount,Issuer, Admin)
 
     @staticmethod
     def GenesisBlock():

@@ -9,6 +9,7 @@ Usage:
 from neo.Blockchain import *
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.TransactionAttribute import *
+from neo.Core.Helper import Helper
 from neo.Fixed8 import Fixed8
 from neo.Network.Inventory import Inventory
 from neo.Network.InventoryType import InventoryType
@@ -133,7 +134,7 @@ class Transaction(Inventory, InventoryMixin):
 
     def Hash(self):
         if not self.__hash:
-            self.__hash = Crypto.Hash256( self.GetHashData())
+            self.__hash = Crypto.Hash256( Helper.GetHashData(self))
         return self.__hash
 
 

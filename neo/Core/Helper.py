@@ -1,5 +1,7 @@
 
 from neo.Cryptography.Crypto import *
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import MemoryStream
 
 class Helper(object):
 
@@ -14,9 +16,10 @@ class Helper(object):
 
     @staticmethod
     def GetHashData(hashable):
-
-        raise NotImplementedError()
-
+        ms = MemoryStream()
+        writer = BinaryWriter(ms)
+        hashable.SerializeUnsigned(writer)
+        return ms.toArray()
 
     @staticmethod
     def Sign(signable, keypair):

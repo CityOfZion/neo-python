@@ -55,7 +55,8 @@ In English:
 
     def SerializeExclusiveData(self, writer):
         writer.writeByte(self.AssetType)
-        writer.writeVarBytes(self.Name)
+        print("name is: %s " % self.Name)
+        writer.writeVarString(self.Name)
         writer.writeFixed8(self.Amount)
         writer.writeBytes(self.Issuer)
         writer.writeBytes(self.Admin)
