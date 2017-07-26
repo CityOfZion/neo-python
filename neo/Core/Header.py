@@ -12,7 +12,7 @@ class Header(BlockBase):
 
     def Deserialize(self, reader):
         super(Header, self).Deserialize(reader)
-        if reader.readByte() != 0:
+        if reader.ReadByte() != 0:
             raise Exception('Incorrect Header Format')
 
     def Equals(self, other):
@@ -31,8 +31,8 @@ class Header(BlockBase):
         reader = BinaryReader(ms)
 
         header.DeserializeUnsigned(reader)
-        reader.readByte()
-        header.Script = reader.readSerializableArray()
+        reader.ReadByte()
+        header.Script = reader.ReadSerializableArray()
 
         return header
 
@@ -43,5 +43,5 @@ class Header(BlockBase):
     def Serialize(self, writer):
 
         super(Header, self).Serialize(writer)
-        writer.writeByte(0x00)
+        writer.WriteByte(0x00)
 

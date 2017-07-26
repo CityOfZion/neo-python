@@ -13,8 +13,8 @@ from binascii import hexlify
 
 class MemoryStream(BytesIO):
     """docstring for MemoryStream"""
-    def __init__(self):
-        super(MemoryStream, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(MemoryStream, self).__init__(*args, **kwargs)
 
     def canRead(self):
         return self.readable

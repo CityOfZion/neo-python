@@ -17,13 +17,13 @@ class BinaryWriter(object):
         super(BinaryWriter, self).__init__()
         self.stream = stream
 
-    def writeByte(self, value):
+    def WriteByte(self, value):
         if type(value) is bytes:
             self.stream.write(chr(value))
         elif type(value) is str:
             self.stream.write(value.enconde('utf-8'))
 
-    def writeBytes(self, value):
+    def WriteBytes(self, value):
         try:
             value = binascii.unhexlify(value)
         except TypeError:
@@ -33,45 +33,45 @@ class BinaryWriter(object):
         self.stream.write(value)
 
     def pack(self, fmt, data):
-        return self.writeBytes(struct.pack(fmt, data))
+        return self.WriteBytes(struct.pack(fmt, data))
 
     def writeChar(self, value):
         return self.pack('c', value)
 
-    def writeInt8(self, value):
+    def WriteInt8(self, value):
         return self.pack('b', value)
 
-    def writeUInt8(self, value):
+    def WriteUInt8(self, value):
         return self.pack('B', value)
 
-    def writeBool(self, value):
+    def WriteBool(self, value):
         return self.pack('?', value)
 
-    def writeInt16(self, value):
+    def WriteInt16(self, value):
         return self.pack('h', value)
 
-    def writeUInt16(self, value):
+    def WriteUInt16(self, value):
         return self.pack('H', value)
 
-    def writeInt32(self, value):
+    def WriteInt32(self, value):
         return self.pack('i', value)
 
-    def writeUInt32(self, value):
+    def WriteUInt32(self, value):
         return self.pack('I', value)
 
-    def writeInt64(self, value):
+    def WriteInt64(self, value):
         return self.pack('q', value)
 
-    def writeUInt64(self, value):
+    def WriteUInt64(self, value):
         return self.pack('Q', value)
 
-    def writeFloat(self, value):
+    def WriteFloat(self, value):
         return self.pack('f', value)
 
-    def writeDouble(self, value):
+    def WriteDouble(self, value):
         return self.pack('d', value)
 
-    def writeVarInt(self, value):
+    def WriteVarInt(self, value):
         if not isinstance(value ,int):
             raise TypeError('%s not int type.' % value)
 
@@ -79,35 +79,35 @@ class BinaryWriter(object):
             raise Exception('%d too small.' % value)
 
         elif value < 0xfd:
-            return self.writeByte(value)
+            return self.WriteByte(value)
 
         elif value <= 0xffff:
-            self.writeByte(0xfd)
-            return self.writeUInt16(value)
+            self.WriteByte(0xfd)
+            return self.WriteUInt16(value)
 
         elif value <= 0xFFFFFFFF:
-            self.writeByte(0xfd)
-            return self.writeUInt32(value)
+            self.WriteByte(0xfd)
+            return self.WriteUInt32(value)
 
         else:
-            self.writeByte(0xff)
-            return self.writeUInt64(value)
+            self.WriteByte(0xff)
+            return self.WriteUInt64(value)
 
-    def writeVarBytes(self, value):
+    def WriteVarBytes(self, value):
         length = len(binascii.unhexlify(value))
-        self.writeVarInt(length)
-        return self.writeBytes(value)
+        self.WriteVarInt(length)
+        return self.WriteBytes(value)
 
-    def writeVarString(self, value):
+    def WriteVarString(self, value):
         out = bytearray(value.encode('utf-8')).hex()
         length = len(out)
-        self.writeVarInt(length)
-        return self.writeBytes(value.encode('utf-8'))
+        self.WriteVarInt(length)
+        return self.WriteBytes(value.encode('utf-8'))
 
-    def writeSerializableArray(self, array):
-        self.writeVarInt(len(array))
+    def WriteSerializableArray(self, array):
+        self.WriteVarInt(len(array))
         for item in array:
             item.serialize(self)
 
-    def writeFixed8(self, value):
-        return self.writeBytes(value.getData())
+    def WriteFixed8(self, value):
+        return self.WriteBytes(value.getData())

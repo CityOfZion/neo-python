@@ -3,9 +3,9 @@ from neo.Core.Mixins import VerifiableMixin
 
 class InventoryMixin(VerifiableMixin):
 
-    hash = None
-    inventory_type = None
+    Hash = None
+    InventoryType = None
 
-    def Verify(self, mempool=None):
+    def Verify(self):
         pass
 

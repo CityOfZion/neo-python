@@ -18,8 +18,8 @@ class Script(ISerializable):
         self.redeemScript = None
 
     def serialize(self, writer):
-        writer.writeVarBytes(self.stackScript)
-        writer.writeVarBytes(self.redeemScript)
+        writer.WriteVarBytes(self.stackScript)
+        writer.WriteVarBytes(self.redeemScript)
 
     def deserialize(self, reader):
         pass

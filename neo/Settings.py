@@ -7,7 +7,6 @@ with open('protocol.json') as data_file:
 
 config = data['ProtocolConfiguration']
 
-LEVELDB_PATH= 'Chain'
 
 MAGIC = config['Magic']
 ADDRESS_VERSION = config['AddressVersion']
@@ -22,3 +21,12 @@ PUBLISH_TX_FEE = fees['PublishTransaction']
 REGISTER_TX_FEE = fees['RegisterTransaction']
 
 
+with open('config.json') as data_file:
+    data = json.load(data_file)
+
+config = data['ApplicationConfiguration']
+
+LEVELDB_PATH= config['DataDirectoryPath']
+NODE_PORT = config['NodePort']
+WS_PORT = config['WsPort']
+URI_PREFIX = config['UriPrefix']

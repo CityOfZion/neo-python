@@ -69,17 +69,17 @@ class TransactionAttribute(Inventory, SerializableMixin):
         pass
 
     def serialize(self, writer):
-        writer.writeByte(self.usage)
+        writer.WriteByte(self.usage)
         byteLength = len(self.data)
         if self.usage == TransactionAttributeUsage.Script:
-            writer.writeVarInt(byteLength)
+            writer.WriteVarInt(byteLength)
         elif self.usage == TransactionAttributeUsage.CertUrl or self.usage == TransactionAttributeUsage.DescriptionUrl:
-            writer.writeVarInt(byteLength)
+            writer.WriteVarInt(byteLength)
         elif self.usage == TransactionAttributeUsage.Description or self.usage >= TransactionAttributeUsage.Remark:
-            writer.writeVarInt(byteLength)
+            writer.WriteVarInt(byteLength)
 
         if self.usage == TransactionAttributeUsage.ECDH02 or self.usage == TransactionAttributeUsage.ECDH03:
-            writer.writeBytes(binascii.hexlify(self.data[1:33]))
+            writer.WriteBytes(binascii.hexlify(self.data[1:33]))
         else:
-            writer.writeBytes(binascii.hexlify(self.data))
+            writer.WriteBytes(binascii.hexlify(self.data))
 

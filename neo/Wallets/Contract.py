@@ -124,10 +124,10 @@ class Contract(SerializableMixin):
         return True
 
     def Serialize(self, writer):
-        writer.writeBytes(self.ScriptHash)
-        writer.writeBytes(self.PubKeyHash)
-        writer.writeVarBytes(self.ParameterList)  # TODO need check
-        writer.writeVarBytes(self.RedeemScript)
+        writer.WriteBytes(self.ScriptHash)
+        writer.WriteBytes(self.PubKeyHash)
+        writer.WriteVarBytes(self.ParameterList)  # TODO need check
+        writer.WriteVarBytes(self.RedeemScript)
 
     def Deserialize(self, reader):
         raise NotImplementedError()

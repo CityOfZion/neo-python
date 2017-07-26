@@ -17,7 +17,7 @@ class MinerTransaction(Transaction):
         return self.Size() + sys.getsizeof(int)
 
     def DeserializeExclusiveData(self, reader):
-        self.Nonce = reader.readUInt32()
+        self.Nonce = reader.ReadUInt32()
 
 
     def OnDeserialized(self):

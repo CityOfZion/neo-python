@@ -27,7 +27,7 @@ class ClaimTransaction(Transaction):
         if self.Version != 0:
             raise Exception('Format Exception')
 
-        self.Claims = reader.readSerializableArray()
+        self.Claims = reader.ReadSerializableArray()
         if len(self.Claims) == 0:
             raise Exception('Format Exception')
 
@@ -36,7 +36,7 @@ class ClaimTransaction(Transaction):
         raise NotImplementedError()
 
     def SerializeExclusiveData(self, writer):
-        writer.writeSerializableArray(self.Claims)
+        writer.WriteSerializableArray(self.Claims)
 
 
     def ToJson(self):

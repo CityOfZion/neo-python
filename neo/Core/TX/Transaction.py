@@ -19,6 +19,7 @@ from neo.IO.Mixins import SerializableMixin
 from neo.Helper import big_or_little
 
 from neo.IO.MemoryStream import MemoryStream
+from neo.IO.BinaryReader import BinaryReader
 from neo.Core.Helper import Helper
 import sys
 import json
@@ -59,9 +60,9 @@ class TransactionOutput(SerializableMixin):
 
     def serialize(self, writer):
         # Serialize
-        writer.writeBytes(big_or_little(self.AssetId))
-        writer.writeFixed8(self.Value)
-        writer.writeBytes(self.ScriptHash)
+        writer.WriteBytes(big_or_little(self.AssetId))
+        writer.WriteFixed8(self.Value)
+        writer.WriteBytes(self.ScriptHash)
 
     def deserialize(self, reader):
         # Deserialize
@@ -80,8 +81,8 @@ class TransactionInput(SerializableMixin):
 
     def serialize(self, writer):
         # Serialize
-        writer.writeBytes(big_or_little(self.PrevHash))
-        writer.writeUInt16(self.PrevIndex)
+        writer.WriteBytes(big_or_little(self.PrevHash))
+        writer.WriteUInt16(self.PrevIndex)
 
     def deserialize(self, reader):
         # Deserialize
@@ -190,16 +191,23 @@ class Transaction(Inventory, InventoryMixin):
 
         self.DeserializeUnsigned(reader)
 
-        self.scripts = reader.readSerializableArray()
+        self.scripts = reader.ReadSerializableArray()
         self.OnDeserialized()
 
 
     def DeserializeExclusiveData(self, reader):
         pass
 
+
+    @staticmethod
+    def DeserializeFromBufer(buffer, offset=0):
+        mstream = MemoryStream(buffer, offset)
+        reader = BinaryReader(mstream)
+        return Transaction.DeserializeFrom(reader)
+
     @staticmethod
     def DeserializeFrom(reader):
-        type = reader.readByte()
+        type = reader.ReadByte()
         tx = None
 
         from neo.Core.TX.RegisterTransaction import RegisterTransaction
@@ -215,21 +223,21 @@ class Transaction(Inventory, InventoryMixin):
             tx = IssueTransaction()
 
         tx.DeserializeUnsignedWithoutType(reader)
-        tx.scripts = reader.readSerializableArray()
+        tx.scripts = reader.ReadSerializableArray()
         tx.OnDeserialized()
 
 
     def DeserializeUnsigned(self, reader):
-        if reader.readByte() != self.Type:
+        if reader.ReadByte() != self.Type:
             raise Exception('incorrect type')
         self.DeserializeUnsignedWithoutType(reader)
 
     def DeserializeUnsignedWithoutType(self,reader):
-        self.Version = reader.readByte()
+        self.Version = reader.ReadByte()
         self.DeserializeExclusiveData(reader)
-        self.Attributes = reader.readSerializableArray()
-        self.inputs = [CoinReference(ref) for ref in reader.readSerializableArray()]
-        self.outputs = [TransactionOutput(ref) for ref in reader.readSerializableArray()]
+        self.Attributes = reader.ReadSerializableArray()
+        self.inputs = [CoinReference(ref) for ref in reader.ReadSerializableArray()]
+        self.outputs = [TransactionOutput(ref) for ref in reader.ReadSerializableArray()]
 
 
     def Equals(self, other):
@@ -305,15 +313,15 @@ class Transaction(Inventory, InventoryMixin):
 
     def Serialize(self, writer):
         self.SerializeUnsigned(writer)
-        writer.writeSerializableArray(self.scripts)
+        writer.WriteSerializableArray(self.scripts)
 
     def SerializeUnsigned(self, writer):
-        writer.writeByte(self.TransactionType)
-        writer.writeByte(self.Version)
+        writer.WriteByte(self.TransactionType)
+        writer.WriteByte(self.Version)
         self.SerializeExclusiveData(writer)
-        writer.writeSerializableArray(self.Attributes)
-        writer.writeSerializableArray(self.inputs)
-        writer.writeSerializableArray(self.outputs)
+        writer.WriteSerializableArray(self.Attributes)
+        writer.WriteSerializableArray(self.inputs)
+        writer.WriteSerializableArray(self.outputs)
 
     def SerializeExclusiveData(self, writer):
         # ReWrite in RegisterTransaction and IssueTransaction#

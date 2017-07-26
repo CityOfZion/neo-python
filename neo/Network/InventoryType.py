@@ -8,6 +8,6 @@ Usage:
 
 
 class InventoryType(object):
-    TX = 0x01         # Transaction
-    Block = 0x02      # Block
-    Consensus = 0xe0  # Consensus information
+    TX = b'\x01'         # Transaction
+    Block = 'b\x02'      # Block
+    Consensus = 'b\xe0'  # Consensus information

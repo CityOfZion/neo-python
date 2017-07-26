@@ -77,12 +77,14 @@ class MerkleTree(object):
     # < returns > 返回计算的结果 < / returns >
     @staticmethod
     def ComputeRoot(hashes):
+        print("computing root! %s " % hashes)
         if not len(hashes):
             raise Exception('Hashes must have length')
         if len(hashes) == 1:
             return hashes[0]
 
         tree = MerkleTree(hashes)
+        print("Tree is: %s " % tree)
         return tree.Root.Hash
 
     @staticmethod

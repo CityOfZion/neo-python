@@ -17,76 +17,77 @@ class BinaryReader(object):
         super(BinaryReader, self).__init__()
         self.stream = stream
 
-    def readByte(self):
+
+    def unpack(self, fmt, length=1):
+        return struct.unpack(fmt, self.readBytes(length=length))[0]
+
+    def ReadByte(self):
         return ord(self.stream.read(1))
 
-    def readBytes(self, length):
+    def ReadBytes(self, length):
         value = self.stream.read(length)
         try:
             return binascii.hexlify(value)
         except:
             return value
 
-    def unpack(self, fmt, length=1):
-        return struct.unpack(fmt, self.readBytes(length=length))[0]
-
-    def readChar(self):
+    def ReadChar(self):
         return self.unpack('c')
 
-    def readInt8(self):
+    def ReadInt8(self):
         return self.unpack('b')
 
-    def readUInt8(self):
+    def ReadUInt8(self):
         return self.unpack('B')
 
-    def readBool(self):
+    def ReadBool(self):
         return self.unpack('?')
 
-    def readInt16(self):
+    def ReadInt16(self):
         return self.unpack('h', 2)
 
-    def readUInt16(self):
+    def ReadUInt16(self):
         return self.unpack('H', 2)
 
-    def readInt32(self):
+    def ReadInt32(self):
         return self.unpack('i', 4)
 
-    def readUInt32(self):
+    def ReadUInt32(self):
         return self.unpack('I', 4)
 
-    def readInt64(self):
+    def ReadInt64(self):
         return self.unpack('q', 8)
 
-    def readUInt64(self):
+    def ReadUInt64(self):
         return self.unpack('Q', 8)
 
-    def readFloat(self):
+    def ReadFloat(self):
         return self.unpack('f', 4)
 
-    def readDouble(self):
+    def ReadDouble(self):
         return self.unpack('d', 8)
 
-    def readVarInt(self):
-        fb = self.readByte()
+    def ReadVarInt(self):
+        fb = self.ReadByte()
         value = 0
         if fb == 0xfd:
-            value = self.readUInt16()
+            value = self.ReadUInt16()
         elif fb == 0xfe:
-            value = self.readUInt32()
+            value = self.ReadUInt32()
         elif fb == 0xff:
-            value = self.readUInt64()
+            value = self.ReadUInt64()
         else:
             value = fb
         return int(value)
 
-    def readVarBytes(self):
-        length = self.readVarInt()
-        return self.readBytes(length)
+    def ReadVarBytes(self):
+        length = self.ReadVarInt()
+        return self.ReadBytes(length)
 
-    def readString(self):
-        length = self.readUInt8()
+    def ReadString(self):
+        length = self.ReadUInt8()
         return self.unpack(str(length) + 's', length)
 
-    def readSerializableArray(self):
-        length = self.readVarInt()
-        pass
+    def ReadSerializableArray(self):
+        length = self.ReadVarInt()
+        raise NotImplementedError()

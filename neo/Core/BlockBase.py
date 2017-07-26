@@ -62,26 +62,26 @@ class BlockBase(VerifiableMixin):
         self.DeserializeUnsigned(reader)
         if reader.ReadByte() != 1:
             raise Exception('Incorrect format')
-        self.Script = reader.readSerializableArray(self.scripts)
+        self.Script = reader.ReadSerializableArray(self.scripts)
 
 
     def DeserializeUnsigned(self, reader):
-        self.Version = reader.readUInt32()
-        self.PrevHash = reader.readSerializableArray()
-        self.MerkleRoot = reader.readSerializableArray()
-        self.Timestamp = reader.readUInt32()
-        self.Index = reader.readUInt32()
-        self.ConsensusData = reader.readUInt64()
-        self.NextConsensus = reader.readSerializableArray()
+        self.Version = reader.ReadUInt32()
+        self.PrevHash = reader.ReadSerializableArray()
+        self.MerkleRoot = reader.ReadSerializableArray()
+        self.Timestamp = reader.ReadUInt32()
+        self.Index = reader.ReadUInt32()
+        self.ConsensusData = reader.ReadUInt64()
+        self.NextConsensus = reader.ReadSerializableArray()
 
     def SerializeUnsigned(self, writer):
-        writer.writeUInt32(self.Version)
-        writer.writeSerializableArray(self.PrevHash)
-        writer.writeSerializableArray(self.MerkleRoot)
-        writer.writeUInt32(self.Timestamp)
-        writer.writeUInt32(self.Index)
-        writer.writeUInt64(self.ConsensusData)
-        writer.writeSerializableArray(self.NextConsensus)
+        writer.WriteUInt32(self.Version)
+        writer.WriteSerializableArray(self.PrevHash)
+        writer.WriteSerializableArray(self.MerkleRoot)
+        writer.WriteUInt32(self.Timestamp)
+        writer.WriteUInt32(self.Index)
+        writer.WriteUInt64(self.ConsensusData)
+        writer.WriteSerializableArray(self.NextConsensus)
 
     def GetHashData(self):
         raise NotImplementedError('Not Implemented')
@@ -103,8 +103,8 @@ class BlockBase(VerifiableMixin):
 
     def Serialize(self, writer):
         self.SerializeUnsigned(writer)
-        writer.writeByte(1)
-        writer.writeSerializableArray(self.Script)
+        writer.WriteByte(1)
+        writer.WriteSerializableArray(self.Script)
 
 
 

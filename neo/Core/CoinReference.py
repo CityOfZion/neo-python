@@ -18,12 +18,12 @@ class CoinReference(object):
 
     def Deserialize(self, reader):
 
-        self.PrevHash = reader.readUInt256()
-        self.PrevIndex = reader.readUInt16()
+        self.PrevHash = reader.ReadUInt256()
+        self.PrevIndex = reader.ReadUInt16()
 
     def Serialize(self, writer):
-        writer.writeUInt256(self.PrevHash)
-        writer.writeUInt16(self.PrevIndex)
+        writer.WriteUInt256(self.PrevHash)
+        writer.WriteUInt16(self.PrevIndex)
 
     def Equals(self, other):
         if other is None: return False

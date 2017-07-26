@@ -17,7 +17,8 @@ from neo.Fixed8 import Fixed8
 from datetime import datetime
 from bitarray import bitarray
 from neo.Cryptography.ECCurve import ECDSA
-import math
+from events import Events
+
 ### not sure of the origin of these
 Issuer = b'030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b'
 Admin = b'9c17b4ee1441676e36d77a141dd77869d271381d'
@@ -40,6 +41,8 @@ class Blockchain(object):
 
     __instance = None
 
+
+    PersistCompleted = Events()
 
     @staticmethod
     def StandbyValidators():

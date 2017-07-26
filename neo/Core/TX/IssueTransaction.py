@@ -28,7 +28,7 @@ class IssueTransaction(Transaction):
         pass
 
     def DeserializeExclusiveData(self, reader):
-        reader.readUInt32()
+        reader.ReadUInt32()
 
     def SerializeExclusiveData(self, writer):
-        writer.writeUInt32(self.Nonce)
+        writer.WriteUInt32(self.Nonce)

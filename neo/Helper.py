@@ -28,7 +28,3 @@ def big_or_little_str(string):
             arr[index], arr[length -index] = arr[length -index], arr[index]
     return str(arr)
 
-
-def GetVarSize(list):
-
-    raise NotImplementedError()

@@ -6,8 +6,10 @@ bpython==0.16
 certifi==2017.4.17
 cffi==1.10.0
 chardet==3.0.4
+colorlog==3.0.0
 curtsies==0.2.11
 ecdsa==0.13
+Events==0.3
 greenlet==0.4.12
 idna==2.5
 mpmath==0.19

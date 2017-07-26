@@ -16,12 +16,12 @@ class Witness(SerializableMixin):
         return sys.getsizeof(self.InvocationScript) + sys.getsizeof(self.VerificationScript)
 
     def Deserialize(self, reader):
-        self.InvocationScript = reader.readVarBytes()
-        self.VerificationScript = reader.readVarBytes()
+        self.InvocationScript = reader.ReadVarBytes()
+        self.VerificationScript = reader.ReadVarBytes()
 
     def Serialize(self, writer):
-        writer.writeVarBytes(self.InvocationScript)
-        writer.writeVarBytes(self.VerificationScript)
+        writer.WriteVarBytes(self.InvocationScript)
+        writer.WriteVarBytes(self.VerificationScript)
 
     def ToJson(self):
         data = {
