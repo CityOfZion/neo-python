@@ -57,3 +57,74 @@ class RpcClient(object):
 
         return [self.call(request) for request in requests]
 
+
+
+    def sendRawTransaction(self, tx):
+        """
+        Send Transaction
+        """
+        return self.call(method="sendrawtransaction",
+                             params=[tx])
+
+    def getBestBlockhash(self):
+        """
+        Get Best BlockHash from chain
+        """
+        return self.call(method="getbestblockhash",
+                             params=[]).get("result", "")
+
+    def getBlock(self, hint, verbose=1):
+        """
+        Get Block from chain with hash or index
+        hint : blockhash or index
+        Verbose: 0-Simple, 1-Verbose
+        """
+        if verbose not in (0, 1):
+            raise ValueError('verbose, should be 0 or 1.')
+        return self.call(method="getblock",params=[hint, verbose])
+
+    def getBlockCount(self):
+        """
+        Get Block Count from chain
+        """
+        return self.call(method="getblockcount",
+                             params=[]).get('result', 0)
+
+    def getBlockHash(self, index):
+        """
+        Get BlockHash from chain by index
+        """
+        return self.call(method="getblockhash",
+                             params=[index]).get('result', '')
+
+    def getConnectionCount(self):
+        """
+        Get Connection Count from chain
+        """
+        return self.call(method="getconnectioncount",
+                             params=[]).get('result', 0)
+
+    def getRawMemPool(self):
+        """
+        Get Uncomfirmed tx in Memory Pool
+        """
+        return self.call(method="getrawmempool",
+                             params=[])
+
+    def getRawTransaction(self, txid, verbose=0):
+        """
+        Get comfirmed tx from chain
+        Verbose: 0-Simple, 1-Verbose
+        """
+        if verbose not in (0, 1):
+            raise ValueError('verbose, should be 0 or 1.')
+
+        return self.call(method="getrawtransaction",
+                             params=[txid, verbose])
+
+    def getTxOut(self, txid, n=0):
+        """
+        Get Tx Output from chain
+        """
+        return self.call(method="gettxout",
+                             params=[txid, n])

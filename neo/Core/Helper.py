@@ -26,6 +26,15 @@ class Helper(object):
 
         raise NotImplementedError()
 
+    @staticmethod
+    def ToArray( value ):
+
+        ms = MemoryStream()
+        writer = BinaryWriter(ms)
+
+        value.Serialize(writer)
+
+        return ms.ToArray()
 
     @staticmethod
     def ToScriptHash(scripts):

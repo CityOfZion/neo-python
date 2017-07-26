@@ -1,5 +1,11 @@
 
+
+
+
 class IPEndpoint():
+
+    ANY = '0.0.0.0'
+
 
     Address = None
     Port = None

@@ -1,10 +1,4 @@
 # -*- coding:utf-8 -*-
-"""
-Description:
-    Remote Node, use to broadcast tx
-Usage:
-    from neo.Network.RemoteNode import RemoteNode
-"""
 
 
 from neo.Network.RPC.RpcClient import RpcClient
@@ -24,10 +18,11 @@ from .Payloads.InvPayload import InvPayload
 from .Payloads.MerkleBlockPayload import MerkleBlockPayload
 from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
+from .Message import Message
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction
 from neo.IO.Helper import AsSerializableWithType
-
+import asyncio
 
 
 class RemoteNode(object):
@@ -38,9 +33,9 @@ class RemoteNode(object):
     InventoryReceived = Events()
     PeersReceived = Events()
 
-    HalfMinute = timedelta(seconds=30)
-    OneMinute = timedelta(minutes=1)
-    HalfHour = timedelta(minutes=30)
+    HalfMinute = 30
+    OneMinute = 60
+    HalfHour = 1800
 
 
     _message_queue = []
@@ -58,21 +53,19 @@ class RemoteNode(object):
 
 
     def __init__(self, local_node):
-        super(RemoteNode, self).__init__()
         self._local_node = local_node
-
 
 
     def Disconnect(self, error):
         if self._disposed == 0:
 
-        self.Disconnected.on_change(error)
+            self.Disconnected.on_change(error)
 
-        #lock missions global
-        #lock missions
-        self._missions_global.remove(self._missions)
-        #end lock missions
-        #end lock missions global
+            #lock missions global
+            #lock missions
+            self._missions_global.remove(self._missions)
+            #end lock missions
+            #end lock missions global
 
 
     def Dispose(self):
@@ -374,72 +367,116 @@ class RemoteNode(object):
         return False
 
 
-    def sendRawTransaction(self, tx):
-        """
-        Send Transaction
-        """
-        return self.rpc.call(method="sendrawtransaction",
-                             params=[tx])
 
-    def getBestBlockhash(self):
-        """
-        Get Best BlockHash from chain
-        """
-        return self.rpc.call(method="getbestblockhash",
-                             params=[]).get("result", "")
+    def StartProcol(self):
 
-    def getBlock(self, hint, verbose=1):
-        """
-        Get Block from chain with hash or index
-        hint : blockhash or index
-        Verbose: 0-Simple, 1-Verbose
-        """
-        if verbose not in (0, 1):
-            raise ValueError('verbose, should be 0 or 1.')
-        return self.rpc.call(method="getblock",params=[hint, verbose])
+        result_future = yield from asyncio.wait_for(Message("version", VersionPayload(self._local_node.Port, self._local_node.Nonce, self._local_node.UserAgent)), 60.0)
+        print("result::: %s " % result_future.result())
+        if not result_future.result(): return
 
-    def getBlockCount(self):
-        """
-        Get Block Count from chain
-        """
-        return self.rpc.call(method="getblockcount",
-                             params=[]).get('result', 0)
+        message_future = yield from asyncio.wait_for(self.ReceiveMessageAsync(self.HalfMinute), self.HalfMinute)
+        print("message: :%s " % message_future.result())
 
-    def getBlockHash(self, index):
-        """
-        Get BlockHash from chain by index
-        """
-        return self.rpc.call(method="getblockhash",
-                             params=[index]).get('result', '')
+        if message_future.result() is None: return
 
-    def getConnectionCount(self):
-        """
-        Get Connection Count from chain
-        """
-        return self.rpc.call(method="getconnectioncount",
-                             params=[]).get('result', 0)
+        message = message_future.result()
+        if message.Command != 'version':
+            self.Disconnect(True)
+            return
 
-    def getRawMemPool(self):
-        """
-        Get Uncomfirmed tx in Memory Pool
-        """
-        return self.rpc.call(method="getrawmempool",
-                             params=[])
 
-    def getRawTransaction(self, txid, verbose=0):
-        """
-        Get comfirmed tx from chain
-        Verbose: 0-Simple, 1-Verbose
-        """
-        if verbose not in (0, 1):
-            raise ValueError('verbose, should be 0 or 1.')
+        try:
+            self.Version = AsSerializableWithType(message.Payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
 
-        return self.rpc.call(method="getrawtransaction",
-                             params=[txid, verbose])
+        except Exception as e:
+            print("exception getting version: %s " % e)
+            self.Disconnect(e)
+            return
 
-    def getTxOut(self, txid, n=0):
-        """
-        Get Tx Output from chain
-        """
-        return self.rpc.call(method="gettxout",
-                             params=[txid, n])
+        if self.Version.Nonce != self._local_node.Nonce:
+
+            self.Disconnect(True)
+            return
+
+        #lock localnode connected peers
+#        if (localNode.connectedPeers.Where(p= > p != this).Any(p= > p.RemoteEndpoint.Address.Equals(
+#                RemoteEndpoint.Address) & & p.Version?.Nonce == Version.Nonce))
+#        {
+#            Disconnect(false);
+#        return;
+#        }
+
+        #endlock
+
+
+        if self.ListenerEndpoint is not None:
+            if self.ListenerEndpoint.Port != self.Version.Port:
+                self.Disconnect(True)
+                return
+        elif self.Version.Port > 0:
+            self.ListenerEndpoint = IPEndpoint(self.RemoteEndpoint.Address, self.Version.Port)
+
+
+        verack_future = yield from asyncio.wait_for( self.SendMessageAsync(Message("verack")))
+
+        if not verack_future.result(): return
+
+
+        vmessage_future = yield from asyncio.wait_for( self.ReceiveMessageAsync(self.HalfMinute))
+
+        if vmessage_future.result() is None or vmessage_future.result().Command != "verack":
+            self.Disconnect(True)
+            return
+
+        if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
+
+            self.EnqueueMessage("getheaders", GetBlocksPayload(Blockchain.Default().CurrentHeaderHash()),True)
+
+        self.StartSendLoop()
+
+
+        while self._disposed == 0:
+
+            if Blockchain.Default() is not None:
+
+                if len(self._missions)  == 0 and Blockchain.Default().Height() < self.Version.StartHeight:
+                    self.EnqueueMessage("getblocks", GetBlocksPayload(Blockchain.Default().CurrentBlockHash()), True)
+
+            timeout = self.HalfHour if len(self._missions) == 0 else self.OneMinute
+
+            receive_message_future = yield from asyncio.wait_for( self.ReceiveMessageAsync(timeout), timeout)
+
+            if not receive_message_future.result():
+                break
+
+            try:
+                self.OnMessageReceived(receive_message_future.result())
+            except Exception as e:
+                print("could not receive message: %s " % receive_message_future.result())
+                self.Disconnect(True)
+                break
+
+
+
+    def StartSendLoop(self):
+        while self._disposed == 0:
+
+            message = None
+
+            #lock message queue
+
+            if len(self._message_queue):
+
+                message = self._message_queue.pop()
+
+
+            if message is None:
+                i = 0
+                while i < 10 and self._disposed == 0:
+                    i = i +1
+
+                    asyncio.sleep(1)
+
+            else:
+                yield from asyncio.wait_for( self.SendMessageAsync(message))
+

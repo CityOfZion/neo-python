@@ -9,7 +9,7 @@ Usage:
 
 import struct
 import binascii
-
+import importlib
 
 class BinaryReader(object):
     """docstring for BinaryReader"""
@@ -88,6 +88,25 @@ class BinaryReader(object):
         length = self.ReadUInt8()
         return self.unpack(str(length) + 's', length)
 
-    def ReadSerializableArray(self):
+    def ReadFixedString(self, length):
+        return self.ReadBytes(length).decode()
+
+    def ReadSerializableArray(self, class_name):
+
+        module = '.'.join(class_name.split('.')[:-1])
+        klassname = class_name.split('.')[-1]
+        klass = getattr(importlib.import_module(module), klassname)
+        serializable = klass()
+
         length = self.ReadVarInt()
+
+        items = []
+
+        for i in range(0, length):
+            item = klass()
+            item.Deserialize(self)
+            items.append(item)
+
+        return items
+
         raise NotImplementedError()

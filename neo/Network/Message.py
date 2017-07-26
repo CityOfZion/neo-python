@@ -1,7 +1,11 @@
 from neo.IO.Mixins import SerializableMixin
+from neo.IO.BinaryReader import BinaryReader
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import MemoryStream
 from neo import Settings
 from neo.Cryptography.Helper import *
 import ctypes
+import asyncio
 
 class Message(SerializableMixin):
 
@@ -17,7 +21,7 @@ class Message(SerializableMixin):
     Payload = None
 
 
-    def __init__(self, command, payload = None):
+    def __init__(self, command=None, payload = None):
 
         self.Command = command
 
@@ -59,8 +63,38 @@ class Message(SerializableMixin):
 
 
     @staticmethod
-    def DeserializeFromAsyncSocket(socket, cancellation_token):
+    async def DeserializeFromAsyncSocket(socket, cancellation_token):
         buffer = bytearray(24)
+
+        try:
+            socket.recv_into(buffer, 24)
+
+            ms = MemoryStream(buffer)
+            reader = BinaryReader(ms)
+
+            message = Message()
+            message.Command = reader.ReadFixedString(12)
+            length = reader.ReadUInt32()
+            if length > Message.PayloadMaxSize:
+                raise Exception("format too big")
+
+            message.Checksum = reader.ReadUInt32()
+            message.Payload = bytearray(length)
+
+            if len(message.Payload) > 0:
+                socket.recv_into(message.Payload)
+
+            checksum = Message.GetChecksum(message.Payload)
+
+            if checksum != message.Checksum:
+                raise Exception("checksum mismatch")
+
+
+        except Exception as e:
+                print("could not receive buffer from socket: %s " % e)
+
+
+
 
         raise NotImplementedError()
 
@@ -70,7 +104,7 @@ class Message(SerializableMixin):
         raise NotImplementedError()
 
     @staticmethod
-    def FillBufferAsyncSocket(socket, buffer, cancellation_token):
+    async def FillBufferAsyncSocket(socket, buffer, cancellation_token):
         raise NotImplementedError()
 
 
