@@ -5,8 +5,18 @@ from neo import Settings
 from neo.Network.TCPRemoteNode import TCPListener,TCPRemoteNode
 from neo.Network.IPEndpoint import IPEndpoint
 from neo.Core.Blockchain import Blockchain
+from neo.Core.Block import Block
+from neo.Core.Tx.MinerTransaction import MinerTransaction
+from neo.Core.Tx.Transaction import Transaction,TransactionType
 from events import Events
 import asyncio
+from logging import Logger
+import threading
+
+
+#outside class def so it can be static
+_mempool = {}  # contains { uint256, transaction }
+
 
 class LocalNode():
 
@@ -19,7 +29,9 @@ class LocalNode():
     InventoryReceiving = Events()
     InventoryReceived = Events()
 
-    _mempool = {}           #  contains { uint256, transaction }
+    new_tx_event = threading.Event()
+
+    _temppool = set()       # contains transactions
     _hash_set = set()       # contains transactions
     _known_hashes = set()   # contains transaction hashes (uint256)
 
@@ -80,18 +92,26 @@ class LocalNode():
                 print("couldnt get socket %s " % e)
         pass
 
-    def _make_server(self):
-        #        self._server = TCPServer((self._localhost, self._port), ThreadedTCPRequestHandler)
-        # ip, port = self._server.server_address
+    def AddTransaction(self, tx):
+        if Blockchain.Default() is None: return False
 
-        # Start a thread with the server -- that thread will then start one
-        # more thread for each request
-        #       self._server_thread = threading.Thread(target=self._server.serve_forever, name="LocalNode.TPCServerLoop")
-        # Exit the server thread when the main thread terminates
-        #       self._server_thread.daemon = True
-        #       self._server_thread.start()
+        #lock mempool
 
-        pass
+        if tx.Hash() in _mempool:
+#            Logger.debug("tx hash already in mempool: %s " % tx.Hash())
+            return False
+        elif Blockchain.Default().ContainsTransaction(tx.Hash()):
+#            Logger.debug("tx hash already in blockchain: %s " % tx.Hash())
+            return False
+        elif not tx.Verify([v for k,v in _mempool]): return False
+
+        _mempool[tx.Hash()] = tx
+        # endlock
+
+        self.CheckMemPool()
+
+        return True
+
 
     def _make_loops(self):
 
@@ -120,28 +140,330 @@ class LocalNode():
 
 
     def AddTransactionLoop(self):
+        self.new_tx_event.wait()
 
-        pass
+        transactions = []
+
+        #lock temppool
+        #if len(self._temppool == 0): continue
+        transactions = list(self._temppool)
+        self._temppool = []
+        #endlock
+
+        verified = set()
+        #lock mempool
+
+        transactions = [tx for tx in transactions if not tx.Hash() in _mempool and not Blockchain.Default().ContainsTransaction(tx.Hash())]
+
+        if len(transactions):
+            mempool_current = [v for k,v in _mempool]
+            for tx in transactions:
+                if tx.Verify( mempool_current + transactions):
+                    verified.add(tx)
+            for tx in verified:
+                _mempool[tx.Hash()] = tx
+
+            self.CheckMemPool()
+        #endlock
+
+        self.RelayDirectly(verified)
+        if self.InventoryReceived is not None:
+            [self.InventoryReceived.on_change(tx) for tx in verified]
+
+
+    @staticmethod
+    def AllowHashes(hashes):
+        #lock known hashes
+            LocalNode._known_hashes = LocalNode._known_hashes - hashes
+        #endlock
+
+
+    def Blockchain_persistCompleted(self, block):
+        #lock mempool
+        for tx in block.Transactions:
+            del _mempool[tx.Hash()]
+
+        if len(_mempool) == 0: return
+
+        remaining = [v for k,v in _mempool]
+        _mempool = {}
+
+        #lock temp ppol
+        self._temppool = self._temppool + remaining
+        #end lock temppool
+
+        self.new_tx_event.set()
+        #endlock mempool
+
+
+    def CheckMemPool(self):
+        if len(_mempool) <= self.MEMORY_POOL_SIZE: return
+        num_to_delete = len(_mempool) - self.MEMORY_POOL_SIZE
+        hashes_to_delete = [k for k,v in _mempool][:-num_to_delete]
+        for hash in hashes_to_delete:
+            del _mempool[hash]
+
+
+
+#    async def ConnectToPeersAsync(self, address, port):
+
+
+    async def ConnectToPeersAsync(self, remoteEndpoint):
+        if remoteEndpoint.Port == self._port and remoteEndpoint.Address in self.LocalAddresses():
+            return
+
+        #lock unconnected peers
+        self._unconnected_peers.remove(remoteEndpoint)
+        #endlock
+
+        #lock connected peers
+        for cp in self._connected_peers:
+            if cp.ListenerEndpoint.Address == remoteEndpoint.Address and cp.ListenerEndpoint.Port == remoteEndpoint.ListenerEndpoint.Port:
+                return
+        #endlock
+
+        remote_node = TCPRemoteNode(self, remoteEndpoint)
+
+        await remote_node.ConnectAsync()
+
+        self.OnConnected(remote_node)
+
+
 
     def ConnectToPeersLoop(self):
 
-#        self._server_socket = socket.socket(socket.)
-#       while self._disposed == 0:
+        while self._disposed == 0:
 
-#            socket = self._so
-        pass
+            connectedCount = len(self._connected_peers)
+            unconnectedCount = len(self._unconnected_peers)
+
+            if connectedCount < self.CONNECTED_MAX:
+
+                taskloop = asyncio.get_event_loop()
+                tasks = []
+
+                if unconnectedCount > 0:
+                    endpoints = []
+
+                    #lock unconnected peers
+                    num_to_take = self.CONNECTED_MAX - connectedCount
+                    endpoints = list(self._unconnected_peers)[:num_to_take]
+                    #endlock
+
+                    for ep in endpoints:
+                        tasks.append( taskloop.create_task( self.ConnectToPeersAsync(ep)))
+
+                elif connectedCount > 0:
+
+                    #lock connected peers
+                    [node.RequestPeers() for node in self._connected_peers]
+                    #endlock
+
+                else:
+                    seeds = [IPEndpoint(str.split(':')[0], str.split(':')[1]) for str in Settings.SEED_LIST]
+                    for ep in seeds:
+                        tasks.append(taskloop.create_task(self.ConnectToPeersAsync(ep)))
+
+                wait_tasks = asyncio.wait(tasks)
+                taskloop.run_until_complete(wait_tasks)
+                taskloop.close()
+
+            i = 0
+
+            while i < 50 and self._disposed == 0:
+                i = i+1
+                asyncio.sleep(1)
 
 
-    def onPersistCompleted(self, block):
-        pass
-
-    def Blockchain_persistCompleted(self, block):
-
-        pass
-
+    @staticmethod
+    def ContainsTransaction(self):
+        #lock mempool
+        return hash in _mempool
+        #endlock
 
 
+    def Dispose(self):
+        if self._disposed == 0:
 
+            if self._started  > 0:
+
+                Blockchain.PersistCompleted -= self.Blockchain_persistCompleted
+
+                if self._listener is not None: self._listener.Dispose()
+
+                if self._connect_thread.is_alive(): self._connect_thread.join()
+
+                #lock unconnected peers
+
+                if self._unconnected_peers < self.UNCONNECTED_MAX:
+                    #lock connected peers
+                    self._unconnected_peers = self._unconnected_peers + [peer for peer in self._connected_peers if peer.ListenerEnpoint is not None][:self.UNCONNECTED_MAX - len(self._unconnected_peers)]
+                    #endlock
+
+                nodes = []
+
+                #lock connected peers
+                nodes = list(self._connected_peers)
+                #endlock
+
+                #this shouldbe done async, i guess
+                [node.Disconnect(False) for node in nodes]
+
+                self.new_tx_event.set()
+
+                if self._pool_thread.is_alive(): self._pool_thread.join()
+
+                self.new_tx_event.clear()
+
+
+    @staticmethod
+    def GetMemoryPool():
+        #lock mempool
+        return [v for k,v in _mempool]
+        #endlock
+
+    def GetRemoteNodes(self):
+        #lock connected peers
+        return list(self._connected_peers)
+        #endlock
+
+    @staticmethod
+    def GetTransaction(hash):
+
+        #lock mempool
+        if _mempool[hash] is not None:
+            return _mempool[hash]
+        #endlock
+        return None
+
+    @staticmethod
+    def IsIntranetAddress( address ):
+        raise NotImplementedError()
+
+    @staticmethod
+    def LoadState(stream):
+        raise NotImplementedError()
+
+    def OnConnected(self, remoteNode):
+
+        #lock connected peres
+        self._connected_peers.append(remoteNode)
+        #endlock
+
+        remoteNode.Disconnected += self.RemoteNode_Disconnected
+        remoteNode.InventoryReceived += self.RemoteNode_InventoryReceived
+        remoteNode.PeersReceived += self.RemoteNode_PeersReceived
+        remoteNode.StartProcol()
+
+
+    async def ProcessWebsocketAsync(self, context):
+        raise NotImplementedError()
+
+    def Relay(self, inventory):
+        if inventory is MinerTransaction: return False
+
+        #lock known hashes
+        if inventory.Hash in self._known_hashes: return False
+        #endlock
+
+        self.InventoryReceiving.on_change(self, inventory)
+
+        if inventory is Block:
+            if Blockchain.Default() == None: return False
+
+            if Blockchain.Default().ContainsBlock(inventory.Hash): return False
+
+            if not Blockchain.Default().AddBlock(inventory): return False
+
+        elif inventory is Transaction:
+
+            if not self.AddTransaction(inventory): return False
+
+        else:
+            if not inventory.Verify(): return False
+
+        relayed = self.RelayDirectly(inventory)
+
+        self.InventoryReceived.on_change(inventory)
+
+        return relayed
+
+    def RelayDirectly(self, inventory):
+        relayed = False
+        #lock connected peers
+
+        #RelayCache.add(inventory)
+
+        for node in self._connected_peers:
+            relayed |= node.Relay(inventory)
+
+        #end lock
+        return relayed
+
+    def RemoteNode_Disconnected(self, sender, error):
+        remoteNode = sender
+        remoteNode.Disconnected -= self.RemoteNode_Disconnected
+        remoteNode.InventoryReceived -= self.RemoteNode_InventoryReceived
+        remoteNode.PeersReceived -= self.RemoteNode_PeersReceived
+
+        if error and remoteNode.ListenerEndpoint is not None:
+            #lock bad peers
+            self._bad_peers.add(remoteNode.ListenerEndpoint)
+            #endlock
+
+            #lock unconnected peers
+            #lock connected peers
+            if remoteNode.ListenerEndpoint is not None:
+                self._unconnected_peers.remove(remoteNode.ListenerEndpoint)
+
+            self._connected_peers.remove(remoteNode)
+            #endlock
+            #endlock
+
+    def RemoteNode_InventoryReceived(self, sender, inventory):
+
+        if inventory is Transaction and inventory.Type is not TransactionType.ClaimTransaction and inventory.Type is not TransactionType.IssueTransaction:
+            if Blockchain.Default() is None: return
+
+            #lock known hashes
+            if inventory.Hash in self._known_hashes: return
+            self._known_hashes.add(inventory.Hash)
+            # endlock
+
+            self.InventoryReceiving.on_change(self, inventory)
+
+            #lock temppool
+            self._temppool.add(inventory)
+            #endlock
+            self.new_tx_event.set()
+
+        else:
+
+            self.Relay(inventory)
+
+    def RemoteNode_PeersReceived(self, sender, peers):
+
+        #lock unconnected peers
+
+
+        if len(self._unconnected_peers) < self.UNCONNECTED_MAX:
+
+            #lock bad peers
+            #lock connected peers
+
+            self._unconnected_peers = self._unconnected_peers + peers
+            self._unconnected_peers -= self._bad_peers
+            self._unconnected_peers -= set([p.ListenerEndpoint for p in self._connected_peers])
+            #endlock connected peers
+            #endlock bad peers
+
+
+        #endlock unconnected peers
+
+
+    @staticmethod
+    def SaveState( stream ):
+        raise NotImplementedError()
 
     async def _startTask(self, future, port, ws_port):
 
@@ -161,7 +483,7 @@ class LocalNode():
             self._listener.daemon_threads = True
             try:
                 self._port = port
-                self.AcceptPeersAsync()
+                await asyncio.wait_for( self.AcceptPeersAsync())
             except Exception as e:
                 print("ecxpetion creating listener: %s " % e)
 

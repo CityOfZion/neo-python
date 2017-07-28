@@ -59,7 +59,7 @@ class RemoteNode(object):
     def Disconnect(self, error):
         if self._disposed == 0:
 
-            self.Disconnected.on_change(error)
+            self.Disconnected.on_change(self, error)
 
             #lock missions global
             #lock missions
@@ -84,7 +84,7 @@ class RemoteNode(object):
             if peer.Port != self._local_node.Port and not peer.address in self._local_node.LocalAddresses:
                 peers.append(peer)
         if len(peers):
-            self.PeersReceived.on_change(peers)
+            self.PeersReceived.on_change(self, peers)
 
 
     def OnFilterAddMessageReceived(self, payload):
@@ -227,7 +227,7 @@ class RemoteNode(object):
 
         if inventory is MinerTransaction: return
 
-        self.InventoryReceived.on_change(inventory)
+        self.InventoryReceived.on_change(self, inventory)
 
 
     def OnInvMessageReceived(self, payload):

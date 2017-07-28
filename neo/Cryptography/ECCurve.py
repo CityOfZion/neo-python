@@ -31,7 +31,6 @@ def samefield(a,b):
     return True
 
 def test_bit(num, index):
-    ba = bytearray()
     if (num & (1 << index)):
         return True
     return False
@@ -166,7 +165,6 @@ def sqrtCQ(val, CQ):
             P = next_random_integer(CQ.bit_length())
 
         U,V = _lucas_sequence(CQ, P, Q, k)
-        print("U, V: %s %s" % (U, V))
         if( V * V ) % CQ == fourQ:
 
             if test_bit(V, 0):
@@ -196,7 +194,7 @@ class FiniteField:
         def __add__(self, rhs): return self.field.add(self, self.field.value(rhs))
         def __sub__(self, rhs): return self.field.sub(self, self.field.value(rhs))
         def __mul__(self, rhs): return self.field.mul(self, self.field.value(rhs))
-        def __div__(self, rhs): return self.field.div(self, self.field.value(rhs))
+        def __truediv__(self, rhs): return self.field.div(self, self.field.value(rhs))
         def __pow__(self, rhs): return self.field.pow(self, rhs)
 
         # int * Value
@@ -209,7 +207,7 @@ class FiniteField:
         def __eq__(self, rhs): return self.field.eq(self, self.field.value(rhs))
         def __ne__(self, rhs): return not (self==rhs)
 
-        def __str__(self): return "0x%x" % self.value
+        def __str__(self): return "0x%s" % self.value
         def __neg__(self): return self.field.neg(self)
 
 
@@ -275,6 +273,10 @@ class FiniteField:
         """
         returns a plain integer
         """
+        if type(x) is str:
+            hex = binascii.unhexlify(x)
+            return int.from_bytes(hex, 'big')
+#            print("hex: %s " % hex)
         return  x.value if isinstance(x, FiniteField.Value) else x
 
     def zero(self):
@@ -312,7 +314,7 @@ class EllipticCurve:
 
         # Point * int   or Point * Value
         def __mul__(self, rhs): return self.curve.mul(self, rhs)
-        def __div__(self, rhs): return self.curve.div(self, rhs)
+        def __truediv__(self, rhs): return self.curve.div(self, rhs)
 
         def __eq__(self, rhs): return self.curve.eq(self, rhs)
         def __ne__(self, rhs): return not (self==rhs)
@@ -405,6 +407,7 @@ class EllipticCurve:
         scalar = self.field.integer(scalar)
         accumulator= self.zero()
         shifter= pt
+
         while scalar!=0:
             bit= scalar % 2
             if bit:
@@ -463,7 +466,7 @@ class EllipticCurve:
         cq = self.field.p
 
         expected_byte_len = int(( _bitlength(cq) + 7 ) / 8)
-        print("expected byte length: %s " % expected_byte_len)
+#        print("expected byte length: %s " % expected_byte_len)
 
         f = ba[0]
 
@@ -476,7 +479,7 @@ class EllipticCurve:
             data.reverse()
             data.append(0)
             X1 = int.from_bytes(data, 'little')
-            print("x1, ytilde %s %s " % (X1, yTilde))
+#            print("x1, ytilde %s %s " % (X1, yTilde))
             return self.decompress_from_curve(X1, yTilde)
 
         #uncompressed or hybrid
@@ -628,8 +631,8 @@ class ECDSA:
         x2= self.crack1(r, s2, m2, secret)
 
         if x1!=x2:
-            print("x1=%s" % x1)
-            print("x2=%s" % x2)
+            print("x1= %s" % x1)
+            print("x2= %s" % x2)
 
         return (secret, x1)
 
