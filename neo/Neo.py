@@ -17,7 +17,7 @@ class CLI(object):
         self._blockchain = LevelDBBlockchain( Settings.LEVELDB_PATH )
         Blockchain.RegisterBlockchain(self._blockchain)
         self._localnode = LocalNode()
-        self._localnode.Start('127.0.0.1','10334')
+        self._localnode.Start(20333,20334)
 
 
     def SetWallet(self, wallet):

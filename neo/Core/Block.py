@@ -46,7 +46,6 @@ class Block(BlockBase, InventoryMixin):
         self.Script = script
         self.Transactions = transactions
         self.RebuildMerkleRoot()
-        print("CREATED BLOCK!!!")
 
     def Header(self):
         if not self.__header:
@@ -137,9 +136,7 @@ class Block(BlockBase, InventoryMixin):
     # 根据区块中所有交易的Hash生成MerkleRoot
     # < / summary >
     def RebuildMerkleRoot(self):
-        print("rebuilding merkle root")
         hashes = [tx.Hash() for tx in self.Transactions]
-        print("hashes: %s " % hashes)
         self.MerkleRoot = MerkleTree.ComputeRoot([tx.Hash() for tx in self.Transactions])
 
     # < summary >
@@ -171,7 +168,7 @@ class Block(BlockBase, InventoryMixin):
         writer.WriteSerializableArray(self.Script)
         writer.WriteSerializableArray([tx.Hash() for tx in self.Transactions])
 
-        return ms.toArray()
+        return ms.ToArray()
 
     # < summary >
     # 验证该区块是否合法

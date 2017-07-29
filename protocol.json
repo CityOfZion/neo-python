@@ -13,11 +13,11 @@
     ],
 
     "SeedList": [
-      "seed1.antshares.org:20333",
-      "seed2.antshares.org:20333",
-      "seed3.antshares.org:20333",
-      "seed4.antshares.org:20333",
-      "seed5.antshares.org:20333"
+      "seed1.neo.org:20333",
+      "seed2.neo.org:20333",
+      "seed3.neo.org:20333",
+      "seed4.neo.org:20333",
+      "seed5.neo.org:20333"
     ],
     "SystemFee": {
       "EnrollmentTransaction": 10,

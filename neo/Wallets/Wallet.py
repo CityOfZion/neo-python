@@ -20,7 +20,7 @@ from neo.Wallets.Contract import Contract
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
 from neo.Wallets.KeyPair import KeyPair
-from neo.Network.RemoteNode import RemoteNode
+#from neo.Network.RemoteNode import RemoteNode
 from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryWriter import BinaryWriter
 from neo import Settings
@@ -59,7 +59,7 @@ class Wallet(object):
     _db_path = _path
 
     _indexedDB = None
-    _node = None
+    #_node = None
 
     _blockThread = None
     _lock = Lock()
@@ -80,7 +80,7 @@ class Wallet(object):
             self._master_key = bytes(Random.get_random_bytes(32))
             self._keys = []
             self._indexedDB= LevelDBBlockchain(LDB_PATH)
-            self._node = RemoteNode(url=TEST_NODE)
+            #self._node = RemoteNode(url=TEST_NODE)
 
             self._current_height = Blockchain.Default().HeaderHeight() + 1 if Blockchain.Default() is not None else 0
 
@@ -114,6 +114,9 @@ class Wallet(object):
             self._current_height = self.LoadStoredData('Height')
 
             del passwordKey
+
+
+            self._current_height = Blockchain.Default().HeaderHeight() + 1 if Blockchain.Default() is not None else 0
 
             self._blockThread = Thread(target=self.ProcessBlocks, name='Wallet.ProcessBlocks')
             self._blockThread.start()
@@ -240,7 +243,7 @@ class Wallet(object):
     def ProcessBlocks(self):
         while self._is_running:
 
-            while self._current_height <= Blockchain.Default().Height and self._is_running:
+            while self._current_height <= Blockchain.Default().Height() and self._is_running:
 
                 block = Blockchain.Default().GetBlock(self._current_height)
 

@@ -27,6 +27,6 @@ with open('config.json') as data_file:
 config = data['ApplicationConfiguration']
 
 LEVELDB_PATH= config['DataDirectoryPath']
-NODE_PORT = config['NodePort']
+NODE_PORT = int(config['NodePort'])
 WS_PORT = config['WsPort']
 URI_PREFIX = config['UriPrefix']

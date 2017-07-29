@@ -3,7 +3,6 @@ from .MemoryStream import MemoryStream
 from .BinaryReader import BinaryReader
 import importlib
 
-
 def AsSerializableWithType(buffer, class_name):
 
     module = '.'.join(class_name.split('.')[:-1])

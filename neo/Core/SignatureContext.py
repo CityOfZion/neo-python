@@ -58,7 +58,7 @@ class SingatureContext(BytesIO):
             for item in array:
                 sb.push(item['signature'])
             scripts[i] = Script()
-            scripts[i].stackScript = sb.toArray()
+            scripts[i].stackScript = sb.ToArray()
             scripts[i].redeemScript = self.redeemScripts[i]
 
         return scripts

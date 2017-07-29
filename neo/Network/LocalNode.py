@@ -1,18 +1,16 @@
-import socketserver
-import threading
-import uuid
 from neo import Settings
-from neo.Network.TCPRemoteNode import TCPListener,TCPRemoteNode
+from neo.Network.TCPRemoteNode import TCPRemoteNode
 from neo.Network.IPEndpoint import IPEndpoint
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Block import Block
-from neo.Core.Tx.MinerTransaction import MinerTransaction
-from neo.Core.Tx.Transaction import Transaction,TransactionType
+from neo.Core.TX.MinerTransaction import MinerTransaction
+from neo.Core.TX.Transaction import Transaction,TransactionType
 from events import Events
 import asyncio
-from logging import Logger
-import threading
-
+from gevent import monkey
+from concurrent.futures import ThreadPoolExecutor
+monkey.patch_all()
+import random
 
 #outside class def so it can be static
 _mempool = {}  # contains { uint256, transaction }
@@ -26,10 +24,13 @@ class LocalNode():
     MEMORY_POOL_SIZE = 30000
 
 
+
+    __LOOP = None
+
     InventoryReceiving = Events()
     InventoryReceived = Events()
 
-    new_tx_event = threading.Event()
+#    new_tx_event = threading.Event()
 
     _temppool = set()       # contains transactions
     _hash_set = set()       # contains transactions
@@ -42,10 +43,10 @@ class LocalNode():
     _connected_peers = []           #remote nodes
 
     _local_addresses = set()        #ip addresses
-    _port = Settings.NODE_PORT
+    _port = 0
     _localhost = '127.0.0.1'
 
-    _nonce = uuid.uuid1()
+    _nonce = random.randint(1294967200,4294967200)
 
     _listener = None
 
@@ -68,9 +69,12 @@ class LocalNode():
 
         print("nonce: %s " % self._nonce)
 #        self._make_server()
+
+        self._port = Settings.NODE_PORT
+        print("LOCALNODE PORT: %s " % self._port)
         self._make_loops()
         #not sure exactly how this works at the moment
-        Blockchain.PersistCompleted += self.Blockchain_persistCompleted
+        Blockchain.PersistCompleted.on_change += self.Blockchain_persistCompleted
 
 
 
@@ -82,11 +86,10 @@ class LocalNode():
 
             try:
 
-                socket_future = yield from asyncio.wait_for( self._listener.AcceptPeersAsync())
+                sock, addr = self._listener.AcceptSocketAsync()
+                print("accepted: %s %s " % (sock, addr))
 
-                socket = socket_future.result()
-
-                print("Socket: %s " % socket)
+                remoteNode = TCPRemoteNode(self, addr)
 
             except Exception as e:
                 print("couldnt get socket %s " % e)
@@ -116,12 +119,19 @@ class LocalNode():
     def _make_loops(self):
 
 
-        self._connect_thread = threading.Thread(target=self.ConnectToPeersLoop, name='LocalNode.ConnectToPeersLoop')
-        self._connect_thread.daemon = True
+        self.__LOOP = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.__LOOP)
+        asyncio.run_coroutine_threadsafe(self.ConnectToPeersLoop(), self.__LOOP)
+
+        asyncio.run_coroutine_threadsafe(self.AddTransactionLoop(), self.__LOOP)
+        self.__LOOP.run_forever()
+
+#        self._connect_thread = threading.Thread(target=self.ConnectToPeersLoop, name='LocalNode.ConnectToPeersLoop')
+#        self._connect_thread.daemon = True
 #        self._connect_thread.start()
 
-        self._pool_thread = threading.Thread(target=self.AddTransactionLoop, name='LocalNode.AddTransactionLoop')
-        self._pool_thread.daemon = True
+#        self._pool_thread = threading.Thread(target=self.AddTransactionLoop, name='LocalNode.AddTransactionLoop')
+#        self._pool_thread.daemon = True
 #        self._pool_thread.start()
 
 
@@ -139,36 +149,39 @@ class LocalNode():
         return len(self._connected_peers)
 
 
-    def AddTransactionLoop(self):
-        self.new_tx_event.wait()
+    async def AddTransactionLoop(self):
+#        self.new_tx_event.wait()
 
-        transactions = []
+        print("Running add transaction loop")
+        while self._disposed == 0:
+            transactions = []
 
-        #lock temppool
-        #if len(self._temppool == 0): continue
-        transactions = list(self._temppool)
-        self._temppool = []
-        #endlock
+            #lock temppool
+            #if len(self._temppool == 0): continue
+            transactions = list(self._temppool)
+            self._temppool = []
+            #endlock
 
-        verified = set()
-        #lock mempool
+            verified = set()
+            #lock mempool
 
-        transactions = [tx for tx in transactions if not tx.Hash() in _mempool and not Blockchain.Default().ContainsTransaction(tx.Hash())]
+            transactions = [tx for tx in transactions if not tx.Hash() in _mempool and not Blockchain.Default().ContainsTransaction(tx.Hash())]
 
-        if len(transactions):
-            mempool_current = [v for k,v in _mempool]
-            for tx in transactions:
-                if tx.Verify( mempool_current + transactions):
-                    verified.add(tx)
-            for tx in verified:
-                _mempool[tx.Hash()] = tx
+            if len(transactions):
+                mempool_current = [v for k,v in _mempool]
+                for tx in transactions:
+                    if tx.Verify( mempool_current + transactions):
+                        verified.add(tx)
+                for tx in verified:
+                    _mempool[tx.Hash()] = tx
 
-            self.CheckMemPool()
-        #endlock
+                self.CheckMemPool()
+            #endlock
+            print("will relay directly: %s " % verified)
+            await self.RelayDirectly(verified)
 
-        self.RelayDirectly(verified)
-        if self.InventoryReceived is not None:
-            [self.InventoryReceived.on_change(tx) for tx in verified]
+            if self.InventoryReceived is not None:
+                [self.InventoryReceived.on_change(tx) for tx in verified]
 
 
     @staticmethod
@@ -192,11 +205,12 @@ class LocalNode():
         self._temppool = self._temppool + remaining
         #end lock temppool
 
-        self.new_tx_event.set()
+#        self.new_tx_event.set()
         #endlock mempool
 
 
     def CheckMemPool(self):
+        print("Checking mempool")
         if len(_mempool) <= self.MEMORY_POOL_SIZE: return
         num_to_delete = len(_mempool) - self.MEMORY_POOL_SIZE
         hashes_to_delete = [k for k,v in _mempool][:-num_to_delete]
@@ -209,11 +223,15 @@ class LocalNode():
 
 
     async def ConnectToPeersAsync(self, remoteEndpoint):
+        print("connect to peers async: %s " % remoteEndpoint.ToAddress())
         if remoteEndpoint.Port == self._port and remoteEndpoint.Address in self.LocalAddresses():
             return
 
         #lock unconnected peers
-        self._unconnected_peers.remove(remoteEndpoint)
+        try:
+            self._unconnected_peers.remove(remoteEndpoint)
+        except Exception as e:
+            print("Could not remove endpoint from unconnected peers")
         #endlock
 
         #lock connected peers
@@ -223,28 +241,30 @@ class LocalNode():
         #endlock
 
         remote_node = TCPRemoteNode(self, remoteEndpoint)
+        print("created remote node: %s " % remoteEndpoint)
+#        connect_res = yield for asyncio.wait_for(  remote_node.ConnectAsync(), 60)
 
-        await remote_node.ConnectAsync()
+        result = remote_node.ConnectAsync()
+        if result:
+            await self.OnConnected(remote_node)
 
-        self.OnConnected(remote_node)
 
-
-
+    @asyncio.coroutine
     def ConnectToPeersLoop(self):
-
+        print("connect to peers loop!")
         while self._disposed == 0:
 
             connectedCount = len(self._connected_peers)
             unconnectedCount = len(self._unconnected_peers)
-
+            print("connect loop: unconnected, connected %s %s " % (connectedCount, unconnectedCount))
             if connectedCount < self.CONNECTED_MAX:
-
+                print("try to connect!")
                 taskloop = asyncio.get_event_loop()
                 tasks = []
 
                 if unconnectedCount > 0:
                     endpoints = []
-
+                    print("unconnected count")
                     #lock unconnected peers
                     num_to_take = self.CONNECTED_MAX - connectedCount
                     endpoints = list(self._unconnected_peers)[:num_to_take]
@@ -260,10 +280,13 @@ class LocalNode():
                     #endlock
 
                 else:
-                    seeds = [IPEndpoint(str.split(':')[0], str.split(':')[1]) for str in Settings.SEED_LIST]
+                    seeds = [IPEndpoint(str.split(':')[0], int(str.split(':')[1])) for str in Settings.SEED_LIST]
+#                    seeds = [IPEndpoint('seed1.neo.org',20333),]
+                    print("seeds: %s " % seeds)
                     for ep in seeds:
                         tasks.append(taskloop.create_task(self.ConnectToPeersAsync(ep)))
 
+                print("wait ttassks: %s " % tasks)
                 wait_tasks = asyncio.wait(tasks)
                 taskloop.run_until_complete(wait_tasks)
                 taskloop.close()
@@ -272,6 +295,7 @@ class LocalNode():
 
             while i < 50 and self._disposed == 0:
                 i = i+1
+                print("sleep: %s " % i)
                 asyncio.sleep(1)
 
 
@@ -309,11 +333,11 @@ class LocalNode():
                 #this shouldbe done async, i guess
                 [node.Disconnect(False) for node in nodes]
 
-                self.new_tx_event.set()
+                #self.new_tx_event.set()
 
                 if self._pool_thread.is_alive(): self._pool_thread.join()
 
-                self.new_tx_event.clear()
+                #self.new_tx_event.clear()
 
 
     @staticmethod
@@ -345,15 +369,16 @@ class LocalNode():
         raise NotImplementedError()
 
     def OnConnected(self, remoteNode):
-
+        print("on connected!: %s " % remoteNode)
         #lock connected peres
         self._connected_peers.append(remoteNode)
         #endlock
-
-        remoteNode.Disconnected += self.RemoteNode_Disconnected
-        remoteNode.InventoryReceived += self.RemoteNode_InventoryReceived
-        remoteNode.PeersReceived += self.RemoteNode_PeersReceived
-        remoteNode.StartProcol()
+        print("connected peers: %s " % [p.ToString() for p in self._connected_peers])
+        remoteNode.Disconnected.on_change += self.RemoteNode_Disconnected
+        remoteNode.InventoryReceived.on_change += self.RemoteNode_InventoryReceived
+        remoteNode.PeersReceived.on_change += self.RemoteNode_PeersReceived
+        print("WILL START PROTOCOL")
+        return remoteNode.StartProcol()
 
 
     async def ProcessWebsocketAsync(self, context):
@@ -402,9 +427,9 @@ class LocalNode():
 
     def RemoteNode_Disconnected(self, sender, error):
         remoteNode = sender
-        remoteNode.Disconnected -= self.RemoteNode_Disconnected
-        remoteNode.InventoryReceived -= self.RemoteNode_InventoryReceived
-        remoteNode.PeersReceived -= self.RemoteNode_PeersReceived
+        remoteNode.Disconnected.on_change -= self.RemoteNode_Disconnected
+        remoteNode.InventoryReceived.on_change -= self.RemoteNode_InventoryReceived
+        remoteNode.PeersReceived.on_change -= self.RemoteNode_PeersReceived
 
         if error and remoteNode.ListenerEndpoint is not None:
             #lock bad peers
@@ -435,7 +460,7 @@ class LocalNode():
             #lock temppool
             self._temppool.add(inventory)
             #endlock
-            self.new_tx_event.set()
+            #self.new_tx_event.set()
 
         else:
 
@@ -465,8 +490,9 @@ class LocalNode():
     def SaveState( stream ):
         raise NotImplementedError()
 
-    async def _startTask(self, future, port, ws_port):
+    async def _startTask(self, port, ws_port):
 
+        print("starting __start task")
         try:
             ipaddr = self.LocalAddresses()[0]
             ## no UPNP for now
@@ -474,16 +500,25 @@ class LocalNode():
         except Exception as e:
             pass
 
-        self._connect_thread.start()
-        self._pool_thread.start()
-
+        print("__start_task")
         if port > 0:
+            print("starting task!!")
             endpoint = IPEndpoint(IPEndpoint.ANY,port)
-            self._listener = TCPRemoteNode(self, endpoint)
-            self._listener.daemon_threads = True
+            print("endpoint: %s" % endpoint)
+            try:
+                self._listener = TCPRemoteNode(self, endpoint)
+                self._listener.daemon_threads = True
+            except Exception as e:
+                print("coludnt start remote node: %s " % e)
+
             try:
                 self._port = port
-                await asyncio.wait_for( self.AcceptPeersAsync())
+                print("will wait for accept peers async ")
+#                await asyncio.wait_for( self.AcceptPeersAsync(), )
+                executor = ThreadPoolExecutor()
+                await self.__LOOP.run_in_executor(executor, self.AcceptPeersAsync())
+#                await asyncio.run_coroutine_threadsafe(self.AcceptPeersAsync(), self.__LOOP)
+                print("Connected on accept peers async")
             except Exception as e:
                 print("ecxpetion creating listener: %s " % e)
 
@@ -495,11 +530,14 @@ class LocalNode():
 
     def Start(self, port=0, ws_port=0):
         if self._started == 0:
-            loop = asyncio.get_event_loop()
-            future = asyncio.Future()
-            asyncio.ensure_future(self._startTask(future, port, ws_port))
-            loop.run_until_complete(future)
 
+            print("starting!")
+
+            asyncio.run_coroutine_threadsafe(self._startTask(port, ws_port), self.__LOOP)
+#            asyncio.ensure_future(self._startTask(port, ws_port))
+#            self.__LOOP.run_until_complete(future)
+            self.__LOOP.run_forever()
+            print("STARTED")
 
 
     def SyncronizeMemoryPool(self):

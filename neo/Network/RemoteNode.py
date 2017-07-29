@@ -23,7 +23,9 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction
 from neo.IO.Helper import AsSerializableWithType
 import asyncio
+from gevent import monkey
 
+monkey.patch_all()
 
 class RemoteNode(object):
     """docstring for RemoteNode"""
@@ -53,6 +55,7 @@ class RemoteNode(object):
 
 
     def __init__(self, local_node):
+        print("creating remote node!")
         self._local_node = local_node
 
 
@@ -367,20 +370,22 @@ class RemoteNode(object):
         return False
 
 
+    async def StartProcol(self):
+        print("starting protocol!!!!: %s" % self.ListenerEndpoint.ToAddress())
 
-    def StartProcol(self):
+        message = Message("version", VersionPayload(self._local_node._port, self._local_node._nonce, self._local_node.UserAgent))
+        result_future = await asyncio.wait_for(self.SendMessageAsync(message), 60.0)
+        print("result::: %s " % result_future)
+        if not result_future: return
 
-        result_future = yield from asyncio.wait_for(Message("version", VersionPayload(self._local_node.Port, self._local_node.Nonce, self._local_node.UserAgent)), 60.0)
-        print("result::: %s " % result_future.result())
-        if not result_future.result(): return
+        message_rec = await asyncio.wait_for(self.ReceiveMessageAsync(self.HalfMinute), 60.0)
+        print("message: :%s" % message_rec)
 
-        message_future = yield from asyncio.wait_for(self.ReceiveMessageAsync(self.HalfMinute), self.HalfMinute)
-        print("message: :%s " % message_future.result())
+        if message_rec is None: return
 
-        if message_future.result() is None: return
-
-        message = message_future.result()
-        if message.Command != 'version':
+        print("message recieved: %s " % message_rec.Command)
+        if message.Command != ('version' or b'Anttversion\x00'):
+            print("command is not version...., disconnecting")
             self.Disconnect(True)
             return
 
@@ -393,10 +398,10 @@ class RemoteNode(object):
             self.Disconnect(e)
             return
 
-        if self.Version.Nonce != self._local_node.Nonce:
-
-            self.Disconnect(True)
-            return
+        if self.Version.Nonce != self._local_node._nonce:
+            print("unequal nonces: %s %s " % (self.Version.Nonce, self._local_node._nonce))
+#            self.Disconnect(True)
+#            return
 
         #lock localnode connected peers
 #        if (localNode.connectedPeers.Where(p= > p != this).Any(p= > p.RemoteEndpoint.Address.Equals(
@@ -408,23 +413,30 @@ class RemoteNode(object):
 
         #endlock
 
+        print("continuing... listener endpoint, port: %s %s " % (self.ListenerEndpoint.Port, self.Version.Port))
 
         if self.ListenerEndpoint is not None:
             if self.ListenerEndpoint.Port != self.Version.Port:
-                self.Disconnect(True)
-                return
+                print("unequal ports....")
+#                self.Disconnect(True)
+#                return
         elif self.Version.Port > 0:
             self.ListenerEndpoint = IPEndpoint(self.RemoteEndpoint.Address, self.Version.Port)
 
+        print("will wait to send verack message")
 
-        verack_future = yield from asyncio.wait_for( self.SendMessageAsync(Message("verack")))
+        verack= await asyncio.wait_for( self.SendMessageAsync(Message("verack")), 60.0)
 
-        if not verack_future.result(): return
+        if verack is None:
+            print("verack is none...")
+            return
 
 
-        vmessage_future = yield from asyncio.wait_for( self.ReceiveMessageAsync(self.HalfMinute))
+        vmessage = await asyncio.wait_for( self.ReceiveMessageAsync(self.HalfMinute), 60.0)
 
-        if vmessage_future.result() is None or vmessage_future.result().Command != "verack":
+        print("vmessage future command: %s %s" % (vmessage, vmessage.Command) )
+        if vmessage is None or vmessage.Command != "verack":
+            print("verack command failed .... disconnet" )
             self.Disconnect(True)
             return
 
@@ -444,7 +456,7 @@ class RemoteNode(object):
 
             timeout = self.HalfHour if len(self._missions) == 0 else self.OneMinute
 
-            receive_message_future = yield from asyncio.wait_for( self.ReceiveMessageAsync(timeout), timeout)
+            receive_message_future = await asyncio.wait_for( self.ReceiveMessageAsync(timeout), timeout)
 
             if not receive_message_future.result():
                 break
@@ -478,5 +490,5 @@ class RemoteNode(object):
                     asyncio.sleep(1)
 
             else:
-                yield from asyncio.wait_for( self.SendMessageAsync(message))
+                yield from asyncio.wait_for( self.SendMessageAsync(message), 60)
 

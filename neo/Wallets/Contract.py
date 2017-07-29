@@ -60,14 +60,12 @@ class Contract(SerializableMixin):
             raise Exception('Invalid keys')
 
         sb = ScriptBuilder()
-        print("length: %s " % m)
         sb.push(m)
 
 
         pkeys = [point for point in publicKeys]
         pkeys.sort()
         keys = [p.encode_point().decode() for p in pkeys]
-        print("keys:: %s " % keys)
 
         #for now we dont
         for key in keys:
@@ -76,12 +74,8 @@ class Contract(SerializableMixin):
         sb.push(len(publicKeys))
         sb.add(ScriptOp.CHECKMULTISIG)
 
-        toarray = sb.toArray()
-        print("type: %s" % type(toarray))
-        print("length: %s " % len(toarray))
-        print("toarray: %s " % toarray)
+        toarray = sb.ToArray()
         tastr = toarray.decode('utf8')
-        print("tastr: %s " % tastr)
         return toarray
 
     @staticmethod
@@ -94,7 +88,7 @@ class Contract(SerializableMixin):
         sb = ScriptBuilder()
         sb.push(publicKey)
         sb.add(ScriptOp.CHECKSIG)
-        return sb.toArray()
+        return sb.ToArray()
 
     def Equals(self, other):
         if id(self) == id(other):

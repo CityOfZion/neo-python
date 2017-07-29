@@ -25,5 +25,5 @@ class MemoryStream(BytesIO):
     def canWrite(self):
         return self.writable
 
-    def toArray(self):
+    def ToArray(self):
         return hexlify(self.getvalue())

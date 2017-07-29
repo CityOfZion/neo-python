@@ -61,8 +61,8 @@ class ScriptBuilder(object):
             self.add(buf)
         return
 
-    def toArray(self):
-        return self.ms.toArray()
+    def ToArray(self):
+        return self.ms.ToArray()
 
 
 if __name__ == '__main__':
@@ -72,4 +72,4 @@ if __name__ == '__main__':
     sb.add(21)
     sb.push(pubkey)
     sb.add(ScriptOp.OP_CHECKSIG)
-    print((sb.toArray()))
+    print((sb.ToArray()))

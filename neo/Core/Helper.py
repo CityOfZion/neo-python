@@ -2,6 +2,7 @@
 from neo.Cryptography.Crypto import *
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream
+import pickle
 
 class Helper(object):
 
@@ -19,7 +20,7 @@ class Helper(object):
         ms = MemoryStream()
         writer = BinaryWriter(ms)
         hashable.SerializeUnsigned(writer)
-        return ms.toArray()
+        return ms.ToArray()
 
     @staticmethod
     def Sign(signable, keypair):

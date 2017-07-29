@@ -14,6 +14,8 @@ class SerializableMixin(object):
     def Deserialize(self, reader):
         pass
 
+    def ToArray(self):
+        pass
 
 class TrackableMixin(object):
 

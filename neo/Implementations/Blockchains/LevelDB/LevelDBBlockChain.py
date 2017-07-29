@@ -56,7 +56,12 @@ class LevelDBBlockchain(Blockchain):
 
         self._header_index.append(Blockchain.GenesisBlock())
 
-        self._db = plyvel.DB(path, create_if_missing=True)
+        try:
+            self._db = plyvel.DB(path, create_if_missing=True)
+        except Exception as e:
+            print("leveldb unavailable, you may already be running this process: %s " % e)
+
+
         print("type: %s " % type(SYS_Version))
         version = self._db.get_property(SYS_Version)
         print("version: %s " % version)
