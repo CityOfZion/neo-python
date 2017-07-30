@@ -39,53 +39,53 @@ class BinaryReader(object):
     def ReadChar(self):
         return self.unpack('c')
 
-    def ReadInt8(self):
-        return self.unpack('b')
+    def ReadInt8(self, endian="<"):
+        return self.unpack('%sb' % endian)
 
-    def ReadUInt8(self):
-        return self.unpack('B')
+    def ReadUInt8(self, endian="<"):
+        return self.unpack('%sB' % endian)
 
 
-    def ReadInt16(self):
-        return self.unpack('h', 2)
+    def ReadInt16(self, endian="<"):
+        return self.unpack('%sh' % endian, 2)
 
-    def ReadUInt16(self):
+    def ReadUInt16(self, endian="<"):
 #        print("reading 16")
 #        val = self.stream.read(2)
 #        print("val16: %s " % val)
 #        intval = int.from_bytes(val, 'big', signed=False)
 #        print("16 intval: %s " % intval)
 #        return intval
-        return self.unpack('H', 2)
+        return self.unpack('%sH' % endian, 2)
 
-    def ReadInt32(self):
-        return self.unpack('i', 4)
+    def ReadInt32(self, endian="<"):
+        return self.unpack('%si' % endian, 4)
 
-    def ReadUInt32(self):
+    def ReadUInt32(self, endian="<"):
         print("reading uint 32111")
 #        val = self.stream.read(4)
 #        intval = int.from_bytes(val, 'big',signed=False)
 #        print("stream val 32 %s "% val)
 #        print("32 intval: %s " % intval)
 #        return intval
-        return self.unpack('I', 4)
+        return self.unpack('%sI' % endian, 4)
 
-    def ReadInt64(self):
-        return self.unpack('q', 8)
+    def ReadInt64(self, endian="<"):
+        return self.unpack('%sq' % endian, 8)
 
-    def ReadUInt64(self):
-        return self.unpack('Q', 8)
+    def ReadUInt64(self, endian="<"):
+        return self.unpack('%sQ' % endian, 8)
 
-    def ReadFloat(self):
-        return self.unpack('f', 4)
+    def ReadFloat(self, endian="<"):
+        return self.unpack('%sf' % endian, 4)
 
-    def ReadDouble(self):
-        return self.unpack('d', 8)
+    def ReadDouble(self, endian="<"):
+        return self.unpack('%sd' % endian, 8)
 
     def ReadVarInt(self):
         fb = self.ReadByte()
         value = 0
-        print("read var int value %s " % fb)
+        print("read var int value %s " % hex(fb))
         if fb == b'\xfd':
             print("read 16!")
             value = self.ReadUInt16()

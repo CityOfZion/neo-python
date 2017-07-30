@@ -63,7 +63,7 @@ class LocalNode():
     GlobalMissionsEnabled = True
     ServiceEnabled = True
     UnPnpEnabled = False
-    UserAgent = "NEO Python v0.01"
+    UserAgent = "/NEO:2.0.1/"
 
     def __init__(self):
 

@@ -16,7 +16,7 @@ class PayloadTestCase(unittest.TestCase):
 
     port = 20333
     nonce = random.randint(12949672,42949672)
-    ua = "NEO Python v0.01"
+    ua = "/NEO:2.0.1/"
 
     payload = None
     def setUp(self):

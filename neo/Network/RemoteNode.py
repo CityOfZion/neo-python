@@ -24,7 +24,7 @@ from neo.Core.TX.Transaction import Transaction
 from neo.IO.Helper import AsSerializableWithType
 import asyncio
 from gevent import monkey
-
+import pprint
 monkey.patch_all()
 
 class RemoteNode(object):
@@ -373,10 +373,12 @@ class RemoteNode(object):
     async def StartProcol(self):
         print("starting protocol!!!!: %s" % self.ListenerEndpoint.ToAddress())
 
-        message = Message("version", VersionPayload(self._local_node._port, self._local_node._nonce, self._local_node.UserAgent))
+
+        message = Message("version",VersionPayload(self._local_node._port, self._local_node._nonce, self._local_node.UserAgent))
         result_future = await asyncio.wait_for(self.SendMessageAsync(message), 60.0)
         print("result::: %s " % result_future)
         if not result_future: return
+
 
         message_rec = await asyncio.wait_for(self.ReceiveMessageAsync(self.HalfMinute), 60.0)
         print("message: :%s" % message_rec)
@@ -384,19 +386,21 @@ class RemoteNode(object):
         if message_rec is None: return
 
         print("message recieved: %s " % message_rec.Command)
-        if message.Command != ('version' or b'Anttversion\x00'):
+        if message_rec.Command != 'version':
             print("command is not version...., disconnecting")
             self.Disconnect(True)
             return
 
 
         try:
-            self.Version = AsSerializableWithType(message.Payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
+            self.Version = AsSerializableWithType(message_rec.Payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
 
         except Exception as e:
             print("exception getting version: %s " % e)
             self.Disconnect(e)
             return
+
+        print("VERSIONNNN: %s " % self.Version.Port)
 
         if self.Version.Nonce != self._local_node._nonce:
             print("unequal nonces: %s %s " % (self.Version.Nonce, self._local_node._nonce))
@@ -418,27 +422,35 @@ class RemoteNode(object):
         if self.ListenerEndpoint is not None:
             if self.ListenerEndpoint.Port != self.Version.Port:
                 print("unequal ports....")
-#                self.Disconnect(True)
-#                return
+                self.Disconnect(True)
+                return
+
         elif self.Version.Port > 0:
             self.ListenerEndpoint = IPEndpoint(self.RemoteEndpoint.Address, self.Version.Port)
 
+
         print("will wait to send verack message")
+
+
 
         verack= await asyncio.wait_for( self.SendMessageAsync(Message("verack")), 60.0)
 
-        if verack is None:
+        if verack is None or verack is False:
             print("verack is none...")
             return
-
+        else:
+            print("VERACK: %s " % verack)
 
         vmessage = await asyncio.wait_for( self.ReceiveMessageAsync(self.HalfMinute), 60.0)
 
-        print("vmessage future command: %s %s" % (vmessage, vmessage.Command) )
+        print("vmessage future command: %s" % (vmessage) )
         if vmessage is None or vmessage.Command != "verack":
             print("verack command failed .... disconnet" )
             self.Disconnect(True)
             return
+
+        print("VERACKKKKKKKKKKKK")
+        return
 
         if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
 

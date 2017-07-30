@@ -7,6 +7,7 @@ from .Message import Message
 import asyncio
 from neo.Core.Helper import Helper
 from gevent import monkey
+import binascii
 
 monkey.patch_all()
 
@@ -66,7 +67,6 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-
     def handle(self):
 #        print("handle tcp request:  %s " % self.request)
 #        print("address is : %s " % self.client_address)
@@ -90,7 +90,6 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
         print("remote node connect async::")
 
         try:
-
             self._socket.connect((self.ListenerEndpoint.Address, self.ListenerEndpoint.Port))
             return self.OnConnected()
 
@@ -115,6 +114,7 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
 
         try:
 
+            print("RRRRRRRECEVI ASCYNC:: %s " % self._socket._closed)
             message = Message.DeserializeFromAsyncSocket(self._socket, None)
             return message
         except Exception as e:
@@ -131,10 +131,10 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
         print("remote node send message async: :%s " % message)
         if not self._connected or self.__disposed > 0: return False
 
-        ba = Helper.ToArray(message)
-
+        ba = binascii.unhexlify( Helper.ToArray(message) )
+        print("sending all;: %s " % ba)
         try:
-            self._socket.send(ba)
+            self._socket.sendall(ba)
             return True
         except Exception as e:
             print("could not send message %s " % e)

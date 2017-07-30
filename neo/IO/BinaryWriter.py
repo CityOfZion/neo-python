@@ -44,43 +44,43 @@ class BinaryWriter(object):
         print("pack bytes: %s " % byts)
         return self.WriteBytes(struct.pack(fmt, data))
 
-    def WriteChar(self, value):
+    def WriteChar(self, value, endian="<"):
         return self.pack('c', value)
 
-    def WriteInt8(self, value):
-        return self.pack('b', value)
+    def WriteInt8(self, value, endian="<"):
+        return self.pack('%sb' % endian, value)
 
-    def WriteUInt8(self, value):
-        return self.pack('B', value)
+    def WriteUInt8(self, value, endian="<"):
+        return self.pack('%sB' % endian, value)
 
-    def WriteBool(self, value):
+    def WriteBool(self, value, endian="<"):
         return self.pack('?', value)
 
-    def WriteInt16(self, value):
-        return self.pack('h', value)
+    def WriteInt16(self, value, endian="<"):
+        return self.pack('%sh' % endian, value)
 
-    def WriteUInt16(self, value):
-        return self.pack('H', value)
+    def WriteUInt16(self, value, endian="<"):
+        return self.pack('%sH' % endian, value)
 
-    def WriteInt32(self, value):
-        return self.pack('i', value)
+    def WriteInt32(self, value, endian="<"):
+        return self.pack('%si' % endian, value)
 
-    def WriteUInt32(self, value):
-        return self.pack('I', value)
+    def WriteUInt32(self, value, endian="<"):
+        return self.pack('%sI' % endian, value)
 
-    def WriteInt64(self, value):
-        return self.pack('q', value)
+    def WriteInt64(self, value, endian="<"):
+        return self.pack('%sq' % endian, value)
 
-    def WriteUInt64(self, value):
-        return self.pack('Q', value)
+    def WriteUInt64(self, value, endian="<"):
+        return self.pack('%sQ' % endian, value)
 
-    def WriteFloat(self, value):
-        return self.pack('f', value)
+    def WriteFloat(self, value, endian="<"):
+        return self.pack('%sf' % endian, value)
 
-    def WriteDouble(self, value):
-        return self.pack('d', value)
+    def WriteDouble(self, value, endian="<"):
+        return self.pack('%sd' % endian, value)
 
-    def WriteVarInt(self, value):
+    def WriteVarInt(self, value, endian="<"):
         if not isinstance(value ,int):
             raise TypeError('%s not int type.' % value)
 
@@ -94,28 +94,28 @@ class BinaryWriter(object):
         elif value <= 0xffff:
             print("writing var int single byte fffff: %s " % value)
             self.WriteByte(0xfd)
-            return self.WriteUInt16(value)
+            return self.WriteUInt16(value, endian)
 
         elif value <= 0xFFFFFFFF:
             print("writing var int single byte fffffffff: %s " % value)
             self.WriteByte(0xfd)
-            return self.WriteUInt32(value)
+            return self.WriteUInt32(value, endian)
 
         else:
             self.WriteByte(0xff)
-            return self.WriteUInt64(value)
+            return self.WriteUInt64(value, endian)
 
-    def WriteVarBytes(self, value):
+    def WriteVarBytes(self, value, endian="<"):
         length = len(binascii.unhexlify(value))
-        self.WriteVarInt(length)
+        self.WriteVarInt(length, endian)
         return self.WriteBytes(value)
 
-    def WriteVarString(self, value):
+    def WriteVarString(self, value, endian="<"):
         out = bytearray(value.encode('utf-8'))
         print("write var string, out: %s " %out)
         length = len(out)
         print("var string length: %s " % length)
-        self.WriteVarInt(length)
+        self.WriteVarInt(length, endian)
         return self.WriteBytes(value.encode('utf-8'))
 
     def WriteFixedString(self, value, length):

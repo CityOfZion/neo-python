@@ -27,7 +27,7 @@ class Message(SerializableMixin):
     def __init__(self, command=None, payload = None):
 
         self.Command = command
-        self.Magic = Settings.MAGIC
+        self.Magic = 0x74746e41
 
         if payload is None:
             payload = bytearray()
@@ -82,12 +82,9 @@ class Message(SerializableMixin):
 
             message = Message()
             print("Reading message:......")
-            message.Command = reader.ReadFixedString(12)
+            message.Magic = reader.ReadUInt32()
+            message.Command = reader.ReadFixedString(12).decode('utf-8')
             print("command is :%s " % message.Command)
-
-
-            somethingElse = reader.ReadUInt32()
-            print("Something else: %s " % somethingElse)
 
             length = reader.ReadUInt32()
             print("LENGTH: %s " % length)
@@ -95,8 +92,7 @@ class Message(SerializableMixin):
                 raise Exception("format too big")
 
             message.Checksum = reader.ReadUInt32()
-            #1086745783
-            #2198620797
+
             print("Checksum: %s " % message.Checksum)
             message.Payload = bytearray(length)
 

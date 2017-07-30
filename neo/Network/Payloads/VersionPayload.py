@@ -46,20 +46,20 @@ class VersionPayload(SerializableMixin):
 
 
     def Deserialize(self, reader):
-        self.Version = reader.ReadUInt8()
+        self.Version = reader.ReadUInt32()
         self.Services = reader.ReadUInt64()
         self.Timestamp = reader.ReadUInt32()
-        self.Port = reader.ReadUInt16()
+        self.Port = reader.ReadUInt16(endian="<")
         self.Nonce = reader.ReadUInt32()
         self.UserAgent = reader.ReadVarString().decode('utf-8')
         self.StartHeight = reader.ReadUInt32()
         self.Relay = reader.ReadBool()
 
     def Serialize(self, writer):
-        writer.WriteUInt8(self.Version)
+        writer.WriteUInt32(self.Version)
         writer.WriteUInt64(self.Services)
         writer.WriteUInt32(self.Timestamp)
-        writer.WriteUInt16(self.Port)
+        writer.WriteUInt16(self.Port, endian="<")
         writer.WriteUInt32(self.Nonce)
         writer.WriteVarString(self.UserAgent)
         writer.WriteUInt32(self.StartHeight)
