@@ -10,6 +10,7 @@ from neo.Core.TX.Transaction import Transaction,TransactionType
 
 import binascii
 from neo.Core.AssetType import AssetType
+from neo.Cryptography.ECCurve import ECDSA
 
 class RegisterTransaction(Transaction):
     """
@@ -32,16 +33,17 @@ In English:
          # 3. For point coupons, you can use any pattern;
 """
 
-    def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), issuer=None, admin=None):
+    def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), precision=0, issuer=None, admin=None):
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.TransactionType = TransactionType.RegisterTransaction  # 0x40
 
         self.AssetType = assettype
         self.Name = assetname
 
-        self.Amount = Fixed8(amount)  # Unlimited Mode: -0.00000001
+        self.Amount = amount  # Unlimited Mode: -0.00000001
         self.Issuer = issuer
         self.Admin = admin
+        self.Precision = precision
 
     def getSystemFee(self):
         return Fixed8(100)
@@ -53,10 +55,22 @@ In English:
         pass
 
 
+    def DeserializeExclusiveData(self, reader):
+        self.AssetType = reader.ReadByte()
+        self.Name = reader.ReadVarString().decode('utf-8')
+        self.Amount = reader.ReadFixed8()
+        self.Precision = reader.ReadByte()
+
+        pkey = reader.ReadBytes(33)
+        ecdsa = ECDSA.decode_secp256r1(pkey)
+        self.Issuer = ecdsa.G
+        self.Admin =reader.ReadUInt160()
+
     def SerializeExclusiveData(self, writer):
         writer.WriteByte(self.AssetType)
         print("name is: %s " % self.Name)
         writer.WriteVarString(self.Name)
         writer.WriteFixed8(self.Amount)
+        writer.WriteByte(self.Precision)
         writer.WriteBytes(self.Issuer)
-        writer.WriteBytes(self.Admin)
+        writer.WriteUInt160(self.Admin)

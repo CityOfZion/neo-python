@@ -5,12 +5,15 @@ from neo.Core.Helper import Helper
 import ctypes
 from neo.Blockchain import GetBlockchain,GetGenesis
 from neo.Core.Witness import Witness
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import MemoryStream
+
 class BlockBase(VerifiableMixin):
 
     #  <summary>
     #  区块版本
     #  </summary>
-    Version=None
+    Version=0
     #  <summary>
     #  前一个区块的散列值
     #  </summary>
@@ -98,7 +101,13 @@ class BlockBase(VerifiableMixin):
         writer.WriteUInt160(self.NextConsensus)
 
     def GetHashData(self):
-        raise NotImplementedError('Not Implemented')
+
+        ms = MemoryStream()
+        writer = BinaryWriter(ms)
+
+        self.SerializeUnsigned(writer)
+        return ms.ToArray()
+
 
     def GetMessage(self):
         return self.GetHashData()

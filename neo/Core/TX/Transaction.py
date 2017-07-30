@@ -23,7 +23,7 @@ from neo.IO.BinaryReader import BinaryReader
 from neo.Core.Helper import Helper
 import sys
 import json
-
+from neo.Core.Witness import Witness
 
 class TransactionResult():
     AssetId=None
@@ -139,6 +139,7 @@ class Transaction(Inventory, InventoryMixin):
         return self.__hash
 
 
+
     def NetworkFee(self):
         if self.__network_fee == -Fixed8.Satoshi():
 #            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
@@ -207,23 +208,30 @@ class Transaction(Inventory, InventoryMixin):
 
     @staticmethod
     def DeserializeFrom(reader):
-        type = reader.ReadByte()
+        ttype = reader.ReadByte()
         tx = None
+
+        print("TRANSACTION TYPE:: %s %s " % (type(ttype), ttype))
 
         from neo.Core.TX.RegisterTransaction import RegisterTransaction
         from neo.Core.TX.IssueTransaction import IssueTransaction
         from neo.Core.TX.ClaimTransaction import ClaimTransaction
         from neo.Core.TX.MinerTransaction import MinerTransaction
 
-        if type == TransactionType.RegisterTransaction:
+        if ttype == TransactionType.RegisterTransaction:
             tx = RegisterTransaction()
-        elif type == TransactionType.MinerTransaction:
+        elif ttype == TransactionType.MinerTransaction:
             tx = MinerTransaction()
-        elif type == TransactionType.IssueTransaction:
+        elif ttype == TransactionType.IssueTransaction:
             tx = IssueTransaction()
+        elif ttype == TransactionType.ClaimTransaction:
+            tx = ClaimTransaction()
 
         tx.DeserializeUnsignedWithoutType(reader)
-        tx.scripts = reader.ReadSerializableArray()
+
+        witness = Witness()
+        witness.Deserialize(reader)
+        tx.scripts = witness
         tx.OnDeserialized()
 
 

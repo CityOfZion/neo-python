@@ -36,8 +36,9 @@ class Block(BlockBase, InventoryMixin):
     def __init__(self, prevHash=None, timestamp=None, index=None,
                  consensusData=None, nextConsensus=None, script=None, transactions=[]):
 
+        print("timestamp: %s " % timestamp)
         super(Block, self).__init__()
-
+        self.Version = 0
         self.PrevHash = prevHash
         self.Timestamp = timestamp
         self.Index = index
@@ -139,7 +140,7 @@ class Block(BlockBase, InventoryMixin):
     # < / summary >
     # < returns > 返回区块的HashCode < / returns >
     def GetHashCode(self):
-        return self.Hash().GetHashCode()
+        return self.Hash()
 
     # < summary >
     # 根据区块中所有交易的Hash生成MerkleRoot

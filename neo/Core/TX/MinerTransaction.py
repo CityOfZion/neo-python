@@ -19,6 +19,9 @@ class MinerTransaction(Transaction):
     def DeserializeExclusiveData(self, reader):
         self.Nonce = reader.ReadUInt32()
 
+    def SerializeExclusiveData(self, writer):
+        writer.WriteUInt32(self.Nonce)
+
 
     def OnDeserialized(self):
         raise NotImplementedError()

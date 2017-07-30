@@ -57,24 +57,24 @@ class Blockchain(object):
 
     @staticmethod
     def SystemShare():
-        amount =sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL
+        amount =Fixed8(sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
         return RegisterTransaction([],[], AssetType.AntShare,
                                  "[{\"lang\":\"en\",\"name\":\"NEO\"}]",
-                                 amount, Issuer, Admin)
+                                 amount, 0, Issuer, Admin)
 
     @staticmethod
     def SystemCoin():
-        amount =sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL
+        amount =Fixed8(sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
         return RegisterTransaction([],[], AssetType.AntCoin,
                                  "[{\"lang\":\"en\",\"name\":\"NEOGas\"}]",
-                                 amount,Issuer, Admin)
+                                 amount,0,Issuer, Admin)
 
     @staticmethod
     def GenesisBlock():
 
 
         prev_hash = 0
-        timestamp = datetime(2016, 7, 15, 15, 8, 21 ).time()
+        timestamp = int(datetime(2016, 7, 15, 15, 8, 21 ).timestamp())
         index = 0
         consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
         next_consensus = Blockchain.GetConsensusAddress(Blockchain.StandbyValidators())

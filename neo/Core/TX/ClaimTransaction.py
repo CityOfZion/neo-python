@@ -27,7 +27,16 @@ class ClaimTransaction(Transaction):
         if self.Version != 0:
             raise Exception('Format Exception')
 
-        self.Claims = reader.ReadSerializableArray()
+
+        numrefs = reader.ReadVarInt()
+        print("num claims: %s " % numrefs)
+        claims = []
+        for i in range(0, numrefs):
+            c = CoinReference()
+            c.Deserialize(reader)
+            claims.append(c)
+
+        self.Claims = claims
         if len(self.Claims) == 0:
             raise Exception('Format Exception')
 
