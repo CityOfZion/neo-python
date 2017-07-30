@@ -34,3 +34,21 @@ You may need to uninstall plyvel (python libleveldb library), and reinstall with
 pip uninstall plyvel
 CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel --no-cache-dir
 ```
+
+### Running
+
+After installing requirements and activating your environment, there is an easy to use `cli.py` file for you to run
+
+```
+python cli.py 
+```
+
+That should do some stuff.  Not fully functional yet
+
+### Tests
+
+Tests are important.  Currently there are not enough, but we are working on that.  You can start them by running this command
+
+```
+python -m unittest discover . 
+```
