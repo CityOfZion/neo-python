@@ -4,7 +4,7 @@ from neo.Cryptography.Crypto import *
 from neo.Core.Helper import Helper
 import ctypes
 from neo.Blockchain import GetBlockchain,GetGenesis
-
+from neo.Core.Witness import Witness
 class BlockBase(VerifiableMixin):
 
     #  <summary>
@@ -60,28 +60,42 @@ class BlockBase(VerifiableMixin):
 
     def Deserialize(self, reader):
         self.DeserializeUnsigned(reader)
-        if reader.ReadByte() != 1:
+        byt = reader.ReadByte()
+        print("Byte to read:: %s %s" % (type(byt),byt))
+        if int(byt) != 1:
             raise Exception('Incorrect format')
-        self.Script = reader.ReadSerializableArray(self.scripts)
+
+        print("deseriailizing witness")
+        witness = Witness()
+        witness.Deserialize(reader)
+        self.Script = witness
+        print("deserialized witness")
 
 
     def DeserializeUnsigned(self, reader):
+        print("DEserializing unsigned block")
         self.Version = reader.ReadUInt32()
-        self.PrevHash = reader.ReadSerializableArray()
-        self.MerkleRoot = reader.ReadSerializableArray()
+        print("DEserializing unsigned 1")
+        self.PrevHash = reader.ReadUInt256()
+        print("DEserializing unsigned 2")
+        self.MerkleRoot = reader.ReadUInt256()
+        print("DEserializing unsigned 3")
         self.Timestamp = reader.ReadUInt32()
         self.Index = reader.ReadUInt32()
+        print("DEserializing unsigned 4")
         self.ConsensusData = reader.ReadUInt64()
-        self.NextConsensus = reader.ReadSerializableArray()
+        print("DEserializing unsigned 5")
+        self.NextConsensus = reader.ReadUInt160()
+        print("DEserializing unsigned 6")
 
     def SerializeUnsigned(self, writer):
         writer.WriteUInt32(self.Version)
-        writer.WriteSerializableArray(self.PrevHash)
-        writer.WriteSerializableArray(self.MerkleRoot)
+        writer.WriteUInt256(self.PrevHash)
+        writer.WriteUInt256(self.MerkleRoot)
         writer.WriteUInt32(self.Timestamp)
         writer.WriteUInt32(self.Index)
         writer.WriteUInt64(self.ConsensusData)
-        writer.WriteSerializableArray(self.NextConsensus)
+        writer.WriteUInt160(self.NextConsensus)
 
     def GetHashData(self):
         raise NotImplementedError('Not Implemented')
@@ -104,7 +118,8 @@ class BlockBase(VerifiableMixin):
     def Serialize(self, writer):
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
-        writer.WriteSerializableArray(self.Script)
+        self.Script.Serialize(writer)
+#        writer.WriteSerializableArray(self.Script)
 
 
 

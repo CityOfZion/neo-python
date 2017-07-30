@@ -134,3 +134,17 @@ class BinaryReader(object):
 
         return items
 
+
+    def ReadUInt256(self):
+        return self.ReadBytes(32)
+
+    def ReadUInt160(self):
+        return self.ReadBytes(20)
+
+    def ReadHashes(self):
+        len = self.ReadUInt8()
+        items = []
+        for i in range(0, len):
+            items.append( self.ReadUInt256())
+
+        return items

@@ -9,5 +9,11 @@ Usage:
 
 class InventoryType(object):
     TX = b'\x01'         # Transaction
-    Block = 'b\x02'      # Block
-    Consensus = 'b\xe0'  # Consensus information
+    Block = b'\x02'      # Block
+    Consensus = b'\xe0'  # Consensus information
+
+    @staticmethod
+    def AllInventoriesInt():
+        return [int.from_bytes(InventoryType.TX,'little'), \
+                int.from_bytes(InventoryType.Block,'little'), \
+                int.from_bytes(InventoryType.Consensus,'little')]

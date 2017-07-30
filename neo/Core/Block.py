@@ -34,7 +34,7 @@ class Block(BlockBase, InventoryMixin):
 
 
     def __init__(self, prevHash=None, timestamp=None, index=None,
-                 consensusData=None, nextConsensus=None, script=None, transactions=None):
+                 consensusData=None, nextConsensus=None, script=None, transactions=[]):
 
         super(Block, self).__init__()
 
@@ -85,13 +85,22 @@ class Block(BlockBase, InventoryMixin):
     #  < / summary >
     #  < param name = "reader" > 数据来源 < / param >
     def Deserialize(self, reader):
-        super(BlockBase,self).Deserialize(reader)
-        self.Transactions = [ Transaction(reader.ReadVarInt(0x10000)),]
+        print("will deserialize block")
+        super(Block,self).Deserialize(reader)
+        print("Deserialized block base")
+        transaction_length = reader.ReadVarInt()
 
-        if len(self.Transactions) < 1:
+
+        print("Transaction lenegth: %s " % transaction_length)
+
+        if transaction_length < 1:
             raise Exception('Invalid format')
 
-        [tx.DeserializeFrom(reader) for tx in self.Transactions]
+        for i in range(0, transaction_length):
+            tx = Transaction()
+            tx.DeserializeFrom(reader)
+            self.Transactions.append(tx)
+        print("Deseriailized transactions")
 
         if MerkleTree.ComputeRoot( [tx.Hash() for tx in self.Transactions]) != self.MerkleRoot:
             raise Exception('Invalid Format')
@@ -136,8 +145,9 @@ class Block(BlockBase, InventoryMixin):
     # 根据区块中所有交易的Hash生成MerkleRoot
     # < / summary >
     def RebuildMerkleRoot(self):
-        hashes = [tx.Hash() for tx in self.Transactions]
-        self.MerkleRoot = MerkleTree.ComputeRoot([tx.Hash() for tx in self.Transactions])
+        if self.Transactions is not None and len(self.Transactions) > 0:
+            hashes = [tx.Hash() for tx in self.Transactions]
+            self.MerkleRoot = MerkleTree.ComputeRoot([tx.Hash() for tx in self.Transactions])
 
     # < summary >
     # 序列化

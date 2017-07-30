@@ -1,7 +1,7 @@
 
 from neo.Core.TX.Transaction import *
 from neo.Fixed8 import Fixed8
-from neo.Helper import GetVarSize
+import sys
 
 class ClaimTransaction(Transaction):
 
@@ -11,7 +11,7 @@ class ClaimTransaction(Transaction):
 
     @property
     def Size(self):
-        return super(ClaimTransaction,self).Size() + GetVarSize(self.Claims)
+        return super(ClaimTransaction,self).Size() + sys.getsizeof(self.Claims)
 
 
     def __init__(self, *args, **kwargs):

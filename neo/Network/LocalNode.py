@@ -191,6 +191,9 @@ class LocalNode():
         #endlock
 
 
+    def KnownHashes(self):
+        return self._known_hashes
+
     def Blockchain_persistCompleted(self, block):
         #lock mempool
         for tx in block.Transactions:

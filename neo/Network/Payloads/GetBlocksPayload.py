@@ -23,7 +23,8 @@ class GetBlocksPayload(SerializableMixin):
 
 
     def Serialize(self, writer):
-        writer.Write(self.HashStart)
-        writer.Write(self.HashStop)
-
+        writer.WriteHashes(self.HashStart)
+        if self.HashStop is not None:
+            writer.WriteUInt256(self.HashStop)
+        
 

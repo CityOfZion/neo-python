@@ -27,7 +27,7 @@ class Message(SerializableMixin):
     def __init__(self, command=None, payload = None):
 
         self.Command = command
-        self.Magic = 0x74746e41
+        self.Magic = Settings.MAGIC
 
         if payload is None:
             payload = bytearray()

@@ -8,7 +8,7 @@ class Witness(SerializableMixin):
     InvocationScript=None
     VerificationScript=None
 
-    def __init__(self, invocation_script, verification_script):
+    def __init__(self, invocation_script=None, verification_script=None):
         self.InvocationScript = invocation_script
         self.VerificationScript = verification_script
 

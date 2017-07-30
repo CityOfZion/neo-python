@@ -6,7 +6,7 @@ class HeadersPayload(SerializableMixin):
 
     Headers = []
 
-    def __init__(self, headers):
+    def __init__(self, headers=None):
         self.Headers = headers if headers else []
 
 

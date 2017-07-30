@@ -9,7 +9,14 @@ Usage:
 
 import struct
 import binascii
+def swap32(i):
+    return struct.unpack("<I", struct.pack(">I", i))[0]
 
+def convert_to_uint160(value):
+    return bin(value+2**20)[-20:]
+
+def convert_to_uint256(value):
+    return bin(value+2**32)[-32:]
 
 class BinaryWriter(object):
     """docstring for BinaryWriter"""
@@ -74,6 +81,23 @@ class BinaryWriter(object):
     def WriteUInt64(self, value, endian="<"):
         return self.pack('%sQ' % endian, value)
 
+    def WriteUInt160(self, value, endian="<"):
+        print("writing uint 32: %s %s " % (value, type(value)))
+        if type(value) is int:
+            value = convert_to_uint160(value)
+            print("byte val: %s " % value)
+        print("bytevall:: %s " % value)
+        return self.WriteBytes(value)
+
+    def WriteUInt256(self, value, endian="<"):
+        print("writing uint 32: %s %s " % (value, type(value)))
+        if type(value) is int:
+            value = convert_to_uint256(value)
+            print("byte val: %s " % value)
+        print("bytevall:: %s " % value)
+        return self.WriteBytes(value)
+#        return self.pack('%sQ' % endian, value)
+
     def WriteFloat(self, value, endian="<"):
         return self.pack('%sf' % endian, value)
 
@@ -135,6 +159,12 @@ class BinaryWriter(object):
         self.WriteVarInt(len(array))
         for item in array:
             item.serialize(self)
+
+    def WriteHashes(self, array):
+        length = len(array)
+        self.WriteUInt8(length)
+        for item in array:
+            self.WriteUInt256(item)
 
     def WriteFixed8(self, value):
         return self.WriteBytes(value.getData())
