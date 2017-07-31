@@ -140,9 +140,10 @@ class BinaryReader(object):
         return items
 
 
-    def ReadUInt256(self):
+    def ReadUInt256(self, reverse = True):
         ba = bytearray(self.ReadBytes(32))
-        ba.reverse()
+        if reverse:
+            ba.reverse()
         return ba
 
     def ReadUInt160(self):
@@ -152,6 +153,6 @@ class BinaryReader(object):
         len = self.ReadUInt8()
         items = []
         for i in range(0, len):
-            items.append( self.ReadUInt256())
-
+            items.append( (self.ReadUInt256(False).hex()))
+        print("reading hashes: %s " % items)
         return items

@@ -34,14 +34,14 @@ class TransactionResult():
         self.Amount = amount
 
 class TransactionType(object):
-    MinerTransaction = 0x00
-    IssueTransaction = 0x01
-    ClaimTransaction = 0x02
-    EnrollmentTransaction = 0x20
-    VotingTransaction = 0x24
-    RegisterTransaction = 0x40
-    ContractTransaction = 0x80
-    AgencyTransaction = 0xb0
+    MinerTransaction = b'\x00'
+    IssueTransaction = b'\x01'
+    ClaimTransaction = b'\x02'
+    EnrollmentTransaction = b'\x20'
+    VotingTransaction = b'\x24'
+    RegisterTransaction = b'\x40'
+    ContractTransaction = b'\x80'
+    AgencyTransaction = b'\xb0'
 
 
 class TransactionOutput(SerializableMixin):
@@ -59,6 +59,7 @@ class TransactionOutput(SerializableMixin):
         self.ScriptHash = ScriptHash
 
     def Serialize(self, writer):
+        print("self asset id: %s " % self.AssetId)
         writer.WriteUInt256(self.AssetId)
         writer.WriteDouble(float(self.Value))
         writer.WriteUInt160(self.ScriptHash)
@@ -219,14 +220,14 @@ class Transaction(Inventory, InventoryMixin):
         from neo.Core.TX.ClaimTransaction import ClaimTransaction
         from neo.Core.TX.MinerTransaction import MinerTransaction
 
-        if ttype == TransactionType.RegisterTransaction:
+        if ttype == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
             tx = RegisterTransaction()
-        elif ttype == TransactionType.MinerTransaction:
+        elif ttype == int.from_bytes( TransactionType.MinerTransaction, 'little'):
             print("CREATING miNER TRANSACTION!!")
             tx = MinerTransaction()
-        elif ttype == TransactionType.IssueTransaction:
+        elif ttype == int.from_bytes( TransactionType.IssueTransaction, 'little'):
             tx = IssueTransaction()
-        elif ttype == TransactionType.ClaimTransaction:
+        elif ttype == int.from_bytes( TransactionType.ClaimTransaction, 'little'):
             tx = ClaimTransaction()
 
         tx.DeserializeUnsignedWithoutType(reader)
@@ -327,7 +328,7 @@ class Transaction(Inventory, InventoryMixin):
         writer.WriteSerializableArray(self.scripts)
 
     def SerializeUnsigned(self, writer):
-        writer.WriteByte(self.TransactionType)
+        writer.stream.write(self.TransactionType)
         writer.WriteByte(self.Version)
         self.SerializeExclusiveData(writer)
         writer.WriteSerializableArray(self.Attributes)

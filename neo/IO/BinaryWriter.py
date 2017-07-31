@@ -26,10 +26,8 @@ class BinaryWriter(object):
 
     def WriteByte(self, value):
         if type(value) is bytes:
-            print("writing bytes::::::::::")
             self.stream.write(chr(value))
         elif type(value) is str:
-            print("writing stringeeeee")
             self.stream.write(value.enconde('utf-8'))
         elif type(value) is int:
             self.stream.write(bytes([value]))
@@ -44,6 +42,7 @@ class BinaryWriter(object):
             pass
         except binascii.Error:
             pass
+
         self.stream.write(value)
 
     def pack(self, fmt, data):
@@ -96,8 +95,6 @@ class BinaryWriter(object):
         if type(value) is int:
             value = convert_to_uint256(value)
 
-        ba = bytearray(value)
-        ba.reverse()
         return self.WriteBytes(value)
 #        return self.pack('%sQ' % endian, value)
 

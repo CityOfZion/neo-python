@@ -270,7 +270,7 @@ class RemoteNode(object):
         #endlock
         print("added hashes to missions")
         if len(hashes) < 1: return
-
+        print("hashes: %s " % hashes)
         self.EnqueueMessage("getdata", InvPayload(payload.Type, hashes))
 
 
@@ -494,6 +494,7 @@ class RemoteNode(object):
 
             #lock message queue
             print("MESSAGE QUEUE %s " % len(self._message_queue))
+            print("Commands: %s " % [m.Command for m in self._message_queue])
             if len(self._message_queue) > 0:
 
                 message = self._message_queue[0]
