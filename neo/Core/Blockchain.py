@@ -166,7 +166,7 @@ class Blockchain(object):
 
         raise NotImplementedError()
 
-    def ContainsBlock(selfhash):
+    def ContainsBlock(self,hash):
         # abstract
         pass
 

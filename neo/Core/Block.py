@@ -66,7 +66,7 @@ class Block(BlockBase, InventoryMixin):
 
 
     def Size(self):
-        s = self.Size()
+        s = super(Block,self).Size()
         s = s + sys.getsizeof(self.Transactions)
 
         return s
@@ -192,9 +192,11 @@ class Block(BlockBase, InventoryMixin):
     # < returns > 返回该区块的合法性，返回true即为合法，否则，非法。 < / returns >
     def Verify(self, completely=False):
 
+        print("Verifying BLOCK!!")
         from neo.Blockchain import GetBlockchain,GetConsensusAddress
 
-        if not self.Verify(): return False
+        res = super(Block, self).Verify()
+        if not res: return False
 
         for tx in self.Transactions:
             if tx.Type == TransactionType.MinerTransaction: return False

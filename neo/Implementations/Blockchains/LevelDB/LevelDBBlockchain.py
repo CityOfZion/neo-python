@@ -100,9 +100,18 @@ class LevelDBBlockchain(Blockchain):
 
 
     def AddBlock(self, block):
+
+        print("LEVELDB ADD BLOCK %s " % block)
         header_len = len(self._header_index)
         if block.Index -1 >= header_len:
             return False
 
         if block.Index == header_len:
             if self._verify_blocks and not block.Verify(): return False
+
+        print("add block not fully implemented ....")
+
+    def ContainsBlock(self,hash):
+        print("checking if leveldb contains hash %s " % hash)
+        print("return false for now")
+        return False

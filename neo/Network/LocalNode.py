@@ -388,28 +388,39 @@ class LocalNode():
         raise NotImplementedError()
 
     def Relay(self, inventory):
+        print("relaying inventory! %s " % inventory)
         if inventory is MinerTransaction: return False
 
+        print("Checking hashes from known hashes")
+
         #lock known hashes
-        if inventory.Hash in self._known_hashes: return False
+        if inventory.Hash() in self._known_hashes: return False
         #endlock
 
+        print("CHecked hashes")
         self.InventoryReceiving.on_change(self, inventory)
 
-        if inventory is Block:
+        print("dispatched event")
+        if type(inventory) is Block:
+            print("checknig block")
             if Blockchain.Default() == None: return False
 
-            if Blockchain.Default().ContainsBlock(inventory.Hash): return False
+            print("checking to see if blockchain cotains hash")
+            if Blockchain.Default().ContainsBlock(inventory.Hash()): return False
 
+            print("trinig to add inventory")
             if not Blockchain.Default().AddBlock(inventory): return False
 
-        elif inventory is Transaction:
-
+        elif type(inventory) is Transaction:
+            print("Checking inventory transaction")
             if not self.AddTransaction(inventory): return False
 
         else:
+            print("checking to verify")
             if not inventory.Verify(): return False
 
+
+        print("Will relay inventory directly: %s " % inventory.Hash())
         relayed = self.RelayDirectly(inventory)
 
         self.InventoryReceived.on_change(inventory)
@@ -417,12 +428,15 @@ class LocalNode():
         return relayed
 
     def RelayDirectly(self, inventory):
+
+        print("going to relay directly....")
         relayed = False
         #lock connected peers
 
         #RelayCache.add(inventory)
 
         for node in self._connected_peers:
+            print("Relaying to remote node %s " % node)
             relayed |= node.Relay(inventory)
 
         #end lock
@@ -449,15 +463,16 @@ class LocalNode():
             #endlock
 
     def RemoteNode_InventoryReceived(self, sender, inventory):
-
+        print("remote node inventory received!!! %s %s " % (sender, inventory))
         if inventory is Transaction and inventory.Type is not TransactionType.ClaimTransaction and inventory.Type is not TransactionType.IssueTransaction:
             if Blockchain.Default() is None: return
 
+            print("OK REMOTE NODE INVENTORY RECEIVED: %s " % sender )
             #lock known hashes
             if inventory.Hash in self._known_hashes: return
             self._known_hashes.add(inventory.Hash)
             # endlock
-
+            print("Will invoke local node inventory receiving!")
             self.InventoryReceiving.on_change(self, inventory)
 
             #lock temppool
@@ -466,7 +481,7 @@ class LocalNode():
             #self.new_tx_event.set()
 
         else:
-
+            print("INVENTORY IS NOT TRANSACTION, RELAY")
             self.Relay(inventory)
 
     def RemoteNode_PeersReceived(self, sender, peers):

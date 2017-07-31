@@ -26,6 +26,7 @@ import asyncio
 from gevent import monkey
 import pprint
 monkey.patch_all()
+import binascii
 
 class RemoteNode(object):
     """docstring for RemoteNode"""
@@ -223,17 +224,29 @@ class RemoteNode(object):
 
     def OnInventoryReceived(self, inventory):
 
-        print("ON INVENTORY RECEIVED!!!!")
+        print("ON INVENTORY RECEIVED!!!! %s " % inventory)
         #lock missions global
-        self._missions_global.remove( inventory.Hash)
+        blockhash =  inventory.Hash()
+        print("blockhash : %s " % blockhash)
+        print("missions global: %s " % self._missions_global)
+        if blockhash in self._missions_global:
+            print("removed blockhash from mission global")
+            self._missions_global.remove( blockhash)
         #endlock
 
         #lock missions
-        self._missions.remove( inventory.Hash )
+        print("try to remove blockhash from missions")
+        if blockhash in self._missions:
+            self._missions.remove( blockhash )
+            print("removed blockhash from missions")
         #endlock
+        print("finish trying to recieve block hash from misions")
 
-        if inventory is MinerTransaction: return
+        if type(inventory) is MinerTransaction:
+            print("received miner transaction, return")
+            return
 
+        print("is not miner transaction, continue")
         self.InventoryReceived.on_change(self, inventory)
 
 
@@ -356,6 +369,8 @@ class RemoteNode(object):
 
     def Relay(self, data):
 
+        print("No relaying for now")
+        return False
         if not self.Version.Relay: return False
 
         #check if data is IInventory

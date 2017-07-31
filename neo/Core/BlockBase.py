@@ -48,7 +48,7 @@ class BlockBase(VerifiableMixin):
 
     def Hash(self):
         if not self.__hash:
-            self.__hash = Crypto.Hash256(self.GetHashData())
+            self.__hash = binascii.hexlify( Crypto.Hash256(self.GetHashData()))
 
         return self.__hash
 
@@ -59,7 +59,10 @@ class BlockBase(VerifiableMixin):
 
         uintsize = ctypes.sizeof(ctypes.c_uint)
         ulongsize = ctypes.sizeof(ctypes.c_ulong)
-        return uintsize + self.PrevHash.Size() + self.MerkleRoot.Size() + uintsize + uintsize + ulongsize + self.NextConsensus.Size() + 1 + self.Script.Size()
+        scriptsize = 0
+        if self.Script is not None:
+            scriptsize = self.Script.Size()
+        return uintsize + 32 + 32 + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
 
 
     def Deserialize(self, reader):
@@ -140,24 +143,25 @@ class BlockBase(VerifiableMixin):
 
     def ToJson(self):
         json = {}
-        json["hash"] = self.Hash()
+        json["hash"] = binascii.hexlify(self.Hash())
 
-        json["size"] = self.Size
+        json["size"] = self.Size()
         json["version"] = self.Version
         json["previousblockhash"] = self.PrevHash
         json["merkleroot"] = self.MerkleRoot
         json["time"] = self.Timestamp
         json["index"] = self.Index
-        json['next_consensus'] = self.NextConsensus
+        json['next_consensus'] = binascii.hexlify(self.NextConsensus)
         json["consensus data"] = self.ConsensusData
 #        json["nextconsensus"] = self.Wallet.ToAddress(self.NextConsensus)
         json["script"] = self.Script
         return json
 
     def Verify(self):
-        if self.Hash == GetGenesis().Hash: return True
+        print("Verifiing block::: %s " % self.Index)
+        if self.Hash() == GetGenesis().Hash(): return True
 
-        if GetBlockchain().ContainsBlock(self.Hash): return True
+        if GetBlockchain().ContainsBlock(self.Hash()): return True
 
         prev_header = GetBlockchain().GetHeader(self.PrevHash)
 
