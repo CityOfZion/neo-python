@@ -7,6 +7,7 @@ from neo.Blockchain import GetBlockchain,GetGenesis
 from neo.Core.Witness import Witness
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream
+import pprint
 
 class BlockBase(VerifiableMixin):
 
@@ -79,17 +80,19 @@ class BlockBase(VerifiableMixin):
         print("DEserializing unsigned block")
         self.Version = reader.ReadUInt32()
         print("DEserializing unsigned 1")
-        self.PrevHash = reader.ReadUInt256()
+        self.PrevHash = binascii.hexlify( reader.ReadUInt256())
         print("DEserializing unsigned 2")
-        self.MerkleRoot = reader.ReadUInt256()
+        self.MerkleRoot = binascii.hexlify( reader.ReadUInt256())
         print("DEserializing unsigned 3")
         self.Timestamp = reader.ReadUInt32()
         self.Index = reader.ReadUInt32()
         print("DEserializing unsigned 4")
-        self.ConsensusData = reader.ReadUInt64()
+        self.ConsensusData =  reader.ReadUInt64()
         print("DEserializing unsigned 5")
         self.NextConsensus = reader.ReadUInt160()
+        print("NEXT CONSENSUS: %s " % self.NextConsensus)
         print("DEserializing unsigned 6")
+        print(self.ToJson())
 
     def SerializeUnsigned(self, writer):
         writer.WriteUInt32(self.Version)
@@ -137,17 +140,18 @@ class BlockBase(VerifiableMixin):
 
     def ToJson(self):
         json = {}
-        json["hash"] = self.__hash.toString()
+        json["hash"] = self.Hash()
 
         json["size"] = self.Size
         json["version"] = self.Version
-        json["previousblockhash"] = self.PrevHash.ToString()
-        json["merkleroot"] = self.MerkleRoot.ToString()
+        json["previousblockhash"] = self.PrevHash
+        json["merkleroot"] = self.MerkleRoot
         json["time"] = self.Timestamp
         json["index"] = self.Index
-        json["nonce"] = self.ConsensusData.ToString("x16")
+        json['next_consensus'] = self.NextConsensus
+        json["consensus data"] = self.ConsensusData
 #        json["nextconsensus"] = self.Wallet.ToAddress(self.NextConsensus)
-        json["script"] = self.Script.ToJson()
+        json["script"] = self.Script
         return json
 
     def Verify(self):

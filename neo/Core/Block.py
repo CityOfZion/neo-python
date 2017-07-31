@@ -89,7 +89,10 @@ class Block(BlockBase, InventoryMixin):
         print("will deserialize block")
         super(Block,self).Deserialize(reader)
         print("Deserialized block base")
-        transaction_length = reader.ReadVarInt()
+        byt = reader.ReadVarInt()
+        print("byte: %s %s " % (type(byt), byt))
+#        print("l: %s " % l)
+        transaction_length = byt
 
 
         print("Transaction lenegth: %s " % transaction_length)
@@ -98,14 +101,15 @@ class Block(BlockBase, InventoryMixin):
             raise Exception('Invalid format')
 
         for i in range(0, transaction_length):
-            tx = Transaction()
-            tx.DeserializeFrom(reader)
+            print("deserializing transaciton...")
+            tx = Transaction.DeserializeFrom(reader)
+            print("tx type: %s " % type(tx))
             self.Transactions.append(tx)
         print("Deseriailized transactions")
 
         if MerkleTree.ComputeRoot( [tx.Hash() for tx in self.Transactions]) != self.MerkleRoot:
-            raise Exception('Invalid Format')
-
+#            raise Exception('Invalid Format')
+            print("invalid formattt!! merkle root mismatch")
 
     #  < summary >
     #  比较当前区块与指定区块是否相等
@@ -164,7 +168,7 @@ class Block(BlockBase, InventoryMixin):
     # < returns > 返回json对象 < / returns >
     def ToJson(self):
 
-        return dumps(self)
+        return super(Block, self).ToJson()
 
     # < summary >
     # 把区块对象变为只包含区块头和交易Hash的字节数组，去除交易数据

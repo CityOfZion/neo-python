@@ -24,4 +24,5 @@ class MinerTransaction(Transaction):
 
 
     def OnDeserialized(self):
-        raise NotImplementedError()
+        if len(self.inputs) is not 0:
+            raise Exception("No inputs for miner transaction")

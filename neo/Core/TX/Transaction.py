@@ -55,18 +55,19 @@ class TransactionOutput(SerializableMixin):
     def __init__(self, AssetId=None, Value=None, ScriptHash=None):
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
-        self.Value = Value if type(Value) is Fixed8 else Fixed8(Value)
+        self.Value = Value
         self.ScriptHash = ScriptHash
 
-    def serialize(self, writer):
-        # Serialize
-        writer.WriteBytes(big_or_little(self.AssetId))
-        writer.WriteFixed8(self.Value)
-        writer.WriteBytes(self.ScriptHash)
+    def Serialize(self, writer):
+        writer.WriteUInt256(self.AssetId)
+        writer.WriteDouble(float(self.Value))
+        writer.WriteUInt160(self.ScriptHash)
 
-    def deserialize(self, reader):
-        # Deserialize
-        pass
+    def Deserialize(self, reader):
+        self.AssetId = reader.ReadUInt256()
+        self.Value = reader.ReadDouble()
+        self.ScriptHash = reader.ReadUInt160()
+
 
 class TransactionInput(SerializableMixin):
     """docstring for TransactionInput"""
@@ -79,16 +80,15 @@ class TransactionInput(SerializableMixin):
         self.PrevHash = prevHash
         self.PrevIndex = int(prevIndex)
 
-    def serialize(self, writer):
-        # Serialize
-        writer.WriteBytes(big_or_little(self.PrevHash))
+    def Serialize(self, writer):
+        writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt16(self.PrevIndex)
 
-    def deserialize(self, reader):
-        # Deserialize
-        pass
+    def Deserialize(self, reader):
+        self.PrevHash = reader.ReadUInt256()
+        self.PrevIndex = reader.ReadUInt16()
 
-    def toString(self):
+    def ToString(self):
         # to string
         return bytes(self.PrevHash) + ":" + bytes(self.PrevIndex)
 
@@ -135,9 +135,10 @@ class Transaction(Inventory, InventoryMixin):
 
     def Hash(self):
         if not self.__hash:
-            self.__hash = Crypto.Hash256( Helper.GetHashData(self))
+            hashdata = Helper.GetHashData(self)
+            print("hashdata :%s" % hashdata)
+            self.__hash = Crypto.Hash256( hashdata )
         return self.__hash
-
 
 
     def NetworkFee(self):
@@ -221,6 +222,7 @@ class Transaction(Inventory, InventoryMixin):
         if ttype == TransactionType.RegisterTransaction:
             tx = RegisterTransaction()
         elif ttype == TransactionType.MinerTransaction:
+            print("CREATING miNER TRANSACTION!!")
             tx = MinerTransaction()
         elif ttype == TransactionType.IssueTransaction:
             tx = IssueTransaction()
@@ -234,6 +236,7 @@ class Transaction(Inventory, InventoryMixin):
         tx.scripts = witness
         tx.OnDeserialized()
 
+        return tx
 
     def DeserializeUnsigned(self, reader):
         if reader.ReadByte() != self.Type:
@@ -243,9 +246,9 @@ class Transaction(Inventory, InventoryMixin):
     def DeserializeUnsignedWithoutType(self,reader):
         self.Version = reader.ReadByte()
         self.DeserializeExclusiveData(reader)
-        self.Attributes = reader.ReadSerializableArray()
-        self.inputs = [CoinReference(ref) for ref in reader.ReadSerializableArray()]
-        self.outputs = [TransactionOutput(ref) for ref in reader.ReadSerializableArray()]
+        self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute')
+        self.inputs = [CoinReference(ref) for ref in reader.ReadSerializableArray('neo.Core.CoinReference.CoinReference')]
+        self.outputs = [TransactionOutput(ref) for ref in reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')]
 
 
     def Equals(self, other):

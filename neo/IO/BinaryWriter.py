@@ -54,6 +54,12 @@ class BinaryWriter(object):
     def WriteChar(self, value, endian="<"):
         return self.pack('c', value)
 
+    def WriteFloat(self, value, endian="<"):
+        return self.pack('%sf' % endian, value)
+
+    def WriteDouble(self, value, endian="<"):
+        return self.pack('%sd' % endian, value)
+
     def WriteInt8(self, value, endian="<"):
         return self.pack('%sb' % endian, value)
 
@@ -82,27 +88,19 @@ class BinaryWriter(object):
         return self.pack('%sQ' % endian, value)
 
     def WriteUInt160(self, value, endian="<"):
-        print("writing uint 32: %s %s " % (value, type(value)))
         if type(value) is int:
             value = convert_to_uint160(value)
-            print("byte val: %s " % value)
-        print("bytevall:: %s " % value)
         return self.WriteBytes(value)
 
     def WriteUInt256(self, value, endian="<"):
-        print("writing uint 32: %s %s " % (value, type(value)))
         if type(value) is int:
             value = convert_to_uint256(value)
-            print("byte val: %s " % value)
-        print("bytevall:: %s " % value)
+
+        ba = bytearray(value)
+        ba.reverse()
         return self.WriteBytes(value)
 #        return self.pack('%sQ' % endian, value)
 
-    def WriteFloat(self, value, endian="<"):
-        return self.pack('%sf' % endian, value)
-
-    def WriteDouble(self, value, endian="<"):
-        return self.pack('%sd' % endian, value)
 
     def WriteVarInt(self, value, endian="<"):
         if not isinstance(value ,int):
@@ -158,7 +156,7 @@ class BinaryWriter(object):
     def WriteSerializableArray(self, array):
         self.WriteVarInt(len(array))
         for item in array:
-            item.serialize(self)
+            item.Serialize(self)
 
     def WriteHashes(self, array):
         length = len(array)

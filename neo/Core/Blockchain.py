@@ -19,10 +19,11 @@ from bitarray import bitarray
 from neo.Cryptography.ECCurve import ECDSA
 from events import Events
 from events import Events
+from neo.Cryptography.ECCurve import ECDSA
 
 ### not sure of the origin of these
-Issuer = b'030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b'
-Admin = b'9c17b4ee1441676e36d77a141dd77869d271381d'
+Issuer = ECDSA.decode_secp256r1( '030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
+Admin = b'Abf2qMs1pzQb8kYk9RuxtUb9jtRKJVuBJt'
 
 
 class Blockchain(object):
@@ -57,16 +58,16 @@ class Blockchain(object):
 
     @staticmethod
     def SystemShare():
-        amount =Fixed8(sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
+        amount =sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL
         return RegisterTransaction([],[], AssetType.AntShare,
-                                 "[{\"lang\":\"en\",\"name\":\"NEO\"}]",
-                                 amount, 0, Issuer, Admin)
+                                 "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
+                                 amount, 0, 0, Admin)
 
     @staticmethod
     def SystemCoin():
-        amount =Fixed8(sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
+        amount =sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL
         return RegisterTransaction([],[], AssetType.AntCoin,
-                                 "[{\"lang\":\"en\",\"name\":\"NEOGas\"}]",
+                                 "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
                                  amount,0,Issuer, Admin)
 
     @staticmethod
@@ -78,7 +79,7 @@ class Blockchain(object):
         index = 0
         consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
         next_consensus = Blockchain.GetConsensusAddress(Blockchain.StandbyValidators())
-        script = Witness( bitarray(0), [ScriptOp.PUSHT])
+        script = Witness( bytearray(0), bytearray(ScriptOp.PUSHT))
 
         mt = MinerTransaction()
         mt.Nonce = 2083236893

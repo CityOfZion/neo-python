@@ -33,17 +33,19 @@ In English:
          # 3. For point coupons, you can use any pattern;
 """
 
-    def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), precision=0, issuer=None, admin=None):
+    def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=0, precision=0, issuer=None, admin=None):
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.TransactionType = TransactionType.RegisterTransaction  # 0x40
 
         self.AssetType = assettype
         self.Name = assetname
-
+        print("creating Amount: %s " % amount)
         self.Amount = amount  # Unlimited Mode: -0.00000001
         self.Issuer = issuer
         self.Admin = admin
         self.Precision = precision
+
+#    def Hash(self):
 
     def getSystemFee(self):
         return Fixed8(100)
@@ -58,7 +60,7 @@ In English:
     def DeserializeExclusiveData(self, reader):
         self.AssetType = reader.ReadByte()
         self.Name = reader.ReadVarString().decode('utf-8')
-        self.Amount = reader.ReadFixed8()
+        self.Amount = reader.ReadDouble()
         self.Precision = reader.ReadByte()
 
         pkey = reader.ReadBytes(33)
@@ -70,7 +72,14 @@ In English:
         writer.WriteByte(self.AssetType)
         print("name is: %s " % self.Name)
         writer.WriteVarString(self.Name)
-        writer.WriteFixed8(self.Amount)
+        writer.WriteFloat(float(self.Amount))
         writer.WriteByte(self.Precision)
-        writer.WriteBytes(self.Issuer)
+
+        print("issiues: %s %s" % (type(self.Issuer),self.Issuer))
+        if type(self.Issuer) is int:
+
+            writer.WriteBytes(bytearray(1))
+        else:
+            writer.WriteBytes(self.Issuer.encode_point(True))
+
         writer.WriteUInt160(self.Admin)
