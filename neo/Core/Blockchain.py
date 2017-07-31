@@ -50,7 +50,6 @@ class Blockchain(object):
     def StandbyValidators():
         if len(Blockchain.__validators) < 1:
             vlist = Settings.STANDBY_VALIDATORS
-            print("validators %s " % vlist)
             for pkey in Settings.STANDBY_VALIDATORS:
                 Blockchain.__validators.append( ECDSA.decode_secp256r1(pkey).G)
 
@@ -84,7 +83,6 @@ class Blockchain(object):
         mt = MinerTransaction()
         mt.Nonce = 2083236893
 
-        print("standby validators: %s " % len(Blockchain.StandbyValidators()))
         output = TransactionOutput(
             AssetType.AntShare,
             Blockchain.SystemShare().Amount,
@@ -220,9 +218,7 @@ class Blockchain(object):
     def GetConsensusAddress(validators):
         vlen = len(validators)
         script = Contract.CreateMultiSigRedeemScript(vlen - int((vlen - 1)/3) , validators)
-        print("Script: %s " % script)
         hashed = Crypto.Hash160(script)
-        print("hashed: %s" % hashed)
         return hashed
 
     def GetValidators(self, others):

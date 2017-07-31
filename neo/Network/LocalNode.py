@@ -12,10 +12,12 @@ from concurrent.futures import ThreadPoolExecutor
 monkey.patch_all()
 import random
 
+from autologging import logged
+
 #outside class def so it can be static
 _mempool = {}  # contains { uint256, transaction }
 
-
+@logged
 class LocalNode():
 
     PROTOCOL_VERSION = 0
@@ -67,11 +69,9 @@ class LocalNode():
 
     def __init__(self):
 
-        print("nonce: %s " % self._nonce)
 #        self._make_server()
 
         self._port = Settings.NODE_PORT
-        print("LOCALNODE PORT: %s " % self._port)
         self._make_loops()
         #not sure exactly how this works at the moment
         Blockchain.PersistCompleted.on_change += self.Blockchain_persistCompleted
@@ -87,7 +87,6 @@ class LocalNode():
             try:
 
                 sock, addr = self._listener.AcceptSocketAsync()
-                print("accepted: %s %s " % (sock, addr))
 
                 remoteNode = TCPRemoteNode(self, addr)
 
@@ -101,10 +100,8 @@ class LocalNode():
         #lock mempool
 
         if tx.Hash() in _mempool:
-#            Logger.debug("tx hash already in mempool: %s " % tx.Hash())
             return False
         elif Blockchain.Default().ContainsTransaction(tx.Hash()):
-#            Logger.debug("tx hash already in blockchain: %s " % tx.Hash())
             return False
         elif not tx.Verify([v for k,v in _mempool]): return False
 
@@ -126,13 +123,6 @@ class LocalNode():
         asyncio.run_coroutine_threadsafe(self.AddTransactionLoop(), self.__LOOP)
         self.__LOOP.run_forever()
 
-#        self._connect_thread = threading.Thread(target=self.ConnectToPeersLoop, name='LocalNode.ConnectToPeersLoop')
-#        self._connect_thread.daemon = True
-#        self._connect_thread.start()
-
-#        self._pool_thread = threading.Thread(target=self.AddTransactionLoop, name='LocalNode.AddTransactionLoop')
-#        self._pool_thread.daemon = True
-#        self._pool_thread.start()
 
 
     def _close(self):
@@ -152,7 +142,7 @@ class LocalNode():
     async def AddTransactionLoop(self):
 #        self.new_tx_event.wait()
 
-        print("Running add transaction loop")
+        self.__log.debug("Running add transaction loop")
         while self._disposed == 0:
             transactions = []
 
@@ -177,7 +167,7 @@ class LocalNode():
 
                 self.CheckMemPool()
             #endlock
-            print("will relay directly: %s " % verified)
+
             await self.RelayDirectly(verified)
 
             if self.InventoryReceived is not None:
@@ -213,7 +203,7 @@ class LocalNode():
 
 
     def CheckMemPool(self):
-        print("Checking mempool")
+
         if len(_mempool) <= self.MEMORY_POOL_SIZE: return
         num_to_delete = len(_mempool) - self.MEMORY_POOL_SIZE
         hashes_to_delete = [k for k,v in _mempool][:-num_to_delete]
@@ -226,7 +216,7 @@ class LocalNode():
 
 
     async def ConnectToPeersAsync(self, remoteEndpoint):
-        print("connect to peers async: %s " % remoteEndpoint.ToAddress())
+
         if remoteEndpoint.Port == self._port and remoteEndpoint.Address in self.LocalAddresses():
             return
 
@@ -244,8 +234,6 @@ class LocalNode():
         #endlock
 
         remote_node = TCPRemoteNode(self, remoteEndpoint)
-        print("created remote node: %s " % remoteEndpoint)
-#        connect_res = yield for asyncio.wait_for(  remote_node.ConnectAsync(), 60)
 
         result = remote_node.ConnectAsync()
         if result:
@@ -254,20 +242,20 @@ class LocalNode():
 
     @asyncio.coroutine
     def ConnectToPeersLoop(self):
-        print("connect to peers loop!")
+
         while self._disposed == 0:
 
             connectedCount = len(self._connected_peers)
             unconnectedCount = len(self._unconnected_peers)
-            print("connect loop: unconnected, connected %s %s " % (connectedCount, unconnectedCount))
+            self.__log.debug("connect loop: unconnected, connected %s %s " % (connectedCount, unconnectedCount))
             if connectedCount < self.CONNECTED_MAX:
-                print("try to connect!")
+
                 taskloop = asyncio.get_event_loop()
                 tasks = []
 
                 if unconnectedCount > 0:
                     endpoints = []
-                    print("unconnected count")
+
                     #lock unconnected peers
                     num_to_take = self.CONNECTED_MAX - connectedCount
                     endpoints = list(self._unconnected_peers)[:num_to_take]
@@ -285,11 +273,10 @@ class LocalNode():
                 else:
                     seeds = [IPEndpoint(str.split(':')[0], int(str.split(':')[1])) for str in Settings.SEED_LIST]
 #                    seeds = [IPEndpoint('seed1.neo.org',20333),]
-                    print("seeds: %s " % seeds)
+
                     for ep in seeds:
                         tasks.append(taskloop.create_task(self.ConnectToPeersAsync(ep)))
 
-                print("wait ttassks: %s " % tasks)
                 wait_tasks = asyncio.wait(tasks)
                 taskloop.run_until_complete(wait_tasks)
                 taskloop.close()
@@ -298,7 +285,6 @@ class LocalNode():
 
             while i < 50 and self._disposed == 0:
                 i = i+1
-                print("sleep: %s " % i)
                 asyncio.sleep(1)
 
 
@@ -372,15 +358,14 @@ class LocalNode():
         raise NotImplementedError()
 
     def OnConnected(self, remoteNode):
-        print("on connected!: %s " % remoteNode)
+
         #lock connected peres
         self._connected_peers.append(remoteNode)
         #endlock
-        print("connected peers: %s " % [p.ToString() for p in self._connected_peers])
+        self.__log.debug("connected peers: %s " % [p.ToString() for p in self._connected_peers])
         remoteNode.Disconnected.on_change += self.RemoteNode_Disconnected
         remoteNode.InventoryReceived.on_change += self.RemoteNode_InventoryReceived
         remoteNode.PeersReceived.on_change += self.RemoteNode_PeersReceived
-        print("WILL START PROTOCOL")
         return remoteNode.StartProcol()
 
 
@@ -388,39 +373,30 @@ class LocalNode():
         raise NotImplementedError()
 
     def Relay(self, inventory):
-        print("relaying inventory! %s " % inventory)
-        if inventory is MinerTransaction: return False
 
-        print("Checking hashes from known hashes")
+        if inventory is MinerTransaction: return False
 
         #lock known hashes
         if inventory.Hash() in self._known_hashes: return False
         #endlock
 
-        print("CHecked hashes")
         self.InventoryReceiving.on_change(self, inventory)
 
-        print("dispatched event")
         if type(inventory) is Block:
-            print("checknig block")
+
             if Blockchain.Default() == None: return False
 
-            print("checking to see if blockchain cotains hash")
             if Blockchain.Default().ContainsBlock(inventory.Hash()): return False
 
-            print("trinig to add inventory")
             if not Blockchain.Default().AddBlock(inventory): return False
 
         elif type(inventory) is Transaction:
-            print("Checking inventory transaction")
             if not self.AddTransaction(inventory): return False
 
         else:
-            print("checking to verify")
             if not inventory.Verify(): return False
 
 
-        print("Will relay inventory directly: %s " % inventory.Hash())
         relayed = self.RelayDirectly(inventory)
 
         self.InventoryReceived.on_change(inventory)
@@ -429,14 +405,13 @@ class LocalNode():
 
     def RelayDirectly(self, inventory):
 
-        print("going to relay directly....")
         relayed = False
         #lock connected peers
 
         #RelayCache.add(inventory)
 
         for node in self._connected_peers:
-            print("Relaying to remote node %s " % node)
+            self.__log.debug("Relaying to remote node %s " % node)
             relayed |= node.Relay(inventory)
 
         #end lock
@@ -463,16 +438,16 @@ class LocalNode():
             #endlock
 
     def RemoteNode_InventoryReceived(self, sender, inventory):
-        print("remote node inventory received!!! %s %s " % (sender, inventory))
+        self.__log.debug("remote node inventory received!!! %s %s " % (sender, inventory))
+
         if inventory is Transaction and inventory.Type is not TransactionType.ClaimTransaction and inventory.Type is not TransactionType.IssueTransaction:
             if Blockchain.Default() is None: return
 
-            print("OK REMOTE NODE INVENTORY RECEIVED: %s " % sender )
             #lock known hashes
             if inventory.Hash in self._known_hashes: return
             self._known_hashes.add(inventory.Hash)
             # endlock
-            print("Will invoke local node inventory receiving!")
+
             self.InventoryReceiving.on_change(self, inventory)
 
             #lock temppool
@@ -481,7 +456,6 @@ class LocalNode():
             #self.new_tx_event.set()
 
         else:
-            print("INVENTORY IS NOT TRANSACTION, RELAY")
             self.Relay(inventory)
 
     def RemoteNode_PeersReceived(self, sender, peers):
@@ -510,19 +484,10 @@ class LocalNode():
 
     async def _startTask(self, port, ws_port):
 
-        print("starting __start task")
-        try:
-            ipaddr = self.LocalAddresses()[0]
-            ## no UPNP for now
+        self.__log.debug("__start_task")
 
-        except Exception as e:
-            pass
-
-        print("__start_task")
         if port > 0:
-            print("starting task!!")
             endpoint = IPEndpoint(IPEndpoint.ANY,port)
-            print("endpoint: %s" % endpoint)
             try:
                 self._listener = TCPRemoteNode(self, endpoint)
                 self._listener.daemon_threads = True
@@ -531,12 +496,9 @@ class LocalNode():
 
             try:
                 self._port = port
-                print("will wait for accept peers async ")
-#                await asyncio.wait_for( self.AcceptPeersAsync(), )
+
                 executor = ThreadPoolExecutor()
                 await self.__LOOP.run_in_executor(executor, self.AcceptPeersAsync())
-#                await asyncio.run_coroutine_threadsafe(self.AcceptPeersAsync(), self.__LOOP)
-                print("Connected on accept peers async")
             except Exception as e:
                 print("ecxpetion creating listener: %s " % e)
 
@@ -549,13 +511,11 @@ class LocalNode():
     def Start(self, port=0, ws_port=0):
         if self._started == 0:
 
-            print("starting!")
 
             asyncio.run_coroutine_threadsafe(self._startTask(port, ws_port), self.__LOOP)
 #            asyncio.ensure_future(self._startTask(port, ws_port))
 #            self.__LOOP.run_until_complete(future)
-            self.__LOOP.run_forever()
-            print("STARTED")
+            yield self.__LOOP.run_forever()
 
 
     def SyncronizeMemoryPool(self):

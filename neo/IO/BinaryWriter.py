@@ -9,6 +9,8 @@ Usage:
 
 import struct
 import binascii
+from autologging import logged
+
 def swap32(i):
     return struct.unpack("<I", struct.pack(">I", i))[0]
 
@@ -18,6 +20,7 @@ def convert_to_uint160(value):
 def convert_to_uint256(value):
     return bin(value+2**32)[-32:]
 
+@logged
 class BinaryWriter(object):
     """docstring for BinaryWriter"""
     def __init__(self, stream):
@@ -47,7 +50,6 @@ class BinaryWriter(object):
 
     def pack(self, fmt, data):
         byts = struct.pack(fmt, data)
-        print("pack bytes: %s " % byts)
         return self.WriteBytes(struct.pack(fmt, data))
 
     def WriteChar(self, value, endian="<"):
@@ -107,16 +109,13 @@ class BinaryWriter(object):
             raise Exception('%d too small.' % value)
 
         elif value < 0xfd:
-            print("writing var int single byte: %s " % value)
             return self.WriteByte(value)
 
         elif value <= 0xffff:
-            print("writing var int single byte fffff: %s " % value)
             self.WriteByte(0xfd)
             return self.WriteUInt16(value, endian)
 
         elif value <= 0xFFFFFFFF:
-            print("writing var int single byte fffffffff: %s " % value)
             self.WriteByte(0xfd)
             return self.WriteUInt32(value, endian)
 
@@ -131,15 +130,12 @@ class BinaryWriter(object):
 
     def WriteVarString(self, value, endian="<"):
         out = bytearray(value.encode('utf-8'))
-        print("write var string, out: %s " %out)
         length = len(out)
-        print("var string length: %s " % length)
         self.WriteVarInt(length, endian)
         return self.WriteBytes(value.encode('utf-8'))
 
     def WriteFixedString(self, value, length):
         towrite = value.encode('utf-8')
-        print("Writing fixed: %s %s " % (towrite, length))
         slen = len(towrite)
         if len(value) > slen:
             raise Exception("string longer than fixed length: %s " % length)
@@ -159,7 +155,9 @@ class BinaryWriter(object):
         length = len(array)
         self.WriteUInt8(length)
         for item in array:
-            self.WriteUInt256(item)
+            ba = bytearray(binascii.unhexlify(item))
+            ba.reverse()
+            self.WriteUInt256(ba)
 
     def WriteFixed8(self, value):
         return self.WriteBytes(value.getData())

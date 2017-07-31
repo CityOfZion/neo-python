@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-"""
-Description:
-    IndexedDBWallet
-Usage:
-    from neo.Implementations.Wallets.IndexedDBWallet import IndexedDBWallet
-"""
 
 from neo.Wallets.Wallet import Wallet
 from neo.Wallets.Coin import Coin as WalletCoin
@@ -17,7 +11,9 @@ from enum import Enum
 
 from .PWDatabase import PWDatabase
 from .Models import *
+from autologging import logged
 
+@logged
 class UserWallet(Wallet):
 
     Version = None
@@ -30,9 +26,9 @@ class UserWallet(Wallet):
         db = PWDatabase.ContextDB()
         try:
             db.create_tables([Account,Address,Coin,Contract,Key,Transaction,TransactionInfo,])
-            print("created tables")
+            self.__log.debug("created tables")
         except Exception as e:
-            print("coludnt create tables: %s " % e)
+            print("couldn't create tables: %s " % e)
 
     def DB(self):
         return PWDatabase.Context()

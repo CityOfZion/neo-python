@@ -10,7 +10,10 @@ Usage:
 import struct
 import binascii
 import importlib
+from autologging import logged
 
+
+@logged
 class BinaryReader(object):
     """docstring for BinaryReader"""
     def __init__(self, stream):
@@ -19,8 +22,6 @@ class BinaryReader(object):
 
 
     def unpack(self, fmt, length=1):
-#        ba = self.ReadBytes(length)
-#        print("BA UNPACK: %s " % ba)
         return struct.unpack(fmt, self.stream.read(length))[0]
 
     def ReadByte(self):
@@ -28,11 +29,9 @@ class BinaryReader(object):
             return ord(self.stream.read(1))
         except Exception as e:
             print("Could not read byte: %s" % e)
+
     def ReadBytes(self, length):
         value = self.stream.read(length)
-#        try:
-#            return binascii.hexlify(value)
-#        except:
         return value
 
     def ReadBool(self):
@@ -58,24 +57,12 @@ class BinaryReader(object):
         return self.unpack('%sh' % endian, 2)
 
     def ReadUInt16(self, endian="<"):
-#        print("reading 16")
-#        val = self.stream.read(2)
-#        print("val16: %s " % val)
-#        intval = int.from_bytes(val, 'big', signed=False)
-#        print("16 intval: %s " % intval)
-#        return intval
         return self.unpack('%sH' % endian, 2)
 
     def ReadInt32(self, endian="<"):
         return self.unpack('%si' % endian, 4)
 
     def ReadUInt32(self, endian="<"):
-        print("reading uint 32111")
-#        val = self.stream.read(4)
-#        intval = int.from_bytes(val, 'big',signed=False)
-#        print("stream val 32 %s "% val)
-#        print("32 intval: %s " % intval)
-#        return intval
         return self.unpack('%sI' % endian, 4)
 
     def ReadInt64(self, endian="<"):
@@ -89,18 +76,14 @@ class BinaryReader(object):
         fb = self.ReadByte()
         if fb is None: return 0
         value = 0
-        print("read var int value %s " % hex(fb))
+        self.__log.debug("read var int value %s " % hex(fb))
         if hex(fb) == '0xfd':
-            print("read 16!")
             value = self.ReadUInt16()
         elif hex(fb) == '0xfe':
-            print("read 32!!!")
             value = self.ReadUInt32()
         elif hex(fb) == '0xff':
-            print("read 64!")
             value = self.ReadUInt64()
         else:
-            print("read default!!!!")
             value = fb
         return int(value)
 
@@ -114,8 +97,6 @@ class BinaryReader(object):
 
     def ReadVarString(self):
         length = self.ReadVarInt()
-        print("var string length: %s " % length)
-
         return self.unpack(str(length) + 's', length)
 
     def ReadFixedString(self, length):
@@ -126,10 +107,7 @@ class BinaryReader(object):
         module = '.'.join(class_name.split('.')[:-1])
         klassname = class_name.split('.')[-1]
         klass = getattr(importlib.import_module(module), klassname)
-#
         length = self.ReadVarInt()
-        print("Reading serializable %s " % class_name)
-        print("NUM Serializable %s " % length)
         items = []
 
         for i in range(0, length):
@@ -153,6 +131,5 @@ class BinaryReader(object):
         len = self.ReadUInt8()
         items = []
         for i in range(0, len):
-            items.append( (self.ReadUInt256(False).hex()))
-        print("reading hashes: %s " % items)
+            items.append( (self.ReadUInt256().hex()))
         return items

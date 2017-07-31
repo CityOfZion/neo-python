@@ -6,30 +6,20 @@ Usage:
     from neo.Wallets.Wallet import Wallet
 """
 
-from neo.Helper import ANTCOIN
-from neo.Defaults import TEST_ADDRESS,LDB_PATH
-from neo.Core.TX.Transaction import TransactionOutput,TransactionInput,TransactionType
+from neo.Defaults import LDB_PATH
+from neo.Core.TX.Transaction import TransactionType
 from neo.Core.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Cryptography.Base58 import b58decode
-from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
-from neo.Wallets.Account import Account
-from neo.Wallets.Contract import Contract
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
 from neo.Wallets.KeyPair import KeyPair
-#from neo.Network.RemoteNode import RemoteNode
-from neo.IO.MemoryStream import MemoryStream
-from neo.IO.BinaryWriter import BinaryWriter
 from neo import Settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-
-import itertools
+from autologging import logged
 import hashlib
-from ecdsa import SigningKey, NIST256p
-from neo.Defaults import TEST_NODE
 
 from threading import Thread
 from threading import Lock
@@ -38,6 +28,7 @@ from threading import Lock
 from Crypto import Random
 from Crypto.Cipher import AES
 
+@logged
 class Wallet(object):
 
 
@@ -92,7 +83,6 @@ class Wallet(object):
             passwordHash = hashlib.sha256(passwordKey.encode('utf-8')).digest()
             master = AES.new(self._master_key, AES.MODE_CBC, self._iv)
             masterKey = master.encrypt(passwordHash)
-            print("hash, master key: %s %s" % (passwordHash, masterKey))
             self.SaveStoredData('PasswordHash', passwordHash)
             self.SaveStoredData('IV', self._iv),
             self.SaveStoredData('MasterKey', masterKey)
@@ -152,14 +142,6 @@ class Wallet(object):
         self.SaveStoredData("PasswordHash", password_key)
         self.SaveStoredData("MasterKey", AES.new(self._master_key, AES.MODE_CBC, self._iv))
 
-    def CheckAddressState(self, script_hash):
-        if script_hash in self._contracts:
-            return AddressState.InWallet
-
-        if script_hash in self._watch_only:
-            return AddressState.InWallet | AddressState.WatchOnly
-
-        return AddressState.NoState
 
 
     def ContainsKey(self, public_key):
@@ -173,7 +155,7 @@ class Wallet(object):
 
 
     def CreatePrivateKey(self):
-        private_key = bitarray(32)
+        private_key = bytearray(32)
         private_key = Random.new().read(private_key)
         return private_key
 

@@ -8,7 +8,9 @@ from neo.Core.Witness import Witness
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream
 import pprint
+from autologging import logged
 
+@logged
 class BlockBase(VerifiableMixin):
 
     #  <summary>
@@ -54,8 +56,6 @@ class BlockBase(VerifiableMixin):
 
 
     def Size(self):
-#            sizeof(uint) + PrevHash.Size + MerkleRoot.Size + sizeof(uint) + sizeof(uint) + sizeof(
-#                ulong) + NextConsensus.Size + 1 + Script.Size;
 
         uintsize = ctypes.sizeof(ctypes.c_uint)
         ulongsize = ctypes.sizeof(ctypes.c_ulong)
@@ -68,34 +68,22 @@ class BlockBase(VerifiableMixin):
     def Deserialize(self, reader):
         self.DeserializeUnsigned(reader)
         byt = reader.ReadByte()
-        print("Byte to read:: %s %s" % (type(byt),byt))
         if int(byt) != 1:
             raise Exception('Incorrect format')
 
-        print("deseriailizing witness")
         witness = Witness()
         witness.Deserialize(reader)
         self.Script = witness
-        print("deserialized witness")
 
 
     def DeserializeUnsigned(self, reader):
-        print("DEserializing unsigned block")
         self.Version = reader.ReadUInt32()
-        print("DEserializing unsigned 1")
         self.PrevHash = binascii.hexlify( reader.ReadUInt256())
-        print("DEserializing unsigned 2")
         self.MerkleRoot = binascii.hexlify( reader.ReadUInt256())
-        print("DEserializing unsigned 3")
         self.Timestamp = reader.ReadUInt32()
         self.Index = reader.ReadUInt32()
-        print("DEserializing unsigned 4")
         self.ConsensusData =  reader.ReadUInt64()
-        print("DEserializing unsigned 5")
         self.NextConsensus = reader.ReadUInt160()
-        print("NEXT CONSENSUS: %s " % self.NextConsensus)
-        print("DEserializing unsigned 6")
-        print(self.ToJson())
 
     def SerializeUnsigned(self, writer):
         writer.WriteUInt32(self.Version)

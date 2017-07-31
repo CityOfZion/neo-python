@@ -10,10 +10,13 @@ from neo.IO.BinaryWriter import BinaryWriter
 from neo.Cryptography.MerkleTree import MerkleTree
 from json import dumps
 import sys
+from autologging import logged
 
 #  < summary >
 #  区块或区块头
 #  < / summary >
+
+@logged
 class Block(BlockBase, InventoryMixin):
 
     #  < summary >
@@ -36,7 +39,6 @@ class Block(BlockBase, InventoryMixin):
     def __init__(self, prevHash=None, timestamp=None, index=None,
                  consensusData=None, nextConsensus=None, script=None, transactions=[]):
 
-        print("timestamp: %s " % timestamp)
         super(Block, self).__init__()
         self.Version = 0
         self.PrevHash = prevHash
@@ -86,30 +88,20 @@ class Block(BlockBase, InventoryMixin):
     #  < / summary >
     #  < param name = "reader" > 数据来源 < / param >
     def Deserialize(self, reader):
-        print("will deserialize block")
         super(Block,self).Deserialize(reader)
-        print("Deserialized block base")
         byt = reader.ReadVarInt()
-        print("byte: %s %s " % (type(byt), byt))
-#        print("l: %s " % l)
         transaction_length = byt
-
-
-        print("Transaction lenegth: %s " % transaction_length)
 
         if transaction_length < 1:
             raise Exception('Invalid format')
 
         for i in range(0, transaction_length):
-            print("deserializing transaciton...")
             tx = Transaction.DeserializeFrom(reader)
-            print("tx type: %s " % type(tx))
             self.Transactions.append(tx)
-        print("Deseriailized transactions")
 
         if MerkleTree.ComputeRoot( [tx.Hash() for tx in self.Transactions]) != self.MerkleRoot:
 #            raise Exception('Invalid Format')
-            print("invalid formattt!! merkle root mismatch")
+            self.__log.debug("invalid formattt!! merkle root mismatch")
 
     #  < summary >
     #  比较当前区块与指定区块是否相等
@@ -128,7 +120,6 @@ class Block(BlockBase, InventoryMixin):
     @staticmethod
     def FromTrimmedData(bytes, index, transaction_method):
         block = Block()
-#        ms = MemoryStream(bytes, index, (len(bytes) - index))
         ms = MemoryStream()
         reader = BinaryReader(ms)
 
@@ -192,7 +183,7 @@ class Block(BlockBase, InventoryMixin):
     # < returns > 返回该区块的合法性，返回true即为合法，否则，非法。 < / returns >
     def Verify(self, completely=False):
 
-        print("Verifying BLOCK!!")
+        self.__log.debug("Verifying BLOCK!!")
         from neo.Blockchain import GetBlockchain,GetConsensusAddress
 
         res = super(Block, self).Verify()

@@ -2,7 +2,11 @@
 from neo.Core.TX.Transaction import *
 from neo.Fixed8 import Fixed8
 import sys
+from neo.Core.Blockchain import Blockchain
 
+from autologging import logged
+
+@logged
 class ClaimTransaction(Transaction):
 
     Claims = set()
@@ -29,7 +33,6 @@ class ClaimTransaction(Transaction):
 
 
         numrefs = reader.ReadVarInt()
-        print("num claims: %s " % numrefs)
         claims = []
         for i in range(0, numrefs):
             c = CoinReference()
@@ -50,7 +53,7 @@ class ClaimTransaction(Transaction):
 
     def ToJson(self):
 
-        json = super(Transaction,self).ToJson()
+        json = super(ClaimTransaction,self).ToJson()
 
         json['claims'] = [claim.ToJson() for claim in self.Claims]
 

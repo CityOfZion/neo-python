@@ -24,6 +24,7 @@ from neo.Core.Helper import Helper
 import sys
 import json
 from neo.Core.Witness import Witness
+from autologging import logged
 
 class TransactionResult():
     AssetId=None
@@ -43,7 +44,7 @@ class TransactionType(object):
     ContractTransaction = b'\x80'
     AgencyTransaction = b'\xb0'
 
-
+@logged
 class TransactionOutput(SerializableMixin):
 
 
@@ -70,6 +71,7 @@ class TransactionOutput(SerializableMixin):
         self.ScriptHash = reader.ReadUInt160()
 
 
+@logged
 class TransactionInput(SerializableMixin):
     """docstring for TransactionInput"""
 
@@ -91,7 +93,7 @@ class TransactionInput(SerializableMixin):
 
     def ToString(self):
         # to string
-        return bytes(self.PrevHash) + ":" + bytes(self.PrevIndex)
+        return self.PrevHash + ":" + self.PrevIndex
 
 
 class Transaction(Inventory, InventoryMixin):
@@ -137,7 +139,6 @@ class Transaction(Inventory, InventoryMixin):
     def Hash(self):
         if not self.__hash:
             hashdata = Helper.GetHashData(self)
-            print("hashdata :%s" % hashdata)
             self.__hash = Crypto.Hash256( hashdata )
         return self.__hash
 
@@ -213,8 +214,6 @@ class Transaction(Inventory, InventoryMixin):
         ttype = reader.ReadByte()
         tx = None
 
-        print("TRANSACTION TYPE:: %s %s " % (type(ttype), ttype))
-
         from neo.Core.TX.RegisterTransaction import RegisterTransaction
         from neo.Core.TX.IssueTransaction import IssueTransaction
         from neo.Core.TX.ClaimTransaction import ClaimTransaction
@@ -223,7 +222,6 @@ class Transaction(Inventory, InventoryMixin):
         if ttype == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
             tx = RegisterTransaction()
         elif ttype == int.from_bytes( TransactionType.MinerTransaction, 'little'):
-            print("CREATING miNER TRANSACTION!!")
             tx = MinerTransaction()
         elif ttype == int.from_bytes( TransactionType.IssueTransaction, 'little'):
             tx = IssueTransaction()

@@ -23,8 +23,6 @@ class VersionPayload(SerializableMixin):
 
     def __init__(self, port=None, nonce=None, userAgent=None):
         if port and nonce and userAgent:
-#            self.Version = LocalNode.PROTOCOL_VERSION
-#using LocalNode.PROTOCOL_VERSION makes circular import error
             self.Port = port
             self.Version = 0
             self.Services = NetworkAddressWithTime.NODE_NETWORK
@@ -37,7 +35,6 @@ class VersionPayload(SerializableMixin):
 
             self.Relay = True
 
-        print("created version: %s " % self.StartHeight)
 
     def Size(self):
         return ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_ulong) + ctypes.sizeof(ctypes.c_uint) + \

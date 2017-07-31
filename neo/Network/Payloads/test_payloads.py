@@ -10,8 +10,9 @@ from neo.Core.Helper import Helper
 import random
 import unittest
 import binascii
+from autologging import logged
 
-
+@logged
 class PayloadTestCase(unittest.TestCase):
 
     port = 20333

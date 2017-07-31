@@ -3,7 +3,9 @@
 from neo.Cryptography.Crypto import *
 from bitarray import bitarray
 import sys
+from autologging import logged
 
+@logged
 class MerkleTreeNode(object):
     Hash = None
     Parent = None
@@ -25,6 +27,7 @@ class MerkleTreeNode(object):
     def Size(self):
         return sys.getsizeof(self)
 
+@logged
 class MerkleTree(object):
 
     Root = None
@@ -32,11 +35,9 @@ class MerkleTree(object):
     Depth = 0
 
     def __init__(self, hashes):
-        print("hashes: %s %s " % (hashes, len(hashes)))
         self.Root = MerkleTree.__Build([ MerkleTreeNode(hash) for hash in hashes])
         depth=1
         i = self.Root
-        print("root is %s " % self.Root)
         while i.LeftChild is not None:
             depth = depth + 1
             i = i.LeftChild
@@ -81,7 +82,6 @@ class MerkleTree(object):
             return hashes[0]
 
         tree = MerkleTree(hashes)
-        print("Tree is: %s " % tree)
         return tree.Root.Hash
 
     @staticmethod

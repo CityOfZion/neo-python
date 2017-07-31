@@ -1,4 +1,5 @@
 asn1crypto==0.22.0
+Autologging==1.1.0
 bitarray==0.8.1
 bitcoin==1.1.42
 blessings==1.6

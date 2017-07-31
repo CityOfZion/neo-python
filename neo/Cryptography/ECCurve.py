@@ -27,7 +27,7 @@ def samefield(a,b):
     determine if a uses the same field
     """
     if a.field!=b.field:
-        print("field mismatch")
+        return False
     return True
 
 def test_bit(num, index):
@@ -160,7 +160,6 @@ def sqrtCQ(val, CQ):
     while U == 1 or U == qMinusOne:
 
         P = next_random_integer( CQ.bit_length() )
-        print("p is : %s " % P)
         while P >= CQ or modpow(P * P - fourQ, legendreExponent, CQ) != qMinusOne:
             P = next_random_integer(CQ.bit_length())
 
@@ -276,7 +275,7 @@ class FiniteField:
         if type(x) is str:
             hex = binascii.unhexlify(x)
             return int.from_bytes(hex, 'big')
-#            print("hex: %s " % hex)
+
         return  x.value if isinstance(x, FiniteField.Value) else x
 
     def zero(self):
@@ -466,7 +465,6 @@ class EllipticCurve:
         cq = self.field.p
 
         expected_byte_len = int(( _bitlength(cq) + 7 ) / 8)
-#        print("expected byte length: %s " % expected_byte_len)
 
         f = ba[0]
 
@@ -479,7 +477,6 @@ class EllipticCurve:
             data.reverse()
             data.append(0)
             X1 = int.from_bytes(data, 'little')
-#            print("x1, ytilde %s %s " % (X1, yTilde))
             return self.decompress_from_curve(X1, yTilde)
 
         #uncompressed or hybrid

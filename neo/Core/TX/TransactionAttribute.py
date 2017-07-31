@@ -62,24 +62,24 @@ class TransactionAttribute(Inventory, SerializableMixin):
     """docstring for TransactionAttribute"""
     def __init__(self, usage, data):
         super(TransactionAttribute, self).__init__()
-        self.usage = usage
-        self.data = data
+        self.Usage = usage
+        self.Data = data
 
-    def deserialize(self, reader):
+    def Deserialize(self, reader):
         pass
 
-    def serialize(self, writer):
-        writer.WriteByte(self.usage)
-        byteLength = len(self.data)
-        if self.usage == TransactionAttributeUsage.Script:
+    def Serialize(self, writer):
+        writer.WriteByte(self.Usage)
+        byteLength = len(self.Data)
+        if self.Usage == TransactionAttributeUsage.Script:
             writer.WriteVarInt(byteLength)
-        elif self.usage == TransactionAttributeUsage.CertUrl or self.usage == TransactionAttributeUsage.DescriptionUrl:
+        elif self.Usage == TransactionAttributeUsage.CertUrl or self.Usage == TransactionAttributeUsage.DescriptionUrl:
             writer.WriteVarInt(byteLength)
-        elif self.usage == TransactionAttributeUsage.Description or self.usage >= TransactionAttributeUsage.Remark:
+        elif self.Usage == TransactionAttributeUsage.Description or self.Usage >= TransactionAttributeUsage.Remark:
             writer.WriteVarInt(byteLength)
 
-        if self.usage == TransactionAttributeUsage.ECDH02 or self.usage == TransactionAttributeUsage.ECDH03:
-            writer.WriteBytes(binascii.hexlify(self.data[1:33]))
+        if self.Usage == TransactionAttributeUsage.ECDH02 or self.Usage == TransactionAttributeUsage.ECDH03:
+            writer.WriteBytes(binascii.hexlify(self.Data[1:33]))
         else:
-            writer.WriteBytes(binascii.hexlify(self.data))
+            writer.WriteBytes(binascii.hexlify(self.Data))
 

@@ -9,20 +9,9 @@ from neo.Core.Helper import Helper
 from gevent import monkey
 import binascii
 
+from autologging import logged
+
 monkey.patch_all()
-
-
-class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
-
-    def handle(self):
-        print("handle tcp request:  %s " % self.request)
-        print("address is : %s " % self.client_address)
-        print("server: %s " % self.server)
-
-        data = str(self.request.recv(1024), 'ascii')
-        cur_thread = threading.current_thread()
-        response = bytes("{}: {}".format(cur_thread.name, data), 'ascii')
-        self.request.sendall(response)
 
 
 
@@ -31,6 +20,7 @@ class TCPListener(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
     pass
 
+@logged
 class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
 
 
@@ -56,7 +46,6 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
                     self._server = TCPListener((remote_endpoint.Address, remote_endpoint.Port), TCPRemoteNode, True)
                     self._server.serve_forever()
                     self._socket = self._server.socket
-                    print("created server: %s " % self._server)
 
                 except Exception as e:
                     print("could not bind server: %s " % e)
@@ -68,14 +57,6 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
 
 
     def handle(self):
-#        print("handle tcp request:  %s " % self.request)
-#        print("address is : %s " % self.client_address)
-#        print("server: %s " % self.server)
-
-        #data = str(self.request.recv(1024), 'ascii')
-        #cur_thread = threading.current_thread()
-        #response = bytes("{}: {}".format(cur_thread.name, data), 'ascii')
-        #self.request.sendall(response)
         try:
 
             message = Message.DeserializeFromAsyncSocket( self._socket, None)
@@ -87,7 +68,6 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
 
 
     def ConnectAsync(self):
-        print("remote node connect async::")
 
         try:
             self._socket.connect((self.ListenerEndpoint.Address, self.ListenerEndpoint.Port))
@@ -114,7 +94,6 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
 
         try:
 
-            print("RRRRRRRECEVI ASCYNC:: %s " % self._socket._closed)
             message = Message.DeserializeFromAsyncSocket(self._socket, None)
             return message
         except Exception as e:
@@ -124,15 +103,13 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
 
     def AcceptSocketAsync(self):
         sock, addr = self._socket.accept()
-        print("accept socket async: %s %s  " % (sock, addr))
         return sock,addr
 
     async def SendMessageAsync(self, message):
-        print("remote node send message async: :%s " % message)
+        self.__log.debug("Remote Node Sending message async- Command: %s, payload: \n%s " % (message.Command, message.Payload))
         if not self._connected or self.__disposed > 0: return False
 
         ba = binascii.unhexlify( Helper.ToArray(message) )
-        print("sending all;: %s " % ba)
         try:
             self._socket.sendall(ba)
             return True
@@ -142,11 +119,6 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
         return False
 
     def OnConnected(self):
-        print("Remote node on connected...")
-#        addr = self._socket.gethostname()
-#        addr = socket.gethostname()
-#        print("addrs::: %s " % addr)
-#        self.RemoteEndpoint = IPEndpoint(addr.split(':')[0], addr.split(':')[1])
         self.RemoteEndpoint = self.ListenerEndpoint
         self._connected = True
 

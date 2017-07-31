@@ -9,7 +9,7 @@ def AsSerializableWithType(buffer, class_name):
     klassname = class_name.split('.')[-1]
     klass = getattr(importlib.import_module(module), klassname)
     serializable = klass()
-    print("serializable!: %s " % serializable)
+
     mstream = MemoryStream(buffer)
     reader = BinaryReader(mstream)
 

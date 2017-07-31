@@ -21,28 +21,28 @@ class Inventory(object):
         super(Inventory, self).__init__()
         self.hash = None
 
-    def ensureHash(self):
+    def EnsureHash(self):
         self.hash = big_or_little(binascii.hexlify(
-                        bin_dbl_sha256(binascii.unhexlify(self.getHashData()))))
+                        bin_dbl_sha256(binascii.unhexlify(self.GetHashData()))))
         return self.hash
 
-    def getHashData(self):
+    def GetHashData(self):
         ms = MemoryStream()
         w = BinaryWriter(ms)
-        self.serializeUnsigned(w)
+        self.SerializeUnsigned(w)
         return ms.ToArray()
 
-    def getScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self):
         pass
 
-    def serialize(self, writer):
+    def Serialize(self, writer):
         pass
 
-    def serializeUnsigned(self, writer):
+    def SerializeUnsigned(self, writer):
         pass
 
-    def deserialize(self, reader):
+    def Deserialize(self, reader):
         pass
 
-    def deserializeUnsigned(self, reader):
+    def DeserializeUnsigned(self, reader):
         pass

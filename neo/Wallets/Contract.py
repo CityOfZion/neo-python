@@ -20,8 +20,9 @@ from ecdsa import curves
 import hashlib
 import binascii
 from neo.Cryptography.Helper import *
+from autologging import logged
 
-
+@logged
 class Contract(SerializableMixin):
     """docstring for Contract"""
 
@@ -54,7 +55,6 @@ class Contract(SerializableMixin):
     @staticmethod
     def CreateMultiSigRedeemScript(m, publicKeys):
         # raise NotImplementedError()
-
 
         if m < 2 or m > len(publicKeys) or len(publicKeys) > 1024:
             raise Exception('Invalid keys')

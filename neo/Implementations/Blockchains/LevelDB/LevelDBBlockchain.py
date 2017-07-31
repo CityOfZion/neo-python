@@ -4,6 +4,7 @@ from enum import Enum
 import plyvel
 import ctypes
 from ctypes import *
+from autologging import logged
 
 
 DATA_Block =        b'\x01'
@@ -23,6 +24,8 @@ SYS_CurrentBlock =  b'\xc0'
 SYS_CurrentHeader = b'\xc1'
 SYS_Version =       b'\xf0'
 
+
+@logged
 class LevelDBBlockchain(Blockchain):
 
     _db = None
@@ -44,8 +47,9 @@ class LevelDBBlockchain(Blockchain):
         return self._header_index[self.HeaderHeight()]
 
     def HeaderHeight(self):
-        print("getting header height leveldb")
-        return len(self._header_index) - 1
+        height = len(self._header_index) - 1
+        self.__log.debug("Getting Header height: %s " % height)
+        return height
 
     def Height(self):
         return self._current_block_height
@@ -62,11 +66,8 @@ class LevelDBBlockchain(Blockchain):
             print("leveldb unavailable, you may already be running this process: %s " % e)
 
 
-        print("type: %s " % type(SYS_Version))
         version = self._db.get_property(SYS_Version)
-        print("version: %s " % version)
 
-#        self._current_block_height = self._db.get(SYS_CurrentBlock, 0, False)
         self._current_block_height = self._db.get(SYS_CurrentBlock, 0)
 
         current_header_height = self._db.get(SYS_CurrentHeader, self._current_block_height)
@@ -101,17 +102,21 @@ class LevelDBBlockchain(Blockchain):
 
     def AddBlock(self, block):
 
-        print("LEVELDB ADD BLOCK %s " % block)
+        self.__log.debug("LEVELDB ADD BLOCK HEIGHT: %s  -- hash -- %s" % (block.Index, block.Hash()))
         header_len = len(self._header_index)
         if block.Index -1 >= header_len:
+            self.__log.debug("Returning... block index -1 is greater than header length")
             return False
+
+
+        self.__log.debug("add block not fully implemented ....")
 
         if block.Index == header_len:
             if self._verify_blocks and not block.Verify(): return False
 
-        print("add block not fully implemented ....")
 
     def ContainsBlock(self,hash):
-        print("checking if leveldb contains hash %s " % hash)
-        print("return false for now")
+
+        self.__log.debug("checking if leveldb contains hash %s " % hash)
+        self.__log.debug("return false for now")
         return False

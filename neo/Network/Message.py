@@ -8,7 +8,9 @@ from neo.Cryptography.Helper import *
 import ctypes
 import asyncio
 import binascii
+from autologging import logged
 
+@logged
 class Message(SerializableMixin):
 
 
@@ -34,18 +36,16 @@ class Message(SerializableMixin):
         else:
             payload = binascii.unhexlify( Helper.ToArray(payload))
 
-        print("created message, payload is : %s " % payload)
         self.Checksum = Message.GetChecksum(payload)
-        print("created message, checksum: %s " % self.Checksum)
         self.Payload = payload
-
+        self.__log.debug("Created Message %s " % self.Command)
 
     def Size(self):
         return ctypes.sizeof(ctypes.c_uint) + 12 + ctypes.sizeof(ctypes.c_int) + ctypes.sizeof(ctypes.c_uint) + len(self.Payload)
 
     def Deserialize(self, reader):
         if reader.ReadUInt32() != self.Magic:
-            raise Exception("Invalit format, wrong magic")
+            raise Exception("Invalid format, wrong magic")
 
         self.Command = reader.ReadFixedString(12).decode('utf-8')
 
@@ -81,25 +81,22 @@ class Message(SerializableMixin):
             reader = BinaryReader(ms)
 
             message = Message()
-            print("Reading message:......")
+
             message.Magic = reader.ReadUInt32()
             message.Command = reader.ReadFixedString(12).decode('utf-8')
-            print("command is :%s " % message.Command)
 
             length = reader.ReadUInt32()
-            print("LENGTH: %s " % length)
+
             if length > Message.PayloadMaxSizeInt:
                 raise Exception("format too big")
 
             message.Checksum = reader.ReadUInt32()
 
-            print("Checksum: %s " % message.Checksum)
             message.Payload = bytearray(length)
 
             if len(message.Payload) > 0:
                 socket.recv_into(message.Payload)
 
-            print("message payload is :%s " % message.Payload)
             checksum = Message.GetChecksum(message.Payload)
 
             if checksum != message.Checksum:
@@ -126,15 +123,6 @@ class Message(SerializableMixin):
 
     @staticmethod
     def GetChecksum(value):
-#        if type(value) is bytearray:
-#            print("do something here")
-#            try:
-#                value = value.decode('utf-8')
-#            except UnicodeDecodeError as e:
-#                print("could not decode as utf-8")
-#                value = value.decode('latin-1')
-#            except Exception as e:
-#                print("Could not decode byte array: %s " % value)
 
         uint32 = bin_dbl_sha256(value)[:4]
 

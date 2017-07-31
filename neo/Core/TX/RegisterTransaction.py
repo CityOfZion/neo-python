@@ -39,7 +39,6 @@ In English:
 
         self.AssetType = assettype
         self.Name = assetname
-        print("creating Amount: %s " % amount)
         self.Amount = amount  # Unlimited Mode: -0.00000001
         self.Issuer = issuer
         self.Admin = admin
@@ -70,12 +69,10 @@ In English:
 
     def SerializeExclusiveData(self, writer):
         writer.WriteByte(self.AssetType)
-        print("name is: %s " % self.Name)
         writer.WriteVarString(self.Name)
         writer.WriteFloat(float(self.Amount))
         writer.WriteByte(self.Precision)
 
-        print("issiues: %s %s" % (type(self.Issuer),self.Issuer))
         if type(self.Issuer) is int:
 
             writer.WriteBytes(bytearray(1))

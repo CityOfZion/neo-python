@@ -19,10 +19,8 @@ class ScriptBuilder(object):
 
     def add(self, op):
         if isinstance(op, int):
-            print("writing bytes: %s" % bytes([op]))
             self.ms.write(bytes([op]))
         else:
-            print("writing op: %s " % op)
             self.ms.write(op)
         return
 
