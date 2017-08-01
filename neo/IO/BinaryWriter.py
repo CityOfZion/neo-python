@@ -90,9 +90,14 @@ class BinaryWriter(object):
             value = convert_to_uint160(value)
         return self.WriteBytes(value)
 
-    def WriteUInt256(self, value, endian="<"):
+    def WriteUInt256(self, value, endian="<", destination_hash=True):
         if type(value) is int:
             value = convert_to_uint256(value)
+
+        if destination_hash:
+            ba = bytearray(binascii.unhexlify(value))
+            ba.reverse()
+            return self.WriteBytes(ba)
 
         return self.WriteBytes(value)
 #        return self.pack('%sQ' % endian, value)

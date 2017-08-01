@@ -25,6 +25,12 @@ def hash_to_wallet_address(ba, address_version=23):
 long = int
 
 
+def double_sha256(ba):
+    d1 = hashlib.sha256(ba)
+    d2 = hashlib.sha256()
+    d1.hexdigest()
+    d2.update(d1.digest())
+    return d2.hexdigest()
 
 
 def random_to_priv(key):

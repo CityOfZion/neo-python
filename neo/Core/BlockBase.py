@@ -52,9 +52,26 @@ class BlockBase(VerifiableMixin):
 
     def Hash(self):
         if not self.__hash:
-            self.__hash = binascii.hexlify( Crypto.Hash256(self.GetHashData()))
+            hashdata = Helper.GetHashData(self)
+            ba = bytearray(binascii.unhexlify(hashdata))
+
+            hash = bin_dbl_sha256(ba)
+            hashhex = binascii.hexlify(hash)
+
+            self.__hash = hashhex
 
         return self.__hash
+
+    def RawData(self):
+        return Helper.GetHashData(self)
+
+    def HashToString(self):
+
+        uint256bytes = bytearray(binascii.unhexlify(self.Hash()))
+        uint256bytes.reverse()
+        out = uint256bytes.hex()
+
+        return out
 
 
     def Size(self):
@@ -89,6 +106,8 @@ class BlockBase(VerifiableMixin):
 
     def SerializeUnsigned(self, writer):
         writer.WriteUInt32(self.Version)
+        print("prev hash %s " % self.PrevHash)
+        print("prev hash unhex %s " % binascii.unhexlify(self.PrevHash))
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt256(self.MerkleRoot)
         writer.WriteUInt32(self.Timestamp)
@@ -96,18 +115,10 @@ class BlockBase(VerifiableMixin):
         writer.WriteUInt64(self.ConsensusData)
         writer.WriteUInt160(self.NextConsensus)
 
-    def GetHashData(self):
-
-        ms = MemoryStream()
-        writer = BinaryWriter(ms)
-
-        self.SerializeUnsigned(writer)
-        ms.flush()
-        return ms.ToArray()
 
 
     def GetMessage(self):
-        return self.GetHashData()
+        return Helper.GetHashData(self)
 
 
     def GetScriptHashesForVerifying(self):
