@@ -36,7 +36,7 @@ class ConsensusPayload(SerializableMixin):
         raise NotImplementedError()
 
     def Deserialize(self, reader):
-        raise NotImplementedError()
+        raise NotImplementedError('Consensus not implemented')
 
     def DeserializeUnsigned(self, reader):
         raise NotImplementedError()

@@ -226,6 +226,8 @@ class RemoteNode(object):
     #receives blocks
     def OnInventoryReceived(self, inventory):
 
+        if inventory is None:
+            return
 
         #lock missions global
         blockhash =  inventory.Hash()
@@ -497,7 +499,7 @@ class RemoteNode(object):
 
                 message = self._message_queue[0]
                 self._message_queue.remove(message)
-                print("WILL SEND MESSAGE:::: %s " % message.Command)
+                self.__log.debug("WILL SEND MESSAGE:::: %s " % message.Command)
 
             if message is None:
 #                i = 0

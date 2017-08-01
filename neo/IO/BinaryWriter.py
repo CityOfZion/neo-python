@@ -159,7 +159,7 @@ class BinaryWriter(object):
         for item in array:
             ba = bytearray(binascii.unhexlify(item))
             ba.reverse()
-            self.WriteUInt256(ba)
+            self.WriteUInt256(ba,"<",False)
 
     def WriteFixed8(self, value):
         return self.WriteBytes(value.getData())

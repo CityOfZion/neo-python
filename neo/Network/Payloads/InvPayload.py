@@ -1,7 +1,9 @@
 
 from neo.IO.Mixins import SerializableMixin
 import sys
+from autologging import logged
 
+@logged
 class InvPayload(SerializableMixin):
 
     Type = None
@@ -27,6 +29,9 @@ class InvPayload(SerializableMixin):
 
 
     def Serialize(self, writer):
-        writer.WriteByte(self.Type)
-        writer.WriteHashes(self.Hashes)
-
+        self.__log.debug("Will write hashes: %s " % self.Hashes)
+        try:
+            writer.WriteByte(self.Type)
+            writer.WriteHashes(self.Hashes)
+        except Exception as e:
+            print("COULD NOT WRITE INVENTORY HASHES %s " % e)

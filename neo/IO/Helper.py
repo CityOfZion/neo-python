@@ -12,11 +12,16 @@ class Helper(object):
         module = '.'.join(class_name.split('.')[:-1])
         klassname = class_name.split('.')[-1]
         klass = getattr(importlib.import_module(module), klassname)
-        serializable = klass()
-
         mstream = MemoryStream(buffer)
         reader = BinaryReader(mstream)
 
-        serializable.Deserialize(reader)
+        try:
+            serializable = klass()
+            serializable.Deserialize(reader)
 
-        return serializable
+            return serializable
+        except Exception as e:
+            print("Colud not deserialize %s " % klassname)
+
+
+        return None

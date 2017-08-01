@@ -38,7 +38,6 @@ class Message(SerializableMixin):
 
         self.Checksum = Message.GetChecksum(payload)
         self.Payload = payload
-        self.__log.debug("Created Message %s " % self.Command)
 
     def Size(self):
         return ctypes.sizeof(ctypes.c_uint) + 12 + ctypes.sizeof(ctypes.c_int) + ctypes.sizeof(ctypes.c_uint) + len(self.Payload)
@@ -61,6 +60,8 @@ class Message(SerializableMixin):
 
         if not Message.GetChecksum(self.Payload) == self.Checksum:
             raise Exception("checksum mismatch")
+
+        self.__log.debug("Deserialized Message %s " % self.Command)
 
     @staticmethod
     def DeserializeFromAsyncStream(stream, cancellation_token):
