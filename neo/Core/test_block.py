@@ -122,7 +122,7 @@ class BlocksTestCase(unittest.TestCase):
         self.assertEqual(txhash, self.b2tx_id)
 
     def test_genesis_block(self):
-        return
+#        return
         block = GetGenesis()
         print("block: %s " % block)
         print("merkle: %s " % block.MerkleRoot )
