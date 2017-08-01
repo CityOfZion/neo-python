@@ -28,6 +28,7 @@ class ClaimTransaction(Transaction):
 
     def DeserializeExclusiveData(self, reader):
 
+        self.Type = TransactionType.ClaimTransaction
         if self.Version != 0:
             raise Exception('Format Exception')
 

@@ -20,6 +20,7 @@ class Helper(object):
         ms = MemoryStream()
         writer = BinaryWriter(ms)
         hashable.SerializeUnsigned(writer)
+        ms.flush()
         return ms.ToArray()
 
     @staticmethod

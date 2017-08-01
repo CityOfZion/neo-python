@@ -10,6 +10,7 @@ from neo.IO.Helper import AsSerializableWithType
 import io
 from neo.Core.Witness import Witness
 
+
 class BlocksTestCase(unittest.TestCase):
 
 
@@ -44,6 +45,7 @@ class BlocksTestCase(unittest.TestCase):
 
     def test_block_deserialize(self):
 
+        return
         block = AsSerializableWithType(self.rawblock, 'neo.Core.Block.Block')
 
         self.assertEqual(self.rb_prev, block.PrevHash)
@@ -64,6 +66,66 @@ class BlocksTestCase(unittest.TestCase):
 
         self.assertEqual(type(tx.scripts), Witness)
 
+
+
+
+
+    b2raw= b'00000000ef1f8f66a16fba100ed760f4ac6aa5a0d0bb8f4a0e92705b106761ef181718b3d0765298ceb5f57de7d2b0dab00ed25be4134706ada2d90adb8b7e3aba323a8e1abd125901000000d11f7a289214bdaff3812db982f3b0089a21a278988efeec6a027b2501fd450140884037dd265cb5f5a54802f53c2c8593b31d5b8a9c0bad4c7e366b153d878989d168080ac36b930036a9eb966b48c70bb41792e698fa021116f27c09643563b840e83ab14404d964a91dbac45f5460e88ad57196b1779478e3475334af8c1b49cd9f0213257895c60b5b92a4800eb32d785cbb39ae1f022528943909fd37deba63403677848bf98cc9dbd8fbfd7f2e4f34471866ea82ca6bffbf0f778b6931483700c17829b4bd066eb04983d3aac0bd46b9c8d03a73a8e714d3119de93cd9522e314054d16853b22014190063f77d9edf6fbccefcf71fffd1234f688823b4e429ae5fa639d0a664c842fbdfcb4d6e21f39d81c23563b92cffa09696d93c95bc4893a6401a43071d00d3e854f7f1f321afa7d5301d36f2195dc1e2643463f34ae637d2b02ae0eb11d4256c507a4f8304cea6396a7fce640f50acb301c2f6336d27717e84f155210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae010000d11f7a2800000000'
+    b2hash = '0012f8566567a9d7ddf25acb5cf98286c9703297de675d01ba73fbfe6bcb841c'
+    b2prev_hash = b'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef'
+    b2height = 1
+    b2merkle = '8e3a32ba3a7e8bdb0ad9a2ad064713e45bd20eb0dab0d2e77df5b5ce985276d0'
+    b2nonce = int.from_bytes( binascii.unhexlify('afbd1492287a1fd1'), 'big')
+    b2nextconsensus ='AdyQbbn6ENjqWDa5JNYMwN3ikNcA4JeZdk'
+    b2timestamp = 1494400282
+
+    b2invocation=b'40884037dd265cb5f5a54802f53c2c8593b31d5b8a9c0bad4c7e366b153d878989d168080ac36b930036a9eb966b48c70bb41792e698fa021116f27c09643563b840e83ab14404d964a91dbac45f5460e88ad57196b1779478e3475334af8c1b49cd9f0213257895c60b5b92a4800eb32d785cbb39ae1f022528943909fd37deba63403677848bf98cc9dbd8fbfd7f2e4f34471866ea82ca6bffbf0f778b6931483700c17829b4bd066eb04983d3aac0bd46b9c8d03a73a8e714d3119de93cd9522e314054d16853b22014190063f77d9edf6fbccefcf71fffd1234f688823b4e429ae5fa639d0a664c842fbdfcb4d6e21f39d81c23563b92cffa09696d93c95bc4893a6401a43071d00d3e854f7f1f321afa7d5301d36f2195dc1e2643463f34ae637d2b02ae0eb11d4256c507a4f8304cea6396a7fce640f50acb301c2f6336d27717e84'
+    b2verification=b'55210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae'
+
+    b2tx_len = 1
+
+    b2tx_id=b'8e3a32ba3a7e8bdb0ad9a2ad064713e45bd20eb0dab0d2e77df5b5ce985276d0'
+    b2tx_nonce = 679092177
+    b2tx_vin = []
+    b2tx_vout = []
+
+    b2tx_realraw =  '0000d11f7a2800000000'
+    b2tx_hex =      '0000d11f7a2800000000'
+    b2tx_raw = b'\x00\x00\x00(z\x1f\xd1\x00\x80'
+
+    def test_araw_block(self):
+
+        hexdata = binascii.unhexlify(self.b2raw)
+
+        block = AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
+        self.assertEqual(block.Index, self.b2height)
+        self.assertEqual(block.ConsensusData, self.b2nonce)
+        self.assertEqual(block.Timestamp, self.b2timestamp)
+        self.assertEqual(block.PrevHash, self.b2prev_hash)
+
+
+        next_consensus_address = block.NextConsensusToWalletAddress()
+
+        self.assertEqual(next_consensus_address, self.b2nextconsensus)
+
+        witness = block.Script
+        ins = binascii.hexlify(witness.InvocationScript)
+        vns = binascii.hexlify(witness.VerificationScript)
+
+        self.assertEqual(ins, self.b2invocation)
+        self.assertEqual(vns, self.b2verification)
+
+        self.assertEqual(len(block.Transactions), self.b2tx_len)
+
+        tx = block.Transactions[0]
+
+        self.assertEqual(tx.inputs, self.b2tx_vin)
+        self.assertEqual(tx.outputs, self.b2tx_vout)
+
+        self.assertEqual(tx.Nonce, self.b2tx_nonce)
+
+        txhash = tx.HashToString()
+        self.assertEqual(txhash, self.b2tx_id)
 
     def test_genesis_block(self):
         return

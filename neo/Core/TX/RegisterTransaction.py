@@ -57,6 +57,7 @@ In English:
 
 
     def DeserializeExclusiveData(self, reader):
+        self.Type = TransactionType.RegisterTransaction
         self.AssetType = reader.ReadByte()
         self.Name = reader.ReadVarString().decode('utf-8')
         self.Amount = reader.ReadDouble()

@@ -18,8 +18,10 @@ class MinerTransaction(Transaction):
 
     def DeserializeExclusiveData(self, reader):
         self.Nonce = reader.ReadUInt32()
+        self.Type = TransactionType.MinerTransaction
 
     def SerializeExclusiveData(self, writer):
+        print("writing nonce! %s " % self.Nonce)
         writer.WriteUInt32(self.Nonce)
 
 

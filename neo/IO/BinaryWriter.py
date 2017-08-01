@@ -29,7 +29,7 @@ class BinaryWriter(object):
 
     def WriteByte(self, value):
         if type(value) is bytes:
-            self.stream.write(chr(value))
+            self.stream.write(value)
         elif type(value) is str:
             self.stream.write(value.enconde('utf-8'))
         elif type(value) is int:

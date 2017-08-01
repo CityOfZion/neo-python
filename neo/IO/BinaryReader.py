@@ -25,10 +25,7 @@ class BinaryReader(object):
         return struct.unpack(fmt, self.stream.read(length))[0]
 
     def ReadByte(self):
-        try:
-            return ord(self.stream.read(1))
-        except Exception as e:
-            print("Could not read byte: %s" % e)
+        return ord(self.stream.read(1))
 
     def ReadBytes(self, length):
         value = self.stream.read(length)
@@ -124,8 +121,14 @@ class BinaryReader(object):
             ba.reverse()
         return ba
 
-    def ReadUInt160(self):
-        return self.ReadBytes(20)
+    def ReadUInt160(self, reverse=False, hex=False):
+        ba = bytearray(self.ReadBytes(20))
+        if reverse:
+            ba.reverse()
+        if hex:
+            return binascii.hexlify(ba)
+
+        return ba
 
     def ReadHashes(self):
         len = self.ReadUInt8()

@@ -17,7 +17,7 @@ class IssueTransaction(Transaction):
     """docstring for IssueTransaction"""
     def __init__(self, *args, **kwargs):
         super(IssueTransaction, self).__init__(*args, **kwargs)
-        self.TransactionType = TransactionType.IssueTransaction  # 0x40
+        self.Type = TransactionType.IssueTransaction  # 0x40
         self.Nonce = self.GenNonce()
 
     def GenNonce(self):
@@ -28,6 +28,7 @@ class IssueTransaction(Transaction):
         pass
 
     def DeserializeExclusiveData(self, reader):
+        self.Type = TransactionType.IssueTransaction
         pass
 #        reader.ReadUInt32()
 

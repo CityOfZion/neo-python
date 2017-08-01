@@ -14,8 +14,17 @@ import time
 import random
 import hashlib
 import binascii
+import base58
+
+def hash_to_wallet_address(ba, address_version=23):
+    sb = bytearray([23]) + ba
+    c256 = bin_dbl_sha256(sb)[0:4]
+    outb = sb + bytearray(c256)
+    return base58.b58encode(bytes(outb))
 
 long = int
+
+
 
 
 def random_to_priv(key):
@@ -28,7 +37,7 @@ def redeem_to_scripthash(redeem):
     return binascii.hexlify(bin_hash160(redeem))
 
 def scripthash_to_address(scripthash):
-    return bin_to_b58check(binascii.unhexlify(scripthash),int('17',16))
+    return bin_to_b58check(binascii.unhexlify(scripthash), 23)
 
 def pubkey_to_pubhash(pubkey):
     return redeem_to_scripthash(pubkey_to_redeem(pubkey))
@@ -129,7 +138,7 @@ def decode(string, base):
         string = string.lower()
     while len(string) > 0:
         result *= base
-        result += code_string.find(string[0])
+        result += code_string.find(str(string[0]))
         string = string[1:]
     return result
 
@@ -205,7 +214,12 @@ def from_int_to_byte(a):
     return a
 
 def bin_to_b58check(inp,magicbyte=0):
-    inp_fmtd = chr(int(magicbyte)) + inp
+    print("inp: %s " % inp)
+    print("")
+    mb = b'\x17'
+    inp_fmtd = mb + inp
+    print("inpf %s " % inp_fmtd)
+#    inp_fmtd = chr(magicbyte) + inp
     checksum = bin_dbl_sha256(inp_fmtd)[:4]
     return changebase(inp_fmtd+checksum, 256, 58)
 
@@ -218,8 +232,8 @@ def from_string_to_bytes(a):
     return a
 
 def bin_dbl_sha256(s):
-    bytes_to_hash = from_string_to_bytes(s)
-    return hashlib.sha256(hashlib.sha256(bytes_to_hash).digest()).digest()
+#    bytes_to_hash = from_string_to_bytes(s)
+    return hashlib.sha256(hashlib.sha256(s).digest()).digest()
 
 def random_string(x):
     return str(os.urandom(x))

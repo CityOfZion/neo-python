@@ -131,7 +131,7 @@ class Transaction(Inventory, InventoryMixin):
         self.outputs = outputs
         self.Attributes= attributes
         self.scripts = scripts
-        self.TransactionType = TransactionType.ContractTransaction
+        self.Type = None
         self.InventoryType = 0x01  # InventoryType TX 0x01
         self.systemFee = self.SystemFee()
 
@@ -139,9 +139,14 @@ class Transaction(Inventory, InventoryMixin):
     def Hash(self):
         if not self.__hash:
             hashdata = Helper.GetHashData(self)
-            self.__hash = Crypto.Hash256( hashdata )
+            ba = bytearray(binascii.unhexlify(hashdata))
+            self.__hash = Crypto.Hash256( ba )
         return self.__hash
 
+    def HashToString(self):
+        ba = bytearray(self.Hash())
+        ba.reverse()
+        return binascii.hexlify(ba)
 
     def NetworkFee(self):
         if self.__network_fee == -Fixed8.Satoshi():
@@ -176,7 +181,7 @@ class Transaction(Inventory, InventoryMixin):
 
 
     def Size(self):
-        return sys.getsizeof(self.TransactionType) + sys.getsizeof(0) \
+        return sys.getsizeof(self.Type) + sys.getsizeof(0) \
                + sys.getsizeof(self.Attributes) + sys.getsizeof(self.inputs) + \
                     sys.getsizeof(self.outputs) + sys.getsizeof(self.scripts)
 
@@ -230,9 +235,15 @@ class Transaction(Inventory, InventoryMixin):
 
         tx.DeserializeUnsignedWithoutType(reader)
 
-        witness = Witness()
-        witness.Deserialize(reader)
-        tx.scripts = witness
+
+        try:
+            witness = Witness()
+            witness.Deserialize(reader)
+            tx.scripts = [witness]
+        except Exception as e:
+            print("no scripts to read")
+
+
         tx.OnDeserialized()
 
         return tx
@@ -326,7 +337,8 @@ class Transaction(Inventory, InventoryMixin):
         writer.WriteSerializableArray(self.scripts)
 
     def SerializeUnsigned(self, writer):
-        writer.stream.write(self.TransactionType)
+        print("writing tx: %s " % self.Type)
+        writer.WriteByte(self.Type)
         writer.WriteByte(self.Version)
         self.SerializeExclusiveData(writer)
         writer.WriteSerializableArray(self.Attributes)

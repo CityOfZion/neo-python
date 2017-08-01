@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from .Mixins import VerifiableMixin
 from neo.Cryptography.Crypto import *
+from neo.Cryptography.Helper import *
 from neo.Core.Helper import Helper
 import ctypes
 from neo.Blockchain import GetBlockchain,GetGenesis
@@ -45,6 +46,7 @@ class BlockBase(VerifiableMixin):
     Script = None
 
     __hash = None
+
 
 
 
@@ -125,6 +127,10 @@ class BlockBase(VerifiableMixin):
 #        writer.WriteSerializableArray(self.Script)
 
 
+
+    def NextConsensusToWalletAddress(self):
+
+        return hash_to_wallet_address(self.NextConsensus)
 
     def ToArray(self):
         raise NotImplementedError()
