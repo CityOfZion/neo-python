@@ -30,6 +30,7 @@ class Inventory(object):
         ms = MemoryStream()
         w = BinaryWriter(ms)
         self.SerializeUnsigned(w)
+        ms.flush()
         return ms.ToArray()
 
     def GetScriptHashesForVerifying(self):

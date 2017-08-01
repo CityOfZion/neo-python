@@ -1,7 +1,7 @@
 
 from .VersionPayload import VersionPayload
 from neo.Network.Message import Message
-from neo.IO.Helper import AsSerializableWithType
+from neo.IO.Helper import Helper as IOHelper
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
@@ -36,7 +36,7 @@ class PayloadTestCase(unittest.TestCase):
 
         serialized = binascii.unhexlify( Helper.ToArray(self.payload))
 
-        deserialized_version = AsSerializableWithType(serialized, 'neo.Network.Payloads.VersionPayload.VersionPayload')
+        deserialized_version = IOHelper.AsSerializableWithType(serialized, 'neo.Network.Payloads.VersionPayload.VersionPayload')
 
         v = deserialized_version
 
@@ -60,7 +60,7 @@ class PayloadTestCase(unittest.TestCase):
         writer = BinaryWriter(ms)
 
         message.Serialize(writer)
-
+        ms.flush()
         result = binascii.unhexlify( ms.ToArray())
 
         ms = MemoryStream(result)
@@ -80,7 +80,7 @@ class PayloadTestCase(unittest.TestCase):
         self.assertEqual(checksum, dm.Checksum)
 
 
-        deserialized_version = AsSerializableWithType(dm.Payload, 'neo.Network.Payloads.VersionPayload.VersionPayload')
+        deserialized_version = IOHelper.AsSerializableWithType(dm.Payload, 'neo.Network.Payloads.VersionPayload.VersionPayload')
 
 
         self.assertEqual(deserialized_version.Port, self.port)

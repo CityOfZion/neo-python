@@ -60,6 +60,7 @@ class ScriptBuilder(object):
         return
 
     def ToArray(self):
+        self.ms.flush()
         return self.ms.ToArray()
 
 

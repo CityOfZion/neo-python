@@ -3,16 +3,20 @@ from .MemoryStream import MemoryStream
 from .BinaryReader import BinaryReader
 import importlib
 
-def AsSerializableWithType(buffer, class_name):
 
-    module = '.'.join(class_name.split('.')[:-1])
-    klassname = class_name.split('.')[-1]
-    klass = getattr(importlib.import_module(module), klassname)
-    serializable = klass()
+class Helper(object):
 
-    mstream = MemoryStream(buffer)
-    reader = BinaryReader(mstream)
+    @staticmethod
+    def AsSerializableWithType(buffer, class_name):
 
-    serializable.Deserialize(reader)
+        module = '.'.join(class_name.split('.')[:-1])
+        klassname = class_name.split('.')[-1]
+        klass = getattr(importlib.import_module(module), klassname)
+        serializable = klass()
 
-    return serializable
+        mstream = MemoryStream(buffer)
+        reader = BinaryReader(mstream)
+
+        serializable.Deserialize(reader)
+
+        return serializable

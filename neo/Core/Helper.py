@@ -35,7 +35,7 @@ class Helper(object):
         writer = BinaryWriter(ms)
 
         value.Serialize(writer)
-
+        ms.flush()
         return ms.ToArray()
 
     @staticmethod

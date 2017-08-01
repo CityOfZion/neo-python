@@ -60,7 +60,6 @@ class TransactionOutput(SerializableMixin):
         self.ScriptHash = ScriptHash
 
     def Serialize(self, writer):
-        print("self asset id: %s " % self.AssetId)
         writer.WriteUInt256(self.AssetId)
         writer.WriteDouble(float(self.Value))
         writer.WriteUInt160(self.ScriptHash)
@@ -241,7 +240,7 @@ class Transaction(Inventory, InventoryMixin):
             witness.Deserialize(reader)
             tx.scripts = [witness]
         except Exception as e:
-            print("no scripts to read")
+            pass
 
 
         tx.OnDeserialized()
@@ -337,7 +336,6 @@ class Transaction(Inventory, InventoryMixin):
         writer.WriteSerializableArray(self.scripts)
 
     def SerializeUnsigned(self, writer):
-        print("writing tx: %s " % self.Type)
         writer.WriteByte(self.Type)
         writer.WriteByte(self.Version)
         self.SerializeExclusiveData(writer)

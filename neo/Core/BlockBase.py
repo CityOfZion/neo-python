@@ -102,6 +102,7 @@ class BlockBase(VerifiableMixin):
         writer = BinaryWriter(ms)
 
         self.SerializeUnsigned(writer)
+        ms.flush()
         return ms.ToArray()
 
 

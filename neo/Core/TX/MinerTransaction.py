@@ -21,7 +21,6 @@ class MinerTransaction(Transaction):
         self.Type = TransactionType.MinerTransaction
 
     def SerializeExclusiveData(self, writer):
-        print("writing nonce! %s " % self.Nonce)
         writer.WriteUInt32(self.Nonce)
 
 

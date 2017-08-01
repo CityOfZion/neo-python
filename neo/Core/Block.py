@@ -89,6 +89,7 @@ class Block(BlockBase, InventoryMixin):
     #  < param name = "reader" > 数据来源 < / param >
     def Deserialize(self, reader):
         super(Block,self).Deserialize(reader)
+        self.Transactions = []
         byt = reader.ReadVarInt()
         transaction_length = byt
 
@@ -125,7 +126,7 @@ class Block(BlockBase, InventoryMixin):
 
         block.DeserializeUnsigned(reader)
         reader.ReadByte()
-        block.Script = reader.ReadSerializableArray()
+        block.Script = reader.ReadSerializableArray('neo.Core.Witness.Witness')
         block.Transactions = []
         for i in range(0, reader.ReadVarInt()):
             block.Transactions[i] = transaction_method( reader.ReadSerializableArray())
@@ -173,7 +174,7 @@ class Block(BlockBase, InventoryMixin):
         writer.WriteByte(1)
         writer.WriteSerializableArray(self.Script)
         writer.WriteSerializableArray([tx.Hash() for tx in self.Transactions])
-
+        ms.flush()
         return ms.ToArray()
 
     # < summary >

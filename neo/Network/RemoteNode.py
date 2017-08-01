@@ -21,7 +21,7 @@ from .Payloads.VersionPayload import VersionPayload
 from .Message import Message
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction
-from neo.IO.Helper import AsSerializableWithType
+from neo.IO.Helper import Helper as IOHelper
 import asyncio
 from gevent import monkey
 import pprint
@@ -290,13 +290,13 @@ class RemoteNode(object):
 
         self.__log.debug("ON MESSAGE RECEIVED:::::::::: %s " % message.Command)
         if message.Command == "addr":
-            self.OnAddrMessageReceived( AsSerializableWithType(message.Payload, 'neo.Network.Payloads.AddrPayload.AddrPayload') )
+            self.OnAddrMessageReceived( IOHelper.AsSerializableWithType(message.Payload, 'neo.Network.Payloads.AddrPayload.AddrPayload') )
 
         elif message.Command == "block":
-            self.OnInventoryReceived( AsSerializableWithType(message.Payload, 'neo.Core.Block.Block'))
+            self.OnInventoryReceived( IOHelper.AsSerializableWithType(message.Payload, 'neo.Core.Block.Block'))
 
         elif message.Command == 'consensus':
-            self.OnInventoryReceived(AsSerializableWithType(message.Payload, 'neo.Network.Payloads.ConsensusPayload.ConsensusPayload'))
+            self.OnInventoryReceived(IOHelper.AsSerializableWithType(message.Payload, 'neo.Network.Payloads.ConsensusPayload.ConsensusPayload'))
 
         elif message.Command == 'filteradd':
             pass
@@ -311,19 +311,19 @@ class RemoteNode(object):
             self.OnGetAddrMessageReceived()
 
         elif message.Command == 'getblocks':
-            self.OnGetBlocksMessageReceived(AsSerializableWithType(message.Payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload'))
+            self.OnGetBlocksMessageReceived(IOHelper.AsSerializableWithType(message.Payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload'))
 
         elif message.Command == 'getdata':
-            self.OnGetDataMessageReceived(AsSerializableWithType( message.Payload, 'neo.Network.Payloads.InvPayload.InvPayload'))
+            self.OnGetDataMessageReceived(IOHelper.AsSerializableWithType( message.Payload, 'neo.Network.Payloads.InvPayload.InvPayload'))
 
         elif message.Command == 'getheaders':
-            self.OnGetHeadersMessageReceived(AsSerializableWithType(message.Payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload'))
+            self.OnGetHeadersMessageReceived(IOHelper.AsSerializableWithType(message.Payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload'))
 
         elif message.Command == 'headers':
-            self.OnHeadersMessageReceived(AsSerializableWithType(message.Payload, 'neo.Network.Payloads.HeadersPayload.HeadersPayload'))
+            self.OnHeadersMessageReceived(IOHelper.AsSerializableWithType(message.Payload, 'neo.Network.Payloads.HeadersPayload.HeadersPayload'))
 
         elif message.Command == 'inv':
-            self.OnInvMessageReceived( AsSerializableWithType(message.Payload, 'neo.Network.Payloads.InvPayload.InvPayload'))
+            self.OnInvMessageReceived( IOHelper.AsSerializableWithType(message.Payload, 'neo.Network.Payloads.InvPayload.InvPayload'))
 
         elif message.Command == 'mempool':
             self.OnMemPoolMessageReceived()
@@ -407,7 +407,7 @@ class RemoteNode(object):
 
 
         try:
-            self.Version = AsSerializableWithType(message.Payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
+            self.Version = IOHelper.AsSerializableWithType(message.Payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
 
         except Exception as e:
             print("exception getting version: %s " % e)

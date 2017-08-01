@@ -34,9 +34,6 @@ class BinaryWriter(object):
             self.stream.write(value.enconde('utf-8'))
         elif type(value) is int:
             self.stream.write(bytes([value]))
-        else:
-            #raise Exception("Could not write byte for type: %s " % type(value))
-            print("Colud not write byte for type: %s " % type(value))
 
     def WriteBytes(self, value):
         try:
