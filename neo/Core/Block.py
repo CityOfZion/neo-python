@@ -100,9 +100,10 @@ class Block(BlockBase, InventoryMixin):
             tx = Transaction.DeserializeFrom(reader)
             self.Transactions.append(tx)
 
-        if MerkleTree.ComputeRoot( [tx.Hash() for tx in self.Transactions]) != self.MerkleRoot:
-#            raise Exception('Invalid Format')
+        if MerkleTree.ComputeRoot( [tx.HashToString() for tx in self.Transactions]) != self.MerkleRoot:
             self.__log.debug("invalid formattt!! merkle root mismatch")
+            print("merkle root mismatch!!!")
+
 
     #  < summary >
     #  比较当前区块与指定区块是否相等
@@ -142,9 +143,10 @@ class Block(BlockBase, InventoryMixin):
     # 根据区块中所有交易的Hash生成MerkleRoot
     # < / summary >
     def RebuildMerkleRoot(self):
+        self.__log.debug("Rebuilding merlke root!")
         if self.Transactions is not None and len(self.Transactions) > 0:
-            hashes = [tx.Hash() for tx in self.Transactions]
-            self.MerkleRoot = MerkleTree.ComputeRoot([tx.Hash() for tx in self.Transactions])
+#            hashes = [tx.HashToString() for tx in self.Transactions]
+            self.MerkleRoot = MerkleTree.ComputeRoot([tx.HashToString() for tx in self.Transactions])
 
     # < summary >
     # 序列化

@@ -155,7 +155,6 @@ class RemoteNode(object):
         self.__log.debug("GET Data Message Received")
         for hash in payload.DistinctHashes():
 
-
             inventory = None
             #no caching for now
             #if (!localNode.RelayCache.TryGet(hash, out inventory) & & !localNode.ServiceEnabled)

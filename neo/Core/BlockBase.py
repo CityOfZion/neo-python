@@ -106,8 +106,6 @@ class BlockBase(VerifiableMixin):
 
     def SerializeUnsigned(self, writer):
         writer.WriteUInt32(self.Version)
-        print("prev hash %s " % self.PrevHash)
-        print("prev hash unhex %s " % binascii.unhexlify(self.PrevHash))
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt256(self.MerkleRoot)
         writer.WriteUInt32(self.Timestamp)

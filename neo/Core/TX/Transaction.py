@@ -142,6 +142,10 @@ class Transaction(Inventory, InventoryMixin):
             self.__hash = Crypto.Hash256( ba )
         return self.__hash
 
+    def HashHex(self):
+        return binascii.hexlify(self.Hash())
+
+
     def HashToString(self):
         ba = bytearray(self.Hash())
         ba.reverse()

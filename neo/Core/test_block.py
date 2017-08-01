@@ -1,15 +1,10 @@
 
 import unittest
-#from neo.Core.Blockchain import Blockchain
-from neo.Blockchain import GetBlockchain
 from neo.Blockchain import GetGenesis
-from neo.Blockchain import GetSystemCoin
-from neo.Blockchain import GetSystemShare
 import binascii
 from neo.IO.Helper import Helper
-import io
-from neo.Core.Witness import Witness
 
+from neo.Cryptography.MerkleTree import MerkleTree
 
 class BlocksTestCase(unittest.TestCase):
 
@@ -95,6 +90,11 @@ class BlocksTestCase(unittest.TestCase):
         out = bytes(block.HashToString().encode('utf-8'))
         self.assertEqual(out, self.rb_hash)
 
+        root = MerkleTree.ComputeRoot([tx.HashToString() for tx in block.Transactions])
+        self.assertEqual(root, block.MerkleRoot)
+
+
+
     def test_block_two(self):
         hexdata = binascii.unhexlify(self.b2raw)
 
@@ -128,6 +128,9 @@ class BlocksTestCase(unittest.TestCase):
 
         txhash = tx.HashToString()
         self.assertEqual(txhash, self.b2tx_id)
+
+        root = MerkleTree.ComputeRoot([tx.HashToString() for tx in block.Transactions])
+        self.assertEqual(root, block.MerkleRoot)
 
     def test_genesis_block(self):
         return
