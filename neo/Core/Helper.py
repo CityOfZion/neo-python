@@ -42,6 +42,18 @@ class Helper(object):
     def ToScriptHash(scripts):
         return Crypto.Hash160(scripts)
 
+
+    @staticmethod
+    def RawBytesToScriptHash(raw):
+        rawh = binascii.unhexlify(raw)
+
+        rawhashstr = binascii.unhexlify(bytes(Crypto.Hash160(rawh), encoding='utf-8'))
+#        h160bytes = bytearray(rawhashstr)
+#        h160bytes.reverse()
+#        out = bytes(h160bytes.hex(), encoding='utf-8')
+#        return out
+        return rawhashstr
+
     @staticmethod
     def VerifyScripts(verifiable):
 

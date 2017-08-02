@@ -48,7 +48,7 @@ class TransactionType(object):
 class TransactionOutput(SerializableMixin):
 
 
-    Value = None
+    Value = None # should be fixed 8
     ScriptHash = None
     AssetId = None
 
@@ -61,12 +61,12 @@ class TransactionOutput(SerializableMixin):
 
     def Serialize(self, writer):
         writer.WriteUInt256(self.AssetId)
-        writer.WriteDouble(float(self.Value))
+        writer.WriteInt64(self.Value.value)
         writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
         self.AssetId = reader.ReadUInt256()
-        self.Value = reader.ReadDouble()
+        self.Value = Fixed8(reader.readInt64)
         self.ScriptHash = reader.ReadUInt160()
 
 
@@ -100,7 +100,7 @@ class Transaction(Inventory, InventoryMixin):
 
     Type = None
 
-    Version = None
+    Version = 0
 
     Attributes = []
 
@@ -110,7 +110,7 @@ class Transaction(Inventory, InventoryMixin):
 
     scripts = []
 
-    systemFee = Fixed8(0)
+    systemFee = 0
 
     InventoryType = InventoryType.TX
 
@@ -130,15 +130,13 @@ class Transaction(Inventory, InventoryMixin):
         self.outputs = outputs
         self.Attributes= attributes
         self.scripts = scripts
-        self.Type = None
         self.InventoryType = 0x01  # InventoryType TX 0x01
         self.systemFee = self.SystemFee()
 
 
     def Hash(self):
         if not self.__hash:
-            hashdata = Helper.GetHashData(self)
-            ba = bytearray(binascii.unhexlify(hashdata))
+            ba = bytearray(binascii.unhexlify(self.GetHashData()))
             self.__hash = Crypto.Hash256( ba )
         return self.__hash
 
@@ -150,6 +148,9 @@ class Transaction(Inventory, InventoryMixin):
         ba = bytearray(self.Hash())
         ba.reverse()
         return binascii.hexlify(ba)
+
+    def GetHashData(self):
+        return Helper.GetHashData(self)
 
     def NetworkFee(self):
         if self.__network_fee == -Fixed8.Satoshi():
@@ -346,6 +347,7 @@ class Transaction(Inventory, InventoryMixin):
         writer.WriteSerializableArray(self.Attributes)
         writer.WriteSerializableArray(self.inputs)
         writer.WriteSerializableArray(self.outputs)
+
 
     def SerializeExclusiveData(self, writer):
         # ReWrite in RegisterTransaction and IssueTransaction#

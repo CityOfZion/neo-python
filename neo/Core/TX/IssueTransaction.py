@@ -18,10 +18,7 @@ class IssueTransaction(Transaction):
     def __init__(self, *args, **kwargs):
         super(IssueTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.IssueTransaction  # 0x40
-        self.Nonce = self.GenNonce()
 
-    def GenNonce(self):
-        return random.randint(268435456, 4294967295)
 
     def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""

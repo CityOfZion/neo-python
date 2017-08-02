@@ -33,14 +33,14 @@ In English:
          # 3. For point coupons, you can use any pattern;
 """
 
-    def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=0, precision=0, issuer=None, admin=None):
+    def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), precision=0, owner=None, admin=None):
         super(RegisterTransaction, self).__init__(inputs, outputs)
-        self.TransactionType = TransactionType.RegisterTransaction  # 0x40
+        self.Type = TransactionType.RegisterTransaction  # 0x40
 
         self.AssetType = assettype
         self.Name = assetname
         self.Amount = amount  # Unlimited Mode: -0.00000001
-        self.Issuer = issuer
+        self.Owner = owner
         self.Admin = admin
         self.Precision = precision
 
@@ -60,24 +60,26 @@ In English:
         self.Type = TransactionType.RegisterTransaction
         self.AssetType = reader.ReadByte()
         self.Name = reader.ReadVarString().decode('utf-8')
-        self.Amount = reader.ReadDouble()
+        self.Amount = Fixed8( reader.ReadInt64())
         self.Precision = reader.ReadByte()
 
         pkey = reader.ReadBytes(33)
         ecdsa = ECDSA.decode_secp256r1(pkey)
-        self.Issuer = ecdsa.G
+        self.Owner = ecdsa.G
         self.Admin =reader.ReadUInt160()
 
     def SerializeExclusiveData(self, writer):
         writer.WriteByte(self.AssetType)
-        writer.WriteVarString(self.Name)
-        writer.WriteFloat(float(self.Amount))
+        writer.WriteVarString(self.Name, encoding='utf-8')
+        writer.WriteInt64(self.Amount.value)
         writer.WriteByte(self.Precision)
 
-        if type(self.Issuer) is int:
+        #owner
+        writer.WriteByte(b'\x00')
+#        if type(self.Owner) is int:
 
-            writer.WriteBytes(bytearray(1))
-        else:
-            writer.WriteBytes(self.Issuer.encode_point(True))
+#            writer.WriteBytes(bytearray(1))
+#        else:
+#            writer.WriteBytes(self.Owner.encode_point(True))
 
-        writer.WriteUInt160(self.Admin)
+        writer.WriteUInt160( self.Admin )

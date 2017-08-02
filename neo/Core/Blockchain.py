@@ -9,22 +9,22 @@ from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.Witness import Witness
 from neo.Core.Scripts.ScriptOp import *
 from neo.Core.SpentCoin import SpentCoin
+from neo.Core.Helper import Helper
 from neo.Wallets.Contract import Contract
 from neo import Settings
 from neo.Cryptography.Crypto import *
+from neo.Cryptography.Helper import *
 from collections import Counter
 from neo.Fixed8 import Fixed8
 from datetime import datetime
-from bitarray import bitarray
-from neo.Cryptography.ECCurve import ECDSA
-from events import Events
 from events import Events
 from neo.Cryptography.ECCurve import ECDSA
+import pytz
+
 
 ### not sure of the origin of these
 Issuer = ECDSA.decode_secp256r1( '030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
 Admin = b'Abf2qMs1pzQb8kYk9RuxtUb9jtRKJVuBJt'
-
 
 class Blockchain(object):
 
@@ -57,24 +57,32 @@ class Blockchain(object):
 
     @staticmethod
     def SystemShare():
-        amount =sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL
+        amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL )
+        owner = bytes(0)
+        admin = Crypto.Hash160(ScriptOp.PUSHT)
         return RegisterTransaction([],[], AssetType.AntShare,
                                  "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
-                                 amount, 0, 0, Admin)
+                                 amount,0, owner, admin)
 
     @staticmethod
     def SystemCoin():
-        amount =sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL
+        amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
+
+        owner = 0
+        precision=8
+        admin = Crypto.Hash160(ScriptOp.PUSHF)
+
         return RegisterTransaction([],[], AssetType.AntCoin,
-                                 "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
-                                 amount,0,Issuer, Admin)
+                                         "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
+                                         amount,precision,owner, admin)
 
     @staticmethod
     def GenesisBlock():
 
 
-        prev_hash = 0
-        timestamp = int(datetime(2016, 7, 15, 15, 8, 21 ).timestamp())
+        prev_hash = bytearray(32)
+        timestamp = int(datetime(2016, 7, 15, 15, 8, 21, tzinfo= pytz.utc ).timestamp())
+        print("timestamp: %s " % timestamp)
         index = 0
         consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
         next_consensus = Blockchain.GetConsensusAddress(Blockchain.StandbyValidators())
@@ -84,9 +92,9 @@ class Blockchain(object):
         mt.Nonce = 2083236893
 
         output = TransactionOutput(
-            AssetType.AntShare,
+            Blockchain.SystemShare().HashToString(),
             Blockchain.SystemShare().Amount,
-            Crypto.Hash160( Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators()) )
+            Helper.RawBytesToScriptHash(Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators()))
         )
 
         it = IssueTransaction([],[output],[], [script])
@@ -218,8 +226,7 @@ class Blockchain(object):
     def GetConsensusAddress(validators):
         vlen = len(validators)
         script = Contract.CreateMultiSigRedeemScript(vlen - int((vlen - 1)/3) , validators)
-        hashed = Crypto.Hash160(script)
-        return hashed
+        return Helper.RawBytesToScriptHash(script)
 
     def GetValidators(self, others):
 

@@ -13,17 +13,22 @@ from neo.Helper import big_or_little
 
 class Fixed8:
 
+    value = 0
+
+    D = 100000000
+
 
 
     """docstring for Fixed8"""
     def __init__(self, number):
-        self.f = D(str(number))
+        self.value = number
 
-    def getData(self):
-        hex_str = hex(int(self.f*D('100000000')))[2:]
-        if len(hex_str)%2:
-            hex_str = '0' + hex_str
-        return big_or_little(hex_str)
+
+
+    @staticmethod
+    def FromDecimal(number):
+        out = number * Fixed8.D
+        return Fixed8(out)
 
     @staticmethod
     def Satoshi():

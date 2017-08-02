@@ -93,6 +93,8 @@ class BinaryWriter(object):
     def WriteUInt256(self, value, endian="<", destination_hash=True):
         if type(value) is int:
             value = convert_to_uint256(value)
+        elif type(value) is bytearray:
+            return self.WriteBytes(value)
 
         if destination_hash:
             ba = bytearray(binascii.unhexlify(value))
@@ -130,8 +132,8 @@ class BinaryWriter(object):
         self.WriteVarInt(length, endian)
         return self.WriteBytes(value)
 
-    def WriteVarString(self, value, endian="<"):
-        out = bytearray(value.encode('utf-8'))
+    def WriteVarString(self, value, endian="<", encoding="utf-8"):
+        out = bytearray(value.encode(encoding))
         length = len(out)
         self.WriteVarInt(length, endian)
         return self.WriteBytes(value.encode('utf-8'))

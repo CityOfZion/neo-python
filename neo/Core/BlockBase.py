@@ -21,11 +21,11 @@ class BlockBase(VerifiableMixin):
     #  <summary>
     #  前一个区块的散列值
     #  </summary>
-    PrevHash=None
+    PrevHash= 0
     #  <summary>
     #  该区块中所有交易的Merkle树的根
     #  </summary>
-    MerkleRoot = None
+    MerkleRoot = 0
     #  <summary>
     #  时间戳
     #  </summary>
@@ -107,7 +107,9 @@ class BlockBase(VerifiableMixin):
     def SerializeUnsigned(self, writer):
         writer.WriteUInt32(self.Version)
         writer.WriteUInt256(self.PrevHash)
+
         writer.WriteUInt256(self.MerkleRoot)
+
         writer.WriteUInt32(self.Timestamp)
         writer.WriteUInt32(self.Index)
         writer.WriteUInt64(self.ConsensusData)
