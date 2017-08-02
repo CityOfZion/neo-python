@@ -101,8 +101,7 @@ class Block(BlockBase, InventoryMixin):
             self.Transactions.append(tx)
 
         if MerkleTree.ComputeRoot( [tx.HashToString() for tx in self.Transactions]) != self.MerkleRoot:
-            self.__log.debug("invalid formattt!! merkle root mismatch")
-            print("merkle root mismatch!!!")
+            raise Exception("Merkle Root Mismatch")
 
 
     #  < summary >
@@ -144,9 +143,7 @@ class Block(BlockBase, InventoryMixin):
     # < / summary >
     def RebuildMerkleRoot(self):
         self.__log.debug("Rebuilding merlke root!")
-        print("rebuilding merkle root! %s " % self.MerkleRoot)
         if self.Transactions is not None and len(self.Transactions) > 0:
-#            hashes = [tx.HashToString() for tx in self.Transactions]
             self.MerkleRoot = MerkleTree.ComputeRoot([tx.HashToString() for tx in self.Transactions])
 
     # < summary >

@@ -82,7 +82,6 @@ class Blockchain(object):
 
         prev_hash = bytearray(32)
         timestamp = int(datetime(2016, 7, 15, 15, 8, 21, tzinfo= pytz.utc ).timestamp())
-        print("timestamp: %s " % timestamp)
         index = 0
         consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
         next_consensus = Blockchain.GetConsensusAddress(Blockchain.StandbyValidators())

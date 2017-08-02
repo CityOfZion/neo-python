@@ -107,9 +107,7 @@ class BlockBase(VerifiableMixin):
     def SerializeUnsigned(self, writer):
         writer.WriteUInt32(self.Version)
         writer.WriteUInt256(self.PrevHash)
-
         writer.WriteUInt256(self.MerkleRoot)
-
         writer.WriteUInt32(self.Timestamp)
         writer.WriteUInt32(self.Index)
         writer.WriteUInt64(self.ConsensusData)
@@ -164,7 +162,6 @@ class BlockBase(VerifiableMixin):
         return json
 
     def Verify(self):
-        print("Verifiing block::: %s " % self.Index)
         if self.Hash() == GetGenesis().Hash(): return True
 
         if GetBlockchain().ContainsBlock(self.Hash()): return True

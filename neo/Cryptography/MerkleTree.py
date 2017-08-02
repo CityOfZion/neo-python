@@ -64,9 +64,16 @@ class MerkleTree(object):
                 node.RightChild = leaves[i * 2 + 1]
                 leaves[i * 2 + 1].Parent = node
 
-#            node.Hash = new UInt256(Crypto.Default.Hash256(parents[i].LeftChild.Hash.ToArray().Concat(parents[i].RightChild.Hash.ToArray()).ToArray()));
 
-            node.Hash = Crypto.Hash256(node.LeftChild.Hash + node.RightChild.Hash)
+            lcarray = bytearray(binascii.unhexlify( node.LeftChild.Hash))
+            lcarray.reverse()
+            rcarray = bytearray(binascii.unhexlify(node.RightChild.Hash))
+            rcarray.reverse()
+            hasharray= lcarray + rcarray
+            h = bytearray(Crypto.Hash256(hasharray))
+            h.reverse()
+            node.Hash =  binascii.hexlify(h)
+
         return MerkleTree.__Build(parents)
 
     # < summary >

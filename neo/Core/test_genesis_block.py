@@ -108,13 +108,13 @@ class GenesisBlockTestCase(unittest.TestCase):
         self.assertEqual(block.Index, self.testnet_genesis_index)
         self.assertEqual(block.ConsensusData, self.testnet_genesis_nonce)
         self.assertEqual(block.Timestamp, self.genblock_timestamp)
+        self.assertEqual(block.MerkleRoot, self.testnet_genesis_merkle)
+
         txhashes = [tx.HashToString() for tx in block.Transactions]
         self.assertEqual(txhashes, self.test_genesis_tx_hashes)
 
-        block.MerkleRoot = self.testnet_genesis_merkle
 
         rd = block.RawData()
 
         self.assertEqual(block.RawData(), self.testnet_genesis_raw)
         self.assertEqual(block.HashToString(), self.testnet_genesis_hash)
-#        self.assertEqual(merklehash, self.testnet_genesis_merkle)
