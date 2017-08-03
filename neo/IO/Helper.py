@@ -21,7 +21,7 @@ class Helper(object):
 
             return serializable
         except Exception as e:
-            print("Colud not deserialize %s " % klassname)
+            print("Colud not deserialize %s %s" % (klassname, e))
 
 
         return None

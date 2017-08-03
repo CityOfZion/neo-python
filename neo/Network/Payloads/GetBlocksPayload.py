@@ -18,8 +18,8 @@ class GetBlocksPayload(SerializableMixin):
 
 
     def Deserialize(self, reader):
-        self.HashStart = reader.ReadSerializeableArray(16)
-        self.HashStop = reader.ReadSerializeable()
+        self.HashStart = reader.ReadHashes()
+        self.HashStop = reader.ReadUInt256()
 
 
     def Serialize(self, writer):

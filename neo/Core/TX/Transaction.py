@@ -95,6 +95,7 @@ class TransactionInput(SerializableMixin):
         return self.PrevHash + ":" + self.PrevIndex
 
 
+@logged
 class Transaction(Inventory, InventoryMixin):
 
 
@@ -373,22 +374,28 @@ class Transaction(Inventory, InventoryMixin):
 
 
     def Verify(self, mempool):
+        self.__log.debug("Verifying transaction: %s " % self.HashToString())
         for i in range(1, len(self.inputs)):
             j=0
             while j < i:
                 j = j+1
                 if self.inputs[i].PrevHash() == self.inputs[j].PrevHash() and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
                     return False
-
+        self.__log.debug("Verified inputs 1")
         for tx in mempool:
             if tx is not self:
                 for ip in self.inputs:
                     if ip in tx.inputs:
                         return False
 
+
+        self.__log.debug("Verified inputs 2, checking double spend")
+
         if GetBlockchain().IsDoubleSpend(self):
             return False
 
+
+        self.__log.debug("verifying outputs ...")
         for txOutput in self.outputs:
             asset = GetBlockchain().GetAssetState(txOutput.AssetId)
 
@@ -396,6 +403,9 @@ class Transaction(Inventory, InventoryMixin):
 
             if txOutput.Value % pow(10, 8 - asset.Precision) != 0:
                 return False
+
+        self.__log.debug("unimplemented after here ...")
+        return True
 
         txResults = self.GetTransactionResults()
 

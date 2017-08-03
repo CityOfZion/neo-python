@@ -98,7 +98,10 @@ class Blockchain(object):
 
         it = IssueTransaction([],[output],[], [script])
 
-        return Block(prev_hash,timestamp,index,consensus_data,next_consensus,script,[mt,Blockchain.SystemShare(),Blockchain.SystemCoin(),it])
+        return Block(prev_hash,timestamp,index,consensus_data,
+                     next_consensus,script,
+                     [mt,Blockchain.SystemShare(),Blockchain.SystemCoin(),it],
+                     True)
 
 
     @staticmethod
@@ -215,10 +218,12 @@ class Blockchain(object):
         # abstract
         pass
 
-    def GetHeader(self, height):
+    def GetHeader(self, hash):
         # abstract
         pass
 
+    def GetHeaderByHeight(self, height):
+        pass
 
 
     @staticmethod

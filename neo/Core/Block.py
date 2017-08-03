@@ -16,6 +16,7 @@ from autologging import logged
 #  区块或区块头
 #  < / summary >
 
+
 @logged
 class Block(BlockBase, InventoryMixin):
 
@@ -37,7 +38,8 @@ class Block(BlockBase, InventoryMixin):
 
 
     def __init__(self, prevHash=None, timestamp=None, index=None,
-                 consensusData=None, nextConsensus=None, script=None, transactions=[]):
+                 consensusData=None, nextConsensus=None,
+                 script=None, transactions=[], build_root=False):
 
         super(Block, self).__init__()
         self.Version = 0
@@ -48,7 +50,8 @@ class Block(BlockBase, InventoryMixin):
         self.NextConsensus = nextConsensus
         self.Script = script
         self.Transactions = transactions
-        self.RebuildMerkleRoot()
+        if build_root:
+            self.RebuildMerkleRoot()
 
     def Header(self):
         if not self.__header:
@@ -87,8 +90,13 @@ class Block(BlockBase, InventoryMixin):
     #  反序列化
     #  < / summary >
     #  < param name = "reader" > 数据来源 < / param >
-    def Deserialize(self, reader):
+    def Deserialize(self, reader, is_header=False):
         super(Block,self).Deserialize(reader)
+
+
+        if is_header:
+            return
+
         self.Transactions = []
         byt = reader.ReadVarInt()
         transaction_length = byt
@@ -129,7 +137,10 @@ class Block(BlockBase, InventoryMixin):
         block.Script = reader.ReadSerializableArray('neo.Core.Witness.Witness')
         block.Transactions = []
         for i in range(0, reader.ReadVarInt()):
-            block.Transactions[i] = transaction_method( reader.ReadSerializableArray())
+            tx = Transaction.DeserializeFrom(reader)
+            block.Transactions.append(tx)
+
+        return block
 
     # < summary >
     # 获得区块的HashCode
@@ -159,8 +170,9 @@ class Block(BlockBase, InventoryMixin):
     # < / summary >
     # < returns > 返回json对象 < / returns >
     def ToJson(self):
-
-        return super(Block, self).ToJson()
+        json = super(Block, self).ToJson()
+        json['tx'] = [tx.ToJson() for tx in self.Transactions]
+        return json
 
     # < summary >
     # 把区块对象变为只包含区块头和交易Hash的字节数组，去除交易数据
@@ -172,7 +184,7 @@ class Block(BlockBase, InventoryMixin):
 
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
-        writer.WriteSerializableArray(self.Script)
+        self.Script.serialize(writer)
         writer.WriteSerializableArray([tx.Hash() for tx in self.Transactions])
         ms.flush()
         return ms.ToArray()
@@ -190,19 +202,22 @@ class Block(BlockBase, InventoryMixin):
         res = super(Block, self).Verify()
         if not res: return False
 
-        for tx in self.Transactions:
+        #first TX has to be a miner transaction. other tx after that cant be miner tx
+        if self.Transactions[0].Type != TransactionType.MinerTransaction: return False
+        for tx in self.Transactions[1:]:
             if tx.Type == TransactionType.MinerTransaction: return False
 
-        bc = GetBlockchain()
 
         if completely:
+            bc = GetBlockchain()
+
             if self.NextConsensus != GetConsensusAddress(bc.GetValidators(self.Transactions).ToArray()):
                 return False
             
             for tx in self.Transactions:
                 if not tx.Verify():
                     pass
-
+            self.__log.debug("Blocks cannot be fully validated at this moment.  please pass completely=False")
             raise NotImplementedError()
             ## do this below!
             #foreach(Transaction tx in Transactions)

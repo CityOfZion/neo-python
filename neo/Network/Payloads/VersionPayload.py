@@ -7,8 +7,10 @@ from neo.Core.Blockchain import Blockchain
 import sys
 import ctypes
 import datetime
+from autologging import logged
 
 
+@logged
 class VersionPayload(SerializableMixin):
 
 
@@ -18,7 +20,7 @@ class VersionPayload(SerializableMixin):
     Port = None
     Nonce = None
     UserAgent = None
-    StartHeight = 1
+    StartHeight = 0
     Relay = False
 
     def __init__(self, port=None, nonce=None, userAgent=None):
@@ -43,13 +45,16 @@ class VersionPayload(SerializableMixin):
 
 
     def Deserialize(self, reader):
+        self.__log.debug("DESERIALIZING VERSION!!!!")
         self.Version = reader.ReadUInt32()
+
         self.Services = reader.ReadUInt64()
         self.Timestamp = reader.ReadUInt32()
         self.Port = reader.ReadUInt16()
         self.Nonce = reader.ReadUInt32()
         self.UserAgent = reader.ReadVarString().decode('utf-8')
         self.StartHeight = reader.ReadUInt32()
+        self.__log.debug("VERSION START HEIGH:T %s " % self.StartHeight)
         self.Relay = reader.ReadBool()
 
     def Serialize(self, writer):

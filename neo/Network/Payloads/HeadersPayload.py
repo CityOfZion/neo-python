@@ -15,7 +15,7 @@ class HeadersPayload(SerializableMixin):
 
 
     def Deserialize(self, reader):
-        self.Headers = reader.ReadSerializableArray(2000)
+        self.Headers = reader.ReadSerializableArray('neo.Core.Block.Block', True)
 
     def Serialize(self, writer):
         writer.Write(self.Headers)

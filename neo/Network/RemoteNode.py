@@ -214,6 +214,7 @@ class RemoteNode(object):
 
 
     def OnHeadersMessageReceived(self, payload):
+        self.__log.debug("ON Headers message received: %s " % payload)
         if Blockchain.Default() is None: return
 
         Blockchain.Default().AddHeaders(payload.Headers)
@@ -232,7 +233,7 @@ class RemoteNode(object):
         blockhash =  inventory.Hash()
 
         self.__log.debug("Received block %s %s " % (inventory.Index, blockhash))
-        self.__log.debug(inventory.ToJson())
+#        self.__log.debug(inventory.ToJson())
 
         if blockhash in self._missions_global:
             self._missions_global.remove( blockhash)
@@ -401,14 +402,18 @@ class RemoteNode(object):
 
         if message_rec is None: return
 
-        if message_rec.Command != 'version':
-            self.__log.debug("command is not version...., disconnecting")
-            self.Disconnect(True)
+        try:
+            if message_rec.Command != 'version':
+                self.__log.debug("command is not version...., disconnecting")
+                self.Disconnect(True)
+                return
+        except Exception as e:
+            print("could not receive message command %s " % e)
             return
 
-
         try:
-            self.Version = IOHelper.AsSerializableWithType(message.Payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
+            self.Version = IOHelper.AsSerializableWithType(message_rec.Payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
+            self.__log.debug("CURRENT VERSION START HEIGHT: %s " % self.Version.StartHeight)
 
         except Exception as e:
             print("exception getting version: %s " % e)
@@ -417,8 +422,8 @@ class RemoteNode(object):
 
         if self.Version.Nonce != self._local_node._nonce:
             self.__log.debug("unequal nonces: %s %s " % (self.Version.Nonce, self._local_node._nonce))
-            self.Disconnect(True)
-            return
+#            self.Disconnect(True)
+#            return
 
         #lock localnode connected peers
 #        if (localNode.connectedPeers.Where(p= > p != this).Any(p= > p.RemoteEndpoint.Address.Equals(
@@ -455,7 +460,7 @@ class RemoteNode(object):
         self.__log.debug("Header height, start height: %s %s" %( Blockchain.Default().HeaderHeight(), self.Version.StartHeight))
 
         if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
-            self.__log.debug("ENCQUING GET HEADERS MESSSSAAGGEGEE %s "  % Blockchain.Default().CurrentHeaderHash())
+            self.__log.debug("XXXXXXXXXXXX ENCQUING GET HEADERS MESSSSAAGGEGEE %s "  % Blockchain.Default().CurrentHeaderHash())
             self.EnqueueMessage("getheaders", GetBlocksPayload(Blockchain.Default().CurrentHeaderHash()),True)
 
         sendloop = asyncio.run_coroutine_threadsafe(self.StartSendLoop(), asyncio.get_event_loop())
@@ -466,7 +471,7 @@ class RemoteNode(object):
             if Blockchain.Default() is not None:
 
                 if len(self._missions)  == 0 and Blockchain.Default().Height() < self.Version.StartHeight:
-                    self.__log.debug("GET BLOCKS MESSAGE %s %s" % Blockchain.Default().CurrentBlockHash())
+                    self.__log.debug("GET BLOCKS MESSAGE %s" % Blockchain.Default().CurrentBlockHash())
                     self.EnqueueMessage("getblocks", GetBlocksPayload(Blockchain.Default().CurrentBlockHash()), True)
 
             timeout = self.HalfHour if len(self._missions) == 0 else self.OneMinute
