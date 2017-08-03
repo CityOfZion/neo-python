@@ -99,7 +99,7 @@ class BinaryReader(object):
     def ReadFixedString(self, length):
         return self.ReadBytes(length).rstrip(b'\x00')
 
-    def ReadSerializableArray(self, class_name, is_header=False):
+    def ReadSerializableArray(self, class_name):
 
         module = '.'.join(class_name.split('.')[:-1])
         klassname = class_name.split('.')[-1]
@@ -110,10 +110,7 @@ class BinaryReader(object):
         try:
             for i in range(0, length):
                 item = klass()
-                if is_header:
-                    item.Deserialize(self, True)
-                else:
-                    item.Deserialize(self)
+                item.Deserialize(self)
                 items.append(item)
 
         except Exception as e:

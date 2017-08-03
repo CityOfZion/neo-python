@@ -4,6 +4,7 @@ from neo.Core.BlockBase import BlockBase
 from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryReader import BinaryReader
 from bitarray import bitarray
+from neo.Core.Witness import Witness
 
 class Header(BlockBase):
 
@@ -12,8 +13,8 @@ class Header(BlockBase):
 
     def Deserialize(self, reader):
         super(Header, self).Deserialize(reader)
-        if reader.ReadByte() != 0:
-            raise Exception('Incorrect Header Format')
+#        if reader.ReadByte() != 0:
+#            raise Exception('Incorrect Header Format')
 
     def Equals(self, other):
 
@@ -32,7 +33,12 @@ class Header(BlockBase):
 
         header.DeserializeUnsigned(reader)
         reader.ReadByte()
-        header.Script = reader.ReadSerializableArray()
+
+
+        witness = Witness()
+        witness.Deserialize(reader)
+        header.Script = witness
+
 
         return header
 
@@ -43,5 +49,6 @@ class Header(BlockBase):
     def Serialize(self, writer):
 
         super(Header, self).Serialize(writer)
-        writer.WriteByte(0x00)
+        writer.WriteByte(0)
+
 

@@ -90,12 +90,8 @@ class Block(BlockBase, InventoryMixin):
     #  反序列化
     #  < / summary >
     #  < param name = "reader" > 数据来源 < / param >
-    def Deserialize(self, reader, is_header=False):
+    def Deserialize(self, reader):
         super(Block,self).Deserialize(reader)
-
-
-        if is_header:
-            return
 
         self.Transactions = []
         byt = reader.ReadVarInt()
