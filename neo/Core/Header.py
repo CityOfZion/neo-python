@@ -12,9 +12,10 @@ class Header(BlockBase):
         return super(Header,self).Size() + 1
 
     def Deserialize(self, reader):
+        print("DESERIALIZING HEADERRR1")
         super(Header, self).Deserialize(reader)
-#        if reader.ReadByte() != 0:
-#            raise Exception('Incorrect Header Format')
+        if reader.ReadByte() != 0:
+            raise Exception('Incorrect Header Format')
 
     def Equals(self, other):
 
@@ -27,7 +28,7 @@ class Header(BlockBase):
 
         header = Header()
 
-        ms = MemoryStream()
+        ms = MemoryStream(data)
 
         reader = BinaryReader(ms)
 

@@ -60,7 +60,7 @@ class LevelDBBlockchain(Blockchain):
     def __init__(self, path):
         super(LevelDBBlockchain,self).__init__()
         self.__log.debug('Initialized LEVELDB')
-        self._header_index.append(Blockchain.GenesisBlock().HashToString())
+        self._header_index.append(Blockchain.GenesisBlock().HashToByteString())
 
         try:
             self._db = plyvel.DB(path, create_if_missing=True)
@@ -90,11 +90,11 @@ class LevelDBBlockchain(Blockchain):
         if self._stored_header_count == 0:
             headers = []
             for key, value in self._db.iterator(start=DATA_Block):
-                headers.append(  Header.FromTrimmedData(value, key))
+                headers.append(  Header.FromTrimmedData(bytearray(value)[4:], 0))
             sorted(headers, key=lambda h: h.Index)
 
             for h in headers:
-                self._header_index.append(h.HashToString())
+                self._header_index.append(h.HashToByteString())
 
 #        elif current_header_height >= self._current_block_height:
 #            current_hash = current_header_height
@@ -106,11 +106,11 @@ class LevelDBBlockchain(Blockchain):
 
     def AddBlock(self, block):
 
-        self.__log.debug("LEVELDB ADD BLOCK HEIGHT: %s  -- hash -- %s" % (block.Index, block.HashToString()))
+        self.__log.debug("LEVELDB ADD BLOCK HEIGHT: %s  -- hash -- %s" % (block.Index, block.HashToByteString()))
 
         #lock block cache
-        if not block.HashToString() in self._block_cache:
-            self._block_cache[block.HashToString()] = block
+        if not block.Hash() in self._block_cache:
+            self._block_cache[block.Hash()] = block
         #end lock
 
         #lock header index
@@ -141,7 +141,6 @@ class LevelDBBlockchain(Blockchain):
     def ContainsBlock(self,hash):
 
         self.__log.debug("checking if leveldb contains hash %s " % hash)
-        self.__log.debug("return false for now")
 
         header = self.GetHeader(hash)
         if header is not None and header.Index <= self._current_block_height:
@@ -156,12 +155,14 @@ class LevelDBBlockchain(Blockchain):
         #end lock header cache
 
         self.__log.debug("get header from db not implementet yet")
-#        Slice value;
-#        if (!db.TryGet(ReadOptions.Default, SliceBuilder.Begin(DataEntryPrefix.DATA_Block).Add(hash), out value))
-#        return null;
 
-        #return Header.FromTrimmedData(value.ToArray(), sizeof(long));
+        try:
+            out = bytearray(self._db.get(DATA_Block + hash))[4:]
+            self.__log.debug("heade hash from db out %s " % out)
 
+            return Header.FromTrimmedData(out, 0)
+        except Exception as e:
+            print("could not retrive header hash %s" % e)
         return None
 
     def GetHeaderByHeight(self, height):
@@ -186,9 +187,42 @@ class LevelDBBlockchain(Blockchain):
 
         self.__log.debug("Adding headers to LEVELDB: %s " % headers)
 
-        for header in headers:
-            self.__log.debug('Header: %s' % pprint.pprint(header.ToJson()))
+        # lock headers
+        # lock header cache
+        header_index_count = len(self._header_index)
+        with self._db.write_batch() as wb:
+            for header in headers:
+                self.__log.debug('Writing header %s %s' % (header.Index, header.HashToByteString()))
 
+                if header.Index - 1 >= header_index_count: break
+                if header.Index < header_index_count: continue
+                if self._verify_blocks and not header.Verify(): break
+
+                self.OnAddHeader(header, wb)
+                self._header_cache[header.HashToByteString()] = header
+
+        # unlock headers cache
+        # unlock headers
+
+    def OnAddHeader(self, header, wb):
+
+        self.__log.debug("ON add header! %s " % header)
+        self._header_index.append(header.HashToByteString())
+
+#clean up old headers?
+#        while header.Index - 2000 >= self._stored_header_count:
+#            ms = MemoryStream()
+#            w = BinaryWriter(ms)
+#            w.Write(header_index.Skip((int)stored_header_count).Take(2000).ToArray());
+#            w.Flush()
+#            batch.Put(SliceBuilder.Begin(DataEntryPrefix.IX_HeaderHashList).Add(stored_header_count), ms.ToArray());
+#            stored_header_count += 2000;
+
+        self.__log.debug("Will try to add header to leveldb")
+
+        wb.put( DATA_Block + header.HashToByteString(), bytes(4) + header.HashToByteString())
+        wb.put( SYS_CurrentHeader + header.HashToByteString(), header.Index.to_bytes( 4, 'little'))
+        self.__log.debug("added header to leveldb!")
 
     def Persist(self, block):
         pass

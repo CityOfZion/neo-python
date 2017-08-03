@@ -214,7 +214,7 @@ class RemoteNode(object):
 
 
     def OnHeadersMessageReceived(self, payload):
-        self.__log.debug("ON Headers message received: %s " % payload)
+        self.__log.debug("ON Headers message received:")
         if Blockchain.Default() is None: return
 
         Blockchain.Default().AddHeaders(payload.Headers)

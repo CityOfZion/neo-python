@@ -73,6 +73,8 @@ class BlockBase(VerifiableMixin):
 
         return out
 
+    def HashToByteString(self):
+        return bytes(self.HashToString(), encoding='utf-8')
 
     def Size(self):
 
@@ -105,6 +107,13 @@ class BlockBase(VerifiableMixin):
         self.NextConsensus = reader.ReadUInt160()
 
     def SerializeUnsigned(self, writer):
+        print("Serializing index (%s) %s " % ( self.Index, type(self)))
+        print("writing version:                 %s " % self.MerkleRoot)
+        print("writing merkle                   %s " % self.MerkleRoot)
+        print("writing self prevhash            %s " % self.PrevHash)
+        print("writing timestamp                %s " % self.Timestamp)
+        print("wirting consensus data           %s " % self.ConsensusData)
+        print("writing next consensus           %s " % self.NextConsensus)
         writer.WriteUInt32(self.Version)
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt256(self.MerkleRoot)
