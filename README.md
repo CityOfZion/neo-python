@@ -4,6 +4,27 @@ In progress, please reach out in order to contribute
 
 ## Getting started
 
+
+you will need to install the libleveldb library. on OSX:
+```
+brew install leveldb
+```
+
+ubuntu/debian
+```
+apt-get -s install libleveldb-dev
+```
+
+centos/redhat/fedora
+```
+yum -y install libleveldb-dev
+```
+
+windows ( not sure )
+
+
+-------------------
+
 make a python 3 virtual environment, and activate it
 ```
 python3 -m venv venv
