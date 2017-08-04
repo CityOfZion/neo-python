@@ -123,7 +123,6 @@ class LevelDBBlockchain(Blockchain):
                     current_hash = header.PrevHash
 
         else:
-            print("STHOESUTHOESNUTHSONTEUHNSOTEHUSNOTEUHNSOTHEUSTNEOUTHOSETUHOSTENUH")
             with self._db.write_batch() as wb:
                 for key,value in self._db.iterator():
                     wb.delete(key)
@@ -384,7 +383,6 @@ class LevelDBBlockchain(Blockchain):
 
     def Dispose(self):
         self._disposed = True
-        self._async_loop.close()
         Blockchain.DeregisterBlockchain()
         self._header_index=[]
         self._db.close()
