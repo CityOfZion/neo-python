@@ -176,13 +176,9 @@ class LevelDBBlockchain(Blockchain):
 
         try:
             out = bytearray(self._db.get(DATA_Block + hash))[4:]
-            outt = binascii.unhexlify(out)
-            print("getting data from leveldb %s " % out)
-            print("getting data from leveldb %s " % outt)
-
-            self.__log.debug("heade hash from db out %s " % out)
-
-            return Header.FromTrimmedData(outt, 0)
+            outhex = binascii.unhexlify(out)
+            self.__log.debug("heade hash from db out %s " % outhex)
+            return Header.FromTrimmedData(outhex, 0)
         except Exception as e:
             print("could not retrive header hash %s" % e)
         return None
@@ -210,7 +206,6 @@ class LevelDBBlockchain(Blockchain):
         self.AddHeaders( [ header])
 
     def AddHeaders(self, headers):
-        print("adding headers!: %s " % headers[0].HashToByteString())
 
         self.__log.debug("Adding headers to LEVELDB: %s " % headers)
         # lock headers
@@ -254,12 +249,9 @@ class LevelDBBlockchain(Blockchain):
 #            stored_header_count += 2000;
 
         self.__log.debug("Will try to add header to leveldb")
-        print("adding to leveldb")
-        print("will write raw data %s " % header.ToArray())
         wb.put( DATA_Block + hHash, bytes(4) + header.ToArray())
         wb.put( SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))
         self.__log.debug("added header to leveldb!")
-        print("added leveldb")
 
     def Persist(self, block):
         pass

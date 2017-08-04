@@ -48,14 +48,11 @@ class Header(BlockBase):
         reader = BinaryReader(ms)
 
         header.DeserializeUnsigned(reader)
-        print("initial....")
         reader.ReadByte()
-        print("2222")
 
         witness = Witness()
         witness.Deserialize(reader)
         header.Script = witness
-        print("3333")
 
         return header
 

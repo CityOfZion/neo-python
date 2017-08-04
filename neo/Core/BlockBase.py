@@ -145,9 +145,7 @@ class BlockBase(VerifiableMixin):
 
     def Serialize(self, writer):
         self.SerializeUnsigned(writer)
-        print("serializing header")
         writer.WriteByte(1)
-        print("wrote bite")
         self.Script.Serialize(writer)
 
 

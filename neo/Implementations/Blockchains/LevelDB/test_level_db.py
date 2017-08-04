@@ -22,19 +22,18 @@ class LevelDBTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print("setting up!")
         self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH)
         Blockchain.RegisterBlockchain(self._blockchain)
         self._genesis = Blockchain.GenesisBlock()
 
     @classmethod
     def tearDownClass(self):
-        result = self._blockchain.Dispose()
+        self._blockchain.Dispose()
         shutil.rmtree(self.LEVELDB_TESTPATH)
 
 
     def test__initial_state(self):
-        print("test initial state!")
+
         self.assertEqual(self._blockchain.CurrentBlockHash(), self._genesis.HashToByteString())
 
         self.assertEqual(self._blockchain.CurrentHeaderHash(), self._genesis.Header().HashToByteString())
