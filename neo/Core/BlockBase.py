@@ -52,7 +52,7 @@ class BlockBase(VerifiableMixin):
 
     def Hash(self):
         if not self.__hash:
-            hashdata = Helper.GetHashData(self)
+            hashdata = self.RawData()
             ba = bytearray(binascii.unhexlify(hashdata))
 
             hash = bin_dbl_sha256(ba)
@@ -61,6 +61,9 @@ class BlockBase(VerifiableMixin):
             self.__hash = hashhex
 
         return self.__hash
+
+    def ToArray(self):
+        return Helper.ToArray(self)
 
     def RawData(self):
         return Helper.GetHashData(self)
@@ -107,13 +110,13 @@ class BlockBase(VerifiableMixin):
         self.NextConsensus = reader.ReadUInt160()
 
     def SerializeUnsigned(self, writer):
-        print("Serializing index (%s) %s " % ( self.Index, type(self)))
-        print("writing version:                 %s " % self.MerkleRoot)
-        print("writing merkle                   %s " % self.MerkleRoot)
-        print("writing self prevhash            %s " % self.PrevHash)
-        print("writing timestamp                %s " % self.Timestamp)
-        print("wirting consensus data           %s " % self.ConsensusData)
-        print("writing next consensus           %s " % self.NextConsensus)
+#        print("Serializing index (%s) %s " % ( self.Index, type(self)))
+#        print("writing version:                 %s " % self.MerkleRoot)
+#        print("writing merkle                   %s " % self.MerkleRoot)
+#        print("writing self prevhash            %s " % self.PrevHash)
+#        print("writing timestamp                %s " % self.Timestamp)
+#        print("wirting consensus data           %s " % self.ConsensusData)
+#        print("writing next consensus           %s " % self.NextConsensus)
         writer.WriteUInt32(self.Version)
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt256(self.MerkleRoot)
@@ -142,17 +145,16 @@ class BlockBase(VerifiableMixin):
 
     def Serialize(self, writer):
         self.SerializeUnsigned(writer)
+        print("serializing header")
         writer.WriteByte(1)
+        print("wrote bite")
         self.Script.Serialize(writer)
-
 
 
     def NextConsensusToWalletAddress(self):
 
         return hash_to_wallet_address(self.NextConsensus)
 
-    def ToArray(self):
-        raise NotImplementedError()
 
     def ToJson(self):
         json = {}

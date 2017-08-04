@@ -6,13 +6,28 @@ from neo.IO.BinaryReader import BinaryReader
 from bitarray import bitarray
 from neo.Core.Witness import Witness
 
+
 class Header(BlockBase):
+
+
+    def __init__(self, prevhash=None,merlke_root=None,timestamp=None,
+                    index=None, consensus_data=None, next_consenus=None, script=None):
+
+        super(Header, self).__init__()
+
+        self.PrevHash = prevhash
+        self.MerkleRoot = merlke_root
+        self.Timestamp = timestamp
+        self.Index = index
+        self.ConsensusData = consensus_data
+        self.NextConsensus = next_consenus
+        self.Script = script
+
 
     def Size(self):
         return super(Header,self).Size() + 1
 
     def Deserialize(self, reader):
-        print("DESERIALIZING HEADERRR1")
         super(Header, self).Deserialize(reader)
         if reader.ReadByte() != 0:
             raise Exception('Incorrect Header Format')
@@ -33,13 +48,14 @@ class Header(BlockBase):
         reader = BinaryReader(ms)
 
         header.DeserializeUnsigned(reader)
+        print("initial....")
         reader.ReadByte()
-
+        print("2222")
 
         witness = Witness()
         witness.Deserialize(reader)
         header.Script = witness
-
+        print("3333")
 
         return header
 

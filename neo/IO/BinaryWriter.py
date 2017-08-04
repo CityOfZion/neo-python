@@ -127,8 +127,8 @@ class BinaryWriter(object):
             self.WriteByte(0xff)
             return self.WriteUInt64(value, endian)
 
-    def WriteVarBytes(self, value, endian="<"):
-        length = len(binascii.unhexlify(value))
+    def WriteVarBytes(self, value, endian="<", unhexlify=True):
+        length = len(value)
         self.WriteVarInt(length, endian)
         return self.WriteBytes(value)
 

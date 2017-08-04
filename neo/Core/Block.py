@@ -11,7 +11,7 @@ from neo.Cryptography.MerkleTree import MerkleTree
 from json import dumps
 import sys
 from autologging import logged
-
+from neo.Core.Header import Header
 #  < summary >
 #  区块或区块头
 #  < / summary >
@@ -53,19 +53,22 @@ class Block(BlockBase, InventoryMixin):
         if build_root:
             self.RebuildMerkleRoot()
 
+    """
+        'PrevHash' : self.PrevHash,
+        'MerkleRoot' : self.MerkleRoot,
+        'Timestamp' : self.Timestamp,
+        'Index' : self.Index,
+        'ConsensusData' : self.ConsensusData,
+        'NextConsensus' : self.NextConsensus,
+        'Script' : self.Script,
+
+    """
+
     def Header(self):
         if not self.__header:
 
-
-            self.__header = {
-                'PrevHash' : self.PrevHash,
-                'MerkleRoot' : self.MerkleRoot,
-                'Timestamp' : self.Timestamp,
-                'Index' : self.Index,
-                'ConsensusData' : self.ConsensusData,
-                'NextConsensus' : self.NextConsensus,
-                'Script' : self.Script,
-            }
+            self.__header = Header(self.PrevHash, self.MerkleRoot, self.Timestamp,
+                            self.Index, self.ConsensusData, self.NextConsensus, self.Script)
 
         return self.__header
 

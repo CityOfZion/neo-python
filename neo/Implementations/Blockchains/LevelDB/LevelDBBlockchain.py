@@ -6,7 +6,7 @@ import ctypes
 from ctypes import *
 from autologging import logged
 import pprint
-
+import binascii
 
 DATA_Block =        b'\x01'
 DATA_Transaction =  b'\x02'
@@ -29,6 +29,7 @@ SYS_Version =       b'\xf0'
 @logged
 class LevelDBBlockchain(Blockchain):
 
+    _path = None
     _db = None
     _thread = None
     _header_index = []
@@ -39,6 +40,7 @@ class LevelDBBlockchain(Blockchain):
 
     _disposed = False
 
+    _do_cache = False
     _verify_blocks = False
 
     def CurrentBlockHash(self):
@@ -56,19 +58,32 @@ class LevelDBBlockchain(Blockchain):
     def Height(self):
         return self._current_block_height
 
+    def Path(self):
+        return self._path
+
+    def SetDoCache(self, val):
+        self._do_cache = val
+
+    def GetDoCache(self):
+        return self._do_cache
 
     def __init__(self, path):
         super(LevelDBBlockchain,self).__init__()
+        self._path = path
         self.__log.debug('Initialized LEVELDB')
-        self._header_index.append(Blockchain.GenesisBlock().HashToByteString())
+
+        self._header_index = []
+        self._header_index.append(Blockchain.GenesisBlock().Header().HashToByteString())
 
         try:
-            self._db = plyvel.DB(path, create_if_missing=True)
+            self._db = plyvel.DB(self._path, create_if_missing=True)
         except Exception as e:
             print("leveldb unavailable, you may already be running this process: %s " % e)
+            raise Exception('Leveldb Unavailable')
 
 
         version = self._db.get_property(SYS_Version)
+        self.__log.debug("current version %s " % version)
 
         self._current_block_height = self._db.get(SYS_CurrentBlock, 0)
 
@@ -108,10 +123,11 @@ class LevelDBBlockchain(Blockchain):
 
         self.__log.debug("LEVELDB ADD BLOCK HEIGHT: %s  -- hash -- %s" % (block.Index, block.HashToByteString()))
 
-        #lock block cache
-        if not block.Hash() in self._block_cache:
-            self._block_cache[block.Hash()] = block
-        #end lock
+        if self._do_cache:
+            #lock block cache
+            if not block.Hash() in self._block_cache:
+                self._block_cache[block.Hash()] = block
+            #end lock
 
         #lock header index
         header_len = len(self._header_index)
@@ -149,18 +165,24 @@ class LevelDBBlockchain(Blockchain):
         return False
 
     def GetHeader(self, hash):
-        #lock header cache
-        if hash in self._header_cache:
-            return self._header_cache[hash]
-        #end lock header cache
+
+        if self._do_cache:
+            #lock header cache
+            if hash in self._header_cache:
+                return self._header_cache[hash]
+            #end lock header cache
 
         self.__log.debug("get header from db not implementet yet")
 
         try:
             out = bytearray(self._db.get(DATA_Block + hash))[4:]
+            outt = binascii.unhexlify(out)
+            print("getting data from leveldb %s " % out)
+            print("getting data from leveldb %s " % outt)
+
             self.__log.debug("heade hash from db out %s " % out)
 
-            return Header.FromTrimmedData(out, 0)
+            return Header.FromTrimmedData(outt, 0)
         except Exception as e:
             print("could not retrive header hash %s" % e)
         return None
@@ -183,10 +205,14 @@ class LevelDBBlockchain(Blockchain):
 
         return self._header_index[height]
 
+
+    def AddHeader(self, header):
+        self.AddHeaders( [ header])
+
     def AddHeaders(self, headers):
+        print("adding headers!: %s " % headers[0].HashToByteString())
 
         self.__log.debug("Adding headers to LEVELDB: %s " % headers)
-
         # lock headers
         # lock header cache
         header_index_count = len(self._header_index)
@@ -198,8 +224,12 @@ class LevelDBBlockchain(Blockchain):
                 if header.Index < header_index_count: continue
                 if self._verify_blocks and not header.Verify(): break
 
+
+                if self._do_cache:
+                    self._header_cache[header.HashToByteString()] = header
+
                 self.OnAddHeader(header, wb)
-                self._header_cache[header.HashToByteString()] = header
+
 
         # unlock headers cache
         # unlock headers
@@ -207,7 +237,12 @@ class LevelDBBlockchain(Blockchain):
     def OnAddHeader(self, header, wb):
 
         self.__log.debug("ON add header! %s " % header)
-        self._header_index.append(header.HashToByteString())
+
+        hHash = header.HashToByteString()
+
+        if not hHash in self._header_index:
+
+            self._header_index.append(hHash)
 
 #clean up old headers?
 #        while header.Index - 2000 >= self._stored_header_count:
@@ -219,10 +254,21 @@ class LevelDBBlockchain(Blockchain):
 #            stored_header_count += 2000;
 
         self.__log.debug("Will try to add header to leveldb")
-
-        wb.put( DATA_Block + header.HashToByteString(), bytes(4) + header.HashToByteString())
-        wb.put( SYS_CurrentHeader + header.HashToByteString(), header.Index.to_bytes( 4, 'little'))
+        print("adding to leveldb")
+        print("will write raw data %s " % header.ToArray())
+        wb.put( DATA_Block + hHash, bytes(4) + header.ToArray())
+        wb.put( SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))
         self.__log.debug("added header to leveldb!")
+        print("added leveldb")
 
     def Persist(self, block):
         pass
+
+
+    def Dispose(self):
+        Blockchain.DeregisterBlockchain()
+        self._header_index=[]
+        self._db.close()
+        closed = self._db.closed
+        self._db = None
+        return closed

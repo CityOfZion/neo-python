@@ -20,7 +20,7 @@ from datetime import datetime
 from events import Events
 from neo.Cryptography.ECCurve import ECDSA
 import pytz
-
+import traceback
 
 ### not sure of the origin of these
 Issuer = ECDSA.decode_secp256r1( '030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
@@ -305,5 +305,11 @@ class Blockchain(object):
 
     @staticmethod
     def RegisterBlockchain(blockchain):
-        Blockchain.__instance = blockchain
-        print("registered blockchain, instance is: %s " % Blockchain.__instance)
+        if Blockchain.__instance is None:
+            Blockchain.__instance = blockchain
+            print("registered blockchain, instance is: %s an path %s" % (Blockchain.__instance, Blockchain.__instance.Path()))
+
+
+    @staticmethod
+    def DeregisterBlockchain():
+        Blockchain.__instance = None

@@ -47,6 +47,12 @@ class BlocksTestCase(unittest.TestCase):
     b2tx_vout = []
 
 
+    @staticmethod
+    def BlockIndexOne():
+        print("GETTING BLOCK INDEX ONE!")
+        block = Helper.AsSerializableWithType(BlocksTestCase.b2raw, 'neo.Core.Block.Block')
+        return block
+
     def test_block_deserialize(self):
 
         block = Helper.AsSerializableWithType(self.rawblock_hex, 'neo.Core.Block.Block')
