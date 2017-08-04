@@ -279,7 +279,6 @@ class RemoteNode(object):
 
         if len(hashes) < 1: return
 
-        self.__log.debug("Requesting block data for hashes: %s" % hashes)
         self.EnqueueMessage("getdata", InvPayload(payload.Type, hashes))
 
 

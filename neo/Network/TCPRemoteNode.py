@@ -106,7 +106,7 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
         return sock,addr
 
     async def SendMessageAsync(self, message):
-        self.__log.debug("Remote Node Sending message async- Command: %s, payload: \n%s " % (message.Command, message.Payload))
+        self.__log.debug("Remote Node Sending message async- Command: %s " % (message.Command))
         if not self._connected or self.__disposed > 0: return False
 
         ba = binascii.unhexlify( Helper.ToArray(message) )

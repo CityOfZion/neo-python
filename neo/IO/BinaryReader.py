@@ -73,7 +73,6 @@ class BinaryReader(object):
         fb = self.ReadByte()
         if fb is None: return 0
         value = 0
-        self.__log.debug("read var int value %s " % hex(fb))
         if hex(fb) == '0xfd':
             value = self.ReadUInt16()
         elif hex(fb) == '0xfe':

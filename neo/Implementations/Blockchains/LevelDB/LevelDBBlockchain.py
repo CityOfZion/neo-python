@@ -8,6 +8,8 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import ctypes
 import time
+import threading
+
 DATA_Block =        b'\x01'
 DATA_Transaction =  b'\x02'
 
@@ -39,6 +41,7 @@ class LevelDBBlockchain(Blockchain):
     _stored_header_count = 0
 
     _disposed = False
+    _async_loop = None
 
     _verify_blocks = False
 
@@ -120,6 +123,7 @@ class LevelDBBlockchain(Blockchain):
                     current_hash = header.PrevHash
 
         else:
+            print("STHOESUTHOESNUTHSONTEUHNSOTEHUSNOTEUHNSOTHEUSTNEOUTHOSETUHOSTENUH")
             with self._db.write_batch() as wb:
                 for key,value in self._db.iterator():
                     wb.delete(key)
@@ -130,12 +134,10 @@ class LevelDBBlockchain(Blockchain):
         #start a thread for persisting blocks
         #we dont want to do this during testing
         if self._path != './UnitTestChain':
-            executor = ThreadPoolExecutor(max_workers=1)
-            eventloop = asyncio.get_event_loop()
             try:
-                eventloop.run_until_complete(
-                    self.PersistBlocks(executor)
-                )
+                t = threading.Thread(target=self.PersistBlocks)
+                t.daemon=True
+                t.start()
             except Exception as e:
                 print("exception running persist blocks therad %s " % e)
 
@@ -146,6 +148,7 @@ class LevelDBBlockchain(Blockchain):
 
         #lock block cache
         if not block.HashToByteString() in self._block_cache:
+            print("adding block to block cache %s " % self._block_cache)
             self._block_cache[block.HashToByteString()] = block
         #end lock
 
@@ -193,15 +196,21 @@ class LevelDBBlockchain(Blockchain):
             return self._header_cache[hash]
         #end lock header cache
 
-        self.__log.debug("get header from db not implementet yet")
+#        self.__log.debug("get header from db not implementet yet")
 
         try:
-            out = bytearray(self._db.get(DATA_Block + hash))[4:]
+            print("trying to get data....")
+            out = bytearray(self._db.get(DATA_Block + hash))
+            print("get header, out is %s " % out)
+            out = out[4:]
+            print("out is now %s " % out)
             outhex = binascii.unhexlify(out)
             self.__log.debug("heade hash from db out %s " % outhex)
             return Header.FromTrimmedData(outhex, 0)
+        except TypeError:
+            print("hash not found")
         except Exception as e:
-            print("could not retrive header hash %s" % e)
+            print("OTHER ERRROR %s " % e)
         return None
 
     def GetHeaderByHeight(self, height):
@@ -231,7 +240,7 @@ class LevelDBBlockchain(Blockchain):
 
     def AddHeaders(self, headers):
 
-        self.__log.debug("Adding headers to LEVELDB: %s " % headers)
+        self.__log.debug("Adding headers to LEVELDB: ...")
         # lock headers
         # lock header cache
         header_index_count = len(self._header_index)
@@ -254,7 +263,6 @@ class LevelDBBlockchain(Blockchain):
 
     def OnAddHeader(self, header, wb):
 
-        self.__log.debug("ON add header! %s " % header)
 
         hHash = header.HashToByteString()
 
@@ -278,6 +286,12 @@ class LevelDBBlockchain(Blockchain):
 
     def Persist(self, block):
 
+        self.__log.debug("________________________________")
+        self.__log.debug("________________________________")
+        self.__log.debug("PERSISTING BLOCK %s "% block.Index)
+        self.__log.debug("________________________________")
+        self.__log.debug("________________________________")
+
         sn = self._db.snapshot()
 
         accounts = sn.iterator(prefix=ST_Account)
@@ -289,7 +303,8 @@ class LevelDBBlockchain(Blockchain):
         storages = sn.iterator(prefix=ST_Storage)
 
         amount_sysfee = (self.GetSysFeeAmount(block.PrevHash) + block.TotalFees()).to_bytes(4, 'little')
-        print("will write block to db")
+        self.__log.debug("Persisting block with index %s " % block.Index)
+
         with self._db.write_batch() as wb:
 
             wb.put(DATA_Block + block.HashToByteString(), amount_sysfee + block.Trim())
@@ -322,31 +337,41 @@ class LevelDBBlockchain(Blockchain):
             #do save all the accounts, unspent, coins, validators, assets, etc
             #now sawe the current sys block
             wb.put(SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
-            print("saved current block %s " % block.Index)
+            self.__log.debug("Persisted block with index %s " % block.Index)
             self._current_block_height = block.Index
 
-    async def PersistBlocks(self, blocks):
+
+    def PersistBlocks(self):
 
         while not self._disposed:
 
-            await asyncio.sleep(5)
+
+            print("sleeeeeeepy ---------------check new block")
+
+            time.sleep(1)
+            print("sleeeeeeepy ---------------check new block")
 
             while not self._disposed:
                 hash = None
-                print("checking for new blocks ....")
+                print("---------------check new block")
+                self.__log.debug("checking for new block ...")
                 #lock header index
                 if len(self._header_index) <= self._current_block_height + 1: break
-                print("should add block at index %s " % (self._current_block_height + 1))
+                self.__log.debug("should add block at index %s " % (self._current_block_height + 1))
                 hash = self._header_index[self._current_block_height + 1]
                 #end lock header index
 
-
+                print("LOOKING FOR HASH: %s " % hash)
                 block = None
                 #lock block cache
 
-                if not hash in self._block_cache: break
-                block = self._block_cache[hash]
+                if not hash in self._block_cache:
+                    print("hash not in block cache!!!")
+                    print("CURRENT BLOCK CACHE %s " % self._block_cache)
 
+                    break
+                block = self._block_cache[hash]
+                print("block is in block cache, persist!! %s "% block)
                 #end lock block cache
 
                 self.Persist(block)
@@ -359,6 +384,7 @@ class LevelDBBlockchain(Blockchain):
 
     def Dispose(self):
         self._disposed = True
+        self._async_loop.close()
         Blockchain.DeregisterBlockchain()
         self._header_index=[]
         self._db.close()

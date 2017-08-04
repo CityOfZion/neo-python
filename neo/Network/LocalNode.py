@@ -386,7 +386,7 @@ class LocalNode():
 
             if Blockchain.Default() == None: return False
 
-            if Blockchain.Default().ContainsBlock(inventory.Hash()): return False
+            if Blockchain.Default().ContainsBlock(inventory.HashToByteString()): return False
 
             if not Blockchain.Default().AddBlock(inventory): return False
 

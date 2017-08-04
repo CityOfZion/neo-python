@@ -29,7 +29,6 @@ class InvPayload(SerializableMixin):
 
 
     def Serialize(self, writer):
-        self.__log.debug("Will write hashes: %s " % self.Hashes)
         try:
             writer.WriteByte(self.Type)
             writer.WriteHashes(self.Hashes)
