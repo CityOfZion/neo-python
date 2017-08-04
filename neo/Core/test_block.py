@@ -81,7 +81,7 @@ class BlocksTestCase(unittest.TestCase):
         out = bytes(block.HashToString().encode('utf-8'))
         self.assertEqual(out, self.rb_hash)
 
-        root = MerkleTree.ComputeRoot([tx.HashToString() for tx in block.Transactions])
+        root = MerkleTree.ComputeRoot([tx.HashToByteString() for tx in block.Transactions])
         self.assertEqual(root, block.MerkleRoot)
 
 
@@ -117,9 +117,9 @@ class BlocksTestCase(unittest.TestCase):
 
         self.assertEqual(tx.Nonce, self.b2tx_nonce)
 
-        txhash = tx.HashToString()
+        txhash = tx.HashToByteString()
         self.assertEqual(txhash, self.b2tx_id)
 
-        root = MerkleTree.ComputeRoot([tx.HashToString() for tx in block.Transactions])
+        root = MerkleTree.ComputeRoot([tx.HashToByteString() for tx in block.Transactions])
         self.assertEqual(root, block.MerkleRoot)
 

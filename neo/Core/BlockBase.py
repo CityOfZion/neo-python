@@ -89,6 +89,9 @@ class BlockBase(VerifiableMixin):
         return uintsize + 32 + 32 + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
 
 
+    def IndexBytes(self):
+        return self.Index.to_bytes(4, 'little')
+
     def Deserialize(self, reader):
         self.DeserializeUnsigned(reader)
         byt = reader.ReadByte()

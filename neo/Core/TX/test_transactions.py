@@ -29,7 +29,7 @@ class TransactionTestCase(unittest.TestCase):
 
         self.assertEqual(type(tx), MinerTransaction )
 
-        self.assertEqual(tx.HashToString(), self.tx_id)
+        self.assertEqual(tx.HashToByteString(), self.tx_id)
 
         self.assertEqual(tx.Nonce, self.tx_nonce)
 

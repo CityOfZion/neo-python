@@ -274,6 +274,7 @@ class Blockchain(object):
 
     def GetSysFeeAmount(self, hash):
         #abstract
+
         pass
 
     def GetTransaction(self, hash):

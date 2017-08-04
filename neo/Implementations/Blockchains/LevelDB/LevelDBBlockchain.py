@@ -1,13 +1,13 @@
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
-from enum import Enum
+from neo.Core.TX.Transaction import Transaction,TransactionType,TransactionInput, TransactionOutput
 import plyvel
-import ctypes
-from ctypes import *
 from autologging import logged
-import pprint
 import binascii
-
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+import ctypes
+import time
 DATA_Block =        b'\x01'
 DATA_Transaction =  b'\x02'
 
@@ -40,8 +40,9 @@ class LevelDBBlockchain(Blockchain):
 
     _disposed = False
 
-    _do_cache = False
     _verify_blocks = False
+
+    _sysversion = b'/NEO:2.0.1/'
 
     def CurrentBlockHash(self):
         self.__log.debug("Getting Current bolck hash")
@@ -61,11 +62,6 @@ class LevelDBBlockchain(Blockchain):
     def Path(self):
         return self._path
 
-    def SetDoCache(self, val):
-        self._do_cache = val
-
-    def GetDoCache(self):
-        return self._do_cache
 
     def __init__(self, path):
         super(LevelDBBlockchain,self).__init__()
@@ -83,51 +79,75 @@ class LevelDBBlockchain(Blockchain):
 
 
         version = self._db.get_property(SYS_Version)
-        self.__log.debug("current version %s " % version)
 
-        self._current_block_height = self._db.get(SYS_CurrentBlock, 0)
+        if version is not None: #or in the future, if version doesn't equal the current version...
+            self.__log.debug("current version %s " % version)
 
-        current_header_height = self._db.get(SYS_CurrentHeader, self._current_block_height)
+            self._current_block_height = self._db.get(SYS_CurrentBlock, 0)
 
-        self.__log.debug("current header height, hashes %s %s " %(self._current_block_height, self._header_index) )
+            current_header_height = self._db.get(SYS_CurrentHeader, self._current_block_height)
 
-        hashes = []
-        for key, value in self._db.iterator(start=IX_HeaderHashList):
-            hashes.append({'index':key, 'hash':value})
+            print("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
 
-        sorted(hashes, key=lambda i: i['index'])
+            hashes = []
+            for key, value in self._db.iterator(start=IX_HeaderHashList):
+                hashes.append({'index':key, 'hash':value})
 
-        for h in hashes:
-            if not h['hash'] == Blockchain.GenesisBlock().Hash():
-                self._header_index.append(h['hash'])
-            self._stored_header_count += 1
+            sorted(hashes, key=lambda i: i['index'])
 
-        if self._stored_header_count == 0:
-            headers = []
-            for key, value in self._db.iterator(start=DATA_Block):
-                headers.append(  Header.FromTrimmedData(bytearray(value)[4:], 0))
-            sorted(headers, key=lambda h: h.Index)
+            for h in hashes:
+                if not h['hash'] == Blockchain.GenesisBlock().Hash():
+                    self._header_index.append(h['hash'])
+                self._stored_header_count += 1
+            print("hashes: %s " % hashes, self._stored_header_count)
 
-            for h in headers:
-                self._header_index.append(h.HashToByteString())
+            if self._stored_header_count == 0:
+                headers = []
+                for key, value in self._db.iterator(start=DATA_Block):
+                    dbhash = bytearray(value)[4:]
+                    headers.append(  Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
+                sorted(headers, key=lambda h: h.Index)
 
-#        elif current_header_height >= self._current_block_height:
-#            current_hash = current_header_height
-#            while not current_hash == self._header_index[self._stored_header_count -1]:
-#                header = Header.FromTrimmedData( self._db.get(DATA_Block + hash), ctypes.sizeof(ctypes.c_long) )
-#                self._header_index.insert(self._stored_header_count, current_hash)
-#                current_hash = header.PrevHash
+                for h in headers:
+                    self._header_index.append(h.HashToByteString())
+
+            elif current_header_height >= self._current_block_height:
+                current_hash = current_header_height
+                while not current_hash == self._header_index[self._stored_header_count -1]:
+                    dbhash = bytearray(self._db.get(DATA_Block + current_hash))[4:]
+                    header = Header.FromTrimmedData( binascii.unhexlify(dbhash), 0)
+                    self._header_index.insert(self._stored_header_count, current_hash)
+                    current_hash = header.PrevHash
+
+        else:
+            with self._db.write_batch() as wb:
+                for key,value in self._db.iterator():
+                    wb.delete(key)
+
+            self.Persist(Blockchain.GenesisBlock())
+            self._db.put(SYS_Version, self._sysversion )
+
+        #start a thread for persisting blocks
+        #we dont want to do this during testing
+        if self._path != './UnitTestChain':
+            executor = ThreadPoolExecutor(max_workers=1)
+            eventloop = asyncio.get_event_loop()
+            try:
+                eventloop.run_until_complete(
+                    self.PersistBlocks(executor)
+                )
+            except Exception as e:
+                print("exception running persist blocks therad %s " % e)
 
 
     def AddBlock(self, block):
 
         self.__log.debug("LEVELDB ADD BLOCK HEIGHT: %s  -- hash -- %s" % (block.Index, block.HashToByteString()))
 
-        if self._do_cache:
-            #lock block cache
-            if not block.Hash() in self._block_cache:
-                self._block_cache[block.Hash()] = block
-            #end lock
+        #lock block cache
+        if not block.HashToByteString() in self._block_cache:
+            self._block_cache[block.HashToByteString()] = block
+        #end lock
 
         #lock header index
         header_len = len(self._header_index)
@@ -144,6 +164,8 @@ class LevelDBBlockchain(Blockchain):
 
             #do some leveldb stuff here
             self.__log.debug("this is where we add the block to leveldb")
+
+            self.AddHeader(block.Header())
 
             if block.Index < header_len:
                 #new_block_event.Set()
@@ -166,11 +188,10 @@ class LevelDBBlockchain(Blockchain):
 
     def GetHeader(self, hash):
 
-        if self._do_cache:
-            #lock header cache
-            if hash in self._header_cache:
-                return self._header_cache[hash]
-            #end lock header cache
+        #lock header cache
+        if hash in self._header_cache:
+            return self._header_cache[hash]
+        #end lock header cache
 
         self.__log.debug("get header from db not implementet yet")
 
@@ -201,6 +222,9 @@ class LevelDBBlockchain(Blockchain):
 
         return self._header_index[height]
 
+    def GetSysFeeAmount(self, hash):
+        return 0
+
 
     def AddHeader(self, header):
         self.AddHeaders( [ header])
@@ -220,8 +244,7 @@ class LevelDBBlockchain(Blockchain):
                 if self._verify_blocks and not header.Verify(): break
 
 
-                if self._do_cache:
-                    self._header_cache[header.HashToByteString()] = header
+                self._header_cache[header.HashToByteString()] = header
 
                 self.OnAddHeader(header, wb)
 
@@ -254,10 +277,88 @@ class LevelDBBlockchain(Blockchain):
         self.__log.debug("added header to leveldb!")
 
     def Persist(self, block):
-        pass
+
+        sn = self._db.snapshot()
+
+        accounts = sn.iterator(prefix=ST_Account)
+        unspentcoins = sn.iterator(prefix=ST_Coin)
+        spentcoins = sn.iterator(prefix=ST_SpentCoin)
+        validators = sn.iterator(prefix=ST_Validator)
+        assets = sn.iterator(prefix=ST_Asset)
+        contracts = sn.iterator(prefix=ST_Contract)
+        storages = sn.iterator(prefix=ST_Storage)
+
+        amount_sysfee = (self.GetSysFeeAmount(block.PrevHash) + block.TotalFees()).to_bytes(4, 'little')
+        print("will write block to db")
+        with self._db.write_batch() as wb:
+
+            wb.put(DATA_Block + block.HashToByteString(), amount_sysfee + block.Trim())
+
+            for tx in block.Transactions:
+
+                wb.put(DATA_Transaction + tx.HashToByteString(), block.IndexBytes() + tx.ToArray())
+
+                #do a whole lotta stuff with tx here...
+                if tx.Type == TransactionType.RegisterTransaction:
+                    pass
+
+                elif tx.Type == TransactionType.IssueTransaction:
+                    pass
+
+                elif tx.Type == TransactionType.IssueTransaction:
+                    pass
+
+                elif tx.Type == TransactionType.ClaimTransaction:
+                    pass
+
+                elif tx.Type == TransactionType.EnrollmentTransaction:
+                    pass
+
+                elif tx.Type == TransactionType.PublishTransaction:
+                    pass
+                elif tx.Type == TransactionType.InvocationTransaction:
+                    pass
+
+            #do save all the accounts, unspent, coins, validators, assets, etc
+            #now sawe the current sys block
+            wb.put(SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
+            print("saved current block %s " % block.Index)
+            self._current_block_height = block.Index
+
+    async def PersistBlocks(self, blocks):
+
+        while not self._disposed:
+
+            await asyncio.sleep(5)
+
+            while not self._disposed:
+                hash = None
+                print("checking for new blocks ....")
+                #lock header index
+                if len(self._header_index) <= self._current_block_height + 1: break
+                print("should add block at index %s " % (self._current_block_height + 1))
+                hash = self._header_index[self._current_block_height + 1]
+                #end lock header index
+
+
+                block = None
+                #lock block cache
+
+                if not hash in self._block_cache: break
+                block = self._block_cache[hash]
+
+                #end lock block cache
+
+                self.Persist(block)
+                self.OnPersistCompleted(block)
+
+                #lock block cache
+                del self._block_cache[hash]
+                #end lock block cache
 
 
     def Dispose(self):
+        self._disposed = True
         Blockchain.DeregisterBlockchain()
         self._header_index=[]
         self._db.close()

@@ -88,6 +88,9 @@ class Block(BlockBase, InventoryMixin):
 #        return amount_in - amount_out - amount_sysfee;
         return 0
 
+    def TotalFees(self):
+        return sum( tx.systemFee.value for tx in self.Transactions)
+
 
     #  < summary >
     #  反序列化
@@ -107,7 +110,7 @@ class Block(BlockBase, InventoryMixin):
             tx = Transaction.DeserializeFrom(reader)
             self.Transactions.append(tx)
 
-        if MerkleTree.ComputeRoot( [tx.HashToString() for tx in self.Transactions]) != self.MerkleRoot:
+        if MerkleTree.ComputeRoot( [tx.HashToByteString() for tx in self.Transactions]) != self.MerkleRoot:
             raise Exception("Merkle Root Mismatch")
 
 
@@ -154,7 +157,7 @@ class Block(BlockBase, InventoryMixin):
     def RebuildMerkleRoot(self):
         self.__log.debug("Rebuilding merlke root!")
         if self.Transactions is not None and len(self.Transactions) > 0:
-            self.MerkleRoot = MerkleTree.ComputeRoot([tx.HashToString() for tx in self.Transactions])
+            self.MerkleRoot = MerkleTree.ComputeRoot([tx.HashToByteString() for tx in self.Transactions])
 
     # < summary >
     # 序列化
@@ -183,8 +186,8 @@ class Block(BlockBase, InventoryMixin):
 
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
-        self.Script.serialize(writer)
-        writer.WriteSerializableArray([tx.Hash() for tx in self.Transactions])
+        self.Script.Serialize(writer)
+        writer.WriteHashes([tx.HashToByteString() for tx in self.Transactions])
         ms.flush()
         return ms.ToArray()
 

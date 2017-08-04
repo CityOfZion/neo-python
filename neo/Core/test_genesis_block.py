@@ -55,7 +55,7 @@ class GenesisBlockTestCase(unittest.TestCase):
     def test_miner_tx(self):
         miner_tx = MinerTransaction()
         miner_tx.Nonce = 2083236893
-        self.assertEqual(miner_tx.HashToString(), self.gen_miner_tx_id)
+        self.assertEqual(miner_tx.HashToByteString(), self.gen_miner_tx_id)
 
     def test_issue_tx(self):
 
@@ -71,7 +71,7 @@ class GenesisBlockTestCase(unittest.TestCase):
         out = Helper.RawBytesToScriptHash(script)
 
         output = TransactionOutput(
-            share_tx.HashToString(),
+            share_tx.HashToByteString(),
             Blockchain.SystemShare().Amount,
             out
         )
@@ -81,7 +81,7 @@ class GenesisBlockTestCase(unittest.TestCase):
         issue_tx = IssueTransaction([],[output],[], [script])
 
         self.assertEqual(issue_tx.GetHashData(), self.issuetx_rraw)
-        self.assertEqual(issue_tx.HashToString(), self.gen_issue_tx_id)
+        self.assertEqual(issue_tx.HashToByteString(), self.gen_issue_tx_id)
 
     def test_system_share(self):
 
@@ -89,7 +89,7 @@ class GenesisBlockTestCase(unittest.TestCase):
 
         self.assertEqual(type(share_tx), RegisterTransaction)
         self.assertEqual(self.sysshareraw, share_tx.GetHashData())
-        self.assertEqual(self.sys_share_id, share_tx.HashToString())
+        self.assertEqual(self.sys_share_id, share_tx.HashToByteString())
         self.assertEqual(share_tx.Precision, 0)
 
 
@@ -97,7 +97,7 @@ class GenesisBlockTestCase(unittest.TestCase):
         coin_tx = GetSystemCoin()
         self.assertEqual(type(coin_tx), RegisterTransaction)
         self.assertEqual(self.syscoinraw, coin_tx.GetHashData())
-        self.assertEqual(self.sys_coin_id, coin_tx.HashToString())
+        self.assertEqual(self.sys_coin_id, coin_tx.HashToByteString())
         self.assertEqual(coin_tx.Precision, 8)
 
     def test_genesis_block(self):
@@ -110,7 +110,7 @@ class GenesisBlockTestCase(unittest.TestCase):
         self.assertEqual(block.Timestamp, self.genblock_timestamp)
         self.assertEqual(block.MerkleRoot, self.testnet_genesis_merkle)
 
-        txhashes = [tx.HashToString() for tx in block.Transactions]
+        txhashes = [tx.HashToByteString() for tx in block.Transactions]
         self.assertEqual(txhashes, self.test_genesis_tx_hashes)
 
 

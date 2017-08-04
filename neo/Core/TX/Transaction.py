@@ -43,6 +43,8 @@ class TransactionType(object):
     RegisterTransaction = b'\x40'
     ContractTransaction = b'\x80'
     AgencyTransaction = b'\xb0'
+    PublishTransaction = b'\xd0'
+    InvocationTransaction = b'\xd1'
 
 @logged
 class TransactionOutput(SerializableMixin):
@@ -138,17 +140,21 @@ class Transaction(Inventory, InventoryMixin):
     def Hash(self):
         if not self.__hash:
             ba = bytearray(binascii.unhexlify(self.GetHashData()))
-            self.__hash = Crypto.Hash256( ba )
+            hash = Crypto.Hash256(ba)
+            hashhex = binascii.hexlify(hash)
+            self.__hash = hashhex
         return self.__hash
-
-    def HashHex(self):
-        return binascii.hexlify(self.Hash())
 
 
     def HashToString(self):
-        ba = bytearray(self.Hash())
-        ba.reverse()
-        return binascii.hexlify(ba)
+        uint256bytes = bytearray(binascii.unhexlify(self.Hash()))
+        uint256bytes.reverse()
+        out = uint256bytes.hex()
+
+        return out
+
+    def HashToByteString(self):
+        return bytes(self.HashToString(), encoding='utf-8')
 
     def GetHashData(self):
         return Helper.GetHashData(self)
@@ -270,6 +276,9 @@ class Transaction(Inventory, InventoryMixin):
         if other is None or other is not self:
             return False
         return self.Hash() == other.Hash()
+
+    def ToArray(self):
+        return Helper.ToArray(self)
 
     def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""

@@ -39,19 +39,8 @@ class LevelDBTest(unittest.TestCase):
         self.assertEqual(self._blockchain.CurrentHeaderHash(), self._genesis.Header().HashToByteString())
         self.assertEqual(self._blockchain.HeaderHeight(), 0)
 
-        #the genesis block should initially be persisted... but it currently isnt.  for now height is 0 and this test fails
-        #self.assertEqual(self._blockchain.Height(), 1)
+        self.assertEqual(self._blockchain.Height(), 0)
 
-
-
-
-    def test_add_genesis_header(self):
-
-        header = self._genesis.Header()
-        header_hash = header.HashToByteString()
-
-        #this should fail, since genesis header will already be there
-#        add_genesis_header_result = self._blockchain.AddHeader(header)
 
 
     def test_add_header(self):
@@ -75,3 +64,25 @@ class LevelDBTest(unittest.TestCase):
 
         self.assertEqual(type(block_one_again), Header)
         self.assertEqual(block_one_again.HashToByteString(), self.block_one_hash)
+        #check to see if the header hash in correct
+        self.assertEqual(block_one_again.HashToByteString(), self._blockchain.CurrentHeaderHash())
+
+        #now try adding the same block again and see if the height changes
+        self._blockchain.AddHeader(header)
+        self.assertEqual(self._blockchain.HeaderHeight(), 1)
+
+
+        #current block height should still be zero
+        self.assertEqual(self._blockchain.Height(), 0)
+
+
+        #now test adding the second block
+
+        self._blockchain.Persist(block_one)
+
+        #now the block height should be 1
+        self.assertEqual(self._blockchain.Height(), 1)
+
+
+        #test contains block functions
+        self.assertTrue( self._blockchain.ContainsBlock(block_one_again.HashToByteString()))
