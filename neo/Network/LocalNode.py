@@ -11,7 +11,7 @@ from gevent import monkey
 from concurrent.futures import ThreadPoolExecutor
 monkey.patch_all()
 import random
-
+import threading
 from autologging import logged
 
 #outside class def so it can be static
@@ -36,7 +36,7 @@ class LocalNode():
 
     _temppool = set()       # contains transactions
     _hash_set = set()       # contains transactions
-    _known_hashes = set()   # contains transaction hashes (uint256)
+    _known_hashes = []   # contains transaction hashes (uint256)
 
     _cache = None
 
@@ -357,22 +357,28 @@ class LocalNode():
     def LoadState(stream):
         raise NotImplementedError()
 
-    def OnConnected(self, remoteNode):
+    async def OnConnected(self, remoteNode):
 
         #lock connected peres
         self._connected_peers.append(remoteNode)
         #endlock
-        self.__log.debug("connected peers: %s " % [p.ToString() for p in self._connected_peers])
+#        self.__log.debug("connected peers: %s " % [p.ToString() for p in self._connected_peers])
         remoteNode.Disconnected.on_change += self.RemoteNode_Disconnected
         remoteNode.InventoryReceived.on_change += self.RemoteNode_InventoryReceived
         remoteNode.PeersReceived.on_change += self.RemoteNode_PeersReceived
-        return remoteNode.StartProcol()
+        node_name = 'RemoteNode-%s-thread ' % remoteNode.RemoteEndpoint.Address
+        loop = asyncio.get_event_loop()
+        await loop.create_task(remoteNode.StartProcol())
+#        thread = threading.Thread(target=remoteNode.StartProcol,name=node_name, daemon=True)
+#        thread.start()
+#        await remoteNode.StartProcol()
 
 
     async def ProcessWebsocketAsync(self, context):
         raise NotImplementedError()
 
     def Relay(self, inventory):
+
 
         if inventory is MinerTransaction: return False
 
@@ -383,10 +389,11 @@ class LocalNode():
         self.InventoryReceiving.on_change(self, inventory)
 
         if type(inventory) is Block:
-
             if Blockchain.Default() == None: return False
 
-            if Blockchain.Default().ContainsBlock(inventory.HashToByteString()): return False
+            if Blockchain.Default().ContainsBlock(inventory.HashToByteString()):
+#                self.__log.debug("cant add block %s because blockchain already contains it %s " % inventory.HashToByteString())
+                return False
 
             if not Blockchain.Default().AddBlock(inventory): return False
 
@@ -410,9 +417,9 @@ class LocalNode():
 
         #RelayCache.add(inventory)
 
-        for node in self._connected_peers:
-            self.__log.debug("Relaying to remote node %s " % node)
-            relayed |= node.Relay(inventory)
+#        for node in self._connected_peers:
+#            self.__log.debug("Relaying to remote node %s " % node)
+#            relayed |= node.Relay(inventory)
 
         #end lock
         return relayed
@@ -438,14 +445,15 @@ class LocalNode():
             #endlock
 
     def RemoteNode_InventoryReceived(self, sender, inventory):
-        self.__log.debug("remote node inventory received!!! %s %s " % (sender, inventory))
 
         if inventory is Transaction and inventory.Type is not TransactionType.ClaimTransaction and inventory.Type is not TransactionType.IssueTransaction:
+
+
             if Blockchain.Default() is None: return
 
             #lock known hashes
             if inventory.Hash in self._known_hashes: return
-            self._known_hashes.add(inventory.Hash)
+            self._known_hashes.append(inventory.Hash)
             # endlock
 
             self.InventoryReceiving.on_change(self, inventory)
@@ -508,6 +516,7 @@ class LocalNode():
 
 
 
+    @asyncio.coroutine
     def Start(self, port=0, ws_port=0):
         if self._started == 0:
 

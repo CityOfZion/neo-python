@@ -18,5 +18,6 @@ class AddrPayload(SerializableMixin):
 
 
     def Serialize(self, writer):
-        writer.WriteSerializeableArray(self.NetworkAddressesWithTime)
+        for address in self.NetworkAddressesWithTime:
+            address.Serialize(writer)
 

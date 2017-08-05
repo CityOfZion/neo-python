@@ -51,7 +51,6 @@ class GenesisBlockTestCase(unittest.TestCase):
     ]
 
 
-
     def test_miner_tx(self):
         miner_tx = MinerTransaction()
         miner_tx.Nonce = 2083236893

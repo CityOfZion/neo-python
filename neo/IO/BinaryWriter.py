@@ -155,13 +155,14 @@ class BinaryWriter(object):
         for item in array:
             item.Serialize(self)
 
-    def WriteHashes(self, array):
-        length = len(array)
+    def WriteHashes(self, arr):
+        length = len(arr)
         self.WriteUInt8(length)
-        for item in array:
+        for item in arr:
             ba = bytearray(binascii.unhexlify(item))
             ba.reverse()
             self.WriteUInt256(ba,"<",False)
 
+
     def WriteFixed8(self, value):
-        return self.WriteBytes(value.getData())
+        return self.WriteBytes(value.value)

@@ -5,6 +5,7 @@ __pycache__/
 
 #chain
 Chain
+MyChain
 
 # C extensions
 *.so

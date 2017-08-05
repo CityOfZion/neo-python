@@ -13,60 +13,85 @@ import binascii
 
 
 class TransactionAttributeUsage(object):
-    ContractHash = 0x00
+    ContractHash = int.from_bytes(b'\x00','little')
 
-    ECDH02 = 0x02
-    ECDH03 = 0x03
+    ECDH02 = int.from_bytes(b'\x02','little')
+    ECDH03 = int.from_bytes(b'\x03','little')
 
-    Script = 0x20
+    Script = int.from_bytes(b'\x20','little')
 
-    CertUrl = 0x80
-    DescriptionUrl = 0x81
-    Description = 0x90
+    Vote = int.from_bytes(b'\x30','little')
 
-    Hash1 = 0xa1
-    Hash2 = 0xa2
-    Hash3 = 0xa3
-    Hash4 = 0xa4
-    Hash5 = 0xa5
-    Hash6 = 0xa6
-    Hash7 = 0xa7
-    Hash8 = 0xa8
-    Hash9 = 0xa9
-    Hash10 = 0xaa
-    Hash11 = 0xab
-    Hash12 = 0xac
-    Hash13 = 0xad
-    Hash14 = 0xae
-    Hash15 = 0xaf
+    CertUrl = int.from_bytes(b'\x80','little')
+    DescriptionUrl = int.from_bytes(b'\x81','little')
+    Description = int.from_bytes(b'\x90','little')
 
-    Remark = 0xf0
-    Remark1 = 0xf1
-    Remark2 = 0xf2
-    Remark3 = 0xf3
-    Remark4 = 0xf4
-    Remark5 = 0xf5
-    Remark6 = 0xf6
-    Remark7 = 0xf7
-    Remark8 = 0xf8
-    Remark9 = 0xf9
-    Remark10 = 0xfa
-    Remark11 = 0xfb
-    Remark12 = 0xfc
-    Remark13 = 0xfd
-    Remark14 = 0xfe
-    Remark15 = 0xff
+    Hash1 = int.from_bytes(b'\xa1','little')
+    Hash2 = int.from_bytes(b'\xa2','little')
+    Hash3 = int.from_bytes(b'\xa3','little')
+    Hash4 = int.from_bytes(b'\xa4','little')
+    Hash5 = int.from_bytes(b'\xa5','little')
+    Hash6 = int.from_bytes(b'\xa6','little')
+    Hash7 = int.from_bytes(b'\xa7','little')
+    Hash8 = int.from_bytes(b'\xa8','little')
+    Hash9 = int.from_bytes(b'\xa9','little')
+    Hash10 = int.from_bytes(b'\xaa','little')
+    Hash11 = int.from_bytes(b'\xab','little')
+    Hash12 = int.from_bytes(b'\xac','little')
+    Hash13 = int.from_bytes(b'\xad','little')
+    Hash14 = int.from_bytes(b'\xae','little')
+    Hash15 = int.from_bytes(b'\xaf','little')
+
+    Remark = int.from_bytes(b'\xf0','little')
+    Remark1 = int.from_bytes(b'\xf1','little')
+    Remark2 = int.from_bytes(b'\xf2','little')
+    Remark3 = int.from_bytes(b'\xf3','little')
+    Remark4 = int.from_bytes(b'\xf4','little')
+    Remark5 = int.from_bytes(b'\xf5','little')
+    Remark6 = int.from_bytes(b'\xf6','little')
+    Remark7 = int.from_bytes(b'\xf7','little')
+    Remark8 = int.from_bytes(b'\xf8','little')
+    Remark9 = int.from_bytes(b'\xf9','little')
+    Remark10 = int.from_bytes(b'\xfa','little')
+    Remark11 = int.from_bytes(b'\xfb','little')
+    Remark12 = int.from_bytes(b'\xfc','little')
+    Remark13 = int.from_bytes(b'\xfd','little')
+    Remark14 = int.from_bytes(b'\xfe','little')
+    Remark15 = int.from_bytes(b'\xff','little')
 
 
 class TransactionAttribute(Inventory, SerializableMixin):
     """docstring for TransactionAttribute"""
-    def __init__(self, usage, data):
+    def __init__(self, usage=None, data=None):
         super(TransactionAttribute, self).__init__()
         self.Usage = usage
         self.Data = data
 
     def Deserialize(self, reader):
-        pass
+        usage = reader.ReadByte()
+        print("attribute usage: %s " % usage)
+        if usage == TransactionAttributeUsage.ContractHash or usage==TransactionAttributeUsage.Vote or \
+            (usage >= TransactionAttributeUsage.Hash1 or usage <= TransactionAttributeUsage.Hash15):
+
+            self.Data = reader.ReadBytes(32)
+
+        elif usage == TransactionAttributeUsage.ECDH02 or usage == TransactionAttributeUsage.ECDH03:
+
+            self.Data = bytearray(usage) + bytearray(reader.ReadBytes(32))
+
+        elif usage == TransactionAttributeUsage.Script:
+            self.Data = reader.ReadBytes(20)
+
+        elif usage == TransactionAttributeUsage.DescriptionUrl:
+
+            self.Data == reader.ReadBytes(reader.ReadByte())
+
+        elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
+            self.Data = reader.ReadVarBytes()
+
+        else:
+            print("format error!!!")
+
 
     def Serialize(self, writer):
         writer.WriteByte(self.Usage)

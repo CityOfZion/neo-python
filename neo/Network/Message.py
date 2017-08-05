@@ -105,8 +105,8 @@ class Message(SerializableMixin):
                 print("Message command :%s " % message.Command)
                 print("Checksum mismatch: %s " % message.Checksum)
                 print("message payload: %s " % message.Payload)
-
-                raise Exception("invalid checksum")
+                return None
+                #raise Exception("invalid checksum")
 
             return message
 

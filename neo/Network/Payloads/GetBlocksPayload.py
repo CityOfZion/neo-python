@@ -1,7 +1,10 @@
 
 from neo.IO.Mixins import SerializableMixin
 import sys
+from autologging import logged
 
+
+@logged
 class GetBlocksPayload(SerializableMixin):
 
     HashStart = []
@@ -23,8 +26,10 @@ class GetBlocksPayload(SerializableMixin):
 
 
     def Serialize(self, writer):
+        self.__log.debug("Writing hash start... %s " % self.HashStart)
         writer.WriteHashes(self.HashStart)
         if self.HashStop is not None:
             writer.WriteUInt256(self.HashStop)
-        
+        else:
+            writer.WriteUInt256( bytearray(32))
 

@@ -25,7 +25,11 @@ class BinaryReader(object):
         return struct.unpack(fmt, self.stream.read(length))[0]
 
     def ReadByte(self):
-        return ord(self.stream.read(1))
+        try:
+            return ord(self.stream.read(1))
+        except Exception as e:
+            print("ord expected character but got none")
+        return 0
 
     def ReadBytes(self, length):
         value = self.stream.read(length)
@@ -109,7 +113,9 @@ class BinaryReader(object):
         try:
             for i in range(0, length):
                 item = klass()
+                print("created class: %s " % class_name)
                 item.Deserialize(self)
+                print("deserialized class %s" % item)
                 items.append(item)
 
             return items

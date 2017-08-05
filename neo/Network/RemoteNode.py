@@ -28,7 +28,8 @@ import pprint
 monkey.patch_all()
 import binascii
 from autologging import logged
-
+import time
+import threading
 @logged
 class RemoteNode(object):
     """docstring for RemoteNode"""
@@ -44,8 +45,8 @@ class RemoteNode(object):
 
 
     _message_queue = []
-    _missions_global = set() #stores UInt256 hashes
-    _missions = set()        #stores UInt256 hashes
+    _missions_global = [] #stores UInt256 hashes
+    _missions = []        #stores UInt256 hashes
 
     _local_node = None
     _disposed = 0
@@ -79,10 +80,15 @@ class RemoteNode(object):
 
     def EnqueueMessage(self, command, payload=None, is_single=False):
 
-        self.__log.debug("ENQUEUEINGMESSSSSSSAGE:: %s " % command)
         message = Message(command,payload)
-        self._message_queue.append(message)
-        self.__log.debug("MESSAGE QUEUE LENGTH: %s " % len(self._message_queue))
+
+        existing_commands = [m.Command for m in self._message_queue]
+
+        if not is_single or command not in existing_commands:
+
+            self._message_queue.append(message)
+        else:
+            print("not enqueing message.... %s " % command)
 
     def OnAddrMessageReceived(self, payload):
         allpeers = [p.Endpoint for p in payload.AddressList]
@@ -121,20 +127,25 @@ class RemoteNode(object):
 
         #endlock
 
-        self.EnqueueMessage("addr",payload)
+        self.EnqueueMessage("addr",payload, True)
 
     def OnGetBlocksMessageReceived(self, payload):
 
+        self.__log.debug("ON GETBLOCKS MESSAGE RECEIVED!!!!")
         if not self._local_node.ServiceEnabled or Blockchain.Default() is None: return
 
+#        print("payload hash start hash stop: %s %s" % (payload.HashStart, payload.HashStop))
         phashes = [Blockchain.Default().GetHeader(p) for p in payload.HashStart if Blockchain.Default().GetHeader(p) is not None]
         sorted(phashes, key=lambda p: p.Index)
 
+ #       self.__log.debug("PHASHES %s " % phashes)
         if len(phashes) < 1: return
 
         hash = phashes[0]
 
-        if hash == payload.HashStop: return
+        if hash == payload.HashStop:
+#            print("PAYLOAD IS HASH STOP, RETURN...")
+            return
 
         hashes = []
 
@@ -144,6 +155,7 @@ class RemoteNode(object):
 
             if hash is None: break
 
+#            print("HASH IN NOT NOT, adding hash to inv payload: %s " % hash)
             hashes.append(hash)
 
 
@@ -152,9 +164,13 @@ class RemoteNode(object):
 
     def OnGetDataMessageReceived(self, payload):
 
-        self.__log.debug("GET Data Message Received")
+        self.__log.debug("---------------------------------------------")
+        self.__log.debug("---------------------------------------------")
+        self.__log.debug("GET Data Message Received " )
+        self.__log.debug("---------------------------------------------")
+        self.__log.debug("---------------------------------------------")
         for hash in payload.DistinctHashes():
-
+            self.__log.debug("Get Data processing hash %s " % hash)
             inventory = None
             #no caching for now
             #if (!localNode.RelayCache.TryGet(hash, out inventory) & & !localNode.ServiceEnabled)
@@ -220,20 +236,19 @@ class RemoteNode(object):
         Blockchain.Default().AddHeaders(payload.Headers)
 
         if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
-            self.EnqueueMessage("getheaders", GetBlocksPayload(Blockchain.Default().CurrentHeaderHash()))
+            self.EnqueueMessage("getheaders", GetBlocksPayload(Blockchain.Default().CurrentHeaderHash()), True)
 
 
     #receives blocks
     def OnInventoryReceived(self, inventory):
 
+        print("ON INVENTORY RECEIVED...........")
         if inventory is None:
+            print("INVENTORY IS NONE....")
             return
 
         #lock missions global
-        blockhash =  inventory.Hash()
-
-        self.__log.debug("Received block %s %s " % (inventory.Index, blockhash))
-#        self.__log.debug(inventory.ToJson())
+        blockhash =  inventory.HashToString()
 
         if blockhash in self._missions_global:
             self._missions_global.remove( blockhash)
@@ -247,17 +262,30 @@ class RemoteNode(object):
         if type(inventory) is MinerTransaction:
             return
 
+#        print("WILL DISPATCH ON INVENTORY RECEIVED.......")
         self.InventoryReceived.on_change(self, inventory)
 
 
     def OnInvMessageReceived(self, payload):
 
-        self.__log.debug("INV MESSAGE RECEIVED: %s " % payload.Type)
 
         if not payload.Type in InventoryType.AllInventoriesInt():
+            print("payload not in all inventories")
             return
 
-        hashes = payload.DistinctHashes()
+        hashes = []
+
+        if payload.Type == int.from_bytes(InventoryType.Block,'little'):
+#            print("use block hashes!!")
+            hashes = []
+            hashstart = Blockchain.Default().Height() + 1
+            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 5:
+                hashes.append(Blockchain.Default().GetHeaderHash(hashstart))
+                hashstart += 1
+            #        self.__log.debug("Requesting block data for hashes: %s" % hashes[0])
+#            print("requesting hashes %s " % hashes)
+        else:
+            hashes = payload.DistinctHashes()
 
         #lock localnode.knownhashes
         hashes = [h for h in hashes if not h in self._local_node.KnownHashes()]
@@ -270,14 +298,15 @@ class RemoteNode(object):
         if self._local_node.GlobalMissionsEnabled:
             hashes = [h for h in hashes if not h in self._missions_global]
 
-        [self._missions_global.add(h) for h in hashes]
+        [self._missions_global.append(h) for h in hashes]
         #endlock
 
         #lock missions
-        [self._missions.add(h) for h in hashes]
+        [self._missions.append(h) for h in hashes]
         #endlock
 
         if len(hashes) < 1: return
+
 
         self.EnqueueMessage("getdata", InvPayload(payload.Type, hashes))
 
@@ -289,7 +318,9 @@ class RemoteNode(object):
 
     def OnMessageReceived(self, message):
 
-        self.__log.debug("ON MESSAGE RECEIVED:::::::::: %s " % message.Command)
+        if message is None:return
+
+#        self.__log.debug("ON MESSAGE RECEIVED:::::::::: %s " % message.Command)
         if message.Command == "addr":
             self.OnAddrMessageReceived( IOHelper.AsSerializableWithType(message.Payload, 'neo.Network.Payloads.AddrPayload.AddrPayload') )
 
@@ -338,10 +369,11 @@ class RemoteNode(object):
             self.Disconnect(True)
 
 
-        elif message.Command in ["alert","merkleblock","notfound","ping","pong","reject",]:
+        elif message.Command in ["alert","notfound","ping","pong","reject",]:
             pass
 
-
+        elif message.Command == "merkleblock":
+            pass
 
     def ReceiveMessageAsync(self, timeout):
         #abstract
@@ -456,29 +488,33 @@ class RemoteNode(object):
             self.Disconnect(True)
             return
 
-        self.__log.debug("Header height, start height: %s %s" %( Blockchain.Default().HeaderHeight(), self.Version.StartHeight))
+#        self.__log.debug("Header height, start height: %s %s" %( Blockchain.Default().HeaderHeight(), self.Version.StartHeight))
 
         if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
-            self.__log.debug("XXXXXXXXXXXX ENCQUING GET HEADERS MESSSSAAGGEGEE %s "  % Blockchain.Default().CurrentHeaderHash())
+#            self.__log.debug("XXXXXXXXXXXX ENCQUING GET HEADERS MESSSSAAGGEGEE %s "  % Blockchain.Default().CurrentHeaderHash())
             self.EnqueueMessage("getheaders", GetBlocksPayload(Blockchain.Default().CurrentHeaderHash()),True)
 
-        sendloop = asyncio.run_coroutine_threadsafe(self.StartSendLoop(), asyncio.get_event_loop())
-
+#        await asyncio.gather(self.StartSendLoop(), loop=asyncio.get_event_loop())
+#        await asyncio.ensure_future(self.StartSendLoop())
+#        asyncio._run_until_complete(self.StartSendLoop())
+#        await self.StartSendLoop()
+        asyncio.get_event_loop().create_task(self.StartSendLoop())
+#        t = threading.Thread(target=self.StartSendLoop, name='remotenote-sendloop',daemon=True)
+#        t.start()
 
         while self._disposed == 0:
 
             if Blockchain.Default() is not None:
-
                 if len(self._missions)  == 0 and Blockchain.Default().Height() < self.Version.StartHeight:
-                    self.__log.debug("GET BLOCKS MESSAGE %s" % Blockchain.Default().CurrentBlockHash())
-                    self.EnqueueMessage("getblocks", GetBlocksPayload(Blockchain.Default().CurrentBlockHash()), True)
+#                    self.__log.debug("GET BLOCKS MESSAGE %s" % Blockchain.Default().CurrentBlockHash())
+                    self.EnqueueMessage("getblocks", GetBlocksPayload(Blockchain.Default().CurrentBlockHashPlusOne()), True)
 
             timeout = self.HalfHour if len(self._missions) == 0 else self.OneMinute
 
             receive_message_future = await asyncio.wait_for( self.ReceiveMessageAsync(timeout), 10)
 
             if not receive_message_future:
-                print("no message future!: ")
+#                print("no message future!: ")
                 break
 
             try:
@@ -490,14 +526,14 @@ class RemoteNode(object):
 
 
     @asyncio.coroutine
-    def StartSendLoop(self):
+    async def StartSendLoop(self):
         while self._disposed == 0:
 
             message = None
 
             #lock message queue
-            self.__log.debug("MESSAGE QUEUE %s " % len(self._message_queue))
-            self.__log.debug("Commands: %s " % [m.Command for m in self._message_queue])
+#            self.__log.debug("-------------------------------------MESSAGE QUEUE %s " % len(self._message_queue))
+#            self.__log.debug("Commands: %s " % [m.Command for m in self._message_queue])
             if len(self._message_queue) > 0:
 
                 message = self._message_queue[0]
@@ -508,10 +544,9 @@ class RemoteNode(object):
 #                i = 0
 #                while i < 10 and self._disposed == 0:
 #                    i = i +1
-                self.__log.debug("Send loop sleep!")
-                yield from asyncio.sleep(1)
+#                self.__log.debug("Send loop sleep!")
+                await asyncio.sleep(1)
 
             else:
-                self.__log.debug("STARTSENDLOOP Message send: ... %s " % message.Command)
-                msend = yield from asyncio.wait_for( self.SendMessageAsync(message), 10)
-
+ #               self.__log.debug("STARTSENDLOOP Message send: ... %s " % message.Command)
+                await self.SendMessageAsync(message)

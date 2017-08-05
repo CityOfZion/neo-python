@@ -17,7 +17,11 @@ class CLI(object):
         self._blockchain = LevelDBBlockchain( Settings.LEVELDB_PATH )
         Blockchain.RegisterBlockchain(self._blockchain)
         self._localnode = LocalNode()
-        process = self._localnode.Start(20333,20334)
+        self.start_node()
+
+    async def start_node(self):
+
+        await self._localnode.Start(20333, 20334)
 
 
     def SetWallet(self, wallet):

@@ -46,12 +46,8 @@ class Header(BlockBase):
         ms = MemoryStream(data)
 
         reader = BinaryReader(ms)
-        print("from trimmed data...1")
         header.DeserializeUnsigned(reader)
         reader.ReadByte()
-
-
-        print("from trimmed data...2")
 
         witness = Witness()
         witness.Deserialize(reader)

@@ -107,8 +107,13 @@ class Block(BlockBase, InventoryMixin):
             raise Exception('Invalid format')
 
         for i in range(0, transaction_length):
-            tx = Transaction.DeserializeFrom(reader)
-            self.Transactions.append(tx)
+            try:
+                tx = Transaction.DeserializeFrom(reader)
+                self.Transactions.append(tx)
+            except Exception as e:
+                print("could not deserialize tx: %s " % e)
+                print("BLOCK  %s " % self.Index)
+
 
         if MerkleTree.ComputeRoot( [tx.HashToByteString() for tx in self.Transactions]) != self.MerkleRoot:
             raise Exception("Merkle Root Mismatch")

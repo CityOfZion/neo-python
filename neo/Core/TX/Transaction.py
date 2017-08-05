@@ -67,10 +67,15 @@ class TransactionOutput(SerializableMixin):
         writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
+        print("deseiralizing t output")
         self.AssetId = reader.ReadUInt256()
-        self.Value = Fixed8(reader.readInt64)
+        print("asset id %s " % self.AssetId)
+        fval = reader.ReadInt64()
+        print("fval: %s  " % fval)
+        self.Value = Fixed8( fval )
+        print("self value %s " % self.Value)
         self.ScriptHash = reader.ReadUInt160()
-
+        print("self script hash: %s " % self.ScriptHash)
 
 @logged
 class TransactionInput(SerializableMixin):
@@ -234,6 +239,9 @@ class Transaction(Inventory, InventoryMixin):
         from neo.Core.TX.IssueTransaction import IssueTransaction
         from neo.Core.TX.ClaimTransaction import ClaimTransaction
         from neo.Core.TX.MinerTransaction import MinerTransaction
+        from neo.Core.TX.ContractTransaction import ContractTransaction
+
+        print("************ DESERIALIZE FROM ....... TTYPE:::: %s " % ttype)
 
         if ttype == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
             tx = RegisterTransaction()
@@ -243,16 +251,18 @@ class Transaction(Inventory, InventoryMixin):
             tx = IssueTransaction()
         elif ttype == int.from_bytes( TransactionType.ClaimTransaction, 'little'):
             tx = ClaimTransaction()
+        elif ttype == int.from_bytes( TransactionType.ContractTransaction, 'little'):
+            tx = ContractTransaction()
 
         tx.DeserializeUnsignedWithoutType(reader)
 
-
-        try:
-            witness = Witness()
-            witness.Deserialize(reader)
-            tx.scripts = [witness]
-        except Exception as e:
-            pass
+        tx.scripts = []
+        byt = reader.ReadByte()
+        if byt > 0:
+            for i in range(0, byt):
+                witness = Witness()
+                witness.Deserialize(reader)
+                tx.scripts = [witness]
 
 
         tx.OnDeserialized()
@@ -268,8 +278,8 @@ class Transaction(Inventory, InventoryMixin):
         self.Version = reader.ReadByte()
         self.DeserializeExclusiveData(reader)
         self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute')
-        self.inputs = [CoinReference(ref) for ref in reader.ReadSerializableArray('neo.Core.CoinReference.CoinReference')]
-        self.outputs = [TransactionOutput(ref) for ref in reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')]
+        self.inputs = reader.ReadSerializableArray( 'neo.Core.CoinReference.CoinReference')
+        self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
 
 
     def Equals(self, other):

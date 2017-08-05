@@ -106,12 +106,14 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
         return sock,addr
 
     async def SendMessageAsync(self, message):
-        self.__log.debug("Remote Node Sending message async- Command: %s " % (message.Command))
+#        self.__log.debug("Remote Node Sending message async- Command: %s %s" % (message.Command, message.Payload))
         if not self._connected or self.__disposed > 0: return False
 
-        ba = binascii.unhexlify( Helper.ToArray(message) )
+        ba = Helper.ToArray(message)
+
+        ba2 = binascii.unhexlify( ba)
         try:
-            self._socket.sendall(ba)
+            self._socket.sendall(ba2)
             return True
         except Exception as e:
             print("could not send message %s " % e)

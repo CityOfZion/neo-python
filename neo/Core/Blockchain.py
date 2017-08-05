@@ -198,6 +198,9 @@ class Blockchain(object):
         # abstract
         pass
 
+    def GetHeaderHash(self, height):
+        pass
+
     def GetBlock(self, height):
         return self.GetBlockByHash(self.GetBlockHash(height))
 
@@ -308,7 +311,6 @@ class Blockchain(object):
     def RegisterBlockchain(blockchain):
         if Blockchain.__instance is None:
             Blockchain.__instance = blockchain
-            print("registered blockchain, instance is: %s an path %s" % (Blockchain.__instance, Blockchain.__instance.Path()))
 
 
     @staticmethod

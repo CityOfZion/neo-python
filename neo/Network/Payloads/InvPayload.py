@@ -15,7 +15,11 @@ class InvPayload(SerializableMixin):
 
 
     def DistinctHashes(self):
-        return set(self.Hashes)
+        hh = []
+        for h in self.Hashes:
+            if not h in hh:
+                hh.append(h)
+        return hh
 
     def Size(self):
         return sys.getsizeof(self.Type) + sys.getsizeof(self.Hashes)
