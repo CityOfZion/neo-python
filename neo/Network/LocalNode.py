@@ -360,7 +360,9 @@ class LocalNode():
     async def OnConnected(self, remoteNode):
 
         #lock connected peres
+        length = len(self._connected_peers)
         self._connected_peers.append(remoteNode)
+        remoteNode.ServerID = length
         #endlock
 #        self.__log.debug("connected peers: %s " % [p.ToString() for p in self._connected_peers])
         remoteNode.Disconnected.on_change += self.RemoteNode_Disconnected

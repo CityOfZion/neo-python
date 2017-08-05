@@ -144,18 +144,6 @@ class LevelDBBlockchain(Blockchain):
                     if h.Index > 0:
                         self._header_index.append(h.HashToByteString())
 
-            elif current_header_height >= self._stored_header_count:
-
-                while current_header_hash != self._header_index[self._stored_header_count-1]:
-                    db = self._db.get(DATA_Block + current_header_hash)
-                    if db is not None:
-                        dbhash = bytearray(db)[4:]
-                        header = Header.FromTrimmedData( binascii.unhexlify(dbhash), 0)
-                        self._header_index.insert(self._stored_header_count, current_header_hash)
-                        current_header_hash = header.PrevHash
-                    else:
-                        break
-            print("self header index: %s " % len(self._header_index))
 
         else:
             with self._db.write_batch() as wb:
@@ -278,26 +266,31 @@ class LevelDBBlockchain(Blockchain):
 
     def AddHeaders(self, headers):
 
-        self.__log.debug("Adding headers to LEVELDB: ...  " )
+        self.__log.debug("Adding headers to LEVELDB: ... ")
         # lock headers
         # lock header cache
-        with self._db.write_batch() as wb:
-            for header in headers:
+        newheaders = []
+        for header in headers:
 
-                if header.Index - 1 >= len(self._header_index): break
-                if header.Index < len(self._header_index): continue
-                if self._verify_blocks and not header.Verify(): break
+            if header.Index - 1 >= len(self._header_index):
+                print("header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
+                break
+
+            if header.Index < len(self._header_index): continue
+            if self._verify_blocks and not header.Verify(): break
 
 
-                self._header_cache[header.HashToByteString()] = header
+            self._header_cache[header.HashToByteString()] = header
 
-                self.OnAddHeader(header, wb)
+            self.OnAddHeader(header)
 
 
         # unlock headers cache
         # unlock headers
 
-    def OnAddHeader(self, header, wb):
+        return True
+
+    def OnAddHeader(self, header):
 
 
         hHash = header.HashToByteString()
@@ -321,8 +314,10 @@ class LevelDBBlockchain(Blockchain):
 
             print("TRimming stored header index!!!!! %s" % self._stored_header_count)
 
-        wb.put( DATA_Block + hHash, bytes(4) + header.ToArray())
-        wb.put( SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))
+        with self._db.write_batch() as wb:
+            wb.put( DATA_Block + hHash, bytes(4) + header.ToArray())
+            wb.put( SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))
+
 
     def Persist(self, block):
 

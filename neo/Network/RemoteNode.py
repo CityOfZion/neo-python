@@ -32,6 +32,7 @@ import binascii
 from autologging import logged
 import time
 import threading
+from concurrent.futures import ThreadPoolExecutor
 @logged
 class RemoteNode(object):
     """docstring for RemoteNode"""
@@ -45,6 +46,7 @@ class RemoteNode(object):
     OneMinute = 60
     HalfHour = 1800
 
+    ServerID = 0
 
     _message_queue = []
     _missions_global = [] #stores UInt256 hashes
@@ -235,7 +237,8 @@ class RemoteNode(object):
         self.__log.debug("ON Headers message received:")
         if Blockchain.Default() is None: return
 
-        Blockchain.Default().AddHeaders(payload.Headers)
+        executor = ThreadPoolExecutor()
+        yield from asyncio.get_event_loop().run_in_executor(executor,Blockchain.Default().AddHeaders(payload.Headers))
 
         if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
 #            if Blockchain.Default().HeaderHeight() - Blockchain.Default().Height() < 4000:
@@ -284,8 +287,9 @@ class RemoteNode(object):
         if payload.Type == int.from_bytes(InventoryType.Block,'little'):
 #            print("use block hashes!!")
             hashes = []
-            hashstart = Blockchain.Default().Height() + 1
-            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 10:
+            hashstart = Blockchain.Default().Height() + 1 + (5 * self.ServerID)
+            print("remote node id %s requesting blocks at start %s " % (self.ServerID, hashstart))
+            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 5:
                 hashes.append(Blockchain.Default().GetHeaderHash(hashstart))
                 hashstart += 1
             #        self.__log.debug("Requesting block data for hashes: %s" % hashes[0])
@@ -428,6 +432,7 @@ class RemoteNode(object):
 
         return False
 
+    @asyncio.coroutine
     def StartProcol(self):
 
         message = Message("version", VersionPayload(self._local_node._port, self._local_node._nonce, self._local_node.UserAgent))
@@ -521,7 +526,8 @@ class RemoteNode(object):
 
             if not receive_message_future:
                 print("no message future!: ")
-#                break
+                self.Disconnect(True)
+                break
 
             try:
                 self.OnMessageReceived(receive_message_future)

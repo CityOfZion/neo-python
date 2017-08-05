@@ -31,13 +31,15 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
     _connected = False
     __disposed = 0
 
+
     def ToString(self):
         return "TCP Remote Node: %s " % self.ListenerEndpoint.ToAddress()
 
-    def __init__(self, localnode, remote_endpoint=None, sock=None):
+    def __init__(self, localnode, remote_endpoint=None, sock=None, server_id=0):
         super(TCPRemoteNode, self).__init__(localnode)
 
         self.ListenerEndpoint = remote_endpoint
+        self.ServerID = server_id
 
         if remote_endpoint:
             if remote_endpoint.Address == '0.0.0.0':
@@ -86,6 +88,7 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
 
         if self.__disposed == 0 and self._server:
             self._server.shutdown()
+            self._socket.close()
 
             super(TCPRemoteNode, self).Disconnect(error)
 
