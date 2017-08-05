@@ -155,6 +155,10 @@ class BinaryWriter(object):
         for item in array:
             item.Serialize(self)
 
+    def Write2000256List(self, arr):
+        for item in arr:
+            self.WriteUInt256(item, "<",True)
+
     def WriteHashes(self, arr):
         length = len(arr)
         self.WriteUInt8(length)

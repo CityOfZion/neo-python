@@ -137,6 +137,17 @@ class BinaryReader(object):
 
         return ba
 
+
+    def Read2000256List(self):
+        items = []
+        for i in range(0, 2000):
+            item = self.ReadBytes(64)
+            ba = bytearray(binascii.unhexlify(item))
+            if len(ba):
+                ba.reverse()
+                items.append( ba.hex().encode('utf-8'))
+        return items
+
     def ReadHashes(self):
         len = self.ReadUInt8()
         items = []

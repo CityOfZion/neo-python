@@ -368,7 +368,7 @@ class RemoteNode(object):
 
         elif message.Command == 'tx':
             if len(message.Payload) < 1024 * 1024:
-                self.OnInventoryReceived(Transaction.DeserializeFrom(message.Payload))
+                self.OnInventoryReceived(IOHelper.DeserializeTX(message.Payload))
 
 
         elif message.Command in ['verack','version',]:

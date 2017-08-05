@@ -6,7 +6,6 @@ Usage:
     from neo.Wallets.Wallet import Wallet
 """
 
-from neo.Defaults import LDB_PATH
 from neo.Core.TX.Transaction import TransactionType
 from neo.Core.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
@@ -20,7 +19,7 @@ from neo import Settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from autologging import logged
 import hashlib
-
+from neo import Settings
 from threading import Thread
 from threading import Lock
 
@@ -70,7 +69,12 @@ class Wallet(object):
             self._iv = bytes( Random.get_random_bytes(16))
             self._master_key = bytes(Random.get_random_bytes(32))
             self._keys = []
-            self._indexedDB= LevelDBBlockchain(LDB_PATH)
+
+            if Blockchain.Default() is None:
+                self._indexedDB= LevelDBBlockchain(Settings.LEVELDB_PATH)
+                Blockchain.RegisterBlockchain(self._indexedDB)
+            else:
+                self._indexedDB = Blockchain.Default()
             #self._node = RemoteNode(url=TEST_NODE)
 
             self._current_height = Blockchain.Default().HeaderHeight() + 1 if Blockchain.Default() is not None else 0
@@ -109,7 +113,7 @@ class Wallet(object):
             self._current_height = Blockchain.Default().HeaderHeight() + 1 if Blockchain.Default() is not None else 0
 
             self._blockThread = Thread(target=self.ProcessBlocks, name='Wallet.ProcessBlocks')
-            self._blockThread.start()
+#            self._blockThread.start()
 
     def BuildDatabase(self):
         #abstract

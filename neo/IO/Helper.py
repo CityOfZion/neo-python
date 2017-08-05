@@ -2,7 +2,7 @@
 from .MemoryStream import MemoryStream
 from .BinaryReader import BinaryReader
 import importlib
-
+from neo.Core.TX.Transaction import Transaction
 
 class Helper(object):
 
@@ -25,3 +25,12 @@ class Helper(object):
 
 
         return None
+
+    @staticmethod
+    def DeserializeTX(buffer):
+        mstream = MemoryStream(buffer)
+        reader = BinaryReader(mstream)
+
+        tx = Transaction.DeserializeFrom(reader)
+
+        return tx

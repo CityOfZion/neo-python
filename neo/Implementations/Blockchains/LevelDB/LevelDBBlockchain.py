@@ -9,6 +9,9 @@ from concurrent.futures import ThreadPoolExecutor
 import ctypes
 import time
 import threading
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.IO.BinaryReader import BinaryReader
+from neo.IO.MemoryStream import MemoryStream
 
 DATA_Block =        b'\x01'
 DATA_Transaction =  b'\x02'
@@ -93,27 +96,42 @@ class LevelDBBlockchain(Blockchain):
         if version == self._sysversion: #or in the future, if version doesn't equal the current version...
             self.__log.debug("current version %s " % version)
 
-            ba=bytearray(self._db.get(SYS_CurrentBlock))
+            ba=bytearray(self._db.get(SYS_CurrentBlock, 0))
             self._current_block_height = int.from_bytes( ba[-4:], 'little')
 
 
-            ba = bytearray(self._db.get(SYS_CurrentHeader))
+            ba = bytearray(self._db.get(SYS_CurrentHeader, 0))
             current_header_height = int.from_bytes(ba[-4:], 'little')
+            current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
+            print("current header hash!! %s " % current_header_hash)
             print("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
 
-#            hashes = []
-#            for key, value in self._db.iterator(prefix=DATA_Block):
-#                hashes.append({'index':key, 'hash':value})
 
- #           print("hashes: %s " % len(hashes) )
- #           sorted(hashes, key=lambda i: i['index'])
+            hashes = []
+            try:
+                for key, value in self._db.iterator(prefix=IX_HeaderHashList):
+                    ms = MemoryStream(value)
+                    reader = BinaryReader(ms)
+                    hlist = reader.Read2000256List()
+                    key =int.from_bytes(key[-4:], 'little')
+                    hashes.append({'k':key, 'v':hlist})
+    #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
 
-#            for h in hashes:
-#                if not h['hash'] == Blockchain.GenesisBlock().Hash():
-#                    self._header_index.append(h['hash'])
-#                self._stored_header_count += 1
-#            print("hashes: %s " % hashes, self._stored_header_count)
+            except Exception as e:
+                print("Coludnt get stored header hash list: %s " % e)
+
+            if len(hashes):
+                hashes.sort(key=lambda x:x['k'])
+                genstr = Blockchain.GenesisBlock().HashToByteString()
+                for hlist in hashes:
+
+                    for hash in hlist['v']:
+                        if hash != genstr:
+                            self._header_index.append(hash)
+                        self._stored_header_count += 1
+
+            print("header index count now: %s %s " % (len(self._header_index), self._stored_header_count))
 
             if self._stored_header_count == 0:
                 headers = []
@@ -126,13 +144,18 @@ class LevelDBBlockchain(Blockchain):
                     if h.Index > 0:
                         self._header_index.append(h.HashToByteString())
 
-#            elif current_header_height >= self._current_block_height:
-#                current_hash = current_header_height
-#                while not current_hash == self._header_index[self._stored_header_count -1]:
-#                    dbhash = bytearray(self._db.get(DATA_Block + current_hash))[4:]
-#                    header = Header.FromTrimmedData( binascii.unhexlify(dbhash), 0)
-#                    self._header_index.insert(self._stored_header_count, current_hash)
-#                    current_hash = header.PrevHash
+            elif current_header_height >= self._stored_header_count:
+
+                while current_header_hash != self._header_index[self._stored_header_count-1]:
+                    db = self._db.get(DATA_Block + current_header_hash)
+                    if db is not None:
+                        dbhash = bytearray(db)[4:]
+                        header = Header.FromTrimmedData( binascii.unhexlify(dbhash), 0)
+                        self._header_index.insert(self._stored_header_count, current_header_hash)
+                        current_header_hash = header.PrevHash
+                    else:
+                        break
+            print("self header index: %s " % len(self._header_index))
 
         else:
             with self._db.write_batch() as wb:
@@ -283,14 +306,20 @@ class LevelDBBlockchain(Blockchain):
 
             self._header_index.append(hHash)
 
-#clean up old headers?
-#        while header.Index - 2000 >= self._stored_header_count:
-#            ms = MemoryStream()
-#            w = BinaryWriter(ms)
-#            w.Write(header_index.Skip((int)stored_header_count).Take(2000).ToArray());
-#            w.Flush()
-#            batch.Put(SliceBuilder.Begin(DataEntryPrefix.IX_HeaderHashList).Add(stored_header_count), ms.ToArray());
-#            stored_header_count += 2000;
+        #just keep 2000 headrs in memory....
+        while header.Index - 2000 >= self._stored_header_count:
+            ms = MemoryStream()
+            w = BinaryWriter(ms)
+            headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count+2000]
+            w.Write2000256List(headers_to_write)
+            ms.flush()
+            print("Writing stored header count: %s " % self._stored_header_count)
+            with self._db.write_batch() as wb:
+                wb.put( IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), ms.ToArray())
+
+            self._stored_header_count += 2000
+
+            print("TRimming stored header index!!!!! %s" % self._stored_header_count)
 
         wb.put( DATA_Block + hHash, bytes(4) + header.ToArray())
         wb.put( SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))

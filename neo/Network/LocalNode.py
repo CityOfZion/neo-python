@@ -398,7 +398,7 @@ class LocalNode():
 
             if not Blockchain.Default().AddBlock(inventory): return False
 
-        elif type(inventory) is Transaction:
+        elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
             if not self.AddTransaction(inventory): return False
 
         else:
