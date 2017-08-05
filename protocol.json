@@ -13,7 +13,9 @@
     ],
 
     "SeedList": [
-      "seed1.neo.org:20333"
+      "seed1.neo.org:20333",
+      "seed2.neo.org:20333"
+
 
     ],
     "SystemFee": {
