@@ -14,7 +14,7 @@ class AddrPayload(SerializableMixin):
 
 
     def Deserialize(self, reader):
-        self.NetworkAddressesWithTime = reader.ReadSerializableArray()
+        self.NetworkAddressesWithTime = reader.ReadSerializableArray('neo.Network.Payloads.NetworkAddressWithTime.NetworkAddressWithTime')
 
 
     def Serialize(self, writer):

@@ -237,8 +237,7 @@ class RemoteNode(object):
         self.__log.debug("ON Headers message received:")
         if Blockchain.Default() is None: return
 
-        executor = ThreadPoolExecutor()
-        yield from asyncio.get_event_loop().run_in_executor(executor,Blockchain.Default().AddHeaders(payload.Headers))
+        Blockchain.Default().AddHeaders(payload.Headers)
 
         if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
 #            if Blockchain.Default().HeaderHeight() - Blockchain.Default().Height() < 4000:
@@ -287,9 +286,9 @@ class RemoteNode(object):
         if payload.Type == int.from_bytes(InventoryType.Block,'little'):
 #            print("use block hashes!!")
             hashes = []
-            hashstart = Blockchain.Default().Height() + 1 + (5 * self.ServerID)
+            hashstart = Blockchain.Default().Height() + 1 + (3 * self.ServerID)
             print("remote node id %s requesting blocks at start %s " % (self.ServerID, hashstart))
-            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 5:
+            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 3:
                 hashes.append(Blockchain.Default().GetHeaderHash(hashstart))
                 hashstart += 1
             #        self.__log.debug("Requesting block data for hashes: %s" % hashes[0])
@@ -522,7 +521,7 @@ class RemoteNode(object):
 
             timeout = self.HalfHour if len(self._missions) == 0 else self.OneMinute
 
-            receive_message_future = yield from asyncio.wait_for( self.ReceiveMessageAsync(timeout), 10)
+            receive_message_future = yield from asyncio.wait_for(self.ReceiveMessageAsync(timeout), 10)
 
             if not receive_message_future:
                 print("no message future!: ")
@@ -550,7 +549,7 @@ class RemoteNode(object):
 
                 message = self._message_queue[0]
                 self._message_queue.remove(message)
-                self.__log.debug("WILL SEND MESSAGE:::: %s " % message.Command)
+                self.__log.debug("Node %s WILL SEND MESSAGE:::: %s " % (self.ServerID, message.Command))
 
             if message is None:
 #                i = 0
