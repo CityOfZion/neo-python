@@ -63,19 +63,14 @@ class TransactionOutput(SerializableMixin):
 
     def Serialize(self, writer):
         writer.WriteUInt256(self.AssetId)
-        writer.WriteInt64(self.Value.value)
+        writer.WriteInt64(int(self.Value.value))
         writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
-        print("deseiralizing t output")
-        self.AssetId = reader.ReadUInt256()
-        print("asset id %s " % self.AssetId)
+        self.AssetId = reader.ReadUInt256(reverse=False)
         fval = reader.ReadInt64()
-        print("fval: %s  " % fval)
-        self.Value = Fixed8( fval )
-        print("self value %s " % self.Value)
+        self.Value = Fixed8( int(fval ) )
         self.ScriptHash = reader.ReadUInt160()
-        print("self script hash: %s " % self.ScriptHash)
 
 @logged
 class TransactionInput(SerializableMixin):
@@ -239,9 +234,8 @@ class Transaction(Inventory, InventoryMixin):
         from neo.Core.TX.IssueTransaction import IssueTransaction
         from neo.Core.TX.ClaimTransaction import ClaimTransaction
         from neo.Core.TX.MinerTransaction import MinerTransaction
-        from neo.Core.TX.ContractTransaction import ContractTransaction
+        from neo.Core.TX.PublishTransaction import PublishTransaction
 
-        print("************ DESERIALIZE FROM ....... TTYPE:::: %s " % ttype)
 
         if ttype == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
             tx = RegisterTransaction()
@@ -251,8 +245,12 @@ class Transaction(Inventory, InventoryMixin):
             tx = IssueTransaction()
         elif ttype == int.from_bytes( TransactionType.ClaimTransaction, 'little'):
             tx = ClaimTransaction()
-        elif ttype == int.from_bytes( TransactionType.ContractTransaction, 'little'):
-            tx = ContractTransaction()
+        elif ttype == int.from_bytes( TransactionType.PublishTransaction, 'little'):
+            tx = PublishTransaction()
+        else:
+            tx = Transaction()
+            tx.Type = ttype
+        print("created tx of type: %s " % tx.Type)
 
         tx.DeserializeUnsignedWithoutType(reader)
 

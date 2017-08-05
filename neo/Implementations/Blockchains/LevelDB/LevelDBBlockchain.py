@@ -123,7 +123,8 @@ class LevelDBBlockchain(Blockchain):
 
                 headers.sort(key=lambda h: h.Index)
                 for h in headers:
-                    self._header_index.append(h.HashToByteString())
+                    if h.Index > 0:
+                        self._header_index.append(h.HashToByteString())
 
 #            elif current_header_height >= self._current_block_height:
 #                current_hash = current_header_height
@@ -141,31 +142,34 @@ class LevelDBBlockchain(Blockchain):
             self.Persist(Blockchain.GenesisBlock())
             self._db.put(SYS_Version, self._sysversion )
 
-        #start a thread for persisting blocks
-        #we dont want to do this during testing
+
+        self.StartPersist()
+
+    def StartPersist(self):
+
+        # start a thread for persisting blocks
+        # we dont want to do this during testing
         if self._path != './UnitTestChain':
             try:
                 t = threading.Thread(target=self.PersistBlocks)
-                t.daemon=True
+                t.daemon = True
                 t.start()
             except Exception as e:
                 print("exception running persist blocks therad %s " % e)
 
-
     def AddBlock(self, block):
 
-#        self.__log.debug("LEVELDB ADD BLOCK HEIGHT: %s  -- hash -- %s -- %s" % (block.Index, self._current_block_height, block.HashToByteString()))
-
+        self.__log.debug("LEVELDB ADD BLOCK HEIGHT: %s  -- hash -- %s -- %s" % (block.Index, self._current_block_height, block.HashToByteString()))
         #lock block cache
         if not block.HashToByteString() in self._block_cache:
-#            print("adding block to block cache %s " % len(self._block_cache))
+            print("adding block to block cache %s " % len(self._block_cache))
             self._block_cache[block.HashToByteString()] = block
         #end lock
 
         #lock header index
         header_len = len(self._header_index)
         if block.Index -1 >= header_len:
-#            self.__log.debug("Returning... block index -1 is greater than header length %s %s %s" % (block.Index, header_len, self._current_block_height))
+            self.__log.debug("Returning... block index -1 is greater than header length")
             return False
 
         if block.Index == header_len:
@@ -176,7 +180,7 @@ class LevelDBBlockchain(Blockchain):
                 return False
 
             #do some leveldb stuff here
-#            self.__log.debug("this is where we add the block to leveldb")
+            self.__log.debug("this is where we add the block to leveldb")
 
             self.AddHeader(block.Header())
 
@@ -187,12 +191,14 @@ class LevelDBBlockchain(Blockchain):
 
         #end lock header index
 
+        self.__log.debug("ADDED BLock %s %s" % (block.Index, block.HashToByteString()))
         return True
 
     def ContainsBlock(self,hash):
 
         header = self.GetHeader(hash)
         if header is not None and header.Index <= self._current_block_height:
+            self.__log.debug("Already contains block %s %s " % (header.Index, self._current_block_height))
             return True
 
         return False
@@ -352,7 +358,7 @@ class LevelDBBlockchain(Blockchain):
 
 
             time.sleep(1)
-#            self.__log.debug("Header height, block height: %s %s %s " % (self.HeaderHeight(), self.Height(), self.CurrentHeaderHash()))
+            self.__log.info("Header height, block height: %s %s %s " % (self.HeaderHeight(), self.Height(), self.CurrentHeaderHash()))
             while not self._disposed:
                 hash = None
 
@@ -360,9 +366,10 @@ class LevelDBBlockchain(Blockchain):
                 if len(self._header_index) <= self._current_block_height + 1: break
 #                self.__log.debug("should add block at index %s " % (self._current_block_height + 1))
                 hash = self._header_index[self._current_block_height + 1]
+
                 #end lock header index
 
-#                self.__log.debug("LOOKING FOR HASH: %s " % hash)
+                self.__log.info("LOOKING FOR HASH: %s " % hash)
                 block = None
                 #lock block cache
 

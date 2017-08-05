@@ -6,6 +6,8 @@ from neo.Defaults import TEST_NODE
 from datetime import datetime,timedelta
 from events import Events
 from neo.Core.Blockchain import Blockchain
+from neo.Core.BlockBase import BlockBase
+from neo.Core.Block import Block
 from .IPEndpoint import IPEndpoint
 from .InventoryType import InventoryType
 from .Payloads.AddrPayload import AddrPayload
@@ -236,18 +238,22 @@ class RemoteNode(object):
         Blockchain.Default().AddHeaders(payload.Headers)
 
         if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
+#            if Blockchain.Default().HeaderHeight() - Blockchain.Default().Height() < 4000:
+
             self.EnqueueMessage("getheaders", GetBlocksPayload(Blockchain.Default().CurrentHeaderHash()), True)
 
 
     #receives blocks
     def OnInventoryReceived(self, inventory):
 
-        print("ON INVENTORY RECEIVED...........")
+#        print("ON INVENTORY RECEIVED........... ")
         if inventory is None:
             print("INVENTORY IS NONE....")
             return
 
-        #lock missions global
+        if type(inventory) is Block:
+            print("ON BLOCK INVENTORY RECEIVED........... %s " % inventory.Index)  #lock missions global
+
         blockhash =  inventory.HashToString()
 
         if blockhash in self._missions_global:
@@ -279,11 +285,11 @@ class RemoteNode(object):
 #            print("use block hashes!!")
             hashes = []
             hashstart = Blockchain.Default().Height() + 1
-            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 5:
+            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 10:
                 hashes.append(Blockchain.Default().GetHeaderHash(hashstart))
                 hashstart += 1
             #        self.__log.debug("Requesting block data for hashes: %s" % hashes[0])
-#            print("requesting hashes %s " % hashes)
+            print("requesting hashes %s " % hashes)
         else:
             hashes = payload.DistinctHashes()
 
@@ -320,7 +326,7 @@ class RemoteNode(object):
 
         if message is None:return
 
-#        self.__log.debug("ON MESSAGE RECEIVED:::::::::: %s " % message.Command)
+        self.__log.debug("ON MESSAGE RECEIVED:::::::::: %s " % message.Command)
         if message.Command == "addr":
             self.OnAddrMessageReceived( IOHelper.AsSerializableWithType(message.Payload, 'neo.Network.Payloads.AddrPayload.AddrPayload') )
 
@@ -369,7 +375,7 @@ class RemoteNode(object):
             self.Disconnect(True)
 
 
-        elif message.Command in ["alert","notfound","ping","pong","reject",]:
+        elif message.Command in ["alert","notfound","ping","pong","reject",":head"]:
             pass
 
         elif message.Command == "merkleblock":
@@ -422,14 +428,13 @@ class RemoteNode(object):
 
         return False
 
-
-    async def StartProcol(self):
+    def StartProcol(self):
 
         message = Message("version", VersionPayload(self._local_node._port, self._local_node._nonce, self._local_node.UserAgent))
-        result_future = await asyncio.wait_for(self.SendMessageAsync(message), 60.0)
+        result_future = yield from asyncio.wait_for(self.SendMessageAsync(message), 60.0)
         if not result_future: return
 
-        message_rec = await asyncio.wait_for(self.ReceiveMessageAsync(self.HalfMinute), 60.0)
+        message_rec = yield from asyncio.wait_for(self.ReceiveMessageAsync(self.HalfMinute), 60.0)
 
         if message_rec is None: return
 
@@ -475,14 +480,14 @@ class RemoteNode(object):
             self.ListenerEndpoint = IPEndpoint(self.RemoteEndpoint.Address, self.Version.Port)
 
 
-        verack= await asyncio.wait_for( self.SendMessageAsync(Message("verack")), 60.0)
+        verack= yield from asyncio.wait_for( self.SendMessageAsync(Message("verack")), 60.0)
 
         if verack is None or verack is False:
             return
 
         self.__log.debug("VERACK")
 
-        vmessage = await asyncio.wait_for( self.ReceiveMessageAsync(self.HalfMinute), 60.0)
+        vmessage = yield from asyncio.wait_for( self.ReceiveMessageAsync(self.HalfMinute), 60.0)
 
         if vmessage is None or vmessage.Command != "verack":
             self.Disconnect(True)
@@ -492,6 +497,7 @@ class RemoteNode(object):
 
         if Blockchain.Default().HeaderHeight() < self.Version.StartHeight:
 #            self.__log.debug("XXXXXXXXXXXX ENCQUING GET HEADERS MESSSSAAGGEGEE %s "  % Blockchain.Default().CurrentHeaderHash())
+#            if Blockchain.Default().HeaderHeight() - Blockchain.Default().Height() < 4000:
             self.EnqueueMessage("getheaders", GetBlocksPayload(Blockchain.Default().CurrentHeaderHash()),True)
 
 #        await asyncio.gather(self.StartSendLoop(), loop=asyncio.get_event_loop())
@@ -511,11 +517,11 @@ class RemoteNode(object):
 
             timeout = self.HalfHour if len(self._missions) == 0 else self.OneMinute
 
-            receive_message_future = await asyncio.wait_for( self.ReceiveMessageAsync(timeout), 10)
+            receive_message_future = yield from asyncio.wait_for( self.ReceiveMessageAsync(timeout), 10)
 
             if not receive_message_future:
-#                print("no message future!: ")
-                break
+                print("no message future!: ")
+#                break
 
             try:
                 self.OnMessageReceived(receive_message_future)
@@ -532,7 +538,7 @@ class RemoteNode(object):
             message = None
 
             #lock message queue
-#            self.__log.debug("-------------------------------------MESSAGE QUEUE %s " % len(self._message_queue))
+            self.__log.debug("-------------------------------------MESSAGE QUEUE %s " % len(self._message_queue))
 #            self.__log.debug("Commands: %s " % [m.Command for m in self._message_queue])
             if len(self._message_queue) > 0:
 

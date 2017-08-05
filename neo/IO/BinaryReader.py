@@ -113,9 +113,7 @@ class BinaryReader(object):
         try:
             for i in range(0, length):
                 item = klass()
-                print("created class: %s " % class_name)
                 item.Deserialize(self)
-                print("deserialized class %s" % item)
                 items.append(item)
 
             return items

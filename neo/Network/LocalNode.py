@@ -392,8 +392,9 @@ class LocalNode():
             if Blockchain.Default() == None: return False
 
             if Blockchain.Default().ContainsBlock(inventory.HashToByteString()):
-#                self.__log.debug("cant add block %s because blockchain already contains it %s " % inventory.HashToByteString())
+                self.__log.debug("cant add block %s because blockchain already contains it " % inventory.HashToByteString())
                 return False
+            self.__log.debug("Will Try to add block" % inventory.HashToByteString())
 
             if not Blockchain.Default().AddBlock(inventory): return False
 
@@ -446,8 +447,9 @@ class LocalNode():
 
     def RemoteNode_InventoryReceived(self, sender, inventory):
 
-        if inventory is Transaction and inventory.Type is not TransactionType.ClaimTransaction and inventory.Type is not TransactionType.IssueTransaction:
+        self.__log.debug("Remote Node inventory received %s " % inventory)
 
+        if inventory is Transaction and inventory.Type is not TransactionType.ClaimTransaction and inventory.Type is not TransactionType.IssueTransaction:
 
             if Blockchain.Default() is None: return
 
@@ -516,7 +518,6 @@ class LocalNode():
 
 
 
-    @asyncio.coroutine
     def Start(self, port=0, ws_port=0):
         if self._started == 0:
 
