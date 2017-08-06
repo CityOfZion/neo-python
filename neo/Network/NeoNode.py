@@ -209,9 +209,12 @@ class NeoNode(Protocol):
         #            print("use block hashes!!")
         hashes = []
         hashstart = self.blockchain.Height() + 1
-        while hashstart < self.blockchain.HeaderHeight() and len(hashes) < 2:
-            hashes.append(self.blockchain.GetHeaderHash(hashstart))
-            hashstart += 1
+        while hashstart < self.blockchain.HeaderHeight() and len(hashes) < 100:
+            hash = self.blockchain.GetHeaderHash(hashstart)
+            if not hash in self.factory.blockrequests:
+                self.factory.blockrequests.append(hash)
+                hashes.append(self.blockchain.GetHeaderHash(hashstart))
+                hashstart += 1
 
 
         self.Log("requesting %s hashes  " % len(hashes))
@@ -234,7 +237,10 @@ class NeoNode(Protocol):
 
         self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
 
-#        blockhash =  block.HashToString()
+        blockhash =  block.HashToString()
+
+        if blockhash in self.factory.blockrequests:
+            self.factory.blockrequests.remove(blockhash)
 
         #lock missions global
 #        if blockhash in self._missions_global:

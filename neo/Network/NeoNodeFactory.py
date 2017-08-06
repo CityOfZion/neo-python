@@ -32,6 +32,8 @@ class NeoFactory(Factory):
     nodeid = 12234234
     blockchain = None
 
+    blockrequests = []
+
     def __init__(self):
         self.startFactory()
 

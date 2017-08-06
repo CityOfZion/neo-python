@@ -109,7 +109,7 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt()
         items = []
-        self.__log.debug("deserializing %s items of %s " % (length, class_name))
+        print("deserializing %s items of %s " % (length, class_name))
         try:
             for i in range(0, length):
                 item = klass()

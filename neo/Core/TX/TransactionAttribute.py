@@ -69,14 +69,13 @@ class TransactionAttribute(Inventory, SerializableMixin):
 
     def Deserialize(self, reader):
         usage = reader.ReadByte()
+        self.Usage = usage
         print("attribute usage: %s " % usage)
         if usage == TransactionAttributeUsage.ContractHash or usage==TransactionAttributeUsage.Vote or \
-            (usage >= TransactionAttributeUsage.Hash1 or usage <= TransactionAttributeUsage.Hash15):
-
+            (usage >= TransactionAttributeUsage.Hash1 and usage <= TransactionAttributeUsage.Hash15):
             self.Data = reader.ReadBytes(32)
 
         elif usage == TransactionAttributeUsage.ECDH02 or usage == TransactionAttributeUsage.ECDH03:
-
             self.Data = bytearray(usage) + bytearray(reader.ReadBytes(32))
 
         elif usage == TransactionAttributeUsage.Script:
@@ -84,27 +83,36 @@ class TransactionAttribute(Inventory, SerializableMixin):
 
         elif usage == TransactionAttributeUsage.DescriptionUrl:
 
-            self.Data == reader.ReadBytes(reader.ReadByte())
+            self.Data == reader.ReadBytes(reader.ReadByte()).decode('utf-8')
 
         elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
-            self.Data = reader.ReadVarBytes()
-
+            self.Data = reader.ReadVarBytes().decode('utf-8')
         else:
             print("format error!!!")
 
 
     def Serialize(self, writer):
         writer.WriteByte(self.Usage)
-        byteLength = len(self.Data)
-        if self.Usage == TransactionAttributeUsage.Script:
-            writer.WriteVarInt(byteLength)
-        elif self.Usage == TransactionAttributeUsage.CertUrl or self.Usage == TransactionAttributeUsage.DescriptionUrl:
-            writer.WriteVarInt(byteLength)
-        elif self.Usage == TransactionAttributeUsage.Description or self.Usage >= TransactionAttributeUsage.Remark:
-            writer.WriteVarInt(byteLength)
 
-        if self.Usage == TransactionAttributeUsage.ECDH02 or self.Usage == TransactionAttributeUsage.ECDH03:
-            writer.WriteBytes(binascii.hexlify(self.Data[1:33]))
+
+        if self.Usage == TransactionAttributeUsage.ContractHash or self.Usage == TransactionAttributeUsage.Vote or \
+                (self.Usage >= TransactionAttributeUsage.Hash1 and self.Usage <= TransactionAttributeUsage.Hash15):
+            writer.WriteBytes(self.Data)
+
+        elif self.Usage == TransactionAttributeUsage.ECDH02 or self.Usage == TransactionAttributeUsage.ECDH03:
+            writer.WriteBytes(self.Data[1:33])
+
+        elif self.Usage == TransactionAttributeUsage.Script:
+            writer.WriteBytes(self.Data)
+
+        elif self.Usage == TransactionAttributeUsage.DescriptionUrl:
+            writer.WriteVarString( self.Data)
+#            self.Data == reader.ReadBytes(reader.ReadByte())
+
+        elif self.Usage == TransactionAttributeUsage.Description or self.Usage >= TransactionAttributeUsage.Remark:
+            writer.WriteVarString(self.Data)
+
         else:
-            writer.WriteBytes(binascii.hexlify(self.Data))
+            print("format error!!!")
+
 
