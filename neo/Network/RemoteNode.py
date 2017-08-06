@@ -286,9 +286,9 @@ class RemoteNode(object):
         if payload.Type == int.from_bytes(InventoryType.Block,'little'):
 #            print("use block hashes!!")
             hashes = []
-            hashstart = Blockchain.Default().Height() + 1 + (3 * self.ServerID)
-            print("remote node id %s requesting blocks at start %s " % (self.ServerID, hashstart))
-            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 3:
+            hashstart = Blockchain.Default().Height() + 1
+            print("remote node id %s requesting 100 blocks at start %s " % (self.ServerID, hashstart))
+            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 2:
                 hashes.append(Blockchain.Default().GetHeaderHash(hashstart))
                 hashstart += 1
             #        self.__log.debug("Requesting block data for hashes: %s" % hashes[0])
@@ -521,7 +521,7 @@ class RemoteNode(object):
 
             timeout = self.HalfHour if len(self._missions) == 0 else self.OneMinute
 
-            receive_message_future = yield from asyncio.wait_for(self.ReceiveMessageAsync(timeout), 10)
+            receive_message_future = yield from asyncio.wait_for(self.ReceiveMessageAsync(timeout), 60)
 
             if not receive_message_future:
                 print("no message future!: ")

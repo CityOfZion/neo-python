@@ -75,3 +75,19 @@ class TransactionTestCase(unittest.TestCase):
         tx = Transaction.DeserializeFrom(reader)
         self.assertEqual(tx.ToArray(), self.pb_raw)
         self.assertEqual(tx.HashToByteString(), self.pb_hash)
+
+
+    ir = b'd100644011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111081234567890abcdef0415cd5b0769cc4ee2f1c9f4e0782756dabf246d0a4fe60a035400000000'
+    ir_id=b'1a328cdd53c7f1710b4006304e8c75236a9b18523f037cdf069a96f0d7f01379'
+
+    def test_invocation_transaction(self):
+
+
+        ms = MemoryStream(binascii.unhexlify(self.ir))
+
+        reader = BinaryReader(ms)
+
+        tx = Transaction.DeserializeFrom(reader)
+        self.assertEqual(tx.ToArray(), self.ir)
+        self.assertEqual(tx.HashToByteString(), self.ir_id)
+
