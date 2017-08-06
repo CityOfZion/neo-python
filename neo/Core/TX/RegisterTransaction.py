@@ -36,7 +36,7 @@ In English:
     def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), precision=0, owner=None, admin=None):
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.Type = TransactionType.RegisterTransaction  # 0x40
-
+        print("GETTING REGISTER TRANSACTION!!!")
         self.AssetType = assettype
         self.Name = assetname
         self.Amount = amount  # Unlimited Mode: -0.00000001
@@ -63,9 +63,13 @@ In English:
         self.Amount = Fixed8( reader.ReadInt64())
         self.Precision = reader.ReadByte()
 
-        pkey = reader.ReadBytes(33)
-        ecdsa = ECDSA.decode_secp256r1(pkey)
-        self.Owner = ecdsa.G
+#        pkey = reader.ReadBytes(33)
+#        print("pke %s " % pkey)
+#        print("hex: %s " % binascii.hexlify(pkey))
+#        ecdsa = ECDSA.decode_secp256r1(pkey)
+
+        self.Owner = reader.ReadBytes(33)
+#        self.Owner = ecdsa.G
         self.Admin =reader.ReadUInt160()
 
     def SerializeExclusiveData(self, writer):
@@ -75,7 +79,10 @@ In English:
         writer.WriteByte(self.Precision)
 
         #owner
-        writer.WriteByte(b'\x00')
+
+        writer.WriteBytes(self.Owner)
+
+#        writer.WriteByte(b'\x00')
 #        if type(self.Owner) is int:
 
 #            writer.WriteBytes(bytearray(1))

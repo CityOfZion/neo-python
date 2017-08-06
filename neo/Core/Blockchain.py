@@ -58,7 +58,7 @@ class Blockchain(object):
     @staticmethod
     def SystemShare():
         amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL )
-        owner = bytes(0)
+        owner = b'\x00'
         admin = Crypto.Hash160(ScriptOp.PUSHT)
         return RegisterTransaction([],[], AssetType.AntShare,
                                  "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
@@ -68,7 +68,7 @@ class Blockchain(object):
     def SystemCoin():
         amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
 
-        owner = 0
+        owner = b'\x00'
         precision=8
         admin = Crypto.Hash160(ScriptOp.PUSHF)
 
