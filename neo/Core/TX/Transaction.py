@@ -236,7 +236,7 @@ class Transaction(Inventory, InventoryMixin):
         from neo.Core.TX.MinerTransaction import MinerTransaction
         from neo.Core.TX.PublishTransaction import PublishTransaction
         from neo.Core.TX.InvocationTransaction import InvocationTransaction
-
+        from neo.Core.TX.EnrollmentTransaction import EnrollmentTransaction
 
         if ttype == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
             tx = RegisterTransaction()
@@ -250,6 +250,8 @@ class Transaction(Inventory, InventoryMixin):
             tx = PublishTransaction()
         elif ttype == int.from_bytes(TransactionType.InvocationTransaction, 'little'):
             tx = InvocationTransaction()
+        elif ttype == int.from_bytes(TransactionType.EnrollmentTransaction, 'little'):
+            tx = EnrollmentTransaction()
         else:
             tx = Transaction()
             tx.Type = ttype
