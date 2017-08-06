@@ -213,9 +213,8 @@ class NeoNode(Protocol):
             hash = self.blockchain.GetHeaderHash(hashstart)
             if not hash in self.factory.blockrequests:
                 self.factory.blockrequests.append(hash)
-                hashes.append(self.blockchain.GetHeaderHash(hashstart))
-                hashstart += 1
-
+                hashes.append(hash)
+            hashstart += 1
 
         self.Log("requesting %s hashes  " % len(hashes))
 
@@ -239,8 +238,8 @@ class NeoNode(Protocol):
 
         blockhash =  block.HashToString()
 
-        if blockhash in self.factory.blockrequests:
-            self.factory.blockrequests.remove(blockhash)
+#        if blockhash in self.factory.blockrequests:
+#            self.factory.blockrequests.remove(blockhash)
 
         #lock missions global
 #        if blockhash in self._missions_global:
