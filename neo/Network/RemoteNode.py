@@ -287,8 +287,8 @@ class RemoteNode(object):
 #            print("use block hashes!!")
             hashes = []
             hashstart = Blockchain.Default().Height() + 1
-            print("remote node id %s requesting 100 blocks at start %s " % (self.ServerID, hashstart))
-            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 2:
+            print("remote node id %s requesting 200 blocks at start %s " % (self.ServerID, hashstart))
+            while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 200:
                 hashes.append(Blockchain.Default().GetHeaderHash(hashstart))
                 hashstart += 1
             #        self.__log.debug("Requesting block data for hashes: %s" % hashes[0])

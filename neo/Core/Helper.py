@@ -23,6 +23,8 @@ class Helper(object):
         ms.flush()
         return ms.ToArray()
 
+
+
     @staticmethod
     def Sign(signable, keypair):
 

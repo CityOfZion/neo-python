@@ -2,7 +2,7 @@
 
 from neo.Core.TX.Transaction import Transaction,TransactionType
 import sys
-
+import binascii
 class MinerTransaction(Transaction):
 
     Nonce = None
@@ -20,8 +20,20 @@ class MinerTransaction(Transaction):
         self.Nonce = reader.ReadUInt32()
         self.Type = TransactionType.MinerTransaction
 
+    def SerializeExclusiveDataAlternative(self, writer):
+        byt = int.to_bytes(self.Nonce, 4, 'little')
+        ba = bytearray(byt)
+        byts = binascii.hexlify(ba)
+        writer.WriteBytes(byts)
+
     def SerializeExclusiveData(self, writer):
-        writer.WriteUInt32(self.Nonce)
+        self.SerializeExclusiveDataAlternative(writer)
+
+        #this should work, and it does in most cases
+        #but for some reason with block 2992 on tesntet it doesnt
+        #the nonce 1113941606 messes with it.
+        #anyways, the above should work
+        #writer.WriteUInt32(self.Nonce)
 
 
     def OnDeserialized(self):

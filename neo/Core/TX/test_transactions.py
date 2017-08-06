@@ -68,6 +68,7 @@ class TransactionTestCase(unittest.TestCase):
     pb_hash = b'5467a1fc8723ceffa8e5ee59399b02eea1df6fbaa53768c6704b90b960d223fa'
 
     def test_publish_tx_deserialize(self):
+
         ms = MemoryStream(binascii.unhexlify(self.pb_raw))
 
         reader = BinaryReader(ms)
@@ -82,7 +83,6 @@ class TransactionTestCase(unittest.TestCase):
 
     def test_invocation_transaction(self):
 
-
         ms = MemoryStream(binascii.unhexlify(self.ir))
 
         reader = BinaryReader(ms)
@@ -91,3 +91,16 @@ class TransactionTestCase(unittest.TestCase):
         self.assertEqual(tx.ToArray(), self.ir)
         self.assertEqual(tx.HashToByteString(), self.ir_id)
 
+
+    mr = b'00006666654200000000'
+    mrn = 1113941606
+    mrh = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'
+    def test_miner_tx(self):
+        ms = MemoryStream(binascii.unhexlify(self.mr))
+
+        reader = BinaryReader(ms)
+        tx = Transaction.DeserializeFrom(reader)
+        print("tx: %s " % tx.HashToByteString())
+        self.assertEqual(tx.Nonce, self.mrn)
+        self.assertEqual(tx.ToArray(), self.mr)
+        self.assertEqual(tx.HashToByteString(), self.mrh)

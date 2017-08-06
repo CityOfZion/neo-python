@@ -11,7 +11,7 @@ class InvocationTransaction(Transaction):
     Gas = 0
 
     def SystemFee(self):
-        return self.Gas
+        return Fixed8(self.Gas)
 
 
 
