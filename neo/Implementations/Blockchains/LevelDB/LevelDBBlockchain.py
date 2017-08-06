@@ -13,6 +13,8 @@ from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
 
+import events
+
 DATA_Block =        b'\x01'
 DATA_Transaction =  b'\x02'
 
@@ -49,6 +51,9 @@ class LevelDBBlockchain(Blockchain):
     _verify_blocks = False
 
     _sysversion = b'/NEO:2.0.1/'
+
+    missing_block = events.Events()
+
 
     def CurrentBlockHash(self):
 #        print("Getting Current bolck hash")
@@ -400,6 +405,9 @@ class LevelDBBlockchain(Blockchain):
                 if not hash in self._block_cache:
 #                    print("hash not in block cache!!!")
 #                    print("CURRENT BLOCK CACHE %s " % (len(self._block_cache)))
+                    if len(self._block_cache) > 2000:
+                        self.missing_block.on_change(hash)
+
                     break
 
                 block = self._block_cache[hash]

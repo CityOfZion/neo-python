@@ -3,7 +3,7 @@
 from neo.Core.TX.Transaction import Transaction,TransactionType
 import sys
 from neo.Core.FunctionCode import FunctionCode
-
+import binascii
 class PublishTransaction(Transaction):
 
 
@@ -33,25 +33,47 @@ class PublishTransaction(Transaction):
         else:
             self.NeedStorage = False
 
-        self.Name = reader.ReadVarString().decode('utf-8')
-        self.CodeVersion = reader.ReadVarString().decode('utf-8')
-        self.Author = reader.ReadVarString().decode('utf-8')
-        self.Email = reader.ReadVarString().decode('utf-8')
-        self.Description = reader.ReadVarString().decode('utf-8')
+        self.Name = reader.ReadVarString()
+        self.CodeVersion = reader.ReadVarString()
+        self.Author = reader.ReadVarString()
+        self.Email = reader.ReadVarString()
+        self.Description = reader.ReadVarString()
+
+
+
+    def SerializePossibleEncodingIssue(self, writer, value):
+        length = len(value)
+        ba = bytearray(value)
+        byts = binascii.hexlify(ba)
+        string = byts.decode('utf-8')
+        writer.WriteByte(length)
+        writer.WriteBytes(string)
 
     def SerializeExclusiveData(self, writer):
 
         self.Code.Serialize(writer)
 
         if self.Version >=1:
-            writer.WriteBoolean( self.NeedStorage)
+            writer.WriteBool( self.NeedStorage)
 
-        writer.WriteVarString(self.Name)
+        self.SerializePossibleEncodingIssue(writer, self.Name)
+        self.SerializePossibleEncodingIssue(writer, self.CodeVersion)
+        self.SerializePossibleEncodingIssue(writer, self.Author)
+        self.SerializePossibleEncodingIssue(writer, self.Email)
+        self.SerializePossibleEncodingIssue(writer, self.Description)
 
-        writer.WriteVarString(self.CodeVersion)
-        writer.WriteVarString(self.Author)
-        writer.WriteVarString(self.Email)
-        writer.WriteVarString(self.Description)
 
+
+#        writer.WriteVarString(self.Name)
+
+#        writer.WriteVarString(self.CodeVersion)
+#        writer.WriteVarString(self.Author)
+#        writer.WriteVarString(self.Email)
+
+
+#        print("bytelen: %s " % len(writer.stream.ToArray()))
+
+#        writer.WriteVarBytes(self.Description)
+#        print( "bytelen: %s " % len(writer.stream.ToArray()))
 
 

@@ -49,9 +49,14 @@ class NeoNode(Protocol):
         self.pm = None
         self.reset_counter = False
 
+        self.myblockrequests=[]
+
+        self.missing_block = None
+
     def connectionMade(self):
         self.state = "CONNECTING"
         self.blockchain = Blockchain.Default()
+        self.blockchain.missing_block.on_change += self.OnBlockchainMissingBlock
         self.endpoint = self.transport.getPeer()
         self.factory.peers[self.remote_nodeid] = self
         self.Log("Connection from %s" % self.endpoint)
@@ -59,8 +64,17 @@ class NeoNode(Protocol):
 
     def connectionLost(self, reason=None):
         self.state = "HELLO"
+
+        self.blockchain.missing_block.on_change -= self.OnBlockchainMissingBlock
+
         if self.remote_nodeid in self.factory.peers:
             self.factory.peers.pop(self.remote_nodeid)
+
+        for h in self.myblockrequests:
+            if h in self.factory.blockrequests:
+                self.factory.blockrequests.remove(h)
+
+        self.myblockrequests = []
         self.Log("%s disconnected" % self.nodeid, )
 
 
@@ -105,19 +119,18 @@ class NeoNode(Protocol):
             stream = MemoryStream(mdata)
             reader = BinaryReader(stream)
             message = Message()
-            try:
-                message.Deserialize(reader)
+            message.Deserialize(reader)
 
-                self.buffer_in = self.buffer_in[messageExpectedLength:]
-                self.pm = None
-                self.MessageReceived(message)
-                self.reset_counter = False
+            self.buffer_in = self.buffer_in[messageExpectedLength:]
+            self.pm = None
+            self.MessageReceived(message)
+            self.reset_counter = False
 
-                while len(self.buffer_in) >=24 and not self.reset_counter:
-                    self.CheckDataReceived()
+            while len(self.buffer_in) >=24 and not self.reset_counter:
+                self.CheckDataReceived()
 
-            except Exception as e:
-                self.Log("could not deserialize mesasge :%s " % e)
+#            except Exception as e:
+#                self.Log("could not deserialize mesasge :%s " % e)
         else:
             self.reset_counter = True
 
@@ -209,10 +222,11 @@ class NeoNode(Protocol):
         #            print("use block hashes!!")
         hashes = []
         hashstart = self.blockchain.Height() + 1
-        while hashstart < self.blockchain.HeaderHeight() and len(hashes) < 100:
+        while hashstart < self.blockchain.HeaderHeight() and len(hashes) < 200:
             hash = self.blockchain.GetHeaderHash(hashstart)
-            if not hash in self.factory.blockrequests:
+            if not hash in self.factory.blockrequests and not hash in self.myblockrequests:
                 self.factory.blockrequests.append(hash)
+                self.myblockrequests.append(hash)
                 hashes.append(hash)
             hashstart += 1
 
@@ -238,9 +252,10 @@ class NeoNode(Protocol):
 
         blockhash =  block.HashToString()
 
-#        if blockhash in self.factory.blockrequests:
-#            self.factory.blockrequests.remove(blockhash)
-
+        if blockhash in self.factory.blockrequests:
+            self.factory.blockrequests.remove(blockhash)
+        if blockhash in self.myblockrequests:
+            self.myblockrequests.remove(blockhash)
         #lock missions global
 #        if blockhash in self._missions_global:
 #            self._missions_global.remove( blockhash)
@@ -254,6 +269,12 @@ class NeoNode(Protocol):
 #        print("WILL DISPATCH ON INVENTORY RECEIVED.......")
 #        self.InventoryReceived.on_change(self, inventory)
         self.factory.InventoryReceived(self.factory,block)
+
+    def OnBlockchainMissingBlock(self, blockhash):
+        if self.missing_block is None:
+            print("WILL LOOK FOR MISSING BLOCK!! %s " % blockhash)
+            self.missing_block = blockhash
+
 
     def Log(self, message):
         print("%s - %s" % (self.endpoint, message))

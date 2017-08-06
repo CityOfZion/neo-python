@@ -27,7 +27,7 @@ def gotProtocol(p):
 #d = connectProtocol(point, NeoProtocol)
 #d.addCallback(gotProtocol)
 
-BOOTSTRAP_LIST = ["seed1.neo.org:20333",]
+BOOTSTRAP_LIST = Settings.SEED_LIST
 
 for bootstrap in BOOTSTRAP_LIST:
     host, port = bootstrap.split(":")
