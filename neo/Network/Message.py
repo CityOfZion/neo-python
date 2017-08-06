@@ -10,6 +10,9 @@ import asyncio
 import binascii
 from autologging import logged
 
+class ChecksumException(Exception):
+    pass
+
 @logged
 class Message(SerializableMixin):
 
@@ -24,6 +27,8 @@ class Message(SerializableMixin):
     Checksum = None
 
     Payload = None
+
+    Length = 0
 
 
     def __init__(self, command=None, payload = None):
@@ -43,23 +48,23 @@ class Message(SerializableMixin):
         return ctypes.sizeof(ctypes.c_uint) + 12 + ctypes.sizeof(ctypes.c_int) + ctypes.sizeof(ctypes.c_uint) + len(self.Payload)
 
     def Deserialize(self, reader):
-        if reader.ReadUInt32() != self.Magic:
-            raise Exception("Invalid format, wrong magic")
+        self.Magic = reader.ReadUInt32()
 
         self.Command = reader.ReadFixedString(12).decode('utf-8')
 
-        length = reader.ReadUInt32()
+        self.Length = reader.ReadUInt32()
 
-        if length > self.PayloadMaxSizeInt:
+        if self.Length > self.PayloadMaxSizeInt:
             raise Exception("invalid format- payload too large")
 
         self.Checksum = reader.ReadUInt32()
 
-        self.Payload = reader.ReadBytes(length)
+        self.Payload = reader.ReadBytes(self.Length)
 
+        checksum = Message.GetChecksum(self.Payload)
 
-        if not Message.GetChecksum(self.Payload) == self.Checksum:
-            raise Exception("checksum mismatch")
+        if checksum != self.Checksum:
+            raise ChecksumException("checksum mismatch")
 
         self.__log.debug("Deserialized Message %s " % self.Command)
 
