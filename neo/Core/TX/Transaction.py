@@ -79,10 +79,10 @@ class TransactionInput(SerializableMixin):
     PrevHash=None
     PrevIndex=None
 
-    def __init__(self, prevHash, prevIndex):
+    def __init__(self, prevHash=None, prevIndex=None):
         super(TransactionInput, self).__init__()
         self.PrevHash = prevHash
-        self.PrevIndex = int(prevIndex)
+        self.PrevIndex = prevIndex
 
     def Serialize(self, writer):
         writer.WriteUInt256(self.PrevHash)

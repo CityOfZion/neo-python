@@ -83,10 +83,10 @@ class TransactionAttribute(Inventory, SerializableMixin):
 
         elif usage == TransactionAttributeUsage.DescriptionUrl:
 
-            self.Data == reader.ReadBytes(reader.ReadByte()).decode('utf-8')
+            self.Data == reader.ReadBytes(reader.ReadByte())
 
         elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
-            self.Data = reader.ReadVarBytes().decode('utf-8')
+            self.Data = reader.ReadBytes(reader.ReadByte())
         else:
             print("format error!!!")
 
@@ -94,6 +94,8 @@ class TransactionAttribute(Inventory, SerializableMixin):
     def Serialize(self, writer):
         writer.WriteByte(self.Usage)
 
+
+        print("writer length: %s " % len(writer.stream.ToArray()))
 
         if self.Usage == TransactionAttributeUsage.ContractHash or self.Usage == TransactionAttributeUsage.Vote or \
                 (self.Usage >= TransactionAttributeUsage.Hash1 and self.Usage <= TransactionAttributeUsage.Hash15):
@@ -106,11 +108,18 @@ class TransactionAttribute(Inventory, SerializableMixin):
             writer.WriteBytes(self.Data)
 
         elif self.Usage == TransactionAttributeUsage.DescriptionUrl:
-            writer.WriteVarString( self.Data)
-#            self.Data == reader.ReadBytes(reader.ReadByte())
+            mlen = len(self.Data)
+            writer.WriteVarInt(mlen)
+
+            byts = bytes(self.Data.hex().encode('utf-8'))
+            writer.WriteBytes(byts)
 
         elif self.Usage == TransactionAttributeUsage.Description or self.Usage >= TransactionAttributeUsage.Remark:
-            writer.WriteVarString(self.Data)
+            mlen = len(self.Data)
+            writer.WriteVarInt(mlen)
+
+            byts = bytes( self.Data.hex().encode('utf-8'))
+            writer.WriteBytes(byts)
 
         else:
             print("format error!!!")

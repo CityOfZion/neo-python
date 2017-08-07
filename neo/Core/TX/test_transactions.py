@@ -20,7 +20,7 @@ class TransactionTestCase(unittest.TestCase):
 
 
     def test_tx_deserialize(self):
-
+        
         ms = MemoryStream(self.tx_raw_hex)
 
         reader = BinaryReader(ms)
@@ -124,6 +124,7 @@ class TransactionTestCase(unittest.TestCase):
 
 
     def test_contract_tx_again(self):
+
         ms = MemoryStream(binascii.unhexlify(self.cr))
 
         reader = BinaryReader(ms)
@@ -136,7 +137,6 @@ class TransactionTestCase(unittest.TestCase):
     p2id=b'514157940a3e31b087891c5e8ed362721f0a7f3dda3f80b7a3fe618d02b7d3d3'
 
     def test_pub_two(self):
-
 
         ms = MemoryStream(binascii.unhexlify(self.p2))
 
@@ -154,6 +154,7 @@ class TransactionTestCase(unittest.TestCase):
 
 
     def test_enrollment_tx(self):
+
         ms = MemoryStream(binascii.unhexlify(self.eraw))
 
         reader = BinaryReader(ms)
@@ -161,3 +162,16 @@ class TransactionTestCase(unittest.TestCase):
 
         self.assertEqual(tx.ToArray(), self.eraw)
         self.assertEqual(tx.HashToByteString(), self.eid)
+
+    yatx = b'800001f00431313131010206cc6f919695fb55c9605c55127128c29697d791af884c2636416c69a944880100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000e58e5999bcbf5d78f52ead40654131abb9ee27099b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5009a04f516000000e53a27d37d7f5a3187003c21efe3725304a7410601414058b4a41beabdcf62381f7feea02767a714eb8ea49212fdb47a6f0bed2d0ae87d27377d9c2b4412ebf816042f2144e6e08939c7d83638b61208d3a7f5ea47c3ba232102ca81fa6c7ef20219c417d876c2743ea87728d416632d09c18004652aed09e000ac'
+    yatx_id=b'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
+
+    def test_yet_another_tx(self):
+
+        ms = MemoryStream(binascii.unhexlify(self.yatx))
+
+        reader = BinaryReader(ms)
+        tx = Transaction.DeserializeFrom(reader)
+        print("tx raw %s " % tx.ToArray())
+        self.assertEqual(tx.ToArray(), self.yatx)
+        self.assertEqual(tx.HashToByteString(), self.yatx_id)
