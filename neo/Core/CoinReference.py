@@ -18,12 +18,8 @@ class CoinReference(object):
 
     def Deserialize(self, reader):
 
-        print("trying to deserialize coin ref")
         self.PrevHash = reader.ReadUInt256(reverse=False)
-        print("sef prev hash: %s " % self.PrevHash )
-
         self.PrevIndex = reader.ReadUInt16()
-        print("self prev index %s " % self.PrevIndex)
 
     def Serialize(self, writer):
 

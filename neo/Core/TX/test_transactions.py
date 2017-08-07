@@ -20,7 +20,7 @@ class TransactionTestCase(unittest.TestCase):
 
 
     def test_tx_deserialize(self):
-        
+
         ms = MemoryStream(self.tx_raw_hex)
 
         reader = BinaryReader(ms)
