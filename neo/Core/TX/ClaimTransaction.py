@@ -49,6 +49,7 @@ class ClaimTransaction(Transaction):
         raise NotImplementedError()
 
     def SerializeExclusiveData(self, writer):
+
         writer.WriteSerializableArray(self.Claims)
 
 

@@ -29,7 +29,7 @@ class PublishTransaction(Transaction):
         self.Code.Deserialize(reader)
 
         if self.Version >= 1:
-            self.NeedStorage = reader.ReadBoolean()
+            self.NeedStorage = reader.ReadBool()
         else:
             self.NeedStorage = False
 
