@@ -13,7 +13,6 @@ from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
 
-import events
 
 DATA_Block =        b'\x01'
 DATA_Transaction =  b'\x02'
@@ -51,8 +50,6 @@ class LevelDBBlockchain(Blockchain):
     _verify_blocks = False
 
     _sysversion = b'/NEO:2.0.1/'
-
-    missing_block = events.Events()
 
 
     def CurrentBlockHash(self):
@@ -385,7 +382,6 @@ class LevelDBBlockchain(Blockchain):
         while not self._disposed:
 
 
-
             time.sleep(1)
             self.__log.info("Header height, block height: %s %s %s " % (self.HeaderHeight(), self.Height(), self.CurrentHeaderHash()))
             while not self._disposed:
@@ -393,9 +389,7 @@ class LevelDBBlockchain(Blockchain):
 
                 #lock header index
                 if len(self._header_index) <= self._current_block_height + 1: break
-#                print("should add block at index %s " % (self._current_block_height + 1))
                 hash = self._header_index[self._current_block_height + 1]
-
                 #end lock header index
 
                 self.__log.info("LOOKING FOR HASH: %s " % hash)
@@ -403,16 +397,9 @@ class LevelDBBlockchain(Blockchain):
                 #lock block cache
 
                 if not hash in self._block_cache:
-#                    print("hash not in block cache!!!")
-#                    print("CURRENT BLOCK CACHE %s " % (len(self._block_cache)))
-                    if len(self._block_cache) > 2000:
-                        self.missing_block.on_change(hash)
-
                     break
 
                 block = self._block_cache[hash]
-#                print("block is in block cache, persist!! %s "% block)
-                #end lock block cache
 
                 self.Persist(block)
                 self.OnPersistCompleted(block)

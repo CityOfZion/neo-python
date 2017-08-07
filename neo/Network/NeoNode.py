@@ -51,7 +51,6 @@ class NeoNode(Protocol):
 
         self.myblockrequests=[]
 
-        self.missing_block = None
 
     def connectionMade(self):
         self.state = "CONNECTING"
@@ -106,7 +105,6 @@ class NeoNode(Protocol):
                 self.CheckMessageData()
             except Exception as e:
                 self.Log('could not read initial bytes %s ' % e)
-#                self.pm = None
 
 
     def CheckMessageData(self):
@@ -129,8 +127,6 @@ class NeoNode(Protocol):
             while len(self.buffer_in) >=24 and not self.reset_counter:
                 self.CheckDataReceived()
 
-#            except Exception as e:
-#                self.Log("could not deserialize mesasge :%s " % e)
         else:
             self.reset_counter = True
 
@@ -193,7 +189,6 @@ class NeoNode(Protocol):
 
     def HandleInvMessage(self, payload):
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
-        self.Log("handling inv message payload: %s " % inventory)
 
         if inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
             self.HandleConsenusInventory(inventory)
@@ -219,7 +214,6 @@ class NeoNode(Protocol):
 
 
     def HandleBlockHashInventory(self, inventory):
-        #            print("use block hashes!!")
         hashes = []
         hashstart = self.blockchain.Height() + 1
         while hashstart < self.blockchain.HeaderHeight() and len(hashes) < 200:
@@ -256,24 +250,9 @@ class NeoNode(Protocol):
             self.factory.blockrequests.remove(blockhash)
         if blockhash in self.myblockrequests:
             self.myblockrequests.remove(blockhash)
-        #lock missions global
-#        if blockhash in self._missions_global:
-#            self._missions_global.remove( blockhash)
-        #endlock
 
-        #lock missions
-#        if blockhash in self._missions:
-#            self._missions.remove( blockhash )
-        #endlock
-
-#        print("WILL DISPATCH ON INVENTORY RECEIVED.......")
-#        self.InventoryReceived.on_change(self, inventory)
         self.factory.InventoryReceived(self.factory,block)
 
-    def OnBlockchainMissingBlock(self, blockhash):
-        if self.missing_block is None:
-            print("WILL LOOK FOR MISSING BLOCK!! %s " % blockhash)
-            self.missing_block = blockhash
 
 
     def Log(self, message):
