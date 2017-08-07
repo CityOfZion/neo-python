@@ -55,7 +55,6 @@ class NeoNode(Protocol):
     def connectionMade(self):
         self.state = "CONNECTING"
         self.blockchain = Blockchain.Default()
-        self.blockchain.missing_block.on_change += self.OnBlockchainMissingBlock
         self.endpoint = self.transport.getPeer()
         self.factory.peers[self.remote_nodeid] = self
         self.Log("Connection from %s" % self.endpoint)
@@ -63,8 +62,6 @@ class NeoNode(Protocol):
 
     def connectionLost(self, reason=None):
         self.state = "HELLO"
-
-        self.blockchain.missing_block.on_change -= self.OnBlockchainMissingBlock
 
         if self.remote_nodeid in self.factory.peers:
             self.factory.peers.pop(self.remote_nodeid)
