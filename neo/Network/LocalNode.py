@@ -91,7 +91,7 @@ class LocalNode():
                 remoteNode = TCPRemoteNode(self, addr)
 
             except Exception as e:
-                print("couldnt get socket %s " % e)
+                self.__log.debug("couldnt get socket %s " % e)
         pass
 
     def AddTransaction(self, tx):
@@ -224,7 +224,7 @@ class LocalNode():
         try:
             self._unconnected_peers.remove(remoteEndpoint)
         except Exception as e:
-            print("Could not remove endpoint from unconnected peers")
+            self.__log.debug("Could not remove endpoint from unconnected peers")
         #endlock
 
         #lock connected peers
@@ -504,7 +504,7 @@ class LocalNode():
                 self._listener = TCPRemoteNode(self, endpoint)
                 self._listener.daemon_threads = True
             except Exception as e:
-                print("coludnt start remote node: %s " % e)
+                self.__log.debug("coludnt start remote node: %s " % e)
 
             try:
                 self._port = port
@@ -512,7 +512,7 @@ class LocalNode():
                 executor = ThreadPoolExecutor()
                 await self.__LOOP.run_in_executor(executor, self.AcceptPeersAsync())
             except Exception as e:
-                print("ecxpetion creating listener: %s " % e)
+                self.__log.debug("ecxpetion creating listener: %s " % e)
 
         if ws_port > 0:
             # create websocket host

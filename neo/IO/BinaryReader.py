@@ -28,7 +28,7 @@ class BinaryReader(object):
         try:
             return ord(self.stream.read(1))
         except Exception as e:
-            print("ord expected character but got none")
+            self.__log.debug("ord expected character but got none")
         return 0
 
     def ReadBytes(self, length):
@@ -109,7 +109,7 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt()
         items = []
-        print("deserializing %s items of %s " % (length, class_name))
+        self.__log.debug("deserializing %s items of %s " % (length, class_name))
         try:
             for i in range(0, length):
                 item = klass()
@@ -118,7 +118,7 @@ class BinaryReader(object):
 
             return items
         except Exception as e:
-            print("could not deserialize items for class: %s %s " % (class_name, e))
+            self.__log.debug("could not deserialize items for class: %s %s " % (class_name, e))
 
         return None
 

@@ -253,4 +253,4 @@ class NeoNode(Protocol):
 
 
     def Log(self, message):
-        print("%s - %s" % (self.endpoint, message))
+        self.__log.debug("%s - %s" % (self.endpoint, message))

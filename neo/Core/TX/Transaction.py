@@ -255,7 +255,6 @@ class Transaction(Inventory, InventoryMixin):
         else:
             tx = Transaction()
             tx.Type = ttype
-        print("created tx of type: %s " % tx.Type)
 
         tx.DeserializeUnsignedWithoutType(reader)
 

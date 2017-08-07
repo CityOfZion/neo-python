@@ -81,8 +81,8 @@ class Wallet(object):
 
             self.BuildDatabase()
 
-            print("iv::: %s " % self._iv)
-            print("mk::: A%s " % self._master_key)
+            self.__log.debug("iv::: %s " % self._iv)
+            self.__log.debug("mk::: A%s " % self._master_key)
 
             passwordHash = hashlib.sha256(passwordKey.encode('utf-8')).digest()
             master = AES.new(self._master_key, AES.MODE_CBC, self._iv)
@@ -302,7 +302,7 @@ class Wallet(object):
                 self.BalanceChanged()
 
         except Exception as e:
-            print("could not process: %s " % e)
+            self.__log.debug("could not process: %s " % e)
         finally:
             self._lock.release()
 

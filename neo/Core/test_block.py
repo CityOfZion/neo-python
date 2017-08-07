@@ -49,7 +49,7 @@ class BlocksTestCase(unittest.TestCase):
 
     @staticmethod
     def BlockIndexOne():
-        print("GETTING BLOCK INDEX ONE!")
+        self.__log.debug("GETTING BLOCK INDEX ONE!")
         block = Helper.AsSerializableWithType(BlocksTestCase.b2raw, 'neo.Core.Block.Block')
         return block
 

@@ -92,7 +92,7 @@ class RemoteNode(object):
 
             self._message_queue.append(message)
         else:
-            print("not enqueing message.... %s " % command)
+            self.__log.debug("not enqueing message.... %s " % command)
 
     def OnAddrMessageReceived(self, payload):
         allpeers = [p.Endpoint for p in payload.AddressList]
@@ -138,7 +138,7 @@ class RemoteNode(object):
         self.__log.debug("ON GETBLOCKS MESSAGE RECEIVED!!!!")
         if not self._local_node.ServiceEnabled or Blockchain.Default() is None: return
 
-#        print("payload hash start hash stop: %s %s" % (payload.HashStart, payload.HashStop))
+#        self.__log.debug("payload hash start hash stop: %s %s" % (payload.HashStart, payload.HashStop))
         phashes = [Blockchain.Default().GetHeader(p) for p in payload.HashStart if Blockchain.Default().GetHeader(p) is not None]
         sorted(phashes, key=lambda p: p.Index)
 
@@ -148,7 +148,7 @@ class RemoteNode(object):
         hash = phashes[0]
 
         if hash == payload.HashStop:
-#            print("PAYLOAD IS HASH STOP, RETURN...")
+#            self.__log.debug("PAYLOAD IS HASH STOP, RETURN...")
             return
 
         hashes = []
@@ -159,7 +159,7 @@ class RemoteNode(object):
 
             if hash is None: break
 
-#            print("HASH IN NOT NOT, adding hash to inv payload: %s " % hash)
+#            self.__log.debug("HASH IN NOT NOT, adding hash to inv payload: %s " % hash)
             hashes.append(hash)
 
 
@@ -248,13 +248,13 @@ class RemoteNode(object):
     #receives blocks
     def OnInventoryReceived(self, inventory):
 
-#        print("ON INVENTORY RECEIVED........... ")
+#        self.__log.debug("ON INVENTORY RECEIVED........... ")
         if inventory is None:
-            print("INVENTORY IS NONE....")
+            self.__log.debug("INVENTORY IS NONE....")
             return
 
         if type(inventory) is Block:
-            print("ON BLOCK INVENTORY RECEIVED........... %s " % inventory.Index)  #lock missions global
+            self.__log.debug("ON BLOCK INVENTORY RECEIVED........... %s " % inventory.Index)  #lock missions global
 
         blockhash =  inventory.HashToString()
 
@@ -270,7 +270,7 @@ class RemoteNode(object):
         if type(inventory) is MinerTransaction:
             return
 
-#        print("WILL DISPATCH ON INVENTORY RECEIVED.......")
+#        self.__log.debug("WILL DISPATCH ON INVENTORY RECEIVED.......")
         self.InventoryReceived.on_change(self, inventory)
 
 
@@ -278,21 +278,21 @@ class RemoteNode(object):
 
 
         if not payload.Type in InventoryType.AllInventoriesInt():
-            print("payload not in all inventories")
+            self.__log.debug("payload not in all inventories")
             return
 
         hashes = []
 
         if payload.Type == int.from_bytes(InventoryType.Block,'little'):
-#            print("use block hashes!!")
+#            self.__log.debug("use block hashes!!")
             hashes = []
             hashstart = Blockchain.Default().Height() + 1
-            print("remote node id %s requesting 200 blocks at start %s " % (self.ServerID, hashstart))
+            self.__log.debug("remote node id %s requesting 200 blocks at start %s " % (self.ServerID, hashstart))
             while hashstart < Blockchain.Default().HeaderHeight() and len(hashes) < 200:
                 hashes.append(Blockchain.Default().GetHeaderHash(hashstart))
                 hashstart += 1
             #        self.__log.debug("Requesting block data for hashes: %s" % hashes[0])
-            print("requesting hashes %s " % hashes)
+            self.__log.debug("requesting hashes %s " % hashes)
         else:
             hashes = payload.DistinctHashes()
 
@@ -427,7 +427,7 @@ class RemoteNode(object):
                         self.EnqueueMessage("inv", InvPayload(InventoryType.TX, hashes))
                         return True
             except Exception as e:
-                print("couldn't get transactions from data list :%s " % e)
+                self.__log.debug("couldn't get transactions from data list :%s " % e)
 
         return False
 
@@ -448,7 +448,7 @@ class RemoteNode(object):
                 self.Disconnect(True)
                 return
         except Exception as e:
-            print("could not receive message command %s " % e)
+            self.__log.debug("could not receive message command %s " % e)
             return
 
         try:
@@ -456,7 +456,7 @@ class RemoteNode(object):
             self.__log.debug("CURRENT VERSION START HEIGHT: %s " % self.Version.StartHeight)
 
         except Exception as e:
-            print("exception getting version: %s " % e)
+            self.__log.debug("exception getting version: %s " % e)
             self.Disconnect(e)
             return
 
@@ -524,14 +524,14 @@ class RemoteNode(object):
             receive_message_future = yield from asyncio.wait_for(self.ReceiveMessageAsync(timeout), 60)
 
             if not receive_message_future:
-                print("no message future!: ")
+                self.__log.debug("no message future!: ")
                 self.Disconnect(True)
                 break
 
             try:
                 self.OnMessageReceived(receive_message_future)
             except Exception as e:
-                print("could not receive message: %s " % e)
+                self.__log.debug("could not receive message: %s " % e)
                 self.Disconnect(True)
                 break
 

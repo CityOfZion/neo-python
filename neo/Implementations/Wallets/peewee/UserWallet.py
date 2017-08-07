@@ -28,7 +28,7 @@ class UserWallet(Wallet):
             db.create_tables([Account,Address,Coin,Contract,Key,Transaction,TransactionInfo,])
             self.__log.debug("created tables")
         except Exception as e:
-            print("couldn't create tables: %s " % e)
+            self.__log.debug("couldn't create tables: %s " % e)
 
     def DB(self):
         return PWDatabase.Context()
@@ -88,7 +88,7 @@ class UserWallet(Wallet):
         try:
             return Key.get(Name=key).Value
         except Exception as e:
-            print('could not get key %s ' % e)
+            self.__log.debug('could not get key %s ' % e)
 
     def LoadTransactions(self):
         return Transaction.select()

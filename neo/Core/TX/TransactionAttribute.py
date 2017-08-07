@@ -10,6 +10,7 @@ from neo.Network.Inventory import Inventory
 from neo.IO.Mixins import SerializableMixin
 
 import binascii
+from autologging import logged
 
 
 class TransactionAttributeUsage(object):
@@ -60,6 +61,7 @@ class TransactionAttributeUsage(object):
     Remark15 = int.from_bytes(b'\xff','little')
 
 
+@logged
 class TransactionAttribute(Inventory, SerializableMixin):
     """docstring for TransactionAttribute"""
     def __init__(self, usage=None, data=None):
@@ -70,7 +72,7 @@ class TransactionAttribute(Inventory, SerializableMixin):
     def Deserialize(self, reader):
         usage = reader.ReadByte()
         self.Usage = usage
-        print("attribute usage: %s " % usage)
+        self.__log.debug("attribute usage: %s " % usage)
         if usage == TransactionAttributeUsage.ContractHash or usage==TransactionAttributeUsage.Vote or \
             (usage >= TransactionAttributeUsage.Hash1 and usage <= TransactionAttributeUsage.Hash15):
             self.Data = reader.ReadBytes(32)
@@ -88,14 +90,14 @@ class TransactionAttribute(Inventory, SerializableMixin):
         elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
             self.Data = reader.ReadBytes(reader.ReadByte())
         else:
-            print("format error!!!")
+            self.__log.debug("format error!!!")
 
 
     def Serialize(self, writer):
         writer.WriteByte(self.Usage)
 
 
-        print("writer length: %s " % len(writer.stream.ToArray()))
+        self.__log.debug("writer length: %s " % len(writer.stream.ToArray()))
 
         if self.Usage == TransactionAttributeUsage.ContractHash or self.Usage == TransactionAttributeUsage.Vote or \
                 (self.Usage >= TransactionAttributeUsage.Hash1 and self.Usage <= TransactionAttributeUsage.Hash15):
@@ -122,6 +124,6 @@ class TransactionAttribute(Inventory, SerializableMixin):
             writer.WriteBytes(byts)
 
         else:
-            print("format error!!!")
+            self.__log.debug("format error!!!")
 
 

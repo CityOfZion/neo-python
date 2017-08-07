@@ -11,7 +11,10 @@ from neo.Core.TX.Transaction import Transaction,TransactionType
 import binascii
 from neo.Core.AssetType import AssetType
 from neo.Cryptography.ECCurve import ECDSA
+from autologging import logged
 
+
+@logged
 class RegisterTransaction(Transaction):
     """
         # 发行总量，共有2种模式：
@@ -36,7 +39,7 @@ In English:
     def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), precision=0, owner=None, admin=None):
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.Type = TransactionType.RegisterTransaction  # 0x40
-        print("GETTING REGISTER TRANSACTION!!!")
+        self.__log.debug("GETTING REGISTER TRANSACTION!!!")
         self.AssetType = assettype
         self.Name = assetname
         self.Amount = amount  # Unlimited Mode: -0.00000001
@@ -64,8 +67,8 @@ In English:
         self.Precision = reader.ReadByte()
 
 #        pkey = reader.ReadBytes(33)
-#        print("pke %s " % pkey)
-#        print("hex: %s " % binascii.hexlify(pkey))
+#        self.__log.debug("pke %s " % pkey)
+#        self.__log.debug("hex: %s " % binascii.hexlify(pkey))
 #        ecdsa = ECDSA.decode_secp256r1(pkey)
 
         self.Owner = reader.ReadBytes(33)

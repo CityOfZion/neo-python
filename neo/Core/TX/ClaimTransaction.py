@@ -94,7 +94,7 @@ class ClaimTransaction(Transaction):
             return Blockchain.CalculateBonusIgnoreClaimed(self.Claims,False) == -txResult.Amount
 
         except Exception as e:
-            print('couldnt calculate bonus: %s ' % e)
+            self.__log.debug('couldnt calculate bonus: %s ' % e)
 
         return False
 

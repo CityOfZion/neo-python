@@ -1,3 +1,12 @@
+import sys
+import logging
+logname = 'nodes.log'
+logging.basicConfig(
+     level=logging.DEBUG,
+     filemode='a',
+     filename=logname,
+     format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
+
 from neo.Network.NeoNode import NeoNode
 from neo.Network.NeoNodeFactory import NeoFactory
 
@@ -22,4 +31,5 @@ for bootstrap in Settings.SEED_LIST:
     point = TCP4ClientEndpoint(reactor, host, int(port))
     d = connectProtocol(point, NeoNode(NeoFactory))
 
+print("Starting node ...")
 reactor.run()

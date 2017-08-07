@@ -220,11 +220,8 @@ def from_int_to_byte(a):
     return a
 
 def bin_to_b58check(inp,magicbyte=0):
-    print("inp: %s " % inp)
-    print("")
     mb = b'\x17'
     inp_fmtd = mb + inp
-    print("inpf %s " % inp_fmtd)
 #    inp_fmtd = chr(magicbyte) + inp
     checksum = bin_dbl_sha256(inp_fmtd)[:4]
     return changebase(inp_fmtd+checksum, 256, 58)
@@ -254,7 +251,6 @@ def bin_hash160(string):
     return hashlib.new('ripemd160', intermed).hexdigest()
 
 def bin_sha256(string):
-    print("type: %s " % type(string))
     binary_data = string if type(string) is bytes else string.encode('utf-8')
     return hashlib.sha256(binary_data).digest()
 

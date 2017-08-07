@@ -107,16 +107,16 @@ class Message(SerializableMixin):
 
             if checksum != message.Checksum:
 
-                print("Message command :%s " % message.Command)
-                print("Checksum mismatch: %s " % message.Checksum)
-                print("message payload: %s " % message.Payload)
+                self.__log.debug("Message command :%s " % message.Command)
+                self.__log.debug("Checksum mismatch: %s " % message.Checksum)
+                self.__log.debug("message payload: %s " % message.Payload)
                 return None
                 #raise Exception("invalid checksum")
 
             return message
 
         except Exception as e:
-                print("could not receive buffer from socket: %s " % e)
+                self.__log.debug("could not receive buffer from socket: %s " % e)
 
 
 

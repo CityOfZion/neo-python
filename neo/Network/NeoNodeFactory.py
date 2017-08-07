@@ -24,8 +24,9 @@ from .Payloads.MerkleBlockPayload import MerkleBlockPayload
 from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
+from autologging import logged
 
-
+@logged
 class NeoFactory(Factory):
 
     peers = {}
@@ -49,7 +50,7 @@ class NeoFactory(Factory):
 
     def InventoryReceived(self, inventory):
 
-        print("Neo factory received inventory %s " % inventory)
+        self.__log.debug("Neo factory received inventory %s " % inventory)
 
         if inventory is MinerTransaction: return False
 
@@ -61,9 +62,9 @@ class NeoFactory(Factory):
             if Blockchain.Default() == None: return False
 
             if Blockchain.Default().ContainsBlock(inventory.HashToByteString()):
-                print("cant add block %s because blockchain already contains it " % inventory.HashToByteString())
+                self.__log.debug("cant add block %s because blockchain already contains it " % inventory.HashToByteString())
                 return False
-            print("Will Try to add block" % inventory.HashToByteString())
+            self.__log.debug("Will Try to add block" % inventory.HashToByteString())
 
             if not Blockchain.Default().AddBlock(inventory): return False
 

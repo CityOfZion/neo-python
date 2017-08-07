@@ -71,4 +71,4 @@ if __name__ == '__main__':
     sb.add(21)
     sb.push(pubkey)
     sb.add(ScriptOp.OP_CHECKSIG)
-    print((sb.ToArray()))
+    self.__log.debug((sb.ToArray()))

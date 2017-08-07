@@ -23,7 +23,7 @@ class PublishTransaction(Transaction):
 
     def DeserializeExclusiveData(self, reader):
         if self.Version > 1:
-            print("format exception...")
+            self.__log.debug("format exception...")
 
         self.Code = FunctionCode()
         self.Code.Deserialize(reader)
@@ -71,9 +71,9 @@ class PublishTransaction(Transaction):
 #        writer.WriteVarString(self.Email)
 
 
-#        print("bytelen: %s " % len(writer.stream.ToArray()))
+#        self.__log.debug("bytelen: %s " % len(writer.stream.ToArray()))
 
 #        writer.WriteVarBytes(self.Description)
-#        print( "bytelen: %s " % len(writer.stream.ToArray()))
+#        self.__log.debug( "bytelen: %s " % len(writer.stream.ToArray()))
 
 

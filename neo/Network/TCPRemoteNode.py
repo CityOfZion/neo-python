@@ -43,14 +43,14 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
 
         if remote_endpoint:
             if remote_endpoint.Address == '0.0.0.0':
-    #            print("has remote endpoint ANY")
+    #            self.__log.debug("has remote endpoint ANY")
                 try:
                     self._server = TCPListener((remote_endpoint.Address, remote_endpoint.Port), TCPRemoteNode, True)
                     self._server.serve_forever()
                     self._socket = self._server.socket
 
                 except Exception as e:
-                    print("could not bind server: %s " % e)
+                    self.__log.debug("could not bind server: %s " % e)
 
 
             if not self._server:
@@ -65,7 +65,7 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
             return message
 
         except Exception as e:
-            print("could not receive message %s " % e)
+            self.__log.debug("could not receive message %s " % e)
             return None
 
 
@@ -76,7 +76,7 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
             return self.OnConnected()
 
         except Exception as e:
-            print("could not connect async: %s " % e)
+            self.__log.debug("could not connect async: %s " % e)
 
             self.Disconnect(False)
 
@@ -100,7 +100,7 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
             message = Message.DeserializeFromAsyncSocket(self._socket, None)
             return message
         except Exception as e:
-            print("could not receive message async: %s " % e)
+            self.__log.debug("could not receive message async: %s " % e)
 
         return None
 
@@ -119,7 +119,7 @@ class TCPRemoteNode(RemoteNode, socketserver.BaseRequestHandler):
             self._socket.sendall(ba2)
             return True
         except Exception as e:
-            print("could not send message %s " % e)
+            self.__log.debug("could not send message %s " % e)
 
         return False
 

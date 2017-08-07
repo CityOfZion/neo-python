@@ -110,10 +110,9 @@ class Block(BlockBase, InventoryMixin):
             try:
                 tx = Transaction.DeserializeFrom(reader)
                 self.Transactions.append(tx)
-                print("Deserialized %s %s " % (type(tx),tx.HashToByteString()))
             except Exception as e:
-                print("could not deserialize tx: %s " % e)
-                print("BLOCK  %s " % self.Index)
+                self.__log.debug("could not deserialize tx: %s " % e)
+                self.__log.debug("BLOCK  %s " % self.Index)
 
 
 
