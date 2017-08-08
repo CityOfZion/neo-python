@@ -159,9 +159,9 @@ class BlockBase(VerifiableMixin):
 
     def ToJson(self):
         json = {}
-        json["hash"] = binascii.hexlify(self.Hash())
+        json["hash"] = self.HashToString()
 
-        json["size"] = self.Size()
+#        json["size"] = self.Size()
         json["version"] = self.Version
         json["previousblockhash"] = self.PrevHash
         json["merkleroot"] = self.MerkleRoot

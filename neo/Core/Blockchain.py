@@ -201,8 +201,9 @@ class Blockchain(object):
     def GetHeaderHash(self, height):
         pass
 
-    def GetBlock(self, height):
-        return self.GetBlockByHash(self.GetBlockHash(height))
+    def GetBlock(self, height_or_hash):
+#        return self.GetBlockByHash(self.GetBlockHash(height))
+        pass
 
     def GetBlockByHash(self, hash):
         # abstract
@@ -306,6 +307,13 @@ class Blockchain(object):
     def OnPersistCompleted(self, block):
 
         self.__validators = []
+
+
+    def StartPersist(self):
+        pass
+
+    def StopPersist(self):
+        pass
 
     @staticmethod
     def RegisterBlockchain(blockchain):

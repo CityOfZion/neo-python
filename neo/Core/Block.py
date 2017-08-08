@@ -12,6 +12,7 @@ from json import dumps
 import sys
 from autologging import logged
 from neo.Core.Header import Header
+from neo.Core.Witness import Witness
 #  < summary >
 #  区块或区块头
 #  < / summary >
@@ -31,6 +32,7 @@ class Block(BlockBase, InventoryMixin):
 
     __header = None
 
+    __is_trimmed = False
     #  < summary >
     #  资产清单的类型
     #  < / summary >
@@ -135,19 +137,20 @@ class Block(BlockBase, InventoryMixin):
 
 
     @staticmethod
-    def FromTrimmedData(bytes, index, transaction_method):
+    def FromTrimmedData(byts, index, transaction_method=None):
+        print("getting block from trimmed data!!! ")
         block = Block()
-        ms = MemoryStream()
+        block.__is_trimmed = True
+        ms = MemoryStream(byts)
         reader = BinaryReader(ms)
 
         block.DeserializeUnsigned(reader)
         reader.ReadByte()
-        block.Script = reader.ReadSerializableArray('neo.Core.Witness.Witness')
-        block.Transactions = []
-        for i in range(0, reader.ReadVarInt()):
-            tx = Transaction.DeserializeFrom(reader)
-            block.Transactions.append(tx)
+        witness = Witness()
+        witness.Deserialize(reader)
+        block.witness = witness
 
+        block.Transactions = reader.ReadHashes()
         return block
 
     # < summary >
@@ -179,7 +182,11 @@ class Block(BlockBase, InventoryMixin):
     # < returns > 返回json对象 < / returns >
     def ToJson(self):
         json = super(Block, self).ToJson()
-        json['tx'] = [tx.ToJson() for tx in self.Transactions]
+        if self.__is_trimmed:
+            json['tx'] = self.Transactions
+        else:
+            json['tx'] = [tx.ToJson() for tx in self.Transactions]
+
         return json
 
     # < summary >
@@ -189,7 +196,6 @@ class Block(BlockBase, InventoryMixin):
     def Trim(self):
         ms = MemoryStream()
         writer = BinaryWriter(ms)
-
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)

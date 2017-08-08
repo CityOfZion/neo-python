@@ -29,7 +29,7 @@ from autologging import logged
 @logged
 class NeoFactory(Factory):
 
-    peers = {}
+    peers = []
     nodeid = 12234234
     blockchain = None
 
@@ -39,9 +39,16 @@ class NeoFactory(Factory):
         self.startFactory()
 
     def startFactory(self):
-        self.peers = {}
+        self.peers = []
         self.nodeid = 1123123
         self.blockchain = Blockchain.Default()
+        self.blockchain.SyncReset.on_change += self.LevelDB_onreset
+
+    def stopFactory(self):
+        print("stopping factory")
+        self.blockchain.SyncReset.on_change -= self.LevelDB_onreset
+        self.blockchain = None
+
 
     def buildProtocol(self, addr):
         return NeoNode(self)
@@ -92,3 +99,11 @@ class NeoFactory(Factory):
 
         #end lock
         return relayed
+
+
+    def LevelDB_onreset(self, hash):
+        self.__log.debug("Recevied leveldb reset function %s " % hash)
+        self.blockrequests = []
+        for peer in self.peers:
+            print("peer is %s " % peer)
+            peer.HandleBlockReset(hash)

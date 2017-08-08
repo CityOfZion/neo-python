@@ -72,6 +72,12 @@ class TransactionOutput(SerializableMixin):
         self.Value = Fixed8( int(fval ) )
         self.ScriptHash = reader.ReadUInt160()
 
+    def ToJson(self):
+        return {
+            'AssetId': self.AssetId,
+            'Value': self.Value.value,
+            'ScriptHash': self.ScriptHash
+        }
 @logged
 class TransactionInput(SerializableMixin):
     """docstring for TransactionInput"""
@@ -96,6 +102,11 @@ class TransactionInput(SerializableMixin):
         # to string
         return self.PrevHash + ":" + self.PrevIndex
 
+    def ToJson(self):
+        return {
+            'PrevHash': self.PrevHash,
+            'PrevIndex': self.PrevIndex
+        }
 
 @logged
 class Transaction(Inventory, InventoryMixin):
@@ -160,13 +171,14 @@ class Transaction(Inventory, InventoryMixin):
         return Helper.GetHashData(self)
 
     def NetworkFee(self):
-        if self.__network_fee == -Fixed8.Satoshi():
+        return Fixed8(0)
+#        if self.__network_fee == Fixed8.Satoshi():
 #            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
 #            Fixed8 output = Outputs.Where(p= > p.AssetId.Equals(Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
 #            _network_fee = input - output - SystemFee;
-            pass
+#            pass
 
-        return self.__network_fee
+#        return self.__network_fee
 
 
     def getAllInputs(self):
@@ -381,14 +393,14 @@ class Transaction(Inventory, InventoryMixin):
 
     def ToJson(self):
         jsn = {}
-        jsn["txid"] = self.Hash()
-        jsn["size"] = self.Size()
+        jsn["txid"] = self.HashToString()
         jsn["type"] = self.Type
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
         jsn["vout"] = [out.ToJson() for out in self.outputs]
-        jsn["sys_fee"] = self.SystemFee()
-        jsn["net_fee"] = self.NetworkFee()
+        jsn["vin"] = [input.ToJson() for input in self.inputs]
+        jsn["sys_fee"] = self.SystemFee().value
+        jsn["net_fee"] = self.NetworkFee().value
         jsn["scripts"] = [script.ToJson() for script in self.scripts]
 
         return json.dumps(jsn)

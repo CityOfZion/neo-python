@@ -127,3 +127,10 @@ class TransactionAttribute(Inventory, SerializableMixin):
             self.__log.debug("format error!!!")
 
 
+
+    def ToJson(self):
+        obj = {
+            'usage': self.Usage,
+            'data': '' if not self.Data else self.Data.decode('utf-8')
+        }
+        return obj

@@ -13,9 +13,7 @@
     ],
 
     "SeedList": [
-      "seed1.neo.org:20333",
-      "seed3.neo.org:20333",
-      "seed4.neo.org:20333"
+      "seed1.neo.org:20333"
     ],
     "SystemFee": {
       "EnrollmentTransaction": 10,

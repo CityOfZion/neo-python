@@ -48,29 +48,40 @@ class NeoNode(Protocol):
         self.buffer_in = bytearray()
         self.pm = None
         self.reset_counter = False
-
         self.myblockrequests=[]
 
+
+    def Disconnect(self):
+        self.transport.loseConnection()
+        self.state = 'DISCONNECT'
+
+    def Name(self):
+        return self.transport.getPeer()
 
     def connectionMade(self):
         self.state = "CONNECTING"
         self.blockchain = Blockchain.Default()
         self.endpoint = self.transport.getPeer()
-        self.factory.peers[self.remote_nodeid] = self
+        self.factory.peers.append(self)
         self.Log("Connection from %s" % self.endpoint)
 
 
     def connectionLost(self, reason=None):
         self.state = "HELLO"
+        self.blockchain = None
+        self.buffer_in = None
+        self.pm = None
 
-        if self.remote_nodeid in self.factory.peers:
-            self.factory.peers.pop(self.remote_nodeid)
+        if self in self.factory.peers:
+            self.factory.peers.remove(self)
 
         for h in self.myblockrequests:
             if h in self.factory.blockrequests:
                 self.factory.blockrequests.remove(h)
 
-        self.myblockrequests = []
+        self.myblockrequests = None
+
+
         self.Log("%s disconnected" % self.nodeid, )
 
 
@@ -108,7 +119,7 @@ class NeoNode(Protocol):
         currentlength = len(self.buffer_in)
         messageExpectedLength = 24 + self.pm.Length
         percentcomplete = int(100 * (currentlength / messageExpectedLength))
-        self.Log("Receiving %s data: %s percent complete" % (self.pm.Command, percentcomplete))
+        #self.Log("Receiving %s data: %s percent complete" % (self.pm.Command, percentcomplete))
         if currentlength >= messageExpectedLength:
             mdata = self.buffer_in[:messageExpectedLength]
             stream = MemoryStream(mdata)
@@ -171,7 +182,7 @@ class NeoNode(Protocol):
     def HandleVersion(self, payload):
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
         self.remote_nodeid = self.Version.Nonce
-        self.state = 'VERSION'
+        self.state = 'ESTABLISHED'
         self.SendVersion()
 
     def HandleGetAddress(self, payload):
@@ -180,7 +191,6 @@ class NeoNode(Protocol):
 
     def HandleVerack(self):
         m = Message('verack')
-        self.state = 'ESTABLISHED'
         self.SendSerializedMessage(m)
         self.ProtocolReady()
 
@@ -221,10 +231,18 @@ class NeoNode(Protocol):
                 hashes.append(hash)
             hashstart += 1
 
-        self.Log("requesting %s hashes  " % len(hashes))
+        if len(hashes) == 0:
 
-        message = Message("getdata", InvPayload(InventoryType.Block, hashes))
-        self.SendSerializedMessage(message)
+            self.Log("ALL BLOCKS COMPLETE.... Wait for more headers")
+            self.AskForMoreHeaders()
+
+        else:
+            self.Log("requesting %s hashes  " % len(hashes))
+
+
+
+            message = Message("getdata", InvPayload(InventoryType.Block, hashes))
+            self.SendSerializedMessage(message)
 
 
 
@@ -251,6 +269,10 @@ class NeoNode(Protocol):
         self.factory.InventoryReceived(self.factory,block)
 
 
+    def HandleBlockReset(self, hash):
+
+        print("node handle block reset: %s " % hash)
+        self.myblockrequests = []
 
     def Log(self, message):
         self.__log.debug("%s - %s" % (self.endpoint, message))

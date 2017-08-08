@@ -109,7 +109,7 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt()
         items = []
-        self.__log.debug("deserializing %s items of %s " % (length, class_name))
+#        self.__log.debug("deserializing %s items of %s " % (length, class_name))
         try:
             for i in range(0, length):
                 item = klass()
@@ -120,7 +120,7 @@ class BinaryReader(object):
         except Exception as e:
             self.__log.debug("could not deserialize items for class: %s %s " % (class_name, e))
 
-        return None
+        return []
 
     def ReadUInt256(self, reverse = True):
         ba = bytearray(self.ReadBytes(32))

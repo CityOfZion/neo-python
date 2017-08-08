@@ -151,9 +151,12 @@ class BinaryWriter(object):
             diff -=1
 
     def WriteSerializableArray(self, array):
-        self.WriteVarInt(len(array))
-        for item in array:
-            item.Serialize(self)
+        if array is None:
+            self.WriteByte(0)
+        else:
+            self.WriteVarInt(len(array))
+            for item in array:
+                item.Serialize(self)
 
     def Write2000256List(self, arr):
         for item in arr:

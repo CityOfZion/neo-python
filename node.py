@@ -17,8 +17,10 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo import Settings
 
+
 blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
+Blockchain.StartPersist()
 
 #endpoint = TCP4ServerEndpoint(reactor, 20333)
 #endpoint.listen(NeoFactory())

@@ -12,6 +12,16 @@ a telnet server instead; see the comments for details.
 Based on an example by Abe Fettig.
 """
 
+import pprint
+import logging
+logname = 'cli.log'
+logging.basicConfig(
+     level=logging.DEBUG,
+     filemode='a',
+     filename=logname,
+     format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
+
+
 from neo.Network.NeoNode import NeoNode
 from neo.Network.NeoNodeFactory import NeoFactory
 
@@ -28,15 +38,35 @@ from twisted.internet import stdio, reactor
 from twisted.protocols import basic
 from twisted.web import client
 
+from autologging import logged
+
+@logged
 class NeoCommandProtocol(basic.LineReceiver):
     delimiter = b'\n' # unix terminal style newlines. remove this line
                      # for use with Telnet
 
-    def send_line_to_b(self, value):
-        return self.sendLine(value.encode('utf-8'))
+    server_running=False
+    factory = None
 
+    def send_line_to_b(self, value, and_ask_whats_next=False):
+
+        if and_ask_whats_next:
+            self.sendLine(b'%s     Ok.. what next?' % value.encode('utf-8'))
+        else:
+            self.sendLine(value.encode('utf-8'))
     def connectionMade(self):
-        self.send_line_to_b("Web checker console. Type 'help' for help.")
+
+        self.send_line_to_b('Starting Server... Please wait')
+
+        for bootstrap in Settings.SEED_LIST:
+            host, port = bootstrap.split(":")
+            point = TCP4ClientEndpoint(reactor, host, int(port))
+            d = connectProtocol(point, NeoNode(NeoFactory))
+            d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
+
+        Blockchain.Default().StartPersist()
+
+        self.send_line_to_b("Neo console. Type 'help' for help.")
 
     def lineReceived(self, line):
         # Ignore blank lines
@@ -55,10 +85,10 @@ class NeoCommandProtocol(basic.LineReceiver):
         except AttributeError as e:
             self.send_line_to_b('Error: no such command.')
         else:
-            try:
-                method(*args)
-            except Exception as e:
-                self.send_line_to_b('Error: ' + str(e))
+#            try:
+            method(*args)
+#            except Exception as e:
+#                self.send_line_to_b('Error: ' + str(e))
 
     def do_help(self, command=None):
         """help [command]: List commands, or show help on the given command"""
@@ -75,33 +105,96 @@ class NeoCommandProtocol(basic.LineReceiver):
 
     def do_check(self, url):
         """check <url>: Attempt to download the given web page"""
-        client.Agent(reactor).request('GET', url).addCallback(
+        client.Agent(reactor).request('GET', url.encode('utf-8')).addCallback(
             client.readBody).addCallback(
             self.__checkSuccess).addErrback(
             self.__checkFailure)
 
-    def do_startserver(self):
-        print("do start server")
-        for bootstrap in Settings.SEED_LIST:
-            host, port = bootstrap.split(":")
-            point = TCP4ClientEndpoint(reactor, host, int(port))
-            d = connectProtocol(point, NeoNode(NeoFactory))
+    def do_start(self, *args):
 
-    def do_stopserver(self):
-        print("do stop server")
-        reactor.disconnectAll()
+        what = self.__get_arg(args)
 
-    def do_showstate(self):
-        height = Blockchain.Default().Height()
-        headers = Blockchain.Default().HeaderHeight()
-        self.send_line_to_b('Progress: %s / %s ' % (height, headers))
+        if what == 'server':
 
+            self.send_line_to_b('Server is already running', True)
+
+        elif what is not None:
+            self.send_line_to_b('No command to start %s' % what, True)
+        else:
+            self.send_line_to_b('Please supply something to start', True)
+
+
+    def do_stop(self, *args):
+        what = self.__get_arg(args)
+
+        if what=='server':
+            self.do_quit()
+
+        elif what is not None:
+            self.send_line_to_b('No command to stop %s' % what, True)
+        else:
+            self.send_line_to_b('Please supply something to stop', True)
+
+
+    def do_show(self, *args):
+        what = self.__get_arg(args)
+
+        if what == 'block':
+            blockid = self.__get_arg(args, 1)
+            self.send_line_to_b('Block details')
+            if blockid is not None:
+                block = Blockchain.Default().GetBlock(blockid)
+
+                if block is not None:
+                    pprint.pprint(block.ToJson())
+                    print("\n")
+                    print("ok, what next?")
+                else:
+                    print("could not locate block %s " % blockid)
+            else:
+                print('please specify a block')
+            return
+        elif what == 'header':
+            headerid = self.__get(args,1)
+            print("show header ")
+            return
+
+        elif what == 'tx':
+            txid = self.__get_arg(args, 1)
+            self.send_line_to_b('Not implemented yet')
+            return
+        elif what == 'state':
+            height = Blockchain.Default().Height()
+            headers = Blockchain.Default().HeaderHeight()
+            self.send_line_to_b('Progress: %s / %s ' % (height, headers), True)
+            return
+        elif what == 'nodes':
+            for peer in self.factory.peers:
+                self.send_line_to_b('Peer %s' % (peer.Name()))
+            return
+
+        self.send_line_to_b("what should i show?  try 'block ID', 'tx ID', 'state', or 'nodes' ")
+
+    def __get_arg(self, arguments, index=0):
+        try:
+            return arguments[index].lower()
+        except Exception as e:
+            self.__log.debug("couldnt get argument at index %s from %s: %s " % (index, arguments,e))
+        return None
 
     def __checkSuccess(self, pageData):
         self.send_line_to_b("Success: got %i bytes." % len(pageData))
 
     def __checkFailure(self, failure):
         self.send_line_to_b("Failure: " + failure.getErrorMessage())
+
+    def onProtocolConnected(self, protocol):
+        if not self.factory:
+            self.factory = protocol.factory
+
+
+    def onProtocolError(self, reason):
+        print("Protocol exception %s " % reason)
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.

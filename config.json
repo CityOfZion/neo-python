@@ -1,6 +1,6 @@
 {
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "Chains/MyChain",
+    "DataDirectoryPath": "Chains/MyChain2",
     "NodePort": 20333,
     "WsPort": 20334,
     "UriPrefix": [ "http://*:20332" ],

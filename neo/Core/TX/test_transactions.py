@@ -139,6 +139,7 @@ class TransactionTestCase(unittest.TestCase):
         ms = MemoryStream(binascii.unhexlify(self.p2))
 
         reader = BinaryReader(ms)
+
         tx = Transaction.DeserializeFrom(reader)
 
         self.assertEqual(tx.ToArray(), self.p2)
