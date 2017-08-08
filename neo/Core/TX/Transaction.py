@@ -403,7 +403,7 @@ class Transaction(Inventory, InventoryMixin):
         jsn["net_fee"] = self.NetworkFee().value
         jsn["scripts"] = [script.ToJson() for script in self.scripts]
 
-        return json.dumps(jsn)
+        return jsn
 
 
     def Verify(self, mempool):

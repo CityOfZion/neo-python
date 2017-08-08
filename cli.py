@@ -13,6 +13,7 @@ Based on an example by Abe Fettig.
 """
 
 import pprint
+import json
 import logging
 logname = 'cli.log'
 logging.basicConfig(
@@ -141,22 +142,32 @@ class NeoCommandProtocol(basic.LineReceiver):
 
         if what == 'block':
             blockid = self.__get_arg(args, 1)
-            self.send_line_to_b('Block details')
             if blockid is not None:
                 block = Blockchain.Default().GetBlock(blockid)
 
                 if block is not None:
-                    pprint.pprint(block.ToJson())
-                    print("\n")
-                    print("ok, what next?")
+                    [self.send_line_to_b(out) for out in json.dumps(block.ToJson(), indent=2).split("\n")]
+                    self.send_line_to_b("Ok... what next?")
                 else:
                     print("could not locate block %s " % blockid)
             else:
                 print('please specify a block')
             return
+
         elif what == 'header':
-            headerid = self.__get(args,1)
-            print("show header ")
+
+            hid = self.__get_arg(args, 1)
+            self.send_line_to_b('Header details:')
+            if hid is not None:
+                header = Blockchain.Default().GetHeaderBy(hid)
+
+                if header is not None:
+                    [self.send_line_to_b(out) for out in json.dumps(header.ToJson(), indent=2).split("\n")]
+                    self.send_line_to_b('ok.. what next?')
+                else:
+                    print("could not locate Header %s " % hid)
+            else:
+                print('please specify a Header')
             return
 
         elif what == 'tx':
@@ -169,11 +180,14 @@ class NeoCommandProtocol(basic.LineReceiver):
             self.send_line_to_b('Progress: %s / %s ' % (height, headers), True)
             return
         elif what == 'nodes':
-            for peer in self.factory.peers:
-                self.send_line_to_b('Peer %s' % (peer.Name()))
+            if self.factory and len(self.factory.peers):
+                for peer in self.factory.peers:
+                    self.send_line_to_b('Peer %s' % (peer.Name()))
+            else:
+                self.send_line_to_b('Not connected yet')
             return
 
-        self.send_line_to_b("what should i show?  try 'block ID', 'tx ID', 'state', or 'nodes' ")
+        self.send_line_to_b("what should i show?  try 'block ID/hash', 'header ID/hash 'tx hash', 'state', or 'nodes' ")
 
     def __get_arg(self, arguments, index=0):
         try:
@@ -198,7 +212,8 @@ class NeoCommandProtocol(basic.LineReceiver):
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
-        reactor.stop()
+        if reactor.running:
+            reactor.stop()
 
 if __name__ == "__main__":
     stdio.StandardIO(NeoCommandProtocol())

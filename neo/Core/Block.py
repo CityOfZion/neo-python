@@ -138,7 +138,7 @@ class Block(BlockBase, InventoryMixin):
 
     @staticmethod
     def FromTrimmedData(byts, index, transaction_method=None):
-        print("getting block from trimmed data!!! ")
+
         block = Block()
         block.__is_trimmed = True
         ms = MemoryStream(byts)

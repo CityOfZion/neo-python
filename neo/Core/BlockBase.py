@@ -163,13 +163,13 @@ class BlockBase(VerifiableMixin):
 
 #        json["size"] = self.Size()
         json["version"] = self.Version
-        json["previousblockhash"] = self.PrevHash
-        json["merkleroot"] = self.MerkleRoot
+        json["previousblockhash"] = self.PrevHash.decode('utf-8')
+        json["merkleroot"] = self.MerkleRoot.decode('utf-8')
         json["time"] = self.Timestamp
         json["index"] = self.Index
-        json['next_consensus'] = binascii.hexlify(self.NextConsensus)
+        json['next_consensus'] = binascii.hexlify(self.NextConsensus).decode('utf-8')
         json["consensus data"] = self.ConsensusData
-        json["script"] = self.Script
+        json["script"] = '' if not self.Script else self.Script.ToJson()
         return json
 
     def Verify(self):

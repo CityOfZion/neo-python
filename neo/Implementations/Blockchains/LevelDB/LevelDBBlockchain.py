@@ -250,6 +250,22 @@ class LevelDBBlockchain(Blockchain):
             self.__log.debug("OTHER ERRROR %s " % e)
         return None
 
+    def GetHeaderBy(self, height_or_hash):
+        hash = None
+
+        if len(height_or_hash) == 64:
+            bhash = height_or_hash.encode('utf-8')
+            if bhash in self._header_index:
+                hash = bhash
+
+        elif self.GetHeaderHash(int(height_or_hash)) is not None:
+            hash = self.GetHeaderHash(int(height_or_hash))
+
+        if hash is not None:
+            return self.GetHeader(hash)
+
+        return None
+
     def GetHeaderByHeight(self, height):
         hash=None
         #lock header index
@@ -294,7 +310,6 @@ class LevelDBBlockchain(Blockchain):
         return None
 
     def GetBlockByHash(self, hash):
-        print("getting block by hash %s " % hash)
         try:
             out = bytearray(self._db.get(DATA_Block + hash))
             out = out[4:]

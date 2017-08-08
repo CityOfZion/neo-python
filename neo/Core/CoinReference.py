@@ -37,4 +37,4 @@ class CoinReference(object):
             'vout':self.PrevIndex
         }
 
-        return json.dumps(out)
+        return out

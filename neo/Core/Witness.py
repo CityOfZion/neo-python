@@ -3,6 +3,7 @@
 from neo.IO.Mixins import SerializableMixin
 import sys
 import json
+import binascii
 class Witness(SerializableMixin):
 
     InvocationScript=None
@@ -25,8 +26,8 @@ class Witness(SerializableMixin):
 
     def ToJson(self):
         data = {
-            'invocation': ':'.join(x.encode('hex') for x in self.InvocationScript),
-            'verification': ':'.join(x.encode('hex') for x in self.VerificationScript)
+            'invocation': binascii.hexlify( self.InvocationScript).decode('utf-8'),
+            'verification': binascii.hexlify( self.VerificationScript).decode('utf-8')
         }
 
-        return json.dumps(data)
+        return data

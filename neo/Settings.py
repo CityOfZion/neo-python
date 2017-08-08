@@ -30,3 +30,4 @@ LEVELDB_PATH= config['DataDirectoryPath']
 NODE_PORT = int(config['NodePort'])
 WS_PORT = config['WsPort']
 URI_PREFIX = config['UriPrefix']
+VERSION_NAME = config['VersionName']

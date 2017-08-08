@@ -31,6 +31,8 @@ from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
 import random
 
+from neo import Settings
+
 @logged
 class NeoNode(Protocol):
 
@@ -175,7 +177,7 @@ class NeoNode(Protocol):
 
 
     def SendVersion(self):
-        m = Message("version", VersionPayload(20333, self.nodeid, "/NEO:2.0.1/"))
+        m = Message("version", VersionPayload(Settings.NODE_PORT, self.nodeid, Settings.VERSION_NAME))
         self.SendSerializedMessage(m)
 
 

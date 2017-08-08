@@ -28,3 +28,4 @@ class FunctionCode(SerializableMixin):
         writer.WriteVarBytes( self.ParameterList)
         writer.WriteByte(self.ReturnType)
 
+
