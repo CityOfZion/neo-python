@@ -1,7 +1,7 @@
 
 import json
 
-with open('protocol.mainnet.json') as data_file:
+with open('protocol.json') as data_file:
 
     data = json.load(data_file)
 

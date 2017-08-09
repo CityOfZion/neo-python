@@ -51,6 +51,10 @@ class NeoNode(Protocol):
         self.pm = None
         self.reset_counter = False
         self.myblockrequests=[]
+        self.bytes_in = 0
+        self.bytes_out = 0
+
+
 
 
     def Disconnect(self):
@@ -59,6 +63,12 @@ class NeoNode(Protocol):
 
     def Name(self):
         return self.transport.getPeer()
+
+    def IOStats(self):
+        biM = self.bytes_in / 1000000 #megabyes
+        boM = self.bytes_out / 1000000
+
+        return "%s MB in / %s MB out" % (biM, boM)
 
     def connectionMade(self):
         self.state = "CONNECTING"
@@ -90,7 +100,7 @@ class NeoNode(Protocol):
 
     def dataReceived(self, data):
 
-#        self.factory.bytes_received(len(data))
+        self.bytes_in += (len(data))
 
         self.buffer_in = self.buffer_in + data
 
@@ -219,8 +229,8 @@ class NeoNode(Protocol):
     def SendSerializedMessage(self, message):
         ba = Helper.ToArray(message)
         ba2 = binascii.unhexlify(ba)
-#        self.factory.bytes_sent(len(ba2))
         self.transport.write(ba2)
+        self.bytes_out += len(ba2)
         del ba
         del ba2
 

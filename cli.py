@@ -186,7 +186,7 @@ class NeoCommandProtocol(basic.LineReceiver):
         elif what == 'nodes':
             if self.factory and len(self.factory.peers):
                 for peer in self.factory.peers:
-                    self.send_line_to_b('Peer %s' % (peer.Name()))
+                    self.send_line_to_b('Peer %s - IO: %s' % (peer.Name(), peer.IOStats()))
             else:
                 self.send_line_to_b('Not connected yet')
             return
@@ -199,7 +199,7 @@ class NeoCommandProtocol(basic.LineReceiver):
         else:
             self.send_line_to_b("%s is not something i can show" % what)
 
-        self.send_line_to_b("what should i show?  try 'block ID/hash', 'header ID/hash 'tx hash', 'state', 'nodes', or 'io' ")
+        self.send_line_to_b("what should i show?  try 'block ID/hash', 'header ID/hash 'tx hash', 'state', 'nodes' ")
 
     def __get_arg(self, arguments, index=0):
         try:
