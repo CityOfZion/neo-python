@@ -72,8 +72,6 @@ class PromptInterface(object):
 
     go_on = True
 
-    style = style_from_pygments(TangoStyle)
-
     completer = WordCompleter(['block','tx','header','io','help','state',])
 
     commands = ['quit','help','show',]
@@ -82,10 +80,20 @@ class PromptInterface(object):
         Token.Command: '#ff0066',
         Token.Neo: '#0000ee',
         Token.Default: '#00ee00',
-
+        Token.Number: "#ffffff",
     })
 
     history = InMemoryHistory()
+
+    def get_bottom_toolbar(self, cli=None):
+        try:
+            return [(Token.Command, 'Progress: '),
+                    (Token.Number, str(Blockchain.Default().Height())),
+                    (Token.Neo, '/'),
+                    (Token.Number, str(Blockchain.Default().HeaderHeight()))]
+        except Exception as e:
+            print("couldnt get toolbar: %s " % e)
+            return []
 
     def onProtocolConnected(self, protocol):
         if not self.factory:
@@ -96,6 +104,7 @@ class PromptInterface(object):
         self.__log.debug("Protocol exception")
 
     def quit(self):
+        print('Shutting down.  This may take a bit...')
         self.go_on = False
         reactor.stop()
 
@@ -157,7 +166,7 @@ class PromptInterface(object):
     def run(self):
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.05)
+        dbloop.start(.1)
 
         tokens = [(Token.Neo, 'NEO'),(Token.Default,' cli. Type '),(Token.Command, "'help' "), (Token.Default, 'to get started')]
         print_tokens(tokens, self.token_style)
@@ -166,9 +175,10 @@ class PromptInterface(object):
         while self.go_on:
 
             result = prompt("neo> ",
-                         completer=self.completer,
-                         history=self.history,
-                         style=self.style)
+                            completer=self.completer,
+                            history=self.history,
+                            get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                            style=self.token_style)
 
             command, arguments = self.parse_result(result)
             if command == 'quit' or command == 'exit':

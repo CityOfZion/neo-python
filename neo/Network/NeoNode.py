@@ -241,13 +241,13 @@ class NeoNode(Protocol):
 
     def HandleBlockHashInventory(self, inventory=None):
 
-        if BC.Default().BlockCacheCount() > 3000:
+        if BC.Default().BlockCacheCount() > 4000:
 
             self.__log.debug("************************************************")
             self.__log.debug("BLOCK CACHE COUNT TOO HIGH, PAUSE FOR NOW")
             self.__log.debug("********************************************")
 
-            reactor.callLater(20.0, self.HandleBlockHashInventory, inventory)
+            reactor.callLater(60.0, self.HandleBlockHashInventory, inventory)
             return
 
         hashes = []

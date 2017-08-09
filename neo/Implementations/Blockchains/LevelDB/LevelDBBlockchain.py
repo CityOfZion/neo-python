@@ -454,10 +454,10 @@ class LevelDBBlockchain(Blockchain):
 
             if not hash in self._block_cache:
 
-                if len(self._block_cache) > 20000:
-                    self.__log.debug("Resetting block cache :/")
-                    self._block_cache = {}
-                    self.SyncReset.on_change(hash)
+#                if len(self._block_cache) > 20000:
+#                    self.__log.debug("Resetting block cache :/")
+#                    self._block_cache = {}
+#                    self.SyncReset.on_change(hash)
                 break
 
             block = self._block_cache[hash]
