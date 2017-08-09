@@ -23,9 +23,9 @@ logging.basicConfig(
      format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 
+
 from neo.Network.NeoNode import NeoNode
 from neo.Network.NeoNodeFactory import NeoFactory
-
 
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
@@ -41,6 +41,7 @@ from twisted.web import client
 
 from autologging import logged
 
+
 @logged
 class NeoCommandProtocol(basic.LineReceiver):
     delimiter = b'\n' # unix terminal style newlines. remove this line
@@ -49,18 +50,21 @@ class NeoCommandProtocol(basic.LineReceiver):
     server_running=False
     factory = None
 
+
     def send_line_to_b(self, value, and_ask_whats_next=False):
 
         if and_ask_whats_next:
             self.sendLine(b'%s     Ok.. what next?' % value.encode('utf-8'))
         else:
             self.sendLine(value.encode('utf-8'))
+
     def connectionMade(self):
 
         self.send_line_to_b('Starting Server... Please wait')
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(1)
+        dbloop.start(.3)
+
 
         #start up endpoints
         for bootstrap in Settings.SEED_LIST:
@@ -72,6 +76,7 @@ class NeoCommandProtocol(basic.LineReceiver):
 
 
         self.send_line_to_b("Neo console. Type 'help' for help.")
+
 
     def lineReceived(self, line):
         # Ignore blank lines
@@ -92,6 +97,7 @@ class NeoCommandProtocol(basic.LineReceiver):
         else:
 #            try:
             method(*args)
+#if we catch exception here, its harder to debug
 #            except Exception as e:
 #                self.send_line_to_b('Error: ' + str(e))
 
@@ -108,12 +114,6 @@ class NeoCommandProtocol(basic.LineReceiver):
         self.send_line_to_b('Goodbye.')
         self.transport.loseConnection()
 
-    def do_check(self, url):
-        """check <url>: Attempt to download the given web page"""
-        client.Agent(reactor).request('GET', url.encode('utf-8')).addCallback(
-            client.readBody).addCallback(
-            self.__checkSuccess).addErrback(
-            self.__checkFailure)
 
     def do_start(self, *args):
 

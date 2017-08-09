@@ -315,6 +315,9 @@ class Blockchain(object):
     def StopPersist(self):
         pass
 
+    def BlockCacheCount(self):
+        pass
+
     @staticmethod
     def RegisterBlockchain(blockchain):
         if Blockchain.__instance is None:

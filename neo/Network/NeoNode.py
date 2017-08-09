@@ -1,5 +1,5 @@
 from twisted.internet.endpoints import TCP4ClientEndpoint,TCP4ServerEndpoint
-
+from twisted.internet.interfaces import IPullProducer,IPushProducer
 from twisted.internet.protocol import Protocol, Factory
 from twisted.internet import reactor
 import json
@@ -53,7 +53,6 @@ class NeoNode(Protocol):
         self.myblockrequests=[]
         self.bytes_in = 0
         self.bytes_out = 0
-
 
 
 
@@ -243,7 +242,17 @@ class NeoNode(Protocol):
         self.Log("handle transaction not implemented")
 
 
-    def HandleBlockHashInventory(self, inventory):
+    def HandleBlockHashInventory(self, inventory=None):
+
+        if Blockchain.Default().BlockCacheCount() > 3000:
+
+            self.__log.debug("************************************************")
+            self.__log.debug("BLOCK CACHE COUNT TOO HIGH, PAUSE FOR NOW")
+            self.__log.debug("********************************************")
+
+            reactor.callLater(5, self.HandleBlockHashInventory, inventory)
+            return
+
         hashes = []
         hashstart = self.blockchain.Height() + 1
         while hashstart < self.blockchain.HeaderHeight() and len(hashes) < 200:
@@ -280,7 +289,7 @@ class NeoNode(Protocol):
 
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
 
-        self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
+        #self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
 
         blockhash =  block.HashToString()
 

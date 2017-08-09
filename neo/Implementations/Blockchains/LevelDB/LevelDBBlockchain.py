@@ -192,7 +192,7 @@ class LevelDBBlockchain(Blockchain):
 
         #end lock header index
 
-        self.__log.debug("ADDED BLock %s %s" % (block.Index, block.HashToByteString()))
+#        self.__log.debug("ADDED BLock %s %s" % (block.Index, block.HashToByteString()))
         return True
 
     def ContainsBlock(self,hash):
@@ -370,6 +370,9 @@ class LevelDBBlockchain(Blockchain):
             wb.put( SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))
 
 
+    def BlockCacheCount(self):
+        return len(self._block_cache)
+
     def Persist(self, block):
 
         self.__log.debug("___________________________________________")
@@ -427,7 +430,7 @@ class LevelDBBlockchain(Blockchain):
 
     def PersistBlocks(self):
 
-        self.__log.info("Header height, block height: %s/%s  --%s " % (self.Height(),self.HeaderHeight(), self.CurrentHeaderHash()))
+#        self.__log.info("Header height, block height: %s/%s  --%s " % (self.Height(),self.HeaderHeight(), self.CurrentHeaderHash()))
         while not self._disposed:
             hash = None
 
