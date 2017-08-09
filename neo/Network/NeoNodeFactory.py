@@ -31,11 +31,7 @@ class NeoFactory(Factory):
 
     peers = []
     nodeid = 12234234
-    blockchain = None
 
-    blockrequests = []
-    b_recv = 0
-    b_sent = 0
 
     def __init__(self):
         self.startFactory()
@@ -43,14 +39,9 @@ class NeoFactory(Factory):
     def startFactory(self):
         self.peers = []
         self.nodeid = 1123123
-        BC.Default().SyncReset.on_change += self.LevelDB_onreset
-        self.b_recv = 0
-        self.b_sent = 0
 
     def stopFactory(self):
-        BC.Default().SyncReset.on_change -= self.LevelDB_onreset
-        self.blockchain = None
-
+        pass
 
     def buildProtocol(self, addr):
         return NeoNode(self)
@@ -59,7 +50,7 @@ class NeoFactory(Factory):
 
     def InventoryReceived(self, inventory):
 
-#        self.__log.debug("Neo factory received inventory %s " % inventory)
+        self.__log.debug("Neo factory received inventory %s " % inventory)
 
         if inventory is MinerTransaction: return False
 
@@ -101,10 +92,3 @@ class NeoFactory(Factory):
 
         #end lock
         return relayed
-
-
-    def LevelDB_onreset(self, hash):
-#        self.__log.debug("Recevied leveldb reset function %s " % hash)
-        self.blockrequests = []
-        for peer in self.peers:
-            peer.HandleBlockReset(hash)

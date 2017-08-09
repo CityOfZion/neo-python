@@ -1,7 +1,7 @@
 from twisted.internet.endpoints import TCP4ClientEndpoint,TCP4ServerEndpoint
 from twisted.internet.interfaces import IPullProducer,IPushProducer
 from twisted.internet.protocol import Protocol, Factory
-from twisted.internet import reactor
+from twisted.internet import reactor,task
 import json
 import time
 import binascii
@@ -84,8 +84,8 @@ class NeoNode(Protocol):
             self.factory.peers.remove(self)
 
         for h in self.myblockrequests:
-            if h in self.factory.blockrequests:
-                self.factory.blockrequests.remove(h)
+            if h in BC.Default().BlockRequests():
+                BC.Default().BlockRequests().remove(h)
 
         self.myblockrequests = None
 
@@ -218,7 +218,15 @@ class NeoNode(Protocol):
         elif inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
             self.HandleTransactionInventory(inventory)
         elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-            self.HandleBlockHashInventory(inventory)
+
+            if BC.Default().BlockCacheCount() > 2000:
+                self.__log.debug("************************************************")
+                self.__log.debug("BLOCK CACHE COUNT TOO HIGH, PAUSE FOR NOW")
+                self.__log.debug("********************************************")
+
+                reactor.callLater(60.0, self.HandleBlockHashInventory, inventory)
+            else:
+                self.HandleBlockHashInventory(inventory)
 
 
 
@@ -241,21 +249,13 @@ class NeoNode(Protocol):
 
     def HandleBlockHashInventory(self, inventory=None):
 
-        if BC.Default().BlockCacheCount() > 4000:
-
-            self.__log.debug("************************************************")
-            self.__log.debug("BLOCK CACHE COUNT TOO HIGH, PAUSE FOR NOW")
-            self.__log.debug("********************************************")
-
-            reactor.callLater(60.0, self.HandleBlockHashInventory, inventory)
-            return
-
+        self.__log.debug("HANDLING BLOCK HASH INVENTORY!!")
         hashes = []
         hashstart = BC.Default().Height() + 1
         while hashstart < BC.Default().HeaderHeight() and len(hashes) < 200:
             hash = BC.Default().GetHeaderHash(hashstart)
-            if not hash in self.factory.blockrequests and not hash in self.myblockrequests:
-                self.factory.blockrequests.append(hash)
+            if not hash in BC.Default().BlockRequests() and not hash in self.myblockrequests:
+                BC.Default().BlockRequests().append(hash)
                 self.myblockrequests.append(hash)
                 hashes.append(hash)
             hashstart += 1
@@ -290,8 +290,8 @@ class NeoNode(Protocol):
 
         blockhash =  block.HashToString()
 
-        if blockhash in self.factory.blockrequests:
-            self.factory.blockrequests.remove(blockhash)
+        if blockhash in BC.Default().BlockRequests():
+            BC.Default().BlockRequests().remove(blockhash)
         if blockhash in self.myblockrequests:
             self.myblockrequests.remove(blockhash)
 

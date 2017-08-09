@@ -42,6 +42,7 @@ from twisted.web import client
 from autologging import logged
 
 from pygments.styles.tango import TangoStyle
+from pygments.lexers.data import JsonLexer
 from prompt_toolkit.styles import style_from_pygments
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import style_from_dict
@@ -166,7 +167,7 @@ class PromptInterface(object):
     def run(self):
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
+        dbloop.start(.001)
 
         tokens = [(Token.Neo, 'NEO'),(Token.Default,' cli. Type '),(Token.Command, "'help' "), (Token.Default, 'to get started')]
         print_tokens(tokens, self.token_style)
@@ -187,7 +188,8 @@ class PromptInterface(object):
                 self.help()
             elif command == 'show':
                 self.show(arguments)
-
+            else:
+                print("command %s not found" % command)
 
 
 
@@ -211,4 +213,5 @@ if __name__ == "__main__":
 
 #    reactor.callInThread(setup,cli)
     reactor.callInThread(cli.run)
+#    reactor.suggestThreadPoolSize(10)
     reactor.run()
