@@ -100,3 +100,5 @@ ENV/
 .DS_Store
 
 .idea
+
+endpoints.txt

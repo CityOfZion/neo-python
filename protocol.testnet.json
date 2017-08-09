@@ -12,11 +12,11 @@
       "034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b"
     ],
     "SeedList": [
-      "seed1.antshares.org:20333",
-      "seed2.antshares.org:20333",
-      "seed3.antshares.org:20333",
-      "seed4.antshares.org:20333",
-      "seed5.antshares.org:20333"
+      "13.59.174.230:20333",
+      "18.220.111.187:20333",
+      "18.220.66.180:20333",
+      "52.14.252.120:20333",
+      "13.59.87.100:20333"
     ],
     "SystemFee": {
       "EnrollmentTransaction": 10,
