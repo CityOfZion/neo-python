@@ -1,8 +1,4 @@
 import unittest
-import binascii
-from neo.Blockchain import GetGenesis
-from neo.Blockchain import GetSystemShare
-from neo.Blockchain import GetSystemCoin
 from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
@@ -12,6 +8,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neo.Core.Scripts.ScriptOp import ScriptOp
+from neo import Settings
 
 class GenesisBlockTestCase(unittest.TestCase):
 
@@ -50,6 +47,12 @@ class GenesisBlockTestCase(unittest.TestCase):
         b'bdecbb623eee6f9ade28d5a8ff5fb3ea9c9d73af039e0286201b3b0291fb4d4a',
     ]
 
+    @classmethod
+    def setUpClass(cls):
+        if Settings.MAGIC == 1953787457:
+            print('ok to test!')
+        else:
+            raise unittest.SkipTest('Only test genesis blocks with testnet protocol settings')
 
     def test_miner_tx(self):
         miner_tx = MinerTransaction()

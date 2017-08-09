@@ -6,7 +6,7 @@ from neo.IO.Helper import Helper
 import unittest
 import shutil
 import binascii
-
+from neo import Settings
 
 class LevelDBTest(unittest.TestCase):
 
@@ -25,6 +25,12 @@ class LevelDBTest(unittest.TestCase):
         self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH)
         Blockchain.RegisterBlockchain(self._blockchain)
         self._genesis = Blockchain.GenesisBlock()
+
+
+        if Settings.MAGIC == 1953787457:
+            print('ok to test!')
+        else:
+            raise unittest.SkipTest('Only test genesis blocks with testnet protocol settings')
 
     @classmethod
     def tearDownClass(self):
