@@ -63,7 +63,7 @@ class NeoCommandProtocol(basic.LineReceiver):
         self.send_line_to_b('Starting Server... Please wait')
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.3)
+        dbloop.start(.1)
 
 
         #start up endpoints
@@ -220,7 +220,7 @@ class NeoCommandProtocol(basic.LineReceiver):
 
 
     def onProtocolError(self, reason):
-        print("Protocol exception %s " % reason)
+        print("Protocol exception %s " % pprint.pprint(reason.protocol))
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.

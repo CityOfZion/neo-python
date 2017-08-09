@@ -9,7 +9,7 @@ from autologging import logged
 
 
 from neo.Core.Block import Block
-from neo.Core.Blockchain import Blockchain
+from neo.Core.Blockchain import Blockchain as BC
 from neo.Network.Message import Message,ChecksumException
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
@@ -46,7 +46,6 @@ class NeoNode(Protocol):
         self.state = "HELLO"
         self.remote_nodeid = random.randint(1294967200,4294967200)
         self.endpoint = ''
-        self.blockchain = None
         self.buffer_in = bytearray()
         self.pm = None
         self.reset_counter = False
@@ -71,7 +70,6 @@ class NeoNode(Protocol):
 
     def connectionMade(self):
         self.state = "CONNECTING"
-        self.blockchain = Blockchain.Default()
         self.endpoint = self.transport.getPeer()
         self.factory.peers.append(self)
         self.Log("Connection from %s" % self.endpoint)
@@ -79,7 +77,6 @@ class NeoNode(Protocol):
 
     def connectionLost(self, reason=None):
         self.state = "HELLO"
-        self.blockchain = None
         self.buffer_in = None
         self.pm = None
 
@@ -184,12 +181,12 @@ class NeoNode(Protocol):
 
     def AskForMoreHeaders(self):
         self.Log("asking for more headers...")
-        get_headers_message = Message("getheaders", GetBlocksPayload(self.blockchain.CurrentHeaderHash()))
+        get_headers_message = Message("getheaders", GetBlocksPayload(BC.Default().CurrentHeaderHash()))
         self.SendSerializedMessage(get_headers_message)
 
     def AskForMoreBlocks(self):
         self.Log("asking for more blocks ...")
-        get_blocks_message =  Message("getblocks", GetBlocksPayload(self.blockchain.CurrentBlockHashPlusOne()))
+        get_blocks_message =  Message("getblocks", GetBlocksPayload(BC.Default().CurrentBlockHashPlusOne()))
         self.SendSerializedMessage(get_blocks_message)
 
 
@@ -244,19 +241,19 @@ class NeoNode(Protocol):
 
     def HandleBlockHashInventory(self, inventory=None):
 
-        if Blockchain.Default().BlockCacheCount() > 3000:
+        if BC.Default().BlockCacheCount() > 3000:
 
             self.__log.debug("************************************************")
             self.__log.debug("BLOCK CACHE COUNT TOO HIGH, PAUSE FOR NOW")
             self.__log.debug("********************************************")
 
-            reactor.callLater(5, self.HandleBlockHashInventory, inventory)
+            reactor.callLater(20.0, self.HandleBlockHashInventory, inventory)
             return
 
         hashes = []
-        hashstart = self.blockchain.Height() + 1
-        while hashstart < self.blockchain.HeaderHeight() and len(hashes) < 200:
-            hash = self.blockchain.GetHeaderHash(hashstart)
+        hashstart = BC.Default().Height() + 1
+        while hashstart < BC.Default().HeaderHeight() and len(hashes) < 200:
+            hash = BC.Default().GetHeaderHash(hashstart)
             if not hash in self.factory.blockrequests and not hash in self.myblockrequests:
                 self.factory.blockrequests.append(hash)
                 self.myblockrequests.append(hash)
@@ -280,9 +277,9 @@ class NeoNode(Protocol):
     def HandleBlockHeadersReceived(self, inventory):
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
-        self.blockchain.AddHeaders(inventory.Headers)
+        BC.Default().AddHeaders(inventory.Headers)
         del inventory
-        if self.blockchain.HeaderHeight() < self.Version.StartHeight:
+        if BC.Default().HeaderHeight() < self.Version.StartHeight:
             self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):

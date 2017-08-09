@@ -4,7 +4,7 @@ from .NeoNode import NeoNode
 
 
 from neo.Core.Block import Block
-from neo.Core.Blockchain import Blockchain
+from neo.Core.Blockchain import Blockchain as BC
 from neo.Network.Message import Message
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
@@ -43,13 +43,12 @@ class NeoFactory(Factory):
     def startFactory(self):
         self.peers = []
         self.nodeid = 1123123
-        self.blockchain = Blockchain.Default()
-        self.blockchain.SyncReset.on_change += self.LevelDB_onreset
+        BC.Default().SyncReset.on_change += self.LevelDB_onreset
         self.b_recv = 0
         self.b_sent = 0
 
     def stopFactory(self):
-        self.blockchain.SyncReset.on_change -= self.LevelDB_onreset
+        BC.Default().SyncReset.on_change -= self.LevelDB_onreset
         self.blockchain = None
 
 
@@ -69,14 +68,14 @@ class NeoFactory(Factory):
         #endlock
 
         if type(inventory) is Block:
-            if Blockchain.Default() == None: return False
+            if BC.Default() == None: return False
 
-            if Blockchain.Default().ContainsBlock(inventory.HashToByteString()):
+            if BC.Default().ContainsBlock(inventory.HashToByteString()):
 #                self.__log.debug("cant add block %s because blockchain already contains it " % inventory.HashToByteString())
                 return False
 #            self.__log.debug("Will Try to add block" % inventory.HashToByteString())
 
-            if not Blockchain.Default().AddBlock(inventory): return False
+            if not BC.Default().AddBlock(inventory): return False
 
         elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
             if not self.AddTransaction(inventory): return False

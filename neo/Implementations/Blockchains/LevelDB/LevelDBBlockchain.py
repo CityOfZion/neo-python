@@ -5,14 +5,10 @@ from neo.Core.TX.Transaction import Transaction,TransactionType,TransactionInput
 import plyvel
 from autologging import logged
 import binascii
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-import ctypes
-import time
-import threading
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
+from twisted.internet import reactor
 
 import events
 
@@ -227,12 +223,18 @@ class LevelDBBlockchain(Blockchain):
     def GetHeaderBy(self, height_or_hash):
         hash = None
 
+        intval = None
+        try:
+            intval = int(height_or_hash)
+        except Exception as e:
+            pass
+
         if len(height_or_hash) == 64:
             bhash = height_or_hash.encode('utf-8')
             if bhash in self._header_index:
                 hash = bhash
 
-        elif self.GetHeaderHash(int(height_or_hash)) is not None:
+        elif intval is not None and self.GetHeaderHash(intval) is not None:
             hash = self.GetHeaderHash(int(height_or_hash))
 
         if hash is not None:
@@ -270,13 +272,20 @@ class LevelDBBlockchain(Blockchain):
     def GetBlock(self, height_or_hash):
 
         hash = None
+
+        intval = None
+        try:
+            intval = int(height_or_hash)
+        except Exception as e:
+            pass
+
         if len(height_or_hash) == 64:
             bhash = height_or_hash.encode('utf-8')
             if bhash in self._header_index:
                 hash = bhash
 
-        elif self.GetBlockHash(int(height_or_hash)) is not None:
-            hash = self.GetBlockHash(int(height_or_hash))
+        elif intval is not None and self.GetBlockHash(intval) is not None:
+            hash = self.GetBlockHash(intval)
 
         if hash is not None:
             return self.GetBlockByHash(hash)
@@ -453,8 +462,10 @@ class LevelDBBlockchain(Blockchain):
 
             block = self._block_cache[hash]
 
-            self.Persist(block)
-            self.OnPersistCompleted(block)
+            reactor.callFromThread(self.Persist, block)
+            reactor.callFromThread(self.OnPersistCompleted, block)
+#            self.Persist(block)
+#            self.OnPersistCompleted(block)
 
             #lock block cache
             del self._block_cache[hash]
