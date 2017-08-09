@@ -34,6 +34,8 @@ class NeoFactory(Factory):
     blockchain = None
 
     blockrequests = []
+    b_recv = 0
+    b_sent = 0
 
     def __init__(self):
         self.startFactory()
@@ -43,9 +45,10 @@ class NeoFactory(Factory):
         self.nodeid = 1123123
         self.blockchain = Blockchain.Default()
         self.blockchain.SyncReset.on_change += self.LevelDB_onreset
+        self.b_recv = 0
+        self.b_sent = 0
 
     def stopFactory(self):
-        print("stopping factory")
         self.blockchain.SyncReset.on_change -= self.LevelDB_onreset
         self.blockchain = None
 
@@ -57,7 +60,7 @@ class NeoFactory(Factory):
 
     def InventoryReceived(self, inventory):
 
-        self.__log.debug("Neo factory received inventory %s " % inventory)
+#        self.__log.debug("Neo factory received inventory %s " % inventory)
 
         if inventory is MinerTransaction: return False
 
@@ -69,9 +72,9 @@ class NeoFactory(Factory):
             if Blockchain.Default() == None: return False
 
             if Blockchain.Default().ContainsBlock(inventory.HashToByteString()):
-                self.__log.debug("cant add block %s because blockchain already contains it " % inventory.HashToByteString())
+#                self.__log.debug("cant add block %s because blockchain already contains it " % inventory.HashToByteString())
                 return False
-            self.__log.debug("Will Try to add block" % inventory.HashToByteString())
+#            self.__log.debug("Will Try to add block" % inventory.HashToByteString())
 
             if not Blockchain.Default().AddBlock(inventory): return False
 
@@ -102,8 +105,7 @@ class NeoFactory(Factory):
 
 
     def LevelDB_onreset(self, hash):
-        self.__log.debug("Recevied leveldb reset function %s " % hash)
+#        self.__log.debug("Recevied leveldb reset function %s " % hash)
         self.blockrequests = []
         for peer in self.peers:
-            print("peer is %s " % peer)
             peer.HandleBlockReset(hash)

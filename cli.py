@@ -35,7 +35,7 @@ blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
 
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
-from twisted.internet import stdio, reactor
+from twisted.internet import stdio, reactor, task
 from twisted.protocols import basic
 from twisted.web import client
 
@@ -59,13 +59,17 @@ class NeoCommandProtocol(basic.LineReceiver):
 
         self.send_line_to_b('Starting Server... Please wait')
 
+        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        dbloop.start(1)
+
+        #start up endpoints
         for bootstrap in Settings.SEED_LIST:
             host, port = bootstrap.split(":")
             point = TCP4ClientEndpoint(reactor, host, int(port))
             d = connectProtocol(point, NeoNode(NeoFactory))
             d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
 
-        Blockchain.Default().StartPersist()
+
 
         self.send_line_to_b("Neo console. Type 'help' for help.")
 
@@ -186,8 +190,16 @@ class NeoCommandProtocol(basic.LineReceiver):
             else:
                 self.send_line_to_b('Not connected yet')
             return
+#        elif what == 'io':
+#            if self.factory:
+#                br = '%s bytes in, %s bytes out' % ( self.factory.bytes_received(), self.factory.bytes_sent())
+#                self.send_line_to_b(br)
+#            else:
+#                self.send_line_to_b('Not connected yet')
+        else:
+            self.send_line_to_b("%s is not something i can show" % what)
 
-        self.send_line_to_b("what should i show?  try 'block ID/hash', 'header ID/hash 'tx hash', 'state', or 'nodes' ")
+        self.send_line_to_b("what should i show?  try 'block ID/hash', 'header ID/hash 'tx hash', 'state', 'nodes', or 'io' ")
 
     def __get_arg(self, arguments, index=0):
         try:
@@ -217,4 +229,5 @@ class NeoCommandProtocol(basic.LineReceiver):
 
 if __name__ == "__main__":
     stdio.StandardIO(NeoCommandProtocol())
+    # start leveldb persist loop
     reactor.run()

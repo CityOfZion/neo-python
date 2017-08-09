@@ -158,32 +158,6 @@ class LevelDBBlockchain(Blockchain):
             self._db.put(SYS_Version, self._sysversion )
 
 
-#        self.StartPersist()
-
-    def StopPersist(self):
-        if self._persistthread is not None and self._disposed == 0:
-            self._disposed = 1
-            self._persistthread.join(1)
-            self.__log.debug("Stopped persist thread")
-            self._persistthread = None
-            self._block_cache = []
-        return True
-
-    def StartPersist(self):
-
-        # start a thread for persisting blocks
-        # we dont want to do this during testing
-        if self._path != './UnitTestChain':
-            try:
-                self._persistthread = threading.Thread(target=self.PersistBlocks)
-                self._persistthread.daemon=True
-                self._persistthread.start()
-                self._disposed = 0
-                self.__log.debug("started persist thread")
-                return True
-            except Exception as e:
-                self.__log.debug("exception running persist blocks therad %s " % e)
-        return False
 
     def AddBlock(self, block):
 
@@ -327,29 +301,49 @@ class LevelDBBlockchain(Blockchain):
         # lock headers
         # lock header cache
         newheaders = []
+        count = 0
         for header in headers:
 
-            if header.Index - 1 >= len(self._header_index):
+            if header.Index - 1 >= len(self._header_index) + count:
                 self.__log.debug("header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
                 break
 
-            if header.Index < len(self._header_index): continue
+            if header.Index < count + len(self._header_index): continue
             if self._verify_blocks and not header.Verify(): break
 
 
             self._header_cache[header.HashToByteString()] = header
+            count = count+1
+#            self.OnAddHeader(header)
 
-            self.OnAddHeader(header)
+            newheaders.append(header)
 
 
         # unlock headers cache
         # unlock headers
 
+        if len(newheaders):
+            self.OnAddHeaders(newheaders)
+
         return True
+
+
+
+    def OnAddHeaders(self, headers):
+        lastheader = None
+#        headers.sort(lambda x:x.Index)
+        for h in headers:
+            hHash = h.HashToByteString()
+            if not hHash in self._header_index:
+                self._header_index.append(hHash)
+                lastheader = h
+
+        if lastheader is not None:
+            self.OnAddHeader(lastheader)
 
     def OnAddHeader(self, header):
 
-
+        self.__log.debug("Will write header %s as last " % header.Index)
         hHash = header.HashToByteString()
 
         if not hHash in self._header_index:
@@ -433,39 +427,35 @@ class LevelDBBlockchain(Blockchain):
 
     def PersistBlocks(self):
 
+        self.__log.info("Header height, block height: %s/%s  --%s " % (self.Height(),self.HeaderHeight(), self.CurrentHeaderHash()))
         while not self._disposed:
+            hash = None
 
-
-            time.sleep(1)
-            self.__log.info("Header height, block height: %s/%s  --%s " % (self.Height(),self.HeaderHeight(), self.CurrentHeaderHash()))
-            while not self._disposed:
-                hash = None
-
-                #lock header index
-                if len(self._header_index) <= self._current_block_height + 1: break
-                hash = self._header_index[self._current_block_height + 1]
-                #end lock header index
+            #lock header index
+            if len(self._header_index) <= self._current_block_height + 1: break
+            hash = self._header_index[self._current_block_height + 1]
+            #end lock header index
 
 #                self.__log.info("LOOKING FOR HASH: %s " % hash)
-                block = None
-                #lock block cache
+            block = None
+            #lock block cache
 
-                if not hash in self._block_cache:
+            if not hash in self._block_cache:
 
-                    if len(self._block_cache) > 6000:
-                        self.__log.debug("Resetting block cache :/")
-                        self._block_cache = []
-                        self.SyncReset.on_change(hash)
-                    break
+                if len(self._block_cache) > 20000:
+                    self.__log.debug("Resetting block cache :/")
+                    self._block_cache = {}
+                    self.SyncReset.on_change(hash)
+                break
 
-                block = self._block_cache[hash]
+            block = self._block_cache[hash]
 
-                self.Persist(block)
-                self.OnPersistCompleted(block)
+            self.Persist(block)
+            self.OnPersistCompleted(block)
 
-                #lock block cache
-                del self._block_cache[hash]
-                #end lock block cache
+            #lock block cache
+            del self._block_cache[hash]
+            #end lock block cache
 
 
     def Dispose(self):

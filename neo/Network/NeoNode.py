@@ -90,6 +90,7 @@ class NeoNode(Protocol):
 
     def dataReceived(self, data):
 
+#        self.factory.bytes_received(len(data))
 
         self.buffer_in = self.buffer_in + data
 
@@ -104,6 +105,7 @@ class NeoNode(Protocol):
             ms = MemoryStream(mstart)
             reader = BinaryReader(ms)
 
+
             try:
                 m = Message()
                 m.Magic =reader.ReadUInt32()
@@ -111,17 +113,21 @@ class NeoNode(Protocol):
                 m.Length = reader.ReadUInt32()
                 m.Checksum = reader.ReadUInt32()
                 self.pm = m
-
-                self.CheckMessageData()
+                del ms
+                del reader
             except Exception as e:
                 self.Log('could not read initial bytes %s ' % e)
 
+            self.CheckMessageData()
 
     def CheckMessageData(self):
+        if not self.pm: return
+
         currentlength = len(self.buffer_in)
         messageExpectedLength = 24 + self.pm.Length
-        percentcomplete = int(100 * (currentlength / messageExpectedLength))
+        #percentcomplete = int(100 * (currentlength / messageExpectedLength))
         #self.Log("Receiving %s data: %s percent complete" % (self.pm.Command, percentcomplete))
+
         if currentlength >= messageExpectedLength:
             mdata = self.buffer_in[:messageExpectedLength]
             stream = MemoryStream(mdata)
@@ -133,7 +139,9 @@ class NeoNode(Protocol):
             self.pm = None
             self.MessageReceived(message)
             self.reset_counter = False
-
+            del mdata
+            del stream
+            del reader
             while len(self.buffer_in) >=24 and not self.reset_counter:
                 self.CheckDataReceived()
 
@@ -202,7 +210,7 @@ class NeoNode(Protocol):
         if inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
             self.HandleConsenusInventory(inventory)
         elif inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
-            self.HandleTranactionInventory(inventory)
+            self.HandleTransactionInventory(inventory)
         elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
             self.HandleBlockHashInventory(inventory)
 
@@ -211,7 +219,10 @@ class NeoNode(Protocol):
     def SendSerializedMessage(self, message):
         ba = Helper.ToArray(message)
         ba2 = binascii.unhexlify(ba)
+#        self.factory.bytes_sent(len(ba2))
         self.transport.write(ba2)
+        del ba
+        del ba2
 
 
     def HandleConsenusInventory(self, inventory):
@@ -242,7 +253,6 @@ class NeoNode(Protocol):
             self.Log("requesting %s hashes  " % len(hashes))
 
 
-
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             self.SendSerializedMessage(message)
 
@@ -252,6 +262,7 @@ class NeoNode(Protocol):
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
         self.blockchain.AddHeaders(inventory.Headers)
+        del inventory
         if self.blockchain.HeaderHeight() < self.Version.StartHeight:
             self.AskForMoreHeaders()
 
@@ -272,8 +283,6 @@ class NeoNode(Protocol):
 
 
     def HandleBlockReset(self, hash):
-
-        print("node handle block reset: %s " % hash)
         self.myblockrequests = []
 
     def Log(self, message):
