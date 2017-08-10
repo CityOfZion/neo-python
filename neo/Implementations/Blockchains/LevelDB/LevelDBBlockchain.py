@@ -54,9 +54,12 @@ class LevelDBBlockchain(Blockchain):
     SyncReset = events.Events()
 
     def CurrentBlockHash(self):
+        try:
 #        print("Getting Current bolck hash")
-        return self._header_index[self._current_block_height]
-
+            return self._header_index[self._current_block_height]
+        except Exception as e:
+            pass
+        return None
     def CurrentBlockHashPlusOne(self):
         try:
             return self._header_index[self._current_block_height + 1]

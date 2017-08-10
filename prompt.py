@@ -75,7 +75,7 @@ class PromptInterface(object):
 
     completer = WordCompleter(['block','tx','header','io','help','state',])
 
-    commands = ['quit','help','show',]
+    commands = ['quit','help','show','block {index/hash}', 'header {index/hash}','tx {hash}']
 
     token_style = style_from_dict({
         Token.Command: '#ff0066',
@@ -117,27 +117,17 @@ class PromptInterface(object):
 
     def show(self, args):
         what = self.get_arg(args)
+
+        if what=='block':
+            self.show_block(args[1:])
+        elif what =='header':
+            self.show_header(args[1:])
+        elif what == 'tx':
+            self.show_tx(args[1:])
+
         item = self.get_arg(args, 1)
 
-        if what == 'block' and item is not None:
-
-            block = Blockchain.Default().GetBlock(item)
-
-            if block is not None:
-                print(json.dumps(block.ToJson(), indent=4))
-            else:
-                print("could not locate block %s" % item)
-
-        elif what == 'header' and item is not None:
-            header = Blockchain.Default().GetHeaderBy(item)
-            if header is not None:
-                print(json.dumps(header.ToJson(), indent=4))
-            else:
-                print("could not locate Header %s \n" % item)
-
-        elif what == 'tx' and item is not None:
-            print("Show tx not implemented yet\n")
-        elif what == 'state':
+        if what == 'state':
             height = Blockchain.Default().Height()
             headers = Blockchain.Default().HeaderHeight()
             print('Progress: %s / %s\n' % (height, headers))
@@ -151,6 +141,38 @@ class PromptInterface(object):
         else:
             print("what should i show?  try 'block ID/hash', 'header ID/hash 'tx hash', 'state', 'nodes' ")
 
+
+    def show_block(self, args):
+        item = self.get_arg(args)
+        if item is not None:
+            block = Blockchain.Default().GetBlock(item)
+
+            if block is not None:
+                print(json.dumps(block.ToJson(), indent=4))
+            else:
+                print("could not locate block %s" % item)
+        else:
+            print("please specify a block")
+
+    def show_header(self, args):
+        item = self.get_arg(args)
+        if item is not None:
+            header = Blockchain.Default().GetHeaderBy(item)
+            if header is not None:
+                print(json.dumps(header.ToJson(), indent=4))
+            else:
+                print("could not locate Header %s \n" % item)
+        else:
+            print("please specify a header")
+
+
+    def show_tx(self, args):
+        item = self.get_arg(args)
+        if item is not None:
+            print("getting tx %s " % args)
+
+        else:
+            print("please specify a tx")
 
     def get_arg(self, arguments, index=0):
         try:
@@ -188,6 +210,12 @@ class PromptInterface(object):
                 self.help()
             elif command == 'show':
                 self.show(arguments)
+            elif command == 'block':
+                self.show_block(arguments)
+            elif command == 'tx':
+                self.show_tx(arguments)
+            elif command == 'header':
+                self.show_header(arguments)
             else:
                 print("command %s not found" % command)
 
@@ -196,12 +224,8 @@ class PromptInterface(object):
 
 
 if __name__ == "__main__":
-#    stdio.StandardIO(NeoCommandProtocol())
-    # start leveldb persist loop
-
 
     cli = PromptInterface()
-
 
     # start up endpoints
     for bootstrap in Settings.SEED_LIST:
@@ -210,8 +234,5 @@ if __name__ == "__main__":
         d = connectProtocol(point, NeoNode(NeoFactory))
         d.addCallbacks(cli.onProtocolConnected, cli.onProtocolError)
 
-
-#    reactor.callInThread(setup,cli)
     reactor.callInThread(cli.run)
-#    reactor.suggestThreadPoolSize(10)
     reactor.run()

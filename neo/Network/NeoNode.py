@@ -185,9 +185,11 @@ class NeoNode(Protocol):
         self.SendSerializedMessage(get_headers_message)
 
     def AskForMoreBlocks(self):
-        self.Log("asking for more blocks ...")
-        get_blocks_message =  Message("getblocks", GetBlocksPayload(BC.Default().CurrentBlockHashPlusOne()))
-        self.SendSerializedMessage(get_blocks_message)
+        bcplus_one = BC.Default().CurrentBlockHashPlusOne()
+        if bcplus_one is not None:
+            self.Log("asking for more blocks ...")
+            get_blocks_message =  Message("getblocks", GetBlocksPayload(BC.Default().CurrentBlockHashPlusOne()))
+            self.SendSerializedMessage(get_blocks_message)
 
 
     def SendVersion(self):
