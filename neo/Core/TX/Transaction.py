@@ -72,12 +72,12 @@ class TransactionOutput(SerializableMixin):
         self.AssetId = binascii.hexlify( reader.ReadUInt256())
         fval = reader.ReadInt64()
         self.Value = Fixed8( int(fval ) )
-        self.ScriptHash = binascii.hexlify(reader.ReadUInt160())
+        self.ScriptHash = reader.ReadUInt160()
 
     def ToJson(self):
         return {
             'AssetId': self.AssetId.decode('utf-8'),
-            'Value': self.Value.value,
+            'Value': self.Value.value / Fixed8.D,
             'ScriptHash': hash_to_wallet_address(self.ScriptHash)
         }
 @logged
@@ -392,7 +392,7 @@ class Transaction(Inventory, InventoryMixin):
     def ToJson(self):
         jsn = {}
         jsn["txid"] = self.HashToString()
-        jsn["type"] = int.from_bytes( self.Type, 'little')
+        jsn["type"] = self.Type if type(self.Type) is int else int.from_bytes( self.Type, 'little')
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
         jsn["vout"] = [out.ToJson() for out in self.outputs]
