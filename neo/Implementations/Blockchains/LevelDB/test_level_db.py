@@ -27,10 +27,10 @@ class LevelDBTest(unittest.TestCase):
         self._genesis = Blockchain.GenesisBlock()
 
 
-        if Settings.MAGIC == 1953787457:
-            print('ok to test!')
-        else:
-            raise unittest.SkipTest('Only test genesis blocks with testnet protocol settings')
+#        if Settings.MAGIC == 1953787457:
+#            print('ok to test!')
+ #       else:
+ #           raise unittest.SkipTest('Only test genesis blocks with testnet protocol settings')
 
     @classmethod
     def tearDownClass(self):
