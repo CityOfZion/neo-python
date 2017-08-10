@@ -22,8 +22,6 @@ PUBLISH_TX_FEE = fees['PublishTransaction']
 REGISTER_TX_FEE = fees['RegisterTransaction']
 
 
-with open('config.json') as data_file:
-    data = json.load(data_file)
 
 config = data['ApplicationConfiguration']
 

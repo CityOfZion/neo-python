@@ -24,5 +24,15 @@
       "PublishTransaction": 5,
       "RegisterTransaction": 100
     }
+  },
+
+  "ApplicationConfiguration": {
+    "DataDirectoryPath": "./Chains/TestChain",
+    "NodePort": 20333,
+    "WsPort": 20334,
+    "UriPrefix": [ "http://*:20332" ],
+    "SslCert": "",
+    "SslCertPassword": "",
+    "VersionName":"/NEO:2.0.1/"
   }
 }

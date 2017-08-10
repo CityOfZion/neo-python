@@ -181,7 +181,7 @@ class BlocksTestCase(unittest.TestCase):
 
         path = '%s/fixtures/1050514.txt' % os.getcwd()
         print("path: %s " % path)
-        
+
         with open(path,'rb') as f:
 #
             blockraw = f.read().strip()
