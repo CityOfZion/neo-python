@@ -6,7 +6,7 @@ from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
 import binascii
-
+import pprint
 class TransactionTestCase(unittest.TestCase):
 
 
@@ -47,6 +47,9 @@ class TransactionTestCase(unittest.TestCase):
         self.assertEqual(out, self.tx_raw)
 
 
+        json = tx.ToJson()
+        self.assertEqual(json['nonce'], self.tx_nonce)
+
     ctx_raw = b'800000014a4dfb91023b1b2086029e03af739d9ceab35fffa8d528de9a6fee3e62bbecbd0000019b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50000c16ff286230067f97110a66136d38badc7b9f88eab013027ce4901fd04014099546819767644bbef323e428aab48c8801e66b8c7fb452dcd11205c13f5b198c9b37e9aa6808d6c3a74e50931d3413115e2a86a4a4a99fcae894219c092ca6340a0de35bc6c04c25b8f6cca46b91a35144db40fc94967293500f08c58df81f7c9ecb59cc13bcaca4d932e27a8d9a8204f48d488b6ccdfccd830c22bf4b7353dd64039346418372b541dfe7fdc99611bfc59cee881044da2912cb2404b885c6472310a2b771153e6a0022abb11aa41288ef98a2aed1bb42714fa6a1c6e85e415b8bb4045cc681dbe07155b554b0291f0352546223e49e3192c221249c29eb97651aec3c5f2f6adfc85a87cfdfef3a15d57391cf99190e8d80b01fcc1ebf8f48c745957f154210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae'
     ctx_id = b'4feb0081f9425cab84269127bef0a871a84d4408f09923d17ebb257cd231b362'
 
@@ -76,6 +79,17 @@ class TransactionTestCase(unittest.TestCase):
         tx = Transaction.DeserializeFrom(reader)
         self.assertEqual(tx.ToArray(), self.pb_raw)
         self.assertEqual(tx.HashToByteString(), self.pb_hash)
+
+        json = tx.ToJson()
+
+        contract = json['contract']
+        self.assertEqual(contract['author'], 'Erik Zhang')
+        self.assertEqual(contract['description'], 'Lock your assets until a timestamp.')
+
+        self.assertEqual(contract['code']['hash'], 'dJpxawFbHrECL5aghzzAA7BgFDeyvUv3PeSykGhF5pAqyDq35gKUA9kXVmTrVHMQN9Xvg7QevCzar3tdQNpzePwobz79uPDsbDCtVGTCu1Jn43RRpARbKZACFGtdt5JFzvLdL93NHsj8JucHXTf3D1L3C4rsZThGh2u3WngyE8beMvhi4rnzewp8K4fcnAddBtQ1dgxFN7rNu7mdDvMW7XipgBpDg6PaAE4MgGm8EyQ1rTWYMr422xYZuxkzyYxCEMnE1dLyoLjsSviAM831t6rTafrfhMDbR5wYT1ik2v3UkkZUrf8quWGFsfBNUASPU6rvE6JzwqNJtZ8dwjkXRHPnT2YKCTHYqcKq49BQZ7ZL1CW1azQgYJHXJxFcPebFfrkPw2WTgvAGGWj656QkmtUi4Rh7EJMkknJNFg7KEhaTiHTwRRg7TUyQmw')
+        self.assertEqual(contract['code']['returntype'], 1)
+        self.assertEqual(contract['code']['parameters'], '020500')
+
 
 
     ir = b'd100644011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111081234567890abcdef0415cd5b0769cc4ee2f1c9f4e0782756dabf246d0a4fe60a035400000000'
@@ -116,6 +130,15 @@ class TransactionTestCase(unittest.TestCase):
         reader = BinaryReader(ms)
         tx = Transaction.DeserializeFrom(reader)
         self.assertEqual(self.rrid, tx.HashToByteString())
+
+
+        json = tx.ToJson()
+        asset = json['asset']
+
+        self.assertEqual(asset['admin'], 'ARFe4mTKRTETerRoMsyzBXoPt2EKBvBXFX')
+        self.assertEqual(asset['name'], '[{"lang":"zh-CN","name":"TestCoin"}]')
+        self.assertEqual(asset['precision'], 8)
+
 
     cr = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce490241400bd2e921cee90c8de1a192e61e33eb8980a3dc00c388ee9aac0712178cc8fceed8bb59788f7caf3c4dc082abcdaaa49772fda86db4ceea243bda31bcde9b8a0b3c21034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e1104182f145967cc4ee2f1c9f4e0782756dabf246d0a4fe60a035441402fe3e20c303e26c3817fed6fc7db8edde4ac62b16eee796c01c2b59e382b7ddfc82f0b36c7f7520821c7b72b9aff50ae27a016961f1ef1dade9cafa85655380f2321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
     crid = b'e4d2ea5df2adf77df91049beccbb16f98863b93a16439c60381eac1f23bff178'

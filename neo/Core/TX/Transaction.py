@@ -21,6 +21,8 @@ from neo.Helper import big_or_little
 from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryReader import BinaryReader
 from neo.Core.Helper import Helper
+from neo import Settings
+
 import sys
 import json
 from neo.Core.Witness import Witness
@@ -67,16 +69,16 @@ class TransactionOutput(SerializableMixin):
         writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
-        self.AssetId = reader.ReadUInt256(reverse=False)
+        self.AssetId = binascii.hexlify( reader.ReadUInt256())
         fval = reader.ReadInt64()
         self.Value = Fixed8( int(fval ) )
         self.ScriptHash = reader.ReadUInt160()
 
     def ToJson(self):
         return {
-            'AssetId': self.AssetId,
-            'Value': self.Value.value,
-            'ScriptHash': self.ScriptHash
+            'AssetId': self.AssetId.decode('utf-8'),
+            'Value': self.Value.value / Fixed8.D,
+            'ScriptHash': hash_to_wallet_address(self.ScriptHash)
         }
 @logged
 class TransactionInput(SerializableMixin):
@@ -95,7 +97,7 @@ class TransactionInput(SerializableMixin):
         writer.WriteUInt16(self.PrevIndex)
 
     def Deserialize(self, reader):
-        self.PrevHash = reader.ReadUInt256()
+        self.PrevHash = binascii.hexlify( reader.ReadUInt256())
         self.PrevIndex = reader.ReadUInt16()
 
     def ToString(self):
@@ -104,7 +106,7 @@ class TransactionInput(SerializableMixin):
 
     def ToJson(self):
         return {
-            'PrevHash': self.PrevHash,
+            'PrevHash': self.PrevHash.encode('utf-8'),
             'PrevIndex': self.PrevIndex
         }
 
@@ -124,11 +126,11 @@ class Transaction(Inventory, InventoryMixin):
 
     scripts = []
 
-    systemFee = 0
+    __system_fee =  Fixed8(0)
+    __network_fee = Fixed8(0)
 
     InventoryType = InventoryType.TX
 
-    __network_fee = -1
 
     __hash = None
     __htbs = None
@@ -146,8 +148,6 @@ class Transaction(Inventory, InventoryMixin):
         self.Attributes= attributes
         self.scripts = scripts
         self.InventoryType = 0x01  # InventoryType TX 0x01
-        self.systemFee = self.SystemFee()
-
 
     def Hash(self):
         if not self.__hash:
@@ -174,15 +174,6 @@ class Transaction(Inventory, InventoryMixin):
     def GetHashData(self):
         return Helper.GetHashData(self)
 
-    def NetworkFee(self):
-        return Fixed8(0)
-#        if self.__network_fee == Fixed8.Satoshi():
-#            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
-#            Fixed8 output = Outputs.Where(p= > p.AssetId.Equals(Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
-#            _network_fee = input - output - SystemFee;
-#            pass
-
-#        return self.__network_fee
 
 
     def getAllInputs(self):
@@ -217,10 +208,17 @@ class Transaction(Inventory, InventoryMixin):
         return self.__height
 
     def SystemFee(self):
+        return self.__system_fee
 
-#        if (Settings.Default.SystemFee.ContainsKey(Type))
-#            return Settings.Default.SystemFee[Type];
-        return Fixed8(0)
+    def NetworkFee(self):
+        return self.__network_fee
+#        if self.__network_fee == Fixed8.Satoshi():
+#            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
+#            Fixed8 output = Outputs.Where(p= > p.AssetId.Equals(Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
+#            _network_fee = input - output - SystemFee;
+#            pass
+
+#        return self.__network_fee
 
 
     def Deserialize(self, reader):
@@ -237,7 +235,7 @@ class Transaction(Inventory, InventoryMixin):
 
     @staticmethod
     def DeserializeFromBufer(buffer, offset=0):
-        mstream = MemoryStream(buffer, offset)
+        mstream = MemoryStream(buffer)
         reader = BinaryReader(mstream)
         return Transaction.DeserializeFrom(reader)
 
@@ -398,7 +396,7 @@ class Transaction(Inventory, InventoryMixin):
     def ToJson(self):
         jsn = {}
         jsn["txid"] = self.HashToString()
-        jsn["type"] = self.Type
+        jsn["type"] = self.Type if type(self.Type) is int else int.from_bytes( self.Type, 'little')
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
         jsn["vout"] = [out.ToJson() for out in self.outputs]
@@ -406,7 +404,6 @@ class Transaction(Inventory, InventoryMixin):
         jsn["sys_fee"] = self.SystemFee().value
         jsn["net_fee"] = self.NetworkFee().value
         jsn["scripts"] = [script.ToJson() for script in self.scripts]
-
         return jsn
 
 

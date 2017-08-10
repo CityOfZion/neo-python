@@ -64,6 +64,18 @@ class PublishTransaction(Transaction):
 
 
 
+    def ToJson(self):
+        jsn = super(PublishTransaction, self).ToJson()
+        jsn['contract'] = {}
+        jsn['contract']['code'] = self.Code.ToJson()
+        jsn['contract']['needstorage'] = self.NeedStorage
+        jsn['contract']['name'] = self.Name.decode('utf-8')
+        jsn['contract']['version'] = self.CodeVersion.decode('utf-8')
+        jsn['contract']['author'] = self.Author.decode('utf-8')
+        jsn['contract']['email'] = self.Email.decode('utf-8')
+        jsn['contract']['description'] = self.Description.decode('utf-8')
+        return jsn
+
 #        writer.WriteVarString(self.Name)
 
 #        writer.WriteVarString(self.CodeVersion)

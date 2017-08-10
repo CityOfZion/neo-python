@@ -12,7 +12,7 @@ import binascii
 from neo.Core.AssetType import AssetType
 from neo.Cryptography.ECCurve import ECDSA
 from autologging import logged
-
+from neo.Cryptography.Helper import hash_to_wallet_address
 
 @logged
 class RegisterTransaction(Transaction):
@@ -93,3 +93,19 @@ In English:
 #            writer.WriteBytes(self.Owner.encode_point(True))
 
         writer.WriteUInt160( self.Admin )
+
+
+    def ToJson(self):
+        jsn = super(RegisterTransaction, self).ToJson()
+
+        asset = {
+            'type': self.AssetType,
+            'name': self.Name,
+            'amount': self.Amount.value,
+            'precision': self.Precision if type(self.Precision) is int else self.Precision.decode('utf-8'),
+            'owner': bytearray(self.Owner).hex(),
+            'admin': hash_to_wallet_address(self.Admin)
+        }
+        jsn['asset'] = asset
+
+        return jsn

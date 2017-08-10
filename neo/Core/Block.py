@@ -92,7 +92,7 @@ class Block(BlockBase, InventoryMixin):
         return 0
 
     def TotalFees(self):
-        return sum( tx.systemFee.value for tx in self.Transactions)
+        return sum( tx.SystemFee().value for tx in self.Transactions)
 
 
     #  < summary >

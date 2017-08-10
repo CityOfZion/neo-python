@@ -160,18 +160,19 @@ class LevelDBBlockchain(Blockchain):
             self._db.put(SYS_Version, self._sysversion )
 
 
-
     def GetTransaction(self, hash):
-        try:
+
+        if type(hash) is not bytes:
+            hash = bytes(hash.encode('utf-8'))
+
+        if hash is not None:
             out = bytearray(self._db.get(DATA_Transaction + hash))
-            height = int.from_bytes(out[:4], 'little')
-            out = out[4:]
-            outhex = binascii.unhexlify(out)
-            return Transaction.DeserializeFromBufer(outhex, 0), height
-        except TypeError:
-            self.__log.debug("tx hash not found")
-        except Exception as e:
-            self.__log.debug("OTHER ERRROR %s " % e)
+            if out is not None:
+                height = int.from_bytes(out[:4], 'little')
+                out = out[4:]
+                outhex = binascii.unhexlify(out)
+                return Transaction.DeserializeFromBufer(outhex, 0), height
+
         return None, -1
 
 

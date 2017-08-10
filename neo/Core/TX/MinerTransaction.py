@@ -3,11 +3,11 @@
 from neo.Core.TX.Transaction import Transaction,TransactionType
 import sys
 import binascii
+
 class MinerTransaction(Transaction):
 
     Nonce = None
 
-    NetworkFee = 0
 
     def __init__(self, *args, **kwargs):
         super(MinerTransaction, self).__init__(*args, **kwargs)
@@ -39,3 +39,9 @@ class MinerTransaction(Transaction):
     def OnDeserialized(self):
         if len(self.inputs) is not 0:
             raise Exception("No inputs for miner transaction")
+
+
+    def ToJson(self):
+        jsn = super(MinerTransaction, self).ToJson()
+        jsn['nonce'] = self.Nonce
+        return jsn
