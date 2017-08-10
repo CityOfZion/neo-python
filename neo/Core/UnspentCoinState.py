@@ -7,11 +7,11 @@ from neo.IO.MemoryStream import MemoryStream
 class UnspentCoinState(StateBase):
 
 
-    Items = []
+    Items = {}
 
-    def __init__(self, items=None):
+    def __init__(self, items={}):
         self.Items = items
-        print("created unspent coins %s " % self.Items)
+
     def Size(self):
         return super(UnspentCoinState, self).Size() + sys.getsizeof(self.Items)
 

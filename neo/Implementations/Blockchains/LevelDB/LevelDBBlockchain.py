@@ -455,7 +455,8 @@ class LevelDBBlockchain(Blockchain):
 
 
                 #go through all tx inputs
-                unique_tx_input_hashes = set([inp.PrevHash for inp in tx.inputs])
+
+                unique_tx_input_hashes = [inp.PrevHash for inp in tx.inputs if not inp.PrevHash in unique_tx_input_hashes]
                 for txhash in unique_tx_input_hashes:
                     prevTx, height = self.GetTransaction(txhash)
                     coin_refs_by_hash = [coinref for coinref in tx.inputs if coinref.PrevHash == txhash]

@@ -102,7 +102,7 @@ class PromptInterface(object):
         self.__log.debug("PRotocol connected!!")
 
     def onProtocolError(self, reason):
-        self.__log.debug("Protocol exception")
+        self.__log.debug("Protocol exception %s " % vars(reason))
 
     def quit(self):
         print('Shutting down.  This may take a bit...')
@@ -230,6 +230,7 @@ if __name__ == "__main__":
     # start up endpoints
     for bootstrap in Settings.SEED_LIST:
         host, port = bootstrap.split(":")
+        print("trying to connect to %s %s " % (host, port))
         point = TCP4ClientEndpoint(reactor, host, int(port))
         d = connectProtocol(point, NeoNode(NeoFactory))
         d.addCallbacks(cli.onProtocolConnected, cli.onProtocolError)
