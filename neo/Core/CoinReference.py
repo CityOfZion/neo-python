@@ -33,7 +33,7 @@ class CoinReference(object):
 
     def ToJson(self):
         out = {
-            'txid': self.PrevHash,
+            'txid': self.PrevHash.decode('utf-8'),
             'vout':self.PrevIndex
         }
 
