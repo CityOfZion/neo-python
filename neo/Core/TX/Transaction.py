@@ -69,16 +69,16 @@ class TransactionOutput(SerializableMixin):
         writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
-        self.AssetId = reader.ReadUInt256(reverse=False)
+        self.AssetId = binascii.hexlify( reader.ReadUInt256())
         fval = reader.ReadInt64()
         self.Value = Fixed8( int(fval ) )
-        self.ScriptHash = reader.ReadUInt160()
+        self.ScriptHash = binascii.hexlify(reader.ReadUInt160())
 
     def ToJson(self):
         return {
-            'AssetId': self.AssetId,
+            'AssetId': self.AssetId.decode('utf-8'),
             'Value': self.Value.value,
-            'ScriptHash': self.ScriptHash
+            'ScriptHash': hash_to_wallet_address(self.ScriptHash)
         }
 @logged
 class TransactionInput(SerializableMixin):
@@ -97,7 +97,7 @@ class TransactionInput(SerializableMixin):
         writer.WriteUInt16(self.PrevIndex)
 
     def Deserialize(self, reader):
-        self.PrevHash = reader.ReadUInt256()
+        self.PrevHash = binascii.hexlify( reader.ReadUInt256())
         self.PrevIndex = reader.ReadUInt16()
 
     def ToString(self):
@@ -106,7 +106,7 @@ class TransactionInput(SerializableMixin):
 
     def ToJson(self):
         return {
-            'PrevHash': self.PrevHash,
+            'PrevHash': self.PrevHash.encode('utf-8'),
             'PrevIndex': self.PrevIndex
         }
 

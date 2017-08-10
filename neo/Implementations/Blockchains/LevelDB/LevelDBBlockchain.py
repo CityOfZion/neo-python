@@ -162,12 +162,13 @@ class LevelDBBlockchain(Blockchain):
         if type(hash) is not bytes:
             hash = bytes(hash.encode('utf-8'))
 
-        out = bytearray(self._db.get(DATA_Transaction + hash))
-        if out is not None:
-            height = int.from_bytes(out[:4], 'little')
-            out = out[4:]
-            outhex = binascii.unhexlify(out)
-            return Transaction.DeserializeFromBufer(outhex, 0), height
+        if hash is not None:
+            out = bytearray(self._db.get(DATA_Transaction + hash))
+            if out is not None:
+                height = int.from_bytes(out[:4], 'little')
+                out = out[4:]
+                outhex = binascii.unhexlify(out)
+                return Transaction.DeserializeFromBufer(outhex, 0), height
 
         return None, -1
 

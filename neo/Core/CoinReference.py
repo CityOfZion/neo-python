@@ -18,7 +18,7 @@ class CoinReference(object):
 
     def Deserialize(self, reader):
 
-        self.PrevHash = reader.ReadUInt256(reverse=False)
+        self.PrevHash = binascii.hexlify( reader.ReadUInt256())
         self.PrevIndex = reader.ReadUInt16()
 
     def Serialize(self, writer):
