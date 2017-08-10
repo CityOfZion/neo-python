@@ -112,6 +112,7 @@ class BlockBase(VerifiableMixin):
         self.ConsensusData =  reader.ReadUInt64()
         self.NextConsensus = reader.ReadUInt160()
 
+
     def SerializeUnsigned(self, writer):
 #        self.__log.debug("Serializing index (%s) %s " % ( self.Index, type(self)))
 #        self.__log.debug("writing version:                 %s " % self.MerkleRoot)

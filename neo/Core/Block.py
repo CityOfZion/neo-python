@@ -13,10 +13,11 @@ import sys
 from autologging import logged
 from neo.Core.Header import Header
 from neo.Core.Witness import Witness
+import json
+
 #  < summary >
 #  区块或区块头
 #  < / summary >
-
 
 @logged
 class Block(BlockBase, InventoryMixin):

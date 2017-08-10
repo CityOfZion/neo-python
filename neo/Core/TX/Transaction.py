@@ -271,7 +271,7 @@ class Transaction(Inventory, InventoryMixin):
         tx.DeserializeUnsignedWithoutType(reader)
 
         tx.scripts = []
-        byt = reader.ReadByte()
+        byt = reader.ReadVarInt()
         if byt > 0:
             for i in range(0, byt):
                 witness = Witness()

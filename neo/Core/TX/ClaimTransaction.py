@@ -34,6 +34,7 @@ class ClaimTransaction(Transaction):
 
 
         numrefs = reader.ReadVarInt()
+
         claims = []
         for i in range(0, numrefs):
             c = CoinReference()

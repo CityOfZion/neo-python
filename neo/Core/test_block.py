@@ -1,4 +1,5 @@
-
+import os
+import sys
 import unittest
 from neo.Blockchain import GetGenesis
 import binascii
@@ -49,11 +50,11 @@ class BlocksTestCase(unittest.TestCase):
 
     @staticmethod
     def BlockIndexOne():
-        self.__log.debug("GETTING BLOCK INDEX ONE!")
         block = Helper.AsSerializableWithType(BlocksTestCase.b2raw, 'neo.Core.Block.Block')
         return block
 
     def test_block_deserialize(self):
+        
 
         block = Helper.AsSerializableWithType(self.rawblock_hex, 'neo.Core.Block.Block')
 
@@ -87,6 +88,7 @@ class BlocksTestCase(unittest.TestCase):
 
 
     def test_block_two(self):
+
         hexdata = binascii.unhexlify(self.b2raw)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -152,6 +154,7 @@ class BlocksTestCase(unittest.TestCase):
     pb_hash = b'077c7fc9a85d777aeb42e1076bd98451f16e59354bfb6fed998ccabd93f6ccb9'
 
     def test_block_publish_tx(self):
+
         hexdata = binascii.unhexlify(self.pb_raw)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -164,9 +167,26 @@ class BlocksTestCase(unittest.TestCase):
     t992h = b'bcfc016b33f6abc1f1109878f6d69a8aaf42b9ac09c5793507afbbdccdb8f68f'
     t992m = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'
     def test_2992(self):
+
         hexdata = binascii.unhexlify(self.t992)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
         self.assertEqual(block.MerkleRoot, self.t992m)
         self.assertEqual(block.HashToByteString(), self.t992h)
         pass
+
+    big_tx_hash = b'93fb1184b95fd785022dea163ffc60ef6fa548ca240b49dd8339700cee581991'
+
+    def test_1050514(self):
+
+        path = '/Users/saun0063/Workshop/neo-python/fixtures/1050514.txt'
+
+        with open(path,'rb') as f:
+#
+            blockraw = f.read().strip()
+
+            hex = binascii.unhexlify(blockraw)
+
+            block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
+
+            self.assertEqual(self.big_tx_hash, block.HashToByteString())

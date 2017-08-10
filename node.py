@@ -10,8 +10,7 @@ logging.basicConfig(
 from neo.Network.NeoNode import NeoNode
 from neo.Network.NeoNodeFactory import NeoFactory
 
-from twisted.internet.endpoints import TCP4ClientEndpoint,TCP4ServerEndpoint
-from twisted.internet import reactor, defer
+from twisted.internet import reactor, task
 
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
@@ -20,18 +19,17 @@ from neo import Settings
 
 blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
-Blockchain.StartPersist()
 
-#endpoint = TCP4ServerEndpoint(reactor, 20333)
-#endpoint.listen(NeoFactory())
 
 
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
+
+dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+dbloop.start(.001)
 
 for bootstrap in Settings.SEED_LIST:
     host, port = bootstrap.split(":")
     point = TCP4ClientEndpoint(reactor, host, int(port))
     d = connectProtocol(point, NeoNode(NeoFactory))
 
-print("Starting node ...")
 reactor.run()
