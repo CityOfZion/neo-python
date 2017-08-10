@@ -1,11 +1,14 @@
 import sys
 import logging
-logname = 'nodes.log'
-logging.basicConfig(
-     level=logging.DEBUG,
-     filemode='a',
-     filename=logname,
-     format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
+
+#no logging for the node
+
+#logname = 'nodes.log'
+#logging.basicConfig(
+#     level=logging.DEBUG,
+#     filemode='a',
+#     filename=logname,
+#     format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 from neo.Network.NeoNode import NeoNode
 from neo.Network.NeoNodeFactory import NeoFactory

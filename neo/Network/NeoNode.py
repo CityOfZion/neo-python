@@ -240,16 +240,16 @@ class NeoNode(Protocol):
 
 
     def HandleConsenusInventory(self, inventory):
-        self.Log("handle consensus not implemented")
-
+#        self.Log("handle consensus not implemented")
+        pass
 
     def HandleTransactionInventory(self, inventory):
-        self.Log("handle transaction not implemented")
-
+#        self.Log("handle transaction not implemented")
+        pass
 
     def HandleBlockHashInventory(self, inventory=None):
 
-        self.__log.debug("HANDLING BLOCK HASH INVENTORY!!")
+#        self.__log.debug("HANDLING BLOCK HASH INVENTORY!!")
         hashes = []
         hashstart = BC.Default().Height() + 1
         while hashstart < BC.Default().HeaderHeight() and len(hashes) < 200:

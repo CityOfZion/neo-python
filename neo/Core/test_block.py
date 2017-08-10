@@ -54,7 +54,7 @@ class BlocksTestCase(unittest.TestCase):
         return block
 
     def test_block_deserialize(self):
-        
+
 
         block = Helper.AsSerializableWithType(self.rawblock_hex, 'neo.Core.Block.Block')
 
@@ -179,8 +179,9 @@ class BlocksTestCase(unittest.TestCase):
 
     def test_1050514(self):
 
-        path = '/Users/saun0063/Workshop/neo-python/fixtures/1050514.txt'
-
+        path = '%s/fixtures/1050514.txt' % os.getcwd()
+        print("path: %s " % path)
+        
         with open(path,'rb') as f:
 #
             blockraw = f.read().strip()

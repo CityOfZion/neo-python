@@ -5,22 +5,28 @@ In progress, please reach out in order to contribute
 ## Getting started
 
 
-you will need to install the libleveldb library. on OSX:
+you will need to install the libleveldb library. 
+
+##### on OSX:
 ```
 brew install leveldb
 ```
 
-ubuntu/debian
+##### ubuntu/debian
 ```
 apt-get -s install libleveldb-dev
 ```
 
-centos/redhat/fedora
+##### centos/redhat/fedora is a bit more tricky...
 ```
-yum -y install libleveldb-dev
+yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel
 ```
 
-windows ( not sure )
+you may need to enable the epel repo for the leveldb-devel package, which you can do by editing `/etc/yum.repos.d/epel.repo`
+
+
+
+##### windows ( not sure )
 
 
 -------------------
@@ -58,43 +64,40 @@ CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel ply
 
 ## Running
 
-After installing requirements and activating your environment, there is an easy to use `cli.py` file for you to run the node as well as some basic interactivity
+After installing requirements and activating your environment, there is an easy to use `prompt.py` file for you to run the node as well as some basic interactivity
 
 ```
-python cli.py 
-> Starting Server... Please wait
-> Neo console. Type 'help' for help.
-> show state
-> Progress: 230003 / 1210000      Ok.. what next?
+python prompt.py 
+NEO cli. Type 'help' to get started
+
+neo> show state
+Progress: 1054913 / 1237188
+
+neo> 
 ```
 
 You can query for a block in the current server by hash or by block index:
 
 ```
-python cli.py 
-> Starting Server... Please wait
-> Neo console. Type 'help' for help.
-> show
-> what should i show?  try 'block ID/hash', 'header ID/hash 'tx hash', 'state', or 'nodes' 
+python prompt.py 
+NEO cli. Type 'help' to get started
 
-show block 11335
+neo> show block 122235
 {
-  "hash": "39684763ea1f6e27f27813017b9a75041ea51a0fc9856bef42e839c4efe268df",
-  "merkleroot": "337afb56abfcc81228d0f12fafffdcc74c4c820c1cca68e0f37c4b46b052218d",
-  "previousblockhash": "7ef806ab2b4e8719c87c78242c83ff839f5cca28d1b55b526cca6879b8347f23",
-  "consensus data": 1643989216319287762,
-  "index": 11335,
-  "next_consensus": "59e75d652b5d3827bf04c165bbe9ef95cca4bf55",
-  "script": "",
-  "tx": [
-    "337afb56abfcc81228d0f12fafffdcc74c4c820c1cca68e0f37c4b46b052218d"
-  ],
-  "time": 1476859946,
-  "version": 0
+    "index": 122235,
+    "script": "",
+    "merkleroot": "1d5a895ea34509a83becb5d2f9391018a3f59d670d94a2c3f8deb509a07464bd",
+    "previousblockhash": "98ae05cb68ab857659cc6c8379eb7ba68b57ef1f5317904c295341d82d0a1713",
+    "tx": [
+        "1d5a895ea34509a83becb5d2f9391018a3f59d670d94a2c3f8deb509a07464bd"
+    ],
+    "version": 0,
+    "time": 1479110368,
+    "hash": "74671375033f506325ef08d35632f74083cca564dc7ea6444c94d3b9dec3f61b",
+    "consensus data": 16070047272025254767,
+    "next_consensus": "59e75d652b5d3827bf04c165bbe9ef95cca4bf55"
 }
-Ok... what next?
-
->
+neo> 
 ```
 
 
@@ -107,7 +110,7 @@ python node.py
 
 ### Logging
 
-Currently, `cli.py` logs to `cli.log`, while the `node.py` file logs to `nodes.log`
+Currently, `prompt.py` logs to `prompt.log`, while the `node.py` does not log.
 
 
 
