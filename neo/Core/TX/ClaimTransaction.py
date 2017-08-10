@@ -11,7 +11,6 @@ class ClaimTransaction(Transaction):
 
     Claims = set()
 
-    NetworkFee = Fixed8(0)
 
     @property
     def Size(self):

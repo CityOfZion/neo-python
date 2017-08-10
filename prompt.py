@@ -119,11 +119,11 @@ class PromptInterface(object):
         what = self.get_arg(args)
 
         if what=='block':
-            self.show_block(args[1:])
+            return self.show_block(args[1:])
         elif what =='header':
-            self.show_header(args[1:])
+            return self.show_header(args[1:])
         elif what == 'tx':
-            self.show_tx(args[1:])
+            return self.show_tx(args[1:])
 
         item = self.get_arg(args, 1)
 
@@ -169,10 +169,13 @@ class PromptInterface(object):
     def show_tx(self, args):
         item = self.get_arg(args)
         if item is not None:
-            print("getting tx %s " % args)
-
+            tx,height = Blockchain.Default().GetTransaction(item)
+            if height  > -1:
+                print(json.dumps(tx.ToJson(), indent=4))
+            else:
+                print("tx %s not found" % item)
         else:
-            print("please specify a tx")
+            print("please specify a tx hash")
 
     def get_arg(self, arguments, index=0):
         try:
@@ -183,8 +186,10 @@ class PromptInterface(object):
 
 
     def parse_result(self, result):
-        commandParts = [s.lower() for s in result.split()]
-        return commandParts[0], commandParts[1:]
+        if len(result):
+            commandParts = [s.lower() for s in result.split()]
+            return commandParts[0], commandParts[1:]
+        return None,None
 
     def run(self):
 
@@ -216,6 +221,8 @@ class PromptInterface(object):
                 self.show_tx(arguments)
             elif command == 'header':
                 self.show_header(arguments)
+            elif command == None:
+                print('please specify a command')
             else:
                 print("command %s not found" % command)
 

@@ -8,7 +8,7 @@ class InvocationTransaction(Transaction):
 
 
     Script = bytearray(0)
-    Gas = 0
+    Gas = Fixed8(0)
 
     def SystemFee(self):
         return Fixed8(self.Gas)
