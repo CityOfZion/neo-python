@@ -131,6 +131,7 @@ class Transaction(Inventory, InventoryMixin):
     __network_fee = -1
 
     __hash = None
+    __htbs = None
 
     __height = 0
 
@@ -165,7 +166,10 @@ class Transaction(Inventory, InventoryMixin):
         return out
 
     def HashToByteString(self):
-        return bytes(self.HashToString(), encoding='utf-8')
+        if not self.__htbs:
+            self.__htbs = bytes(self.HashToString(), encoding='utf-8')
+        return self.__htbs
+
 
     def GetHashData(self):
         return Helper.GetHashData(self)

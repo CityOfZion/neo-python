@@ -11,6 +11,9 @@ from neo.IO.MemoryStream import MemoryStream
 from twisted.internet import reactor
 
 import events
+from neo.Core.UnspentCoinState import UnspentCoinState
+from neo.Core.AccountState import AccountState
+from neo.Core.CoinState import CoinState
 
 
 DATA_Block =        b'\x01'
@@ -153,6 +156,20 @@ class LevelDBBlockchain(Blockchain):
             self.Persist(Blockchain.GenesisBlock())
             self._db.put(SYS_Version, self._sysversion )
 
+
+
+    def GetTransaction(self, hash):
+        try:
+            out = bytearray(self._db.get(DATA_Transaction + hash))
+            height = int.from_bytes(out[:4], 'little')
+            out = out[4:]
+            outhex = binascii.unhexlify(out)
+            return Transaction.DeserializeFromBufer(outhex, 0), height
+        except TypeError:
+            self.__log.debug("tx hash not found")
+        except Exception as e:
+            self.__log.debug("OTHER ERRROR %s " % e)
+        return None, -1
 
 
     def AddBlock(self, block):
@@ -391,8 +408,8 @@ class LevelDBBlockchain(Blockchain):
 
         sn = self._db.snapshot()
 
-#        accounts = sn.iterator(prefix=ST_Account)
-#        unspentcoins = sn.iterator(prefix=ST_Coin)
+        accounts = [AccountState.DeserializeFromDB(buffer) for key,buffer in sn.iterator(prefix=ST_Account)]
+        unspentcoins = [UnspentCoinState.DeserializeFromDB(buffer) for key,buffer in sn.iterator(prefix=ST_Coin)]
 #        spentcoins = sn.iterator(prefix=ST_SpentCoin)
 #        validators = sn.iterator(prefix=ST_Validator)
 #        assets = sn.iterator(prefix=ST_Asset)
@@ -408,6 +425,50 @@ class LevelDBBlockchain(Blockchain):
             for tx in block.Transactions:
 
                 wb.put(DATA_Transaction + tx.HashToByteString(), block.IndexBytes() + tx.ToArray())
+
+                #go through all outputs and add unspent coins to them
+                unspentcoinstate = UnspentCoinState([1 for item in tx.outputs])
+                unspentcoins.append([tx.HashToByteString(), unspentcoinstate])
+
+
+                #go through all the accounts in the xt outputs
+                for output in tx.outputs:
+                    account = AccountState()
+                    account.newlycreated=True
+                    for acc in accounts:
+                        if acc.ScriptHash == output.ScriptHash:
+                            account = account
+                            break
+
+                    if account.HasBalance(output.AssetId):
+                        account.AddToBalance(output.AssetId, output.Value)
+                    else:
+                        account.SetBalanceFor(output.AssetId, output.Value)
+
+                    if account.newlycreated:
+                        account.newlycreated=False
+                        accounts.append(account)
+
+
+
+                #go through all tx inputs
+                unique_tx_input_hashes = set([inp.PrevHash for inp in tx.inputs])
+                for txhash in unique_tx_input_hashes:
+                    prevTx, height = self.GetTransaction(txhash)
+                    coin_refs_by_hash = [coinref for coinref in tx.inputs if coinref.PrevHash == txhash]
+                    for input in coin_refs_by_hash:
+
+                        coin = None
+                        for uns in unspentcoins:
+                            if uns[0] == input.PrevHash:
+                                coin = uns[0]
+                        if coin is None:
+                            coin = UnspentCoinState()
+                        coin.Items[input.PrevIndex] |= CoinState.Spent
+
+                        if prevTx.outputs[input.PrevIndex].AssedId == Blockchain.SystemShare().HashToByteString():
+                            #do something with spentcoinsattes
+                            pass
 
                 #do a whole lotta stuff with tx here...
                 if tx.Type == TransactionType.RegisterTransaction:

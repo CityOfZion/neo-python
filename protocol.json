@@ -27,10 +27,10 @@
   },
 
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/MainChain",
-    "NodePort": 10333,
-    "WsPort": 10334,
-    "UriPrefix": [ "http://*:10332" ],
+    "DataDirectoryPath": "./Chains/TestChain",
+    "NodePort": 20333,
+    "WsPort": 20334,
+    "UriPrefix": [ "http://*:20332" ],
     "SslCert": "",
     "SslCertPassword": "",
     "VersionName":"/NEO:2.0.1/"

@@ -47,7 +47,7 @@ class BlockBase(VerifiableMixin):
 
     __hash = None
 
-
+    __htbs = None
 
 
     def Hash(self):
@@ -77,7 +77,9 @@ class BlockBase(VerifiableMixin):
         return out
 
     def HashToByteString(self):
-        return bytes(self.HashToString(), encoding='utf-8')
+        if not self.__htbs:
+            self.__htbs = bytes(self.HashToString(), encoding='utf-8')
+        return self.__htbs
 
     def Size(self):
 
