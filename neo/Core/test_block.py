@@ -173,14 +173,20 @@ class BlocksTestCase(unittest.TestCase):
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
         self.assertEqual(block.MerkleRoot, self.t992m)
         self.assertEqual(block.HashToByteString(), self.t992h)
-        pass
+
+
+        json = block.ToJson()
+        self.assertEqual(json['index'], 2992)
+        self.assertEqual(json['hash'], self.t992h.decode('utf-8'))
+        self.assertEqual(json['merkleroot'], self.t992m.decode('utf-8'))
+        self.assertEqual(len(json['tx']), 1)
+        self.assertEqual(json['tx'][0]['txid'], '4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9')
 
     big_tx_hash = b'93fb1184b95fd785022dea163ffc60ef6fa548ca240b49dd8339700cee581991'
 
     def test_1050514(self):
 
         path = '%s/fixtures/1050514.txt' % os.getcwd()
-        print("path: %s " % path)
 
         with open(path,'rb') as f:
 #
@@ -191,3 +197,18 @@ class BlocksTestCase(unittest.TestCase):
             block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
 
             self.assertEqual(self.big_tx_hash, block.HashToByteString())
+
+        json = block.ToJson()
+
+        self.assertEqual(json['index'], 1050514)
+        self.assertEqual(json['hash'], self.big_tx_hash.decode('utf-8'))
+        self.assertEqual(len(json['tx']), 65)
+
+
+        for tx in json['tx']:
+            if tx['txid'] == '1dc3543a5b54fcfce3fefba6c772f3a59740b2b1784690b3c66e2f7052f002bb':
+                bigclaim = tx
+                self.assertEqual(len(bigclaim['claims']), 1756)
+                vout = bigclaim['vout'][0]
+                self.assertEqual(vout['ScriptHash'], 'AFnRHRQceaUgFQxPTttAQzAZvsjGSNtHCH')
+                self.assertEqual(vout['Value'], 57868.00133972)

@@ -39,3 +39,9 @@ class MinerTransaction(Transaction):
     def OnDeserialized(self):
         if len(self.inputs) is not 0:
             raise Exception("No inputs for miner transaction")
+
+
+    def ToJson(self):
+        jsn = super(MinerTransaction, self).ToJson()
+        jsn['nonce'] = self.Nonce
+        return jsn
