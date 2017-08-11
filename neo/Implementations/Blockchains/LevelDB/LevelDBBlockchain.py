@@ -87,7 +87,7 @@ class LevelDBBlockchain(Blockchain):
         self._header_index.append(Blockchain.GenesisBlock().Header().HashToByteString())
 
         try:
-            self._db = plyvel.DB(self._path, create_if_missing=True)
+            self._db = plyvel.DB(self._path, create_if_missing=True, compression=None)
         except Exception as e:
             self.__log.debug("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
@@ -452,13 +452,15 @@ class LevelDBBlockchain(Blockchain):
                     for input in coin_refs_by_hash:
 
                         unspentcoins.GetAndChange(input.PrevHash).Items[input.PrevIndex] |= CoinState.Spent
-
+                        print("Comparing asset ids %s %s " % (prevTx.outputs[input.PrevIndex].AssetId, Blockchain.SystemShare().HashToByteString()))
                         if prevTx.outputs[input.PrevIndex].AssetId == Blockchain.SystemShare().HashToByteString():
-
+                            print("FOUND!!!!!!!!!!!!!!!!!!")
                             sc = spentcoins.GetAndChange(input.PrevHash, SpentCoinState(input.PrevHash, height, {} ))
                             sc.Items[input.PrevIndex] = block.Index
-
-                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes())
+                        else:
+                            print("NOTTTTTTT FOUND")
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes(),new_instance=None, debug_item=True)
+                        print("ACCOUNTTTTTT ISSSS %s %s " % (acct, acct.ScriptHash))
                         assetid = prevTx.outputs[input.PrevIndex].AssetId
                         acct.AddToBalance( assetid, -1 * prevTx.outputs[input.PrevIndex].Value.value)
 

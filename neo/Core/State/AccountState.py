@@ -5,7 +5,7 @@ import binascii
 from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
-
+import traceback
 class AccountState(StateBase):
 
 
@@ -21,7 +21,6 @@ class AccountState(StateBase):
         self.IsFrozen = is_frozen
         self.Votes = votes
         self.Balances = balances
-        print("CREATED ACCOUNT STATE WITH SCRIPT HASH %s " % self.ScriptHash)
 
     def Clone(self):
         return AccountState(self.ScriptHash, self.IsFrozen, self.Votes, self.Balances)
@@ -43,7 +42,6 @@ class AccountState(StateBase):
     def Deserialize(self, reader):
         super(AccountState, self).Deserialize(reader)
         self.ScriptHash = reader.ReadUInt160()
-        print("DESERIRAIZED ACCOUNT STATE... SCRIPT HASH %s " % self.ScriptHash)
         self.IsFrozen = reader.ReadBool()
         num_votes = reader.ReadVarInt()
         for i in range(0, num_votes):
@@ -60,6 +58,7 @@ class AccountState(StateBase):
     def Serialize(self, writer):
         super(AccountState, self).Serialize(writer)
         print("SERIALIZING ACCOUNT STATE... %s" % self.ScriptHash)
+
         writer.WriteUInt160(self.ScriptHash)
         writer.WriteBool(self.IsFrozen)
         writer.WriteVarInt(len(self.Votes))
