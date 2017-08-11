@@ -431,7 +431,7 @@ class LevelDBBlockchain(Blockchain):
 
                 #go through all the accounts in the tx outputs
                 for output in tx.outputs:
-                    account = accounts.GetAndChange(output.ScriptHash, AccountState(output.ScriptHash))
+                    account = accounts.GetAndChange(output.ScriptHashBytes(), AccountState(output.ScriptHashBytes()))
 
                     if account.HasBalance(output.AssetId):
                         account.AddToBalance(output.AssetId, output.Value)
@@ -458,7 +458,7 @@ class LevelDBBlockchain(Blockchain):
                             sc = spentcoins.GetAndChange(input.PrevHash, SpentCoinState(input.PrevHash, height, {} ))
                             sc.Items[input.PrevIndex] = block.Index
 
-                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHash)
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes())
                         assetid = prevTx.outputs[input.PrevIndex].AssetId
                         acct.AddToBalance( assetid, -1 * prevTx.outputs[input.PrevIndex].Value.value)
 

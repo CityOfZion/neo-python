@@ -60,7 +60,7 @@ class GenesisBlockTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         pass
-    
+
     def test_miner_tx(self):
         miner_tx = MinerTransaction()
         miner_tx.Nonce = 2083236893

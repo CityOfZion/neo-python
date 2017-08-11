@@ -53,7 +53,7 @@ class TransactionOutput(SerializableMixin):
 
 
     Value = None # should be fixed 8
-    ScriptHash = None
+    _ScriptHash = None
     AssetId = None
 
     """docstring for TransactionOutput"""
@@ -61,23 +61,29 @@ class TransactionOutput(SerializableMixin):
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
         self.Value = Value
-        self.ScriptHash = ScriptHash
+        self._ScriptHash = ScriptHash
+
+    def ScriptHash(self):
+        return hash_to_wallet_address(self._ScriptHash)
+
+    def ScriptHashBytes(self):
+        return self.ScriptHash().encode('utf-8')
 
     def Serialize(self, writer):
         writer.WriteUInt256(self.AssetId)
         writer.WriteFixed8(self.Value)
-        writer.WriteUInt160(self.ScriptHash)
+        writer.WriteUInt160(self._ScriptHash)
 
     def Deserialize(self, reader):
         self.AssetId = binascii.hexlify( reader.ReadUInt256())
         self.Value = reader.ReadFixed8()
-        self.ScriptHash = reader.ReadUInt160()
+        self._ScriptHash = reader.ReadUInt160()
 
     def ToJson(self):
         return {
             'AssetId': self.AssetId.decode('utf-8'),
             'Value': self.Value.value / Fixed8.D,
-            'ScriptHash': hash_to_wallet_address(self.ScriptHash)
+            'ScriptHash': self.ScriptHash()
         }
 
 @logged

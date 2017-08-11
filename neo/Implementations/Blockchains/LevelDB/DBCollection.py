@@ -35,6 +35,7 @@ class DBCollection():
 
     def Commit(self, wb):
         for item in self.Changed:
+#            print("committing item %s %s" % (item, type(item)))
             wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
         for item in self.Deleted:
             wb.delete(self.Prefix + item)
