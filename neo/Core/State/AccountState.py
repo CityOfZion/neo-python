@@ -5,7 +5,9 @@ import binascii
 from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
-import traceback
+from autologging import logged
+
+@logged
 class AccountState(StateBase):
 
 
@@ -51,14 +53,11 @@ class AccountState(StateBase):
 
         for i in range(0, num_balances):
             assetid = binascii.hexlify( reader.ReadUInt256())
-            fval = reader.ReadInt64()
-            amount = Fixed8(int(fval))
+            amount = reader.ReadFixed8()
             self.Balances.append([assetid,amount])
 
     def Serialize(self, writer):
         super(AccountState, self).Serialize(writer)
-        print("SERIALIZING ACCOUNT STATE... %s" % self.ScriptHash)
-
         writer.WriteUInt160(self.ScriptHash)
         writer.WriteBool(self.IsFrozen)
         writer.WriteVarInt(len(self.Votes))
@@ -72,7 +71,8 @@ class AccountState(StateBase):
         for i in range(0, len(balances)):
             balance = balances[i]
             writer.WriteUInt256(balance[0])
-            writer.WriteInt64(balance[1].value)
+            writer.WriteFixed8(balance[1])
+#            writer.WriteInt64(balance[1].value)
 
     def HasBalance(self, assetId):
         for b in self.Balances:

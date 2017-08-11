@@ -63,6 +63,9 @@ class TransactionOutput(SerializableMixin):
         self.Value = Value
         self._ScriptHash = ScriptHash
 
+    def ScriptHashRaw(self):
+        return self._ScriptHash
+
     def ScriptHash(self):
         return hash_to_wallet_address(self._ScriptHash)
 

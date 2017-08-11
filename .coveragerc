@@ -8,5 +8,3 @@ omit =
   neo/Network/TCPRemoteNode.py
   neo/Network/LocalNode.py
   neo/Network/IPEndpoint.py
-  neo/Network/RPC/*
-  neo/Network/UPNP/*

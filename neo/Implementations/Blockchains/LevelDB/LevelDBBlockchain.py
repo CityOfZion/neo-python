@@ -431,10 +431,10 @@ class LevelDBBlockchain(Blockchain):
 
                 #go through all the accounts in the tx outputs
                 for output in tx.outputs:
-                    account = accounts.GetAndChange(output.ScriptHashBytes(), AccountState(output.ScriptHashBytes()))
+                    account = accounts.GetAndChange(output.ScriptHashBytes(), AccountState(output.ScriptHashRaw()))
 
                     if account.HasBalance(output.AssetId):
-                        account.AddToBalance(output.AssetId, output.Value)
+                        account.AddToBalance(output.AssetId, output.Value.value)
                     else:
                         account.SetBalanceFor(output.AssetId, output.Value)
 
@@ -452,15 +452,12 @@ class LevelDBBlockchain(Blockchain):
                     for input in coin_refs_by_hash:
 
                         unspentcoins.GetAndChange(input.PrevHash).Items[input.PrevIndex] |= CoinState.Spent
-                        print("Comparing asset ids %s %s " % (prevTx.outputs[input.PrevIndex].AssetId, Blockchain.SystemShare().HashToByteString()))
+
                         if prevTx.outputs[input.PrevIndex].AssetId == Blockchain.SystemShare().HashToByteString():
-                            print("FOUND!!!!!!!!!!!!!!!!!!")
                             sc = spentcoins.GetAndChange(input.PrevHash, SpentCoinState(input.PrevHash, height, {} ))
                             sc.Items[input.PrevIndex] = block.Index
-                        else:
-                            print("NOTTTTTTT FOUND")
+
                         acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes(),new_instance=None, debug_item=True)
-                        print("ACCOUNTTTTTT ISSSS %s %s " % (acct, acct.ScriptHash))
                         assetid = prevTx.outputs[input.PrevIndex].AssetId
                         acct.AddToBalance( assetid, -1 * prevTx.outputs[input.PrevIndex].Value.value)
 

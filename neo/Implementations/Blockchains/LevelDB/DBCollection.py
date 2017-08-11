@@ -1,8 +1,5 @@
-from neo.Core.State.AccountState import AccountState
 import binascii
 from autologging import logged
-import traceback
-import pprint
 
 @logged
 class DBCollection():
@@ -33,15 +30,11 @@ class DBCollection():
     def _BuildCollection(self):
 
         for key, buffer in self.DB.iterator(prefix=self.Prefix):
-            print("building Collection with key, value.. %s %s " % (self.ClassRef, key))
-            if key[0] == b'@':
-                key = key[1:]
-                print("new key %s " % key)
+            key = key[1:]
             self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
 
     def Commit(self, wb):
         for item in self.Changed:
-#            print("committing item %s %s" % (item, type(item)))
             wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
         for item in self.Deleted:
             wb.delete(self.Prefix + item)
@@ -50,16 +43,15 @@ class DBCollection():
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
         if debug_item:
-            print("KEY VAL IS: %s " % keyval)
-            pprint.pprint(self.Collection)
+            self.__log.debug("KEY VAL IS: %s " % keyval)
+            self.__log.debug("Collection: %s " % self.Collection)
         item = self.TryGet(keyval)
 
         if item is None:
 
             if new_instance is None:
                 item = self.ClassRef()
-                traceback.print_stack()
-                print("CReating new instance of %s " % self.ClassRef)
+                self.__log.debug("CReating new instance of %s " % self.ClassRef)
             else:
                 item = new_instance
 
