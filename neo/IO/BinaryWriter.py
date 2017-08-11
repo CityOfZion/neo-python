@@ -133,10 +133,16 @@ class BinaryWriter(object):
         return self.WriteBytes(value)
 
     def WriteVarString(self, value, endian="<", encoding="utf-8"):
-        out = bytearray(value.encode(encoding))
-        length = len(out)
-        self.WriteVarInt(length, endian)
-        return self.WriteBytes(value.encode('utf-8'))
+        if type(value) is str:
+            value = value.encode(encoding)
+
+        length = len(value)
+        ba = bytearray(value)
+        byts = binascii.hexlify(ba)
+        string = byts.decode('utf-8')
+        self.WriteByte(length)
+        self.WriteBytes(string)
+
 
     def WriteFixedString(self, value, length):
         towrite = value.encode('utf-8')
@@ -172,4 +178,4 @@ class BinaryWriter(object):
 
 
     def WriteFixed8(self, value):
-        return self.WriteBytes(value.value)
+        return self.WriteInt64(int(value.value))

@@ -62,14 +62,10 @@ In English:
     def DeserializeExclusiveData(self, reader):
         self.Type = TransactionType.RegisterTransaction
         self.AssetType = reader.ReadByte()
-        self.Name = reader.ReadVarString().decode('utf-8')
-        self.Amount = Fixed8( reader.ReadInt64())
+        self.Name = reader.ReadVarString()
+        self.Amount = reader.ReadFixed8()
         self.Precision = reader.ReadByte()
 
-#        pkey = reader.ReadBytes(33)
-#        self.__log.debug("pke %s " % pkey)
-#        self.__log.debug("hex: %s " % binascii.hexlify(pkey))
-#        ecdsa = ECDSA.decode_secp256r1(pkey)
 
         self.Owner = reader.ReadBytes(33)
 #        self.Owner = ecdsa.G
@@ -77,8 +73,8 @@ In English:
 
     def SerializeExclusiveData(self, writer):
         writer.WriteByte(self.AssetType)
-        writer.WriteVarString(self.Name, encoding='utf-8')
-        writer.WriteInt64(self.Amount.value)
+        writer.WriteVarString(self.Name)
+        writer.WriteFixed8(self.Amount)
         writer.WriteByte(self.Precision)
 
         #owner
@@ -100,7 +96,7 @@ In English:
 
         asset = {
             'type': self.AssetType,
-            'name': self.Name,
+            'name': self.Name.decode('utf-8'),
             'amount': self.Amount.value,
             'precision': self.Precision if type(self.Precision) is int else self.Precision.decode('utf-8'),
             'owner': bytearray(self.Owner).hex(),

@@ -41,14 +41,6 @@ class PublishTransaction(Transaction):
 
 
 
-    def SerializePossibleEncodingIssue(self, writer, value):
-        length = len(value)
-        ba = bytearray(value)
-        byts = binascii.hexlify(ba)
-        string = byts.decode('utf-8')
-        writer.WriteByte(length)
-        writer.WriteBytes(string)
-
     def SerializeExclusiveData(self, writer):
 
         self.Code.Serialize(writer)
@@ -56,11 +48,11 @@ class PublishTransaction(Transaction):
         if self.Version >=1:
             writer.WriteBool( self.NeedStorage)
 
-        self.SerializePossibleEncodingIssue(writer, self.Name)
-        self.SerializePossibleEncodingIssue(writer, self.CodeVersion)
-        self.SerializePossibleEncodingIssue(writer, self.Author)
-        self.SerializePossibleEncodingIssue(writer, self.Email)
-        self.SerializePossibleEncodingIssue(writer, self.Description)
+        writer.WriteVarString(self.Name)
+        writer.WriteVarString(self.CodeVersion)
+        writer.WriteVarString(self.Author)
+        writer.WriteVarString(self.Email)
+        writer.WriteVarString(self.Description)
 
 
 
@@ -75,17 +67,4 @@ class PublishTransaction(Transaction):
         jsn['contract']['email'] = self.Email.decode('utf-8')
         jsn['contract']['description'] = self.Description.decode('utf-8')
         return jsn
-
-#        writer.WriteVarString(self.Name)
-
-#        writer.WriteVarString(self.CodeVersion)
-#        writer.WriteVarString(self.Author)
-#        writer.WriteVarString(self.Email)
-
-
-#        self.__log.debug("bytelen: %s " % len(writer.stream.ToArray()))
-
-#        writer.WriteVarBytes(self.Description)
-#        self.__log.debug( "bytelen: %s " % len(writer.stream.ToArray()))
-
 

@@ -1,16 +1,7 @@
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
-from neo.Core.TX.Transaction import Transaction,TransactionType,TransactionInput, TransactionOutput
-from neo.Core.TX.RegisterTransaction import RegisterTransaction
-from neo.Core.TX.InvocationTransaction import InvocationTransaction
-from neo.Core.TX.PublishTransaction import PublishTransaction
-from neo.Core.TX.ClaimTransaction import ClaimTransaction
-from neo.Core.TX.EnrollmentTransaction import EnrollmentTransaction
-
-import plyvel
-from autologging import logged
-import binascii
+from neo.Core.TX.Transaction import Transaction,TransactionType
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
@@ -18,31 +9,20 @@ from twisted.internet import reactor
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Fixed8 import Fixed8
 
+from neo.Core.State.UnspentCoinState import UnspentCoinState
+from neo.Core.State.AccountState import AccountState
+from neo.Core.State.CoinState import CoinState
+from neo.Core.State.SpentCoinState import SpentCoinState
+from neo.Core.State.AssetState import AssetState
+from neo.Core.State.ValidatorState import ValidatorState
+from .DBPrefix import DBPrefix
+
+import plyvel
+from autologging import logged
+import binascii
 import events
-from neo.Core.UnspentCoinState import UnspentCoinState
-from neo.Core.AccountState import AccountState
-from neo.Core.CoinState import CoinState
-from neo.Core.SpentCoinState import SpentCoinState
-from neo.Core.AssetState import AssetState
 
-class DBPrefix:
 
-    DATA_Block =        b'\x01'
-    DATA_Transaction =  b'\x02'
-
-    ST_Account =        b'\x40'
-    ST_Coin =           b'\x44'
-    ST_SpentCoin =      b'\x45'
-    ST_Validator =      b'\x48'
-    ST_Asset =          b'\x4c'
-    ST_Contract =       b'\x50'
-    ST_Storage =        b'\x70'
-
-    IX_HeaderHashList = b'\x80'
-
-    SYS_CurrentBlock =  b'\xc0'
-    SYS_CurrentHeader = b'\xc1'
-    SYS_Version =       b'\xf0'
 
 
 @logged
@@ -426,8 +406,8 @@ class LevelDBBlockchain(Blockchain):
         accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, DBPrefix.ST_SpentCoin, SpentCoinState)
-
         assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState )
+        validators = DBCollection(self._db, DBPrefix.ST_Validator, ValidatorState)
 
 #        validators = sn.iterator(prefix=ST_Validator)
 #        contracts = sn.iterator(prefix=ST_Contract)
@@ -494,7 +474,7 @@ class LevelDBBlockchain(Blockchain):
 
                 elif tx.Type == int.from_bytes( TransactionType.IssueTransaction, 'little'):
 
-                    txresults = [result in tx.GetTransactionResults() if result.Amount.value < 0]
+                    txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
                     for result in txresults:
                         asset = assets.GetAndChange(result.AssetId)
                         asset.Available = asset.Available.value - result.Amount.value
@@ -510,7 +490,7 @@ class LevelDBBlockchain(Blockchain):
                             spentcoins.GetAndChange(input.PrevHash)
 
                 elif tx.Type == int.from_bytes( TransactionType.EnrollmentTransaction, 'little'):
-                    pass
+                    validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
 
                 elif tx.Type == int.from_bytes( TransactionType.PublishTransaction, 'little'):
                     pass

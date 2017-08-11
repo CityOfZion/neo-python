@@ -21,14 +21,11 @@ class IssueTransaction(Transaction):
 
 
     def GetScriptHashesForVerifying(self):
-        """Get ScriptHash From SignatureContract"""
         pass
 
     def DeserializeExclusiveData(self, reader):
         self.Type = TransactionType.IssueTransaction
         pass
-#        reader.ReadUInt32()
 
     def SerializeExclusiveData(self, writer):
         pass
-#        writer.WriteUInt32(self.Nonce)

@@ -110,19 +110,18 @@ class TransactionAttribute(Inventory, SerializableMixin):
             writer.WriteBytes(self.Data)
 
         elif self.Usage == TransactionAttributeUsage.DescriptionUrl:
-            mlen = len(self.Data)
-            writer.WriteVarInt(mlen)
-
-            byts = bytes(self.Data.hex().encode('utf-8'))
-            writer.WriteBytes(byts)
+#            mlen = len(self.Data)
+#            writer.WriteVarInt(mlen)
+#            byts = bytes(self.Data.hex().encode('utf-8'))
+#            writer.WriteBytes(byts)
+            writer.WriteVarString(self.Data)
 
         elif self.Usage == TransactionAttributeUsage.Description or self.Usage >= TransactionAttributeUsage.Remark:
-            mlen = len(self.Data)
-            writer.WriteVarInt(mlen)
-
-            byts = bytes( self.Data.hex().encode('utf-8'))
-            writer.WriteBytes(byts)
-
+#            mlen = len(self.Data)
+#            writer.WriteVarInt(mlen)
+#            byts = bytes( self.Data.hex().encode('utf-8'))
+#            writer.WriteBytes(byts)
+            writer.WriteVarString(self.Data)
         else:
             self.__log.debug("format error!!!")
 

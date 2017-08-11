@@ -1,9 +1,4 @@
 
-import importlib
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import DBPrefix
 
 class DBCollection():
 
@@ -25,8 +20,8 @@ class DBCollection():
 
     def _BuildCollection(self):
 
-        self.Collection = [self.ClassRef.DeserializeFromDB(buffer)
-                            for key,buffer in self.DB.iterator(prefix=self.Prefix)]
+        for key, buffer in self.DB.iterator(prefix=self.Prefix):
+            self.Collection[key] = self.ClassRef.DeserializeFromDB(buffer)
 
 
     def GetAndChange(self, itemval, new_instance=None):
@@ -60,3 +55,4 @@ class DBCollection():
 
     def Add(self, keyval, item):
         self.Collection[keyval] = item
+

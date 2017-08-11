@@ -12,6 +12,8 @@ class StateBase(SerializableMixin):
         return ctypes.sizeof(ctypes.c_byte)
 
 
+    def DeserializeFromDB(self, buffer):
+        pass
 
     def Deserialize(self, reader):
         if reader.ReadByte() != self.StateVersion:

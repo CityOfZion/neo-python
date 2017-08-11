@@ -8,7 +8,7 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.Witness import Witness
 from neo.Core.Scripts.ScriptOp import *
-from neo.Core.SpentCoinState import SpentCoinState
+from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.Helper import Helper
 from neo.Wallets.Contract import Contract
 from neo import Settings

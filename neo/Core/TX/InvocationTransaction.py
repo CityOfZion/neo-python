@@ -34,15 +34,14 @@ class InvocationTransaction(Transaction):
             raise Exception('Invalid Format')
 
         if self.Version >= 1:
-            fval = reader.ReadInt64()
-            self.Gas = Fixed8(int(fval))
+            self.Gas = reader.ReadFixed8()
         else:
             self.Gas = Fixed8(0)
 
     def SerializeExclusiveData(self, writer):
         writer.WriteVarBytes(self.Script)
         if self.Version >= 1:
-            writer.WriteInt64(int(self.Gas.value))
+            writer.WriteFixed8(self.Gas)
 
 
     def Verify(self, mempool):
