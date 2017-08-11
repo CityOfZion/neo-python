@@ -48,8 +48,7 @@ class SpentCoinState(StateBase):
 
         writer.WriteVarInt( len( self.Items))
 
-        for key,val in self.Items:
+        for key,val in self.Items.items():
             writer.WriteUInt16(key)
             writer.WriteUInt32(val)
 
-            

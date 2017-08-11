@@ -59,11 +59,8 @@ class GenesisBlockTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if Settings.MAGIC == 1953787457:
-            print('ok to test!')
-#        else:
-#            raise unittest.SkipTest('Only test genesis blocks with testnet protocol settings')
-
+        pass
+    
     def test_miner_tx(self):
         miner_tx = MinerTransaction()
         miner_tx.Nonce = 2083236893

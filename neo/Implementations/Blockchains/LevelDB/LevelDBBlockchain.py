@@ -15,6 +15,8 @@ from neo.Core.State.CoinState import CoinState
 from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
+from neo.Core.State.ContractState import ContractState
+
 from .DBPrefix import DBPrefix
 
 import plyvel
@@ -408,9 +410,8 @@ class LevelDBBlockchain(Blockchain):
         spentcoins = DBCollection(self._db, DBPrefix.ST_SpentCoin, SpentCoinState)
         assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState )
         validators = DBCollection(self._db, DBPrefix.ST_Validator, ValidatorState)
+        contracts = DBCollection(self._db, DBPrefix.ST_Contract, ContractState)
 
-#        validators = sn.iterator(prefix=ST_Validator)
-#        contracts = sn.iterator(prefix=ST_Contract)
 #        storages = sn.iterator(prefix=ST_Storage)
 
         amount_sysfee = (self.GetSysFeeAmount(block.PrevHash) + block.TotalFees()).to_bytes(4, 'little')
@@ -424,13 +425,13 @@ class LevelDBBlockchain(Blockchain):
                 wb.put(DBPrefix.DATA_Transaction + tx.HashToByteString(), block.IndexBytes() + tx.ToArray())
 
                 #go through all outputs and add unspent coins to them
-                unspentcoinstate = UnspentCoinState([CoinState.Confirmed for item in tx.outputs])
+
+                unspentcoinstate = UnspentCoinState.FromTXOutputsConfirmed(tx.outputs)
                 unspentcoins.Add(tx.HashToByteString(), unspentcoinstate)
 
                 #go through all the accounts in the tx outputs
                 for output in tx.outputs:
-
-                    account = accounts.GetAndChange(output.ScriptHash, AccountState(script_hash=output.ScriptHash))
+                    account = accounts.GetAndChange(output.ScriptHash, AccountState(output.ScriptHash))
 
                     if account.HasBalance(output.AssetId):
                         account.AddToBalance(output.AssetId, output.Value)
@@ -493,12 +494,48 @@ class LevelDBBlockchain(Blockchain):
                     validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
 
                 elif tx.Type == int.from_bytes( TransactionType.PublishTransaction, 'little'):
-                    pass
+
+                    contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
+                                             tx.Author, tx.Email, tx.Description)
+
+                    contracts.GetAndChange(tx.Code.ScriptHash(), contract)
+
                 elif tx.Type == int.from_bytes( TransactionType.InvocationTransaction, 'little'):
+                    # will have to create a VM / state machine first :-|
                     pass
 
-            #do save all the accounts, unspent, coins, validators, assets, etc
-            #now sawe the current sys block
+            # do save all the accounts, unspent, coins, validators, assets, etc
+            # now sawe the current sys block
+
+            #filter out accounts to delete then commit
+            for key,account in accounts.Collection.items():
+                if not account.IsFrozen and len(account.Votes) == 0 and account.AllBalancesZeroOrLess():
+                    accounts.Remove(key)
+            accounts.Commit(wb)
+
+            #filte out unspent coins to delete then commit
+            for key, unspent in unspentcoins.Collection.items():
+                unspentcoins.Remove(key)
+            unspentcoins.Commit(wb)
+
+            #filter out spent coins to delete then commit to db
+            for key, spent in spentcoins.Collection.items():
+                if len( spent.Items) == 0:
+                    spentcoins.Remove(key)
+            spentcoins.Commit(wb)
+
+            #commit validators
+            validators.Commit(wb)
+
+            #commit assets
+            assets.Commit(wb)
+
+            #commit contracts
+            contracts.Commit(wb)
+
+            #commit storages ( not implemented )
+            #storages.Commit(wb)
+
             wb.put(DBPrefix.SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
             self._current_block_height = block.Index
 

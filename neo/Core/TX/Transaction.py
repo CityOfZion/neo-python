@@ -65,13 +65,12 @@ class TransactionOutput(SerializableMixin):
 
     def Serialize(self, writer):
         writer.WriteUInt256(self.AssetId)
-        writer.WriteInt64(int(self.Value.value))
+        writer.WriteFixed8(self.Value)
         writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
         self.AssetId = binascii.hexlify( reader.ReadUInt256())
-        fval = reader.ReadInt64()
-        self.Value = Fixed8( int(fval ) )
+        self.Value = reader.ReadFixed8()
         self.ScriptHash = reader.ReadUInt160()
 
     def ToJson(self):
@@ -80,6 +79,7 @@ class TransactionOutput(SerializableMixin):
             'Value': self.Value.value / Fixed8.D,
             'ScriptHash': hash_to_wallet_address(self.ScriptHash)
         }
+
 @logged
 class TransactionInput(SerializableMixin):
     """docstring for TransactionInput"""

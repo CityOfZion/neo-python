@@ -3,6 +3,7 @@ from .StateBase import StateBase
 import sys
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
+from .CoinState import CoinState
 
 class UnspentCoinState(StateBase):
 
@@ -12,8 +13,21 @@ class UnspentCoinState(StateBase):
     def __init__(self, items={}):
         self.Items = items
 
+    @staticmethod
+    def FromTXOutputsConfirmed(outputs):
+        uns = UnspentCoinState()
+        for i in range(0, len(outputs)):
+            uns.Items[i] = CoinState.Confirmed
+        return uns
+
     def Size(self):
         return super(UnspentCoinState, self).Size() + sys.getsizeof(self.Items)
+
+    def IsAllSpent(self):
+        for k,v in self.Items:
+            if v & CoinState.Spent > 0:
+                return False
+        return True
 
     def Deserialize(self, reader):
         super(UnspentCoinState, self).Deserialize(reader)
@@ -21,7 +35,6 @@ class UnspentCoinState(StateBase):
         item_array = bytearray(reader.ReadVarBytes())
         for i in range(0, len(item_array)):
             self.Items[i] = item_array[i]
-        print("item dict: %s " % self.Items)
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -33,5 +46,10 @@ class UnspentCoinState(StateBase):
 
     def Serialize(self, writer):
         super(UnspentCoinState, self).Serialize(writer)
-        items = [val for key,val in self.Items]
-        writer.WriteVarBytes(self.Items, unhexlify=False)
+
+
+        writer.WriteVarInt(len(self.Items))
+        [writer.WriteByte(val) for key, val in self.Items.items()]
+#items = [val for key,val in self.Items.items()]
+#        print("serializing unspent coins!")
+#        writer.WriteVarBytes(items, unhexlify=False)

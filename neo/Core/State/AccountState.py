@@ -63,13 +63,14 @@ class AccountState(StateBase):
         for vote in self.Votes:
             writer.WriteBytes(vote)
 
-        balances = [b for b in self.Balances if b[1] > 0]
+        balances = [b for b in self.Balances if b[1].value > 0]
 
         writer.WriteVarInt(len(balances))
 
         for i in range(0, len(balances)):
-            writer.WriteUInt256(i[0])
-            writer.WriteInt64(i[1].value)
+            balance = balances[i]
+            writer.WriteUInt256(balance[0])
+            writer.WriteInt64(balance[1].value)
 
     def HasBalance(self, assetId):
         for b in self.Balances:
@@ -101,3 +102,9 @@ class AccountState(StateBase):
 
         if not found:
             self.Balances.append([assetId, val])
+
+    def AllBalancesZeroOrLess(self):
+        for item in self.Balances:
+            if item[1].value > 0:
+                return False
+        return True

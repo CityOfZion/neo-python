@@ -2,6 +2,7 @@
 from neo.IO.Mixins import SerializableMixin
 import binascii
 from neo.Cryptography.Helper import hash_to_wallet_address
+from neo.Cryptography.Helper import hash_to_wallet_address
 
 class FunctionCode(SerializableMixin):
 
@@ -15,6 +16,13 @@ class FunctionCode(SerializableMixin):
 
     _scriptHash = None
 
+
+    def ScriptHash(self):
+        if self._scriptHash is None:
+
+            self._scriptHash = hash_to_wallet_address( self.Script )
+
+        return self._scriptHash
 
     def Deserialize(self, reader):
 

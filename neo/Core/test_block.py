@@ -4,6 +4,7 @@ import unittest
 from neo.Blockchain import GetGenesis
 import binascii
 from neo.IO.Helper import Helper
+from neo.Core.Blockchain import Blockchain
 
 from neo.Cryptography.MerkleTree import MerkleTree
 
@@ -84,7 +85,6 @@ class BlocksTestCase(unittest.TestCase):
 
         root = MerkleTree.ComputeRoot([tx.HashToByteString() for tx in block.Transactions])
         self.assertEqual(root, block.MerkleRoot)
-
 
 
     def test_block_two(self):

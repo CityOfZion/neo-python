@@ -1,5 +1,7 @@
 
 from neo.IO.Mixins import SerializableMixin
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import MemoryStream
 import ctypes
 
 
@@ -12,12 +14,21 @@ class StateBase(SerializableMixin):
         return ctypes.sizeof(ctypes.c_byte)
 
 
-    def DeserializeFromDB(self, buffer):
+    @staticmethod
+    def DeserializeFromDB(buffer):
         pass
 
     def Deserialize(self, reader):
-        if reader.ReadByte() != self.StateVersion:
+        sv = reader.ReadByte()
+        if sv != self.StateVersion:
             raise Exception("Incorrect State format")
 
     def Serialize(self, writer):
         writer.WriteByte(self.StateVersion)
+
+
+    def ToByteArray(self):
+        ms = MemoryStream()
+        writer = BinaryWriter(ms)
+        self.Serialize(writer)
+        return ms.ToArray()
