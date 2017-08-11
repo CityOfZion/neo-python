@@ -11,7 +11,7 @@ import struct
 import binascii
 import importlib
 from autologging import logged
-
+from neo.Fixed8 import Fixed8
 
 @logged
 class BinaryReader(object):
@@ -154,3 +154,7 @@ class BinaryReader(object):
         for i in range(0, len):
             items.append( (self.ReadUInt256().hex()))
         return items
+
+    def ReadFixed8(self):
+        fval = self.ReadInt64()
+        return Fixed8( int(fval ) )

@@ -2,6 +2,12 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction,TransactionType,TransactionInput, TransactionOutput
+from neo.Core.TX.RegisterTransaction import RegisterTransaction
+from neo.Core.TX.InvocationTransaction import InvocationTransaction
+from neo.Core.TX.PublishTransaction import PublishTransaction
+from neo.Core.TX.ClaimTransaction import ClaimTransaction
+from neo.Core.TX.EnrollmentTransaction import EnrollmentTransaction
+
 import plyvel
 from autologging import logged
 import binascii
@@ -9,29 +15,34 @@ from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
 from twisted.internet import reactor
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
+from neo.Fixed8 import Fixed8
 
 import events
 from neo.Core.UnspentCoinState import UnspentCoinState
 from neo.Core.AccountState import AccountState
 from neo.Core.CoinState import CoinState
+from neo.Core.SpentCoinState import SpentCoinState
+from neo.Core.AssetState import AssetState
 
+class DBPrefix:
 
-DATA_Block =        b'\x01'
-DATA_Transaction =  b'\x02'
+    DATA_Block =        b'\x01'
+    DATA_Transaction =  b'\x02'
 
-ST_Account =        b'\x40'
-ST_Coin =           b'\x44'
-ST_SpentCoin =      b'\x45'
-ST_Validator =      b'\x48'
-ST_Asset =          b'\x4c'
-ST_Contract =       b'\x50'
-ST_Storage =        b'\x70'
+    ST_Account =        b'\x40'
+    ST_Coin =           b'\x44'
+    ST_SpentCoin =      b'\x45'
+    ST_Validator =      b'\x48'
+    ST_Asset =          b'\x4c'
+    ST_Contract =       b'\x50'
+    ST_Storage =        b'\x70'
 
-IX_HeaderHashList = b'\x80'
+    IX_HeaderHashList = b'\x80'
 
-SYS_CurrentBlock =  b'\xc0'
-SYS_CurrentHeader = b'\xc1'
-SYS_Version =       b'\xf0'
+    SYS_CurrentBlock =  b'\xc0'
+    SYS_CurrentHeader = b'\xc1'
+    SYS_Version =       b'\xf0'
 
 
 @logged
@@ -100,15 +111,15 @@ class LevelDBBlockchain(Blockchain):
             raise Exception('Leveldb Unavailable')
 
 
-        version = self._db.get(SYS_Version)
+        version = self._db.get(DBPrefix.SYS_Version)
 
         if version == self._sysversion: #or in the future, if version doesn't equal the current version...
 
-            ba=bytearray(self._db.get(SYS_CurrentBlock, 0))
+            ba=bytearray(self._db.get(DBPrefix.SYS_CurrentBlock, 0))
             self._current_block_height = int.from_bytes( ba[-4:], 'little')
 
 
-            ba = bytearray(self._db.get(SYS_CurrentHeader, 0))
+            ba = bytearray(self._db.get(DBPrefix.SYS_CurrentHeader, 0))
             current_header_height = int.from_bytes(ba[-4:], 'little')
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
@@ -118,7 +129,7 @@ class LevelDBBlockchain(Blockchain):
 
             hashes = []
             try:
-                for key, value in self._db.iterator(prefix=IX_HeaderHashList):
+                for key, value in self._db.iterator(prefix=DBPrefix.IX_HeaderHashList):
                     ms = MemoryStream(value)
                     reader = BinaryReader(ms)
                     hlist = reader.Read2000256List()
@@ -141,7 +152,7 @@ class LevelDBBlockchain(Blockchain):
 
             if self._stored_header_count == 0:
                 headers = []
-                for key, value in self._db.iterator(prefix=DATA_Block):
+                for key, value in self._db.iterator(prefix=DBPrefix.DATA_Block):
                     dbhash = bytearray(value)[4:]
                     headers.append(  Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
 
@@ -157,7 +168,7 @@ class LevelDBBlockchain(Blockchain):
                     wb.delete(key)
 
             self.Persist(Blockchain.GenesisBlock())
-            self._db.put(SYS_Version, self._sysversion )
+            self._db.put(DBPrefix.SYS_Version, self._sysversion )
 
 
     def GetTransaction(self, hash):
@@ -166,7 +177,7 @@ class LevelDBBlockchain(Blockchain):
             hash = bytes(hash.encode('utf-8'))
 
         if hash is not None:
-            out = bytearray(self._db.get(DATA_Transaction + hash))
+            out = bytearray(self._db.get(DBPrefix.DATA_Transaction + hash))
             if out is not None:
                 height = int.from_bytes(out[:4], 'little')
                 out = out[4:]
@@ -231,7 +242,7 @@ class LevelDBBlockchain(Blockchain):
 #        self.__log.debug("get header from db not implementet yet")
 
         try:
-            out = bytearray(self._db.get(DATA_Block + hash))
+            out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
             out = out[4:]
             outhex = binascii.unhexlify(out)
             return Header.FromTrimmedData(outhex, 0)
@@ -315,7 +326,7 @@ class LevelDBBlockchain(Blockchain):
 
     def GetBlockByHash(self, hash):
         try:
-            out = bytearray(self._db.get(DATA_Block + hash))
+            out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
             out = out[4:]
             outhex = binascii.unhexlify(out)
             return Block.FromTrimmedData(outhex, 0)
@@ -389,15 +400,15 @@ class LevelDBBlockchain(Blockchain):
             ms.flush()
             self.__log.debug("Writing stored header count: %s " % self._stored_header_count)
             with self._db.write_batch() as wb:
-                wb.put( IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), ms.ToArray())
+                wb.put( DBPrefix.IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), ms.ToArray())
 
             self._stored_header_count += 2000
 
             self.__log.debug("TRimming stored header index!!!!! %s" % self._stored_header_count)
 
         with self._db.write_batch() as wb:
-            wb.put( DATA_Block + hHash, bytes(4) + header.ToArray())
-            wb.put( SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))
+            wb.put( DBPrefix.DATA_Block + hHash, bytes(4) + header.ToArray())
+            wb.put( DBPrefix.SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))
 
 
     def BlockCacheCount(self):
@@ -412,11 +423,13 @@ class LevelDBBlockchain(Blockchain):
 
         sn = self._db.snapshot()
 
-        accounts = [AccountState.DeserializeFromDB(buffer) for key,buffer in sn.iterator(prefix=ST_Account)]
-        unspentcoins = [UnspentCoinState.DeserializeFromDB(buffer) for key,buffer in sn.iterator(prefix=ST_Coin)]
-#        spentcoins = sn.iterator(prefix=ST_SpentCoin)
+        accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
+        unspentcoins = DBCollection(self._db, DBPrefix.ST_Coin, UnspentCoinState)
+        spentcoins = DBCollection(self._db, DBPrefix.ST_SpentCoin, SpentCoinState)
+
+        assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState )
+
 #        validators = sn.iterator(prefix=ST_Validator)
-#        assets = sn.iterator(prefix=ST_Asset)
 #        contracts = sn.iterator(prefix=ST_Contract)
 #        storages = sn.iterator(prefix=ST_Storage)
 
@@ -424,81 +437,89 @@ class LevelDBBlockchain(Blockchain):
 
         with self._db.write_batch() as wb:
 
-            wb.put(DATA_Block + block.HashToByteString(), amount_sysfee + block.Trim())
+            wb.put(DBPrefix.DATA_Block + block.HashToByteString(), amount_sysfee + block.Trim())
 
             for tx in block.Transactions:
 
-                wb.put(DATA_Transaction + tx.HashToByteString(), block.IndexBytes() + tx.ToArray())
+                wb.put(DBPrefix.DATA_Transaction + tx.HashToByteString(), block.IndexBytes() + tx.ToArray())
 
                 #go through all outputs and add unspent coins to them
-                unspentcoinstate = UnspentCoinState([1 for item in tx.outputs])
-                unspentcoins.append([tx.HashToByteString(), unspentcoinstate])
+                unspentcoinstate = UnspentCoinState([CoinState.Confirmed for item in tx.outputs])
+                unspentcoins.Add(tx.HashToByteString(), unspentcoinstate)
 
-
-                #go through all the accounts in the xt outputs
+                #go through all the accounts in the tx outputs
                 for output in tx.outputs:
-                    account = AccountState()
-                    account.newlycreated=True
-                    for acc in accounts:
-                        if acc.ScriptHash == output.ScriptHash:
-                            account = account
-                            break
+
+                    account = accounts.GetAndChange(output.ScriptHash, AccountState(script_hash=output.ScriptHash))
 
                     if account.HasBalance(output.AssetId):
                         account.AddToBalance(output.AssetId, output.Value)
                     else:
                         account.SetBalanceFor(output.AssetId, output.Value)
 
-                    if account.newlycreated:
-                        account.newlycreated=False
-                        accounts.append(account)
-
 
 
                 #go through all tx inputs
+                unique_tx_input_hashes = []
+                for input in tx.inputs:
+                    if not input.PrevHash in unique_tx_input_hashes:
+                        unique_tx_input_hashes.append(input.PrevHash)
 
-                unique_tx_input_hashes = [inp.PrevHash for inp in tx.inputs if not inp.PrevHash in unique_tx_input_hashes]
                 for txhash in unique_tx_input_hashes:
                     prevTx, height = self.GetTransaction(txhash)
                     coin_refs_by_hash = [coinref for coinref in tx.inputs if coinref.PrevHash == txhash]
                     for input in coin_refs_by_hash:
 
-                        coin = None
-                        for uns in unspentcoins:
-                            if uns[0] == input.PrevHash:
-                                coin = uns[0]
-                        if coin is None:
-                            coin = UnspentCoinState()
-                        coin.Items[input.PrevIndex] |= CoinState.Spent
+                        unspentcoins.GetAndChange(input.PrevHash).Items[input.PrevIndex] |= CoinState.Spent
 
-                        if prevTx.outputs[input.PrevIndex].AssedId == Blockchain.SystemShare().HashToByteString():
-                            #do something with spentcoinsattes
-                            pass
+                        if prevTx.outputs[input.PrevIndex].AssetId == Blockchain.SystemShare().HashToByteString():
+
+                            sc = spentcoins.GetAndChange(input.PrevHash, SpentCoinState(input.PrevHash, height, {} ))
+                            sc.Items[input.PrevIndex] = block.Index
+
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHash)
+                        assetid = prevTx.outputs[input.PrevIndex].AssetId
+                        acct.AddToBalance( assetid, -1 * prevTx.outputs[input.PrevIndex].Value.value)
+
 
                 #do a whole lotta stuff with tx here...
-                if tx.Type == TransactionType.RegisterTransaction:
+                if tx.Type == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
+
+                    #tx =
+                    asset = AssetState(tx.HashToByteString(),tx.AssetType, tx.Name, tx.Amount,
+                                       Fixed8(0),tx.Precision, Fixed8(0), Fixed8(0), bytearray(20),
+                                       tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False )
+
+                    assets.Add(tx.HashToByteString(), asset)
+
+                elif tx.Type == int.from_bytes( TransactionType.IssueTransaction, 'little'):
+
+                    txresults = [result in tx.GetTransactionResults() if result.Amount.value < 0]
+                    for result in txresults:
+                        asset = assets.GetAndChange(result.AssetId)
+                        asset.Available = asset.Available.value - result.Amount.value
+
+
+                elif tx.Type == int.from_bytes( TransactionType.ClaimTransaction, 'little'):
+
+                    for input in tx.Claims:
+
+                        sc = spentcoins.TryGet(input.PrevHash)
+                        if sc and input.PrevIndex in sc.Items:
+                            del sc.Items[input.PrevIndex]
+                            spentcoins.GetAndChange(input.PrevHash)
+
+                elif tx.Type == int.from_bytes( TransactionType.EnrollmentTransaction, 'little'):
                     pass
 
-                elif tx.Type == TransactionType.IssueTransaction:
+                elif tx.Type == int.from_bytes( TransactionType.PublishTransaction, 'little'):
                     pass
-
-                elif tx.Type == TransactionType.IssueTransaction:
-                    pass
-
-                elif tx.Type == TransactionType.ClaimTransaction:
-                    pass
-
-                elif tx.Type == TransactionType.EnrollmentTransaction:
-                    pass
-
-                elif tx.Type == TransactionType.PublishTransaction:
-                    pass
-                elif tx.Type == TransactionType.InvocationTransaction:
+                elif tx.Type == int.from_bytes( TransactionType.InvocationTransaction, 'little'):
                     pass
 
             #do save all the accounts, unspent, coins, validators, assets, etc
             #now sawe the current sys block
-            wb.put(SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
+            wb.put(DBPrefix.SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
             self._current_block_height = block.Index
 
 

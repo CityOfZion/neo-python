@@ -17,7 +17,11 @@ class UnspentCoinState(StateBase):
 
     def Deserialize(self, reader):
         super(UnspentCoinState, self).Deserialize(reader)
-        self.Items = bytearray(reader.ReadVarBytes())
+
+        item_array = bytearray(reader.ReadVarBytes())
+        for i in range(0, len(item_array)):
+            self.Items[i] = item_array[i]
+        print("item dict: %s " % self.Items)
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -29,4 +33,5 @@ class UnspentCoinState(StateBase):
 
     def Serialize(self, writer):
         super(UnspentCoinState, self).Serialize(writer)
+        items = [val for key,val in self.Items]
         writer.WriteVarBytes(self.Items, unhexlify=False)

@@ -30,7 +30,7 @@ from autologging import logged
 
 class TransactionResult():
     AssetId=None
-    Amount=0
+    Amount=Fixed8(0)
 
     def __init__(self, asset_id, amount):
         self.AssetId = asset_id

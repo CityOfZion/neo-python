@@ -8,7 +8,7 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.Witness import Witness
 from neo.Core.Scripts.ScriptOp import *
-from neo.Core.SpentCoin import SpentCoin
+from neo.Core.SpentCoinState import SpentCoinState
 from neo.Core.Helper import Helper
 from neo.Wallets.Contract import Contract
 from neo import Settings
@@ -167,9 +167,9 @@ class Blockchain(object):
                     raise Exception('Invalid claim')
 
 
-                coin = SpentCoin(tx.Outputs[claim.PrevIndex], height_start, height_end)
-                unclaimed.append(coin)
-
+#                coin = SpentCoin(tx.Outputs[claim.PrevIndex], height_start, height_end)
+#                unclaimed.append(coin)
+            raise NotImplementedError()
         return Blockchain.CalculateBonusInternal(unclaimed)
 
 

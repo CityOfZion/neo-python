@@ -15,7 +15,6 @@ class AccountState(StateBase):
     Votes = []
     Balances = []
 
-    newlycreated=True
 
     def __init__(self, script_hash=None, is_frozen=False, votes=[], balances=[]):
         self.ScriptHash = script_hash
