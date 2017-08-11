@@ -15,10 +15,10 @@ class AccountState(StateBase):
     ScriptHash = None
     IsFrozen = False
     Votes = []
-    Balances = []
+    Balances = {}
 
 
-    def __init__(self, script_hash=None, is_frozen=False, votes=[], balances=[]):
+    def __init__(self, script_hash=None, is_frozen=False, votes=[], balances={}):
         self.ScriptHash = script_hash
         self.IsFrozen = is_frozen
         self.Votes = votes
@@ -42,7 +42,7 @@ class AccountState(StateBase):
         return account
 
     def Deserialize(self, reader):
-        start = time.clock()
+
         super(AccountState, self).Deserialize(reader)
         self.ScriptHash = reader.ReadUInt160()
         self.IsFrozen = reader.ReadBool()
@@ -51,15 +51,12 @@ class AccountState(StateBase):
             self.Votes.append(reader.ReadBytes(33))
 
         num_balances = reader.ReadVarInt()
-
+        self.Balances = {}
         for i in range(0, num_balances):
             assetid = binascii.hexlify( reader.ReadUInt256())
             amount = reader.ReadFixed8()
-            self.Balances.append([assetid,amount])
+            self.Balances[assetid] = amount
 
-        self.__log.debug("ACcount state total balances %s " % (len(self.Balances)))
-        end = time.clock()
-        self.__log.debug("Deserialize %s in time %s " % (self.ScriptHash, end-start))
 
 
     def Serialize(self, writer):
@@ -70,49 +67,49 @@ class AccountState(StateBase):
         for vote in self.Votes:
             writer.WriteBytes(vote)
 
-        balances = [b for b in self.Balances if b[1].value > 0]
 
-        writer.WriteVarInt(len(balances))
+        blen = len(self.Balances)
+        writer.WriteVarInt(blen)
 
-        for i in range(0, len(balances)):
-            balance = balances[i]
-            writer.WriteUInt256(balance[0])
-            writer.WriteFixed8(balance[1])
+        for key,value in self.Balances.items():
+            writer.WriteUInt256(key)
+            writer.WriteFixed8(value)
 #            writer.WriteInt64(balance[1].value)
 
     def HasBalance(self, assetId):
-        for b in self.Balances:
-            if b[0] == assetId:
+        for key, balance in self.Balances.items():
+            if key == assetId:
                 return True
+        return False
 
     def BalanceFor(self, assetId):
-        for b in self.Balances:
-            if b[0] == assetId:
-                return b[1]
+        for key,balance in self.Balances.items():
+            if key == assetId:
+                return balance
         return Fixed8(0)
 
     def SetBalanceFor(self, assetId, val):
         found=False
-        for b in self.Balances:
-            if b[0] == assetId:
-                b[1] = val
-                found=True
-
-        if not found:
-            self.Balances.append([assetId,val])
-
-    def AddToBalance(self, assetId, val):
-        found = False
-        for b in self.Balances:
-            if b[0] == assetId:
-                b[1] = Fixed8( b[1].value + val)
+        for key,balance in self.Balances.items():
+            if key == assetId:
+                self.Balances[key] = val
                 found = True
 
         if not found:
-            self.Balances.append([assetId, val])
+            self.Balances[assetId] = val
+
+    def AddToBalance(self, assetId, val):
+        found = False
+        for key, balance in self.Balances.items():
+            if key == assetId:
+                newval = balance.value + val
+                self.Balances[assetId] = Fixed8(newval)
+                found = True
+        if not found:
+            self.Balances[assetId] = val
 
     def AllBalancesZeroOrLess(self):
-        for item in self.Balances:
-            if item[1].value > 0:
+        for key,value in self.Balances.items():
+            if value.value > 0:
                 return False
         return True

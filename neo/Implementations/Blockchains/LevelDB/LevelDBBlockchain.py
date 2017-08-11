@@ -48,8 +48,6 @@ class LevelDBBlockchain(Blockchain):
     _verify_blocks = False
 
     _sysversion = b'/NEO:2.0.1/'
-    _persistthread = None
-    _persistloop = None
 
     SyncReset = events.Events()
 
@@ -159,33 +157,6 @@ class LevelDBBlockchain(Blockchain):
             self._db.put(DBPrefix.SYS_Version, self._sysversion )
 
 
-        thread = threading.Thread(target=self.PersistBlocks())
-        thread.daemon = False
-        thread.start()
-
-        self.StartPersist()
-
-    def StopPersist(self):
-        self._disposed = 1
-        self._persistloop.stop()
-        self._persistloop.close()
-        self._persistthread.join(1)
-        self._persistthread = None
-
-    def StartLoop(self, loop):
-
-        asyncio.set_event_loop(loop)
-        self._persistloop = loop
-        asyncio.ensure_future(self.PersistBlocks())
-        #        task = loop.create_task(self.PersistBlocks)
-        #        asyncio.ensure_future(task)
-        loop.run_until_complete(asyncio.ensure_future(self.PersistBlocks()))
-#        loop.run_forever()
-
-    def StartPersist(self):
-        newloop = asyncio.new_event_loop()
-        self._persistthread = threading.Thread(target=self.StartLoop, args=(newloop,))
-        self._persistthread.start()
 
     def GetTransaction(self, hash):
 
@@ -439,27 +410,13 @@ class LevelDBBlockchain(Blockchain):
 
         sn = self._db.snapshot()
 
-
-        end1 = time.clock()
-        self.__log.debug("snapshot %s " % (end1 - start))
-
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
-        end2 = time.clock()
-        self.__log.debug("counts %s " % (end2 - end1))
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
-
-
-        end3 = time.clock()
-        self.__log.debug("unspent %s " % (end3 - end2))
-
         spentcoins = DBCollection(self._db, sn,  DBPrefix.ST_SpentCoin, SpentCoinState)
-        end4 = time.clock()
-        self.__log.debug("spent %s " % (end4 - end3))
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState )
         validators = DBCollection(self._db, sn, DBPrefix.ST_Validator, ValidatorState)
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
-        end5 = time.clock()
-        self.__log.debug("all db collection %s " % (end5 - end4))
+
 #        storages = sn.iterator(prefix=ST_Storage)
 
         amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(4, 'little')
@@ -509,7 +466,7 @@ class LevelDBBlockchain(Blockchain):
                             sc = spentcoins.GetAndChange(input.PrevHash, SpentCoinState(input.PrevHash, height, {} ))
                             sc.Items[input.PrevIndex] = block.Index
 
-                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes(),new_instance=None, debug_item=True)
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes())
                         assetid = prevTx.outputs[input.PrevIndex].AssetId
                         acct.AddToBalance( assetid, -1 * prevTx.outputs[input.PrevIndex].Value.value)
 
@@ -596,47 +553,44 @@ class LevelDBBlockchain(Blockchain):
             self.__log.debug("Completed in %s " % diff)
             self.__log.debug("_________________________________________")
 
-    async def PersistBlocks(self):
+
+    def PersistBlocks(self):
 
 #        self.__log.info("Header height, block height: %s/%s  --%s " % (self.Height(),self.HeaderHeight(), self.CurrentHeaderHash()))
 
+
         while not self._disposed:
-#            self.__log.debug("persist111111")
-            if len(self._block_cache) == 0:
-                await asyncio.sleep(1)
 
-            while not self._disposed:
-#                self.__log.debug("checking.......")
-                hash = None
 
-                #lock header index
-                if len(self._header_index) <= self._current_block_height + 1: break
-                hash = self._header_index[self._current_block_height + 1]
-                #end lock header index
+            hash = None
 
-    #                self.__log.info("LOOKING FOR HASH: %s " % hash)
-                block = None
-                #lock block cache
+            #lock header index
+            if len(self._header_index) <= self._current_block_height + 1: break
+            hash = self._header_index[self._current_block_height + 1]
+            #end lock header index
 
-                if not hash in self._block_cache:
+#                self.__log.info("LOOKING FOR HASH: %s " % hash)
+            block = None
+            #lock block cache
 
-    #                if len(self._block_cache) > 20000:
-    #                    self.__log.debug("Resetting block cache :/")
-    #                    self._block_cache = {}
-    #                    self.SyncReset.on_change(hash)
-                    break
+            if not hash in self._block_cache:
 
-                block = self._block_cache[hash]
+#                if len(self._block_cache) > 20000:
+#                    self.__log.debug("Resetting block cache :/")
+#                    self._block_cache = {}
+#                    self.SyncReset.on_change(hash)
+                break
 
-                self.Persist(block)
-                self.OnPersistCompleted(block)
+            block = self._block_cache[hash]
+
+#                reactor.callFromThread(self.Persist,block)
 #                reactor.callFromThread(self.OnPersistCompleted, block)
-    #            self.Persist(block)
-    #            self.OnPersistCompleted(block)
+            self.Persist(block)
+            self.OnPersistCompleted(block)
 
-                #lock block cache
-                del self._block_cache[hash]
-                #end lock block cache
+            #lock block cache
+            del self._block_cache[hash]
+            #end lock block cache
 
 
     def Dispose(self):

@@ -31,13 +31,11 @@ class DBCollection():
         self._BuildCollection()
 
     def _BuildCollection(self):
-        self.__log.debug("BUILDING COLLECTION FOR %s " % self.ClassRef)
 
         for key, buffer in self.SN.iterator(prefix=self.Prefix):
             key = key[1:]
             self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
 
-        self.__log.debug("Num in Collection %s " % len(self.Collection))
 
     def Commit(self, wb, destroy=True):
         for item in self.Changed:
@@ -58,7 +56,6 @@ class DBCollection():
 
             if new_instance is None:
                 item = self.ClassRef()
-                self.__log.debug("CReating new instance of %s " % self.ClassRef)
             else:
                 item = new_instance
 
