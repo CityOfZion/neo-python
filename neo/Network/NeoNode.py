@@ -221,7 +221,7 @@ class NeoNode(Protocol):
             self.HandleTransactionInventory(inventory)
         elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
 
-            if BC.Default().BlockCacheCount() > 2000:
+            if BC.Default().BlockCacheCount() > 200:
                 self.__log.debug("************************************************")
                 self.__log.debug("BLOCK CACHE COUNT TOO HIGH, PAUSE FOR NOW")
                 self.__log.debug("********************************************")
@@ -254,7 +254,7 @@ class NeoNode(Protocol):
 #        self.__log.debug("HANDLING BLOCK HASH INVENTORY!!")
         hashes = []
         hashstart = BC.Default().Height() + 1
-        while hashstart < BC.Default().HeaderHeight() and len(hashes) < 200:
+        while hashstart < BC.Default().HeaderHeight() and len(hashes) < 10:
             hash = BC.Default().GetHeaderHash(hashstart)
             if not hash in BC.Default().BlockRequests() and not hash in self.myblockrequests:
                 BC.Default().BlockRequests().append(hash)

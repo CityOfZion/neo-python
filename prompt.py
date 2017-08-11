@@ -35,10 +35,10 @@ blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
 
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
-from twisted.internet import stdio, reactor, task
+from twisted.internet import stdio, reactor, task, threads
 from twisted.protocols import basic
 from twisted.web import client
-
+import asyncio
 from autologging import logged
 
 from pygments.styles.tango import TangoStyle
@@ -107,6 +107,7 @@ class PromptInterface(object):
     def quit(self):
         print('Shutting down.  This may take a bit...')
         self.go_on = False
+        Blockchain.Default().StopPersist()
         reactor.stop()
 
     def help(self):
@@ -193,8 +194,11 @@ class PromptInterface(object):
 
     def run(self):
 
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.001)
+#        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+#        dbloop.start(.01)
+
+#        reactor.callInThread( Blockchain.Default().PersistBlocks)
+#        print("after call in thread!")
 
         tokens = [(Token.Neo, 'NEO'),(Token.Default,' cli. Type '),(Token.Command, "'help' "), (Token.Default, 'to get started')]
         print_tokens(tokens, self.token_style)
@@ -229,9 +233,7 @@ class PromptInterface(object):
 
 
 
-
-if __name__ == "__main__":
-
+def main():
     cli = PromptInterface()
 
     # start up endpoints
@@ -244,3 +246,6 @@ if __name__ == "__main__":
 
     reactor.callInThread(cli.run)
     reactor.run()
+
+if __name__ == "__main__":
+    main()

@@ -6,7 +6,7 @@ from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
 from autologging import logged
-
+import time
 @logged
 class AccountState(StateBase):
 
@@ -42,6 +42,7 @@ class AccountState(StateBase):
         return account
 
     def Deserialize(self, reader):
+        start = time.clock()
         super(AccountState, self).Deserialize(reader)
         self.ScriptHash = reader.ReadUInt160()
         self.IsFrozen = reader.ReadBool()
@@ -55,6 +56,11 @@ class AccountState(StateBase):
             assetid = binascii.hexlify( reader.ReadUInt256())
             amount = reader.ReadFixed8()
             self.Balances.append([assetid,amount])
+
+        self.__log.debug("ACcount state total balances %s " % (len(self.Balances)))
+        end = time.clock()
+        self.__log.debug("Deserialize %s in time %s " % (self.ScriptHash, end-start))
+
 
     def Serialize(self, writer):
         super(AccountState, self).Serialize(writer)

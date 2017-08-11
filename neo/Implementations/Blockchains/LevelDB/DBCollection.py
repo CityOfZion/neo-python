@@ -5,6 +5,7 @@ from autologging import logged
 class DBCollection():
 
     DB=None
+    SN=None
     Prefix=None
 
     ClassRef = None
@@ -14,9 +15,11 @@ class DBCollection():
     Changed = []
     Deleted = []
 
-    def __init__(self, db, prefix, class_ref):
+    def __init__(self, db, sn, prefix, class_ref):
 
         self.DB = db
+        self.SN = sn
+
         self.Prefix = prefix
 
         self.ClassRef = class_ref
@@ -28,17 +31,21 @@ class DBCollection():
         self._BuildCollection()
 
     def _BuildCollection(self):
+        self.__log.debug("BUILDING COLLECTION FOR %s " % self.ClassRef)
 
-        for key, buffer in self.DB.iterator(prefix=self.Prefix):
+        for key, buffer in self.SN.iterator(prefix=self.Prefix):
             key = key[1:]
             self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
 
-    def Commit(self, wb):
+        self.__log.debug("Num in Collection %s " % len(self.Collection))
+
+    def Commit(self, wb, destroy=True):
         for item in self.Changed:
             wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
         for item in self.Deleted:
             wb.delete(self.Prefix + item)
-
+        if destroy:
+            self.Destroy()
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
@@ -85,3 +92,14 @@ class DBCollection():
     def MarkChanged(self, keyval):
         if not keyval in self.Changed:
             self.Changed.append(keyval)
+
+
+    def Destroy(self):
+        self.DB = None
+        self.SN = None
+        self.Collection = None
+        self.ClassRef = None
+        self.Prefix = None
+        self.Deleted = None
+        self.Changed = None
+        self.__log = None
