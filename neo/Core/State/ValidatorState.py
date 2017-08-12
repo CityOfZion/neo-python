@@ -25,6 +25,10 @@ class ValidatorState(StateBase):
         reader = BinaryReader(m)
         v = ValidatorState()
         v.Deserialize(reader)
+
+        m.Cleanup()
+        m = None
+
         return v
 
     def Serialize(self, writer):

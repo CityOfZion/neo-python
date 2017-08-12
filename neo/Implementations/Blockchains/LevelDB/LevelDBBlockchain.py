@@ -218,7 +218,7 @@ class LevelDBBlockchain(Blockchain):
 
     def ContainsBlock(self,index):
 
-        if index < self._current_block_height:
+        if index <= self._current_block_height:
             return True
         return False
 
@@ -430,7 +430,8 @@ class LevelDBBlockchain(Blockchain):
 
 #        storages = sn.iterator(prefix=ST_Storage)
 
-        amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(4, 'little')
+        amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(8, 'little')
+
 
         with self._db.write_batch() as wb:
 
@@ -569,10 +570,8 @@ class LevelDBBlockchain(Blockchain):
 
             wb.put(DBPrefix.SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
             self._current_block_height = block.Index
-#            end = time.clock()
-#            diff = end - start
-#            self.__log.debug("Completed in %s " % diff)
-#            self.__log.debug("_________________________________________")
+
+
 
 #    @profile()
     def PersistBlocks(self):

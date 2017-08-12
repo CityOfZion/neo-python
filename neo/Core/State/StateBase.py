@@ -31,4 +31,9 @@ class StateBase(SerializableMixin):
         ms = MemoryStream()
         writer = BinaryWriter(ms)
         self.Serialize(writer)
-        return ms.ToArray()
+
+        retval = ms.ToArray()
+        ms.Cleanup()
+        ms = None
+
+        return retval

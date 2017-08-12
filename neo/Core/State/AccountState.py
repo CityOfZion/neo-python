@@ -39,6 +39,10 @@ class AccountState(StateBase):
         reader = BinaryReader(m)
         account = AccountState()
         account.Deserialize(reader)
+
+        m.Cleanup()
+        m = None
+
         return account
 
     def Deserialize(self, reader):

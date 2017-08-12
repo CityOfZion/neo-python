@@ -27,3 +27,9 @@ class MemoryStream(BytesIO):
 
     def ToArray(self):
         return hexlify(self.getvalue())
+
+    def Cleanup(self):
+        self.seek(0)
+        self.truncate()
+        self.close()
+

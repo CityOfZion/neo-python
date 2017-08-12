@@ -21,7 +21,10 @@ class Helper(object):
         writer = BinaryWriter(ms)
         hashable.SerializeUnsigned(writer)
         ms.flush()
-        return ms.ToArray()
+        retVal = ms.ToArray()
+        ms.Cleanup()
+        ms = None
+        return retVal
 
 
 
@@ -37,8 +40,11 @@ class Helper(object):
         writer = BinaryWriter(ms)
 
         value.Serialize(writer)
-        ms.flush()
-        return ms.ToArray()
+
+        retVal = ms.ToArray()
+        ms.Cleanup()
+        ms = None
+        return retVal
 
     @staticmethod
     def ToScriptHash(scripts):

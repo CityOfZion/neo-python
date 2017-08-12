@@ -42,6 +42,10 @@ class UnspentCoinState(StateBase):
         reader = BinaryReader(m)
         uns = UnspentCoinState()
         uns.Deserialize(reader)
+
+        m.Cleanup()
+        m = None
+
         return uns
 
     def Serialize(self, writer):

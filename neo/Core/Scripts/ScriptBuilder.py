@@ -61,14 +61,10 @@ class ScriptBuilder(object):
 
     def ToArray(self):
         self.ms.flush()
-        return self.ms.ToArray()
+        retval = self.ms.ToArray()
+        self.ms.Cleanup()
+        self.ms = None
+
+        return retval
 
 
-if __name__ == '__main__':
-    from bitcoin import privkey_to_pubkey
-    pubkey = privkey_to_pubkey('L1RrT1f4kXJGnF2hESU1AbaQQG82WqLsmWQWEPGm2fbrNLwdrAV9')
-    sb = ScriptBuilder()
-    sb.add(21)
-    sb.push(pubkey)
-    sb.add(ScriptOp.OP_CHECKSIG)
-    self.__log.debug((sb.ToArray()))

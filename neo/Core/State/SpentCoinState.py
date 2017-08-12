@@ -28,6 +28,10 @@ class SpentCoinState(StateBase):
         reader = BinaryReader(m)
         spentcoin = SpentCoinState()
         spentcoin.Deserialize(reader)
+
+        m.Cleanup()
+        m = None
+
         return spentcoin
 
     def Deserialize(self, reader):

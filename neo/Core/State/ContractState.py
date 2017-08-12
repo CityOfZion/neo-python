@@ -47,6 +47,10 @@ class ContractState(StateBase):
         reader = BinaryReader(m)
         c = ContractState()
         c.Deserialize(reader)
+
+        m.Cleanup()
+        m = None
+
         return c
 
     def Serialize(self, writer):

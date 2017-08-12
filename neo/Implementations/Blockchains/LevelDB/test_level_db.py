@@ -95,4 +95,4 @@ class LevelDBTest(unittest.TestCase):
 
 
         #test contains block functions
-        self.assertTrue( self._blockchain.ContainsBlock(block_one_again.HashToByteString()))
+        self.assertTrue( self._blockchain.ContainsBlock(block_one_again.Index))

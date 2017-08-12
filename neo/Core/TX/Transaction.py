@@ -246,7 +246,11 @@ class Transaction(Inventory, InventoryMixin):
     def DeserializeFromBufer(buffer, offset=0):
         mstream = MemoryStream(buffer)
         reader = BinaryReader(mstream)
-        return Transaction.DeserializeFrom(reader)
+        tx = Transaction.DeserializeFrom(reader)
+
+        mstream.Cleanup()
+        mstream = None
+        return tx
 
     @staticmethod
     def DeserializeFrom(reader):

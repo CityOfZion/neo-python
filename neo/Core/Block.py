@@ -210,8 +210,10 @@ class Block(BlockBase, InventoryMixin):
         writer.WriteByte(1)
         self.Script.Serialize(writer)
         writer.WriteHashes([tx.HashToByteString() for tx in self.Transactions])
-        ms.flush()
-        return ms.ToArray()
+        retVal = ms.ToArray()
+        ms.Cleanup()
+        ms = None
+        return retVal
 
     # < summary >
     # 验证该区块是否合法

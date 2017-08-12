@@ -53,9 +53,8 @@ class Header(BlockBase):
         witness.Deserialize(reader)
         header.Script = witness
 
-        ms.flush()
+        ms.Cleanup()
         ms = None
-        reader = None
 
         return header
 

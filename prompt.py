@@ -235,7 +235,7 @@ class PromptInterface(object):
         print("Total: %s MB " % totalmb)
         print("garbage: %s " % gc.garbage)
         print("gc enabled %s " % gc.isenabled())
-        
+
     def get_arg(self, arguments, index=0):
         try:
             return arguments[index]
