@@ -22,7 +22,30 @@ logging.basicConfig(
      filename=logname,
      format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
+import gc
+from pympler.classtracker import ClassTracker
+from neo.Network.NeoNodeFactory import NeoFactory
+from neo.Network.NeoNode import NeoNode
+from neo.Network.Message import Message
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Core.Block import Block
+from neo.Core.Header import Header
+from neo.IO.BinaryReader import BinaryReader
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import MemoryStream
+from neo.Core.Blockchain import Blockchain
+from neo.Core.TX.Transaction import Transaction
+from neo.Core.State.AccountState import AccountState
+from neo.Network.Payloads.InvPayload import InvPayload
+from neo.Core.CoinReference import CoinReference
 
+import time
+classestotrack = [
+    DBCollection,AccountState,MemoryStream,InvPayload,CoinReference
+]
+
+import resource
 
 from neo.Network.NeoNode import NeoNode
 from neo.Network.NeoNodeFactory import NeoFactory
@@ -75,7 +98,14 @@ class PromptInterface(object):
 
     completer = WordCompleter(['block','tx','header','io','help','state',])
 
-    commands = ['quit','help','show','block {index/hash}', 'header {index/hash}','tx {hash}']
+    commands = ['quit',
+                'help',
+                'show',
+                'block {index/hash}',
+                'header {index/hash}',
+                'tx {hash}',
+                'mem',
+                'memsum',]
 
     token_style = style_from_dict({
         Token.Command: '#ff0066',
@@ -85,6 +115,13 @@ class PromptInterface(object):
     })
 
     history = InMemoryHistory()
+
+    tracker = None
+
+    def __init__(self):
+        self.tracker = ClassTracker()
+        for c in classestotrack:
+            self.tracker.track_class(c)
 
     def get_bottom_toolbar(self, cli=None):
         try:
@@ -144,11 +181,19 @@ class PromptInterface(object):
 
     def show_block(self, args):
         item = self.get_arg(args)
+        txarg = self.get_arg(args, 1)
         if item is not None:
             block = Blockchain.Default().GetBlock(item)
 
             if block is not None:
                 print(json.dumps(block.ToJson(), indent=4))
+
+                if txarg and 'tx' in txarg:
+
+                    for tx in block.Transactions:
+                        self.show_tx([tx])
+
+
             else:
                 print("could not locate block %s" % item)
         else:
@@ -177,6 +222,20 @@ class PromptInterface(object):
         else:
             print("please specify a tx hash")
 
+    def show_mem(self):
+        print("this may take a while ...")
+        print("app may become unstable after this")
+        self.tracker.create_snapshot('Summary %s ' % time.clock())
+        stats = self.tracker.stats
+        stats.print_summary()
+
+    def show_memsum(self):
+        total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        totalmb = total / 1000000
+        print("Total: %s MB " % totalmb)
+        print("garbage: %s " % gc.garbage)
+        print("gc enabled %s " % gc.isenabled())
+        
     def get_arg(self, arguments, index=0):
         try:
             return arguments[index]
@@ -221,6 +280,10 @@ class PromptInterface(object):
                 self.show_tx(arguments)
             elif command == 'header':
                 self.show_header(arguments)
+            elif command == 'mem':
+                self.show_mem()
+            elif command == 'memsum':
+                self.show_memsum()
             elif command == None:
                 print('please specify a command')
             else:

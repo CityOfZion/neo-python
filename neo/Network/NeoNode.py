@@ -32,6 +32,8 @@ from .InventoryType import InventoryType
 import random
 
 from neo import Settings
+from pympler import tracker
+from memory_profiler import profile
 
 @logged
 class NeoNode(Protocol):
@@ -72,6 +74,7 @@ class NeoNode(Protocol):
         self.state = "CONNECTING"
         self.endpoint = self.transport.getPeer()
         self.factory.peers.append(self)
+        self.memory_tracker = tracker.SummaryTracker()
         self.Log("Connection from %s" % self.endpoint)
 
 
@@ -99,10 +102,10 @@ class NeoNode(Protocol):
         self.bytes_in += (len(data))
 
         self.buffer_in = self.buffer_in + data
-
+#        self.Log("buffer length: %s " % len(self.buffer_in))
         self.CheckDataReceived()
 
-
+#    @profile
     def CheckDataReceived(self):
 
         if len(self.buffer_in) >= 24:
@@ -126,6 +129,7 @@ class NeoNode(Protocol):
 
             self.CheckMessageData()
 
+#    @profile
     def CheckMessageData(self):
         if not self.pm: return
 
@@ -156,7 +160,7 @@ class NeoNode(Protocol):
 
     def MessageReceived(self, m):
 
-        self.Log("Messagereceived and processed ...: %s " % m.Command)
+#        self.Log("Messagereceived and processed ...: %s " % m.Command)
 
         if m.Command == 'verack':
             self.HandleVerack()
@@ -249,6 +253,7 @@ class NeoNode(Protocol):
 #        self.Log("handle transaction not implemented")
         pass
 
+#    @profile
     def HandleBlockHashInventory(self, inventory=None):
 
 #        self.__log.debug("HANDLING BLOCK HASH INVENTORY!!")

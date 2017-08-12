@@ -53,6 +53,10 @@ class Header(BlockBase):
         witness.Deserialize(reader)
         header.Script = witness
 
+        ms.flush()
+        ms = None
+        reader = None
+
         return header
 
     def GetHashCode(self):

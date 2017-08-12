@@ -32,10 +32,12 @@ class DBCollection():
 
     def _BuildCollection(self):
 
-        for key, buffer in self.SN.iterator(prefix=self.Prefix):
-            key = key[1:]
-            self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
-
+            for key, buffer in self.SN.iterator(prefix=self.Prefix):
+                key = key[1:]
+                try:
+                    self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
+                except Exception as e:
+                    self.__log.debug("Coludnt build collection %s for class %s with key%s and buffer %s" % (e, self.ClassRef, key, buffer))
 
     def Commit(self, wb, destroy=True):
         for item in self.Changed:

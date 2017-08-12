@@ -26,7 +26,9 @@ from autologging import logged
 import binascii
 import events
 import asyncio
+from memory_profiler import profile
 
+from pympler import tracker
 
 
 
@@ -46,6 +48,8 @@ class LevelDBBlockchain(Blockchain):
     _async_loop = None
 
     _verify_blocks = False
+
+    _memTracker = None
 
     _sysversion = b'/NEO:2.0.1/'
 
@@ -81,11 +85,13 @@ class LevelDBBlockchain(Blockchain):
 
 
 
-
+#    @profile
     def __init__(self, path):
         super(LevelDBBlockchain,self).__init__()
         self._path = path
 #        self.__log.debug('Initialized LEVELDB')
+
+#        self._memTracker = tracker.SummaryTracker()
 
         self._header_index = []
         self._header_index.append(Blockchain.GenesisBlock().Header().HashToByteString())
@@ -210,20 +216,18 @@ class LevelDBBlockchain(Blockchain):
 #        self.__log.debug("ADDED BLock %s %s" % (block.Index, block.HashToByteString()))
         return True
 
-    def ContainsBlock(self,hash):
+    def ContainsBlock(self,index):
 
-        header = self.GetHeader(hash)
-        if header is not None and header.Index <= self._current_block_height:
-            self.__log.debug("Already contains block %s %s " % (header.Index, self._current_block_height))
+        if index < self._current_block_height:
             return True
-
         return False
 
+#    @profile
     def GetHeader(self, hash):
 
         #lock header cache
-        if hash in self._header_cache:
-            return self._header_cache[hash]
+#        if hash in self._header_cache:
+#            return self._header_cache[hash]
         #end lock header cache
 
 #        self.__log.debug("get header from db not implementet yet")
@@ -234,7 +238,8 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Header.FromTrimmedData(outhex, 0)
         except TypeError:
-            self.__log.debug("hash not found")
+#            self.__log.debug("hash not found")
+            pass
         except Exception as e:
             self.__log.debug("OTHER ERRROR %s " % e)
         return None
@@ -324,6 +329,7 @@ class LevelDBBlockchain(Blockchain):
     def AddHeader(self, header):
         self.AddHeaders( [ header])
 
+#    @profile
     def AddHeaders(self, headers):
 
         # lock headers
@@ -340,7 +346,7 @@ class LevelDBBlockchain(Blockchain):
             if self._verify_blocks and not header.Verify(): break
 
 
-            self._header_cache[header.HashToByteString()] = header
+#            self._header_cache[header.HashToByteString()] = header
             count = count+1
 #            self.OnAddHeader(header)
 
@@ -353,13 +359,16 @@ class LevelDBBlockchain(Blockchain):
         if len(newheaders):
             self.OnAddHeaders(newheaders)
 
+        newheaders = []
+        headers = []
+
         return True
 
 
 
     def OnAddHeaders(self, headers):
         lastheader = None
-#        headers.sort(lambda x:x.Index)
+
         for h in headers:
             hHash = h.HashToByteString()
             if not hHash in self._header_index:
@@ -401,15 +410,17 @@ class LevelDBBlockchain(Blockchain):
     def BlockCacheCount(self):
         return len(self._block_cache)
 
+#    @profile
     def Persist(self, block):
 
-        start = time.clock()
-        self.__log.debug("___________________________________________")
+#        self._memTracker.print_diff()
+
+#        start = time.clock()
+#        self.__log.debug("___________________________________________")
         self.__log.debug("PERSISTING BLOCK %s " % block.Index)
-        self.__log.debug("Total Headers %s , block cache %s " % (self.HeaderHeight(), len(self._block_cache)))
+#        self.__log.debug("Total Headers %s , block cache %s " % (self.HeaderHeight(), len(self._block_cache)))
 
         sn = self._db.snapshot()
-
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, sn,  DBPrefix.ST_SpentCoin, SpentCoinState)
@@ -469,7 +480,6 @@ class LevelDBBlockchain(Blockchain):
                         acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes())
                         assetid = prevTx.outputs[input.PrevIndex].AssetId
                         acct.AddToBalance( assetid, -1 * prevTx.outputs[input.PrevIndex].Value.value)
-
 
                 #do a whole lotta stuff with tx here...
                 if tx.Type == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
@@ -545,15 +555,26 @@ class LevelDBBlockchain(Blockchain):
             #commit storages ( not implemented )
             #storages.Commit(wb)
 
+
+            sn.close()
+            del sn
+
+            contracts=None
+            assets = None
+            validators = None
+            spentcoins = None
+            unspentcoins = None
+            accounts = None
+
+
             wb.put(DBPrefix.SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
             self._current_block_height = block.Index
+#            end = time.clock()
+#            diff = end - start
+#            self.__log.debug("Completed in %s " % diff)
+#            self.__log.debug("_________________________________________")
 
-            end = time.clock()
-            diff = end - start
-            self.__log.debug("Completed in %s " % diff)
-            self.__log.debug("_________________________________________")
-
-
+#    @profile()
     def PersistBlocks(self):
 
 #        self.__log.info("Header height, block height: %s/%s  --%s " % (self.Height(),self.HeaderHeight(), self.CurrentHeaderHash()))

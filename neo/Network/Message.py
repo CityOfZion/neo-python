@@ -9,6 +9,7 @@ import ctypes
 import asyncio
 import binascii
 from autologging import logged
+import pympler
 
 class ChecksumException(Exception):
     pass
@@ -66,7 +67,7 @@ class Message(SerializableMixin):
         if checksum != self.Checksum:
             raise ChecksumException("checksum mismatch")
 
-        self.__log.debug("Deserialized Message %s " % self.Command)
+#        self.__log.debug("Deserialized Message %s " % self.Command)
 
     @staticmethod
     def DeserializeFromAsyncStream(stream, cancellation_token):
@@ -107,17 +108,17 @@ class Message(SerializableMixin):
 
             if checksum != message.Checksum:
 
-                self.__log.debug("Message command :%s " % message.Command)
-                self.__log.debug("Checksum mismatch: %s " % message.Checksum)
-                self.__log.debug("message payload: %s " % message.Payload)
-                return None
+#                self.__log.debug("Message command :%s " % message.Command)
+#                self.__log.debug("Checksum mismatch: %s " % message.Checksum)
+#                self.__log.debug("message payload: %s " % message.Payload)
+#                return None
                 #raise Exception("invalid checksum")
 
-            return message
+                return message
 
         except Exception as e:
-                self.__log.debug("could not receive buffer from socket: %s " % e)
-
+#                self.__log.debug("could not receive buffer from socket: %s " % e)
+            pass
 
 
 

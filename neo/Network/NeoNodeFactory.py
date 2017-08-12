@@ -25,6 +25,8 @@ from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
 from autologging import logged
+from pympler import tracker
+from memory_profiler import profile
 
 @logged
 class NeoFactory(Factory):
@@ -47,10 +49,10 @@ class NeoFactory(Factory):
         return NeoNode(self)
 
 
-
+#    @profile()
     def InventoryReceived(self, inventory):
 
-        self.__log.debug("Neo factory received inventory %s " % inventory)
+#        self.__log.debug("Neo factory received inventory %s " % inventory)
 
         if inventory is MinerTransaction: return False
 
@@ -61,7 +63,7 @@ class NeoFactory(Factory):
         if type(inventory) is Block:
             if BC.Default() == None: return False
 
-            if BC.Default().ContainsBlock(inventory.HashToByteString()):
+            if BC.Default().ContainsBlock(inventory.Index):
 #                self.__log.debug("cant add block %s because blockchain already contains it " % inventory.HashToByteString())
                 return False
 #            self.__log.debug("Will Try to add block" % inventory.HashToByteString())
