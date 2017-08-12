@@ -234,7 +234,7 @@ class LevelDBBlockchain(Blockchain):
 
         try:
             out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
-            out = out[4:]
+            out = out[8:]
             outhex = binascii.unhexlify(out)
             return Header.FromTrimmedData(outhex, 0)
         except TypeError:
@@ -319,7 +319,7 @@ class LevelDBBlockchain(Blockchain):
     def GetBlockByHash(self, hash):
         try:
             out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
-            out = out[4:]
+            out = out[8:]
             outhex = binascii.unhexlify(out)
             return Block.FromTrimmedData(outhex, 0)
         except Exception as e:
@@ -403,7 +403,7 @@ class LevelDBBlockchain(Blockchain):
             self.__log.debug("TRimming stored header index!!!!! %s" % self._stored_header_count)
 
         with self._db.write_batch() as wb:
-            wb.put( DBPrefix.DATA_Block + hHash, bytes(4) + header.ToArray())
+            wb.put( DBPrefix.DATA_Block + hHash, bytes(8) + header.ToArray())
             wb.put( DBPrefix.SYS_CurrentHeader,  hHash + header.Index.to_bytes( 4, 'little'))
 
 
