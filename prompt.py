@@ -23,27 +23,12 @@ logging.basicConfig(
      format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 import gc
-from pympler.classtracker import ClassTracker
-from neo.Network.NeoNodeFactory import NeoFactory
-from neo.Network.NeoNode import NeoNode
-from neo.Network.Message import Message
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Core.Block import Block
-from neo.Core.Header import Header
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream
-from neo.Core.Blockchain import Blockchain
-from neo.Core.TX.Transaction import Transaction
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.Core.State.AccountState import AccountState
 from neo.Network.Payloads.InvPayload import InvPayload
 from neo.Core.CoinReference import CoinReference
 
-import time
-classestotrack = [
-    DBCollection,AccountState,MemoryStream,InvPayload,CoinReference
-]
 
 import resource
 
@@ -59,17 +44,11 @@ Blockchain.RegisterBlockchain(blockchain)
 
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 from twisted.internet import stdio, reactor, task
-from twisted.protocols import basic
-from twisted.web import client
 
 from autologging import logged
 
-from pygments.styles.tango import TangoStyle
-from pygments.lexers.data import JsonLexer
-from prompt_toolkit.styles import style_from_pygments
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -96,7 +75,7 @@ class PromptInterface(object):
 
     go_on = True
 
-    completer = WordCompleter(['block','tx','header','io','help','state',])
+    completer = WordCompleter(['block','tx','header','mem','help','state',])
 
     commands = ['quit',
                 'help',
@@ -104,8 +83,7 @@ class PromptInterface(object):
                 'block {index/hash}',
                 'header {index/hash}',
                 'tx {hash}',
-                'mem',
-                'memsum',]
+                'mem',]
 
     token_style = style_from_dict({
         Token.Command: '#ff0066',
@@ -116,12 +94,6 @@ class PromptInterface(object):
 
     history = InMemoryHistory()
 
-    tracker = None
-
-    def __init__(self):
-        self.tracker = ClassTracker()
-        for c in classestotrack:
-            self.tracker.track_class(c)
 
     def get_bottom_toolbar(self, cli=None):
         try:
@@ -223,18 +195,12 @@ class PromptInterface(object):
             print("please specify a tx hash")
 
     def show_mem(self):
-        print("this may take a while ...")
-        print("app may become unstable after this")
-        self.tracker.create_snapshot('Summary %s ' % time.clock())
-        stats = self.tracker.stats
-        stats.print_summary()
-
-    def show_memsum(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
         print("Total: %s MB " % totalmb)
         print("garbage: %s " % gc.garbage)
-        print("gc enabled %s " % gc.isenabled())
+        print("total buffers %s " % StreamManager.TotalBuffers())
+
 
     def get_arg(self, arguments, index=0):
         try:
@@ -282,8 +248,7 @@ class PromptInterface(object):
                 self.show_header(arguments)
             elif command == 'mem':
                 self.show_mem()
-            elif command == 'memsum':
-                self.show_memsum()
+
             elif command == None:
                 print('please specify a command')
             else:
@@ -300,7 +265,6 @@ if __name__ == "__main__":
     # start up endpoints
     for bootstrap in Settings.SEED_LIST:
         host, port = bootstrap.split(":")
-        print("trying to connect to %s %s " % (host, port))
         point = TCP4ClientEndpoint(reactor, host, int(port))
         d = connectProtocol(point, NeoNode(NeoFactory))
         d.addCallbacks(cli.onProtocolConnected, cli.onProtocolError)

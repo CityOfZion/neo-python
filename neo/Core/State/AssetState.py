@@ -5,7 +5,7 @@ import binascii
 from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.Core.AssetType import AssetType
 
 class AssetState(StateBase):
@@ -50,13 +50,12 @@ class AssetState(StateBase):
 
     @staticmethod
     def DeserializeFromDB(buffer):
-        m = MemoryStream(buffer)
+        m = StreamManager.GetStream(buffer)
         reader = BinaryReader(m)
         account = AssetState()
         account.Deserialize(reader)
 
-        m.Cleanup()
-        m = None
+        StreamManager.ReleaseStream(m)
 
         return account
 

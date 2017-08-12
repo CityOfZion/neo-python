@@ -18,7 +18,7 @@ from neo.Cryptography.Crypto import *
 from neo.IO.Mixins import SerializableMixin
 from neo.Helper import big_or_little
 
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.Core.Helper import Helper
 from neo import Settings
@@ -244,12 +244,11 @@ class Transaction(Inventory, InventoryMixin):
 
     @staticmethod
     def DeserializeFromBufer(buffer, offset=0):
-        mstream = MemoryStream(buffer)
+        mstream = StreamManager.GetStream(buffer)
         reader = BinaryReader(mstream)
         tx = Transaction.DeserializeFrom(reader)
 
-        mstream.Cleanup()
-        mstream = None
+        StreamManager.ReleaseStream(mstream)
         return tx
 
     @staticmethod

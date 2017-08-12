@@ -2,7 +2,7 @@
 from .StateBase import StateBase
 import sys
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.Core.FunctionCode import FunctionCode
 
 class ContractState(StateBase):
@@ -43,13 +43,12 @@ class ContractState(StateBase):
 
     @staticmethod
     def DeserializeFromDB(buffer):
-        m = MemoryStream(buffer)
+        m = StreamManager.GetStream(buffer)
         reader = BinaryReader(m)
         c = ContractState()
         c.Deserialize(reader)
 
-        m.Cleanup()
-        m = None
+        StreamManager.ReleaseStream(m)
 
         return c
 

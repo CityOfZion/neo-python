@@ -1,7 +1,7 @@
 from neo.IO.Mixins import SerializableMixin
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo import Settings
 from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
@@ -68,79 +68,6 @@ class Message(SerializableMixin):
             raise ChecksumException("checksum mismatch")
 
 #        self.__log.debug("Deserialized Message %s " % self.Command)
-
-    @staticmethod
-    def DeserializeFromAsyncStream(stream, cancellation_token):
-
-        buffer = bytearray(24)
-
-        raise NotImplementedError()
-
-
-    @staticmethod
-    def DeserializeFromAsyncSocket(socket, cancellation_token):
-        buffer = bytearray(24)
-
-        try:
-            socket.recv_into(buffer, 24)
-
-            ms = MemoryStream(buffer)
-            reader = BinaryReader(ms)
-
-            message = Message()
-
-            message.Magic = reader.ReadUInt32()
-            message.Command = reader.ReadFixedString(12).decode('utf-8')
-
-            length = reader.ReadUInt32()
-
-            if length > Message.PayloadMaxSizeInt:
-                raise Exception("format too big")
-
-            message.Checksum = reader.ReadUInt32()
-
-            message.Payload = bytearray(length)
-
-            if length > 0:
-                message.Payload = Message.FillBufferAsyncStream(socket, length, None)
-
-            checksum = Message.GetChecksum(message.Payload)
-
-            if checksum != message.Checksum:
-
-#                self.__log.debug("Message command :%s " % message.Command)
-#                self.__log.debug("Checksum mismatch: %s " % message.Checksum)
-#                self.__log.debug("message payload: %s " % message.Payload)
-#                return None
-                #raise Exception("invalid checksum")
-
-                return message
-
-        except Exception as e:
-#                self.__log.debug("could not receive buffer from socket: %s " % e)
-            pass
-
-
-
-
-    @staticmethod
-    def FillBufferAsyncStream(stream, length, cancellation_token):
-        chunks=[]
-        bytes_received=0
-
-        while bytes_received  < length:
-            chunk = stream.recv(min(length - bytes_received, 1024))
-            if chunk == b'':
-                raise Exception('Socket connection broken')
-            chunks.append(chunk)
-            bytes_received = bytes_received + len(chunk)
-
-        return b''.join(chunks)
-
-    @staticmethod
-    async def FillBufferAsyncSocket(socket, buffer, cancellation_token):
-        raise NotImplementedError()
-
 
 
     @staticmethod

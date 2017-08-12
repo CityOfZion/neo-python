@@ -1,7 +1,7 @@
 
 from neo.IO.Mixins import SerializableMixin
 from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 import ctypes
 
 
@@ -28,12 +28,11 @@ class StateBase(SerializableMixin):
 
 
     def ToByteArray(self):
-        ms = MemoryStream()
+        ms = StreamManager.GetStream()
         writer = BinaryWriter(ms)
         self.Serialize(writer)
 
         retval = ms.ToArray()
-        ms.Cleanup()
-        ms = None
+        StreamManager.ReleaseStream(ms)
 
         return retval

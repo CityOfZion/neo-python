@@ -4,7 +4,7 @@ from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction,TransactionType
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from twisted.internet import reactor
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Fixed8 import Fixed8
@@ -122,11 +122,12 @@ class LevelDBBlockchain(Blockchain):
             hashes = []
             try:
                 for key, value in self._db.iterator(prefix=DBPrefix.IX_HeaderHashList):
-                    ms = MemoryStream(value)
+                    ms = StreamManager.GetStream(value)
                     reader = BinaryReader(ms)
                     hlist = reader.Read2000256List()
                     key =int.from_bytes(key[-4:], 'little')
                     hashes.append({'k':key, 'v':hlist})
+                    StreamManager.ReleaseStream(ms)
     #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
 
             except Exception as e:
@@ -389,14 +390,15 @@ class LevelDBBlockchain(Blockchain):
 
         #just keep 2000 headrs in memory....
         while header.Index - 2000 >= self._stored_header_count:
-            ms = MemoryStream()
+            ms = StreamManager.GetStream()
             w = BinaryWriter(ms)
             headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count+2000]
             w.Write2000256List(headers_to_write)
-            ms.flush()
+            out = ms.ToArray()
+            StreamManager.ReleaseStream(ms)
             self.__log.debug("Writing stored header count: %s " % self._stored_header_count)
             with self._db.write_batch() as wb:
-                wb.put( DBPrefix.IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), ms.ToArray())
+                wb.put( DBPrefix.IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), out)
 
             self._stored_header_count += 2000
 

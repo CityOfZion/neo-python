@@ -2,7 +2,7 @@
 from .StateBase import StateBase
 import sys
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 
 class ValidatorState(StateBase):
 
@@ -21,13 +21,12 @@ class ValidatorState(StateBase):
 
     @staticmethod
     def DeserializeFromDB(buffer):
-        m = MemoryStream(buffer)
+        m = StreamManager.GetStream(buffer)
         reader = BinaryReader(m)
         v = ValidatorState()
         v.Deserialize(reader)
 
-        m.Cleanup()
-        m = None
+        StreamManager.ReleaseStream(m)
 
         return v
 

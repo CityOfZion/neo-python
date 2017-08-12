@@ -4,7 +4,7 @@ import sys
 import binascii
 from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from autologging import logged
 import time
 @logged
@@ -35,13 +35,12 @@ class AccountState(StateBase):
 
     @staticmethod
     def DeserializeFromDB(buffer):
-        m = MemoryStream(buffer)
+        m = StreamManager.GetStream(buffer)
         reader = BinaryReader(m)
         account = AccountState()
         account.Deserialize(reader)
 
-        m.Cleanup()
-        m = None
+        StreamManager.ReleaseStream(m)
 
         return account
 

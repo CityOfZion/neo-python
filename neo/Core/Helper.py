@@ -1,7 +1,7 @@
 
 from neo.Cryptography.Crypto import *
 from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 import pickle
 
 class Helper(object):
@@ -17,13 +17,12 @@ class Helper(object):
 
     @staticmethod
     def GetHashData(hashable):
-        ms = MemoryStream()
+        ms = StreamManager.GetStream()
         writer = BinaryWriter(ms)
         hashable.SerializeUnsigned(writer)
         ms.flush()
         retVal = ms.ToArray()
-        ms.Cleanup()
-        ms = None
+        StreamManager.ReleaseStream(ms)
         return retVal
 
 
@@ -36,14 +35,14 @@ class Helper(object):
     @staticmethod
     def ToArray( value ):
 
-        ms = MemoryStream()
+        ms = StreamManager.GetStream()
         writer = BinaryWriter(ms)
 
         value.Serialize(writer)
 
         retVal = ms.ToArray()
-        ms.Cleanup()
-        ms = None
+        StreamManager.ReleaseStream(ms)
+        
         return retVal
 
     @staticmethod

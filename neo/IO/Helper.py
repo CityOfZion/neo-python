@@ -1,5 +1,5 @@
 
-from .MemoryStream import MemoryStream
+from .MemoryStream import MemoryStream,StreamManager
 from .BinaryReader import BinaryReader
 import importlib
 from neo.Core.TX.Transaction import Transaction
@@ -12,17 +12,20 @@ class Helper(object):
         module = '.'.join(class_name.split('.')[:-1])
         klassname = class_name.split('.')[-1]
         klass = getattr(importlib.import_module(module), klassname)
-        mstream = MemoryStream(buffer)
+        mstream = StreamManager.GetStream(buffer)
         reader = BinaryReader(mstream)
 
         try:
             serializable = klass()
             serializable.Deserialize(reader)
 
+#            StreamManager.ReleaseStream(mstream)
+
             return serializable
         except Exception as e:
             print("Colud not deserialize %s %s" % (klassname, e))
-
+        finally:
+            StreamManager.ReleaseStream(mstream)
 
         return None
 

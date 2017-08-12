@@ -12,7 +12,7 @@ from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Network.Message import Message,ChecksumException
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.IO.Helper import Helper as IOHelper
 from neo.Core.Helper import Helper
 from neo.Core.TX.Transaction import Transaction
@@ -111,7 +111,7 @@ class NeoNode(Protocol):
         if len(self.buffer_in) >= 24:
 
             mstart = self.buffer_in[:24]
-            ms = MemoryStream(mstart)
+            ms = StreamManager.GetStream(mstart)
             reader = BinaryReader(ms)
 
 
@@ -122,10 +122,11 @@ class NeoNode(Protocol):
                 m.Length = reader.ReadUInt32()
                 m.Checksum = reader.ReadUInt32()
                 self.pm = m
-                del ms
-                del reader
             except Exception as e:
                 self.Log('could not read initial bytes %s ' % e)
+            finally:
+                StreamManager.ReleaseStream(ms)
+                del reader
 
             self.CheckMessageData()
 
@@ -140,11 +141,11 @@ class NeoNode(Protocol):
 
         if currentlength >= messageExpectedLength:
             mdata = self.buffer_in[:messageExpectedLength]
-            stream = MemoryStream(mdata)
+            stream = StreamManager.GetStream(mdata)
             reader = BinaryReader(stream)
             message = Message()
             message.Deserialize(reader)
-
+            StreamManager.ReleaseStream(stream)
             self.buffer_in = self.buffer_in[messageExpectedLength:]
             self.pm = None
             self.MessageReceived(message)

@@ -2,7 +2,7 @@
 from .StateBase import StateBase
 import sys
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from .CoinState import CoinState
 
 class UnspentCoinState(StateBase):
@@ -38,13 +38,12 @@ class UnspentCoinState(StateBase):
 
     @staticmethod
     def DeserializeFromDB(buffer):
-        m = MemoryStream(buffer)
+        m = StreamManager.GetStream(buffer)
         reader = BinaryReader(m)
         uns = UnspentCoinState()
         uns.Deserialize(reader)
 
-        m.Cleanup()
-        m = None
+        StreamManager.ReleaseStream(m)
 
         return uns
 

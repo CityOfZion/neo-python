@@ -1,10 +1,10 @@
 
-from .VersionPayload import VersionPayload
+from neo.Network.Payloads.VersionPayload import VersionPayload
 from neo.Network.Message import Message
 from neo.IO.Helper import Helper as IOHelper
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo import Settings
 from neo.Core.Helper import Helper
 import random
@@ -39,7 +39,7 @@ class PayloadTestCase(unittest.TestCase):
         deserialized_version = IOHelper.AsSerializableWithType(serialized, 'neo.Network.Payloads.VersionPayload.VersionPayload')
 
         v = deserialized_version
-
+        print("deserialized version %s " % v)
         self.assertEqual(v.Nonce, self.nonce)
         self.assertEqual(v.Port, self.port)
         self.assertEqual(v.UserAgent, self.ua)
@@ -56,18 +56,24 @@ class PayloadTestCase(unittest.TestCase):
 
         self.assertEqual(message.Command, 'version')
 
-        ms = MemoryStream()
+        ms = StreamManager.GetStream()
         writer = BinaryWriter(ms)
 
         message.Serialize(writer)
-        ms.flush()
-        result = binascii.unhexlify( ms.ToArray())
 
-        ms = MemoryStream(result)
+
+        result = binascii.unhexlify( ms.ToArray())
+        StreamManager.ReleaseStream(ms)
+
+
+
+        ms = StreamManager.GetStream(result)
         reader = BinaryReader(ms)
 
         deserialized_message = Message()
         deserialized_message.Deserialize( reader )
+
+        StreamManager.ReleaseStream(ms)
 
         dm = deserialized_message
 

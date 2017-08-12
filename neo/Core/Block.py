@@ -4,7 +4,7 @@ from neo.Network.Mixins import InventoryMixin
 from neo.Network.InventoryType import InventoryType
 from neo.Core.BlockBase import BlockBase
 from neo.Core.TX.Transaction import Transaction,TransactionType
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.Cryptography.MerkleTree import MerkleTree
@@ -151,7 +151,7 @@ class Block(BlockBase, InventoryMixin):
 
         block = Block()
         block.__is_trimmed = True
-        ms = MemoryStream(byts)
+        ms = StreamManager.GetStream(byts)
         reader = BinaryReader(ms)
 
         block.DeserializeUnsigned(reader)
@@ -161,6 +161,10 @@ class Block(BlockBase, InventoryMixin):
         block.witness = witness
 
         block.Transactions = reader.ReadHashes()
+
+
+        StreamManager.ReleaseStream(ms)
+
         return block
 
     # < summary >
@@ -204,15 +208,14 @@ class Block(BlockBase, InventoryMixin):
     # < / summary >
     # < returns > 返回只包含区块头和交易Hash的字节数组 < / returns >
     def Trim(self):
-        ms = MemoryStream()
+        ms = StreamManager.GetStream()
         writer = BinaryWriter(ms)
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)
         writer.WriteHashes([tx.HashToByteString() for tx in self.Transactions])
         retVal = ms.ToArray()
-        ms.Cleanup()
-        ms = None
+        StreamManager.ReleaseStream(ms)
         return retVal
 
     # < summary >

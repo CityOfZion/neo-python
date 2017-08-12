@@ -11,7 +11,52 @@ from io import BytesIO
 from binascii import hexlify
 
 
+
+__mstreams__=[]
+__mstreams_available__ = []
+
+
+class StreamManager(object):
+
+    @staticmethod
+    def TotalBuffers():
+        return len(__mstreams__)
+
+    @staticmethod
+    def GetStream(data=None):
+#        print("requesting stream from available %s.. total %s " % (len(__mstreams_available__), len(__mstreams__)))
+        if len(__mstreams_available__) == 0:
+#            print("CREATING NEW STREAM!!!")
+            if data:
+                mstream = MemoryStream(data)
+                mstream.seek(0)
+            else:
+                mstream = MemoryStream()
+            __mstreams__.append(mstream)
+            return mstream
+
+        mstream = __mstreams_available__.pop()
+
+        if data is not None and len(data):
+            mstream.Cleanup()
+            mstream.write(data)
+
+        mstream.seek(0)
+
+        return mstream
+
+
+    @staticmethod
+    def ReleaseStream(mstream):
+        mstream.Cleanup()
+        __mstreams_available__.append(mstream)
+#        print("released stream, now total: %s %s " % (len(__mstreams_available__), len(__mstreams__)))
+
 class MemoryStream(BytesIO):
+
+
+
+
     """docstring for MemoryStream"""
     def __init__(self, *args, **kwargs):
         super(MemoryStream, self).__init__(*args, **kwargs)
@@ -30,6 +75,5 @@ class MemoryStream(BytesIO):
 
     def Cleanup(self):
         self.seek(0)
-        self.truncate()
-        self.close()
+        self.truncate(0)
 
