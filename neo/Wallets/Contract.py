@@ -7,18 +7,11 @@ Usage:
     from neo.Wallets.Contract import Contract
 """
 from io import BytesIO,BufferedReader,BufferedWriter
-from neo.Core.Scripts.ScriptOp import *
-from neo.Core.Scripts.ScriptBuilder import ScriptBuilder
-from neo.Cryptography.Helper import *
+from neo.VM.OpCode import *
+from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Cryptography.Crypto import *
 from neo.IO.Mixins import SerializableMixin
 from neo.Wallets.ContractParameterType import ContractParameterType
-from neo.Core.Scripts.ScriptBuilder import ScriptBuilder, ScriptOp
-from bitarray import bitarray
-from ecdsa.keys import VerifyingKey
-from ecdsa import curves
-import hashlib
-import binascii
 from neo.Cryptography.Helper import *
 from autologging import logged
 
@@ -72,7 +65,7 @@ class Contract(SerializableMixin):
             sb.push(key)
 
         sb.push(len(publicKeys))
-        sb.add(ScriptOp.CHECKMULTISIG)
+        sb.add(CHECKMULTISIG)
 
         toarray = sb.ToArray()
         tastr = toarray.decode('utf8')
@@ -87,7 +80,7 @@ class Contract(SerializableMixin):
     def CreateSignatureRedeemScript(publicKey):
         sb = ScriptBuilder()
         sb.push(publicKey)
-        sb.add(ScriptOp.CHECKSIG)
+        sb.add(CHECKSIG)
         return sb.ToArray()
 
     def Equals(self, other):

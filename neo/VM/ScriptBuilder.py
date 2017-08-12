@@ -8,7 +8,7 @@ Usage:
 
 import binascii
 
-from neo.Core.Scripts.ScriptOp import ScriptOp
+from neo.VM.OpCode import *
 from neo.IO.MemoryStream import MemoryStream
 
 class ScriptBuilder(object):
@@ -29,29 +29,29 @@ class ScriptBuilder(object):
             return
         if isinstance(data,int):
             if data == -1:
-                return self.add(ScriptOp.PUSHM1)
+                return self.add(PUSHM1)
             elif data == 0:
-                return self.add(ScriptOp.PUSH0)
+                return self.add(PUSH0)
             elif data > 0 and data <= 16:
-                return self.add(int.from_bytes(ScriptOp.PUSH1,'big') -1  + data)
+                return self.add(int.from_bytes(PUSH1,'big') -1  + data)
             else:
                 return self.push(bytes(data))
         else:
             buf = binascii.unhexlify(data)
-        if len(buf) <= int.from_bytes( ScriptOp.PUSHBYTES75, 'big'):
+        if len(buf) <= int.from_bytes( PUSHBYTES75, 'big'):
             self.add(len(buf))
             self.add(buf)
         elif len(buf) < 0x100:
-            self.add(ScriptOp.PUSH1)
+            self.add(PUSH1)
             self.add(len(buf))
             self.add(buf)
         elif len(buf) < 0x10000:
-            self.add(ScriptOp.PUSH2)
+            self.add(PUSH2)
             self.add(len(buf) & 0xff)
             self.add(len(buf) >> 8)
             self.add(buf)
         elif len(buf) < 0x100000000:
-            self.add(ScriptOp.PUSH4)
+            self.add(PUSH4)
             self.add(len(buf) & 0xff)
             self.add((len(buf) >> 8) & 0xff)
             self.add((len(buf) >> 16) & 0xff)

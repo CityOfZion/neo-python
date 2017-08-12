@@ -7,7 +7,7 @@ from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.Witness import Witness
-from neo.Core.Scripts.ScriptOp import *
+from neo.VM.OpCode import *
 from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.Helper import Helper
 from neo.Wallets.Contract import Contract
@@ -60,7 +60,7 @@ class Blockchain(object):
     def SystemShare():
         amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL )
         owner = b'\x00'
-        admin = Crypto.Hash160(ScriptOp.PUSHT)
+        admin = Crypto.Hash160(PUSHT)
         return RegisterTransaction([],[], AssetType.AntShare,
                                  "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
                                  amount,0, owner, admin)
@@ -71,7 +71,7 @@ class Blockchain(object):
 
         owner = b'\x00'
         precision=8
-        admin = Crypto.Hash160(ScriptOp.PUSHF)
+        admin = Crypto.Hash160(PUSHF)
 
         return RegisterTransaction([],[], AssetType.AntCoin,
                                          "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
@@ -86,7 +86,7 @@ class Blockchain(object):
         index = 0
         consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
         next_consensus = Blockchain.GetConsensusAddress(Blockchain.StandbyValidators())
-        script = Witness( bytearray(0), bytearray(ScriptOp.PUSHT))
+        script = Witness( bytearray(0), bytearray(PUSHT))
 
         mt = MinerTransaction()
         mt.Nonce = 2083236893

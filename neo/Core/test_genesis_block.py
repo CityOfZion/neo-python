@@ -7,7 +7,7 @@ from neo.Wallets.Contract import Contract
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
-from neo.Core.Scripts.ScriptOp import ScriptOp
+from neo.VM.OpCode import *
 from neo import Settings
 
 class GenesisBlockTestCase(unittest.TestCase):
@@ -86,7 +86,7 @@ class GenesisBlockTestCase(unittest.TestCase):
                 out
             )
 
-            script = Witness( bytearray(0), bytearray(ScriptOp.PUSHT))
+            script = Witness( bytearray(0), bytearray(PUSHT))
 
             issue_tx = IssueTransaction([],[output],[], [script])
 

@@ -260,3 +260,21 @@ def sha256(string):
 def random_key():
     entropy = random_string(32) + str(random.randrange(2**256)) + str(int(time.time() * 1000000))
     return sha256(entropy)
+
+def base256_encode(n, minwidth=0): # int/long to byte array
+    if n > 0:
+        arr = []
+        while n:
+            n, rem = divmod(n, 256)
+            arr.append(rem)
+        b = bytearray(reversed(arr))
+    elif n == 0:
+        b = bytearray(b'\x00')
+    else:
+        raise ValueError("Negative numbers not supported")
+
+    if minwidth > 0 and len(b) < minwidth: # zero padding needed?
+        b = (minwidth-len(b)) * '\x00' + b
+    b.reverse()
+
+    return b
