@@ -60,12 +60,15 @@ class LevelDBBlockchain(Blockchain):
 #        print("Getting Current bolck hash")
             return self._header_index[self._current_block_height]
         except Exception as e:
+            self.__log.debug("Couldnt get current block hash, returning none: %s " % e)
             pass
         return None
+
     def CurrentBlockHashPlusOne(self):
         try:
             return self._header_index[self._current_block_height + 1]
         except Exception as e:
+            print("couldnt get current block hash plus one %s " % e)
             pass
         return self.CurrentBlockHash()
 
@@ -418,9 +421,10 @@ class LevelDBBlockchain(Blockchain):
 #        self._memTracker.print_diff()
 
 #        start = time.clock()
-#        self.__log.debug("___________________________________________")
+        self.__log.debug("___________________________________________")
         self.__log.debug("PERSISTING BLOCK %s " % block.Index)
-#        self.__log.debug("Total Headers %s , block cache %s " % (self.HeaderHeight(), len(self._block_cache)))
+        self.__log.debug("Total Headers %s , block cache %s " % (self.HeaderHeight(), len(self._block_cache)))
+        self.__log.debug("¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬")
 
         sn = self._db.snapshot()
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
@@ -605,10 +609,10 @@ class LevelDBBlockchain(Blockchain):
 
             block = self._block_cache[hash]
 
-#                reactor.callFromThread(self.Persist,block)
-#                reactor.callFromThread(self.OnPersistCompleted, block)
-            self.Persist(block)
-            self.OnPersistCompleted(block)
+            reactor.callFromThread(self.Persist,block)
+            reactor.callFromThread(self.OnPersistCompleted, block)
+#            self.Persist(block)
+#            self.OnPersistCompleted(block)
 
             #lock block cache
             del self._block_cache[hash]

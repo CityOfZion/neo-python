@@ -7,7 +7,7 @@ import time
 import binascii
 from autologging import logged
 
-
+import pprint
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Network.Message import Message,ChecksumException
@@ -54,6 +54,7 @@ class NeoNode(Protocol):
         self.myblockrequests=[]
         self.bytes_in = 0
         self.bytes_out = 0
+        self.block_req_max = 100
 
 
 
@@ -93,7 +94,7 @@ class NeoNode(Protocol):
         self.myblockrequests = None
 
 
-        self.Log("%s disconnected" % self.nodeid, )
+        self.Log("%s disconnected %s" % (self.nodeid, reason))
 
 
 
@@ -102,7 +103,7 @@ class NeoNode(Protocol):
         self.bytes_in += (len(data))
 
         self.buffer_in = self.buffer_in + data
-#        self.Log("buffer length: %s " % len(self.buffer_in))
+
         self.CheckDataReceived()
 
 #    @profile
@@ -182,7 +183,7 @@ class NeoNode(Protocol):
 
     def ProtocolReady(self):
         self.AskForMoreHeaders()
-        self.AskForMoreBlocks()
+#        self.AskForMoreBlocks()
 
     def AskForMoreHeaders(self):
         self.Log("asking for more headers...")
@@ -192,7 +193,7 @@ class NeoNode(Protocol):
     def AskForMoreBlocks(self):
         bcplus_one = BC.Default().CurrentBlockHashPlusOne()
         if bcplus_one is not None:
-            self.Log("asking for more blocks ...")
+            self.Log("asking for more blocks ... %s %s" % (bcplus_one, vars(bcplus_one)))
             get_blocks_message =  Message("getblocks", GetBlocksPayload(BC.Default().CurrentBlockHashPlusOne()))
             self.SendSerializedMessage(get_blocks_message)
 
@@ -205,6 +206,7 @@ class NeoNode(Protocol):
     def HandleVersion(self, payload):
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
         self.remote_nodeid = self.Version.Nonce
+        self.Log("Remote version %s " % vars(self.Version))
         self.state = 'ESTABLISHED'
         self.SendVersion()
 
@@ -225,7 +227,7 @@ class NeoNode(Protocol):
         elif inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
             self.HandleTransactionInventory(inventory)
         elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-
+#            self.Log(("HANDLING BLOCK HASH INVVVVVVVVVVVVV!"))
 #            if BC.Default().BlockCacheCount() > 6000:
 #                self.__log.debug("************************************************")
 #                self.__log.debug("BLOCK CACHE COUNT TOO HIGH, PAUSE FOR NOW")
@@ -233,7 +235,11 @@ class NeoNode(Protocol):
 #
 #                reactor.callLater(60.0, self.HandleBlockHashInventory, inventory)
 #            else:
-            self.HandleBlockHashInventory(inventory)
+
+            if len(self.myblockrequests) < self.block_req_max * 2:
+                self.HandleBlockHashInventory(inventory)
+            else:
+                self.Log("WONT ASK FOR MORE BLOCKSSSSSS %s " % len(self.myblockrequests))
 
 
 
@@ -257,10 +263,10 @@ class NeoNode(Protocol):
 #    @profile
     def HandleBlockHashInventory(self, inventory=None):
 
-#        self.__log.debug("HANDLING BLOCK HASH INVENTORY!!")
         hashes = []
         hashstart = BC.Default().Height() + 1
-        while hashstart < BC.Default().HeaderHeight() and len(hashes) < 200:
+        self.Log("will ask for hash start %s " % hashstart)
+        while hashstart < BC.Default().HeaderHeight() and len(hashes) < self.block_req_max:
             hash = BC.Default().GetHeaderHash(hashstart)
             if not hash in BC.Default().BlockRequests() and not hash in self.myblockrequests:
                 BC.Default().BlockRequests().append(hash)
@@ -275,7 +281,6 @@ class NeoNode(Protocol):
 
         else:
             self.Log("requesting %s hashes  " % len(hashes))
-
 
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             self.SendSerializedMessage(message)
@@ -292,11 +297,14 @@ class NeoNode(Protocol):
 
     def HandleBlockReceived(self, inventory):
 
+
+#        self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % inventory)
+
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
 
-        #self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
+#        self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
 
-        blockhash =  block.HashToString()
+        blockhash =  block.HashToByteString()
 
         if blockhash in BC.Default().BlockRequests():
             BC.Default().BlockRequests().remove(blockhash)
