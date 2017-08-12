@@ -54,7 +54,8 @@ class NeoNode(Protocol):
         self.myblockrequests=[]
         self.bytes_in = 0
         self.bytes_out = 0
-        self.block_req_max = 100
+        self.block_req_part = 100
+        self.block_req_max = 20 * self.block_req_part
 
 
 
@@ -236,7 +237,7 @@ class NeoNode(Protocol):
 #                reactor.callLater(60.0, self.HandleBlockHashInventory, inventory)
 #            else:
 
-            if len(self.myblockrequests) < self.block_req_max * 2:
+            if len(self.myblockrequests) < self.block_req_max:
                 self.HandleBlockHashInventory(inventory)
             else:
                 self.Log("WONT ASK FOR MORE BLOCKSSSSSS %s " % len(self.myblockrequests))
@@ -266,7 +267,7 @@ class NeoNode(Protocol):
         hashes = []
         hashstart = BC.Default().Height() + 1
         self.Log("will ask for hash start %s " % hashstart)
-        while hashstart < BC.Default().HeaderHeight() and len(hashes) < self.block_req_max:
+        while hashstart < BC.Default().HeaderHeight() and len(hashes) < self.block_req_part:
             hash = BC.Default().GetHeaderHash(hashstart)
             if not hash in BC.Default().BlockRequests() and not hash in self.myblockrequests:
                 BC.Default().BlockRequests().append(hash)
