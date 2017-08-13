@@ -46,6 +46,9 @@ class DBCollection():
             wb.delete(self.Prefix + item)
         if destroy:
             self.Destroy()
+        else:
+            self.Changed = []
+            self.Deleted = []
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 

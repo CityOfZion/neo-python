@@ -19,7 +19,7 @@ class NodeLeader():
 
     Peers = []
 
-    ConnectedPeersMax = 6
+    ConnectedPeersMax = 14
 
     UnconnectedPeers = []
 
@@ -61,7 +61,6 @@ class NodeLeader():
     def SetupConnection(self, host, port):
         self.__log.debug("Setting up connection! %s %s " % (host, port))
         point = TCP4ClientEndpoint(reactor, host, int(port))
-
         d = connectProtocol(point, NeoNode(NeoFactory, self))
         d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
 
@@ -100,13 +99,11 @@ class NodeLeader():
             if BC.Default() == None: return False
 
             if BC.Default().ContainsBlock(inventory.Index):
-                #                self.__log.debug("cant add block %s because blockchain already contains it " % inventory.HashToByteString())
                 return False
-                #            self.__log.debug("Will Try to add block" % inventory.HashToByteString())
 
-            if not BC.Default().AddBlock(inventory): return False
+            if not BC.Default().AddBlock(inventory):
+                return False
 
-#            BC.Default().PersistBlocks()
 
         elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
             if not self.AddTransaction(inventory): return False

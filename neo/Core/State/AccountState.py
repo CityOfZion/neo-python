@@ -60,7 +60,7 @@ class AccountState(StateBase):
             amount = reader.ReadFixed8()
             self.Balances[assetid] = amount
 
-
+#        self.__log.debug("balances: %s %s " % (len(self.Balances),self.Balances))
 
     def Serialize(self, writer):
         super(AccountState, self).Serialize(writer)
@@ -77,7 +77,6 @@ class AccountState(StateBase):
         for key,value in self.Balances.items():
             writer.WriteUInt256(key)
             writer.WriteFixed8(value)
-#            writer.WriteInt64(balance[1].value)
 
     def HasBalance(self, assetId):
         for key, balance in self.Balances.items():

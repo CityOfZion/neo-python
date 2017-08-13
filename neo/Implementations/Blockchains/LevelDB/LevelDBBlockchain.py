@@ -4,10 +4,11 @@ from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction,TransactionType
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 from twisted.internet import reactor
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Fixed8 import Fixed8
+import timeit
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
@@ -16,12 +17,18 @@ from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.ContractState import ContractState
+import threading
+import time
 from .DBPrefix import DBPrefix
 
 import plyvel
 from autologging import logged
 import binascii
 import events
+import asyncio
+from memory_profiler import profile
+
+from pympler import tracker
 
 
 
@@ -48,12 +55,14 @@ class LevelDBBlockchain(Blockchain):
 
     SyncReset = events.Events()
 
+    Accounts = None
+
     def CurrentBlockHash(self):
         try:
 #        print("Getting Current bolck hash")
             return self._header_index[self._current_block_height]
         except Exception as e:
-            self.__log.debug("Couldnt get current block hash, returning none: %s " % e)
+            self.__log.debug("Couldnt get current block hash, returning none: %s ", )
             pass
         return None
 
@@ -159,6 +168,8 @@ class LevelDBBlockchain(Blockchain):
             self.Persist(Blockchain.GenesisBlock())
             self._db.put(DBPrefix.SYS_Version, self._sysversion )
 
+        sn = self._db.snapshot()
+        self.Accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
 
 
     def GetTransaction(self, hash):
@@ -373,8 +384,7 @@ class LevelDBBlockchain(Blockchain):
                 lastheader = h
 
         if lastheader is not None:
-#            reactor.callFromThread(self.OnAddHeader, lastheader)
-            self.OnAddHeader(lastheader)
+            reactor.callFromThread(self.OnAddHeader, lastheader)
 
     def OnAddHeader(self, header):
 
@@ -409,22 +419,23 @@ class LevelDBBlockchain(Blockchain):
     def BlockCacheCount(self):
         return len(self._block_cache)
 
-#    @profile
     def Persist(self, block):
 
         self.__log.debug("___________________________________________")
-        self.__log.debug("PERSISTING BLOCK %s " % block.Index)
-        self.__log.debug("Total Headers %s , block cache %s " % (self.HeaderHeight(), len(self._block_cache)))
-        self.__log.debug("¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬")
+        self.__log.debug("PERSISTING BLOCK %s  (Cache: %s " % (block.Index,len(self._block_cache)))
+#        self.__log.debug("Total Headers %s , block cache %s " % (self.HeaderHeight(), len(self._block_cache)))
 
         sn = self._db.snapshot()
-        accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
+
+        accounts = self.Accounts
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
+
+
         spentcoins = DBCollection(self._db, sn,  DBPrefix.ST_SpentCoin, SpentCoinState)
+
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState )
         validators = DBCollection(self._db, sn, DBPrefix.ST_Validator, ValidatorState)
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
-
 #        storages = sn.iterator(prefix=ST_Storage)
 
         amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(8, 'little')
@@ -528,7 +539,8 @@ class LevelDBBlockchain(Blockchain):
             for key,account in accounts.Collection.items():
                 if not account.IsFrozen and len(account.Votes) == 0 and account.AllBalancesZeroOrLess():
                     accounts.Remove(key)
-            accounts.Commit(wb)
+
+            accounts.Commit(wb,False)
 
             #filte out unspent coins to delete then commit
             for key, unspent in unspentcoins.Collection.items():
@@ -562,15 +574,12 @@ class LevelDBBlockchain(Blockchain):
             validators = None
             spentcoins = None
             unspentcoins = None
-            accounts = None
 
 
             wb.put(DBPrefix.SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
             self._current_block_height = block.Index
 
 
-
-#    @profile()
     def PersistBlocks(self):
 
 #        self.__log.info("Header height, block height: %s/%s  --%s " % (self.Height(),self.HeaderHeight(), self.CurrentHeaderHash()))
@@ -600,10 +609,10 @@ class LevelDBBlockchain(Blockchain):
 
             block = self._block_cache[hash]
 
-#            reactor.callInThread(self.Persist,block)
-#            reactor.callInThread(self.OnPersistCompleted, block)
-            self.Persist(block)
-            self.OnPersistCompleted(block)
+            reactor.callFromThread(self.Persist,block)
+            reactor.callFromThread(self.OnPersistCompleted, block)
+#            self.Persist(block)
+#            self.OnPersistCompleted(block)
 
             #lock block cache
             del self._block_cache[hash]
