@@ -10,10 +10,12 @@ class NetworkAddressWithTime(SerializableMixin):
 
     Timestamp = None
     Services = None
-    Endpoint = None
+    Address = None
+    Port = None
 
-    def __init__(self, endpoint=None, services=None, timestamp=None):
-        self.Endpoint = endpoint
+    def __init__(self, address=None, port=None, services=None, timestamp=None):
+        self.Address = address
+        self.Port = port
         self.Services = services
         self.Timestamp = timestamp
 
@@ -25,17 +27,13 @@ class NetworkAddressWithTime(SerializableMixin):
     def Deserialize(self, reader):
         self.Timestamp = reader.ReadUInt32()
         self.Services = reader.ReadUInt64()
-        address =  reader.ReadBytes(16)
-        port = int.from_bytes( reader.ReadBytes(2).reverse(), 'big')
-        self.Endpoint = IPEndpoint(address, port)
+        self.Address =  reader.ReadFixedString(16).decode('utf-8')
+        self.Port = reader.ReadUInt16(endian='>')
 
     def Serialize(self, writer):
-        writer.Write(self.Timestamp)
-        writer.Write(self.Services)
-        #writer.Write(EndPoint.Address.GetAddressBytes());
-        #writer.Write(BitConverter.GetBytes((ushort)EndPoint.Port).Reverse().ToArray())
-
-        writer.Write(self.Endpoint.Address)
-        writer.Write(self.Endpoint.Port)
+        writer.WriteUInt32(self.Timestamp)
+        writer.WriteUInt64(self.Services)
+        writer.WriteFixedString(self.Address,16)
+        writer.WriteUInt16(self.Port, endian='>')
 
 

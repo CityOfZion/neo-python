@@ -39,7 +39,6 @@ In English:
     def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), precision=0, owner=None, admin=None):
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.Type = TransactionType.RegisterTransaction  # 0x40
-        self.__log.debug("GETTING REGISTER TRANSACTION!!!")
         self.AssetType = assettype
         self.Name = assetname
         self.Amount = amount  # Unlimited Mode: -0.00000001

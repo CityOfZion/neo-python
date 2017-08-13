@@ -1,5 +1,6 @@
 
 from neo.Network.Payloads.VersionPayload import VersionPayload
+from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Network.Message import Message
 from neo.IO.Helper import Helper as IOHelper
 from neo.IO.BinaryWriter import BinaryWriter
@@ -11,6 +12,7 @@ import random
 import unittest
 import binascii
 from autologging import logged
+from datetime import datetime
 
 @logged
 class PayloadTestCase(unittest.TestCase):
@@ -39,7 +41,6 @@ class PayloadTestCase(unittest.TestCase):
         deserialized_version = IOHelper.AsSerializableWithType(serialized, 'neo.Network.Payloads.VersionPayload.VersionPayload')
 
         v = deserialized_version
-        print("deserialized version %s " % v)
         self.assertEqual(v.Nonce, self.nonce)
         self.assertEqual(v.Port, self.port)
         self.assertEqual(v.UserAgent, self.ua)
@@ -93,3 +94,36 @@ class PayloadTestCase(unittest.TestCase):
         self.assertEqual(deserialized_version.UserAgent, self.ua)
 
         self.assertEqual(deserialized_version.Timestamp, self.payload.Timestamp)
+
+
+    def test_network_addrtime(self):
+
+        addr="55.15.69.104"
+        port=10333
+        ts = int(datetime.now().timestamp())
+        services = 0
+
+        nawt = NetworkAddressWithTime(addr, port, services, ts)
+
+        ms = StreamManager.GetStream()
+        writer = BinaryWriter(ms)
+
+        nawt.Serialize(writer)
+
+        arr = ms.ToArray()
+        arhex = binascii.unhexlify(arr)
+
+        StreamManager.ReleaseStream(ms)
+
+        ms = StreamManager.GetStream(arhex)
+        reader = BinaryReader(ms)
+
+        nawt2 = NetworkAddressWithTime()
+        nawt2.Deserialize(reader)
+
+        StreamManager.ReleaseStream(ms)
+
+        self.assertEqual(nawt.Address, nawt2.Address)
+        self.assertEqual(nawt.Services, nawt2.Services)
+        self.assertEqual(nawt.Port, nawt2.Port)
+        self.assertEqual(nawt.Timestamp, nawt2.Timestamp)

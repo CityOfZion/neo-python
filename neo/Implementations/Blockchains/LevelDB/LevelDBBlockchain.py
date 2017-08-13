@@ -4,11 +4,10 @@ from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction,TransactionType
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import StreamManager
 from twisted.internet import reactor
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Fixed8 import Fixed8
-import timeit
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
@@ -17,18 +16,12 @@ from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.ContractState import ContractState
-import threading
-import time
 from .DBPrefix import DBPrefix
 
 import plyvel
 from autologging import logged
 import binascii
 import events
-import asyncio
-from memory_profiler import profile
-
-from pympler import tracker
 
 
 
@@ -418,9 +411,6 @@ class LevelDBBlockchain(Blockchain):
 #    @profile
     def Persist(self, block):
 
-#        self._memTracker.print_diff()
-
-#        start = time.clock()
         self.__log.debug("___________________________________________")
         self.__log.debug("PERSISTING BLOCK %s " % block.Index)
         self.__log.debug("Total Headers %s , block cache %s " % (self.HeaderHeight(), len(self._block_cache)))

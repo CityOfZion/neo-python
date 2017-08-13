@@ -7,6 +7,7 @@ class RandomAccessStack():
     def __init__(self):
         self._list = []
 
+    @property
     def Count(self):
         return len(self._list)
 
@@ -20,7 +21,7 @@ class RandomAccessStack():
     def Insert(self, index, item):
         index = int(index)
 
-        if index < 0 or index > self.Count():
+        if index < 0 or index > self.Count:
             raise Exception("Invalid list operation")
 
         self._list.insert(index, item)
@@ -28,10 +29,10 @@ class RandomAccessStack():
     def Peek(self, index = 0):
         index = int(index)
 
-        if index < 0 or index > self.Count():
+        if index < 0 or index > self.Count:
             raise Exception("Invalid list operation")
 
-        return self._list[self.Count() - 1 - index]
+        return self._list[self.Count - 1 - index]
 
     def Pop(self):
         return self._list.pop(0)
@@ -42,10 +43,10 @@ class RandomAccessStack():
     def Remove(self, index):
         index = int(index)
 
-        if index < 0 or index > self.Count():
+        if index < 0 or index > self.Count:
             raise Exception("Invalid list operation")
 
-        item = self._list[self.Count() - 1 - index]
+        item = self._list[self.Count - 1 - index]
 
         item = self._list.remove(item)
 
@@ -55,7 +56,7 @@ class RandomAccessStack():
     def Set(self, index, item):
         index = int(index)
 
-        if index < 0 or index > self.Count():
+        if index < 0 or index > self.Count:
             raise Exception("Invalid list operation")
 
-        self._list[self.Count() - index - 1] = item
+        self._list[self.Count - index - 1] = item

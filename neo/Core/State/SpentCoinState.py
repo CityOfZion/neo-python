@@ -49,8 +49,10 @@ class SpentCoinState(StateBase):
                 val = reader.ReadUInt32()
                 items[key] = val
             except Exception as e:
-                pass
 #                self.__log.debug("no could not read spent coin state items with length %s " % count)
+#                self.__log.debug("DID Get items %s " % items)
+                pass
+
         self.Items = items
 
 
@@ -61,7 +63,7 @@ class SpentCoinState(StateBase):
         writer.WriteUInt256(self.TransactionHash)
         writer.WriteUInt32(self.TransactionHeight)
 
-        writer.WriteVarInt( len( self.Items.items()))
+        writer.WriteVarInt( len( self.Items))
 
         for key,val in self.Items.items():
             writer.WriteUInt16(key)

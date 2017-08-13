@@ -1,49 +1,25 @@
 #!/usr/bin/env python
 
-# Copyright (c) Twisted Matrix Laboratories.
-# See LICENSE for details.
 
 """
-Example using stdio, Deferreds, LineReceiver and twisted.web.client.
 
-Note that the WebCheckerCommandProtocol protocol could easily be used in e.g.
-a telnet server instead; see the comments for details.
-
-Based on an example by Abe Fettig.
 """
 
-import pprint
 import json
 import logging
-logname = 'prompt.log'
-logging.basicConfig(
-     level=logging.DEBUG,
-     filemode='a',
-     filename=logname,
-     format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 import gc
-from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
-from neo.IO.MemoryStream import MemoryStream,StreamManager
-from neo.Core.State.AccountState import AccountState
-from neo.Network.Payloads.InvPayload import InvPayload
-from neo.Core.CoinReference import CoinReference
-
+from neo.IO.MemoryStream import StreamManager
+from neo.Network.NodeLeader import NodeLeader
 
 import resource
-
-from neo.Network.NeoNode import NeoNode
-from neo.Network.NeoNodeFactory import NeoFactory
 
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo import Settings
 
-blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
-Blockchain.RegisterBlockchain(blockchain)
 
-from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
-from twisted.internet import stdio, reactor, task
+from twisted.internet import reactor, task
 
 from autologging import logged
 
@@ -53,6 +29,18 @@ from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
+
+
+logname = 'prompt.log'
+logging.basicConfig(
+     level=logging.DEBUG,
+     filemode='a',
+     filename=logname,
+     format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
+
+blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
+Blockchain.RegisterBlockchain(blockchain)
+
 
 example_style = style_from_dict({
     # User input.
@@ -71,7 +59,6 @@ example_style = style_from_dict({
 @logged
 class PromptInterface(object):
 
-    factory = None
 
     go_on = True
 
@@ -95,6 +82,8 @@ class PromptInterface(object):
     history = InMemoryHistory()
 
 
+    node_leader = None
+
     def get_bottom_toolbar(self, cli=None):
         try:
             return [(Token.Command, 'Progress: '),
@@ -105,18 +94,12 @@ class PromptInterface(object):
             print("couldnt get toolbar: %s " % e)
             return []
 
-    def onProtocolConnected(self, protocol):
-        if not self.factory:
-            self.factory = protocol.factory
-        self.__log.debug("PRotocol connected!!")
-
-    def onProtocolError(self, reason):
-        self.__log.debug("Protocol exception %s " % vars(reason))
 
     def quit(self):
         print('Shutting down.  This may take a bit...')
         self.go_on = False
         reactor.stop()
+        self.node_leader.Shutdown()
 
     def help(self):
         tokens = []
@@ -141,8 +124,8 @@ class PromptInterface(object):
             headers = Blockchain.Default().HeaderHeight()
             print('Progress: %s / %s\n' % (height, headers))
         elif what == 'nodes' or what == 'node':
-            if self.factory and len(self.factory.peers):
-                for peer in self.factory.peers:
+            if self.node_leader and len(self.node_leader.Peers):
+                for peer in self.node_leader.Peers:
                     print('Peer %s - IO: %s' % (peer.Name(), peer.IOStats()))
                 print("\n")
             else:
@@ -221,6 +204,8 @@ class PromptInterface(object):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.005)
 
+        self.node_leader = NodeLeader.Instance()
+
         tokens = [(Token.Neo, 'NEO'),(Token.Default,' cli. Type '),(Token.Command, "'help' "), (Token.Default, 'to get started')]
         print_tokens(tokens, self.token_style)
         print("\n")
@@ -261,13 +246,6 @@ class PromptInterface(object):
 if __name__ == "__main__":
 
     cli = PromptInterface()
-
-    # start up endpoints
-    for bootstrap in Settings.SEED_LIST:
-        host, port = bootstrap.split(":")
-        point = TCP4ClientEndpoint(reactor, host, int(port))
-        d = connectProtocol(point, NeoNode(NeoFactory))
-        d.addCallbacks(cli.onProtocolConnected, cli.onProtocolError)
-
+    NodeLeader.Instance().Start()
     reactor.callInThread(cli.run)
     reactor.run()
