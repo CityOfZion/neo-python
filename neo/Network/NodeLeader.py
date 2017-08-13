@@ -19,7 +19,7 @@ class NodeLeader():
 
     Peers = []
 
-    ConnectedPeersMax = 14
+    ConnectedPeersMax = 6
 
     UnconnectedPeers = []
 
@@ -27,6 +27,8 @@ class NodeLeader():
 
     NodeId = None
 
+
+    BlockRequests = []
 
     @staticmethod
     def Instance():
@@ -41,6 +43,7 @@ class NodeLeader():
         self.Peers = []
         self.UnconnectedPeers = []
         self.ADDRS = []
+        self.BlockRequests = []
         self.NodeId = random.randint(1294967200,4294967200)
 
     def Start(self):
@@ -87,7 +90,7 @@ class NodeLeader():
     #    @profile()
     def InventoryReceived(self, inventory):
 
-#        self.__log.debug("Node Leader received inventory %s " % inventory)
+        self.__log.debug("Node Leader received inventory %s " % inventory.Index)
 
         if inventory is MinerTransaction: return False
 
@@ -99,9 +102,11 @@ class NodeLeader():
             if BC.Default() == None: return False
 
             if BC.Default().ContainsBlock(inventory.Index):
+                self.__log.debug("BLOCK ALREADY IN LEVELDB!!!")
                 return False
 
             if not BC.Default().AddBlock(inventory):
+                self.__log.debug("NODE LEADER COULD NOT ADD BLOCK")
                 return False
 
 
