@@ -24,7 +24,7 @@ yum -y install development tools python35 python35-devel python35-pip readline-d
 
 you may need to enable the epel repo for the leveldb-devel package, which you can do by editing `/etc/yum.repos.d/epel.repo`
 
-
+### For all of these, make sure that the `Chains` directory in your project has the proper write permisisons
 
 ##### windows ( not sure )
 
