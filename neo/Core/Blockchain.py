@@ -326,6 +326,8 @@ class Blockchain(object):
     def BlockCacheCount(self):
         pass
 
+
+
     @staticmethod
     def RegisterBlockchain(blockchain):
         if Blockchain.__instance is None:

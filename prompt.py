@@ -35,7 +35,7 @@ from prompt_toolkit.history import InMemoryHistory
 
 logname = 'prompt.log'
 logging.basicConfig(
-     level=logging.DEBUG,
+     level=logging.CRITICAL,
      filemode='a',
      filename=logname,
      format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
@@ -64,7 +64,7 @@ class PromptInterface(object):
 
     go_on = True
 
-    completer = WordCompleter(['block','tx','header','mem','help','state','node','exit','quit','configure','db'])
+    completer = WordCompleter(['block','tx','header','mem','help','state','node','exit','quit','config','db','log'])
 
     commands = ['quit',
                 'help',
@@ -74,7 +74,8 @@ class PromptInterface(object):
                 'mem',
                 'nodes',
                 'state',
-                'configure {node or db} int int'
+                'config {node, db} int int'
+                'config log on/off'
                 ]
 
     token_style = style_from_dict({
@@ -128,7 +129,8 @@ class PromptInterface(object):
         bpm = 0
         if diff > 0 and mins > 0:
             bpm = diff / mins
-        print('Progress: %s / %s\n' % (height, headers))
+        print('Progress: %s / %s' % (height, headers))
+        print('Block Cache length %s ' % Blockchain.Default().BlockCacheCount())
         print('Blocks since program start %s ' % diff)
         print('Time elapsed %s mins' % mins)
         print('blocks per min %s ' % bpm)
@@ -193,6 +195,8 @@ class PromptInterface(object):
         print("garbage: %s " % gc.garbage)
         print("total buffers %s " % StreamManager.TotalBuffers())
 
+
+
     def configure(self, args):
         what = self.get_arg(args)
 
@@ -223,9 +227,24 @@ class PromptInterface(object):
                 Blockchain.Default().CMISSLIM = c2
                 print("Set DB Cache Miss Limit %s " % c2)
             self.show_state()
+        elif what =='log' or what == 'logs':
+            c1 = self.get_arg(args, 1).lower()
+            if c1 is not None:
+                if c1 == 'on' or c1 =='1':
+                    print("turning on logging")
+                    logger = logging.getLogger()
+                    logger.setLevel(logging.DEBUG)
+                    print("logger %s " % logger)
+                if c1 == 'off' or c1 == '0':
+                    print("turning off logging")
+                    logger = logging.getLogger()
+                    logger.setLevel(logging.ERROR)
+
+            else:
+                print("cannot configure log.  Please specify on or off")
         else:
             print("cannot configure %s " % what)
-            print("Try 'configure node 100 1000' or configure db 1000 4'")
+            print("Try 'config node 100 1000' or config db 1000 4' or config log on/off")
 
     def get_arg(self, arguments, index=0, convert_to_int=False):
         try:
@@ -280,7 +299,7 @@ class PromptInterface(object):
                 self.show_nodes()
             elif command == 'state':
                 self.show_state()
-            elif command == 'configure':
+            elif command == 'config':
                 self.configure(arguments)
             elif command == None:
                 print('please specify a command')
