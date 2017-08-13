@@ -51,15 +51,15 @@ class LevelDBBlockchain(Blockchain):
 
     _memTracker = None
 
-
-
     _sysversion = b'/NEO:2.0.1/'
 
     SyncReset = events.Events()
+    _missed_count = 0
 
-    _MissingBlock = None
-
+    MissingBlock = events.Events()
     Accounts = None
+
+
 
     def CurrentBlockHash(self):
         try:
@@ -114,7 +114,12 @@ class LevelDBBlockchain(Blockchain):
 
         version = self._db.get(DBPrefix.SYS_Version)
 
+
+        sn = self._db.snapshot()
+        self.Accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
+
         if version == self._sysversion: #or in the future, if version doesn't equal the current version...
+
 
             ba=bytearray(self._db.get(DBPrefix.SYS_CurrentBlock, 0))
             self._current_block_height = int.from_bytes( ba[-4:], 'little')
@@ -169,11 +174,10 @@ class LevelDBBlockchain(Blockchain):
                 for key,value in self._db.iterator():
                     wb.delete(key)
 
+
             self.Persist(Blockchain.GenesisBlock())
             self._db.put(DBPrefix.SYS_Version, self._sysversion )
 
-        sn = self._db.snapshot()
-        self.Accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
 
 
     def GetTransaction(self, hash):
@@ -196,16 +200,14 @@ class LevelDBBlockchain(Blockchain):
 
         #lock block cache
         if not block.HashToByteString() in self._block_cache:
-            self.__log.debug("adding block to block cache %s " % len(self._block_cache))
+#            self.__log.debug("adding block to block cache %s " % len(self._block_cache))
             self._block_cache[block.HashToByteString()] = block
-        else:
-            self.__log.debug("BLOCK %s already in block cache " % block.Index)
         #end lock
 
         #lock header index
         header_len = len(self._header_index)
         if block.Index -1 >= header_len:
-            self.__log.debug("Returning... block index -1 is greater than header length")
+#            self.__log.debug("Returning... block index -1 is greater than header length")
             return False
 
         if block.Index == header_len:
@@ -216,6 +218,7 @@ class LevelDBBlockchain(Blockchain):
                 return False
 
             #do some leveldb stuff here
+ #           self.__log.debug("this is where we add the block to leveldb")
 
             self.AddHeader(block.Header())
 
@@ -389,8 +392,7 @@ class LevelDBBlockchain(Blockchain):
                 lastheader = h
 
         if lastheader is not None:
-            reactor.callFromThread(self.OnAddHeader, lastheader)
-#            self.OnAddHeader(lastheader)
+            self.OnAddHeader(lastheader)
 
     def OnAddHeader(self, header):
 
@@ -425,15 +427,16 @@ class LevelDBBlockchain(Blockchain):
     def BlockCacheCount(self):
         return len(self._block_cache)
 
-    def MissingBlockHash(self):
-        return self._MissingBlock
-
+#    @profile
     def Persist(self, block):
+
+#        self._memTracker.print_diff()
 
         start = time.clock()
         self.__log.debug("___________________________________________")
-        self.__log.debug("PERSISTING BLOCK %s  (Cache: %s " % (block.Index,len(self._block_cache)))
+        self.__log.debug("PERSISTING BLOCK %s (cache) %s " % (block.Index, len(self._block_cache)))
 #        self.__log.debug("Total Headers %s , block cache %s " % (self.HeaderHeight(), len(self._block_cache)))
+        self.__log.debug("¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬")
 
         sn = self._db.snapshot()
 
@@ -588,11 +591,15 @@ class LevelDBBlockchain(Blockchain):
 
             wb.put(DBPrefix.SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
             self._current_block_height = block.Index
-            self.__log.debug("Elapsed %s " % (time.clock() - start))
 
+            end = time.clock()
+            self.__log.debug("TOOK %s s" % (end - start))
+
+#    @profile()
     def PersistBlocks(self):
 
-#        self.__log.info("Header height, block height: %s/%s  --%s " % (self.Height(),self.HeaderHeight(), self.CurrentHeaderHash()))
+#        self.__log.info("Hheight, b height, cache: %s/%s %s  --%s " % (self.Height(),self.HeaderHeight(), len(self._block_cache), self.CurrentHeaderHash()))
+
 
         while not self._disposed:
 
@@ -604,18 +611,21 @@ class LevelDBBlockchain(Blockchain):
             hash = self._header_index[self._current_block_height + 1]
             #end lock header index
 
-            self.__log.info("LOOKING FOR HASH: %s " % hash)
+#                self.__log.info("LOOKING FOR HASH: %s " % hash)
             block = None
             #lock block cache
 
             if not hash in self._block_cache:
 
-                self._MissingBlock = hash
-#                    self._block_cache = {}
-#                    self.SyncReset.on_change(hash)
+                if len(self._block_cache) > self.CACHELIM:
+                    self._missed_count +=1
+                    if self._missed_count > self.CMISSLIM:
+                        self.MissingBlock.on_change(hash)
+
+
                 break
 
-            self._MissingBlock = None
+            self._missed_count = 0
             block = self._block_cache[hash]
 
 #            reactor.callFromThread(self.Persist,block)

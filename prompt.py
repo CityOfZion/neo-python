@@ -7,7 +7,9 @@
 
 import json
 import logging
-
+import datetime
+import math
+import time
 import gc
 from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
@@ -62,15 +64,18 @@ class PromptInterface(object):
 
     go_on = True
 
-    completer = WordCompleter(['block','tx','header','mem','help','state',])
+    completer = WordCompleter(['block','tx','header','mem','help','state','node','exit','quit','configure','db'])
 
     commands = ['quit',
                 'help',
-                'show',
                 'block {index/hash}',
                 'header {index/hash}',
                 'tx {hash}',
-                'mem',]
+                'mem',
+                'nodes',
+                'state',
+                'configure {node or db} int int'
+                ]
 
     token_style = style_from_dict({
         Token.Command: '#ff0066',
@@ -81,6 +86,8 @@ class PromptInterface(object):
 
     history = InMemoryHistory()
 
+    start_height = Blockchain.Default().Height()
+    start_dt = datetime.datetime.utcnow()
 
     node_leader = None
 
@@ -107,31 +114,33 @@ class PromptInterface(object):
             tokens.append((Token.Command, "%s\n" %c))
         print_tokens(tokens, self.token_style)
 
-    def show(self, args):
-        what = self.get_arg(args)
 
-        if what=='block':
-            return self.show_block(args[1:])
-        elif what =='header':
-            return self.show_header(args[1:])
-        elif what == 'tx':
-            return self.show_tx(args[1:])
+    def show_state(self):
+        height = Blockchain.Default().Height()
+        headers = Blockchain.Default().HeaderHeight()
 
-        item = self.get_arg(args, 1)
+        diff = height - self.start_height
+        now = datetime.datetime.utcnow()
+        difftime = now - self.start_dt
 
-        if what == 'state':
-            height = Blockchain.Default().Height()
-            headers = Blockchain.Default().HeaderHeight()
-            print('Progress: %s / %s\n' % (height, headers))
-        elif what == 'nodes' or what == 'node':
-            if self.node_leader and len(self.node_leader.Peers):
-                for peer in self.node_leader.Peers:
-                    print('Peer %s - IO: %s' % (peer.Name(), peer.IOStats()))
-                print("\n")
-            else:
-                print('Not connected yet\n')
+        mins = difftime / datetime.timedelta(minutes=1)
+        print("minutes %s " % mins)
+        bpm = 0
+        if diff > 0 and mins > 0:
+            bpm = diff / mins
+        print('Progress: %s / %s\n' % (height, headers))
+        print('Blocks since program start %s ' % diff)
+        print('Time elapsed %s mins' % mins)
+        print('blocks per min %s ' % bpm)
+        print("Node Req Part, Max: %s %s " % (self.node_leader.BREQPART, self.node_leader.BREQMAX))
+        print("DB Cache Lim, Miss Lim %s %s " % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM))
+    def show_nodes(self):
+        if self.node_leader and len(self.node_leader.Peers):
+            for peer in self.node_leader.Peers:
+                print('Peer %s - IO: %s' % (peer.Name(), peer.IOStats()))
+            print("\n")
         else:
-            print("what should i show?  try 'block ID/hash', 'header ID/hash 'tx hash', 'state', 'nodes' ")
+            print('Not connected yet\n')
 
 
     def show_block(self, args):
@@ -184,10 +193,46 @@ class PromptInterface(object):
         print("garbage: %s " % gc.garbage)
         print("total buffers %s " % StreamManager.TotalBuffers())
 
+    def configure(self, args):
+        what = self.get_arg(args)
 
-    def get_arg(self, arguments, index=0):
+        if what == 'node':
+            c1 = self.get_arg(args,1, convert_to_int=True)
+            c2 = self.get_arg(args, 2, convert_to_int=True)
+
+            if not c1:
+                print("please provide settings. arguments must be integers")
+
+            if c1 is not None and c1 > 1:
+                if c1 > 200:
+                    c1 = 200
+                    print("Node request part must be less than 201")
+                self.node_leader.BREQPART = c1
+                print("Set Node Request Part to %s " % c1)
+            if c2 is not None and c2 >= self.node_leader.BREQPART:
+                self.node_leader.BREQMAX = c2
+                print("Set Node Request Max to %s " % c2)
+            self.show_state()
+        elif what == 'db':
+            c1 = self.get_arg(args, 1, convert_to_int=True)
+            c2 = self.get_arg(args, 2, convert_to_int=True)
+            if c1 is not None and c1 > 1:
+                Blockchain.Default().CACHELIM = c1
+                print("Set DB Cache Limit to %s " % c1)
+            if c2 is not None and c2 >= self.node_leader.BREQPART:
+                Blockchain.Default().CMISSLIM = c2
+                print("Set DB Cache Miss Limit %s " % c2)
+            self.show_state()
+        else:
+            print("cannot configure %s " % what)
+            print("Try 'configure node 100 1000' or configure db 1000 4'")
+
+    def get_arg(self, arguments, index=0, convert_to_int=False):
         try:
-            return arguments[index]
+            arg = arguments[index]
+            if convert_to_int:
+                return int(arg)
+            return arg
         except Exception as e:
             pass
         return None
@@ -223,8 +268,6 @@ class PromptInterface(object):
                 self.quit()
             elif command == 'help':
                 self.help()
-            elif command == 'show':
-                self.show(arguments)
             elif command == 'block':
                 self.show_block(arguments)
             elif command == 'tx':
@@ -233,7 +276,12 @@ class PromptInterface(object):
                 self.show_header(arguments)
             elif command == 'mem':
                 self.show_mem()
-
+            elif command == 'nodes' or command == 'node':
+                self.show_nodes()
+            elif command == 'state':
+                self.show_state()
+            elif command == 'configure':
+                self.configure(arguments)
             elif command == None:
                 print('please specify a command')
             else:
@@ -247,5 +295,6 @@ if __name__ == "__main__":
 
     cli = PromptInterface()
     NodeLeader.Instance().Start()
+#    reactor.suggestThreadPoolSize(30)
     reactor.callInThread(cli.run)
     reactor.run()

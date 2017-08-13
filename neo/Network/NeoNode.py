@@ -44,7 +44,6 @@ class NeoNode(Protocol):
     def __init__(self, factory, leader):
         self.factory = factory
         self.leader = leader
-
         self.nodeid = self.leader.NodeId
         self.remote_nodeid = random.randint(1294967200,4294967200)
         self.endpoint = ''
@@ -54,11 +53,12 @@ class NeoNode(Protocol):
         self.myblockrequests=[]
         self.bytes_in = 0
         self.bytes_out = 0
-        self.block_req_part = 50
-        self.block_req_max =  2 * self.block_req_part
 
         self.host = None
         self.port = None
+
+
+        self.Log("CREATED NEO NODE!!!!!!!!!")
 
         self.leader.UnconnectedPeers.append(self)
 
@@ -84,7 +84,6 @@ class NeoNode(Protocol):
         self.endpoint = self.transport.getPeer()
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
-
         if not self in self.leader.Peers:
             self.leader.Peers.append(self)
         if self in self.leader.UnconnectedPeers:
@@ -104,8 +103,8 @@ class NeoNode(Protocol):
             self.leader.UnconnectedPeers.append(self)
 
         for h in self.myblockrequests:
-            if h in self.leader.BlockRequests:
-                self.leader.BlockRequests.remove(h)
+            if h in BC.Default().BlockRequests():
+                BC.Default().BlockRequests().remove(h)
 
         self.myblockrequests = None
 
@@ -144,8 +143,11 @@ class NeoNode(Protocol):
                 StreamManager.ReleaseStream(ms)
                 del reader
 
-            self.CheckMessageData()
-
+            try:
+                self.CheckMessageData()
+            except RecursionError:
+                self.Log("Recursion error!!!")
+                self.Disconnect()
 #    @profile
     def CheckMessageData(self):
         if not self.pm: return
@@ -174,7 +176,7 @@ class NeoNode(Protocol):
 
     def MessageReceived(self, m):
 
-        self.Log("Messagereceived and processed ...: %s " % m.Command)
+#        self.Log("Messagereceived and processed ...: %s " % m.Command)
 
         if m.Command == 'verack':
             self.HandleVerack()
@@ -185,6 +187,7 @@ class NeoNode(Protocol):
         elif m.Command == 'inv':
             self.HandleInvMessage(m.Payload)
         elif m.Command == 'block':
+#            reactor.callFromThread(self.HandleBlockReceived, m.Payload)
             self.HandleBlockReceived(m.Payload)
         elif m.Command == 'headers':
             self.HandleBlockHeadersReceived(m.Payload)
@@ -197,7 +200,7 @@ class NeoNode(Protocol):
     def ProtocolReady(self):
         self.AskForMoreHeaders()
 #        self.AskForMoreBlocks()
-        self.RequestPeerInfo()
+#        self.RequestPeerInfo()
 
     def AskForMoreHeaders(self):
         self.Log("asking for more headers...")
@@ -207,7 +210,7 @@ class NeoNode(Protocol):
     def AskForMoreBlocks(self):
         bcplus_one = BC.Default().CurrentBlockHashPlusOne()
 
-        if bcplus_one is not None and len(self.myblockrequests) < self.block_req_max:
+        if bcplus_one is not None and len(self.myblockrequests) < self.leader.BREQMAX:
             self.Log("asking for more blocks ... %s " % (bcplus_one))
             get_blocks_message =  Message("getblocks", GetBlocksPayload(BC.Default().CurrentBlockHashPlusOne()))
             self.SendSerializedMessage(get_blocks_message)
@@ -236,7 +239,8 @@ class NeoNode(Protocol):
 
         addrpayload = AddrPayload(addresses=peerlist)
         message = Message('addr',addrpayload)
-        self.SendSerializedMessage(message)
+#        self.SendSerializedMessage(message)
+#       dont send peer info now
 
     def SendVersion(self):
         m = Message("version", VersionPayload(Settings.NODE_PORT, self.nodeid, Settings.VERSION_NAME))
@@ -287,7 +291,9 @@ class NeoNode(Protocol):
 #                reactor.callLater(60.0, self.HandleBlockHashInventory, inventory)
 #            else:
 
-            if len(self.myblockrequests) < self.block_req_max:
+            if len(self.myblockrequests) < self.leader.BREQMAX:
+#                reactor.callFromThread(self.GenerateBlockHashInventory)
+                #self.Log("GENERATED BLOCK HASHES %s " % len(hashes))
                 self.HandleBlockHashInventory(inventory)
 #            else:
 #                self.Log("WONT ASK FOR MORE BLOCKSSSSSS")
@@ -312,20 +318,28 @@ class NeoNode(Protocol):
         pass
 
 #    @profile
-    def HandleBlockHashInventory(self, inventory=None):
+
+
+    def RequestMissingBlock(self, hash):
+        self.Log("On missing block event! %s " % hash)
+
+        message = Message("getdata", InvPayload(InventoryType.Block, [hash]))
+        self.SendSerializedMessage(message)
+
+    def HandleBlockHashInventory(self, inventory):
 
         hashes = []
-        missing = BC.Default().MissingBlockHash()
-        if missing is not None:
-            self.Log("WILL ASK FOR MISSING BLOCK %s " % missing)
-            hashes.append(missing)
+        index = 0
+
+
+#        index = self.leader.Peers.index(self)
 
         hashstart = BC.Default().Height() + 1
-#        self.Log("will ask for hash start %s " % hashstart)
-        while hashstart < BC.Default().HeaderHeight() and len(hashes) < self.block_req_part:
+        self.Log("will ask for hash start %s " % hashstart)
+        while hashstart < BC.Default().HeaderHeight() and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
-            if not hash in self.leader.BlockRequests and not hash in self.myblockrequests:
-                self.leader.BlockRequests.append(hash)
+            if not hash in BC.Default().BlockRequests() and not hash in self.myblockrequests:
+                BC.Default().BlockRequests().append(hash)
                 self.myblockrequests.append(hash)
                 hashes.append(hash)
             hashstart += 1
@@ -339,8 +353,8 @@ class NeoNode(Protocol):
             self.Log("requesting %s hashes  " % len(hashes))
 
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
+#            reactor.callInThread(self.SendSerializedMessage,message)
             self.SendSerializedMessage(message)
-
 
 
     def HandleBlockHeadersReceived(self, inventory):
@@ -358,12 +372,12 @@ class NeoNode(Protocol):
 
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
 
-        self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
+#        self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
 
         blockhash =  block.HashToByteString()
 
-        if blockhash in self.leader.BlockRequests:
-            self.leader.BlockRequests.remove(blockhash)
+        if blockhash in BC.Default().BlockRequests():
+            BC.Default().BlockRequests().remove(blockhash)
         if blockhash in self.myblockrequests:
             self.myblockrequests.remove(blockhash)
 

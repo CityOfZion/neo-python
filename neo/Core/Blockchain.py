@@ -43,6 +43,11 @@ class Blockchain(object):
 
     __instance = None
 
+    __blockrequests = []
+
+    CACHELIM=500
+    CMISSLIM=5
+
     PersistCompleted = Events()
 
     @staticmethod
@@ -136,6 +141,9 @@ class Blockchain(object):
     def AddHeaders(self, headers):
         # abstract
         pass
+
+    def BlockRequests(self):
+        return self.__blockrequests
 
 
     @staticmethod

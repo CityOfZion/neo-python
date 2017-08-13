@@ -19,7 +19,7 @@ class NodeLeader():
 
     Peers = []
 
-    ConnectedPeersMax = 6
+    ConnectedPeersMax = 30
 
     UnconnectedPeers = []
 
@@ -27,8 +27,11 @@ class NodeLeader():
 
     NodeId = None
 
+    _MissedBlocks=[]
 
-    BlockRequests = []
+
+    BREQPART=100
+    BREQMAX= 3000
 
     @staticmethod
     def Instance():
@@ -43,8 +46,8 @@ class NodeLeader():
         self.Peers = []
         self.UnconnectedPeers = []
         self.ADDRS = []
-        self.BlockRequests = []
         self.NodeId = random.randint(1294967200,4294967200)
+        BC.Default().MissingBlock.on_change += self.OnMissingBlockEvent
 
     def Start(self):
         # start up endpoints
@@ -66,6 +69,7 @@ class NodeLeader():
         point = TCP4ClientEndpoint(reactor, host, int(port))
         d = connectProtocol(point, NeoNode(NeoFactory, self))
         d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
+        reactor.callLater(2, d.cancel)
 
     def Shutdown(self):
         print("shut down!")
@@ -86,11 +90,33 @@ class NodeLeader():
         self.__log.debug("Protocol exception %s " % vars(reason))
 
 
+    def OnMissingBlockEvent(self, hash):
+        if not hash in self._MissedBlocks:
+            self.__log.debug("ON MISSING BLOCK!!!!!!!!!!!!!")
+            if hash in BC.Default().BlockRequests():
+                self.__log.debug("hash was in block requests")
+            else:
+                self.__log.debug("HASH WASNT IN BLOCK REQUESTSSS!!!!")
+            self._MissedBlocks.append(hash)
+#            header = BC.Default().GetHeader(hash)
+#            for index,peer in enumerate(self.Peers):
+#                hash_to_get = BC.Default().GetHeaderHash(header.Index + index)
+            p = random.choice(self.Peers)
+            p.RequestMissigBlock(hash)
+            p = random.choice(self.Peers)
+            p.RequestMissigBlock(hash)
+            p = random.choice(self.Peers)
+            p.RequestMissigBlock(hash)
+            p = random.choice(self.Peers)
+            p.RequestMissigBlock(hash)
 
     #    @profile()
     def InventoryReceived(self, inventory):
 
-        self.__log.debug("Node Leader received inventory %s " % inventory.Index)
+#        self.__log.debug("Node Leader received inventory %s " % inventory)
+
+        if inventory.HashToByteString() in self._MissedBlocks:
+            self._MissedBlocks.remove(inventory.HashToByteString())
 
         if inventory is MinerTransaction: return False
 
@@ -102,11 +128,9 @@ class NodeLeader():
             if BC.Default() == None: return False
 
             if BC.Default().ContainsBlock(inventory.Index):
-                self.__log.debug("BLOCK ALREADY IN LEVELDB!!!")
                 return False
 
             if not BC.Default().AddBlock(inventory):
-                self.__log.debug("NODE LEADER COULD NOT ADD BLOCK")
                 return False
 
 
