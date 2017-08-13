@@ -205,7 +205,7 @@ class PromptInterface(object):
         dbloop.start(.005)
 
         self.node_leader = NodeLeader.Instance()
-
+        self.node_leader.Start()
         tokens = [(Token.Neo, 'NEO'),(Token.Default,' cli. Type '),(Token.Command, "'help' "), (Token.Default, 'to get started')]
         print_tokens(tokens, self.token_style)
         print("\n")

@@ -373,6 +373,7 @@ class LevelDBBlockchain(Blockchain):
                 lastheader = h
 
         if lastheader is not None:
+#            reactor.callFromThread(self.OnAddHeader, lastheader)
             self.OnAddHeader(lastheader)
 
     def OnAddHeader(self, header):
@@ -599,10 +600,10 @@ class LevelDBBlockchain(Blockchain):
 
             block = self._block_cache[hash]
 
-            reactor.callFromThread(self.Persist,block)
-            reactor.callFromThread(self.OnPersistCompleted, block)
-#            self.Persist(block)
-#            self.OnPersistCompleted(block)
+#            reactor.callInThread(self.Persist,block)
+#            reactor.callInThread(self.OnPersistCompleted, block)
+            self.Persist(block)
+            self.OnPersistCompleted(block)
 
             #lock block cache
             del self._block_cache[hash]

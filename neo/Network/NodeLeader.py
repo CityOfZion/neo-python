@@ -19,11 +19,14 @@ class NodeLeader():
 
     Peers = []
 
+    ConnectedPeersMax = 6
+
     UnconnectedPeers = []
+
+    ADDRS = []
 
     NodeId = None
 
-    _RunLoop = None
 
     @staticmethod
     def Instance():
@@ -37,26 +40,37 @@ class NodeLeader():
     def Setup(self):
         self.Peers = []
         self.UnconnectedPeers = []
+        self.ADDRS = []
         self.NodeId = random.randint(1294967200,4294967200)
-        self._RunLoop = task.LoopingCall(self.RunLoop)
 
     def Start(self):
         # start up endpoints
         for bootstrap in Settings.SEED_LIST:
             host, port = bootstrap.split(":")
-            point = TCP4ClientEndpoint(reactor, host, int(port))
-            d = connectProtocol(point, NeoNode(NeoFactory, self))
+            self.ADDRS.append('%s:%s' % (host,port))
+            self.SetupConnection(host, port)
 
-            d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
 
-        self._RunLoop.start(10)
+    def RemoteNodePeerReceived(self, host, port):
+        addr = '%s:%s' % (host,port)
+        if not addr in self.ADDRS:
+            if len(self.Peers) < self.ConnectedPeersMax:
+                self.ADDRS.append(addr)
+                self.SetupConnection(host, port)
+
+    def SetupConnection(self, host, port):
+        self.__log.debug("Setting up connection! %s %s " % (host, port))
+        point = TCP4ClientEndpoint(reactor, host, int(port))
+
+        d = connectProtocol(point, NeoNode(NeoFactory, self))
+        d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
 
     def Shutdown(self):
         print("shut down!")
-        self._RunLoop.stop()
+#        self._RunLoop.stop()
 
         for p in self.Peers:
-            p.transport.loseConnection()
+            p.Disconnect()
 
     def onProtocolConnected(self, peer):
         self.__log.debug("PRotocol connected!! %s " % peer)
@@ -74,7 +88,7 @@ class NodeLeader():
     #    @profile()
     def InventoryReceived(self, inventory):
 
-        self.__log.debug("Node Leader received inventory %s " % inventory)
+#        self.__log.debug("Node Leader received inventory %s " % inventory)
 
         if inventory is MinerTransaction: return False
 
@@ -91,6 +105,8 @@ class NodeLeader():
                 #            self.__log.debug("Will Try to add block" % inventory.HashToByteString())
 
             if not BC.Default().AddBlock(inventory): return False
+
+#            BC.Default().PersistBlocks()
 
         elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
             if not self.AddTransaction(inventory): return False
@@ -117,13 +133,3 @@ class NodeLeader():
         # end lock
         return relayed
 
-
-    def RunLoop(self):
-        self.__log.debug("tick P:%s U:%s" % (len(self.Peers), len(self.UnconnectedPeers)))
-
-        if len(self.Peers) > 0:
-
-            peer = random.choice(self.Peers)
-            self.__log.debug("Asking Peer %s to send peer info " % peer)
-            peer.SendPeerInfo()
-#        self.__log.debug("Doing Unconnected %s" % self.UnconnectedPeers)
