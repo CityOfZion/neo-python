@@ -125,22 +125,27 @@ class PromptInterface(object):
         difftime = now - self.start_dt
 
         mins = difftime / datetime.timedelta(minutes=1)
-        print("minutes %s " % mins)
+
         bpm = 0
         if diff > 0 and mins > 0:
             bpm = diff / mins
-        print('Progress: %s / %s' % (height, headers))
-        print('Block Cache length %s ' % Blockchain.Default().BlockCacheCount())
-        print('Blocks since program start %s ' % diff)
-        print('Time elapsed %s mins' % mins)
-        print('blocks per min %s ' % bpm)
-        print("Node Req Part, Max: %s %s " % (self.node_leader.BREQPART, self.node_leader.BREQMAX))
-        print("DB Cache Lim, Miss Lim %s %s " % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM))
+
+        out = 'Progress: %s / %s\n' % (height, headers)
+        out += 'Block Cache length %s\n' % Blockchain.Default().BlockCacheCount()
+        out += 'Blocks since program start %s\n' % diff
+        out += 'Time elapsed %s mins\n' % mins
+        out += 'blocks per min %s \n' % bpm
+        out += "Node Req Part, Max: %s %s\n" % (self.node_leader.BREQPART, self.node_leader.BREQMAX)
+        out += "DB Cache Lim, Miss Lim %s %s\n" % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM)
+        tokens = [(Token.Number, out)]
+        print_tokens(tokens, self.token_style)
+
     def show_nodes(self):
         if self.node_leader and len(self.node_leader.Peers):
+            out = ''
             for peer in self.node_leader.Peers:
-                print('Peer %s - IO: %s' % (peer.Name(), peer.IOStats()))
-            print("\n")
+                out+='Peer %s - IO: %s\n' % (peer.Name(), peer.IOStats())
+            print_tokens([(Token.Number, out)], self.token_style)
         else:
             print('Not connected yet\n')
 
@@ -152,8 +157,10 @@ class PromptInterface(object):
             block = Blockchain.Default().GetBlock(item)
 
             if block is not None:
-                print(json.dumps(block.ToJson(), indent=4))
-
+                bjson = json.dumps(block.ToJson(), indent=4)
+                tokens = [(Token.Number, bjson)]
+                print_tokens(tokens, self.token_style)
+                print('\n')
                 if txarg and 'tx' in txarg:
 
                     for tx in block.Transactions:
@@ -182,7 +189,12 @@ class PromptInterface(object):
         if item is not None:
             tx,height = Blockchain.Default().GetTransaction(item)
             if height  > -1:
-                print(json.dumps(tx.ToJson(), indent=4))
+
+                bjson = json.dumps(tx.ToJson(), indent=4)
+                tokens = [(Token.Command, bjson)]
+                print_tokens(tokens, self.token_style)
+                print('\n')
+
             else:
                 print("tx %s not found" % item)
         else:
@@ -191,11 +203,9 @@ class PromptInterface(object):
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
-        print("Total: %s MB " % totalmb)
-        print("garbage: %s " % gc.garbage)
-        print("total buffers %s " % StreamManager.TotalBuffers())
-
-
+        out = "Total: %s MB\n" % totalmb
+        out += "total buffers %s\n" % StreamManager.TotalBuffers()
+        print_tokens([(Token.Number, out)], self.token_style)
 
     def configure(self, args):
         what = self.get_arg(args)

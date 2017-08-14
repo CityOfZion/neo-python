@@ -4,6 +4,8 @@ from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.OpCode import *
 from autologging import logged
+from neo.BigInteger import BigInteger
+
 
 @logged
 class ExecutionEngine():
@@ -182,6 +184,221 @@ class ExecutionEngine():
 
             elif opcode == FROMALTSTACK:
                 estack.PushT(astack.Pop())
+
+            elif opcode == XDROP:
+                n = estack.Pop().GetBigInteger()
+                if n < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+                estack.Remove(n)
+
+            elif opcode == XSWAP:
+                n = estack.Pop().GetBigInteger()
+
+                if n < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                #if n == 0 break, same as do x if n > 0
+                if n > 0:
+
+                    item = estack.Peek(n)
+                    estack.Set(n, estack.Peek())
+                    estack.Set(0, item)
+
+
+            elif opcode == XTUCK:
+                n = estack.Pop().GetBigInteger()
+
+                if n <= 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                estack.Insert(n, estack.Peek())
+
+            elif opcode == DEPTH:
+                estack.PushT(estack.Count)
+
+            elif opcode == DROP:
+                estack.Pop()
+
+            elif opcode == DUP:
+                estack.PushT(estack.Peek())
+
+            elif opcode == NIP:
+                x2 = estack.Pop()
+                estack.Pop()
+                estack.PushT(x2)
+
+            elif opcode == OVER:
+
+                x2 = estack.Pop()
+                x1 = estack.Peek()
+                estack.PushT(x2)
+                estack.PushT(x1)
+
+            elif opcode == PICK:
+
+                n = estack.Pop().GetBigInteger()
+                if n < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                estack.PushT( estack.Peek(n))
+
+            elif opcode == ROLL:
+
+                n = estack.Pop().GetBigInteger()
+                if n < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                if n > 0:
+                    estack.PushT( estack.Remove(n))
+
+            elif opcode == ROT:
+                x3 = estack.Pop()
+                x2 = estack.Pop()
+                x1 = estack.Pop()
+
+                estack.PushT(x2)
+                estack.PushT(x3)
+                estack.PushT(x1)
+
+            elif opcode == SWAP:
+
+                x2 = estack.Pop()
+                x1 = estack.Pop()
+                estack.PushT(x2)
+                estack.PushT(x1)
+
+            elif opcode == TUCK:
+
+                x2 = estack.Pop()
+                x1 = estack.Pop()
+                estack.PushT(x2)
+                estack.PushT(x1)
+                estack.PushT(x2)
+
+            elif opcode == CAT:
+
+                x2 = estack.Pop().GetByteArray()
+                x1 = estack.Pop().GetByteArray()
+                estack.PushT( x1 + x2 )
+
+            elif opcode == SUBSTR:
+
+                count = estack.Pop().GetBigInteger()
+                if count < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                index = estack.Pop().GetBigInteger()
+                if index < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                x = estack.Pop().GetByteArray()
+                estack.PushT( x[index:count])
+
+            elif opcode == LEFT:
+
+                count = estack.Pop().GetBigInteger()
+                if count < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                x = estack.Pop().GetByteArray()
+                estack.PushT(x[:count])
+
+            elif opcode == RIGHT:
+
+                count = estack.Pop().GetBigInteger()
+                if count < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                x = estack.Pop().GetByteArray()
+                if len(x) < count:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                estack.PushT(x[-count:])
+
+            elif opcode == SIZE:
+
+                x = estack.Pop().GetByteArray()
+                estack.PushT(len(x))
+
+            elif opcode == INVERT:
+
+                x = estack.Pop().GetBigInteger()
+                estack.PushT(~x)
+
+            elif opcode == AND:
+
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT( x1 & x2)
+
+            elif opcode == OR:
+
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT( x1 | x2 )
+
+            elif opcode == XOR:
+
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT( x1 ^ x2 )
+
+            elif opcode == EQUAL:
+
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT( x1.Equals(x2))
+
+            elif opcode == INC:
+
+                x = estack.Pop().GetBigInteger()
+                estack.PushT(x + 1)
+
+            elif opcode == DEC:
+
+                x = estack.Pop().GetBigInteger()
+                estack.PushT(x - 1)
+
+            elif opcode == SIGN:
+
+                ##### Make sure to implement sign for big integer
+                x = estack.Pop().GetBigInteger()
+                estack.PushT(x.Sign)
+
+
+            elif opcode == NEGATE:
+
+                x = estack.Pop().GetBigInteger()
+                estack.PushT( -x )
+
+            elif opcode == ABS:
+
+                x = estack.Pop().GetBigInteger()
+                estack.PushT( abs(x))
+
+            elif opcode == NOT:
+
+                x = estack.Pop().GetBigBoolean()
+                estack.PushT(not x)
+
+            elif opcode == NZ:
+
+                x = estack.Pop().GetBigInteger()
+                estack.PushT( x is not 0)
 
 
 
