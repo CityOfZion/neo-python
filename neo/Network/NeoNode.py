@@ -329,10 +329,6 @@ class NeoNode(Protocol):
     def HandleBlockHashInventory(self, inventory):
 
         hashes = []
-        index = 0
-
-
-#        index = self.leader.Peers.index(self)
 
         hashstart = BC.Default().Height() + 1
         self.Log("will ask for hash start %s " % hashstart)

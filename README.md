@@ -107,6 +107,12 @@ If you dont want interactivity, but just want to run the server you can simply r
 python node.py 
 ```
 
+#### Extra notes
+On OSX, if you would like to run the process in the background, even when your computer is sleeping, you can use the built in `caffeinate` command
+```
+caffeinate python prompt.py
+```
+
 
 ### Logging
 

@@ -234,7 +234,6 @@ class PromptInterface(object):
                     print("turning on logging")
                     logger = logging.getLogger()
                     logger.setLevel(logging.DEBUG)
-                    print("logger %s " % logger)
                 if c1 == 'off' or c1 == '0':
                     print("turning off logging")
                     logger = logging.getLogger()
@@ -266,7 +265,7 @@ class PromptInterface(object):
     def run(self):
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.01)
+        dbloop.start(.05)
 
         self.node_leader = NodeLeader.Instance()
 

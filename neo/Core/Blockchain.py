@@ -45,7 +45,7 @@ class Blockchain(object):
 
     __blockrequests = []
 
-    CACHELIM=500
+    CACHELIM=4000
     CMISSLIM=5
 
     PersistCompleted = Events()

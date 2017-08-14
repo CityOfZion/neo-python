@@ -69,7 +69,7 @@ class NodeLeader():
         point = TCP4ClientEndpoint(reactor, host, int(port))
         d = connectProtocol(point, NeoNode(NeoFactory, self))
         d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
-        reactor.callLater(2, d.cancel)
+        reactor.callLater(5, d.cancel)
 
     def Shutdown(self):
         print("shut down!")

@@ -392,7 +392,8 @@ class LevelDBBlockchain(Blockchain):
                 lastheader = h
 
         if lastheader is not None:
-            self.OnAddHeader(lastheader)
+#            self.OnAddHeader(lastheader)
+            reactor.callInThread(self.OnAddHeader, lastheader)
 
     def OnAddHeader(self, header):
 
