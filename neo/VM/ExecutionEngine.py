@@ -5,7 +5,7 @@ from neo.VM import VMState
 from neo.VM.OpCode import *
 from autologging import logged
 from neo.BigInteger import BigInteger
-
+import math
 
 @logged
 class ExecutionEngine():
@@ -400,7 +400,139 @@ class ExecutionEngine():
                 x = estack.Pop().GetBigInteger()
                 estack.PushT( x is not 0)
 
+            elif opcode == ADD:
 
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 + x2)
+
+            elif opcode == SUB:
+
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 - x2)
+
+            elif opcode == MUL:
+
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 * x2)
+
+            elif opcode == DIV:
+
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 / x2)
+
+            elif opcode == MOD:
+
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 % x2)
+
+            elif opcode == SHL:
+
+                n = estack.Pop().GetBigInteger()
+                x = estack.Pop().GetBigInteger()
+
+                estack.PushT( x << n )
+
+
+            elif opcode == SHR:
+
+                n = estack.Pop().GetBigInteger()
+                x = estack.Pop().GetBigInteger()
+
+                estack.PushT(x >> n)
+
+            elif opcode == BOOLAND:
+
+                x1 = estack.Pop().GetBoolean()
+                x2 = estack.Pop().GetBoolean()
+
+                estack.PushT( x1 and x2 )
+
+            elif opcode == BOOLOR:
+
+                x1 = estack.Pop().GetBoolean()
+                x2 = estack.Pop().GetBoolean()
+
+                estack.PushT(x1 or x2)
+
+            elif opcode == NUMEQUAL:
+
+                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop().GetBigInteger()
+
+                estack.PushT( x1 == x2 )
+
+            elif opcode == NUMNOTEQUAL:
+
+                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 != x2)
+
+            elif opcode == LT:
+
+                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 < x2)
+
+            elif opcode == GT:
+
+                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 > x2)
+
+            elif opcode == LTE:
+
+                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 <= x2)
+
+            elif opcode == GTE:
+
+                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop().GetBigInteger()
+
+                estack.PushT(x1 >= x2)
+
+
+            elif opcode == MIN:
+
+                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop().GetBigInteger()
+
+                estack.PushT( min(x1, x2))
+
+            elif opcode == MAX:
+
+                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop().GetBigInteger()
+
+                estack.PushT(max(x1,x2))
+
+            elif opcode == WITHIN:
+
+                b = estack.Pop().GetBigInteger()
+                a = estack.Pop().GetBigInteger()
+                x = estack.Pop().GetBigInteger()
+
+                estack.PushT( a <= x and x < b )
+
+
+            #CRyPTO
+
+            
 
     def LoadScript(self, script, push_only=False):
 
