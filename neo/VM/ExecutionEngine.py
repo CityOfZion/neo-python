@@ -5,7 +5,8 @@ from neo.VM import VMState
 from neo.VM.OpCode import *
 from autologging import logged
 from neo.BigInteger import BigInteger
-import math
+import hashlib
+from neo.VM.InteropService import Array,Struct
 
 @logged
 class ExecutionEngine():
@@ -363,6 +364,9 @@ class ExecutionEngine():
 
                 estack.PushT( x1.Equals(x2))
 
+
+            #numeric
+
             elif opcode == INC:
 
                 x = estack.Pop().GetBigInteger()
@@ -531,6 +535,193 @@ class ExecutionEngine():
 
 
             #CRyPTO
+            elif opcode == SHA1:
+                h = hashlib.sha1( estack.Pop().GetByteArray())
+                estack.PushT( h.digest())
+
+            elif opcode == SHA256:
+                h = hashlib.sha256( estack.Pop().GetByteArray())
+                estack.PushT( h.digest())
+
+            elif opcode == HASH160:
+
+                estack.PushT( self.Crypto.Hash160(estack.Pop().GetByteArray()))
+
+            elif opcode == HASH256:
+
+                estack.PushT( self.Crypto.Hash256(estack.Pop().GetByteArray()))
+
+            elif opcode == CHECKSIG:
+
+                pubkey = estack.Pop().GetByteArray()
+                sig = estack.Pop().GetByteArray()
+
+                try:
+
+                    self.Crypto.VerifySignature( self.ScriptContainer.GetMessage(), pubkey, sig)
+
+                except Exception as e:
+
+                    estack.PushT(False)
+
+
+            elif opcode == CHECKMULTISIG:
+
+                n = estack.Pop().GetBigInteger()
+
+                if n < 1:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                pubkeys = []
+                for i in range(0, n):
+                    pubkeys[i] = estack.Pop().GetByteArray()
+
+                m = estack.Pop().GetBigInteger()
+
+                if m < 1 or m > n:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                sigs = []
+
+                for i in range(0, m):
+                    m[i] = estack.Pop().GetByteArray()
+
+                message = self.ScriptContainer.GetMessage()
+
+                fSuccess = True
+
+                try:
+
+                    i=0
+                    j=0
+
+                    while fSuccess and i < m and j < n:
+
+                        if self.Crypto.VerifySignature(message, sigs[i], pubkeys[j]):
+                            i+=1
+                        j+=1
+
+                        if m - i > j - n:
+                            fSuccess = False
+
+                except Exception as e:
+                    fSuccess = False
+
+                estack.PushT(fSuccess)
+
+
+            #lists
+            elif opcode == ARRAYSIZE:
+
+                item = estack.Pop()
+
+                if not item.IsArray():
+                    estack.PushT( len(item.GetByteArray()))
+
+                else:
+                    estack.PushT( len(item.GetArray()))
+
+            elif opcode == PACK:
+
+                size = estack.Pop().GetBigInteger()
+
+                if size < 0 or size > estack.Count:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                items = []
+
+                for i in range(0, size):
+                    items[i] = estack.Pop()
+
+                estack.PushT(items)
+
+            elif opcode == UNPACK:
+                item = estack.Pop()
+
+                if not item.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                items = item.GetArray()
+                items.reverse()
+
+                [estack.PushT(i) for i in items]
+
+                estack.PushT(len(items))
+
+            elif opcode == PICKITEM:
+
+                index = estack.Pop().GetBigInteger()
+
+                if index < 0:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                item = estack.Pop()
+
+                if not item.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                items = item.GetArray()
+
+                if index >= len(items):
+                    self._VMState |= VMState.FAULT
+                    return
+
+                estack.PushT(items[index])
+
+            elif opcode == SETITEM:
+
+                newItem = estack.Pop()
+
+                if newItem.IsStruct:
+                    newItem = newItem.Clone()
+
+                index = estack.Pop().GetBigInteger()
+
+                arrItem = estack.Pop()
+
+                if not arrItem.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                items = arrItem.GetArray()
+
+                if index < 0 or index >= len(items):
+                    self._VMState |= VMState.FAULT
+                    return
+
+                items[index] = newItem
+
+            elif opcode == NEWARRAY:
+
+                count = estack.Pop().GetBigInteger()
+
+                items = [None for i in range(0, count)]
+
+                estack.PushT(Array(items))
+
+            elif opcode == NEWSTRUCT:
+
+                count = estack.Pop().GetBigInteger()
+
+                items = [None for i in range(0, count)]
+
+                estack.PushT(Struct(items))
+
+            else:
+
+                self._VMState |= VMState.FAULT
+                return
+
+        if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
+
+            if self.CurrentContext.GetInstructionPointer() in self.CurrentContext.Breakpoints:
+                self._VMState |= VMState.BREAK
 
 
 
@@ -553,19 +744,19 @@ class ExecutionEngine():
             self.__log.debug("stopping because vm state is %s " % self._VMState)
 
         op = None
+
         if self.CurrentContext.GetInstructionPointer() >= len(self.CurrentContext.Script):
             op = RET
         else:
             op = self.CurrentContext.OpReader.ReadByte()
-        print("op is %s " % op)
 
+        print("op is %s " % op)
 
         try:
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
             print("exception: %s " % e)
             self.__log.error("Exception executing op %s " % e)
-
             self._VMState |= VMState.FAULT
 
 

@@ -30,7 +30,7 @@
     }
   },
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/MainChainPersistTX",
+    "DataDirectoryPath": "./Chains/Chain1",
     "NodePort": 10333,
     "WsPort": 10334,
     "UriPrefix": [ "http://*:10332" ],

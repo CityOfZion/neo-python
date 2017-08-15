@@ -33,7 +33,7 @@ from .InventoryType import InventoryType
 import random
 
 from neo import Settings
-
+import traceback
 @logged
 class NeoNode(Protocol):
 
@@ -93,6 +93,7 @@ class NeoNode(Protocol):
 
 
     def connectionLost(self, reason=None):
+
         self.buffer_in = None
         self.pm = None
 
@@ -114,11 +115,14 @@ class NeoNode(Protocol):
 
     def dataReceived(self, data):
 
-        self.bytes_in += (len(data))
+        try:
+            self.bytes_in += (len(data))
 
-        self.buffer_in = self.buffer_in + data
+            self.buffer_in = self.buffer_in + data
 
-        self.CheckDataReceived()
+            self.CheckDataReceived()
+        except Exception as e:
+            self.Log("Could not receive data %s  " % e)
 
 #    @profile
     def CheckDataReceived(self):
@@ -144,6 +148,8 @@ class NeoNode(Protocol):
                 del reader
 
             try:
+                #make this threadsafe
+#                reactor.callFromThread(self.CheckMessageData)
                 self.CheckMessageData()
             except RecursionError:
                 self.Log("Recursion error!!!")
@@ -229,18 +235,18 @@ class NeoNode(Protocol):
     def SendPeerInfo(self):
 
 
-        self.Log("SENDING PEER INFO %s " % self)
+#        self.Log("SENDING PEER INFO %s " % self)
 
-        peerlist = []
-        for peer in self.leader.Peers:
-            peerlist.append( peer.GetNetworkAddressWithTime())
+#        peerlist = []
+#        for peer in self.leader.Peers:
+#            peerlist.append( peer.GetNetworkAddressWithTime())
+#        self.Log("Peer list %s " % peerlist)
 
-        self.Log("Peer list %s " % peerlist)
-
-        addrpayload = AddrPayload(addresses=peerlist)
-        message = Message('addr',addrpayload)
+#        addrpayload = AddrPayload(addresses=peerlist)
+#        message = Message('addr',addrpayload)
 #        self.SendSerializedMessage(message)
 #       dont send peer info now
+        pass
 
     def SendVersion(self):
         m = Message("version", VersionPayload(Settings.NODE_PORT, self.nodeid, Settings.VERSION_NAME))
@@ -301,13 +307,15 @@ class NeoNode(Protocol):
 
 
     def SendSerializedMessage(self, message):
-        ba = Helper.ToArray(message)
-        ba2 = binascii.unhexlify(ba)
-        self.transport.write(ba2)
-        self.bytes_out += len(ba2)
-        del ba
-        del ba2
-
+        try:
+            ba = Helper.ToArray(message)
+            ba2 = binascii.unhexlify(ba)
+            self.transport.write(ba2)
+            self.bytes_out += len(ba2)
+            del ba
+            del ba2
+        except Exception as e:
+            self.Log("Could not send message %s " % e)
 
     def HandleConsenusInventory(self, inventory):
 #        self.Log("handle consensus not implemented")

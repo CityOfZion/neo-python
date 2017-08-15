@@ -34,10 +34,7 @@ class DBCollection():
 
             for key, buffer in self.SN.iterator(prefix=self.Prefix):
                 key = key[1:]
-                try:
-                    self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
-                except Exception as e:
-                    self.__log.debug("Coludnt build collection %s for class %s with key%s and buffer %s" % (e, self.ClassRef, key, buffer))
+                self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
 
     def Commit(self, wb, destroy=True):
         for item in self.Changed:
@@ -83,9 +80,8 @@ class DBCollection():
         return None
 
     def Add(self, keyval, item):
-        self.MarkChanged(keyval)
         self.Collection[keyval] = item
-
+        self.MarkChanged(keyval)
 
     def Remove(self, keyval):
         if not keyval in self.Deleted:

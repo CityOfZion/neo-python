@@ -68,7 +68,7 @@ class NodeLeader():
         self.__log.debug("Setting up connection! %s %s " % (host, port))
         point = TCP4ClientEndpoint(reactor, host, int(port))
         d = connectProtocol(point, NeoNode(NeoFactory, self))
-        d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
+        d.addCallbacks(self.onProtocolConnected, errback=self.onProtocolError)
         reactor.callLater(5, d.cancel)
 
     def Shutdown(self):
@@ -87,7 +87,7 @@ class NodeLeader():
             self.UnconnectedPeers.remove(peer)
 
     def onProtocolError(self, reason):
-        self.__log.debug("Protocol exception %s " % vars(reason))
+        self.__log.debug("Protocol exception %s " % reason)
 
 
     def OnMissingBlockEvent(self, hash):
@@ -114,36 +114,38 @@ class NodeLeader():
     def InventoryReceived(self, inventory):
 
 #        self.__log.debug("Node Leader received inventory %s " % inventory)
+        try:
+            if inventory.HashToByteString() in self._MissedBlocks:
+                self._MissedBlocks.remove(inventory.HashToByteString())
 
-        if inventory.HashToByteString() in self._MissedBlocks:
-            self._MissedBlocks.remove(inventory.HashToByteString())
+            if inventory is MinerTransaction: return False
 
-        if inventory is MinerTransaction: return False
+            # lock known hashes
+            #        if inventory.Hash() in self._known_hashes: return False
+            # endlock
 
-        # lock known hashes
-        #        if inventory.Hash() in self._known_hashes: return False
-        # endlock
+            if type(inventory) is Block:
+                if BC.Default() == None: return False
 
-        if type(inventory) is Block:
-            if BC.Default() == None: return False
+                if BC.Default().ContainsBlock(inventory.Index):
+                    return False
 
-            if BC.Default().ContainsBlock(inventory.Index):
-                return False
-
-            if not BC.Default().AddBlock(inventory):
-                return False
-
-
-        elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
-            if not self.AddTransaction(inventory): return False
-
-        else:
-            if not inventory.Verify(): return False
+                if not BC.Default().AddBlock(inventory):
+                    return False
 
 
-            #        relayed = self.RelayDirectly(inventory)
+            elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
+                if not self.AddTransaction(inventory): return False
 
-            #        return relayed
+            else:
+                if not inventory.Verify(): return False
+
+
+    #        relayed = self.RelayDirectly(inventory)
+
+    #        return relayed
+        except Exception as e:
+            print("coludnt add inventory %s ")
 
     def RelayDirectly(self, inventory):
 

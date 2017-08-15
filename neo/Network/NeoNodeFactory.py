@@ -20,6 +20,7 @@ class NeoFactory(Factory):
 
     def buildProtocol(self, addr):
         from .NodeLeader import NodeLeader
+        self.__log.debug("NODE FACTORY BULID PROTOCOL?")
         return NeoNode(self, NodeLeader.Instance())
 
 

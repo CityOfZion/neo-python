@@ -47,6 +47,7 @@ class Blockchain(object):
 
     CACHELIM=4000
     CMISSLIM=5
+    LOOPTIME = .1
 
     PersistCompleted = Events()
 

@@ -35,7 +35,7 @@ from prompt_toolkit.history import InMemoryHistory
 
 logname = 'prompt.log'
 logging.basicConfig(
-     level=logging.CRITICAL,
+     level=logging.DEBUG,
      filemode='a',
      filename=logname,
      format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
@@ -106,6 +106,7 @@ class PromptInterface(object):
     def quit(self):
         print('Shutting down.  This may take a bit...')
         self.go_on = False
+        #Blockchain.Default().Dispose()
         reactor.stop()
         self.node_leader.Shutdown()
 
@@ -275,7 +276,7 @@ class PromptInterface(object):
     def run(self):
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.05)
+        dbloop.start(.01)
 
         self.node_leader = NodeLeader.Instance()
 
