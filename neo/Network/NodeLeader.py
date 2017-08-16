@@ -31,7 +31,7 @@ class NodeLeader():
 
 
     BREQPART=100
-    BREQMAX= 3000
+    BREQMAX= 5000
 
     @staticmethod
     def Instance():
@@ -144,8 +144,7 @@ class NodeLeader():
     #        relayed = self.RelayDirectly(inventory)
 
     #        return relayed
-        except Exception as e:
-            print("coludnt add inventory %s ")
+        ex
 
     def RelayDirectly(self, inventory):
 

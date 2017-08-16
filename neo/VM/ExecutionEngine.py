@@ -129,7 +129,7 @@ class ExecutionEngine():
                 pass
             elif opcode in [JMP, JMPIF, JMPIFNOT]:
                 offset = context.OpReader.ReadInt16()
-                offset = context.GetInstructionPointer + offset - 3
+                offset = context.InstructionPointer + offset - 3
                 if offset < 0 or offset > context.Script.Length:
                     self._VMSTATE |= VMState.FAULT
                     return
@@ -145,7 +145,7 @@ class ExecutionEngine():
 
             elif opcode == CALL:
                 istack.PushT(context.Clone())
-                context.SetInstructionPointer( context.GetInstructionPointer() + 2)
+                context.SetInstructionPointer( context.InstructionPointer + 2)
                 self.ExecuteOp(JMP, self.CurrentContext)
 
             elif opcode == RET:
@@ -720,7 +720,7 @@ class ExecutionEngine():
 
         if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
 
-            if self.CurrentContext.GetInstructionPointer() in self.CurrentContext.Breakpoints:
+            if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
                 self._VMState |= VMState.BREAK
 
 
@@ -745,7 +745,7 @@ class ExecutionEngine():
 
         op = None
 
-        if self.CurrentContext.GetInstructionPointer() >= len(self.CurrentContext.Script):
+        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             op = RET
         else:
             op = self.CurrentContext.OpReader.ReadByte()

@@ -229,10 +229,16 @@ class InteropService():
     _dictionary = {}
 
 
-    def _Register(self, method, func):
+    def __init__(self):
+        self.Register("System.ExecutionEngine.GetScriptContainer", self.GetScriptContainer)
+        self.Register("System.ExecutionEngine.GetExecutingScriptHash", self.GetExecutingScriptHash)
+        self.Register("System.ExecutionEngine.GetCallingScriptHash", self.GetCallingScriptHash)
+        self.Register("System.ExecutionEngine.GetEntryScriptHash", self.GetEntryScriptHash)
+
+    def Register(self, method, func):
         self._dictionary[method] = func
 
-    def _Invoke(self, method, engine):
+    def Invoke(self, method, engine):
 
         if not method in self._dictionary.keys():
 
@@ -245,20 +251,20 @@ class InteropService():
     @staticmethod
     def GetScriptContainer(engine):
 
-        engine.EvaluationStack.Push( StackItem.FromInterface(engine.ScriptContainer))
+        engine.EvaluationStack.PushT( StackItem.FromInterface(engine.ScriptContainer))
         return True
 
     @staticmethod
     def GetExecutingScriptHash(engine):
-        engine.EvaluationStack.Push( engine.CurrentContext.ScriptHash )
+        engine.EvaluationStack.PushT( engine.CurrentContext.ScriptHash )
         return True
 
     @staticmethod
     def GetCallingScriptHash(engine):
-        engine.EvaluationStack.Push( engine.CallingContext.ScriptHash )
+        engine.EvaluationStack.PushT( engine.CallingContext.ScriptHash )
         return True
 
     @staticmethod
     def GetEntryScriptHash(engine):
-        engine.EvaluationStack.Push( engine.EntryContext.ScriptHash )
+        engine.EvaluationStack.PushT( engine.EntryContext.ScriptHash )
         return True

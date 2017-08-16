@@ -115,14 +115,11 @@ class NeoNode(Protocol):
 
     def dataReceived(self, data):
 
-        try:
-            self.bytes_in += (len(data))
+        self.bytes_in += (len(data))
 
-            self.buffer_in = self.buffer_in + data
+        self.buffer_in = self.buffer_in + data
 
-            self.CheckDataReceived()
-        except Exception as e:
-            self.Log("Could not receive data %s  " % e)
+        self.CheckDataReceived()
 
 #    @profile
     def CheckDataReceived(self):
@@ -205,7 +202,7 @@ class NeoNode(Protocol):
 
     def ProtocolReady(self):
         self.AskForMoreHeaders()
-#        self.AskForMoreBlocks()
+        self.AskForMoreBlocks()
 #        self.RequestPeerInfo()
 
     def AskForMoreHeaders(self):
@@ -310,10 +307,9 @@ class NeoNode(Protocol):
         try:
             ba = Helper.ToArray(message)
             ba2 = binascii.unhexlify(ba)
-            self.transport.write(ba2)
             self.bytes_out += len(ba2)
-            del ba
-            del ba2
+            self.transport.write(ba2)
+#            reactor.callInThread(self.transport.write,ba2)
         except Exception as e:
             self.Log("Could not send message %s " % e)
 

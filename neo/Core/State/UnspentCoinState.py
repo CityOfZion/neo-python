@@ -37,11 +37,11 @@ class UnspentCoinState(StateBase):
 
         length = len(self.Items)
 
-        print("Before: %s %s %s " % (self.Items, index, length))
         while length < index + 1:
             self.Items.append(0)
             length = len(self.Items)
-        print("NOW: %s %s %s " % (self.Items, index, length))
+        self.__log.debug("NOW: %s %s %s " % (self.Items, index, length))
+
         self.Items[index] |= value
 
 

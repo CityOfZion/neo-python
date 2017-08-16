@@ -23,12 +23,14 @@ class ExecutionContext():
     def Breakpoints(self):
         return self.__Breakpoints
 
-    def GetInstructionPointer(self):
+    @property
+    def InstructionPointer(self):
         return self.__OpReader.stream.tell()
 
     def SetInstructionPointer(self, value):
         self.__OpReader.stream.seek(value)
 
+    @property
     def NextInstruction(self):
         return self.Script[ self.__OpReader.stream.tell()]
 

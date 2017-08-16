@@ -276,7 +276,7 @@ class PromptInterface(object):
     def run(self):
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.01)
+        dbloop.start(.02)
 
         self.node_leader = NodeLeader.Instance()
 
@@ -323,7 +323,8 @@ class PromptInterface(object):
 if __name__ == "__main__":
 
     cli = PromptInterface()
-    NodeLeader.Instance().Start()
-#    reactor.suggestThreadPoolSize(30)
+
+    reactor.suggestThreadPoolSize(10)
     reactor.callInThread(cli.run)
+    NodeLeader.Instance().Start()
     reactor.run()
