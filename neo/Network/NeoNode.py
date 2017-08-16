@@ -1,6 +1,4 @@
-from twisted.internet.endpoints import TCP4ClientEndpoint,TCP4ServerEndpoint
-from twisted.internet.interfaces import IPullProducer,IPushProducer
-from twisted.internet.protocol import Protocol, Factory
+from twisted.internet.protocol import Protocol
 from twisted.internet import reactor,task
 import json
 import time
@@ -18,22 +16,16 @@ from neo.Core.Helper import Helper
 from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 
-from .Payloads.AddrPayload import AddrPayload
-from .Payloads.ConsensusPayload import ConsensusPayload
-from .Payloads.FilterLoadPayload import FilterLoadPayload
-from .Payloads.FilterAddPayload import FilterAddPayload
 from .Payloads.GetBlocksPayload import GetBlocksPayload
-from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
-from .Payloads.HeadersPayload import HeadersPayload
 from .Payloads.InvPayload import InvPayload
-from .Payloads.MerkleBlockPayload import MerkleBlockPayload
 from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
+
 import random
 
 from neo import Settings
-import traceback
+
 @logged
 class NeoNode(Protocol):
 
@@ -41,9 +33,12 @@ class NeoNode(Protocol):
 
     leader = None
 
-    def __init__(self, factory, leader):
+    def __init__(self, factory):
         self.factory = factory
-        self.leader = leader
+
+        from neo.Network.NodeLeader import NodeLeader
+
+        self.leader =NodeLeader.Instance()
         self.nodeid = self.leader.NodeId
         self.remote_nodeid = random.randint(1294967200,4294967200)
         self.endpoint = ''
@@ -57,10 +52,8 @@ class NeoNode(Protocol):
         self.host = None
         self.port = None
 
+        self.Log("CREATED NEO NODE!!!!!!!!! %s " % self.remote_nodeid)
 
-        self.Log("CREATED NEO NODE!!!!!!!!!")
-
-        self.leader.UnconnectedPeers.append(self)
 
 
     def Disconnect(self):
@@ -84,10 +77,6 @@ class NeoNode(Protocol):
         self.endpoint = self.transport.getPeer()
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
-        if not self in self.leader.Peers:
-            self.leader.Peers.append(self)
-        if self in self.leader.UnconnectedPeers:
-            self.leader.UnconnectedPeers.remove(self)
 
         self.Log("Connection from %s" % self.endpoint)
 
@@ -96,16 +85,6 @@ class NeoNode(Protocol):
 
         self.buffer_in = None
         self.pm = None
-
-        if self in self.leader.Peers:
-            self.leader.Peers.remove(self)
-
-        if not self in self.leader.UnconnectedPeers:
-            self.leader.UnconnectedPeers.append(self)
-
-        for h in self.myblockrequests:
-            if h in BC.Default().BlockRequests():
-                BC.Default().BlockRequests().remove(h)
 
         self.myblockrequests = None
 

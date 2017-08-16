@@ -199,6 +199,9 @@ class Blockchain(object):
         # abstract
         pass
 
+    def GetAccountStateByIndex(self, index):
+        pass
+
     def GetAccountState(self, script_hash):
         # abstract
         pass
@@ -222,6 +225,14 @@ class Blockchain(object):
         # abstract
         pass
 
+    def GetSpentCoins(self,tx_hash):
+        pass
+
+    def GetAllSpentCoins(self):
+        pass
+
+    def ShowAllContracts(self):
+        pass
 
     def GetContract(self, hash):
         # abstract

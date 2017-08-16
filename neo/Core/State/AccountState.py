@@ -7,6 +7,8 @@ from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream,StreamManager
 from autologging import logged
 import time
+from neo.Cryptography.Helper import hash_to_wallet_address
+
 @logged
 class AccountState(StateBase):
 
@@ -115,3 +117,19 @@ class AccountState(StateBase):
             if value.value > 0:
                 return False
         return True
+
+
+    def ToJson(self):
+        json = super(AccountState, self).ToJson()
+        hash = bytearray(self.ScriptHash)
+        addr = hash_to_wallet_address(hash)
+        json['script_hash'] = addr
+        json['frozen'] = self.IsFrozen
+        json['votes'] = []
+
+        balances = {}
+        for key, value in self.Balances.items():
+            balances[key.decode('utf-8')] = value.value
+
+        json['balances'] = balances
+        return json

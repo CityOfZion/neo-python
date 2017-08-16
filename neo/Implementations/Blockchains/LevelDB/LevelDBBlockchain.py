@@ -184,6 +184,66 @@ class LevelDBBlockchain(Blockchain):
             self._db.put(DBPrefix.SYS_Version, self._sysversion )
 
 
+    def GetAccountStateByIndex(self, index):
+        try:
+            num = int(index)
+
+            print("keys %s " % self.Accounts.Collection.keys())
+
+        except Exception as e:
+            print("could not get account state by index! %s " % index)
+        return None
+
+    def GetAccountState(self, script_hash):
+
+        if type(script_hash) is str:
+            try:
+                script_hash = script_hash.encode('utf-8')
+            except Exception as e:
+                print("could not convert argument to bytes :%s " % e)
+                return None
+
+        acct = self.Accounts.TryGet(keyval=script_hash)
+
+        if acct is None:
+            acct = self.GetAccountStateByIndex(script_hash)
+
+        return acct
+
+
+    def ShowAllContracts(self):
+
+        print("Showing all contracts!!")
+        sn = self._db.snapshot()
+        contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
+#        sn.close()
+        return contracts.Collection.keys()
+
+
+    def GetContract(self, hash):
+
+        sn = self._db.snapshot()
+        contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
+        sn.close()
+        return contracts.TryGet(keyval=hash)
+
+
+    def GetAllSpentCoins(self):
+        sn = self._db.snapshot()
+        coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState, debug=True)
+
+        return coins.Collection.keys()
+
+
+    def GetSpentCoins(self,tx_hash):
+
+        if type(tx_hash) is not bytes:
+            tx_hash = bytes(tx_hash.encode('utf-8'))
+
+        sn = self._db.snapshot()
+        coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState, debug=True)
+
+        return coins.TryGet(keyval=tx_hash)
 
     def GetTransaction(self, hash):
 
@@ -191,8 +251,9 @@ class LevelDBBlockchain(Blockchain):
             hash = bytes(hash.encode('utf-8'))
 
         if hash is not None:
-            out = bytearray(self._db.get(DBPrefix.DATA_Transaction + hash))
+            out = self._db.get(DBPrefix.DATA_Transaction + hash)
             if out is not None:
+                out = bytearray(out)
                 height = int.from_bytes(out[:4], 'little')
                 out = out[4:]
                 outhex = binascii.unhexlify(out)
@@ -611,7 +672,7 @@ class LevelDBBlockchain(Blockchain):
 #    @profile()
     def PersistBlocks(self):
 
-#        self.__log.info("Hheight, b height, cache: %s/%s %s  --%s " % (self.Height(),self.HeaderHeight(), len(self._block_cache), self.CurrentHeaderHash()))
+        self.__log.info("Hheight, b height, cache: %s/%s %s  --%s " % (self.Height(),self.HeaderHeight(), len(self._block_cache), self.CurrentHeaderHash()))
 
 
         while not self._disposed:

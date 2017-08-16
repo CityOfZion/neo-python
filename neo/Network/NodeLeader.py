@@ -3,8 +3,8 @@ from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
+from neo.Network.NeoFactory import NeoFactory
 from neo.Network.NeoNode import NeoNode
-from neo.Network.NeoNodeFactory import NeoFactory
 from neo import Settings
 
 
@@ -67,7 +67,7 @@ class NodeLeader():
     def SetupConnection(self, host, port):
         self.__log.debug("Setting up connection! %s %s " % (host, port))
         point = TCP4ClientEndpoint(reactor, host, int(port))
-        d = connectProtocol(point, NeoNode(NeoFactory, self))
+        d = connectProtocol(point, NeoNode(NeoFactory))
         d.addCallbacks(self.onProtocolConnected, errback=self.onProtocolError)
         reactor.callLater(5, d.cancel)
 
@@ -114,37 +114,37 @@ class NodeLeader():
     def InventoryReceived(self, inventory):
 
 #        self.__log.debug("Node Leader received inventory %s " % inventory)
-        try:
-            if inventory.HashToByteString() in self._MissedBlocks:
-                self._MissedBlocks.remove(inventory.HashToByteString())
 
-            if inventory is MinerTransaction: return False
+        if inventory.HashToByteString() in self._MissedBlocks:
+            self._MissedBlocks.remove(inventory.HashToByteString())
 
-            # lock known hashes
-            #        if inventory.Hash() in self._known_hashes: return False
-            # endlock
+        if inventory is MinerTransaction: return False
 
-            if type(inventory) is Block:
-                if BC.Default() == None: return False
+        # lock known hashes
+        #        if inventory.Hash() in self._known_hashes: return False
+        # endlock
 
-                if BC.Default().ContainsBlock(inventory.Index):
-                    return False
+        if type(inventory) is Block:
+            if BC.Default() == None: return False
 
-                if not BC.Default().AddBlock(inventory):
-                    return False
+            if BC.Default().ContainsBlock(inventory.Index):
+                return False
 
-
-            elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
-                if not self.AddTransaction(inventory): return False
-
-            else:
-                if not inventory.Verify(): return False
+            if not BC.Default().AddBlock(inventory):
+                return False
 
 
-    #        relayed = self.RelayDirectly(inventory)
+        elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
+            if not self.AddTransaction(inventory): return False
 
-    #        return relayed
-        ex
+        else:
+            if not inventory.Verify(): return False
+
+
+#        relayed = self.RelayDirectly(inventory)
+
+#        return relayed
+
 
     def RelayDirectly(self, inventory):
 

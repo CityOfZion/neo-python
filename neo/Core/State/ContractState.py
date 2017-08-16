@@ -62,3 +62,17 @@ class ContractState(StateBase):
         writer.WriteVarString(self.Author)
         writer.WriteVarString(self.Email)
         writer.WriteVarString(self.Description)
+
+    def ToJson(self):
+
+        return {
+
+            'version':self.StateVersion,
+            'code': self.Code.ToJson(),
+            'storage': self.HasStorage,
+            'name': self.Name,
+            'code_version': self.CodeVersion,
+            'author': self.Author,
+            'email': self.Email,
+            'description': self.Description
+        }

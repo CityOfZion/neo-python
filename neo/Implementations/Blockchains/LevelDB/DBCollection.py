@@ -15,7 +15,9 @@ class DBCollection():
     Changed = []
     Deleted = []
 
-    def __init__(self, db, sn, prefix, class_ref):
+    Debug = False
+
+    def __init__(self, db, sn, prefix, class_ref, debug=False):
 
         self.DB = db
         self.SN = sn
@@ -23,6 +25,7 @@ class DBCollection():
         self.Prefix = prefix
 
         self.ClassRef = class_ref
+        self.Debug = debug
 
         self.Collection = {}
         self.Changed = []
@@ -32,9 +35,17 @@ class DBCollection():
 
     def _BuildCollection(self):
 
-            for key, buffer in self.SN.iterator(prefix=self.Prefix):
-                key = key[1:]
-                self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
+        for key, buffer in self.SN.iterator(prefix=self.Prefix):
+            key = key[1:]
+            if self.Debug:
+                try:
+                    self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
+                except Exception as e:
+                    print("could not decode spent coin %s %s %s" % (key, buffer, e))
+            else:
+                self.Collection[key] = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
+
+
 
     def Commit(self, wb, destroy=True):
         for item in self.Changed:

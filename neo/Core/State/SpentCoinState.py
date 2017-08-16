@@ -62,15 +62,19 @@ class SpentCoinState(StateBase):
         return spentcoin
 
     def Deserialize(self, reader):
+        super(SpentCoinState, self).Deserialize(reader)
+
         self.TransactionHash = reader.ReadUInt256()
         self.TransactionHeight = reader.ReadUInt32()
 
         count = reader.ReadVarInt()
-
+#        print("reading count %s " % count)
         items = [0] * count
         for i in range(0, count):
             index = reader.ReadUInt16()
+#            print("read index %s " % index)
             height = reader.ReadUInt32()
+#            print("read height %s" % height)
             items[i] = SpentCoinItem(index=index, height=height)
 
         self.Items = items
@@ -89,3 +93,24 @@ class SpentCoinState(StateBase):
             writer.WriteUInt16(item.index)
             writer.WriteUInt32(item.height)
 
+
+
+    def ToJson(self):
+
+        items = []
+
+        print("decoding tx: %s %s " % (self.TransactionHash, type(self.TransactionHash)))
+
+        ba = bytearray(self.TransactionHash)
+        txhash = binascii.hexlify(ba)
+
+
+        for i in self.Items:
+            items.append({'index': i.index, 'height':i.height})
+
+        return {
+            'version':self.StateVersion,
+            'txHash': txhash.decode('utf-8'),
+            'txHeight': self.TransactionHeight,
+            'items': items
+        }

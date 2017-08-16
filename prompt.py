@@ -76,6 +76,7 @@ class PromptInterface(object):
                 'state',
                 'config {node, db} int int'
                 'config log on/off'
+                'pause',
                 ]
 
     token_style = style_from_dict({
@@ -92,6 +93,14 @@ class PromptInterface(object):
 
     node_leader = None
 
+    paused = False
+
+    def paused_loop(self):
+
+        while self.paused:
+#            self.__log.debug("paused...")
+            time.sleep(1)
+
     def get_bottom_toolbar(self, cli=None):
         try:
             return [(Token.Command, 'Progress: '),
@@ -106,6 +115,7 @@ class PromptInterface(object):
     def quit(self):
         print('Shutting down.  This may take a bit...')
         self.go_on = False
+        self.paused = False
         #Blockchain.Default().Dispose()
         reactor.stop()
         self.node_leader.Shutdown()
@@ -115,6 +125,17 @@ class PromptInterface(object):
         for c in self.commands:
             tokens.append((Token.Command, "%s\n" %c))
         print_tokens(tokens, self.token_style)
+
+    def toggle_pause(self):
+        if self.paused:
+            self.paused = not self.paused
+#            reactor.run()
+            print("resusiming execution")
+
+        else:
+            self.paused = not self.paused
+            print('pausing execution!')
+            reactor.callLater(1,self.paused_loop)
 
 
     def show_state(self):
@@ -201,6 +222,61 @@ class PromptInterface(object):
         else:
             print("please specify a tx hash")
 
+
+    def show_account_state(self, args):
+        item = self.get_arg(args)
+        print("account to show %s " % item)
+
+        if item is not None:
+            account = Blockchain.Default().GetAccountState(item)
+
+            if account is not None:
+                bjson = json.dumps(account.ToJson(), indent=4)
+                tokens = [(Token.Number, bjson)]
+                print_tokens(tokens, self.token_style)
+                print('\n')
+            else:
+                print("account %s not found" % item)
+        else:
+            print("please specify an account address")
+
+
+    def show_contract_state(self, args):
+        item = self.get_arg(args)
+
+        if item is not None:
+
+            if item.lower() == 'all':
+                contracts = Blockchain.Default().ShowAllContracts()
+                print("contracts: %s " % contracts)
+            else:
+                contract = Blockchain.Default().GetContract(item)
+                if contract is not None:
+                    bjson = json.dumps(contract.ToJson(), indent=4)
+                    tokens = [(Token.Number, bjson)]
+                    print_tokens(tokens, self.token_style)
+                    print('\n')
+        else:
+            print("please specify a contract")
+
+    def show_spent_coins(self, args):
+        item = self.get_arg(args)
+
+        if item is not None:
+            if item.lower() == 'all':
+                coins = Blockchain.Default().GetAllSpentCoins()
+                print("coins %s " % coins)
+            else:
+
+                coin = Blockchain.Default().GetSpentCoins(item)
+                if coin is not None:
+                    bjson = json.dumps(coin.ToJson(), indent=4)
+                    tokens = [(Token.Number, bjson)]
+                    print_tokens(tokens, self.token_style)
+
+        else:
+            print("please specify a tx hash")
+
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
@@ -269,7 +345,7 @@ class PromptInterface(object):
 
     def parse_result(self, result):
         if len(result):
-            commandParts = [s.lower() for s in result.split()]
+            commandParts = [s for s in result.split()]
             return commandParts[0], commandParts[1:]
         return None,None
 
@@ -293,30 +369,44 @@ class PromptInterface(object):
                             style=self.token_style)
 
             command, arguments = self.parse_result(result)
-            if command == 'quit' or command == 'exit':
-                self.quit()
-            elif command == 'help':
-                self.help()
-            elif command == 'block':
-                self.show_block(arguments)
-            elif command == 'tx':
-                self.show_tx(arguments)
-            elif command == 'header':
-                self.show_header(arguments)
-            elif command == 'mem':
-                self.show_mem()
-            elif command == 'nodes' or command == 'node':
-                self.show_nodes()
-            elif command == 'state':
-                self.show_state()
-            elif command == 'config':
-                self.configure(arguments)
-            elif command == None:
-                print('please specify a command')
+
+            if command is not None and len(command) > 0:
+                command = command.lower()
+
+
+                if command == 'quit' or command == 'exit':
+                    self.quit()
+                elif command == 'help':
+                    self.help()
+                elif command == 'block':
+                    self.show_block(arguments)
+                elif command == 'tx':
+                    self.show_tx(arguments)
+                elif command == 'header':
+                    self.show_header(arguments)
+                elif command =='account':
+                    self.show_account_state(arguments)
+                elif command =='contract':
+                    self.show_contract_state(arguments)
+                elif command == 'sc':
+                    self.show_spent_coins(arguments)
+                elif command == 'mem':
+                    self.show_mem()
+                elif command == 'nodes' or command == 'node':
+                    self.show_nodes()
+                elif command == 'state':
+                    self.show_state()
+                elif command == 'config':
+                    self.configure(arguments)
+                elif command == 'pause' or command == 'unpause' or command == 'resume':
+                    self.toggle_pause()
+                elif command == None:
+                    print('please specify a command')
+                else:
+                    print("command %s not found" % command)
+
             else:
-                print("command %s not found" % command)
-
-
+                print("\n")
 
 
 
