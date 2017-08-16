@@ -90,6 +90,9 @@ class NodeLeader():
         self.__log.debug("Protocol exception %s " % reason)
 
 
+#    def DeregisterBlockRequests(self):
+
+
     def OnMissingBlockEvent(self, hash):
         if not hash in self._MissedBlocks:
             self.__log.debug("ON MISSING BLOCK!!!!!!!!!!!!!")

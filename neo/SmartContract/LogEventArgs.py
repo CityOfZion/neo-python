@@ -1,6 +1,6 @@
 
 
-class NotifyEventArgs:
+class LogEventArgs:
 
 
     ScriptContainer = None

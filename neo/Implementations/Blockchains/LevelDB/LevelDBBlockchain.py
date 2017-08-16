@@ -61,6 +61,13 @@ class LevelDBBlockchain(Blockchain):
 
     MissingBlock = events.Events()
     Accounts = None
+    UnspentCoins = None
+    SpentCoins = None
+    Contracts = None
+    Assets = None
+    Validators = None
+    Contracts = None
+    Storages = None
 
 
 
@@ -78,7 +85,6 @@ class LevelDBBlockchain(Blockchain):
         try:
             return self._header_index[self._current_block_height + 1]
         except Exception as e:
-            print("couldnt get current block hash plus one %s " % e)
             pass
         return self.CurrentBlockHash()
 
@@ -121,7 +127,6 @@ class LevelDBBlockchain(Blockchain):
 
         sn = self._db.snapshot()
         self.Accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
-
 
         if version == self._sysversion: #or in the future, if version doesn't equal the current version...
 
@@ -259,7 +264,7 @@ class LevelDBBlockchain(Blockchain):
                 outhex = binascii.unhexlify(out)
                 return Transaction.DeserializeFromBufer(outhex, 0), height
 
-        return None, -1
+        raise Exception("Colud not find transaction for hash %s " % hash)
 
 
     def AddBlock(self, block):
@@ -511,14 +516,13 @@ class LevelDBBlockchain(Blockchain):
         sn = self._db.snapshot()
 
         accounts = self.Accounts
+
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
         validators = DBCollection(self._db, sn, DBPrefix.ST_Validator, ValidatorState)
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
-
-#        storages = sn.iterator(prefix=ST_Storage)
 
         amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(8, 'little')
 
@@ -572,7 +576,6 @@ class LevelDBBlockchain(Blockchain):
                     #do a whole lotta stuff with tx here...
                     if tx.Type == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
 
-                        #tx =
                         asset = AssetState(tx.HashToByteString(),tx.AssetType, tx.Name, tx.Amount,
                                            Fixed8(0),tx.Precision, Fixed8(0), Fixed8(0), bytearray(20),
                                            tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False )
@@ -610,12 +613,12 @@ class LevelDBBlockchain(Blockchain):
                         # will have to create a VM / state machine first :-|
                         script_table = CachedScriptTable(contracts)
 
-#                        service  = StateMachine(accounts, validators, assets, contracts, storages)
-#                        engine = ApplicationEngine(tx, script_table, service, tx.Gas)
-#                        engine.LoadScript(tx.Script, False)
+    #                        service  = StateMachine(accounts, validators, assets, contracts, storages)
+    #                        engine = ApplicationEngine(tx, script_table, service, tx.Gas)
+    #                        engine.LoadScript(tx.Script, False)
 
- #                       if engine.Execute():
- #                           service.Commit()
+    #                       if engine.Execute():
+    #                           service.Commit()
 
 
                 # do save all the accounts, unspent, coins, validators, assets, etc
@@ -651,16 +654,7 @@ class LevelDBBlockchain(Blockchain):
                 #commit storages ( not implemented )
                 storages.Commit(wb)
 
-
                 sn.close()
-                del sn
-
-                contracts=None
-                assets = None
-                validators = None
-                spentcoins = None
-                unspentcoins = None
-                storages = None
 
                 wb.put(DBPrefix.SYS_CurrentBlock, block.HashToByteString() + block.IndexBytes())
                 self._current_block_height = block.Index
@@ -668,11 +662,12 @@ class LevelDBBlockchain(Blockchain):
                 end = time.clock()
                 self.__log.debug("TOOK %s s" % (end - start))
         except Exception as e:
-            print("Could not persist blocks %s " % e)
-#    @profile()
+            print("COULD NOT PERSIST BLOCK %s " % e)
+
+
     def PersistBlocks(self):
 
-        self.__log.info("Hheight, b height, cache: %s/%s %s  --%s " % (self.Height(),self.HeaderHeight(), len(self._block_cache), self.CurrentHeaderHash()))
+#        self.__log.info("Hheight, b height, cache: %s/%s %s  --%s " % (self.Height(),self.HeaderHeight(), len(self._block_cache), self.CurrentHeaderHash()))
 
 
         while not self._disposed:

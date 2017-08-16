@@ -273,7 +273,7 @@ class PromptInterface(object):
                     bjson = json.dumps(coin.ToJson(), indent=4)
                     tokens = [(Token.Number, bjson)]
                     print_tokens(tokens, self.token_style)
-
+                    print("\n")
         else:
             print("please specify a tx hash")
 
@@ -406,8 +406,7 @@ class PromptInterface(object):
                     print("command %s not found" % command)
 
             else:
-                print("\n")
-
+                pass
 
 
 if __name__ == "__main__":

@@ -99,11 +99,8 @@ class SpentCoinState(StateBase):
 
         items = []
 
-        print("decoding tx: %s %s " % (self.TransactionHash, type(self.TransactionHash)))
-
         ba = bytearray(self.TransactionHash)
         txhash = binascii.hexlify(ba)
-
 
         for i in self.Items:
             items.append({'index': i.index, 'height':i.height})

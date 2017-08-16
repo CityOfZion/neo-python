@@ -14,12 +14,14 @@ class ApplicationEngine(ExecutionEngine):
     gas_consumed = 0
     testMode = False
 
+    Trigger = None
 
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
 
-    def __init__(self, container, table, service, gas, testMode=False):
+    def __init__(self, trigger_type, container, table, service, gas, testMode=False):
 
+            self.Trigger = trigger_type
             self._ScriptContainer = container
             self._Table = table
             self._Service = service

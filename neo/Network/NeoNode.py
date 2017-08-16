@@ -86,6 +86,12 @@ class NeoNode(Protocol):
         self.buffer_in = None
         self.pm = None
 
+        bcr = BC.Default().BlockRequests()
+
+        for req in bcr:
+            if req in self.myblockrequests:
+                bcr.remove(req)
+
         self.myblockrequests = None
 
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
@@ -235,22 +241,6 @@ class NeoNode(Protocol):
         self.Log("Remote version %s " % vars(self.Version))
         self.SendVersion()
 
-    def HandleGetAddress(self, payload):
-
-
-        self.Log("888888888888888************************")
-        self.Log("888888888888888*****      HANDLETTTTTTTTT GET ADDRESS!!")
-        self.Log("888888888888888************************")
-        self.Log("Payload: %s %s" % (payload, vars(payload)))
-
-        return
-
-    def HandleAddr(self, payload):
-        self.Log("888888888888888************************")
-        self.Log("888888888888888*****      GOT ADDRESS!!")
-        self.Log("888888888888888************************")
-        self.Log("Payload: %s %s" % (payload, vars(payload)))
-
     def HandleVerack(self):
         m = Message('verack')
         self.SendSerializedMessage(m)
@@ -264,21 +254,9 @@ class NeoNode(Protocol):
         elif inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
             self.HandleTransactionInventory(inventory)
         elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-#            self.Log(("HANDLING BLOCK HASH INVVVVVVVVVVVVV!"))
-#            if BC.Default().BlockCacheCount() > 6000:
-#                self.__log.debug("************************************************")
-#                self.__log.debug("BLOCK CACHE COUNT TOO HIGH, PAUSE FOR NOW")
-#                self.__log.debug("********************************************")
-#
-#                reactor.callLater(60.0, self.HandleBlockHashInventory, inventory)
-#            else:
 
             if len(self.myblockrequests) < self.leader.BREQMAX:
-#                reactor.callFromThread(self.GenerateBlockHashInventory)
-                #self.Log("GENERATED BLOCK HASHES %s " % len(hashes))
                 self.HandleBlockHashInventory(inventory)
-#            else:
-#                self.Log("WONT ASK FOR MORE BLOCKSSSSSS")
 
 
 
@@ -293,14 +271,10 @@ class NeoNode(Protocol):
             self.Log("Could not send message %s " % e)
 
     def HandleConsenusInventory(self, inventory):
-#        self.Log("handle consensus not implemented")
         pass
 
     def HandleTransactionInventory(self, inventory):
-#        self.Log("handle transaction not implemented")
         pass
-
-#    @profile
 
 
     def RequestMissingBlock(self, hash):
