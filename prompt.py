@@ -88,7 +88,7 @@ class PromptInterface(object):
 
     history = InMemoryHistory()
 
-    start_height = Blockchain.Default().Height()
+    start_height = Blockchain.Default().Height
     start_dt = datetime.datetime.utcnow()
 
     node_leader = None
@@ -104,9 +104,9 @@ class PromptInterface(object):
     def get_bottom_toolbar(self, cli=None):
         try:
             return [(Token.Command, 'Progress: '),
-                    (Token.Number, str(Blockchain.Default().Height())),
+                    (Token.Number, str(Blockchain.Default().Height)),
                     (Token.Neo, '/'),
-                    (Token.Number, str(Blockchain.Default().HeaderHeight()))]
+                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
             print("couldnt get toolbar: %s " % e)
             return []
@@ -139,8 +139,8 @@ class PromptInterface(object):
 
 
     def show_state(self):
-        height = Blockchain.Default().Height()
-        headers = Blockchain.Default().HeaderHeight()
+        height = Blockchain.Default().Height
+        headers = Blockchain.Default().HeaderHeight
 
         diff = height - self.start_height
         now = datetime.datetime.utcnow()

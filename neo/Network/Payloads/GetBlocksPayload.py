@@ -2,7 +2,7 @@
 from neo.IO.Mixins import SerializableMixin
 import sys
 from autologging import logged
-
+from neo.UInt256 import UInt256
 
 @logged
 class GetBlocksPayload(SerializableMixin):
@@ -31,5 +31,5 @@ class GetBlocksPayload(SerializableMixin):
         if self.HashStop is not None:
             writer.WriteUInt256(self.HashStop)
         else:
-            writer.WriteUInt256( bytearray(32))
+            writer.WriteUInt256( UInt256())
 

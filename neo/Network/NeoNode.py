@@ -196,11 +196,11 @@ class NeoNode(Protocol):
         self.SendSerializedMessage(get_headers_message)
 
     def AskForMoreBlocks(self):
-        bcplus_one = BC.Default().CurrentBlockHashPlusOne()
+        bcplus_one = BC.Default().CurrentBlockHashPlusOne
 
         if bcplus_one is not None and len(self.myblockrequests) < self.leader.BREQMAX:
             self.Log("asking for more blocks ... %s " % (bcplus_one))
-            get_blocks_message =  Message("getblocks", GetBlocksPayload(BC.Default().CurrentBlockHashPlusOne()))
+            get_blocks_message =  Message("getblocks", GetBlocksPayload(BC.Default().CurrentBlockHashPlusOne))
             self.SendSerializedMessage(get_blocks_message)
 
     def RequestPeerInfo(self):

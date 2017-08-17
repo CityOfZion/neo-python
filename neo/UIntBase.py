@@ -14,15 +14,16 @@ class UIntBase(SerializableMixin):
         if data is None:
             self._data = bytearray(num_bytes)
 
-        elif len(data) != num_bytes:
-            raise Exception("Invalid UInt")
-
-        if type(data) is bytes:
-            self._data = bytearray(data)
-        elif type(data) is bytearray:
-            self._data = data
         else:
-            raise Exception("Invalid format")
+            if len(data) != num_bytes:
+                raise Exception("Invalid UInt")
+
+            if type(data) is bytes:
+                self._data = bytearray(data)
+            elif type(data) is bytearray:
+                self._data = data
+            else:
+                raise Exception("Invalid format")
 
     @property
     def Data(self):

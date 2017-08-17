@@ -33,7 +33,7 @@ from memory_profiler import profile
 
 from pympler import tracker
 import traceback
-
+from neo.UInt256 import UInt256
 
 @logged
 class LevelDBBlockchain(Blockchain):
@@ -244,17 +244,16 @@ class LevelDBBlockchain(Blockchain):
 
     def GetTransaction(self, hash):
 
-        if type(hash) is not bytes:
-            hash = bytes(hash.encode('utf-8'))
+        if type(hash) is not UInt256 or hash is None:
+            raise Exception ("please specify UInt256")
 
-        if hash is not None:
-            out = self._db.get(DBPrefix.DATA_Transaction + hash)
-            if out is not None:
-                out = bytearray(out)
-                height = int.from_bytes(out[:4], 'little')
-                out = out[4:]
-                outhex = binascii.unhexlify(out)
-                return Transaction.DeserializeFromBufer(outhex, 0), height
+        out = self._db.get(DBPrefix.DATA_Transaction + hash.ToBytes())
+        if out is not None:
+            out = bytearray(out)
+            height = int.from_bytes(out[:4], 'little')
+            out = out[4:]
+            outhex = binascii.unhexlify(out)
+            return Transaction.DeserializeFromBufer(outhex, 0), height
 
         raise Exception("Colud not find transaction for hash %s " % hash)
 
@@ -560,7 +559,7 @@ class LevelDBBlockchain(Blockchain):
                             sc = spentcoins.GetAndChange(input.PrevHash, SpentCoinState(input.PrevHash, height, [] ))
                             sc.Items.append( SpentCoinItem( input.PrevIndex, block.Index))
 
-                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes())
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex]._ScriptHash)
                         assetid = prevTx.outputs[input.PrevIndex].AssetId
                         acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
