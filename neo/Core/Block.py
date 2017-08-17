@@ -57,16 +57,6 @@ class Block(BlockBase, InventoryMixin):
         if build_root:
             self.RebuildMerkleRoot()
 
-    """
-        'PrevHash' : self.PrevHash,
-        'MerkleRoot' : self.MerkleRoot,
-        'Timestamp' : self.Timestamp,
-        'Index' : self.Index,
-        'ConsensusData' : self.ConsensusData,
-        'NextConsensus' : self.NextConsensus,
-        'Script' : self.Script,
-
-    """
 
     def Header(self):
         if not self.__header:
@@ -127,8 +117,7 @@ class Block(BlockBase, InventoryMixin):
                 self.__log.debug("BLOCK  %s " % self.Index)
 
 
-
-        if MerkleTree.ComputeRoot( [tx.HashToByteString() for tx in self.Transactions]) != self.MerkleRoot:
+        if MerkleTree.ComputeRoot( [tx.Hash for tx in self.Transactions]) != self.MerkleRoot:
             raise Exception("Merkle Root Mismatch")
 
 
@@ -142,7 +131,7 @@ class Block(BlockBase, InventoryMixin):
 
         if other is None: return False
         if other is self: return True
-        return self.Hash() == other.Hash()
+        return self.Hash == other.Hash
 
 
 
@@ -180,7 +169,7 @@ class Block(BlockBase, InventoryMixin):
     def RebuildMerkleRoot(self):
         self.__log.debug("Rebuilding merlke root!")
         if self.Transactions is not None and len(self.Transactions) > 0:
-            self.MerkleRoot = MerkleTree.ComputeRoot([tx.HashToByteString() for tx in self.Transactions])
+            self.MerkleRoot = MerkleTree.ComputeRoot([tx.Hash for tx in self.Transactions])
 
     # < summary >
     # 序列化

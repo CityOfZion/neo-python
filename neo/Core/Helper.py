@@ -2,6 +2,7 @@
 from neo.Cryptography.Crypto import *
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.UInt160 import UInt160
 import pickle
 
 class Helper(object):
@@ -59,7 +60,7 @@ class Helper(object):
 #        h160bytes.reverse()
 #        out = bytes(h160bytes.hex(), encoding='utf-8')
 #        return out
-        return rawhashstr
+        return UInt160(data=rawhashstr)
 
     @staticmethod
     def VerifyScripts(verifiable):

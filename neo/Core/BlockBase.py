@@ -10,6 +10,8 @@ from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream
 import pprint
 from autologging import logged
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 @logged
 class BlockBase(VerifiableMixin):
@@ -21,11 +23,11 @@ class BlockBase(VerifiableMixin):
     #  <summary>
     #  前一个区块的散列值
     #  </summary>
-    PrevHash= 0
+    PrevHash= 0 #UInt256
     #  <summary>
     #  该区块中所有交易的Merkle树的根
     #  </summary>
-    MerkleRoot = 0
+    MerkleRoot = 0 #UInt256
     #  <summary>
     #  时间戳
     #  </summary>
@@ -39,7 +41,7 @@ class BlockBase(VerifiableMixin):
     #  <summary>
     #  下一个区块的记账合约的散列值
     #  </summary>
-    NextConsensus = None
+    NextConsensus = None #UInt160
     #  <summary>
     #  用于验证该区块的脚本
     #  </summary>
@@ -50,17 +52,16 @@ class BlockBase(VerifiableMixin):
     __htbs = None
 
 
+    @property
     def Hash(self):
         if not self.__hash:
             hashdata = self.RawData()
             ba = bytearray(binascii.unhexlify(hashdata))
-
             hash = bin_dbl_sha256(ba)
-            hashhex = binascii.hexlify(hash)
-
-            self.__hash = hashhex
+            self.__hash = UInt256(data=hash)
 
         return self.__hash
+
 
     def ToArray(self):
         return Helper.ToArray(self)
@@ -68,18 +69,6 @@ class BlockBase(VerifiableMixin):
     def RawData(self):
         return Helper.GetHashData(self)
 
-    def HashToString(self):
-
-        uint256bytes = bytearray(binascii.unhexlify(self.Hash()))
-        uint256bytes.reverse()
-        out = uint256bytes.hex()
-
-        return out
-
-    def HashToByteString(self):
-        if not self.__htbs:
-            self.__htbs = bytes(self.HashToString(), encoding='utf-8')
-        return self.__htbs
 
     def Size(self):
 
@@ -107,8 +96,8 @@ class BlockBase(VerifiableMixin):
 
     def DeserializeUnsigned(self, reader):
         self.Version = reader.ReadUInt32()
-        self.PrevHash = binascii.hexlify( reader.ReadUInt256())
-        self.MerkleRoot = binascii.hexlify( reader.ReadUInt256())
+        self.PrevHash = reader.ReadUInt256()
+        self.MerkleRoot = reader.ReadUInt256()
         self.Timestamp = reader.ReadUInt32()
         self.Index = reader.ReadUInt32()
         self.ConsensusData =  reader.ReadUInt64()
@@ -155,30 +144,26 @@ class BlockBase(VerifiableMixin):
         self.Script.Serialize(writer)
 
 
-    def NextConsensusToWalletAddress(self):
-
-        return hash_to_wallet_address(self.NextConsensus)
-
 
     def ToJson(self):
         json = {}
-        json["hash"] = self.HashToString()
+        json["hash"] = self.Hash.ToString()
 
 #        json["size"] = self.Size()
         json["version"] = self.Version
-        json["previousblockhash"] = self.PrevHash.decode('utf-8')
-        json["merkleroot"] = self.MerkleRoot.decode('utf-8')
+        json["previousblockhash"] = self.PrevHash.ToString()
+        json["merkleroot"] = self.MerkleRoot.ToString()
         json["time"] = self.Timestamp
         json["index"] = self.Index
-        json['next_consensus'] = binascii.hexlify(self.NextConsensus).decode('utf-8')
+        json['next_consensus'] = self.NextConsensus.ToString()
         json["consensus data"] = self.ConsensusData
         json["script"] = '' if not self.Script else self.Script.ToJson()
         return json
 
     def Verify(self):
-        if self.Hash() == GetGenesis().Hash(): return True
+        if self.Hash == GetGenesis().Hash: return True
 
-        if GetBlockchain().ContainsBlock(self.Hash()): return True
+        if GetBlockchain().ContainsBlock(self.Hash): return True
 
         prev_header = GetBlockchain().GetHeader(self.PrevHash)
 

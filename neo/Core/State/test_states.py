@@ -16,16 +16,14 @@ class StateTestCase(unittest.TestCase):
 
     def test_spentcoin(self):
 
-        pass
 
         #the key and buffer from above are possibly not correct
         #should log a sample value from the C# version and see what an example buffer would be
 
-#        input = binascii.unhexlify(self.buffer)
+        input = binascii.unhexlify(self.buffer)
 
-#        ms = MemoryStream(input)
-#        reader = BinaryReader(ms)
+        ms = MemoryStream(input)
+        reader = BinaryReader(ms)
 
-#        SpentCoinState.DeserializeFromDB(input)
-
+        spentcoin = SpentCoinState.DeserializeFromDB(input)
 

@@ -10,6 +10,8 @@ Usage:
 import struct
 import binascii
 from autologging import logged
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 def swap32(i):
     return struct.unpack("<I", struct.pack(">I", i))[0]
@@ -86,23 +88,17 @@ class BinaryWriter(object):
         return self.pack('%sQ' % endian, value)
 
     def WriteUInt160(self, value, endian="<"):
-        if type(value) is int:
-            value = convert_to_uint160(value)
-        return self.WriteBytes(value)
+        if type(value) is UInt160:
+            value.Serialize(self)
+        else:
+            raise Exception("value must be UInt160 instance ")
 
-    def WriteUInt256(self, value, endian="<", destination_hash=True):
-        if type(value) is int:
-            value = convert_to_uint256(value)
-        elif type(value) is bytearray:
-            return self.WriteBytes(value)
-
-        if destination_hash:
-            ba = bytearray(binascii.unhexlify(value))
-            ba.reverse()
-            return self.WriteBytes(ba)
-
-        return self.WriteBytes(value)
-#        return self.pack('%sQ' % endian, value)
+    def WriteUInt256(self, value):
+        if type(value) is UInt256:
+            value.Serialize(self)
+        else:
+            raise Exception("Cannot write value that is not UInt256")
+    #        return self.pack('%sQ' % endian, value)
 
 
     def WriteVarInt(self, value, endian="<"):
@@ -161,7 +157,9 @@ class BinaryWriter(object):
             self.WriteByte(0)
         else:
             self.WriteVarInt(len(array))
+            print("Writing items %s " % len(array))
             for item in array:
+                print("serializing item %s " % item)
                 item.Serialize(self)
 
     def Write2000256List(self, arr):

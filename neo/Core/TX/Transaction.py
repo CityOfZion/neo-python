@@ -27,6 +27,8 @@ import sys
 import json
 from neo.Core.Witness import Witness
 from autologging import logged
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 class TransactionResult():
     AssetId=None
@@ -73,20 +75,22 @@ class TransactionOutput(SerializableMixin):
         return self.ScriptHash().encode('utf-8')
 
     def Serialize(self, writer):
+        print("trying to serialize t output")
         writer.WriteUInt256(self.AssetId)
         writer.WriteFixed8(self.Value)
         writer.WriteUInt160(self._ScriptHash)
+        print("finished serializing t oput!")
 
     def Deserialize(self, reader):
-        self.AssetId = binascii.hexlify( reader.ReadUInt256())
+        self.AssetId = reader.ReadUInt256()
         self.Value = reader.ReadFixed8()
         self._ScriptHash = reader.ReadUInt160()
 
     def ToJson(self):
         return {
-            'AssetId': self.AssetId.decode('utf-8'),
+            'AssetId': self.AssetId.ToString(),
             'Value': self.Value.value / Fixed8.D,
-            'ScriptHash': self.ScriptHash()
+            'ScriptHash': Crypto.ToAddress(self._ScriptHash)
         }
 
 @logged
@@ -106,7 +110,7 @@ class TransactionInput(SerializableMixin):
         writer.WriteUInt16(self.PrevIndex)
 
     def Deserialize(self, reader):
-        self.PrevHash = binascii.hexlify( reader.ReadUInt256())
+        self.PrevHash = reader.ReadUInt256()
         self.PrevIndex = reader.ReadUInt16()
 
     def ToString(self):
@@ -115,7 +119,7 @@ class TransactionInput(SerializableMixin):
 
     def ToJson(self):
         return {
-            'PrevHash': self.PrevHash.encode('utf-8'),
+            'PrevHash': self.PrevHash.ToString(),
             'PrevIndex': self.PrevIndex
         }
 
@@ -158,26 +162,13 @@ class Transaction(Inventory, InventoryMixin):
         self.scripts = scripts
         self.InventoryType = 0x01  # InventoryType TX 0x01
 
+    @property
     def Hash(self):
         if not self.__hash:
             ba = bytearray(binascii.unhexlify(self.GetHashData()))
             hash = Crypto.Hash256(ba)
-            hashhex = binascii.hexlify(hash)
-            self.__hash = hashhex
+            self.__hash = UInt256(data=hash)
         return self.__hash
-
-
-    def HashToString(self):
-        uint256bytes = bytearray(binascii.unhexlify(self.Hash()))
-        uint256bytes.reverse()
-        out = uint256bytes.hex()
-
-        return out
-
-    def HashToByteString(self):
-        if not self.__htbs:
-            self.__htbs = bytes(self.HashToString(), encoding='utf-8')
-        return self.__htbs
 
 
     def GetHashData(self):
@@ -286,13 +277,15 @@ class Transaction(Inventory, InventoryMixin):
 
         tx.scripts = []
         byt = reader.ReadVarInt()
+        print("will deserialize scripts %s " % byt)
         if byt > 0:
             for i in range(0, byt):
                 witness = Witness()
                 witness.Deserialize(reader)
-                tx.scripts = [witness]
 
+                tx.scripts.append(witness)
 
+        print("deserialized tx %s " % tx.scripts)
         tx.OnDeserialized()
 
         return tx
@@ -308,12 +301,14 @@ class Transaction(Inventory, InventoryMixin):
         self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute')
         self.inputs = reader.ReadSerializableArray( 'neo.Core.CoinReference.CoinReference')
         self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
-
+        print("attributes %s " % self.Attributes)
+        print("inputs %s " % self.inputs)
+        print("outputs %s " % self.outputs)
 
     def Equals(self, other):
         if other is None or other is not self:
             return False
-        return self.Hash() == other.Hash()
+        return self.Hash == other.Hash
 
     def ToArray(self):
         return Helper.ToArray(self)
@@ -386,6 +381,7 @@ class Transaction(Inventory, InventoryMixin):
 
     def Serialize(self, writer):
         self.SerializeUnsigned(writer)
+        print("finished serializing!! now write scripts! %s " % self.scripts)
         writer.WriteSerializableArray(self.scripts)
 
     def SerializeUnsigned(self, writer):
@@ -407,7 +403,7 @@ class Transaction(Inventory, InventoryMixin):
 
     def ToJson(self):
         jsn = {}
-        jsn["txid"] = self.HashToString()
+        jsn["txid"] = self.Hash.ToString()
         jsn["type"] = self.Type if type(self.Type) is int else int.from_bytes( self.Type, 'little')
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]

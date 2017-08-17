@@ -13,6 +13,7 @@ from neo.Core.AssetType import AssetType
 from neo.Cryptography.ECCurve import ECDSA
 from autologging import logged
 from neo.Cryptography.Helper import hash_to_wallet_address
+from neo.Cryptography.Crypto import Crypto
 
 @logged
 class RegisterTransaction(Transaction):
@@ -36,7 +37,15 @@ In English:
          # 3. For point coupons, you can use any pattern;
 """
 
-    def __init__(self, inputs=[], outputs=[], assettype=AssetType.AntShare, assetname='', amount=Fixed8(0), precision=0, owner=None, admin=None):
+    def __init__(self, inputs=[],
+                        outputs=[],
+                        assettype=AssetType.GoverningToken,
+                        assetname='',
+                        amount=Fixed8(0),
+                        precision=0,
+                        owner=None,
+                        admin=None):
+
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.Type = TransactionType.RegisterTransaction  # 0x40
         self.AssetType = assettype
@@ -64,8 +73,6 @@ In English:
         self.Name = reader.ReadVarString()
         self.Amount = reader.ReadFixed8()
         self.Precision = reader.ReadByte()
-
-
         self.Owner = reader.ReadBytes(33)
 #        self.Owner = ecdsa.G
         self.Admin =reader.ReadUInt160()
@@ -99,7 +106,7 @@ In English:
             'amount': self.Amount.value,
             'precision': self.Precision if type(self.Precision) is int else self.Precision.decode('utf-8'),
             'owner': bytearray(self.Owner).hex(),
-            'admin': hash_to_wallet_address(self.Admin)
+            'admin': Crypto.ToAddress(self.Admin)
         }
         jsn['asset'] = asset
 

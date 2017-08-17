@@ -21,6 +21,8 @@ from events import Events
 from neo.Cryptography.ECCurve import ECDSA
 import pytz
 import traceback
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 ### not sure of the origin of these
 Issuer = ECDSA.decode_secp256r1( '030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
@@ -64,8 +66,8 @@ class Blockchain(object):
     def SystemShare():
         amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL )
         owner = b'\x00'
-        admin = Crypto.Hash160(PUSHT)
-        return RegisterTransaction([],[], AssetType.AntShare,
+        admin = Crypto.ToScriptHash(PUSHT)
+        return RegisterTransaction([],[], AssetType.GoverningToken,
                                  "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
                                  amount,0, owner, admin)
 
@@ -75,9 +77,9 @@ class Blockchain(object):
 
         owner = b'\x00'
         precision=8
-        admin = Crypto.Hash160(PUSHF)
+        admin = Crypto.ToScriptHash(PUSHF)
 
-        return RegisterTransaction([],[], AssetType.AntCoin,
+        return RegisterTransaction([],[], AssetType.UtilityToken,
                                          "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
                                          amount,precision,owner, admin)
 
@@ -85,7 +87,7 @@ class Blockchain(object):
     def GenesisBlock():
 
 
-        prev_hash = bytearray(32)
+        prev_hash = UInt256(data=bytearray(32))
         timestamp = int(datetime(2016, 7, 15, 15, 8, 21, tzinfo= pytz.utc ).timestamp())
         index = 0
         consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
@@ -96,9 +98,9 @@ class Blockchain(object):
         mt.Nonce = 2083236893
 
         output = TransactionOutput(
-            Blockchain.SystemShare().HashToString(),
+            Blockchain.SystemShare().Hash,
             Blockchain.SystemShare().Amount,
-            Helper.RawBytesToScriptHash(Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators()))
+            Crypto.ToScriptHash(Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators()))
         )
 
         it = IssueTransaction([],[output],[], [script])
@@ -254,7 +256,7 @@ class Blockchain(object):
     def GetConsensusAddress(validators):
         vlen = len(validators)
         script = Contract.CreateMultiSigRedeemScript(vlen - int((vlen - 1)/3) , validators)
-        return Helper.RawBytesToScriptHash(script)
+        return Crypto.ToScriptHash(script)
 
     def GetValidators(self, others):
 

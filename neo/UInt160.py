@@ -1,13 +1,16 @@
+from neo.UIntBase import UIntBase
+
+class UInt160(UIntBase):
 
 
-class UInt160(int):
 
 
-    _data = bytearray()
+    def __init__(self, data=None):
+
+        super(UInt160, self).__init__(num_bytes=20, data=data)
 
 
-    def __init__(self, x=None, base=10, data=None):
-        super(UInt160, self).__init__(x, base)
 
-        self._data = data
+
+
 

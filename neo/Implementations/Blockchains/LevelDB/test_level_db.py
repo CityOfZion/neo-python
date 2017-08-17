@@ -36,12 +36,12 @@ class LevelDBTest(unittest.TestCase):
 
     def test__initial_state(self):
 
-        self.assertEqual(self._blockchain.CurrentBlockHash(), self._genesis.HashToByteString())
+        self.assertEqual(self._blockchain.CurrentBlockHash(), self._genesis.Hash.ToBytes())
 
 
-        self.assertEqual(self._blockchain.CurrentHeaderHash(), self._genesis.Header().HashToByteString())
+        self.assertEqual(self._blockchain.CurrentHeaderHash(), self._genesis.Header().Hash.ToBytes())
 
-        self.assertEqual(self._blockchain.CurrentHeaderHash(), self._genesis.Header().HashToByteString())
+        self.assertEqual(self._blockchain.CurrentHeaderHash(), self._genesis.Header().Hash.ToBytes())
 
         self.assertEqual(self._blockchain.HeaderHeight(), 0)
 
@@ -56,7 +56,7 @@ class LevelDBTest(unittest.TestCase):
 
         block_one = Helper.AsSerializableWithType(hexdata,'neo.Core.Block.Block')
         header = block_one.Header()
-        hHash = header.HashToByteString()
+        hHash = header.Hash.ToBytes()
 
         if Settings.MAGIC == 1953787457:
             self.assertEqual(self._blockchain.CurrentHeaderHash(), b'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef')

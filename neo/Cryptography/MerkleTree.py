@@ -4,6 +4,8 @@ from neo.Cryptography.Crypto import *
 from bitarray import bitarray
 import sys
 from autologging import logged
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 @logged
 class MerkleTreeNode(object):
@@ -65,14 +67,8 @@ class MerkleTree(object):
                 leaves[i * 2 + 1].Parent = node
 
 
-            lcarray = bytearray(binascii.unhexlify( node.LeftChild.Hash))
-            lcarray.reverse()
-            rcarray = bytearray(binascii.unhexlify(node.RightChild.Hash))
-            rcarray.reverse()
-            hasharray= lcarray + rcarray
-            h = bytearray(Crypto.Hash256(hasharray))
-            h.reverse()
-            node.Hash =  binascii.hexlify(h)
+            hasharray= bytearray(node.LeftChild.Hash.ToArray() + node.RightChild.Hash.ToArray())
+            node.Hash = UInt256( data = Crypto.Hash256(hasharray))
 
         return MerkleTree.__Build(parents)
 

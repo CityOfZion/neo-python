@@ -105,7 +105,7 @@ class LevelDBBlockchain(Blockchain):
 #        self._memTracker = tracker.SummaryTracker()
 
         self._header_index = []
-        self._header_index.append(Blockchain.GenesisBlock().Header().HashToByteString())
+        self._header_index.append(Blockchain.GenesisBlock().Header().Hash.ToBytes())
 
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)

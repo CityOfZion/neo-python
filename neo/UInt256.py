@@ -1,13 +1,12 @@
+from neo.UIntBase import UIntBase
+
+class UInt256(UIntBase):
 
 
-class UInt256(int):
+
+    def __init__(self, data=None):
+
+        super(UInt256, self).__init__(num_bytes=32, data=data)
 
 
-    _data = bytearray()
-
-
-    def __init__(self, x=None, base=10, data=None):
-        super(UInt256, self).__init__(x, base)
-
-        self._data = data
 

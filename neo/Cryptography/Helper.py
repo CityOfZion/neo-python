@@ -246,6 +246,11 @@ def bytes_to_hex_string(b):
         return b
     return ''.join('{:02x}'.format(y) for y in b)
 
+def bin_hash160Bytes(bts):
+    intermed = hashlib.sha256(bts).digest()
+    return hashlib.new('ripemd160', intermed).digest()
+
+
 def bin_hash160(string):
     intermed = hashlib.sha256(string).digest()
     return hashlib.new('ripemd160', intermed).hexdigest()

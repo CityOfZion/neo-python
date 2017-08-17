@@ -72,6 +72,7 @@ class TransactionAttribute(Inventory, SerializableMixin):
     def Deserialize(self, reader):
         usage = reader.ReadByte()
         self.Usage = usage
+        print("USAGE %s " % usage)
         self.__log.debug("attribute usage: %s " % usage)
         if usage == TransactionAttributeUsage.ContractHash or usage==TransactionAttributeUsage.Vote or \
             (usage >= TransactionAttributeUsage.Hash1 and usage <= TransactionAttributeUsage.Hash15):
@@ -92,6 +93,7 @@ class TransactionAttribute(Inventory, SerializableMixin):
         else:
             self.__log.debug("format error!!!")
 
+        print("DATA %s " % self.Data.decode('utf-8'))
 
     def Serialize(self, writer):
         writer.WriteByte(self.Usage)
