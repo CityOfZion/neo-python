@@ -80,9 +80,8 @@ class GenesisBlockTestCase(unittest.TestCase):
 
         if Settings.MAGIC == 1953787457:
             self.assertEqual(script, self.contractraw)
-#            out = Helper.RawBytesToScriptHash(script)
             out = Crypto.ToScriptHash(script)
-            print("out %s " % out)
+
             output = TransactionOutput(
                 share_tx.Hash,
                 Blockchain.SystemShare().Amount,
@@ -92,7 +91,6 @@ class GenesisBlockTestCase(unittest.TestCase):
             script = Witness( bytearray(0), bytearray(PUSHT))
 
             issue_tx = IssueTransaction([],[output],[], [script])
-            print("issue tx raw %s " % issue_tx.GetHashData())
             self.assertEqual(issue_tx.GetHashData(), self.issuetx_rraw)
             self.assertEqual(issue_tx.Hash.ToBytes(), self.gen_issue_tx_id)
 

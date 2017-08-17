@@ -49,9 +49,9 @@ class DBCollection():
 
     def Commit(self, wb, destroy=True):
         for item in self.Changed:
-            wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
+            wb.put( self.Prefix + item.ToBytes(), self.Collection[item].ToByteArray() )
         for item in self.Deleted:
-            wb.delete(self.Prefix + item)
+            wb.delete(self.Prefix + item.ToBytes())
         if destroy:
             self.Destroy()
         else:

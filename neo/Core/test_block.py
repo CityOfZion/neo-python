@@ -167,7 +167,7 @@ class BlocksTestCase(unittest.TestCase):
     t992h = b'bcfc016b33f6abc1f1109878f6d69a8aaf42b9ac09c5793507afbbdccdb8f68f'
     t992m = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'
     def test_2992(self):
-        return
+
         hexdata = binascii.unhexlify(self.t992)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')

@@ -121,18 +121,22 @@ class Blockchain(object):
         return Blockchain.__instance
 
 
+    @property
     def CurrentBlockHash(self):
         # abstract
         pass
 
+    @property
     def CurrentHeaderHash(self):
         # abstract
         pass
 
+    @property
     def HeaderHeight(self):
         # abstract
         pass
 
+    @property
     def Height(self):
         # abstract
         pass
@@ -169,7 +173,7 @@ class Blockchain(object):
 
             for claim in to_be_checked:
 
-                if claim.PrevIndex >= len(tx.Outputs) or tx.Outputs[claim.PrevIndex].AssetId == Blockchain.SystemShare().Hash():
+                if claim.PrevIndex >= len(tx.Outputs) or tx.Outputs[claim.PrevIndex].AssetId == Blockchain.SystemShare().Hash:
                     raise Exception('Invalid claim')
 
 

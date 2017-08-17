@@ -118,13 +118,13 @@ class NodeLeader():
 
 #        self.__log.debug("Node Leader received inventory %s " % inventory)
 
-        if inventory.HashToByteString() in self._MissedBlocks:
-            self._MissedBlocks.remove(inventory.HashToByteString())
+        if inventory.Hash in self._MissedBlocks:
+            self._MissedBlocks.remove(inventory.Hash)
 
         if inventory is MinerTransaction: return False
 
         # lock known hashes
-        #        if inventory.Hash() in self._known_hashes: return False
+        #        if inventory.Hash in self._known_hashes: return False
         # endlock
 
         if type(inventory) is Block:

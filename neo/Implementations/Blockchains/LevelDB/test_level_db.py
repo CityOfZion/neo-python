@@ -36,16 +36,16 @@ class LevelDBTest(unittest.TestCase):
 
     def test__initial_state(self):
 
-        self.assertEqual(self._blockchain.CurrentBlockHash(), self._genesis.Hash.ToBytes())
+        self.assertEqual(self._blockchain.CurrentBlockHash.ToBytes(), self._genesis.Hash.ToBytes())
 
 
-        self.assertEqual(self._blockchain.CurrentHeaderHash(), self._genesis.Header().Hash.ToBytes())
+        self.assertEqual(self._blockchain.CurrentHeaderHash.ToBytes(), self._genesis.Header.Hash.ToBytes())
 
-        self.assertEqual(self._blockchain.CurrentHeaderHash(), self._genesis.Header().Hash.ToBytes())
+        self.assertEqual(self._blockchain.CurrentHeaderHash.ToBytes(), self._genesis.Header.Hash.ToBytes())
 
-        self.assertEqual(self._blockchain.HeaderHeight(), 0)
+        self.assertEqual(self._blockchain.HeaderHeight, 0)
 
-        self.assertEqual(self._blockchain.Height(), 0)
+        self.assertEqual(self._blockchain.Height, 0)
 
 
 
@@ -55,35 +55,34 @@ class LevelDBTest(unittest.TestCase):
         hexdata = binascii.unhexlify(self.block_one_raw)
 
         block_one = Helper.AsSerializableWithType(hexdata,'neo.Core.Block.Block')
-        header = block_one.Header()
-        hHash = header.Hash.ToBytes()
+        header = block_one.Header
 
         if Settings.MAGIC == 1953787457:
-            self.assertEqual(self._blockchain.CurrentHeaderHash(), b'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef')
+            self.assertEqual(self._blockchain.CurrentHeaderHash.ToBytes(), b'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef')
         else:
-            self.assertEqual(self._blockchain.CurrentHeaderHash(), b'd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf')
+            self.assertEqual(self._blockchain.CurrentHeaderHash.ToBytes(), b'd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf')
 
-        self.assertEqual(self._blockchain.HeaderHeight(), 0)
+        self.assertEqual(self._blockchain.HeaderHeight, 0)
 
         #add it to leveldb
         self._blockchain.AddHeader( header )
-        self.assertEqual(self._blockchain.HeaderHeight(), 1)
+        self.assertEqual(self._blockchain.HeaderHeight, 1)
 
         #now retrieve it
-#        block_one_again = self._blockchain.GetHeader(hHash)
+        block_one_again = self._blockchain.GetHeader(header.Hash)
 
-#        self.assertEqual(type(block_one_again), Header)
-#        self.assertEqual(block_one_again.HashToByteString(), self.block_one_hash)
+        self.assertEqual(type(block_one_again), Header)
+        self.assertEqual(block_one_again.Hash.ToBytes(), self.block_one_hash)
         #check to see if the header hash in correct
-#        self.assertEqual(block_one_again.HashToByteString(), self._blockchain.CurrentHeaderHash())
+        self.assertEqual(block_one_again.Hash.ToBytes(), self._blockchain.CurrentHeaderHash.ToBytes())
 
         #now try adding the same block again and see if the height changes
 #        self._blockchain.AddHeader(header)
-#        self.assertEqual(self._blockchain.HeaderHeight(), 1)
+#        self.assertEqual(self._blockchain.HeaderHeight, 1)
 
 
         #current block height should still be zero
-#        self.assertEqual(self._blockchain.Height(), 0)
+#        self.assertEqual(self._blockchain.Height, 0)
 
 
         #now test adding the second block
@@ -91,7 +90,7 @@ class LevelDBTest(unittest.TestCase):
 #        self._blockchain.Persist(block_one)
 
         #now the block height should be 1
-#        self.assertEqual(self._blockchain.Height(), 1)
+#        self.assertEqual(self._blockchain.Height, 1)
 
 
         #test contains block functions

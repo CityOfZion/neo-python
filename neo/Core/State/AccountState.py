@@ -58,7 +58,7 @@ class AccountState(StateBase):
         num_balances = reader.ReadVarInt()
         self.Balances = {}
         for i in range(0, num_balances):
-            assetid = binascii.hexlify( reader.ReadUInt256())
+            assetid =reader.ReadUInt256()
             amount = reader.ReadFixed8()
             self.Balances[assetid] = amount
 

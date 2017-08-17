@@ -221,7 +221,7 @@ class StateReader(InteropService):
         if Blockchain.Default() is None:
             engine.EvaluationStack.Push(0)
         else:
-            engine.EvaluationStack.Push( Blockchain.Default().Height())
+            engine.EvaluationStack.Push( Blockchain.Default().Height)
 
         return True
 
@@ -241,7 +241,7 @@ class StateReader(InteropService):
 
             elif height == 0:
 
-                header = Blockchain.GenesisBlock().Header()
+                header = Blockchain.GenesisBlock().Header
 
 
         elif len(data) == 32:
@@ -252,9 +252,9 @@ class StateReader(InteropService):
 
                 header = Blockchain.Default().GetHeaderBy(height_or_hash=hash)
 
-            elif hash == Blockchain.GenesisBlock().Hash():
+            elif hash == Blockchain.GenesisBlock().Hash:
 
-                header = Blockchain.GenesisBlock().Header()
+                header = Blockchain.GenesisBlock().Header
 
 
         engine.EvaluationStack.PushT( StackItem.FromInterface(header))
@@ -287,9 +287,9 @@ class StateReader(InteropService):
 
                 block = Blockchain.Default().GetBlock(height_or_hash=hash)
 
-            elif hash == Blockchain.GenesisBlock().Hash():
+            elif hash == Blockchain.GenesisBlock().Hash:
 
-                block = Blockchain.GenesisBlock().Header()
+                block = Blockchain.GenesisBlock().Header
 
 
         engine.EvaluationStack.PushT( StackItem.FromInterface(block))
@@ -349,7 +349,7 @@ class StateReader(InteropService):
         header = engine.EvaluationStack.Pop().GetInterface('neo.Core.BlockBase.BlockBase')
         if header is None:
             return False
-        engine.EvaluationStack.Push(header.Hash().ToArray())
+        engine.EvaluationStack.Push(header.Hash.ToArray())
         return True
 
 

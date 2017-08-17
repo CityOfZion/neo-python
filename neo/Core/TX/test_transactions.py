@@ -153,7 +153,7 @@ class TransactionTestCase(unittest.TestCase):
 
         reader = BinaryReader(ms)
         tx = Transaction.DeserializeFrom(reader)
-        print("HASH DATA %s  " % tx.GetHashData())
+
         self.assertEqual(tx.ToArray(), self.cr)
         self.assertEqual(tx.Hash.ToBytes(), self.crid)
 

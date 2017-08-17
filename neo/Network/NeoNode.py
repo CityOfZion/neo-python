@@ -192,7 +192,7 @@ class NeoNode(Protocol):
 
     def AskForMoreHeaders(self):
         self.Log("asking for more headers...")
-        get_headers_message = Message("getheaders", GetBlocksPayload(BC.Default().CurrentHeaderHash()))
+        get_headers_message = Message("getheaders", GetBlocksPayload(BC.Default().CurrentHeaderHash))
         self.SendSerializedMessage(get_headers_message)
 
     def AskForMoreBlocks(self):
@@ -287,9 +287,9 @@ class NeoNode(Protocol):
 
         hashes = []
 
-        hashstart = BC.Default().Height() + 1
+        hashstart = BC.Default().Height + 1
         self.Log("will ask for hash start %s " % hashstart)
-        while hashstart < BC.Default().HeaderHeight() and len(hashes) < self.leader.BREQPART:
+        while hashstart < BC.Default().HeaderHeight and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
             if not hash in BC.Default().BlockRequests() and not hash in self.myblockrequests:
                 BC.Default().BlockRequests().append(hash)
@@ -315,7 +315,7 @@ class NeoNode(Protocol):
 
         BC.Default().AddHeaders(inventory.Headers)
         del inventory
-        if BC.Default().HeaderHeight() < self.Version.StartHeight:
+        if BC.Default().HeaderHeight < self.Version.StartHeight:
             self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):
@@ -327,7 +327,7 @@ class NeoNode(Protocol):
 
 #        self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
 
-        blockhash =  block.HashToByteString()
+        blockhash =  block.Hash
 
         if blockhash in BC.Default().BlockRequests():
             BC.Default().BlockRequests().remove(blockhash)

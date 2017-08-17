@@ -36,7 +36,7 @@ class Header(BlockBase):
 
         if other is None: return False
         if other is self: return True
-        return self.Hash() == other.Hash()
+        return self.Hash == other.Hash
 
     @staticmethod
     def FromTrimmedData(data, index):
@@ -58,7 +58,7 @@ class Header(BlockBase):
         return header
 
     def GetHashCode(self):
-        return self.Hash()
+        return self.Hash
 
 
     def Serialize(self, writer):

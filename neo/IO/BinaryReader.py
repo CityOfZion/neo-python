@@ -111,19 +111,11 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt()
         items = []
-        print("s")
-        print("deserializing %s items of %s " % (length, class_name))
- #       try:
         for i in range(0, length):
             item = klass()
             item.Deserialize(self)
             items.append(item)
-            print("deserialized item %s " % item.ToJson())
         return items
-#        except Exception as e:
-#            self.__log.debug("could not deserialize items for class: %s %s " % (class_name, e))
-
-#        return []
 
     def ReadUInt256(self):
         return UInt256(data=self.ReadBytes(32))

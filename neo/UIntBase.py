@@ -38,7 +38,6 @@ class UIntBase(SerializableMixin):
 
 
     def Serialize(self, writer):
-        print("%s writing val %s %s" % (type(self), self._data, self._data.hex()))
         writer.WriteBytes(self._data)
 
     def Deserialize(self, reader):
@@ -49,10 +48,8 @@ class UIntBase(SerializableMixin):
 
 
     def ToString(self):
-        print("self data %s " % self._data)
         db = bytearray(self._data)
         db.reverse()
-        print("Reversed data %s " % db)
         return db.hex()
 
 
@@ -72,3 +69,6 @@ class UIntBase(SerializableMixin):
         if self._data == other._data:
             return True
 
+
+    def __hash__(self):
+        return int.from_bytes(self._data, 'little')

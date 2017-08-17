@@ -157,22 +157,18 @@ class BinaryWriter(object):
             self.WriteByte(0)
         else:
             self.WriteVarInt(len(array))
-            print("Writing items %s " % len(array))
             for item in array:
-                print("serializing item %s " % item)
                 item.Serialize(self)
 
     def Write2000256List(self, arr):
         for item in arr:
-            self.WriteUInt256(item, "<",True)
+            self.WriteUInt256(item)
 
     def WriteHashes(self, arr):
         length = len(arr)
-        self.WriteUInt8(length)
+        self.WriteVarInt(length)
         for item in arr:
-            ba = bytearray(binascii.unhexlify(item))
-            ba.reverse()
-            self.WriteUInt256(ba,"<",False)
+            self.WriteUInt256(item)
 
 
     def WriteFixed8(self, value):

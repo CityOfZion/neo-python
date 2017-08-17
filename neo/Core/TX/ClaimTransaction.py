@@ -84,7 +84,7 @@ class ClaimTransaction(Transaction):
 
         txResult = None
         for tx in self.GetTransactionResults():
-            if tx.AssetId == Blockchain.SystemCoin().Hash():
+            if tx.AssetId == Blockchain.SystemCoin().Hash:
                 txResult = tx
                 break
 

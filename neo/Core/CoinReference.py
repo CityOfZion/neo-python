@@ -22,7 +22,6 @@ class CoinReference(object):
         self.PrevIndex = reader.ReadUInt16()
 
     def Serialize(self, writer):
-        print("serializing coin reference")
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt16(self.PrevIndex)
 

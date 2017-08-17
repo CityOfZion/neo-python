@@ -58,6 +58,7 @@ class Block(BlockBase, InventoryMixin):
             self.RebuildMerkleRoot()
 
 
+    @property
     def Header(self):
         if not self.__header:
 
@@ -109,13 +110,8 @@ class Block(BlockBase, InventoryMixin):
             raise Exception('Invalid format')
 
         for i in range(0, transaction_length):
-            try:
-                tx = Transaction.DeserializeFrom(reader)
-                self.Transactions.append(tx)
-            except Exception as e:
-                self.__log.debug("could not deserialize tx: %s " % e)
-                self.__log.debug("BLOCK  %s " % self.Index)
-
+            tx = Transaction.DeserializeFrom(reader)
+            self.Transactions.append(tx)
 
         if MerkleTree.ComputeRoot( [tx.Hash for tx in self.Transactions]) != self.MerkleRoot:
             raise Exception("Merkle Root Mismatch")
@@ -161,7 +157,7 @@ class Block(BlockBase, InventoryMixin):
     # < / summary >
     # < returns > 返回区块的HashCode < / returns >
     def GetHashCode(self):
-        return self.Hash()
+        return self.Hash
 
     # < summary >
     # 根据区块中所有交易的Hash生成MerkleRoot
@@ -202,7 +198,7 @@ class Block(BlockBase, InventoryMixin):
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)
-        writer.WriteHashes([tx.HashToByteString() for tx in self.Transactions])
+        writer.WriteHashes([tx.Hash for tx in self.Transactions])
         retVal = ms.ToArray()
         StreamManager.ReleaseStream(ms)
         return retVal
