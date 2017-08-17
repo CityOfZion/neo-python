@@ -32,7 +32,7 @@ import asyncio
 from memory_profiler import profile
 
 from pympler import tracker
-
+import traceback
 
 
 @logged
@@ -60,16 +60,8 @@ class LevelDBBlockchain(Blockchain):
     _missed_count = 0
 
     MissingBlock = events.Events()
+
     Accounts = None
-    UnspentCoins = None
-    SpentCoins = None
-    Contracts = None
-    Assets = None
-    Validators = None
-    Contracts = None
-    Storages = None
-
-
 
 
     def CurrentBlockHash(self):
@@ -123,6 +115,7 @@ class LevelDBBlockchain(Blockchain):
 
 
         version = self._db.get(DBPrefix.SYS_Version)
+
 
 
         sn = self._db.snapshot()
@@ -189,17 +182,9 @@ class LevelDBBlockchain(Blockchain):
             self._db.put(DBPrefix.SYS_Version, self._sysversion )
 
 
-    def GetAccountStateByIndex(self, index):
-        try:
-            num = int(index)
 
-            print("keys %s " % self.Accounts.Collection.keys())
 
-        except Exception as e:
-            print("could not get account state by index! %s " % index)
-        return None
-
-    def GetAccountState(self, script_hash):
+    def GetAccountState(self, script_hash, print_all_accounts=False):
 
         if type(script_hash) is str:
             try:
@@ -208,11 +193,13 @@ class LevelDBBlockchain(Blockchain):
                 print("could not convert argument to bytes :%s " % e)
                 return None
 
-        acct = self.Accounts.TryGet(keyval=script_hash)
+        accounts = self.Accounts
+        acct = accounts.TryGet(keyval=script_hash)
 
         if acct is None:
-            acct = self.GetAccountStateByIndex(script_hash)
-
+            print("Could not find account. Length of accounts %s " % len(accounts.Collection.items()))
+            if print_all_accounts:
+                print("All accounts: %s " % accounts.Collection.keys())
         return acct
 
 
@@ -515,8 +502,8 @@ class LevelDBBlockchain(Blockchain):
 
         sn = self._db.snapshot()
 
-        accounts = self.Accounts
 
+        accounts = self.Accounts
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
@@ -545,7 +532,7 @@ class LevelDBBlockchain(Blockchain):
                         account = accounts.GetAndChange(output.ScriptHashBytes(), AccountState(output.ScriptHashRaw()))
 
                         if account.HasBalance(output.AssetId):
-                            account.AddToBalance(output.AssetId, output.Value.value)
+                            account.AddToBalance(output.AssetId, output.Value)
                         else:
                             account.SetBalanceFor(output.AssetId, output.Value)
 
@@ -571,7 +558,7 @@ class LevelDBBlockchain(Blockchain):
 
                             acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].ScriptHashBytes())
                             assetid = prevTx.outputs[input.PrevIndex].AssetId
-                            acct.AddToBalance( assetid, -1 * prevTx.outputs[input.PrevIndex].Value.value)
+                            acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
                     #do a whole lotta stuff with tx here...
                     if tx.Type == int.from_bytes( TransactionType.RegisterTransaction, 'little'):

@@ -228,7 +228,7 @@ class PromptInterface(object):
         print("account to show %s " % item)
 
         if item is not None:
-            account = Blockchain.Default().GetAccountState(item)
+            account = Blockchain.Default().GetAccountState(item, print_all_accounts=True)
 
             if account is not None:
                 bjson = json.dumps(account.ToJson(), indent=4)

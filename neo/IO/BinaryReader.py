@@ -157,4 +157,4 @@ class BinaryReader(object):
 
     def ReadFixed8(self):
         fval = self.ReadInt64()
-        return Fixed8( int(fval ) )
+        return Fixed8( fval )

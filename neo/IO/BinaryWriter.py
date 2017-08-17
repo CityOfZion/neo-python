@@ -178,4 +178,4 @@ class BinaryWriter(object):
 
 
     def WriteFixed8(self, value):
-        return self.WriteInt64(int(value.value))
+        return self.WriteInt64(value.value)

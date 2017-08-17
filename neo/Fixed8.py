@@ -27,9 +27,43 @@ class Fixed8:
 
     @staticmethod
     def FromDecimal(number):
-        out = number * Fixed8.D
+        out = int(number * Fixed8.D)
         return Fixed8(out)
 
     @staticmethod
     def Satoshi():
         return Fixed8(1)
+
+
+    def __add__(self, other):
+        return Fixed8( self.value + other.value)
+    def __iadd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        return Fixed8( self.value - other.value)
+    def __isub__(self, other):
+        return self.__sub__(other)
+
+    def __mul__(self, other):
+        return Fixed8( self.value * other.value)
+    def __imul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        return Fixed8( int(self.value / other.value))
+    def __itruediv__(self, other):
+        return self.__truediv__(other)
+
+    def __mod__(self, other):
+        return Fixed8( int(self.value % other.value))
+    def __imod__(self, other):
+        return self.__imod__(other)
+
+
+
+    def __pow__(self, power, modulo=None):
+        return Fixed8( pow(self.value, power.value, modulo))
+
+    def __neg__(self):
+        return Fixed8(-1 * self.value)

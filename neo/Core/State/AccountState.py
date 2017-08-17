@@ -76,45 +76,52 @@ class AccountState(StateBase):
         blen = len(self.Balances)
         writer.WriteVarInt(blen)
 
-        for key,value in self.Balances.items():
+        for key,fixed8 in self.Balances.items():
             writer.WriteUInt256(key)
-            writer.WriteFixed8(value)
+            writer.WriteFixed8(fixed8)
 
     def HasBalance(self, assetId):
-        for key, balance in self.Balances.items():
+        for key, fixed8 in self.Balances.items():
             if key == assetId:
                 return True
         return False
 
     def BalanceFor(self, assetId):
-        for key,balance in self.Balances.items():
+        for key,fixed8 in self.Balances.items():
             if key == assetId:
-                return balance
+                return fixed8
         return Fixed8(0)
 
-    def SetBalanceFor(self, assetId, val):
+    def SetBalanceFor(self, assetId, fixed8_val):
         found=False
-        for key,balance in self.Balances.items():
+        for key,val in self.Balances.items():
             if key == assetId:
-                self.Balances[key] = val
+                self.Balances[key] = fixed8_val
                 found = True
 
         if not found:
-            self.Balances[assetId] = val
+            self.Balances[assetId] = fixed8_val
 
-    def AddToBalance(self, assetId, val):
+    def AddToBalance(self, assetId, fixed8_val):
         found = False
         for key, balance in self.Balances.items():
             if key == assetId:
-                newval = balance.value + val
-                self.Balances[assetId] = Fixed8(newval)
+                self.Balances[assetId] = self.Balances[assetId] + fixed8_val
                 found = True
         if not found:
-            self.Balances[assetId] = val
+            self.Balances[assetId] = fixed8_val
+
+    def SubtractFromBalance(self, assetId, fixed8_val):
+        found = False
+        for key, balance in self.Balances.items():
+            if key == assetId:
+                self.Balances[assetId] = self.Balances[assetId] - fixed8_val
+        if not found:
+            self.Balances[assetId] = fixed8_val * Fixed8(-1)
 
     def AllBalancesZeroOrLess(self):
-        for key,value in self.Balances.items():
-            if value.value > 0:
+        for key,fixed8 in self.Balances.items():
+            if fixed8.value > 0:
                 return False
         return True
 
@@ -126,7 +133,7 @@ class AccountState(StateBase):
         json['script_hash'] = addr
         json['frozen'] = self.IsFrozen
         json['votes'] = []
-
+        print("balances %s " % self.Balances.items())
         balances = {}
         for key, value in self.Balances.items():
             balances[key.decode('utf-8')] = value.value
