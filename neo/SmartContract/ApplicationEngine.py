@@ -1,9 +1,10 @@
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.OpCode import *
 from neo.VM import VMState
-
+from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
-
+import traceback
+import sys,os
 
 class ApplicationEngine(ExecutionEngine):
 
@@ -21,19 +22,20 @@ class ApplicationEngine(ExecutionEngine):
 
     def __init__(self, trigger_type, container, table, service, gas, testMode=False):
 
-            self.Trigger = trigger_type
-            self._ScriptContainer = container
-            self._Table = table
-            self._Service = service
-            self.gas_amount = self.gas_free + gas.value
-            self.testMode = testMode
+        super(ApplicationEngine, self).__init__(container=container,crypto=Crypto.Default(), table=table, service=service)
+
+        self.Trigger = trigger_type
+        self.gas_amount = self.gas_free + gas.value
+        self.testMode = testMode
+
+        print("created app engine %s " % self)
 
 
     def CheckArraySize(self):
 
         maxArraySize = 1024
 
-        if self.CurrentContext.GetInstructionPointer() >= len(self.CurrentContext.Script):
+        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             return True
 
         opcode = self.CurrentContext.NextInstruction
@@ -158,7 +160,9 @@ class ApplicationEngine(ExecutionEngine):
                 self.gas_consumed = self.gas_consumed + self.GetPrice() * self.ratio
 
             except Exception as e:
-
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
                 print("exception calculating gas consumed %s " % e)
 
                 return False
@@ -183,7 +187,7 @@ class ApplicationEngine(ExecutionEngine):
         return not self._VMState & VMState.FAULT > 0
 
 
-    def GetGasPrice(self):
+    def GetPrice(self):
 
         if self.CurrentContext.InstructionPointer >= len( self.CurrentContext.Script):
             return 0

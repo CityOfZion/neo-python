@@ -63,16 +63,20 @@ class ContractState(StateBase):
         writer.WriteVarString(self.Email)
         writer.WriteVarString(self.Description)
 
+        print("SErialized contract state: %s " % writer.stream.ToArray())
+
     def ToJson(self):
+
+        codejson = self.Code.ToJson()
 
         return {
 
             'version':self.StateVersion,
-            'code': self.Code.ToJson(),
+            'code': codejson,
             'storage': self.HasStorage,
-            'name': self.Name,
-            'code_version': self.CodeVersion,
-            'author': self.Author,
-            'email': self.Email,
-            'description': self.Description
+            'name': self.Name.decode('utf-8'),
+            'code_version': self.CodeVersion.decode('utf-8'),
+            'author': self.Author.decode('utf-8'),
+            'email': self.Email.decode('utf-8'),
+            'description': self.Description.decode('utf-8')
         }

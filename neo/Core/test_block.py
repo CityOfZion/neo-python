@@ -212,3 +212,5 @@ class BlocksTestCase(unittest.TestCase):
                 vout = bigclaim['vout'][0]
                 self.assertEqual(vout['ScriptHash'], 'AFnRHRQceaUgFQxPTttAQzAZvsjGSNtHCH')
                 self.assertEqual(vout['Value'], 57868.00133972)
+
+

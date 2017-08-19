@@ -145,6 +145,7 @@ class BlockBase(VerifiableMixin):
 
 
 
+
     def ToJson(self):
         json = {}
         json["hash"] = self.Hash.ToString()

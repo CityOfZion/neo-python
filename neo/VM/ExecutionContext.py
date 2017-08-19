@@ -32,7 +32,7 @@ class ExecutionContext():
 
     @property
     def NextInstruction(self):
-        return self.Script[ self.__OpReader.stream.tell()]
+        return self.Script[ self.__OpReader.stream.tell()].to_bytes(1,'little')
 
 
 

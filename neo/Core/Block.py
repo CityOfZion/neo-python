@@ -117,6 +117,10 @@ class Block(BlockBase, InventoryMixin):
             raise Exception("Merkle Root Mismatch")
 
 
+#        if self.Index == 2003:
+#            reader.stream.seek(0)
+#            print("block data %s " % reader.stream.ToArray())
+
     #  < summary >
     #  比较当前区块与指定区块是否相等
     #  < / summary >

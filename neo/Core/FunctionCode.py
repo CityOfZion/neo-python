@@ -3,6 +3,7 @@ from neo.IO.Mixins import SerializableMixin
 import binascii
 from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Helper import hash_to_wallet_address
+from neo.Cryptography.Crypto import Crypto
 
 class FunctionCode(SerializableMixin):
 
@@ -24,8 +25,7 @@ class FunctionCode(SerializableMixin):
 
     def ScriptHash(self):
         if self._scriptHash is None:
-
-            self._scriptHash = hash_to_wallet_address( self.Script )
+            self._scriptHash = Crypto.ToScriptHash(self.Script, unhex=False)
 
         return self._scriptHash
 
@@ -46,8 +46,8 @@ class FunctionCode(SerializableMixin):
 
     def ToJson(self):
         return {
-            'hash': hash_to_wallet_address(self.Script),
-            'script': bytearray(self.Script).hex(),
-            'parameters': bytearray(self.ParameterList).hex(),
+            'hash': self.ScriptHash().ToString(),
+            'script': self.Script.hex(),
+            'parameters': self.ParameterList.hex(),
             'returntype': self.ReturnType if type(self.ReturnType) is int else self.ReturnType.decode('utf-8')
         }

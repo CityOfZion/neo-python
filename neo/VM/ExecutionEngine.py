@@ -64,7 +64,7 @@ class ExecutionEngine():
     def EntryContext(self):
         return self.InvocationStack.Peek( self.InvocationStack.Count - 1)
 
-    def ExecutionEngine(self, container, crypto, table=None, service = None):
+    def __init__(self, container=None, crypto=None, table=None, service = None):
         self._ScriptContainer = container
         self._Crypto = crypto
         self._Table = table
@@ -74,7 +74,7 @@ class ExecutionEngine():
         self._EvaluationStack = RandomAccessStack()
         self._AltStack = RandomAccessStack()
 
-
+        print("created execution engine: %s %s %s " % (self._InvocationStack, self._EvaluationStack, self._Crypto))
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
@@ -748,7 +748,7 @@ class ExecutionEngine():
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             op = RET
         else:
-            op = self.CurrentContext.OpReader.ReadByte()
+            op = self.CurrentContext.OpReader.ReadByte().to_bytes(1,'little')
 
         print("op is %s " % op)
 

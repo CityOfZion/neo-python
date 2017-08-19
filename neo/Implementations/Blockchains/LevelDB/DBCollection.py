@@ -59,7 +59,7 @@ class DBCollection():
                 self.Changed = []
                 self.Deleted = []
         except Exception as e:
-            print("COULD NOT COMMIT: %s %s " % (e, self.ClassRef))
+            print("COULD NOT COMMIT: %s %s %s" % (e, self.ClassRef, item))
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 

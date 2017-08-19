@@ -78,13 +78,9 @@ class AssetState(StateBase):
         reader.ReadByte()
 
         self.Fee = reader.ReadFixed8()
-        print("read fixed 8 %s " % self.Fee)
         self.FeeAddress = reader.ReadUInt160()
-        print("read fee address %s " % self.FeeAddress)
         self.Owner = ECDSA.Deserialize_Secp256r1(reader)
-        print("Read owner %s " % self.Owner)
         self.Admin = reader.ReadUInt160()
-        print("Read admin:%s" % self.Admin)
         self.Issuer = reader.ReadUInt160()
         self.Expiration = reader.ReadUInt32()
         self.IsFrozen = reader.ReadBool()
@@ -101,16 +97,15 @@ class AssetState(StateBase):
 
         writer.WriteFixed8(self.Available)
         writer.WriteByte(self.Precision)
-        writer.WriteByte(self.FeeMode)
+        writer.WriteByte(b'\x00')
         writer.WriteFixed8(self.Fee)
         writer.WriteUInt160(self.FeeAddress)
-
         self.Owner.Serialize(writer)
-
         writer.WriteUInt160(self.Admin)
         writer.WriteUInt160(self.Issuer)
         writer.WriteUInt32(self.Expiration)
         writer.WriteBool(self.IsFrozen)
+
 
     def GetName(self):
         if self.AssetType == AssetType.GoverningToken: return "NEO"

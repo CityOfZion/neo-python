@@ -381,10 +381,9 @@ class EllipticCurve:
 
         def Serialize(self, writer, compress=True):
             if self == self.curve.Infinity:
-                writer.WriteByte(0)
+                writer.WriteByte(b'\x00')
             else:
                 byt = self.encode_point(compressed=compress)
-                print("BYT: %s " % byt)
                 writer.WriteBytes(byt)
 
         def ToString(self):

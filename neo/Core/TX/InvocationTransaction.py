@@ -46,3 +46,10 @@ class InvocationTransaction(Transaction):
 
     def Verify(self, mempool):
         raise NotImplementedError()
+
+
+    def ToJson(self):
+        jsn = super(InvocationTransaction, self).ToJson()
+        jsn['script'] = self.Script.hex()
+        jsn['gas'] = self.Gas.value
+        return jsn
