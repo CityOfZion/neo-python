@@ -59,7 +59,7 @@ class ExecutionContext():
     def Clone(self):
 
         context = ExecutionContext(self._Engine, self.Script, self.PushOnly, self.__Breakpoints)
-        context.SetInstructionPointer(self.GetInstructionPointer())
+        context.SetInstructionPointer(self.InstructionPointer)
 
         return context
 

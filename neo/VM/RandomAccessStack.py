@@ -1,3 +1,4 @@
+from neo.VM.InteropService import StackItem
 
 class RandomAccessStack():
 
@@ -18,6 +19,7 @@ class RandomAccessStack():
         return enumerate(self._list)
 
 
+
     def Insert(self, index, item):
         index = int(index)
 
@@ -35,10 +37,21 @@ class RandomAccessStack():
         return self._list[self.Count - 1 - index]
 
     def Pop(self):
+#        self.PrintList("POPSTACK <- ")
         return self._list.pop(0)
 
     def PushT(self, item):
+
+        if not type(item) is StackItem and not issubclass(type(item), StackItem):
+            try:
+                item = StackItem.New(item)
+            except Exception as e:
+                print("Could not create stack item from %s %s " % (item, type(item)))
+
+        print("PUSHT: %s " % item)
+
         self._list.append(item)
+#        self.PrintList("PUSHSTACK -> ")
 
     def Remove(self, index):
         index = int(index)
@@ -59,4 +72,16 @@ class RandomAccessStack():
         if index < 0 or index > self.Count:
             raise Exception("Invalid list operation")
 
+        if not type(item) is StackItem and not issubclass(type(item), StackItem):
+            try:
+                item = StackItem.New(item)
+            except Exception as e:
+                print("Could not create stack item from %s %s " % (item, type(item)))
+
+        print("SET: %s " % item)
+
         self._list[self.Count - index - 1] = item
+
+
+    def PrintList(self, message=None):
+        print("%s %s" % (message,[str(item) for item in self._list]))

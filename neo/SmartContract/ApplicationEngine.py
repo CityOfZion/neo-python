@@ -3,7 +3,6 @@ from neo.VM.OpCode import *
 from neo.VM import VMState
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
-import traceback
 import sys,os
 
 class ApplicationEngine(ExecutionEngine):
@@ -227,15 +226,14 @@ class ApplicationEngine(ExecutionEngine):
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script) - 3:
             return 1
 
-        len = self.CurrentContext.Script[self.CurrentContext.InstructionPointer + 1]
+        length = self.CurrentContext.Script[self.CurrentContext.InstructionPointer + 1]
 
-        if self.CurrentContext.InstructionPointer > len(self.CurrentContext.Script) - len - 2:
+        if self.CurrentContext.InstructionPointer > len(self.CurrentContext.Script) - length - 2:
             return 1
 
-        strbytes = self.CurrentContext.Script[self.CurrentContext.InstructionPointer+2:len]
-        api_name = strbytes.decode('ascii')
+        strbytes = self.CurrentContext.Script[self.CurrentContext.InstructionPointer+2:length + self.CurrentContext.InstructionPointer + 2]
 
-        print("api name %s " % api_name)
+        api_name = strbytes.decode('utf-8')
 
         api = api_name.replace('Antshares.','Neo.')
 
@@ -293,7 +291,6 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Storage.Delete":
             return 100
 
-        print("Case %s not found " % api)
 
         return 1
 

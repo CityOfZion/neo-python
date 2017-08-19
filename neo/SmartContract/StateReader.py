@@ -220,11 +220,10 @@ class StateReader(InteropService):
         return True
 
     def Blockchain_GetHeight(self, engine):
-
         if Blockchain.Default() is None:
             engine.EvaluationStack.PushT(0)
         else:
-            engine.EvaluationStack.PushT( Blockchain.Default().Height)
+            engine.EvaluationStack.PushT( Blockchain.Default().Height )
 
         return True
 
@@ -267,7 +266,9 @@ class StateReader(InteropService):
     def Blockchain_GetBlock(self, engine):
         data = engine.EvaluationStack.Pop().GetByteArray()
 
+
         block = None
+        print("blockchain get block %s " % data)
 
         if len(data) <= 5:
 

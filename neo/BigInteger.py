@@ -6,7 +6,6 @@ from neo.Cryptography.Helper import base256_encode
 class BigInteger(int):
 
 
-
     def ToByteArray(self):
         return base256_encode(self)
 

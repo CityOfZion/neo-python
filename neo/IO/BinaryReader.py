@@ -14,6 +14,7 @@ from autologging import logged
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
+import sys
 
 @logged
 class BinaryReader(object):
@@ -75,7 +76,7 @@ class BinaryReader(object):
         return self.unpack('%sQ' % endian, 8)
 
 
-    def ReadVarInt(self):
+    def ReadVarInt(self, max=sys.maxsize):
         fb = self.ReadByte()
         if fb is None: return 0
         value = 0
@@ -89,16 +90,16 @@ class BinaryReader(object):
             value = fb
         return int(value)
 
-    def ReadVarBytes(self):
-        length = self.ReadVarInt()
+    def ReadVarBytes(self, max=sys.maxsize):
+        length = self.ReadVarInt(max)
         return self.ReadBytes(length)
 
     def ReadString(self):
         length = self.ReadUInt8()
         return self.unpack(str(length) + 's', length)
 
-    def ReadVarString(self):
-        length = self.ReadVarInt()
+    def ReadVarString(self, max=sys.maxsize):
+        length = self.ReadVarInt(max)
         return self.unpack(str(length) + 's', length)
 
     def ReadFixedString(self, length):

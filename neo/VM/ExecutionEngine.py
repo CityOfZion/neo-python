@@ -7,6 +7,9 @@ from autologging import logged
 from neo.BigInteger import BigInteger
 import hashlib
 from neo.VM.InteropService import Array,Struct
+import sys,os
+from neo.UInt160 import UInt160
+import traceback
 
 @logged
 class ExecutionEngine():
@@ -104,7 +107,7 @@ class ExecutionEngine():
             self._VMState |= VMState.FAULT
 
         if opcode >= PUSHBYTES1 and opcode <= PUSHBYTES75:
-            estack.PushT(context.OpReader.ReadBytes(opcode))
+            estack.PushT(context.OpReader.ReadBytes(int.from_bytes( opcode, 'little')))
         else:
 
             # push values
@@ -130,7 +133,7 @@ class ExecutionEngine():
             elif opcode in [JMP, JMPIF, JMPIFNOT]:
                 offset = context.OpReader.ReadInt16()
                 offset = context.InstructionPointer + offset - 3
-                if offset < 0 or offset > context.Script.Length:
+                if offset < 0 or offset > len(context.Script):
                     self._VMSTATE |= VMState.FAULT
                     return
 
@@ -154,12 +157,11 @@ class ExecutionEngine():
                     self._VMState |= VMState.HALT
 
             elif opcode == APPCALL or opcode == TAILCALL:
-
                 if self._Table == None:
                     self._VMState |= VMState.FAULT
                     return
 
-                script_hash = context.OpReader.ReadBytes(20)
+                script_hash = UInt160(data=context.OpReader.ReadBytes(20)).ToBytes()
                 script = self._Table.GetScript(script_hash)
 
                 if script == None:
@@ -415,7 +417,7 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
+#                print("x2, x1 %s .. %s " % (x2, x1))
                 estack.PushT(x1 - x2)
 
             elif opcode == MUL:
@@ -748,14 +750,21 @@ class ExecutionEngine():
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             op = RET
         else:
-            op = self.CurrentContext.OpReader.ReadByte().to_bytes(1,'little')
+            op = self.CurrentContext.OpReader.ReadByte().to_bytes(1, 'little')
 
-        print("op is %s " % op)
+
+        opname = ToName(op)
+        print("executing op:  %s -> %s" % (op, opname))
 
         try:
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
             print("exception: %s " % e)
+            frame = sys._getframe(2)
+            traceback.print_stack(frame)
             self.__log.error("Exception executing op %s " % e)
             self._VMState |= VMState.FAULT
 

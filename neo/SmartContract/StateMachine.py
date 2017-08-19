@@ -31,6 +31,9 @@ class StateMachine(StateReader):
 
 
     def __init__(self, accounts, validators, assets, contracts, storages, wb):
+
+        super(StateMachine, self).__init__()
+
         self._accounts = accounts
         self._validators = validators
         self._assets = assets

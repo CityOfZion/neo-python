@@ -121,3 +121,36 @@ PICKITEM = b'\xC3'
 SETITEM = b'\xC4'
 NEWARRAY = b'\xC5' # 用作引用類型
 NEWSTRUCT = b'\xC6' # 用作值類型
+
+
+import sys
+import importlib
+import binascii
+
+def ToName(op):
+    items = dir(sys.modules[__name__])
+
+    module = importlib.import_module('neo.VM.OpCode')
+
+    if type(op) is bytes:
+        op = int.from_bytes(op, 'little')
+
+    for item in items:
+        n = getattr(module, item)
+
+        try:
+            nn = int(binascii.hexlify(n))
+
+            if op == nn:
+                return item
+        except Exception as e:
+            pass
+
+        try:
+            nn2 = int.from_bytes(n, 'little')
+            if op == nn2:
+                return item
+        except Exception as e:
+            pass
+
+    return None

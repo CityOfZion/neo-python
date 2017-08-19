@@ -5,7 +5,7 @@ from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import TransactionType
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
-
+import json
 class SmartContractTest(unittest.TestCase):
     LEVELDB_TESTPATH = './fixtures/TestSC'
 
@@ -44,6 +44,9 @@ class SmartContractTest(unittest.TestCase):
                 invtx = tx
 
         self.assertIsNotNone(invtx)
+
+        print("Block: %s " % json.dumps(block.ToJson(), indent=4))
+        print("TX: %s " % json.dumps(invtx.ToJson(), indent=4))
 
         self.assertEqual(len(invtx.Script), 100)
         self.assertEqual(invtx.Script.hex(), self.invtxh)

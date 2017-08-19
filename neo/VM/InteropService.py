@@ -1,8 +1,8 @@
 
 from neo.VM.Mixins import EquatableMixin
 from neo.BigInteger import BigInteger
-
-
+import sys
+import traceback
 
 class StackItem(EquatableMixin):
 
@@ -33,9 +33,13 @@ class StackItem(EquatableMixin):
         raise Exception('Not Supported')
 
 
+    def __str__(self):
+        return 'Stack Item'
+
     @staticmethod
     def FromInterface(value):
         return InteropInterface(value)
+
 
 
     @staticmethod
@@ -48,10 +52,12 @@ class StackItem(EquatableMixin):
             return Integer( BigInteger(value))
         elif typ is bool:
             return Boolean(value)
-        elif typ is bytearray:
+        elif typ is bytearray or typ is bytes:
             return ByteArray(value)
         elif typ is list:
             return Array(value)
+        print("Could not create stack item for vaule %s %s " % (typ, value))
+        return value
 
 class Array(StackItem):
 
@@ -86,6 +92,8 @@ class Array(StackItem):
     def GetByteArray(self):
         raise Exception("Not supported")
 
+    def __str__(self):
+        return "Array: %s" % self._array
 
 
 class Boolean(StackItem):
@@ -117,7 +125,8 @@ class Boolean(StackItem):
     def GetByteArray(self):
         return self.TRUE if self._value else self.FALSE
 
-
+    def __str__(self):
+        return "Boolean: %s" % self._value
 
 
 class ByteArray(StackItem):
@@ -138,6 +147,8 @@ class ByteArray(StackItem):
     def GetByteArray(self):
         return self._value
 
+    def __str__(self):
+        return "ByteArray: %s %s" % (len(self._value),self._value.hex())
 
 class Integer(StackItem):
 
@@ -168,6 +179,8 @@ class Integer(StackItem):
     def GetByteArray(self):
         return self._value.ToByteArray()
 
+    def __str__(self):
+        return "Integer: %s " % self._value
 
 class InteropInterface(StackItem):
 
@@ -189,11 +202,16 @@ class InteropInterface(StackItem):
         return True if self._object is not None else False
 
     def GetByteArray(self):
-        raise Exception("Not supported!")
+        frame = sys._getframe(2)
+        traceback.print_stack(frame)
+#        print("calling frame %s " % sys._getframe(2))
+        raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._object))
 
     def GetInterface(self, t):
         return self._object
 
+    def __str__(self):
+        return "IOp Interface: %s " % self._object
 
 
 class Struct(Array):
@@ -223,6 +241,9 @@ class Struct(Array):
             return False
         return self._array == other._array
 
+    def __str__(self):
+        return "Struct: %s " % self._array
+
 class InteropService():
 
 
@@ -240,12 +261,16 @@ class InteropService():
 
     def Invoke(self, method, engine):
 
+        print("invoking method: %s " % method)
         if not method in self._dictionary.keys():
 
+            for k,v in self._dictionary.items():
+                print("%s -> %s " % (k, v))
             return False
 
+        print("will call method")
         func = self._dictionary[method]
-
+        print("method is %s" % func)
         return func(engine)
 
     @staticmethod
