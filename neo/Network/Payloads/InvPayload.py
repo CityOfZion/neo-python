@@ -13,13 +13,10 @@ class InvPayload(SerializableMixin):
         self.Type = type
         self.Hashes = hashes if hashes else []
 
-
-    def DistinctHashes(self):
-        hh = []
-        for h in self.Hashes:
-            if not h in hh:
-                hh.append(h)
-        return hh
+#    @property
+#    def DistinctHashes(self):
+##        return [h.ToBytes() for h in self.Hashes]
+#        return set(self.Hashes)
 
     def Size(self):
         return sys.getsizeof(self.Type) + sys.getsizeof(self.Hashes)
@@ -38,3 +35,6 @@ class InvPayload(SerializableMixin):
             writer.WriteHashes(self.Hashes)
         except Exception as e:
             self.__log.debug("COULD NOT WRITE INVENTORY HASHES %s " % e)
+
+    def ToString(self):
+        return "INVENTORY %s " % [h.ToString() for h in self.Hashes]

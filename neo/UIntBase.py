@@ -4,55 +4,56 @@ import binascii
 class UIntBase(SerializableMixin):
 
 
-    _data = bytearray()
+    Data = bytearray()
 
-
+    __hash = None
 
     def __init__(self, num_bytes, data=None):
         super(UIntBase, self).__init__()
 
         if data is None:
-            self._data = bytearray(num_bytes)
+            self.Data = bytearray(num_bytes)
 
         else:
             if len(data) != num_bytes:
                 raise Exception("Invalid UInt")
 
             if type(data) is bytes:
-                self._data = bytearray(data)
+                self.Data = bytearray(data)
             elif type(data) is bytearray:
-                self._data = data
+                self.Data = data
             else:
                 raise Exception("Invalid format")
 
-    @property
-    def Data(self):
-        return self._data
-
+        self.__hash = self.GetHashCode()
     @property
     def Size(self):
-        return len(self._data)
+        return len(self.Data)
 
     def GetHashCode(self):
 
-        return int.from_bytes(self._data[:4], 'little')
+        return int.from_bytes(self.Data[:4], 'little')
 
 
     def Serialize(self, writer):
-        writer.WriteBytes(self._data)
+        writer.WriteBytes(self.Data)
 
     def Deserialize(self, reader):
-        self._data = reader.ReadBytes(self.Size)
+        print("deserializing: %s %s" % (type(self),self.Size))
+        self.Data = reader.ReadBytes(self.Size)
+        self.__hash = self.GetHashCode()
 
     def ToArray(self):
-        return self._data
+        return self.Data
 
 
     def ToString(self):
-        db = bytearray(self._data)
+        db = bytearray(self.Data)
         db.reverse()
         return db.hex()
 
+    def ToString2(self):
+        return self.Data.hex()
 
     def ToBytes(self):
         return bytes(self.ToString(), encoding='utf-8')
@@ -67,9 +68,9 @@ class UIntBase(SerializableMixin):
         if other is self:
             return True
 
-        if self._data == other._data:
+        if self.Data == other.Data:
             return True
 
 
     def __hash__(self):
-        return int.from_bytes(self._data, 'little')
+        return self.__hash

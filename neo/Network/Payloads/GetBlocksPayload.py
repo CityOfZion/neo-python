@@ -10,9 +10,9 @@ class GetBlocksPayload(SerializableMixin):
     HashStart = []
     HashStop = None
 
-    def __init__(self, hash_start=None, hash_stop=None):
+    def __init__(self, hash_start=[], hash_stop=None):
 
-        self.HashStart = [] if not hash_start else [hash_start,]
+        self.HashStart = hash_start
         self.HashStop = hash_stop
 
 
@@ -26,10 +26,10 @@ class GetBlocksPayload(SerializableMixin):
 
 
     def Serialize(self, writer):
-        self.__log.debug("Writing hash start... %s " % self.HashStart)
+#        self.__log.debug("Writing hash start... %s %s" % (len(self.HashStart), self.HashStart[0].ToArray()))
         writer.WriteHashes(self.HashStart)
         if self.HashStop is not None:
             writer.WriteUInt256(self.HashStop)
-        else:
-            writer.WriteUInt256( UInt256())
-
+#        else:
+#            writer.WriteUInt256( UInt256(data=bytearray(32)))
+#        self.__log.debug("Wrote Hash start ...")

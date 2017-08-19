@@ -198,7 +198,7 @@ class Block(BlockBase, InventoryMixin):
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)
-        writer.WriteHashes([tx.Hash for tx in self.Transactions])
+        writer.WriteHashes([tx.Hash.ToBytes() for tx in self.Transactions])
         retVal = ms.ToArray()
         StreamManager.ReleaseStream(ms)
         return retVal

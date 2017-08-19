@@ -45,7 +45,7 @@ class NeoNode(Protocol):
         self.buffer_in = bytearray()
         self.pm = None
         self.reset_counter = False
-        self.myblockrequests=[]
+        self.myblockrequests=set()
         self.bytes_in = 0
         self.bytes_out = 0
 
@@ -86,11 +86,13 @@ class NeoNode(Protocol):
         self.buffer_in = None
         self.pm = None
 
-        bcr = BC.Default().BlockRequests()
+        bcr = BC.Default().BlockRequests
 
+        toremove = []
         for req in bcr:
             if req in self.myblockrequests:
-                bcr.remove(req)
+                toremove.append(req)
+        [bcr.remove(req) for req in toremove]
 
         self.myblockrequests = None
 
@@ -136,14 +138,14 @@ class NeoNode(Protocol):
             except RecursionError:
                 self.Log("Recursion error!!!")
                 self.Disconnect()
-#    @profile
+
     def CheckMessageData(self):
         if not self.pm: return
 
         currentlength = len(self.buffer_in)
         messageExpectedLength = 24 + self.pm.Length
-        #percentcomplete = int(100 * (currentlength / messageExpectedLength))
-        #self.Log("Receiving %s data: %s percent complete" % (self.pm.Command, percentcomplete))
+#        percentcomplete = int(100 * (currentlength / messageExpectedLength))
+#        self.Log("Receiving %s data: %s percent complete" % (self.pm.Command, percentcomplete))
 
         if currentlength >= messageExpectedLength:
             mdata = self.buffer_in[:messageExpectedLength]
@@ -156,7 +158,7 @@ class NeoNode(Protocol):
             self.pm = None
             self.MessageReceived(message)
             self.reset_counter = False
-            while len(self.buffer_in) >=24 and not self.reset_counter:
+            while len(self.buffer_in) > 24 and not self.reset_counter:
                 self.CheckDataReceived()
 
         else:
@@ -175,7 +177,6 @@ class NeoNode(Protocol):
         elif m.Command == 'inv':
             self.HandleInvMessage(m.Payload)
         elif m.Command == 'block':
-#            reactor.callFromThread(self.HandleBlockReceived, m.Payload)
             self.HandleBlockReceived(m.Payload)
         elif m.Command == 'headers':
             self.HandleBlockHeadersReceived(m.Payload)
@@ -192,16 +193,30 @@ class NeoNode(Protocol):
 
     def AskForMoreHeaders(self):
         self.Log("asking for more headers...")
-        get_headers_message = Message("getheaders", GetBlocksPayload(BC.Default().CurrentHeaderHash))
+        get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
     def AskForMoreBlocks(self):
-        bcplus_one = BC.Default().CurrentBlockHashPlusOne
 
-        if bcplus_one is not None and len(self.myblockrequests) < self.leader.BREQMAX:
-            self.Log("asking for more blocks ... %s " % (bcplus_one))
-            get_blocks_message =  Message("getblocks", GetBlocksPayload(BC.Default().CurrentBlockHashPlusOne))
-            self.SendSerializedMessage(get_blocks_message)
+        hashes = []
+        hashstart = BC.Default().Height + 1
+
+
+        self.Log("asking for more blocks ... %s " % hashstart)
+
+        while hashstart < BC.Default().HeaderHeight and len(hashes) < self.leader.BREQPART:
+            hash = BC.Default().GetHeaderHash(hashstart)
+            if not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
+                BC.Default().BlockRequests.add(hash)
+                self.myblockrequests.add(hash)
+                hashes.append(hash)
+            hashstart += 1
+
+        if len(hashes) > 0:
+            message = Message("getdata", InvPayload(InventoryType.Block, hashes))
+            self.SendSerializedMessage(message)
+        else:
+            reactor.callLater(5, self.AskForMoreBlocks)
 
     def RequestPeerInfo(self):
         self.SendSerializedMessage(Message('getaddr'))
@@ -247,94 +262,57 @@ class NeoNode(Protocol):
         self.ProtocolReady()
 
     def HandleInvMessage(self, payload):
+
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
-
-        if inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
-            self.HandleConsenusInventory(inventory)
-        elif inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
-            self.HandleTransactionInventory(inventory)
-        elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-
-            if len(self.myblockrequests) < self.leader.BREQMAX:
-                self.HandleBlockHashInventory(inventory)
-
+#        print("HANDLE INVENTAROY MESSAG:: %s " % inventory.Type)
+#        if inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
+#            self.HandleConsenusInventory(inventory)
+#        elif inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
+#            self.HandleTransactionInventory(inventory)
+#        elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
+#            if len(self.myblockrequests) < self.leader.BREQMAX:
+#                self.HandleBlockHashInventory(inventory)
+#        if inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
+#            self.HandleBlockHashInventory(inventory)
 
 
     def SendSerializedMessage(self, message):
-        try:
-            ba = Helper.ToArray(message)
-            ba2 = binascii.unhexlify(ba)
-            self.bytes_out += len(ba2)
-            self.transport.write(ba2)
-#            reactor.callInThread(self.transport.write,ba2)
-        except Exception as e:
-            self.Log("Could not send message %s " % e)
-
-    def HandleConsenusInventory(self, inventory):
-        pass
-
-    def HandleTransactionInventory(self, inventory):
-        pass
-
-
-    def RequestMissingBlock(self, hash):
-        self.Log("On missing block event! %s " % hash)
-
-        message = Message("getdata", InvPayload(InventoryType.Block, [hash]))
-        self.SendSerializedMessage(message)
-
-    def HandleBlockHashInventory(self, inventory):
-
-        hashes = []
-
-        hashstart = BC.Default().Height + 1
-        self.Log("will ask for hash start %s " % hashstart)
-        while hashstart < BC.Default().HeaderHeight and len(hashes) < self.leader.BREQPART:
-            hash = BC.Default().GetHeaderHash(hashstart)
-            if not hash in BC.Default().BlockRequests() and not hash in self.myblockrequests:
-                BC.Default().BlockRequests().append(hash)
-                self.myblockrequests.append(hash)
-                hashes.append(hash)
-            hashstart += 1
-
-        if len(hashes) == 0:
-
-            self.Log("ALL BLOCKS COMPLETE.... Wait for more headers")
-            self.AskForMoreHeaders()
-
-        else:
-            self.Log("requesting %s hashes  " % len(hashes))
-
-            message = Message("getdata", InvPayload(InventoryType.Block, hashes))
-#            reactor.callInThread(self.SendSerializedMessage,message)
-            self.SendSerializedMessage(message)
+        ba = Helper.ToArray(message)
+        ba2 = binascii.unhexlify(ba)
+        self.bytes_out += len(ba2)
+        self.transport.write(ba2)
+#        reactor.callInThread(self.transport.write,ba2)
 
 
     def HandleBlockHeadersReceived(self, inventory):
+        start = time.clock()
+        self.leader.is_requesting_headers = False
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
+
         BC.Default().AddHeaders(inventory.Headers)
-        del inventory
         if BC.Default().HeaderHeight < self.Version.StartHeight:
             self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):
 
 
-#        self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % inventory)
 
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
 
-#        self.Log("ON BLOCK INVENTORY RECEIVED........... %s " % block.Index)
+        blockhash =  block.Hash.ToBytes()
 
-        blockhash =  block.Hash
-
-        if blockhash in BC.Default().BlockRequests():
-            BC.Default().BlockRequests().remove(blockhash)
+        if blockhash in BC.Default().BlockRequests:
+            BC.Default().BlockRequests.remove(blockhash)
         if blockhash in self.myblockrequests:
             self.myblockrequests.remove(blockhash)
 
         self.leader.InventoryReceived(block)
+
+        if len(self.myblockrequests) < self.leader.NREQMAX:
+            self.AskForMoreBlocks()
+#        else:
+#            reactor.callLater(5, self.AskForMoreBlocks)
 
     def HandleBlockReset(self, hash):
         self.myblockrequests = []

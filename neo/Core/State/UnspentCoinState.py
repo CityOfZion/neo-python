@@ -40,7 +40,6 @@ class UnspentCoinState(StateBase):
         while length < index + 1:
             self.Items.append(0)
             length = len(self.Items)
-        self.__log.debug("NOW: %s %s %s " % (self.Items, index, length))
 
         self.Items[index] |= value
 

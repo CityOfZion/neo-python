@@ -2,12 +2,14 @@
 from .StateBase import StateBase
 import sys
 import binascii
+from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream,StreamManager
 from autologging import logged
 import time
 from neo.Cryptography.Helper import hash_to_wallet_address
+from neo.IO.BinaryWriter import BinaryWriter
 
 @logged
 class AccountState(StateBase):
@@ -19,12 +21,13 @@ class AccountState(StateBase):
     Votes = []
     Balances = {}
 
-
     def __init__(self, script_hash=None, is_frozen=False, votes=[], balances={}):
         self.ScriptHash = script_hash
         self.IsFrozen = is_frozen
         self.Votes = votes
         self.Balances = balances
+
+
 
     def Clone(self):
         return AccountState(self.ScriptHash, self.IsFrozen, self.Votes, self.Balances)
@@ -125,18 +128,26 @@ class AccountState(StateBase):
                 return False
         return True
 
+    def ToByteArray(self):
+        ms = StreamManager.GetStream()
+        writer = BinaryWriter(ms)
+        self.Serialize(writer)
+
+        retval = ms.ToArray()
+        StreamManager.ReleaseStream(ms)
+
+        return retval
 
     def ToJson(self):
         json = super(AccountState, self).ToJson()
-        hash = bytearray(self.ScriptHash)
-        addr = hash_to_wallet_address(hash)
+        addr = Crypto.ToAddress(self.ScriptHash)
         json['script_hash'] = addr
         json['frozen'] = self.IsFrozen
         json['votes'] = []
-        print("balances %s " % self.Balances.items())
+
         balances = {}
         for key, value in self.Balances.items():
-            balances[key.decode('utf-8')] = value.value
+            balances[key.ToString()] = value.value
 
         json['balances'] = balances
         return json

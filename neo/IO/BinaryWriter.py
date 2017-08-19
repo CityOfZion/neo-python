@@ -162,13 +162,18 @@ class BinaryWriter(object):
 
     def Write2000256List(self, arr):
         for item in arr:
-            self.WriteUInt256(item)
+            ba = bytearray(binascii.unhexlify(item))
+            ba.reverse()
+            self.WriteBytes(ba)
+
 
     def WriteHashes(self, arr):
         length = len(arr)
-        self.WriteVarInt(length)
+        self.WriteUInt8(length)
         for item in arr:
-            self.WriteUInt256(item)
+            ba = bytearray(binascii.unhexlify(item))
+            ba.reverse()
+            self.WriteBytes(ba)
 
 
     def WriteFixed8(self, value):

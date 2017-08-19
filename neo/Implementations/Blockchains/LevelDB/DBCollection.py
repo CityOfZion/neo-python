@@ -1,5 +1,7 @@
 import binascii
 from autologging import logged
+from neo.UInt256 import UInt256
+from neo.UInt160 import UInt160
 
 @logged
 class DBCollection():
@@ -16,6 +18,7 @@ class DBCollection():
     Deleted = []
 
     Debug = False
+
 
     def __init__(self, db, sn, prefix, class_ref, debug=False):
 
@@ -49,9 +52,9 @@ class DBCollection():
 
     def Commit(self, wb, destroy=True):
         for item in self.Changed:
-            wb.put( self.Prefix + item.ToBytes(), self.Collection[item].ToByteArray() )
+            wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
         for item in self.Deleted:
-            wb.delete(self.Prefix + item.ToBytes())
+            wb.delete(self.Prefix + item)
         if destroy:
             self.Destroy()
         else:
@@ -60,13 +63,9 @@ class DBCollection():
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
-        if debug_item:
-            self.__log.debug("KEY VAL IS: %s " % keyval)
-            self.__log.debug("Collection: %s " % self.Collection)
         item = self.TryGet(keyval)
 
         if item is None:
-
             if new_instance is None:
                 item = self.ClassRef()
             else:

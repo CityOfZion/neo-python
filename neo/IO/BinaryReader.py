@@ -118,29 +118,30 @@ class BinaryReader(object):
         return items
 
     def ReadUInt256(self):
-        return UInt256(data=self.ReadBytes(32))
+        return UInt256(data=bytearray(self.ReadBytes(32)))
 
     def ReadUInt160(self):
 
-        return UInt160(data = self.ReadBytes(20))
+        return UInt160(data = bytearray(self.ReadBytes(20)))
 
 
 
     def Read2000256List(self):
         items = []
         for i in range(0, 2000):
-            item = self.ReadBytes(64)
-            ba = bytearray(binascii.unhexlify(item))
-            if len(ba):
-                ba.reverse()
-                items.append( ba.hex().encode('utf-8'))
+            data = self.ReadBytes(64)
+            ba = bytearray(binascii.unhexlify(data))
+            ba.reverse()
+            items.append( ba.hex().encode('utf-8'))
         return items
 
-    def ReadHashes(self):
+    def ReadHashes(self, maximum=16):
         len = self.ReadUInt8()
         items = []
         for i in range(0, len):
-            items.append( self.ReadUInt256())
+            ba = bytearray(self.ReadBytes(32))
+            ba.reverse()
+            items.append( ba.hex())
         return items
 
     def ReadFixed8(self):

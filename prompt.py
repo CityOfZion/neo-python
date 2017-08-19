@@ -116,7 +116,7 @@ class PromptInterface(object):
         print('Shutting down.  This may take a bit...')
         self.go_on = False
         self.paused = False
-        #Blockchain.Default().Dispose()
+        Blockchain.Default().Dispose()
         reactor.stop()
         self.node_leader.Shutdown()
 
@@ -153,7 +153,7 @@ class PromptInterface(object):
             bpm = diff / mins
 
         out = 'Progress: %s / %s\n' % (height, headers)
-        out += 'Block Cache length %s\n' % Blockchain.Default().BlockCacheCount()
+        out += 'Block Cache length %s\n' % Blockchain.Default().BlockCacheCount
         out += 'Blocks since program start %s\n' % diff
         out += 'Time elapsed %s mins\n' % mins
         out += 'blocks per min %s \n' % bpm
@@ -352,7 +352,9 @@ class PromptInterface(object):
     def run(self):
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.02)
+        dbloop.start(1)
+
+        Blockchain.Default().PersistBlocks()
 
         self.node_leader = NodeLeader.Instance()
 
@@ -413,7 +415,7 @@ if __name__ == "__main__":
 
     cli = PromptInterface()
 
-    reactor.suggestThreadPoolSize(10)
+#    reactor.suggestThreadPoolSize(10)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
     reactor.run()

@@ -1,7 +1,7 @@
 
 from neo.Fixed8 import Fixed8
 from unittest import TestCase
-
+from neo.BigInteger import BigInteger
 
 class FancyNumberTestCase(TestCase):
 
@@ -96,3 +96,59 @@ class FancyNumberTestCase(TestCase):
         self.assertEqual(f8.value, 204202556000)
 
 
+
+    def test_big_integer_add(self):
+
+        b1 = BigInteger(10)
+        b2 = BigInteger(20)
+
+        b3 = b1 + b2
+
+        self.assertIsInstance(b3, BigInteger)
+        self.assertEqual(b3, 30)
+
+    def test_big_integer_sub(self):
+        b1 = BigInteger(5505505505505505050505)
+        b2 = BigInteger(5505505505505505000000)
+
+        b3 = b1 - b2
+
+        self.assertIsInstance(b3, BigInteger)
+        self.assertEqual(b3, 50505)
+
+    def test_big_integer_mul(self):
+        b1 = BigInteger(55055055055055)
+        b2 = BigInteger(55055055055)
+
+        b3 = b1 * b2
+
+        self.assertIsInstance(b3, BigInteger)
+        self.assertEqual(b3, 3031059087112109081053025)
+
+    def test_big_integer_div(self):
+        b1 = BigInteger(55055055055055)
+        b2 = BigInteger(55055055)
+
+        b3 = b1 / b2
+        self.assertIsInstance(b3, BigInteger)
+        self.assertEqual(b3, 1000000)
+
+    def test_big_integer_float(self):
+        b1 = BigInteger(5505.001)
+        b2 = BigInteger(55055.999)
+
+        b3 = b1 + b2
+
+        self.assertIsInstance(b3, BigInteger)
+        self.assertEqual(b3, 60560)
+
+
+    def test_big_integer_to_ba(self):
+
+        b1 = BigInteger(8972340892734890723)
+
+        ba = b1.ToByteArray()
+
+        integer = BigInteger.from_bytes(ba, 'little')
+
+        self.assertEqual(integer, 8972340892734890723)

@@ -50,40 +50,45 @@ class TransactionOutput(SerializableMixin):
 
 
     Value = None # should be fixed 8
-    _ScriptHash = None
+    ScriptHash = None
     AssetId = None
 
     """docstring for TransactionOutput"""
-    def __init__(self, AssetId=None, Value=None, ScriptHash=None):
+    def __init__(self, AssetId=None, Value=None, script_hash=None):
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
         self.Value = Value
-        self._ScriptHash = ScriptHash
+        self.ScriptHash = script_hash
 
-    def ScriptHashRaw(self):
-        return self._ScriptHash
+#        if self.ScriptHash is None:
+#            raise Exception("Script hash is required!!!!!!!!")
 
-    def ScriptHash(self):
-        return hash_to_wallet_address(self._ScriptHash._data)
+    @property
+    def Address(self):
+        return Crypto.ToAddress(self.ScriptHash)
 
-    def ScriptHashBytes(self):
-        return self.ScriptHash().encode('utf-8')
+    @property
+    def AddressBytes(self):
+        return bytes(self.Address, encoding='utf-8')
 
     def Serialize(self, writer):
         writer.WriteUInt256(self.AssetId)
         writer.WriteFixed8(self.Value)
-        writer.WriteUInt160(self._ScriptHash)
+        writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
         self.AssetId = reader.ReadUInt256()
         self.Value = reader.ReadFixed8()
-        self._ScriptHash = reader.ReadUInt160()
+        self.ScriptHash = reader.ReadUInt160()
+        if self.ScriptHash is None:
+            raise Exception("Script hash is required from deserialize!!!!!!!!")
+
 
     def ToJson(self):
         return {
             'AssetId': self.AssetId.ToString(),
             'Value': self.Value.value / Fixed8.D,
-            'ScriptHash': Crypto.ToAddress(self._ScriptHash)
+            'ScriptHash': self.Address
         }
 
 @logged

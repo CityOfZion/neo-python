@@ -31,7 +31,9 @@ class NodeLeader():
 
 
     BREQPART=100
-    BREQMAX= 5000
+    NREQMAX =1000
+    BREQMAX= 4000
+
 
     @staticmethod
     def Instance():
@@ -47,15 +49,15 @@ class NodeLeader():
         self.UnconnectedPeers = []
         self.ADDRS = []
         self.NodeId = random.randint(1294967200,4294967200)
-        BC.Default().MissingBlock.on_change += self.OnMissingBlockEvent
 
     def Start(self):
         # start up endpoints
+        start_delay=0
         for bootstrap in Settings.SEED_LIST:
             host, port = bootstrap.split(":")
             self.ADDRS.append('%s:%s' % (host,port))
-            self.SetupConnection(host, port)
-
+            reactor.callLater( start_delay, self.SetupConnection,host, port)
+            start_delay+=2
 
     def RemoteNodePeerReceived(self, host, port):
         addr = '%s:%s' % (host,port)
@@ -89,37 +91,12 @@ class NodeLeader():
     def onProtocolError(self, reason):
         self.__log.debug("Protocol exception %s " % reason)
 
-
-#    def DeregisterBlockRequests(self):
-
-
-    def OnMissingBlockEvent(self, hash):
-        if not hash in self._MissedBlocks:
-            self.__log.debug("ON MISSING BLOCK!!!!!!!!!!!!!")
-            if hash in BC.Default().BlockRequests():
-                self.__log.debug("hash was in block requests")
-            else:
-                self.__log.debug("HASH WASNT IN BLOCK REQUESTSSS!!!!")
-            self._MissedBlocks.append(hash)
-#            header = BC.Default().GetHeader(hash)
-#            for index,peer in enumerate(self.Peers):
-#                hash_to_get = BC.Default().GetHeaderHash(header.Index + index)
-            p = random.choice(self.Peers)
-            p.RequestMissigBlock(hash)
-            p = random.choice(self.Peers)
-            p.RequestMissigBlock(hash)
-            p = random.choice(self.Peers)
-            p.RequestMissigBlock(hash)
-            p = random.choice(self.Peers)
-            p.RequestMissigBlock(hash)
-
     #    @profile()
     def InventoryReceived(self, inventory):
 
-#        self.__log.debug("Node Leader received inventory %s " % inventory)
 
-        if inventory.Hash in self._MissedBlocks:
-            self._MissedBlocks.remove(inventory.Hash)
+        if inventory.Hash.ToBytes() in self._MissedBlocks:
+            self._MissedBlocks.remove(inventory.Hash.ToBytes())
 
         if inventory is MinerTransaction: return False
 

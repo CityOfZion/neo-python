@@ -4,7 +4,4 @@ source = neo
 [report]
 omit =
   venv*
-  neo/Network/RemoteNode.py
-  neo/Network/TCPRemoteNode.py
-  neo/Network/LocalNode.py
   neo/Network/IPEndpoint.py

@@ -45,7 +45,7 @@ class Blockchain(object):
 
     __instance = None
 
-    __blockrequests = []
+    __blockrequests = set()
 
     CACHELIM=4000
     CMISSLIM=5
@@ -149,6 +149,7 @@ class Blockchain(object):
         # abstract
         pass
 
+    @property
     def BlockRequests(self):
         return self.__blockrequests
 
