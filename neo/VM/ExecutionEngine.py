@@ -763,8 +763,8 @@ class ExecutionEngine():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
             print("exception: %s " % e)
-            frame = sys._getframe(2)
-            traceback.print_stack(frame)
+#            frame = sys._getframe(2)
+#            traceback.print_stack(frame)
             self.__log.error("Exception executing op %s " % e)
             self._VMState |= VMState.FAULT
 
