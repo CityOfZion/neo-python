@@ -40,26 +40,26 @@ class DBCollection():
 
         for key, buffer in self.SN.iterator(prefix=self.Prefix):
             key = key[1:]
-            if self.Debug:
-                try:
-                    self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
-                except Exception as e:
-                    print("could not decode spent coin %s %s %s" % (key, buffer, e))
-            else:
-                self.Collection[key] = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
+            try:
+                self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
+            except Exception as e:
+                print("could not decode class %s %s %s %s" % (self.ClassRef,key, buffer, e))
 
 
 
     def Commit(self, wb, destroy=True):
-        for item in self.Changed:
-            wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
-        for item in self.Deleted:
-            wb.delete(self.Prefix + item)
-        if destroy:
-            self.Destroy()
-        else:
-            self.Changed = []
-            self.Deleted = []
+        try:
+            for item in self.Changed:
+                wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
+            for item in self.Deleted:
+                wb.delete(self.Prefix + item)
+            if destroy:
+                self.Destroy()
+            else:
+                self.Changed = []
+                self.Deleted = []
+        except Exception as e:
+            print("COULD NOT COMMIT: %s %s " % (e, self.ClassRef))
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 

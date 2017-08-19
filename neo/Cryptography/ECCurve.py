@@ -350,8 +350,14 @@ class EllipticCurve:
         def isoncurve(self):
             return self.curve.isoncurve(self)
 
+        @property
+        def IsInfinity(self):
+            return True if self == self.curve.Infinity else False
 
         def encode_point(self, compressed=True):
+
+            if self.IsInfinity:
+                return bytearray([0])
 
             xbytes = bytearray(self.x.value.to_bytes(32,'little'))
             xbytes.reverse()
@@ -371,10 +377,28 @@ class EllipticCurve:
             data = bytearray(tilde) + xbytes
             return binascii.hexlify(data)
 
+
+
+        def Serialize(self, writer, compress=True):
+            if self == self.curve.Infinity:
+                writer.WriteByte(0)
+            else:
+                byt = self.encode_point(compressed=compress)
+                print("BYT: %s " % byt)
+                writer.WriteBytes(byt)
+
+        def ToString(self):
+            return binascii.hexlify(self.encode_point(compressed=True)).decode('utf-8')
+
+
     def __init__(self, field, a, b):
         self.field= field
         self.a= field.value(a)
         self.b= field.value(b)
+
+    @property
+    def Infinity(self):
+        return self.point(0,0)
 
     def add(self, p, q):
         """
@@ -458,6 +482,29 @@ class EllipticCurve:
 
 
 
+    def decode_from_reader(self, reader):
+
+
+        f = reader.ReadByte()
+
+        if f == 0:
+            return self.Infinity
+
+        # these are compressed
+        if f == 2 or f == 3:
+            yTilde = f & 1
+            data = bytearray(reader.ReadBytes(32))
+            data.reverse()
+            data.append(0)
+            X1 = int.from_bytes(data, 'little')
+            return self.decompress_from_curve(X1, yTilde)
+
+        # uncompressed or hybrid
+        elif f == 4 or f == 6 or f == 7:
+            raise NotImplementedError()
+
+        raise Exception("Invalid point incoding: %s " % f)
+
     def decode_from_hex(self, hex_str):
 
         ba = bytearray(binascii.unhexlify(hex_str))
@@ -467,6 +514,9 @@ class EllipticCurve:
         expected_byte_len = int(( _bitlength(cq) + 7 ) / 8)
 
         f = ba[0]
+
+        if f == 0:
+            return self.Infinity
 
         # these are compressed
         if f == 2 or f == 3:
@@ -484,6 +534,8 @@ class EllipticCurve:
             raise NotImplementedError()
 
         raise Exception("Invalid point incoding: %s " % f)
+
+
 
 
 
@@ -525,6 +577,10 @@ class ECDSA:
         self.ec= ec
         self.G= G
         self.GFn= FiniteField(n)
+
+    @property
+    def Curve(self):
+        return self.ec
 
     def calcpub(self, privkey):
         """
@@ -644,6 +700,8 @@ class ECDSA:
         k= self.GFn.value(signsecret)
         return (s*k-m)/r
 
+
+
     @staticmethod
     def secp256r1():
         """
@@ -651,14 +709,17 @@ class ECDSA:
         """
         GFp = FiniteField(int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16))
         ec = EllipticCurve(GFp, 115792089210356248762697446949407573530086143415290314195533631308867097853948,41058363725152142129326129780047268409114441015993725554835256314039467401291)
-        return ECDSA(GFp, ec.point(0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296,0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5),int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
-
+        #return ECDSA(GFp, ec.point(0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296,0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5),int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
+        return ECDSA(ec,
+                     ec.point(0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296,0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5),
+                     GFp)
 
     @staticmethod
     def decode_secp256r1(str):
         """
         decode a public key on the secp256r1 curve
         """
+
         GFp = FiniteField(int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16))
         ec = EllipticCurve(GFp, 115792089210356248762697446949407573530086143415290314195533631308867097853948,
                            41058363725152142129326129780047268409114441015993725554835256314039467401291)
@@ -669,6 +730,19 @@ class ECDSA:
         else:
             raise Exception("Could not decode string")
 
+
+    @staticmethod
+    def Deserialize_Secp256r1(reader):
+        GFp = FiniteField(int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16))
+        ec = EllipticCurve(GFp, 115792089210356248762697446949407573530086143415290314195533631308867097853948,
+                           41058363725152142129326129780047268409114441015993725554835256314039467401291)
+
+
+        return ec.decode_from_reader(reader)
+
+
+
+
     @staticmethod
     def secp256k1():
         """
@@ -677,6 +751,5 @@ class ECDSA:
         GFp= FiniteField(2**256 - 2**32 - 977) # This is P from below... aka FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
         ec= EllipticCurve(GFp, 0, 7)
         return ECDSA(ec, ec.point( 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798, 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8  ), 2**256 - 432420386565659656852420866394968145599)
-
 
 

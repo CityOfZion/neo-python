@@ -14,6 +14,7 @@ from neo.Cryptography.ECCurve import ECDSA
 from autologging import logged
 from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
+from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
 
 @logged
 class RegisterTransaction(Transaction):
@@ -51,6 +52,12 @@ In English:
         self.AssetType = assettype
         self.Name = assetname
         self.Amount = amount  # Unlimited Mode: -0.00000001
+
+
+        if owner is not None and type(owner) is not EllipticCurve.ECPoint:
+            print("TYPE %s " % type(owner))
+            raise Exception("Invalid owner, must be ECPoint instance")
+
         self.Owner = owner
         self.Admin = admin
         self.Precision = precision
@@ -73,7 +80,7 @@ In English:
         self.Name = reader.ReadVarString()
         self.Amount = reader.ReadFixed8()
         self.Precision = reader.ReadByte()
-        self.Owner = reader.ReadBytes(33)
+        self.Owner = ECDSA.Deserialize_Secp256r1(reader)
 #        self.Owner = ecdsa.G
         self.Admin =reader.ReadUInt160()
 
@@ -83,16 +90,7 @@ In English:
         writer.WriteFixed8(self.Amount)
         writer.WriteByte(self.Precision)
 
-        #owner
-
-        writer.WriteBytes(self.Owner)
-
-#        writer.WriteByte(b'\x00')
-#        if type(self.Owner) is int:
-
-#            writer.WriteBytes(bytearray(1))
-#        else:
-#            writer.WriteBytes(self.Owner.encode_point(True))
+        self.Owner.Serialize(writer)
 
         writer.WriteUInt160( self.Admin )
 
@@ -105,7 +103,7 @@ In English:
             'name': self.Name.decode('utf-8'),
             'amount': self.Amount.value,
             'precision': self.Precision if type(self.Precision) is int else self.Precision.decode('utf-8'),
-            'owner': bytearray(self.Owner).hex(),
+            'owner': self.Owner.ToString(),
             'admin': Crypto.ToAddress(self.Admin)
         }
         jsn['asset'] = asset

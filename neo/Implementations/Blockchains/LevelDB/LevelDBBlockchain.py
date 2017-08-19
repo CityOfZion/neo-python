@@ -8,6 +8,7 @@ from neo.IO.MemoryStream import StreamManager
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neo.Fixed8 import Fixed8
+from neo.UInt160 import UInt160
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
@@ -19,10 +20,16 @@ from neo.Core.State.ContractState import ContractState
 from neo.Core.State.StorageItem import StorageItem
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 
+from neo.SmartContract.StateMachine import StateMachine
+from neo.SmartContract.ApplicationEngine import ApplicationEngine
+from neo.SmartContract import TriggerType
+
 import time
 import plyvel
 from autologging import logged
 import binascii
+import pprint
+import json
 
 @logged
 class LevelDBBlockchain(Blockchain):
@@ -427,7 +434,7 @@ class LevelDBBlockchain(Blockchain):
     def BlockCacheCount(self):
         return len(self._block_cache)
 
-#    @profile
+
     def Persist(self, block):
 
         start = time.clock()
@@ -437,7 +444,9 @@ class LevelDBBlockchain(Blockchain):
         accounts = self.Accounts
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
+        print("unserializing assets...")
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
+        print("unserialized assets....")
         validators = DBCollection(self._db, sn, DBPrefix.ST_Validator, ValidatorState)
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
@@ -493,24 +502,25 @@ class LevelDBBlockchain(Blockchain):
                             acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
                     #do a whole lotta stuff with tx here...
-                    if tx.Type == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
-
-                        asset = AssetState(tx.Hash.ToBytes(),tx.AssetType, tx.Name, tx.Amount,
-                                           Fixed8(0),tx.Precision, Fixed8(0), Fixed8(0), bytearray(20),
+                    if tx.Type == TransactionType.RegisterTransaction:
+                        print("RUNNING REGISTER TX")
+                        asset = AssetState(tx.Hash,tx.AssetType, tx.Name, tx.Amount,
+                                           Fixed8(0),tx.Precision, Fixed8(0), Fixed8(0), UInt160(data=bytearray(20)),
                                            tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False )
 
-                        assets.Add(tx.Hash, asset)
+                        assets.Add(tx.Hash.ToBytes(), asset)
+                        print("ASSET %s " % json.dumps( asset.ToJson(), indent=4))
 
-                    elif tx.Type == int.from_bytes( TransactionType.IssueTransaction, 'little'):
-
+                    elif tx.Type == TransactionType.IssueTransaction:
+                        print("RUNNING ISSUE TX")
                         txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
                         for result in txresults:
                             asset = assets.GetAndChange(result.AssetId.ToBytes())
-                            asset.Available = asset.Available.value - result.Amount.value
+                            asset.Available = asset.Available - result.Amount
+                            print("ISSUE %s " % json.dumps( asset.ToJson(), indent=4))
 
-
-                    elif tx.Type == int.from_bytes( TransactionType.ClaimTransaction, 'little'):
-
+                    elif tx.Type == TransactionType.ClaimTransaction:
+                        print("RUNNING CLAIM TX")
                         for input in tx.Claims:
 
                             sc = spentcoins.TryGet(input.PrevHash.ToBytes())
@@ -518,27 +528,44 @@ class LevelDBBlockchain(Blockchain):
                                 sc.DeleteIndex(input.PrevIndex)
                                 spentcoins.GetAndChange(input.PrevHash.ToBytes())
 
-                    elif tx.Type == int.from_bytes( TransactionType.EnrollmentTransaction, 'little'):
-                        validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
-
-                    elif tx.Type == int.from_bytes( TransactionType.PublishTransaction, 'little'):
-
+                    elif tx.Type == TransactionType.EnrollmentTransaction:
+                        print("RUNNING ERNOLLMENT TX")
+                        validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
+#                        print("VALIDATOR %s " % validator.ToJson())
+                    elif tx.Type == TransactionType.PublishTransaction:
+                        print("RUNNING PUBLISH TX")
                         contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
                                                  tx.Author, tx.Email, tx.Description)
 
                         contracts.GetAndChange(tx.Code.ScriptHash(), contract)
+                        print("PUBLISH: %s " % json.dumps( contract.ToJson(), indent=4))
+                    elif tx.Type == TransactionType.InvocationTransaction:
 
-                    elif tx.Type == int.from_bytes( TransactionType.InvocationTransaction, 'little'):
-                        # will have to create a VM / state machine first :-|
+                        print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes))
                         script_table = CachedScriptTable(contracts)
+                        service = StateMachine(accounts, validators, assets, contracts,storages,wb)
 
-    #                        service  = StateMachine(accounts, validators, assets, contracts, storages)
-    #                        engine = ApplicationEngine(tx, script_table, service, tx.Gas)
-    #                        engine.LoadScript(tx.Script, False)
+                        engine = ApplicationEngine(
+                            trigger_type=TriggerType.Application,
+                            container=tx,
+                            table=script_table,
+                            service=service,
+                            gas=tx.Gas,
+                            testMode=True
+                        )
 
-    #                       if engine.Execute():
-    #                           service.Commit()
+                        engine.LoadScript(tx.Script,False)
 
+                        # drum roll?
+                        if engine.Execute():
+                            service.Commit()
+
+                    else:
+
+                        if tx.Type != b'\x00' and tx.Type != 128:
+
+
+                            print("TX Not Found %s " % tx.Type)
 
                 # do save all the accounts, unspent, coins, validators, assets, etc
                 # now sawe the current sys block
@@ -600,10 +627,11 @@ class LevelDBBlockchain(Blockchain):
                 break
 
             block = self._block_cache[hash]
-
-            self.Persist(block)
-            self.OnPersistCompleted(block)
-
+            try:
+                self.Persist(block)
+                self.OnPersistCompleted(block)
+            except Exception as e:
+                print("COULD NOT PERSIST OR ON PERSIST COMPLETE %s " % e)
             del self._block_cache[hash]
 
     def Dispose(self):

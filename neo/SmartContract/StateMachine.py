@@ -4,8 +4,10 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.FunctionCode import FunctionCode
 from neo.Core.State.StorageItem import StorageItem
 from neo.Core.State.StorageKey import StorageKey
+from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.AssetType import AssetType
 from neo.Cryptography.Crypto import Crypto
+from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Fixed8 import Fixed8
@@ -116,9 +118,17 @@ class StateMachine(StateReader):
 
     def Validator_Register(self, engine):
         #Not Implemented
-        pubkey = engine.EvaluationStack.Pop().GetByteArray()
+        pubkey = ECDSA.decode_secp256r1( engine.EvaluationStack.Pop().GetByteArray())
+        if pubkey.IsInfinity:
+            return False
 
-        return False
+        if not self.CheckWitnessPubkey(engine, pubkey):
+            return False
+
+        vstate = ValidatorState(pub_key=pubkey)
+        validator = self._validators.GetOrAdd(pubkey.ToString(), vstate)
+        engine.EvaluationStack.PushT(StackItem.FromInterface(validator))
+        return True
 
 
     def Asset_Create(self, engine):
@@ -160,8 +170,15 @@ class StateMachine(StateReader):
         if amount != Fixed8.NegativeSatoshi() and amount.value % pow(10, 8 - precision) != 0:
             return False
 
-        owner = engine.EvaluationStack.Pop().GetByteArray()
+        ownerData = engine.EvaluationStack.Pop().GetByteArray()
 
+        owner = ECDSA.decode_secp256r1(ownerData)
+
+        if owner.IsInfinity:
+            return False
+
+        if not self.CheckWitnessPubkey(engine, owner):
+            return False
 
         admin = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
         issuer = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())

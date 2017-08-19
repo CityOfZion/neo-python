@@ -65,7 +65,7 @@ class Blockchain(object):
     @staticmethod
     def SystemShare():
         amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL )
-        owner = b'\x00'
+        owner = ECDSA.secp256r1().Curve.Infinity
         admin = Crypto.ToScriptHash(PUSHT)
         return RegisterTransaction([],[], AssetType.GoverningToken,
                                  "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
@@ -75,7 +75,8 @@ class Blockchain(object):
     def SystemCoin():
         amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
 
-        owner = b'\x00'
+        owner = ECDSA.secp256r1().Curve.Infinity
+
         precision=8
         admin = Crypto.ToScriptHash(PUSHF)
 
@@ -333,8 +334,8 @@ class Blockchain(object):
 
     def OnPersistCompleted(self, block):
 
-        self.__validators = []
-
+#        self.__validators = []
+        pass
 
     def StartPersist(self):
         pass

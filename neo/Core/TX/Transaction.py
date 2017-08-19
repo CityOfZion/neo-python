@@ -23,7 +23,7 @@ from autologging import logged
 from neo.UInt256 import UInt256
 
 import sys
-
+from itertools import groupby
 
 class TransactionResult():
     AssetId=None
@@ -32,6 +32,9 @@ class TransactionResult():
     def __init__(self, asset_id, amount):
         self.AssetId = asset_id
         self.Amount = amount
+
+    def ToString(self):
+        return "%s -> %s " % (self.AssetId.ToString(), self.Amount.value)
 
 class TransactionType(object):
     MinerTransaction = b'\x00'
@@ -177,19 +180,34 @@ class Transaction(Inventory, InventoryMixin):
     def getAllInputs(self):
         return self.inputs
 
-
+    @property
     def References(self):
         if self.__references is None:
 
-            refs = set()
+            refs = {}
 
+            #group by the input prevhash
 
-            for input in self.inputs:
-                tx = GetBlockchain().GetTransaction(input.PrevHash)
-
+            for hash, group in groupby(self.inputs, lambda x: x.PrevHash):
+                tx = GetBlockchain().GetTransaction(hash.ToBytes())
                 if tx is not None:
-                    #this aint right yet
-                    refs.add({'input':input, 'output':tx.outputs[input.PrevIndex]})
+                    for input in group:
+                        refs[input] = tx.outputs[input.PrevIndex]
+
+#            ipts = []
+#            for input in self.inputs:
+#                if not input.PrevHash in ipts:
+#                    ipts.append(input.PrevHash)
+
+            #go through all the inputs again, but according to the prevhash
+            #and get... the output of the other tx that this input outputs to?
+#            for inputPrevHash in ipts:
+
+#                tx = GetBlockchain().GetTransaction(inputPrevHash.ToBytes())
+#                if tx is not None:
+#                    for input in self.inputs:
+#                        if input.PrevHash == inputPrevHash:
+#                            refs[input] = tx.outputs[input.PrevIndex]
 
             self.__references = refs
         return self.__references
@@ -467,20 +485,24 @@ class Transaction(Inventory, InventoryMixin):
 #                    return array
 
     def GetTransactionResults(self):
-        if self.References() is None: return None
-        raise NotImplementedError()
-#        return References.Values.Select(p= > new
-#        {
-#            AssetId = p.AssetId,
-#                      Value = p.Value
-#        }).Concat(Outputs.Select(p= > new
-#        {
-#            AssetId = p.AssetId,
-#                      Value = -p.Value
-#        })).GroupBy(p= > p.AssetId, (k, g) = > new
-#        TransactionResult
-#        {
-#            AssetId = k,
-#                      Amount = g.Sum(p= > p.Value)
-#        }).Where(p= > p.Amount != Fixed8.Zero);
+        if self.References is None: return None
+
+        results = []
+        realresults = []
+        for ref_output in self.References.values():
+            results.append(TransactionResult(ref_output.AssetId, ref_output.Value))
+
+        for output in self.outputs:
+            results.append(TransactionResult(output.AssetId, output.Value * Fixed8(-1)))
+
+        for key, group in groupby(results, lambda x: x.AssetId):
+            sum=Fixed8(0)
+            for item in group:
+                sum = sum + item.Amount
+
+            if sum != Fixed8.Zero():
+
+                realresults.append( TransactionResult(key, sum))
+        print("REAL RESULTS %s " % [r.ToString() for r in realresults])
+        return realresults
 

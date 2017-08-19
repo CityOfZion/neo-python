@@ -79,7 +79,7 @@ class Contract(SerializableMixin):
     @staticmethod
     def CreateSignatureRedeemScript(publicKey):
         sb = ScriptBuilder()
-        sb.push(publicKey)
+        sb.push(publicKey.encode_point(compressed=True))
         sb.add(CHECKSIG)
         return sb.ToArray()
 

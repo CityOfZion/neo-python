@@ -6,9 +6,11 @@ from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.State.StorageItem import StorageItem
 from neo.Core.Blockchain import Blockchain
+from neo.Cryptography.Crypto import Crypto
 from neo.BigInteger import BigInteger
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
+from neo.Cryptography.ECCurve import ECDSA
 
 from neo.VM.InteropService import StackItem
 
@@ -177,7 +179,7 @@ class StateReader(InteropService):
 
     def CheckWitnessPubkey(self, engine, pubkey):
         #the ToScriptHash thing needs fixing
-        return self.CheckWitnessHash(engine, Contract.CreateSignatureRedeemScript(pubkey).ToScriptHash())
+        return self.CheckWitnessHash(engine, Crypto.ToScriptHash( Contract.CreateSignatureRedeemScript(pubkey)))
 
 
     def Runtime_CheckWitness(self, engine):
@@ -191,8 +193,8 @@ class StateReader(InteropService):
             result = self.CheckWitnessHash(engine, hashOrPubkey)
 
         elif len(hashOrPubkey) == 33:
-
-            result = self.CheckWitnessPubkey(engine, hashOrPubkey)
+            point = ECDSA.decode_secp256r1(hashOrPubkey)
+            result = self.CheckWitnessPubkey(engine, point)
 
         else:
             result = False
@@ -322,6 +324,10 @@ class StateReader(InteropService):
     def Blockchain_GetValidators(self, engine):
 
         validators = Blockchain.Default().GetValidators()
+
+        items = [ StackItem(validator.encode_point(compressed=True)) for validator in validators]
+
+        engine.EvaluationStack.PushT(items)
 
         raise NotImplementedError()
 

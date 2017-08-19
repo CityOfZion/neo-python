@@ -16,6 +16,7 @@ class UIntBase(SerializableMixin):
 
         else:
             if len(data) != num_bytes:
+                print("data len %s %s " % (len(data), num_bytes))
                 raise Exception("Invalid UInt")
 
             if type(data) is bytes:
