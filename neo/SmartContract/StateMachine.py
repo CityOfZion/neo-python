@@ -1,10 +1,416 @@
-from neo.VM import VMState
-from neo.VM import OpCode
-
+from neo.Core.State.ContractState import ContractState
+from neo.Core.State.AssetState import AssetState
+from neo.Core.Blockchain import Blockchain
+from neo.Core.FunctionCode import FunctionCode
+from neo.Core.State.StorageItem import StorageItem
+from neo.Core.State.StorageKey import StorageKey
+from neo.Core.AssetType import AssetType
+from neo.Cryptography.Crypto import Crypto
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
+from neo.Fixed8 import Fixed8
+from neo.VM.InteropService import StackItem
+from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
 
+import sys
 
 class StateMachine(StateReader):
 
+    _accounts = None
+    _validators = None
+    _assets = None
+    _contracts = None
+    _storages = None
 
-    pass
+    _wb = None
+
+    _contracts_created = {}
+
+
+    def __init__(self, accounts, validators, assets, contracts, storages, wb):
+        self._accounts = accounts
+        self._validators = validators
+        self._assets = assets
+        self._contracts = contracts
+        self._storages = storages
+
+        self.Register("Neo.Account.SetVotes", self.Account_SetVotes)
+        self.Register("Neo.Validator.Register", self.Validator_Register)
+        self.Register("Neo.Asset.Create", self.Asset_Create)
+        self.Register("Neo.Asset.Renew", self.Asset_Renew)
+        self.Register("Neo.Contract.Create", self.Contract_Create)
+        self.Register("Neo.Contract.Migrate", self.Contract_Migrate)
+        self.Register("Neo.Contract.GetStorageContext", self.Contract_GetStorageContext)
+        self.Register("Neo.Contract.Destroy", self.Contract_Destroy)
+        self.Register("Neo.Storage.Put", self.Storage_Put)
+        self.Register("Neo.Storage.Delete", self.Storage_Delete)
+
+        self.Register("AntShares.Account.SetVotes", self.Account_SetVotes)
+        self.Register("AntShares.Validator.Register", self.Validator_Register)
+        self.Register("AntShares.Asset.Create", self.Asset_Create)
+        self.Register("AntShares.Asset.Renew", self.Asset_Renew)
+        self.Register("AntShares.Contract.Create", self.Contract_Create)
+        self.Register("AntShares.Contract.Migrate", self.Contract_Migrate)
+        self.Register("AntShares.Contract.GetStorageContext", self.Contract_GetStorageContext)
+        self.Register("AntShares.Contract.Destroy", self.Contract_Destroy)
+        self.Register("AntShares.Storage.Put", self.Storage_Put)
+        self.Register("AntShares.Storage.Delete", self.Storage_Delete)
+
+
+    def CheckStorageContext(self, context):
+        contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
+
+        if contract is not None and contract.HasStorage:
+            return True
+
+        return False
+
+    def Commit(self):
+        print("COMMITTING ENGINE!!!")
+        self._accounts.commit(self._wb, False)
+        self._validators.commit(self._wb, False)
+        self._assets.commit(self._wb, False)
+        self._contracts.commit(self._wb, False)
+        self._storages.commit(self._wb, False)
+
+
+
+    def Blockchain_GetAccount(self, engine):
+        hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
+        account = self._accounts.TryGet( Crypto.ToAddress(hash))
+        if account:
+            engine.EvaluationStack.PushT(StackItem.FromInterface(account))
+            return True
+
+        return False
+
+    def Blockchain_GetAsset(self, engine):
+
+        hash = UInt256(data=engine.EvaluationStack.Pop().GetByteArray())
+
+        asset = self._assets.TryGet(hash.ToBytes())
+        if asset:
+            engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
+            return True
+        return False
+
+    def Blockchain_GetContract(self, engine):
+        hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
+
+        contract = self._contracts.TryGet(hash.ToBytes())
+
+        if contract:
+            engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+            return True
+        return False
+
+    def Account_SetVotes(self, engine):
+
+        #Not Implemented
+        account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
+        vote_list = engine.EvaluationStack.Pop().GetArray()
+
+        return True
+
+
+    def Validator_Register(self, engine):
+        #Not Implemented
+        pubkey = engine.EvaluationStack.Pop().GetByteArray()
+
+        return False
+
+
+    def Asset_Create(self, engine):
+
+        tx = engine.ScriptContainer
+
+        asset_type = engine.EvaluationStack.Pop().GetBigInteger()
+
+        if not asset_type in AssetType.AllTypes() or \
+                        asset_type == AssetType.CreditFlag or \
+                        asset_type == AssetType.DutyFlag or \
+                        asset_type == AssetType.GoverningToken or \
+                        asset_type == AssetType.UtilityToken:
+
+            return False
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 1024:
+            return False
+
+        name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+        print("decode name %s " % name)
+
+        amount = Fixed8(engine.EvaluationStack.Pop().GetBigInteger())
+
+        if amount == Fixed8.Zero() or amount < Fixed8.NegativeSatoshi():
+            return False
+
+        if asset_type == AssetType.Invoice and amount != Fixed8.NegativeSatoshi():
+            return False
+
+        precision = engine.EvaluationStack.Pop().GetBigInteger()
+
+        if precision > 8:
+            return False
+
+        if asset_type == AssetType.Share and precision != 0:
+            return False
+
+        if amount != Fixed8.NegativeSatoshi() and amount.value % pow(10, 8 - precision) != 0:
+            return False
+
+        owner = engine.EvaluationStack.Pop().GetByteArray()
+
+
+        admin = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
+        issuer = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
+
+        new_asset = AssetState(
+            asset_id=tx.Hash, asset_type=asset_type, name=name, amount=amount,
+            available=Fixed8.Zero(),precision=precision,fee_mode=0,fee=Fixed8.Zero(),
+            fee_addr=UInt160(),owner=owner,admin=admin,issuer=issuer,
+            expiration= Blockchain.Default().Height + 1 + 2000000, is_frozen=False
+        )
+
+        asset = self._assets.GetOrAdd(tx.Hash.ToBytes(), new_asset)
+
+        engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
+
+        return True
+
+
+    def Asset_Renew(self, engine):
+
+        current_asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
+
+        if current_asset is None:
+            return False
+
+        years = engine.EvaluationStack.Pop().GetBigInteger()
+
+        asset = self._assets.GetAndChange(current_asset.AssetId.ToBytes())
+
+        if asset.Expiration < Blockchain.Default().Height + 1:
+            asset.Expiration = Blockchain.Default().Height + 1
+
+        try:
+
+            asset.Expiration = asset.Expiration + years * 2000000
+
+        except Exception as e:
+            print("could not set expiration date %s " % e)
+
+            asset.Expiration = sys.maxsize
+
+        engine.EvaluationStack.PushT(asset.Expiration)
+
+        return True
+
+    def Contract_Create(self, engine):
+
+        script = engine.EvaluationStack.Pop().GetByteArray()
+
+        if len(script) > 1024 * 1024:
+            return False
+
+        param_list = engine.EvaluationStack.Pop().GetByteArray()
+
+        if len(param_list) > 252:
+            return False
+
+        return_type = engine.EvaluationStack.Pop().GetBigInteger()
+
+        needs_storage = engine.EvaluationStack.Pop().GetBoolean()
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        version = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        author = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        email = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 65536:
+            return False
+        description = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        hash = Crypto.ToScriptHash(script)
+
+        contract = self._contracts.TryGet(hash.ToBytes())
+
+        if contract == None:
+
+            code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
+
+            contract = ContractState(code=code, has_storage=needs_storage,
+                                     name=name, version=version, author=author,
+                                     email=email, description=description)
+
+            self._contracts.Add(hash.ToBytes(), contract)
+
+            self._contracts_created[hash.ToBytes()] = UInt160( data = engine.CurrentContext.ScriptHash)
+
+        engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+        return True
+
+
+    def Contract_Migrate(self, engine):
+
+        script = engine.EvaluationStack.Pop().GetByteArray()
+
+        if len(script) > 1024 * 1024:
+            return False
+
+        param_list = engine.EvaluationStack.Pop().GetByteArray()
+
+        if len(param_list) > 252:
+            return False
+
+        return_type = engine.EvaluationStack.Pop().GetBigInteger()
+
+        needs_storage = engine.EvaluationStack.Pop().GetBoolean()
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        version = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        author = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        email = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        if len(engine.EvaluationStack.Peek().GetByteArray()) > 65536:
+            return False
+        description = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+
+        hash = Crypto.ToScriptHash(script)
+
+        contract = self._contracts.TryGet(hash.ToBytes())
+
+        if contract is None:
+
+            code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
+
+            contract = ContractState(code=code, has_storage=needs_storage,
+                                     name=name, version=version, author=author,
+                                     email=email, description=description)
+
+            self._contracts.Add(hash.ToBytes(), contract)
+
+            self._contracts_created[hash.ToBytes()] = UInt160( data = engine.CurrentContext.ScriptHash)
+
+            if needs_storage:
+
+                for pair in self._storages.Find(engine.CurrentContext.ScriptHash.ToBytes()):
+
+                    key = StorageKey(script_hash = hash, key = pair.Key.Key)
+                    item = StorageItem(pair.Value.Value)
+                    self._storages.Add(key, item)
+
+        engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+        return True
+
+    def Contract_GetStorageContext(self, engine):
+
+        contract = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.ContractState.ContractState')
+
+
+        if contract.ScriptHash.ToBytes() in self._contracts_created:
+            created = self._contracts_created[contract.ScriptHash.ToBytes()]
+
+            if created == UInt160(data=engine.CurrentContext.ScriptHash):
+
+                context = StorageContext(script_hash=contract.ScriptHash)
+                engine.EvaluationStack.PushT(StackItem.FromInterface(context))
+                return True
+
+        return False
+
+    def Contract_Destroy(self, engine):
+        hash = UInt160( data= engine.CurrentContext.ScriptHash)
+
+        contract = self._contracts.TryGet(hash.ToBytes())
+
+        if contract is not None:
+
+            self._contracts.Delete(hash.ToBytes())
+
+            if contract.HasStorage:
+
+                for pair in self._storages.Find( hash.ToBytes()):
+
+                    self._storages.Delete(pair.Key)
+
+        return True
+
+    def Storage_Get(self, engine):
+
+        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+
+        if not self.CheckStorageContext(context):
+            return False
+
+        key = engine.EvaluationStack.Pop().GetByteArray()
+
+        storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
+
+        item = self._storages.TryGet(storage_key)
+
+        if item is not None:
+            engine.EvaluationStack.PushT(item.Value)
+        else:
+            engine.EvaluationStack.PushT(bytearray(0))
+
+        return True
+
+
+    def Storage_Put(self, engine):
+
+        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+
+        if not self.CheckStorageContext(context):
+            return False
+
+        key = engine.EvaluationStack.Pop().GetByteArray()
+
+        if len(key) > 1024:
+            return False
+
+        value = engine.EvaluationStack.Pop().GetByteArray()
+
+        new_item = StorageItem(value=value)
+        storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
+
+        item = self._storages.GetAndChange(storage_key, new_instance=new_item)
+        item.Value = value
+
+        return True
+
+    def Storage_Delete(self, engine):
+
+        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+
+        if not self.CheckStorageContext(context):
+            return False
+
+        key = engine.EvaluationStack.Pop().GetByteArray()
+
+        storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
+
+        self._storages.Delete(storage_key)

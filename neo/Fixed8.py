@@ -34,6 +34,15 @@ class Fixed8:
     def Satoshi():
         return Fixed8(1)
 
+    @staticmethod
+    def NegativeSatoshi():
+        return Fixed8(-1)
+
+    @staticmethod
+    def Zero():
+        return Fixed8(0)
+
+
 
     def __add__(self, other):
         return Fixed8( self.value + other.value)

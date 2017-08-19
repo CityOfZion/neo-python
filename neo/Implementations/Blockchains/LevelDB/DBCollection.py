@@ -77,7 +77,16 @@ class DBCollection():
 
         return item
 
+    def GetOrAdd(self, keyval, new_instance):
 
+        item = new_instance
+
+        if keyval in self.Deleted:
+            self.Deleted.remove(keyval)
+
+        self.Add(keyval,item)
+
+        return item
 
     def GetItemBy(self, keyval):
         return self.GetAndChange(keyval)

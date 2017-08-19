@@ -10,6 +10,7 @@ class StorageContext(InteropMixin):
         self.ScriptHash = script_hash
 
 
+
     def ToArray(self):
         #hmmm... script hashes are already a byte array at the moment, i think?
         #return self.ScriptHash.ToArray()

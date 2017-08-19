@@ -18,3 +18,9 @@ class AssetType(object):
     Share = DutyFlag | 0x10
     Invoice = DutyFlag | 0x18
     Token = CreditFlag | 0x20
+
+    @staticmethod
+    def AllTypes():
+        return [AssetType.CreditFlag, AssetType.DutyFlag, AssetType.GoverningToken,
+                AssetType.UtilityToken, AssetType.Currency, AssetType.Share,
+                AssetType.Invoice, AssetType.Token]

@@ -2,14 +2,15 @@ from neo.VM.InteropService import InteropService
 from neo.Wallets.Contract import Contract
 from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
 from neo.SmartContract.LogEventArgs import LogEventArgs
+from neo.SmartContract.StorageContext import StorageContext
+from neo.Core.State.StorageKey import StorageKey
+from neo.Core.State.StorageItem import StorageItem
 from neo.Core.Blockchain import Blockchain
 from neo.BigInteger import BigInteger
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 
 from neo.VM.InteropService import StackItem
-
-import binascii
 
 import events
 
@@ -161,7 +162,7 @@ class StateReader(InteropService):
 
 
     def Runtime_GetTrigger(self, engine):
-        engine.EvaluationStack.Push(engine.Trigger)
+        engine.EvaluationStack.PushT(engine.Trigger)
 
 
     def CheckWitnessHash(self, engine, hash):
@@ -196,7 +197,7 @@ class StateReader(InteropService):
         else:
             result = False
 
-        engine.EvaluationStack.Push(result)
+        engine.EvaluationStack.PushT(result)
 
         return True
 
@@ -219,9 +220,9 @@ class StateReader(InteropService):
     def Blockchain_GetHeight(self, engine):
 
         if Blockchain.Default() is None:
-            engine.EvaluationStack.Push(0)
+            engine.EvaluationStack.PushT(0)
         else:
-            engine.EvaluationStack.Push( Blockchain.Default().Height)
+            engine.EvaluationStack.PushT( Blockchain.Default().Height)
 
         return True
 
@@ -349,7 +350,7 @@ class StateReader(InteropService):
         header = engine.EvaluationStack.Pop().GetInterface('neo.Core.BlockBase.BlockBase')
         if header is None:
             return False
-        engine.EvaluationStack.Push(header.Hash.ToArray())
+        engine.EvaluationStack.PushT(header.Hash.ToArray())
         return True
 
 
@@ -358,7 +359,7 @@ class StateReader(InteropService):
         header = engine.EvaluationStack.Pop().GetInterface('neo.Core.BlockBase.BlockBase')
         if header is None:
             return False
-        engine.EvaluationStack.Push(header.Version)
+        engine.EvaluationStack.PushT(header.Version)
         return True
 
     def Header_GetPrevHash(self, engine):
@@ -366,7 +367,7 @@ class StateReader(InteropService):
         header = engine.EvaluationStack.Pop().GetInterface('neo.Core.BlockBase.BlockBase')
         if header is None:
             return False
-        engine.EvaluationStack.Push(header.PrevHash.ToArray())
+        engine.EvaluationStack.PushT(header.PrevHash.ToArray())
         return True
 
     def Header_GetMerkleRoot(self, engine):
@@ -374,7 +375,7 @@ class StateReader(InteropService):
         header = engine.EvaluationStack.Pop().GetInterface('neo.Core.BlockBase.BlockBase')
         if header is None:
             return False
-        engine.EvaluationStack.Push(header.MerkleRoot.ToArray())
+        engine.EvaluationStack.PushT(header.MerkleRoot.ToArray())
         return True
 
     def Header_GetTimestamp(self, engine):
@@ -382,7 +383,7 @@ class StateReader(InteropService):
         header = engine.EvaluationStack.Pop().GetInterface('neo.Core.BlockBase.BlockBase')
         if header is None:
             return False
-        engine.EvaluationStack.Push(header.Timestamp)
+        engine.EvaluationStack.PushT(header.Timestamp)
         return True
 
     def Header_GetConsensusData(self, engine):
@@ -390,7 +391,7 @@ class StateReader(InteropService):
         header = engine.EvaluationStack.Pop().GetInterface('neo.Core.BlockBase.BlockBase')
         if header is None:
             return False
-        engine.EvaluationStack.Push(header.ConsensusData)
+        engine.EvaluationStack.PushT(header.ConsensusData)
         return True
 
     def Header_GetNextConsensus(self, engine):
@@ -398,7 +399,7 @@ class StateReader(InteropService):
         header = engine.EvaluationStack.Pop().GetInterface('neo.Core.BlockBase.BlockBase')
         if header is None:
             return False
-        engine.EvaluationStack.Push(header.NextConsensus.ToArray())
+        engine.EvaluationStack.PushT(header.NextConsensus.ToArray())
         return True
 
     def Block_GetTransactionCount(self, engine):
@@ -406,7 +407,7 @@ class StateReader(InteropService):
         block = engine.EvaluationStack.Pop().GetInterface('neo.Core.Block.Block')
         if block is None:
             return False
-        engine.EvaluationStack.Push( len(block.Transactions))
+        engine.EvaluationStack.PushT( len(block.Transactions))
         return True
 
     def Block_GetTransactions(self, engine):
@@ -416,7 +417,7 @@ class StateReader(InteropService):
             return False
 
         txlist = [StackItem.FromInterface(tx) for tx in block.Transactions]
-        engine.EvaluationStack.Push(txlist)
+        engine.EvaluationStack.PushT(txlist)
         return True
 
     def Block_GetTransaction(self, engine):
@@ -428,7 +429,7 @@ class StateReader(InteropService):
             return False
 
         tx= StackItem.FromInterface(block.Transactions[index])
-        engine.EvaluationStack.Push(tx)
+        engine.EvaluationStack.PushT(tx)
         return True
 
     def Transaction_GetHash(self, engine):
@@ -437,7 +438,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        engine.EvaluationStack.Push(tx.Hash.ToArray())
+        engine.EvaluationStack.PushT(tx.Hash.ToArray())
         return True
 
     def Transaction_GetType(self, engine):
@@ -446,7 +447,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        engine.EvaluationStack.Push(tx.Type)
+        engine.EvaluationStack.PushT(tx.Type)
         return True
 
     def Transaction_GetAttributes(self, engine):
@@ -456,7 +457,7 @@ class StateReader(InteropService):
             return False
 
         attr = [StackItem.FromInterface(attr) for attr in tx.Attributes]
-        engine.EvaluationStack.Push(attr)
+        engine.EvaluationStack.PushT(attr)
         return True
 
     def Transaction_GetInputs(self, engine):
@@ -466,7 +467,7 @@ class StateReader(InteropService):
             return False
 
         inputs = [StackItem.FromInterface(input) for input in tx.Inputs]
-        engine.EvaluationStack.Push(inputs)
+        engine.EvaluationStack.PushT(inputs)
         return True
 
     def Transaction_GetOutputs(self, engine):
@@ -476,7 +477,7 @@ class StateReader(InteropService):
             return False
 
         outputs = [StackItem.FromInterface(output) for output in tx.Outputs]
-        engine.EvaluationStack.Push(outputs)
+        engine.EvaluationStack.PushT(outputs)
         return True
 
     def Transaction_GetReferences(self, engine):
@@ -486,7 +487,7 @@ class StateReader(InteropService):
             return False
 
         refs = [StackItem.FromInterface(ref) for ref in tx.References]
-        engine.EvaluationStack.Push(refs)
+        engine.EvaluationStack.PushT(refs)
         return True
 
     def Attribute_GetUsage(self, engine):
@@ -494,7 +495,7 @@ class StateReader(InteropService):
         attr = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.TransactionAttribute.TransactionAttribute')
         if attr is None:
             return False
-        engine.EvaluationStack.Push(attr.Usage)
+        engine.EvaluationStack.PushT(attr.Usage)
         return True
 
     def Attribute_GetData(self, engine):
@@ -502,7 +503,7 @@ class StateReader(InteropService):
         attr = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.TransactionAttribute.TransactionAttribute')
         if attr is None:
             return False
-        engine.EvaluationStack.Push(attr.Data)
+        engine.EvaluationStack.PushT(attr.Data)
         return True
 
     def Input_GetHash(self, engine):
@@ -510,7 +511,7 @@ class StateReader(InteropService):
         input = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionInput')
         if input is None:
             return False
-        engine.EvaluationStack.Push(input.PrevHash.ToArray())
+        engine.EvaluationStack.PushT(input.PrevHash.ToArray())
         return True
 
     def Input_GetIndex(self, engine):
@@ -518,7 +519,7 @@ class StateReader(InteropService):
         input = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionInput')
         if input is None:
             return False
-        engine.EvaluationStack.Push(input.PrevIndex)
+        engine.EvaluationStack.PushT(input.PrevIndex)
         return True
 
     def Output_GetAssetId(self, engine):
@@ -526,7 +527,7 @@ class StateReader(InteropService):
         output = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionOutput')
         if output is None:
             return False
-        engine.EvaluationStack.Push(output.AssetId)
+        engine.EvaluationStack.PushT(output.AssetId)
         return True
 
     def Output_GetValue(self, engine):
@@ -534,7 +535,7 @@ class StateReader(InteropService):
         output = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionOutput')
         if output is None:
             return False
-        engine.EvaluationStack.Push(output.Value.GetData())
+        engine.EvaluationStack.PushT(output.Value.GetData())
         return True
 
     def Output_GetScriptHash(self, engine):
@@ -542,7 +543,7 @@ class StateReader(InteropService):
         output = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionOutput')
         if output is None:
             return False
-        engine.EvaluationStack.Push(output.ScriptHash.ToArray())
+        engine.EvaluationStack.PushT(output.ScriptHash.ToArray())
         return True
 
     def Account_GetScriptHash(self, engine):
@@ -550,7 +551,7 @@ class StateReader(InteropService):
         account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
         if account is None:
             return False
-        engine.EvaluationStack.Push(account.ScriptHash.ToArray())
+        engine.EvaluationStack.PushT(account.ScriptHash.ToArray())
         return True
 
     def Account_GetVotes(self, engine):
@@ -560,7 +561,7 @@ class StateReader(InteropService):
             return False
 
         votes = [StackItem.FromInterface(v.EncodePoint(True)) for v in account.Votes]
-        engine.EvaluationStack.Push(votes)
+        engine.EvaluationStack.PushT(votes)
         return True
 
     def Account_GetBalance(self, engine):
@@ -571,7 +572,7 @@ class StateReader(InteropService):
             return False
 
         balance = account.BalanceFor(assetId)
-        engine.EvaluationStack.Push(balance.GetData())
+        engine.EvaluationStack.PushT(balance.GetData())
         return True
 
     def Asset_GetAssetId(self, engine):
@@ -579,7 +580,7 @@ class StateReader(InteropService):
         asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
         if asset is None:
             return False
-        engine.EvaluationStack.Push(asset.AssetId.ToArray())
+        engine.EvaluationStack.PushT(asset.AssetId.ToArray())
         return True
 
     def Asset_GetAssetType(self, engine):
@@ -587,7 +588,7 @@ class StateReader(InteropService):
         asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
         if asset is None:
             return False
-        engine.EvaluationStack.Push(asset.AssetType)
+        engine.EvaluationStack.PushT(asset.AssetType)
         return True
 
     def Asset_GetAmount(self, engine):
@@ -595,7 +596,7 @@ class StateReader(InteropService):
         asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
         if asset is None:
             return False
-        engine.EvaluationStack.Push(asset.Amount.GetData())
+        engine.EvaluationStack.PushT(asset.Amount.GetData())
         return True
 
     def Asset_GetAvailable(self, engine):
@@ -603,7 +604,7 @@ class StateReader(InteropService):
         asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
         if asset is None:
             return False
-        engine.EvaluationStack.Push(asset.Available.GetData())
+        engine.EvaluationStack.PushT(asset.Available.GetData())
         return True
 
     def Asset_GetPrecision(self, engine):
@@ -611,7 +612,7 @@ class StateReader(InteropService):
         asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
         if asset is None:
             return False
-        engine.EvaluationStack.Push(asset.Precision)
+        engine.EvaluationStack.PushT(asset.Precision)
         return True
 
     def Asset_GetOwner(self, engine):
@@ -619,7 +620,7 @@ class StateReader(InteropService):
         asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
         if asset is None:
             return False
-        engine.EvaluationStack.Push(asset.Owner.EncodePoint(True))
+        engine.EvaluationStack.PushT(asset.Owner.EncodePoint(True))
         return True
 
     def Asset_GetAdmin(self, engine):
@@ -627,7 +628,7 @@ class StateReader(InteropService):
         asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
         if asset is None:
             return False
-        engine.EvaluationStack.Push(asset.Admin.ToArray())
+        engine.EvaluationStack.PushT(asset.Admin.ToArray())
         return True
 
     def Asset_GetIssuer(self, engine):
@@ -635,7 +636,7 @@ class StateReader(InteropService):
         asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
         if asset is None:
             return False
-        engine.EvaluationStack.Push(asset.Issuer.ToArray())
+        engine.EvaluationStack.PushT(asset.Issuer.ToArray())
         return True
 
     def Contract_GetScript(self, engine):
@@ -643,15 +644,39 @@ class StateReader(InteropService):
         contract = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.ContractState.ContractState')
         if contract is None:
             return False
-        engine.EvaluationStack.Push(contract.Code.Script)
+        engine.EvaluationStack.PushT(contract.Code.Script)
         return True
 
     def Storage_GetContext(self, engine):
 
-        raise NotImplementedError()
+        hash = UInt160( data= engine.CurrentContext.ScriptHash)
+
+        context = StorageContext(script_hash=hash)
+
+        engine.EvaluationStack.PushT(context)
+
 
 
     def Storage_Get(self, engine):
 
-        raise NotImplementedError()
+        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
 
+        contract = Blockchain.Default().GetContract( context.ScriptHash.ToBytes())
+
+        if contract is None or not contract.HasStorage:
+            return False
+
+        key = engine.EvaluationStack.Pop().GetByteArray()
+
+        storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
+
+        item = Blockchain.Default().GetStorageItem(storage_key)
+
+        if item is not None:
+
+            engine.EvaluationStack.PushT( item.Value)
+
+        else:
+            engine.EvaluationStack.PushT( bytearray(0))
+
+        return True

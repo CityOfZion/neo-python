@@ -17,6 +17,11 @@ class FunctionCode(SerializableMixin):
     _scriptHash = None
 
 
+    def __init__(self, script=None, param_list=[], return_type=None):
+        self.Script = script
+        self.ParameterList = param_list
+        self.ReturnType = return_type
+
     def ScriptHash(self):
         if self._scriptHash is None:
 

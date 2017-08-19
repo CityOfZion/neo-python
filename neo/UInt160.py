@@ -12,5 +12,3 @@ class UInt160(UIntBase):
 
 
 
-
-
