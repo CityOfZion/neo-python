@@ -37,8 +37,6 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
 
     def Persist(self, block):
 
-        print("RUNNNING LEVELDB TESTSTSTHOESUTHOESUNTSOENTUH")
-
         sn = self._db.snapshot()
 
         accounts = self.Accounts
@@ -94,24 +92,22 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
 
             # do a whole lotta stuff with tx here...
             if tx.Type == TransactionType.RegisterTransaction:
-                print("RUNNING REGISTER TX")
+
                 asset = AssetState(tx.Hash, tx.AssetType, tx.Name, tx.Amount,
                                    Fixed8(0), tx.Precision, Fixed8(0), Fixed8(0), UInt160(data=bytearray(20)),
                                    tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False)
 
                 assets.Add(tx.Hash.ToBytes(), asset)
-                print("ASSET %s " % json.dumps(asset.ToJson(), indent=4))
 
             elif tx.Type == TransactionType.IssueTransaction:
-                print("RUNNING ISSUE TX")
+
                 txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
                 for result in txresults:
                     asset = assets.GetAndChange(result.AssetId.ToBytes())
                     asset.Available = asset.Available - result.Amount
-                    print("ISSUE %s " % json.dumps(asset.ToJson(), indent=4))
 
             elif tx.Type == TransactionType.ClaimTransaction:
-                print("RUNNING CLAIM TX")
+
                 for input in tx.Claims:
 
                     sc = spentcoins.TryGet(input.PrevHash.ToBytes())
@@ -120,21 +116,22 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                         spentcoins.GetAndChange(input.PrevHash.ToBytes())
 
             elif tx.Type == TransactionType.EnrollmentTransaction:
-                print("RUNNING ERNOLLMENT TX")
+
                 validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
                 #                        print("VALIDATOR %s " % validator.ToJson())
+
             elif tx.Type == TransactionType.PublishTransaction:
-                print("RUNNING PUBLISH TX")
+
                 contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
                                          tx.Author, tx.Email, tx.Description)
 
                 contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
-                print("PUBLISH: %s " % json.dumps(contract.ToJson(), indent=4))
+
             elif tx.Type == TransactionType.InvocationTransaction:
 
-                print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
                 script_table = CachedScriptTable(contracts)
                 service = StateMachine(accounts, validators, assets, contracts, storages, None)
+                contractState = contracts.TryGet(b'54030ae64f0a6d24bfda562778e0f4c9f1e24ecc')
 
                 engine = ApplicationEngine(
                     trigger_type=TriggerType.Application,
@@ -149,6 +146,6 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
 
                 # drum roll?
                 if engine.Execute():
-                    print("Would commit here...")
                     #service.Commit()
-
+                    return True
+                return False

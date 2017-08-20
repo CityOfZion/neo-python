@@ -10,6 +10,7 @@ from neo.VM.InteropService import Array,Struct
 import sys,os
 from neo.UInt160 import UInt160
 import traceback
+import binascii
 
 @logged
 class ExecutionEngine():
@@ -73,11 +74,10 @@ class ExecutionEngine():
         self._Table = table
         self._Service = service
 
-        self._InvocationStack = RandomAccessStack()
-        self._EvaluationStack = RandomAccessStack()
-        self._AltStack = RandomAccessStack()
+        self._InvocationStack = RandomAccessStack(name='Invocation')
+        self._EvaluationStack = RandomAccessStack(name='Evaluation')
+        self._AltStack = RandomAccessStack(name='Alt')
 
-        print("created execution engine: %s %s %s " % (self._InvocationStack, self._EvaluationStack, self._Crypto))
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
@@ -115,14 +115,16 @@ class ExecutionEngine():
                        PUSH9,PUSH10,PUSH11,PUSH12,PUSH13,PUSH14,PUSH15,PUSH16 ]
 
             if opcode == PUSH0:
-                estack.PushT(bytearray(0))
+                estack.PushT(bytearray([0]))
 
             elif opcode == PUSHDATA1:
-                estack.PushT(context.OpReader.ReadByte())
+                lenngth = context.OpReader.ReadByte()
+                print("BYT %s " % lenngth)
+                estack.PushT(bytearray(context.OpReader.ReadBytes(lenngth)))
             elif opcode == PUSHDATA2:
-                estack.PushT(context.OpReader.ReadUInt16())
+                estack.PushT(context.OpReader.ReadBytes(context.OpReader.ReadUInt16()))
             elif opcode == PUSHDATA4:
-                estack.PushT(context.OpReader.ReadUInt32())
+                estack.PushT(context.OpReader.ReadBytes(context.OpReader.ReadUInt32()))
             elif opcode in pushops:
                 # EvaluationStack.Push((int)opcode - (int)OpCode.PUSH1 + 1);
                 estack.PushT(opcode - PUSH1 + 1)
@@ -140,10 +142,13 @@ class ExecutionEngine():
                 fValue = True
                 if opcode > JMP:
                     fValue = estack.Pop().GetBoolean()
+                    print("fvalue %s " % fValue)
                     if opcode == JMPIFNOT:
+                        print("Will negate ev value!! %s " % fValue)
                         fValue = not fValue
+                        print("did negate fvalue %s " % fValue)
                 if fValue:
-                    context.InstructionPointer = offset
+                    context.SetInstructionPointer( offset )
 
 
             elif opcode == CALL:
@@ -458,72 +463,72 @@ class ExecutionEngine():
 
             elif opcode == BOOLAND:
 
-                x1 = estack.Pop().GetBoolean()
                 x2 = estack.Pop().GetBoolean()
+                x1 = estack.Pop().GetBoolean()
 
                 estack.PushT( x1 and x2 )
 
             elif opcode == BOOLOR:
 
-                x1 = estack.Pop().GetBoolean()
                 x2 = estack.Pop().GetBoolean()
+                x1 = estack.Pop().GetBoolean()
 
                 estack.PushT(x1 or x2)
 
             elif opcode == NUMEQUAL:
 
-                x1 = estack.Pop().GetBigInteger()
                 x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
 
                 estack.PushT( x1 == x2 )
 
             elif opcode == NUMNOTEQUAL:
 
-                x1 = estack.Pop().GetBigInteger()
                 x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
 
                 estack.PushT(x1 != x2)
 
             elif opcode == LT:
 
-                x1 = estack.Pop().GetBigInteger()
                 x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
 
                 estack.PushT(x1 < x2)
 
             elif opcode == GT:
 
-                x1 = estack.Pop().GetBigInteger()
                 x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
 
                 estack.PushT(x1 > x2)
 
             elif opcode == LTE:
 
-                x1 = estack.Pop().GetBigInteger()
                 x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
 
                 estack.PushT(x1 <= x2)
 
             elif opcode == GTE:
 
-                x1 = estack.Pop().GetBigInteger()
                 x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
 
                 estack.PushT(x1 >= x2)
 
 
             elif opcode == MIN:
 
-                x1 = estack.Pop().GetBigInteger()
                 x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
 
                 estack.PushT( min(x1, x2))
 
             elif opcode == MAX:
 
-                x1 = estack.Pop().GetBigInteger()
                 x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
 
                 estack.PushT(max(x1,x2))
 
@@ -750,9 +755,9 @@ class ExecutionEngine():
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             op = RET
         else:
-            op = self.CurrentContext.OpReader.ReadByte().to_bytes(1, 'little')
+            op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-
+        print("OP: %s " % op)
         opname = ToName(op)
         print("executing op:  %s -> %s" % (op, opname))
 
@@ -763,9 +768,6 @@ class ExecutionEngine():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
             print("exception: %s " % e)
-#            frame = sys._getframe(2)
-#            traceback.print_stack(frame)
-            self.__log.error("Exception executing op %s " % e)
             self._VMState |= VMState.FAULT
 
 

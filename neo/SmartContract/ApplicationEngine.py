@@ -27,8 +27,6 @@ class ApplicationEngine(ExecutionEngine):
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
 
-        print("created app engine %s " % self)
-
 
     def CheckArraySize(self):
 

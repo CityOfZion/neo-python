@@ -62,7 +62,6 @@ class StateMachine(StateReader):
         self.Register("AntShares.Storage.Put", self.Storage_Put)
         self.Register("AntShares.Storage.Delete", self.Storage_Delete)
 
-        print("created State machine %s " % self)
 
     def CheckStorageContext(self, context):
         contract = self._contracts.TryGet(context.ScriptHash.ToBytes())

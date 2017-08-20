@@ -27,9 +27,11 @@ class BinaryReader(object):
     def unpack(self, fmt, length=1):
         return struct.unpack(fmt, self.stream.read(length))[0]
 
-    def ReadByte(self):
+    def ReadByte(self, do_ord=True):
         try:
-            return ord(self.stream.read(1))
+            if do_ord:
+                return ord(self.stream.read(1))
+            return self.stream.read(1)
         except Exception as e:
             self.__log.debug("ord expected character but got none")
         return 0

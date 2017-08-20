@@ -271,12 +271,12 @@ class StateReader(InteropService):
         print("blockchain get block %s " % data)
 
         if len(data) <= 5:
-
-            height = BigInteger(data)
+            height = BigInteger.FromBytes(data)
+            print("HEIGHT %s " % height)
 
             if Blockchain.Default() is not None:
 
-                block = Blockchain.Default().GetBlock(height_or_hash=height)
+                block = Blockchain.Default().GetBlockByHeight(height)
 
             elif height == 0:
 
@@ -285,11 +285,11 @@ class StateReader(InteropService):
 
         elif len(data) == 32:
 
-            hash = UInt256(data=data)
+            hash = UInt256(data=data).ToBytes()
 
             if Blockchain.Default() is not None:
 
-                block = Blockchain.Default().GetBlock(height_or_hash=hash)
+                block = Blockchain.Default().GetBlockByHash(hash=hash)
 
             elif hash == Blockchain.GenesisBlock().Hash:
 

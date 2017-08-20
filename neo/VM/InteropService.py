@@ -56,7 +56,7 @@ class StackItem(EquatableMixin):
             return ByteArray(value)
         elif typ is list:
             return Array(value)
-        print("Could not create stack item for vaule %s %s " % (typ, value))
+#        print("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 
 class Array(StackItem):

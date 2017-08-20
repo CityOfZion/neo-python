@@ -125,12 +125,25 @@ NEWSTRUCT = b'\xC6' # 用作值類型
 
 import sys
 import importlib
-import binascii
+#import binascii
+
+module = importlib.import_module('neo.VM.OpCode')
+items = dir(sys.modules[__name__])
+
+#for item in items:
+#    val = getattr(module,item)
+#    if type(val) is bytes:
+#        out = int.from_bytes(val,'little')
+#        setattr(module,'%s_I' % item, out)
+
+#items = dir(sys.modules[__name__])
+
+#for item in items:
+#    val = getattr(module,item)
+#    print("ITEM/VAL: %s %s " % (item,val))
+
 
 def ToName(op):
-    items = dir(sys.modules[__name__])
-
-    module = importlib.import_module('neo.VM.OpCode')
 
     if type(op) is bytes:
         op = int.from_bytes(op, 'little')

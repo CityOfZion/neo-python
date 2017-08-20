@@ -221,6 +221,9 @@ class Blockchain(object):
     def GetHeaderHash(self, height):
         pass
 
+    def GetBlockByHeight(self, height):
+        pass
+
     def GetBlock(self, height_or_hash):
 #        return self.GetBlockByHash(self.GetBlockHash(height))
         pass

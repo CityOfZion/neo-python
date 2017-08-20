@@ -86,7 +86,7 @@ class TransactionTestCase(unittest.TestCase):
         self.assertEqual(contract['author'], 'Erik Zhang')
         self.assertEqual(contract['description'], 'Lock your assets until a timestamp.')
 
-        self.assertEqual(contract['code']['hash'], 'dJpxawFbHrECL5aghzzAA7BgFDeyvUv3PeSykGhF5pAqyDq35gKUA9kXVmTrVHMQN9Xvg7QevCzar3tdQNpzePwobz79uPDsbDCtVGTCu1Jn43RRpARbKZACFGtdt5JFzvLdL93NHsj8JucHXTf3D1L3C4rsZThGh2u3WngyE8beMvhi4rnzewp8K4fcnAddBtQ1dgxFN7rNu7mdDvMW7XipgBpDg6PaAE4MgGm8EyQ1rTWYMr422xYZuxkzyYxCEMnE1dLyoLjsSviAM831t6rTafrfhMDbR5wYT1ik2v3UkkZUrf8quWGFsfBNUASPU6rvE6JzwqNJtZ8dwjkXRHPnT2YKCTHYqcKq49BQZ7ZL1CW1azQgYJHXJxFcPebFfrkPw2WTgvAGGWj656QkmtUi4Rh7EJMkknJNFg7KEhaTiHTwRRg7TUyQmw')
+        self.assertEqual(contract['code']['hash'], 'ffbd1a7ad1e2348b6b3822426f364bfb4bcce3b9')
         self.assertEqual(contract['code']['returntype'], 1)
         self.assertEqual(contract['code']['parameters'], '020500')
 

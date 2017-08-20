@@ -52,7 +52,6 @@ class ExecutionContext():
         self.Script = script
         self.PushOnly = push_only
         self.__Breakpoints = break_points
-
         self.__mstream = StreamManager.GetStream(self.Script)
         self.__OpReader = BinaryReader(self.__mstream)
 

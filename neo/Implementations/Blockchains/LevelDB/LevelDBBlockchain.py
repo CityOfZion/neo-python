@@ -323,6 +323,12 @@ class LevelDBBlockchain(Blockchain):
     def GetSysFeeAmount(self, hash):
         return Fixed8(0)
 
+    def GetBlockByHeight(self, height):
+        hash = self.GetBlockHash(height)
+        if hash is not None:
+            return self.GetBlockByHash(hash)
+
+
     def GetBlock(self, height_or_hash):
 
         hash = None
@@ -330,6 +336,8 @@ class LevelDBBlockchain(Blockchain):
         intval = None
         try:
             intval = int(height_or_hash)
+            print("GETTING INTVAL: %s " % intval)
+
         except Exception as e:
             pass
 
