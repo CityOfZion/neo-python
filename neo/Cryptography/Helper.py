@@ -255,6 +255,7 @@ def bin_hash160(string):
     intermed = hashlib.sha256(string).digest()
     return hashlib.new('ripemd160', intermed).hexdigest()
 
+
 def bin_sha256(string):
     binary_data = string if type(string) is bytes else string.encode('utf-8')
     return hashlib.sha256(binary_data).digest()

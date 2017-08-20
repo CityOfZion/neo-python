@@ -30,9 +30,9 @@ class StackItem(EquatableMixin):
         raise Exception('Not supported')
 
     def GetInterface(self, t):
-        print("You may need to push this item using FromInterface")
-        raise Exception('Not Supported')
-
+        print("You may need to push %s  using FromInterface " % t)
+#        raise Exception('Not Supported')
+        return None
 
     def __str__(self):
         return 'Stack Item'
@@ -263,16 +263,15 @@ class InteropService():
 
     def Invoke(self, method, engine):
 
-        print("invoking method: %s " % method)
         if not method in self._dictionary.keys():
 
+            print("method %s not found in ->" % method)
             for k,v in self._dictionary.items():
                 print("%s -> %s " % (k, v))
             return False
 
-        print("will call method")
         func = self._dictionary[method]
-        print("method is %s" % func)
+        print("invoking method -> %s" % func)
         return func(engine)
 
     @staticmethod

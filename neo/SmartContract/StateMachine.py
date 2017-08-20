@@ -66,10 +66,13 @@ class StateMachine(StateReader):
 
 
     def CheckStorageContext(self, context):
-        contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
+        if context is None:
+            return False
 
-        if contract is not None and contract.HasStorage:
-            return True
+        contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
+        if contract is not None:
+            if contract is not None and contract.HasStorage:
+                return True
 
         return False
 
@@ -116,8 +119,13 @@ class StateMachine(StateReader):
 
     def Account_SetVotes(self, engine):
 
-        vote_list = engine.EvaluationStack.Pop().GetArray()
-        account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
+        try:
+            account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
+
+            vote_list = engine.EvaluationStack.Pop().GetArray()
+        except Exception as e:
+            print("could not get account or votes: %s " % e)
+            return False
 
         if account is None or len(vote_list) > 1024:
             return False
@@ -136,7 +144,7 @@ class StateMachine(StateReader):
         for v in vote_list:
             voteset.add(v.GetByteArray())
         acct.Votes = list(voteset)
-
+        print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
         return True
 
 
@@ -173,7 +181,7 @@ class StateMachine(StateReader):
             return False
 
         name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
-        print("decode name %s " % name)
+#        print("decode name %s " % name)
 
         amount = Fixed8(engine.EvaluationStack.Pop().GetBigInteger())
 
@@ -402,18 +410,24 @@ class StateMachine(StateReader):
 
     def Storage_Get(self, engine):
 
-        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+        context = None
+        try:
+            context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+        except Exception as e:
+            print("Storage Context not found")
+            return False
 
+        print("context %s " % context)
         if not self.CheckStorageContext(context):
             return False
 
         key = engine.EvaluationStack.Pop().GetByteArray()
-
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
-
-        item = self._storages.TryGet(storage_key)
+        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         if item is not None:
+            print("Got Stored item %s " % item)
+
             engine.EvaluationStack.PushT(item.Value)
         else:
             engine.EvaluationStack.PushT(bytearray(0))
@@ -422,8 +436,12 @@ class StateMachine(StateReader):
 
 
     def Storage_Put(self, engine):
-
-        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+        context = None
+        try:
+            context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+        except Exception as e:
+            print("Storage Context Not found on stack")
+            return False
 
         if not self.CheckStorageContext(context):
             return False
@@ -433,13 +451,17 @@ class StateMachine(StateReader):
         if len(key) > 1024:
             return False
 
+
         value = engine.EvaluationStack.Pop().GetByteArray()
 
         new_item = StorageItem(value=value)
-        storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 
-        item = self._storages.GetAndChange(storage_key, new_instance=new_item)
+        storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
+
+        item = self._storages.GetAndChange(storage_key.GetHashCodeBytes(), new_instance=new_item)
         item.Value = value
+
+        print("Put stored item %s %s " % (item, item.Value))
 
         return True
 
@@ -454,4 +476,6 @@ class StateMachine(StateReader):
 
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 
-        self._storages.Delete(storage_key)
+        self._storages.Delete(storage_key.GetHashCodeBytes())
+
+        return True

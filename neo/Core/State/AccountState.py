@@ -92,7 +92,6 @@ class AccountState(StateBase):
             writer.WriteFixed8(fixed8)
 
     def HasBalance(self, assetId):
-        print("checking balances %s %s" % (self.Balances.keys(), assetId))
         for key, fixed8 in self.Balances.items():
             if key == assetId:
                 return True

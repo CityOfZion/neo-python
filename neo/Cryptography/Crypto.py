@@ -18,6 +18,9 @@ class Crypto(object):
     def Hash160(message):
         return bin_hash160(message)
 
+    @staticmethod
+    def Hash160Bytes(message):
+        return bin_hash160Bytes(message)
 
     @staticmethod
     def Hash256(message):
@@ -52,7 +55,7 @@ class Crypto(object):
 class CryptoInstance():
 
     def Hash160(self, message):
-        return Crypto.Hash160(message)
+        return Crypto.Hash160Bytes(message)
 
     def Hash256(self, message):
         return Crypto.Hash256(message)

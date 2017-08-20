@@ -40,10 +40,9 @@ class ExecutionContext():
 
     def ScriptHash(self):
         if self._script_hash is None:
-
+            print("getting script context.....")
             self._script_hash = self._Engine.Crypto.Hash160(self.Script)
-            pass
-
+            print("script context is %s " % self._script_hash)
         return self._script_hash
 
 

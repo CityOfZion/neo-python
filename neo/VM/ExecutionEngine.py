@@ -119,7 +119,6 @@ class ExecutionEngine():
 
             elif opcode == PUSHDATA1:
                 lenngth = context.OpReader.ReadByte()
-                print("BYT %s " % lenngth)
                 estack.PushT(bytearray(context.OpReader.ReadBytes(lenngth)))
             elif opcode == PUSHDATA2:
                 estack.PushT(context.OpReader.ReadBytes(context.OpReader.ReadUInt16()))

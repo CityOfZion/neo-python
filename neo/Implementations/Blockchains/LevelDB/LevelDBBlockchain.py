@@ -565,13 +565,6 @@ class LevelDBBlockchain(Blockchain):
                     # drum roll?
                     if engine.Execute():
                         service.Commit()
-                    else:
-
-                        bad_invocations = [31331,]
-                        if not block.Index in bad_invocations:
-                            raise Exception("EXCEPTION EXECUTING CONTRACT")
-                        else:
-                            print("Invocation exited poorly")
                 else:
 
                     if tx.Type != b'\x00' and tx.Type != 128:
