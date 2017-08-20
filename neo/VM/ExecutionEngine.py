@@ -143,11 +143,8 @@ class ExecutionEngine():
                 fValue = True
                 if opcode > JMP:
                     fValue = estack.Pop().GetBoolean()
-                    print("fvalue %s " % fValue)
                     if opcode == JMPIFNOT:
-                        print("Will negate ev value!! %s " % fValue)
                         fValue = not fValue
-                        print("did negate fvalue %s " % fValue)
                 if fValue:
                     context.SetInstructionPointer( offset )
 
@@ -758,9 +755,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-        print("OP: %s " % op)
         opname = ToName(op)
-        print("executing op:  %s -> %s" % (op, opname))
+        print("____________________________________________________")
+        print("%s -> %s" % (op, opname))
+        print("-----------------------------------")
 
         self.ExecuteOp(op, self.CurrentContext)
 

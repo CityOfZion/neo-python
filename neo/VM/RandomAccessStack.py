@@ -51,8 +51,8 @@ class RandomAccessStack():
             except Exception as e:
                 print("Could not create stack item from %s %s " % (item, type(item)))
 
-        print("[%s] PUSHT: %s " % (self._name,item))
-
+#        print("[%s] PUSHT: %s " % (self._name,item))
+        self.PrintFormat('PUSHT', item)
         self._list.append(item)
 #        if self._name == 'Evaluation':
 #            self.PrintList("Evaluation: PUSHSTACK -> ")
@@ -82,10 +82,15 @@ class RandomAccessStack():
             except Exception as e:
                 print("Could not create stack item from %s %s " % (item, type(item)))
 
-        print("SET: %s " % item)
+#        print("SET: %s " % item)
+        self.PrintFormat('SET',item)
 
         self._list[self.Count - index - 1] = item
 
+    def PrintFormat(self, operation, value):
+        name = "{:<15}".format("[%s]" % self._name)
+        op = "{:<10}".format(operation)
+        print("                                         %s  %s -> %s" % (name,op, value))
 
     def PrintList(self, message=None):
         print("%s %s" % (message,[str(item) for item in self._list]))

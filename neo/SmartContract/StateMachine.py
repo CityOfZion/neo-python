@@ -74,12 +74,13 @@ class StateMachine(StateReader):
         return False
 
     def Commit(self):
-        print("COMMITTING ENGINE!!!")
-        self._accounts.Commit(self._wb, False)
-        self._validators.Commit(self._wb, False)
-        self._assets.Commit(self._wb, False)
-        self._contracts.Commit(self._wb, False)
-        self._storages.Commit(self._wb, False)
+        if self._wb is not None:
+            print("COMMITTING ENGINE!!!")
+            self._accounts.Commit(self._wb, False)
+            self._validators.Commit(self._wb, False)
+            self._assets.Commit(self._wb, False)
+            self._contracts.Commit(self._wb, False)
+            self._storages.Commit(self._wb, False)
 
 
 
