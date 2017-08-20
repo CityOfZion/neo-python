@@ -131,7 +131,7 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
 
                 script_table = CachedScriptTable(contracts)
                 service = StateMachine(accounts, validators, assets, contracts, storages, None)
-                contractState = contracts.TryGet(b'54030ae64f0a6d24bfda562778e0f4c9f1e24ecc')
+                #contractState = contracts.TryGet(b'54030ae64f0a6d24bfda562778e0f4c9f1e24ecc')
 
                 engine = ApplicationEngine(
                     trigger_type=TriggerType.Application,
@@ -144,8 +144,20 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
 
                 engine.LoadScript(tx.Script, False)
 
-                # drum roll?
-                if engine.Execute():
-                    #service.Commit()
+
+                # normally, this function does not return true/false
+                # for testing purposes, we try to execute and if an exception is raised
+                # we will return false, otherwise if success return true
+
+                # this is different than the 'success' bool returned by engine.Execute()
+                # the 'success' bool returned by engine.Execute() is a value indicating
+                # wether or not the invocation was successful, and if so, we then commit
+                # the changes made by the contract to the database
+                try:
+                    success = engine.Execute()
+                    if success:
+                        service.Commit()
                     return True
-                return False
+                except Exception as e:
+                    print("could not execute %s " % e)
+                    return False

@@ -119,6 +119,6 @@ class TransactionAttribute(Inventory, SerializableMixin):
     def ToJson(self):
         obj = {
             'usage': self.Usage,
-            'data': '' if not self.Data else self.Data.decode('utf-8')
+            'data': '' if not self.Data else self.Data.hex()
         }
         return obj

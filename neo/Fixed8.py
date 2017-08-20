@@ -76,3 +76,7 @@ class Fixed8:
 
     def __neg__(self):
         return Fixed8(-1 * self.value)
+
+
+    def __eq__(self, other):
+        return self.value == other.value

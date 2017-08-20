@@ -8,18 +8,17 @@ from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLe
 import json
 class SmartContractTest(unittest.TestCase):
     LEVELDB_TESTPATH = './fixtures/TestSC'
-
     _blockchain = None
 
 
     @classmethod
     def setUpClass(self):
         self._blockchain = TestLevelDBBlockchain(path=self.LEVELDB_TESTPATH)
+        Blockchain.RegisterBlockchain(self._blockchain)
 
     @classmethod
     def tearDownClass(self):
         self._blockchain.Dispose()
-
 
     def test_a_initial_setup(self):
 
@@ -30,6 +29,7 @@ class SmartContractTest(unittest.TestCase):
     invtxh = '4011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111081234567890abcdef0415cd5b0769cc4ee2f1c9f4e0782756dabf246d0a4fe60a0354'
 
     def test_invocation_block(self):
+
         hexdata = binascii.unhexlify(self.invb)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -58,3 +58,4 @@ class SmartContractTest(unittest.TestCase):
         result = self._blockchain.Persist(block)
 
         self.assertTrue(result)
+

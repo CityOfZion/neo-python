@@ -16,6 +16,7 @@ from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
 
 import sys
+import json
 
 class StateMachine(StateReader):
 
@@ -39,6 +40,7 @@ class StateMachine(StateReader):
         self._assets = assets
         self._contracts = contracts
         self._storages = storages
+        self._wb = wb
 
         self.Register("Neo.Account.SetVotes", self.Account_SetVotes)
         self.Register("Neo.Validator.Register", self.Validator_Register)
@@ -73,17 +75,18 @@ class StateMachine(StateReader):
 
     def Commit(self):
         print("COMMITTING ENGINE!!!")
-        self._accounts.commit(self._wb, False)
-        self._validators.commit(self._wb, False)
-        self._assets.commit(self._wb, False)
-        self._contracts.commit(self._wb, False)
-        self._storages.commit(self._wb, False)
+        self._accounts.Commit(self._wb, False)
+        self._validators.Commit(self._wb, False)
+        self._assets.Commit(self._wb, False)
+        self._contracts.Commit(self._wb, False)
+        self._storages.Commit(self._wb, False)
 
 
 
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
-        account = self._accounts.TryGet( Crypto.ToAddress(hash))
+        address = Crypto.ToAddress(hash).encode('utf-8')
+        account = self._accounts.TryGet(address)
         if account:
             engine.EvaluationStack.PushT(StackItem.FromInterface(account))
             return True
@@ -112,9 +115,26 @@ class StateMachine(StateReader):
 
     def Account_SetVotes(self, engine):
 
-        #Not Implemented
-        account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
         vote_list = engine.EvaluationStack.Pop().GetArray()
+        account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
+
+        if account is None or len(vote_list) > 1024:
+            return False
+
+        if account.IsFrozen:
+            return False
+
+        balance = account.BalanceFor( Blockchain.SystemShare().Hash)
+
+        if balance == Fixed8.Zero() and len(vote_list) > 0:
+            return False
+
+        acct = self._accounts.GetAndChange(account.AddressBytes)
+
+        voteset = set()
+        for v in vote_list:
+            voteset.add(v.GetByteArray())
+        acct.Votes = list(voteset)
 
         return True
 

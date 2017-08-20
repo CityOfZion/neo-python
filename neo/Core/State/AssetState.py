@@ -111,7 +111,7 @@ class AssetState(StateBase):
         if self.AssetType == AssetType.GoverningToken: return "NEO"
         elif self.AssetType == AssetType.UtilityToken: return "NEOGas"
 
-        return "Name!"
+        return self.Name.decode('utf-8')
 
 
     def ToJson(self):

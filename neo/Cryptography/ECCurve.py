@@ -378,16 +378,19 @@ class EllipticCurve:
             return binascii.hexlify(data)
 
 
-
-        def Serialize(self, writer, compress=True):
-            if self == self.curve.Infinity:
-                writer.WriteByte(b'\x00')
-            else:
-                byt = self.encode_point(compressed=compress)
-                writer.WriteBytes(byt)
-
         def ToString(self):
             return binascii.hexlify(self.encode_point(compressed=True)).decode('utf-8')
+
+        def ToBytes(self):
+            return binascii.hexlify(self.encode_point(compressed=True))
+
+        def Serialize(self, writer, compress=True):
+                if self == self.curve.Infinity:
+                    writer.WriteByte(b'\x00')
+                else:
+                    byt = self.encode_point(compressed=compress)
+                    writer.WriteBytes(byt)
+
 
 
     def __init__(self, field, a, b):

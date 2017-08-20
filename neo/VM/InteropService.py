@@ -30,6 +30,7 @@ class StackItem(EquatableMixin):
         raise Exception('Not supported')
 
     def GetInterface(self, t):
+        print("You may need to push this item using FromInterface")
         raise Exception('Not Supported')
 
 
@@ -56,6 +57,7 @@ class StackItem(EquatableMixin):
             return ByteArray(value)
         elif typ is list:
             return Array(value)
+
 #        print("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 

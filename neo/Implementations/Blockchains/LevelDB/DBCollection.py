@@ -2,7 +2,7 @@ import binascii
 from autologging import logged
 from neo.UInt256 import UInt256
 from neo.UInt160 import UInt160
-
+from neo.Core.State.ValidatorState import ValidatorState
 @logged
 class DBCollection():
 
@@ -49,6 +49,7 @@ class DBCollection():
 
     def Commit(self, wb, destroy=True):
         try:
+
             for item in self.Changed:
                 wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
             for item in self.Deleted:

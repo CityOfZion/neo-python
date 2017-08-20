@@ -9,6 +9,7 @@ from neo.IO.MemoryStream import MemoryStream,StreamManager
 from autologging import logged
 import time
 from neo.Cryptography.Helper import hash_to_wallet_address
+from neo.Cryptography.Crypto import Crypto
 from neo.IO.BinaryWriter import BinaryWriter
 
 @logged
@@ -28,6 +29,13 @@ class AccountState(StateBase):
         self.Balances = balances
 
 
+    @property
+    def Address(self):
+        return Crypto.ToAddress(self.ScriptHash)
+
+    @property
+    def AddressBytes(self):
+        return self.Address.encode('utf-8')
 
     def Clone(self):
         return AccountState(self.ScriptHash, self.IsFrozen, self.Votes, self.Balances)
@@ -84,6 +92,7 @@ class AccountState(StateBase):
             writer.WriteFixed8(fixed8)
 
     def HasBalance(self, assetId):
+        print("checking balances %s %s" % (self.Balances.keys(), assetId))
         for key, fixed8 in self.Balances.items():
             if key == assetId:
                 return True
@@ -141,9 +150,12 @@ class AccountState(StateBase):
     def ToJson(self):
         json = super(AccountState, self).ToJson()
         addr = Crypto.ToAddress(self.ScriptHash)
+
+#        votes = [v.hex() for v in self.]
+
         json['script_hash'] = addr
         json['frozen'] = self.IsFrozen
-        json['votes'] = []
+        json['votes'] = [v.hex() for v in self.Votes]
 
         balances = {}
         for key, value in self.Balances.items():

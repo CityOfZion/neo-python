@@ -40,3 +40,8 @@ class ValidatorState(StateBase):
     def Serialize(self, writer):
         super(ValidatorState, self).Serialize(writer)
         self.PublicKey.Serialize(writer)
+
+    def ToJson(self):
+        return {
+            'pubkey': self.PublicKey.ToString()
+        }

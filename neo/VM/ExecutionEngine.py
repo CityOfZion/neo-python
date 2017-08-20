@@ -127,7 +127,8 @@ class ExecutionEngine():
                 estack.PushT(context.OpReader.ReadBytes(context.OpReader.ReadUInt32()))
             elif opcode in pushops:
                 # EvaluationStack.Push((int)opcode - (int)OpCode.PUSH1 + 1);
-                estack.PushT(opcode - PUSH1 + 1)
+                topush = int.from_bytes(opcode, 'little') - int.from_bytes(PUSH1, 'little') + 1
+                estack.PushT(topush)
 
             #control
             elif opcode == NOP:
@@ -641,7 +642,7 @@ class ExecutionEngine():
                 items = []
 
                 for i in range(0, size):
-                    items[i] = estack.Pop()
+                    items.append( estack.Pop())
 
                 estack.PushT(items)
 
@@ -761,14 +762,7 @@ class ExecutionEngine():
         opname = ToName(op)
         print("executing op:  %s -> %s" % (op, opname))
 
-        try:
-            self.ExecuteOp(op, self.CurrentContext)
-        except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(exc_type, fname, exc_tb.tb_lineno)
-            print("exception: %s " % e)
-            self._VMState |= VMState.FAULT
+        self.ExecuteOp(op, self.CurrentContext)
 
 
 
