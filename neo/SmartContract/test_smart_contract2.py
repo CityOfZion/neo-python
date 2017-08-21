@@ -1,24 +1,15 @@
-import unittest
 import binascii
-
 from neo.IO.Helper import Helper
-from neo.Core.Blockchain import Blockchain
-from neo.Core.TX.Transaction import TransactionType
-from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
-import json
-class SmartContractTest(unittest.TestCase):
-    LEVELDB_TESTPATH = './fixtures/TestSC2'
-    _blockchain = None
+from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 
+
+class SmartContractTest2(BlockchainFixtureTestCase):
 
     @classmethod
-    def setUpClass(self):
-        self._blockchain = TestLevelDBBlockchain(path=self.LEVELDB_TESTPATH)
-        Blockchain.RegisterBlockchain(self._blockchain)
+    def leveldb_testpath(self):
+        return './fixtures/TestSC2'
 
-    @classmethod
-    def tearDownClass(self):
-        self._blockchain.Dispose()
+
 
     def test_b_initial_setup(self):
 
