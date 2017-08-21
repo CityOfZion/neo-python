@@ -35,11 +35,11 @@ class ContractState(StateBase):
         self.Code = code
 
         self.HasStorage = reader.ReadBool()
-        self.Name = reader.ReadVarString()
-        self.CodeVersion = reader.ReadVarString()
-        self.Author = reader.ReadVarString()
-        self.Email = reader.ReadVarString()
-        self.Description = reader.ReadVarString()
+        self.Name = reader.ReadVarString(max=252)
+        self.CodeVersion = reader.ReadVarString(max=252)
+        self.Author = reader.ReadVarString(max=252)
+        self.Email = reader.ReadVarString(max=252)
+        self.Description = reader.ReadVarString(max=252)
 
     @staticmethod
     def DeserializeFromDB(buffer):

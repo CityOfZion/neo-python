@@ -507,9 +507,13 @@ class EllipticCurve:
 
         raise Exception("Invalid point incoding: %s " % f)
 
-    def decode_from_hex(self, hex_str):
+    def decode_from_hex(self, hex_str, unhex=True):
 
-        ba = bytearray(binascii.unhexlify(hex_str))
+        ba = None
+        if unhex:
+            ba = bytearray(binascii.unhexlify(hex_str))
+        else:
+            ba = hex_str
 
         cq = self.field.p
 
@@ -717,7 +721,7 @@ class ECDSA:
                      GFp)
 
     @staticmethod
-    def decode_secp256r1(str):
+    def decode_secp256r1(str, unhex=True):
         """
         decode a public key on the secp256r1 curve
         """
@@ -726,7 +730,7 @@ class ECDSA:
         ec = EllipticCurve(GFp, 115792089210356248762697446949407573530086143415290314195533631308867097853948,
                            41058363725152142129326129780047268409114441015993725554835256314039467401291)
 
-        point = ec.decode_from_hex(str)
+        point = ec.decode_from_hex(str, unhex=unhex)
         if point.isoncurve():
             return ECDSA(GFp, point, int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
         else:

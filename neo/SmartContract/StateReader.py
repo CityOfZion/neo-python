@@ -656,14 +656,9 @@ class StateReader(InteropService):
 
     def Storage_GetContext(self, engine):
 
-        print("GETting STORAGe conteXT%s " % engine.CurrentContext.ScriptHash())
-        print("to bytes %s " % engine.CurrentContext.ScriptHash())
         hash = UInt160( data= engine.CurrentContext.ScriptHash())
-        print("created hash %s " % hash)
         context = StorageContext(script_hash=hash)
-        print("got context %s " % context)
         engine.EvaluationStack.PushT(StackItem.FromInterface(context))
-        print("pushed context")
         return True
 
     def Storage_Get(self, engine):

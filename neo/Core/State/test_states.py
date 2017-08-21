@@ -76,3 +76,5 @@ class StateTestCase(unittest.TestCase):
 
         self.assertEqual(binascii.hexlify(contract.Code.Script), self.ctr_script)
         self.assertEqual(contract.Code.ScriptHash().ToBytes(), self.ctr_hash)
+
+

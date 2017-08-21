@@ -43,7 +43,8 @@ class DBCollection():
             try:
                 self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
             except Exception as e:
-                print("could not decode class %s %s %s %s" % (self.ClassRef,key, buffer, e))
+                if key != b'1f06d4728dfa975c925258f886594b73d9651bdc': #Temporary.. this contract was serialized incorrectly
+                    print("could not decode class %s %s %s %s" % (self.ClassRef,key, buffer, e))
 
 
 

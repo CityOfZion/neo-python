@@ -17,7 +17,7 @@ from neo.SmartContract.StateReader import StateReader
 
 import sys
 import json
-
+import binascii
 class StateMachine(StateReader):
 
     _accounts = None
@@ -203,18 +203,27 @@ class StateMachine(StateReader):
             return False
 
         ownerData = engine.EvaluationStack.Pop().GetByteArray()
+        print("got owner data %s"  % ownerData )
 
-        owner = ECDSA.decode_secp256r1(ownerData)
-
+        owner = ECDSA.decode_secp256r1( ownerData ,unhex=False).G
+        print("got owner %s " % owner)
         if owner.IsInfinity:
+            print("is invitiyt, return false")
             return False
 
         if not self.CheckWitnessPubkey(engine, owner):
+            print("check witness false...")
             return False
 
+        print("chekced witness...")
+
         admin = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
+
+        print("got admin .. %s " % admin)
+
         issuer = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
 
+        print("got issuer %s " % issuer)
         new_asset = AssetState(
             asset_id=tx.Hash, asset_type=asset_type, name=name, amount=amount,
             available=Fixed8.Zero(),precision=precision,fee_mode=0,fee=Fixed8.Zero(),
@@ -222,6 +231,7 @@ class StateMachine(StateReader):
             expiration= Blockchain.Default().Height + 1 + 2000000, is_frozen=False
         )
 
+        print("created new asset %s " % new_asset)
         asset = self._assets.GetOrAdd(tx.Hash.ToBytes(), new_asset)
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
@@ -259,55 +269,56 @@ class StateMachine(StateReader):
     def Contract_Create(self, engine):
 
         script = engine.EvaluationStack.Pop().GetByteArray()
-
+        print("script %s " % script)
         if len(script) > 1024 * 1024:
             return False
 
         param_list = engine.EvaluationStack.Pop().GetByteArray()
-
+        print("param list%s " % param_list)
         if len(param_list) > 252:
             return False
 
         return_type = engine.EvaluationStack.Pop().GetBigInteger()
-
+        print("return type %s " % return_type)
         needs_storage = engine.EvaluationStack.Pop().GetBoolean()
-
+        print("needs storage %s " % needs_storage)
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
-        name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
-
+        name = engine.EvaluationStack.Pop().GetByteArray()
+        print("name %s "% name.decode('utf-8'))
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
-        version = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
-
+        version = engine.EvaluationStack.Pop().GetByteArray()
+        print("version %s " % version.decode('utf-8'))
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
-        author = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
-
+        author = engine.EvaluationStack.Pop().GetByteArray()
+        print("author %s " % author.decode('utf-8'))
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
-        email = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
-
+        email = engine.EvaluationStack.Pop().GetByteArray()
+        print("email %s " % email.decode('utf-8'))
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 65536:
             return False
-        description = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
-
-        hash = Crypto.ToScriptHash(script)
-
+        description = engine.EvaluationStack.Pop().GetByteArray()
+        print("description %s " % description.decode('utf-8'))
+        hash = Crypto.ToScriptHash(script, unhex=False)
+        print("to script hash %s " % hash)
+        print("contract hash to bytes %s " % hash.ToBytes())
         contract = self._contracts.TryGet(hash.ToBytes())
-
+        print("tried to get contract %s " % contract)
         if contract == None:
 
             code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
-
+            print("created function code")
             contract = ContractState(code=code, has_storage=needs_storage,
                                      name=name, version=version, author=author,
                                      email=email, description=description)
 
             self._contracts.Add(hash.ToBytes(), contract)
-
-            self._contracts_created[hash.ToBytes()] = UInt160( data = engine.CurrentContext.ScriptHash)
-
+            print("added contract to contracts")
+            self._contracts_created[hash.ToBytes()] = UInt160( data = engine.CurrentContext.ScriptHash())
+            print("adde contracts to self contracts created")
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
         return True
 
@@ -348,7 +359,7 @@ class StateMachine(StateReader):
             return False
         description = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
 
-        hash = Crypto.ToScriptHash(script)
+        hash = Crypto.ToScriptHash(script, unhex=False)
 
         contract = self._contracts.TryGet(hash.ToBytes())
 
@@ -366,7 +377,7 @@ class StateMachine(StateReader):
 
             if needs_storage:
 
-                for pair in self._storages.Find(engine.CurrentContext.ScriptHash.ToBytes()):
+                for pair in self._storages.Find(engine.CurrentContext.ScriptHash()):
 
                     key = StorageKey(script_hash = hash, key = pair.Key.Key)
                     item = StorageItem(pair.Value.Value)
@@ -383,7 +394,7 @@ class StateMachine(StateReader):
         if contract.ScriptHash.ToBytes() in self._contracts_created:
             created = self._contracts_created[contract.ScriptHash.ToBytes()]
 
-            if created == UInt160(data=engine.CurrentContext.ScriptHash):
+            if created == UInt160(data=engine.CurrentContext.ScriptHash()):
 
                 context = StorageContext(script_hash=contract.ScriptHash)
                 engine.EvaluationStack.PushT(StackItem.FromInterface(context))

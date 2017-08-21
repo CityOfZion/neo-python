@@ -17,7 +17,7 @@ class StorageKey(SerializableMixin):
         return mmh3.hash(self.Key)
 
     def GetHashCode(self):
-        return self.ScriptHash.GetHashCode() + self._murmur()
+        return abs(self.ScriptHash.GetHashCode() + self._murmur())
 
     def GetHashCodeBytes(self):
         return self.GetHashCode().to_bytes(8, 'little')
