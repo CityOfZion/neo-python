@@ -12,6 +12,9 @@ import binascii
 import importlib
 from autologging import logged
 from neo.Fixed8 import Fixed8
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
+import sys
 
 @logged
 class BinaryReader(object):
@@ -24,9 +27,11 @@ class BinaryReader(object):
     def unpack(self, fmt, length=1):
         return struct.unpack(fmt, self.stream.read(length))[0]
 
-    def ReadByte(self):
+    def ReadByte(self, do_ord=True):
         try:
-            return ord(self.stream.read(1))
+            if do_ord:
+                return ord(self.stream.read(1))
+            return self.stream.read(1)
         except Exception as e:
             self.__log.debug("ord expected character but got none")
         return 0
@@ -73,7 +78,7 @@ class BinaryReader(object):
         return self.unpack('%sQ' % endian, 8)
 
 
-    def ReadVarInt(self):
+    def ReadVarInt(self, max=sys.maxsize):
         fb = self.ReadByte()
         if fb is None: return 0
         value = 0
@@ -87,16 +92,16 @@ class BinaryReader(object):
             value = fb
         return int(value)
 
-    def ReadVarBytes(self):
-        length = self.ReadVarInt()
+    def ReadVarBytes(self, max=sys.maxsize):
+        length = self.ReadVarInt(max)
         return self.ReadBytes(length)
 
     def ReadString(self):
         length = self.ReadUInt8()
         return self.unpack(str(length) + 's', length)
 
-    def ReadVarString(self):
-        length = self.ReadVarInt()
+    def ReadVarString(self, max=sys.maxsize):
+        length = self.ReadVarInt(max)
         return self.unpack(str(length) + 's', length)
 
     def ReadFixedString(self, length):
@@ -109,52 +114,39 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt()
         items = []
-#        self.__log.debug("deserializing %s items of %s " % (length, class_name))
-        try:
-            for i in range(0, length):
-                item = klass()
-                item.Deserialize(self)
-                items.append(item)
+        for i in range(0, length):
+            item = klass()
+            item.Deserialize(self)
+            items.append(item)
+        return items
 
-            return items
-        except Exception as e:
-            self.__log.debug("could not deserialize items for class: %s %s " % (class_name, e))
+    def ReadUInt256(self):
+        return UInt256(data=bytearray(self.ReadBytes(32)))
 
-        return []
+    def ReadUInt160(self):
 
-    def ReadUInt256(self, reverse = True):
-        ba = bytearray(self.ReadBytes(32))
-        if reverse:
-            ba.reverse()
-        return ba
+        return UInt160(data = bytearray(self.ReadBytes(20)))
 
-    def ReadUInt160(self, reverse=False, hex=False):
-        ba = bytearray(self.ReadBytes(20))
-        if reverse:
-            ba.reverse()
-        if hex:
-            return binascii.hexlify(ba)
-
-        return ba
 
 
     def Read2000256List(self):
         items = []
         for i in range(0, 2000):
-            item = self.ReadBytes(64)
-            ba = bytearray(binascii.unhexlify(item))
-            if len(ba):
-                ba.reverse()
-                items.append( ba.hex().encode('utf-8'))
+            data = self.ReadBytes(64)
+            ba = bytearray(binascii.unhexlify(data))
+            ba.reverse()
+            items.append( ba.hex().encode('utf-8'))
         return items
 
-    def ReadHashes(self):
+    def ReadHashes(self, maximum=16):
         len = self.ReadUInt8()
         items = []
         for i in range(0, len):
-            items.append( (self.ReadUInt256().hex()))
+            ba = bytearray(self.ReadBytes(32))
+            ba.reverse()
+            items.append( ba.hex())
         return items
 
     def ReadFixed8(self):
         fval = self.ReadInt64()
-        return Fixed8( int(fval ) )
+        return Fixed8( fval )

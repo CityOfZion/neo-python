@@ -77,7 +77,7 @@ class Wallet(object):
                 self._indexedDB = Blockchain.Default()
             #self._node = RemoteNode(url=TEST_NODE)
 
-            self._current_height = Blockchain.Default().HeaderHeight() + 1 if Blockchain.Default() is not None else 0
+            self._current_height = Blockchain.Default().HeaderHeight + 1 if Blockchain.Default() is not None else 0
 
             self.BuildDatabase()
 
@@ -110,7 +110,7 @@ class Wallet(object):
             del passwordKey
 
 
-            self._current_height = Blockchain.Default().HeaderHeight() + 1 if Blockchain.Default() is not None else 0
+            self._current_height = Blockchain.Default().HeaderHeight + 1 if Blockchain.Default() is not None else 0
 
             self._blockThread = Thread(target=self.ProcessBlocks, name='Wallet.ProcessBlocks')
 #            self._blockThread.start()
@@ -229,7 +229,7 @@ class Wallet(object):
     def ProcessBlocks(self):
         while self._is_running:
 
-            while self._current_height <= Blockchain.Default().Height() and self._is_running:
+            while self._current_height <= Blockchain.Default().Height and self._is_running:
 
                 block = Blockchain.Default().GetBlock(self._current_height)
 
@@ -282,7 +282,7 @@ class Wallet(object):
                     for coin in self._coins:
                         if coin.CoinRef.Equals(input):
 
-                            if coin.TXOutput.AssetId == Blockchain.SystemShare().Hash():
+                            if coin.TXOutput.AssetId == Blockchain.SystemShare().Hash:
                                 coin.State |= CoinState.Spent | CoinState.Confirmed
                                 changed.add(coin.CoinRef)
                             else:

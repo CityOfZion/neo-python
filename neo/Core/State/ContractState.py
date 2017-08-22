@@ -35,11 +35,11 @@ class ContractState(StateBase):
         self.Code = code
 
         self.HasStorage = reader.ReadBool()
-        self.Name = reader.ReadVarString()
-        self.CodeVersion = reader.ReadVarString()
-        self.Author = reader.ReadVarString()
-        self.Email = reader.ReadVarString()
-        self.Description = reader.ReadVarString()
+        self.Name = reader.ReadVarString(max=252)
+        self.CodeVersion = reader.ReadVarString(max=252)
+        self.Author = reader.ReadVarString(max=252)
+        self.Email = reader.ReadVarString(max=252)
+        self.Description = reader.ReadVarString(max=252)
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -62,3 +62,21 @@ class ContractState(StateBase):
         writer.WriteVarString(self.Author)
         writer.WriteVarString(self.Email)
         writer.WriteVarString(self.Description)
+
+        #print("SErialized contract state: %s " % writer.stream.ToArray())
+
+    def ToJson(self):
+
+        codejson = self.Code.ToJson()
+
+        return {
+
+            'version':self.StateVersion,
+            'code': codejson,
+            'storage': self.HasStorage,
+            'name': self.Name.decode('utf-8'),
+            'code_version': self.CodeVersion.decode('utf-8'),
+            'author': self.Author.decode('utf-8'),
+            'email': self.Email.decode('utf-8'),
+            'description': self.Description.decode('utf-8')
+        }

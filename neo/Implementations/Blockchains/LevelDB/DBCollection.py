@@ -1,6 +1,8 @@
 import binascii
 from autologging import logged
-
+from neo.UInt256 import UInt256
+from neo.UInt160 import UInt160
+from neo.Core.State.ValidatorState import ValidatorState
 @logged
 class DBCollection():
 
@@ -15,7 +17,12 @@ class DBCollection():
     Changed = []
     Deleted = []
 
-    def __init__(self, db, sn, prefix, class_ref):
+    Debug = False
+
+
+
+
+    def __init__(self, db, sn, prefix, class_ref, debug=False):
 
         self.DB = db
         self.SN = sn
@@ -23,42 +30,53 @@ class DBCollection():
         self.Prefix = prefix
 
         self.ClassRef = class_ref
+        self.Debug = debug
 
         self.Collection = {}
         self.Changed = []
         self.Deleted = []
 
-        self._BuildCollection()
+        self._BuildCollectionKeys()
 
-    def _BuildCollection(self):
+    @property
+    def Current(self):
+        try:
+            ret = {}
+            for key,val in self.Collection.items():
+                if val is not None:
+                    ret[key] = val
+            return ret
+        except Exception as e:
+            self.__log.debug("error getting items %s " % e)
 
-            for key, buffer in self.SN.iterator(prefix=self.Prefix):
-                key = key[1:]
-                try:
-                    self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
-                except Exception as e:
-                    self.__log.debug("Coludnt build collection %s for class %s with key%s and buffer %s" % (e, self.ClassRef, key, buffer))
+        return {}
+
+    def _BuildCollectionKeys(self):
+        for key in self.SN.iterator(prefix=self.Prefix, include_value=False):
+            key = key[1:]
+#            print("adding key %s " % key)
+            self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
-        for item in self.Changed:
-            wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
-        for item in self.Deleted:
-            wb.delete(self.Prefix + item)
-        if destroy:
-            self.Destroy()
-        else:
-            self.Changed = []
-            self.Deleted = []
+        try:
+
+            for item in self.Changed:
+                wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
+            for item in self.Deleted:
+                wb.delete(self.Prefix + item)
+            if destroy:
+                self.Destroy()
+            else:
+                self.Changed = []
+                self.Deleted = []
+        except Exception as e:
+            self.__log.debug("COULD NOT COMMIT: %s %s" % (e, self.ClassRef))
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
-        if debug_item:
-            self.__log.debug("KEY VAL IS: %s " % keyval)
-            self.__log.debug("Collection: %s " % self.Collection)
         item = self.TryGet(keyval)
 
         if item is None:
-
             if new_instance is None:
                 item = self.ClassRef()
             else:
@@ -70,22 +88,48 @@ class DBCollection():
 
         return item
 
+    def GetOrAdd(self, keyval, new_instance):
 
+        item = new_instance
+
+        if keyval in self.Deleted:
+            self.Deleted.remove(keyval)
+
+        self.Add(keyval,item)
+
+        return item
 
     def GetItemBy(self, keyval):
         return self.GetAndChange(keyval)
 
 
     def TryGet(self, keyval):
-        if keyval in self.Collection:
+        if keyval in self.Collection.keys():
             self.MarkChanged(keyval)
-            return self.Collection[keyval]
+
+            item = self.Collection[keyval]
+            if item is None:
+                item = self._GetItem(keyval)
+            return item
+
         return None
 
-    def Add(self, keyval, item):
-        self.MarkChanged(keyval)
-        self.Collection[keyval] = item
 
+    def _GetItem(self, keyval):
+        try:
+            buffer = self.SN.get(self.Prefix + keyval)
+            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
+            self.Collection[keyval] = item
+            return item
+        except Exception as e:
+            self.__log.debug("Could not deserialize item from key %s : %s" % (keyval, e))
+
+        return None
+
+
+    def Add(self, keyval, item):
+        self.Collection[keyval] = item
+        self.MarkChanged(keyval)
 
     def Remove(self, keyval):
         if not keyval in self.Deleted:

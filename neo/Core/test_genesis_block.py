@@ -9,6 +9,7 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
 from neo import Settings
+from neo.Cryptography.Crypto import Crypto
 
 class GenesisBlockTestCase(unittest.TestCase):
 
@@ -43,6 +44,7 @@ class GenesisBlockTestCase(unittest.TestCase):
 
     issuetx_rraw = b'01000000019b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50000c16ff2862300197ff6783d512a740d42f4cc4f5572955fa44c95'
 
+
     test_genesis_tx_hashes = [
         b'fb5bd72b2d6792d75dc2f1084ffa9e9f70ca85543c717a6b13d9959b452a57d6',
         b'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b',
@@ -64,7 +66,7 @@ class GenesisBlockTestCase(unittest.TestCase):
     def test_miner_tx(self):
         miner_tx = MinerTransaction()
         miner_tx.Nonce = 2083236893
-        self.assertEqual(miner_tx.HashToByteString(), self.gen_miner_tx_id)
+        self.assertEqual(miner_tx.Hash.ToBytes(), self.gen_miner_tx_id)
 
     def test_issue_tx(self):
 
@@ -78,10 +80,10 @@ class GenesisBlockTestCase(unittest.TestCase):
 
         if Settings.MAGIC == 1953787457:
             self.assertEqual(script, self.contractraw)
-            out = Helper.RawBytesToScriptHash(script)
+            out = Crypto.ToScriptHash(script)
 
             output = TransactionOutput(
-                share_tx.HashToByteString(),
+                share_tx.Hash,
                 Blockchain.SystemShare().Amount,
                 out
             )
@@ -89,25 +91,24 @@ class GenesisBlockTestCase(unittest.TestCase):
             script = Witness( bytearray(0), bytearray(PUSHT))
 
             issue_tx = IssueTransaction([],[output],[], [script])
-
             self.assertEqual(issue_tx.GetHashData(), self.issuetx_rraw)
-            self.assertEqual(issue_tx.HashToByteString(), self.gen_issue_tx_id)
+            self.assertEqual(issue_tx.Hash.ToBytes(), self.gen_issue_tx_id)
 
     def test_system_share(self):
-
         share_tx = GetSystemShare()
 
         self.assertEqual(type(share_tx), RegisterTransaction)
         self.assertEqual(self.sysshareraw, share_tx.GetHashData())
-        self.assertEqual(self.sys_share_id, share_tx.HashToByteString())
+        self.assertEqual(self.sys_share_id, share_tx.Hash.ToBytes())
         self.assertEqual(share_tx.Precision, 0)
 
 
     def test_system_coin(self):
+
         coin_tx = GetSystemCoin()
         self.assertEqual(type(coin_tx), RegisterTransaction)
         self.assertEqual(self.syscoinraw, coin_tx.GetHashData())
-        self.assertEqual(self.sys_coin_id, coin_tx.HashToByteString())
+        self.assertEqual(self.sys_coin_id, coin_tx.Hash.ToBytes())
         self.assertEqual(coin_tx.Precision, 8)
 
     def test_genesis_block(self):
@@ -120,18 +121,19 @@ class GenesisBlockTestCase(unittest.TestCase):
         self.assertEqual(block.Timestamp, self.genblock_timestamp)
 
 
-        txhashes = [tx.HashToByteString() for tx in block.Transactions]
-        rd = block.RawData()
+        txhashes = [tx.Hash.ToBytes() for tx in block.Transactions]
+
+#        rd = block.RawData()
 
         if Settings.MAGIC == 1953787457:
-            self.assertEqual(block.MerkleRoot, self.testnet_genesis_merkle)
+            self.assertEqual(block.MerkleRoot.ToBytes(), self.testnet_genesis_merkle)
             self.assertEqual(txhashes, self.test_genesis_tx_hashes)
             self.assertEqual(block.RawData(), self.testnet_genesis_raw)
-            self.assertEqual(block.HashToString(), self.testnet_genesis_hash)
+            self.assertEqual(block.Hash.ToString(), self.testnet_genesis_hash)
         else:
             self.assertEqual(block.MerkleRoot, self.mainnet_genesis_merkle)
             self.assertEqual(txhashes, self.mainnet_genesis_tx_hashes)
-            self.assertEqual(block.HashToByteString(), self.mainnet_genesis_hash)
+            self.assertEqual(block.Hash.ToBytes(), self.mainnet_genesis_hash)
 
 
 

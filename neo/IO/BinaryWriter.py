@@ -10,6 +10,8 @@ Usage:
 import struct
 import binascii
 from autologging import logged
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 def swap32(i):
     return struct.unpack("<I", struct.pack(">I", i))[0]
@@ -86,23 +88,17 @@ class BinaryWriter(object):
         return self.pack('%sQ' % endian, value)
 
     def WriteUInt160(self, value, endian="<"):
-        if type(value) is int:
-            value = convert_to_uint160(value)
-        return self.WriteBytes(value)
+        if type(value) is UInt160:
+            value.Serialize(self)
+        else:
+            raise Exception("value must be UInt160 instance ")
 
-    def WriteUInt256(self, value, endian="<", destination_hash=True):
-        if type(value) is int:
-            value = convert_to_uint256(value)
-        elif type(value) is bytearray:
-            return self.WriteBytes(value)
-
-        if destination_hash:
-            ba = bytearray(binascii.unhexlify(value))
-            ba.reverse()
-            return self.WriteBytes(ba)
-
-        return self.WriteBytes(value)
-#        return self.pack('%sQ' % endian, value)
+    def WriteUInt256(self, value):
+        if type(value) is UInt256:
+            value.Serialize(self)
+        else:
+            raise Exception("Cannot write value that is not UInt256")
+    #        return self.pack('%sQ' % endian, value)
 
 
     def WriteVarInt(self, value, endian="<"):
@@ -166,7 +162,10 @@ class BinaryWriter(object):
 
     def Write2000256List(self, arr):
         for item in arr:
-            self.WriteUInt256(item, "<",True)
+            ba = bytearray(binascii.unhexlify(item))
+            ba.reverse()
+            self.WriteBytes(ba)
+
 
     def WriteHashes(self, arr):
         length = len(arr)
@@ -174,8 +173,8 @@ class BinaryWriter(object):
         for item in arr:
             ba = bytearray(binascii.unhexlify(item))
             ba.reverse()
-            self.WriteUInt256(ba,"<",False)
+            self.WriteBytes(ba)
 
 
     def WriteFixed8(self, value):
-        return self.WriteInt64(int(value.value))
+        return self.WriteInt64(value.value)

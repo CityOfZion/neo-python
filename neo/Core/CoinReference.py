@@ -18,11 +18,10 @@ class CoinReference(object):
 
     def Deserialize(self, reader):
 
-        self.PrevHash = binascii.hexlify( reader.ReadUInt256())
+        self.PrevHash = reader.ReadUInt256()
         self.PrevIndex = reader.ReadUInt16()
 
     def Serialize(self, writer):
-
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt16(self.PrevIndex)
 
@@ -33,7 +32,7 @@ class CoinReference(object):
 
     def ToJson(self):
         out = {
-            'txid': self.PrevHash.decode('utf-8'),
+            'txid': self.PrevHash.ToString(),
             'vout':self.PrevIndex
         }
 

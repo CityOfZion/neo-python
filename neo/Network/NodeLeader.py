@@ -3,8 +3,8 @@ from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
+from neo.Network.NeoFactory import NeoFactory
 from neo.Network.NeoNode import NeoNode
-from neo.Network.NeoNodeFactory import NeoFactory
 from neo import Settings
 
 
@@ -31,7 +31,9 @@ class NodeLeader():
 
 
     BREQPART=100
-    BREQMAX= 3000
+    NREQMAX =1000
+    BREQMAX= 4000
+
 
     @staticmethod
     def Instance():
@@ -47,15 +49,15 @@ class NodeLeader():
         self.UnconnectedPeers = []
         self.ADDRS = []
         self.NodeId = random.randint(1294967200,4294967200)
-        BC.Default().MissingBlock.on_change += self.OnMissingBlockEvent
 
     def Start(self):
         # start up endpoints
+        start_delay=0
         for bootstrap in Settings.SEED_LIST:
             host, port = bootstrap.split(":")
             self.ADDRS.append('%s:%s' % (host,port))
-            self.SetupConnection(host, port)
-
+            reactor.callLater( start_delay, self.SetupConnection,host, port)
+            start_delay+=2
 
     def RemoteNodePeerReceived(self, host, port):
         addr = '%s:%s' % (host,port)
@@ -67,14 +69,11 @@ class NodeLeader():
     def SetupConnection(self, host, port):
         self.__log.debug("Setting up connection! %s %s " % (host, port))
         point = TCP4ClientEndpoint(reactor, host, int(port))
-        d = connectProtocol(point, NeoNode(NeoFactory, self))
-        d.addCallbacks(self.onProtocolConnected, self.onProtocolError)
+        d = connectProtocol(point, NeoNode(NeoFactory))
+        d.addCallbacks(self.onProtocolConnected, errback=self.onProtocolError)
         reactor.callLater(5, d.cancel)
 
     def Shutdown(self):
-        print("shut down!")
-#        self._RunLoop.stop()
-
         for p in self.Peers:
             p.Disconnect()
 
@@ -87,41 +86,19 @@ class NodeLeader():
             self.UnconnectedPeers.remove(peer)
 
     def onProtocolError(self, reason):
-        self.__log.debug("Protocol exception %s " % vars(reason))
-
-
-    def OnMissingBlockEvent(self, hash):
-        if not hash in self._MissedBlocks:
-            self.__log.debug("ON MISSING BLOCK!!!!!!!!!!!!!")
-            if hash in BC.Default().BlockRequests():
-                self.__log.debug("hash was in block requests")
-            else:
-                self.__log.debug("HASH WASNT IN BLOCK REQUESTSSS!!!!")
-            self._MissedBlocks.append(hash)
-#            header = BC.Default().GetHeader(hash)
-#            for index,peer in enumerate(self.Peers):
-#                hash_to_get = BC.Default().GetHeaderHash(header.Index + index)
-            p = random.choice(self.Peers)
-            p.RequestMissigBlock(hash)
-            p = random.choice(self.Peers)
-            p.RequestMissigBlock(hash)
-            p = random.choice(self.Peers)
-            p.RequestMissigBlock(hash)
-            p = random.choice(self.Peers)
-            p.RequestMissigBlock(hash)
+        self.__log.debug("Protocol exception %s " % reason)
 
     #    @profile()
     def InventoryReceived(self, inventory):
 
-#        self.__log.debug("Node Leader received inventory %s " % inventory)
 
-        if inventory.HashToByteString() in self._MissedBlocks:
-            self._MissedBlocks.remove(inventory.HashToByteString())
+        if inventory.Hash.ToBytes() in self._MissedBlocks:
+            self._MissedBlocks.remove(inventory.Hash.ToBytes())
 
         if inventory is MinerTransaction: return False
 
         # lock known hashes
-        #        if inventory.Hash() in self._known_hashes: return False
+        #        if inventory.Hash in self._known_hashes: return False
         # endlock
 
         if type(inventory) is Block:
@@ -141,9 +118,10 @@ class NodeLeader():
             if not inventory.Verify(): return False
 
 
-            #        relayed = self.RelayDirectly(inventory)
+#        relayed = self.RelayDirectly(inventory)
 
-            #        return relayed
+#        return relayed
+
 
     def RelayDirectly(self, inventory):
 

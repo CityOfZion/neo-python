@@ -18,12 +18,9 @@ class Helper(object):
         try:
             serializable = klass()
             serializable.Deserialize(reader)
-
-#            StreamManager.ReleaseStream(mstream)
-
             return serializable
         except Exception as e:
-            print("Colud not deserialize %s %s" % (klassname, e))
+            print("couldnt deserialize: %s " % e)
         finally:
             StreamManager.ReleaseStream(mstream)
 

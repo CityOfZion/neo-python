@@ -23,14 +23,16 @@ class ExecutionContext():
     def Breakpoints(self):
         return self.__Breakpoints
 
-    def GetInstructionPointer(self):
+    @property
+    def InstructionPointer(self):
         return self.__OpReader.stream.tell()
 
     def SetInstructionPointer(self, value):
         self.__OpReader.stream.seek(value)
 
+    @property
     def NextInstruction(self):
-        return self.Script[ self.__OpReader.stream.tell()]
+        return self.Script[ self.__OpReader.stream.tell()].to_bytes(1,'little')
 
 
 
@@ -38,10 +40,7 @@ class ExecutionContext():
 
     def ScriptHash(self):
         if self._script_hash is None:
-
             self._script_hash = self._Engine.Crypto.Hash160(self.Script)
-            pass
-
         return self._script_hash
 
 
@@ -50,14 +49,13 @@ class ExecutionContext():
         self.Script = script
         self.PushOnly = push_only
         self.__Breakpoints = break_points
-
         self.__mstream = StreamManager.GetStream(self.Script)
         self.__OpReader = BinaryReader(self.__mstream)
 
     def Clone(self):
 
         context = ExecutionContext(self._Engine, self.Script, self.PushOnly, self.__Breakpoints)
-        context.SetInstructionPointer(self.GetInstructionPointer())
+        context.SetInstructionPointer(self.InstructionPointer)
 
         return context
 

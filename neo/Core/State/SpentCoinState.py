@@ -6,6 +6,18 @@ from neo.IO.MemoryStream import MemoryStream,StreamManager
 import binascii
 from autologging import logged
 
+
+class SpentCoinItem():
+    index = None
+    height = None
+
+    def __init__(self, index, height):
+        self.index = index
+        self.height = height
+
+
+
+
 @logged
 class SpentCoinState(StateBase):
     Output = None
@@ -15,12 +27,28 @@ class SpentCoinState(StateBase):
 
     TransactionHash = None
     TransactionHeight = None
-    Items = {}
+    Items = []
 
-    def __init__(self, hash=None, height = None, items = {}):
+    def __init__(self, hash=None, height = None, items = []):
         self.TransactionHash = hash
         self.TransactionHeight = height
         self.Items = items
+
+
+    def HasIndex(self, index):
+        for i in self.Items:
+            if i.index == index:
+                return True
+        return False
+
+    def DeleteIndex(self, index):
+        to_remove = None
+        for i in self.Items:
+            if i.index == index:
+                to_remove = i
+
+        if to_remove:
+            self.Items.remove(to_remove)
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -34,24 +62,18 @@ class SpentCoinState(StateBase):
         return spentcoin
 
     def Deserialize(self, reader):
+        super(SpentCoinState, self).Deserialize(reader)
+
         self.TransactionHash = reader.ReadUInt256()
         self.TransactionHeight = reader.ReadUInt32()
 
         count = reader.ReadVarInt()
-#        self.__log.debug("num items %s " % count)
-#        print("tx %s " % self.TransactionHash.decode('utf-8'))
-#        txhash = binascii.hexlify(self.TransactionHash).decode('utf-8')
 
-        items = {}
+        items = [0] * count
         for i in range(0, count):
-            try:
-                key = reader.ReadUInt16()
-                val = reader.ReadUInt32()
-                items[key] = val
-            except Exception as e:
-#                self.__log.debug("no could not read spent coin state items with length %s " % count)
-#                self.__log.debug("DID Get items %s " % items)
-                pass
+            index = reader.ReadUInt16()
+            height = reader.ReadUInt32()
+            items[i] = SpentCoinItem(index=index, height=height)
 
         self.Items = items
 
@@ -65,7 +87,23 @@ class SpentCoinState(StateBase):
 
         writer.WriteVarInt( len( self.Items))
 
-        for key,val in self.Items.items():
-            writer.WriteUInt16(key)
-            writer.WriteUInt32(val)
+        for item in self.Items:
+            writer.WriteUInt16(item.index)
+            writer.WriteUInt32(item.height)
 
+
+
+    def ToJson(self):
+
+        items = []
+
+
+        for i in self.Items:
+            items.append({'index': i.index, 'height':i.height})
+
+        return {
+            'version':self.StateVersion,
+            'txHash': self.TransactionHash.ToString(),
+            'txHeight': self.TransactionHeight,
+            'items': items
+        }

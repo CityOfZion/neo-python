@@ -35,7 +35,7 @@ from prompt_toolkit.history import InMemoryHistory
 
 logname = 'prompt.log'
 logging.basicConfig(
-     level=logging.CRITICAL,
+     level=logging.DEBUG,
      filemode='a',
      filename=logname,
      format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
@@ -76,6 +76,7 @@ class PromptInterface(object):
                 'state',
                 'config {node, db} int int'
                 'config log on/off'
+                'pause',
                 ]
 
     token_style = style_from_dict({
@@ -87,17 +88,25 @@ class PromptInterface(object):
 
     history = InMemoryHistory()
 
-    start_height = Blockchain.Default().Height()
+    start_height = Blockchain.Default().Height
     start_dt = datetime.datetime.utcnow()
 
     node_leader = None
 
+    paused = False
+
+    def paused_loop(self):
+
+        while self.paused:
+#            self.__log.debug("paused...")
+            time.sleep(1)
+
     def get_bottom_toolbar(self, cli=None):
         try:
             return [(Token.Command, 'Progress: '),
-                    (Token.Number, str(Blockchain.Default().Height())),
+                    (Token.Number, str(Blockchain.Default().Height)),
                     (Token.Neo, '/'),
-                    (Token.Number, str(Blockchain.Default().HeaderHeight()))]
+                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
             print("couldnt get toolbar: %s " % e)
             return []
@@ -106,6 +115,8 @@ class PromptInterface(object):
     def quit(self):
         print('Shutting down.  This may take a bit...')
         self.go_on = False
+        self.paused = False
+        Blockchain.Default().Dispose()
         reactor.stop()
         self.node_leader.Shutdown()
 
@@ -115,32 +126,48 @@ class PromptInterface(object):
             tokens.append((Token.Command, "%s\n" %c))
         print_tokens(tokens, self.token_style)
 
+    def toggle_pause(self):
+        if self.paused:
+            self.paused = not self.paused
+#            reactor.run()
+            print("resusiming execution")
+
+        else:
+            self.paused = not self.paused
+            print('pausing execution!')
+            reactor.callLater(1,self.paused_loop)
+
 
     def show_state(self):
-        height = Blockchain.Default().Height()
-        headers = Blockchain.Default().HeaderHeight()
+        height = Blockchain.Default().Height
+        headers = Blockchain.Default().HeaderHeight
 
         diff = height - self.start_height
         now = datetime.datetime.utcnow()
         difftime = now - self.start_dt
 
         mins = difftime / datetime.timedelta(minutes=1)
-        print("minutes %s " % mins)
+
         bpm = 0
         if diff > 0 and mins > 0:
             bpm = diff / mins
-        print('Progress: %s / %s' % (height, headers))
-        print('Block Cache length %s ' % Blockchain.Default().BlockCacheCount())
-        print('Blocks since program start %s ' % diff)
-        print('Time elapsed %s mins' % mins)
-        print('blocks per min %s ' % bpm)
-        print("Node Req Part, Max: %s %s " % (self.node_leader.BREQPART, self.node_leader.BREQMAX))
-        print("DB Cache Lim, Miss Lim %s %s " % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM))
+
+        out = 'Progress: %s / %s\n' % (height, headers)
+        out += 'Block Cache length %s\n' % Blockchain.Default().BlockCacheCount
+        out += 'Blocks since program start %s\n' % diff
+        out += 'Time elapsed %s mins\n' % mins
+        out += 'blocks per min %s \n' % bpm
+        out += "Node Req Part, Max: %s %s\n" % (self.node_leader.BREQPART, self.node_leader.BREQMAX)
+        out += "DB Cache Lim, Miss Lim %s %s\n" % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM)
+        tokens = [(Token.Number, out)]
+        print_tokens(tokens, self.token_style)
+
     def show_nodes(self):
         if self.node_leader and len(self.node_leader.Peers):
+            out = ''
             for peer in self.node_leader.Peers:
-                print('Peer %s - IO: %s' % (peer.Name(), peer.IOStats()))
-            print("\n")
+                out+='Peer %s - IO: %s\n' % (peer.Name(), peer.IOStats())
+            print_tokens([(Token.Number, out)], self.token_style)
         else:
             print('Not connected yet\n')
 
@@ -152,8 +179,10 @@ class PromptInterface(object):
             block = Blockchain.Default().GetBlock(item)
 
             if block is not None:
-                print(json.dumps(block.ToJson(), indent=4))
-
+                bjson = json.dumps(block.ToJson(), indent=4)
+                tokens = [(Token.Number, bjson)]
+                print_tokens(tokens, self.token_style)
+                print('\n')
                 if txarg and 'tx' in txarg:
 
                     for tx in block.Transactions:
@@ -182,20 +211,78 @@ class PromptInterface(object):
         if item is not None:
             tx,height = Blockchain.Default().GetTransaction(item)
             if height  > -1:
-                print(json.dumps(tx.ToJson(), indent=4))
+
+                bjson = json.dumps(tx.ToJson(), indent=4)
+                tokens = [(Token.Command, bjson)]
+                print_tokens(tokens, self.token_style)
+                print('\n')
+
             else:
                 print("tx %s not found" % item)
+        else:
+            print("please specify a tx hash")
+
+
+    def show_account_state(self, args):
+        item = self.get_arg(args)
+        print("account to show %s " % item)
+
+        if item is not None:
+            account = Blockchain.Default().GetAccountState(item, print_all_accounts=True)
+
+            if account is not None:
+                bjson = json.dumps(account.ToJson(), indent=4)
+                tokens = [(Token.Number, bjson)]
+                print_tokens(tokens, self.token_style)
+                print('\n')
+            else:
+                print("account %s not found" % item)
+        else:
+            print("please specify an account address")
+
+
+    def show_contract_state(self, args):
+        item = self.get_arg(args)
+
+        if item is not None:
+
+            if item.lower() == 'all':
+                contracts = Blockchain.Default().ShowAllContracts()
+                print("contracts: %s " % contracts)
+            else:
+                contract = Blockchain.Default().GetContract(item)
+                if contract is not None:
+                    bjson = json.dumps(contract.ToJson(), indent=4)
+                    tokens = [(Token.Number, bjson)]
+                    print_tokens(tokens, self.token_style)
+                    print('\n')
+        else:
+            print("please specify a contract")
+
+    def show_spent_coins(self, args):
+        item = self.get_arg(args)
+
+        if item is not None:
+            if item.lower() == 'all':
+                coins = Blockchain.Default().GetAllSpentCoins()
+                print("coins %s " % coins)
+            else:
+
+                coin = Blockchain.Default().GetSpentCoins(item)
+                if coin is not None:
+                    bjson = json.dumps(coin.ToJson(), indent=4)
+                    tokens = [(Token.Number, bjson)]
+                    print_tokens(tokens, self.token_style)
+                    print("\n")
         else:
             print("please specify a tx hash")
 
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
-        print("Total: %s MB " % totalmb)
-        print("garbage: %s " % gc.garbage)
-        print("total buffers %s " % StreamManager.TotalBuffers())
-
-
+        out = "Total: %s MB\n" % totalmb
+        out += "total buffers %s\n" % StreamManager.TotalBuffers()
+        print_tokens([(Token.Number, out)], self.token_style)
 
     def configure(self, args):
         what = self.get_arg(args)
@@ -258,14 +345,16 @@ class PromptInterface(object):
 
     def parse_result(self, result):
         if len(result):
-            commandParts = [s.lower() for s in result.split()]
+            commandParts = [s for s in result.split()]
             return commandParts[0], commandParts[1:]
         return None,None
 
     def run(self):
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.05)
+        dbloop.start(1)
+
+        Blockchain.Default().PersistBlocks()
 
         self.node_leader = NodeLeader.Instance()
 
@@ -282,37 +371,51 @@ class PromptInterface(object):
                             style=self.token_style)
 
             command, arguments = self.parse_result(result)
-            if command == 'quit' or command == 'exit':
-                self.quit()
-            elif command == 'help':
-                self.help()
-            elif command == 'block':
-                self.show_block(arguments)
-            elif command == 'tx':
-                self.show_tx(arguments)
-            elif command == 'header':
-                self.show_header(arguments)
-            elif command == 'mem':
-                self.show_mem()
-            elif command == 'nodes' or command == 'node':
-                self.show_nodes()
-            elif command == 'state':
-                self.show_state()
-            elif command == 'config':
-                self.configure(arguments)
-            elif command == None:
-                print('please specify a command')
+
+            if command is not None and len(command) > 0:
+                command = command.lower()
+
+
+                if command == 'quit' or command == 'exit':
+                    self.quit()
+                elif command == 'help':
+                    self.help()
+                elif command == 'block':
+                    self.show_block(arguments)
+                elif command == 'tx':
+                    self.show_tx(arguments)
+                elif command == 'header':
+                    self.show_header(arguments)
+                elif command =='account':
+                    self.show_account_state(arguments)
+                elif command =='contract':
+                    self.show_contract_state(arguments)
+                elif command == 'sc':
+                    self.show_spent_coins(arguments)
+                elif command == 'mem':
+                    self.show_mem()
+                elif command == 'nodes' or command == 'node':
+                    self.show_nodes()
+                elif command == 'state':
+                    self.show_state()
+                elif command == 'config':
+                    self.configure(arguments)
+                elif command == 'pause' or command == 'unpause' or command == 'resume':
+                    self.toggle_pause()
+                elif command == None:
+                    print('please specify a command')
+                else:
+                    print("command %s not found" % command)
+
             else:
-                print("command %s not found" % command)
-
-
-
+                pass
 
 
 if __name__ == "__main__":
 
     cli = PromptInterface()
-    NodeLeader.Instance().Start()
-#    reactor.suggestThreadPoolSize(30)
+
+#    reactor.suggestThreadPoolSize(10)
     reactor.callInThread(cli.run)
+    NodeLeader.Instance().Start()
     reactor.run()

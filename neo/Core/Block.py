@@ -57,17 +57,8 @@ class Block(BlockBase, InventoryMixin):
         if build_root:
             self.RebuildMerkleRoot()
 
-    """
-        'PrevHash' : self.PrevHash,
-        'MerkleRoot' : self.MerkleRoot,
-        'Timestamp' : self.Timestamp,
-        'Index' : self.Index,
-        'ConsensusData' : self.ConsensusData,
-        'NextConsensus' : self.NextConsensus,
-        'Script' : self.Script,
 
-    """
-
+    @property
     def Header(self):
         if not self.__header:
 
@@ -119,18 +110,16 @@ class Block(BlockBase, InventoryMixin):
             raise Exception('Invalid format')
 
         for i in range(0, transaction_length):
-            try:
-                tx = Transaction.DeserializeFrom(reader)
-                self.Transactions.append(tx)
-            except Exception as e:
-                self.__log.debug("could not deserialize tx: %s " % e)
-                self.__log.debug("BLOCK  %s " % self.Index)
+            tx = Transaction.DeserializeFrom(reader)
+            self.Transactions.append(tx)
 
-
-
-        if MerkleTree.ComputeRoot( [tx.HashToByteString() for tx in self.Transactions]) != self.MerkleRoot:
+        if MerkleTree.ComputeRoot( [tx.Hash for tx in self.Transactions]) != self.MerkleRoot:
             raise Exception("Merkle Root Mismatch")
 
+
+#        if self.Index == 2003:
+#            reader.stream.seek(0)
+#            print("block data %s " % reader.stream.ToArray())
 
     #  < summary >
     #  比较当前区块与指定区块是否相等
@@ -142,7 +131,7 @@ class Block(BlockBase, InventoryMixin):
 
         if other is None: return False
         if other is self: return True
-        return self.Hash() == other.Hash()
+        return self.Hash == other.Hash
 
 
 
@@ -172,7 +161,7 @@ class Block(BlockBase, InventoryMixin):
     # < / summary >
     # < returns > 返回区块的HashCode < / returns >
     def GetHashCode(self):
-        return self.Hash()
+        return self.Hash
 
     # < summary >
     # 根据区块中所有交易的Hash生成MerkleRoot
@@ -180,7 +169,7 @@ class Block(BlockBase, InventoryMixin):
     def RebuildMerkleRoot(self):
         self.__log.debug("Rebuilding merlke root!")
         if self.Transactions is not None and len(self.Transactions) > 0:
-            self.MerkleRoot = MerkleTree.ComputeRoot([tx.HashToByteString() for tx in self.Transactions])
+            self.MerkleRoot = MerkleTree.ComputeRoot([tx.Hash for tx in self.Transactions])
 
     # < summary >
     # 序列化
@@ -213,7 +202,7 @@ class Block(BlockBase, InventoryMixin):
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)
-        writer.WriteHashes([tx.HashToByteString() for tx in self.Transactions])
+        writer.WriteHashes([tx.Hash.ToBytes() for tx in self.Transactions])
         retVal = ms.ToArray()
         StreamManager.ReleaseStream(ms)
         return retVal

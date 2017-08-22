@@ -5,7 +5,7 @@ from neo.Blockchain import GetGenesis
 import binascii
 from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
-
+from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.MerkleTree import MerkleTree
 
 class BlocksTestCase(unittest.TestCase):
@@ -59,8 +59,8 @@ class BlocksTestCase(unittest.TestCase):
 
         block = Helper.AsSerializableWithType(self.rawblock_hex, 'neo.Core.Block.Block')
 
-        self.assertEqual(self.rb_prev, block.PrevHash)
-        self.assertEqual(self.rb_merlke, block.MerkleRoot)
+        self.assertEqual(self.rb_prev, block.PrevHash.ToBytes())
+        self.assertEqual(self.rb_merlke, block.MerkleRoot.ToBytes())
         self.assertEqual(self.rb_ts, block.Timestamp)
         self.assertEqual(self.rb_h, block.Index)
         self.assertEqual(self.rb_nonce, block.ConsensusData)
@@ -80,10 +80,10 @@ class BlocksTestCase(unittest.TestCase):
         rawdata = block.RawData()
         compair_data = self.rawblock[:len(rawdata)]
         self.assertEqual(rawdata, compair_data)
-        out = bytes(block.HashToString().encode('utf-8'))
+        out = block.Hash.ToBytes()
         self.assertEqual(out, self.rb_hash)
 
-        root = MerkleTree.ComputeRoot([tx.HashToByteString() for tx in block.Transactions])
+        root = MerkleTree.ComputeRoot([tx.Hash for tx in block.Transactions])
         self.assertEqual(root, block.MerkleRoot)
 
 
@@ -95,12 +95,13 @@ class BlocksTestCase(unittest.TestCase):
         self.assertEqual(block.Index, self.b2height)
         self.assertEqual(block.ConsensusData, self.b2nonce)
         self.assertEqual(block.Timestamp, self.b2timestamp)
-        self.assertEqual(block.PrevHash, self.b2prev_hash)
+        self.assertEqual(block.PrevHash.ToBytes(), self.b2prev_hash)
 
 
-        self.assertEqual(block.HashToString(), self.b2hash)
+        self.assertEqual(block.Hash.ToString(), self.b2hash)
 
-        next_consensus_address = block.NextConsensusToWalletAddress()
+
+        next_consensus_address = Crypto.ToAddress(block.NextConsensus)
 
         self.assertEqual(next_consensus_address, self.b2nextconsensus)
 
@@ -119,10 +120,10 @@ class BlocksTestCase(unittest.TestCase):
 
         self.assertEqual(tx.Nonce, self.b2tx_nonce)
 
-        txhash = tx.HashToByteString()
+        txhash = tx.Hash.ToBytes()
         self.assertEqual(txhash, self.b2tx_id)
 
-        root = MerkleTree.ComputeRoot([tx.HashToByteString() for tx in block.Transactions])
+        root = MerkleTree.ComputeRoot([tx.Hash for tx in block.Transactions])
         self.assertEqual(root, block.MerkleRoot)
 
 
@@ -146,9 +147,8 @@ class BlocksTestCase(unittest.TestCase):
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
 
 
-        self.assertEqual(block.MerkleRoot, self.sf_merk)
-        self.assertEqual(block.HashToByteString(), self.sf_hash)
-        pass
+        self.assertEqual(block.MerkleRoot.ToBytes(), self.sf_merk)
+        self.assertEqual(block.Hash.ToBytes(), self.sf_hash)
 
     pb_raw = b'00000000f7f81039bc589a1fcf89e77944a7434da7660bd1ca1584a4cc7f1983548050d1dc937c5a3f1081828080c4ac279e804295f54525d10739ad34b53caf3da8822d83d11259e800000092abe1e9ff2a383af3812db982f3b0089a21a278988efeec6a027b2501fd45014069af682cb67a122d26c073cce731efd0386d200f56505e611539ae30cee65a6f7b7275dc1bb9080f3420b34b8adf3d770b3f6e15eaa79aeba2fe3c1603b8242340faa17d6e37a2b71f0ec51188c88c6962b113646bc7f122d4f4da4564a483631e4d8cc58340f396f41bbc4f209c1eec34cd62f099817386718602c5aa5acc2c4b407c006dbaaa100a2b2eee2e7f8c7f602993e4802b83ce3a9638acb437498afc2a55a7c8075cd5d8b8d086d6a379d413358915d66462b9613dee18347cd2f3fe7a4058a553b3b0bde72270aeb74c2026c4183daab5e4f7291a93e45527c775529c97174b664f487433cca8ea46d67f8298ccd209bd355c56747eb5a14ce92295e00b4003e2efc22e39302f8fbf94115c59fd8f17cc553702dc2e7d01b849f7d463fb81639f1d60e7eac1f95a562a04571f37109cde1944010bab8be1f348e97006100af155210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae02000092abe1e900000000d000fd3f01746b4c04000000004c04000000004c040000000061681e416e745368617265732e426c6f636b636861696e2e476574486569676874681d416e745368617265732e426c6f636b636861696e2e476574426c6f636b744c0400000000948c6c766b947275744c0402000000936c766b9479744c0400000000948c6c766b9479681d416e745368617265732e4865616465722e47657454696d657374616d70a0744c0401000000948c6c766b947275744c0401000000948c6c766b9479641b004c0400000000744c0402000000948c6c766b947275623000744c0401000000936c766b9479744c0400000000936c766b9479ac744c0402000000948c6c766b947275620300744c0402000000948c6c766b947961748c6c766b946d748c6c766b946d748c6c766b946d746c768c6b946d746c768c6b946d746c768c6b946d6c75660302050001044c6f636b0c312e302d70726576696577310a4572696b205a68616e67126572696b40616e747368617265732e6f7267234c6f636b20796f75722061737365747320756e74696c20612074696d657374616d702e00014e23ac4c4851f93407d4c59e1673171f39859db9e7cac72540cd3cc1ae0cca87000001e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6000ebcaaa0d00000067f97110a66136d38badc7b9f88eab013027ce49014140c298da9f06d5687a0bb87ea3bba188b7dcc91b9667ea5cb71f6fdefe388f42611df29be9b2d6288655b9f2188f46796886afc3b37d8b817599365d9e161ecfb62321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
     pb_hash = b'077c7fc9a85d777aeb42e1076bd98451f16e59354bfb6fed998ccabd93f6ccb9'
@@ -159,7 +159,7 @@ class BlocksTestCase(unittest.TestCase):
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
 
-        self.assertEqual(block.HashToByteString(), self.pb_hash)
+        self.assertEqual(block.Hash.ToBytes(), self.pb_hash)
 
 
 
@@ -171,8 +171,8 @@ class BlocksTestCase(unittest.TestCase):
         hexdata = binascii.unhexlify(self.t992)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
-        self.assertEqual(block.MerkleRoot, self.t992m)
-        self.assertEqual(block.HashToByteString(), self.t992h)
+        self.assertEqual(block.MerkleRoot.ToBytes(), self.t992m)
+        self.assertEqual(block.Hash.ToBytes(), self.t992h)
 
 
         json = block.ToJson()
@@ -196,7 +196,7 @@ class BlocksTestCase(unittest.TestCase):
 
             block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
 
-            self.assertEqual(self.big_tx_hash, block.HashToByteString())
+            self.assertEqual(self.big_tx_hash, block.Hash.ToBytes())
 
         json = block.ToJson()
 
@@ -212,3 +212,5 @@ class BlocksTestCase(unittest.TestCase):
                 vout = bigclaim['vout'][0]
                 self.assertEqual(vout['ScriptHash'], 'AFnRHRQceaUgFQxPTttAQzAZvsjGSNtHCH')
                 self.assertEqual(vout['Value'], 57868.00133972)
+
+

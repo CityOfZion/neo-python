@@ -21,6 +21,8 @@ from events import Events
 from neo.Cryptography.ECCurve import ECDSA
 import pytz
 import traceback
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 ### not sure of the origin of these
 Issuer = ECDSA.decode_secp256r1( '030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
@@ -43,10 +45,11 @@ class Blockchain(object):
 
     __instance = None
 
-    __blockrequests = []
+    __blockrequests = set()
 
     CACHELIM=4000
     CMISSLIM=5
+    LOOPTIME = .1
 
     PersistCompleted = Events()
 
@@ -62,9 +65,9 @@ class Blockchain(object):
     @staticmethod
     def SystemShare():
         amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL )
-        owner = b'\x00'
-        admin = Crypto.Hash160(PUSHT)
-        return RegisterTransaction([],[], AssetType.AntShare,
+        owner = ECDSA.secp256r1().Curve.Infinity
+        admin = Crypto.ToScriptHash(PUSHT)
+        return RegisterTransaction([],[], AssetType.GoverningToken,
                                  "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
                                  amount,0, owner, admin)
 
@@ -72,11 +75,12 @@ class Blockchain(object):
     def SystemCoin():
         amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
 
-        owner = b'\x00'
-        precision=8
-        admin = Crypto.Hash160(PUSHF)
+        owner = ECDSA.secp256r1().Curve.Infinity
 
-        return RegisterTransaction([],[], AssetType.AntCoin,
+        precision=8
+        admin = Crypto.ToScriptHash(PUSHF)
+
+        return RegisterTransaction([],[], AssetType.UtilityToken,
                                          "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
                                          amount,precision,owner, admin)
 
@@ -84,7 +88,7 @@ class Blockchain(object):
     def GenesisBlock():
 
 
-        prev_hash = bytearray(32)
+        prev_hash = UInt256(data=bytearray(32))
         timestamp = int(datetime(2016, 7, 15, 15, 8, 21, tzinfo= pytz.utc ).timestamp())
         index = 0
         consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
@@ -95,9 +99,9 @@ class Blockchain(object):
         mt.Nonce = 2083236893
 
         output = TransactionOutput(
-            Blockchain.SystemShare().HashToString(),
+            Blockchain.SystemShare().Hash,
             Blockchain.SystemShare().Amount,
-            Helper.RawBytesToScriptHash(Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators()))
+            Crypto.ToScriptHash(Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators()))
         )
 
         it = IssueTransaction([],[output],[], [script])
@@ -118,18 +122,22 @@ class Blockchain(object):
         return Blockchain.__instance
 
 
+    @property
     def CurrentBlockHash(self):
         # abstract
         pass
 
+    @property
     def CurrentHeaderHash(self):
         # abstract
         pass
 
+    @property
     def HeaderHeight(self):
         # abstract
         pass
 
+    @property
     def Height(self):
         # abstract
         pass
@@ -142,6 +150,7 @@ class Blockchain(object):
         # abstract
         pass
 
+    @property
     def BlockRequests(self):
         return self.__blockrequests
 
@@ -166,7 +175,7 @@ class Blockchain(object):
 
             for claim in to_be_checked:
 
-                if claim.PrevIndex >= len(tx.Outputs) or tx.Outputs[claim.PrevIndex].AssetId == Blockchain.SystemShare().Hash():
+                if claim.PrevIndex >= len(tx.Outputs) or tx.Outputs[claim.PrevIndex].AssetId == Blockchain.SystemShare().Hash:
                     raise Exception('Invalid claim')
 
 
@@ -198,6 +207,9 @@ class Blockchain(object):
         # abstract
         pass
 
+    def GetAccountStateByIndex(self, index):
+        pass
+
     def GetAccountState(self, script_hash):
         # abstract
         pass
@@ -207,6 +219,9 @@ class Blockchain(object):
         pass
 
     def GetHeaderHash(self, height):
+        pass
+
+    def GetBlockByHeight(self, height):
         pass
 
     def GetBlock(self, height_or_hash):
@@ -221,6 +236,14 @@ class Blockchain(object):
         # abstract
         pass
 
+    def GetSpentCoins(self,tx_hash):
+        pass
+
+    def GetAllSpentCoins(self):
+        pass
+
+    def ShowAllContracts(self):
+        pass
 
     def GetContract(self, hash):
         # abstract
@@ -242,7 +265,7 @@ class Blockchain(object):
     def GetConsensusAddress(validators):
         vlen = len(validators)
         script = Contract.CreateMultiSigRedeemScript(vlen - int((vlen - 1)/3) , validators)
-        return Helper.RawBytesToScriptHash(script)
+        return Crypto.ToScriptHash(script)
 
     def GetValidators(self, others):
 
@@ -314,8 +337,8 @@ class Blockchain(object):
 
     def OnPersistCompleted(self, block):
 
-        self.__validators = []
-
+#        self.__validators = []
+        pass
 
     def StartPersist(self):
         pass

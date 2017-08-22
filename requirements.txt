@@ -26,6 +26,7 @@ idna==2.5
 incremental==17.5.0
 matplotlib==2.0.2
 memory-profiler==0.47
+mmh3==2.4
 mpmath==0.19
 numpy==1.13.1
 peewee==2.10.1

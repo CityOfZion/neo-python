@@ -4,18 +4,22 @@ import sys
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream,StreamManager
 from .CoinState import CoinState
+from autologging import logged
 
+
+@logged
 class UnspentCoinState(StateBase):
 
 
-    Items = {}
+    Items = None
 
-    def __init__(self, items={}):
+    def __init__(self, items=[]):
         self.Items = items
 
     @staticmethod
     def FromTXOutputsConfirmed(outputs):
         uns = UnspentCoinState()
+        uns.Items = [0] * len(outputs)
         for i in range(0, len(outputs)):
             uns.Items[i] = CoinState.Confirmed
         return uns
@@ -24,17 +28,31 @@ class UnspentCoinState(StateBase):
         return super(UnspentCoinState, self).Size() + sys.getsizeof(self.Items)
 
     def IsAllSpent(self):
-        for k,v in self.Items:
-            if v & CoinState.Spent > 0:
+        for item in self.Items:
+            if item & CoinState.Spent > 0:
                 return False
         return True
+
+    def OrEqValueForItemAt(self, index, value):
+
+        length = len(self.Items)
+
+        while length < index + 1:
+            self.Items.append(0)
+            length = len(self.Items)
+
+        self.Items[index] |= value
+
+
 
     def Deserialize(self, reader):
         super(UnspentCoinState, self).Deserialize(reader)
 
-        item_array = bytearray(reader.ReadVarBytes())
-        for i in range(0, len(item_array)):
-            self.Items[i] = item_array[i]
+
+        blen = reader.ReadVarInt()
+        self.Items = [0] * blen
+        for i in range(0, blen):
+            self.Items[i] = reader.ReadByte()
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -47,12 +65,11 @@ class UnspentCoinState(StateBase):
 
         return uns
 
+
+
     def Serialize(self, writer):
         super(UnspentCoinState, self).Serialize(writer)
 
-
         writer.WriteVarInt(len(self.Items))
-        [writer.WriteByte(val) for key, val in self.Items.items()]
-#items = [val for key,val in self.Items.items()]
-#        print("serializing unspent coins!")
-#        writer.WriteVarBytes(items, unhexlify=False)
+
+        [writer.WriteByte(item) for item in self.Items]

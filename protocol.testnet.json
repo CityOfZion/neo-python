@@ -12,6 +12,11 @@
       "034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b"
     ],
     "SeedList": [
+      "seed1.neo.org:20333",
+      "seed2.neo.org:20333",
+      "seed3.neo.org:20333",
+      "seed4.neo.org:20333",
+      "seed5.neo.org:20333",
       "13.59.174.230:20333",
       "18.220.111.187:20333",
       "18.220.66.180:20333",
@@ -27,7 +32,7 @@
   },
 
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/TestChain",
+    "DataDirectoryPath": "./Chains/Gogo",
     "NodePort": 20333,
     "WsPort": 20334,
     "UriPrefix": [ "http://*:20332" ],

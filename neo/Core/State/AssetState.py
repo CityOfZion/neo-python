@@ -7,6 +7,9 @@ from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.Core.AssetType import AssetType
+from neo.UInt160 import UInt160
+from neo.Cryptography.Crypto import Crypto
+from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
 
 class AssetState(StateBase):
 
@@ -28,7 +31,7 @@ class AssetState(StateBase):
 
 
     def __init__(self, asset_id=None, asset_type=None,name=None,amount=Fixed8(0),available=Fixed8(0),
-                 precision=0, fee_mode=0, fee=Fixed8(0), fee_addr=None, owner=None,
+                 precision=0, fee_mode=0, fee=Fixed8(0), fee_addr=UInt160(data=bytearray(20)), owner=None,
                  admin=None,issuer=None,expiration=None,is_frozen=False):
         self.AssetId = asset_id
         self.AssetType = asset_type
@@ -39,6 +42,10 @@ class AssetState(StateBase):
         self.FeeMode = fee_mode
         self.Fee = fee
         self.FeeAddress = fee_addr
+
+        if owner is not None and type(owner) is not EllipticCurve.ECPoint:
+            raise Exception("Owner must be ECPoint Instance")
+
         self.Owner = owner
         self.Admin = admin
         self.Issuer = issuer
@@ -72,7 +79,7 @@ class AssetState(StateBase):
 
         self.Fee = reader.ReadFixed8()
         self.FeeAddress = reader.ReadUInt160()
-        self.Owner = reader.ReadBytes(33)
+        self.Owner = ECDSA.Deserialize_Secp256r1(reader)
         self.Admin = reader.ReadUInt160()
         self.Issuer = reader.ReadUInt160()
         self.Expiration = reader.ReadUInt32()
@@ -84,19 +91,42 @@ class AssetState(StateBase):
         writer.WriteByte(self.AssetType)
         writer.WriteVarString(self.Name)
         writer.WriteFixed8(self.Amount)
+
+        if type(self.Available) is not Fixed8:
+            raise Exception("AVAILABLE IS NOT FIXED 8!")
+
         writer.WriteFixed8(self.Available)
         writer.WriteByte(self.Precision)
-        writer.WriteByte(self.FeeMode)
+        writer.WriteByte(b'\x00')
         writer.WriteFixed8(self.Fee)
         writer.WriteUInt160(self.FeeAddress)
-        writer.WriteBytes(self.Owner)
+        self.Owner.Serialize(writer)
         writer.WriteUInt160(self.Admin)
         writer.WriteUInt160(self.Issuer)
         writer.WriteUInt32(self.Expiration)
         writer.WriteBool(self.IsFrozen)
 
-    def GetName(self):
-        if self.AssetType == AssetType.AntShare: return "NEO"
-        elif self.AssetType == AssetType.AntCoin: return "NEOGas"
 
-        return "Name!"
+    def GetName(self):
+        if self.AssetType == AssetType.GoverningToken: return "NEO"
+        elif self.AssetType == AssetType.UtilityToken: return "NEOGas"
+
+        return self.Name.decode('utf-8')
+
+
+    def ToJson(self):
+        return {
+            'assetId': self.AssetId.ToString(),
+            'assetType': self.AssetType,
+            'name': self.GetName(),
+            'amount': self.Amount.value,
+            'available': self.Available.value,
+            'precicion': self.Precision,
+            'fee': self.Fee.value,
+            'address': self.FeeAddress.ToString(),
+            'owner':self.Owner.ToString(),
+            'admin': Crypto.ToAddress(self.Admin),
+            'issuer': Crypto.ToAddress(self.Issuer),
+            'expiration': self.Expiration,
+            'is_frozen':self.IsFrozen
+        }

@@ -36,3 +36,9 @@ class StateBase(SerializableMixin):
         StreamManager.ReleaseStream(ms)
 
         return retval
+
+    def ToJson(self):
+
+        return {
+            'version':self.StateVersion
+        }

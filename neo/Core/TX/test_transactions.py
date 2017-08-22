@@ -29,7 +29,7 @@ class TransactionTestCase(unittest.TestCase):
 
         self.assertEqual(type(tx), MinerTransaction )
 
-        self.assertEqual(tx.HashToByteString(), self.tx_id)
+        self.assertEqual(tx.Hash.ToBytes(), self.tx_id)
 
         self.assertEqual(tx.Nonce, self.tx_nonce)
 
@@ -64,7 +64,7 @@ class TransactionTestCase(unittest.TestCase):
 
         self.assertEqual(tx.ToArray(), self.ctx_raw)
 
-        self.assertEqual(tx.HashToByteString(), self.ctx_id)
+        self.assertEqual(tx.Hash.ToBytes(), self.ctx_id)
 
 
     pb_raw = b'd000fd3f01746b4c04000000004c04000000004c040000000061681e416e745368617265732e426c6f636b636861696e2e476574486569676874681d416e745368617265732e426c6f636b636861696e2e476574426c6f636b744c0400000000948c6c766b947275744c0402000000936c766b9479744c0400000000948c6c766b9479681d416e745368617265732e4865616465722e47657454696d657374616d70a0744c0401000000948c6c766b947275744c0401000000948c6c766b9479641b004c0400000000744c0402000000948c6c766b947275623000744c0401000000936c766b9479744c0400000000936c766b9479ac744c0402000000948c6c766b947275620300744c0402000000948c6c766b947961748c6c766b946d748c6c766b946d748c6c766b946d746c768c6b946d746c768c6b946d746c768c6b946d6c75660302050001044c6f636b0c312e302d70726576696577310a4572696b205a68616e67126572696b40616e747368617265732e6f7267234c6f636b20796f75722061737365747320756e74696c20612074696d657374616d702e00014e23ac4c4851f93407d4c59e1673171f39859db9e7cac72540cd3cc1ae0cca87000001e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6000ebcaaa0d00000067f97110a66136d38badc7b9f88eab013027ce49014140c298da9f06d5687a0bb87ea3bba188b7dcc91b9667ea5cb71f6fdefe388f42611df29be9b2d6288655b9f2188f46796886afc3b37d8b817599365d9e161ecfb62321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
@@ -78,7 +78,7 @@ class TransactionTestCase(unittest.TestCase):
 
         tx = Transaction.DeserializeFrom(reader)
         self.assertEqual(tx.ToArray(), self.pb_raw)
-        self.assertEqual(tx.HashToByteString(), self.pb_hash)
+        self.assertEqual(tx.Hash.ToBytes(), self.pb_hash)
 
         json = tx.ToJson()
 
@@ -86,7 +86,7 @@ class TransactionTestCase(unittest.TestCase):
         self.assertEqual(contract['author'], 'Erik Zhang')
         self.assertEqual(contract['description'], 'Lock your assets until a timestamp.')
 
-        self.assertEqual(contract['code']['hash'], 'dJpxawFbHrECL5aghzzAA7BgFDeyvUv3PeSykGhF5pAqyDq35gKUA9kXVmTrVHMQN9Xvg7QevCzar3tdQNpzePwobz79uPDsbDCtVGTCu1Jn43RRpARbKZACFGtdt5JFzvLdL93NHsj8JucHXTf3D1L3C4rsZThGh2u3WngyE8beMvhi4rnzewp8K4fcnAddBtQ1dgxFN7rNu7mdDvMW7XipgBpDg6PaAE4MgGm8EyQ1rTWYMr422xYZuxkzyYxCEMnE1dLyoLjsSviAM831t6rTafrfhMDbR5wYT1ik2v3UkkZUrf8quWGFsfBNUASPU6rvE6JzwqNJtZ8dwjkXRHPnT2YKCTHYqcKq49BQZ7ZL1CW1azQgYJHXJxFcPebFfrkPw2WTgvAGGWj656QkmtUi4Rh7EJMkknJNFg7KEhaTiHTwRRg7TUyQmw')
+        self.assertEqual(contract['code']['hash'], 'ffbd1a7ad1e2348b6b3822426f364bfb4bcce3b9')
         self.assertEqual(contract['code']['returntype'], 1)
         self.assertEqual(contract['code']['parameters'], '020500')
 
@@ -103,7 +103,7 @@ class TransactionTestCase(unittest.TestCase):
 
         tx = Transaction.DeserializeFrom(reader)
         self.assertEqual(tx.ToArray(), self.ir)
-        self.assertEqual(tx.HashToByteString(), self.ir_id)
+        self.assertEqual(tx.Hash.ToBytes(), self.ir_id)
 
 
     mr = b'00006666654200000000'
@@ -117,7 +117,7 @@ class TransactionTestCase(unittest.TestCase):
         tx = Transaction.DeserializeFrom(reader)
         self.assertEqual(tx.Nonce, self.mrn)
         self.assertEqual(tx.ToArray(), self.mr)
-        self.assertEqual(tx.HashToByteString(), self.mrh)
+        self.assertEqual(tx.Hash.ToBytes(), self.mrh)
 
 
     rr = b'400060245b7b226c616e67223a227a682d434e222c226e616d65223a2254657374436f696e227d5dffffffffffffffff08034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e1167f97110a66136d38badc7b9f88eab013027ce4900014423a26aeca49cdeeb9522c720e1ae3a93bbe27d53662839b16a438305c20906010001e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60001e1a210b00000067f97110a66136d38badc7b9f88eab013027ce490141405d8223ec807e3416a220a75ef9805dfa2e36bd4f6dcc7372373aa45f15c7fadfc96a8642e52acf56c2c66d549be4ba820484873d5cada00b9c1ce9674fbf96382321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
@@ -125,11 +125,12 @@ class TransactionTestCase(unittest.TestCase):
 
 
     def test_register_tx(self):
+
         ms = MemoryStream(binascii.unhexlify(self.rr))
 
         reader = BinaryReader(ms)
         tx = Transaction.DeserializeFrom(reader)
-        self.assertEqual(self.rrid, tx.HashToByteString())
+        self.assertEqual(self.rrid, tx.Hash.ToBytes())
 
 
         json = tx.ToJson()
@@ -141,6 +142,8 @@ class TransactionTestCase(unittest.TestCase):
 
 
     cr = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce490241400bd2e921cee90c8de1a192e61e33eb8980a3dc00c388ee9aac0712178cc8fceed8bb59788f7caf3c4dc082abcdaaa49772fda86db4ceea243bda31bcde9b8a0b3c21034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e1104182f145967cc4ee2f1c9f4e0782756dabf246d0a4fe60a035441402fe3e20c303e26c3817fed6fc7db8edde4ac62b16eee796c01c2b59e382b7ddfc82f0b36c7f7520821c7b72b9aff50ae27a016961f1ef1dade9cafa85655380f2321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
+    cr2= b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce49'
+
     crid = b'e4d2ea5df2adf77df91049beccbb16f98863b93a16439c60381eac1f23bff178'
 
 
@@ -150,7 +153,9 @@ class TransactionTestCase(unittest.TestCase):
 
         reader = BinaryReader(ms)
         tx = Transaction.DeserializeFrom(reader)
-        self.assertEqual(tx.HashToByteString(), self.crid)
+
+        self.assertEqual(tx.ToArray(), self.cr)
+        self.assertEqual(tx.Hash.ToBytes(), self.crid)
 
 
     p2 = b'd000a9746b7400936c766b94797451936c766b9479a1633a007400936c766b94797451936c766b94797452936c766b9479617c6554009561746c768c6b946d746c768c6b946d746c768c6b946d6c75667400936c766b94797451936c766b9479617c6525007452936c766b94799561746c768c6b946d746c768c6b946d746c768c6b946d6c7566746b7400936c766b94797451936c766b94799361746c768c6b946d746c768c6b946d6c756600ff09e5919ce5919ce5919c04302e3031037777770377777704656565660001fb9b53e0a87295a94973cd395d64c068c705d662e3965682b2cb36bf67acf7e5000001e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60001edc0c1700000050ac4949596f5b62fef7be4d1c3e494e6048ed4a0141402725b8f7e5ada56e5c5e85177cdda9dd6cf738a7f35861fb3413c4e05017125acae5d978cd9e89bda7ab13eb87ba960023cb44d085b9d2b06a88e47cefd6e224232102ff8ac54687f36bbc31a91b730cc385da8af0b581f2d59d82b5cfef824fd271f6ac'
@@ -166,7 +171,7 @@ class TransactionTestCase(unittest.TestCase):
         tx = Transaction.DeserializeFrom(reader)
 
         self.assertEqual(tx.ToArray(), self.p2)
-        self.assertEqual(tx.HashToByteString(), self.p2id)
+        self.assertEqual(tx.Hash.ToBytes(), self.p2id)
 
 
 
@@ -183,7 +188,7 @@ class TransactionTestCase(unittest.TestCase):
         tx = Transaction.DeserializeFrom(reader)
 
         self.assertEqual(tx.ToArray(), self.eraw)
-        self.assertEqual(tx.HashToByteString(), self.eid)
+        self.assertEqual(tx.Hash.ToBytes(), self.eid)
 
     yatx = b'800001f00431313131010206cc6f919695fb55c9605c55127128c29697d791af884c2636416c69a944880100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000e58e5999bcbf5d78f52ead40654131abb9ee27099b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5009a04f516000000e53a27d37d7f5a3187003c21efe3725304a7410601414058b4a41beabdcf62381f7feea02767a714eb8ea49212fdb47a6f0bed2d0ae87d27377d9c2b4412ebf816042f2144e6e08939c7d83638b61208d3a7f5ea47c3ba232102ca81fa6c7ef20219c417d876c2743ea87728d416632d09c18004652aed09e000ac'
     yatx_id=b'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
@@ -195,4 +200,4 @@ class TransactionTestCase(unittest.TestCase):
         reader = BinaryReader(ms)
         tx = Transaction.DeserializeFrom(reader)
         self.assertEqual(tx.ToArray(), self.yatx)
-        self.assertEqual(tx.HashToByteString(), self.yatx_id)
+        self.assertEqual(tx.Hash.ToBytes(), self.yatx_id)

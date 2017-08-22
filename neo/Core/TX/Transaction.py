@@ -7,26 +7,23 @@ Usage:
 """
 
 from neo.Blockchain import *
-from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.TransactionAttribute import *
-from neo.Core.Helper import Helper
+from neo.Core.CoinReference import CoinReference
 from neo.Fixed8 import Fixed8
 from neo.Network.Inventory import Inventory
 from neo.Network.InventoryType import InventoryType
 from neo.Network.Mixins import InventoryMixin
 from neo.Cryptography.Crypto import *
 from neo.IO.Mixins import SerializableMixin
-from neo.Helper import big_or_little
-
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.Core.Helper import Helper
-from neo import Settings
-
-import sys
-import json
 from neo.Core.Witness import Witness
 from autologging import logged
+from neo.UInt256 import UInt256
+
+import sys
+from itertools import groupby
 
 class TransactionResult():
     AssetId=None
@@ -35,6 +32,9 @@ class TransactionResult():
     def __init__(self, asset_id, amount):
         self.AssetId = asset_id
         self.Amount = amount
+
+    def ToString(self):
+        return "%s -> %s " % (self.AssetId.ToString(), self.Amount.value)
 
 class TransactionType(object):
     MinerTransaction = b'\x00'
@@ -53,40 +53,45 @@ class TransactionOutput(SerializableMixin):
 
 
     Value = None # should be fixed 8
-    _ScriptHash = None
+    ScriptHash = None
     AssetId = None
 
     """docstring for TransactionOutput"""
-    def __init__(self, AssetId=None, Value=None, ScriptHash=None):
+    def __init__(self, AssetId=None, Value=None, script_hash=None):
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
         self.Value = Value
-        self._ScriptHash = ScriptHash
+        self.ScriptHash = script_hash
 
-    def ScriptHashRaw(self):
-        return self._ScriptHash
+#        if self.ScriptHash is None:
+#            raise Exception("Script hash is required!!!!!!!!")
 
-    def ScriptHash(self):
-        return hash_to_wallet_address(self._ScriptHash)
+    @property
+    def Address(self):
+        return Crypto.ToAddress(self.ScriptHash)
 
-    def ScriptHashBytes(self):
-        return self.ScriptHash().encode('utf-8')
+    @property
+    def AddressBytes(self):
+        return bytes(self.Address, encoding='utf-8')
 
     def Serialize(self, writer):
         writer.WriteUInt256(self.AssetId)
         writer.WriteFixed8(self.Value)
-        writer.WriteUInt160(self._ScriptHash)
+        writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
-        self.AssetId = binascii.hexlify( reader.ReadUInt256())
+        self.AssetId = reader.ReadUInt256()
         self.Value = reader.ReadFixed8()
-        self._ScriptHash = reader.ReadUInt160()
+        self.ScriptHash = reader.ReadUInt160()
+        if self.ScriptHash is None:
+            raise Exception("Script hash is required from deserialize!!!!!!!!")
+
 
     def ToJson(self):
         return {
-            'AssetId': self.AssetId.decode('utf-8'),
+            'AssetId': self.AssetId.ToString(),
             'Value': self.Value.value / Fixed8.D,
-            'ScriptHash': self.ScriptHash()
+            'ScriptHash': self.Address
         }
 
 @logged
@@ -106,7 +111,7 @@ class TransactionInput(SerializableMixin):
         writer.WriteUInt16(self.PrevIndex)
 
     def Deserialize(self, reader):
-        self.PrevHash = binascii.hexlify( reader.ReadUInt256())
+        self.PrevHash = reader.ReadUInt256()
         self.PrevIndex = reader.ReadUInt16()
 
     def ToString(self):
@@ -115,7 +120,7 @@ class TransactionInput(SerializableMixin):
 
     def ToJson(self):
         return {
-            'PrevHash': self.PrevHash.encode('utf-8'),
+            'PrevHash': self.PrevHash.ToString(),
             'PrevIndex': self.PrevIndex
         }
 
@@ -158,26 +163,13 @@ class Transaction(Inventory, InventoryMixin):
         self.scripts = scripts
         self.InventoryType = 0x01  # InventoryType TX 0x01
 
+    @property
     def Hash(self):
         if not self.__hash:
             ba = bytearray(binascii.unhexlify(self.GetHashData()))
             hash = Crypto.Hash256(ba)
-            hashhex = binascii.hexlify(hash)
-            self.__hash = hashhex
+            self.__hash = UInt256(data=hash)
         return self.__hash
-
-
-    def HashToString(self):
-        uint256bytes = bytearray(binascii.unhexlify(self.Hash()))
-        uint256bytes.reverse()
-        out = uint256bytes.hex()
-
-        return out
-
-    def HashToByteString(self):
-        if not self.__htbs:
-            self.__htbs = bytes(self.HashToString(), encoding='utf-8')
-        return self.__htbs
 
 
     def GetHashData(self):
@@ -188,19 +180,34 @@ class Transaction(Inventory, InventoryMixin):
     def getAllInputs(self):
         return self.inputs
 
-
+    @property
     def References(self):
         if self.__references is None:
 
-            refs = set()
+            refs = {}
 
+            #group by the input prevhash
 
-            for input in self.inputs:
-                tx = GetBlockchain().GetTransaction(input.PrevHash())
-
+            for hash, group in groupby(self.inputs, lambda x: x.PrevHash):
+                tx = GetBlockchain().GetTransaction(hash.ToBytes())
                 if tx is not None:
-                    #this aint right yet
-                    refs.add({'input':input, 'output':tx.outputs[input.PrevIndex]})
+                    for input in group:
+                        refs[input] = tx.outputs[input.PrevIndex]
+
+#            ipts = []
+#            for input in self.inputs:
+#                if not input.PrevHash in ipts:
+#                    ipts.append(input.PrevHash)
+
+            #go through all the inputs again, but according to the prevhash
+            #and get... the output of the other tx that this input outputs to?
+#            for inputPrevHash in ipts:
+
+#                tx = GetBlockchain().GetTransaction(inputPrevHash.ToBytes())
+#                if tx is not None:
+#                    for input in self.inputs:
+#                        if input.PrevHash == inputPrevHash:
+#                            refs[input] = tx.outputs[input.PrevIndex]
 
             self.__references = refs
         return self.__references
@@ -286,12 +293,13 @@ class Transaction(Inventory, InventoryMixin):
 
         tx.scripts = []
         byt = reader.ReadVarInt()
+
         if byt > 0:
             for i in range(0, byt):
                 witness = Witness()
                 witness.Deserialize(reader)
-                tx.scripts = [witness]
 
+                tx.scripts.append(witness)
 
         tx.OnDeserialized()
 
@@ -309,80 +317,13 @@ class Transaction(Inventory, InventoryMixin):
         self.inputs = reader.ReadSerializableArray( 'neo.Core.CoinReference.CoinReference')
         self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
 
-
     def Equals(self, other):
         if other is None or other is not self:
             return False
-        return self.Hash() == other.Hash()
+        return self.Hash == other.Hash
 
     def ToArray(self):
         return Helper.ToArray(self)
-
-    def GetScriptHashesForVerifying(self):
-        """Get ScriptHash From SignatureContract"""
-
-        return []
-#        if not self.__references:
-#            raise Exception('No References to be verified')
-#
-#        hashes = [ref.ScriptHash() for ref in self.References()]
-
-#        if (References == null) throw new InvalidOperationException();
-#        HashSet < UInt160 > hashes = new HashSet < UInt160 > (Inputs.Select(p= > References[p].ScriptHash));
-#        hashes.UnionWith(Attributes.Where(p= > p.Usage == TransactionAttributeUsage.Script).Select(p= > newUInt160(p.Data)));
-#        foreach(var group in Outputs.GroupBy(p= > p.AssetId))
-#        {
-#            AssetState asset = Blockchain.Default.GetAssetState(group.Key);
-#            if (asset == null) throw new InvalidOperationException();
-#            if (asset.AssetType.HasFlag(AssetType.DutyFlag))
-#            {
-#                hashes.UnionWith(group.Select(p = > p.ScriptHash));
-#            }
-#        }
-#        return hashes.OrderBy(p= > p).ToArray();
-#
-#        result = self.References()
-#
-#        if result == None:
-#            raise Exception, 'getReference None.'
-#
-#        for _input in self.inputs:
-#            _hash = result.get(_input.toString()).scriptHash
-#            hashes.update({_hash.toString(), _hash})
-
-        # TODO
-        # Blockchain.getTransaction
-#        txs = [Blockchain.getTransaction(output.AssetId) for output in self.outputs]
-#        for output in self.outputs:
-#            tx = txs[self.outputs.index(output)]
-#            if tx == None:
-#                raise Exception, "Tx == None"
-#            else:
-#                if tx.AssetType & AssetType.DutyFlag:
-#                    hashes.update(output.ScriptHash.toString(), output.ScriptHash)
-#
-#                    array = sorted(hashes.keys())
-#                    return array
-
-
-    def GetTransactionResults(self):
-        if self.References() is None: return None
-        raise NotImplementedError()
-#        return References.Values.Select(p= > new
-#        {
-#            AssetId = p.AssetId,
-#                      Value = p.Value
-#        }).Concat(Outputs.Select(p= > new
-#        {
-#            AssetId = p.AssetId,
-#                      Value = -p.Value
-#        })).GroupBy(p= > p.AssetId, (k, g) = > new
-#        TransactionResult
-#        {
-#            AssetId = k,
-#                      Amount = g.Sum(p= > p.Value)
-#        }).Where(p= > p.Amount != Fixed8.Zero);
-
 
     def Serialize(self, writer):
         self.SerializeUnsigned(writer)
@@ -407,7 +348,7 @@ class Transaction(Inventory, InventoryMixin):
 
     def ToJson(self):
         jsn = {}
-        jsn["txid"] = self.HashToString()
+        jsn["txid"] = self.Hash.ToString()
         jsn["type"] = self.Type if type(self.Type) is int else int.from_bytes( self.Type, 'little')
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
@@ -425,7 +366,7 @@ class Transaction(Inventory, InventoryMixin):
             j=0
             while j < i:
                 j = j+1
-                if self.inputs[i].PrevHash() == self.inputs[j].PrevHash() and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
+                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
                     return False
         self.__log.debug("Verified inputs 1")
         for tx in mempool:
@@ -462,7 +403,7 @@ class Transaction(Inventory, InventoryMixin):
         numDestroyed = len(destroyedResults)
         if numDestroyed > 1:
             return False
-        if numDestroyed == 1 and destroyedResults[0].AssetId != GetSystemCoin().Hash():
+        if numDestroyed == 1 and destroyedResults[0].AssetId != GetSystemCoin().Hash:
             return False
         if self.SystemFee() > Fixed8(0) and ( numDestroyed == 0 or destroyedResults[0].Amount < self.SystemFee()):
             return False
@@ -473,12 +414,12 @@ class Transaction(Inventory, InventoryMixin):
 
         if self.Type == TransactionType.MinerTransaction or self.Type == TransactionType.ClaimTransaction:
             for tx in issuedResults:
-                if tx.AssetId != GetSystemCoin().Hash():
+                if tx.AssetId != GetSystemCoin().Hash:
                     return False
 
         elif self.Type == TransactionType.IssueTransaction:
             for tx in issuedResults:
-                if tx.AssetId != GetSystemCoin().Hash():
+                if tx.AssetId != GetSystemCoin().Hash:
                     return False
 
         else:
@@ -495,3 +436,73 @@ class Transaction(Inventory, InventoryMixin):
                     return False
 
         return Helper.VerifyScripts(self)
+
+
+
+    def GetScriptHashesForVerifying(self):
+
+        return []
+#        if not self.__references:
+#            raise Exception('No References to be verified')
+#
+#        hashes = [ref.ScriptHash() for ref in self.References()]
+
+#        if (References == null) throw new InvalidOperationException();
+#        HashSet < UInt160 > hashes = new HashSet < UInt160 > (Inputs.Select(p= > References[p].ScriptHash));
+#        hashes.UnionWith(Attributes.Where(p= > p.Usage == TransactionAttributeUsage.Script).Select(p= > newUInt160(p.Data)));
+#        foreach(var group in Outputs.GroupBy(p= > p.AssetId))
+#        {
+#            AssetState asset = Blockchain.Default.GetAssetState(group.Key);
+#            if (asset == null) throw new InvalidOperationException();
+#            if (asset.AssetType.HasFlag(AssetType.DutyFlag))
+#            {
+#                hashes.UnionWith(group.Select(p = > p.ScriptHash));
+#            }
+#        }
+#        return hashes.OrderBy(p= > p).ToArray();
+#
+#        result = self.References()
+#
+#        if result == None:
+#            raise Exception, 'getReference None.'
+#
+#        for _input in self.inputs:
+#            _hash = result.get(_input.toString()).scriptHash
+#            hashes.update({_hash.toString(), _hash})
+
+# TODO
+# Blockchain.getTransaction
+#        txs = [Blockchain.getTransaction(output.AssetId) for output in self.outputs]
+#        for output in self.outputs:
+#            tx = txs[self.outputs.index(output)]
+#            if tx == None:
+#                raise Exception, "Tx == None"
+#            else:
+#                if tx.AssetType & AssetType.DutyFlag:
+#                    hashes.update(output.ScriptHash.toString(), output.ScriptHash)
+#
+#                    array = sorted(hashes.keys())
+#                    return array
+
+    def GetTransactionResults(self):
+        if self.References is None: return None
+
+        results = []
+        realresults = []
+        for ref_output in self.References.values():
+            results.append(TransactionResult(ref_output.AssetId, ref_output.Value))
+
+        for output in self.outputs:
+            results.append(TransactionResult(output.AssetId, output.Value * Fixed8(-1)))
+
+        for key, group in groupby(results, lambda x: x.AssetId):
+            sum=Fixed8(0)
+            for item in group:
+                sum = sum + item.Amount
+
+            if sum != Fixed8.Zero():
+
+                realresults.append( TransactionResult(key, sum))
+
+        return realresults
+

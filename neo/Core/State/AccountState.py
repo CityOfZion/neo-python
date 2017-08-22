@@ -2,11 +2,16 @@
 from .StateBase import StateBase
 import sys
 import binascii
+from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream,StreamManager
 from autologging import logged
 import time
+from neo.Cryptography.Helper import hash_to_wallet_address
+from neo.Cryptography.Crypto import Crypto
+from neo.IO.BinaryWriter import BinaryWriter
+
 @logged
 class AccountState(StateBase):
 
@@ -17,12 +22,20 @@ class AccountState(StateBase):
     Votes = []
     Balances = {}
 
-
     def __init__(self, script_hash=None, is_frozen=False, votes=[], balances={}):
         self.ScriptHash = script_hash
         self.IsFrozen = is_frozen
         self.Votes = votes
         self.Balances = balances
+
+
+    @property
+    def Address(self):
+        return Crypto.ToAddress(self.ScriptHash)
+
+    @property
+    def AddressBytes(self):
+        return self.Address.encode('utf-8')
 
     def Clone(self):
         return AccountState(self.ScriptHash, self.IsFrozen, self.Votes, self.Balances)
@@ -56,7 +69,7 @@ class AccountState(StateBase):
         num_balances = reader.ReadVarInt()
         self.Balances = {}
         for i in range(0, num_balances):
-            assetid = binascii.hexlify( reader.ReadUInt256())
+            assetid =reader.ReadUInt256()
             amount = reader.ReadFixed8()
             self.Balances[assetid] = amount
 
@@ -74,44 +87,78 @@ class AccountState(StateBase):
         blen = len(self.Balances)
         writer.WriteVarInt(blen)
 
-        for key,value in self.Balances.items():
+        for key,fixed8 in self.Balances.items():
             writer.WriteUInt256(key)
-            writer.WriteFixed8(value)
+            writer.WriteFixed8(fixed8)
 
     def HasBalance(self, assetId):
-        for key, balance in self.Balances.items():
+        for key, fixed8 in self.Balances.items():
             if key == assetId:
                 return True
         return False
 
     def BalanceFor(self, assetId):
-        for key,balance in self.Balances.items():
+        for key,fixed8 in self.Balances.items():
             if key == assetId:
-                return balance
+                return fixed8
         return Fixed8(0)
 
-    def SetBalanceFor(self, assetId, val):
+    def SetBalanceFor(self, assetId, fixed8_val):
         found=False
-        for key,balance in self.Balances.items():
+        for key,val in self.Balances.items():
             if key == assetId:
-                self.Balances[key] = val
+                self.Balances[key] = fixed8_val
                 found = True
 
         if not found:
-            self.Balances[assetId] = val
+            self.Balances[assetId] = fixed8_val
 
-    def AddToBalance(self, assetId, val):
+    def AddToBalance(self, assetId, fixed8_val):
         found = False
         for key, balance in self.Balances.items():
             if key == assetId:
-                newval = balance.value + val
-                self.Balances[assetId] = Fixed8(newval)
+                self.Balances[assetId] = self.Balances[assetId] + fixed8_val
                 found = True
         if not found:
-            self.Balances[assetId] = val
+            self.Balances[assetId] = fixed8_val
+
+    def SubtractFromBalance(self, assetId, fixed8_val):
+        found = False
+        for key, balance in self.Balances.items():
+            if key == assetId:
+                self.Balances[assetId] = self.Balances[assetId] - fixed8_val
+        if not found:
+            self.Balances[assetId] = fixed8_val * Fixed8(-1)
 
     def AllBalancesZeroOrLess(self):
-        for key,value in self.Balances.items():
-            if value.value > 0:
+        for key,fixed8 in self.Balances.items():
+            if fixed8.value > 0:
                 return False
         return True
+
+    def ToByteArray(self):
+        ms = StreamManager.GetStream()
+        writer = BinaryWriter(ms)
+        self.Serialize(writer)
+
+        retval = ms.ToArray()
+        StreamManager.ReleaseStream(ms)
+
+        return retval
+
+    def ToJson(self):
+        json = super(AccountState, self).ToJson()
+        addr = Crypto.ToAddress(self.ScriptHash)
+
+#        votes = [v.hex() for v in self.]
+
+        json['script_hash'] = addr
+        json['frozen'] = self.IsFrozen
+        json['votes'] = [v.hex() for v in self.Votes]
+
+        balances = {}
+        for key, value in self.Balances.items():
+            balances[key.ToString()] = value.value
+
+        json['balances'] = balances
+        return json

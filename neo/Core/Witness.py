@@ -20,6 +20,7 @@ class Witness(SerializableMixin):
         self.InvocationScript = reader.ReadVarBytes()
         self.VerificationScript = reader.ReadVarBytes()
 
+
     def Serialize(self, writer):
         writer.WriteVarBytes(self.InvocationScript)
         writer.WriteVarBytes(self.VerificationScript)

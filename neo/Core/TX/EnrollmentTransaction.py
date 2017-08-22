@@ -3,12 +3,11 @@
 from neo.Core.TX.Transaction import Transaction,TransactionType
 import sys
 import binascii
-
+from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
 class EnrollmentTransaction(Transaction):
 
     PublicKey = None
     _script_hash = None
-
 
 
     def __init__(self, *args, **kwargs):
@@ -18,13 +17,17 @@ class EnrollmentTransaction(Transaction):
     def Size(self):
         return self.Size() + sys.getsizeof(int)
 
+
     def DeserializeExclusiveData(self, reader):
         if self.Version is not 0:
             raise Exception('Invalid format')
 
-        self.PublicKey = reader.ReadBytes(33)
+        self.PublicKey = ECDSA.Deserialize_Secp256r1(reader)
 
     def SerializeExclusiveData(self, writer):
-        writer.WriteBytes(self.PublicKey)
+        self.PublicKey.Serialize(writer, True)
 
-
+    def ToJson(self):
+        jsn = super(EnrollmentTransaction, self).ToJson()
+        jsn['pubkey'] = self.PublicKey.ToString()
+        return jsn

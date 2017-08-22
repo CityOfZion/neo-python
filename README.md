@@ -1,9 +1,55 @@
-# neo-python: Python SDK for NEO platform
+<p align="center">
+  <img 
+    src="http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png" 
+    width="125px;">
+</p>
 
-In progress, please reach out in order to contribute
+<h1 align="center">neo-python</h1>
+
+<p align="center">
+  Python Node and SDK for the <b>NEO</b> blockchain.
+</p>
+
+
+<p align="center">
+  <a href="https://travis-ci.org/CityOfZion/neo-python">
+    <img src="https://travis-ci.org/CityOfZion/neo-python.svg?branch=master">
+  </a>
+  <a href='https://coveralls.io/github/CityOfZion/neo-python?branch=master'>
+    <img src='https://coveralls.io/repos/github/CityOfZion/neo-python/badge.svg?branch=master' alt='Coverage Status' />
+  </a>
+</p>
+
+## What does it currently do
+
+- This project aims to be a full port of the original C# [neo project](https://github.com/neo-project) 
+- Run a python based P2P node
+- Interactive CLI for configuring node and inspecting block chain
+- Runs smart contracts on the block chain in a python virtual machine
+
+## What will it do
+
+- Wallet functionality
+- Full python RPC client
+- Compile smart contracts written python and deploy to blockchain
+- Full smart contract debugging and inspection
+
+
+### Get Help or give help
+
+- Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
+- Or ping **@localhuman** on the [NEO Slack](https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA).
+- Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome.  All successful pull requests will be rewarded with one photo of a cat or kitten. 
+
+
+### License
+
+- Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
+- Main author is [@localhuman](https://github.com/localhuman).
+
+
 
 ## Getting started
-
 
 you will need to install the libleveldb library. 
 
@@ -101,11 +147,6 @@ neo>
 ```
 
 
-If you dont want interactivity, but just want to run the server you can simply run the `node.py` file:
-
-```
-python node.py 
-```
 
 #### Extra notes
 On OSX, if you would like to run the process in the background, even when your computer is sleeping, you can use the built in `caffeinate` command
@@ -116,13 +157,18 @@ caffeinate python prompt.py
 
 ### Logging
 
-Currently, `prompt.py` logs to `prompt.log`, while the `node.py` does not log.
-
+Currently, `prompt.py` logs to `prompt.log`
 
 
 ## Tests
 
 Tests are important.  Currently there are not enough, but we are working on that.  You can start them by running this command
+
+Note that some of the unit tests use a giant blockchain fixture database ( around 800mb ).  This file is not kept in the repo.
+
+When running tests the first time, the test setup will try to download the file and extract it to the proper directory
+
+Long story short, the first time you run your tests, it will take a while to download those fixtures. After that it should be pretty quick.
 
 ```
 python -m unittest discover neo 

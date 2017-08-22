@@ -72,7 +72,7 @@ class TransactionAttribute(Inventory, SerializableMixin):
     def Deserialize(self, reader):
         usage = reader.ReadByte()
         self.Usage = usage
-        self.__log.debug("attribute usage: %s " % usage)
+
         if usage == TransactionAttributeUsage.ContractHash or usage==TransactionAttributeUsage.Vote or \
             (usage >= TransactionAttributeUsage.Hash1 and usage <= TransactionAttributeUsage.Hash15):
             self.Data = reader.ReadBytes(32)
@@ -96,9 +96,6 @@ class TransactionAttribute(Inventory, SerializableMixin):
     def Serialize(self, writer):
         writer.WriteByte(self.Usage)
 
-
-        self.__log.debug("writer length: %s " % len(writer.stream.ToArray()))
-
         if self.Usage == TransactionAttributeUsage.ContractHash or self.Usage == TransactionAttributeUsage.Vote or \
                 (self.Usage >= TransactionAttributeUsage.Hash1 and self.Usage <= TransactionAttributeUsage.Hash15):
             writer.WriteBytes(self.Data)
@@ -110,17 +107,9 @@ class TransactionAttribute(Inventory, SerializableMixin):
             writer.WriteBytes(self.Data)
 
         elif self.Usage == TransactionAttributeUsage.DescriptionUrl:
-#            mlen = len(self.Data)
-#            writer.WriteVarInt(mlen)
-#            byts = bytes(self.Data.hex().encode('utf-8'))
-#            writer.WriteBytes(byts)
             writer.WriteVarString(self.Data)
 
         elif self.Usage == TransactionAttributeUsage.Description or self.Usage >= TransactionAttributeUsage.Remark:
-#            mlen = len(self.Data)
-#            writer.WriteVarInt(mlen)
-#            byts = bytes( self.Data.hex().encode('utf-8'))
-#            writer.WriteBytes(byts)
             writer.WriteVarString(self.Data)
         else:
             self.__log.debug("format error!!!")
@@ -130,6 +119,6 @@ class TransactionAttribute(Inventory, SerializableMixin):
     def ToJson(self):
         obj = {
             'usage': self.Usage,
-            'data': '' if not self.Data else self.Data.decode('utf-8')
+            'data': '' if not self.Data else self.Data.hex()
         }
         return obj
