@@ -145,13 +145,14 @@ class StateMachine(StateReader):
         if balance == Fixed8.Zero() and len(vote_list) > 0:
             return False
 
-        acct = self._accounts.GetAndChange(account.AddressBytes)
-
-        voteset = set()
-        for v in vote_list:
-            voteset.add(v.GetByteArray())
-        acct.Votes = list(voteset)
-        self.__log.debug("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
+#       disable setting votes for now until further testing to make sure we're not duplicating votes
+#
+#        acct = self._accounts.GetAndChange(account.AddressBytes)
+#        voteset = set()
+#        for v in vote_list:
+#            voteset.add(v.GetByteArray())
+#        acct.Votes = list(voteset)
+#        self.__log.debug("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
         return True
 
 

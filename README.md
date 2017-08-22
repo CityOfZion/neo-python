@@ -44,7 +44,7 @@
 
 ### License
 
-- Open-source [MIT](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
+- Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
 - Main author is [@localhuman](https://github.com/localhuman).
 
 
@@ -164,6 +164,12 @@ Currently, `prompt.py` logs to `prompt.log`
 ## Tests
 
 Tests are important.  Currently there are not enough, but we are working on that.  You can start them by running this command
+
+Note that some of the unit tests use a giant blockchain fixture database ( around 800mb ).  This file is not kept in the repo.
+
+When running tests the first time, the test setup will try to download the file and extract it to the proper directory
+
+Long story short, the first time you run your tests, it will take a while to download those fixtures. After that it should be pretty quick.
 
 ```
 python -m unittest discover neo 

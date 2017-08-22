@@ -20,6 +20,8 @@ class DBCollection():
     Debug = False
 
 
+
+
     def __init__(self, db, sn, prefix, class_ref, debug=False):
 
         self.DB = db
@@ -34,18 +36,26 @@ class DBCollection():
         self.Changed = []
         self.Deleted = []
 
-        self._BuildCollection()
+        self._BuildCollectionKeys()
 
-    def _BuildCollection(self):
+    @property
+    def Current(self):
+        try:
+            ret = {}
+            for key,val in self.Collection.items():
+                if val is not None:
+                    ret[key] = val
+            return ret
+        except Exception as e:
+            self.__log.debug("error getting items %s " % e)
 
-        for key, buffer in self.SN.iterator(prefix=self.Prefix):
+        return {}
+
+    def _BuildCollectionKeys(self):
+        for key in self.SN.iterator(prefix=self.Prefix, include_value=False):
             key = key[1:]
-            try:
-                self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
-            except Exception as e:
-                self.__log.debug("could not decode class %s %s %s %s" % (self.ClassRef,key, buffer, e))
-
-
+#            print("adding key %s " % key)
+            self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
         try:
@@ -94,10 +104,28 @@ class DBCollection():
 
 
     def TryGet(self, keyval):
-        if keyval in self.Collection:
+        if keyval in self.Collection.keys():
             self.MarkChanged(keyval)
-            return self.Collection[keyval]
+
+            item = self.Collection[keyval]
+            if item is None:
+                item = self._GetItem(keyval)
+            return item
+
         return None
+
+
+    def _GetItem(self, keyval):
+        try:
+            buffer = self.SN.get(self.Prefix + keyval)
+            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
+            self.Collection[keyval] = item
+            return item
+        except Exception as e:
+            self.__log.debug("Could not deserialize item from key %s : %s" % (keyval, e))
+
+        return None
+
 
     def Add(self, keyval, item):
         self.Collection[keyval] = item

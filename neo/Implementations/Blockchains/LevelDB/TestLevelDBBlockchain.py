@@ -39,7 +39,7 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
 
         sn = self._db.snapshot()
 
-        accounts = self.Accounts
+        accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
