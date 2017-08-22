@@ -21,7 +21,7 @@ class BlockchainFixtureTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
 
-        if os.path.exists(self.leveldb_testpath()):
+        if os.path.exists(self.FIXTURE_FILENAME):
             print("fixtures already downloaded")
 
         else:
@@ -35,14 +35,14 @@ class BlockchainFixtureTestCase(unittest.TestCase):
                 for block in response.iter_content(1024):
                     handle.write(block)
 
-            print("opening tar file")
-            try:
-                tar = tarfile.open(self.FIXTURE_FILENAME)
-                tar.extractall()
-                tar.close()
-                print("closing tar file")
-            except Exception as e:
-                print("Could not extract tar file %s " % e)
+        print("opening tar file")
+        try:
+            tar = tarfile.open(self.FIXTURE_FILENAME)
+            tar.extractall()
+            tar.close()
+            print("extracted tar file")
+        except Exception as e:
+            print("Could not extract tar file %s " % e)
 
 
         if os.path.exists(self.leveldb_testpath()):

@@ -50,114 +50,114 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
         amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(8, 'little')
 
 
-        for tx in block.Transactions:
+        with self._db.write_batch() as wb:
+            for tx in block.Transactions:
 
-            unspentcoinstate = UnspentCoinState.FromTXOutputsConfirmed(tx.outputs)
-            unspentcoins.Add(tx.Hash.ToBytes(), unspentcoinstate)
+                unspentcoinstate = UnspentCoinState.FromTXOutputsConfirmed(tx.outputs)
+                unspentcoins.Add(tx.Hash.ToBytes(), unspentcoinstate)
 
-            # go through all the accounts in the tx outputs
-            for output in tx.outputs:
-                account = accounts.GetAndChange(output.AddressBytes, AccountState(output.ScriptHash))
+                # go through all the accounts in the tx outputs
+                for output in tx.outputs:
+                    account = accounts.GetAndChange(output.AddressBytes, AccountState(output.ScriptHash))
 
-                if account.HasBalance(output.AssetId):
-                    account.AddToBalance(output.AssetId, output.Value)
-                else:
-                    account.SetBalanceFor(output.AssetId, output.Value)
+                    if account.HasBalance(output.AssetId):
+                        account.AddToBalance(output.AssetId, output.Value)
+                    else:
+                        account.SetBalanceFor(output.AssetId, output.Value)
 
-            # go through all tx inputs
-            unique_tx_input_hashes = []
-            for input in tx.inputs:
-                if not input.PrevHash in unique_tx_input_hashes:
-                    unique_tx_input_hashes.append(input.PrevHash)
+                # go through all tx inputs
+                unique_tx_input_hashes = []
+                for input in tx.inputs:
+                    if not input.PrevHash in unique_tx_input_hashes:
+                        unique_tx_input_hashes.append(input.PrevHash)
 
-            for txhash in unique_tx_input_hashes:
-                prevTx, height = self.GetTransaction(txhash.ToBytes())
-                coin_refs_by_hash = [coinref for coinref in tx.inputs if
-                                     coinref.PrevHash.ToBytes() == txhash.ToBytes()]
-                for input in coin_refs_by_hash:
+                for txhash in unique_tx_input_hashes:
+                    prevTx, height = self.GetTransaction(txhash.ToBytes())
+                    coin_refs_by_hash = [coinref for coinref in tx.inputs if
+                                         coinref.PrevHash.ToBytes() == txhash.ToBytes()]
+                    for input in coin_refs_by_hash:
 
-                    uns = unspentcoins.GetAndChange(input.PrevHash.ToBytes())
-                    uns.OrEqValueForItemAt(input.PrevIndex, CoinState.Spent)
+                        uns = unspentcoins.GetAndChange(input.PrevHash.ToBytes())
+                        uns.OrEqValueForItemAt(input.PrevIndex, CoinState.Spent)
 
-                    if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                        sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(),
-                                                     SpentCoinState(input.PrevHash, height, []))
-                        sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
+                        if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
+                            sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(),
+                                                         SpentCoinState(input.PrevHash, height, []))
+                            sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
 
-                    output = prevTx.outputs[input.PrevIndex]
-                    acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes,
-                                                 AccountState(output.ScriptHash))
-                    assetid = prevTx.outputs[input.PrevIndex].AssetId
-                    acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
+                        output = prevTx.outputs[input.PrevIndex]
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes,
+                                                     AccountState(output.ScriptHash))
+                        assetid = prevTx.outputs[input.PrevIndex].AssetId
+                        acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
-            # do a whole lotta stuff with tx here...
-            if tx.Type == TransactionType.RegisterTransaction:
+                # do a whole lotta stuff with tx here...
+                if tx.Type == TransactionType.RegisterTransaction:
 
-                asset = AssetState(tx.Hash, tx.AssetType, tx.Name, tx.Amount,
-                                   Fixed8(0), tx.Precision, Fixed8(0), Fixed8(0), UInt160(data=bytearray(20)),
-                                   tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False)
+                    asset = AssetState(tx.Hash, tx.AssetType, tx.Name, tx.Amount,
+                                       Fixed8(0), tx.Precision, Fixed8(0), Fixed8(0), UInt160(data=bytearray(20)),
+                                       tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False)
 
-                assets.Add(tx.Hash.ToBytes(), asset)
+                    assets.Add(tx.Hash.ToBytes(), asset)
 
-            elif tx.Type == TransactionType.IssueTransaction:
+                elif tx.Type == TransactionType.IssueTransaction:
 
-                txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
-                for result in txresults:
-                    asset = assets.GetAndChange(result.AssetId.ToBytes())
-                    asset.Available = asset.Available - result.Amount
+                    txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
+                    for result in txresults:
+                        asset = assets.GetAndChange(result.AssetId.ToBytes())
+                        asset.Available = asset.Available - result.Amount
 
-            elif tx.Type == TransactionType.ClaimTransaction:
+                elif tx.Type == TransactionType.ClaimTransaction:
 
-                for input in tx.Claims:
+                    for input in tx.Claims:
 
-                    sc = spentcoins.TryGet(input.PrevHash.ToBytes())
-                    if sc and sc.HasIndex(input.PrevIndex):
-                        sc.DeleteIndex(input.PrevIndex)
-                        spentcoins.GetAndChange(input.PrevHash.ToBytes())
+                        sc = spentcoins.TryGet(input.PrevHash.ToBytes())
+                        if sc and sc.HasIndex(input.PrevIndex):
+                            sc.DeleteIndex(input.PrevIndex)
+                            spentcoins.GetAndChange(input.PrevHash.ToBytes())
 
-            elif tx.Type == TransactionType.EnrollmentTransaction:
+                elif tx.Type == TransactionType.EnrollmentTransaction:
 
-                validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
-                #                        print("VALIDATOR %s " % validator.ToJson())
+                    validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
+                    #                        print("VALIDATOR %s " % validator.ToJson())
 
-            elif tx.Type == TransactionType.PublishTransaction:
+                elif tx.Type == TransactionType.PublishTransaction:
 
-                contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
-                                         tx.Author, tx.Email, tx.Description)
+                    contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
+                                             tx.Author, tx.Email, tx.Description)
 
-                contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
+                    contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
 
-            elif tx.Type == TransactionType.InvocationTransaction:
+                elif tx.Type == TransactionType.InvocationTransaction:
 
-                script_table = CachedScriptTable(contracts)
-                service = StateMachine(accounts, validators, assets, contracts, storages, None)
-                #contractState = contracts.TryGet(b'54030ae64f0a6d24bfda562778e0f4c9f1e24ecc')
+                    script_table = CachedScriptTable(contracts)
+                    service = StateMachine(accounts, validators, assets, contracts, storages, wb=wb)
 
-                engine = ApplicationEngine(
-                    trigger_type=TriggerType.Application,
-                    container=tx,
-                    table=script_table,
-                    service=service,
-                    gas=tx.Gas,
-                    testMode=True
-                )
+                    engine = ApplicationEngine(
+                        trigger_type=TriggerType.Application,
+                        container=tx,
+                        table=script_table,
+                        service=service,
+                        gas=tx.Gas,
+                        testMode=True
+                    )
 
-                engine.LoadScript(tx.Script, False)
+                    engine.LoadScript(tx.Script, False)
 
 
-                # normally, this function does not return true/false
-                # for testing purposes, we try to execute and if an exception is raised
-                # we will return false, otherwise if success return true
+                    # normally, this function does not return true/false
+                    # for testing purposes, we try to execute and if an exception is raised
+                    # we will return false, otherwise if success return true
 
-                # this is different than the 'success' bool returned by engine.Execute()
-                # the 'success' bool returned by engine.Execute() is a value indicating
-                # wether or not the invocation was successful, and if so, we then commit
-                # the changes made by the contract to the database
-                try:
-                    success = engine.Execute()
-                    if success:
-                        service.Commit()
-                    return True
-                except Exception as e:
-                    print("could not execute %s " % e)
-                    return False
+                    # this is different than the 'success' bool returned by engine.Execute()
+                    # the 'success' bool returned by engine.Execute() is a value indicating
+                    # wether or not the invocation was successful, and if so, we then commit
+                    # the changes made by the contract to the database
+                    try:
+                        success = engine.Execute()
+                        if success:
+                            service.Commit()
+                        return True
+                    except Exception as e:
+                        print("could not execute %s " % e)
+                        return False

@@ -10,6 +10,7 @@ class BigInteger(int):
         return BigInteger( int.from_bytes(data,'little'))
 
 
+
     def ToByteArray(self):
         return base256_encode(self)
 

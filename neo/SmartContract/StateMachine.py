@@ -14,6 +14,9 @@ from neo.Fixed8 import Fixed8
 from neo.VM.InteropService import StackItem
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
+from neo.IO.BinaryReader import BinaryReader
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import StreamManager
 
 import sys
 import json
@@ -269,56 +272,55 @@ class StateMachine(StateReader):
     def Contract_Create(self, engine):
 
         script = engine.EvaluationStack.Pop().GetByteArray()
-        print("script %s " % script)
+
         if len(script) > 1024 * 1024:
             return False
 
         param_list = engine.EvaluationStack.Pop().GetByteArray()
-        print("param list%s " % param_list)
         if len(param_list) > 252:
             return False
 
-        return_type = engine.EvaluationStack.Pop().GetBigInteger()
-        print("return type %s " % return_type)
+        return_type = int(engine.EvaluationStack.Pop().GetBigInteger())
+
         needs_storage = engine.EvaluationStack.Pop().GetBoolean()
-        print("needs storage %s " % needs_storage)
+
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
         name = engine.EvaluationStack.Pop().GetByteArray()
-        print("name %s "% name.decode('utf-8'))
+
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
-        version = engine.EvaluationStack.Pop().GetByteArray()
-        print("version %s " % version.decode('utf-8'))
+        code_version = engine.EvaluationStack.Pop().GetByteArray()
+
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
         author = engine.EvaluationStack.Pop().GetByteArray()
-        print("author %s " % author.decode('utf-8'))
+
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
         email = engine.EvaluationStack.Pop().GetByteArray()
-        print("email %s " % email.decode('utf-8'))
+
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 65536:
             return False
+
         description = engine.EvaluationStack.Pop().GetByteArray()
-        print("description %s " % description.decode('utf-8'))
+
         hash = Crypto.ToScriptHash(script, unhex=False)
-        print("to script hash %s " % hash)
-        print("contract hash to bytes %s " % hash.ToBytes())
+
         contract = self._contracts.TryGet(hash.ToBytes())
-        print("tried to get contract %s " % contract)
+
         if contract == None:
 
             code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
-            print("created function code")
-            contract = ContractState(code=code, has_storage=needs_storage,
-                                     name=name, version=version, author=author,
-                                     email=email, description=description)
 
-            self._contracts.Add(hash.ToBytes(), contract)
-            print("added contract to contracts")
+            print("code is %s " % code.ToJson())
+
+            contract = ContractState(code,needs_storage,name,code_version,author,email,description)
+
+            self._contracts.GetAndChange(code.ScriptHash().ToBytes(), contract)
+
             self._contracts_created[hash.ToBytes()] = UInt160( data = engine.CurrentContext.ScriptHash())
-            print("adde contracts to self contracts created")
+
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
         return True
 
@@ -335,7 +337,7 @@ class StateMachine(StateReader):
         if len(param_list) > 252:
             return False
 
-        return_type = engine.EvaluationStack.Pop().GetBigInteger()
+        return_type = int(engine.EvaluationStack.Pop().GetBigInteger())
 
         needs_storage = engine.EvaluationStack.Pop().GetBoolean()
 
@@ -390,7 +392,7 @@ class StateMachine(StateReader):
 
         contract = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.ContractState.ContractState')
 
-
+        print("CONTRACTTTTTT GET STORAGE CONTEXT!!!")
         if contract.ScriptHash.ToBytes() in self._contracts_created:
             created = self._contracts_created[contract.ScriptHash.ToBytes()]
 
