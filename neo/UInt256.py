@@ -14,11 +14,8 @@ class UInt256(UIntBase):
 
     def Serialize(self, writer):
 
-#        print("SERAILIZING UINT256: %s %s" % (self.ToBytes(), len(self.Data)))
         writer.WriteBytes(self.Data)
 
     def Deserialize(self, reader):
-#        print("deserializing: %s %s" % (type(self),self.Size))
         self.Data = reader.ReadBytes(32)
-#        print("deserialized UINT 256 %s " % self.Data)
 

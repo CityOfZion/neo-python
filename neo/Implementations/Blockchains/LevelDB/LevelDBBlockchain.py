@@ -177,7 +177,7 @@ class LevelDBBlockchain(Blockchain):
             try:
                 script_hash = script_hash.encode('utf-8')
             except Exception as e:
-                print("could not convert argument to bytes :%s " % e)
+                self.__log.debug("could not convert argument to bytes :%s " % e)
                 return None
 
         accounts = self.Accounts
@@ -336,8 +336,6 @@ class LevelDBBlockchain(Blockchain):
         intval = None
         try:
             intval = int(height_or_hash)
-            print("GETTING INTVAL: %s " % intval)
-
         except Exception as e:
             pass
 
@@ -361,7 +359,7 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Block.FromTrimmedData(outhex, 0)
         except Exception as e:
-            print("couldnt get block %s " % e)
+            self.__log.debug("couldnt get block %s " % e)
         return None
 
 
@@ -508,24 +506,19 @@ class LevelDBBlockchain(Blockchain):
 
                 #do a whole lotta stuff with tx here...
                 if tx.Type == TransactionType.RegisterTransaction:
-                    print("RUNNING REGISTER TX")
                     asset = AssetState(tx.Hash,tx.AssetType, tx.Name, tx.Amount,
                                        Fixed8(0),tx.Precision, Fixed8(0), Fixed8(0), UInt160(data=bytearray(20)),
                                        tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False )
 
                     assets.Add(tx.Hash.ToBytes(), asset)
-                    print("ASSET %s " % json.dumps( asset.ToJson(), indent=4))
 
                 elif tx.Type == TransactionType.IssueTransaction:
-                    print("RUNNING ISSUE TX")
                     txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
                     for result in txresults:
                         asset = assets.GetAndChange(result.AssetId.ToBytes())
                         asset.Available = asset.Available - result.Amount
-                        print("ISSUE %s " % json.dumps( asset.ToJson(), indent=4))
 
                 elif tx.Type == TransactionType.ClaimTransaction:
-                    print("RUNNING CLAIM TX")
                     for input in tx.Claims:
 
                         sc = spentcoins.TryGet(input.PrevHash.ToBytes())
@@ -534,20 +527,16 @@ class LevelDBBlockchain(Blockchain):
                             spentcoins.GetAndChange(input.PrevHash.ToBytes())
 
                 elif tx.Type == TransactionType.EnrollmentTransaction:
-                    print("RUNNING ERNOLLMENT TX %s " % json.dumps(tx.ToJson(), indent=4))
                     newvalidator = ValidatorState(pub_key=tx.PublicKey)
                     validators.GetAndChange(tx.PublicKey.ToBytes(), newvalidator)
                 elif tx.Type == TransactionType.PublishTransaction:
-                    print("RUNNING PUBLISH TX")
                     contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
                                              tx.Author, tx.Email, tx.Description)
 
                     contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
-                    print("PUBLISH: %s " % json.dumps( contract.ToJson(), indent=4))
                 elif tx.Type == TransactionType.InvocationTransaction:
 
-                    print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
-                    print("Block raw is %s " % block.ToArray())
+                    self.__log.debug("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
                     script_table = CachedScriptTable(contracts)
                     service = StateMachine(accounts, validators, assets, contracts,storages,wb)
 
@@ -562,15 +551,18 @@ class LevelDBBlockchain(Blockchain):
 
                     engine.LoadScript(tx.Script,False)
 
-                    # drum roll?
-                    if engine.Execute():
-                        service.Commit()
+                    try:
+                        # drum roll?
+                        success = engine.Execute()
+                        if success:
+                            service.Commit()
+                    except Exception as e:
+                        self.__log.debug("could not execute %s " % e)
+
                 else:
 
                     if tx.Type != b'\x00' and tx.Type != 128:
-
-
-                        print("TX Not Found %s " % tx.Type)
+                        self.__log.debug("TX Not Found %s " % tx.Type)
 
             # do save all the accounts, unspent, coins, validators, assets, etc
             # now sawe the current sys block
@@ -635,7 +627,7 @@ class LevelDBBlockchain(Blockchain):
                 self.Persist(block)
                 self.OnPersistCompleted(block)
             except Exception as e:
-                print("COULD NOT PERSIST OR ON PERSIST COMPLETE %s " % e)
+                self.__log.debug("COULD NOT PERSIST OR ON PERSIST COMPLETE %s " % e)
             del self._block_cache[hash]
 
     def Dispose(self):

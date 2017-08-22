@@ -503,6 +503,6 @@ class Transaction(Inventory, InventoryMixin):
             if sum != Fixed8.Zero():
 
                 realresults.append( TransactionResult(key, sum))
-        print("REAL RESULTS %s " % [r.ToString() for r in realresults])
+
         return realresults
 

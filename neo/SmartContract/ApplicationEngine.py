@@ -4,7 +4,9 @@ from neo.VM import VMState
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 import sys,os
+from autologging import logged
 
+@logged
 class ApplicationEngine(ExecutionEngine):
 
 
@@ -100,7 +102,7 @@ class ApplicationEngine(ExecutionEngine):
             try:
                 length = len(self.EvaluationStack.Peek(0).GetByteArray()) + len(self.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
-                print("colud not get length %s " % e)
+                self.__log.debug("colud not get length %s " % e)
 
             if length > maxItemSize:
                 return False
@@ -159,9 +161,8 @@ class ApplicationEngine(ExecutionEngine):
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print(exc_type, fname, exc_tb.tb_lineno)
-                print("exception calculating gas consumed %s " % e)
-
+                self.__log.debug(exc_type, fname, exc_tb.tb_lineno)
+                self.__log.debug("exception calculating gas consumed %s " % e)
                 return False
 
             if not self.testMode and self.gas_consumed > self.gas_amount:

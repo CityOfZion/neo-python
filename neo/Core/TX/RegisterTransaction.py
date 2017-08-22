@@ -55,7 +55,6 @@ In English:
 
 
         if owner is not None and type(owner) is not EllipticCurve.ECPoint:
-            print("TYPE %s " % type(owner))
             raise Exception("Invalid owner, must be ECPoint instance")
 
         self.Owner = owner

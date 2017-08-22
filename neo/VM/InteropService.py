@@ -3,7 +3,9 @@ from neo.VM.Mixins import EquatableMixin
 from neo.BigInteger import BigInteger
 import sys
 import traceback
+from autologging import logged
 
+@logged
 class StackItem(EquatableMixin):
 
 
@@ -30,7 +32,7 @@ class StackItem(EquatableMixin):
         raise Exception('Not supported')
 
     def GetInterface(self, t):
-        print("You may need to push %s  using FromInterface " % t)
+        self.__log.debug("You may need to push %s  using FromInterface " % t)
 #        raise Exception('Not Supported')
         return None
 
@@ -246,6 +248,8 @@ class Struct(Array):
     def __str__(self):
         return "Struct: %s " % self._array
 
+
+@logged
 class InteropService():
 
 
@@ -265,13 +269,14 @@ class InteropService():
 
         if not method in self._dictionary.keys():
 
-            print("method %s not found in ->" % method)
+            self.__log.debug("method %s not found in ->" % method)
             for k,v in self._dictionary.items():
-                print("%s -> %s " % (k, v))
+                self.__log.debug("%s -> %s " % (k, v))
             return False
 
         func = self._dictionary[method]
         print("invoking method -> %s" % func)
+
         return func(engine)
 
     @staticmethod

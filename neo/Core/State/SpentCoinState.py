@@ -68,13 +68,11 @@ class SpentCoinState(StateBase):
         self.TransactionHeight = reader.ReadUInt32()
 
         count = reader.ReadVarInt()
-#        print("reading count %s " % count)
+
         items = [0] * count
         for i in range(0, count):
             index = reader.ReadUInt16()
-#            print("read index %s " % index)
             height = reader.ReadUInt32()
-#            print("read height %s" % height)
             items[i] = SpentCoinItem(index=index, height=height)
 
         self.Items = items

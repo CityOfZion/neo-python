@@ -1,5 +1,7 @@
 from neo.VM.InteropService import StackItem
+from autologging import logged
 
+@logged
 class RandomAccessStack():
 
 
@@ -49,21 +51,16 @@ class RandomAccessStack():
             try:
                 item = StackItem.New(item)
             except Exception as e:
-                print("Could not create stack item from %s %s " % (item, type(item)))
+                self.__log.debug("Could not create stack item from %s %s " % (item, type(item)))
 
-#        print("[%s] PUSHT: %s " % (self._name,item))
         self.PrintFormat('PUSHT', item)
         self._list.append(item)
-#        if self._name == 'Evaluation':
-#            self.PrintList("Evaluation: PUSHSTACK -> ")
 
     def Remove(self, index):
         index = int(index)
 
         if index < 0 or index >= self.Count:
             raise Exception("Invalid list operation")
-
-#        item = self._list[self.Count - 1 - index]
 
         item = self._list.pop( self.Count - 1 - index )
 
@@ -80,9 +77,8 @@ class RandomAccessStack():
             try:
                 item = StackItem.New(item)
             except Exception as e:
-                print("Could not create stack item from %s %s " % (item, type(item)))
+                self.__log.debug("Could not create stack item from %s %s " % (item, type(item)))
 
-#        print("SET: %s " % item)
         self.PrintFormat('SET',item)
 
         self._list[self.Count - index - 1] = item
@@ -91,6 +87,7 @@ class RandomAccessStack():
         name = "{:<15}".format("[%s]" % self._name)
         op = "{:<10}".format(operation)
         print("                                         %s  %s -> %s" % (name,op, value))
+
 
     def PrintList(self, message=None):
         print("%s %s" % (message,[str(item) for item in self._list]))

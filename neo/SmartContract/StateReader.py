@@ -268,11 +268,9 @@ class StateReader(InteropService):
 
 
         block = None
-        print("blockchain get block %s " % data)
 
         if len(data) <= 5:
             height = BigInteger.FromBytes(data)
-            print("HEIGHT %s " % height)
 
             if Blockchain.Default() is not None:
 

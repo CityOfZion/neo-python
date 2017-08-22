@@ -21,6 +21,11 @@ from neo.IO.MemoryStream import StreamManager
 import sys
 import json
 import binascii
+
+from autologging import logged
+
+
+@logged
 class StateMachine(StateReader):
 
     _accounts = None
@@ -81,7 +86,6 @@ class StateMachine(StateReader):
 
     def Commit(self):
         if self._wb is not None:
-            print("COMMITTING ENGINE!!!")
             self._accounts.Commit(self._wb, False)
             self._validators.Commit(self._wb, False)
             self._assets.Commit(self._wb, False)
@@ -127,7 +131,7 @@ class StateMachine(StateReader):
 
             vote_list = engine.EvaluationStack.Pop().GetArray()
         except Exception as e:
-            print("could not get account or votes: %s " % e)
+            self.__log.debug("could not get account or votes: %s " % e)
             return False
 
         if account is None or len(vote_list) > 1024:
@@ -147,7 +151,7 @@ class StateMachine(StateReader):
         for v in vote_list:
             voteset.add(v.GetByteArray())
         acct.Votes = list(voteset)
-        print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
+        self.__log.debug("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
         return True
 
 
@@ -206,27 +210,22 @@ class StateMachine(StateReader):
             return False
 
         ownerData = engine.EvaluationStack.Pop().GetByteArray()
-        print("got owner data %s"  % ownerData )
 
         owner = ECDSA.decode_secp256r1( ownerData ,unhex=False).G
-        print("got owner %s " % owner)
+
         if owner.IsInfinity:
-            print("is invitiyt, return false")
             return False
 
         if not self.CheckWitnessPubkey(engine, owner):
-            print("check witness false...")
+            self.__log.debug("check witness false...")
             return False
 
-        print("chekced witness...")
 
         admin = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
 
-        print("got admin .. %s " % admin)
 
         issuer = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
 
-        print("got issuer %s " % issuer)
         new_asset = AssetState(
             asset_id=tx.Hash, asset_type=asset_type, name=name, amount=amount,
             available=Fixed8.Zero(),precision=precision,fee_mode=0,fee=Fixed8.Zero(),
@@ -234,7 +233,6 @@ class StateMachine(StateReader):
             expiration= Blockchain.Default().Height + 1 + 2000000, is_frozen=False
         )
 
-        print("created new asset %s " % new_asset)
         asset = self._assets.GetOrAdd(tx.Hash.ToBytes(), new_asset)
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
@@ -261,7 +259,7 @@ class StateMachine(StateReader):
             asset.Expiration = asset.Expiration + years * 2000000
 
         except Exception as e:
-            print("could not set expiration date %s " % e)
+            self.__log.debug("could not set expiration date %s " % e)
 
             asset.Expiration = sys.maxsize
 
@@ -312,8 +310,6 @@ class StateMachine(StateReader):
         if contract == None:
 
             code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
-
-            print("code is %s " % code.ToJson())
 
             contract = ContractState(code,needs_storage,name,code_version,author,email,description)
 
@@ -392,7 +388,7 @@ class StateMachine(StateReader):
 
         contract = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.ContractState.ContractState')
 
-        print("CONTRACTTTTTT GET STORAGE CONTEXT!!!")
+        self.__log.debug("CONTRACT Get storage context %s " % contract)
         if contract.ScriptHash.ToBytes() in self._contracts_created:
             created = self._contracts_created[contract.ScriptHash.ToBytes()]
 
@@ -427,10 +423,9 @@ class StateMachine(StateReader):
         try:
             context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
         except Exception as e:
-            print("Storage Context not found")
+            self.__log.debug("Storage Context not found")
             return False
 
-        print("context %s " % context)
         if not self.CheckStorageContext(context):
             return False
 
@@ -439,7 +434,6 @@ class StateMachine(StateReader):
         item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         if item is not None:
-            print("Got Stored item %s " % item)
 
             engine.EvaluationStack.PushT(item.Value)
         else:
@@ -453,7 +447,7 @@ class StateMachine(StateReader):
         try:
             context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
         except Exception as e:
-            print("Storage Context Not found on stack")
+            self.__log.debug("Storage Context Not found on stack")
             return False
 
         if not self.CheckStorageContext(context):
@@ -474,7 +468,7 @@ class StateMachine(StateReader):
         item = self._storages.GetAndChange(storage_key.GetHashCodeBytes(), new_instance=new_item)
         item.Value = value
 
-        print("Put stored item %s %s " % (item, item.Value))
+        self.__log.debug("Put stored item %s %s " % (item, item.Value))
 
         return True
 

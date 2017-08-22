@@ -26,9 +26,7 @@ class StreamManager(object):
     @staticmethod
     def GetStream(data=None):
 
-#        print("requesting stream from available %s.. total %s " % (len(__mstreams_available__), len(__mstreams__)))
         if len(__mstreams_available__) == 0:
-#            print("CREATING NEW STREAM!!!")
             if data:
                 mstream = MemoryStream(data)
                 mstream.seek(0)
@@ -52,7 +50,6 @@ class StreamManager(object):
     def ReleaseStream(mstream):
         mstream.Cleanup()
         __mstreams_available__.append(mstream)
-#        print("released stream, now total: %s %s " % (len(__mstreams_available__), len(__mstreams__)))
 
 class MemoryStream(BytesIO):
 

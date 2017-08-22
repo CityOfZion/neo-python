@@ -16,7 +16,6 @@ class UIntBase(SerializableMixin):
 
         else:
             if len(data) != num_bytes:
-                print("data len %s %s " % (len(data), num_bytes))
                 raise Exception("Invalid UInt")
 
             if type(data) is bytes:
@@ -40,7 +39,6 @@ class UIntBase(SerializableMixin):
         writer.WriteBytes(self.Data)
 
     def Deserialize(self, reader):
-        print("deserializing: %s %s" % (type(self),self.Size))
         self.Data = reader.ReadBytes(self.Size)
         self.__hash = self.GetHashCode()
 

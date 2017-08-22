@@ -74,9 +74,6 @@ class NodeLeader():
         reactor.callLater(5, d.cancel)
 
     def Shutdown(self):
-        print("shut down!")
-#        self._RunLoop.stop()
-
         for p in self.Peers:
             p.Disconnect()
 

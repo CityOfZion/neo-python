@@ -263,29 +263,18 @@ class NeoNode(Protocol):
 
     def HandleInvMessage(self, payload):
 
-        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
-#        print("HANDLE INVENTAROY MESSAG:: %s " % inventory.Type)
-#        if inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
-#            self.HandleConsenusInventory(inventory)
-#        elif inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
-#            self.HandleTransactionInventory(inventory)
-#        elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-#            if len(self.myblockrequests) < self.leader.BREQMAX:
-#                self.HandleBlockHashInventory(inventory)
-#        if inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-#            self.HandleBlockHashInventory(inventory)
-
+#        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
+        pass
 
     def SendSerializedMessage(self, message):
         ba = Helper.ToArray(message)
         ba2 = binascii.unhexlify(ba)
         self.bytes_out += len(ba2)
         self.transport.write(ba2)
-#        reactor.callInThread(self.transport.write,ba2)
 
 
     def HandleBlockHeadersReceived(self, inventory):
-        start = time.clock()
+
         self.leader.is_requesting_headers = False
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
@@ -295,8 +284,6 @@ class NeoNode(Protocol):
             self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):
-
-
 
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
 
@@ -311,8 +298,7 @@ class NeoNode(Protocol):
 
         if len(self.myblockrequests) < self.leader.NREQMAX:
             self.AskForMoreBlocks()
-#        else:
-#            reactor.callLater(5, self.AskForMoreBlocks)
+
 
     def HandleBlockReset(self, hash):
         self.myblockrequests = []

@@ -43,8 +43,7 @@ class DBCollection():
             try:
                 self.Collection[key] = self.ClassRef.DeserializeFromDB( binascii.unhexlify( buffer))
             except Exception as e:
-                if key != b'1f06d4728dfa975c925258f886594b73d9651bdc': #Temporary.. this contract was serialized incorrectly
-                    print("could not decode class %s %s %s %s" % (self.ClassRef,key, buffer, e))
+                self.__log.debug("could not decode class %s %s %s %s" % (self.ClassRef,key, buffer, e))
 
 
 
@@ -61,7 +60,7 @@ class DBCollection():
                 self.Changed = []
                 self.Deleted = []
         except Exception as e:
-            print("COULD NOT COMMIT: %s %s %s" % (e, self.ClassRef, item))
+            self.__log.debug("COULD NOT COMMIT: %s %s" % (e, self.ClassRef))
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
