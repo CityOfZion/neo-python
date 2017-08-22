@@ -49,8 +49,7 @@
 
 
 
-
-### Getting started
+## Getting started
 
 you will need to install the libleveldb library. 
 
