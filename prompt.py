@@ -106,7 +106,7 @@ class PromptInterface(object):
             return [(Token.Command, 'Progress: '),
                     (Token.Number, str(Blockchain.Default().Height)),
                     (Token.Neo, '/'),
-                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
+                    (Token.Number, str(Blockchain.Default().HeaderHeight -1))]
         except Exception as e:
             print("couldnt get toolbar: %s " % e)
             return []
@@ -140,7 +140,7 @@ class PromptInterface(object):
 
     def show_state(self):
         height = Blockchain.Default().Height
-        headers = Blockchain.Default().HeaderHeight
+        headers = Blockchain.Default().HeaderHeight -1
 
         diff = height - self.start_height
         now = datetime.datetime.utcnow()
@@ -209,16 +209,17 @@ class PromptInterface(object):
     def show_tx(self, args):
         item = self.get_arg(args)
         if item is not None:
-            tx,height = Blockchain.Default().GetTransaction(item)
-            if height  > -1:
+            try:
+                tx,height = Blockchain.Default().GetTransaction(item)
+                if height  > -1:
 
-                bjson = json.dumps(tx.ToJson(), indent=4)
-                tokens = [(Token.Command, bjson)]
-                print_tokens(tokens, self.token_style)
-                print('\n')
-
-            else:
-                print("tx %s not found" % item)
+                    bjson = json.dumps(tx.ToJson(), indent=4)
+                    tokens = [(Token.Command, bjson)]
+                    print_tokens(tokens, self.token_style)
+                    print('\n')
+            except Exception as e:
+                print("Could not find transaction with id %s " % item)
+                print("Please specify a tx hash like 'db55b4d97cf99db6826967ef4318c2993852dff3e79ec446103f141c716227f6'")
         else:
             print("please specify a tx hash")
 

@@ -265,9 +265,9 @@ class NeoNode(Protocol):
 
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
 
-        print("handle inv %s " % inventory.Type)
-        if inventory.Type == InventoryType.Block:
-            print("handle block ?...")
+#        print("handle inv %s " % inventory.Type)
+#        if inventory.Type == InventoryType.Block:
+#            print("handle block ?...")
 
     def SendSerializedMessage(self, message):
         ba = Helper.ToArray(message)
