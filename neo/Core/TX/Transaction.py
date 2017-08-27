@@ -24,7 +24,7 @@ from neo.UInt256 import UInt256
 
 import sys
 from itertools import groupby
-
+from neo.Core.AssetType import AssetType
 class TransactionResult():
     AssetId=None
     Amount=Fixed8(0)
@@ -151,7 +151,7 @@ class Transaction(Inventory, InventoryMixin):
 
     __height = 0
 
-    __references = {}
+    __references = None
 
 
     """docstring for Transaction"""
@@ -162,6 +162,7 @@ class Transaction(Inventory, InventoryMixin):
         self.Attributes= attributes
         self.scripts = scripts
         self.InventoryType = 0x01  # InventoryType TX 0x01
+        self.__references = None
 
     @property
     def Hash(self):
@@ -182,34 +183,20 @@ class Transaction(Inventory, InventoryMixin):
 
     @property
     def References(self):
+
         if self.__references is None:
 
             refs = {}
 
             #group by the input prevhash
-
             for hash, group in groupby(self.inputs, lambda x: x.PrevHash):
-                tx = GetBlockchain().GetTransaction(hash.ToBytes())
+                tx,height = GetBlockchain().GetTransaction(hash.ToBytes())
                 if tx is not None:
                     for input in group:
                         refs[input] = tx.outputs[input.PrevIndex]
 
-#            ipts = []
-#            for input in self.inputs:
-#                if not input.PrevHash in ipts:
-#                    ipts.append(input.PrevHash)
-
-            #go through all the inputs again, but according to the prevhash
-            #and get... the output of the other tx that this input outputs to?
-#            for inputPrevHash in ipts:
-
-#                tx = GetBlockchain().GetTransaction(inputPrevHash.ToBytes())
-#                if tx is not None:
-#                    for input in self.inputs:
-#                        if input.PrevHash == inputPrevHash:
-#                            refs[input] = tx.outputs[input.PrevIndex]
-
             self.__references = refs
+
         return self.__references
 
 
@@ -441,48 +428,32 @@ class Transaction(Inventory, InventoryMixin):
 
     def GetScriptHashesForVerifying(self):
 
-        return []
-#        if not self.__references:
-#            raise Exception('No References to be verified')
-#
-#        hashes = [ref.ScriptHash() for ref in self.References()]
 
-#        if (References == null) throw new InvalidOperationException();
-#        HashSet < UInt160 > hashes = new HashSet < UInt160 > (Inputs.Select(p= > References[p].ScriptHash));
-#        hashes.UnionWith(Attributes.Where(p= > p.Usage == TransactionAttributeUsage.Script).Select(p= > newUInt160(p.Data)));
-#        foreach(var group in Outputs.GroupBy(p= > p.AssetId))
-#        {
-#            AssetState asset = Blockchain.Default.GetAssetState(group.Key);
-#            if (asset == null) throw new InvalidOperationException();
-#            if (asset.AssetType.HasFlag(AssetType.DutyFlag))
-#            {
-#                hashes.UnionWith(group.Select(p = > p.ScriptHash));
-#            }
-#        }
-#        return hashes.OrderBy(p= > p).ToArray();
-#
-#        result = self.References()
-#
-#        if result == None:
-#            raise Exception, 'getReference None.'
-#
-#        for _input in self.inputs:
-#            _hash = result.get(_input.toString()).scriptHash
-#            hashes.update({_hash.toString(), _hash})
+        if not self.References:
+            return []
 
-# TODO
-# Blockchain.getTransaction
-#        txs = [Blockchain.getTransaction(output.AssetId) for output in self.outputs]
-#        for output in self.outputs:
-#            tx = txs[self.outputs.index(output)]
-#            if tx == None:
-#                raise Exception, "Tx == None"
-#            else:
-#                if tx.AssetType & AssetType.DutyFlag:
-#                    hashes.update(output.ScriptHash.toString(), output.ScriptHash)
-#
-#                    array = sorted(hashes.keys())
-#                    return array
+        hashes = set()
+        for coinref,output in self.References.items():
+            hashes.add(output.ScriptHash)
+
+        for attr in self.Attributes:
+            if attr.Usage == TransactionAttributeUsage.Script:
+                hashes.add( UInt160(data=attr.Data))
+
+        for key, group in groupby(self.outputs, lambda p: p.AssetId):
+            asset = GetBlockchain().GetAssetState(key.ToBytes())
+            if asset is None:
+                raise Exception("Invalid operation")
+
+            if asset.AssetType == AssetType.DutyFlag:
+                for p in group:
+                    hashes.add(p.ScriptHash)
+
+        hashlist = list(hashes)
+        hashlist.sort()
+
+        return hashlist
+
 
     def GetTransactionResults(self):
         if self.References is None: return None

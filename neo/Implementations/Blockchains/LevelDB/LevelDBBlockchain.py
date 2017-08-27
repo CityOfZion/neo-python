@@ -219,6 +219,12 @@ class LevelDBBlockchain(Blockchain):
 
         return coins.TryGet(keyval=tx_hash)
 
+    def GetAssetState(self, assetId):
+        sn = self._db.snapshot()
+        assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
+        asset = assets.TryGet(assetId)
+        return asset
+
     def GetTransaction(self, hash):
 
         if not type(hash) is bytes:

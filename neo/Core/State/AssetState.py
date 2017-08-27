@@ -36,6 +36,7 @@ class AssetState(StateBase):
         self.AssetId = asset_id
         self.AssetType = asset_type
         self.Name = name
+
         self.Amount = amount
         self.Available = available
         self.Precision = precision
@@ -71,9 +72,11 @@ class AssetState(StateBase):
         self.AssetId = reader.ReadUInt256()
         self.AssetType = reader.ReadByte()
         self.Name = reader.ReadVarString()
+
         self.Amount = reader.ReadFixed8()
         self.Available = reader.ReadFixed8()
         self.Precision = reader.ReadByte()
+
         #fee mode
         reader.ReadByte()
 
@@ -111,7 +114,9 @@ class AssetState(StateBase):
         if self.AssetType == AssetType.GoverningToken: return "NEO"
         elif self.AssetType == AssetType.UtilityToken: return "NEOGas"
 
-        return self.Name.decode('utf-8')
+        if type(self.Name) is bytes:
+            return self.Name.decode('utf-8')
+        return self.Name
 
 
     def ToJson(self):
@@ -121,7 +126,7 @@ class AssetState(StateBase):
             'name': self.GetName(),
             'amount': self.Amount.value,
             'available': self.Available.value,
-            'precicion': self.Precision,
+            'precision': self.Precision,
             'fee': self.Fee.value,
             'address': self.FeeAddress.ToString(),
             'owner':self.Owner.ToString(),
