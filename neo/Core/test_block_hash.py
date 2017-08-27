@@ -1,9 +1,9 @@
-import unittest
+from neo.Utils.NeoTestCase import NeoTestCase
 import binascii
 from neo.Cryptography.Helper import *
 from neo.UInt256 import UInt256
 
-class BlockHashTest(unittest.TestCase):
+class BlockHashTest(NeoTestCase):
 
     block_raw = b'00000000a291d73be4a7cf582c7cd9fb0c49bfca76c4fbb5881ea7906588f9f7acf69f2adc19cb001e0aa2b0024fda6baf3c77ddbb8ac90b39e42d76b69fa3830e52e902f2b480593e5d0500be9260c6e922bc7cf3812db982f3b0089a21a278988efeec6a027b25'
 

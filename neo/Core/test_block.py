@@ -1,6 +1,6 @@
+from neo.Utils.NeoTestCase import NeoTestCase
 import os
 import sys
-import unittest
 from neo.Blockchain import GetGenesis
 import binascii
 from neo.IO.Helper import Helper
@@ -8,7 +8,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.MerkleTree import MerkleTree
 
-class BlocksTestCase(unittest.TestCase):
+class BlocksTestCase(NeoTestCase):
 
 
     #raw block ( block # 343892 )

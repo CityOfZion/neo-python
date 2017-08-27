@@ -1,6 +1,4 @@
-
-import unittest
-
+from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ContractState import ContractState
@@ -8,7 +6,7 @@ from neo.Core.State.ContractState import ContractState
 
 import binascii
 
-class StateTestCase(unittest.TestCase):
+class StateTestCase(NeoTestCase):
 
 
 

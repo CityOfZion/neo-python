@@ -1,4 +1,4 @@
-
+from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Network.Payloads.VersionPayload import VersionPayload
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Network.Message import Message
@@ -9,13 +9,12 @@ from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo import Settings
 from neo.Core.Helper import Helper
 import random
-import unittest
 import binascii
 from autologging import logged
 from datetime import datetime
 
 @logged
-class PayloadTestCase(unittest.TestCase):
+class PayloadTestCase(NeoTestCase):
 
     port = 20333
     nonce = random.randint(12949672,42949672)

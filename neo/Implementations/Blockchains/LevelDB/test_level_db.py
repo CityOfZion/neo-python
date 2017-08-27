@@ -1,14 +1,13 @@
-
+from neo.Utils.NeoTestCase import NeoTestCase
 from .LevelDBBlockchain import LevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.IO.Helper import Helper
-import unittest
 import shutil
 import binascii
 from neo import Settings
 
-class LevelDBTest(unittest.TestCase):
+class LevelDBTest(NeoTestCase):
 
     LEVELDB_TESTPATH = './UnitTestChain'
 

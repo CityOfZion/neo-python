@@ -206,7 +206,7 @@ class NeoNode(Protocol):
 
         while hashstart < BC.Default().HeaderHeight and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
-            if not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
+            if hash is not None and not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
                 BC.Default().BlockRequests.add(hash)
                 self.myblockrequests.add(hash)
                 hashes.append(hash)
@@ -263,8 +263,11 @@ class NeoNode(Protocol):
 
     def HandleInvMessage(self, payload):
 
-#        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
-        pass
+        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
+
+        print("handle inv %s " % inventory.Type)
+        if inventory.Type == InventoryType.Block:
+            print("handle block ?...")
 
     def SendSerializedMessage(self, message):
         ba = Helper.ToArray(message)

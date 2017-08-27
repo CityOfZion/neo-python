@@ -1,9 +1,9 @@
-
+from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Fixed8 import Fixed8
-from unittest import TestCase
+
 from neo.BigInteger import BigInteger
 
-class FancyNumberTestCase(TestCase):
+class FancyNumberTestCase(NeoTestCase):
 
 
 

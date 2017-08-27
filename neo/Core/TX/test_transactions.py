@@ -1,5 +1,4 @@
-import unittest
-
+from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction
 from neo.IO.BinaryWriter import BinaryWriter
@@ -7,7 +6,7 @@ from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream
 import binascii
 import pprint
-class TransactionTestCase(unittest.TestCase):
+class TransactionTestCase(NeoTestCase):
 
 
     tx_raw = b'0000d11f7a2800000000'
