@@ -89,21 +89,22 @@ class NeoNode(Protocol):
 
         reactor.callInThread(self.ReleaseBlockRequests)
         self.leader.RemoveConnectedPeer(self)
-
 #        self.leader = None
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
 
 
     def ReleaseBlockRequests(self):
         bcr = BC.Default().BlockRequests
+        requests = self.myblockrequests
         #
-        toremove = []
-        for req in bcr:
-            if req in self.myblockrequests:
-                toremove.append(req)
-        [bcr.remove(req) for req in toremove]
+        for req in requests:
+            try:
+                bcr.remove(req)
+            except Exception as e:
+                print("Couldnt remove request %s " % e)
 
         self.myblockrequests = set()
+
 
     def dataReceived(self, data):
 

@@ -157,8 +157,8 @@ class PromptInterface(object):
         out += 'Blocks since program start %s\n' % diff
         out += 'Time elapsed %s mins\n' % mins
         out += 'blocks per min %s \n' % bpm
-        out += "Node Req Part, Max: %s %s\n" % (self.node_leader.BREQPART, self.node_leader.BREQMAX)
-        out += "DB Cache Lim, Miss Lim %s %s\n" % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM)
+#        out += "Node Req Part, Max: %s %s\n" % (self.node_leader.BREQPART, self.node_leader.BREQMAX)
+#        out += "DB Cache Lim, Miss Lim %s %s\n" % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM)
         tokens = [(Token.Number, out)]
         print_tokens(tokens, self.token_style)
 
