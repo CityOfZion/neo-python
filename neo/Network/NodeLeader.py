@@ -68,25 +68,12 @@ class NodeLeader():
 
     def SetupConnection(self, host, port):
         self.__log.debug("Setting up connection! %s %s " % (host, port))
-        point = TCP4ClientEndpoint(reactor, host, int(port))
-        d = connectProtocol(point, NeoNode(NeoFactory))
-        d.addCallbacks(self.onProtocolConnected, errback=self.onProtocolError)
-        reactor.callLater(5, d.cancel)
+        reactor.connectTCP(host, int(port), NeoFactory())
 
     def Shutdown(self):
         for p in self.Peers:
             p.Disconnect()
 
-    def onProtocolConnected(self, peer):
-        self.__log.debug("PRotocol connected!! %s " % peer)
-        if not peer in self.Peers:
-            self.Peers.append(peer)
-
-        if peer in self.UnconnectedPeers:
-            self.UnconnectedPeers.remove(peer)
-
-    def onProtocolError(self, reason):
-        self.__log.debug("Protocol exception %s " % reason)
 
     #    @profile()
     def InventoryReceived(self, inventory):

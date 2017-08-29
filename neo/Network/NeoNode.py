@@ -33,8 +33,7 @@ class NeoNode(Protocol):
 
     leader = None
 
-    def __init__(self, factory):
-        self.factory = factory
+    def __init__(self):
 
         from neo.Network.NodeLeader import NodeLeader
 
@@ -77,6 +76,8 @@ class NeoNode(Protocol):
         self.endpoint = self.transport.getPeer()
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
+        if not self in self.leader.Peers:
+            self.leader.Peers.append(self)
 
         self.Log("Connection from %s" % self.endpoint)
 
@@ -87,7 +88,7 @@ class NeoNode(Protocol):
         self.pm = None
 
         bcr = BC.Default().BlockRequests
-
+#
         toremove = []
         for req in bcr:
             if req in self.myblockrequests:
@@ -96,7 +97,10 @@ class NeoNode(Protocol):
 
         self.myblockrequests = None
 
+
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
+
+
 
 
 
@@ -203,14 +207,19 @@ class NeoNode(Protocol):
 
 
         self.Log("asking for more blocks ... %s " % hashstart)
-
+        first=None
         while hashstart < BC.Default().HeaderHeight and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
             if hash is not None and not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
+                if not first:
+                    first = hashstart
                 BC.Default().BlockRequests.add(hash)
                 self.myblockrequests.add(hash)
                 hashes.append(hash)
             hashstart += 1
+
+        self.Log("asked for more blocks ... %s thru %s" % (first,hashstart))
+
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))

@@ -616,10 +616,10 @@ class LevelDBBlockchain(Blockchain):
 
 
     def PersistBlocks(self):
+        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s " % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash))
 
         while not self._disposed:
 
-#                self.__log.info("Hheight, b height, cache: %s/%s %s  --%s " % (self.Height,self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash))
 
             if len(self._header_index) <= self._current_block_height + 1:
                 break
