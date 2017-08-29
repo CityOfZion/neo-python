@@ -618,7 +618,7 @@ class LevelDBBlockchain(Blockchain):
 
 
     def PersistBlocks(self):
-#        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s " % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash))
+#        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
         while not self._disposed:
             if len(self._header_index) <= self._current_block_height + 1:
@@ -627,8 +627,10 @@ class LevelDBBlockchain(Blockchain):
             hash = self._header_index[self._current_block_height + 1]
 
             if not hash in self._block_cache:
+                self.BlockSearchTries +=1
                 break
 
+            self.BlockSearchTries=0
             block = self._block_cache[hash]
 
             try:

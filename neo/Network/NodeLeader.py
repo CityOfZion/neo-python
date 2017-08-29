@@ -54,9 +54,7 @@ class NodeLeader():
         self.NodeId = random.randint(1294967200,4294967200)
 
     def Restart(self):
-        print("will try restart!!!")
         if len(self.Peers) == 0:
-            print("WILL DO RESTART!")
             self.Start()
 
     def Start(self):
@@ -103,6 +101,15 @@ class NodeLeader():
 
         if len(self.Peers) == 0:
             reactor.callLater(10, self.Restart)
+
+
+    def ResetBlockRequestsAndCache(self):
+        print("RESETTING BLOCK REQUESTS AND CACHE!")
+        BC.Default().BlockSearchTries = 0
+        for p in self.Peers:
+            p.myblockrequests= set()
+        BC.Default().__blockrequests = set()
+        BC.Default()._block_cache = {}
 
     #    @profile()
     def InventoryReceived(self, inventory):

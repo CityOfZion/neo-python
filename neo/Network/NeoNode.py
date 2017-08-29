@@ -87,24 +87,23 @@ class NeoNode(Protocol):
 #        self.buffer_in = None
 #        self.pm = None
 
-        bcr = BC.Default().BlockRequests
-#
-        toremove = []
-        for req in bcr:
-            if req in self.myblockrequests:
-                toremove.append(req)
-        [bcr.remove(req) for req in toremove]
-
-        self.myblockrequests = []
-
+        reactor.callInThread(self.ReleaseBlockRequests)
         self.leader.RemoveConnectedPeer(self)
 
 #        self.leader = None
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
 
 
+    def ReleaseBlockRequests(self):
+        bcr = BC.Default().BlockRequests
+        #
+        toremove = []
+        for req in bcr:
+            if req in self.myblockrequests:
+                toremove.append(req)
+        [bcr.remove(req) for req in toremove]
 
-
+        self.myblockrequests = set()
 
     def dataReceived(self, data):
 
@@ -203,14 +202,17 @@ class NeoNode(Protocol):
         self.SendSerializedMessage(get_headers_message)
 
 
-
     def AskForMoreBlocks(self):
+        reactor.callInThread(self.DoAskForMoreBlocks)
+
+    def DoAskForMoreBlocks(self):
 
         hashes = []
         hashstart = BC.Default().Height + 1
 
+        if BC.Default().BlockSearchTries > 400 and len(BC.Default().BlockRequests) > 0:
+            self.leader.ResetBlockRequestsAndCache()
 
-        self.Log("asking for more blocks ... %s " % hashstart)
         first=None
         while hashstart < BC.Default().HeaderHeight and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
@@ -222,7 +224,7 @@ class NeoNode(Protocol):
                 hashes.append(hash)
             hashstart += 1
 
-        self.Log("asked for more blocks ... %s thru %s" % (first,hashstart))
+        self.Log("asked for more blocks ... %s thru %s stale count %s " % (first,hashstart, BC.Default().BlockSearchTries))
 
 
         if len(hashes) > 0:
