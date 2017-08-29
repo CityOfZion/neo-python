@@ -87,7 +87,8 @@ class NeoNode(Protocol):
 #        self.buffer_in = None
 #        self.pm = None
 
-        reactor.callInThread(self.ReleaseBlockRequests)
+#        reactor.callInThread(self.ReleaseBlockRequests)
+        self.ReleaseBlockRequests()
         self.leader.RemoveConnectedPeer(self)
 #        self.leader = None
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
@@ -96,12 +97,14 @@ class NeoNode(Protocol):
     def ReleaseBlockRequests(self):
         bcr = BC.Default().BlockRequests
         requests = self.myblockrequests
+        self.Log("Release block requests before %s " % len(bcr))
         #
         for req in requests:
             try:
                 bcr.remove(req)
             except Exception as e:
                 print("Couldnt remove request %s " % e)
+        self.Log("Release block requests after %s " % len(bcr))
 
         self.myblockrequests = set()
 
@@ -210,12 +213,16 @@ class NeoNode(Protocol):
 
         hashes = []
         hashstart = BC.Default().Height + 1
+        current_header_height = BC.Default().HeaderHeight
+
 
         if BC.Default().BlockSearchTries > 400 and len(BC.Default().BlockRequests) > 0:
-            self.leader.ResetBlockRequestsAndCache()
+#            self.leader.ResetBlockRequestsAndCache()
+            print("putting block needed most in %s "% hashstart)
+            hashes.append(BC.Default().GetHeaderHash(hashstart))
 
         first=None
-        while hashstart < BC.Default().HeaderHeight and len(hashes) < self.leader.BREQPART:
+        while hashstart < current_header_height and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
             if hash is not None and not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
                 if not first:
@@ -225,14 +232,15 @@ class NeoNode(Protocol):
                 hashes.append(hash)
             hashstart += 1
 
-        self.Log("asked for more blocks ... %s thru %s stale count %s " % (first,hashstart, BC.Default().BlockSearchTries))
+        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first,hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
 
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             self.SendSerializedMessage(message)
         else:
-            reactor.callLater(5, self.AskForMoreBlocks)
+            self.Log("all caught up!!!!!! hashes is zero")
+            reactor.callLater(20, self.DoAskForMoreBlocks)
 
     def RequestPeerInfo(self):
         self.SendSerializedMessage(Message('getaddr'))
@@ -294,11 +302,10 @@ class NeoNode(Protocol):
 
     def HandleBlockHeadersReceived(self, inventory):
 
-        self.leader.is_requesting_headers = False
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
-
         BC.Default().AddHeaders(inventory.Headers)
+
         if BC.Default().HeaderHeight < self.Version.StartHeight:
             self.AskForMoreHeaders()
 
@@ -316,7 +323,8 @@ class NeoNode(Protocol):
         self.leader.InventoryReceived(block)
 
         if len(self.myblockrequests) < self.leader.NREQMAX:
-            self.AskForMoreBlocks()
+#            reactor.callLater(2, self.DoAskForMoreBlocks)
+            self.DoAskForMoreBlocks()
 
 
     def HandleBlockReset(self, hash):

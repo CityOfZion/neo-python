@@ -392,8 +392,7 @@ class LevelDBBlockchain(Blockchain):
 
 
         if len(newheaders):
-            reactor.callInThread(self.ProcessNewHeaders, newheaders)
-#            self.ProcessNewHeaders(newheaders)
+            self.ProcessNewHeaders(newheaders)
 
         return True
 
@@ -403,13 +402,10 @@ class LevelDBBlockchain(Blockchain):
         start = time.clock()
 
         lastheader = headers[-1]
-        toadd = []
-        hashes = [h.Hash.ToBytes() for h in headers]
-        for h in hashes:
-            if not h in self._header_index:
-                toadd.append(h)
 
-        self._header_index = self._header_index + toadd
+        hashes = [h.Hash.ToBytes() for h in headers]
+
+        self._header_index = self._header_index + hashes
 
         self.__log.debug("Process Headers: %s %s" % (lastheader,(time.clock() - start)))
 
@@ -634,11 +630,13 @@ class LevelDBBlockchain(Blockchain):
             block = self._block_cache[hash]
 
             try:
+
                 self.Persist(block)
                 self.OnPersistCompleted(block)
+                del self._block_cache[hash]
             except Exception as e:
                 self.__log.debug("COULD NOT PERSIST OR ON PERSIST COMPLETE %s " % e)
-            del self._block_cache[hash]
+
 
     def Dispose(self):
         self._disposed = True

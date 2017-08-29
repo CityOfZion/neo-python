@@ -33,8 +33,8 @@ class NodeLeader():
     _MissedBlocks=[]
 
 
-    BREQPART=100
-    NREQMAX =1000
+    BREQPART=150
+    NREQMAX =150
     BREQMAX= 4000
 
 
@@ -64,7 +64,7 @@ class NodeLeader():
             host, port = bootstrap.split(":")
             self.ADDRS.append('%s:%s' % (host,port))
             reactor.callLater( start_delay, self.SetupConnection,host, port)
-            start_delay+=.1
+            start_delay+=10
 
     def RemoteNodePeerReceived(self, host, port):
         addr = '%s:%s' % (host,port)
