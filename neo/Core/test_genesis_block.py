@@ -131,7 +131,7 @@ class GenesisBlockTestCase(NeoTestCase):
             self.assertEqual(block.RawData(), self.testnet_genesis_raw)
             self.assertEqual(block.Hash.ToString(), self.testnet_genesis_hash)
         else:
-            self.assertEqual(block.MerkleRoot, self.mainnet_genesis_merkle)
+            self.assertEqual(block.MerkleRoot.ToBytes(), self.mainnet_genesis_merkle)
             self.assertEqual(txhashes, self.mainnet_genesis_tx_hashes)
             self.assertEqual(block.Hash.ToBytes(), self.mainnet_genesis_hash)
 
