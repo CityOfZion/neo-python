@@ -3,14 +3,17 @@ from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
-from neo.Network.NeoFactory import NeoFactory
 from neo.Network.NeoNode import NeoNode
 from neo import Settings
 
 
 from autologging import logged
-from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
+from twisted.internet.protocol import Factory
+from twisted.application.internet import ClientService
 from twisted.internet import reactor,task
+from twisted.internet.endpoints import clientFromString
+from twisted.application.internet import backoffPolicy
+
 import random
 
 @logged
@@ -50,6 +53,12 @@ class NodeLeader():
         self.ADDRS = []
         self.NodeId = random.randint(1294967200,4294967200)
 
+    def Restart(self):
+        print("will try restart!!!")
+        if len(self.Peers) == 0:
+            print("WILL DO RESTART!")
+            self.Start()
+
     def Start(self):
         # start up endpoints
         start_delay=0
@@ -57,7 +66,7 @@ class NodeLeader():
             host, port = bootstrap.split(":")
             self.ADDRS.append('%s:%s' % (host,port))
             reactor.callLater( start_delay, self.SetupConnection,host, port)
-            start_delay+=2
+            start_delay+=.1
 
     def RemoteNodePeerReceived(self, host, port):
         addr = '%s:%s' % (host,port)
@@ -68,12 +77,32 @@ class NodeLeader():
 
     def SetupConnection(self, host, port):
         self.__log.debug("Setting up connection! %s %s " % (host, port))
-        reactor.connectTCP(host, int(port), NeoFactory())
+
+        factory = Factory.forProtocol(NeoNode)
+        endpoint = clientFromString(reactor,"tcp:host=%s:port=%s:timeout=5" % (host,port))
+
+        connectingService = ClientService(
+            endpoint,
+            factory,
+            retryPolicy=backoffPolicy(.5, factor=3.0)
+        )
+        connectingService.startService()
 
     def Shutdown(self):
         for p in self.Peers:
             p.Disconnect()
 
+
+    def AddConnectedPeer(self, peer):
+        if not peer in self.Peers:
+            self.Peers.append(peer)
+
+    def RemoveConnectedPeer(self, peer):
+        if peer in self.Peers:
+            self.Peers.remove(peer)
+
+        if len(self.Peers) == 0:
+            reactor.callLater(10, self.Restart)
 
     #    @profile()
     def InventoryReceived(self, inventory):

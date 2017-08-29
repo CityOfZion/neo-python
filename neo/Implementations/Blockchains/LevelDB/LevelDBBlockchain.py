@@ -30,6 +30,7 @@ from autologging import logged
 import binascii
 import pprint
 import json
+from twisted.internet import reactor
 
 @logged
 class LevelDBBlockchain(Blockchain):
@@ -391,7 +392,8 @@ class LevelDBBlockchain(Blockchain):
 
 
         if len(newheaders):
-            self.ProcessNewHeaders(newheaders)
+            reactor.callInThread(self.ProcessNewHeaders, newheaders)
+#            self.ProcessNewHeaders(newheaders)
 
         return True
 
@@ -616,11 +618,9 @@ class LevelDBBlockchain(Blockchain):
 
 
     def PersistBlocks(self):
-        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s " % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash))
+#        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s " % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash))
 
         while not self._disposed:
-
-
             if len(self._header_index) <= self._current_block_height + 1:
                 break
 
@@ -630,6 +630,7 @@ class LevelDBBlockchain(Blockchain):
                 break
 
             block = self._block_cache[hash]
+
             try:
                 self.Persist(block)
                 self.OnPersistCompleted(block)

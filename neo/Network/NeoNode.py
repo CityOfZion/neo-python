@@ -76,16 +76,16 @@ class NeoNode(Protocol):
         self.endpoint = self.transport.getPeer()
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
-        if not self in self.leader.Peers:
-            self.leader.Peers.append(self)
+
+        self.leader.AddConnectedPeer(self)
 
         self.Log("Connection from %s" % self.endpoint)
 
 
     def connectionLost(self, reason=None):
 
-        self.buffer_in = None
-        self.pm = None
+#        self.buffer_in = None
+#        self.pm = None
 
         bcr = BC.Default().BlockRequests
 #
@@ -95,9 +95,11 @@ class NeoNode(Protocol):
                 toremove.append(req)
         [bcr.remove(req) for req in toremove]
 
-        self.myblockrequests = None
+        self.myblockrequests = []
 
+        self.leader.RemoveConnectedPeer(self)
 
+#        self.leader = None
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
 
 
@@ -199,6 +201,8 @@ class NeoNode(Protocol):
         self.Log("asking for more headers...")
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
+
+
 
     def AskForMoreBlocks(self):
 
