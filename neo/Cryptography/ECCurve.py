@@ -375,6 +375,7 @@ class EllipticCurve:
                 tilde = b'\x02'
 
             data = bytearray(tilde) + xbytes
+
             return binascii.hexlify(data)
 
 

@@ -32,12 +32,12 @@
   },
 
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/Gogo",
+    "DataDirectoryPath": "./Chains/SC2",
     "NodePort": 20333,
     "WsPort": 20334,
     "UriPrefix": [ "http://*:20332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "VersionName":"/NEO:2.0.1/"
+    "VersionName":"/NEO:2.1.0/"
   }
 }

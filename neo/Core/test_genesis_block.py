@@ -1,4 +1,4 @@
-import unittest
+from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
@@ -11,7 +11,7 @@ from neo.VM.OpCode import *
 from neo import Settings
 from neo.Cryptography.Crypto import Crypto
 
-class GenesisBlockTestCase(unittest.TestCase):
+class GenesisBlockTestCase(NeoTestCase):
 
     testnet_genesis_hash = 'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef'
     testnet_ghash_current= ''
@@ -131,7 +131,7 @@ class GenesisBlockTestCase(unittest.TestCase):
             self.assertEqual(block.RawData(), self.testnet_genesis_raw)
             self.assertEqual(block.Hash.ToString(), self.testnet_genesis_hash)
         else:
-            self.assertEqual(block.MerkleRoot, self.mainnet_genesis_merkle)
+            self.assertEqual(block.MerkleRoot.ToBytes(), self.mainnet_genesis_merkle)
             self.assertEqual(txhashes, self.mainnet_genesis_tx_hashes)
             self.assertEqual(block.Hash.ToBytes(), self.mainnet_genesis_hash)
 

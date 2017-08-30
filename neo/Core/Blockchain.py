@@ -47,6 +47,8 @@ class Blockchain(object):
 
     __blockrequests = set()
 
+    BlockSearchTries=0
+
     CACHELIM=4000
     CMISSLIM=5
     LOOPTIME = .1

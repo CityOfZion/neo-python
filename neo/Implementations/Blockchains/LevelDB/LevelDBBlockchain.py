@@ -30,6 +30,7 @@ from autologging import logged
 import binascii
 import pprint
 import json
+from twisted.internet import reactor
 
 @logged
 class LevelDBBlockchain(Blockchain):
@@ -219,6 +220,12 @@ class LevelDBBlockchain(Blockchain):
 
         return coins.TryGet(keyval=tx_hash)
 
+    def GetAssetState(self, assetId):
+        sn = self._db.snapshot()
+        assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
+        asset = assets.TryGet(assetId)
+        return asset
+
     def GetTransaction(self, hash):
 
         if not type(hash) is bytes:
@@ -385,7 +392,8 @@ class LevelDBBlockchain(Blockchain):
 
 
         if len(newheaders):
-            self.ProcessNewHeaders(newheaders)
+            reactor.callInThread(self.ProcessNewHeaders, newheaders)
+#            self.ProcessNewHeaders(newheaders)
 
         return True
 
@@ -610,20 +618,21 @@ class LevelDBBlockchain(Blockchain):
 
 
     def PersistBlocks(self):
+#        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
         while not self._disposed:
-
-#                self.__log.info("Hheight, b height, cache: %s/%s %s  --%s " % (self.Height,self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash))
-
             if len(self._header_index) <= self._current_block_height + 1:
                 break
 
             hash = self._header_index[self._current_block_height + 1]
 
             if not hash in self._block_cache:
+                self.BlockSearchTries +=1
                 break
 
+            self.BlockSearchTries=0
             block = self._block_cache[hash]
+
             try:
                 self.Persist(block)
                 self.OnPersistCompleted(block)

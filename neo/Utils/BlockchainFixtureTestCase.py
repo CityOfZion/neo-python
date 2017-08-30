@@ -1,12 +1,16 @@
+from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
+
 from neo.Core.Blockchain import Blockchain
 
-import unittest
 import tarfile
 import requests
 import os
+from autologging import logged
 
-class BlockchainFixtureTestCase(unittest.TestCase):
+
+@logged
+class BlockchainFixtureTestCase(NeoTestCase):
 
     FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures.tar.gz'
     FIXTURE_FILENAME = './Chains/fixtures.tar.gz'
@@ -21,12 +25,14 @@ class BlockchainFixtureTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
 
+        super(BlockchainFixtureTestCase, self).setUpClass()
+
         if os.path.exists(self.FIXTURE_FILENAME):
-            print("fixtures already downloaded")
+            self.__log.debug("fixtures already downloaded")
 
         else:
 
-            print("downloading fixture block database. this may take a while")
+            self.__log.debug("downloading fixture block database. this may take a while")
 
             response = requests.get(self.FIXTURE_REMOTE_LOC, stream=True)
 
@@ -35,23 +41,24 @@ class BlockchainFixtureTestCase(unittest.TestCase):
                 for block in response.iter_content(1024):
                     handle.write(block)
 
-        print("opening tar file")
+
+        self.__log.debug("opening tar file")
         try:
             tar = tarfile.open(self.FIXTURE_FILENAME)
             tar.extractall()
             tar.close()
-            print("extracted tar file")
+            self.__log.debug("extracted tar file")
         except Exception as e:
-            print("Could not extract tar file %s " % e)
+            self.__log.debug("Could not extract tar file %s " % e)
 
 
         if os.path.exists(self.leveldb_testpath()):
-            print('loading blockchain')
+            self.__log.debug('loading blockchain')
             self._blockchain = TestLevelDBBlockchain(path=self.leveldb_testpath())
             Blockchain.RegisterBlockchain(self._blockchain)
-            print("Starting Tests")
+            self.__log.debug("Starting Tests")
         else:
-            print("Error downloading fixtures")
+            self.__log.debug("Error downloading fixtures")
 
 
     @classmethod

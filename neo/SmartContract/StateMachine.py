@@ -175,7 +175,7 @@ class StateMachine(StateReader):
 
         tx = engine.ScriptContainer
 
-        asset_type = engine.EvaluationStack.Pop().GetBigInteger()
+        asset_type = int(engine.EvaluationStack.Pop().GetBigInteger())
 
         if not asset_type in AssetType.AllTypes() or \
                         asset_type == AssetType.CreditFlag or \
@@ -189,7 +189,6 @@ class StateMachine(StateReader):
             return False
 
         name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
-#        print("decode name %s " % name)
 
         amount = Fixed8(engine.EvaluationStack.Pop().GetBigInteger())
 
@@ -199,7 +198,7 @@ class StateMachine(StateReader):
         if asset_type == AssetType.Invoice and amount != Fixed8.NegativeSatoshi():
             return False
 
-        precision = engine.EvaluationStack.Pop().GetBigInteger()
+        precision = int(engine.EvaluationStack.Pop().GetBigInteger())
 
         if precision > 8:
             return False
@@ -223,7 +222,6 @@ class StateMachine(StateReader):
 
 
         admin = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
-
 
         issuer = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
 

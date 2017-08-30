@@ -135,8 +135,8 @@ class BinaryWriter(object):
         length = len(value)
         ba = bytearray(value)
         byts = binascii.hexlify(ba)
-        string = byts.decode('utf-8')
-        self.WriteByte(length)
+        string = byts.decode(encoding)
+        self.WriteVarInt(length)
         self.WriteBytes(string)
 
 
