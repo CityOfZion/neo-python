@@ -139,7 +139,7 @@ class BinaryReader(object):
         return items
 
     def ReadHashes(self, maximum=16):
-        len = self.ReadUInt8()
+        len = self.ReadVarInt()
         items = []
         for i in range(0, len):
             ba = bytearray(self.ReadBytes(32))

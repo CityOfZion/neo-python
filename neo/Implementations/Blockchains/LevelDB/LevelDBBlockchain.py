@@ -200,10 +200,18 @@ class LevelDBBlockchain(Blockchain):
 
     def GetContract(self, hash):
 
+        if type(hash) is str:
+            try:
+                hash = hash.encode('utf-8')
+            except Exception as e:
+                self.__log.debug("could not convert argument to bytes :%s " % e)
+                return None
+
         sn = self._db.snapshot()
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
+        contract = contracts.TryGet(keyval=hash)
         sn.close()
-        return contracts.TryGet(keyval=hash)
+        return contract
 
 
     def GetAllSpentCoins(self):

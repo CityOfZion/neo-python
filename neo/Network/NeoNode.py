@@ -246,6 +246,7 @@ class NeoNode(Protocol):
             self.SendSerializedMessage(message)
         else:
             self.Log("all caught up!!!!!! hashes is zero")
+            self.AskForMoreHeaders()
             reactor.callLater(20, self.DoAskForMoreBlocks)
 
     def RequestPeerInfo(self):

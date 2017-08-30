@@ -7,20 +7,16 @@ from neo.Core.State.StorageKey import StorageKey
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.AssetType import AssetType
 from neo.Cryptography.Crypto import Crypto
-from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
+from neo.Cryptography.ECCurve import ECDSA
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Fixed8 import Fixed8
 from neo.VM.InteropService import StackItem
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import StreamManager
 
 import sys
 import json
-import binascii
 
 from autologging import logged
 
@@ -143,21 +139,24 @@ class StateMachine(StateReader):
         balance = account.BalanceFor( Blockchain.SystemShare().Hash)
 
         if balance == Fixed8.Zero() and len(vote_list) > 0:
+            print("no balance, return false!")
             return False
 
-#       disable setting votes for now until further testing to make sure we're not duplicating votes
-#
-#        acct = self._accounts.GetAndChange(account.AddressBytes)
-#        voteset = set()
-#        for v in vote_list:
-#            voteset.add(v.GetByteArray())
-#        acct.Votes = list(voteset)
-#        self.__log.debug("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
+        print("Setting votes!!!")
+
+        acct = self._accounts.GetAndChange(account.AddressBytes)
+        voteset = set()
+        for v in vote_list:
+            voteset.add(v.GetByteArray())
+        acct.Votes = list(voteset)
+        print("*****************************************************")
+        print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
+        print("*****************************************************")
         return True
 
 
     def Validator_Register(self, engine):
-        #Not Implemented
+
         pubkey = ECDSA.decode_secp256r1( engine.EvaluationStack.Pop().GetByteArray())
         if pubkey.IsInfinity:
             return False
@@ -234,6 +233,9 @@ class StateMachine(StateReader):
 
         asset = self._assets.GetOrAdd(tx.Hash.ToBytes(), new_asset)
 
+        print("*****************************************************")
+        print("CREATED ASSET %s " % tx.Hash.ToBytes())
+        print("*****************************************************")
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
         return True
@@ -317,6 +319,10 @@ class StateMachine(StateReader):
             self._contracts_created[hash.ToBytes()] = UInt160( data = engine.CurrentContext.ScriptHash())
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+
+        print("*****************************************************")
+        print("CREATED CONTRACT %s " % hash.ToBytes())
+        print("*****************************************************")
         return True
 
 
@@ -381,6 +387,11 @@ class StateMachine(StateReader):
                     self._storages.Add(key, item)
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+
+        print("*****************************************************")
+        print("MIGRATED CONTRACT %s " % hash.ToBytes())
+        print("*****************************************************")
+
         return True
 
     def Contract_GetStorageContext(self, engine):
