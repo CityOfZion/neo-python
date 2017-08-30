@@ -96,6 +96,7 @@ class LevelDBBlockchain(Blockchain):
 
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)
+#            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
         except Exception as e:
             self.__log.debug("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
@@ -178,12 +179,14 @@ class LevelDBBlockchain(Blockchain):
         sn = self._db.snapshot()
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         acct = accounts.TryGet(keyval=script_hash)
-        sn.close()
 
         if acct is None:
-            print("Could not find account. Length of accounts %s " % len(accounts.Collection.keys()))
+            print("Could not find account. Length of accounts %s " % len(accounts.Keys))
             if print_all_accounts:
-                print("All accounts: %s " % accounts.Collection.keys())
+                print("All accounts: %s " % accounts.Keys)
+
+        sn.close()
+
         return acct
 
 
@@ -192,7 +195,7 @@ class LevelDBBlockchain(Blockchain):
         sn = self._db.snapshot()
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         sn.close()
-        return contracts.Collection.keys()
+        return contracts.Keys
 
 
     def GetContract(self, hash):
@@ -207,7 +210,7 @@ class LevelDBBlockchain(Blockchain):
         sn = self._db.snapshot()
         coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
 
-        return coins.Collection.keys()
+        return coins.Keys
 
 
     def GetSpentCoins(self,tx_hash):
@@ -221,9 +224,22 @@ class LevelDBBlockchain(Blockchain):
         return coins.TryGet(keyval=tx_hash)
 
     def GetAssetState(self, assetId):
+
+        if type(assetId) is str:
+            try:
+                assetId = assetId.encode('utf-8')
+            except Exception as e:
+                self.__log.debug("could not convert argument to bytes :%s " % e)
+                return None
+
         sn = self._db.snapshot()
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
         asset = assets.TryGet(assetId)
+
+        if asset is None:
+            print("Available assets: %s " % assets.Keys)
+            return
+
         return asset
 
     def GetTransaction(self, hash):
@@ -262,14 +278,12 @@ class LevelDBBlockchain(Blockchain):
         return True
 
     def ContainsBlock(self,index):
-
         if index <= self._current_block_height:
             return True
         return False
 
 
     def GetHeader(self, hash):
-
 
         try:
             out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
@@ -517,6 +531,7 @@ class LevelDBBlockchain(Blockchain):
                         assets.Add(tx.Hash.ToBytes(), asset)
 
                     elif tx.Type == TransactionType.IssueTransaction:
+
                         txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
                         for result in txresults:
                             asset = assets.GetAndChange(result.AssetId.ToBytes())
@@ -540,7 +555,7 @@ class LevelDBBlockchain(Blockchain):
                         contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
                     elif tx.Type == TransactionType.InvocationTransaction:
 
-                        self.__log.debug("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
+                        print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
                         script_table = CachedScriptTable(contracts)
                         service = StateMachine(accounts, validators, assets, contracts,storages,wb)
 
@@ -576,7 +591,7 @@ class LevelDBBlockchain(Blockchain):
                     if not account.IsFrozen and len(account.Votes) == 0 and account.AllBalancesZeroOrLess():
                         accounts.Remove(key)
 
-                accounts.Commit(wb,False)
+                accounts.Commit(wb)
 
                 #filte out unspent coins to delete then commit
                 for key, unspent in unspentcoins.Current.items():
@@ -617,6 +632,8 @@ class LevelDBBlockchain(Blockchain):
 #        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
         while not self._disposed:
+
+
             if len(self._header_index) <= self._current_block_height + 1:
                 break
 
@@ -629,11 +646,14 @@ class LevelDBBlockchain(Blockchain):
             self.BlockSearchTries=0
             block = self._block_cache[hash]
 
+
             try:
 
                 self.Persist(block)
                 self.OnPersistCompleted(block)
                 del self._block_cache[hash]
+
+
             except Exception as e:
                 self.__log.debug("COULD NOT PERSIST OR ON PERSIST COMPLETE %s " % e)
 

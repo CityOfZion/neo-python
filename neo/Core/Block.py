@@ -214,11 +214,15 @@ class Block(BlockBase, InventoryMixin):
     # < returns > 返回该区块的合法性，返回true即为合法，否则，非法。 < / returns >
     def Verify(self, completely=False):
 
-        self.__log.debug("Verifying BLOCK!!")
-        from neo.Blockchain import GetBlockchain,GetConsensusAddress
-
+        print("verifying block!")
         res = super(Block, self).Verify()
-        if not res: return False
+        if not res:
+            print("block base did not verify")
+            return False
+
+        self.__log.debug("Verifying BLOCK!!")
+        from neo.Blockchain import GetBlockchain, GetConsensusAddress
+
 
         #first TX has to be a miner transaction. other tx after that cant be miner tx
         if self.Transactions[0].Type != TransactionType.MinerTransaction: return False

@@ -22,11 +22,18 @@ class AccountState(StateBase):
     Votes = []
     Balances = {}
 
-    def __init__(self, script_hash=None, is_frozen=False, votes=[], balances={}):
+    def __init__(self, script_hash=None, is_frozen=False, votes=None, balances=None):
         self.ScriptHash = script_hash
         self.IsFrozen = is_frozen
-        self.Votes = votes
-        self.Balances = balances
+        if votes is None:
+            self.Votes = []
+        else:
+            self.Votes = votes
+
+        if balances is None:
+            self.Balances = {}
+        else:
+            self.Balances = balances
 
 
     @property
@@ -127,6 +134,7 @@ class AccountState(StateBase):
         for key, balance in self.Balances.items():
             if key == assetId:
                 self.Balances[assetId] = self.Balances[assetId] - fixed8_val
+                found = True
         if not found:
             self.Balances[assetId] = fixed8_val * Fixed8(-1)
 
@@ -150,15 +158,13 @@ class AccountState(StateBase):
         json = super(AccountState, self).ToJson()
         addr = Crypto.ToAddress(self.ScriptHash)
 
-#        votes = [v.hex() for v in self.]
-
         json['script_hash'] = addr
         json['frozen'] = self.IsFrozen
         json['votes'] = [v.hex() for v in self.Votes]
 
         balances = {}
         for key, value in self.Balances.items():
-            balances[key.ToString()] = value.value
+            balances[key.ToString()] = str( value.value / Fixed8.D )
 
         json['balances'] = balances
         return json

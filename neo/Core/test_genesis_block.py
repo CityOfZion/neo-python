@@ -1,4 +1,4 @@
-from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Utils.VerifiableTestCase import VerifiableTestCase
 from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
@@ -10,8 +10,11 @@ from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
 from neo import Settings
 from neo.Cryptography.Crypto import Crypto
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+import shutil
 
-class GenesisBlockTestCase(NeoTestCase):
+class GenesisBlockTestCase(VerifiableTestCase):
+
 
     testnet_genesis_hash = 'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef'
     testnet_ghash_current= ''
@@ -59,9 +62,6 @@ class GenesisBlockTestCase(NeoTestCase):
         b"3631f66024ca6f5b033d7e0809eb993443374830025af904fb51b0334f127cda"
     ]
 
-    @classmethod
-    def setUpClass(cls):
-        pass
 
     def test_miner_tx(self):
         miner_tx = MinerTransaction()
@@ -135,8 +135,9 @@ class GenesisBlockTestCase(NeoTestCase):
             self.assertEqual(txhashes, self.mainnet_genesis_tx_hashes)
             self.assertEqual(block.Hash.ToBytes(), self.mainnet_genesis_hash)
 
+        res = block.Verify(completely=False)
 
-
+        self.assertTrue(res)
 
 
 

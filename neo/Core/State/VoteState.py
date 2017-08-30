@@ -2,10 +2,15 @@
 
 class VoteState(object):
 
-    PublicKeys=[]
+    PublicKeys=None
 
     Count = 0
 
-    def __init__(self, keys=[], count=0):
-        self.PublicKeys = keys
+    def __init__(self, keys=None, count=0):
+
+        if keys is None:
+            self.PublicKeys = []
+        else:
+            self.PublicKeys = keys
+
         self.Count = count

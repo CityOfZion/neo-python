@@ -70,6 +70,10 @@ class BlockBase(VerifiableMixin):
         return Helper.GetHashData(self)
 
 
+    @property
+    def Scripts(self):
+        return [self.Script]
+
     def Size(self):
 
         uintsize = ctypes.sizeof(ctypes.c_uint)
@@ -105,13 +109,6 @@ class BlockBase(VerifiableMixin):
 
 
     def SerializeUnsigned(self, writer):
-#        self.__log.debug("Serializing index (%s) %s " % ( self.Index, type(self)))
-#        self.__log.debug("writing version:                 %s " % self.MerkleRoot)
-#        self.__log.debug("writing merkle                   %s " % self.MerkleRoot)
-#        self.__log.debug("writing self prevhash            %s " % self.PrevHash)
-#        self.__log.debug("writing timestamp                %s " % self.Timestamp)
-#        self.__log.debug("wirting consensus data           %s " % self.ConsensusData)
-#        self.__log.debug("writing next consensus           %s " % self.NextConsensus)
         writer.WriteUInt32(self.Version)
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt256(self.MerkleRoot)
@@ -128,10 +125,17 @@ class BlockBase(VerifiableMixin):
 
     def GetScriptHashesForVerifying(self):
         #if this is the genesis block, we dont have a prev hash!
-        if self.PrevHash == bytearray(32):
-            return [ self.Script.VerificationScript.ToScriptHash()]
+        if self.PrevHash.Data == bytearray(32):
+            print("verificiation script %s"  %(self.Script.ToJson()))
+            if type(self.Script.VerificationScript) is bytes:
+                return [bytearray(self.Script.VerificationScript)]
+            elif type(self.Script.VerificationScript) is bytearray:
+                return [ self.Script.VerificationScript]
+            else:
+                raise Exception('Invalid Verification script')
 
-        prev_header = GetBlockchain().GetHeader(self.PrevHash)
+        print("prevhash %s "% type(self.PrevHash))
+        prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
         if prev_header == None:
             raise Exception('Invalid operation')
         return [ prev_header.NextConsensus ]
@@ -162,23 +166,30 @@ class BlockBase(VerifiableMixin):
         return json
 
     def Verify(self):
-        if self.Hash == GetGenesis().Hash: return True
+        print("verifying block base 1")
+        if not self.Hash.ToBytes() == GetGenesis().Hash.ToBytes(): return False
+        print("verifying block base @ %s " % self.Index)
+        bc = GetBlockchain()
+        print("BC: %s " % bc)
+        if not bc.ContainsBlock(self.Index):
+            print("blockchin didnt contain block index")
+            return False
+        print("verifying block base 3 %s " % self.PrevHash.ToBytes())
 
-        if GetBlockchain().ContainsBlock(self.Hash): return True
+        if self.Index > 0:
+            prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
 
-        prev_header = GetBlockchain().GetHeader(self.PrevHash)
+            if prev_header == None: return False
 
-        if prev_header == None: return False
+            if prev_header.Index + 1 != self.Index: return False
 
-        if prev_header.Index + 1 != self.Index: return False
+            if prev_header.Timestamp >= self.Timestamp: return False
 
-        if prev_header.Timestamp >= self.Timestamp: return False
-
-        self.__log.debug("End verify for now. cannot verify scripts at the moment")
-        return True
-
+        print("Will verify scripts!!")
         #this should be done to actually verify the block
-        #if not Helper.VerifyScripts(self): return False
+        if not Helper.VerifyScripts(self):
+            print("could not verify scripts")
+            return False
 
-        #return True
+        return True
 

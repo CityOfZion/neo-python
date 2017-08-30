@@ -106,7 +106,7 @@ class PromptInterface(object):
             return [(Token.Command, 'Progress: '),
                     (Token.Number, str(Blockchain.Default().Height)),
                     (Token.Neo, '/'),
-                    (Token.Number, str(Blockchain.Default().HeaderHeight -1))]
+                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
             print("couldnt get toolbar: %s " % e)
             return []
@@ -140,7 +140,7 @@ class PromptInterface(object):
 
     def show_state(self):
         height = Blockchain.Default().Height
-        headers = Blockchain.Default().HeaderHeight -1
+        headers = Blockchain.Default().HeaderHeight
 
         diff = height - self.start_height
         now = datetime.datetime.utcnow()
@@ -241,6 +241,22 @@ class PromptInterface(object):
         else:
             print("please specify an account address")
 
+    def show_asset_state(self, args):
+        item = self.get_arg(args)
+        print("asset to show %s " % item)
+
+        if item is not None:
+            asset = Blockchain.Default().GetAssetState(item)
+
+            if asset is not None:
+                bjson = json.dumps(asset.ToJson(), indent=4)
+                tokens = [(Token.Number, bjson)]
+                print_tokens(tokens, self.token_style)
+                print('\n')
+            else:
+                print("asset %s not found" % item)
+        else:
+            print("please specify an asset hash")
 
     def show_contract_state(self, args):
         item = self.get_arg(args)
@@ -389,6 +405,8 @@ class PromptInterface(object):
                     self.show_header(arguments)
                 elif command =='account':
                     self.show_account_state(arguments)
+                elif command == 'asset':
+                    self.show_asset_state(arguments)
                 elif command =='contract':
                     self.show_contract_state(arguments)
                 elif command == 'sc':

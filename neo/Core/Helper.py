@@ -1,9 +1,12 @@
-
+from neo.Blockchain import GetBlockchain,GetStateReader
 from neo.Cryptography.Crypto import *
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.UInt160 import UInt160
-import pickle
+from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.SmartContract.ApplicationEngine import ApplicationEngine
+from neo.Fixed8 import Fixed8
+from neo.SmartContract import TriggerType
 
 class Helper(object):
 
@@ -65,19 +68,53 @@ class Helper(object):
     @staticmethod
     def VerifyScripts(verifiable):
 
-        max_steps = 3000
-        hashes = []
+
 
         try:
             hashes = verifiable.GetScriptHashesForVerifying()
         except Exception as e:
+            print("couldng get script hashes %s " % e)
             return False
 
-        if len(hashes) != len(verifiable.Scripts): return False
+        if len(hashes) != len(verifiable.Scripts):
+            print("hashes not same length as verifiable scripts")
+            return False
+        print("hello!!!! %s " % hashes)
 
-        ### @TODO script hash verifying!
+        for i in range(0, len(hashes)):
+            verification = verifiable.Scripts[i].VerificationScript
 
-        raise NotImplementedError()
+
+            print("verifying script: %s %s " % (hashes[i], verification))
+
+            if len(verification) == 0:
+                sb = ScriptBuilder()
+                sb.EmitAppCall(hashes[i].Data)
+                verification = sb.ToArray()
+
+            else:
+                if hashes[i] != verification:
+                    print("hashes not equal to script hash!")
+                    return False
+
+            engine = ApplicationEngine(TriggerType.Verification, verifiable, GetBlockchain(), GetStateReader(), Fixed8.Zero())
+            engine.LoadScript(verification, False)
+            engine.LoadScript(verifiable.Scripts[i].InvocationScript, True)
+
+            res =  engine.Execute()
+            if not res:
+                print("engine did not execune")
+                return False
+            else:
+
+                print("engine did execute!")
+
+
+            if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
+                print("stack not one, or stack false")
+                return False
+
+        return True
 
     @staticmethod
     def IToBA(value):

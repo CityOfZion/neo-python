@@ -103,7 +103,7 @@ class NeoNode(Protocol):
             try:
                 bcr.remove(req)
             except Exception as e:
-                print("Couldnt remove request %s " % e)
+                self.Log("Couldnt remove request %s " % e)
         self.Log("Release block requests after %s " % len(bcr))
 
         self.myblockrequests = set()
@@ -215,21 +215,27 @@ class NeoNode(Protocol):
         hashstart = BC.Default().Height + 1
         current_header_height = BC.Default().HeaderHeight
 
-
+        do_go_ahead = False
         if BC.Default().BlockSearchTries > 400 and len(BC.Default().BlockRequests) > 0:
-#            self.leader.ResetBlockRequestsAndCache()
-            print("putting block needed most in %s "% hashstart)
-            hashes.append(BC.Default().GetHeaderHash(hashstart))
+            do_go_ahead = True
 
         first=None
         while hashstart < current_header_height and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
-            if hash is not None and not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
+            if not do_go_ahead:
+                if hash is not None and not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
+                    if not first:
+                        first = hashstart
+                    BC.Default().BlockRequests.add(hash)
+                    self.myblockrequests.add(hash)
+                    hashes.append(hash)
+            else:
                 if not first:
                     first = hashstart
                 BC.Default().BlockRequests.add(hash)
                 self.myblockrequests.add(hash)
                 hashes.append(hash)
+
             hashstart += 1
 
         self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first,hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))

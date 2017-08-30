@@ -2,12 +2,98 @@ from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ContractState import ContractState
+from neo.Core.State.AccountState import AccountState
+from neo.UInt160 import UInt160
+from neo.Fixed8 import Fixed8
+from neo.IO.MemoryStream import StreamManager
+from neo.IO.BinaryReader import BinaryReader
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.Core.Blockchain import Blockchain
 
-
+import json
 import binascii
 
 class StateTestCase(NeoTestCase):
 
+    shash = b"\x89\xeb\x8bV\xf7\x7f\xcd1vs\xdb\xe9\x94\xf0\xc9\x1f\'\xb9\xca\xaf"
+    saddr = 'AUM8Pgc9QTgRBcmGppYoVZ6TFn5UpPDXFs'
+
+
+    def test_account_state(self):
+        hash = UInt160(data=self.shash)
+        account = AccountState(script_hash=hash)
+
+        addr = account.Address
+
+        self.assertEqual(addr, self.saddr)
+
+        input = binascii.unhexlify(self.assset)
+
+        asset = AssetState.DeserializeFromDB(input)
+
+        account.AddToBalance(asset.AssetId, Fixed8(2440000000))
+
+        self.assertEqual(account.BalanceFor(asset.AssetId), Fixed8(2440000000))
+
+        account.SubtractFromBalance(asset.AssetId, Fixed8(1220000000))
+
+        self.assertEqual(account.BalanceFor(asset.AssetId), Fixed8(1220000000))
+
+        self.assertEqual(account.HasBalance(asset.AssetId), True)
+
+        sshare_hash = Blockchain.SystemShare().Hash
+
+        account.SubtractFromBalance(sshare_hash, Fixed8(800000000))
+
+        self.assertFalse(account.AllBalancesZeroOrLess())
+
+
+        acct_json = account.ToJson()
+
+
+
+        stream = StreamManager.GetStream()
+        writer = BinaryWriter(stream)
+
+        account.Serialize(writer)
+        out = stream.ToArray()
+        StreamManager.ReleaseStream(stream)
+
+        input = binascii.unhexlify(out)
+        newaccount = AccountState.DeserializeFromDB(input)
+
+        self.assertEqual(acct_json, newaccount.ToJson())
+
+
+    ac1_out = b'0089eb8b56f77fcd317673dbe994f0c91f27b9caaf0000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500f850d0ffffffffe72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6000b9b74800000000'
+
+    ac2_h = b'\xf3\x97\x1c\xa1\x1e\xc9\xd8j\xba}\x9b8\xc6#\xe0<Ds\r\xd1'
+    ac2_a = 'AdyrsYhdmiV2fPshxX3esXFbzJ1XNmvhYJ'
+
+    def test_account_2(self):
+
+        hash = UInt160(data=self.ac2_h)
+        account2 = AccountState(script_hash=hash)
+
+        addr = account2.Address
+
+        self.assertEqual(addr, self.ac2_a)
+
+        input = binascii.unhexlify(self.assset)
+        asset = AssetState.DeserializeFromDB(input)
+
+        account2.AddToBalance(asset.AssetId, Fixed8(97800000000))
+
+#        print("account 2 %s " % json.dumps(account2.ToJson(), indent=4))
+
+        self.assertEqual(account2.BalanceFor(asset.AssetId), Fixed8(97800000000))
+
+
+
+        input = binascii.unhexlify(self.ac1_out)
+        account1 = AccountState.DeserializeFromDB(input)
+
+#        print("account 1 %s " % json.dumps(account1.ToJson(), indent=4))
 
 
     assset = b'00e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6001445b7b226c616e67223a227a682d434e222c226e616d65223a22e5b08fe89a81e5b881227d2c7b226c616e67223a22656e222c226e616d65223a22416e74436f696e227d5d0000c16ff28623000000000000000000080000000000000000000000000000000000000000000000000000000000009f7fd096d37ed2c0e3f7f0cfc924beef4ffceb689f7fd096d37ed2c0e3f7f0cfc924beef4ffceb6800093d0000'

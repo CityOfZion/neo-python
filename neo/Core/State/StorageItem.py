@@ -7,10 +7,13 @@ from neo.IO.MemoryStream import MemoryStream,StreamManager
 class StorageItem(StateBase):
 
 
-    Value = bytearray(0)
+    Value = None
 
-    def __init__(self, value=bytearray(0)):
-        self.Value = value
+    def __init__(self, value=None):
+        if value is None:
+            self.Value = bytearray(0)
+        else:
+            self.Value = value
 
     def Clone(self):
         return StorageItem(value=self.Value)

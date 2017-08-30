@@ -3,6 +3,8 @@ from autologging import logged
 from neo.UInt256 import UInt256
 from neo.UInt160 import UInt160
 from neo.Core.State.ValidatorState import ValidatorState
+import inspect
+
 @logged
 class DBCollection():
 
@@ -20,6 +22,7 @@ class DBCollection():
     Debug = False
 
 
+    _built_keys=False
 
 
     def __init__(self, db, sn, prefix, class_ref, debug=False):
@@ -36,7 +39,14 @@ class DBCollection():
         self.Changed = []
         self.Deleted = []
 
-        self._BuildCollectionKeys()
+
+    @property
+    def Keys(self):
+        if not self._built_keys:
+            self._BuildCollectionKeys()
+
+        return self.Collection.keys()
+
 
     @property
     def Current(self):
@@ -47,30 +57,41 @@ class DBCollection():
                     ret[key] = val
             return ret
         except Exception as e:
-            self.__log.debug("error getting items %s " % e)
+            print("error getting items %s " % e)
 
         return {}
 
     def _BuildCollectionKeys(self):
         for key in self.SN.iterator(prefix=self.Prefix, include_value=False):
             key = key[1:]
-#            print("adding key %s " % key)
-            self.Collection[key] = None
+            if not key in self.Collection.keys():
+                self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
         try:
 
-            for item in self.Changed:
-                wb.put( self.Prefix + item, self.Collection[item].ToByteArray() )
-            for item in self.Deleted:
-                wb.delete(self.Prefix + item)
+            for keyval in self.Changed:
+                item = self.Collection[keyval]
+                if item is None:
+                    print("key %s %s " % (keyval, self.Collection[keyval]))
+                    print("THIS IS BAD %s " % self.Collection.items())
+                    raise Exception("ITEM NONONEEEE %s " % keyval)
+                else:
+                    wb.put( self.Prefix + keyval, self.Collection[keyval].ToByteArray() )
+            for keyval in self.Deleted:
+                wb.delete(self.Prefix + keyval)
             if destroy:
                 self.Destroy()
             else:
                 self.Changed = []
                 self.Deleted = []
         except Exception as e:
-            self.__log.debug("COULD NOT COMMIT: %s %s" % (e, self.ClassRef))
+            print("COULD NOT COMMIT %s %s " % (e, self.ClassRef))
+            (frame, filename, line_number,
+             function_name, lines, index) = inspect.getouterframes(inspect.currentframe())[1]
+            print(frame, filename, line_number, function_name, lines, index)
+            raise Exception("BAD")
+
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
@@ -104,12 +125,25 @@ class DBCollection():
 
 
     def TryGet(self, keyval):
-        if keyval in self.Collection.keys():
-            self.MarkChanged(keyval)
 
+        #if the item has been looked up, or added it will be in Keys
+        if keyval in self.Collection.keys():
             item = self.Collection[keyval]
             if item is None:
                 item = self._GetItem(keyval)
+            self.MarkChanged(keyval)
+            return item
+
+        #otherwise, chekc in the database
+        key= self.SN.get(self.Prefix + keyval)
+
+        #if the key is there, get the item
+        if key is not None:
+
+            self.MarkChanged(keyval)
+
+            item = self._GetItem(keyval)
+
             return item
 
         return None
@@ -122,7 +156,7 @@ class DBCollection():
             self.Collection[keyval] = item
             return item
         except Exception as e:
-            self.__log.debug("Could not deserialize item from key %s : %s" % (keyval, e))
+            print("Could not deserialize item from key %s : %s" % (keyval, e))
 
         return None
 
@@ -136,6 +170,7 @@ class DBCollection():
             self.Deleted.append(keyval)
 
     def MarkChanged(self, keyval):
+
         if not keyval in self.Changed:
             self.Changed.append(keyval)
 
