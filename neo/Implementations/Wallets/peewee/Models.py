@@ -29,8 +29,8 @@ class Contract(ModelBase):
     RawData = CharField()
     ScriptHash = CharField(unique=True)
     PublicKeyHash = CharField()
-    Account = ForeignKeyField(Account)
-    Address = ForeignKeyField(Address)
+#    Account = ForeignKeyField(Account)
+#    Address = ForeignKeyField(Address)
 
 class Key(ModelBase):
     Name = CharField()

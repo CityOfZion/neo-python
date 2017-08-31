@@ -20,8 +20,10 @@ class PWDatabase(object):
     _db = None
 
     def __init__(self):
+        print("initializing with path %s " % PWDatabase.__dbpath__)
         self._db = SqliteDatabase(PWDatabase.__dbpath__)
         PWDatabase.DBProxy().initialize(self._db)
+        print("initialized proxy!")
         self.startup()
 
 

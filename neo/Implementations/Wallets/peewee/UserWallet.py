@@ -11,6 +11,7 @@ from enum import Enum
 import random
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from Crypto import Random
+import os
 
 from .PWDatabase import PWDatabase
 
@@ -27,6 +28,7 @@ class UserWallet(Wallet):
     Version = None
 
     def __init__(self, path, passwordKey, create):
+
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)
         print("initialized user wallet!! %s " % self)
 
@@ -34,17 +36,20 @@ class UserWallet(Wallet):
         print("trying to build database!! %s " % self._path)
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
+        print("DB %s  " % db)
         try:
-
-
-
-            db.create_tables([Account(),Address,Coin,Contract,Key,Transaction,TransactionInfo,])
-            self.__log.debug("created tables")
+            db.create_tables([Account,Address,Coin,Contract,Key,Transaction,TransactionInfo,], safe=True)
+            print("created tables!")
         except Exception as e:
             print("couldnt build database %s " % e)
 
     def DB(self):
         return PWDatabase.Context()
+
+    @staticmethod
+    def Open(path, password):
+        print("OPENING WITH PATH %s " % path)
+        return UserWallet(path=path, passwordKey=password,create=False)
 
 
     @staticmethod
@@ -58,6 +63,9 @@ class UserWallet(Wallet):
         print("user wallet private key %s " % private_key)
 
         account = WalletKeyPair(priv_key=private_key)
+        print("User wallet public key %s " % account.PublicKey)
+        self._keys[account.PublicKeyHash.ToBytes()] = account
+
         self.OnCreateAccount(account)
         contract = WalletContract.CreateSignatureContract(account.PublicKey)
         self.AddContract(contract)
@@ -88,7 +96,7 @@ class UserWallet(Wallet):
         encrypted_pk = self.EncryptPrivateKey(bytes(decrypted))
         print("encripted pk %s " % encrypted_pk)
 
-        db_account,created = Account.get_or_create(PrivateKeyEncrypted=encrypted_pk, PublicKeyHash= account.PublicKeyHash)
+        db_account,created = Account.get_or_create(PrivateKeyEncrypted=encrypted_pk, PublicKeyHash= account.PublicKeyHash.ToBytes())
         db_account.PrivateKeyEncrypted = encrypted_pk
         db_account.save()
         print("DB ACCOUNT %s " % db_account)
@@ -97,19 +105,28 @@ class UserWallet(Wallet):
 
         super(UserWallet, self).AddContract(contract)
 
-        db_contract = Contract.get(Contract.ScriptHash == contract.ScriptHash)
+        db_contract = None
+        try:
+            db_contract = Contract.get(ScriptHash = contract.ScriptHash.ToBytes())
+        except Exception as e:
+            print("contract does not exist yet")
 
-        if contract is not None:
-            db_contract.PublicKeyHash = contract.PublicKeyHash
+        if db_contract is not None:
+            db_contract.PublicKeyHash = contract.PublicKeyHash.ToBytes()
         else:
-            address = Address.get(Address.ScriptHash == Contract.ScriptHash)
+            address, created = Address.get_or_create(ScriptHash = contract.ScriptHash.ToBytes())
+            address.save()
 
-            if address is None:
-                address = Address.create(ScriptHash = Contract.ScriptHash)
-                address.save()
+            print("created address ? %s %s " % (address, created))
 
-            db_contract = Contract.create(RawData=contract.ToArray(),ScriptHash = contract.ScriptHash, PublicKeyHash = contract.PublicKeyHash)
+            db_contract = Contract.create(RawData=contract.ToArray(),
+                                          ScriptHash = contract.ScriptHash.ToBytes(),
+                                          PublicKeyHash = contract.PublicKeyHash.ToBytes())
+
+            print("Creating db contract %s " % db_contract)
+
             db_contract.save()
+            print("Created db contract...")
 
     def AddWatchOnly(self, script_hash):
         super(UserWallet,self).AddWatchOnly(script_hash)
@@ -142,13 +159,18 @@ class UserWallet(Wallet):
 
     def LoadContracts(self):
         return Contract.select()
-        pass
 
     def LoadStoredData(self, key):
+        print("Looking for key %s " % key)
+        print("keys count %s " % Key.select().count())
+        for k in Key.select():
+            print("key is %s " % k)
         try:
             return Key.get(Name=key).Value
         except Exception as e:
+            print("Could not get key %s " % e)
             self.__log.debug('could not get key %s ' % e)
+        return None
 
     def LoadTransactions(self):
         return Transaction.select()

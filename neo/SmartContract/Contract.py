@@ -13,6 +13,7 @@ from neo.Cryptography.Crypto import *
 from neo.IO.Mixins import SerializableMixin
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.Core.VerificationCode import VerificationCode
+from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
 from autologging import logged
 
@@ -20,7 +21,7 @@ from autologging import logged
 class Contract(SerializableMixin, VerificationCode):
     """docstring for Contract"""
 
-    PubKeyHash = None
+    PublicKeyHash = None
 
     _address = None
 
@@ -50,7 +51,7 @@ class Contract(SerializableMixin, VerificationCode):
 
         self.Script = redeem_script
         self.ParameterList = param_list
-        self.PubKeyHash = pubkey_hash
+        self.PublicKeyHash = pubkey_hash
         self._address = None
 
     @staticmethod
@@ -93,8 +94,11 @@ class Contract(SerializableMixin, VerificationCode):
     def CreateSignatureContract(publicKey):
 
         script = Contract.CreateSignatureRedeemScript(publicKey)
-        params = [ContractParameterType.Signature]
-        pubkey_hash = Crypto.ToScriptHash( publicKey.encode_point(True))
+        params = bytearray(ContractParameterType.Signature)
+        print("creating pubkey hash with public key %s " % publicKey)
+        encoded = publicKey.encode_point(True)
+        print("encoded %s " % encoded)
+        pubkey_hash = Crypto.ToScriptHash( encoded, unhex=False)
 
         return Contract(script, params, pubkey_hash)
 
@@ -114,30 +118,22 @@ class Contract(SerializableMixin, VerificationCode):
         return self.ScriptHash == other.ScriptHash
 
 
-    def GetHashCode(self):
-        if self.ScriptHash == None:
-            self.ScriptHash = Contract.RedeemToScripthash(self.RedeemScript)
-        return self.ScriptHash
 
     def ToScriptHash(self):
         return Crypto.Hash160(self.ScriptHash)
 
-    def IsStandard(self):
-        if len(self.RedeemScript) / 2 != 35:
-            return False
-        array = self.RedeemScript[:]
-        if array[:2] != '21' or array[-2:] != 'ac':
-            return False
-        return True
-
-    def Serialize(self, writer):
-        writer.WriteBytes(self.ScriptHash)
-        writer.WriteBytes(self.PubKeyHash)
-        writer.WriteVarBytes(self.ParameterList)  # TODO need check
-        writer.WriteVarBytes(self.RedeemScript)
 
     def Deserialize(self, reader):
-        raise NotImplementedError()
+        self.PublicKeyHash = reader.ReadUInt160()
+        self.ParameterList = reader.ReadVarBytes()
+        self.Script = reader.ReadVarBytes()
+
+
+    def Serialize(self, writer):
+        writer.WriteUInt160(self.PublicKeyHash)
+        writer.WriteVarBytes(self.ParameterList)
+        writer.WriteVarBytes(self.Script)
+
 
     @staticmethod
     def PubkeyToRedeem(pubkey):
@@ -146,3 +142,7 @@ class Contract(SerializableMixin, VerificationCode):
     @staticmethod
     def RedeemToScripthash(redeem):
         return binascii.hexlify(bin_hash160(redeem))
+
+
+    def ToArray(self):
+        return Helper.ToArray(self)

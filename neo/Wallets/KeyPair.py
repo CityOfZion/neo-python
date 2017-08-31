@@ -28,7 +28,7 @@ class KeyPair(object):
 
         encoded = self.PublicKey.encode_point(True)
 
-        self.PublicKeyHash = Crypto.Hash160(encoded)
+        self.PublicKeyHash = Crypto.ToScriptHash(encoded,unhex=False)
 
 
     @staticmethod

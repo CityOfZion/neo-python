@@ -8,13 +8,10 @@
 import json
 import logging
 import datetime
-import math
 import time
-import gc
+import os
 from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
-import random
-import string
 import resource
 
 from neo.Core.Blockchain import Blockchain
@@ -71,6 +68,9 @@ class PromptInterface(object):
     _gathering_password = False
     _gathered_passwords = []
     _gather_password_action = None
+    _num_passwords_req = 0
+    _wallet_create_path = None
+
 
     Wallet = None
 
@@ -146,18 +146,54 @@ class PromptInterface(object):
             reactor.callLater(1,self.paused_loop)
 
 
+    def do_open(self, arguments):
+        item = self.get_arg(arguments)
+
+        if item and item == 'wallet':
+
+            path = self.get_arg(arguments, 1)
+
+            if path:
+
+                if not os.path.exists(path):
+                    print("wallet file not found")
+                    return
+
+                self._num_passwords_req = 1
+                self._wallet_create_path = path
+                self._gathered_passwords = []
+                self._gathering_password = True
+                self._gather_password_action = self.do_open_wallet
+            else:
+                print("Please specify a path")
+
     def do_create(self, arguments):
         item = self.get_arg(arguments)
 
         if item and item == 'wallet':
-            self._gathered_passwords = []
-            self._gathering_password = True
-            self._gather_password_action = self.do_create_wallet
- #           print("create wallet! Please specify a password")
+
+            path = self.get_arg(arguments, 1)
+
+            if path:
+
+                if os.path.exists(path):
+                    print("File already exists")
+                    return
+
+                self._num_passwords_req = 2
+                self._wallet_create_path = path
+                self._gathered_passwords = []
+                self._gathering_password = True
+                self._gather_password_action = self.do_create_wallet
+     #           print("create wallet! Please specify a password")
+            else:
+                print("Please specify a path")
 
     def do_create_wallet(self):
 #        print("do create wallet with passwords %s "% self._gathered_passwords)
         psswds = self._gathered_passwords
+        path = self._wallet_create_path
+        self._wallet_create_path = None
         self._gathered_passwords = None
         self._gather_password_action = None
 
@@ -166,11 +202,35 @@ class PromptInterface(object):
             return
 
         passwd = psswds[1]
-        print("Creating wallet with password %s " %passwd)
-        random_path = ''.join(random.sample(string.ascii_letters * 10, 10))
-        print("Random path %s " % random_path)
-        self.Wallet = UserWallet.Create(path='./Wallets/%s.db3' % random_path , password=passwd)
-        print("wallet ! %s " % self.Wallet)
+
+        try:
+            self.Wallet = UserWallet.Create(path=path , password=passwd)
+        except Exception as e:
+            print("Exception creating wallet: %s " % e)
+
+        contracts = self.Wallet.GetContracts()
+        contract = contracts[ list(contracts.keys())[0]]
+        key = self.Wallet.GetKey(contract.PublicKeyHash.ToBytes())
+
+        print("Created wallet, saved to %s " % path)
+        print("contract Address %s " % contract.Address)
+        print("pubkey %s " % key.PublicKey.encode_point(True))
+
+
+    def do_open_wallet(self):
+        passwd = self._gathered_passwords[0]
+        path = self._wallet_create_path
+        self._wallet_create_path = None
+        self._gathered_passwords = None
+        self._gather_password_action = None
+
+        print("open wallet %s %s " % (passwd, path))
+
+        try:
+            self.Wallet = UserWallet.Open(path, passwd)
+            print("opened wallet %s " % self.Wallet)
+        except Exception as e:
+            print("could not open wallet %s " % e)
 
     def show_state(self):
         height = Blockchain.Default().Height
@@ -191,8 +251,6 @@ class PromptInterface(object):
         out += 'Blocks since program start %s\n' % diff
         out += 'Time elapsed %s mins\n' % mins
         out += 'blocks per min %s \n' % bpm
-#        out += "Node Req Part, Max: %s %s\n" % (self.node_leader.BREQPART, self.node_leader.BREQMAX)
-#        out += "DB Cache Lim, Miss Lim %s %s\n" % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM)
         tokens = [(Token.Number, out)]
         print_tokens(tokens, self.token_style)
 
@@ -416,7 +474,7 @@ class PromptInterface(object):
         while self.go_on:
 
 
-            if self._gathered_passwords and len(self._gathered_passwords) == 2:
+            if self._gathered_passwords and len(self._gathered_passwords) == self._num_passwords_req:
                 self._gathering_password = False
                 self._gather_password_action()
 
@@ -455,6 +513,8 @@ class PromptInterface(object):
                         self.help()
                     elif command == 'create':
                         self.do_create(arguments)
+                    elif command == 'open':
+                        self.do_open(arguments)
                     elif command == 'block':
                         self.show_block(arguments)
                     elif command == 'tx':

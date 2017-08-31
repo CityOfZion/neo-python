@@ -66,9 +66,10 @@ class Wallet(object):
     def __init__(self, path, passwordKey, create):
 
         print("wallet create?? %s %s %s " % (path, passwordKey, create))
+        self._path = path
+
         if create:
             print("DO CREATE!")
-            self._path = path
             print("path is %s " % self._path)
             self._iv = bytes( Random.get_random_bytes(16))
             self._master_key = bytes(Random.get_random_bytes(32))
@@ -101,10 +102,19 @@ class Wallet(object):
 
         else:
             print("DONT CREATE!!")
-            passwordHash = self.LoadStoredData('PasswordHash')
-            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey):
-                raise Exception("Cryptographic exception")
+            self.BuildDatabase()
 
+            passwordHash = self.LoadStoredData('PasswordHash')
+            if passwordHash is None:
+                raise Exception("Password hash not found in database")
+            print("loaded stored data password hash %s " % passwordHash)
+            hkey= hashlib.sha256(passwordKey.encode('utf-8'))
+            print("hkey %s " % hkey)
+            print("hkey digest %s "% hkey.digest())
+            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
+                raise Exception("Cryptographic exception")
+            
+            print("password ok!")
             self._iv = self.LoadStoredData('IV')
             self._master_key = self.LoadStoredData('MasterKey')
             self._keys = self.LoadKeyPair()
@@ -128,12 +138,14 @@ class Wallet(object):
 
     def AddContract(self, contract):
 
-        for key in self._keys:
-            if not key.PublicKeyHash.ToBytes() == contract.PublicKeyHash.ToBytes():
-                raise Exception('Invalid operation- public key mismatch')
+        print("adding contract... %s " % self._keys.keys())
+        print("looking for %s %s %s" % (contract.PublicKeyHash.ToString(), contract.PublicKeyHash.ToBytes(), contract.PublicKeyHash.Data))
+        if not contract.PublicKeyHash.ToBytes() in self._keys.keys():
+            raise Exception('Invalid operation- public key mismatch')
 
         self._contracts[contract.ScriptHash.ToBytes()] = contract
-        self._watch_only.remove(contract.ScriptHash.ToBytes())
+        if contract.ScriptHash.ToBytes() in self._watch_only:
+            self._watch_only.remove(contract.ScriptHash.ToBytes())
 
 
     def AddWatchOnly(self, script_hash):
@@ -367,6 +379,10 @@ class Wallet(object):
 
     def ValidatePassword(self, password):
         return hashlib.sha256(password) == self.LoadStoredData('PasswordHash')
+
+
+    def GetContracts(self):
+        return self._contracts
 
 
     def MakeTransaction(self, tx, account):
