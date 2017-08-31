@@ -7,7 +7,7 @@ Usage:
 """
 
 from neo.Core.TX.Transaction import TransactionType
-from neo.Core.State import CoinState
+from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Cryptography.Base58 import b58decode
@@ -113,7 +113,7 @@ class Wallet(object):
             print("hkey digest %s "% hkey.digest())
             if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
                 raise Exception("Cryptographic exception")
-            
+
             print("password ok!")
             self._iv = self.LoadStoredData('IV')
             self._master_key = self.LoadStoredData('MasterKey')
@@ -126,10 +126,8 @@ class Wallet(object):
             del passwordKey
 
 
-            self._current_height = Blockchain.Default().HeaderHeight + 1 if Blockchain.Default() is not None else 0
+        self._current_height = 0
 
-            self._blockThread = Thread(target=self.ProcessBlocks, name='Wallet.ProcessBlocks')
-#            self._blockThread.start()
 
     def BuildDatabase(self):
         #abstract
@@ -256,18 +254,23 @@ class Wallet(object):
         pass
 
     def ProcessBlocks(self):
-        while self._is_running:
 
-            while self._current_height <= Blockchain.Default().Height and self._is_running:
+        blockcount = 0
+        print("processing blocks!")
+        while self._current_height <= Blockchain.Default().Height and self._is_running and blockcount < 2:
 
-                block = Blockchain.Default().GetBlock(self._current_height)
+            print("will process block")
+            try:
+                block = Blockchain.Default().GetBlockByHeight(self._current_height)
+            except Exception as e:
+                print("couldnt get block %s " % e)
+                break
 
-                if block is not None:
-                    self.ProcessNewBlock(block)
+            print("block is %s " % block)
+            if block is not None:
+                self.ProcessNewBlock(block)
 
-            for i in range(0, 20):
-                if self._is_running:
-                    time.sleep(1)
+            blockcount+=1
 
     def ProcessNewBlock(self, block):
 
@@ -275,15 +278,15 @@ class Wallet(object):
         changed = set()
         deleted = set()
 
-        self._lock.acquire()
+        print("Wallet processing block %s " % block.Index)
         try:
 
-            for tx in block.Transactions:
+            for tx in block.FullTransactions:
 
                 for index,output in enumerate(tx.outputs):
-
+                    print("index, outputs %s %s " % (index,output))
                     state = self.CheckAddressState(output.ScriptHash)
-
+                    print("state is %s " % state)
                     if state > 0:
                         key = CoinReference(tx.Hash, index )
 
@@ -331,9 +334,7 @@ class Wallet(object):
                 self.BalanceChanged()
 
         except Exception as e:
-            self.__log.debug("could not process: %s " % e)
-        finally:
-            self._lock.release()
+            print("could not process %s " % e)
 
 
     def Rebuild(self):
@@ -389,4 +390,9 @@ class Wallet(object):
 
         raise NotImplementedError()
 
+
+
+    def ToJson(self):
+        #abstract
+        pass
 

@@ -15,6 +15,7 @@ from neo.Core.Header import Header
 from neo.Core.Witness import Witness
 import json
 from neo.Fixed8 import Fixed8
+from neo.Blockchain import GetBlockchain
 
 #  < summary >
 #  区块或区块头
@@ -57,6 +58,28 @@ class Block(BlockBase, InventoryMixin):
         if build_root:
             self.RebuildMerkleRoot()
 
+
+    @property
+    def FullTransactions(self):
+        print("getting full transactions!")
+        is_trimmed = False
+        try:
+            tx = self.Transactions[0]
+            if type(tx) is str:
+                is_trimmed=True
+        except Exception as e:
+            pass
+
+        if not is_trimmed:
+            return self.Transactions
+
+        txs = []
+        for hash in self.Transactions:
+            tx,height = GetBlockchain().GetTransaction(hash)
+            txs.append( tx )
+        print("got tx %s " % txs)
+
+        return txs
 
     @property
     def Header(self):

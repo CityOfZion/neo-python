@@ -217,6 +217,10 @@ class PromptInterface(object):
         print("pubkey %s " % key.PublicKey.encode_point(True))
 
 
+#        dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
+#        dbloop.start(5)
+
+
     def do_open_wallet(self):
         passwd = self._gathered_passwords[0]
         path = self._wallet_create_path
@@ -229,8 +233,19 @@ class PromptInterface(object):
         try:
             self.Wallet = UserWallet.Open(path, passwd)
             print("opened wallet %s " % self.Wallet)
+
+#            dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
+#            dbloop.start(5)
+
         except Exception as e:
             print("could not open wallet %s " % e)
+
+    def show_wallet(self, arguments):
+        if not self.Wallet:
+            print("please open a wallet")
+            return
+
+        print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
 
     def show_state(self):
         height = Blockchain.Default().Height
@@ -515,6 +530,8 @@ class PromptInterface(object):
                         self.do_create(arguments)
                     elif command == 'open':
                         self.do_open(arguments)
+                    elif command == 'wallet':
+                        self.show_wallet(arguments)
                     elif command == 'block':
                         self.show_block(arguments)
                     elif command == 'tx':

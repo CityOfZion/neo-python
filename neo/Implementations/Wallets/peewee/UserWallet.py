@@ -11,7 +11,10 @@ from enum import Enum
 import random
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from Crypto import Random
+from neo.Cryptography.Crypto import Crypto
 import os
+from neo.UInt160 import UInt160
+import binascii
 
 from .PWDatabase import PWDatabase
 
@@ -114,7 +117,9 @@ class UserWallet(Wallet):
         if db_contract is not None:
             db_contract.PublicKeyHash = contract.PublicKeyHash.ToBytes()
         else:
-            address, created = Address.get_or_create(ScriptHash = contract.ScriptHash.ToBytes())
+            sh = bytes(contract.ScriptHash.ToArray())
+            print("saving address %s " % sh)
+            address, created = Address.get_or_create(ScriptHash = sh)
             address.save()
 
             print("created address ? %s %s " % (address, created))
@@ -183,3 +188,32 @@ class UserWallet(Wallet):
         print("keyval %s %s " % (keyval.Name, keyval.Value))
         keyval.save()
         print("saved stored data %s " % keyval)
+
+
+    def OnProcessNewBlock(self, block, added, changed, deleted):
+
+        print("on process new block %s %s %s %s " % (block,added,changed,deleted))
+
+    def ToJson(self):
+
+        jsn = {}
+        jsn['path'] = self._path
+
+        [print("ITEM %s %s" % (type(addr.ScriptHash),addr.ScriptHash)) for addr in Address.select()]
+
+#        addresses = [UInt160(data=addr.ScriptHash) for addr in Address.select()]
+#        print("addresses! %s " % addresses)
+        addresses = [Crypto.ToAddress(UInt160(data=addr.ScriptHash)) for addr in Address.select()]
+        print("addddddresses s %s " % addresses)
+#        jsn['addresses'] = [Crypto.ToAddress( addr.ScriptHash for addr in Address.select()]
+        jsn['addresses'] = addresses
+        return jsn
+
+#        path = self._path
+
+#        print("Saved at %s " % path)
+
+#        addresses = Address.select()
+#        for addr in addresses:
+#            print("Address: %s " % addr)
+
