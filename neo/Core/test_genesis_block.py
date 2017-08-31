@@ -3,7 +3,7 @@ from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.TX.Transaction import *
-from neo.Wallets.Contract import Contract
+from neo.SmartContract.Contract import Contract
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness

@@ -6,8 +6,8 @@ Usage:
     from neo.Core.SingatureContext import SingatureContext
 """
 
-from neo.Wallets.ContractParameterType import ContractParameterType
-from neo.Core.Scripts import ScriptBuilder,Script
+from neo.SmartContract.ContractParameterType import ContractParameterType
+from neo.VM import ScriptBuilder
 from io import BytesIO
 
 class SingatureContext(BytesIO):
@@ -57,8 +57,10 @@ class SingatureContext(BytesIO):
             sb = ScriptBuilder()
             for item in array:
                 sb.push(item['signature'])
-            scripts[i] = Script()
-            scripts[i].stackScript = sb.ToArray()
-            scripts[i].redeemScript = self.redeemScripts[i]
+#            scripts[i] = Script()
+#            scripts[i].stackScript = sb.ToArray()
+ #           scripts[i].redeemScript = self.redeemScripts[i]
 
-        return scripts
+#        return scripts
+        raise NotImplementedError()
+#        return []

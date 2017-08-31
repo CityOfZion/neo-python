@@ -9,9 +9,10 @@ Usage:
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.CoinReference import CoinReference
 from neo.Wallets import Wallet
-from neo.Core.CoinState import CoinState
+from neo.Core.State.CoinState import CoinState
 from neo.IO.Mixins import TrackableMixin
 from neo.IO.TrackState import TrackState
+from neo.Cryptography.Crypto import Crypto
 
 class Coin(TrackableMixin):
 
@@ -40,7 +41,7 @@ class Coin(TrackableMixin):
     @property
     def Address(self):
         if self._address is None:
-            self._address = Wallet.ToAddress(self.TXOutput.ScriptHash)
+            self._address = Crypto.ToAddress(self.TXOutput.ScriptHash)
         return self._address
 
     @property

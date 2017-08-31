@@ -7,7 +7,7 @@ Usage:
 """
 
 from neo.Core.TX.Transaction import TransactionType
-from neo.Core.CoinState import CoinState
+from neo.Core.State import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Cryptography.Base58 import b58decode
@@ -61,14 +61,20 @@ class Wallet(object):
 
 
 
+
     """docstring for Wallet"""
     def __init__(self, path, passwordKey, create):
 
+        print("wallet create?? %s %s %s " % (path, passwordKey, create))
         if create:
+            print("DO CREATE!")
             self._path = path
+            print("path is %s " % self._path)
             self._iv = bytes( Random.get_random_bytes(16))
             self._master_key = bytes(Random.get_random_bytes(32))
-            self._keys = []
+            self._keys = {}
+            self._contracts = {}
+            self._coins = {}
 
             if Blockchain.Default() is None:
                 self._indexedDB= LevelDBBlockchain(Settings.LEVELDB_PATH)
@@ -94,7 +100,7 @@ class Wallet(object):
             self.SaveStoredData('Height', self._current_height)
 
         else:
-
+            print("DONT CREATE!!")
             passwordHash = self.LoadStoredData('PasswordHash')
             if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey):
                 raise Exception("Cryptographic exception")
@@ -123,11 +129,11 @@ class Wallet(object):
     def AddContract(self, contract):
 
         for key in self._keys:
-            if not key.PublicKeyHash == contract.PublicKeyHash:
+            if not key.PublicKeyHash.ToBytes() == contract.PublicKeyHash.ToBytes():
                 raise Exception('Invalid operation- public key mismatch')
 
-        self._contracts[contract.ScriptHash] = contract
-        self._watch_only.remove(contract.ScriptHash)
+        self._contracts[contract.ScriptHash.ToBytes()] = contract
+        self._watch_only.remove(contract.ScriptHash.ToBytes())
 
 
     def AddWatchOnly(self, script_hash):
@@ -158,18 +164,29 @@ class Wallet(object):
         return self.CheckAddressState(script_hash) >= AddressState.InWallet
 
 
-    def CreatePrivateKey(self):
-        private_key = bytearray(32)
-        private_key = Random.new().read(private_key)
-        return private_key
+    def CreateKey(self):
+        private_key = bytes(Random.get_random_bytes(32))
+        print("private key %s " % private_key)
 
-    def CreateKeyPairFromPrivateKey(self, private_key):
+        key = KeyPair(priv_key = private_key)
+        self._keys[key.PublicKeyHash] = key
+        print("keys %s " % self._keys.items())
+        return key
+ #       return private_key
 
-        keypair = KeyPair(private_key = private_key)
+#    def CreateKeyPairFromPrivateKey(self, private_key):
+#
+ #       keypair = KeyPair(private_key = private_key)
 
-        self._keys[keypair.PublicKeyHash] = keypair
+   #     self._keys[keypair.PublicKeyHash] = keypair
 
-        return keypair
+#        return keypair
+
+
+    def EncryptPrivateKey(self, decrypted):
+        aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
+
+        return aes.encrypt(decrypted)
 
     def DecryptPrivateKey(self, encrypted_private_key):
         raise NotImplementedError()

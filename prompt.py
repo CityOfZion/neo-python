@@ -13,10 +13,12 @@ import time
 import gc
 from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
-
+import random
+import string
 import resource
 
 from neo.Core.Blockchain import Blockchain
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo import Settings
 
@@ -65,6 +67,12 @@ class PromptInterface(object):
     go_on = True
 
     completer = WordCompleter(['block','tx','header','mem','help','state','node','exit','quit','config','db','log'])
+
+    _gathering_password = False
+    _gathered_passwords = []
+    _gather_password_action = None
+
+    Wallet = None
 
     commands = ['quit',
                 'help',
@@ -137,6 +145,32 @@ class PromptInterface(object):
             print('pausing execution!')
             reactor.callLater(1,self.paused_loop)
 
+
+    def do_create(self, arguments):
+        item = self.get_arg(arguments)
+
+        if item and item == 'wallet':
+            self._gathered_passwords = []
+            self._gathering_password = True
+            self._gather_password_action = self.do_create_wallet
+ #           print("create wallet! Please specify a password")
+
+    def do_create_wallet(self):
+#        print("do create wallet with passwords %s "% self._gathered_passwords)
+        psswds = self._gathered_passwords
+        self._gathered_passwords = None
+        self._gather_password_action = None
+
+        if len(psswds) != 2 or psswds[0] != psswds[1] or len(psswds[0]) < 10:
+            print("please provide matching passwords that are at least 10 characters long")
+            return
+
+        passwd = psswds[1]
+        print("Creating wallet with password %s " %passwd)
+        random_path = ''.join(random.sample(string.ascii_letters * 10, 10))
+        print("Random path %s " % random_path)
+        self.Wallet = UserWallet.Create(path='./Wallets/%s.db3' % random_path , password=passwd)
+        print("wallet ! %s " % self.Wallet)
 
     def show_state(self):
         height = Blockchain.Default().Height
@@ -381,53 +415,77 @@ class PromptInterface(object):
 
         while self.go_on:
 
-            result = prompt("neo> ",
-                            completer=self.completer,
-                            history=self.history,
-                            get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                            style=self.token_style)
 
-            command, arguments = self.parse_result(result)
+            if self._gathered_passwords and len(self._gathered_passwords) == 2:
+                self._gathering_password = False
+                self._gather_password_action()
 
-            if command is not None and len(command) > 0:
-                command = command.lower()
+            if self._gathering_password:
+                hint = 'password 1> '
+                if len(self._gathered_passwords) == 1:
+                    hint = 'password 2> '
 
+                result = prompt(hint, is_password=True)
 
-                if command == 'quit' or command == 'exit':
-                    self.quit()
-                elif command == 'help':
-                    self.help()
-                elif command == 'block':
-                    self.show_block(arguments)
-                elif command == 'tx':
-                    self.show_tx(arguments)
-                elif command == 'header':
-                    self.show_header(arguments)
-                elif command =='account':
-                    self.show_account_state(arguments)
-                elif command == 'asset':
-                    self.show_asset_state(arguments)
-                elif command =='contract':
-                    self.show_contract_state(arguments)
-                elif command == 'sc':
-                    self.show_spent_coins(arguments)
-                elif command == 'mem':
-                    self.show_mem()
-                elif command == 'nodes' or command == 'node':
-                    self.show_nodes()
-                elif command == 'state':
-                    self.show_state()
-                elif command == 'config':
-                    self.configure(arguments)
-                elif command == 'pause' or command == 'unpause' or command == 'resume':
-                    self.toggle_pause()
-                elif command == None:
-                    print('please specify a command')
-                else:
-                    print("command %s not found" % command)
 
             else:
-                pass
+                result = prompt("neo> ",
+                                completer=self.completer,
+                                history=self.history,
+                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                style=self.token_style)
+
+
+
+            if self._gathering_password:
+                self._gathered_passwords.append(result)
+
+            else:
+
+
+                command, arguments = self.parse_result(result)
+
+                if command is not None and len(command) > 0:
+                    command = command.lower()
+
+
+                    if command == 'quit' or command == 'exit':
+                        self.quit()
+                    elif command == 'help':
+                        self.help()
+                    elif command == 'create':
+                        self.do_create(arguments)
+                    elif command == 'block':
+                        self.show_block(arguments)
+                    elif command == 'tx':
+                        self.show_tx(arguments)
+                    elif command == 'header':
+                        self.show_header(arguments)
+                    elif command =='account':
+                        self.show_account_state(arguments)
+                    elif command == 'asset':
+                        self.show_asset_state(arguments)
+                    elif command =='contract':
+                        self.show_contract_state(arguments)
+                    elif command == 'sc':
+                        self.show_spent_coins(arguments)
+                    elif command == 'mem':
+                        self.show_mem()
+                    elif command == 'nodes' or command == 'node':
+                        self.show_nodes()
+                    elif command == 'state':
+                        self.show_state()
+                    elif command == 'config':
+                        self.configure(arguments)
+                    elif command == 'pause' or command == 'unpause' or command == 'resume':
+                        self.toggle_pause()
+                    elif command == None:
+                        print('please specify a command')
+                    else:
+                        print("command %s not found" % command)
+
+                else:
+                    pass
 
 
 if __name__ == "__main__":

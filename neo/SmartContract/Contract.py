@@ -4,50 +4,68 @@ Description:
     Contract class in neo.Wallets
     Base class of all contracts
 Usage:
-    from neo.Wallets.Contract import Contract
+    from neo.SmartContract.Contract import Contract
 """
 from io import BytesIO,BufferedReader,BufferedWriter
 from neo.VM.OpCode import *
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Cryptography.Crypto import *
 from neo.IO.Mixins import SerializableMixin
-from neo.Wallets.ContractParameterType import ContractParameterType
+from neo.SmartContract.ContractParameterType import ContractParameterType
+from neo.Core.VerificationCode import VerificationCode
 from neo.Cryptography.Helper import *
 from autologging import logged
 
 @logged
-class Contract(SerializableMixin):
+class Contract(SerializableMixin, VerificationCode):
     """docstring for Contract"""
 
-    RedeemScript=None
-    ParameterList = None
     PubKeyHash = None
-    ScriptHash = None
 
-    def __init__(self, redeem_script, param_list, pubkey_hash, script_hash):
+    _address = None
+
+
+    @property
+    def Address(self):
+        if self._address is None:
+            self._address = Crypto.ToAddress(self.ScriptHash)
+        return self._address
+
+    @property
+    def IsStandard(self):
+
+        if len(self.Script) != 35:
+            return False
+
+        if self.Script[0] != 33 or self.Script[34] != CHECKSIG:
+            return False
+
+        return True
+
+
+
+
+    def __init__(self, redeem_script=None, param_list=None, pubkey_hash=None):
         super(Contract, self).__init__()
 
-        self.RedeemScript = redeem_script
+        self.Script = redeem_script
         self.ParameterList = param_list
         self.PubKeyHash = pubkey_hash
-        self.ScriptHash = script_hash
-
+        self._address = None
 
     @staticmethod
     def Create(publicKeyHash, parameterList, redeemScript):
 
-        return Contract(redeemScript, parameterList, publicKeyHash, Contract.RedeemToScripthash(redeemScript))
+        return Contract(redeemScript, parameterList, publicKeyHash)
 
 
 
     @staticmethod
     def CreateMultiSigContract(publickKeyHash, m, publicKeys):
-#        raise NotImplementedError()
-        pass
+        raise NotImplementedError()
 
     @staticmethod
     def CreateMultiSigRedeemScript(m, publicKeys):
-        # raise NotImplementedError()
 
         if m < 2 or m > len(publicKeys) or len(publicKeys) > 1024:
             raise Exception('Invalid keys')
@@ -68,13 +86,18 @@ class Contract(SerializableMixin):
         sb.add(CHECKMULTISIG)
 
         toarray = sb.ToArray()
-        tastr = toarray.decode('utf8')
+#        tastr = toarray.decode('utf8')
         return toarray
 
     @staticmethod
     def CreateSignatureContract(publicKey):
-        result = Contract.RedeemToScripthash(Contract.PubkeyToRedeem(publicKey))
-        return Contract.Create(result, [ContractParameterType.Signature], Contract.CreateSignatureRedeemScript(publicKey))
+
+        script = Contract.CreateSignatureRedeemScript(publicKey)
+        params = [ContractParameterType.Signature]
+        pubkey_hash = Crypto.ToScriptHash( publicKey.encode_point(True))
+
+        return Contract(script, params, pubkey_hash)
+
 
     @staticmethod
     def CreateSignatureRedeemScript(publicKey):
@@ -90,9 +113,6 @@ class Contract(SerializableMixin):
             return False
         return self.ScriptHash == other.ScriptHash
 
-    def GetAddress(self):
-        # TODO
-        raise NotImplementedError()
 
     def GetHashCode(self):
         if self.ScriptHash == None:

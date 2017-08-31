@@ -10,7 +10,7 @@ from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
 from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.Helper import Helper
-from neo.Wallets.Contract import Contract
+from neo.SmartContract.Contract import Contract
 from neo import Settings
 from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
