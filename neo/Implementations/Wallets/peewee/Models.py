@@ -7,15 +7,17 @@ class ModelBase(Model):
         database = PWDatabase.DBProxy()
 
 class Account(ModelBase):
-
-    PrivateKeyEncrypted = CharField()
+    Id = PrimaryKeyField()
+    PrivateKeyEncrypted = CharField(unique=True)
     PublicKeyHash = CharField()
 
 
 class Address(ModelBase):
+    Id = PrimaryKeyField()
     ScriptHash = CharField(unique=True)
 
 class Coin(ModelBase):
+    Id = PrimaryKeyField()
     TxId = CharField(unique=True)
     Index = IntegerField()
     AssetId = CharField()
@@ -26,17 +28,20 @@ class Coin(ModelBase):
 
 
 class Contract(ModelBase):
+    Id = PrimaryKeyField()
     RawData = CharField()
-    ScriptHash = CharField(unique=True)
+    ScriptHash = CharField()
     PublicKeyHash = CharField()
-#    Account = ForeignKeyField(Account)
-#    Address = ForeignKeyField(Address)
+    Account = ForeignKeyField(Account)
+    Address = ForeignKeyField(Address)
 
 class Key(ModelBase):
-    Name = CharField()
+    Id = PrimaryKeyField()
+    Name = CharField(unique=True, )
     Value = CharField()
 
 class Transaction(ModelBase):
+    Id = PrimaryKeyField()
     Hash = CharField(unique=True)
     TransactionType = IntegerField()
     RawData = CharField()
@@ -44,6 +49,7 @@ class Transaction(ModelBase):
     DateTime = DateTimeField()
 
 class TransactionInfo(ModelBase):
+    Id = PrimaryKeyField()
     CoreTransaction = ForeignKeyField(Transaction)
     Height = IntegerField()
     DateTime = DateTimeField()

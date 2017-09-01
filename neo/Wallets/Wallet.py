@@ -22,6 +22,7 @@ import hashlib
 from neo import Settings
 from threading import Thread
 from threading import Lock
+import traceback
 
 
 from Crypto import Random
@@ -41,7 +42,7 @@ class Wallet(object):
     _contracts = {} #holds Contracts
 
     _watch_only = set() # holds set of hashes
-    _coins = [] #holds Coin References
+    _coins = {} #holds Coin References
 
     _current_height=0
 
@@ -65,12 +66,9 @@ class Wallet(object):
     """docstring for Wallet"""
     def __init__(self, path, passwordKey, create):
 
-        print("wallet create?? %s %s %s " % (path, passwordKey, create))
         self._path = path
 
         if create:
-            print("DO CREATE!")
-            print("path is %s " % self._path)
             self._iv = bytes( Random.get_random_bytes(16))
             self._master_key = bytes(Random.get_random_bytes(32))
             self._keys = {}
@@ -84,7 +82,7 @@ class Wallet(object):
                 self._indexedDB = Blockchain.Default()
             #self._node = RemoteNode(url=TEST_NODE)
 
-            self._current_height = Blockchain.Default().HeaderHeight + 1 if Blockchain.Default() is not None else 0
+            self._current_height = 0
 
             self.BuildDatabase()
 
@@ -98,35 +96,38 @@ class Wallet(object):
             self.SaveStoredData('IV', self._iv),
             self.SaveStoredData('MasterKey', masterKey)
     #        self.SaveStoredData('Version') { Version.Major, Version.Minor, Version.Build, Version.Revision }.Select(p => BitConverter.GetBytes(p)).SelectMany(p => p).ToArray());
-            self.SaveStoredData('Height', self._current_height)
+            self.SaveStoredData('Height', self._current_height.to_bytes(4, 'little'))
 
         else:
-            print("DONT CREATE!!")
             self.BuildDatabase()
 
             passwordHash = self.LoadStoredData('PasswordHash')
             if passwordHash is None:
                 raise Exception("Password hash not found in database")
-            print("loaded stored data password hash %s " % passwordHash)
-            hkey= hashlib.sha256(passwordKey.encode('utf-8'))
-            print("hkey %s " % hkey)
-            print("hkey digest %s "% hkey.digest())
-            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
-                raise Exception("Cryptographic exception")
 
-            print("password ok!")
+            hkey= hashlib.sha256(passwordKey.encode('utf-8'))
+
+            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
+                raise Exception("Incorrect Password")
+
             self._iv = self.LoadStoredData('IV')
             self._master_key = self.LoadStoredData('MasterKey')
             self._keys = self.LoadKeyPair()
             self._contracts = self.LoadContracts()
             self._watch_only = self.LoadWatchOnly()
             self._coins = self.LoadCoins()
-            self._current_height = self.LoadStoredData('Height')
+            try:
+                h = self.LoadStoredData('Height')
+                self._current_height = int.from_bytes(h, 'little')
+            except Exception as e:
+                print("couldnt load height data %s " % e)
+                self._current_height = 0
+
+            self._current_height = 470000
 
             del passwordKey
 
 
-        self._current_height = 0
 
 
     def BuildDatabase(self):
@@ -136,8 +137,6 @@ class Wallet(object):
 
     def AddContract(self, contract):
 
-        print("adding contract... %s " % self._keys.keys())
-        print("looking for %s %s %s" % (contract.PublicKeyHash.ToString(), contract.PublicKeyHash.ToBytes(), contract.PublicKeyHash.Data))
         if not contract.PublicKeyHash.ToBytes() in self._keys.keys():
             raise Exception('Invalid operation- public key mismatch')
 
@@ -176,11 +175,11 @@ class Wallet(object):
 
     def CreateKey(self):
         private_key = bytes(Random.get_random_bytes(32))
-        print("private key %s " % private_key)
+        self.__log.debug("private key %s " % private_key)
 
         key = KeyPair(priv_key = private_key)
         self._keys[key.PublicKeyHash] = key
-        print("keys %s " % self._keys.items())
+        self.__log.debug("keys %s " % self._keys.items())
         return key
  #       return private_key
 
@@ -211,7 +210,7 @@ class Wallet(object):
 
     def FindUnspentCoins(self):
         unspent = []
-        for coin in self._coins:
+        for key,coin in self._coins.items():
             if coin.State == CoinState.Confirmed:
                 unspent.append(coin)
         return unspent
@@ -255,22 +254,21 @@ class Wallet(object):
 
     def ProcessBlocks(self):
 
+#        start = time.clock()
         blockcount = 0
-        print("processing blocks!")
-        while self._current_height <= Blockchain.Default().Height and self._is_running and blockcount < 2:
 
-            print("will process block")
-            try:
-                block = Blockchain.Default().GetBlockByHeight(self._current_height)
-            except Exception as e:
-                print("couldnt get block %s " % e)
-                break
+        while self._current_height <= Blockchain.Default().Height and self._is_running and blockcount < 500:
 
-            print("block is %s " % block)
+            block = Blockchain.Default().GetBlockByHeight(self._current_height)
+
             if block is not None:
                 self.ProcessNewBlock(block)
 
             blockcount+=1
+
+        self.SaveStoredData("Height", self._current_height.to_bytes(8, 'little'))
+        self.__log.debug("Wallet processed block to %s " % self._current_height)
+#        end = time.clock()
 
     def ProcessNewBlock(self, block):
 
@@ -278,54 +276,54 @@ class Wallet(object):
         changed = set()
         deleted = set()
 
-        print("Wallet processing block %s " % block.Index)
+#        self.__log.debug("Wallet processing block %s " % block.Index)
         try:
 
             for tx in block.FullTransactions:
 
                 for index,output in enumerate(tx.outputs):
-                    print("index, outputs %s %s " % (index,output))
                     state = self.CheckAddressState(output.ScriptHash)
-                    print("state is %s " % state)
-                    if state > 0:
-                        key = CoinReference(tx.Hash, index )
 
-                        found=False
-                        for coin in self._coins:
-                            if coin.CoinRef.Equals(key):
-                                coin.State |= CoinState.Confirmed
-                                changed.add(coin.CoinRef)
-                                found = True
-                        if not found:
-                            newcoin = Coin.CoinFromRef(key, output, state=CoinState.Confirmed )
-                            self._coins.append(newcoin)
-                            added.add(newcoin.CoinRef)
+                    if state & AddressState.InWallet > 0:
 
-                        if state == AddressState.WatchOnly:
-                            for coin in self._coins:
-                                if coin.CoinRef.Equals(key):
-                                    coin.State |= CoinState.WatchOnly
-                                    changed.add(coin.CoinRef)
+                        key = CoinReference(tx.Hash, index)
 
-            for tx in block.Transactions:
+                        if key in self._coins.keys():
+                            coin = self._coins[key]
+                            coin.State |= CoinState.Confirmed
+                            changed.add(coin)
+
+                        else:
+                            newcoin = Coin.CoinFromRef(coin_ref=key,tx_output=output, state=CoinState.Confirmed)
+#                            newcoin = Coin.CoinFromRef(key, output, state=CoinState.Confirmed )
+                            self._coins[key] = newcoin
+                            added.add(newcoin)
+
+                        if state & AddressState.WatchOnly > 0:
+                            self._coins[key].State |= CoinState.WatchOnly
+                            changed.add(self._coins[key])
+
+
+            for tx in block.FullTransactions:
 
                 for input in tx.inputs:
 
-                    for coin in self._coins:
-                        if coin.CoinRef.Equals(input):
+                    if input in self._coins.keys():
 
-                            if coin.TXOutput.AssetId == Blockchain.SystemShare().Hash:
-                                coin.State |= CoinState.Spent | CoinState.Confirmed
-                                changed.add(coin.CoinRef)
-                            else:
-                                self._coins.remove(coin)
-                                deleted.add(coin.CoinRef)
+                        if self._coins[input].Output.AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
+                            self._coins[input].State |= CoinState.Spent | CoinState.Confirmed
+                            changed.add(self._coins[input])
+                        else:
+                            deleted.add(self._coins[input])
+                            del self._coins[input]
+
 
             for claimTx in [tx for tx in block.Transactions if tx.Type == TransactionType.ClaimTransaction]:
+
                 for ref in claimTx.Claims:
-                    if ref in self._coins:
-                        self._coins.remove(ref)
-                        deleted.add(ref)
+                    if ref in self._coins.keys():
+                        deleted.add(self._coins[ref])
+                        del self._coins[ref]
 
             self._current_height+=1
             self.OnProcessNewBlock(block, added, changed, deleted)
@@ -334,14 +332,14 @@ class Wallet(object):
                 self.BalanceChanged()
 
         except Exception as e:
+            traceback.print_stack()
+            traceback.print_exc()
             print("could not process %s " % e)
 
 
     def Rebuild(self):
-        self._lock.acquire()
-        self._coins = []
+        self._coins = {}
         self._current_height = 0
-        self._lock.release()
 
 
 
@@ -353,13 +351,31 @@ class Wallet(object):
         # abstract
         pass
 
+    def IsWalletTransaction(self, tx):
+        for key,contract in self._contracts.items():
+
+            for output in tx.outputs:
+                if output.ScriptHash.ToBytes() == contract.ScriptHash.ToBytes():
+                    return True
+
+            for script in tx.scripts:
+
+                if script.VerificationScript:
+                    if bytes(contract.ScriptHash.Data) == script.VerificationScript:
+                        return True
+
+
+            #do watch only stuff... not sure yet what it is...
+            return False
+
+
     def CheckAddressState(self, script_hash):
-        for contract in self._contracts:
-            if contract.ScriptHash == script_hash:
+        for key,contract in self._contracts.items():
+            if contract.ScriptHash.ToBytes() == script_hash.ToBytes():
                 return AddressState.InWallet
-        for watch in self._watch_only:
-            if watch.ScriptHash == script_hash:
-                return AddressState.WatchOnly
+#        for watch in self._watch_only:
+#            if watch.ScriptHash == script_hash:
+#                return AddressState.WatchOnly
         return AddressState.NoState
 
     @staticmethod

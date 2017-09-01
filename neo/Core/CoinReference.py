@@ -27,8 +27,16 @@ class CoinReference(object):
 
     def Equals(self, other):
         if other is None: return False
-        if other.PrevHash == self.PrevHash and other.PrevIndex == self.PrevIndex: return True
+        if other.PrevHash.ToBytes() == self.PrevHash.ToBytes() and other.PrevIndex == self.PrevIndex: return True
         return False
+
+    def __eq__(self, other):
+        if other is None: return False
+        if other.PrevHash.ToBytes() == self.PrevHash.ToBytes() and other.PrevIndex == self.PrevIndex: return True
+        return False
+
+    def __hash__(self):
+        return int.from_bytes(self.PrevHash.ToBytes(),'little') + self.PrevIndex
 
     def ToJson(self):
         out = {

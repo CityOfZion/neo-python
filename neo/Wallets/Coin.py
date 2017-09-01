@@ -11,30 +11,33 @@ from neo.Core.CoinReference import CoinReference
 from neo.Wallets import Wallet
 from neo.Core.State.CoinState import CoinState
 from neo.IO.Mixins import TrackableMixin
-from neo.IO.TrackState import TrackState
 from neo.Cryptography.Crypto import Crypto
 
 class Coin(TrackableMixin):
 
-    TXOutput = None
-    CoinRef = None
+    Output = None
+    Reference = None
 
     _address = None
     _state = CoinState.Unconfirmed
 
-    TrackingState = TrackState.NoState
+
 
 
     @staticmethod
     def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed):
-        coin = Coin(tx_output=tx_output)
-        coin.CoinRef = coin_ref
-        coin._state = state
+        coin = Coin(coin_reference=coin_ref, tx_output=tx_output, state=state)
         return coin
 
-    def __init__(self, prev_hash=None, prev_index=None, tx_output=None, state=CoinState.Unconfirmed):
-        self.CoinRef = CoinReference(prev_hash, prev_index)
-        self.TXOutput = tx_output
+
+    def __init__(self, prev_hash=None, prev_index=None, tx_output=None, coin_reference=None, state=CoinState.Unconfirmed):
+        if prev_hash and prev_index:
+            self.Reference = CoinReference(prev_hash, prev_index)
+        elif coin_reference:
+            self.Reference = coin_reference
+        else:
+            self.Reference = None
+        self.Output = tx_output
         self._state = state
 
 
@@ -50,10 +53,7 @@ class Coin(TrackableMixin):
 
     @State.setter
     def State(self,value):
-        if self._state != value:
-            self._state = value
-            if self.TrackingState == TrackState.NoState:
-                self.TrackingState = TrackState.Changed
+        self._state = value
 
 
 
@@ -61,3 +61,9 @@ class Coin(TrackableMixin):
         if other is None or other is not self: return False
         return True
 
+
+    def ToJson(self):
+        return {
+            'Reference': self.Reference.ToJson(),
+            'Output': self.Output.ToJson()
+        }

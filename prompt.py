@@ -18,7 +18,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo import Settings
-
+import traceback
 
 from twisted.internet import reactor, task
 
@@ -212,13 +212,12 @@ class PromptInterface(object):
         contract = contracts[ list(contracts.keys())[0]]
         key = self.Wallet.GetKey(contract.PublicKeyHash.ToBytes())
 
-        print("Created wallet, saved to %s " % path)
-        print("contract Address %s " % contract.Address)
+        print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
         print("pubkey %s " % key.PublicKey.encode_point(True))
 
 
-#        dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
-#        dbloop.start(5)
+        dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
+        dbloop.start(1)
 
 
     def do_open_wallet(self):
@@ -228,17 +227,35 @@ class PromptInterface(object):
         self._gathered_passwords = None
         self._gather_password_action = None
 
-        print("open wallet %s %s " % (passwd, path))
-
         try:
             self.Wallet = UserWallet.Open(path, passwd)
-            print("opened wallet %s " % self.Wallet)
 
-#            dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
-#            dbloop.start(5)
+            dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
+            dbloop.start(1)
 
+            print("Opened wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
         except Exception as e:
             print("could not open wallet %s " % e)
+#            traceback.print_stack()
+#            traceback.print_exc()
+
+
+    def do_import(self, arguments):
+        item = self.get_arg(arguments)
+
+        if item and item == 'wif':
+
+            if not self.Wallet:
+                print("Please open a wallet before importing WIF")
+                return
+
+            wif = self.get_arg(arguments, 1)
+
+            if wif:
+                pass
+            else:
+                print("Please specify a wif")
+
 
     def show_wallet(self, arguments):
         if not self.Wallet:
@@ -494,12 +511,7 @@ class PromptInterface(object):
                 self._gather_password_action()
 
             if self._gathering_password:
-                hint = 'password 1> '
-                if len(self._gathered_passwords) == 1:
-                    hint = 'password 2> '
-
-                result = prompt(hint, is_password=True)
-
+                result = prompt("password> ", is_password=True)
 
             else:
                 result = prompt("neo> ",
@@ -530,6 +542,8 @@ class PromptInterface(object):
                         self.do_create(arguments)
                     elif command == 'open':
                         self.do_open(arguments)
+                    elif command == 'import':
+                        self.do_import(arguments)
                     elif command == 'wallet':
                         self.show_wallet(arguments)
                     elif command == 'block':
@@ -569,7 +583,7 @@ if __name__ == "__main__":
 
     cli = PromptInterface()
 
-    reactor.suggestThreadPoolSize(15)
+#    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
     reactor.run()

@@ -61,7 +61,7 @@ class Block(BlockBase, InventoryMixin):
 
     @property
     def FullTransactions(self):
-        print("getting full transactions!")
+
         is_trimmed = False
         try:
             tx = self.Transactions[0]
@@ -77,9 +77,10 @@ class Block(BlockBase, InventoryMixin):
         for hash in self.Transactions:
             tx,height = GetBlockchain().GetTransaction(hash)
             txs.append( tx )
-        print("got tx %s " % txs)
 
-        return txs
+        self.Transactions = txs
+
+        return self.Transactions
 
     @property
     def Header(self):

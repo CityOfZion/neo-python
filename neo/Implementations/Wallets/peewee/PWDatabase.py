@@ -1,7 +1,11 @@
 
 from peewee import *
 from neo.Defaults import PEEWEE_DB
+import logging
 
+logger = logging.getLogger('peewee')
+logger.setLevel(logging.ERROR)
+#logger.addHandler(logging.StreamHandler())
 
 
 class PWDatabase(object):
@@ -20,10 +24,8 @@ class PWDatabase(object):
     _db = None
 
     def __init__(self):
-        print("initializing with path %s " % PWDatabase.__dbpath__)
         self._db = SqliteDatabase(PWDatabase.__dbpath__)
         PWDatabase.DBProxy().initialize(self._db)
-        print("initialized proxy!")
         self.startup()
 
 

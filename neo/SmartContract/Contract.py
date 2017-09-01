@@ -125,8 +125,10 @@ class Contract(SerializableMixin, VerificationCode):
 
     def Deserialize(self, reader):
         self.PublicKeyHash = reader.ReadUInt160()
+
         self.ParameterList = reader.ReadVarBytes()
-        self.Script = reader.ReadVarBytes()
+        script = bytearray(reader.ReadVarBytes()).hex()
+        self.Script = script
 
 
     def Serialize(self, writer):
