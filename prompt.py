@@ -68,6 +68,7 @@ class PromptInterface(object):
     _gathering_password = False
     _gathered_passwords = []
     _gather_password_action = None
+    _gather_address_str = None
     _num_passwords_req = 0
     _wallet_create_path = None
 
@@ -233,11 +234,11 @@ class PromptInterface(object):
             dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
             dbloop.start(1)
 
-            print("Opened wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+            print("Opened wallet at %s" % path)
         except Exception as e:
             print("could not open wallet %s " % e)
-#            traceback.print_stack()
-#            traceback.print_exc()
+            traceback.print_stack()
+            traceback.print_exc()
 
 
     def do_import(self, arguments):
@@ -252,17 +253,83 @@ class PromptInterface(object):
             wif = self.get_arg(arguments, 1)
 
             if wif:
-                pass
+                print("import wif not implemented yet")
+                return
             else:
                 print("Please specify a wif")
+                return
+
+        print("please specify something to import")
+        return
+
+
+
+
+    def do_export(self, arguments):
+        item = self.get_arg(arguments)
+
+        if item == 'wif':
+
+            if not self.Wallet:
+                print("please open a wallet")
+                return
+            addr = self.get_arg(arguments, 1)
+
+            if not addr:
+                print('please specify an address')
+                return
+
+            if not self.Wallet.ContainsAddressStr(addr):
+                print("address %s not found in wallet" % addr)
+                return
+
+            self._num_passwords_req = 1
+            self._gather_address_str = addr
+            self._gathered_passwords = []
+            self._gathering_password = True
+            self._gather_password_action = self.do_export_wif
+            return
+
+        print("Command export %s not found" % item)
+
+    def do_export_wif(self):
+        passwd = self._gathered_passwords[0]
+        address = self._gather_address_str
+        self._gather_address_str = None
+        self._gathered_passwords = None
+        self._gather_password_action = None
+
+        if not self.Wallet.ValidatePassword(passwd):
+            print("incorrect password")
+            return
+
+        print("exporting wif for address %s" % (address))
+        
 
 
     def show_wallet(self, arguments):
+
+
         if not self.Wallet:
             print("please open a wallet")
             return
 
-        print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+        item = self.get_arg(arguments)
+
+        if not item:
+            print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+
+        if item == 'rebuild':
+            self.Wallet.Rebuild()
+            try:
+                item2 = int(self.get_arg(arguments,1))
+                if item2 and item2 > 0:
+                    print('restarting at %s ' % item2)
+                    self.Wallet._current_height = item2
+            except Exception as e:
+                pass
+        if item == 'unspent':
+            self.Wallet.FindUnspentCoins()
 
     def show_state(self):
         height = Blockchain.Default().Height
@@ -544,6 +611,8 @@ class PromptInterface(object):
                         self.do_open(arguments)
                     elif command == 'import':
                         self.do_import(arguments)
+                    elif command == 'export':
+                        self.do_export(arguments)
                     elif command == 'wallet':
                         self.show_wallet(arguments)
                     elif command == 'block':

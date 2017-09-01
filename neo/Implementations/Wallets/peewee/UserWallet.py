@@ -8,6 +8,8 @@ from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.Transaction import TransactionOutput
+from neo.Core.TX.Transaction import Transaction as CoreTransaction
+
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from Crypto import Random
 from neo.Cryptography.Crypto import Crypto
@@ -52,6 +54,16 @@ class UserWallet(Wallet):
 
     def DB(self):
         return PWDatabase.Context()
+
+    def Rebuild(self):
+        super(UserWallet, self).Rebuild()
+
+        for c in Coin.select():
+            c.delete_instance()
+        for tx in Transaction.select():
+            tx.delete_instance()
+
+        self.__log.debug("deleted coins and transactions %s %s " % (Coin.select().count(), Transaction.select().count()))
 
     @staticmethod
     def Open(path, password):
@@ -134,21 +146,28 @@ class UserWallet(Wallet):
 
 
     def FindUnspentCoins(self):
-        super(UserWallet,self).FindUnspentCoins()
+        return super(UserWallet,self).FindUnspentCoins()
 
     def GetTransactions(self):
-        return Transaction.select()
+        transactions = []
+        for db_tx in Transaction.select():
+            raw = binascii.unhexlify( db_tx.RawData )
+            tx = CoreTransaction.DeserializeFromBufer(raw,0)
+            transactions.append(tx)
+        return transactions
 
     def LoadCoins(self):
 
         coins ={}
 
-        for coin in Coin.select():
-            reference = CoinReference(prev_hash=UInt256(coin.TxId), prev_index=coin.Index)
-            output = TransactionOutput(UInt256(coin.AssetId), Fixed8(coin.Value), UInt160(coin.ScriptHash))
-            walletcoin = WalletCoin.CoinFromRef(reference,output, coin.State)
-            coins[reference] = walletcoin
-#            coins.append(walletcoin)
+        try:
+            for coin in Coin.select():
+                reference = CoinReference(prev_hash=UInt256(coin.TxId), prev_index=coin.Index)
+                output = TransactionOutput(UInt256(coin.AssetId), Fixed8(coin.Value), UInt160(coin.ScriptHash))
+                walletcoin = WalletCoin.CoinFromRef(reference,output, coin.State)
+                coins[reference] = walletcoin
+        except Exception as e:
+            print("could not load coins %s " % e)
 
         return coins
 
@@ -231,43 +250,42 @@ class UserWallet(Wallet):
 
 
         for coin in added:
-            print("on coins changed!-- all addresses:")
-            [print('hash: %s %s' % (addr.ScriptHash,type(addr.ScriptHash))) for addr in Address.select()]
+            self.__log.debug("on coins changed!-- all addresses:")
+            [self.__log.debug('hash: %s %s' % (addr.ScriptHash,type(addr.ScriptHash))) for addr in Address.select()]
 
-
-            print("output script hash %s %s %s %s" % (coin.Output.ScriptHash, coin.Output.ScriptHash.Data, coin.Output.ScriptHash.ToBytes(),coin.Output.ScriptHash.ToString()))
+            self.__log.debug("output script hash %s %s %s %s" % (coin.Output.ScriptHash, coin.Output.ScriptHash.Data, coin.Output.ScriptHash.ToBytes(),coin.Output.ScriptHash.ToString()))
             addr_hash = bytes(coin.Output.ScriptHash.Data)
-            print("addr hash: %s %s " % (addr_hash, type(addr_hash)))
+            self.__log.debug("addr hash: %s %s " % (addr_hash, type(addr_hash)))
             address = Address.get(ScriptHash=addr_hash)
-            print("got address %s " % address)
+            self.__log.debug("got address %s " % address)
+
             c = Coin(
-                TxId = coin.Reference.PrevHash.ToBytes(),
+                TxId = bytes(coin.Reference.PrevHash.Data),
                 Index = coin.Reference.PrevIndex,
-                AssetId = coin.Output.AssetId.ToBytes(),
+                AssetId = bytes(coin.Output.AssetId.Data),
                 Value = coin.Output.Value.value,
-                ScriptHash = coin.Output.ScriptHash.ToBytes(),
+                ScriptHash = bytes(coin.Output.ScriptHash.Data),
                 State = coin.State,
                 Address= address
             )
-            print("created coin %s " % c)
+            self.__log.debug("created coin %s " % c)
             c.save()
-            print("saved coin %s " % c)
+            self.__log.debug("saved coin %s " % c)
 
         for coin in changed:
             try:
-                c = Coin.get(TxId = coin.Reference.PrevHash.ToBytes())
+                c = Coin.get(TxId = bytes(coin.Reference.PrevHash.Data))
                 c.State = coin.State
                 c.save()
             except Exception as e:
-                print("coin to change not found! %s %s " % (coin,e))
+                self.__log.debug("coin to change not found! %s %s " % (coin,e))
 
         for coin in deleted:
             try:
-                c = Coin.get(TxId = coin.Reference.PrevHash.ToBytes())
+                c = Coin.get(TxId = bytes(coin.Reference.PrevHash.Data))
                 c.delete()
             except Exception as e:
-                print("could not delete coin %s %s " % (coin, e))
-
+                self.__log.debug("could not delete coin %s %s " % (coin, e))
 
 
     def ToJson(self):
@@ -278,7 +296,9 @@ class UserWallet(Wallet):
         addresses = [Crypto.ToAddress(UInt160(data=addr.ScriptHash)) for addr in Address.select()]
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
-        jsn['percent_synced'] = self._current_height / Blockchain.Default().Height
-        jsn['coins'] = [ coin.ToJson() for coin in self._coins.values()]
+        jsn['percent_synced'] = int(100 * self._current_height / Blockchain.Default().Height)
+        jsn['coins'] = [ coin.ToJson() for coin in self.FindUnspentCoins()]
+        jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
+
         return jsn
 

@@ -101,14 +101,14 @@ class Wallet(object):
         else:
             self.BuildDatabase()
 
-            passwordHash = self.LoadStoredData('PasswordHash')
-            if passwordHash is None:
-                raise Exception("Password hash not found in database")
+#            passwordHash = self.LoadStoredData('PasswordHash')
+#            if passwordHash is None:
+#                raise Exception("Password hash not found in database")
 
-            hkey= hashlib.sha256(passwordKey.encode('utf-8'))
+#            hkey= hashlib.sha256(passwordKey.encode('utf-8'))
 
-            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
-                raise Exception("Incorrect Password")
+#            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
+#                raise Exception("Incorrect Password")
 
             self._iv = self.LoadStoredData('IV')
             self._master_key = self.LoadStoredData('MasterKey')
@@ -117,13 +117,13 @@ class Wallet(object):
             self._watch_only = self.LoadWatchOnly()
             self._coins = self.LoadCoins()
             try:
-                h = self.LoadStoredData('Height')
-                self._current_height = int.from_bytes(h, 'little')
+                h = int(self.LoadStoredData('Height'))
+                self._current_height = h
             except Exception as e:
                 print("couldnt load height data %s " % e)
                 self._current_height = 0
 
-            self._current_height = 470000
+#            self._current_height = 470000
 
             del passwordKey
 
@@ -172,6 +172,12 @@ class Wallet(object):
     def ContainsAddress(self, script_hash):
         return self.CheckAddressState(script_hash) >= AddressState.InWallet
 
+    def ContainsAddressStr(self, address):
+        for key,contract in self._contracts.items():
+            if contract.Address == address:
+                return True
+        return False
+
 
     def CreateKey(self):
         private_key = bytes(Random.get_random_bytes(32))
@@ -209,11 +215,20 @@ class Wallet(object):
 
 
     def FindUnspentCoins(self):
-        unspent = []
-        for key,coin in self._coins.items():
-            if coin.State == CoinState.Confirmed:
-                unspent.append(coin)
-        return unspent
+        print("finding unspent coins! %s %s" % (self.GetCoins(), self._coins))
+        ret=[]
+        for coin in self.GetCoins():
+            if coin.State & CoinState.Confirmed > 0 and \
+                coin.State & CoinState.Spent == 0 and \
+                coin.State & CoinState.Locked == 0 and \
+                coin.State & CoinState.Frozen == 0 and \
+                coin.State & CoinState.WatchOnly == 0:
+
+                ret.append(coin)
+                print("found unspent %s " % coin)
+
+        print("returning unspent... %s " % ret)
+        return ret
 
     def GetKey(self, public_key_hash):
         if public_key_hash in self._keys:
@@ -266,7 +281,7 @@ class Wallet(object):
 
             blockcount+=1
 
-        self.SaveStoredData("Height", self._current_height.to_bytes(8, 'little'))
+        self.SaveStoredData("Height", self._current_height)
         self.__log.debug("Wallet processed block to %s " % self._current_height)
 #        end = time.clock()
 
@@ -342,7 +357,6 @@ class Wallet(object):
         self._current_height = 0
 
 
-
     def OnProcessNewBlock(self, block, added, changed, deleted):
         # abstract
         pass
@@ -395,11 +409,20 @@ class Wallet(object):
             raise ValueError('Not correct Address, something wrong in Address[-4:].')
 
     def ValidatePassword(self, password):
-        return hashlib.sha256(password) == self.LoadStoredData('PasswordHash')
 
+        return hashlib.sha256(password.encode('utf-8')).digest() == self.LoadStoredData('PasswordHash')
+
+
+
+
+
+    def GetCoins(self):
+        print("getting coins!!!")
+        return [coin for coin in self._coins.values()]
 
     def GetContracts(self):
-        return self._contracts
+        return [contract for contract in self._contracts.values()]
+#        return self._contracts
 
 
     def MakeTransaction(self, tx, account):
