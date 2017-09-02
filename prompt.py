@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-
 """
-
+Define a command line interface class for NEO blockchain data and run it using
+the (external) twisted package.
 """
 
 import json
@@ -10,18 +10,16 @@ import datetime
 import math
 import time
 import gc
+
+from twisted.internet import reactor, task  # https://twistedmatrix.com/trac/
+from autologging import logged
+
 from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
-
 import resource
-
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo import Settings
-
-from twisted.internet import reactor, task
-
-from autologging import logged
 
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import style_from_dict
@@ -30,8 +28,8 @@ from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 
-
 logname = 'prompt.log'
+
 logging.basicConfig(
      level=logging.DEBUG,
      filemode='a',
@@ -57,11 +55,18 @@ example_style = style_from_dict({
 
 @logged
 class PromptInterface(object):
-    
     go_on = True
-
-    completer = WordCompleter(['block','tx','header','mem','help','state','node','exit','quit','config','db','log'])
-
+    completer = WordCompleter(['block',
+                                'tx',
+                                'header',
+                                'mem', 'help',
+                                'state',
+                                'node',
+                                'exit',
+                                'quit',
+                                'config',
+                                'db',
+                                'log'])
     commands = ['quit',
                 'help',
                 'block {index/hash}',
@@ -74,14 +79,12 @@ class PromptInterface(object):
                 'config log on/off'
                 'pause',
                 ]
-
     token_style = style_from_dict({
         Token.Command: '#ff0066',
         Token.Neo: '#0000ee',
         Token.Default: '#00ee00',
         Token.Number: "#ffffff",
     })
-
     history = InMemoryHistory()
     start_height = Blockchain.Default().Height
     start_dt = datetime.datetime.utcnow()
@@ -126,10 +129,10 @@ class PromptInterface(object):
     def toggle_pause(self):
         self.paused = not self.paused
         if self.paused:
-            print('pausing execution!')
+            print('... pausing execution')
             reactor.callLater(1, self.paused_loop)
         else:
-            print('resusiming execution')
+            print('resusiming execution ...')
 #            reactor.run()
 
 
