@@ -26,10 +26,12 @@ class KeyPair(object):
             ecd = ECDSA.secp256r1()
             self.PublicKey = ecd.G * pkint
 
+        else:
+            self.PublicKey = ECDSA.FromBytes_Secp256r1(priv_key).G
+
         encoded = self.PublicKey.encode_point(True)
 
         self.PublicKeyHash = Crypto.ToScriptHash(encoded,unhex=False)
-
 
     @staticmethod
     def PrivateKeyFromWIF(wif):

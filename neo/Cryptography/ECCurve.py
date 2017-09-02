@@ -551,14 +551,14 @@ class EllipticCurve:
             x_data = bytearray(ba[1:1+expected_byte_len])
             x_data.reverse()
             x_data.append(0)
-            print("x data %s %s" % (x_data, len(x_data)))
+            #print("x data %s %s" % (x_data, len(x_data)))
             y_data = bytearray(ba[1 + expected_byte_len:])
             y_data.reverse()
             y_data.append(0)
-            print("y data %s " % y_data)
+            #print("y data %s " % y_data)
             x = int.from_bytes(x_data,'little')
             y = int.from_bytes(y_data, 'little')
-            print("y data %s %s" % (x,y))
+#            print("y data %s %s" % (x,y))
             pnt = self.point(x,y)
             return pnt
 
@@ -787,14 +787,14 @@ class ECDSA:
         elif length == 64 or length == 72:
             skip = length - 64
             out = bytearray(b'04').hex() + pubkey[skip:]
-            print("out %s %s " % (out, len(out)))
+            #print("out %s %s " % (out, len(out)))
             return ECDSA.decode_secp256r1(out)
 
         elif length == 96 or length == 104:
             skip = length - 96
 
             out = bytearray(b'\x04') + bytearray(pubkey[skip:skip+64])
-            print("out %s %s" % (out,len(out)))
+            #print("out %s %s" % (out,len(out)))
             return ECDSA.decode_secp256r1(out, unhex=False, check_on_curve=False)
 
 

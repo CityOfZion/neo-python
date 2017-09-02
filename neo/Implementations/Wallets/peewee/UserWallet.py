@@ -79,9 +79,13 @@ class UserWallet(Wallet):
 
     def CreateKey(self):
         private_key = bytes(Random.get_random_bytes(32))
+        print("CREATING PRIVATE KEY  %s " % private_key)
         self.__log.debug("user wallet private key %s " % private_key)
 
         account = WalletKeyPair(priv_key=private_key)
+        print("ACCOUNT PUBKEY %s " % account.PublicKey)
+        print("ACCOUNT PUBKEY ENCODE" % account.PublicKey.encode_point(True))
+        print("ACCOUNT PUBKEY HASH: %s " % account.PublicKeyHash.ToBytes())
         self.__log.debug("User wallet public key %s " % account.PublicKey)
         self._keys[account.PublicKeyHash.ToBytes()] = account
 
@@ -94,11 +98,12 @@ class UserWallet(Wallet):
 
     def OnCreateAccount(self, account):
 
-        pub = bytearray(account.PublicKey.encode_point(False)[1:])[:64]
+        pubkey = account.PublicKey.encode_point(False)
+        pubkeyunhex = binascii.unhexlify(pubkey)
+        pub = pubkeyunhex[1:65]
+
         priv = bytearray(account.PrivateKey)
-
         decrypted = pub + priv
-
         encrypted_pk = self.EncryptPrivateKey(bytes(decrypted))
 
         db_account,created = Account.get_or_create(PrivateKeyEncrypted=encrypted_pk, PublicKeyHash= account.PublicKeyHash.ToBytes())
@@ -184,6 +189,17 @@ class UserWallet(Wallet):
             ctr[contract.ScriptHash.ToBytes()] = contract
 
         return ctr
+
+    def LoadKeyPairs(self):
+        accts=[]
+        for db_account in Account.select():
+            encrypted = db_account.PrivateKeyEncrypted
+            decrypted = self.DecryptPrivateKey(encrypted)
+            acct = WalletKeyPair(decrypted)
+            assert acct.PublicKeyHash.ToString() == db_account.PublicKeyHash
+            accts.append(acct)
+
+        return accts
 
     def LoadStoredData(self, key):
         self.__log.debug("Looking for key %s " % key)
@@ -290,6 +306,8 @@ class UserWallet(Wallet):
 
     def ToJson(self):
 
+        assets = self.GetCoinAssets()
+
         jsn = {}
         jsn['path'] = self._path
 
@@ -298,7 +316,8 @@ class UserWallet(Wallet):
         jsn['height'] = self._current_height
         jsn['percent_synced'] = int(100 * self._current_height / Blockchain.Default().Height)
         jsn['coins'] = [ coin.ToJson() for coin in self.FindUnspentCoins()]
-        jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
+#        jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
+        jsn['balances'] = [ "%s -> %s " % (asset.ToString(), self.GetBalance(asset).value / Fixed8.D) for asset in assets]
 
         return jsn
 

@@ -12,6 +12,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Cryptography.Base58 import b58decode
 from neo.Cryptography.Helper import *
+from neo.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
 from neo.Wallets.KeyPair import KeyPair
@@ -23,7 +24,7 @@ from neo import Settings
 from threading import Thread
 from threading import Lock
 import traceback
-
+from neo.Fixed8 import Fixed8
 
 from Crypto import Random
 from Crypto.Cipher import AES
@@ -86,33 +87,34 @@ class Wallet(object):
 
             self.BuildDatabase()
 
-            self.__log.debug("iv::: %s " % self._iv)
-            self.__log.debug("mk::: A%s " % self._master_key)
-
             passwordHash = hashlib.sha256(passwordKey.encode('utf-8')).digest()
-            master = AES.new(self._master_key, AES.MODE_CBC, self._iv)
-            masterKey = master.encrypt(passwordHash)
+            master = AES.new(passwordHash, AES.MODE_CBC, self._iv)
+            mk = master.encrypt(self._master_key)
             self.SaveStoredData('PasswordHash', passwordHash)
             self.SaveStoredData('IV', self._iv),
-            self.SaveStoredData('MasterKey', masterKey)
+            self.SaveStoredData('MasterKey', mk)
     #        self.SaveStoredData('Version') { Version.Major, Version.Minor, Version.Build, Version.Revision }.Select(p => BitConverter.GetBytes(p)).SelectMany(p => p).ToArray());
+
             self.SaveStoredData('Height', self._current_height.to_bytes(4, 'little'))
 
         else:
             self.BuildDatabase()
 
-#            passwordHash = self.LoadStoredData('PasswordHash')
-#            if passwordHash is None:
-#                raise Exception("Password hash not found in database")
+            passwordHash = self.LoadStoredData('PasswordHash')
+            if passwordHash is None:
+                raise Exception("Password hash not found in database")
 
-#            hkey= hashlib.sha256(passwordKey.encode('utf-8'))
+            hkey= hashlib.sha256(passwordKey.encode('utf-8'))
 
-#            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
-#                raise Exception("Incorrect Password")
+            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
+                raise Exception("Incorrect Password")
 
             self._iv = self.LoadStoredData('IV')
-            self._master_key = self.LoadStoredData('MasterKey')
-            self._keys = self.LoadKeyPair()
+            master_stored = self.LoadStoredData('MasterKey')
+            aes = AES.new(hkey.digest(),AES.MODE_CBC,self._iv)
+            self._master_key = aes.decrypt(master_stored)
+
+            self._keys = self.LoadKeyPairs()
             self._contracts = self.LoadContracts()
             self._watch_only = self.LoadWatchOnly()
             self._coins = self.LoadCoins()
@@ -164,10 +166,11 @@ class Wallet(object):
 
 
     def ContainsKey(self, public_key):
-        raise NotImplementedError()
+        return self.ContainsKeyHash(Crypto.ToScriptHash(public_key.encode_point(True),unhex=False))
 
     def ContainsKeyHash(self, public_key_hash):
-        return public_key_hash in self._keys
+
+        return public_key_hash in self._keys.keys()
 
     def ContainsAddress(self, script_hash):
         return self.CheckAddressState(script_hash) >= AddressState.InWallet
@@ -181,30 +184,21 @@ class Wallet(object):
 
     def CreateKey(self):
         private_key = bytes(Random.get_random_bytes(32))
-        self.__log.debug("private key %s " % private_key)
+#        self.__log.debug("private key %s " % private_key)
 
         key = KeyPair(priv_key = private_key)
         self._keys[key.PublicKeyHash] = key
         self.__log.debug("keys %s " % self._keys.items())
         return key
- #       return private_key
-
-#    def CreateKeyPairFromPrivateKey(self, private_key):
-#
- #       keypair = KeyPair(private_key = private_key)
-
-   #     self._keys[keypair.PublicKeyHash] = keypair
-
-#        return keypair
 
 
     def EncryptPrivateKey(self, decrypted):
         aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
-
         return aes.encrypt(decrypted)
 
     def DecryptPrivateKey(self, encrypted_private_key):
-        raise NotImplementedError()
+        aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
+        return aes.decrypt(encrypted_private_key)
 
     def DeleteKey(self, public_key_hash):
         raise NotImplementedError()
@@ -215,7 +209,7 @@ class Wallet(object):
 
 
     def FindUnspentCoins(self):
-        print("finding unspent coins! %s %s" % (self.GetCoins(), self._coins))
+
         ret=[]
         for coin in self.GetCoins():
             if coin.State & CoinState.Confirmed > 0 and \
@@ -225,9 +219,7 @@ class Wallet(object):
                 coin.State & CoinState.WatchOnly == 0:
 
                 ret.append(coin)
-                print("found unspent %s " % coin)
 
-        print("returning unspent... %s " % ret)
         return ret
 
     def GetKey(self, public_key_hash):
@@ -239,7 +231,15 @@ class Wallet(object):
         raise NotImplementedError()
 
     def GetBalance(self, asset_id):
-        raise NotImplementedError()
+        total=Fixed8(0)
+        for coin in self.GetCoins():
+            if coin.State & CoinState.Spent == 0 \
+                and coin.Output.AssetId == asset_id:
+
+                total = total + coin.Output.Value
+
+        return total
+
 
 
     def SaveStoredData(self, key, value):
@@ -250,7 +250,7 @@ class Wallet(object):
         # abstract
         pass
 
-    def LoadKeyPair(self):
+    def LoadKeyPairs(self):
         #abstract
         pass
 
@@ -414,11 +414,33 @@ class Wallet(object):
 
 
 
+    def GetChangeAddress(self):
+        for key,contract in self._contracts.items():
+            if contract.IsStandard:
+                return contract.ScriptHash
 
+        raise Exception("Could not find change address")
+
+    def GetDefaultContract(self):
+        try:
+            return self.GetContracts()[0]
+        except Exception as e:
+            print("NO CONTRACTS!")
+
+
+    def GetCoinAssets(self):
+        assets = set()
+        for coin in self.GetCoins():
+            assets.add(coin.Output.AssetId)
+        return list(assets)
 
     def GetCoins(self):
-        print("getting coins!!!")
         return [coin for coin in self._coins.values()]
+
+    def GetContract(self, script_hash):
+        if script_hash.ToBytes() in self._contracts.keys():
+            return self._contracts[script_hash.ToBytes()]
+        return None
 
     def GetContracts(self):
         return [contract for contract in self._contracts.values()]

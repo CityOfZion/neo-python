@@ -209,8 +209,7 @@ class PromptInterface(object):
         except Exception as e:
             print("Exception creating wallet: %s " % e)
 
-        contracts = self.Wallet.GetContracts()
-        contract = contracts[ list(contracts.keys())[0]]
+        contract = self.Wallet.GetDefaultContract()
         key = self.Wallet.GetKey(contract.PublicKeyHash.ToBytes())
 
         print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
@@ -304,7 +303,7 @@ class PromptInterface(object):
             return
 
         print("exporting wif for address %s" % (address))
-        
+
 
 
     def show_wallet(self, arguments):
@@ -318,6 +317,10 @@ class PromptInterface(object):
 
         if not item:
             print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+
+        if item == 'close':
+            print('closed wallet')
+            self.Wallet = None
 
         if item == 'rebuild':
             self.Wallet.Rebuild()

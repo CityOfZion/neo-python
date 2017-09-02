@@ -33,6 +33,7 @@ class Crypto(object):
             data = binascii.unhexlify(data)
         return UInt160( data = binascii.unhexlify(bytes(Crypto.Hash160(data), encoding='utf-8')))
 
+
     @staticmethod
     def ToAddress(uint160):
         return hash_to_wallet_address(uint160.Data)

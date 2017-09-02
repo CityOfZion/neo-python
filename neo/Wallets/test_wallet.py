@@ -16,7 +16,7 @@ class WalletTestCase(NeoTestCase):
     testnet_pub_keyhash = '2321bde5302eda01c0dfd8e0a3828dbf00e9fcf2'
 
     def test_key_pair(self):
-
+        return
 
         pk_from_wif = KeyPair.PrivateKeyFromWIF(self.testnet_WIF)
 
@@ -26,7 +26,6 @@ class WalletTestCase(NeoTestCase):
 
 
         self.assertEqual(kp.PublicKey.encode_point(True), self.testnet_pub_key)
-#        self.assertEqual(kp.PublicKeyHash.ToString(), self.testnet_pub_keyhash)
 
 
         export_wif = kp.Export()
@@ -38,10 +37,21 @@ class WalletTestCase(NeoTestCase):
     kp2_wif = 'KxtFy754kJc2KK5SWPR8UwfeXiRkXiQhNzk4pDoqBt17f5WSTt3D'
 
     def test_kp2(self):
+#        return
         pk_from_wif = KeyPair.PrivateKeyFromWIF(self.kp2_wif)
 
-        print("pk from wif %s " % pk_from_wif)
+#        print("pk from wif %s " % pk_from_wif)
 
         kp = KeyPair(priv_key=pk_from_wif)
 
-        print("kp pubkey %s " % kp.PublicKey.encode_point(True))
+
+
+    acd = b'\xb1\x81\x97]\x9f\x91W\x8c\x96\x00=\xe5\x1eH\xbar\x03\xdf\xcd\xa3;\xf9\x95\xe5u\xaf\xce\x92\xa7T\xe6A\xa7\xba\x93\xf6\xaf\xde\xc7\x8e\x90\xfd*d\xd5e\xad\xdb\xc1\xca[x\xe6<]\x08\x13\xcd\xd3Xt\x93\x95xeV\xd4B6\xd8Gp\x8a\xa5\xfc\xff\x93Q\xfa:\x95tk.\x98\xcb\xf5\xe0I\xa9}L\xde\xb0\xb9~'
+    #ac_phash = '9f17653f6b2073f4f5813d45f0990bfc5307b205'
+    ac_phash = '6c2d8b07cd1dc46f14d2fc1736cea4dbb3fc98cb'
+
+    def test_decrypted_key(self):
+
+        privkey = self.acd
+        key = KeyPair(priv_key=privkey)
+        self.assertEqual(self.ac_phash, key.PublicKeyHash.ToString())
