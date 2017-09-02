@@ -174,16 +174,14 @@ class UserWallet(Wallet):
 
     def LoadContracts(self):
 
-        print("CONTRACTS LOADING")
         ctr = {}
 
         for ct in Contract.select():
 
             data = binascii.unhexlify( ct.RawData)
             contract = Helper.AsSerializableWithType(data, 'neo.SmartContract.Contract.Contract')
-#            pdb.set_trace()
             ctr[contract.ScriptHash.ToBytes()] = contract
-        print("LOADED CONTRACTS! %s " % ctr)
+
         return ctr
 
     def LoadKeyPairs(self):

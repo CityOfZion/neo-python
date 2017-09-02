@@ -73,7 +73,7 @@ class PromptInterface(object):
     _gather_address_str = None
     _num_passwords_req = 0
     _wallet_create_path = None
-
+    _wallet_send_tx = None
 
     Wallet = None
 
@@ -378,15 +378,37 @@ class PromptInterface(object):
 
             output = TransactionOutput(AssetId=assetId,Value=f8amount,script_hash=scripthash)
             tx = ContractTransaction(outputs=[output])
-            print("TX??? %s %s %s" % (tx, tx.inputs, tx.outputs))
             ttx = self.Wallet.MakeTransaction(tx=tx,change_address=None,fee=fee)
+            if ttx is None:
+                print("insufficient funds")
+                return
 
-            print("TTX??? %s %s %s" % (ttx, ttx.inputs, ttx.outputs))
+            self._wallet_send_tx = ttx
+
+            self._num_passwords_req = 1
+            self._gathered_passwords = []
+            self._gathering_password = True
+            self._gather_password_action = self.do_send_created_tx
+
 
         except Exception as e:
             print("could not send: %s " % e)
             traceback.print_stack()
             traceback.print_exc()
+
+    def do_send_created_tx(self):
+        passwd = self._gathered_passwords[0]
+        tx = self._wallet_send_tx
+        self._wallet_send_tx = None
+        self._gathered_passwords = None
+        self._gather_password_action = None
+
+        if not self.Wallet.ValidatePassword(passwd):
+            print("incorrect password")
+            return
+
+        print("will send tx %s " % tx)
+
 
     def show_state(self):
         height = Blockchain.Default().Height

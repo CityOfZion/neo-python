@@ -17,6 +17,12 @@ from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
 from autologging import logged
 
+
+class ContractType():
+    SignatureContract = 0
+    MultiSigContract = 1
+    CustomContract = 2
+
 @logged
 class Contract(SerializableMixin, VerificationCode):
     """docstring for Contract"""
@@ -50,7 +56,13 @@ class Contract(SerializableMixin, VerificationCode):
 
         return True
 
-
+    @property
+    def Type(self):
+        if self.IsStandard:
+            return ContractType.SignatureContract
+        elif self.IsMultiSigContract():
+            return ContractType.MultiSigContract
+        return ContractType.CustomContract
 
 
     def __init__(self, redeem_script=None, param_list=None, pubkey_hash=None):
@@ -81,21 +93,17 @@ class Contract(SerializableMixin, VerificationCode):
         sb = ScriptBuilder()
         sb.push(m)
 
-
         pkeys = [point for point in publicKeys]
         pkeys.sort()
         keys = [p.encode_point().decode() for p in pkeys]
 
-        #for now we dont
         for key in keys:
             sb.push(key)
 
         sb.push(len(publicKeys))
         sb.add(CHECKMULTISIG)
 
-        toarray = sb.ToArray()
-#        tastr = toarray.decode('utf8')
-        return toarray
+        return sb.ToArray()
 
     @staticmethod
     def CreateSignatureContract(publicKey):
@@ -142,6 +150,10 @@ class Contract(SerializableMixin, VerificationCode):
         writer.WriteUInt160(self.PublicKeyHash)
         writer.WriteVarBytes(self.ParameterList)
         writer.WriteVarBytes(self.Script)
+
+    def IsMultiSigContract(self):
+        #Not implemented
+        return False
 
 
     @staticmethod

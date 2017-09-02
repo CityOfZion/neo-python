@@ -311,7 +311,8 @@ class NeoNode(Protocol):
 
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
-        BC.Default().AddHeaders(inventory.Headers)
+        if inventory is not None:
+            BC.Default().AddHeaders(inventory.Headers)
 
         if BC.Default().HeaderHeight < self.Version.StartHeight:
             self.AskForMoreHeaders()

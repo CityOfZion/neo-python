@@ -555,9 +555,6 @@ class Wallet(object):
                 output = TransactionOutput(AssetId=assetId,Value=difference,script_hash=change_address)
                 new_outputs.append(output)
 
-        print("new outputs: %s " % new_outputs)
-        tx.outputs = tx.outputs + new_outputs
-        print("all outputs: %s " % tx.outputs)
 
         inputs = []
 
@@ -565,10 +562,14 @@ class Wallet(object):
             for ref in item:
                 inputs.append(ref.Reference)
 
-        print("inputs: %s " % inputs)
 
         tx.inputs = inputs
+        tx.outputs = tx.outputs + new_outputs
 
+        for inp in tx.inputs:
+            print("Input %s " % json.dumps(inp.ToJson(),indent=4))
+        for outp in tx.outputs:
+            print("Output %s " % json.dumps(outp.ToJson(), indent=4))
         return tx
 
 
