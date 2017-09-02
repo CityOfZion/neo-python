@@ -15,9 +15,11 @@ from neo.Network.NodeLeader import NodeLeader
 import resource
 
 from neo.Core.Blockchain import Blockchain
+from neo.Core.TX.Transaction import Transaction,ContractTransaction,TransactionOutput
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo import Settings
+from neo.Fixed8 import Fixed8
 import traceback
 
 from twisted.internet import reactor, task
@@ -334,6 +336,58 @@ class PromptInterface(object):
         if item == 'unspent':
             self.Wallet.FindUnspentCoins()
 
+    def do_send(self, arguments):
+        try:
+            if not self.Wallet:
+                print("please open a wallet")
+                return
+            if len(arguments) < 3:
+                print("Not enough arguments")
+                return
+
+            to_send = self.get_arg(arguments)
+            address = self.get_arg(arguments,1)
+            amount = self.get_arg(arguments,2)
+
+            assetId = None
+
+            if to_send.lower() == 'neo':
+                assetId = Blockchain.Default().SystemShare().Hash
+            elif to_send.lower() == 'gas':
+                assetId = Blockchain.Default().SystemCoin().Hash
+            elif Blockchain.Default().GetAssetState(to_send):
+                assetId = Blockchain.Default().GetAssetState(to_send).AssetId
+
+            scripthash = self.Wallet.ToScriptHash(address)
+            if scripthash is None:
+                print("invalid address")
+                return
+
+            f8amount = Fixed8.TryParse(amount)
+            if f8amount is None:
+                print("invalid amount format")
+                return
+
+            if f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
+                print("incorrect amount precision")
+                return
+
+            fee = Fixed8.Zero()
+            if self.get_arg(arguments,3):
+                fee = Fixed8.TryParse(self.get_arg(arguments,3))
+
+            output = TransactionOutput(AssetId=assetId,Value=f8amount,script_hash=scripthash)
+            tx = ContractTransaction(outputs=[output])
+            print("TX??? %s %s %s" % (tx, tx.inputs, tx.outputs))
+            ttx = self.Wallet.MakeTransaction(tx=tx,change_address=None,fee=fee)
+
+            print("TTX??? %s %s %s" % (ttx, ttx.inputs, ttx.outputs))
+
+        except Exception as e:
+            print("could not send: %s " % e)
+            traceback.print_stack()
+            traceback.print_exc()
+
     def show_state(self):
         height = Blockchain.Default().Height
         headers = Blockchain.Default().HeaderHeight
@@ -618,6 +672,8 @@ class PromptInterface(object):
                         self.do_export(arguments)
                     elif command == 'wallet':
                         self.show_wallet(arguments)
+                    elif command == 'send':
+                        self.do_send(arguments)
                     elif command == 'block':
                         self.show_block(arguments)
                     elif command == 'tx':

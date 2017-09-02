@@ -34,11 +34,18 @@ class Contract(SerializableMixin, VerificationCode):
 
     @property
     def IsStandard(self):
+        scp = binascii.unhexlify(self.Script)
+        print("script length %s %s" % (self.Script, len(self.Script)))
 
-        if len(self.Script) != 35:
+        print("scp length %s %s" % (scp, len(scp)))
+
+        if len(scp) != 35:
+            print("scirpt not 35!")
             return False
 
-        if self.Script[0] != 33 or self.Script[34] != CHECKSIG:
+        print("script 0, scritp 34 %s %s " % (scp[0], scp[34]))
+        if scp[0] != 33 or scp[34] != int.from_bytes(CHECKSIG, 'little'):
+            print("script 0 not ")
             return False
 
         return True

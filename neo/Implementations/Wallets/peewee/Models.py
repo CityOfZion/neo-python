@@ -18,11 +18,11 @@ class Address(ModelBase):
 
 class Coin(ModelBase):
     Id = PrimaryKeyField()
-    TxId = CharField(unique=True)
+    TxId = CharField()
     Index = IntegerField()
     AssetId = CharField()
     Value = IntegerField()
-    ScriptHash = CharField(unique=True)
+    ScriptHash = CharField()
     State = IntegerField()
     Address = ForeignKeyField(Address)
 

@@ -79,13 +79,8 @@ class UserWallet(Wallet):
 
     def CreateKey(self):
         private_key = bytes(Random.get_random_bytes(32))
-        print("CREATING PRIVATE KEY  %s " % private_key)
-        self.__log.debug("user wallet private key %s " % private_key)
 
         account = WalletKeyPair(priv_key=private_key)
-        print("ACCOUNT PUBKEY %s " % account.PublicKey)
-        print("ACCOUNT PUBKEY ENCODE" % account.PublicKey.encode_point(True))
-        print("ACCOUNT PUBKEY HASH: %s " % account.PublicKeyHash.ToBytes())
         self.__log.debug("User wallet public key %s " % account.PublicKey)
         self._keys[account.PublicKeyHash.ToBytes()] = account
 
@@ -179,6 +174,7 @@ class UserWallet(Wallet):
 
     def LoadContracts(self):
 
+        print("CONTRACTS LOADING")
         ctr = {}
 
         for ct in Contract.select():
@@ -187,7 +183,7 @@ class UserWallet(Wallet):
             contract = Helper.AsSerializableWithType(data, 'neo.SmartContract.Contract.Contract')
 #            pdb.set_trace()
             ctr[contract.ScriptHash.ToBytes()] = contract
-
+        print("LOADED CONTRACTS! %s " % ctr)
         return ctr
 
     def LoadKeyPairs(self):

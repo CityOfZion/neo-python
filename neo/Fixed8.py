@@ -43,6 +43,21 @@ class Fixed8:
         return Fixed8(0)
 
 
+    @staticmethod
+    def TryParse(value):
+        val = None
+        try:
+            val = float(value)
+        except Exception as e:
+            pass
+        if not val:
+            try:
+                val = int(value)
+            except Exception as e:
+                pass
+        if val:
+            return Fixed8( val * Fixed8.D)
+        return None
 
     def __add__(self, other):
         return Fixed8( self.value + other.value)
@@ -95,3 +110,6 @@ class Fixed8:
 
     def __le__(self, other):
         return self.value <= other.value
+
+    def __str__(self):
+        return self.value

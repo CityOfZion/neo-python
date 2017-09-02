@@ -6,11 +6,10 @@ Usage:
     from neo.Wallets.Wallet import Wallet
 """
 
-from neo.Core.TX.Transaction import TransactionType
+from neo.Core.TX.Transaction import TransactionType,TransactionOutput
 from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
-from neo.Cryptography.Base58 import b58decode
 from neo.Cryptography.Helper import *
 from neo.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
@@ -25,6 +24,9 @@ from threading import Thread
 from threading import Lock
 import traceback
 from neo.Fixed8 import Fixed8
+from neo.UInt160 import UInt160
+from itertools import groupby
+from base58 import b58decode
 
 from Crypto import Random
 from Crypto.Cipher import AES
@@ -208,6 +210,7 @@ class Wallet(object):
 
 
 
+
     def FindUnspentCoins(self):
 
         ret=[]
@@ -221,6 +224,40 @@ class Wallet(object):
                 ret.append(coin)
 
         return ret
+
+    def FindUnspentCoinsByAsset(self, asset_id):
+        coins = self.FindUnspentCoins()
+
+        return [coin for coin in coins if coin.Output.AssetId == asset_id]
+
+    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount):
+
+        coins = self.FindUnspentCoinsByAsset(asset_id)
+
+        sum = Fixed8(0)
+
+        for coin in coins:
+            sum = sum + coin.Output.Value
+
+        print("sum is %s " % sum.value)
+
+        if sum < amount:
+            return None
+
+        print("unsorted coins %s "% coins)
+        sorted(coins, key=lambda coin: coin.Output.Value.value)
+
+        print("sorted coins %s " % coins)
+        total = Fixed8(0)
+
+        for index,coin in enumerate(coins):
+            total = total + coin.Output.Value
+            print("adding total %s %s " % (total.value, amount.value))
+            if total >= amount:
+                print("total is greater than amount")
+                return coins[0:index+1]
+
+
 
     def GetKey(self, public_key_hash):
         if public_key_hash in self._keys:
@@ -397,16 +434,23 @@ class Wallet(object):
         return scripthash_to_address(scripthash)
 
     def ToScriptHash(self, address):
+        print("to script hash: %s " % address)
         data = b58decode(address)
+        print("data %s  " % data)
+        print("first byte %s " % data[0])
+        print("addres sversion %s " % self.AddressVersion)
         if len(data) != 25:
             raise ValueError('Not correct Address, wrong length.')
         if data[0] != self.AddressVersion:
             raise ValueError('Not correct Coin Version')
-        scriptHash = binascii.hexlify(data[1:21])
-        if Wallet.ToAddress(scriptHash) == address:
-            return scriptHash
-        else:
-            raise ValueError('Not correct Address, something wrong in Address[-4:].')
+
+        checksum = Crypto.Default().Hash256(data[:21])[:4]
+        print("checksum: %s " % checksum)
+        if checksum != data[21:]:
+            raise Exception('Address format error')
+
+        return UInt160(data=data[1:21])
+
 
     def ValidatePassword(self, password):
 
@@ -416,8 +460,11 @@ class Wallet(object):
 
     def GetChangeAddress(self):
         for key,contract in self._contracts.items():
+            print("contract %s " % contract)
             if contract.IsStandard:
                 return contract.ScriptHash
+            else:
+                print("contract isnt stardard? %s " % contract)
 
         raise Exception("Could not find change address")
 
@@ -447,10 +494,82 @@ class Wallet(object):
 #        return self._contracts
 
 
-    def MakeTransaction(self, tx, account):
+    def MakeTransaction(self, tx, change_address = None, fee = Fixed8(0)):
+        if not tx.outputs: tx.outputs = []
+        if not tx.inputs: tx.inputs = []
 
-        raise NotImplementedError()
+        fee = fee + tx.SystemFee()
 
+        paytotal = {}
+        if tx.Type != int.from_bytes( TransactionType.IssueTransaction, 'little'):
+
+            for key, group in groupby(tx.outputs, lambda x: x.AssetId):
+                sum = Fixed8(0)
+                for item in group:
+                    sum = sum + item.Value
+                paytotal[key] = sum
+
+        print("pay total: %s " % paytotal)
+
+        if fee > Fixed8.Zero():
+
+            if Blockchain.SystemCoin().Hash in paytotal.keys():
+                paytotal[Blockchain.SystemCoin().Hash] = paytotal[Blockchain.SystemCoin().Hash] + fee
+
+            else:
+                paytotal[Blockchain.SystemCoin().Hash] = fee
+
+        print("pay total after fees: %s " % paytotal)
+
+        paycoins = {}
+        for assetId,amount in paytotal.items():
+            unspentss = self.FindUnspentCoinsByAssetAndTotal(assetId, amount)
+            print("UNSPENTSS %s " % unspentss)
+            paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount)
+
+        for key,unspents in paycoins.items():
+            if unspents == None:
+                print("insufficient funds for asset id: %s " % key)
+                return None
+
+        print("pay coins: %s " % paycoins)
+
+        input_sums = {}
+
+        for assetId,unspents in paycoins.items():
+            sum=Fixed8(0)
+            for coin in unspents:
+                sum = sum + coin.Output.Value
+            input_sums[assetId] = sum
+
+        if not change_address:
+            change_address = self.GetChangeAddress()
+
+        print("Change dadress %s " % change_address)
+
+        new_outputs = []
+
+        for assetId,sum in input_sums.items():
+            if sum > paytotal[assetId]:
+                difference = sum - paytotal[assetId]
+                output = TransactionOutput(AssetId=assetId,Value=difference,script_hash=change_address)
+                new_outputs.append(output)
+
+        print("new outputs: %s " % new_outputs)
+        tx.outputs = tx.outputs + new_outputs
+        print("all outputs: %s " % tx.outputs)
+
+        inputs = []
+
+        for item in paycoins.values():
+            for ref in item:
+                inputs.append(ref.Reference)
+
+        print("inputs: %s " % inputs)
+
+        tx.inputs = inputs
+
+        return tx
 
 
     def ToJson(self):

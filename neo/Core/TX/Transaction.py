@@ -25,6 +25,8 @@ from neo.UInt256 import UInt256
 import sys
 from itertools import groupby
 from neo.Core.AssetType import AssetType
+
+
 class TransactionResult():
     AssetId=None
     Amount=Fixed8(0)
@@ -477,3 +479,8 @@ class Transaction(Inventory, InventoryMixin):
 
         return realresults
 
+
+class ContractTransaction(Transaction):
+    def __init__(self, *args, **kwargs):
+        super(ContractTransaction, self).__init__(*args, **kwargs)
+        self.Type = TransactionType.ContractTransaction
