@@ -59,6 +59,19 @@ class ScriptBuilder(object):
             self.add(buf)
         return
 
+
+    def Emit(self, op, arg=None):
+        self.ms.write(op)
+        if arg is not None:
+            self.ms.write(arg)
+
+    def EmitAppCall(self, scriptHash, useTailCall=False):
+        if len(scriptHash) != 20:
+            raise Exception("Invalid script")
+        if useTailCall:
+            return self.Emit(TAILCALL, scriptHash)
+        return self.Emit(APPCALL, scriptHash)
+
     def ToArray(self):
         self.ms.flush()
         retval = self.ms.ToArray()

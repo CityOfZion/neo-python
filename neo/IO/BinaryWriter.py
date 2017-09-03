@@ -12,6 +12,8 @@ import binascii
 from autologging import logged
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
+import sys,os
+import inspect
 
 def swap32(i):
     return struct.unpack("<I", struct.pack(">I", i))[0]
@@ -48,7 +50,6 @@ class BinaryWriter(object):
         self.stream.write(value)
 
     def pack(self, fmt, data):
-        byts = struct.pack(fmt, data)
         return self.WriteBytes(struct.pack(fmt, data))
 
     def WriteChar(self, value, endian="<"):
@@ -64,6 +65,7 @@ class BinaryWriter(object):
         return self.pack('%sb' % endian, value)
 
     def WriteUInt8(self, value, endian="<"):
+        print("writing uint 8 %s " % value)
         return self.pack('%sB' % endian, value)
 
     def WriteBool(self, value, endian="<"):
@@ -169,7 +171,7 @@ class BinaryWriter(object):
 
     def WriteHashes(self, arr):
         length = len(arr)
-        self.WriteUInt8(length)
+        self.WriteVarInt(length)
         for item in arr:
             ba = bytearray(binascii.unhexlify(item))
             ba.reverse()

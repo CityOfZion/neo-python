@@ -51,6 +51,7 @@ class Fixed8:
 
     def __sub__(self, other):
         return Fixed8( self.value - other.value)
+
     def __isub__(self, other):
         return self.__sub__(other)
 

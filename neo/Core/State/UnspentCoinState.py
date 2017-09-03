@@ -13,8 +13,11 @@ class UnspentCoinState(StateBase):
 
     Items = None
 
-    def __init__(self, items=[]):
-        self.Items = items
+    def __init__(self, items=None):
+        if items is None:
+            self.Items = []
+        else:
+            self.Items = items
 
     @staticmethod
     def FromTXOutputsConfirmed(outputs):

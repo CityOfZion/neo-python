@@ -16,6 +16,10 @@ def GetSystemShare():
     from neo.Core.Blockchain import Blockchain
     return Blockchain.SystemShare()
 
+def GetStateReader():
+    from neo.SmartContract.StateReader import StateReader
+    return StateReader.Instance()
+
 def GetConsensusAddress(validators):
     from neo.Core.Blockchain import Blockchain
     return Blockchain.GetConsensusAddress(validators)

@@ -29,10 +29,13 @@ class SpentCoinState(StateBase):
     TransactionHeight = None
     Items = []
 
-    def __init__(self, hash=None, height = None, items = []):
+    def __init__(self, hash=None, height = None, items = None):
         self.TransactionHash = hash
         self.TransactionHeight = height
-        self.Items = items
+        if items is None:
+            self.Items = []
+        else:
+            self.Items = items
 
 
     def HasIndex(self, index):
