@@ -211,6 +211,6 @@ class BlocksTestCase(NeoTestCase):
                 self.assertEqual(len(bigclaim['claims']), 1756)
                 vout = bigclaim['vout'][0]
                 self.assertEqual(vout['ScriptHash'], 'AFnRHRQceaUgFQxPTttAQzAZvsjGSNtHCH')
-                self.assertEqual(vout['Value'], 57868.00133972)
+                self.assertEqual(vout['Value'], 5786800133972)
 
 

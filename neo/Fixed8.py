@@ -56,7 +56,7 @@ class Fixed8:
             except Exception as e:
                 pass
         if val:
-            return Fixed8( val * Fixed8.D)
+            return Fixed8( int(val * Fixed8.D))
         return None
 
     def __add__(self, other):
@@ -111,5 +111,5 @@ class Fixed8:
     def __le__(self, other):
         return self.value <= other.value
 
-    def __str__(self):
-        return self.value
+#    def __str__(self):
+#        return self.value

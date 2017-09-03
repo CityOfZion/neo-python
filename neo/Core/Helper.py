@@ -32,9 +32,20 @@ class Helper(object):
 
 
     @staticmethod
-    def Sign(signable, keypair):
+    def Sign(verifiable, keypair):
 
-        raise NotImplementedError()
+#        stream = StreamManager.GetStream()
+
+        pubkey = binascii.unhexlify( keypair.PublicKey.encode_point(True))
+        print("pubkey %s\n%s " % (pubkey, binascii.hexlify(pubkey)))
+        print("pubkeyfull %s " % keypair.PublicKey.encode_point(False))
+        prikey = bytes(keypair.PrivateKey)
+        print("private key %s " % prikey)
+        hashdata = verifiable.GetHashData()
+
+        res = Crypto.Default().Sign(hashdata, prikey, keypair.PublicKey)
+        print("result %s " % res)
+        return res
 
     @staticmethod
     def ToArray( value ):

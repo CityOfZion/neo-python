@@ -27,6 +27,8 @@ from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, Co
     TransactionInfo
 
 from autologging import logged
+from neo.SmartContract.ContractParameterType import ContractParameterType
+import json
 
 @logged
 class UserWallet(Wallet):
@@ -172,7 +174,21 @@ class UserWallet(Wallet):
         return coins
 
 
+    #this is to be taken out... was needed for old wallets when param list wasnt created correctly
+    def MigrateContracts(self):
+        for ct in Contract.select():
+            data = binascii.unhexlify(ct.RawData)
+            contract = Helper.AsSerializableWithType(data, 'neo.SmartContract.Contract.Contract')
+            if len(contract.ParameterList) < 1:
+                contract.ParameterList = bytearray([ContractParameterType.Signature])
+                print("modified contract %s " % json.dumps( contract.ToJson(), indent=4))
+                ct.RawData = contract.ToArray()
+                ct.save()
+                print("migrated contract %s "% ct)
+
     def LoadContracts(self):
+
+#        self.MigrateContracts()
 
         ctr = {}
 
@@ -180,20 +196,28 @@ class UserWallet(Wallet):
 
             data = binascii.unhexlify( ct.RawData)
             contract = Helper.AsSerializableWithType(data, 'neo.SmartContract.Contract.Contract')
+            print("contract param list length %s "% len(contract.ParameterList))
+            print("LOADED CONTRACT:::: %s " % contract.Script)
+            print("loaded contract %s %s " % (contract.ParameterList, json.dumps(contract.ToJson(), indent=4)))
             ctr[contract.ScriptHash.ToBytes()] = contract
+
 
         return ctr
 
     def LoadKeyPairs(self):
-        accts=[]
+        keypairs={}
         for db_account in Account.select():
             encrypted = db_account.PrivateKeyEncrypted
             decrypted = self.DecryptPrivateKey(encrypted)
             acct = WalletKeyPair(decrypted)
-            assert acct.PublicKeyHash.ToString() == db_account.PublicKeyHash
-            accts.append(acct)
 
-        return accts
+            print("account pub key %s %s " % (acct.PublicKey.encode_point(True), acct.PublicKey))
+
+            assert acct.PublicKeyHash.ToString() == db_account.PublicKeyHash
+
+            keypairs[acct.PublicKeyHash.ToBytes()] = acct
+
+        return keypairs
 
     def LoadStoredData(self, key):
         self.__log.debug("Looking for key %s " % key)
@@ -310,8 +334,8 @@ class UserWallet(Wallet):
         jsn['height'] = self._current_height
         jsn['percent_synced'] = int(100 * self._current_height / Blockchain.Default().Height)
         jsn['coins'] = [ coin.ToJson() for coin in self.FindUnspentCoins()]
-#        jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
+        jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
         jsn['balances'] = [ "%s -> %s " % (asset.ToString(), self.GetBalance(asset).value / Fixed8.D) for asset in assets]
-
+#        jsn['pubkey'] = self._
         return jsn
 

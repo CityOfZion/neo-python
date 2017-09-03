@@ -290,6 +290,9 @@ class LevelDBBlockchain(Blockchain):
             return True
         return False
 
+    def ContainsTransaction(self, hash):
+        tx = self._db.get(DBPrefix.DATA_Transaction + hash.ToBytes())
+        return True if tx is not None else False
 
     def GetHeader(self, hash):
 

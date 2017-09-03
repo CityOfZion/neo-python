@@ -109,11 +109,9 @@ class Contract(SerializableMixin, VerificationCode):
     def CreateSignatureContract(publicKey):
 
         script = Contract.CreateSignatureRedeemScript(publicKey)
-        params = bytearray(ContractParameterType.Signature)
-        print("creating pubkey hash with public key %s " % publicKey)
+        params = bytearray([ContractParameterType.Signature])
         encoded = publicKey.encode_point(True)
-        print("encoded %s " % encoded)
-        pubkey_hash = Crypto.ToScriptHash( encoded, unhex=False)
+        pubkey_hash = Crypto.ToScriptHash( encoded, unhex=True)
 
         return Contract(script, params, pubkey_hash)
 
@@ -143,7 +141,8 @@ class Contract(SerializableMixin, VerificationCode):
 
         self.ParameterList = reader.ReadVarBytes()
         script = bytearray(reader.ReadVarBytes()).hex()
-        self.Script = script
+        self.Script = script.encode('utf-8')
+        print("DESERIALIZED CONTRACT, SCRIPT IS %s " % self.Script)
 
 
     def Serialize(self, writer):
@@ -167,3 +166,10 @@ class Contract(SerializableMixin, VerificationCode):
 
     def ToArray(self):
         return Helper.ToArray(self)
+
+    def ToJson(self):
+        jsn = {}
+        jsn['PublicKeyHash'] = self.PublicKeyHash.ToString()
+        jsn['Parameters'] = bytes(self.ParameterList).decode('utf-8')
+        jsn['Script'] = self.Script.decode('utf-8')
+        return jsn

@@ -27,7 +27,7 @@ from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
 from itertools import groupby
 from base58 import b58decode
-
+from neo.Core.Helper import Helper
 from Crypto import Random
 from Crypto.Cipher import AES
 
@@ -172,7 +172,7 @@ class Wallet(object):
 
     def ContainsKeyHash(self, public_key_hash):
 
-        return public_key_hash in self._keys.keys()
+        return public_key_hash.ToBytes() in self._keys.keys()
 
     def ContainsAddress(self, script_hash):
         return self.CheckAddressState(script_hash) >= AddressState.InWallet
@@ -189,7 +189,7 @@ class Wallet(object):
 #        self.__log.debug("private key %s " % private_key)
 
         key = KeyPair(priv_key = private_key)
-        self._keys[key.PublicKeyHash] = key
+        self._keys[key.PublicKeyHash.ToBytes()] = key
         self.__log.debug("keys %s " % self._keys.items())
         return key
 
@@ -260,9 +260,20 @@ class Wallet(object):
 
 
     def GetKey(self, public_key_hash):
-        if public_key_hash in self._keys:
-            return self._keys[public_key_hash]
+        if public_key_hash.ToBytes() in self._keys.keys():
+            return self._keys[public_key_hash.ToBytes()]
         return None
+
+    def GetKeyByScriptHash(self, script_hash):
+
+        contract = self.GetContract(script_hash)
+        print("goot contract by script hash %s " % contract)
+        print("looking for contract pubkey hash in keys: %s %s" % (contract.PublicKeyHash, contract.PublicKeyHash.ToBytes()))
+        if contract:
+
+            return self.GetKey(contract.PublicKeyHash)
+        return None
+
 
     def GetAvailable(self, asset_id):
         raise NotImplementedError()
@@ -434,21 +445,15 @@ class Wallet(object):
         return scripthash_to_address(scripthash)
 
     def ToScriptHash(self, address):
-        print("to script hash: %s " % address)
         data = b58decode(address)
-        print("data %s  " % data)
-        print("first byte %s " % data[0])
-        print("addres sversion %s " % self.AddressVersion)
         if len(data) != 25:
             raise ValueError('Not correct Address, wrong length.')
         if data[0] != self.AddressVersion:
             raise ValueError('Not correct Coin Version')
 
         checksum = Crypto.Default().Hash256(data[:21])[:4]
-        print("checksum: %s " % checksum)
         if checksum != data[21:]:
             raise Exception('Address format error')
-
         return UInt160(data=data[1:21])
 
 
@@ -460,7 +465,7 @@ class Wallet(object):
 
     def GetChangeAddress(self):
         for key,contract in self._contracts.items():
-            print("contract %s " % contract)
+            print("contract %s " % contract.ScriptHash)
             if contract.IsStandard:
                 return contract.ScriptHash
             else:
@@ -474,6 +479,8 @@ class Wallet(object):
         except Exception as e:
             print("NO CONTRACTS!")
 
+    def GetKeys(self):
+        return [key for key in self._keys.values()]
 
     def GetCoinAssets(self):
         assets = set()
@@ -571,6 +578,39 @@ class Wallet(object):
         for outp in tx.outputs:
             print("Output %s " % json.dumps(outp.ToJson(), indent=4))
         return tx
+
+
+    def SaveTransaction(self, tx):
+#        changes = set()
+
+#        for input in tx.inputs:
+#            if self input in self._coins.
+        print("wallet SaveTransaction not impletmented yet")
+
+    def Sign(self, context):
+        success = False
+
+        for hash in context.ScriptHashes:
+
+            contract = self.GetContract(hash)
+            print("looking for contract %s in contracts %s " % (hash, [contract.ScriptHash for contract in self.GetContracts()]))
+            if contract is None:
+                continue
+
+            print("GOt contract %s " % contract)
+            key = self.GetKeyByScriptHash(hash)
+            print("looking for key %s in keys %s " % (hash.ToBytes(), self._keys.keys()))
+            if key is None:
+                continue
+
+            print("key and contract %s %s " % (contract, key))
+            signature = Helper.Sign(context.Verifiable, key)
+#            signature = context.Verifiable.Sign(key)
+            print("signature %s " % signature)
+            success |= context.AddSignature(contract, key.PublicKey, signature)
+            print("success %s " % success)
+
+        return success
 
 
     def ToJson(self):

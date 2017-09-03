@@ -175,6 +175,7 @@ class BinaryWriter(object):
         for item in arr:
             ba = bytearray(binascii.unhexlify(item))
             ba.reverse()
+#            print("WRITING HASH %s " % ba)
             self.WriteBytes(ba)
 
 

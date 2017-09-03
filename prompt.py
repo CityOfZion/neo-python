@@ -18,6 +18,8 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import Transaction,ContractTransaction,TransactionOutput
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Wallets.SignatureContext import SignatureContext
+from neo.Network.NodeLeader import NodeLeader
 from neo import Settings
 from neo.Fixed8 import Fixed8
 import traceback
@@ -212,7 +214,7 @@ class PromptInterface(object):
             print("Exception creating wallet: %s " % e)
 
         contract = self.Wallet.GetDefaultContract()
-        key = self.Wallet.GetKey(contract.PublicKeyHash.ToBytes())
+        key = self.Wallet.GetKey(contract.PublicKeyHash)
 
         print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
         print("pubkey %s " % key.PublicKey.encode_point(True))
@@ -254,6 +256,7 @@ class PromptInterface(object):
             wif = self.get_arg(arguments, 1)
 
             if wif:
+#                self.Wallet.
                 print("import wif not implemented yet")
                 return
             else:
@@ -306,6 +309,11 @@ class PromptInterface(object):
 
         print("exporting wif for address %s" % (address))
 
+        keys = self.Wallet.GetKeys()
+        print("KEYS %s " % keys)
+        for key in keys:
+            export = key.Export()
+            print("key export : %s " % export)
 
 
     def show_wallet(self, arguments):
@@ -379,6 +387,11 @@ class PromptInterface(object):
             output = TransactionOutput(AssetId=assetId,Value=f8amount,script_hash=scripthash)
             tx = ContractTransaction(outputs=[output])
             ttx = self.Wallet.MakeTransaction(tx=tx,change_address=None,fee=fee)
+
+            for output in ttx.outputs:
+
+                print("output: %s %s " % (output.ScriptHash.ToBytes(), json.dumps(output.ToJson(), indent=4)))
+
             if ttx is None:
                 print("insufficient funds")
                 return
@@ -407,7 +420,37 @@ class PromptInterface(object):
             print("incorrect password")
             return
 
-        print("will send tx %s " % tx)
+
+        try:
+            context = SignatureContext(tx)
+            print("sig context %s " % context)
+            self.Wallet.Sign(context)
+            print("signed context %s " % context)
+
+            if context.Completed:
+                print("context is completed!")
+
+                tx.scripts = context.GetScripts()
+                for s in tx.scripts:
+
+                    print("tx script %s " % json.dumps(s.ToJson(), indent=4))
+
+                print("hash is %s " % tx.Hash.ToBytes())
+                self.Wallet.SaveTransaction(tx)
+
+
+                print("Before relay, tx raw is %s " % tx.ToArray())
+
+                print("before relay, tx is %s " % json.dumps(tx.ToJson(), indent=4))
+
+
+#                relayed = NodeLeader.Instance().Relay(tx)
+#                print("relayed? %s " % relayed)
+
+        except Exception as e:
+            print("could not sign %s " % e)
+            traceback.print_stack()
+            traceback.print_exc()
 
 
     def show_state(self):

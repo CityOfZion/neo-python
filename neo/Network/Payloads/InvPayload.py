@@ -32,9 +32,10 @@ class InvPayload(SerializableMixin):
     def Serialize(self, writer):
         try:
             writer.WriteByte(self.Type)
+#            print("WILL WRITE HASHES %s " % self.Hashes)
             writer.WriteHashes(self.Hashes)
         except Exception as e:
             self.__log.debug("COULD NOT WRITE INVENTORY HASHES %s " % e)
 
     def ToString(self):
-        return "INVENTORY %s " % [h.ToString() for h in self.Hashes]
+        return "INVENTORY Type %s hashes %s " % (self.Type,[h for h in self.Hashes])
