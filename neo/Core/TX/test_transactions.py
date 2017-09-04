@@ -6,6 +6,7 @@ from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream,StreamManager
 import binascii
 import json
+import os
 
 class TransactionTestCase(NeoTestCase):
 
@@ -20,7 +21,7 @@ class TransactionTestCase(NeoTestCase):
 
 
     def test_tx_deserialize(self):
-        return
+
         ms = MemoryStream(self.tx_raw_hex)
 
         reader = BinaryReader(ms)
@@ -54,7 +55,7 @@ class TransactionTestCase(NeoTestCase):
     ctx_id = b'4feb0081f9425cab84269127bef0a871a84d4408f09923d17ebb257cd231b362'
 
     def test_contract_tx_deserialize(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.ctx_raw))
 
         reader = BinaryReader(ms)
@@ -71,7 +72,7 @@ class TransactionTestCase(NeoTestCase):
     pb_hash = b'5467a1fc8723ceffa8e5ee59399b02eea1df6fbaa53768c6704b90b960d223fa'
 
     def test_publish_tx_deserialize(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.pb_raw))
 
         reader = BinaryReader(ms)
@@ -96,7 +97,7 @@ class TransactionTestCase(NeoTestCase):
     ir_id=b'1a328cdd53c7f1710b4006304e8c75236a9b18523f037cdf069a96f0d7f01379'
 
     def test_invocation_transaction(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.ir))
 
         reader = BinaryReader(ms)
@@ -110,7 +111,7 @@ class TransactionTestCase(NeoTestCase):
     mrn = 1113941606
     mrh = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'
     def test_miner_tx(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.mr))
 
         reader = BinaryReader(ms)
@@ -125,7 +126,7 @@ class TransactionTestCase(NeoTestCase):
 
 
     def test_register_tx(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.rr))
 
         reader = BinaryReader(ms)
@@ -148,7 +149,7 @@ class TransactionTestCase(NeoTestCase):
 
 
     def test_contract_tx_again(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.cr))
 
         reader = BinaryReader(ms)
@@ -163,7 +164,7 @@ class TransactionTestCase(NeoTestCase):
     p2id=b'514157940a3e31b087891c5e8ed362721f0a7f3dda3f80b7a3fe618d02b7d3d3'
 
     def test_pub_two(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.p2))
 
         reader = BinaryReader(ms)
@@ -181,7 +182,7 @@ class TransactionTestCase(NeoTestCase):
 
 
     def test_enrollment_tx(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.eraw))
 
         reader = BinaryReader(ms)
@@ -194,7 +195,7 @@ class TransactionTestCase(NeoTestCase):
     yatx_id=b'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
 
     def test_yet_another_tx(self):
-        return
+
         ms = MemoryStream(binascii.unhexlify(self.yatx))
 
         reader = BinaryReader(ms)
@@ -203,13 +204,23 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(tx.Hash.ToBytes(), self.yatx_id)
 
 
-    stx_raw = b'\x80\x00\x00\x01\x89\x8f\x88yG\x96\xef\x98j\x1eL\xc8#\x0e\xa2]{K\xfd\x99\x92\x96\x9d\x82\x1dK\x08\x98\x06\xbfH\xb3\x00\x00\x02\x9b|\xff\xda\xa6t\xbe\xae\x0f\x93\x0e\xbe`\x85\xaf\x90\x93\xe5\xfeV\xb3J\\"\x0c\xcd\xcfn\xfc3o\xc5\x00u+}\x00\x00\x00\x00\x01\x0c\xedx\xd6\xaa\xccE\xc7X\xb7#A\x1b_\xd7\x13\x98\x8c4\x9b|\xff\xda\xa6t\xbe\xae\x0f\x93\x0e\xbe`\x85\xaf\x90\x93\xe5\xfeV\xb3J\\"\x0c\xcd\xcfn\xfc3o\xc5\x00[\xc2\x13.\x00\x00\x00\x07A\xec\x94d\xf3)\x89\xf9Q\x90\x8d\xbdq\xd9\xb8\xf2&\x81B\x01A@\x05\xb7\xf2\xa0\xa2\x10\xfe1\xcd\xbd$wg\x18\xcc\xbcV\x87\xbf\x9b\xe1\xfbb$\xc6\xd9*\xbd\xb7\x9c0O\xeb\xcb\xd1\x91\xe1\x98\xbb\x929\x1e\xe6\xad\xb0Tp\x07\xe3T\xae\xb1,\xfapGW7\x132\x80B\xa3\xc0#!\x02\xd9\xab_5\xac9N\n\xd3\xf5\xdc\xf3\xc9UTf\x98!\xd4\xe4S\xd4A\xf3\xab\xe8\xccJC,A\x9e\xac'
-    stx_braw = b'80000001898f88794796ef986a1e4cc8230ea25d7b4bfd9992969d821d4b089806bf48b30000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500752b7d00000000010ced78d6aacc45c758b723411b5fd713988c349b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5005bc2132e0000000741ec9464f32989f951908dbd71d9b8f226814201414005b7f2a0a210fe31cdbd24776718ccbc5687bf9be1fb6224c6d92abdb79c304febcbd191e198bb92391ee6adb0547007e354aeb12cfa7047573713328042a3c0232102d9ab5f35ac394e0ad3f5dcf3c95554669821d4e453d441f3abe8cc4a432c419eac'
-    def test_sent_ctx(self):
 
-#        ms = StreamManager.GetStream( self.stx_raw)
-        ms = StreamManager.GetStream( binascii.unhexlify(self.stx_braw))
+    giant_tx_hash = "9af1fcaab6fec80922e25dbea34c534c743dcf8d10f76af1892526c2879d3a70"
 
-        reader = BinaryReader(ms)
+    def test_tx_big_remark(self):
+        path = '%s/fixtures/bigtx.txt' % os.getcwd()
 
-        tx = Transaction.DeserializeFrom(reader)
+        with open(path, 'rb') as f:
+
+            blockraw = f.read().strip()
+
+            unhex = binascii.unhexlify(blockraw)
+
+            mstream = StreamManager.GetStream(unhex)
+            reader = BinaryReader(mstream)
+
+            tx = Transaction.DeserializeFrom(reader)
+
+            self.assertEqual(tx.Hash.ToString(), self.giant_tx_hash)
+
+

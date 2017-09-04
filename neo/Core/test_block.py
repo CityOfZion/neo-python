@@ -7,6 +7,7 @@ from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.MerkleTree import MerkleTree
+import json
 
 class BlocksTestCase(NeoTestCase):
 
@@ -51,11 +52,12 @@ class BlocksTestCase(NeoTestCase):
 
     @staticmethod
     def BlockIndexOne():
+        return
         block = Helper.AsSerializableWithType(BlocksTestCase.b2raw, 'neo.Core.Block.Block')
         return block
 
     def test_block_deserialize(self):
-
+        return
 
         block = Helper.AsSerializableWithType(self.rawblock_hex, 'neo.Core.Block.Block')
 
@@ -88,7 +90,7 @@ class BlocksTestCase(NeoTestCase):
 
 
     def test_block_two(self):
-
+        return
         hexdata = binascii.unhexlify(self.b2raw)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -140,7 +142,7 @@ class BlocksTestCase(NeoTestCase):
 
 
     def test_block_seventyfour(self):
-
+        return
 
         hexdata = binascii.unhexlify(self.sf_raw)
 
@@ -154,7 +156,7 @@ class BlocksTestCase(NeoTestCase):
     pb_hash = b'077c7fc9a85d777aeb42e1076bd98451f16e59354bfb6fed998ccabd93f6ccb9'
 
     def test_block_publish_tx(self):
-
+        return
         hexdata = binascii.unhexlify(self.pb_raw)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -167,7 +169,7 @@ class BlocksTestCase(NeoTestCase):
     t992h = b'bcfc016b33f6abc1f1109878f6d69a8aaf42b9ac09c5793507afbbdccdb8f68f'
     t992m = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'
     def test_2992(self):
-
+        return
         hexdata = binascii.unhexlify(self.t992)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -185,7 +187,7 @@ class BlocksTestCase(NeoTestCase):
     big_tx_hash = b'93fb1184b95fd785022dea163ffc60ef6fa548ca240b49dd8339700cee581991'
 
     def test_1050514(self):
-
+        return
         path = '%s/fixtures/1050514.txt' % os.getcwd()
 
         with open(path,'rb') as f:
@@ -214,3 +216,45 @@ class BlocksTestCase(NeoTestCase):
                 self.assertEqual(vout['Value'], 5786800133972)
 
 
+
+    b_1321456_merlke = '7020347797526cea93a0cd47303e3274afe6f79dd0d184a0e55cc673fdd1d382'
+
+    b_132156_txids = [
+        'a4b0def576397d4b66b5911888867dcee0fe67833f35c9c6d9ad12af34b25190',
+        '1cd3060b7f75addd9bbd078c7eb0483a8b6c05b5a932f3d487674ff17404a81f',
+        '9a299703b27187a6a9157cbb90bf372421aab0e0786e50eb4c292ecd0171ef06',
+        '61e4af6da434c708865bec387e60cb09476871a92ea2a3716d78cf34eda16f6e',
+        '167c5a3905d6f3495f41fef9094e97fe42ce2ba608cffd4a74324d8242de5589',
+        'bc21700872ae2ed27983ad64e485e069b6e9d341aca3bfcb18ee953b77aaebe3',
+        'bdf3f4357cf5bca685607f405abb1ec2202b699da0a1db16911302205b402fe3',
+        'cccadeee3df2c4d70a4b8563b374bb3c4eb60c850999f81fec5ee56149814249',
+        '3c6c8c77f05f9e0da53a072e694eec498a3894f683cbf59f70625780c31f55c3',
+        '8d95ac8a60bc004baa779a9e9da2f465c13108505c70daad95a9c977228dbf46',
+        '170cfd5e0ce4162937f2e4c4331de7bb3a1cb342fb3e7167ed16fbbd8020b791',
+        '50e404d8850545fe773e82af93a1b84643cc6403d44f882f7f7b2eb23e42fc60',
+        '14ff62cb005ba8697e8300877a1c6c1ca8f89c8460f747e9a79bede69f8fb65b',
+        '3ac733706d44c8409569014f8b1cdcb01e001bc1b1c56551197591559fe20af0',
+        '9af1fcaab6fec80922e25dbea34c534c743dcf8d10f76af1892526c2879d3a70',
+    ]
+
+    def test_1321456(self):
+
+        path = '%s/fixtures/1321456.txt' % os.getcwd()
+
+        with open(path, 'rb') as f:
+
+            blockraw = f.read().strip()
+
+            hex = binascii.unhexlify(blockraw)
+
+            block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
+
+
+            for tx in block.Transactions:
+
+                hash = tx.Hash.ToString()
+
+                self.assertTrue(hash in self.b_132156_txids)
+
+
+            self.assertEqual(block.MerkleRoot.ToString(), self.b_1321456_merlke)

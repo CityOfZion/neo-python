@@ -16,7 +16,7 @@ from neo.Core.Witness import Witness
 import json
 from neo.Fixed8 import Fixed8
 from neo.Blockchain import GetBlockchain
-
+import pdb
 #  < summary >
 #  区块或区块头
 #  < / summary >
@@ -44,7 +44,7 @@ class Block(BlockBase, InventoryMixin):
 
     def __init__(self, prevHash=None, timestamp=None, index=None,
                  consensusData=None, nextConsensus=None,
-                 script=None, transactions=[], build_root=False):
+                 script=None, transactions=None, build_root=False):
 
         super(Block, self).__init__()
         self.Version = 0
@@ -54,7 +54,13 @@ class Block(BlockBase, InventoryMixin):
         self.ConsensusData = consensusData
         self.NextConsensus = nextConsensus
         self.Script = script
-        self.Transactions = transactions
+
+        if transactions:
+
+            self.Transactions = transactions
+        else:
+            self.Transactions = []
+
         if build_root:
             self.RebuildMerkleRoot()
 
@@ -141,9 +147,6 @@ class Block(BlockBase, InventoryMixin):
             raise Exception("Merkle Root Mismatch")
 
 
-#        if self.Index == 2003:
-#            reader.stream.seek(0)
-#            print("block data %s " % reader.stream.ToArray())
 
     #  < summary >
     #  比较当前区块与指定区块是否相等
