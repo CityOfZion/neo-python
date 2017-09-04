@@ -18,6 +18,7 @@ def big_or_little(string):
             arr[idx], arr[length - idx] = arr[length - idx], arr[idx]
     return bytes(arr)
 
+
 def big_or_little_str(string):
     arr = bytearray(string)
     length = len(arr)
@@ -27,4 +28,3 @@ def big_or_little_str(string):
         else:
             arr[index], arr[length -index] = arr[length -index], arr[index]
     return str(arr)
-
