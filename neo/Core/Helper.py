@@ -32,9 +32,12 @@ class Helper(object):
 
 
     @staticmethod
-    def Sign(signable, keypair):
+    def Sign(verifiable, keypair):
 
-        raise NotImplementedError()
+        prikey = bytes(keypair.PrivateKey)
+        hashdata = verifiable.GetHashData()
+        res = Crypto.Default().Sign(hashdata, prikey, keypair.PublicKey)
+        return res
 
     @staticmethod
     def ToArray( value ):
@@ -79,13 +82,11 @@ class Helper(object):
         if len(hashes) != len(verifiable.Scripts):
             print("hashes not same length as verifiable scripts")
             return False
-        print("hello!!!! %s " % hashes)
 
         for i in range(0, len(hashes)):
             verification = verifiable.Scripts[i].VerificationScript
 
 
-            print("verifying script: %s %s " % (hashes[i], verification))
 
             if len(verification) == 0:
                 sb = ScriptBuilder()
@@ -105,13 +106,10 @@ class Helper(object):
             if not res:
                 print("engine did not execune")
                 return False
-            else:
-
-                print("engine did execute!")
 
 
             if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
-                print("stack not one, or stack false")
+#                print("stack not one, or stack false")
                 return False
 
         return True

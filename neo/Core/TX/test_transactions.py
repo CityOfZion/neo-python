@@ -3,9 +3,11 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import MemoryStream,StreamManager
 import binascii
-import pprint
+import json
+import os
+
 class TransactionTestCase(NeoTestCase):
 
 
@@ -200,3 +202,25 @@ class TransactionTestCase(NeoTestCase):
         tx = Transaction.DeserializeFrom(reader)
         self.assertEqual(tx.ToArray(), self.yatx)
         self.assertEqual(tx.Hash.ToBytes(), self.yatx_id)
+
+
+
+    giant_tx_hash = "9af1fcaab6fec80922e25dbea34c534c743dcf8d10f76af1892526c2879d3a70"
+
+    def test_tx_big_remark(self):
+        path = '%s/fixtures/bigtx.txt' % os.getcwd()
+
+        with open(path, 'rb') as f:
+
+            blockraw = f.read().strip()
+
+            unhex = binascii.unhexlify(blockraw)
+
+            mstream = StreamManager.GetStream(unhex)
+            reader = BinaryReader(mstream)
+
+            tx = Transaction.DeserializeFrom(reader)
+
+            self.assertEqual(tx.Hash.ToString(), self.giant_tx_hash)
+
+

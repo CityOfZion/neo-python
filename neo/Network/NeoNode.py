@@ -183,6 +183,8 @@ class NeoNode(Protocol):
             self.HandleVersion(m.Payload)
         elif m.Command == 'getaddr':
             self.SendPeerInfo()
+        elif m.Command == 'getdata':
+            self.HandleGetDataMessageReceived(m.Payload)
         elif m.Command == 'inv':
             self.HandleInvMessage(m.Payload)
         elif m.Command == 'block':
@@ -262,7 +264,6 @@ class NeoNode(Protocol):
 
     def SendPeerInfo(self):
 
-
 #        self.Log("SENDING PEER INFO %s " % self)
 
 #        peerlist = []
@@ -293,12 +294,8 @@ class NeoNode(Protocol):
         self.ProtocolReady()
 
     def HandleInvMessage(self, payload):
+        pass
 
-        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
-
-#        print("handle inv %s " % inventory.Type)
-#        if inventory.Type == InventoryType.Block:
-#            print("handle block ?...")
 
     def SendSerializedMessage(self, message):
         ba = Helper.ToArray(message)
@@ -311,7 +308,8 @@ class NeoNode(Protocol):
 
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
-        BC.Default().AddHeaders(inventory.Headers)
+        if inventory is not None:
+            BC.Default().AddHeaders(inventory.Headers)
 
         if BC.Default().HeaderHeight < self.Version.StartHeight:
             self.AskForMoreHeaders()
@@ -330,12 +328,47 @@ class NeoNode(Protocol):
         self.leader.InventoryReceived(block)
 
         if len(self.myblockrequests) < self.leader.NREQMAX:
-#            reactor.callLater(2, self.DoAskForMoreBlocks)
             self.DoAskForMoreBlocks()
 
 
     def HandleBlockReset(self, hash):
         self.myblockrequests = []
+
+
+    def HandleGetDataMessageReceived(self, payload):
+
+        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
+
+
+        for hash in inventory.Hashes:
+            hash = hash.encode('utf-8')
+
+            item = None
+            #try to get the inventory to send from relay cache
+
+            if hash in self.leader.RelayCache.keys():
+                item = self.leader.RelayCache[hash]
+
+            if item:
+                if inventory.Type == int.from_bytes( InventoryType.TX,'little'):
+
+                    message = Message(command='tx',payload=item, print_payload=True)
+                    self.SendSerializedMessage(message)
+
+                elif inventory.Type == int.from_bytes( InventoryType.Block, 'little'):
+                    print("handle block!")
+
+                elif inventory.Type == int.from_bytes( InventoryType.Consensus, 'little'):
+                    print("handle consensus")
+
+
+    def Relay(self, inventory):
+
+        inventory = InvPayload(type=inventory.InventoryType, hashes=[inventory.Hash.ToBytes()])
+        m = Message("inv", inventory)
+        self.SendSerializedMessage(m)
+
+        return True
 
     def Log(self, msg):
         self.__log.debug("%s - %s" % (self.endpoint, msg))

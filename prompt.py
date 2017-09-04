@@ -8,18 +8,22 @@
 import json
 import logging
 import datetime
-import math
 import time
-import gc
+import os
 from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
-
 import resource
 
 from neo.Core.Blockchain import Blockchain
+from neo.Core.TX.Transaction import Transaction,ContractTransaction,TransactionOutput
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Wallets.SignatureContext import SignatureContext
+from neo.Wallets.KeyPair import KeyPair
+from neo.Network.NodeLeader import NodeLeader
 from neo import Settings
-
+from neo.Fixed8 import Fixed8
+import traceback
 
 from twisted.internet import reactor, task
 
@@ -65,6 +69,16 @@ class PromptInterface(object):
     go_on = True
 
     completer = WordCompleter(['block','tx','header','mem','help','state','node','exit','quit','config','db','log'])
+
+    _gathering_password = False
+    _gathered_passwords = []
+    _gather_password_action = None
+    _gather_address_str = None
+    _num_passwords_req = 0
+    _wallet_create_path = None
+    _wallet_send_tx = None
+
+    Wallet = None
 
     commands = ['quit',
                 'help',
@@ -138,6 +152,310 @@ class PromptInterface(object):
             reactor.callLater(1,self.paused_loop)
 
 
+    def do_open(self, arguments):
+        item = self.get_arg(arguments)
+
+        if item and item == 'wallet':
+
+            path = self.get_arg(arguments, 1)
+
+            if path:
+
+                if not os.path.exists(path):
+                    print("wallet file not found")
+                    return
+
+                self._num_passwords_req = 1
+                self._wallet_create_path = path
+                self._gathered_passwords = []
+                self._gathering_password = True
+                self._gather_password_action = self.do_open_wallet
+            else:
+                print("Please specify a path")
+
+    def do_create(self, arguments):
+        item = self.get_arg(arguments)
+
+        if item and item == 'wallet':
+
+            path = self.get_arg(arguments, 1)
+
+            if path:
+
+                if os.path.exists(path):
+                    print("File already exists")
+                    return
+
+                self._num_passwords_req = 2
+                self._wallet_create_path = path
+                self._gathered_passwords = []
+                self._gathering_password = True
+                self._gather_password_action = self.do_create_wallet
+     #           print("create wallet! Please specify a password")
+            else:
+                print("Please specify a path")
+
+    def do_create_wallet(self):
+#        print("do create wallet with passwords %s "% self._gathered_passwords)
+        psswds = self._gathered_passwords
+        path = self._wallet_create_path
+        self._wallet_create_path = None
+        self._gathered_passwords = None
+        self._gather_password_action = None
+
+        if len(psswds) != 2 or psswds[0] != psswds[1] or len(psswds[0]) < 10:
+            print("please provide matching passwords that are at least 10 characters long")
+            return
+
+        passwd = psswds[1]
+
+        try:
+            self.Wallet = UserWallet.Create(path=path , password=passwd)
+        except Exception as e:
+            print("Exception creating wallet: %s " % e)
+
+        contract = self.Wallet.GetDefaultContract()
+        key = self.Wallet.GetKey(contract.PublicKeyHash)
+
+        print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+        print("pubkey %s " % key.PublicKey.encode_point(True))
+
+
+        dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
+        dbloop.start(1)
+
+
+    def do_open_wallet(self):
+        passwd = self._gathered_passwords[0]
+        path = self._wallet_create_path
+        self._wallet_create_path = None
+        self._gathered_passwords = None
+        self._gather_password_action = None
+
+        try:
+            self.Wallet = UserWallet.Open(path, passwd)
+
+            dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
+            dbloop.start(1)
+
+            print("Opened wallet at %s" % path)
+        except Exception as e:
+            print("could not open wallet %s " % e)
+            traceback.print_stack()
+            traceback.print_exc()
+
+
+    def do_import(self, arguments):
+        item = self.get_arg(arguments)
+
+        if item and item == 'wif':
+
+            if not self.Wallet:
+                print("Please open a wallet before importing WIF")
+                return
+
+            wif = self.get_arg(arguments, 1)
+
+            if wif:
+#                self.Wallet.
+                prikey = KeyPair.PrivateKeyFromWIF(wif)
+                if prikey:
+
+                    key = self.Wallet.CreateKey(prikey)
+                    print("imported key %s " % wif)
+                    print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
+                    print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+                else:
+                    print("invalid wif")
+                return
+            else:
+                print("Please specify a wif")
+                return
+
+        print("please specify something to import")
+        return
+
+
+
+
+    def do_export(self, arguments):
+        item = self.get_arg(arguments)
+
+        if item == 'wif':
+
+            if not self.Wallet:
+                print("please open a wallet")
+                return
+            addr = self.get_arg(arguments, 1)
+
+            if not addr:
+                print('please specify an address')
+                return
+
+            if not self.Wallet.ContainsAddressStr(addr):
+                print("address %s not found in wallet" % addr)
+                return
+
+            self._num_passwords_req = 1
+            self._gather_address_str = addr
+            self._gathered_passwords = []
+            self._gathering_password = True
+            self._gather_password_action = self.do_export_wif
+            return
+
+        print("Command export %s not found" % item)
+
+    def do_export_wif(self):
+        passwd = self._gathered_passwords[0]
+        address = self._gather_address_str
+        self._gather_address_str = None
+        self._gathered_passwords = None
+        self._gather_password_action = None
+
+        if not self.Wallet.ValidatePassword(passwd):
+            print("incorrect password")
+            return
+
+        print("exporting wif for address %s" % (address))
+
+        keys = self.Wallet.GetKeys()
+        print("KEYS %s " % keys)
+        for key in keys:
+            export = key.Export()
+            print("key export : %s " % export)
+
+
+    def show_wallet(self, arguments):
+
+
+        if not self.Wallet:
+            print("please open a wallet")
+            return
+
+        item = self.get_arg(arguments)
+
+        if not item:
+            print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+            return
+
+        if item in ['v','--v','verbose']:
+            print("Wallet %s " % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
+            return
+
+        if item == 'close':
+            print('closed wallet')
+            self.Wallet = None
+
+        if item == 'rebuild':
+            self.Wallet.Rebuild()
+            try:
+                item2 = int(self.get_arg(arguments,1))
+                if item2 and item2 > 0:
+                    print('restarting at %s ' % item2)
+                    self.Wallet._current_height = item2
+            except Exception as e:
+                pass
+        if item == 'unspent':
+            self.Wallet.FindUnspentCoins()
+
+    def do_send(self, arguments):
+        try:
+            if not self.Wallet:
+                print("please open a wallet")
+                return
+            if len(arguments) < 3:
+                print("Not enough arguments")
+                return
+
+            to_send = self.get_arg(arguments)
+            address = self.get_arg(arguments,1)
+            amount = self.get_arg(arguments,2)
+
+            assetId = None
+
+            if to_send.lower() == 'neo':
+                assetId = Blockchain.Default().SystemShare().Hash
+            elif to_send.lower() == 'gas':
+                assetId = Blockchain.Default().SystemCoin().Hash
+            elif Blockchain.Default().GetAssetState(to_send):
+                assetId = Blockchain.Default().GetAssetState(to_send).AssetId
+
+            scripthash = self.Wallet.ToScriptHash(address)
+            if scripthash is None:
+                print("invalid address")
+                return
+
+            f8amount = Fixed8.TryParse(amount)
+            if f8amount is None:
+                print("invalid amount format")
+                return
+
+            if f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
+                print("incorrect amount precision")
+                return
+
+            fee = Fixed8.Zero()
+            if self.get_arg(arguments,3):
+                fee = Fixed8.TryParse(self.get_arg(arguments,3))
+
+            output = TransactionOutput(AssetId=assetId,Value=f8amount,script_hash=scripthash)
+            tx = ContractTransaction(outputs=[output])
+            ttx = self.Wallet.MakeTransaction(tx=tx,change_address=None,fee=fee)
+
+
+            if ttx is None:
+                print("insufficient funds")
+                return
+
+            self._wallet_send_tx = ttx
+
+            self._num_passwords_req = 1
+            self._gathered_passwords = []
+            self._gathering_password = True
+            self._gather_password_action = self.do_send_created_tx
+
+
+        except Exception as e:
+            print("could not send: %s " % e)
+            traceback.print_stack()
+            traceback.print_exc()
+
+    def do_send_created_tx(self):
+        passwd = self._gathered_passwords[0]
+        tx = self._wallet_send_tx
+        self._wallet_send_tx = None
+        self._gathered_passwords = None
+        self._gather_password_action = None
+
+        if not self.Wallet.ValidatePassword(passwd):
+            print("incorrect password")
+            return
+
+
+        try:
+            context = SignatureContext(tx)
+            self.Wallet.Sign(context)
+
+            if context.Completed:
+
+                tx.scripts = context.GetScripts()
+
+                self.Wallet.SaveTransaction(tx)
+
+                relayed = NodeLeader.Instance().Relay(tx)
+
+                if relayed:
+                    print("Relayed Tx: %s " % tx.Hash.ToString())
+                else:
+                    print("Could not relay tx %s " % tx.Hash.ToString())
+
+
+        except Exception as e:
+            print("could not sign %s " % e)
+            traceback.print_stack()
+            traceback.print_exc()
+
+
     def show_state(self):
         height = Blockchain.Default().Height
         headers = Blockchain.Default().HeaderHeight
@@ -157,8 +475,6 @@ class PromptInterface(object):
         out += 'Blocks since program start %s\n' % diff
         out += 'Time elapsed %s mins\n' % mins
         out += 'blocks per min %s \n' % bpm
-#        out += "Node Req Part, Max: %s %s\n" % (self.node_leader.BREQPART, self.node_leader.BREQMAX)
-#        out += "DB Cache Lim, Miss Lim %s %s\n" % (Blockchain.Default().CACHELIM, Blockchain.Default().CMISSLIM)
         tokens = [(Token.Number, out)]
         print_tokens(tokens, self.token_style)
 
@@ -381,60 +697,89 @@ class PromptInterface(object):
 
         while self.go_on:
 
-            result = prompt("neo> ",
-                            completer=self.completer,
-                            history=self.history,
-                            get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                            style=self.token_style)
 
-            command, arguments = self.parse_result(result)
+            if self._gathered_passwords and len(self._gathered_passwords) == self._num_passwords_req:
+                self._gathering_password = False
+                self._gather_password_action()
 
-            if command is not None and len(command) > 0:
-                command = command.lower()
-
-
-                if command == 'quit' or command == 'exit':
-                    self.quit()
-                elif command == 'help':
-                    self.help()
-                elif command == 'block':
-                    self.show_block(arguments)
-                elif command == 'tx':
-                    self.show_tx(arguments)
-                elif command == 'header':
-                    self.show_header(arguments)
-                elif command =='account':
-                    self.show_account_state(arguments)
-                elif command == 'asset':
-                    self.show_asset_state(arguments)
-                elif command =='contract':
-                    self.show_contract_state(arguments)
-                elif command == 'sc':
-                    self.show_spent_coins(arguments)
-                elif command == 'mem':
-                    self.show_mem()
-                elif command == 'nodes' or command == 'node':
-                    self.show_nodes()
-                elif command == 'state':
-                    self.show_state()
-                elif command == 'config':
-                    self.configure(arguments)
-                elif command == 'pause' or command == 'unpause' or command == 'resume':
-                    self.toggle_pause()
-                elif command == None:
-                    print('please specify a command')
-                else:
-                    print("command %s not found" % command)
+            if self._gathering_password:
+                result = prompt("password> ", is_password=True)
 
             else:
-                pass
+                result = prompt("neo> ",
+                                completer=self.completer,
+                                history=self.history,
+                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                style=self.token_style)
+
+
+
+            if self._gathering_password:
+                self._gathered_passwords.append(result)
+
+            else:
+
+
+                command, arguments = self.parse_result(result)
+
+                if command is not None and len(command) > 0:
+                    command = command.lower()
+
+
+                    if command == 'quit' or command == 'exit':
+                        self.quit()
+                    elif command == 'help':
+                        self.help()
+                    elif command == 'create':
+                        self.do_create(arguments)
+                    elif command == 'open':
+                        self.do_open(arguments)
+                    elif command == 'import':
+                        self.do_import(arguments)
+                    elif command == 'export':
+                        self.do_export(arguments)
+                    elif command == 'wallet':
+                        self.show_wallet(arguments)
+                    elif command == 'send':
+                        self.do_send(arguments)
+                    elif command == 'block':
+                        self.show_block(arguments)
+                    elif command == 'tx':
+                        self.show_tx(arguments)
+                    elif command == 'header':
+                        self.show_header(arguments)
+                    elif command =='account':
+                        self.show_account_state(arguments)
+                    elif command == 'asset':
+                        self.show_asset_state(arguments)
+                    elif command =='contract':
+                        self.show_contract_state(arguments)
+                    elif command == 'sc':
+                        self.show_spent_coins(arguments)
+                    elif command == 'mem':
+                        self.show_mem()
+                    elif command == 'nodes' or command == 'node':
+                        self.show_nodes()
+                    elif command == 'state':
+                        self.show_state()
+                    elif command == 'config':
+                        self.configure(arguments)
+                    elif command == 'pause' or command == 'unpause' or command == 'resume':
+                        self.toggle_pause()
+                    elif command == None:
+                        print('please specify a command')
+                    else:
+                        print("command %s not found" % command)
+
+                else:
+                    pass
 
 
 if __name__ == "__main__":
 
     cli = PromptInterface()
 
-    reactor.suggestThreadPoolSize(15)
+#    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
     reactor.run()

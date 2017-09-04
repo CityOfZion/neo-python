@@ -73,3 +73,6 @@ class UIntBase(SerializableMixin):
 
     def __hash__(self):
         return self.__hash
+
+    def __str__(self):
+        return self.ToString()

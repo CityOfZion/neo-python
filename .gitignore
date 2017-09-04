@@ -9,6 +9,9 @@ UnitTestChain
 # C extensions
 *.so
 
+# wallets
+Wallets
+
 # Distribution / packaging
 .Python
 env/

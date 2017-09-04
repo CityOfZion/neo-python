@@ -354,29 +354,35 @@ class EllipticCurve:
         def IsInfinity(self):
             return True if self == self.curve.Infinity else False
 
-        def encode_point(self, compressed=True):
+
+
+        def encode_point(self, compressed=True, endian='little'):
 
             if self.IsInfinity:
                 return bytearray([0])
 
-            xbytes = bytearray(self.x.value.to_bytes(32,'little'))
+            xbytes = bytearray(self.x.value.to_bytes(32,endian))
             xbytes.reverse()
 
-            if not compressed:
 
-                ybytes = bytearray(self.y.value.to_bytes(32, 'little'))
+            if compressed:
+                byteone = b'\x03'
+                if self.y.value % 2 == 0:
+                    byteone = b'\x02'
+
+
+                data = bytearray(byteone) + xbytes
+                return binascii.hexlify(data)
+
+            else:
+
+
+                ybytes = bytearray(self.y.value.to_bytes(32, endian))
                 ybytes.reverse()
 
                 data = bytearray(b'\x04') + xbytes + ybytes
                 return binascii.hexlify(data)
 
-            tilde = b'\x03'
-            if self.y.value % 2 == 0:
-                tilde = b'\x02'
-
-            data = bytearray(tilde) + xbytes
-
-            return binascii.hexlify(data)
 
 
         def ToString(self):
@@ -537,10 +543,30 @@ class EllipticCurve:
             return self.decompress_from_curve(X1, yTilde)
 
         #uncompressed or hybrid
-        elif f ==  4 or f == 6 or f == 7:
+        elif f == 4:
+
+            if len(ba) != (2 *expected_byte_len) + 1:
+                raise Exception("Incorrect length for compressed encoding")
+
+            x_data = bytearray(ba[1:1+expected_byte_len])
+            x_data.reverse()
+            x_data.append(0)
+            #print("x data %s %s" % (x_data, len(x_data)))
+            y_data = bytearray(ba[1 + expected_byte_len:])
+            y_data.reverse()
+            y_data.append(0)
+            #print("y data %s " % y_data)
+            x = int.from_bytes(x_data,'little')
+            y = int.from_bytes(y_data, 'little')
+#            print("y data %s %s" % (x,y))
+            pnt = self.point(x,y)
+            return pnt
+
+        elif f == 6 or f == 7:
             raise NotImplementedError()
 
-        raise Exception("Invalid point incoding: %s " % f)
+        else:
+            raise Exception("Invalid point incoding: %s " % f)
 
 
 
@@ -721,8 +747,9 @@ class ECDSA:
                      ec.point(0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296,0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5),
                      GFp)
 
+
     @staticmethod
-    def decode_secp256r1(str, unhex=True):
+    def decode_secp256r1(str, unhex=True, check_on_curve=True):
         """
         decode a public key on the secp256r1 curve
         """
@@ -732,11 +759,14 @@ class ECDSA:
                            41058363725152142129326129780047268409114441015993725554835256314039467401291)
 
         point = ec.decode_from_hex(str, unhex=unhex)
-        if point.isoncurve():
-            return ECDSA(GFp, point, int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
-        else:
-            raise Exception("Could not decode string")
 
+        if check_on_curve:
+            if point.isoncurve():
+                return ECDSA(GFp, point, int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
+            else:
+                raise Exception("Could not decode string")
+
+        return ECDSA(GFp, point, int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16))
 
     @staticmethod
     def Deserialize_Secp256r1(reader):
@@ -747,7 +777,25 @@ class ECDSA:
 
         return ec.decode_from_reader(reader)
 
+    @staticmethod
+    def FromBytes_Secp256r1(pubkey):
+        length = len(pubkey)
 
+        if length == 33 or length == 65:
+            return ECDSA.decode_secp256r1(pubkey)
+
+        elif length == 64 or length == 72:
+            skip = length - 64
+            out = bytearray(b'04').hex() + pubkey[skip:]
+            #print("out %s %s " % (out, len(out)))
+            return ECDSA.decode_secp256r1(out)
+
+        elif length == 96 or length == 104:
+            skip = length - 96
+
+            out = bytearray(b'\x04') + bytearray(pubkey[skip:skip+64])
+            #print("out %s %s" % (out,len(out)))
+            return ECDSA.decode_secp256r1(out, unhex=False, check_on_curve=False)
 
 
     @staticmethod
@@ -760,3 +808,14 @@ class ECDSA:
         return ECDSA(ec, ec.point( 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798, 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8  ), 2**256 - 432420386565659656852420866394968145599)
 
 
+    @staticmethod
+    def SignSecp256R1(message, prikey, pubkey):
+
+        GFp = FiniteField(int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16))
+        ec = EllipticCurve(GFp, 115792089210356248762697446949407573530086143415290314195533631308867097853948,41058363725152142129326129780047268409114441015993725554835256314039467401291)
+
+        edcsa = ECDSA(ec,ec.point(pubkey.x.value,pubkey.y.value),GFp)
+
+        res = edcsa.sign(message,prikey)
+
+        return res

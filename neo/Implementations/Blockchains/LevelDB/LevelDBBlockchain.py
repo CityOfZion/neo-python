@@ -290,6 +290,9 @@ class LevelDBBlockchain(Blockchain):
             return True
         return False
 
+    def ContainsTransaction(self, hash):
+        tx = self._db.get(DBPrefix.DATA_Transaction + hash.ToBytes())
+        return True if tx is not None else False
 
     def GetHeader(self, hash):
 
@@ -563,7 +566,7 @@ class LevelDBBlockchain(Blockchain):
                         contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
                     elif tx.Type == TransactionType.InvocationTransaction:
 
-                        print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
+                        self.__log.debug("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
                         script_table = CachedScriptTable(contracts)
                         service = StateMachine(accounts, validators, assets, contracts,storages,wb)
 

@@ -28,10 +28,10 @@
 - Run a python based P2P node
 - Interactive CLI for configuring node and inspecting block chain
 - Runs smart contracts on the block chain in a python virtual machine
+- Very basic Wallet functionality (Not fully tested, please do not use on mainnet)
 
 ### What will it do
 
-- Wallet functionality
 - Full python RPC client
 - Compile smart contracts written python and deploy to blockchain
 - Full smart contract debugging and inspection
@@ -156,6 +156,22 @@ neo> show block 122235
 }
 neo>
 ```
+
+
+#### Available Wallet commands
+
+```
+create wallet {wallet_path}
+open wallet {wallet_path}
+
+wallet { verbose } { rebuild } {rebuild BLOCK_HEIGHT}
+export wif { ADDRESS }
+import wif { WIF }
+
+send { ASSET_ID } { ADDRESS } { AMOUNT }
+
+```
+
 
 #### Extra notes
 On OSX, if you would like to run the process in the background, even when your computer is sleeping, you can use the built in `caffeinate` command

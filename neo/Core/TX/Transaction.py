@@ -25,6 +25,8 @@ from neo.UInt256 import UInt256
 import sys
 from itertools import groupby
 from neo.Core.AssetType import AssetType
+
+
 class TransactionResult():
     AssetId=None
     Amount=Fixed8(0)
@@ -90,7 +92,7 @@ class TransactionOutput(SerializableMixin):
     def ToJson(self):
         return {
             'AssetId': self.AssetId.ToString(),
-            'Value': self.Value.value / Fixed8.D,
+            'Value': self.Value.value,
             'ScriptHash': self.Address
         }
 
@@ -326,7 +328,6 @@ class Transaction(Inventory, InventoryMixin):
 
 
     def SerializeExclusiveData(self, writer):
-        # ReWrite in RegisterTransaction and IssueTransaction#
         pass
 
 
@@ -348,81 +349,81 @@ class Transaction(Inventory, InventoryMixin):
 
 
     def Verify(self, mempool):
-        self.__log.debug("Verifying transaction: %s " % self.HashToString())
-        for i in range(1, len(self.inputs)):
-            j=0
-            while j < i:
-                j = j+1
-                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
-                    return False
-        self.__log.debug("Verified inputs 1")
-        for tx in mempool:
-            if tx is not self:
-                for ip in self.inputs:
-                    if ip in tx.inputs:
-                        return False
+        self.__log.debug("Verifying transaction: %s " % self.Hash.ToBytes())
 
-
-        self.__log.debug("Verified inputs 2, checking double spend")
-
-        if GetBlockchain().IsDoubleSpend(self):
-            return False
-
-
-        self.__log.debug("verifying outputs ...")
-        for txOutput in self.outputs:
-            asset = GetBlockchain().GetAssetState(txOutput.AssetId)
-
-            if asset is None: return False
-
-            if txOutput.Value % pow(10, 8 - asset.Precision) != 0:
-                return False
-
-        self.__log.debug("unimplemented after here ...")
+#        print("return true for now ...")
         return True
 
-        txResults = self.GetTransactionResults()
-
-        if txResults is None: return False
-
-        destroyedResults = []
-        [destroyedResults.append(tx) for tx in txResults if tx.Amount==Fixed8(0)]
-        numDestroyed = len(destroyedResults)
-        if numDestroyed > 1:
-            return False
-        if numDestroyed == 1 and destroyedResults[0].AssetId != GetSystemCoin().Hash:
-            return False
-        if self.SystemFee() > Fixed8(0) and ( numDestroyed == 0 or destroyedResults[0].Amount < self.SystemFee()):
-            return False
-
-        issuedResults = []
-
-        [issuedResults.append(tx) for tx in txResults if tx.Amount() < Fixed8(0)]
-
-        if self.Type == TransactionType.MinerTransaction or self.Type == TransactionType.ClaimTransaction:
-            for tx in issuedResults:
-                if tx.AssetId != GetSystemCoin().Hash:
-                    return False
-
-        elif self.Type == TransactionType.IssueTransaction:
-            for tx in issuedResults:
-                if tx.AssetId != GetSystemCoin().Hash:
-                    return False
-
-        else:
-            if len(issuedResults) > 0:
-                return False
-
-
-        usageECDH=0
-
-        for attr in self.Attributes:
-            if attr.Usage == TransactionAttributeUsage.ECDH02 or attr.Usage == TransactionAttributeUsage.ECDH03:
-                usageECDH = usageECDH+1
-                if usageECDH > 1:
-                    return False
-
-        return Helper.VerifyScripts(self)
+#        for i in range(1, len(self.inputs)):
+#            j=0
+#            while j < i:
+#                j = j+1
+#                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
+#                    return False
+##        self.__log.debug("Verified inputs 1")
+#       for tx in mempool:
+#           if tx is not self:
+#               for ip in self.inputs:
+#                   if ip in tx.inputs:
+#                       return False
+#
+#        self.__log.debug("Verified inputs 2, checking double spend")
+#
+#        if GetBlockchain().IsDoubleSpend(self):
+#            return False
+#
+#        self.__log.debug("verifying outputs ...")
+#        for txOutput in self.outputs:
+#            asset = GetBlockchain().GetAssetState(txOutput.AssetId)
+#
+#            if asset is None: return False
+#
+#            if txOutput.Value % pow(10, 8 - asset.Precision) != 0:
+#                return False
+#
+#        self.__log.debug("unimplemented after here ...")
+#        return True
+#        txResults = self.GetTransactionResults()
+#
+#        if txResults is None: return False
+#
+#        destroyedResults = []
+#        [destroyedResults.append(tx) for tx in txResults if tx.Amount==Fixed8(0)]
+#        numDestroyed = len(destroyedResults)
+#        if numDestroyed > 1:
+#            return False
+#        if numDestroyed == 1 and destroyedResults[0].AssetId != GetSystemCoin().Hash:
+#            return False
+#        if self.SystemFee() > Fixed8(0) and ( numDestroyed == 0 or destroyedResults[0].Amount < self.SystemFee()):
+#            return False
+#
+#        issuedResults = []
+#
+#        [issuedResults.append(tx) for tx in txResults if tx.Amount() < Fixed8(0)]
+#
+#        if self.Type == TransactionType.MinerTransaction or self.Type == TransactionType.ClaimTransaction:
+#            for tx in issuedResults:
+#                if tx.AssetId != GetSystemCoin().Hash:
+#                    return False
+#
+#        elif self.Type == TransactionType.IssueTransaction:
+#            for tx in issuedResults:
+#                if tx.AssetId != GetSystemCoin().Hash:
+#                    return False
+#
+#        else:
+#            if len(issuedResults) > 0:
+#                return False
+#
+#        usageECDH=0
+#
+#        for attr in self.Attributes:
+#            if attr.Usage == TransactionAttributeUsage.ECDH02 or attr.Usage == TransactionAttributeUsage.ECDH03:
+#                usageECDH = usageECDH+1
+#                if usageECDH > 1:
+#                    return False
+#
+#        return Helper.VerifyScripts(self)
 
 
 
@@ -477,3 +478,8 @@ class Transaction(Inventory, InventoryMixin):
 
         return realresults
 
+
+class ContractTransaction(Transaction):
+    def __init__(self, *args, **kwargs):
+        super(ContractTransaction, self).__init__(*args, **kwargs)
+        self.Type = TransactionType.ContractTransaction

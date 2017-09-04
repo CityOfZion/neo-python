@@ -10,6 +10,7 @@ import binascii
 
 from neo.VM.OpCode import *
 from neo.IO.MemoryStream import MemoryStream
+from neo.Cryptography.Helper import base256_encode
 
 class ScriptBuilder(object):
     """docstring for ScriptBuilder"""
@@ -33,9 +34,9 @@ class ScriptBuilder(object):
             elif data == 0:
                 return self.add(PUSH0)
             elif data > 0 and data <= 16:
-                return self.add(int.from_bytes(PUSH1,'big') -1  + data)
+                return self.add(int.from_bytes(PUSH1,'little') -1  + data)
             else:
-                return self.push(bytes(data))
+                return self.push(base256_encode(data))
         else:
             buf = binascii.unhexlify(data)
         if len(buf) <= int.from_bytes( PUSHBYTES75, 'big'):
@@ -64,6 +65,13 @@ class ScriptBuilder(object):
         self.ms.write(op)
         if arg is not None:
             self.ms.write(arg)
+
+    def EmitPushBigInteger(self, number):
+        if number == -1: return self.Emit(PUSHM1)
+        if number == 0: return self.Emit(PUSH0)
+        if number > 0 and number <= 16:
+            return self.Emit(int.from_bytes(PUSH1,'little') - 1 + number)
+        return self.Emit(number)
 
     def EmitAppCall(self, scriptHash, useTailCall=False):
         if len(scriptHash) != 20:
