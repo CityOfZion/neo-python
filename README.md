@@ -19,7 +19,9 @@
   </a>
 </p>
 
-## What does it currently do
+## Overview
+
+### What does it currently do
 
 - This project aims to be a full port of the original C#
 [neo project](https://github.com/neo-project)
@@ -27,7 +29,7 @@
 - Interactive CLI for configuring node and inspecting block chain
 - Runs smart contracts on the block chain in a python virtual machine
 
-## What will it do
+### What will it do
 
 - Wallet functionality
 - Full python RPC client
@@ -40,16 +42,12 @@
 - Or ping **@localhuman** on the [NEO Slack](https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA).
 - Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome.  All successful pull requests will be rewarded with one photo of a cat or kitten.
 
-### License
-
-- Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
-- Main author is [@localhuman](https://github.com/localhuman).
 
 ## Getting started
 
 You will need to install the libleveldb library.
 
-##### on OSX:
+##### OSX:
 
 ```
 brew install leveldb
@@ -61,7 +59,7 @@ brew install leveldb
 apt-get -s install libleveldb-dev
 ```
 
-##### centos/redhat/fedora
+##### Centos/Redhat/Fedora
 
 This is a bit more tricky...
 
@@ -195,3 +193,8 @@ After that, you can generate a command line coverage report use the following:
 ```
 coverage report -m --omit=venv/*
 ```
+
+## License
+
+- Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
+- Main author is [@localhuman](https://github.com/localhuman).
