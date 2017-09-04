@@ -19,6 +19,7 @@ from neo.Core.TX.Transaction import Transaction,ContractTransaction,TransactionO
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.SignatureContext import SignatureContext
+from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo import Settings
 from neo.Fixed8 import Fixed8
@@ -257,7 +258,15 @@ class PromptInterface(object):
 
             if wif:
 #                self.Wallet.
-                print("import wif not implemented yet")
+                prikey = KeyPair.PrivateKeyFromWIF(wif)
+                if prikey:
+
+                    key = self.Wallet.CreateKey(prikey)
+                    print("imported key %s " % wif)
+                    print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
+                    print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+                else:
+                    print("invalid wif")
                 return
             else:
                 print("Please specify a wif")

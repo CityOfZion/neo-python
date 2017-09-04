@@ -79,8 +79,12 @@ class UserWallet(Wallet):
         return wallet
 
 
-    def CreateKey(self):
-        private_key = bytes(Random.get_random_bytes(32))
+    def CreateKey(self, prikey=None):
+        if prikey:
+            private_key = prikey
+            print("CREATING KEY FROM EXISTING PRIVATE KEY... %s " % prikey)
+        else:
+            private_key = bytes(Random.get_random_bytes(32))
 
         account = WalletKeyPair(priv_key=private_key)
         self.__log.debug("User wallet public key %s " % account.PublicKey)
@@ -136,6 +140,7 @@ class UserWallet(Wallet):
 
             db_contract.save()
             self.__log.debug("Created db contract...")
+            print("CREATED CONTRACT!!")
 
     def AddWatchOnly(self, script_hash):
         super(UserWallet,self).AddWatchOnly(script_hash)
@@ -157,6 +162,9 @@ class UserWallet(Wallet):
             tx = CoreTransaction.DeserializeFromBufer(raw,0)
             transactions.append(tx)
         return transactions
+
+    def LoadWatchOnly(self):
+        return {}
 
     def LoadCoins(self):
 

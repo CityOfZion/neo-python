@@ -144,6 +144,7 @@ class Wallet(object):
         if not contract.PublicKeyHash.ToBytes() in self._keys.keys():
             raise Exception('Invalid operation- public key mismatch')
 
+        print("adding contract to self contracts %s " % contract.ScriptHash.ToBytes())
         self._contracts[contract.ScriptHash.ToBytes()] = contract
         if contract.ScriptHash.ToBytes() in self._watch_only:
             self._watch_only.remove(contract.ScriptHash.ToBytes())
@@ -492,7 +493,9 @@ class Wallet(object):
         return [coin for coin in self._coins.values()]
 
     def GetContract(self, script_hash):
+        print("looking for script hash %s in contracts %s " % (script_hash.ToString(), self._contracts.keys()))
         if script_hash.ToBytes() in self._contracts.keys():
+            print("got contract for %s " % script_hash.ToBytes())
             return self._contracts[script_hash.ToBytes()]
         return None
 
