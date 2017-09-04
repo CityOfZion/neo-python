@@ -444,8 +444,8 @@ class PromptInterface(object):
                 print("before relay, tx is %s " % json.dumps(tx.ToJson(), indent=4))
 
 
-#                relayed = NodeLeader.Instance().Relay(tx)
-#                print("relayed? %s " % relayed)
+                relayed = NodeLeader.Instance().Relay(tx)
+                print("relayed? %s " % relayed)
 
         except Exception as e:
             print("could not sign %s " % e)

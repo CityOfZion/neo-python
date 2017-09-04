@@ -6,7 +6,7 @@ from .Helper import *
 from neo.UInt256 import UInt256
 from neo.UInt160 import UInt160
 import bitcoin
-from neo.Cryptography.ECCurve import FiniteField
+from neo.Cryptography.ECCurve import EllipticCurve
 
 
 
@@ -64,27 +64,33 @@ class Crypto(object):
 
         print("SIGNING MESSAGE::: %s " % message)
 
-        hash = hashlib.sha256(message).digest()
-        print("hash %s " % hash)
+        hash = hashlib.sha256(binascii.unhexlify(message)).hexdigest()
+        print("hash... %s " % hash)
 
+        v,r,s = bitcoin.ecdsa_raw_sign(hash, private_key)
+        print("r, s %s %s" % (r,s))
+        rb = bytearray(r.to_bytes(32, 'big'))
+        sb = bytearray(s.to_bytes(32, 'big'))
 
-
-        v,r,s = bitcoin.ecdsa_raw_sign(hash,private_key)
-
-        rb = r.to_bytes(32,'big')
-        sb = s.to_bytes(32,'big')
-        print("rb, sb %s %s " % (rb,sb))
-
-        sig = bytes(rb + sb)
-#        print("SIG: %s %s" % (sig, type(sig)))
-
+        sig = rb + sb
+#        sk = SigningKey.from_string(private_key, curve=NIST256p, hashfunc=hashlib.sha256)
+#        sig = sk.sign(message,hashfunc=hashlib.sha256)
+        print("Signatrue %s " % sig)
         return sig
 
     @staticmethod
     def VerifySignature(message, signature, public_key):
 
-        vk = VerifyingKey.from_string( binascii.unhexlify(public_key),curve=NIST256p, hashfunc=hashlib.sha256 )
-        return vk.verify(binascii.unhexlify(signature), message)
+        if type(public_key) is EllipticCurve.ECPoint:
+
+            pubkey_x = public_key.x.value.to_bytes(32,'big')
+            pubkey_y = public_key.y.value.to_bytes(32,'big')
+            print("pub x %s " % pubkey_x)
+
+            public_key = pubkey_x + pubkey_y
+
+        vk = VerifyingKey.from_string( public_key,curve=NIST256p, hashfunc=hashlib.sha256 )
+        return vk.verify(signature, message)
 
 
 class CryptoInstance():

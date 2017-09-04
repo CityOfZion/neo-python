@@ -370,7 +370,7 @@ class NeoNode(Protocol):
 
                     message = Message(command='tx',payload=item, print_payload=True)
                     print("created message transaction payload %s " % message)
-#                    self.SendSerializedMessage(message)
+                    self.SendSerializedMessage(message)
 
                 elif inventory.Type == int.from_bytes( InventoryType.Block, 'little'):
                     print("handle block!")

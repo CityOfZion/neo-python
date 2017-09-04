@@ -356,12 +356,12 @@ class EllipticCurve:
 
 
 
-        def encode_point(self, compressed=True):
+        def encode_point(self, compressed=True, endian='little'):
 
             if self.IsInfinity:
                 return bytearray([0])
 
-            xbytes = bytearray(self.x.value.to_bytes(32,'little'))
+            xbytes = bytearray(self.x.value.to_bytes(32,endian))
             xbytes.reverse()
 
 
@@ -377,7 +377,7 @@ class EllipticCurve:
             else:
 
 
-                ybytes = bytearray(self.y.value.to_bytes(32, 'little'))
+                ybytes = bytearray(self.y.value.to_bytes(32, endian))
                 ybytes.reverse()
 
                 data = bytearray(b'\x04') + xbytes + ybytes
