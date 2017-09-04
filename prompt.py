@@ -402,9 +402,6 @@ class PromptInterface(object):
             tx = ContractTransaction(outputs=[output])
             ttx = self.Wallet.MakeTransaction(tx=tx,change_address=None,fee=fee)
 
-            for output in ttx.outputs:
-
-                print("output: %s %s " % (output.ScriptHash.ToBytes(), json.dumps(output.ToJson(), indent=4)))
 
             if ttx is None:
                 print("insufficient funds")
@@ -437,29 +434,21 @@ class PromptInterface(object):
 
         try:
             context = SignatureContext(tx)
-            print("sig context %s " % context)
             self.Wallet.Sign(context)
-            print("signed context %s " % context)
 
             if context.Completed:
-                print("context is completed!")
 
                 tx.scripts = context.GetScripts()
-                for s in tx.scripts:
 
-                    print("tx script %s " % json.dumps(s.ToJson(), indent=4))
-
-                print("hash is %s " % tx.Hash.ToBytes())
                 self.Wallet.SaveTransaction(tx)
 
-
-                print("Before relay, tx raw is %s " % tx.ToArray())
-
-                print("before relay, tx is %s " % json.dumps(tx.ToJson(), indent=4))
-
-
                 relayed = NodeLeader.Instance().Relay(tx)
-                print("relayed? %s " % relayed)
+
+                if relayed:
+                    print("Relayed Tx: %s " % tx.Hash.ToString())
+                else:
+                    print("Could not relay tx %s " % tx.Hash.ToString())
+
 
         except Exception as e:
             print("could not sign %s " % e)

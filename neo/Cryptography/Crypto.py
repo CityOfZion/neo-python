@@ -61,21 +61,15 @@ class Crypto(object):
 
         Crypto.SetupSignatureCurve()
 
-
-        print("SIGNING MESSAGE::: %s " % message)
-
         hash = hashlib.sha256(binascii.unhexlify(message)).hexdigest()
-        print("hash... %s " % hash)
 
         v,r,s = bitcoin.ecdsa_raw_sign(hash, private_key)
-        print("r, s %s %s" % (r,s))
+
         rb = bytearray(r.to_bytes(32, 'big'))
         sb = bytearray(s.to_bytes(32, 'big'))
 
         sig = rb + sb
-#        sk = SigningKey.from_string(private_key, curve=NIST256p, hashfunc=hashlib.sha256)
-#        sig = sk.sign(message,hashfunc=hashlib.sha256)
-        print("Signatrue %s " % sig)
+
         return sig
 
     @staticmethod
@@ -85,7 +79,6 @@ class Crypto(object):
 
             pubkey_x = public_key.x.value.to_bytes(32,'big')
             pubkey_y = public_key.y.value.to_bytes(32,'big')
-            print("pub x %s " % pubkey_x)
 
             public_key = pubkey_x + pubkey_y
 

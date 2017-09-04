@@ -149,9 +149,9 @@ class StateMachine(StateReader):
         for v in vote_list:
             voteset.add(v.GetByteArray())
         acct.Votes = list(voteset)
-        print("*****************************************************")
-        print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
-        print("*****************************************************")
+        #print("*****************************************************")
+        #print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
+        #print("*****************************************************")
         return True
 
 
@@ -233,9 +233,9 @@ class StateMachine(StateReader):
 
         asset = self._assets.GetOrAdd(tx.Hash.ToBytes(), new_asset)
 
-        print("*****************************************************")
-        print("CREATED ASSET %s " % tx.Hash.ToBytes())
-        print("*****************************************************")
+        #print("*****************************************************")
+        #print("CREATED ASSET %s " % tx.Hash.ToBytes())
+        #print("*****************************************************")
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
         return True
@@ -320,9 +320,9 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-        print("*****************************************************")
-        print("CREATED CONTRACT %s " % hash.ToBytes())
-        print("*****************************************************")
+        #print("*****************************************************")
+        #print("CREATED CONTRACT %s " % hash.ToBytes())
+        #print("*****************************************************")
         return True
 
 
@@ -388,9 +388,9 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-        print("*****************************************************")
-        print("MIGRATED CONTRACT %s " % hash.ToBytes())
-        print("*****************************************************")
+        #print("*****************************************************")
+        #print("MIGRATED CONTRACT %s " % hash.ToBytes())
+        #print("*****************************************************")
 
         return True
 

@@ -566,7 +566,7 @@ class LevelDBBlockchain(Blockchain):
                         contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
                     elif tx.Type == TransactionType.InvocationTransaction:
 
-                        print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
+                        self.__log.debug("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
                         script_table = CachedScriptTable(contracts)
                         service = StateMachine(accounts, validators, assets, contracts,storages,wb)
 

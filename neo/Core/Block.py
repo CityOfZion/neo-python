@@ -238,10 +238,8 @@ class Block(BlockBase, InventoryMixin):
     # < returns > 返回该区块的合法性，返回true即为合法，否则，非法。 < / returns >
     def Verify(self, completely=False):
 
-        print("verifying block!")
         res = super(Block, self).Verify()
         if not res:
-            print("block base did not verify")
             return False
 
         self.__log.debug("Verifying BLOCK!!")

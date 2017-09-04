@@ -123,9 +123,6 @@ class NodeLeader():
 
         if inventory is MinerTransaction: return False
 
-        # lock known hashes
-        #        if inventory.Hash in self._known_hashes: return False
-        # endlock
 
         if type(inventory) is Block:
             if BC.Default() == None: return False
@@ -140,12 +137,6 @@ class NodeLeader():
             if not inventory.Verify(): return False
 
 
-#        relayed = self.RelayDirectly(inventory)
-
-#        return relayed
-
-
-
 
     def RelayDirectly(self, inventory):
 
@@ -155,19 +146,8 @@ class NodeLeader():
 
         for peer in self.Peers:
 
-
             relayed |= peer.Relay(inventory)
 
-
-        # lock connected peers
-
-        # RelayCache.add(inventory)
-
-        #        for node in self._connected_peers:
-        #            self.__log.debug("Relaying to remote node %s " % node)
-        #            relayed |= node.Relay(inventory)
-
-        # end lock
         return relayed
 
 
@@ -185,25 +165,20 @@ class NodeLeader():
             print("should relay block...")
 
         elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
-            print("WILL RELAY TX")
             if not self.AddTransaction(inventory):
                 return False
-            else:
-                print("was able to add transaction to mempool.....")
         else:
             # consensus
             pass
 
         relayed = self.RelayDirectly(inventory)
         #self.
-        print("relay inventory %s %s" % (inventory, relayed))
         return relayed
 
     def AddTransaction(self, tx):
-        print("add transaction")
+
         if BC.Default() is None:
             return False
-
 
         if tx.Hash.ToBytes() in self.MemPool.keys():
             return False

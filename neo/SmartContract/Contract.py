@@ -41,17 +41,11 @@ class Contract(SerializableMixin, VerificationCode):
     @property
     def IsStandard(self):
         scp = binascii.unhexlify(self.Script)
-        print("script length %s %s" % (self.Script, len(self.Script)))
-
-        print("scp length %s %s" % (scp, len(scp)))
 
         if len(scp) != 35:
-            print("scirpt not 35!")
             return False
 
-        print("script 0, scritp 34 %s %s " % (scp[0], scp[34]))
         if scp[0] != 33 or scp[34] != int.from_bytes(CHECKSIG, 'little'):
-            print("script 0 not ")
             return False
 
         return True
@@ -142,7 +136,6 @@ class Contract(SerializableMixin, VerificationCode):
         self.ParameterList = reader.ReadVarBytes()
         script = bytearray(reader.ReadVarBytes()).hex()
         self.Script = script.encode('utf-8')
-        print("DESERIALIZED CONTRACT, SCRIPT IS %s " % self.Script)
 
 
     def Serialize(self, writer):

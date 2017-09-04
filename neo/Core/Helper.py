@@ -34,17 +34,9 @@ class Helper(object):
     @staticmethod
     def Sign(verifiable, keypair):
 
-#        stream = StreamManager.GetStream()
-
-        pubkey = binascii.unhexlify( keypair.PublicKey.encode_point(True))
-        print("pubkey %s\n%s " % (pubkey, binascii.hexlify(pubkey)))
-        print("pubkeyfull %s " % keypair.PublicKey.encode_point(False))
         prikey = bytes(keypair.PrivateKey)
-        print("private key %s " % prikey)
         hashdata = verifiable.GetHashData()
-
         res = Crypto.Default().Sign(hashdata, prikey, keypair.PublicKey)
-        print("result %s " % res)
         return res
 
     @staticmethod
@@ -90,13 +82,11 @@ class Helper(object):
         if len(hashes) != len(verifiable.Scripts):
             print("hashes not same length as verifiable scripts")
             return False
-        print("hello!!!! %s " % hashes)
 
         for i in range(0, len(hashes)):
             verification = verifiable.Scripts[i].VerificationScript
 
 
-            print("verifying script: %s %s " % (hashes[i], verification))
 
             if len(verification) == 0:
                 sb = ScriptBuilder()
@@ -116,13 +106,10 @@ class Helper(object):
             if not res:
                 print("engine did not execune")
                 return False
-            else:
-
-                print("engine did execute!")
 
 
             if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
-                print("stack not one, or stack false")
+#                print("stack not one, or stack false")
                 return False
 
         return True

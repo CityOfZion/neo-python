@@ -144,7 +144,6 @@ class Wallet(object):
         if not contract.PublicKeyHash.ToBytes() in self._keys.keys():
             raise Exception('Invalid operation- public key mismatch')
 
-        print("adding contract to self contracts %s " % contract.ScriptHash.ToBytes())
         self._contracts[contract.ScriptHash.ToBytes()] = contract
         if contract.ScriptHash.ToBytes() in self._watch_only:
             self._watch_only.remove(contract.ScriptHash.ToBytes())
@@ -240,22 +239,17 @@ class Wallet(object):
         for coin in coins:
             sum = sum + coin.Output.Value
 
-        print("sum is %s " % sum.value)
 
         if sum < amount:
             return None
 
-        print("unsorted coins %s "% coins)
         sorted(coins, key=lambda coin: coin.Output.Value.value)
 
-        print("sorted coins %s " % coins)
         total = Fixed8(0)
 
         for index,coin in enumerate(coins):
             total = total + coin.Output.Value
-            print("adding total %s %s " % (total.value, amount.value))
             if total >= amount:
-                print("total is greater than amount")
                 return coins[0:index+1]
 
 
@@ -268,10 +262,7 @@ class Wallet(object):
     def GetKeyByScriptHash(self, script_hash):
 
         contract = self.GetContract(script_hash)
-        print("goot contract by script hash %s " % contract)
-        print("looking for contract pubkey hash in keys: %s %s" % (contract.PublicKeyHash, contract.PublicKeyHash.ToBytes()))
         if contract:
-
             return self.GetKey(contract.PublicKeyHash)
         return None
 
@@ -351,12 +342,9 @@ class Wallet(object):
                     if state & AddressState.InWallet > 0:
 
                         key = CoinReference(tx.Hash, index)
-                        print("KEY IS %s " % key.ToJson())
-                        print("existing keys: %s " % [c.ToJson() for c in self._coins.keys()])
 #                        print("COIN STATE %s " % self._coinsstate)
 
                         if key in self._coins.keys():
-                            print("COIN IS IN THERE ALREADY??????")
                             coin = self._coins[key]
                             coin.State |= CoinState.Confirmed
                             changed.add(coin)
@@ -378,17 +366,10 @@ class Wallet(object):
                 for input in tx.inputs:
 
                     if input in self._coins.keys():
-                        print("INPUT FOUND IN KEYS!!!!!!!! %s " % input )
                         if self._coins[input].Output.AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                            print("INPUT IS SYSTEM SHARE::::....")
-                            print("COIN CURRENT STATE %s " % self._coins[input].State)
                             self._coins[input].State |= CoinState.Spent | CoinState.Confirmed
-                            print("coin current state after..... %s " % self._coins[input].State)
-                            print("marking coin for change....")
                             changed.add(self._coins[input])
-                            print("CHANGED %s " % changed)
                         else:
-                            print("NOT SYS SHARE, DELETE")
                             deleted.add(self._coins[input])
                             del self._coins[input]
 
@@ -477,7 +458,6 @@ class Wallet(object):
 
     def GetChangeAddress(self):
         for key,contract in self._contracts.items():
-            print("contract %s " % contract.ScriptHash)
             if contract.IsStandard:
                 return contract.ScriptHash
             else:
@@ -490,6 +470,7 @@ class Wallet(object):
             return self.GetContracts()[0]
         except Exception as e:
             print("NO CONTRACTS!")
+        return None
 
     def GetKeys(self):
         return [key for key in self._keys.values()]
@@ -504,9 +485,7 @@ class Wallet(object):
         return [coin for coin in self._coins.values()]
 
     def GetContract(self, script_hash):
-        print("looking for script hash %s in contracts %s " % (script_hash.ToString(), self._contracts.keys()))
         if script_hash.ToBytes() in self._contracts.keys():
-            print("got contract for %s " % script_hash.ToBytes())
             return self._contracts[script_hash.ToBytes()]
         return None
 
@@ -530,8 +509,6 @@ class Wallet(object):
                     sum = sum + item.Value
                 paytotal[key] = sum
 
-        print("pay total: %s " % paytotal)
-
         if fee > Fixed8.Zero():
 
             if Blockchain.SystemCoin().Hash in paytotal.keys():
@@ -540,20 +517,15 @@ class Wallet(object):
             else:
                 paytotal[Blockchain.SystemCoin().Hash] = fee
 
-        print("pay total after fees: %s " % paytotal)
-
         paycoins = {}
         for assetId,amount in paytotal.items():
             unspentss = self.FindUnspentCoinsByAssetAndTotal(assetId, amount)
-            print("UNSPENTSS %s " % unspentss)
             paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount)
 
         for key,unspents in paycoins.items():
             if unspents == None:
                 print("insufficient funds for asset id: %s " % key)
                 return None
-
-        print("pay coins: %s " % paycoins)
 
         input_sums = {}
 
@@ -565,8 +537,6 @@ class Wallet(object):
 
         if not change_address:
             change_address = self.GetChangeAddress()
-
-        print("Change dadress %s " % change_address)
 
         new_outputs = []
 
@@ -587,10 +557,6 @@ class Wallet(object):
         tx.inputs = inputs
         tx.outputs = tx.outputs + new_outputs
 
-        for inp in tx.inputs:
-            print("Input %s " % json.dumps(inp.ToJson(),indent=4))
-        for outp in tx.outputs:
-            print("Output %s " % json.dumps(outp.ToJson(), indent=4))
         return tx
 
 
@@ -599,7 +565,8 @@ class Wallet(object):
 
 #        for input in tx.inputs:
 #            if self input in self._coins.
-        print("wallet SaveTransaction not impletmented yet")
+#        print("wallet SaveTransaction not impletmented yet")
+        pass
 
     def Sign(self, context):
         success = False
@@ -607,22 +574,15 @@ class Wallet(object):
         for hash in context.ScriptHashes:
 
             contract = self.GetContract(hash)
-            print("looking for contract %s in contracts %s " % (hash, [contract.ScriptHash for contract in self.GetContracts()]))
             if contract is None:
                 continue
 
-            print("GOt contract %s " % contract)
             key = self.GetKeyByScriptHash(hash)
-            print("looking for key %s in keys %s " % (hash.ToBytes(), self._keys.keys()))
             if key is None:
                 continue
 
-            print("key and contract %s %s " % (contract, key))
             signature = Helper.Sign(context.Verifiable, key)
-#            signature = context.Verifiable.Sign(key)
-            print("signature %s " % signature)
             success |= context.AddSignature(contract, key.PublicKey, signature)
-            print("success %s " % success)
 
         return success
 

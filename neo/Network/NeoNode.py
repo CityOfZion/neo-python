@@ -264,7 +264,6 @@ class NeoNode(Protocol):
 
     def SendPeerInfo(self):
 
-
 #        self.Log("SENDING PEER INFO %s " % self)
 
 #        peerlist = []
@@ -295,12 +294,8 @@ class NeoNode(Protocol):
         self.ProtocolReady()
 
     def HandleInvMessage(self, payload):
+        pass
 
-        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
-
-#        print("handle inv %s " % inventory.Type)
-#        if inventory.Type == InventoryType.Block:
-#            print("handle block ?...")
 
     def SendSerializedMessage(self, message):
         ba = Helper.ToArray(message)
@@ -333,7 +328,6 @@ class NeoNode(Protocol):
         self.leader.InventoryReceived(block)
 
         if len(self.myblockrequests) < self.leader.NREQMAX:
-#            reactor.callLater(2, self.DoAskForMoreBlocks)
             self.DoAskForMoreBlocks()
 
 
@@ -344,32 +338,21 @@ class NeoNode(Protocol):
     def HandleGetDataMessageReceived(self, payload):
 
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
-        print("handling get data message received! %s " % inventory)
-
-        for hash in inventory.Hashes:
-            print("Hash is %s " % hash)
 
 
         for hash in inventory.Hashes:
             hash = hash.encode('utf-8')
 
-            print("Handling inventory hash %s " % hash)
             item = None
             #try to get the inventory to send from relay cache
+
             if hash in self.leader.RelayCache.keys():
                 item = self.leader.RelayCache[hash]
-                print("Got Item from relay cache %s "% item)
-
-            else:
-                print("hash %s not found in relay cache %s " % (hash, self.leader.RelayCache.items()))
 
             if item:
-                print("TYPE %s %s " % (inventory.Type, InventoryType.TX))
                 if inventory.Type == int.from_bytes( InventoryType.TX,'little'):
-                    print("handle inventory TX!!!!!!!")
 
                     message = Message(command='tx',payload=item, print_payload=True)
-                    print("created message transaction payload %s " % message)
                     self.SendSerializedMessage(message)
 
                 elif inventory.Type == int.from_bytes( InventoryType.Block, 'little'):
@@ -378,13 +361,11 @@ class NeoNode(Protocol):
                 elif inventory.Type == int.from_bytes( InventoryType.Consensus, 'little'):
                     print("handle consensus")
 
-        pass
 
     def Relay(self, inventory):
 
         inventory = InvPayload(type=inventory.InventoryType, hashes=[inventory.Hash.ToBytes()])
         m = Message("inv", inventory)
-        print("sending innevtory %s " % inventory.ToString())
         self.SendSerializedMessage(m)
 
         return True

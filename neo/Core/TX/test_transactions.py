@@ -213,4 +213,3 @@ class TransactionTestCase(NeoTestCase):
         reader = BinaryReader(ms)
 
         tx = Transaction.DeserializeFrom(reader)
-        print("Tx %s %s" % (tx, json.dumps(tx.ToJson(), indent=4)))

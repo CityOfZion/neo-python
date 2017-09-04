@@ -231,7 +231,7 @@ class UserWallet(Wallet):
 
         for tx in block.FullTransactions:
             if self.IsWalletTransaction(tx):
-                print("PROCESSING WALLET TRANSACTION %s " % json.dumps(tx.ToJson(), indent=4))
+#                print("PROCESSING WALLET TRANSACTION %s " % json.dumps(tx.ToJson(), indent=4))
                 db_tx = None
                 try:
                     db_tx = Transaction.get(Hash=tx.Hash.ToBytes())

@@ -126,7 +126,7 @@ class BlockBase(VerifiableMixin):
     def GetScriptHashesForVerifying(self):
         #if this is the genesis block, we dont have a prev hash!
         if self.PrevHash.Data == bytearray(32):
-            print("verificiation script %s"  %(self.Script.ToJson()))
+#            print("verificiation script %s"  %(self.Script.ToJson()))
             if type(self.Script.VerificationScript) is bytes:
                 return [bytearray(self.Script.VerificationScript)]
             elif type(self.Script.VerificationScript) is bytearray:
@@ -134,7 +134,6 @@ class BlockBase(VerifiableMixin):
             else:
                 raise Exception('Invalid Verification script')
 
-        print("prevhash %s "% type(self.PrevHash))
         prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
         if prev_header == None:
             raise Exception('Invalid operation')
@@ -166,15 +165,12 @@ class BlockBase(VerifiableMixin):
         return json
 
     def Verify(self):
-        print("verifying block base 1")
         if not self.Hash.ToBytes() == GetGenesis().Hash.ToBytes(): return False
-        print("verifying block base @ %s " % self.Index)
+
         bc = GetBlockchain()
-        print("BC: %s " % bc)
+
         if not bc.ContainsBlock(self.Index):
-            print("blockchin didnt contain block index")
             return False
-        print("verifying block base 3 %s " % self.PrevHash.ToBytes())
 
         if self.Index > 0:
             prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
@@ -185,10 +181,8 @@ class BlockBase(VerifiableMixin):
 
             if prev_header.Timestamp >= self.Timestamp: return False
 
-        print("Will verify scripts!!")
         #this should be done to actually verify the block
         if not Helper.VerifyScripts(self):
-            print("could not verify scripts")
             return False
 
         return True

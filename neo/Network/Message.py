@@ -45,8 +45,8 @@ class Message(SerializableMixin):
         self.Checksum = Message.GetChecksum(payload)
         self.Payload = payload
 
-        if print_payload:
-            print("PAYLOAD: %s " % self.Payload)
+#        if print_payload:
+#            print("PAYLOAD: %s " % self.Payload)
 
 
     def Size(self):
