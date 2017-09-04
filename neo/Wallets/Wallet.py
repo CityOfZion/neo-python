@@ -351,8 +351,12 @@ class Wallet(object):
                     if state & AddressState.InWallet > 0:
 
                         key = CoinReference(tx.Hash, index)
+                        print("KEY IS %s " % key.ToJson())
+                        print("existing keys: %s " % [c.ToJson() for c in self._coins.keys()])
+#                        print("COIN STATE %s " % self._coinsstate)
 
                         if key in self._coins.keys():
+                            print("COIN IS IN THERE ALREADY??????")
                             coin = self._coins[key]
                             coin.State |= CoinState.Confirmed
                             changed.add(coin)
@@ -364,6 +368,7 @@ class Wallet(object):
                             added.add(newcoin)
 
                         if state & AddressState.WatchOnly > 0:
+
                             self._coins[key].State |= CoinState.WatchOnly
                             changed.add(self._coins[key])
 
@@ -373,11 +378,17 @@ class Wallet(object):
                 for input in tx.inputs:
 
                     if input in self._coins.keys():
-
+                        print("INPUT FOUND IN KEYS!!!!!!!! %s " % input )
                         if self._coins[input].Output.AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
+                            print("INPUT IS SYSTEM SHARE::::....")
+                            print("COIN CURRENT STATE %s " % self._coins[input].State)
                             self._coins[input].State |= CoinState.Spent | CoinState.Confirmed
+                            print("coin current state after..... %s " % self._coins[input].State)
+                            print("marking coin for change....")
                             changed.add(self._coins[input])
+                            print("CHANGED %s " % changed)
                         else:
+                            print("NOT SYS SHARE, DELETE")
                             deleted.add(self._coins[input])
                             del self._coins[input]
 
@@ -616,7 +627,7 @@ class Wallet(object):
         return success
 
 
-    def ToJson(self):
+    def ToJson(self, verbose=False):
         #abstract
         pass
 

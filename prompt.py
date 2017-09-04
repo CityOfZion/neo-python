@@ -336,6 +336,11 @@ class PromptInterface(object):
 
         if not item:
             print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+            return
+
+        if item in ['v','--v','verbose']:
+            print("Wallet %s " % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
+            return
 
         if item == 'close':
             print('closed wallet')
