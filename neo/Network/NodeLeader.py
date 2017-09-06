@@ -37,6 +37,9 @@ class NodeLeader():
     NREQMAX =150
     BREQMAX= 4000
 
+    KnownHashes = []
+    MemPool = {}
+    RelayCache = {}
 
     @staticmethod
     def Instance():
@@ -120,9 +123,6 @@ class NodeLeader():
 
         if inventory is MinerTransaction: return False
 
-        # lock known hashes
-        #        if inventory.Hash in self._known_hashes: return False
-        # endlock
 
         if type(inventory) is Block:
             if BC.Default() == None: return False
@@ -133,30 +133,62 @@ class NodeLeader():
             if not BC.Default().AddBlock(inventory):
                 return False
 
-
-        elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
-            if not self.AddTransaction(inventory): return False
-
         else:
             if not inventory.Verify(): return False
 
-
-#        relayed = self.RelayDirectly(inventory)
-
-#        return relayed
 
 
     def RelayDirectly(self, inventory):
 
         relayed = False
-        # lock connected peers
 
-        # RelayCache.add(inventory)
+        self.RelayCache[inventory.Hash.ToBytes()] = inventory
 
-        #        for node in self._connected_peers:
-        #            self.__log.debug("Relaying to remote node %s " % node)
-        #            relayed |= node.Relay(inventory)
+        for peer in self.Peers:
 
-        # end lock
+            relayed |= peer.Relay(inventory)
+
         return relayed
 
+
+    def Relay(self, inventory):
+
+        if type(inventory) is MinerTransaction:
+            return False
+
+        if inventory.Hash.ToBytes() in self.KnownHashes:
+            return False
+
+        self.KnownHashes.append(inventory.Hash.ToBytes())
+
+        if type(inventory) is Block:
+            print("should relay block...")
+
+        elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
+            if not self.AddTransaction(inventory):
+                return False
+        else:
+            # consensus
+            pass
+
+        relayed = self.RelayDirectly(inventory)
+        #self.
+        return relayed
+
+    def AddTransaction(self, tx):
+
+        if BC.Default() is None:
+            return False
+
+        if tx.Hash.ToBytes() in self.MemPool.keys():
+            return False
+
+        if BC.Default().ContainsTransaction(tx.Hash):
+            return False
+
+        if not tx.Verify(self.MemPool.values()):
+            return False
+
+        self.MemPool[tx.Hash.ToBytes()] = tx
+
+        return True

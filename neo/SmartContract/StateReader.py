@@ -1,5 +1,5 @@
 from neo.VM.InteropService import InteropService
-from neo.Wallets.Contract import Contract
+from neo.SmartContract.Contract import Contract
 from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
 from neo.SmartContract.LogEventArgs import LogEventArgs
 from neo.SmartContract.StorageContext import StorageContext

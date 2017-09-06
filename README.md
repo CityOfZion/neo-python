@@ -1,6 +1,6 @@
 <p align="center">
-  <img
-    src="http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png"
+  <img 
+    src="http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png" 
     width="125px;">
 </p>
 
@@ -9,6 +9,7 @@
 <p align="center">
   Python Node and SDK for the <b>NEO</b> blockchain.
 </p>
+
 
 <p align="center">
   <a href="https://travis-ci.org/CityOfZion/neo-python">
@@ -19,80 +20,78 @@
   </a>
 </p>
 
-## Overview
+## What does it currently do
 
-### What does it currently do
-
-- This project aims to be a full port of the original C#
-[neo project](https://github.com/neo-project)
+- This project aims to be a full port of the original C# [neo project](https://github.com/neo-project) 
 - Run a python based P2P node
 - Interactive CLI for configuring node and inspecting block chain
 - Runs smart contracts on the block chain in a python virtual machine
+- Very basic Wallet functionality (Not fully tested, please do not use on mainnet)
 
-### What will it do
+## What will it do
 
-- Wallet functionality
 - Full python RPC client
 - Compile smart contracts written python and deploy to blockchain
 - Full smart contract debugging and inspection
+
 
 ### Get Help or give help
 
 - Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
 - Or ping **@localhuman** on the [NEO Slack](https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA).
-- Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome.  All successful pull requests will be rewarded with one photo of a cat or kitten.
+- Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome.  All successful pull requests will be rewarded with one photo of a cat or kitten. 
+
+
+### License
+
+- Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
+- Main author is [@localhuman](https://github.com/localhuman).
+
 
 
 ## Getting started
 
-You will need to install the libleveldb library.
+you will need to install the libleveldb library. 
 
-##### OSX:
-
+##### on OSX:
 ```
 brew install leveldb
 ```
 
 ##### ubuntu/debian
-
 ```
 apt-get -s install libleveldb-dev
 ```
 
-##### Centos/Redhat/Fedora
-
-This is a bit more tricky...
-
+##### centos/redhat/fedora is a bit more tricky...
 ```
 yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel
 ```
 
-You may need to enable the epel repo for the leveldb-devel package, which you can do by editing `/etc/yum.repos.d/epel.repo`.
+you may need to enable the epel repo for the leveldb-devel package, which you can do by editing `/etc/yum.repos.d/epel.repo`
 
-### For all of these, make sure that the `Chains` directory in your project has the proper write permissions
+### For all of these, make sure that the `Chains` directory in your project has the proper write permisisons
 
-##### Windows
+##### windows ( not sure )
 
-Not sure. Installing the Python package plyvel seems to require C++ compiler support tied to Visual Studio and libraries.
 
 -------------------
 
-Now navigate into the project, make a Python 3 virtual environment and activate
-it via
-
+make a python 3 virtual environment, and activate it
 ```
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-Then install requirements
+then install requirements
 ```
 pip install -r requirements.txt
 ```
 
+
 ### Installing on OSX
 
-If you're having an issue similar to this:
+if you're having an issue similar to this:
 
 ```
     from ._plyvel import (  # noqa
@@ -109,34 +108,24 @@ pip uninstall plyvel
 CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel --no-cache-dir
 ```
 
-Moreover, this pip installation must see the leveldb header file db.h.
-You may need to add flags similar to the following to the
-installation command
-
-```
---global-option=build_ext
---global-option="-I/usr/local/Cellar/leveldb/1.20_2/include/"
---global-option="-L/usr/local/lib"
-```
-
 ## Running
-After installing requirements and activating your environment, there is an easy
-to use `prompt.py` file for you to run the node as well as some basic interactivity
+
+After installing requirements and activating your environment, there is an easy to use `prompt.py` file for you to run the node as well as some basic interactivity
 
 ```
-python prompt.py
+python prompt.py 
 NEO cli. Type 'help' to get started
 
 neo> show state
 Progress: 1054913 / 1237188
 
-neo>
+neo> 
 ```
 
 You can query for a block in the current server by hash or by block index:
 
 ```
-python prompt.py
+python prompt.py 
 NEO cli. Type 'help' to get started
 
 neo> show block 122235
@@ -154,19 +143,35 @@ neo> show block 122235
     "consensus data": 16070047272025254767,
     "next_consensus": "59e75d652b5d3827bf04c165bbe9ef95cca4bf55"
 }
-neo>
+neo> 
 ```
+
+#### Available Wallet commands
+
+```
+create wallet {wallet_path}
+open wallet {wallet_path}
+
+wallet { verbose } { rebuild } {rebuild BLOCK_HEIGHT}
+export wif { ADDRESS }
+import wif { WIF }
+
+send { ASSET_ID } { ADDRESS } { AMOUNT }
+
+```
+
 
 #### Extra notes
 On OSX, if you would like to run the process in the background, even when your computer is sleeping, you can use the built in `caffeinate` command
-
 ```
 caffeinate python prompt.py
 ```
 
+
 ### Logging
 
 Currently, `prompt.py` logs to `prompt.log`
+
 
 ## Tests
 
@@ -179,22 +184,15 @@ When running tests the first time, the test setup will try to download the file 
 Long story short, the first time you run your tests, it will take a while to download those fixtures. After that it should be pretty quick.
 
 ```
-python -m unittest discover neo
+python -m unittest discover neo 
 ```
 
-To run tests with `coverage`, use the following
-
+To run tests with `coverage`, use the following 
 ```
 coverage run -m unittest discover neo
 ```
 
 After that, you can generate a command line coverage report use the following:
-
 ```
 coverage report -m --omit=venv/*
 ```
-
-## License
-
-- Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
-- Main author is [@localhuman](https://github.com/localhuman).

@@ -88,7 +88,7 @@ class TransactionAttribute(Inventory, SerializableMixin):
             self.Data == reader.ReadBytes(reader.ReadByte())
 
         elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
-            self.Data = reader.ReadBytes(reader.ReadByte())
+            self.Data = reader.ReadVarBytes()
         else:
             self.__log.debug("format error!!!")
 

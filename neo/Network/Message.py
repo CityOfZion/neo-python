@@ -32,7 +32,7 @@ class Message(SerializableMixin):
     Length = 0
 
 
-    def __init__(self, command=None, payload = None):
+    def __init__(self, command=None, payload = None, print_payload=False):
 
         self.Command = command
         self.Magic = Settings.MAGIC
@@ -44,6 +44,10 @@ class Message(SerializableMixin):
 
         self.Checksum = Message.GetChecksum(payload)
         self.Payload = payload
+
+#        if print_payload:
+#            print("PAYLOAD: %s " % self.Payload)
+
 
     def Size(self):
         return ctypes.sizeof(ctypes.c_uint) + 12 + ctypes.sizeof(ctypes.c_int) + ctypes.sizeof(ctypes.c_uint) + len(self.Payload)

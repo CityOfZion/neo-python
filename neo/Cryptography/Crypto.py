@@ -5,10 +5,28 @@ from ecdsa import SigningKey, NIST256p,VerifyingKey
 from .Helper import *
 from neo.UInt256 import UInt256
 from neo.UInt160 import UInt160
+import bitcoin
+from neo.Cryptography.ECCurve import EllipticCurve
+
 
 
 
 class Crypto(object):
+
+    @staticmethod
+    def SetupSignatureCurve():
+
+        bitcoin.change_curve(
+            int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16),
+            int("FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", 16),
+            int("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16),
+            int("5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", 16),
+            int("6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296", 16),
+            int("4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5", 16)
+        )
+
+
+
 
     @staticmethod
     def Default():
@@ -33,6 +51,7 @@ class Crypto(object):
             data = binascii.unhexlify(data)
         return UInt160( data = binascii.unhexlify(bytes(Crypto.Hash160(data), encoding='utf-8')))
 
+
     @staticmethod
     def ToAddress(uint160):
         return hash_to_wallet_address(uint160.Data)
@@ -40,16 +59,31 @@ class Crypto(object):
     @staticmethod
     def Sign(message, private_key, public_key):
 
-        sk = SigningKey.from_string(binascii.unhexlify(private_key), curve=NIST256p, hashfunc=hashlib.sha256)
-        signature = binascii.hexlify(sk.sign( message, hashfunc=hashlib.sha256))
+        Crypto.SetupSignatureCurve()
 
-        return signature
+        hash = hashlib.sha256(binascii.unhexlify(message)).hexdigest()
+
+        v,r,s = bitcoin.ecdsa_raw_sign(hash, private_key)
+
+        rb = bytearray(r.to_bytes(32, 'big'))
+        sb = bytearray(s.to_bytes(32, 'big'))
+
+        sig = rb + sb
+
+        return sig
 
     @staticmethod
     def VerifySignature(message, signature, public_key):
 
-        vk = VerifyingKey.from_string( binascii.unhexlify(public_key),curve=NIST256p, hashfunc=hashlib.sha256 )
-        return vk.verify(binascii.unhexlify(signature), message)
+        if type(public_key) is EllipticCurve.ECPoint:
+
+            pubkey_x = public_key.x.value.to_bytes(32,'big')
+            pubkey_y = public_key.y.value.to_bytes(32,'big')
+
+            public_key = pubkey_x + pubkey_y
+
+        vk = VerifyingKey.from_string( public_key,curve=NIST256p, hashfunc=hashlib.sha256 )
+        return vk.verify(signature, message)
 
 
 class CryptoInstance():
