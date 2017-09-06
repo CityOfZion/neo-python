@@ -44,7 +44,7 @@ class DBCollection():
     def Keys(self):
         if not self._built_keys:
             self._BuildCollectionKeys()
-
+            self._built_keys = True
         return self.Collection.keys()
 
 
