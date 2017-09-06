@@ -320,9 +320,9 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-        #print("*****************************************************")
-        #print("CREATED CONTRACT %s " % hash.ToBytes())
-        #print("*****************************************************")
+        print("*****************************************************")
+        print("CREATED CONTRACT %s " % hash.ToBytes())
+        print("*****************************************************")
         return True
 
 
