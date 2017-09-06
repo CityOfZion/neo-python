@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 
 from neo.Cryptography.Crypto import *
-from bitarray import bitarray
 import sys
 from autologging import logged
 from neo.UInt160 import UInt160
@@ -101,7 +100,7 @@ class MerkleTree(object):
         return list(hashes)
 
     def Trim(self, flags):
-        flags = bitarray(flags)
+        flags = bytearray(flags)
         len = 1 << len(self.Depth-1)
         while flags.length() < len:
             flags.append(0)
