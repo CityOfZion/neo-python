@@ -1,15 +1,10 @@
 from neo.IO.Mixins import SerializableMixin
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo import Settings
 from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
 import ctypes
-import asyncio
 import binascii
 from autologging import logged
-import pympler
 
 class ChecksumException(Exception):
     pass

@@ -80,7 +80,6 @@ In English:
         self.Amount = reader.ReadFixed8()
         self.Precision = reader.ReadByte()
         self.Owner = ECDSA.Deserialize_Secp256r1(reader)
-#        self.Owner = ecdsa.G
         self.Admin =reader.ReadUInt160()
 
     def SerializeExclusiveData(self, writer):
