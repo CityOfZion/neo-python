@@ -1,3 +1,0 @@
-
-class StorageContext():
-    pass

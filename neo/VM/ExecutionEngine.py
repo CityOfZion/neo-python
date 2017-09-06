@@ -755,9 +755,9 @@ class ExecutionEngine():
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
         opname = ToName(op)
-        print("____________________________________________________")
-        print("%s -> %s" % (op, opname))
-        print("-----------------------------------")
+        self.__log.debug("____________________________________________________")
+        self.__log.debug("%s -> %s" % (op, opname))
+        self.__log.debug("-----------------------------------")
 
         self.ExecuteOp(op, self.CurrentContext)
 

@@ -194,9 +194,8 @@ class LevelDBBlockchain(Blockchain):
 
         sn = self._db.snapshot()
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
-        keys = contracts.Keys
         sn.close()
-        return keys
+        return contracts.Keys
 
 
     def GetContract(self, hash):
@@ -208,11 +207,9 @@ class LevelDBBlockchain(Blockchain):
                 self.__log.debug("could not convert argument to bytes :%s " % e)
                 return None
 
-        print("trying to get contract... %s " % hash)
         sn = self._db.snapshot()
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         contract = contracts.TryGet(keyval=hash)
-        print("contract result %s " % contract)
         sn.close()
         return contract
 
