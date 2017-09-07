@@ -88,7 +88,8 @@ class StateMachine(StateReader):
             self._contracts.Commit(self._wb, False)
             self._storages.Commit(self._wb, False)
 
-
+    def TestCommit(self):
+        print("test commit items....")
 
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())

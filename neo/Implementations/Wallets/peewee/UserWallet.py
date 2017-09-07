@@ -27,7 +27,6 @@ from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, Co
     TransactionInfo
 
 from autologging import logged
-from neo.SmartContract.ContractParameterType import ContractParameterType
 import json
 
 @logged

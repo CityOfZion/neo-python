@@ -21,6 +21,7 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Wallets.SignatureContext import SignatureContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
+from neo.Prompt.Commands.Invoke import InvokeContract
 from neo import Settings
 from neo.Fixed8 import Fixed8
 import traceback
@@ -605,6 +606,17 @@ class PromptInterface(object):
         else:
             print("please specify a contract")
 
+    def invoke_contract(self, args):
+#        if not self.Wallet:
+#            print("please open a wallet")
+#            return
+
+        if args and len(args) > 0:
+            return InvokeContract(self.Wallet, args)
+
+        print("please specify a contract to invoke")
+
+
     def show_spent_coins(self, args):
         item = self.get_arg(args)
 
@@ -761,12 +773,14 @@ class PromptInterface(object):
                         self.show_tx(arguments)
                     elif command == 'header':
                         self.show_header(arguments)
-                    elif command =='account':
+                    elif command == 'account':
                         self.show_account_state(arguments)
                     elif command == 'asset':
                         self.show_asset_state(arguments)
-                    elif command =='contract':
+                    elif command == 'contract':
                         self.show_contract_state(arguments)
+                    elif command == 'invoke':
+                        self.invoke_contract(arguments)
                     elif command == 'sc':
                         self.show_spent_coins(arguments)
                     elif command == 'mem':
