@@ -13,6 +13,8 @@ ByteArray = 5
 
 PublicKey = 6
 
-Array = 16
+String = 7
+
+Array = 10
 
 Void = 255

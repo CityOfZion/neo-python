@@ -244,6 +244,9 @@ class Blockchain(object):
     def GetAllSpentCoins(self):
         pass
 
+    def SearchContracts(self, query):
+        pass
+
     def ShowAllContracts(self):
         pass
 

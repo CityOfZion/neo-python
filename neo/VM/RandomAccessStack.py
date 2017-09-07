@@ -17,6 +17,10 @@ class RandomAccessStack():
     def Count(self):
         return len(self._list)
 
+    @property
+    def Items(self):
+        return self._list
+
     def Clear(self):
         self._list = []
 

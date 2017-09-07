@@ -190,12 +190,36 @@ class LevelDBBlockchain(Blockchain):
         return acct
 
 
+    def SearchContracts(self, query):
+        res = []
+        sn = self._db.snapshot()
+        contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
+        keys = contracts.Keys
+
+        for item in keys:
+
+            contract = contracts.TryGet(keyval=item)
+            if query in contract.Name.decode('utf-8'):
+                res.append(contract)
+            elif query in contract.Author.decode('utf-8'):
+                res.append(contract)
+            elif query in contract.Description.decode('utf-8'):
+                res.append(contract)
+            elif query in contract.Email.decode('utf-8'):
+                res.append(contract)
+
+        sn.close()
+
+        return res
+
+
     def ShowAllContracts(self):
 
         sn = self._db.snapshot()
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
+        keys = contracts.Keys
         sn.close()
-        return contracts.Keys
+        return keys
 
 
     def GetContract(self, hash):
@@ -566,7 +590,7 @@ class LevelDBBlockchain(Blockchain):
                         contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
                     elif tx.Type == TransactionType.InvocationTransaction:
 
-                        self.__log.debug("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
+                        print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
                         script_table = CachedScriptTable(contracts)
                         service = StateMachine(accounts, validators, assets, contracts,storages,wb)
 
@@ -584,9 +608,15 @@ class LevelDBBlockchain(Blockchain):
                         try:
                             # drum roll?
                             success = engine.Execute()
+                            print("SUCCESSS!!!!!!")
                             if success:
                                 service.Commit()
+
+                            for item in engine.EvaluationStack.Items:
+                                print("evaluation item %s " % item)
+
                         except Exception as e:
+                            print("COULD NOT EXECUTE %s " % e)
                             self.__log.debug("could not execute %s " % e)
 
                     else:

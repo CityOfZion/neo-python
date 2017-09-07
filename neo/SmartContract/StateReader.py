@@ -207,16 +207,16 @@ class StateReader(InteropService):
     def Runtime_Notify(self, engine):
 
         state = engine.EvaluationStack.Pop()
-        notice = NotifyEventArgs(engine.ScriptContainer, UInt160(data=engine.CurrentContext.ScriptHash), state)
-        self.NotifyEvent.on_change(notice)
-
+#        notice = NotifyEventArgs(engine.ScriptContainer, UInt160(data=engine.CurrentContext.ScriptHash), state)
+#        self.NotifyEvent.on_change(notice)
+        print("RUNTIME NOTIFY STATe %s  " % state)
         return True
 
     def Runtime_Log(self, engine):
-        message = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
-        log = LogEventArgs(engine.ScriptContainer, UInt160(data=engine.CurrentContext.ScriptHash), message)
-        self.LogEvent.on_change(log)
-
+        message = engine.EvaluationStack.Pop().GetByteArray()
+#        log = LogEventArgs(engine.ScriptContainer, UInt160(data=engine.CurrentContext.ScriptHash), message)
+#        self.LogEvent.on_change(log)
+        print("RUNTIME LOG MESSAGE IS %s " % message)
         return True
 
     def Blockchain_GetHeight(self, engine):

@@ -9,7 +9,8 @@ class BigInteger(int):
     def FromBytes(data):
         return BigInteger( int.from_bytes(data,'little'))
 
-
+    def Equals(self, other):
+        return super(BigInteger, self).__eq__(other)
 
     def ToByteArray(self):
         return base256_encode(self)

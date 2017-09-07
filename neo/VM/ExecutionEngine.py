@@ -362,10 +362,12 @@ class ExecutionEngine():
                 estack.PushT( x1 ^ x2 )
 
             elif opcode == EQUAL:
-
+                print("CHECKING EQUAL")
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
+                print("X1, X2: %s %s " % (x2, x1))
+                res = x1.Equals(x2)
+                print("equal result %s " % res)
                 estack.PushT( x1.Equals(x2))
 
 
@@ -755,9 +757,9 @@ class ExecutionEngine():
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
         opname = ToName(op)
-        self.__log.debug("____________________________________________________")
-        self.__log.debug("%s -> %s" % (op, opname))
-        self.__log.debug("-----------------------------------")
+        print("____________________________________________________")
+        print("%s -> %s" % (op, opname))
+        print("-----------------------------------")
 
         self.ExecuteOp(op, self.CurrentContext)
 

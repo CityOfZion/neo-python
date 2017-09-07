@@ -582,6 +582,19 @@ class PromptInterface(object):
             if item.lower() == 'all':
                 contracts = Blockchain.Default().ShowAllContracts()
                 print("contracts: %s " % contracts)
+            elif item.lower() == 'search':
+                query = self.get_arg(args, 1)
+                if query:
+
+                    contracts = Blockchain.Default().SearchContracts(query=query)
+                    print("Found %s results for %s " % (len(contracts), query))
+                    for contract in contracts:
+                        bjson = json.dumps(contract.ToJson(), indent=4)
+                        tokens = [(Token.Number, bjson)]
+                        print_tokens(tokens, self.token_style)
+                        print('\n')
+                else:
+                    print("Please specify a search query")
             else:
                 contract = Blockchain.Default().GetContract(item)
                 if contract is not None:

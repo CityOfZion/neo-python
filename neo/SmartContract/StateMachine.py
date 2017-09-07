@@ -428,25 +428,30 @@ class StateMachine(StateReader):
         return True
 
     def Storage_Get(self, engine):
-
+        print("getting storage")
         context = None
         try:
             context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+            print("got storage context %s " % context)
         except Exception as e:
             self.__log.debug("Storage Context not found")
             return False
 
         if not self.CheckStorageContext(context):
+            print("could not get storage context %s " % context)
             return False
 
         key = engine.EvaluationStack.Pop().GetByteArray()
+        print("storage key %s " % key)
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
         item = self._storages.TryGet(storage_key.GetHashCodeBytes())
-
+        print("item is %s " % item)
         if item is not None:
 
             engine.EvaluationStack.PushT(item.Value)
+            print("added item value %s " % item.Value)
         else:
+            print("adding empty byte array")
             engine.EvaluationStack.PushT(bytearray(0))
 
         return True
@@ -454,30 +459,34 @@ class StateMachine(StateReader):
 
     def Storage_Put(self, engine):
         context = None
+        print("Trying to put storage")
         try:
+
             context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+            print("got storage context %s " % context)
         except Exception as e:
             self.__log.debug("Storage Context Not found on stack")
             return False
 
         if not self.CheckStorageContext(context):
+            print("could not get storage context %s " % context)
             return False
 
         key = engine.EvaluationStack.Pop().GetByteArray()
-
+        print("key is %s " % key)
         if len(key) > 1024:
             return False
 
 
         value = engine.EvaluationStack.Pop().GetByteArray()
-
+        print("value is %s " % value)
         new_item = StorageItem(value=value)
-
+        print("item is %s " % new_item)
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
-
+        print("storage key %s " % storage_key)
         item = self._storages.GetAndChange(storage_key.GetHashCodeBytes(), new_instance=new_item)
         item.Value = value
-
+        print("got storage item %s " % item)
         self.__log.debug("Put stored item %s %s " % (item, item.Value))
 
         return True
