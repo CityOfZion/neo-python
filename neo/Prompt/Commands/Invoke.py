@@ -129,12 +129,25 @@ def descripe_contract(contract):
 
 def parse_param(p):
 
+
     try:
         val = int(p)
         out = BigInteger(val)
         return out
     except Exception as e:
+        print("Couldnt coerce %s to int " % p)
         pass
+
+    try:
+        val = eval(p)
+#        print("value %s %s " % (val, type(val)))
+
+        if type(val) is bytearray:
+            return val.hex()
+
+        return val
+    except Exception as e:
+        print("Counldn eval %s %s " % (p, type(p)))
 
     if type(p) is str:
         return binascii.hexlify( p.encode('utf-8'))
