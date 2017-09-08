@@ -23,7 +23,7 @@ from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
-
+from neo.Cryptography.Crypto import Crypto
 import time
 import plyvel
 from autologging import logged
@@ -255,6 +255,24 @@ class LevelDBBlockchain(Blockchain):
         coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
 
         return coins.TryGet(keyval=tx_hash)
+
+    def SearchAssetState(self, query):
+        res = []
+        sn = self._db.snapshot()
+        assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
+        keys = assets.Keys
+
+        for item in keys:
+            asset = assets.TryGet(keyval=item)
+            if query in asset.Name.decode('utf-8'):
+                res.append(asset)
+            elif query in Crypto.ToAddress(asset.Issuer):
+                res.append(asset)
+            elif query in Crypto.ToAddress(asset.Admin):
+                res.append(asset)
+        sn.close()
+
+        return res
 
     def GetAssetState(self, assetId):
 

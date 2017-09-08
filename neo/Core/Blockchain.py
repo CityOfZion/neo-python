@@ -220,6 +220,9 @@ class Blockchain(object):
         # abstract
         pass
 
+    def SearchAssetState(self, query):
+        pass
+
     def GetHeaderHash(self, height):
         pass
 

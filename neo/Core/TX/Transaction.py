@@ -438,9 +438,7 @@ class Transaction(Inventory, InventoryMixin):
             hashes.add(output.ScriptHash)
 
         for attr in self.Attributes:
-            print("attribute %s %s %s" %(attr.Usage, attr.Data, type(attr.Data)))
             if attr.Usage == TransactionAttributeUsage.Script:
-                print("adding data %s %s" % (attr.Data, type(attr.Data)))
                 if type(attr.Data) is UInt160:
                     hashes.add(attr.Data)
                 else:

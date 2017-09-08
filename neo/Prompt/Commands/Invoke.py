@@ -37,10 +37,19 @@ def InvokeContract(wallet, args, test=True):
     if contract:
         descripe_contract(contract)
 
+        verbose = False
+
+        if 'verbose' in args:
+            verbose = True
+            args.remove('verbose')
+
+        print("VERBOSE %s " % verbose)
+
         params =  args[1:] if len(args) > 1 else []
 
         if len(params) > 0 and params[0] == 'describe':
             return
+
 
         params.reverse()
 
@@ -57,12 +66,13 @@ def InvokeContract(wallet, args, test=True):
         out = sb.ToArray()
 
         if test:
-            test_invoke(out, wallet)
+            return test_invoke(out, wallet)
 
     else:
 
         print("Contract %s not found" % args[0])
 
+    return None,None
 
 
 def test_invoke(script, wallet):
@@ -104,26 +114,30 @@ def test_invoke(script, wallet):
     try:
         # drum roll?
         success = engine.Execute()
-        print("SUCCESSS!!!!!!")
+
         if success:
 
             service.TestCommit()
 
-        for item in engine.EvaluationStack.Items:
-            print("evaluation item %s " % item)
+
+            consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
+
+            if consumed < Fixed8.One():
+                consumed = Fixed8.One()
+
+            #set the amount of gas the tx will need
+            tx.Gas = consumed
 
 
-        consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
-        print("consumed %s " % consumed)
+            #remove the attributes that are used to add a verification script to the tx
+            tx.Attributes = []
 
-        if consumed < Fixed8.One():
-            consumed = Fixed8.One()
-
-        print("Gas consumed: %s " % (consumed.value / Fixed8.D))
+            return tx, engine.EvaluationStack.Items
 
     except Exception as e:
         print("COULD NOT EXECUTE %s " % e)
 
+    return None,[]
 
 def descripe_contract(contract):
     print("invoking contract - %s" % contract.Name.decode('utf-8'))

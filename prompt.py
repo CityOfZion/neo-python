@@ -79,6 +79,8 @@ class PromptInterface(object):
     _wallet_create_path = None
     _wallet_send_tx = None
 
+    _invoke_test_tx = None
+
     Wallet = None
 
     commands = ['quit',
@@ -563,6 +565,20 @@ class PromptInterface(object):
         print("asset to show %s " % item)
 
         if item is not None:
+
+            if item == 'search':
+                query = self.get_arg(args, 1)
+                results = Blockchain.Default().SearchAssetState(query)
+                for asset in results:
+                    print("Found %s results for %s " % (len(results), query))
+                    for asset in results:
+                        bjson = json.dumps(asset.ToJson(), indent=4)
+                        tokens = [(Token.Number, bjson)]
+                        print_tokens(tokens, self.token_style)
+                        print('\n')
+
+                return
+
             asset = Blockchain.Default().GetAssetState(item)
 
             if asset is not None:
@@ -606,16 +622,39 @@ class PromptInterface(object):
         else:
             print("please specify a contract")
 
-    def invoke_contract(self, args):
+    def test_invoke_contract(self, args):
+        self._invoke_test_tx = None
+
         if not self.Wallet:
             print("please open a wallet")
             return
 
+
         if args and len(args) > 0:
-            return InvokeContract(self.Wallet, args)
+            tx, results = InvokeContract(self.Wallet, args,test=True)
+
+            if tx is not None and results is not None:
+                self._invoke_test_tx = tx
+                print("Test invoke successful")
+                print("Results %s " % [str(item) for item in results])
+                print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
+                print("You may now invoke this on the blockchain by using the 'invoke' command with no arguments")
+                return
+            else:
+                print("Error testing contract invoke")
+                return
 
         print("please specify a contract to invoke")
 
+    def invoke_contract(self, args):
+
+        if not self._invoke_test_tx:
+            print("Please test your invoke before deploying it with the 'testinvoke {contracthash} *args' command")
+            return
+
+        print("Would invoke tx here")
+        self._invoke_test_tx = None
+        return
 
     def show_spent_coins(self, args):
         item = self.get_arg(args)
@@ -781,6 +820,8 @@ class PromptInterface(object):
                         self.show_contract_state(arguments)
                     elif command == 'invoke':
                         self.invoke_contract(arguments)
+                    elif command == 'testinvoke':
+                        self.test_invoke_contract(arguments)
                     elif command == 'sc':
                         self.show_spent_coins(arguments)
                     elif command == 'mem':
