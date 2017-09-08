@@ -761,9 +761,13 @@ class ExecutionEngine():
         print("%s -> %s" % (op, opname))
         print("-----------------------------------")
 
-        self.ExecuteOp(op, self.CurrentContext)
-
-
+        try:
+            self.ExecuteOp(op, self.CurrentContext)
+        except Exception as e:
+            print("could not execute op %s " % e)
+            traceback.print_stack()
+            traceback.print_exc()
+            raise e
 
     def StepOut(self):
         self._VMState &= ~VMState.BREAK

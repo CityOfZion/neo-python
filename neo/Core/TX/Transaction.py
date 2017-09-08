@@ -430,7 +430,7 @@ class Transaction(Inventory, InventoryMixin):
     def GetScriptHashesForVerifying(self):
 
 
-        if not self.References:
+        if not self.References and len(self.Attributes) < 1:
             return []
 
         hashes = set()
@@ -438,8 +438,13 @@ class Transaction(Inventory, InventoryMixin):
             hashes.add(output.ScriptHash)
 
         for attr in self.Attributes:
+            print("attribute %s %s %s" %(attr.Usage, attr.Data, type(attr.Data)))
             if attr.Usage == TransactionAttributeUsage.Script:
-                hashes.add( UInt160(data=attr.Data))
+                print("adding data %s %s" % (attr.Data, type(attr.Data)))
+                if type(attr.Data) is UInt160:
+                    hashes.add(attr.Data)
+                else:
+                    hashes.add( UInt160(data=attr.Data))
 
         for key, group in groupby(self.outputs, lambda p: p.AssetId):
             asset = GetBlockchain().GetAssetState(key.ToBytes())

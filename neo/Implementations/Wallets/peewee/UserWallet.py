@@ -302,6 +302,23 @@ class UserWallet(Wallet):
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
 
 
+    def PubKeys(self):
+        keys = self.LoadKeyPairs()
+        jsn = []
+        for k in keys.values():
+            addr = Crypto.ToAddress(k.PublicKeyHash)
+            pub = k.PublicKey.encode_point(True)
+            signature_contract = None
+            for ct in self._contracts.values():
+                if ct.PublicKeyHash == k.PublicKeyHash:
+                    signature_contract = ct
+
+            addr = signature_contract.Address
+
+            jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
+
+        return jsn
+
     def ToJson(self, verbose=False):
 
         assets = self.GetCoinAssets()
@@ -314,10 +331,10 @@ class UserWallet(Wallet):
         jsn['height'] = self._current_height
         jsn['percent_synced'] = int(100 * self._current_height / Blockchain.Default().Height)
         jsn['balances'] = ["%s : %s " % (asset.ToString(), self.GetBalance(asset).value / Fixed8.D) for asset in assets]
+        jsn['public_keys'] = self.PubKeys()
 
         if verbose:
             jsn['coins'] = [coin.ToJson() for coin in self.FindUnspentCoins()]
             jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
-
         return jsn
 

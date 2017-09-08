@@ -35,6 +35,10 @@ class Fixed8:
         return Fixed8(1)
 
     @staticmethod
+    def One():
+        return Fixed8(Fixed8.D)
+
+    @staticmethod
     def NegativeSatoshi():
         return Fixed8(-1)
 

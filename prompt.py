@@ -607,9 +607,9 @@ class PromptInterface(object):
             print("please specify a contract")
 
     def invoke_contract(self, args):
-#        if not self.Wallet:
-#            print("please open a wallet")
-#            return
+        if not self.Wallet:
+            print("please open a wallet")
+            return
 
         if args and len(args) > 0:
             return InvokeContract(self.Wallet, args)

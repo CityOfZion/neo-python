@@ -17,17 +17,18 @@ from neo.Core.State.ContractState import ContractState
 from neo.Core.State.StorageItem import StorageItem
 
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
+from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
 from neo.Core.Witness import Witness
 
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 from neo.SmartContract.StateMachine import StateMachine
+from neo.Cryptography.Crypto import Crypto
+from neo.Fixed8 import Fixed8
 
 from neo.BigInteger import BigInteger
 
 def InvokeContract(wallet, args, test=True):
-
-#    print("invoking contract! %s %s " % (wallet, args))
 
     BC = GetBlockchain()
 
@@ -38,7 +39,7 @@ def InvokeContract(wallet, args, test=True):
 
         params =  args[1:] if len(args) > 1 else []
 
-        if params[0] == 'describe':
+        if len(params) > 0 and params[0] == 'describe':
             return
 
         params.reverse()
@@ -46,33 +47,32 @@ def InvokeContract(wallet, args, test=True):
         sb = ScriptBuilder()
 
         for p in params:
-            print("pushitng param %s " % p)
 
             item = parse_param(p)
             sb.push(item)
 
-            print("Script.. %s " % sb.ToArray(cleanup=False))
 
         sb.EmitAppCall(contract.Code.ScriptHash().Data)
-#        sb.push(binascii.hexlify(contract.Code.Script))
-        print("script is %s " % sb.ToArray(cleanup=False))
+
         out = sb.ToArray()
-        print("out %s " % out)
-        test_invoke(out)
+
+        if test:
+            test_invoke(out, wallet)
+
     else:
 
         print("Contract %s not found" % args[0])
 
 
 
-def test_invoke(script):
+def test_invoke(script, wallet):
     bc = GetBlockchain()
 
     sn = bc._db.snapshot()
 
     accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
-    unspentcoins = DBCollection(bc._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
-    spentcoins = DBCollection(bc._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
+#    unspentcoins = DBCollection(bc._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
+#    spentcoins = DBCollection(bc._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
     assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
     validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
     contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
@@ -81,9 +81,14 @@ def test_invoke(script):
     tx = InvocationTransaction()
     tx.scripts = [ Witness()]
     tx.Script = binascii.unhexlify(script)
-    print("script is %s " % tx.Script)
+
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
+
+    contract = wallet.GetDefaultContract()
+
+    tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
+
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
@@ -107,6 +112,15 @@ def test_invoke(script):
         for item in engine.EvaluationStack.Items:
             print("evaluation item %s " % item)
 
+
+        consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
+        print("consumed %s " % consumed)
+
+        if consumed < Fixed8.One():
+            consumed = Fixed8.One()
+
+        print("Gas consumed: %s " % (consumed.value / Fixed8.D))
+
     except Exception as e:
         print("COULD NOT EXECUTE %s " % e)
 
@@ -117,12 +131,12 @@ def descripe_contract(contract):
     functionCode = contract.Code
 
     parameters = functionCode.ParameterList
-    script = functionCode.Script
 
     method_signature = []
     for p in parameters:
         method_signature.append("{ %s } " % ToName(p))
     rettype = ToName(functionCode.ReturnType)
+
     print("method signature %s  -->  %s" % (' '.join(method_signature), rettype))
 
 
@@ -135,19 +149,17 @@ def parse_param(p):
         out = BigInteger(val)
         return out
     except Exception as e:
-        print("Couldnt coerce %s to int " % p)
         pass
 
     try:
         val = eval(p)
-#        print("value %s %s " % (val, type(val)))
 
         if type(val) is bytearray:
             return val.hex()
 
         return val
     except Exception as e:
-        print("Counldn eval %s %s " % (p, type(p)))
+        pass
 
     if type(p) is str:
         return binascii.hexlify( p.encode('utf-8'))

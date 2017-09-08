@@ -31,6 +31,7 @@ import binascii
 import pprint
 import json
 from twisted.internet import reactor
+import traceback
 
 @logged
 class LevelDBBlockchain(Blockchain):
@@ -617,8 +618,9 @@ class LevelDBBlockchain(Blockchain):
 
                         except Exception as e:
                             print("COULD NOT EXECUTE %s " % e)
-                            self.__log.debug("could not execute %s " % e)
-
+#                            self.__log.debug("could not execute %s " % e)
+                            traceback.print_stack()
+                            traceback.print_exc()
                     else:
 
                         if tx.Type != b'\x00' and tx.Type != 128:

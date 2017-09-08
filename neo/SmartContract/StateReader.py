@@ -15,6 +15,7 @@ from neo.Cryptography.ECCurve import ECDSA
 from neo.VM.InteropService import StackItem
 
 import events
+import binascii
 
 class StateReader(InteropService):
 
@@ -169,34 +170,47 @@ class StateReader(InteropService):
 
     def CheckWitnessHash(self, engine, hash):
 
+        print("check witness hash ... %s " % self._hashes_for_verifying)
         if self._hashes_for_verifying is None:
-
+            print("it is none")
             container = engine.ScriptContainer
+            print("container... %s " % container)
             self._hashes_for_verifying = container.GetScriptHashesForVerifying()
+            print("script hashes for verifying... %s "% self._hashes_for_verifying)
+
 
         return True if hash in self._hashes_for_verifying else False
 
 
     def CheckWitnessPubkey(self, engine, pubkey):
         #the ToScriptHash thing needs fixing
+        print("check witness pubkey??? %s %s " % (engine, pubkey))
+        scripthash = Contract.CreateSignatureRedeemScript(pubkey)
+        print("script hash is %s %s" % (scripthash, type(scripthash)))
         return self.CheckWitnessHash(engine, Crypto.ToScriptHash( Contract.CreateSignatureRedeemScript(pubkey)))
 
 
     def Runtime_CheckWitness(self, engine):
 
+        print("runtime check witness...")
         hashOrPubkey = engine.EvaluationStack.Pop().GetByteArray()
 
+        if len(hashOrPubkey) == 66 or len(hashOrPubkey) == 40:
+            hashOrPubkey = binascii.unhexlify(hashOrPubkey)
+
         result = False
-
+        print("hash or pubkey %s %s " % (hashOrPubkey, len(hashOrPubkey)))
         if len(hashOrPubkey) == 20:
-
+            print("checkwitness hash?? %s " % hashOrPubkey)
             result = self.CheckWitnessHash(engine, hashOrPubkey)
 
         elif len(hashOrPubkey) == 33:
-            point = ECDSA.decode_secp256r1(hashOrPubkey)
+            print("hash or pubkey %s %s " % (hashOrPubkey, type(hashOrPubkey)))
+            point = ECDSA.decode_secp256r1(hashOrPubkey, unhex=False).G
             result = self.CheckWitnessPubkey(engine, point)
-
+            print("CHEKC WITNESS RESULT RESULT IS %s " % result)
         else:
+            print("len")
             result = False
 
         engine.EvaluationStack.PushT(result)
