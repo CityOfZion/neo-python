@@ -1,8 +1,11 @@
 import parser
-
 import pprint
 
-st = parser.suite(open('./boa/sources/Math.py').read())
 
+filepath = './boa/sources/Math.py'
+
+
+st = parser.suite(open(filepath).read())
 tu = st.totuple()
+
 pprint.pprint(tu)

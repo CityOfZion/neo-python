@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 Description:
-    define the data struct of coin
+    Define the data struct of coin
 Usage:
     from neo.Wallets.Coin import Coin
 """
@@ -13,6 +13,7 @@ from neo.Core.State.CoinState import CoinState
 from neo.IO.Mixins import TrackableMixin
 from neo.Cryptography.Crypto import Crypto
 
+
 class Coin(TrackableMixin):
 
     Output = None
@@ -22,15 +23,18 @@ class Coin(TrackableMixin):
     _state = CoinState.Unconfirmed
 
 
-
-
     @staticmethod
     def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed):
         coin = Coin(coin_reference=coin_ref, tx_output=tx_output, state=state)
         return coin
 
 
-    def __init__(self, prev_hash=None, prev_index=None, tx_output=None, coin_reference=None, state=CoinState.Unconfirmed):
+    def __init__(self, 
+                        prev_hash=None, 
+                        prev_index=None, 
+                        tx_output=None, 
+                        coin_reference=None, 
+                        state=CoinState.Unconfirmed):
         if prev_hash and prev_index:
             self.Reference = CoinReference(prev_hash, prev_index)
         elif coin_reference:
@@ -47,23 +51,21 @@ class Coin(TrackableMixin):
             self._address = Crypto.ToAddress(self.TXOutput.ScriptHash)
         return self._address
 
+
     @property
     def State(self):
         return self._state
+
 
     @State.setter
     def State(self,value):
         self._state = value
 
 
-
     def Equals(self, other):
-        if other is None or other is not self: return False
-        return True
+        return other is not None and other is self
 
 
     def ToJson(self):
-        return {
-            'Reference': self.Reference.ToJson(),
-            'Output': self.Output.ToJson()
-        }
+        d = {'Reference': self.Reference.ToJson(), 'Output': self.Output.ToJson()}
+        return d

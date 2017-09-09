@@ -1,14 +1,16 @@
+import sys
+import os
+from autologging import logged
+
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.OpCode import *
 from neo.VM import VMState
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
-import sys,os
-from autologging import logged
+
 
 @logged
 class ApplicationEngine(ExecutionEngine):
-
 
     ratio = 100000
     gas_free = 10 * 100000000
@@ -68,6 +70,7 @@ class ApplicationEngine(ExecutionEngine):
 
         return True
 
+
     def CheckItemSize(self):
 
         maxItemSize = 1024 * 1024
@@ -90,7 +93,6 @@ class ApplicationEngine(ExecutionEngine):
                 return False
 
             return True
-
 
         elif opcode == CAT:
 

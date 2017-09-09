@@ -22,7 +22,7 @@
 
 ## What does it currently do
 
-- This project aims to be a full port of the original C# [neo project](https://github.com/neo-project) 
+- This project aims to be a full port of the [C# code](https://github.com/neo-project/neo) at [Neo Project](https://github.com/neo-project) 
 - Run a python based P2P node
 - Interactive CLI for configuring node and inspecting block chain
 - Runs smart contracts on the block chain in a python virtual machine
@@ -41,17 +41,43 @@
 - Or ping **@localhuman** on the [NEO Slack](https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA).
 - Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome.  All successful pull requests will be rewarded with one photo of a cat or kitten. 
 
-
 ### License
 
 - Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
 - Main author is [@localhuman](https://github.com/localhuman).
 
-
-
 ## Getting started
 
-you will need to install the libleveldb library. 
+### Overview
+
+```
+neo-python
+├── compiler.py
+├── prompt.py                    <─── terminal client
+├── node.py
+└── neo
+    ├── Core
+        ├── State
+        └── TX
+    ├── Cryptography
+    ├── Implementations
+        ├── Blockchains
+            ├── LevelDB
+            └── RPC
+        └── Wallets
+    ├── IO
+    ├── Network
+        └── Payloads
+    ├── SmartContract
+        ├── Framework
+            ├── Neo
+            └── System
+    ├── Utils
+    ├── VM
+    └── Wallets
+```
+
+You will need to install the libleveldb library. 
 
 ##### on OSX:
 ```
@@ -73,7 +99,6 @@ you may need to enable the epel repo for the leveldb-devel package, which you ca
 ### For all of these, make sure that the `Chains` directory in your project has the proper write permisisons
 
 ##### windows ( not sure )
-
 
 -------------------
 
@@ -110,41 +135,15 @@ CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel ply
 
 ## Running
 
-After installing requirements and activating your environment, there is an easy to use `prompt.py` file for you to run the node as well as some basic interactivity
+After installing requirements and activating your environment, 
+there is an easy to use `prompt.py` file for you to run the node 
+as well as some basic interactivity:
 
-```
-python prompt.py 
-NEO cli. Type 'help' to get started
-
-neo> show state
-Progress: 1054913 / 1237188
-
-neo> 
-```
+![opening prompt.py](http://i.imgur.com/jQklFSB.png)
 
 You can query for a block in the current server by hash or by block index:
 
-```
-python prompt.py 
-NEO cli. Type 'help' to get started
-
-neo> show block 122235
-{
-    "index": 122235,
-    "script": "",
-    "merkleroot": "1d5a895ea34509a83becb5d2f9391018a3f59d670d94a2c3f8deb509a07464bd",
-    "previousblockhash": "98ae05cb68ab857659cc6c8379eb7ba68b57ef1f5317904c295341d82d0a1713",
-    "tx": [
-        "1d5a895ea34509a83becb5d2f9391018a3f59d670d94a2c3f8deb509a07464bd"
-    ],
-    "version": 0,
-    "time": 1479110368,
-    "hash": "74671375033f506325ef08d35632f74083cca564dc7ea6444c94d3b9dec3f61b",
-    "consensus data": 16070047272025254767,
-    "next_consensus": "59e75d652b5d3827bf04c165bbe9ef95cca4bf55"
-}
-neo> 
-```
+![inspecting block](http://i.imgur.com/njTiHL3.png)
 
 #### Available Wallet commands
 
@@ -160,24 +159,23 @@ send { ASSET_ID } { ADDRESS } { AMOUNT }
 
 ```
 
+#### Logging
 
-#### Extra notes
+Currently, `prompt.py` logs to `prompt.log`
+
+
+#### Misc
 On OSX, if you would like to run the process in the background, even when your computer is sleeping, you can use the built in `caffeinate` command
 ```
 caffeinate python prompt.py
 ```
 
 
-### Logging
-
-Currently, `prompt.py` logs to `prompt.log`
-
-
-## Tests
+## Module testing
 
 Tests are important.  Currently there are not enough, but we are working on that.  You can start them by running this command
 
-Note that some of the unit tests use a giant blockchain fixture database ( around 800mb ).  This file is not kept in the repo.
+Note that some of the unit tests use a giant blockchain fixture database (around 800mb).  This file is not kept in the repo.
 
 When running tests the first time, the test setup will try to download the file and extract it to the proper directory
 

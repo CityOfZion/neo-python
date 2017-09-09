@@ -1,33 +1,22 @@
 #!/usr/bin/env python
-
-
+"""
+Description:
+    Define a command line interface class for NEO blockchain data and run it using the twisted 
+    package.
+Usage:
+    Execute this script directly.
 """
 
-"""
-
+import os
+import time
 import json
 import logging
 import datetime
-import time
-import os
-from neo.IO.MemoryStream import StreamManager
-from neo.Network.NodeLeader import NodeLeader
 import resource
 
-from neo.Core.Blockchain import Blockchain
-from neo.Core.TX.Transaction import Transaction,ContractTransaction,TransactionOutput
-from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Wallets.SignatureContext import SignatureContext
-from neo.Wallets.KeyPair import KeyPair
-from neo.Network.NodeLeader import NodeLeader
-from neo import Settings
-from neo.Fixed8 import Fixed8
-import traceback
-
-from twisted.internet import reactor, task
-
+from twisted.internet import reactor, task  ## See https://twistedmatrix.com/trac/
 from autologging import logged
+import traceback
 
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import style_from_dict
@@ -35,6 +24,18 @@ from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
+
+from neo.IO.MemoryStream import StreamManager
+from neo.Network.NodeLeader import NodeLeader
+from neo.Core.Blockchain import Blockchain
+from neo.Core.TX.Transaction import Transaction, ContractTransaction, TransactionOutput
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Wallets.SignatureContext import SignatureContext
+from neo.Wallets.KeyPair import KeyPair
+from neo.Network.NodeLeader import NodeLeader
+from neo import Settings
+from neo.Fixed8 import Fixed8
 
 
 logname = 'prompt.log'
@@ -47,34 +48,31 @@ logging.basicConfig(
 blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
 
-
 example_style = style_from_dict({
     # User input.
-    Token:          '#ff0066',
+    Token: '#ff0066',
 
     # Prompt.
     Token.Username: '#884444',
-    Token.At:       '#00aa00',
-    Token.Colon:    '#00aa00',
-    Token.Pound:    '#00aa00',
-    Token.Host:     '#000088 bg:#aaaaff',
-    Token.Path:     '#884444 underline',
+    Token.At: '#00aa00',
+    Token.Colon: '#00aa00',
+    Token.Pound: '#00aa00',
+    Token.Host: '#000088 bg:#aaaaff',
+    Token.Path: '#884444 underline',
 })
 
 
 @logged
 class PromptInterface(object):
 
-
     go_on = True
-
     completer = WordCompleter(['block','tx','header','mem','help','state','node','exit','quit','config','db','log'])
 
-    _gathering_password = False
     _gathered_passwords = []
+    _gathering_password = False
+    _num_passwords_req = 0
     _gather_password_action = None
     _gather_address_str = None
-    _num_passwords_req = 0
     _wallet_create_path = None
     _wallet_send_tx = None
 
@@ -134,22 +132,23 @@ class PromptInterface(object):
         reactor.stop()
         self.node_leader.Shutdown()
 
+
     def help(self):
         tokens = []
-        for c in self.commands:
-            tokens.append((Token.Command, "%s\n" %c))
+        for cmd in self.commands:
+            pair = (Token.Command, "%s\n" % cmd)
+            tokens.append(pair)
         print_tokens(tokens, self.token_style)
 
+
     def toggle_pause(self):
+        self.paused = not self.paused
         if self.paused:
-            self.paused = not self.paused
+            print('pausing execution!')
+            reactor.callLater(1, self.paused_loop)
+        else:
 #            reactor.run()
             print("resusiming execution")
-
-        else:
-            self.paused = not self.paused
-            print('pausing execution!')
-            reactor.callLater(1,self.paused_loop)
 
 
     def do_open(self, arguments):
@@ -172,6 +171,7 @@ class PromptInterface(object):
                 self._gather_password_action = self.do_open_wallet
             else:
                 print("Please specify a path")
+
 
     def do_create(self, arguments):
         item = self.get_arg(arguments)
@@ -220,7 +220,6 @@ class PromptInterface(object):
         print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
         print("pubkey %s " % key.PublicKey.encode_point(True))
 
-
         dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
         dbloop.start(1)
 
@@ -249,7 +248,7 @@ class PromptInterface(object):
         item = self.get_arg(arguments)
 
         if item and item == 'wif':
-
+            
             if not self.Wallet:
                 print("Please open a wallet before importing WIF")
                 return
@@ -274,8 +273,6 @@ class PromptInterface(object):
 
         print("please specify something to import")
         return
-
-
 
 
     def do_export(self, arguments):
@@ -305,6 +302,7 @@ class PromptInterface(object):
 
         print("Command export %s not found" % item)
 
+
     def do_export_wif(self):
         passwd = self._gathered_passwords[0]
         address = self._gather_address_str
@@ -326,7 +324,6 @@ class PromptInterface(object):
 
 
     def show_wallet(self, arguments):
-
 
         if not self.Wallet:
             print("please open a wallet")
@@ -357,6 +354,7 @@ class PromptInterface(object):
                 pass
         if item == 'unspent':
             self.Wallet.FindUnspentCoins()
+
 
     def do_send(self, arguments):
         try:
@@ -420,6 +418,7 @@ class PromptInterface(object):
             traceback.print_stack()
             traceback.print_exc()
 
+
     def do_send_created_tx(self):
         passwd = self._gathered_passwords[0]
         tx = self._wallet_send_tx
@@ -430,7 +429,6 @@ class PromptInterface(object):
         if not self.Wallet.ValidatePassword(passwd):
             print("incorrect password")
             return
-
 
         try:
             context = SignatureContext(tx)
@@ -510,6 +508,7 @@ class PromptInterface(object):
         else:
             print("please specify a block")
 
+
     def show_header(self, args):
         item = self.get_arg(args)
         if item is not None:
@@ -557,6 +556,7 @@ class PromptInterface(object):
         else:
             print("please specify an account address")
 
+
     def show_asset_state(self, args):
         item = self.get_arg(args)
         print("asset to show %s " % item)
@@ -573,6 +573,7 @@ class PromptInterface(object):
                 print("asset %s not found" % item)
         else:
             print("please specify an asset hash")
+
 
     def show_contract_state(self, args):
         item = self.get_arg(args)
@@ -592,6 +593,7 @@ class PromptInterface(object):
         else:
             print("please specify a contract")
 
+
     def show_spent_coins(self, args):
         item = self.get_arg(args)
 
@@ -610,12 +612,14 @@ class PromptInterface(object):
         else:
             print("please specify a tx hash")
 
+
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
         out = "Total: %s MB\n" % totalmb
         out += "total buffers %s\n" % StreamManager.TotalBuffers()
         print_tokens([(Token.Number, out)], self.token_style)
+
 
     def configure(self, args):
         what = self.get_arg(args)
@@ -665,6 +669,7 @@ class PromptInterface(object):
             print("cannot configure %s " % what)
             print("Try 'config node 100 1000' or config db 1000 4' or config log on/off")
 
+
     def get_arg(self, arguments, index=0, convert_to_int=False):
         try:
             arg = arguments[index]
@@ -682,6 +687,7 @@ class PromptInterface(object):
             return commandParts[0], commandParts[1:]
         return None,None
 
+
     def run(self):
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
@@ -697,7 +703,6 @@ class PromptInterface(object):
 
         while self.go_on:
 
-
             if self._gathered_passwords and len(self._gathered_passwords) == self._num_passwords_req:
                 self._gathering_password = False
                 self._gather_password_action()
@@ -712,24 +717,21 @@ class PromptInterface(object):
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
                                 style=self.token_style)
 
-
-
             if self._gathering_password:
                 self._gathered_passwords.append(result)
 
             else:
-
-
                 command, arguments = self.parse_result(result)
 
-                if command is not None and len(command) > 0:
+                if command:
                     command = command.lower()
 
-
-                    if command == 'quit' or command == 'exit':
-                        self.quit()
-                    elif command == 'help':
+                    if command == 'help':
                         self.help()
+                    elif command == 'mem':
+                        self.show_mem()
+                    elif command == 'state':
+                        self.show_state()
                     elif command == 'create':
                         self.do_create(arguments)
                     elif command == 'open':
@@ -756,17 +758,15 @@ class PromptInterface(object):
                         self.show_contract_state(arguments)
                     elif command == 'sc':
                         self.show_spent_coins(arguments)
-                    elif command == 'mem':
-                        self.show_mem()
-                    elif command == 'nodes' or command == 'node':
-                        self.show_nodes()
-                    elif command == 'state':
-                        self.show_state()
                     elif command == 'config':
                         self.configure(arguments)
-                    elif command == 'pause' or command == 'unpause' or command == 'resume':
+                    elif command in ['pause', 'unpause', 'resume']:
                         self.toggle_pause()
-                    elif command == None:
+                    elif command in ['nodes', 'node']:
+                        self.show_nodes()
+                    elif command in ['quit', 'exit']:
+                        self.quit()
+                    elif command is None:
                         print('please specify a command')
                     else:
                         print("command %s not found" % command)

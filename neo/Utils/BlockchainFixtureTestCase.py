@@ -1,12 +1,11 @@
-from neo.Utils.NeoTestCase import NeoTestCase
-from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
-
-from neo.Core.Blockchain import Blockchain
-
-import tarfile
-import requests
 import os
 from autologging import logged
+import tarfile
+import requests
+
+from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
+from neo.Core.Blockchain import Blockchain
 
 
 @logged
@@ -19,7 +18,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
     @classmethod
     def leveldb_testpath(self):
-        return 'Override Me!'
+        return 'Override me!'
 
 
     @classmethod
@@ -29,18 +28,13 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
         if os.path.exists(self.FIXTURE_FILENAME):
             self.__log.debug("fixtures already downloaded")
-
         else:
-
             self.__log.debug("downloading fixture block database. this may take a while")
-
             response = requests.get(self.FIXTURE_REMOTE_LOC, stream=True)
-
             response.raise_for_status()
-            with open(self.FIXTURE_FILENAME,'wb+') as handle:
+            with open(self.FIXTURE_FILENAME, 'wb+') as handle:
                 for block in response.iter_content(1024):
                     handle.write(block)
-
 
         self.__log.debug("opening tar file")
         try:

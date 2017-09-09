@@ -4,7 +4,6 @@ from neo.SmartContract.Framework.Neo.Storage import Storage
 
 class HelloWorld(FunctionCode):
 
-
     @staticmethod
     def Main():
 
