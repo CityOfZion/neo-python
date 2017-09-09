@@ -3,6 +3,7 @@
 from neo.Core.TX.Transaction import Transaction,TransactionType
 import sys
 import binascii
+from neo.Fixed8 import Fixed8
 
 class MinerTransaction(Transaction):
 
@@ -12,6 +13,9 @@ class MinerTransaction(Transaction):
     def __init__(self, *args, **kwargs):
         super(MinerTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.MinerTransaction
+
+    def NetworkFee(self):
+        return Fixed8(0)
 
     def Size(self):
         return self.Size() + sys.getsizeof(int)

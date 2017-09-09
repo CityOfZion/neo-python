@@ -229,6 +229,7 @@ class UserWallet(Wallet):
     def OnProcessNewBlock(self, block, added, changed, deleted):
 
         for tx in block.FullTransactions:
+
             if self.IsWalletTransaction(tx):
 #                print("PROCESSING WALLET TRANSACTION %s " % json.dumps(tx.ToJson(), indent=4))
                 db_tx = None
@@ -297,6 +298,7 @@ class UserWallet(Wallet):
             try:
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.delete_instance()
+
             except Exception as e:
                 print("Couldnt delete coin %s %s " % (e, coin))
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
@@ -322,6 +324,10 @@ class UserWallet(Wallet):
     def ToJson(self, verbose=False):
 
         assets = self.GetCoinAssets()
+        if Blockchain.Default().Height == 0:
+            percent_synced = 0
+        else:
+            percent_synced = int(100 * self._current_height / Blockchain.Default().Height)
 
         jsn = {}
         jsn['path'] = self._path
@@ -329,7 +335,7 @@ class UserWallet(Wallet):
         addresses = [Crypto.ToAddress(UInt160(data=addr.ScriptHash)) for addr in Address.select()]
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
-        jsn['percent_synced'] = int(100 * self._current_height / Blockchain.Default().Height)
+        jsn['percent_synced'] = percent_synced
         jsn['balances'] = ["%s : %s " % (asset.ToString(), self.GetBalance(asset).value / Fixed8.D) for asset in assets]
         jsn['public_keys'] = self.PubKeys()
 

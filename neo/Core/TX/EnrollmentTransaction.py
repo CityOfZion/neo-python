@@ -4,6 +4,9 @@ from neo.Core.TX.Transaction import Transaction,TransactionType
 import sys
 import binascii
 from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
+from neo import Settings
+from neo.Fixed8 import Fixed8
+
 class EnrollmentTransaction(Transaction):
 
     PublicKey = None
@@ -17,6 +20,8 @@ class EnrollmentTransaction(Transaction):
     def Size(self):
         return self.Size() + sys.getsizeof(int)
 
+    def SystemFee(self):
+        return Fixed8( int(Settings.ENROLLMENT_TX_FEE))
 
     def DeserializeExclusiveData(self, reader):
         if self.Version is not 0:

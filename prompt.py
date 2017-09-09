@@ -18,10 +18,10 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import Transaction,ContractTransaction,TransactionOutput
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Wallets.SignatureContext import SignatureContext
+from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract
+from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract
 from neo import Settings
 from neo.Fixed8 import Fixed8
 import traceback
@@ -436,7 +436,7 @@ class PromptInterface(object):
 
 
         try:
-            context = SignatureContext(tx)
+            context = ContractParametersContext(tx)
             self.Wallet.Sign(context)
 
             if context.Completed:
@@ -631,7 +631,7 @@ class PromptInterface(object):
 
 
         if args and len(args) > 0:
-            tx, results = InvokeContract(self.Wallet, args,test=True)
+            tx, results = TestInvokeContract(self.Wallet, args)
 
             if tx is not None and results is not None:
                 self._invoke_test_tx = tx
@@ -652,7 +652,8 @@ class PromptInterface(object):
             print("Please test your invoke before deploying it with the 'testinvoke {contracthash} *args' command")
             return
 
-        print("Would invoke tx here")
+        result = InvokeContract(self.Wallet, self._invoke_test_tx)
+
         self._invoke_test_tx = None
         return
 

@@ -7,13 +7,13 @@ class BigInteger(int):
 
     @staticmethod
     def FromBytes(data):
-        return BigInteger( int.from_bytes(data,'little'))
+        return BigInteger( int.from_bytes(data,'little',signed=True))
 
     def Equals(self, other):
         return super(BigInteger, self).__eq__(other)
 
     def ToByteArray(self):
-        return base256_encode(self)
+        return self.to_bytes(self.bit_length(), byteorder='little', signed=True)
 
     def __abs__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__abs__(*args, **kwargs))

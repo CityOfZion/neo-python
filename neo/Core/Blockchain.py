@@ -167,7 +167,7 @@ class Blockchain(object):
         hashes = Counter([input.PrevHash for input in inputs]).items()
         for hash in hashes:
             height_start=0
-            tx,height = Blockchain.Default().getTransaction(hash)
+            tx,height = Blockchain.Default().GetTransaction(hash)
             height_start = height
             if tx is None: return False
             if height_start == height_end: continue
@@ -324,7 +324,7 @@ class Blockchain(object):
         # abstract
         # should return both transaction and height
         # return tx, height
-        pass
+        return None,0
 
     def GetUnClaimed(self, hash):
         #abstract

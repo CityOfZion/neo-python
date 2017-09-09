@@ -331,18 +331,18 @@ class Wallet(object):
         changed = set()
         deleted = set()
 
-#        self.__log.debug("Wallet processing block %s " % block.Index)
+
         try:
 
             for tx in block.FullTransactions:
 
                 for index,output in enumerate(tx.outputs):
+
                     state = self.CheckAddressState(output.ScriptHash)
 
                     if state & AddressState.InWallet > 0:
 
                         key = CoinReference(tx.Hash, index)
-#                        print("COIN STATE %s " % self._coinsstate)
 
                         if key in self._coins.keys():
                             coin = self._coins[key]
@@ -351,7 +351,6 @@ class Wallet(object):
 
                         else:
                             newcoin = Coin.CoinFromRef(coin_ref=key,tx_output=output, state=CoinState.Confirmed)
-#                            newcoin = Coin.CoinFromRef(key, output, state=CoinState.Confirmed )
                             self._coins[key] = newcoin
                             added.add(newcoin)
 
@@ -366,12 +365,15 @@ class Wallet(object):
                 for input in tx.inputs:
 
                     if input in self._coins.keys():
+
                         if self._coins[input].Output.AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
                             self._coins[input].State |= CoinState.Spent | CoinState.Confirmed
                             changed.add(self._coins[input])
+
                         else:
                             deleted.add(self._coins[input])
                             del self._coins[input]
+
 
 
             for claimTx in [tx for tx in block.Transactions if tx.Type == TransactionType.ClaimTransaction]:
@@ -407,6 +409,7 @@ class Wallet(object):
         pass
 
     def IsWalletTransaction(self, tx):
+
         for key,contract in self._contracts.items():
 
             for output in tx.outputs:
@@ -421,6 +424,7 @@ class Wallet(object):
 
 
             #do watch only stuff... not sure yet what it is...
+
             return False
 
 
@@ -508,6 +512,8 @@ class Wallet(object):
                 for item in group:
                     sum = sum + item.Value
                 paytotal[key] = sum
+        else:
+            paytotal = {}
 
         if fee > Fixed8.Zero():
 
@@ -518,9 +524,11 @@ class Wallet(object):
                 paytotal[Blockchain.SystemCoin().Hash] = fee
 
         paycoins = {}
+
+
         for assetId,amount in paytotal.items():
-            unspentss = self.FindUnspentCoinsByAssetAndTotal(assetId, amount)
             paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount)
+
 
         for key,unspents in paycoins.items():
             if unspents == None:

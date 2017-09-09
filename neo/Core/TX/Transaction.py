@@ -142,8 +142,8 @@ class Transaction(Inventory, InventoryMixin):
 
     scripts = []
 
-    __system_fee =  Fixed8(0)
-    __network_fee = Fixed8(0)
+    __system_fee =  None
+    __network_fee = None
 
     InventoryType = InventoryType.TX
 
@@ -192,6 +192,7 @@ class Transaction(Inventory, InventoryMixin):
 
             #group by the input prevhash
             for hash, group in groupby(self.inputs, lambda x: x.PrevHash):
+
                 tx,height = GetBlockchain().GetTransaction(hash.ToBytes())
                 if tx is not None:
                     for input in group:
@@ -213,10 +214,34 @@ class Transaction(Inventory, InventoryMixin):
         return self.__height
 
     def SystemFee(self):
+        if self.__system_fee is None:
+            self.__system_fee = Fixed8(0)
+
+
         return self.__system_fee
 
     def NetworkFee(self):
+
+        if self.__network_fee is None:
+
+            input = Fixed8(0)
+
+            for coin_ref in self.References.values():
+                if coin_ref.AssetId == GetBlockchain().SystemCoin().Hash:
+                    input = input + coin_ref.Value
+
+            output = Fixed8(0)
+
+            for tx_output in self.outputs:
+                if tx_output.AssetId == GetBlockchain().SystemCoin().Hash:
+                    output = output + tx_output.Value
+
+            self.__network_fee = input - output - self.SystemFee()
+
+#            print("Determined network fee to be %s " % (self.__network_fee.value))
+
         return self.__network_fee
+
 #        if self.__network_fee == Fixed8.Satoshi():
 #            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
 #            Fixed8 output = Outputs.Where(p= > p.AssetId.Equals(Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);

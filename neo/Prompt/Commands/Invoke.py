@@ -1,16 +1,14 @@
 from neo.Blockchain import GetBlockchain
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.Network.NodeLeader import NodeLeader
 import binascii
-import json
+
 
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
-from neo.Core.State.CoinState import CoinState
-from neo.Core.State.SpentCoinState import SpentCoinState,SpentCoinItem
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.ContractState import ContractState
@@ -18,17 +16,50 @@ from neo.Core.State.StorageItem import StorageItem
 
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
-from neo.Core.Witness import Witness
 
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 from neo.SmartContract.StateMachine import StateMachine
+from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 
 from neo.BigInteger import BigInteger
 
-def InvokeContract(wallet, args, test=True):
+
+def InvokeContract(wallet, tx):
+
+    wallet_tx = wallet.MakeTransaction(tx=tx)
+
+    if wallet_tx:
+
+        context = ContractParametersContext(wallet_tx)
+        wallet.Sign(context)
+
+        if context.Completed:
+
+            tx.scripts = context.GetScripts()
+
+            wallet.SaveTransaction(wallet_tx)
+
+            relayed = NodeLeader.Instance().Relay(wallet_tx)
+
+            if relayed:
+                print("Relayed Tx: %s " % tx.Hash.ToString())
+                return True
+            else:
+                print("Could not relay tx %s " % tx.Hash.ToString())
+
+        else:
+
+            print("Incomplete signature")
+
+    else:
+        print("Insufficient funds")
+
+    return False
+
+def TestInvokeContract(wallet, args):
 
     BC = GetBlockchain()
 
@@ -65,8 +96,7 @@ def InvokeContract(wallet, args, test=True):
 
         out = sb.ToArray()
 
-        if test:
-            return test_invoke(out, wallet)
+        return test_invoke(out, wallet)
 
     else:
 
@@ -81,16 +111,16 @@ def test_invoke(script, wallet):
     sn = bc._db.snapshot()
 
     accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
-#    unspentcoins = DBCollection(bc._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
-#    spentcoins = DBCollection(bc._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
     assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
     validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
     contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
     storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
 
     tx = InvocationTransaction()
-    tx.scripts = [ Witness()]
+    tx.Version = 0
+    tx.scripts = []
     tx.Script = binascii.unhexlify(script)
+
 
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)

@@ -16,6 +16,10 @@ from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
 
+from neo import Settings
+from neo.Fixed8 import Fixed8
+
+
 @logged
 class RegisterTransaction(Transaction):
     """
@@ -38,8 +42,8 @@ In English:
          # 3. For point coupons, you can use any pattern;
 """
 
-    def __init__(self, inputs=[],
-                        outputs=[],
+    def __init__(self, inputs=None,
+                        outputs=None,
                         assettype=AssetType.GoverningToken,
                         assetname='',
                         amount=Fixed8(0),
@@ -53,6 +57,15 @@ In English:
         self.Name = assetname
         self.Amount = amount  # Unlimited Mode: -0.00000001
 
+        if inputs is not None:
+            self.inputs = inputs
+        else:
+            self.inputs = []
+
+        if outputs is not None:
+            self.outputs = outputs
+        else:
+            self.outputs = []
 
         if owner is not None and type(owner) is not EllipticCurve.ECPoint:
             raise Exception("Invalid owner, must be ECPoint instance")
@@ -61,10 +74,9 @@ In English:
         self.Admin = admin
         self.Precision = precision
 
-#    def Hash(self):
 
-    def getSystemFee(self):
-        return Fixed8(100)
+    def SystemFee(self):
+        return Fixed8(int(Settings.REGISTER_TX_FEE))
 
     def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""

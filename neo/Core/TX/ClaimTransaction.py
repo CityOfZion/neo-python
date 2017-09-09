@@ -25,6 +25,9 @@ class ClaimTransaction(Transaction):
 
 
 
+    def NetworkFee(self):
+        return Fixed8(0)
+
     def DeserializeExclusiveData(self, reader):
 
         self.Type = TransactionType.ClaimTransaction

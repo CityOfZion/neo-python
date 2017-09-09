@@ -45,7 +45,9 @@ class InvocationTransaction(Transaction):
 
 
     def Verify(self, mempool):
-        raise NotImplementedError()
+        if self.Gas.value % 100000000 != 0:
+            return False
+        return super(InvocationTransaction, self).Verify(mempool)
 
 
     def ToJson(self):

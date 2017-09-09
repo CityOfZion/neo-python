@@ -9,6 +9,7 @@ from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
@@ -295,8 +296,10 @@ class LevelDBBlockchain(Blockchain):
 
     def GetTransaction(self, hash):
 
-        if not type(hash) is bytes:
+        if type(hash) is str:
             hash = hash.encode('utf-8')
+        elif type(hash) is UInt256:
+            hash = hash.ToBytes()
 
         out = self._db.get(DBPrefix.DATA_Transaction + hash)
         if out is not None:
@@ -609,7 +612,8 @@ class LevelDBBlockchain(Blockchain):
                         contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
                     elif tx.Type == TransactionType.InvocationTransaction:
 
-                        print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
+#                        print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
+                        print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: Invoke tx] -> index, tx hash %s %s " % (block.Index, tx.Hash.ToBytes()))
                         script_table = CachedScriptTable(contracts)
                         service = StateMachine(accounts, validators, assets, contracts,storages,wb)
 
@@ -619,7 +623,7 @@ class LevelDBBlockchain(Blockchain):
                             table=script_table,
                             service=service,
                             gas=tx.Gas,
-                            testMode=True
+                            testMode=False
                         )
 
                         engine.LoadScript(tx.Script,False)
@@ -627,18 +631,20 @@ class LevelDBBlockchain(Blockchain):
                         try:
                             # drum roll?
                             success = engine.Execute()
-                            print("SUCCESSS!!!!!!")
+                            print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute] -> Success")
                             if success:
                                 service.Commit()
 
                             for item in engine.EvaluationStack.Items:
-                                print("evaluation item %s " % item)
+                                print( "[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute result] -> %s " % item)
+
 
                         except Exception as e:
                             print("COULD NOT EXECUTE %s " % e)
 #                            self.__log.debug("could not execute %s " % e)
-                            traceback.print_stack()
-                            traceback.print_exc()
+#                            traceback.print_stack()
+#                            traceback.print_exc()
+                            print("EXECUTION FAILLLLLLLLLLLLLLEDDDDDD")
                     else:
 
                         if tx.Type != b'\x00' and tx.Type != 128:

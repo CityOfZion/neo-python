@@ -147,10 +147,11 @@ class StateMachine(StateReader):
 #        print("Setting votes!!!")
 
         acct = self._accounts.GetAndChange(account.AddressBytes)
-        voteset = set()
+        voteset = []
         for v in vote_list:
-            voteset.add(v.GetByteArray())
-        acct.Votes = list(voteset)
+            if not v in vote_list:
+                voteset.append(v.GetByteArray())
+        acct.Votes = voteset
         #print("*****************************************************")
         #print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
         #print("*****************************************************")
@@ -159,7 +160,7 @@ class StateMachine(StateReader):
 
     def Validator_Register(self, engine):
 
-        pubkey = ECDSA.decode_secp256r1( engine.EvaluationStack.Pop().GetByteArray())
+        pubkey = ECDSA.decode_secp256r1( engine.EvaluationStack.Pop().GetByteArray(),unhex=False,check_on_curve=True).G
         if pubkey.IsInfinity:
             return False
 
@@ -167,7 +168,7 @@ class StateMachine(StateReader):
             return False
 
         vstate = ValidatorState(pub_key=pubkey)
-        validator = self._validators.GetOrAdd(pubkey.ToString(), vstate)
+        validator = self._validators.GetOrAdd(pubkey.ToBytes(), vstate)
         engine.EvaluationStack.PushT(StackItem.FromInterface(validator))
         return True
 

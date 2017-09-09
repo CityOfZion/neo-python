@@ -35,6 +35,7 @@ import json
 @logged
 class TestLevelDBBlockchain(LevelDBBlockchain):
 
+
     def Persist(self, block):
 
         sn = self._db.snapshot()

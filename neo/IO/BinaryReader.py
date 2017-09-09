@@ -114,10 +114,14 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt()
         items = []
-        for i in range(0, length):
-            item = klass()
-            item.Deserialize(self)
-            items.append(item)
+        try:
+            for i in range(0, length):
+                item = klass()
+                item.Deserialize(self)
+                items.append(item)
+        except Exception as e:
+            print("Coludnt deserialize %s " % e)
+
         return items
 
     def ReadUInt256(self):

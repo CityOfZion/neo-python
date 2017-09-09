@@ -8,6 +8,8 @@ Usage:
 from neo.Core.TX.Transaction import Transaction,TransactionType
 
 import random
+from neo import Settings
+from neo.Fixed8 import Fixed8
 
 
 class IssueTransaction(Transaction):
@@ -18,6 +20,9 @@ class IssueTransaction(Transaction):
     def __init__(self, *args, **kwargs):
         super(IssueTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.IssueTransaction  # 0x40
+
+    def SystemFee(self):
+        return Fixed8( int(Settings.ISSUE_TX_FEE))
 
 
     def GetScriptHashesForVerifying(self):

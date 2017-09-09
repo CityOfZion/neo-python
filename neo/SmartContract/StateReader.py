@@ -262,8 +262,12 @@ class StateReader(InteropService):
 
 
     def Blockchain_GetBlock(self, engine):
-        data = engine.EvaluationStack.Pop().GetByteArray()
+        data = engine.EvaluationStack.Pop()
 
+        if data:
+            data = data.GetByteArray()
+        else:
+            return False
 
         block = None
 
@@ -302,7 +306,7 @@ class StateReader(InteropService):
         tx = None
 
         if Blockchain.Default() is not None:
-            tx = Blockchain.Default().GetTransaction( UInt256(data=data))
+            tx, height = Blockchain.Default().GetTransaction( UInt256(data=data))
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(tx))
         return True

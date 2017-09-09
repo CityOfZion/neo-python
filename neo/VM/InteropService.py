@@ -215,8 +215,11 @@ class InteropInterface(StackItem):
         return self._object
 
     def __str__(self):
-        return "IOp Interface: %s " % self._object
-
+        try:
+            return "IOp Interface: %s " % self._object
+        except Exception as e:
+            pass
+        return "IOp Interface Item"
 
 class Struct(Array):
 

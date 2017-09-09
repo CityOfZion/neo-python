@@ -6,7 +6,7 @@ from neo.Core.Witness import Witness
 import json
 import binascii
 
-class SignatureContext():
+class ContractParametersContext():
 
 
     Verifiable = None

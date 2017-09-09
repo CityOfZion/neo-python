@@ -399,7 +399,7 @@ class ExecutionEngine():
 
             elif opcode == NOT:
 
-                x = estack.Pop().GetBigBoolean()
+                x = estack.Pop().GetBigInteger()
                 estack.PushT(not x)
 
             elif opcode == NZ:
@@ -620,7 +620,7 @@ class ExecutionEngine():
 
                 item = estack.Pop()
 
-                if not item.IsArray():
+                if not item.IsArray:
                     estack.PushT( len(item.GetByteArray()))
 
                 else:
