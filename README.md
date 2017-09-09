@@ -20,7 +20,9 @@
   </a>
 </p>
 
-## What does it currently do
+## Overview
+
+### What does it currently do
 
 - This project aims to be a full port of the [C# code](https://github.com/neo-project/neo) at [Neo Project](https://github.com/neo-project) 
 - Run a python based P2P node
@@ -28,32 +30,29 @@
 - Runs smart contracts on the block chain in a python virtual machine
 - Very basic Wallet functionality (Not fully tested, please do not use on mainnet)
 
-## What will it do
+### What will it do
 
 - Full python RPC client
 - Compile smart contracts written python and deploy to blockchain
 - Full smart contract debugging and inspection
 
-
 ### Get Help or give help
 
 - Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
-- Or ping **@localhuman** on the [NEO Slack](https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA).
-- Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome.  All successful pull requests will be rewarded with one photo of a cat or kitten. 
+- Or ping [@localhuman](https://github.com/localhuman) on the [NEO Slack](https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA).
+- Pull requests are welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome.  All successful pull requests will be rewarded with one photo of a cat or kitten. 
 
 ### License
 
 - Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
 - Main author is [@localhuman](https://github.com/localhuman).
 
-## Getting started
-
-### Overview
+### Project structure
 
 ```
 neo-python
 ├── compiler.py
-├── prompt.py                    <─── terminal client
+├── prompt.py            <─── terminal client
 ├── node.py
 └── neo
     ├── Core
@@ -77,46 +76,55 @@ neo-python
     └── Wallets
 ```
 
-You will need to install the libleveldb library. 
+## Getting started
 
-##### on OSX:
+Here are some pointers to install the package and exectute the terminal client pointed out in the tree above.
+
+### Dependencies
+
+You will need to install the lib[leveldb](https://en.wikipedia.org/wiki/LevelDB) library, 
+use for many blockchain projects:
+
+##### On OSX:
 ```
 brew install leveldb
 ```
 
-##### ubuntu/debian
+##### On ubuntu/debian
 ```
 apt-get -s install libleveldb-dev
 ```
 
-##### centos/redhat/fedora is a bit more tricky...
+##### Centos/Redhat/Fedora 
+This is a bit more tricky...
 ```
 yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel
 ```
 
-you may need to enable the epel repo for the leveldb-devel package, which you can do by editing `/etc/yum.repos.d/epel.repo`
+You may need to enable the epel repo for the leveldb-devel package, which you can do by editing 
+`/etc/yum.repos.d/epel.repo`
 
-### For all of these, make sure that the `Chains` directory in your project has the proper write permisisons
+For all of these, make sure that the `Chains` directory in your project has the proper write permisisons
 
-##### windows ( not sure )
+##### Windows
+Not sure. Installing the Python package plyvel seems to require C++ compiler support tied to Visual Studio and libraries.
 
 -------------------
 
-make a python 3 virtual environment, and activate it
+Now navigate into the project, make a Python 3 virtual environment and activate it via
 ```
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-then install requirements
+Then install requirements
 ```
 pip install -r requirements.txt
 ```
 
-
 ### Installing on OSX
 
-if you're having an issue similar to this:
+If you're having an issue similar to this:
 
 ```
     from ._plyvel import (  # noqa
@@ -127,10 +135,19 @@ if you're having an issue similar to this:
 ```
 
 You may need to uninstall plyvel (python libleveldb library), and reinstall with the following cflags
-
 ```
 pip uninstall plyvel
 CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel --no-cache-dir
+```
+
+Moreover, this pip installation must see the leveldb header file db.h.
+You may need to add flags similar to the following to the
+installation command
+
+```
+--global-option=build_ext
+--global-option="-I/usr/local/Cellar/leveldb/1.20_2/include/"
+--global-option="-L/usr/local/lib"
 ```
 
 ## Running
@@ -169,7 +186,6 @@ On OSX, if you would like to run the process in the background, even when your c
 ```
 caffeinate python prompt.py
 ```
-
 
 ## Module testing
 
