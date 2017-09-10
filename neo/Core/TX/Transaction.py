@@ -25,7 +25,7 @@ from neo.UInt256 import UInt256
 import sys
 from itertools import groupby
 from neo.Core.AssetType import AssetType
-
+import pdb
 
 class TransactionResult():
     AssetId=None
@@ -214,11 +214,7 @@ class Transaction(Inventory, InventoryMixin):
         return self.__height
 
     def SystemFee(self):
-        if self.__system_fee is None:
-            self.__system_fee = Fixed8(0)
-
-
-        return self.__system_fee
+        return Fixed8(0)
 
     def NetworkFee(self):
 

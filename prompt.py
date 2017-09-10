@@ -21,7 +21,9 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract
+from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke
+from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails
+
 from neo import Settings
 from neo.Fixed8 import Fixed8
 import traceback
@@ -251,29 +253,30 @@ class PromptInterface(object):
     def do_import(self, arguments):
         item = self.get_arg(arguments)
 
-        if item and item == 'wif':
+        if item:
 
-            if not self.Wallet:
-                print("Please open a wallet before importing WIF")
-                return
+            if item == 'wif':
 
-            wif = self.get_arg(arguments, 1)
+                if not self.Wallet:
+                    print("Please open a wallet before importing WIF")
+                    return
 
-            if wif:
-#                self.Wallet.
-                prikey = KeyPair.PrivateKeyFromWIF(wif)
-                if prikey:
+                wif = self.get_arg(arguments, 1)
 
-                    key = self.Wallet.CreateKey(prikey)
-                    print("imported key %s " % wif)
-                    print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
-                    print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
-                else:
-                    print("invalid wif")
-                return
-            else:
-                print("Please specify a wif")
-                return
+                if wif:
+                    prikey = KeyPair.PrivateKeyFromWIF(wif)
+                    if prikey:
+
+                        key = self.Wallet.CreateKey(prikey)
+                        print("imported key %s " % wif)
+                        print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
+                        print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+                    else:
+                        print("invalid wif")
+                    return
+
+            if item == 'contract':
+                return self.load_smart_contract(arguments)
 
         print("please specify something to import")
         return
@@ -562,20 +565,18 @@ class PromptInterface(object):
 
     def show_asset_state(self, args):
         item = self.get_arg(args)
-        print("asset to show %s " % item)
 
         if item is not None:
 
             if item == 'search':
                 query = self.get_arg(args, 1)
                 results = Blockchain.Default().SearchAssetState(query)
+                print("Found %s results for %s " % (len(results), query))
                 for asset in results:
-                    print("Found %s results for %s " % (len(results), query))
-                    for asset in results:
-                        bjson = json.dumps(asset.ToJson(), indent=4)
-                        tokens = [(Token.Number, bjson)]
-                        print_tokens(tokens, self.token_style)
-                        print('\n')
+                    bjson = json.dumps(asset.ToJson(), indent=4)
+                    tokens = [(Token.Number, bjson)]
+                    print_tokens(tokens, self.token_style)
+                    print('\n')
 
                 return
 
@@ -622,6 +623,38 @@ class PromptInterface(object):
         else:
             print("please specify a contract")
 
+
+    def load_smart_contract(self, args):
+
+        if not self.Wallet:
+            print("please open wallet")
+            return
+
+        function_code = LoadContract(args[1:])
+
+        if function_code is not None:
+
+
+            contract_script = GatherContractDetails(function_code, self)
+
+            if contract_script is not None:
+
+                tx, results = test_invoke(contract_script, self.Wallet)
+
+                if tx is not None and results is not None:
+                    self._invoke_test_tx = tx
+                    print("\n-------------------------------------------------------------------------------------------------------------------------------------")
+                    print("Test deploy invoke successful")
+                    print("Results %s " % [str(item) for item in results])
+                    print("Deploy Invoke TX gas cost: %s " % (int(tx.Gas.value / Fixed8.D)))
+                    print("-------------------------------------------------------------------------------------------------------------------------------------\n")
+                    print("You may now deploy this contract on the blockchain by using the 'invoke' command with no arguments or type 'cancel' to cancel deploy\n")
+                    return
+                else:
+                    print("test ivoke failed")
+                    print("tx is, results are %s %s " % (tx, results))
+                    return
+
     def test_invoke_contract(self, args):
         self._invoke_test_tx = None
 
@@ -635,10 +668,12 @@ class PromptInterface(object):
 
             if tx is not None and results is not None:
                 self._invoke_test_tx = tx
+                print("\n-------------------------------------------------------------------------------------------------------------------------------------")
                 print("Test invoke successful")
                 print("Results %s " % [str(item) for item in results])
                 print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
-                print("You may now invoke this on the blockchain by using the 'invoke' command with no arguments")
+                print("-------------------------------------------------------------------------------------------------------------------------------------\n")
+                print("You may now invoke this on the blockchain by using the 'invoke' command with no arguments or type 'cancel' to cancel invoke\n")
                 return
             else:
                 print("Error testing contract invoke")
@@ -655,6 +690,11 @@ class PromptInterface(object):
         result = InvokeContract(self.Wallet, self._invoke_test_tx)
 
         self._invoke_test_tx = None
+        return
+
+    def cancel_operations(self):
+        self._invoke_test_tx = None
+        print("Operation cancelled")
         return
 
     def show_spent_coins(self, args):
@@ -823,6 +863,8 @@ class PromptInterface(object):
                         self.invoke_contract(arguments)
                     elif command == 'testinvoke':
                         self.test_invoke_contract(arguments)
+                    elif command == 'cancel':
+                        self.cancel_operations()
                     elif command == 'sc':
                         self.show_spent_coins(arguments)
                     elif command == 'mem':

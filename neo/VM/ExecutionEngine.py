@@ -91,8 +91,6 @@ class ExecutionEngine():
     def Execute(self):
         self._VMState &= ~VMState.BREAK
 
-#        while (!State.HasFlag(VMState.HALT) & & !State.HasFlag(VMState.FAULT) & & !State.HasFlag(VMState.BREAK))
-#        StepInto();
 
         while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0 and self._VMState & VMState.BREAK == 0:
             self.StepInto()
@@ -753,7 +751,7 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-        opname = ToName(op)
+#        opname = ToName(op)
 #        print("____________________________________________________")
 #        print("%s -> %s" % (op, opname))
 #        print("-----------------------------------")

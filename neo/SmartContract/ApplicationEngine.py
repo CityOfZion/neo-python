@@ -163,6 +163,7 @@ class ApplicationEngine(ExecutionEngine):
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 self.__log.debug(exc_type, fname, exc_tb.tb_lineno)
                 self.__log.debug("exception calculating gas consumed %s " % e)
+                print("Exception calculating gas consumbed %s " % e)
                 return False
 
             if not self.testMode and self.gas_consumed > self.gas_amount:
@@ -267,16 +268,17 @@ class ApplicationEngine(ExecutionEngine):
             return 1000
 
         elif api == "Neo.Validator.Register":
-            return 1000 * 100000000 / self.ratio
+            return int(1000 * 100000000 / self.ratio)
 
         elif api == "Neo.Asset.Create":
-            return 5000 * 100000000 / self.ratio
+            return int(5000 * 100000000 / self.ratio)
 
         elif api == "Neo.Asset.Renew":
-            return self.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio
+            return int(self.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio)
 
         elif api == "Neo.Contract.Create" or api == "Neo.Contract.Migrate":
-            return 500 * 100000000 / self.ratio
+            amount = int(500 * 100000000 / self.ratio)
+            return amount
 
         elif api == "Neo.Storage.Get":
             return 100
@@ -285,7 +287,7 @@ class ApplicationEngine(ExecutionEngine):
             l1 = len(self.EvaluationStack.Peek(1).GetByteArray())
             l2 = len(self.EvaluationStack.Peek(2).GetByteArray())
 
-            return ((l1 + l2 - 1) / 1024 + 1) * 1000
+            return int(((l1 + l2 - 1) / 1024 + 1) * 1000)
 
         elif api == "Neo.Storage.Delete":
             return 100

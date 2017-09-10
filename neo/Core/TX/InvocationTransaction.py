@@ -7,16 +7,16 @@ from neo.Fixed8 import Fixed8
 class InvocationTransaction(Transaction):
 
 
-    Script = bytearray(0)
-    Gas = Fixed8(0)
+    Script = None
+    Gas = None
 
     def SystemFee(self):
         return self.Gas
 
 
-
     def __init__(self, *args, **kwargs):
         super(InvocationTransaction, self).__init__(*args, **kwargs)
+        self.Gas = Fixed8(0)
         self.Type = TransactionType.InvocationTransaction
 
     def Size(self):

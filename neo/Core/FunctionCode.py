@@ -18,10 +18,18 @@ class FunctionCode(SerializableMixin):
     _scriptHash = None
 
 
-    def __init__(self, script=None, param_list=[], return_type=None):
+    NeedsStorage = False
+
+    def __init__(self, script=None, param_list=None, return_type=None, needs_storage=False):
         self.Script = script
-        self.ParameterList = param_list
+        if param_list is None:
+            self.ParameterList = []
+        else:
+            self.ParameterList = param_list
+
         self.ReturnType = return_type
+
+        self.NeedsStorage = needs_storage
 
     def ScriptHash(self):
         if self._scriptHash is None:
@@ -49,5 +57,5 @@ class FunctionCode(SerializableMixin):
             'hash': self.ScriptHash().ToString(),
             'script': self.Script.hex(),
             'parameters': self.ParameterList.hex(),
-            'returntype': self.ReturnType if type(self.ReturnType) is int else self.ReturnType.decode('utf-8')
+            'returntype': self.ReturnType if type(self.ReturnType) is int else self.ReturnType.hex()
         }

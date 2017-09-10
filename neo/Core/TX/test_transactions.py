@@ -106,7 +106,6 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(tx.ToArray(), self.ir)
         self.assertEqual(tx.Hash.ToBytes(), self.ir_id)
 
-
     mr = b'00006666654200000000'
     mrn = 1113941606
     mrh = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'

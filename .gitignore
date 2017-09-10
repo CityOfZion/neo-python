@@ -9,6 +9,7 @@ UnitTestChain
 # C extensions
 *.so
 
+Contracts
 
 # Distribution / packaging
 .Python

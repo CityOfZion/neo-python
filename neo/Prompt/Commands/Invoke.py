@@ -2,6 +2,8 @@ from neo.Blockchain import GetBlockchain
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Network.NodeLeader import NodeLeader
+from neo.Prompt.Utils import parse_param
+
 import binascii
 
 
@@ -74,8 +76,7 @@ def TestInvokeContract(wallet, args):
             verbose = True
             args.remove('verbose')
 
-        print("VERBOSE %s " % verbose)
-
+#
         params =  args[1:] if len(args) > 1 else []
 
         if len(params) > 0 and params[0] == 'describe':
@@ -105,7 +106,10 @@ def TestInvokeContract(wallet, args):
     return None,None
 
 
+
+
 def test_invoke(script, wallet):
+
     bc = GetBlockchain()
 
     sn = bc._db.snapshot()
@@ -117,7 +121,9 @@ def test_invoke(script, wallet):
     storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
 
     tx = InvocationTransaction()
-    tx.Version = 0
+    tx.Version = 1
+    tx.outputs = []
+    tx.inputs = []
     tx.scripts = []
     tx.Script = binascii.unhexlify(script)
 
@@ -141,6 +147,7 @@ def test_invoke(script, wallet):
 
     engine.LoadScript(tx.Script, False)
 
+
     try:
         # drum roll?
         success = engine.Execute()
@@ -149,8 +156,8 @@ def test_invoke(script, wallet):
 
             service.TestCommit()
 
-
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
+            consumed.value = int(consumed.value)
 
             if consumed < Fixed8.One():
                 consumed = Fixed8.One()
@@ -158,11 +165,12 @@ def test_invoke(script, wallet):
             #set the amount of gas the tx will need
             tx.Gas = consumed
 
-
             #remove the attributes that are used to add a verification script to the tx
             tx.Attributes = []
 
             return tx, engine.EvaluationStack.Items
+        else:
+            print("error executing contract.....")
 
     except Exception as e:
         print("COULD NOT EXECUTE %s " % e)
@@ -184,28 +192,3 @@ def descripe_contract(contract):
     print("method signature %s  -->  %s" % (' '.join(method_signature), rettype))
 
 
-
-def parse_param(p):
-
-
-    try:
-        val = int(p)
-        out = BigInteger(val)
-        return out
-    except Exception as e:
-        pass
-
-    try:
-        val = eval(p)
-
-        if type(val) is bytearray:
-            return val.hex()
-
-        return val
-    except Exception as e:
-        pass
-
-    if type(p) is str:
-        return binascii.hexlify( p.encode('utf-8'))
-
-    return p
