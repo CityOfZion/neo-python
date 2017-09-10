@@ -23,16 +23,9 @@ blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
 
 
-
-from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
-
 dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
 dbloop.start(.01)
 
-#for bootstrap in Settings.SEED_LIST:
-#    host, port = bootstrap.split(":")
-#    point = TCP4ClientEndpoint(reactor, host, int(port))
-#    d = connectProtocol(point, NeoNode(NeoFactory))
 
 NodeLeader.Instance().Start()
 
