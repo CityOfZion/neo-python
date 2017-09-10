@@ -1,4 +1,4 @@
-from neo.SmartContract.Framework.Decorator import sys_call
+from neo.SmartContract.Framework.System.Decorator import sys_call
 
 class StorageContext():
     pass

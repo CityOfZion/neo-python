@@ -13,8 +13,14 @@ class Compiler():
 
     _nodes = None
 
+    _entry_method = None
+
+    _all_methods = None
+
     def __init__(self):
         self._nodes = []
+        self._entry_method = None
+        self._all_methods = []
 
     def Validate(self):
 
@@ -28,6 +34,31 @@ class Compiler():
     @property
     def Nodes(self):
         return self._nodes
+
+    @property
+    def Entry(self):
+        return self._entry_method
+
+    @property
+    def Methods(self):
+        return self._all_methods
+
+    def RegisterEntry(self, function_def):
+        self._entry_method = function_def
+
+    def RegisterMethod(self, function_def):
+        if not function_def in self._all_methods:
+            self._all_methods.append(function_def)
+
+    def Convert(self):
+        print("Converting...")
+
+        for node in self._nodes:
+
+            if node.Type is ClassDef:
+
+                node.Convert()
+
 
     @staticmethod
     def Instance():
@@ -68,10 +99,10 @@ class Compiler():
         try:
             result = compiler.Validate()
         except Exception as e:
-            print("could not validate file %s " % path)
+            print("could not validate file %s %s" % (path, e))
 
         if result == True:
-            print("Compiler %s "% compiler.ToJson())
+#            print("Compiler %s "% compiler.ToJson())
             return compiler
 
         return None

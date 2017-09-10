@@ -1,4 +1,4 @@
-from neo.SmartContract.Framework.Decorator import op_decorate
+from neo.SmartContract.Framework.System.Decorator import op_decorate
 from neo.VM import OpCode
 
 class SmartContract():

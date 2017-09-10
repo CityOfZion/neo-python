@@ -10,6 +10,7 @@ class ImportNode(ASTNode):
 
     _names = None
 
+
     def __init__(self, node):
         super(ImportNode, self).__init__(node)
         self._names = []
@@ -31,10 +32,14 @@ class ImportNode(ASTNode):
 
 class ImportFromNode(ASTNode):
 
-    SC_FRAMEWORK = 'neo.SmartContract.Framework'
 
     _module_name = None
     _classnames = None
+
+
+    @property
+    def name(self):
+        return self._module_name
 
     def __init__(self, node):
 
@@ -83,4 +88,5 @@ class ImportFromNode(ASTNode):
         return ['%s.%s' % (self._module_name, name) for name in self._classnames]
 
 
-
+    def __str__(self):
+        return "[Import Node] %s " % self.ImportedClasses
