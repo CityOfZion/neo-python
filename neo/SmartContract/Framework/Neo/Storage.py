@@ -1,5 +1,8 @@
 from neo.SmartContract.Framework.Decorator import sys_call
 
+class StorageContext():
+    pass
+
 class Storage():
 
 

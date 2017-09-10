@@ -1,7 +1,7 @@
 from neo.SmartContract.Framework.Neo.Storage import Storage,StorageContext
 from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
-
+from neo.BigInteger import BigInteger
 
 class Math(FunctionCode):
 
