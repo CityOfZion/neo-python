@@ -71,7 +71,10 @@ class PromptInterface(object):
 
     go_on = True
 
-    completer = WordCompleter(['block','tx','header','mem','help','state','node','exit','quit','config','db','log'])
+    completer = WordCompleter(['block','tx','header','mem',
+                               'help','state','node','exit','quit',
+                               'config', 'import','export','open',
+                               'wallet','contract','asset',])
 
     _gathering_password = False
     _gathered_passwords = []
@@ -90,12 +93,25 @@ class PromptInterface(object):
                 'block {index/hash}',
                 'header {index/hash}',
                 'tx {hash}',
+                'asset {assetId}',
+                'asset search {query}',
+                'contract {contract hash}',
+                'contract search {query}',
                 'mem',
                 'nodes',
                 'state',
-                'config {node, db} int int'
-                'config log on/off'
-                'pause',
+                'config log {on/off}',
+                'import wif {wif}',
+                'import contract {path} {params} {returntype}',
+                'export wif {address}'
+                'open wallet {path}',
+                'create wallet {path}',
+                'wallet {verbose}',
+                'wallet rebuild {start block}',
+                'send {assetId or name} {address} {amount}',
+                'testinvoke contract {contract hash} {params}',
+                'invoke',
+                'cancel',
                 ]
 
     token_style = style_from_dict({
@@ -110,52 +126,32 @@ class PromptInterface(object):
     start_height = Blockchain.Default().Height
     start_dt = datetime.datetime.utcnow()
 
-    node_leader = None
-
-    paused = False
-
-    def paused_loop(self):
-
-        while self.paused:
-#            self.__log.debug("paused...")
-            time.sleep(1)
 
     def get_bottom_toolbar(self, cli=None):
+        out = []
         try:
-            return [(Token.Command, 'Progress: '),
+            out =[(Token.Command, 'Progress: '),
                     (Token.Number, str(Blockchain.Default().Height)),
                     (Token.Neo, '/'),
                     (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
-            print("couldnt get toolbar: %s " % e)
-            return []
+            pass
+
+        return out
 
 
     def quit(self):
         print('Shutting down.  This may take a bit...')
         self.go_on = False
-        self.paused = False
         Blockchain.Default().Dispose()
         reactor.stop()
-        self.node_leader.Shutdown()
+        NodeLeader.Instance().Shutdown()
 
     def help(self):
         tokens = []
         for c in self.commands:
             tokens.append((Token.Command, "%s\n" %c))
         print_tokens(tokens, self.token_style)
-
-    def toggle_pause(self):
-        if self.paused:
-            self.paused = not self.paused
-#            reactor.run()
-            print("resusiming execution")
-
-        else:
-            self.paused = not self.paused
-            print('pausing execution!')
-            reactor.callLater(1,self.paused_loop)
-
 
     def do_open(self, arguments):
         item = self.get_arg(arguments)
@@ -322,10 +318,8 @@ class PromptInterface(object):
             print("incorrect password")
             return
 
-        print("exporting wif for address %s" % (address))
 
         keys = self.Wallet.GetKeys()
-        print("KEYS %s " % keys)
         for key in keys:
             export = key.Export()
             print("key export : %s " % export)
@@ -485,9 +479,9 @@ class PromptInterface(object):
         print_tokens(tokens, self.token_style)
 
     def show_nodes(self):
-        if self.node_leader and len(self.node_leader.Peers):
+        if len( NodeLeader.Instance().Peers) > 0:
             out = ''
-            for peer in self.node_leader.Peers:
+            for peer in NodeLeader.Instance().Peers:
                 out+='Peer %s - IO: %s\n' % (peer.Name(), peer.IOStats())
             print_tokens([(Token.Number, out)], self.token_style)
         else:
@@ -548,7 +542,6 @@ class PromptInterface(object):
 
     def show_account_state(self, args):
         item = self.get_arg(args)
-        print("account to show %s " % item)
 
         if item is not None:
             account = Blockchain.Default().GetAccountState(item, print_all_accounts=True)
@@ -697,23 +690,6 @@ class PromptInterface(object):
         print("Operation cancelled")
         return
 
-    def show_spent_coins(self, args):
-        item = self.get_arg(args)
-
-        if item is not None:
-            if item.lower() == 'all':
-                coins = Blockchain.Default().GetAllSpentCoins()
-                print("coins %s " % coins)
-            else:
-
-                coin = Blockchain.Default().GetSpentCoins(item)
-                if coin is not None:
-                    bjson = json.dumps(coin.ToJson(), indent=4)
-                    tokens = [(Token.Number, bjson)]
-                    print_tokens(tokens, self.token_style)
-                    print("\n")
-        else:
-            print("please specify a tx hash")
 
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
@@ -725,34 +701,7 @@ class PromptInterface(object):
     def configure(self, args):
         what = self.get_arg(args)
 
-        if what == 'node':
-            c1 = self.get_arg(args,1, convert_to_int=True)
-            c2 = self.get_arg(args, 2, convert_to_int=True)
-
-            if not c1:
-                print("please provide settings. arguments must be integers")
-
-            if c1 is not None and c1 > 1:
-                if c1 > 200:
-                    c1 = 200
-                    print("Node request part must be less than 201")
-                self.node_leader.BREQPART = c1
-                print("Set Node Request Part to %s " % c1)
-            if c2 is not None and c2 >= self.node_leader.BREQPART:
-                self.node_leader.BREQMAX = c2
-                print("Set Node Request Max to %s " % c2)
-            self.show_state()
-        elif what == 'db':
-            c1 = self.get_arg(args, 1, convert_to_int=True)
-            c2 = self.get_arg(args, 2, convert_to_int=True)
-            if c1 is not None and c1 > 1:
-                Blockchain.Default().CACHELIM = c1
-                print("Set DB Cache Limit to %s " % c1)
-            if c2 is not None and c2 >= self.node_leader.BREQPART:
-                Blockchain.Default().CMISSLIM = c2
-                print("Set DB Cache Miss Limit %s " % c2)
-            self.show_state()
-        elif what =='log' or what == 'logs':
+        if what =='log' or what == 'logs':
             c1 = self.get_arg(args, 1).lower()
             if c1 is not None:
                 if c1 == 'on' or c1 =='1':
@@ -768,7 +717,7 @@ class PromptInterface(object):
                 print("cannot configure log.  Please specify on or off")
         else:
             print("cannot configure %s " % what)
-            print("Try 'config node 100 1000' or config db 1000 4' or config log on/off")
+            print("Try 'config log on/off'")
 
     def get_arg(self, arguments, index=0, convert_to_int=False):
         try:
@@ -793,8 +742,6 @@ class PromptInterface(object):
         dbloop.start(.1)
 
         Blockchain.Default().PersistBlocks()
-
-        self.node_leader = NodeLeader.Instance()
 
         tokens = [(Token.Neo, 'NEO'),(Token.Default,' cli. Type '),(Token.Command, "'help' "), (Token.Default, 'to get started')]
         print_tokens(tokens, self.token_style)
@@ -865,8 +812,6 @@ class PromptInterface(object):
                         self.test_invoke_contract(arguments)
                     elif command == 'cancel':
                         self.cancel_operations()
-                    elif command == 'sc':
-                        self.show_spent_coins(arguments)
                     elif command == 'mem':
                         self.show_mem()
                     elif command == 'nodes' or command == 'node':
@@ -875,8 +820,6 @@ class PromptInterface(object):
                         self.show_state()
                     elif command == 'config':
                         self.configure(arguments)
-                    elif command == 'pause' or command == 'unpause' or command == 'resume':
-                        self.toggle_pause()
                     elif command == None:
                         print('please specify a command')
                     else:
