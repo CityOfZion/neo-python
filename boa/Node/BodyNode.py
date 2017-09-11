@@ -1,5 +1,5 @@
 from boa.Node.ASTNode import ASTNode
-
+from neo.VM import OpCode
 
 class BodyNode(ASTNode):
 
@@ -16,10 +16,32 @@ class BodyNode(ASTNode):
         return self._value
 
 
+    @property
+    def bytes(self):
+        return self._bytes
+
+
+    @property
+    def op(self):
+        return self._code
+
+    _bytes = None
+
+    _src_addr = None
+
+    _src_addr_switch = None
+
+    _src_func = None
+
+    _code = None
 
     def __init__(self, node):
 
         self._type = 'Body'
+
+        self._src_addr_switch = []
+
+        self._code = OpCode.NOP
 
         super(BodyNode, self).__init__(node)
 

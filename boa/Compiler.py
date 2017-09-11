@@ -17,10 +17,16 @@ class Compiler():
 
     _all_methods = None
 
+    _TokenAddr = 0
+    _AddrConv = None
+
+
+
     def __init__(self):
         self._nodes = []
         self._entry_method = None
         self._all_methods = []
+        self._AddrConv = []
 
     def Validate(self):
 
@@ -30,6 +36,22 @@ class Compiler():
 
         return True
 
+
+    @property
+    def TokenAddr(self) -> int:
+        return self._TokenAddr
+
+    @TokenAddr.setter
+    def TokenAddr(self, value: int):
+        self._TokenAddr = value
+
+    @property
+    def AddrConv(self):
+        return self._AddrConv
+
+    @AddrConv.setter
+    def AddrConv(self, value):
+        self._AddrConv = value
 
     @property
     def Nodes(self):

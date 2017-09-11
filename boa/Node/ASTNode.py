@@ -31,7 +31,8 @@ class ASTNode():
 
     @property
     def Address(self):
-        return abs( self.__hash__())
+        return self._address
+
 
     @property
     def name(self):
