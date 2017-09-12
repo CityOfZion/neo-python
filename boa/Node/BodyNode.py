@@ -22,8 +22,17 @@ class BodyNode(ASTNode):
 
 
     @property
+    def type(self):
+        return type(self._node)
+
+    @property
     def op(self):
         return self._code
+
+
+    addr = None
+
+    func_addr = None
 
     _bytes = None
 
@@ -35,9 +44,12 @@ class BodyNode(ASTNode):
 
     _code = None
 
-    def __init__(self, node):
+    def __init__(self, node, index):
 
         self._type = 'Body'
+
+        self.addr = index
+        self.func_addr = index
 
         self._src_addr_switch = []
 

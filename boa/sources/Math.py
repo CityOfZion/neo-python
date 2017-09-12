@@ -5,19 +5,22 @@ from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
 class Math(FunctionCode):
 
-    q = 1 # type: int
+#    q = 1 # type: int
 
-    def Main(operation: str, a: int, b: int) -> int:
+    @staticmethod
+    def Main() -> None:
 
-        j = 4 # type: int
+        j = 1
+#        j = 3 # type: int
+#        k = 13 # type: int
+#
+#        if operation == 'add':
+#
+#            return a + b
+#
+#        elif operation == 'sub':
+#
+#            return a - b
 
-        if operation == 'add':
 
-            return a + b
-
-        elif operation == 'sub':
-
-            return a - b
-
-
-        return j
+#        return j

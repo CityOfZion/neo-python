@@ -7,6 +7,10 @@ import json
 
 from boa.Node.ASTNode import ASTNode
 
+from neo.IO.MemoryStream import StreamManager
+from neo.IO.BinaryWriter import BinaryWriter
+import binascii
+
 class Compiler():
 
     __instance = None
@@ -26,7 +30,7 @@ class Compiler():
         self._nodes = []
         self._entry_method = None
         self._all_methods = []
-        self._AddrConv = []
+        self._AddrConv = {}
 
     def Validate(self):
 
@@ -47,10 +51,12 @@ class Compiler():
 
     @property
     def AddrConv(self):
+        print("Getting addr conv %s %s " % (self._AddrConv, type(self._AddrConv)))
         return self._AddrConv
 
     @AddrConv.setter
     def AddrConv(self, value):
+        print("Setting address conv %s %s " % (value, type(value)))
         self._AddrConv = value
 
     @property
@@ -80,6 +86,38 @@ class Compiler():
             if node.Type is ClassDef:
 
                 node.Convert()
+
+    def Save(self):
+        print("saving...")
+
+        stream = StreamManager.GetStream()
+        writer = BinaryWriter(stream=stream)
+
+        self.WriteFunc(writer, self.Entry)
+
+        for method in self._all_methods:
+            if not method.IsEntry:
+                self.WriteFunc(writer,method)
+
+        out = stream.ToArray()
+        outb = binascii.unhexlify(out)
+        print("OUT %s  " % out)
+        print("OUT B: %s " % outb)
+
+        StreamManager.ReleaseStream(stream)
+
+        return outb
+
+    def WriteFunc(self, writer, func):
+        print("writing function body items %s " % func.BodyTokens)
+
+        tokens = func.BodyTokens
+        for key in sorted(tokens.keys()):
+            val = tokens[key]
+            print("writing key %s -> %s" % (key, val.code))
+
+            writer.WriteByte(val.code)
+
 
 
     @staticmethod
