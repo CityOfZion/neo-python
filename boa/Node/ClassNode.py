@@ -56,12 +56,12 @@ class ClassNode(ASTNode):
 
         for func in self._methods:
             if func.IsEntry:
-                print("will convert func, it is entry")
+#                print("will convert func, it is entry")
                 func.Convert()
 
         for func in self._methods:
             if not func.IsEntry:
-                print("will convert func, it is not entry")
+#                print("will convert func, it is not entry")
                 func.Convert()
 
     def Validate(self):

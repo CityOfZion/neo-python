@@ -8,9 +8,10 @@ class Math(FunctionCode):
 #    q = 1 # type: int
 
     @staticmethod
-    def Main() -> None:
+    def Main(a: int) -> None:
 
-        j = 1
+        j = 4
+        k = 2
 #        j = 3 # type: int
 #        k = 13 # type: int
 #

@@ -32,6 +32,7 @@ class FunctionNode(ASTNode):
 
     @BodyTokens.setter
     def BodyTokens(self, value):
+
         self._BodyTokens = value
 
     def InsertBodyToken(self, token, addr ):
@@ -92,22 +93,26 @@ class FunctionNode(ASTNode):
         self._decorators = [item.id for item in self._node.decorator_list]
 
         index=0
+
+
         for item in self.Node.body:
 
             if type(item) in [Assign,AugAssign]:
 
                 right = BodyNode(item.value, index)
-                index += 1
+#                index += 1
                 self._items.append(right)
 
                 left = BodyNode(item.targets[0], index)
-                index += 1
+#                index += 1
                 self._items.append(left)
 
             else:
                 node = BodyNode(item, index)
                 self._items.append(node)
-                index += 1
+#                index += 1
+
+            index += 1
 
         self._arguments = [arg.arg for arg in self.Node.args.args]
 
@@ -123,7 +128,7 @@ class FunctionNode(ASTNode):
 #            print("could not load return type %s " % e)
             self._return_type = None
 
-        print("types %s %s " % (self._argument_types, self._return_type))
+#        print("types %s %s " % (self._argument_types, self._return_type))
 
         Compiler.Instance().RegisterMethod(self)
 
@@ -132,7 +137,6 @@ class FunctionNode(ASTNode):
     def Convert(self):
 
 
-        print("CONVERTING!!!!!! %s " % self)
         compiler = Compiler.Instance()
         compiler.TokenAddr = 0
         compiler.AddrConv = {}
@@ -145,14 +149,12 @@ class FunctionNode(ASTNode):
 
         for item in self._items:
 
-            print("GOING THROUGH ITEMS %s " % item)
             if skipcount > 0:
                 skipcount -=1
 
             else:
 
                 if item.type == Return:
-                    print("item is return!")
                     has_returned = True
                     self._insert_end(item)
 
@@ -184,6 +186,8 @@ class FunctionNode(ASTNode):
             TokenConverter._Insert1(OpCode.SETITEM, "", self)
 
 
+        TokenConverter._Insert1(OpCode.NOP, "", self)
+
     def _convert_addr_in_method(self):
 
         compiler = Compiler.Instance()
@@ -199,8 +203,7 @@ class FunctionNode(ASTNode):
 
     def _insert_end(self, src=None):
 
-        if src:
-            TokenConverter._Convert1by1( OpCode.NOP, src, self)
+        TokenConverter._Convert1by1( OpCode.NOP, src, self)
 
         TokenConverter._Insert1(OpCode.FROMALTSTACK, "endcode", self)
         TokenConverter._Insert1(OpCode.DROP, "", self)

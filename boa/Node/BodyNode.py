@@ -66,7 +66,6 @@ class BodyNode(ASTNode):
 #
 #        self._value = self._node.n
 
-        print("creattign body: %s " % self)
 
     def Validate(self):
 

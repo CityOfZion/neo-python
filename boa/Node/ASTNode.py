@@ -72,7 +72,6 @@ class ASTNode():
         from boa.Node.ClassNode import ClassNode
         from boa.Node.ImportNode import ImportNode,ImportFromNode
         from boa.Node.FunctionNode import FunctionNode
-        from boa.Node.BodyNode import BodyNode
 
         typ = type(node)
 
@@ -85,8 +84,4 @@ class ASTNode():
         elif typ is FunctionDef:
             return FunctionNode(node)
 
-#        print("Node type %s not explicitly supported  %s " % typ)
-
-        return BodyNode(node)
-
-#            raise Exception("Node type %s not implemented %s " % typ)
+        return None

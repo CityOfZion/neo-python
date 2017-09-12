@@ -103,7 +103,6 @@ class TokenConverter():
             return TokenConverter._Insert1(OpCode.PUSHM1, comment, to)
         elif i > 0 and i <= 16:
             out = 0x50 + i
-            print("PUSHING INTEGER %s " % out)
             return TokenConverter._Insert1(out, comment, to)
 
         bigint = BigInteger(i)
@@ -117,8 +116,6 @@ class TokenConverter():
     @staticmethod
     def _Convert1by1(op, src, method, data=None):
 
-        print("Convert 1 by 1: %s %s %s" % (op, src, method))
-
         compiler = Compiler.Instance()
 
         token = NeoToken()
@@ -127,7 +124,6 @@ class TokenConverter():
         token.addr = start_addr
 
         if src is not None:
-            print("Source %s %s" % (src, src.addr))
             compiler.AddrConv[src.addr] = start_addr
 
 
@@ -179,7 +175,6 @@ class TokenConverter():
             return TokenConverter._Convert1by1(OpCode.PUSHM1, src, to)
         elif i > 0 and i <= 16:
             out = 0x50 + i
-            print("OUT IS %s " % out)
             return TokenConverter._Convert1by1(out, src, to)
 
         bigint = BigInteger(i)
@@ -222,13 +217,11 @@ class TokenConverter():
 
         skipcount = 0
 
-        print("Converting code %s " % src)
         pprint.pprint(src)
 
         ctype = type(src._node)
 
         if ctype is Return:
-            print("Converting return!!")
             TokenConverter._Convert1by1(OpCode.RET, src, to)
 
 #        elif ctype is Assign:
@@ -239,14 +232,11 @@ class TokenConverter():
 
 
         elif ctype is Num:
-            print("CONVERTING NUMMMMMM %s " % src._node)
             TokenConverter._ConvertPushInteger(src._node.n,src, to)
 #        elif ctype is
 
         elif ctype is Name:
-            print("ctype converting name!!!! %s" % (src._node.ctx))
             if type(src._node.ctx) is Store:
-                print("Storing location.... %s %s %s " % ( src, to, src.func_addr))
                 TokenConverter._ConvertStLoc(src, to, src.func_addr)
             elif type(src._node.ctx) is Load:
                 TokenConverter._ConvertStLoc(src, to, src.func_addr)
@@ -257,7 +247,6 @@ class TokenConverter():
 
 
         elif ctype is If:
-            print("Convert if!")
             token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
             token.nedfix = True
             token.srcaddr = src.tokenAddr
