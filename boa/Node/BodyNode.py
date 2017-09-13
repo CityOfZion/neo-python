@@ -1,5 +1,6 @@
 from boa.Node.ASTNode import ASTNode
 from neo.VM import OpCode
+from ast import Assign
 
 class BodyNode(ASTNode):
 
@@ -48,6 +49,7 @@ class BodyNode(ASTNode):
         self.addr = index
         self.offset = offset
 
+        self._meta = False
 
         if op is None:
             self._code = OpCode.NOP
@@ -59,6 +61,17 @@ class BodyNode(ASTNode):
 
     def _build(self):
         super(BodyNode, self)._build()
+
+
+        if type(self._node) is Assign:
+            print("vars %s " % self._node)
+
+            target = self._node.targets[0]
+
+            if target.id == 'expected':
+                self._meta = True
+                self._name = 'expected'
+                self._value = self._node.value.s
 
 #        target = self._node.targets[0]
 #        self._name = target.id

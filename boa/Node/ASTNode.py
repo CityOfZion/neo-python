@@ -1,5 +1,5 @@
 
-from _ast import ImportFrom,Import,ClassDef,FunctionDef
+from _ast import ImportFrom,Import,ClassDef,FunctionDef,Assign
 
 
 class ASTNode():
@@ -12,7 +12,7 @@ class ASTNode():
 
     _type = None
 
-
+    _meta = None
 
     _address = None
 
@@ -32,6 +32,10 @@ class ASTNode():
     @property
     def Address(self):
         return self._address
+
+    @property
+    def IsMeta(self):
+        return self._meta
 
 
     @property
@@ -72,6 +76,7 @@ class ASTNode():
         from boa.Node.ClassNode import ClassNode
         from boa.Node.ImportNode import ImportNode,ImportFromNode
         from boa.Node.FunctionNode import FunctionNode
+        from boa.Node.BodyNode import BodyNode
 
         typ = type(node)
 
@@ -83,5 +88,7 @@ class ASTNode():
             return ImportNode(node)
         elif typ is FunctionDef:
             return FunctionNode(node)
+        elif typ is Assign:
+            return BodyNode(node,0)
 
         return None

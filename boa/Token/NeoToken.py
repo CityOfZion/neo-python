@@ -182,6 +182,12 @@ class TokenConverter():
     def _ConvertStLoc(src, to, pos):
 
         print("STORE ITEM %s %s " % (src, pos))
+
+        if src._node.id is not None:
+            if not src._node.id in to.StoreTable.keys():
+                to.StoreTable[src._node.id] = pos
+                print("ADDING ITEM/POS TO STORE %s %s " % (src._node.id, pos))
+
         #set array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
         TokenConverter._Convert1by1(OpCode.DUP, None, to)
@@ -199,13 +205,25 @@ class TokenConverter():
     def _ConvertLdLoc(src, to, pos):
         print("LOAD ITEM %s %s " % (src, pos))
 
+        position = pos + len(to.arguments)
+        if src._node.id is not None:
+            print("LOAD NODE id  from store table %s " % src._node.id)
+
+            if src._node.id in to.StoreTable.keys():
+                print("changing pos from %s " % position)
+                position = to.StoreTable[src._node.id] + len(to.arguments)
+                print("changed pos to %s " % position)
+
+            elif src._node.id in to.arguments:
+                position = to.arguments.index(src._node.id)
+
         # get array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
         TokenConverter._Convert1by1(OpCode.DUP, None, to)
         TokenConverter._Convert1by1(OpCode.TOALTSTACK, None, to)
 
         # get i?
-        TokenConverter._ConvertPushInteger(pos + len(to.arguments), None, to)
+        TokenConverter._ConvertPushInteger(position, None, to)
         TokenConverter._Convert1by1(OpCode.PICKITEM, None, to)
 
 

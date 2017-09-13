@@ -28,6 +28,12 @@ class FunctionNode(ASTNode):
 
     _BodyTokens = None
 
+    _store_table = None
+
+    @property
+    def StoreTable(self):
+        return self._store_table
+
 
     @property
     def BodyTokens(self):
@@ -39,8 +45,6 @@ class FunctionNode(ASTNode):
         self._BodyTokens = value
 
     def InsertBodyToken(self, token, addr ):
-        if self.BodyTokens is None:
-            self.BodyTokens = {}
 
 #        print("SETTING ITEM %s at index %s " % (token, addr))
         try:
@@ -81,7 +85,9 @@ class FunctionNode(ASTNode):
         self._items = []
         self._arguments = []
 
-        self._bodytokens = {}
+        self._BodyTokens = {}
+
+        self._store_table = {}
 
         super(FunctionNode, self).__init__(node)
 
@@ -95,6 +101,21 @@ class FunctionNode(ASTNode):
             Compiler.Instance().RegisterEntry(self)
 
         self._decorators = [item.id for item in self._node.decorator_list]
+
+        self._arguments = [arg.arg for arg in self.Node.args.args]
+
+        try:
+            self._argument_types = [arg.annotation.id for arg in self.Node.args.args]
+        except Exception as e:
+            print("could not get types for method arguments %s " % e)
+            pass
+
+        try:
+            self._return_type = self.Node.returns.id
+        except Exception as e:
+            #            print("could not load return type %s " % e)
+            self._return_type = None
+
 
         index=0
 
@@ -123,9 +144,14 @@ class FunctionNode(ASTNode):
                 #now store the value of the item to be returned
                 val = Name()
                 val.ctx = Store()
+                if type(item.value) is Name:
+                    val.id = item.value.id
+                else:
+                    val.id = None
+
                 storeval = BodyNode(val, index)
                 self._items.append(storeval)
-
+#                pdb.set_trace()
                 #now we indicate an exit
                 breakval = BodyNode(Break(), index)
                 self._items.append(breakval)
@@ -133,6 +159,7 @@ class FunctionNode(ASTNode):
                 #and then load the value
                 val = Name()
                 val.ctx = Load()
+                val.id = None
                 loadval = BodyNode(val, index)
                 self._items.append(loadval)
 
@@ -163,21 +190,7 @@ class FunctionNode(ASTNode):
             item.offset = offset
             print("---------------------------Created item %s" % item.AddrOffset())
 
-        self._arguments = [arg.arg for arg in self.Node.args.args]
 
-        try:
-            self._argument_types = [arg.annotation.id for arg in self.Node.args.args]
-        except Exception as e:
-            print("could not get types for method arguments %s " % e)
-            pass
-
-        try:
-            self._return_type = self.Node.returns.id
-        except Exception as e:
-#            print("could not load return type %s " % e)
-            self._return_type = None
-
-#        print("types %s %s " % (self._argument_types, self._return_type))
 
         Compiler.Instance().RegisterMethod(self)
 
@@ -221,6 +234,9 @@ class FunctionNode(ASTNode):
 
 
         for i in range(0, len(self._arguments)):
+
+            arg = self._arguments[i]
+            print("INSERTING ARGUMENT ! %s" % (arg))
 
             TokenConverter._Insert1(OpCode.FROMALTSTACK, "set param %s" % i, self)
             TokenConverter._Insert1(OpCode.DUP, "", self)

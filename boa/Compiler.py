@@ -11,6 +11,8 @@ from neo.IO.MemoryStream import StreamManager
 from neo.IO.BinaryWriter import BinaryWriter
 import binascii
 
+import parser
+
 class Compiler():
 
     __instance = None
@@ -24,7 +26,10 @@ class Compiler():
     _TokenAddr = 0
     _AddrConv = None
 
+    _modulenode = None
 
+
+    _expected_output = None
 
     def __init__(self):
         self._nodes = []
@@ -69,6 +74,14 @@ class Compiler():
     def Methods(self):
         return self._all_methods
 
+    @property
+    def ModuleNode(self):
+        return self._modulenode
+
+    @property
+    def ExpectedOutput(self):
+        return self._expected_output
+
     def RegisterEntry(self, function_def):
         self._entry_method = function_def
 
@@ -103,6 +116,25 @@ class Compiler():
         print("OUT B: %s " % outb)
 
         StreamManager.ReleaseStream(stream)
+
+
+        if self.ExpectedOutput is not None:
+            print("comparing expected %s and out %s " % (out, self.ExpectedOutput))
+            if self.ExpectedOutput == out:
+                print("ALLOK!!!")
+
+            else:
+                print("DOES NOT MATCH")
+                eb = binascii.unhexlify(self.ExpectedOutput)
+                print("E: %s " % eb)
+                print("O: %s " % outb)
+                print("Lengthes %s %s " % (len(eb), len(outb)))
+
+
+                mismatches = [i for i in range(len(eb)) if eb[i] !=outb[i]]
+                print("mismatches indexes: %s " % mismatches)
+                for m in mismatches:
+                    print("Mismatch:  E:%s -> O:%s" % (eb[m], outb[m]))
 
         return outb
 
@@ -145,6 +177,9 @@ class Compiler():
         file = open(path)
         data = file.read()
         file.close()
+
+
+
         node = None
 
         try:
@@ -155,11 +190,18 @@ class Compiler():
             print("Could not compile file %s :: %s " % (path, e))
             return False
 
+        compiler._modulenode = node
+
         body = node.body
 
         for item in body:
+            node = ASTNode.FromNode(item)
 
-            compiler._nodes.append( ASTNode.FromNode(item))
+            if node.IsMeta:
+                if node.name == 'expected':
+                    compiler._expected_output = node.value
+            else:
+                compiler._nodes.append( node )
 
         result = False
 
@@ -169,7 +211,6 @@ class Compiler():
             print("could not validate file %s %s" % (path, e))
 
         if result == True:
-#            print("Compiler %s "% compiler.ToJson())
             return compiler
 
         return None
