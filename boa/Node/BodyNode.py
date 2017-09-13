@@ -23,7 +23,9 @@ class BodyNode(ASTNode):
 
     @property
     def type(self):
-        return type(self._node)
+        if self._node:
+            return type(self._node)
+        return self._code
 
     @property
     def op(self):
@@ -31,29 +33,26 @@ class BodyNode(ASTNode):
 
 
     addr = None
-
-    func_addr = None
+    offset = None
 
     _bytes = None
 
-    _src_addr = None
-
-    _src_addr_switch = None
-
-    _src_func = None
 
     _code = None
 
-    def __init__(self, node, index):
+
+    def __init__(self, node, index, offset=None, op=None):
 
         self._type = 'Body'
 
         self.addr = index
-        self.func_addr = index
+        self.offset = offset
 
-        self._src_addr_switch = []
 
-        self._code = OpCode.NOP
+        if op is None:
+            self._code = OpCode.NOP
+        else:
+            self._code = op
 
         super(BodyNode, self).__init__(node)
 
@@ -72,7 +71,10 @@ class BodyNode(ASTNode):
         return super(BodyNode, self).Validate()
 
 
+    def AddrOffset(self):
+        return "Body Node: Addr: %s Offset %s " % (self.addr, self.offset)
 
     def __str__(self):
-
-        return "[Body Node] %s" % (self._node)
+        if self._node:
+            return "[Body Node] %s" % (self._node)
+        return "[Body Node] %s " % self._code

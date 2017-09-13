@@ -1,11 +1,14 @@
 from boa.Node.ASTNode import ASTNode
 from boa.Node.BodyNode import BodyNode
-from boa.Token.NeoToken import NeoToken,TokenConverter
+from boa.Token.NeoToken import NeoToken,TokenConverter,Nop
 from boa.Compiler import Compiler
 from neo.VM import OpCode
+import pdb
+from _ast import FunctionDef,Return,Assign,AugAssign,Load,Store,Name,Break
 
-from _ast import FunctionDef,Return,Assign,AugAssign
 
+
+import pprint
 class FunctionNode(ASTNode):
 
     _name = None
@@ -39,6 +42,7 @@ class FunctionNode(ASTNode):
         if self.BodyTokens is None:
             self.BodyTokens = {}
 
+#        print("SETTING ITEM %s at index %s " % (token, addr))
         try:
             self.BodyTokens[addr] = token
             return True
@@ -61,7 +65,7 @@ class FunctionNode(ASTNode):
 
 
     @property
-    def body(self):
+    def bodyNodes(self):
         return self._items
 
     @property
@@ -94,25 +98,70 @@ class FunctionNode(ASTNode):
 
         index=0
 
+        nop = BodyNode(Nop(),0)
+        self._items.append(nop)
+
+        has_returned = False
 
         for item in self.Node.body:
 
             if type(item) in [Assign,AugAssign]:
 
                 right = BodyNode(item.value, index)
-#                index += 1
                 self._items.append(right)
 
                 left = BodyNode(item.targets[0], index)
-#                index += 1
                 self._items.append(left)
+
+            elif type(item) is Return:
+                has_returned = True
+                #push the value of the item to be returned
+                val = item.value
+                pushval = BodyNode(val, index)
+                self._items.append(pushval)
+
+                #now store the value of the item to be returned
+                val = Name()
+                val.ctx = Store()
+                storeval = BodyNode(val, index)
+                self._items.append(storeval)
+
+                #now we indicate an exit
+                breakval = BodyNode(Break(), index)
+                self._items.append(breakval)
+
+                #and then load the value
+                val = Name()
+                val.ctx = Load()
+                loadval = BodyNode(val, index)
+                self._items.append(loadval)
+
+
+                #we need a nop first befor return
+                nopval = BodyNode(Nop(), index)
+                self._items.append(nopval)
+
+                retval = BodyNode(item, index)
+                self._items.append(retval)
 
             else:
                 node = BodyNode(item, index)
                 self._items.append(node)
-#                index += 1
 
             index += 1
+
+        if not has_returned:
+            # we need a nop first befor return
+            nopval = BodyNode(Nop(), index)
+            self._items.append(nopval)
+
+            retval = BodyNode(Return(), index)
+            self._items.append(retval)
+
+
+        for offset, item in enumerate(self._items):
+            item.offset = offset
+            print("---------------------------Created item %s" % item.AddrOffset())
 
         self._arguments = [arg.arg for arg in self.Node.args.args]
 
@@ -155,14 +204,11 @@ class FunctionNode(ASTNode):
             else:
 
                 if item.type == Return:
-                    has_returned = True
                     self._insert_end(item)
 
                 skipcount = TokenConverter._ConvertCode(item, self)
 
 
-        if not has_returned and self.IsEntry:
-            self._insert_end()
 
         self._convert_addr_in_method()
 
@@ -186,30 +232,33 @@ class FunctionNode(ASTNode):
             TokenConverter._Insert1(OpCode.SETITEM, "", self)
 
 
-        TokenConverter._Insert1(OpCode.NOP, "", self)
-
     def _convert_addr_in_method(self):
 
         compiler = Compiler.Instance()
-
-        for key, c in self._bodytokens:
-
+        print("CONVERTING ADDR IN METHOD!!!!")
+        for key, c in self._BodyTokens.items():
+            print("converting addr in method!!! %s %s %s" % (c, c.code, c.needfix))
             if c.needfix and c.code != OpCode.CALL:
-
-                addr = compiler.AddrConv[c.srcaddr]
+                pprint.pprint(compiler.AddrConv)
+                print("code src adrd %s " % c.srcaddr)
+                print("c addr %s " % c.addr)
+#                print("c func addr %s " % c.fun)
+                addr = compiler.AddrConv[c.offset + 1]
+                print("ADDR COMP %s " % addr)
+                pprint.pprint(c)
+                print("c vars %s " % vars(c))
                 addr_off = addr - c.addr
+                print("addr offset %s " % addr_off)
+#                pdb.set_trace()
                 c.byts = addr_off.to_bytes(2,'little')
+                print("c bytes %s " % c.byts)
                 c.needfix = False
 
     def _insert_end(self, src=None):
 
-        TokenConverter._Convert1by1( OpCode.NOP, src, self)
-
         TokenConverter._Insert1(OpCode.FROMALTSTACK, "endcode", self)
         TokenConverter._Insert1(OpCode.DROP, "", self)
 
-        if not src:
-            TokenConverter._Insert1(OpCode.RET, "nil return", self)
 
     def Validate(self):
 

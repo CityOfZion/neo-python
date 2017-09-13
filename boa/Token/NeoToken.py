@@ -3,37 +3,32 @@ from neo.VM import OpCode
 from boa.Compiler import Compiler
 from neo.BigInteger import BigInteger
 
-from _ast import Return,Load,Set,Assign,AugAssign,If,IfExp,Name,Num,Store,Del
+from _ast import Return,Load,Set,Assign,AugAssign,If,IfExp,Name,Num,Store,Del,Break,stmt
+
+import pdb
 
 import pprint
+
+class Nop(stmt):
+    pass
 
 class NeoToken():
 
 
     code = OpCode.NOP
     addr = 0
+    srcaddr=0
+    offset = 0
     byts = None
-    srcaddr = None
-    srcaddr_switch = None
-    src_func = None
 
     tokenAddr_Index = None
     tokenAddr_Switch = None
 
-    token_field = None
-    tokenType = None
-    tokenMethod = None
-    tokenI32 = None
-    tokenI64 = None
-
-    tokenR32 = None
-    tokenR64 = None
-
-    tokenStr = None
+    needfix = False
 
     def __init__(self):
         self.tokenAddr_Switch = []
-
+        self.needfix = False
 
     def __str__(self):
         return "[Neo Token %s -> %s]" % (self.code, self.addr)
@@ -116,15 +111,16 @@ class TokenConverter():
     @staticmethod
     def _Convert1by1(op, src, method, data=None):
 
+        print("CONVERTING 1 by 1 %s %s " % (op, src))
         compiler = Compiler.Instance()
 
         token = NeoToken()
         start_addr = compiler.TokenAddr
-
         token.addr = start_addr
 
         if src is not None:
-            compiler.AddrConv[src.addr] = start_addr
+            token.offset = src.offset
+            compiler.AddrConv[src.offset] = start_addr
 
 
         compiler.TokenAddr += 1
@@ -185,6 +181,7 @@ class TokenConverter():
     @staticmethod
     def _ConvertStLoc(src, to, pos):
 
+        print("STORE ITEM %s %s " % (src, pos))
         #set array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
         TokenConverter._Convert1by1(OpCode.DUP, None, to)
@@ -200,6 +197,7 @@ class TokenConverter():
 
     @staticmethod
     def _ConvertLdLoc(src, to, pos):
+        print("LOAD ITEM %s %s " % (src, pos))
 
         # get array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
@@ -219,38 +217,53 @@ class TokenConverter():
 
         pprint.pprint(src)
 
-        ctype = type(src._node)
-
-        if ctype is Return:
-            TokenConverter._Convert1by1(OpCode.RET, src, to)
-
-#        elif ctype is Assign:
-#            print("assign %s " % src)
-
-#        elif ctype is Load:
-#            print("LOAD %s " % Load)
+        if src._node:
 
 
-        elif ctype is Num:
-            TokenConverter._ConvertPushInteger(src._node.n,src, to)
-#        elif ctype is
 
-        elif ctype is Name:
-            if type(src._node.ctx) is Store:
-                TokenConverter._ConvertStLoc(src, to, src.func_addr)
-            elif type(src._node.ctx) is Load:
-                TokenConverter._ConvertStLoc(src, to, src.func_addr)
-            elif type(src._node.ctx) is Del:
-                pass
+            ctype = type(src._node)
+
+            print("CONVERTING: :%s " % ctype)
+
+            if ctype is Nop:
+                print("")
+                token = TokenConverter._Convert1by1(OpCode.NOP, src, to)
+
+            elif ctype is Return:
+                print("CONERTING RETURN!!!")
+                token = TokenConverter._Convert1by1(OpCode.RET, src, to)
+                print("converted return! %s " % token)
+
+            elif ctype is Break:
+                print("CONVERTING JUMP!!!!!!")
+                token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
+                token.needfix = True
+                token.srcaddr = src.addr
+
+
+            elif ctype is Num:
+                print("CONVERTING NUM!!!!!!!!")
+                TokenConverter._ConvertPushInteger(src._node.n,src, to)
+    #        elif ctype is
+
+            elif ctype is Name:
+                if type(src._node.ctx) is Store:
+                    TokenConverter._ConvertStLoc(src, to, src.addr)
+                elif type(src._node.ctx) is Load:
+                    TokenConverter._ConvertLdLoc(src, to, src.addr)
+                elif type(src._node.ctx) is Del:
+                    pass
+                else:
+                    print("colud not convert name object....")
+
+
+            elif ctype is If:
+                token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
+                token.needfix = True
+                token.srcaddr = src.tokenAddr
             else:
-                print("colud not convert name object....")
+                print("other type: %s " % type(src))
+                pdb.set_trace()
 
-
-        elif ctype is If:
-            token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
-            token.nedfix = True
-            token.srcaddr = src.tokenAddr
-        else:
-            print("other type: %s " % type(src))
 
         return skipcount

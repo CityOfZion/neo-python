@@ -8,20 +8,9 @@ class Math(FunctionCode):
 #    q = 1 # type: int
 
     @staticmethod
-    def Main(a: int) -> None:
+    def Main(a: int, b: int) -> int:
 
-        j = 4
-        k = 2
-#        j = 3 # type: int
-#        k = 13 # type: int
-#
-#        if operation == 'add':
-#
-#            return a + b
-#
-#        elif operation == 'sub':
-#
-#            return a - b
+        j = 1
 
+        return 2
 
-#        return j

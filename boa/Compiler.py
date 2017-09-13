@@ -112,9 +112,12 @@ class Compiler():
         tokens = func.BodyTokens
         for key in sorted(tokens.keys()):
             val = tokens[key]
-#            print("writing key %s -> %s" % (key, val.code))
+            print("writing key %s -> %s" % (key, val.code))
 
             writer.WriteByte(val.code)
+            if val.byts:
+                print("Writing bytes! %s " % val.byts)
+                writer.WriteBytes(val.byts)
 
 
 
