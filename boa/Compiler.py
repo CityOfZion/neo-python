@@ -1,7 +1,7 @@
 
 import ast
 
-from _ast import Import,ImportFrom,ClassDef
+from _ast import ClassDef
 
 import json
 
@@ -10,8 +10,8 @@ from boa.Node.ASTNode import ASTNode
 from neo.IO.MemoryStream import StreamManager
 from neo.IO.BinaryWriter import BinaryWriter
 import binascii
-
-import parser
+import symtable
+import pprint
 
 class Compiler():
 
@@ -159,6 +159,17 @@ class Compiler():
             Compiler.__instance = Compiler()
         return Compiler.__instance
 
+
+    @staticmethod
+    def Symtable(path):
+        file = open(path)
+        data = file.read()
+        file.close()
+
+        out = symtable.symtable(data, path,'exec')
+
+        pprint.pprint(out)
+        return out
 
     @staticmethod
     def LoadAndSave(path, output_path=None):

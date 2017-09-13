@@ -4,9 +4,19 @@ from boa.Token.NeoToken import NeoToken,TokenConverter,Nop
 from boa.Compiler import Compiler
 from neo.VM import OpCode
 import pdb
-from _ast import FunctionDef,Return,Assign,AugAssign,Load,Store,Name,Break
+
+from _ast import FunctionDef,Return,Assign,\
+    AugAssign,Load,Store,Name,Break,BinOp,Num,Str,\
+    NameConstant,Ellipsis,Dict,List,Tuple,Set,Bytes
 
 
+TERMINAL_ITEMS = [
+    Num,Str,Ellipsis,Dict,List,Tuple,Set,Bytes,Name,NameConstant,
+]
+
+NAME_ITEMS = [
+    Name, NameConstant,
+]
 
 import pprint
 class FunctionNode(ASTNode):
@@ -92,6 +102,7 @@ class FunctionNode(ASTNode):
         super(FunctionNode, self).__init__(node)
 
 
+
     def _build(self):
         super(FunctionNode, self)._build()
 
@@ -107,13 +118,11 @@ class FunctionNode(ASTNode):
         try:
             self._argument_types = [arg.annotation.id for arg in self.Node.args.args]
         except Exception as e:
-            print("could not get types for method arguments %s " % e)
             pass
 
         try:
             self._return_type = self.Node.returns.id
         except Exception as e:
-            #            print("could not load return type %s " % e)
             self._return_type = None
 
 
@@ -126,54 +135,12 @@ class FunctionNode(ASTNode):
 
         for item in self.Node.body:
 
-            if type(item) in [Assign,AugAssign]:
 
-                right = BodyNode(item.value, index)
-                self._items.append(right)
-
-                left = BodyNode(item.targets[0], index)
-                self._items.append(left)
-
-            elif type(item) is Return:
+            if type(item) is Return:
                 has_returned = True
-                #push the value of the item to be returned
-                val = item.value
-                pushval = BodyNode(val, index)
-                self._items.append(pushval)
 
-                #now store the value of the item to be returned
-                val = Name()
-                val.ctx = Store()
-                if type(item.value) is Name:
-                    val.id = item.value.id
-                else:
-                    val.id = None
+            self._build_item(item, index)
 
-                storeval = BodyNode(val, index)
-                self._items.append(storeval)
-#                pdb.set_trace()
-                #now we indicate an exit
-                breakval = BodyNode(Break(), index)
-                self._items.append(breakval)
-
-                #and then load the value
-                val = Name()
-                val.ctx = Load()
-                val.id = None
-                loadval = BodyNode(val, index)
-                self._items.append(loadval)
-
-
-                #we need a nop first befor return
-                nopval = BodyNode(Nop(), index)
-                self._items.append(nopval)
-
-                retval = BodyNode(item, index)
-                self._items.append(retval)
-
-            else:
-                node = BodyNode(item, index)
-                self._items.append(node)
 
             index += 1
 
@@ -251,9 +218,9 @@ class FunctionNode(ASTNode):
     def _convert_addr_in_method(self):
 
         compiler = Compiler.Instance()
-        print("CONVERTING ADDR IN METHOD!!!!")
+
         for key, c in self._BodyTokens.items():
-            print("converting addr in method!!! %s %s %s" % (c, c.code, c.needfix))
+
             if c.needfix and c.code != OpCode.CALL:
                 pprint.pprint(compiler.AddrConv)
                 print("code src adrd %s " % c.srcaddr)
@@ -285,3 +252,96 @@ class FunctionNode(ASTNode):
     def __str__(self):
 
         return "[Function Node] %s " % self._name
+
+
+
+    def _expand_item(self, item, index, tostore=None, store=True):
+
+        print("EXPANDING ITEM %s %s" % (type(item), tostore))
+        if type(item) in NAME_ITEMS and not store:
+            pushval = BodyNode(item, index)
+            self._items.append(pushval)
+
+        elif type(item) in TERMINAL_ITEMS:
+            # push the value of the item to be returned
+            pushval = BodyNode(item, index)
+            self._items.append(pushval)
+
+            # now store the value of the item to be returned
+            val = tostore
+
+            if not val:
+                val = Name()
+                val.ctx = Store()
+                if type(item) is Name:
+                    val.id = item.id
+                else:
+                    val.id = None
+
+            storeval = BodyNode(val, index)
+            self._items.append(storeval)
+
+        else:
+
+            self._build_item(item, index)
+
+            # now store the value of the item to be returned
+            val = tostore
+
+            if not val:
+                val = Name()
+                val.ctx = Store()
+                if type(item) is Name:
+                    val.id = item.id
+                else:
+                    val.id = None
+
+            storeval = BodyNode(val, index)
+            self._items.append(storeval)
+
+    def _build_item(self, item, index):
+
+        print("PARSING ITEM %s " % (type(item)))
+        if type(item) in [Assign, AugAssign]:
+            print("WILL ASSIGN ITEMeeeeeee %s %s " % (item.value, item.targets[0]))
+            self._expand_item(item.value, index, item.targets[0])
+
+        elif type(item) is Return:
+
+            self._expand_item(item.value, index)
+
+            # now we indicate an exit
+            breakval = BodyNode(Break(), index)
+            self._items.append(breakval)
+
+            # and then load the value
+            val = Name()
+            val.ctx = Load()
+            val.id = None
+            loadval = BodyNode(val, index)
+            self._items.append(loadval)
+
+            # we need a nop first befor return
+            nopval = BodyNode(Nop(), index)
+            self._items.append(nopval)
+
+            retval = BodyNode(item, index)
+            self._items.append(retval)
+
+        elif type(item) is BinOp:
+            print("creating bin op!")
+
+            # load left
+            self._expand_item(item.left, index, store=False)
+#            # load right
+            self._expand_item(item.right, index, store=False)
+
+            opval = BodyNode(item.op, index)
+            self._items.append(opval)
+
+
+        else:
+            print("ITEM::: %s %s" % (item, type(item)))
+            node = BodyNode(item, index)
+            self._items.append(node)
+

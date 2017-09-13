@@ -3,7 +3,9 @@ from neo.VM import OpCode
 from boa.Compiler import Compiler
 from neo.BigInteger import BigInteger
 
-from _ast import Return,Load,Set,Assign,AugAssign,If,IfExp,Name,Num,Store,Del,Break,stmt
+from _ast import Return,Load,Set,Assign,AugAssign,\
+    If,IfExp,Name,Num,Store,Del,Break,stmt,\
+    BinOp,Add,Sub,Mult,Div,FloorDiv
 
 import pdb
 
@@ -111,7 +113,7 @@ class TokenConverter():
     @staticmethod
     def _Convert1by1(op, src, method, data=None):
 
-        print("CONVERTING 1 by 1 %s %s " % (op, src))
+#        print("CONVERTING 1 by 1 %s %s " % (op, src))
         compiler = Compiler.Instance()
 
         token = NeoToken()
@@ -181,12 +183,10 @@ class TokenConverter():
     @staticmethod
     def _ConvertStLoc(src, to, pos):
 
-        print("STORE ITEM %s %s " % (src, pos))
 
         if src._node.id is not None:
             if not src._node.id in to.StoreTable.keys():
                 to.StoreTable[src._node.id] = pos
-                print("ADDING ITEM/POS TO STORE %s %s " % (src._node.id, pos))
 
         #set array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
@@ -203,16 +203,12 @@ class TokenConverter():
 
     @staticmethod
     def _ConvertLdLoc(src, to, pos):
-        print("LOAD ITEM %s %s " % (src, pos))
 
         position = pos + len(to.arguments)
         if src._node.id is not None:
-            print("LOAD NODE id  from store table %s " % src._node.id)
 
             if src._node.id in to.StoreTable.keys():
-                print("changing pos from %s " % position)
                 position = to.StoreTable[src._node.id] + len(to.arguments)
-                print("changed pos to %s " % position)
 
             elif src._node.id in to.arguments:
                 position = to.arguments.index(src._node.id)
@@ -233,34 +229,33 @@ class TokenConverter():
 
         skipcount = 0
 
-        pprint.pprint(src)
-
         if src._node:
 
 
 
             ctype = type(src._node)
 
-            print("CONVERTING: :%s " % ctype)
+            ctx = getattr(src._node, 'ctx', None)
+            if ctx is None:
+                ctx = getattr(src._node, 'n',None)
+#            if getattr(src._node
+#                ctx = src._node.ctx
+
+            print("CONVERTING: :%s %s " % (ctype, ctx))
 
             if ctype is Nop:
-                print("")
-                token = TokenConverter._Convert1by1(OpCode.NOP, src, to)
+                TokenConverter._Convert1by1(OpCode.NOP, src, to)
 
             elif ctype is Return:
-                print("CONERTING RETURN!!!")
-                token = TokenConverter._Convert1by1(OpCode.RET, src, to)
-                print("converted return! %s " % token)
+                TokenConverter._Convert1by1(OpCode.RET, src, to)
 
             elif ctype is Break:
-                print("CONVERTING JUMP!!!!!!")
                 token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
                 token.needfix = True
                 token.srcaddr = src.addr
 
 
             elif ctype is Num:
-                print("CONVERTING NUM!!!!!!!!")
                 TokenConverter._ConvertPushInteger(src._node.n,src, to)
     #        elif ctype is
 
@@ -279,6 +274,18 @@ class TokenConverter():
                 token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
                 token.needfix = True
                 token.srcaddr = src.tokenAddr
+
+            elif ctype is Add:
+                TokenConverter._Convert1by1(OpCode.ADD, src, to)
+            elif ctype is Sub:
+                TokenConverter._Convert1by1(OpCode.SUB, src, to)
+            elif ctype is Mult:
+                TokenConverter._Convert1by1(OpCode.MUL, src, to)
+            elif ctype is Div or ctype is FloorDiv:
+                TokenConverter._Convert1by1(OpCode.DIV, src, to)
+
+
+
             else:
                 print("other type: %s " % type(src))
                 pdb.set_trace()
