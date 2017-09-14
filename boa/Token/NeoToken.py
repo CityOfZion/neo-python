@@ -5,7 +5,8 @@ from neo.BigInteger import BigInteger
 
 from _ast import Return,Load,Set,Assign,AugAssign,\
     If,IfExp,Name,Num,Store,Del,Break,stmt,\
-    BinOp,Add,Sub,Mult,Div,FloorDiv
+    BinOp,Add,Sub,Mult,Div,FloorDiv, Mod,Pow,LShift,RShift,BitAnd,BitOr,BitXor
+
 
 import pdb
 
@@ -187,6 +188,7 @@ class TokenConverter():
         if src._node.id is not None:
             if not src._node.id in to.StoreTable.keys():
                 to.StoreTable[src._node.id] = pos
+                #print("STORED %s at %s " % (src._node.id, pos))
 
         #set array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
@@ -194,6 +196,7 @@ class TokenConverter():
         TokenConverter._Convert1by1(OpCode.TOALTSTACK, None, to)
 
         #set i?
+        #print("Storing item %s %s " % (src._node.id, pos + len(to.arguments)))
         TokenConverter._ConvertPushInteger(pos + len(to.arguments), None, to)
 
         #set item
@@ -213,6 +216,7 @@ class TokenConverter():
             elif src._node.id in to.arguments:
                 position = to.arguments.index(src._node.id)
 
+        #print("LOADING ITEM %s %s " % (src._node.id, position))
         # get array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
         TokenConverter._Convert1by1(OpCode.DUP, None, to)
@@ -270,20 +274,57 @@ class TokenConverter():
                     print("colud not convert name object....")
 
 
+            #flow
             elif ctype is If:
                 token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
                 token.needfix = True
                 token.srcaddr = src.tokenAddr
 
+
+            #Mathematical
             elif ctype is Add:
                 TokenConverter._Convert1by1(OpCode.ADD, src, to)
+
             elif ctype is Sub:
                 TokenConverter._Convert1by1(OpCode.SUB, src, to)
+
             elif ctype is Mult:
                 TokenConverter._Convert1by1(OpCode.MUL, src, to)
+
             elif ctype is Div or ctype is FloorDiv:
                 TokenConverter._Convert1by1(OpCode.DIV, src, to)
 
+            elif ctype is Mod:
+                TokenConverter._Convert1by1(OpCode.MOD, src, to)
+
+            #Is power supported?
+#            elif ctype is Pow:
+#                TokenConverter._Convert1by1(OpCode.P)
+
+
+
+ #           elif ctype is LShift:
+ #
+#                TokenConverter._Convert1by1(OpCode.AND, src, to)
+#                TokenConverter._Convert1by1(OpCode.SHL, src, to)
+#
+#            elif ctype is RShift:
+#                TokenConverter._Convert1by1(OpCode.AND, src, to)
+#                TokenConverter._Convert1by1(OpCode.SHR, src, to)
+
+            elif ctype is BitAnd:
+                TokenConverter._Convert1by1(OpCode.AND, src, to)
+
+            elif ctype is BitOr:
+                TokenConverter._Convert1by1(OpCode.OR, src, to)
+
+            elif ctype is BitXor:
+                TokenConverter._Convert1by1(OpCode.XOR, src, to)
+
+
+            #MATH_OPS = [
+            #    Add, Sub, Mult, Div, FloorDiv, Mod, Pow, LShift, RShift, BitAnd, BitOr, BitXor,
+            #]
 
 
             else:

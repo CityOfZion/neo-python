@@ -7,7 +7,9 @@ import pdb
 
 from _ast import FunctionDef,Return,Assign,\
     AugAssign,Load,Store,Name,Break,BinOp,Num,Str,\
-    NameConstant,Ellipsis,Dict,List,Tuple,Set,Bytes
+    NameConstant,Ellipsis,Dict,List,Tuple,Set,Bytes, \
+    Add,Sub,Mult,Div,FloorDiv,Mod,Pow,LShift,RShift, \
+    BitAnd,BitOr,BitXor
 
 
 TERMINAL_ITEMS = [
@@ -17,6 +19,8 @@ TERMINAL_ITEMS = [
 NAME_ITEMS = [
     Name, NameConstant,
 ]
+
+
 
 import pprint
 class FunctionNode(ASTNode):
@@ -286,28 +290,30 @@ class FunctionNode(ASTNode):
             self._build_item(item, index)
 
             # now store the value of the item to be returned
-            val = tostore
 
-            if not val:
-                val = Name()
-                val.ctx = Store()
-                if type(item) is Name:
-                    val.id = item.id
-                else:
-                    val.id = None
+            if store:
+                val = tostore
 
-            storeval = BodyNode(val, index)
-            self._items.append(storeval)
+                if not val:
+                    val = Name()
+                    val.ctx = Store()
+                    if type(item) is Name:
+                        val.id = item.id
+                    else:
+                        val.id = None
+
+                storeval = BodyNode(val, index)
+                self._items.append(storeval)
 
     def _build_item(self, item, index):
 
         print("PARSING ITEM %s " % (type(item)))
         if type(item) in [Assign, AugAssign]:
-            print("WILL ASSIGN ITEMeeeeeee %s %s " % (item.value, item.targets[0]))
+            print("WILL ASSIGN ITEMeeeeeee %s %s %s" % (item.value, item.targets[0], len(item.targets)))
             self._expand_item(item.value, index, item.targets[0])
 
         elif type(item) is Return:
-
+            print("WILL EXPAND RETURN!!!!!.... %s ----- %s" % (vars(item), vars(item.value)))
             self._expand_item(item.value, index)
 
             # now we indicate an exit
@@ -331,6 +337,14 @@ class FunctionNode(ASTNode):
         elif type(item) is BinOp:
             print("creating bin op!")
 
+            print("typse %s " % (type(item.left)), type(item.right))
+
+#            if type(item.left) is BinOp:
+#                self._build_item(item.left, index)
+#                self._expand_item(item.right, index)
+#            else:
+
+
             # load left
             self._expand_item(item.left, index, store=False)
 #            # load right
@@ -345,3 +359,41 @@ class FunctionNode(ASTNode):
             node = BodyNode(item, index)
             self._items.append(node)
 
+
+
+
+    def evaluate_binop(self, binop):
+
+        if type(binop.left) is Num and type(binop.right) is Num:
+            return binop
+
+
+        while type(binop.left) is BinOp:
+            binop.left = self.evaluate_binop(binop.left)
+
+        while type(binop.right) is BinOp:
+            binop.right = self.evaluate_binop(binop.right)
+
+        num = Num()
+
+
+        print("OP:: %s " % binop.op)
+
+        if type(binop.op) == Add:
+            print("adding")
+            num.n = binop.left.n + binop.right.n
+
+        elif type(binop.op) == Sub:
+            print("subbing")
+            num.n = binop.left.n - binop.right.n
+
+
+        elif type(binop.op) == Mult:
+            print("multing")
+            num.n = binop.left.n * binop.right.n
+
+        #etc
+        print("n is %s " % vars(num))
+        print("evaluated binop... %s %s %s " % (binop.left.n, binop.right.n, num.n))
+
+        return num
