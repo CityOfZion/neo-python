@@ -4,8 +4,11 @@ from boa.Compiler import Compiler
 from neo.BigInteger import BigInteger
 
 from _ast import Return,Load,Set,Assign,AugAssign,\
-    If,IfExp,Name,Num,Store,Del,Break,stmt,\
-    BinOp,Add,Sub,Mult,Div,FloorDiv, Mod,Pow,LShift,RShift,BitAnd,BitOr,BitXor
+    If,IfExp,Name,NameConstant,Num,Store,Del,Break,stmt,\
+    BinOp,Add,Sub,Mult,Div,FloorDiv, Mod,Pow,LShift,RShift,BitAnd,BitOr,BitXor, \
+    Eq,NotEq,Lt,LtE, Gt,GtE,Is,IsNot,In,NotIn
+
+
 
 
 import pdb
@@ -13,6 +16,12 @@ import pdb
 import pprint
 
 class Nop(stmt):
+    pass
+
+class BRTrue(stmt):
+    pass
+
+class BRFalse(stmt):
     pass
 
 class NeoToken():
@@ -189,6 +198,10 @@ class TokenConverter():
             if not src._node.id in to.StoreTable.keys():
                 to.StoreTable[src._node.id] = pos
                 #print("STORED %s at %s " % (src._node.id, pos))
+            else:
+                if src._node.id in to.duplicateAssigns:
+                    pos = to.StoreTable[src._node.id]
+#                    print("LOADING SAVED POS %s %s "  % (src._node.id, pos))
 
         #set array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
@@ -196,7 +209,7 @@ class TokenConverter():
         TokenConverter._Convert1by1(OpCode.TOALTSTACK, None, to)
 
         #set i?
-        #print("Storing item %s %s " % (src._node.id, pos + len(to.arguments)))
+        print("Storing item %s %s " % (src._node.id, pos + len(to.arguments)))
         TokenConverter._ConvertPushInteger(pos + len(to.arguments), None, to)
 
         #set item
@@ -216,7 +229,7 @@ class TokenConverter():
             elif src._node.id in to.arguments:
                 position = to.arguments.index(src._node.id)
 
-        #print("LOADING ITEM %s %s " % (src._node.id, position))
+#        print("LOADING ITEM %s %s " % (src._node.id, position))
         # get array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
         TokenConverter._Convert1by1(OpCode.DUP, None, to)
@@ -236,16 +249,14 @@ class TokenConverter():
         if src._node:
 
 
-
             ctype = type(src._node)
 
             ctx = getattr(src._node, 'ctx', None)
+            v = getattr(src._node, 'n', None)
             if ctx is None:
                 ctx = getattr(src._node, 'n',None)
-#            if getattr(src._node
-#                ctx = src._node.ctx
 
-            print("CONVERTING: :%s %s " % (ctype, ctx))
+            print("CONVERTING: :%s %s %s" % (ctype, ctx, v))
 
             if ctype is Nop:
                 TokenConverter._Convert1by1(OpCode.NOP, src, to)
@@ -253,11 +264,28 @@ class TokenConverter():
             elif ctype is Return:
                 TokenConverter._Convert1by1(OpCode.RET, src, to)
 
+            elif ctype is NameConstant:
+                if src._node.value == True:
+                    TokenConverter._ConvertPushInteger(1, src, to)
+                else:
+                    TokenConverter._ConvertPushInteger(0, src, to)
+
+
             elif ctype is Break:
                 token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
                 token.needfix = True
                 token.srcaddr = src.addr
 
+            elif ctype is BRTrue:
+                token = TokenConverter._Convert1by1(OpCode.JMPIF, src, to, bytearray(2))
+                token.needfix = True
+                token.srcaddr = src.addr
+
+            elif ctype is BRFalse:
+                token = TokenConverter._Convert1by1(OpCode.JMPIFNOT, src, to, bytearray(2))
+                token.needfix = True
+                token.srcaddr = src.addr
+                pass
 
             elif ctype is Num:
                 TokenConverter._ConvertPushInteger(src._node.n,src, to)
@@ -302,9 +330,9 @@ class TokenConverter():
 #                TokenConverter._Convert1by1(OpCode.P)
 
 
-
- #           elif ctype is LShift:
- #
+#           Lshift and right shift do not currently work..
+#
+#           elif ctype is LShift:
 #                TokenConverter._Convert1by1(OpCode.AND, src, to)
 #                TokenConverter._Convert1by1(OpCode.SHL, src, to)
 #
@@ -322,10 +350,36 @@ class TokenConverter():
                 TokenConverter._Convert1by1(OpCode.XOR, src, to)
 
 
-            #MATH_OPS = [
-            #    Add, Sub, Mult, Div, FloorDiv, Mod, Pow, LShift, RShift, BitAnd, BitOr, BitXor,
-            #]
+            #comparator ops
 
+            elif ctype is Eq:
+                TokenConverter._Convert1by1(OpCode.EQUAL, src, to)
+
+            #doesnt seem to be op for not equal
+            elif ctype is NotEq:
+                TokenConverter._Convert1by1(OpCode.NUMNOTEQUAL, src, to)
+
+            elif ctype is Lt:
+                TokenConverter._Convert1by1(OpCode.LT, src, to)
+
+            elif ctype is LtE:
+                TokenConverter._Convert1by1(OpCode.LTE, src, to)
+
+            elif ctype is Gt:
+                TokenConverter._Convert1by1(OpCode.GT, src, to)
+
+            elif ctype is GtE:
+                TokenConverter._Convert1by1(OpCode.GTE, src, to)
+
+            #this should check to see if the two things are the same type or not?
+            #but these following wont do it
+#            elif type is Is:
+#                TokenConverter._Convert1by1(OpCode.EQUAL, src, to)
+#            elif type is IsNot:
+#                TokenConverter._Convert1by1(OpCode.NOT, src, to)
+
+            #not implemented yet are Is, IsNot, In, NotIn
+            #Eq, NotEq, Lt, LtE, Gt, GtE, Is, IsNot, In, NotIn
 
             else:
                 print("other type: %s " % type(src))

@@ -1,6 +1,6 @@
 from boa.Node.ASTNode import ASTNode
 from boa.Node.BodyNode import BodyNode
-from boa.Token.NeoToken import NeoToken,TokenConverter,Nop
+from boa.Token.NeoToken import NeoToken,TokenConverter,Nop,BRFalse,BRTrue
 from boa.Compiler import Compiler
 from neo.VM import OpCode
 import pdb
@@ -9,7 +9,7 @@ from _ast import FunctionDef,Return,Assign,\
     AugAssign,Load,Store,Name,Break,BinOp,Num,Str,\
     NameConstant,Ellipsis,Dict,List,Tuple,Set,Bytes, \
     Add,Sub,Mult,Div,FloorDiv,Mod,Pow,LShift,RShift, \
-    BitAnd,BitOr,BitXor
+    BitAnd,BitOr,BitXor, Compare, IfExp, If
 
 
 TERMINAL_ITEMS = [
@@ -20,6 +20,8 @@ NAME_ITEMS = [
     Name, NameConstant,
 ]
 
+BR_TRUE = 'BR_True'
+BR_FALSE = 'BR_False'
 
 
 import pprint
@@ -43,6 +45,8 @@ class FunctionNode(ASTNode):
     _BodyTokens = None
 
     _store_table = None
+
+    _duplicateAssigns = None
 
     @property
     def StoreTable(self):
@@ -90,6 +94,10 @@ class FunctionNode(ASTNode):
     def arguments(self):
         return self._arguments
 
+
+    @property
+    def duplicateAssigns(self):
+        return self._duplicateAssigns
 
 
     def __init__(self, node):
@@ -198,7 +206,7 @@ class FunctionNode(ASTNode):
 
     def _insert_begin(self):
 
-        varcount = len(self._arguments) + len(self._node.body)
+        varcount = len(self._arguments) + self._collapse_body()
         TokenConverter._InsertPushInteger(varcount, "begincode", self)
         TokenConverter._Insert1(OpCode.NEWARRAY, "", self)
         TokenConverter._Insert1(OpCode.TOALTSTACK, "", self)
@@ -219,6 +227,23 @@ class FunctionNode(ASTNode):
             TokenConverter._Insert1(OpCode.SETITEM, "", self)
 
 
+    def _collapse_body(self):
+        count = 0
+        assigns = []
+        self._duplicateAssigns = []
+
+        for n in self._node.body:
+            if type(n) is Assign:
+                if not n.targets[0].id in assigns:
+                    assigns.append(n.targets[0].id)
+                    count +=1
+                else:
+                    self._duplicateAssigns.append(n.targets[0].id)
+            else:
+                count += 1
+
+        return count
+
     def _convert_addr_in_method(self):
 
         compiler = Compiler.Instance()
@@ -227,18 +252,9 @@ class FunctionNode(ASTNode):
 
             if c.needfix and c.code != OpCode.CALL:
                 pprint.pprint(compiler.AddrConv)
-                print("code src adrd %s " % c.srcaddr)
-                print("c addr %s " % c.addr)
-#                print("c func addr %s " % c.fun)
                 addr = compiler.AddrConv[c.offset + 1]
-                print("ADDR COMP %s " % addr)
-                pprint.pprint(c)
-                print("c vars %s " % vars(c))
                 addr_off = addr - c.addr
-                print("addr offset %s " % addr_off)
-#                pdb.set_trace()
                 c.byts = addr_off.to_bytes(2,'little')
-                print("c bytes %s " % c.byts)
                 c.needfix = False
 
     def _insert_end(self, src=None):
@@ -250,7 +266,6 @@ class FunctionNode(ASTNode):
     def Validate(self):
 
         return super(FunctionNode, self).Validate()
-
 
 
     def __str__(self):
@@ -313,37 +328,57 @@ class FunctionNode(ASTNode):
             self._expand_item(item.value, index, item.targets[0])
 
         elif type(item) is Return:
-            print("WILL EXPAND RETURN!!!!!.... %s ----- %s" % (vars(item), vars(item.value)))
-            self._expand_item(item.value, index)
+            print("WILL EXPAND RETURN!!!!!.... %s " % (vars(item)))
 
-            # now we indicate an exit
-            breakval = BodyNode(Break(), index)
-            self._items.append(breakval)
+            if getattr(item, 'value',None) is not None:
 
-            # and then load the value
-            val = Name()
-            val.ctx = Load()
-            val.id = None
-            loadval = BodyNode(val, index)
-            self._items.append(loadval)
+                self._expand_item(item.value, index)
 
-            # we need a nop first befor return
-            nopval = BodyNode(Nop(), index)
-            self._items.append(nopval)
 
-            retval = BodyNode(item, index)
-            self._items.append(retval)
+            br_type = getattr(item, 'br_type',None)
+
+
+            if br_type is None:
+                breakval = BodyNode(Break(), index)
+
+                # now we indicate an exit
+                self._items.append(breakval)
+
+
+                # and then load the value
+                val = Name()
+                val.ctx = Load()
+                val.id = None
+                loadval = BodyNode(val, index)
+                self._items.append(loadval)
+
+                # we need a nop first befor return
+                nopval = BodyNode(Nop(), index)
+                self._items.append(nopval)
+
+
+                retval = BodyNode(item, index)
+                self._items.append(retval)
+
+            elif br_type == BR_TRUE:
+
+                retval = BodyNode(BRTrue(), index)
+                self._items.append(retval)
+
+                nopval = BodyNode(Nop(), index)
+                self._items.append(nopval)
+
+            elif br_type == BR_FALSE:
+
+                retval = BodyNode(BRFalse(), index)
+                self._items.append(retval)
+
+                nopval = BodyNode(Nop(), index)
+                self._items.append(nopval)
+
+
 
         elif type(item) is BinOp:
-            print("creating bin op!")
-
-            print("typse %s " % (type(item.left)), type(item.right))
-
-#            if type(item.left) is BinOp:
-#                self._build_item(item.left, index)
-#                self._expand_item(item.right, index)
-#            else:
-
 
             # load left
             self._expand_item(item.left, index, store=False)
@@ -354,46 +389,75 @@ class FunctionNode(ASTNode):
             self._items.append(opval)
 
 
+        elif type(item) is Compare:
+
+            print("LOADING COMPARE!!!!!")
+            #load the left operand
+            self._expand_item(item.left, index, store=False)
+
+            #load the right operand
+            right = item.comparators[0]
+            self._expand_item(right, index, store=False)
+
+            #create a new assignment value for the value of the operand
+
+            opval = BodyNode(item.ops[0], index)
+            self._items.append(opval)
+
+        elif type(item) in [If, IfExp]:
+
+            print("Parsing if: %s %s " % (item, vars(item)))
+
+            #add the test clause firt
+            self._build_item(item.test, index)
+
+
+            #add the indicator for break false first
+            #if it is not there, we need to add it
+            brfalse = None
+
+            for orelse in item.orelse:
+                if type(orelse) is Return:
+                    orelse.br_type = BR_FALSE
+                    brfalse = orelse
+            if brfalse is None:
+                brfalse = Return()
+                brfalse.br_type = BR_FALSE
+                #item.orelse.append(Nop())
+
+            self._build_item(brfalse, index)
+
+            #now add the body items?
+            #now add the non return body clauses
+            for ifitem in item.body:
+                if type(ifitem) is not Return:
+                    self._build_item(ifitem, index)
+
+
+
+            #now add the indicator for break true
+            #if it is not there, we need to add it
+            brtrue = None
+            for ifitem in item.body:
+                if type(item) is Return:
+                    item.br_type = BR_TRUE
+                    brtrue = item
+            if brtrue is None:
+                self._items.append(BodyNode(Nop(), index))
+                brtrue = Return()
+                brtrue.br_type = BR_TRUE
+
+            self._build_item(brtrue, index)
+
+
+            #and add the non return else clauses
+            for orelse in item.orelse:
+                if type(orelse) is not Return:
+                    self._build_item(orelse, index)
+
         else:
             print("ITEM::: %s %s" % (item, type(item)))
             node = BodyNode(item, index)
             self._items.append(node)
 
 
-
-
-    def evaluate_binop(self, binop):
-
-        if type(binop.left) is Num and type(binop.right) is Num:
-            return binop
-
-
-        while type(binop.left) is BinOp:
-            binop.left = self.evaluate_binop(binop.left)
-
-        while type(binop.right) is BinOp:
-            binop.right = self.evaluate_binop(binop.right)
-
-        num = Num()
-
-
-        print("OP:: %s " % binop.op)
-
-        if type(binop.op) == Add:
-            print("adding")
-            num.n = binop.left.n + binop.right.n
-
-        elif type(binop.op) == Sub:
-            print("subbing")
-            num.n = binop.left.n - binop.right.n
-
-
-        elif type(binop.op) == Mult:
-            print("multing")
-            num.n = binop.left.n * binop.right.n
-
-        #etc
-        print("n is %s " % vars(num))
-        print("evaluated binop... %s %s %s " % (binop.left.n, binop.right.n, num.n))
-
-        return num
