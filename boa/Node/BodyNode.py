@@ -64,7 +64,7 @@ class BodyNode(ASTNode):
 
 
         if type(self._node) is Assign:
-            print("vars %s " % self._node)
+#            print("vars %s " % self._node)
 
             target = self._node.targets[0]
 

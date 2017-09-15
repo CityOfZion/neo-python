@@ -267,6 +267,12 @@ class StateMachine(StateReader):
 
             asset.Expiration = sys.maxsize
 
+        #tx = engine.ScriptContainer
+        #print("*****************************************************")
+        #print("Renewed ASSET %s " % tx.Hash.ToBytes())
+        #print("*****************************************************")
+        engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
+
         engine.EvaluationStack.PushT(asset.Expiration)
 
         return True
@@ -323,9 +329,9 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-        #print("*****************************************************")
-        #print("CREATED CONTRACT %s " % hash.ToBytes())
-        #print("*****************************************************")
+#        print("*****************************************************")
+#        print("CREATED CONTRACT %s " % hash.ToBytes())
+#        print("*****************************************************")
         return True
 
 

@@ -4,6 +4,7 @@ from neo.UInt256 import UInt256
 from neo.UInt160 import UInt160
 from neo.Core.State.ValidatorState import ValidatorState
 import inspect
+import json
 
 @logged
 class DBCollection():

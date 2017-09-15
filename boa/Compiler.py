@@ -12,6 +12,7 @@ from neo.IO.BinaryWriter import BinaryWriter
 import binascii
 import symtable
 import pprint
+import os
 
 class Compiler():
 
@@ -99,7 +100,7 @@ class Compiler():
                 node.Convert()
 
     def Save(self):
-        print("saving...")
+#        print("saving...")
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream=stream)
@@ -113,15 +114,15 @@ class Compiler():
         out = stream.ToArray()
         outb = binascii.unhexlify(out)
 #        print("OUT %s  " % out)
-        print("OUT B: %s " % outb)
+#        print("OUT B: %s " % outb)
 
         StreamManager.ReleaseStream(stream)
 
 
         if self.ExpectedOutput is not None:
-            print("comparing expected %s and out %s " % (out, self.ExpectedOutput))
+#            print("comparing expected %s and out %s " % (out, self.ExpectedOutput))
             if self.ExpectedOutput == out:
-                print("ALLOK!!!")
+                print("Compilation Successful")
 
             else:
                 print("DOES NOT MATCH")
@@ -144,11 +145,11 @@ class Compiler():
         tokens = func.BodyTokens
         for key in sorted(tokens.keys()):
             val = tokens[key]
-            print("writing key %s -> %s" % (key, val.code))
+#            print("writing key %s -> %s" % (key, val.code))
 
             writer.WriteByte(val.code)
             if val.byts:
-                print("Writing bytes! %s " % val.byts)
+#                print("Writing bytes! %s " % val.byts)
                 writer.WriteBytes(val.byts)
 
 
@@ -172,10 +173,30 @@ class Compiler():
         return out
 
     @staticmethod
+    def WriteFile(data, path):
+
+        f = open(path, 'wb+')
+        f.write(data)
+        f.close()
+#        print("wrote data!")
+
+    @staticmethod
     def LoadAndSave(path, output_path=None):
         compiler = Compiler.Load(path)
         compiler.Convert()
         out = compiler.Save()
+
+        fullpath = os.path.realpath(path)
+
+        path, filename = os.path.split(fullpath)
+        newfilename = filename.replace('.py','.avm')
+        outpath = "%s/%s" % (path, newfilename)
+
+        if output_path is None:
+            Compiler.WriteFile(out, outpath)
+        else:
+            Compiler.WriteFile(out, output_path)
+
         return out
 
 

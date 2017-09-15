@@ -47,6 +47,9 @@ class FunctionNode(ASTNode):
     _store_table = None
 
     _duplicateAssigns = None
+    _allAssigns = None
+
+    _breakreturns = None
 
     @property
     def StoreTable(self):
@@ -97,6 +100,7 @@ class FunctionNode(ASTNode):
 
     @property
     def duplicateAssigns(self):
+        print("GETTING DUPLICATE ASSIGNS ! %s " % self._duplicateAssigns)
         return self._duplicateAssigns
 
 
@@ -110,6 +114,12 @@ class FunctionNode(ASTNode):
         self._BodyTokens = {}
 
         self._store_table = {}
+
+        self._breakreturns = []
+
+        self._duplicateAssigns = []
+
+        self._allAssigns = []
 
         super(FunctionNode, self).__init__(node)
 
@@ -167,7 +177,13 @@ class FunctionNode(ASTNode):
 
         for offset, item in enumerate(self._items):
             item.offset = offset
-            print("---------------------------Created item %s" % item.AddrOffset())
+            if type(item._node) in [BRTrue, BRFalse]:
+
+                brk_offset = self._breakreturns.pop(0)
+#                print("item break offset %s " % brk_offset)
+                item.offset = brk_offset
+
+#            print("---------------------------Created item %s" % item.AddrOffset())
 
 
 
@@ -215,7 +231,7 @@ class FunctionNode(ASTNode):
         for i in range(0, len(self._arguments)):
 
             arg = self._arguments[i]
-            print("INSERTING ARGUMENT ! %s" % (arg))
+#            print("INSERTING ARGUMENT ! %s" % (arg))
 
             TokenConverter._Insert1(OpCode.FROMALTSTACK, "set param %s" % i, self)
             TokenConverter._Insert1(OpCode.DUP, "", self)
@@ -227,18 +243,23 @@ class FunctionNode(ASTNode):
             TokenConverter._Insert1(OpCode.SETITEM, "", self)
 
 
+    def _check_duplicate_assigns(self, assign):
+        for target in assign.targets:
+            if not target.id in self._allAssigns:
+                self._allAssigns.append(target.id)
+            else:
+                self._duplicateAssigns.append(target.id)
+
+
     def _collapse_body(self):
         count = 0
         assigns = []
-        self._duplicateAssigns = []
 
         for n in self._node.body:
             if type(n) is Assign:
                 if not n.targets[0].id in assigns:
                     assigns.append(n.targets[0].id)
                     count +=1
-                else:
-                    self._duplicateAssigns.append(n.targets[0].id)
             else:
                 count += 1
 
@@ -251,9 +272,11 @@ class FunctionNode(ASTNode):
         for key, c in self._BodyTokens.items():
 
             if c.needfix and c.code != OpCode.CALL:
-                pprint.pprint(compiler.AddrConv)
+#                pprint.pprint(compiler.AddrConv)
                 addr = compiler.AddrConv[c.offset + 1]
+#                print("c offset, address %s %s " % (addr, (c.offset+1)))
                 addr_off = addr - c.addr
+#                print("c addr, addr_total %s %s " % (c.addr, addr_off))
                 c.byts = addr_off.to_bytes(2,'little')
                 c.needfix = False
 
@@ -276,7 +299,7 @@ class FunctionNode(ASTNode):
 
     def _expand_item(self, item, index, tostore=None, store=True):
 
-        print("EXPANDING ITEM %s %s" % (type(item), tostore))
+#        print("EXPANDING ITEM %s %s" % (type(item), tostore))
         if type(item) in NAME_ITEMS and not store:
             pushval = BodyNode(item, index)
             self._items.append(pushval)
@@ -322,13 +345,14 @@ class FunctionNode(ASTNode):
 
     def _build_item(self, item, index):
 
-        print("PARSING ITEM %s " % (type(item)))
+#        print("PARSING ITEM %s " % (type(item)))
         if type(item) in [Assign, AugAssign]:
-            print("WILL ASSIGN ITEMeeeeeee %s %s %s" % (item.value, item.targets[0], len(item.targets)))
+#            print("WILL ASSIGN ITEMeeeeeee %s %s %s" % (item.value, item.targets[0], len(item.targets)))
             self._expand_item(item.value, index, item.targets[0])
+            self._check_duplicate_assigns(item)
 
         elif type(item) is Return:
-            print("WILL EXPAND RETURN!!!!!.... %s " % (vars(item)))
+#            print("WILL EXPAND RETURN!!!!!.... %s " % (vars(item)))
 
             if getattr(item, 'value',None) is not None:
 
@@ -391,7 +415,7 @@ class FunctionNode(ASTNode):
 
         elif type(item) is Compare:
 
-            print("LOADING COMPARE!!!!!")
+#            print("LOADING COMPARE!!!!!")
             #load the left operand
             self._expand_item(item.left, index, store=False)
 
@@ -406,11 +430,25 @@ class FunctionNode(ASTNode):
 
         elif type(item) in [If, IfExp]:
 
-            print("Parsing if: %s %s " % (item, vars(item)))
+#            print("Parsing if: %s %s " % (item, vars(item)))
 
             #add the test clause firt
             self._build_item(item.test, index)
 
+
+            #now we need to create an assign object for the result of the test
+            #(both assign store and assign load
+            nodename = str(abs(item.test.__hash__()))
+            snode = Name()
+            snode.ctx = Store()
+            snode.id = nodename
+#            print("node id %s " % snode.id)
+            self._items.append(BodyNode(snode, index))
+
+            lnode = Name()
+            lnode.ctx = Load()
+            lnode.id = nodename
+            self._items.append(BodyNode(lnode, index))
 
             #add the indicator for break false first
             #if it is not there, we need to add it
@@ -423,17 +461,15 @@ class FunctionNode(ASTNode):
             if brfalse is None:
                 brfalse = Return()
                 brfalse.br_type = BR_FALSE
-                #item.orelse.append(Nop())
 
             self._build_item(brfalse, index)
+
 
             #now add the body items?
             #now add the non return body clauses
             for ifitem in item.body:
                 if type(ifitem) is not Return:
                     self._build_item(ifitem, index)
-
-
 
             #now add the indicator for break true
             #if it is not there, we need to add it
@@ -447,7 +483,13 @@ class FunctionNode(ASTNode):
                 brtrue = Return()
                 brtrue.br_type = BR_TRUE
 
+            self._breakreturns.append(len(self._items))
+
+
             self._build_item(brtrue, index)
+
+#            setattr(brfalse, 'break_offset', len(self._items))
+
 
 
             #and add the non return else clauses
@@ -455,8 +497,11 @@ class FunctionNode(ASTNode):
                 if type(orelse) is not Return:
                     self._build_item(orelse, index)
 
+            self._breakreturns.append(len(self._items))
+
+            self._items.append(BodyNode(Nop(), index))
+
         else:
-            print("ITEM::: %s %s" % (item, type(item)))
             node = BodyNode(item, index)
             self._items.append(node)
 

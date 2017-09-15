@@ -53,6 +53,24 @@ def LoadContract(args):
     return None
 
 
+def GatherLoadedContractParams(args, script):
+
+    params = parse_param(args[0], ignore_int=True, prefer_hex=False)
+
+    if type(params) is str:
+        params = params.encode('utf-8')
+
+    return_type = parse_param(args[1], ignore_int=True, prefer_hex=False)
+
+    if type(return_type) is str:
+        return_type = return_type.encode('utf-8')
+
+    needs_storage = bool(parse_param(args[2]))
+
+    out = generate_deploy_script(script,needs_storage=needs_storage,return_type=return_type,parameter_list=params)
+
+    return out
+
 def GatherContractDetails(function_code, prompter):
 
     name = None
@@ -107,11 +125,12 @@ def GatherContractDetails(function_code, prompter):
     print("Needs Storage: %s " % function_code.NeedsStorage)
     print(json.dumps(function_code.ToJson(), indent=4))
 
-    return generate_deploy_script(name, version, author, email, description,
-                                  function_code.NeedsStorage, function_code.ReturnType,
-                                  function_code.ParameterList, function_code.Script)
+    return generate_deploy_script(function_code.Script, name, version, author, email, description,
+                                  function_code.NeedsStorage, ord(function_code.ReturnType),
+                                  function_code.ParameterList)
 
-def generate_deploy_script(name, version, author, email, description, needs_storage, return_type, parameter_list, script):
+def generate_deploy_script(script, name='test', version='test', author='test', email='test',
+                           description='test', needs_storage=False, return_type=b'\xff', parameter_list=[]):
     sb = ScriptBuilder()
 
     sb.push(binascii.hexlify(description.encode('utf-8')))
@@ -120,7 +139,7 @@ def generate_deploy_script(name, version, author, email, description, needs_stor
     sb.push(binascii.hexlify(version.encode('utf-8')))
     sb.push(binascii.hexlify(name.encode('utf-8')))
     sb.WriteBool(needs_storage)
-    sb.push(ord(return_type))
+    sb.push(return_type)
     sb.push(binascii.hexlify(parameter_list))
     sb.WriteVarData(script)
     sb.EmitSysCall("Neo.Contract.Create")

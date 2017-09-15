@@ -21,8 +21,8 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke
-from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails
+from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
+from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,GatherLoadedContractParams
 
 from neo import Settings
 from neo.Fixed8 import Fixed8
@@ -39,6 +39,7 @@ from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 
+from boa.Compiler import Compiler
 
 logname = 'prompt.log'
 logging.basicConfig(
@@ -278,7 +279,49 @@ class PromptInterface(object):
         return
 
 
+    def do_build(self, arguments):
+        path = self.get_arg(arguments)
 
+        try:
+            contract_script = Compiler.Instance().LoadAndSave(path)
+            newpath = path.replace('.py','.avm')
+            print("Saved output to %s " % newpath)
+#            print("contract script %s " % contract_script)
+
+            test = self.get_arg(arguments, 1)
+
+            if test is not None and test == 'test':
+
+                if self.Wallet is not None:
+
+                    f_args = arguments[2:]
+                    i_args = arguments[5:]
+                    script = GatherLoadedContractParams(f_args, contract_script)
+
+                    tx,results = test_deploy_and_invoke(script, i_args, self.Wallet)
+
+                    if tx is not None and results is not None:
+                        print("\n-----------------------------------------------------------")
+                        print("Test deploy invoke successful")
+                        print("Results %s " % [str(item) for item in results])
+                        print("Invoke TX gas cost: %s " % (int(tx.Gas.value / Fixed8.D)))
+                        print("-------------------------------------------------------------\n")
+                        return
+                    else:
+                        print("test ivoke failed")
+                        print("tx is, results are %s %s " % (tx, results))
+                        return
+
+
+
+                else:
+
+                    print("please open a wallet to test built contract")
+
+
+
+        except Exception as e:
+            print("could not bulid %s " % e)
 
     def do_export(self, arguments):
         item = self.get_arg(arguments)
@@ -786,6 +829,8 @@ class PromptInterface(object):
                         self.do_create(arguments)
                     elif command == 'open':
                         self.do_open(arguments)
+                    elif command == 'build':
+                        self.do_build(arguments)
                     elif command == 'import':
                         self.do_import(arguments)
                     elif command == 'export':

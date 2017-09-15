@@ -73,8 +73,8 @@ class AssetState(StateBase):
         self.AssetType = reader.ReadByte()
         self.Name = reader.ReadVarString()
 
-        self.Amount = reader.ReadFixed8()
-        self.Available = reader.ReadFixed8()
+        self.Amount = reader.ReadFixed8(unsigned=True)
+        self.Available = reader.ReadFixed8(unsigned=True)
         self.Precision = reader.ReadByte()
 
         #fee mode
@@ -93,17 +93,17 @@ class AssetState(StateBase):
         writer.WriteUInt256( self.AssetId)
         writer.WriteByte(self.AssetType)
         writer.WriteVarString(self.Name)
-        writer.WriteFixed8(self.Amount)
+        writer.WriteFixed8(self.Amount, unsigned=True)
 
         if type(self.Available) is not Fixed8:
             raise Exception("AVAILABLE IS NOT FIXED 8!")
-
-        writer.WriteFixed8(self.Available)
+        writer.WriteFixed8(self.Available, unsigned=True)
         writer.WriteByte(self.Precision)
         writer.WriteByte(b'\x00')
         writer.WriteFixed8(self.Fee)
         writer.WriteUInt160(self.FeeAddress)
         self.Owner.Serialize(writer)
+        print("6")
         writer.WriteUInt160(self.Admin)
         writer.WriteUInt160(self.Issuer)
         writer.WriteUInt32(self.Expiration)

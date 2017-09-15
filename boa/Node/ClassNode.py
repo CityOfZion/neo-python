@@ -50,11 +50,11 @@ class ClassNode(ASTNode):
                 self._methods.append( node )
             else:
 
-                if type(node) is BodyNode and node.IsMeta:
-                    print("node is meta... %s " % node)
-                else:
-                    self._assignments.append(node)
-
+#                if type(node) is BodyNode and node.IsMeta:
+#                    print("node is meta... %s " % node)
+#                else:
+#                    self._assignments.append(node)
+                pass
 
     def Convert(self):
 
@@ -96,7 +96,6 @@ class ClassNode(ASTNode):
                 return False
 
         for assign in self._assignments:
-            print("validating assignment! %s " % assign)
             if not assign.Validate():
                 return False
 

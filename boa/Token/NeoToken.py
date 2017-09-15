@@ -19,10 +19,10 @@ class Nop(stmt):
     pass
 
 class BRTrue(stmt):
-    pass
+    break_offset=None
 
 class BRFalse(stmt):
-    pass
+    break_offset=None
 
 class NeoToken():
 
@@ -132,6 +132,7 @@ class TokenConverter():
 
         if src is not None:
             token.offset = src.offset
+
             compiler.AddrConv[src.offset] = start_addr
 
 
@@ -144,7 +145,9 @@ class TokenConverter():
             token.byts = data
             compiler.TokenAddr += len(data)
 
-        method.BodyTokens[start_addr] = token
+#        print("SETTING BODY TOKEN %s")
+        method.InsertBodyToken(token, start_addr)
+#        method.BodyTokens[start_addr] = token
 
         return token
 
@@ -200,6 +203,7 @@ class TokenConverter():
                 #print("STORED %s at %s " % (src._node.id, pos))
             else:
                 if src._node.id in to.duplicateAssigns:
+                    #print("item is duplicate %s " % src._node.id)
                     pos = to.StoreTable[src._node.id]
 #                    print("LOADING SAVED POS %s %s "  % (src._node.id, pos))
 
@@ -209,7 +213,7 @@ class TokenConverter():
         TokenConverter._Convert1by1(OpCode.TOALTSTACK, None, to)
 
         #set i?
-        print("Storing item %s %s " % (src._node.id, pos + len(to.arguments)))
+        #print("Storing item %s %s " % (src._node.id, pos + len(to.arguments)))
         TokenConverter._ConvertPushInteger(pos + len(to.arguments), None, to)
 
         #set item
@@ -229,7 +233,7 @@ class TokenConverter():
             elif src._node.id in to.arguments:
                 position = to.arguments.index(src._node.id)
 
-#        print("LOADING ITEM %s %s " % (src._node.id, position))
+        #print("LOADING ITEM %s %s " % (src._node.id, position))
         # get array
         TokenConverter._Convert1by1(OpCode.FROMALTSTACK, src, to)
         TokenConverter._Convert1by1(OpCode.DUP, None, to)
@@ -256,7 +260,7 @@ class TokenConverter():
             if ctx is None:
                 ctx = getattr(src._node, 'n',None)
 
-            print("CONVERTING: :%s %s %s" % (ctype, ctx, v))
+            #print("CONVERTING: :%s %s %s" % (ctype, ctx, v))
 
             if ctype is Nop:
                 TokenConverter._Convert1by1(OpCode.NOP, src, to)
@@ -265,6 +269,9 @@ class TokenConverter():
                 TokenConverter._Convert1by1(OpCode.RET, src, to)
 
             elif ctype is NameConstant:
+
+                #print("src node %s " % vars(src._node))
+
                 if src._node.value == True:
                     TokenConverter._ConvertPushInteger(1, src, to)
                 else:
@@ -277,7 +284,7 @@ class TokenConverter():
                 token.srcaddr = src.addr
 
             elif ctype is BRTrue:
-                token = TokenConverter._Convert1by1(OpCode.JMPIF, src, to, bytearray(2))
+                token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
                 token.needfix = True
                 token.srcaddr = src.addr
 
@@ -285,7 +292,6 @@ class TokenConverter():
                 token = TokenConverter._Convert1by1(OpCode.JMPIFNOT, src, to, bytearray(2))
                 token.needfix = True
                 token.srcaddr = src.addr
-                pass
 
             elif ctype is Num:
                 TokenConverter._ConvertPushInteger(src._node.n,src, to)
@@ -299,14 +305,15 @@ class TokenConverter():
                 elif type(src._node.ctx) is Del:
                     pass
                 else:
-                    print("colud not convert name object....")
+                    #print("colud not convert name object....")
+                    pass
 
 
             #flow
             elif ctype is If:
                 token = TokenConverter._Convert1by1(OpCode.JMP, src, to, bytearray(2))
                 token.needfix = True
-                token.srcaddr = src.tokenAddr
+                token.srcaddr = src.addr
 
 
             #Mathematical
@@ -382,7 +389,7 @@ class TokenConverter():
             #Eq, NotEq, Lt, LtE, Gt, GtE, Is, IsNot, In, NotIn
 
             else:
-                print("other type: %s " % type(src))
+                #print("other type: %s " % type(src))
                 pdb.set_trace()
 
 

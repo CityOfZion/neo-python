@@ -21,7 +21,6 @@ class ImportNode(ASTNode):
         for item in self._node.names:
             self._names.append(item.name)
 
-        print("built import node, names: %s " % self._names)
 
     def Validate(self):
 
