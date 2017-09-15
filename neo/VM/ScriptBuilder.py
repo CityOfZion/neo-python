@@ -137,7 +137,7 @@ class ScriptBuilder(object):
             self.WriteByte(length)
         elif length < 0x100:
             self.ms.write(PUSHDATA1)
-            self.ms.write(length)
+            self.WriteByte(length)
         elif length < 0x1000:
             self.ms.write(PUSHDATA2)
             self.WriteBytes(length.to_bytes(2, 'little'))

@@ -100,7 +100,6 @@ class FunctionNode(ASTNode):
 
     @property
     def duplicateAssigns(self):
-        print("GETTING DUPLICATE ASSIGNS ! %s " % self._duplicateAssigns)
         return self._duplicateAssigns
 
 

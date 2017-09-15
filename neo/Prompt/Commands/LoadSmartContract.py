@@ -143,7 +143,6 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
     sb.push(binascii.hexlify(parameter_list))
     sb.WriteVarData(script)
     sb.EmitSysCall("Neo.Contract.Create")
-
     script = sb.ToArray()
 
     return script
