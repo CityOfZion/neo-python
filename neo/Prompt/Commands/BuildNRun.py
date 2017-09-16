@@ -2,7 +2,7 @@ from neo.Prompt.Utils import get_arg
 from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams
 from neo.Prompt.Commands.Invoke import test_deploy_and_invoke
 from neo.Fixed8 import Fixed8
-from boa.Compiler import Compiler
+from boa.boa import Compiler
 
 
 

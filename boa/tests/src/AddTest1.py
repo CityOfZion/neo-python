@@ -1,6 +1,7 @@
 from neo.SmartContract.Framework.FunctionCode import FunctionCode
+from neo.SmartContract.Framework.Neo.Storage import Blah
 
-expected = b'54c56b61516c766b00527ac4526c766b51527ac46c766b00c36c766b51c3936c766b52527ac46c766b52c36c766b53527ac46203006c766b53c3616c7566'
+j = 223232
 
 
 class SCTest(FunctionCode):
@@ -13,3 +14,9 @@ class SCTest(FunctionCode):
         c = a + b
 
         return c
+
+
+#    @staticmethod
+#    def dostuff(a, b):
+#
+#        return a + b

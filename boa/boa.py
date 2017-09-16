@@ -1,21 +1,16 @@
 import os
 
-from byteplay3 import Code
+from boa.code.file import File
+
 
 class Compiler():
 
     __instance = None
 
-    data = None
+    files = None
 
-    code = None
-
-    def build(self):
-
-
-        code = Code.from_code()
-
-        pass
+    def __init__(self):
+        self.files = []
 
     @staticmethod
     def instance():
@@ -23,6 +18,14 @@ class Compiler():
         if not Compiler.__instance:
             Compiler.__instance = Compiler()
         return Compiler.__instance
+
+    @property
+    def default(self):
+        try:
+            return self.files[0]
+        except Exception as e:
+            pass
+        return None
 
     @staticmethod
     def write_file(data, path):
@@ -45,7 +48,7 @@ class Compiler():
 
         path, filename = os.path.split(fullpath)
         newfilename = filename.replace('.py', '.avm')
-        outpath = "%s/%s" % (path, newfilename)
+        outpath = '%s/%s' % (path, newfilename)
 
         if output_path is None:
             Compiler.write_file(out, outpath)
@@ -61,6 +64,7 @@ class Compiler():
 
         compiler = Compiler.instance()
 
-        file = open(path)
-        compiler.data = file.read()
-        file.close()
+        file = File(path)
+        compiler.files.append(file)
+
+        return compiler

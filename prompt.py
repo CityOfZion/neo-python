@@ -40,7 +40,7 @@ from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 
-from boa.Compiler import Compiler
+from boa.boa import Compiler
 
 logname = 'prompt.log'
 logging.basicConfig(

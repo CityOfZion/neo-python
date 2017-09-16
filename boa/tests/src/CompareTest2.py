@@ -5,17 +5,11 @@ from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
 class SCTest(FunctionCode):
 
-
     @staticmethod
     def Main(a, b):
-
 
         if a > b:
 
             return True
 
-
         return False
-
-
-

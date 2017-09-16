@@ -5,7 +5,6 @@ expected = b'5bc56b6c766b00527ac46c766b51527ac46c766b52527ac46c766b53527ac4616c7
 
 class SCTest(FunctionCode):
 
-
     @staticmethod
     def Main(a, b, c, d):
 
@@ -22,4 +21,3 @@ class SCTest(FunctionCode):
         j = h % g
 
         return j
-

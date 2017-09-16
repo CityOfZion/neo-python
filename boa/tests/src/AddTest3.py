@@ -15,5 +15,3 @@ class SCTest(FunctionCode):
         d = a + b - c * e
 
         return d
-
-

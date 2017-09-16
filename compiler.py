@@ -1,5 +1,5 @@
 
-from boa.Compiler import Compiler
+from boa.boa import Compiler
 
 Compiler.Compile('./boa/sources/Math.py')
 
