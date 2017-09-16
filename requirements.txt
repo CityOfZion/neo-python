@@ -7,6 +7,7 @@ bitarray==0.8.1
 bitcoin==1.1.42
 blessings==1.6
 bpython==0.16
+byteplay3==3.5.0
 certifi==2017.4.17
 cffi==1.10.0
 chardet==3.0.4
