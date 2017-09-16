@@ -63,6 +63,9 @@ class TransactionAttributeUsage(object):
 
 @logged
 class TransactionAttribute(Inventory, SerializableMixin):
+
+    MAX_ATTR_DATA_SIZE = 65535
+
     """docstring for TransactionAttribute"""
     def __init__(self, usage=None, data=None):
         super(TransactionAttribute, self).__init__()
@@ -85,16 +88,21 @@ class TransactionAttribute(Inventory, SerializableMixin):
 
         elif usage == TransactionAttributeUsage.DescriptionUrl:
 
-            self.Data == reader.ReadBytes(reader.ReadByte())
+            self.Data = reader.ReadBytes(reader.ReadByte())
 
         elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
-            self.Data = reader.ReadVarBytes()
+            self.Data = reader.ReadVarBytes(max=self.MAX_ATTR_DATA_SIZE)
         else:
             self.__log.debug("format error!!!")
 
 
     def Serialize(self, writer):
         writer.WriteByte(self.Usage)
+
+        length = len(self.Data)
+
+        if length > self.MAX_ATTR_DATA_SIZE:
+            raise Exception("Invalid transaction attribute")
 
         if self.Usage == TransactionAttributeUsage.ContractHash or self.Usage == TransactionAttributeUsage.Vote or \
                 (self.Usage >= TransactionAttributeUsage.Hash1 and self.Usage <= TransactionAttributeUsage.Hash15):

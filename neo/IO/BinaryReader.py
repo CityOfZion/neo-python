@@ -90,6 +90,10 @@ class BinaryReader(object):
             value = self.ReadUInt64()
         else:
             value = fb
+
+        if value > max:
+            raise Exception("Invalid format")
+
         return int(value)
 
     def ReadVarBytes(self, max=sys.maxsize):
@@ -107,12 +111,12 @@ class BinaryReader(object):
     def ReadFixedString(self, length):
         return self.ReadBytes(length).rstrip(b'\x00')
 
-    def ReadSerializableArray(self, class_name):
+    def ReadSerializableArray(self, class_name, max=sys.maxsize ):
 
         module = '.'.join(class_name.split('.')[:-1])
         klassname = class_name.split('.')[-1]
         klass = getattr(importlib.import_module(module), klassname)
-        length = self.ReadVarInt()
+        length = self.ReadVarInt(max=max)
         items = []
         try:
             for i in range(0, length):

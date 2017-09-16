@@ -155,6 +155,7 @@ class Transaction(Inventory, InventoryMixin):
 
     __references = None
 
+    MAX_TX_ATTRIBUTES=16
 
     """docstring for Transaction"""
     def __init__(self, inputs=[], outputs=[], attributes = [], scripts=[] ):
@@ -323,7 +324,7 @@ class Transaction(Inventory, InventoryMixin):
     def DeserializeUnsignedWithoutType(self,reader):
         self.Version = reader.ReadByte()
         self.DeserializeExclusiveData(reader)
-        self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute')
+        self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute',max=self.MAX_TX_ATTRIBUTES)
         self.inputs = reader.ReadSerializableArray( 'neo.Core.CoinReference.CoinReference')
         self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
 
@@ -343,6 +344,11 @@ class Transaction(Inventory, InventoryMixin):
         writer.WriteByte(self.Type)
         writer.WriteByte(self.Version)
         self.SerializeExclusiveData(writer)
+
+        if len(self.Attributes) > self.MAX_TX_ATTRIBUTES:
+
+            raise Exception("Cannot have more than %s transaction attributes" % self.MAX_TX_ATTRIBUTES)
+
         writer.WriteSerializableArray(self.Attributes)
         writer.WriteSerializableArray(self.inputs)
         writer.WriteSerializableArray(self.outputs)
