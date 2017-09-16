@@ -1,19 +1,6 @@
-
-import ast
-
-from _ast import ClassDef
-
-import json
-
-from boa.Node.ASTNode import ASTNode
-
-from neo.IO.MemoryStream import StreamManager
-from neo.IO.BinaryWriter import BinaryWriter
-import binascii
-import symtable
-import pprint
 import os
 
+from byteplay3 import Code
 
 class Compiler():
 
@@ -21,7 +8,12 @@ class Compiler():
 
     data = None
 
+    code = None
+
     def build(self):
+
+
+        code = Code.from_code()
 
         pass
 

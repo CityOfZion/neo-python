@@ -32,7 +32,7 @@
   },
 
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/SC23",
+    "DataDirectoryPath": "./Chains/SC234",
     "NodePort": 20333,
     "WsPort": 20334,
     "UriPrefix": [ "http://*:20332" ],
