@@ -1,3 +1,6 @@
+from byteplay3 import *
+
+from boa.code import pyop
 
 class Line():
 
@@ -9,18 +12,18 @@ class Line():
     @property
     def is_import(self):
         for i, (op, arg) in enumerate(self.items):
-            if str(op) in ['IMPORT_NAME', 'IMPORT_FROM']:
+            if op in [pyop.IMPORT_NAME, pyop.IMPORT_FROM, pyop.IMPORT_STAR]:
                 return True
         return False
 
     @property
     def is_definition(self):
-        return len(self.items) == 3 and str(self.items[1][0]) == 'LOAD_CONST' and str(self.items[2][0]) == 'STORE_NAME'
+        return len(self.items) == 3 and self.items[1][0] == pyop.LOAD_CONST and self.items[2][0] == pyop.STORE_NAME
 #        return False
 
     @property
     def is_class(self):
         for i, (op, arg) in enumerate(self.items):
-            if str(op) == 'LOAD_BUILD_CLASS':
+            if op == pyop.LOAD_BUILD_CLASS:
                 return True
         return False

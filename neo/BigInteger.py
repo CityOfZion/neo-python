@@ -6,8 +6,8 @@ from neo.Cryptography.Helper import base256_encode
 class BigInteger(int):
 
     @staticmethod
-    def FromBytes(data):
-        return BigInteger( int.from_bytes(data,'little',signed=True))
+    def FromBytes(data, signed=True):
+        return BigInteger( int.from_bytes(data,'little',signed=signed))
 
     def Equals(self, other):
         return super(BigInteger, self).__eq__(other)

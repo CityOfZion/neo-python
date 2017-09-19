@@ -247,6 +247,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             shash = contract_state.Code.ScriptHash()
 
+
             invoke_args.reverse()
 
             sb = ScriptBuilder()
@@ -290,7 +291,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 # set the amount of gas the tx will need
                 itx.Gas = consumed
 
-                return itx, engine.EvaluationStack.Items
+                result = engine.ResultsForCode(contract_state.Code)
+                return itx, result
             else:
                 print("error executing invoke contract...")
 

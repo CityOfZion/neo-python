@@ -1,19 +1,20 @@
 from neo.SmartContract.Framework.FunctionCode import FunctionCode
-from neo.SmartContract.Framework.Neo.Storage import Blah
-
-j = 223232
-
 
 class SCTest(FunctionCode):
 
     @staticmethod
-    def Main():
+    def Main(a, b, c, d):
 
-        a = 1
-        b = 2
-        c = a + b
+        a2 = a * 2
 
-        return c
+        b2 = b + 1
+
+        c2 = c / 2
+
+        d2 = d - 1
+
+
+        return a2 + b2 + c2 + d2
 
 
 #    @staticmethod

@@ -4,6 +4,7 @@ from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.OpCode import *
 from autologging import logged
+from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.BigInteger import BigInteger
 import hashlib
 from neo.VM.InteropService import Array,Struct
@@ -68,6 +69,7 @@ class ExecutionEngine():
     def EntryContext(self):
         return self.InvocationStack.Peek( self.InvocationStack.Count - 1)
 
+
     def __init__(self, container=None, crypto=None, table=None, service = None):
         self._ScriptContainer = container
         self._Crypto = crypto
@@ -81,6 +83,30 @@ class ExecutionEngine():
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
+
+
+    def ResultsForCode(self, contract):
+        try:
+            return_type = contract.ReturnType
+
+            item = self.EvaluationStack.Items[0]
+            if return_type == ContractParameterType.Integer:
+                return item.GetBigInteger()
+            elif return_type == ContractParameterType.Boolean:
+                return item.GetBoolean()
+            elif return_type == ContractParameterType.ByteArray:
+                return item.GetByteArray()
+            elif return_type == ContractParameterType.String:
+                return str(item)
+            elif return_type == ContractParameterType.Array:
+                return item.GetArray()
+            else:
+                print("couldnt format results for return type %s " % return_type)
+            return item
+        except Exception as e:
+            pass
+
+        return self.EvaluationStack.Items
 
 
     def Dispose(self):

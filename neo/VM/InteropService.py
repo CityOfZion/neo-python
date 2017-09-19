@@ -147,12 +147,19 @@ class ByteArray(StackItem):
 
         return self._value == other._value
 
+    def GetBigInteger(self):
+        try:
+            b = BigInteger.FromBytes(self._value, signed=False)
+            return b
+        except Exception as e:
+            pass
+        return self._value
 
     def GetByteArray(self):
         return self._value
 
     def __str__(self):
-        return "ByteArray: %s %s" % (len(self._value),self._value.hex())
+        return "ByteArray: %s" % self._value
 
 class Integer(StackItem):
 

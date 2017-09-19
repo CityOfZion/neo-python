@@ -1,16 +1,18 @@
 import os
+import binascii
+from boa.code.module import Module
 
-from boa.code.file import File
-
+from neo.IO.MemoryStream import StreamManager
+from neo.IO.BinaryWriter import BinaryWriter
 
 class Compiler():
 
     __instance = None
 
-    files = None
+    modules = None
 
     def __init__(self):
-        self.files = []
+        self.modules = []
 
     @staticmethod
     def instance():
@@ -22,7 +24,7 @@ class Compiler():
     @property
     def default(self):
         try:
-            return self.files[0]
+            return self.modules[0]
         except Exception as e:
             pass
         return None
@@ -34,15 +36,25 @@ class Compiler():
         f.write(data)
         f.close()
 
-    def save(self):
-        pass
+    def write(self):
+        stream = StreamManager.GetStream()
+        writer = BinaryWriter(stream)
+
+        method = self.default.main
+        writer.WriteBytes( method.write())
+
+        out = stream.getbuffer()
+        return bytes(out)
 
     @staticmethod
     def load_and_save(path, output_path=None):
 
         compiler = Compiler.load(path)
-        compiler.Convert()
-        out = compiler.save()
+#        compiler.Convert()
+        data = compiler.write()
+
+        hex = binascii.hexlify(data)
+#        print("hex is %s " % hex)
 
         fullpath = os.path.realpath(path)
 
@@ -51,11 +63,11 @@ class Compiler():
         outpath = '%s/%s' % (path, newfilename)
 
         if output_path is None:
-            Compiler.write_file(out, outpath)
+            Compiler.write_file(data, outpath)
         else:
-            Compiler.write_file(out, output_path)
+            Compiler.write_file(data, output_path)
 
-        return out
+        return data
 
     @staticmethod
     def load(path):
@@ -64,7 +76,7 @@ class Compiler():
 
         compiler = Compiler.instance()
 
-        file = File(path)
-        compiler.files.append(file)
+        module = Module(path)
+        compiler.modules.append(module)
 
         return compiler

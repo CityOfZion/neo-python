@@ -6,7 +6,7 @@ from boa.code.line import Line
 from boa.code.items import Definition, Klass, Import
 
 
-class File():
+class Module():
 
     bp = None  # this is to store the byteplay reference
 
@@ -19,6 +19,17 @@ class File():
     module_variables = None  # list of module variables
 
     classes = None  # a list of classes
+
+    methods = None # a list to keep all methods in the module
+
+    @property
+    def main(self):
+        for m in self.methods:
+            if m.name=='Main':
+                return m
+        if len(self.methods):
+            return self.methods[0]
+        return None
 
     def __init__(self, path):
 
@@ -39,6 +50,7 @@ class File():
         self.lines = []
         self.imports = []
         self.module_variables = []
+        self.methods = []
         self.classes = []
 
         self.split_lines()
@@ -50,7 +62,7 @@ class File():
             elif lineset.is_definition:
                 self.module_variables.append(Definition(lineset.items))
             elif lineset.is_class:
-                self.classes.append(Klass(lineset.items))
+                self.classes.append(Klass(lineset.items, self))
             else:
                 print('not sure what to do with line %s ' % lineset)
 
