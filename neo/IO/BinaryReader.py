@@ -155,6 +155,12 @@ class BinaryReader(object):
             items.append( ba.hex())
         return items
 
-    def ReadFixed8(self):
-        fval = self.ReadInt64()
-        return Fixed8( fval )
+    def ReadFixed8(self, unsigned=False):
+
+
+        if unsigned:
+            fval = self.ReadUInt64()
+        else:
+            fval = self.ReadInt64()
+
+        return Fixed8(fval)
