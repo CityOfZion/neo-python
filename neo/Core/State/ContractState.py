@@ -39,7 +39,7 @@ class ContractState(StateBase):
         self.CodeVersion = reader.ReadVarString(max=252)
         self.Author = reader.ReadVarString(max=252)
         self.Email = reader.ReadVarString(max=252)
-        self.Description = reader.ReadVarString(max=252)
+        self.Description = reader.ReadVarString(max=65536)
 
     @staticmethod
     def DeserializeFromDB(buffer):
