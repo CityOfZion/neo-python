@@ -98,6 +98,9 @@ class PyToken():
             elif op == pyop.JUMP_FORWARD:
                 token = tokenizer.convert1(OpCode.JMP,self, data=bytearray(2))
 
+            elif op == pyop.JUMP_ABSOLUTE:
+                token = tokenizer.convert1(OpCode.JMP,self, data=bytearray(2))
+
             elif op == pyop.POP_JUMP_IF_FALSE:
                 token = tokenizer.convert1(OpCode.JMPIFNOT, self, data=bytearray(2))
 

@@ -6,19 +6,29 @@ expected = b'53c56b6c766b00527ac46c766b51527ac461006c766b52527ac46c766b00c36c766
 class SCTest(FunctionCode):
 
     @staticmethod
-    def Main(a, b):
+    def Main(a, b, c, d):
 
-        j = 4
-        q = 2
         m = 0
 
         if a > b:
 
-            m = j + b
+            if c > d:
+
+                m = 3
+
+            else:
+
+                m = 4
 
         else:
 
-            m = q + a
+            if c > d:
+
+                m = 1
+
+            else:
+
+                m = 2
 
         return m
 
