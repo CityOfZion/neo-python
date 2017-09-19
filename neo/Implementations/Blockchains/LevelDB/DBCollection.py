@@ -1,10 +1,7 @@
 import binascii
 from autologging import logged
-from neo.UInt256 import UInt256
-from neo.UInt160 import UInt160
-from neo.Core.State.ValidatorState import ValidatorState
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 import inspect
-import json
 
 @logged
 class DBCollection():
@@ -127,7 +124,6 @@ class DBCollection():
 
     def TryGet(self, keyval):
 
-        #if the item has been looked up, or added it will be in Keys
         if keyval in self.Collection.keys():
             item = self.Collection[keyval]
             if item is None:

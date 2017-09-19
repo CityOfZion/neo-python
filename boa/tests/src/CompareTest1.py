@@ -1,7 +1,5 @@
 from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
-expected = b'53c56b6c766b00527ac46c766b51527ac461006c766b52527ac46c766b00c36c766b51c3a06c766b52527ac4616c7566'
-
 
 class SCTest(FunctionCode):
 
@@ -18,7 +16,13 @@ class SCTest(FunctionCode):
 
             else:
 
-                m = 4
+                if b > c:
+
+                    return 8
+
+                else:
+
+                    return 10
 
         else:
 
@@ -28,7 +32,13 @@ class SCTest(FunctionCode):
 
             else:
 
-                m = 2
+                if b < c:
+
+                    return 11
+
+                else:
+
+                    m = 22
 
         return m
 
