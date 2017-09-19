@@ -50,11 +50,8 @@ class Compiler():
     def load_and_save(path, output_path=None):
 
         compiler = Compiler.load(path)
-#        compiler.Convert()
-        data = compiler.write()
 
-        hex = binascii.hexlify(data)
-#        print("hex is %s " % hex)
+        data = compiler.write()
 
         fullpath = os.path.realpath(path)
 

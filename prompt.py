@@ -828,7 +828,7 @@ if __name__ == "__main__":
 
     cli = PromptInterface()
 
-#    reactor.suggestThreadPoolSize(15)
+    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
     reactor.run()

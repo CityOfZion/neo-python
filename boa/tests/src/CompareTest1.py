@@ -1,20 +1,26 @@
-def Main(a, b):
+from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
-    j = 0
+expected = b'53c56b6c766b00527ac46c766b51527ac461006c766b52527ac46c766b00c36c766b51c3a06c766b52527ac4616c7566'
 
-    if a > b:
 
-        j = a
+class SCTest(FunctionCode):
 
-    else:
+    @staticmethod
+    def Main(a, b):
 
-        j = b
+        j = 4
+        q = 2
+        m = 0
 
-    return j
+        if a > b:
 
-import dis
+            m = j + b
 
-from dis import disassemble
-dis.dis(Main)
+        else:
 
-import di
+            m = q + a
+
+        return m
+
+
+

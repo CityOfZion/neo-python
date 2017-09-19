@@ -8,7 +8,7 @@ class SCTest(FunctionCode):
     @staticmethod
     def Main(a, b):
 
-        if a > b:
+        if a == b:
 
             return True
 

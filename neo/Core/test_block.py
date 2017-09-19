@@ -52,12 +52,10 @@ class BlocksTestCase(NeoTestCase):
 
     @staticmethod
     def BlockIndexOne():
-        return
         block = Helper.AsSerializableWithType(BlocksTestCase.b2raw, 'neo.Core.Block.Block')
         return block
 
     def test_block_deserialize(self):
-        return
 
         block = Helper.AsSerializableWithType(self.rawblock_hex, 'neo.Core.Block.Block')
 
@@ -90,7 +88,7 @@ class BlocksTestCase(NeoTestCase):
 
 
     def test_block_two(self):
-        return
+
         hexdata = binascii.unhexlify(self.b2raw)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -142,7 +140,7 @@ class BlocksTestCase(NeoTestCase):
 
 
     def test_block_seventyfour(self):
-        return
+
 
         hexdata = binascii.unhexlify(self.sf_raw)
 
@@ -156,7 +154,7 @@ class BlocksTestCase(NeoTestCase):
     pb_hash = b'077c7fc9a85d777aeb42e1076bd98451f16e59354bfb6fed998ccabd93f6ccb9'
 
     def test_block_publish_tx(self):
-        return
+
         hexdata = binascii.unhexlify(self.pb_raw)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -169,7 +167,7 @@ class BlocksTestCase(NeoTestCase):
     t992h = b'bcfc016b33f6abc1f1109878f6d69a8aaf42b9ac09c5793507afbbdccdb8f68f'
     t992m = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'
     def test_2992(self):
-        return
+
         hexdata = binascii.unhexlify(self.t992)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -187,7 +185,7 @@ class BlocksTestCase(NeoTestCase):
     big_tx_hash = b'93fb1184b95fd785022dea163ffc60ef6fa548ca240b49dd8339700cee581991'
 
     def test_1050514(self):
-        return
+
         path = '%s/fixtures/1050514.txt' % os.getcwd()
 
         with open(path,'rb') as f:

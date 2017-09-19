@@ -100,7 +100,7 @@ class AssetState(StateBase):
         writer.WriteUInt256( self.AssetId)
         writer.WriteByte(self.AssetType)
         writer.WriteVarString(self.Name)
-        print("WILL WRITE ASSET STATE %s " % self.Amount.value)
+
         if self.Amount.value > -1:
             writer.WriteFixed8(self.Amount, unsigned=True)
         else:

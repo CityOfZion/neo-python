@@ -8,6 +8,9 @@ class SCTest(FunctionCode):
     @staticmethod
     def Main(a, b):
 
-        j = False
+        if a > b:
 
-        j = a > b
+            return 3
+
+
+        return 2

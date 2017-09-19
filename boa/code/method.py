@@ -1,4 +1,4 @@
-from byteplay3 import SetLinenoType,Opcode
+from byteplay3 import SetLinenoType,Opcode,Label
 
 from boa.code.token import PyToken,VMToken,VMTokenizer
 from boa.code import pyop
@@ -12,8 +12,14 @@ class Block():
 
     oplist = None # list
 
+    _label = None # list
+
     def __init__(self, operation_list):
         self.oplist = operation_list
+
+    def set_label(self, label):
+        self._label = label
+        self.oplist[0].jump_label = label
 
     @property
     def line(self):
@@ -26,9 +32,10 @@ class Block():
     def is_return(self):
         if len(self.oplist):
             token = self.oplist[-1]
-
             if token.py_op == pyop.RETURN_VALUE:
                 return True
+
+
 
         return False
 
@@ -40,6 +47,12 @@ class Block():
         newitems = [PyToken(pyop.NOP,self.line), PyToken(pyop.FROMALTSTACK, self.line), PyToken(pyop.DROP, self.line)]
 
         self.oplist = tstart + newitems + tend
+
+
+    def __str__(self):
+        if self._label:
+            return '[Block] %s          [label] %s' % (self.oplist, self._label)
+        return '[Block]: %s' % self.oplist
 
 
 class Method():
@@ -114,6 +127,7 @@ class Method():
 
         self.tokenize()
 
+        self.convert_jumps()
 
     def print(self):
         print(self.code)
@@ -136,6 +150,8 @@ class Method():
 
         self.tokenizer = VMTokenizer(self)
 
+        labels = {}
+
 
         for i, (op, arg) in enumerate(self.code):
 
@@ -149,10 +165,12 @@ class Method():
                 if block_group is not None:
 
                     self.blocks.append( Block(block_group))
+
                 block_group = []
 
+            elif type(op) is Label:
+                labels[1 + len(self.blocks)] = op
             else:
-
                 if op == pyop.STORE_FAST and not arg in self.local_stores.keys():
                     length = len(self.local_stores)
                     self.local_stores[arg] = length
@@ -161,12 +179,15 @@ class Method():
 
                 block_group.append(token)
 
-
         if len(block_group):
             self.blocks.append( Block(block_group))
 
 
-#    def insert_arguments(self):
+        for key,label in labels.items():
+            kint = int(key)
+            self.blocks[kint].set_label(label)
+
+#        [print("block: %s " % str(block)) for block in self.blocks]
 
     def process_block_groups(self):
 
@@ -179,15 +200,13 @@ class Method():
 
                 #this jump needs to jump 3 bytes.  why? stay tuned to find out
                 block_addr = b'\x03\x00'
-                ret_token = PyToken(Opcode(pyop.JUMP_FORWARD),block.line,args=block_addr)
+
+                ret_token = PyToken(pyop.BR_S,block.line,args=block_addr)
+                ret_token.jump_label = block.oplist[0].jump_label
+                block.oplist[0].jump_label = None
                 block.oplist.insert(0, ret_token)
+                block.mark_as_end()
 
-
-        #now we have to get the last block ( which should be a return block )
-        #and insert the 'end code' for the vm
-
-        last_block = self.blocks[-1]
-        last_block.mark_as_end()
 
         alltokens = []
         for block in self.blocks:
@@ -203,6 +222,25 @@ class Method():
 
         for t in self.tokens:
             t.to_vm(self.tokenizer)
+
+
+    def convert_jumps(self):
+        for key,vm_token in self.tokenizer.vm_tokens.items():
+
+            if vm_token.pytoken and type(vm_token.pytoken.args) is Label:
+
+                label = vm_token.pytoken.args
+
+                for key2, vm_token_target in self.tokenizer.vm_tokens.items():
+
+                    if vm_token_target.pytoken and vm_token_target.pytoken.jump_label is not None:
+
+                        jump_to_label = vm_token_target.pytoken.jump_label
+
+                        if jump_to_label == label:
+
+                            difference = vm_token_target.addr - vm_token.addr
+                            vm_token.data = difference.to_bytes(2, 'little')
 
 
     def write(self):

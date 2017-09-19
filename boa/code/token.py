@@ -22,6 +22,8 @@ class PyToken():
 
     tokenizer = None
 
+    jump_label = None
+
     @property
     def op_name(self):
         if type(self.py_op) is int:
@@ -90,8 +92,14 @@ class PyToken():
 
 
             #control flow
+            elif op == pyop.BR_S:
+                token = tokenizer.convert1(OpCode.JMP, self, data=self.args)
+
             elif op == pyop.JUMP_FORWARD:
-                token = tokenizer.convert1(OpCode.JMP,self, data=self.args)
+                token = tokenizer.convert1(OpCode.JMP,self, data=bytearray(2))
+
+            elif op == pyop.POP_JUMP_IF_FALSE:
+                token = tokenizer.convert1(OpCode.JMPIFNOT, self, data=bytearray(2))
 
 
             elif op == pyop.FROMALTSTACK:
@@ -128,6 +136,22 @@ class PyToken():
                 token = tokenizer.convert1(OpCode.MOD, self)
 
 
+            #compare
+
+            elif op == pyop.COMPARE_OP:
+
+                if self.args == '>':
+                    token = tokenizer.convert1(OpCode.GT, self)
+                elif self.args == '>=':
+                    token = tokenizer.convert1(OpCode.GTE, self)
+                elif self.args == '<':
+                    token = tokenizer.convert1(OpCode.LT, self)
+                elif self.args == '<=':
+                    token = tokenizer.convert1(OpCode.LTE, self)
+                elif self.args == '==':
+                    token = tokenizer.convert1(OpCode.EQUAL, self)
+
+#                tokn = tokenizer.convert1(Op)
 
 #        print("created vm token %s " % token)
 #
@@ -171,13 +195,15 @@ class VMTokenizer():
 
     _address = None
 
-    _items = None
+    vm_tokens = None
+
+
 
 
     def __init__(self, method):
         self.method = method
         self._address = 0
-        self._items = {}
+        self.vm_tokens = {}
 
         self.method_begin_items()
 
@@ -186,21 +212,29 @@ class VMTokenizer():
 
         lineno = self.method.start_line_no
         pstart = True
-        for i, (key, value) in enumerate(self._items.items()):
+        for i, (key, value) in enumerate(self.vm_tokens.items()):
 
             if value.pytoken:
                 pt = value.pytoken
 
                 do_print_line_no = False
+                to_label = None
                 if pt.line_no != lineno:
                     print("\n")
                     lineno = pt.line_no
                     do_print_line_no = True
 
+
+                if pt.args and type(pt.args) is Label:
+                    addr = value.addr
+                    plus_addr = int.from_bytes(value.data,'little')
+                    target_addr = addr + plus_addr
+                    to_label = 'to %s ' % target_addr
+
                 lno = "{:<10}".format(pt.line_no if do_print_line_no or pstart else '')
                 addr = "{:<4}".format(key)
                 op = "{:<20}".format(str(pt.op_name))
-                arg = "{:<50}".format(pt.arg_s)
+                arg = "{:<50}".format(to_label if to_label is not None else pt.arg_s)
 
                 print("%s%s%s%s" % (lno,addr,op,arg))
 
@@ -208,12 +242,13 @@ class VMTokenizer():
 
     def to_b(self):
         b_array = bytearray()
-        for key,vm_token in self._items.items():
+        for key,vm_token in self.vm_tokens.items():
 
 #            if vm_token.pytoken:
 #                print("%s  -->  %s" % (vm_token.pytoken.py_op, vm_token.vm_op))
 #            else:
 #                print("%s  -->  %s" % (vm_token.pytoken, vm_token.vm_op))
+
             b_array.append(vm_token.out_op)
 
             if vm_token.data is not None:
@@ -243,7 +278,7 @@ class VMTokenizer():
 
     def insert_vm_token_at(self, vm_token, index):
         #print("INSERTING VM TOKEN AT %s %s " % (vm_token.vm_op, index))
-        self._items[index] = vm_token
+        self.vm_tokens[index] = vm_token
 
 
     def insert1(self, vm_op, data=None):
@@ -319,7 +354,7 @@ class VMTokenizer():
         self._address += 1
 
 
-        if vmtoken.data is not None:
+        if vmtoken.data is not None and type(vmtoken.data) is not Label:
 
             self._address += len(data)
 
