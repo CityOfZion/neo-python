@@ -104,7 +104,7 @@ class Helper(object):
 
             res =  engine.Execute()
             if not res:
-                print("engine did not execune")
+                print("engine did not execute")
                 return False
 
 

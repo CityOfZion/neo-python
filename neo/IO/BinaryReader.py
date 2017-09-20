@@ -118,6 +118,7 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt(max=max)
         items = []
+
         try:
             for i in range(0, length):
                 item = klass()
