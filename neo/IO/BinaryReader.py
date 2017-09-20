@@ -118,12 +118,12 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt(max=max)
         items = []
-        print("WILL TRY TO READ SERIALIZABLE ARRAY.... %s %s " % (length, class_name))
+#        print("WILL TRY TO READ SERIALIZABLE ARRAY.... %s %s " % (length, class_name))
         try:
             for i in range(0, length):
                 item = klass()
                 item.Deserialize(self)
-                print("deserialized item %s %s " % ( i, item))
+#                print("deserialized item %s %s " % ( i, item))
                 items.append(item)
         except Exception as e:
             print("Coludnt deserialize %s " % e)

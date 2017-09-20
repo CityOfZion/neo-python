@@ -112,7 +112,15 @@ class PyToken():
 
             #loading constants ( ie 1, 2 etc)
             elif op == pyop.LOAD_CONST:
-                token = tokenizer.convert_push_integer(self.args, self)
+                if type(self.args) is int:
+                    token = tokenizer.convert_push_integer(self.args, self)
+                elif type(self.args) is str:
+
+                    str_bytes = self.args.encode('utf-8')
+                    self.args = str_bytes
+                    print("convert argument %s " % self.args)
+
+                    token = tokenizer.convert_push_data(self.args, self)
 
             #storing / loading local variables
             elif op == pyop.STORE_FAST:
@@ -417,10 +425,10 @@ class VMTokenizer():
 
         position = self.method.local_stores[local_name]
 
-        #print("POSITION FOR LOCAL NAME %s %s " % (local_name, position))
+        print("POSITION FOR LOCAL NAME %s %s " % (local_name, position))
 
         # set i the index of the local variable to be stored
-        self.convert_push_integer(position,)
+        self.convert_push_integer(position)
 
         # set item
         self.convert_push_integer(2)
