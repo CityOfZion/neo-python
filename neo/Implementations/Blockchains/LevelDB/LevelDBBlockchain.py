@@ -118,8 +118,8 @@ class LevelDBBlockchain(Blockchain):
             current_header_height = int.from_bytes(ba[-4:], 'little')
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
-            self.__log.debug("current header hash!! %s " % current_header_hash)
-            self.__log.debug("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
+#            self.__log.debug("current header hash!! %s " % current_header_hash)
+#            self.__log.debug("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
 
 
             hashes = []
@@ -157,7 +157,21 @@ class LevelDBBlockchain(Blockchain):
                     if h.Index > 0:
                         self._header_index.append(h.Hash.ToBytes())
 
+            elif current_header_height > self._stored_header_count:
 
+                try:
+                    hash = current_header_hash
+                    targethash = self._header_index[-1]
+
+                    newhashes = []
+                    while hash != targethash:
+                        header = self.GetHeader(hash)
+                        newhashes.insert(0, header)
+                        hash = header.PrevHash.ToBytes()
+
+                    self.AddHeaders(newhashes)
+                except Exception as e:
+                    pass
         else:
             with self._db.write_batch() as wb:
                 for key,value in self._db.iterator():
@@ -347,7 +361,7 @@ class LevelDBBlockchain(Blockchain):
             out = out[8:]
             outhex = binascii.unhexlify(out)
             return Header.FromTrimmedData(outhex, 0)
-        except TypeError:
+        except TypeError as e2:
             pass
         except Exception as e:
             self.__log.debug("OTHER ERRROR %s " % e)

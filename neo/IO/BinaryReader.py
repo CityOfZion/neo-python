@@ -118,7 +118,7 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt(max=max)
         items = []
-#        print("WILL TRY TO READ SERIALIZABLE ARRAY.... %s %s " % (length, class_name))
+
         try:
             for i in range(0, length):
                 item = klass()

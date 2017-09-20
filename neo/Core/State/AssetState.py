@@ -114,7 +114,6 @@ class AssetState(StateBase):
         writer.WriteFixed8(self.Fee)
         writer.WriteUInt160(self.FeeAddress)
         self.Owner.Serialize(writer)
-        print("6")
         writer.WriteUInt160(self.Admin)
         writer.WriteUInt160(self.Issuer)
         writer.WriteUInt32(self.Expiration)
