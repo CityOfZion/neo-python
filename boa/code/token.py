@@ -69,7 +69,7 @@ class PyToken():
         return '%s      %s   %s' % (self.line_no, self.addr, self.op_name)
 
 
-    def to_vm(self, tokenizer):
+    def to_vm(self, tokenizer, prev_token=None):
 
         self.tokenizer = tokenizer
         token = None
@@ -132,7 +132,13 @@ class PyToken():
 
             #math
             elif op == pyop.BINARY_ADD:
-                token = tokenizer.convert1(OpCode.ADD, self)
+                print('prevtoken %s ' % prev_token, type(prev_token.args))
+
+                if prev_token and type(prev_token.args) is str:
+                    print("adding cat!!!")
+                    token = tokenizer.convert1(OpCode.CAT, self)
+                else:
+                    token = tokenizer.convert1(OpCode.ADD, self)
 
             elif op == pyop.BINARY_SUBTRACT:
                 token = tokenizer.convert1(OpCode.SUB, self)
@@ -162,12 +168,8 @@ class PyToken():
                 elif self.args == '==':
                     token = tokenizer.convert1(OpCode.EQUAL, self)
 
-#                tokn = tokenizer.convert1(Op)
+        return token
 
-#        print("created vm token %s " % token)
-#
-#        if token is None:
-#            print("did not get token for %s %s" % (self, self.op_name))
 
 class VMToken():
 
@@ -244,7 +246,7 @@ class VMTokenizer():
 
                 lno = "{:<10}".format(pt.line_no if do_print_line_no or pstart else '')
                 addr = "{:<4}".format(key)
-                op = "{:<20}".format(str(pt.op_name))
+                op = "{:<20}".format(str(pt.py_op))
                 arg = "{:<50}".format(to_label if to_label is not None else pt.arg_s)
 
                 print("%s%s%s%s" % (lno,addr,op,arg))

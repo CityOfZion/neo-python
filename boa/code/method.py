@@ -65,7 +65,6 @@ class Method():
 
     tokenizer = None
 
-
     local_stores = None
 
     start_line_no = None
@@ -219,10 +218,10 @@ class Method():
 
 
     def tokenize(self):
-
+        prevtoken = None
         for t in self.tokens:
-            t.to_vm(self.tokenizer)
-
+            t.to_vm(self.tokenizer, prevtoken)
+            prevtoken = t
 
     def convert_jumps(self):
         for key,vm_token in self.tokenizer.vm_tokens.items():
