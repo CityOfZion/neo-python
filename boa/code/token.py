@@ -110,6 +110,9 @@ class PyToken():
             elif op == pyop.POP_JUMP_IF_FALSE:
                 token = tokenizer.convert1(OpCode.JMPIFNOT, self, data=bytearray(2))
 
+            elif op == pyop.POP_JUMP_IF_TRUE:
+                token = tokenizer.convert1(OpCode.JMPIF, self, data=bytearray(2))
+
 
             elif op == pyop.FROMALTSTACK:
                 token = tokenizer.convert1(OpCode.FROMALTSTACK, self)
@@ -118,7 +121,6 @@ class PyToken():
 
             #loading constants ( ie 1, 2 etc)
             elif op == pyop.LOAD_CONST:
-
 
                 if type(self.args) is int:
                     token = tokenizer.convert_push_integer(self.args, self)
@@ -133,6 +135,8 @@ class PyToken():
 
                 elif type(self.args) is bytearray:
                     token = tokenizer.convert_push_data(bytes(self.args), self)
+                elif type(self.args) is bool:
+                    token = tokenizer.convert_push_integer(self.args)
 
             #storing / loading local variables
             elif op == pyop.STORE_FAST:
@@ -141,6 +145,22 @@ class PyToken():
             elif op == pyop.LOAD_FAST:
                 token = tokenizer.convert_load_local(self)
 
+
+            #unary ops
+
+            elif op == pyop.UNARY_INVERT:
+                token = tokenizer.convert1(OpCode.INVERT, self)
+
+            elif op == pyop.UNARY_NEGATIVE:
+                token = tokenizer.convert1(OpCode.NEGATE, self)
+
+            elif op == pyop.UNARY_NOT:
+                token = tokenizer.convert1(OpCode.NOT, self)
+
+            elif op == pyop.UNARY_POSITIVE:
+                #hmmm
+                token = tokenizer.convert1(OpCode.ABS, self)
+                pass
 
             #math
             elif op == pyop.BINARY_ADD:
@@ -164,6 +184,13 @@ class PyToken():
             elif op == pyop.BINARY_MODULO:
                 token = tokenizer.convert1(OpCode.MOD, self)
 
+            elif op == pyop.BINARY_OR:
+                token = tokenizer.convert1(OpCode.BOOLOR, self)
+
+            elif op == pyop.BINARY_AND:
+                token = tokenizer.convert1(OpCode.BOOLAND, self)
+
+
 
             #compare
 
@@ -179,6 +206,7 @@ class PyToken():
                     token = tokenizer.convert1(OpCode.LTE, self)
                 elif self.args == '==':
                     token = tokenizer.convert1(OpCode.EQUAL, self)
+
 
 
             #arrays
@@ -489,6 +517,9 @@ class VMTokenizer():
             self.insert_push_data(bytes(item))
 
         elif type(item) is bytes:
+            self.insert_push_data(item)
+
+        elif type(self.args) is bool:
             self.insert_push_data(item)
 
     def convert_set_element(self, arg, position):
