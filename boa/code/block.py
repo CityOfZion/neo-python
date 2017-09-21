@@ -33,6 +33,48 @@ class Block():
                 return True
         return False
 
+    @property
+    def has_unprocessed_method_calls(self):
+        for token in self.oplist:
+            if token.py_op == pyop.CALL_FUNCTION and token.func_processed == False:
+                return True
+        return False
+
+
+    def preprocess_method_calls(self):
+
+        while self.has_unprocessed_method_calls:
+            start_index_change = None
+            end_index_change = None
+            changed_items = None
+
+            for index, token in enumerate(self.oplist):
+                if token.py_op == pyop.CALL_FUNCTION and token.func_processed == False:
+
+                    token.func_processed = True
+                    param_count = token.args
+
+                    params = self.oplist[index-param_count:index]
+
+                    call_method_op = self.oplist[index-param_count-1]
+                    call_method_type = call_method_op.py_op
+                    call_method_name = call_method_op.args
+
+                    token.func_params = params
+                    token.func_name = call_method_name
+                    token.func_type = call_method_type
+
+                    changed_items = [token]
+
+                    start_index_change = index - param_count - 1
+                    end_index_change = index
+
+            if start_index_change is not None and end_index_change is not None:
+                tstart = self.oplist[0:start_index_change]
+                tend = self.oplist[end_index_change+1:]
+                self.oplist = tstart + changed_items + tend
+
+
 
     @property
     def has_unprocessed_array_sub(self):
@@ -66,10 +108,10 @@ class Block():
                     settoken = PyToken(Opcode(pyop.SETITEM), token.line_no, args=index_to_sub_at, array_item=item_to_sub)
                     changed_items.append(settoken)
 
-                if start_index_change is not None and end_index_change is not None:
-                    tstart = self.oplist[0:start_index_change]
-                    tend = self.oplist[end_index_change + 2:]
-                    self.oplist = tstart + changed_items + tend
+            if start_index_change is not None and end_index_change is not None:
+                tstart = self.oplist[0:start_index_change]
+                tend = self.oplist[end_index_change + 2:]
+                self.oplist = tstart + changed_items + tend
 
 
     @property

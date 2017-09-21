@@ -10,6 +10,9 @@ from neo.BigInteger import BigInteger
 
 
 
+
+
+
 class PyToken():
 
     py_op = None
@@ -27,6 +30,17 @@ class PyToken():
     array_processed = False
 
     array_item = None
+
+
+    #method calling things
+
+    func_processed = False
+
+    func_params = None
+
+    func_name = None
+    func_type = None
+
 
     @property
     def op_name(self):
@@ -148,8 +162,8 @@ class PyToken():
 
             #unary ops
 
-            elif op == pyop.UNARY_INVERT:
-                token = tokenizer.convert1(OpCode.INVERT, self)
+#            elif op == pyop.UNARY_INVERT:
+#                token = tokenizer.convert1(OpCode.INVERT, self)
 
             elif op == pyop.UNARY_NEGATIVE:
                 token = tokenizer.convert1(OpCode.NEGATE, self)
@@ -157,10 +171,10 @@ class PyToken():
             elif op == pyop.UNARY_NOT:
                 token = tokenizer.convert1(OpCode.NOT, self)
 
-            elif op == pyop.UNARY_POSITIVE:
+#            elif op == pyop.UNARY_POSITIVE:
                 #hmmm
-                token = tokenizer.convert1(OpCode.ABS, self)
-                pass
+#                token = tokenizer.convert1(OpCode.ABS, self)
+#                pass
 
             #math
             elif op == pyop.BINARY_ADD:
@@ -189,6 +203,9 @@ class PyToken():
 
             elif op == pyop.BINARY_AND:
                 token = tokenizer.convert1(OpCode.BOOLAND, self)
+
+            elif op == pyop.BINARY_XOR:
+                token = tokenizer.convert1(OpCode.XOR, self)
 
 
 
@@ -221,6 +238,11 @@ class PyToken():
             elif op == pyop.BINARY_SUBSCR:
                 token = tokenizer.convert1(OpCode.PICKITEM,self)
 
+
+            elif op == pyop.CALL_FUNCTION:
+
+                token = tokenizer.convert_method_call(self)
+
         return token
 
 
@@ -234,6 +256,9 @@ class VMToken():
 
     vm_op = None
 
+    src_method = None
+
+    target_method = None
 
     @property
     def out_op(self):
@@ -253,6 +278,9 @@ class VMToken():
             self.data = self.pytoken.data
 
         self.data = data
+
+        self.src_method = None
+        self.target_method = None
 
 
 class VMTokenizer():
@@ -544,3 +572,13 @@ class VMTokenizer():
         self.insert1(OpCode.ROLL)
         self.insert1(OpCode.SETITEM)
 
+
+    def convert_method_call(self, pytoken):
+
+        self.insert1(OpCode.NOP)
+        vmtoken = self.convert1(OpCode.CALL,py_token=pytoken,data=bytearray(b'\x05\x00'))
+
+        vmtoken.src_method = self.method
+        vmtoken.target_method = pytoken.func_name
+
+        return vmtoken

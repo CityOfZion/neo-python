@@ -24,6 +24,7 @@ class Method():
 
     blocks = None
 
+    method_address = None
 
     @property
     def name(self):
@@ -31,11 +32,20 @@ class Method():
 
     @property
     def args(self):
+#        alist = list(self.bp.args)
+#        if 'self' in alist:
+#            alist.remove('self')
+#        return alist
         return self.bp.args
 
     @property
     def code(self):
         return self.bp.code
+
+    @property
+    def vm_tokens(self):
+        return self.tokenizer.vm_tokens
+
 
     @property
     def firstlineno(self):
@@ -66,13 +76,11 @@ class Method():
 
     def __init__(self, code_object, parent):
 
-
         self.bp = code_object
 
         self.parent = parent
 
-        if not self in self.module.methods:
-            self.module.methods.append(self)
+        self.print()
 
         self.read_initial_tokens()
 
@@ -166,6 +174,8 @@ class Method():
             if block.has_unprocessed_array_sub:
                 block.preprocess_array_subs()
 
+            if block.has_unprocessed_method_calls:
+                block.preprocess_method_calls()
 
         alltokens = []
 

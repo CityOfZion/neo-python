@@ -40,8 +40,10 @@ class Compiler():
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)
 
-        method = self.default.main
-        writer.WriteBytes( method.write())
+        module = self.default
+        result = module.write()
+        print("Result %s " % result)
+        writer.WriteBytes( result)
 
         out = stream.getbuffer()
         return bytes(out)
