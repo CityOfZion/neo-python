@@ -14,7 +14,7 @@ class StorageKey(SerializableMixin):
         self.Key = key
 
     def _murmur(self):
-        return mmh3.hash(self.Key)
+        return mmh3.hash(bytes(self.Key))
 
     def GetHashCode(self):
         return abs(self.ScriptHash.GetHashCode() + self._murmur())
