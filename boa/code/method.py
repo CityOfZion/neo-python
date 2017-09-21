@@ -1,58 +1,11 @@
 from byteplay3 import SetLinenoType,Opcode,Label
 
 from boa.code.token import PyToken,VMToken,VMTokenizer
+from boa.code.block import Block
 from boa.code import pyop
 
 import dis
 
-
-
-
-class Block():
-
-    oplist = None # list
-
-    _label = None # list
-
-    def __init__(self, operation_list):
-        self.oplist = operation_list
-
-    def set_label(self, label):
-        self._label = label
-        self.oplist[0].jump_label = label
-
-    @property
-    def line(self):
-        if len(self.oplist):
-            token = self.oplist[0]
-            return token.line_no
-        return None
-
-    @property
-    def is_return(self):
-        if len(self.oplist):
-            token = self.oplist[-1]
-            if token.py_op == pyop.RETURN_VALUE:
-                return True
-
-
-
-        return False
-
-    def mark_as_end(self):
-
-        tstart = self.oplist[:-1]
-        tend = self.oplist[-1:]
-
-        newitems = [PyToken(pyop.NOP,self.line), PyToken(pyop.FROMALTSTACK, self.line), PyToken(pyop.DROP, self.line)]
-
-        self.oplist = tstart + newitems + tend
-
-
-    def __str__(self):
-        if self._label:
-            return '[Block] %s          [label] %s' % (self.oplist, self._label)
-        return '[Block]: %s' % self.oplist
 
 
 class Method():
@@ -70,6 +23,7 @@ class Method():
     start_line_no = None
 
     blocks = None
+
 
     @property
     def name(self):
@@ -206,8 +160,15 @@ class Method():
                 block.oplist.insert(0, ret_token)
                 block.mark_as_end()
 
+            if block.has_unprocessed_array:
+                block.preprocess_arrays()
+
+            if block.has_unprocessed_array_sub:
+                block.preprocess_array_subs()
+
 
         alltokens = []
+
         for block in self.blocks:
             alltokens = alltokens + block.oplist
 

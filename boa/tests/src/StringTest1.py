@@ -10,7 +10,7 @@ class SCTest(FunctionCode):
 
         if c == 'hellogoodbye':
 
-            return a + b + a + b
+            return 3
 
 
         return 1

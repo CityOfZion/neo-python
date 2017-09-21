@@ -12,4 +12,4 @@ class SCTest(FunctionCode):
         b = 2
         c = a + b
 
-        return 1
+        return c

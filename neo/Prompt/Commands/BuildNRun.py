@@ -3,6 +3,30 @@ from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams
 from neo.Prompt.Commands.Invoke import test_deploy_and_invoke
 from neo.Fixed8 import Fixed8
 from boa.boa import Compiler
+import binascii
+
+
+def LoadAndRun(arguments, wallet):
+
+    path = get_arg(arguments)
+
+    try:
+
+        with open(path, 'rb') as f:
+
+            content = f.read()
+
+            try:
+                content = binascii.unhexlify(content)
+            except Exception as e:
+                pass
+
+            script = content
+
+            DoRun(script, arguments, wallet, path)
+
+    except Exception as e:
+        print("couldnt load script %s " % e)
 
 
 
@@ -14,6 +38,19 @@ def BuildAndRun(arguments, wallet):
 
         newpath = path.replace('.py' ,'.avm')
         print("Saved output to %s " % newpath)
+
+        print("contract scrcipt %s " % contract_script)
+
+        DoRun(contract_script,arguments,wallet, path)
+
+    except Exception as e:
+        print("couldn compile %s " % e)
+
+
+def DoRun(contract_script, arguments, wallet, path):
+
+
+    try:
 
         test = get_arg(arguments, 1)
 

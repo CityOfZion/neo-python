@@ -24,6 +24,10 @@ class PyToken():
 
     jump_label = None
 
+    array_processed = False
+
+    array_item = None
+
     @property
     def op_name(self):
         if type(self.py_op) is int:
@@ -46,7 +50,7 @@ class PyToken():
             return str(self.args)
         return ''
 
-    def __init__(self, op, lineno, index=None,args=None):
+    def __init__(self, op, lineno, index=None,args=None, array_item=None):
 
         self.py_op = op
 
@@ -55,6 +59,8 @@ class PyToken():
         self.line_no = lineno
 
         self.addr = index
+
+        self.array_item = array_item
 
 
     def __str__(self):
@@ -112,15 +118,21 @@ class PyToken():
 
             #loading constants ( ie 1, 2 etc)
             elif op == pyop.LOAD_CONST:
+
+
                 if type(self.args) is int:
                     token = tokenizer.convert_push_integer(self.args, self)
                 elif type(self.args) is str:
-
                     str_bytes = self.args.encode('utf-8')
                     self.args = str_bytes
-                    print("convert argument %s " % self.args)
 
                     token = tokenizer.convert_push_data(self.args, self)
+
+                elif type(self.args) is bytes:
+                    token = tokenizer.convert_push_data(self.args, self)
+
+                elif type(self.args) is bytearray:
+                    token = tokenizer.convert_push_data(bytes(self.args), self)
 
             #storing / loading local variables
             elif op == pyop.STORE_FAST:
@@ -132,13 +144,13 @@ class PyToken():
 
             #math
             elif op == pyop.BINARY_ADD:
-                print('prevtoken %s ' % prev_token, type(prev_token.args))
 
-                if prev_token and type(prev_token.args) is str:
-                    print("adding cat!!!")
-                    token = tokenizer.convert1(OpCode.CAT, self)
-                else:
-                    token = tokenizer.convert1(OpCode.ADD, self)
+#we can't tell by looking up the last token what type of item it was
+#will need to figure out a different way of concatting strings
+#                if prev_token and type(prev_token.args) is str:
+#                    token = tokenizer.convert1(OpCode.CAT, self)
+#                else:
+                token = tokenizer.convert1(OpCode.ADD, self)
 
             elif op == pyop.BINARY_SUBTRACT:
                 token = tokenizer.convert1(OpCode.SUB, self)
@@ -167,6 +179,19 @@ class PyToken():
                     token = tokenizer.convert1(OpCode.LTE, self)
                 elif self.args == '==':
                     token = tokenizer.convert1(OpCode.EQUAL, self)
+
+
+            #arrays
+            elif op == pyop.BUILD_LIST:
+                token = tokenizer.convert_new_array(OpCode.NEWARRAY, self)
+            elif op == pyop.SETITEM:
+                token = tokenizer.convert_set_element(self, self.args)
+#                token = tokenizer.convert1(OpCode.SETITEM,self, data=self.args)
+            elif op == pyop.STORE_SUBSCR:
+                #this wont occur because this op is preprocessed into a SETITEM op
+                pass
+            elif op == pyop.BINARY_SUBSCR:
+                token = tokenizer.convert1(OpCode.PICKITEM,self)
 
         return token
 
@@ -361,20 +386,21 @@ class VMTokenizer():
 
         vmtoken = VMToken(vm_op=vm_op, addr=start_addr, pytoken=py_token,data=data)
 
-        #here is where we will do something about
-        #jump targets etc
-
         self._address += 1
 
-
         if vmtoken.data is not None and type(vmtoken.data) is not Label:
-
             self._address += len(data)
 
         self.insert_vm_token_at(vmtoken, start_addr)
 
         return vmtoken
 
+
+    def convert_new_array(self, vm_op, py_token=None,data=None):
+
+        #push the length of the array
+        self.insert_push_integer(py_token.args)
+        self.convert1(OpCode.NEWARRAY,py_token)
 
 
     def convert_push_data(self, data, py_token=None):
@@ -427,8 +453,6 @@ class VMTokenizer():
 
         position = self.method.local_stores[local_name]
 
-        print("POSITION FOR LOCAL NAME %s %s " % (local_name, position))
-
         # set i the index of the local variable to be stored
         self.convert_push_integer(position)
 
@@ -452,6 +476,26 @@ class VMTokenizer():
         self.convert_push_integer(position)
         self.convert1(OpCode.PICKITEM)
 
+
+    def insert_unknown_type(self, item):
+        if type(item) is int:
+            self.insert_push_integer(item)
+
+        elif type(item) is str:
+            str_bytes = item.encode('utf-8')
+            self.insert_push_data(str_bytes)
+
+        elif type(item) is bytearray:
+            self.insert_push_data(bytes(item))
+
+        elif type(item) is bytes:
+            self.insert_push_data(item)
+
+    def convert_set_element(self, arg, position):
+
+        self.insert_push_integer(position)
+        self.insert_unknown_type(arg.array_item)
+        self.convert1(OpCode.SETITEM,arg)
 
     def convert_load_parameter(self, arg, position):
 

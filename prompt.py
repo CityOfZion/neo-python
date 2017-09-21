@@ -22,7 +22,7 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
-from neo.Prompt.Commands.BuildNRun import BuildAndRun
+from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,GatherLoadedContractParams
 from neo.Prompt.Utils import get_arg
 from neo import Settings
@@ -282,6 +282,9 @@ class PromptInterface(object):
 
     def do_build(self, arguments):
         BuildAndRun(arguments, self.Wallet)
+
+    def do_load_n_run(self, arguments):
+        LoadAndRun(arguments, self.Wallet)
 
     def do_export(self, arguments):
         item = get_arg(arguments)
@@ -781,6 +784,8 @@ class PromptInterface(object):
                         self.do_open(arguments)
                     elif command == 'build':
                         self.do_build(arguments)
+                    elif command == 'load_run':
+                        self.do_load_n_run(arguments)
                     elif command == 'import':
                         self.do_import(arguments)
                     elif command == 'export':

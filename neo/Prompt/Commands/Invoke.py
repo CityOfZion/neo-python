@@ -28,7 +28,7 @@ from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 
 from neo.BigInteger import BigInteger
-
+import traceback
 
 def InvokeContract(wallet, tx):
 
@@ -301,6 +301,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
     except Exception as e:
         print("COULD NOT EXECUTE %s " % e)
+        traceback.print_stack()
+        traceback.print_exc()
 
     return None,[]
 

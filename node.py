@@ -1,3 +1,4 @@
+token.array_processed = True
 import sys
 import logging
 

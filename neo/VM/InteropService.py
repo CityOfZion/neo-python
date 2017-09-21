@@ -36,6 +36,9 @@ class StackItem(EquatableMixin):
 #        raise Exception('Not Supported')
         return None
 
+    def GetString(self):
+        return 'Stack Item'
+
     def __str__(self):
         return 'Stack Item'
 
@@ -95,6 +98,8 @@ class Array(StackItem):
 
     def GetByteArray(self):
         raise Exception("Not supported")
+
+
 
     def __str__(self):
         return "Array: %s" % self._array
@@ -157,6 +162,14 @@ class ByteArray(StackItem):
 
     def GetByteArray(self):
         return self._value
+
+    def GetString(self):
+        try:
+            return self._value.decode('utf-8')
+        except Exception as e:
+            pass
+        return str(self)
+
 
     def __str__(self):
         return "ByteArray: %s" % self._value

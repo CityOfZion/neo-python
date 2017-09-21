@@ -97,7 +97,7 @@ class ExecutionEngine():
             elif return_type == ContractParameterType.ByteArray:
                 return item.GetByteArray()
             elif return_type == ContractParameterType.String:
-                return str(item)
+                return item.GetString()
             elif return_type == ContractParameterType.Array:
                 return item.GetArray()
             else:
@@ -388,7 +388,6 @@ class ExecutionEngine():
             elif opcode == EQUAL:
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-                res = x1.Equals(x2)
                 estack.PushT( x1.Equals(x2))
 
 
@@ -699,7 +698,9 @@ class ExecutionEngine():
                     self._VMState |= VMState.FAULT
                     return
 
-                estack.PushT(items[index])
+                to_pick = items[index]
+
+                estack.PushT(to_pick)
 
             elif opcode == SETITEM:
 
@@ -727,9 +728,7 @@ class ExecutionEngine():
             elif opcode == NEWARRAY:
 
                 count = estack.Pop().GetBigInteger()
-
                 items = [None for i in range(0, count)]
-
                 estack.PushT(Array(items))
 
             elif opcode == NEWSTRUCT:
