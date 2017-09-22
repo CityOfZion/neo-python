@@ -575,6 +575,41 @@ class VMTokenizer():
 
     def convert_method_call(self, pytoken):
 
+        for t in pytoken.func_params:
+            t.to_vm(self)
+
+        param_len = len(pytoken.func_params)
+
+        if param_len <= 1:
+            pass
+        elif param_len == 2:
+            self.insert1(OpCode.SWAP)
+        elif param_len == 3:
+            self.insert_push_integer(2)
+            self.insert1(OpCode.XSWAP)
+        else:
+            half_p = int(param_len/2)
+
+            for i in range(0, half_p):
+
+                save_to = param_len - 1 - i
+                print("save to %s " % save_to)
+
+                self.insert_push_integer(save_to)
+                self.insert1(OpCode.PICK)
+
+                self.insert_push_integer(i + 1)
+                self.insert1(OpCode.PICK)
+
+                self.insert_push_integer(save_to + 2)
+                self.insert1(OpCode.XSWAP)
+                self.insert1(OpCode.DROP)
+
+                self.insert_push_integer(i + 1)
+                self.insert1(OpCode.XSWAP)
+                self.insert1(OpCode.DROP)
+
+
         self.insert1(OpCode.NOP)
         vmtoken = self.convert1(OpCode.CALL,py_token=pytoken,data=bytearray(b'\x05\x00'))
 
