@@ -25,5 +25,5 @@ def Main():
                 c = c - 5
 
 
-    return a + b + c
+    return a + b + c # expect 27
 

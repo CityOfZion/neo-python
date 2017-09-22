@@ -182,7 +182,7 @@ class PyToken():
 #                pass
 
             #math
-            elif op == pyop.BINARY_ADD:
+            elif op in [pyop.BINARY_ADD, pyop.INPLACE_ADD]:
 
 #we can't tell by looking up the last token what type of item it was
 #will need to figure out a different way of concatting strings
@@ -191,25 +191,25 @@ class PyToken():
 #                else:
                 token = tokenizer.convert1(OpCode.ADD, self)
 
-            elif op == pyop.BINARY_SUBTRACT:
+            elif op in [pyop.BINARY_SUBTRACT, pyop.INPLACE_SUBTRACT]:
                 token = tokenizer.convert1(OpCode.SUB, self)
 
-            elif op == pyop.BINARY_MULTIPLY:
+            elif op in [pyop.BINARY_MULTIPLY, pyop.INPLACE_MULTIPLY]:
                 token = tokenizer.convert1(OpCode.MUL, self)
 
-            elif op in [pyop.BINARY_FLOOR_DIVIDE, pyop.BINARY_TRUE_DIVIDE]:
+            elif op in [pyop.BINARY_FLOOR_DIVIDE, pyop.BINARY_TRUE_DIVIDE, pyop.INPLACE_FLOOR_DIVIDE, pyop.INPLACE_TRUE_DIVIDE]:
                 token = tokenizer.convert1(OpCode.DIV, self)
 
-            elif op == pyop.BINARY_MODULO:
+            elif op in [pyop.BINARY_MODULO, pyop.INPLACE_MODULO]:
                 token = tokenizer.convert1(OpCode.MOD, self)
 
-            elif op == pyop.BINARY_OR:
+            elif op == [pyop.BINARY_OR, pyop.INPLACE_OR]:
                 token = tokenizer.convert1(OpCode.BOOLOR, self)
 
-            elif op == pyop.BINARY_AND:
+            elif op == [pyop.BINARY_AND, pyop.INPLACE_AND]:
                 token = tokenizer.convert1(OpCode.BOOLAND, self)
 
-            elif op == pyop.BINARY_XOR:
+            elif op == [pyop.BINARY_XOR, pyop.INPLACE_XOR]:
                 token = tokenizer.convert1(OpCode.XOR, self)
 
 
