@@ -160,7 +160,7 @@ class ExecutionEngine():
                 offset = context.OpReader.ReadInt16()
                 offset = context.InstructionPointer + offset - 3
                 if offset < 0 or offset > len(context.Script):
-                    self._VMSTATE |= VMState.FAULT
+                    self._VMState |= VMState.FAULT
                     return
 
                 fValue = True

@@ -7,6 +7,7 @@ from boa.code.method import Method
 from boa.code.items import Definition, Klass, Import
 
 import sys
+from neo.VM import OpCode
 
 class Module():
 
@@ -148,7 +149,7 @@ class Module():
 
             b_array.append(vm_token.out_op)
 
-            if vm_token.data is not None:
+            if vm_token.data is not None and vm_token.vm_op != OpCode.NOP:
                 b_array = b_array + vm_token.data
 
         return b_array

@@ -39,8 +39,6 @@ def BuildAndRun(arguments, wallet):
         newpath = path.replace('.py' ,'.avm')
         print("Saved output to %s " % newpath)
 
-        print("contract scrcipt %s " % contract_script)
-
         DoRun(contract_script,arguments,wallet, path)
 
     except Exception as e:

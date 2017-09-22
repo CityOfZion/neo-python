@@ -41,11 +41,9 @@ class Compiler():
         writer = BinaryWriter(stream)
 
         module = self.default
-        result = module.write()
-        print("Result %s " % result)
-        writer.WriteBytes( result)
-
+        writer.WriteBytes( module.write())
         out = stream.getbuffer()
+
         return bytes(out)
 
     @staticmethod

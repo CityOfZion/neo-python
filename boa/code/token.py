@@ -1,13 +1,12 @@
 from boa.code import pyop
 
-from byteplay3 import Label,isopcode,haslocal
+from byteplay3 import Label,isopcode,haslocal,hasflow
 
 from opcode import opname
 
 from neo.VM import OpCode
 
 from neo.BigInteger import BigInteger
-
 
 
 
@@ -96,19 +95,16 @@ class PyToken():
 
         if self.is_op:
 
+
+
             op = self.py_op
+
 
             if op == pyop.NOP:
                 token = tokenizer.convert1(OpCode.NOP, self)
 
             elif op == pyop.RETURN_VALUE:
                 token = tokenizer.convert1(OpCode.RET, self)
-
-            elif op == pyop.POP_BLOCK:
-                token = tokenizer.convert1(OpCode.DROP)
-
-            #elif op == pyop.LOAD_NULL // this doesn't exist
-            #   self.vm_op = byte(0)
 
 
             #control flow
@@ -126,6 +122,12 @@ class PyToken():
 
             elif op == pyop.POP_JUMP_IF_TRUE:
                 token = tokenizer.convert1(OpCode.JMPIF, self, data=bytearray(2))
+
+            elif op == pyop.SETUP_LOOP:
+                token = tokenizer.convert1(OpCode.NOP, self, is_annotation=True)
+
+            elif op == pyop.POP_BLOCK:
+                token = tokenizer.convert1(OpCode.NOP, self, is_annotation=True)
 
 
             elif op == pyop.FROMALTSTACK:
@@ -260,6 +262,8 @@ class VMToken():
 
     target_method = None
 
+    is_annotation = None
+
     @property
     def out_op(self):
         if type(self.vm_op) is int:
@@ -281,6 +285,8 @@ class VMToken():
 
         self.src_method = None
         self.target_method = None
+
+        self.is_annotation = False
 
 
 class VMTokenizer():
@@ -313,6 +319,7 @@ class VMTokenizer():
 
                 do_print_line_no = False
                 to_label = None
+                from_label = '    '
                 if pt.line_no != lineno:
                     print("\n")
                     lineno = pt.line_no
@@ -321,16 +328,23 @@ class VMTokenizer():
 
                 if pt.args and type(pt.args) is Label:
                     addr = value.addr
-                    plus_addr = int.from_bytes(value.data,'little')
-                    target_addr = addr + plus_addr
-                    to_label = 'to %s ' % target_addr
+                    if value.data is not None:
+                        plus_addr = int.from_bytes(value.data,'little', signed=True)
+                        target_addr = addr + plus_addr
+                        to_label = 'to %s    [ %s ]' % (target_addr, pt.args)
+                    else:
+                        to_label = 'from << %s ' % pt.args
+#                    to_label = 'to %s ' % pt.args
+                elif pt.jump_label:
+                    from_label = ' >> '
+                    to_label ='from [%s]' % pt.jump_label
 
                 lno = "{:<10}".format(pt.line_no if do_print_line_no or pstart else '')
                 addr = "{:<4}".format(key)
                 op = "{:<20}".format(str(pt.py_op))
                 arg = "{:<50}".format(to_label if to_label is not None else pt.arg_s)
 
-                print("%s%s%s%s" % (lno,addr,op,arg))
+                print("%s%s%s%s%s" % (lno,from_label,addr,op,arg))
 
             pstart=False
 
@@ -339,14 +353,13 @@ class VMTokenizer():
         for key,vm_token in self.vm_tokens.items():
 
 #            if vm_token.pytoken:
-#                print("%s  -->  %s" % (vm_token.pytoken.py_op, vm_token.vm_op))
+#                print("%s  -->  %s .... %s" % (vm_token.pytoken.py_op, vm_token.vm_op, vm_token.out_op))
 #            else:
 #                print("%s  -->  %s" % (vm_token.pytoken, vm_token.vm_op))
 
             b_array.append(vm_token.out_op)
 
-            if vm_token.data is not None:
-#                print("DATA                 %s" % vm_token.data)
+            if vm_token.data is not None and vm_token.vm_op != OpCode.NOP:
                 b_array = b_array + vm_token.data
 
         return b_array
@@ -436,7 +449,7 @@ class VMTokenizer():
         return self.insert_push_data(outdata)
 
 
-    def convert1(self,vm_op, py_token=None, data=None):
+    def convert1(self,vm_op, py_token=None, data=None, is_annotation=False):
 
         start_addr = self._address
 
@@ -528,7 +541,7 @@ class VMTokenizer():
         self.convert1(OpCode.DUP)
         self.convert1(OpCode.TOALTSTACK)
 
-        # get i?
+        # get i
         self.convert_push_integer(position)
         self.convert1(OpCode.PICKITEM)
 
@@ -547,7 +560,7 @@ class VMTokenizer():
         elif type(item) is bytes:
             self.insert_push_data(item)
 
-        elif type(self.args) is bool:
+        elif type(item) is bool:
             self.insert_push_data(item)
 
     def convert_set_element(self, arg, position):

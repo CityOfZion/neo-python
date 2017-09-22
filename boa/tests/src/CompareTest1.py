@@ -1,46 +1,43 @@
 from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
 
-class SCTest(FunctionCode):
+def Main(a, b, c, d):
 
-    @staticmethod
-    def Main(a, b, c, d):
+    m = 0
 
-        m = 0
+    if a > b:
 
-        if a > b:
+        if c > d:
 
-            if c > d:
-
-                m = 3
-
-            else:
-
-                if b > c:
-
-                    return 8
-
-                else:
-
-                    return 10
+            m = 3
 
         else:
 
-            if c > d:
+            if b > c:
 
-                m = 1
+                return 8
 
             else:
 
-                if b < c:
+                return 10
 
-                    return 11
+    else:
 
-                else:
+        if c > d:
 
-                    m = 22
+            m = 1
 
-        return m
+        else:
+
+            if b < c:
+
+                return 11
+
+            else:
+
+                m = 22
+
+    return m
 
 
 

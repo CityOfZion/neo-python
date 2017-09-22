@@ -80,8 +80,6 @@ class Method():
 
         self.parent = parent
 
-        self.print()
-
         self.read_initial_tokens()
 
         self.process_block_groups()
@@ -89,6 +87,9 @@ class Method():
         self.tokenize()
 
         self.convert_jumps()
+
+#        self.tokenizer.to_s()
+
 
     def print(self):
         print(self.code)
@@ -111,10 +112,11 @@ class Method():
 
         self.tokenizer = VMTokenizer(self)
 
-        labels = {}
-
+        current_label = None
 
         for i, (op, arg) in enumerate(self.code):
+
+#            print("[%s] %s  ->  %s " % (i, op, arg))
 
             if type(op) is SetLinenoType:
 
@@ -130,7 +132,9 @@ class Method():
                 block_group = []
 
             elif type(op) is Label:
-                labels[1 + len(self.blocks)] = op
+
+                current_label = op
+
             else:
                 if op == pyop.STORE_FAST and not arg in self.local_stores.keys():
                     length = len(self.local_stores)
@@ -138,17 +142,15 @@ class Method():
 
                 token = PyToken(op, current_line_no,i, arg)
 
+                if current_label is not None:
+                    token.jump_label = current_label
+                    current_label = None
+
                 block_group.append(token)
 
         if len(block_group):
             self.blocks.append( Block(block_group))
 
-
-        for key,label in labels.items():
-            kint = int(key)
-            self.blocks[kint].set_label(label)
-
-#        [print("block: %s " % str(block)) for block in self.blocks]
 
     def process_block_groups(self):
 
@@ -208,14 +210,16 @@ class Method():
                         jump_to_label = vm_token_target.pytoken.jump_label
 
                         if jump_to_label == label:
+#                            print("OP %s " % str(vm_token.pytoken.op_name))
+#                            print("START/END: %s %s " % (vm_token_target.addr, vm_token.addr))
 
                             difference = vm_token_target.addr - vm_token.addr
-                            vm_token.data = difference.to_bytes(2, 'little')
+#                            print("setting jump to %s " % difference)
+                            vm_token.data = difference.to_bytes(2, 'little', signed=True)
 
 
     def write(self):
 
-        self.tokenizer.to_s()
 
         out = self.tokenizer.to_b()
         return out
