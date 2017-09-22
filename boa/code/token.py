@@ -30,7 +30,6 @@ class PyToken():
 
     array_item = None
 
-
     #method calling things
 
     func_processed = False
@@ -124,10 +123,14 @@ class PyToken():
                 token = tokenizer.convert1(OpCode.JMPIF, self, data=bytearray(2))
 
             elif op == pyop.SETUP_LOOP:
-                token = tokenizer.convert1(OpCode.NOP, self, is_annotation=True)
+                token = tokenizer.convert1(OpCode.NOP, self)
+
+            elif op == pyop.BREAK_LOOP:
+                token = tokenizer.convert1(OpCode.JMP, self, data=bytearray(2))
 
             elif op == pyop.POP_BLOCK:
-                token = tokenizer.convert1(OpCode.NOP, self, is_annotation=True)
+                token = tokenizer.convert1(OpCode.NOP, self)
+
 
 
             elif op == pyop.FROMALTSTACK:
@@ -449,7 +452,7 @@ class VMTokenizer():
         return self.insert_push_data(outdata)
 
 
-    def convert1(self,vm_op, py_token=None, data=None, is_annotation=False):
+    def convert1(self,vm_op, py_token=None, data=None):
 
         start_addr = self._address
 

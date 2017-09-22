@@ -88,7 +88,7 @@ class Method():
 
         self.convert_jumps()
 
-#        self.tokenizer.to_s()
+        self.tokenizer.to_s()
 
 
     def print(self):
@@ -114,9 +114,11 @@ class Method():
 
         current_label = None
 
+        current_loop_token = None
+
         for i, (op, arg) in enumerate(self.code):
 
-#            print("[%s] %s  ->  %s " % (i, op, arg))
+            print("[%s] %s  ->  %s " % (i, op, arg))
 
             if type(op) is SetLinenoType:
 
@@ -136,11 +138,20 @@ class Method():
                 current_label = op
 
             else:
+
+
                 if op == pyop.STORE_FAST and not arg in self.local_stores.keys():
                     length = len(self.local_stores)
                     self.local_stores[arg] = length
 
                 token = PyToken(op, current_line_no,i, arg)
+
+                if op == pyop.SETUP_LOOP:
+                    current_loop_token = token
+
+                if op == pyop.BREAK_LOOP and current_loop_token is not None:
+                    token.args = current_loop_token.args
+                    current_loop_token = None
 
                 if current_label is not None:
                     token.jump_label = current_label
@@ -197,6 +208,8 @@ class Method():
             prevtoken = t
 
     def convert_jumps(self):
+
+        #convert normal jumps
         for key,vm_token in self.tokenizer.vm_tokens.items():
 
             if vm_token.pytoken and type(vm_token.pytoken.args) is Label:
