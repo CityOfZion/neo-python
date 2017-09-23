@@ -88,7 +88,7 @@ class Method():
 
         self.convert_jumps()
 
-        self.tokenizer.to_s()
+#        self.tokenizer.to_s()
 
 
     def print(self):
@@ -118,7 +118,7 @@ class Method():
 
         for i, (op, arg) in enumerate(self.code):
 
-            print("[%s] %s  ->  %s " % (i, op, arg))
+            #print("[%s] %s  ->  %s " % (i, op, arg))
 
             if type(op) is SetLinenoType:
 

@@ -21,7 +21,7 @@ class StackItem(EquatableMixin):
         return bytearray()
 
     def GetBigInteger(self):
-        return BigInteger(int.from_bytes(self.GetByteArray(),'little'))
+        return BigInteger(int.from_bytes(self.GetByteArray(),'little',signed=True))
 
     def GetBoolean(self):
         for p in self.GetByteArray():
@@ -71,7 +71,7 @@ class Array(StackItem):
 
     _array = [] # a list of stack items
 
-
+    @property
     def IsArray(self):
         return True
 
@@ -154,7 +154,7 @@ class ByteArray(StackItem):
 
     def GetBigInteger(self):
         try:
-            b = BigInteger.FromBytes(self._value, signed=False)
+            b = BigInteger.FromBytes(self._value, signed=True)
             return b
         except Exception as e:
             pass

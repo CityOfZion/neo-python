@@ -1,6 +1,8 @@
 from byteplay3 import Code
 from boa.code.method import Method
 from boa.code import pyop
+import importlib
+import pdb
 
 class Item():
     items = None
@@ -18,10 +20,42 @@ class Definition(Item):
 
 class Import(Item):
 
-    def is_valid(self):
+    module_path = None
+    module_name = None
+
+
+    imported_module = None
+
+    def __init__(self, item_list):
+        super(Import, self).__init__(item_list)
+
+        for i, (op, arg) in enumerate(self.items):
+            if op == pyop.IMPORT_NAME:
+                self.module_path = arg
+
+            elif op == pyop.STORE_NAME:
+                self.module_name = arg
+
+        self.build()
+
+    def build(self):
         # here is where we will check imports
+
+        from boa.code.module import Module
+
+        module = importlib.import_module(self.module_path, self.module_path)
+
+        filename = module.__file__
+
+        self.imported_module = Module(filename)
+
+
+    def is_valid(self):
+
         return True
 
+    def __str__(self):
+        return "%s.%s" % (self.module_path, self.module_name)
 
 class Klass(Item):
 

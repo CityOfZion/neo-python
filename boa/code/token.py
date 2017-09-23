@@ -11,7 +11,6 @@ from neo.BigInteger import BigInteger
 
 
 
-
 class PyToken():
 
     py_op = None
@@ -122,11 +121,18 @@ class PyToken():
             elif op == pyop.POP_JUMP_IF_TRUE:
                 token = tokenizer.convert1(OpCode.JMPIF, self, data=bytearray(2))
 
+            #loops
             elif op == pyop.SETUP_LOOP:
                 token = tokenizer.convert1(OpCode.NOP, self)
 
             elif op == pyop.BREAK_LOOP:
                 token = tokenizer.convert1(OpCode.JMP, self, data=bytearray(2))
+
+            elif op == pyop.FOR_ITER:
+                token = tokenizer.convert1(OpCode.NOP, self)
+
+            elif op == pyop.GET_ITER:
+                token = tokenizer.convert1(OpCode.NOP, self)
 
             elif op == pyop.POP_BLOCK:
                 token = tokenizer.convert1(OpCode.NOP, self)
@@ -146,16 +152,17 @@ class PyToken():
                 elif type(self.args) is str:
                     str_bytes = self.args.encode('utf-8')
                     self.args = str_bytes
-
                     token = tokenizer.convert_push_data(self.args, self)
-
                 elif type(self.args) is bytes:
                     token = tokenizer.convert_push_data(self.args, self)
-
                 elif type(self.args) is bytearray:
                     token = tokenizer.convert_push_data(bytes(self.args), self)
                 elif type(self.args) is bool:
                     token = tokenizer.convert_push_integer(self.args)
+                elif type(self.args) == type(None):
+                    token = tokenizer.convert_push_data(bytearray(0))
+                else:
+                    raise Exception("Could not load type %s for item %s " % (type(self.args), self.args))
 
             #storing / loading local variables
             elif op == pyop.STORE_FAST:
@@ -228,7 +235,8 @@ class PyToken():
                     token = tokenizer.convert1(OpCode.LTE, self)
                 elif self.args == '==':
                     token = tokenizer.convert1(OpCode.EQUAL, self)
-
+                elif self.args == 'is':
+                    token = tokenizer.convert1(OpCode.EQUAL, self)
 
 
             #arrays
@@ -471,7 +479,12 @@ class VMTokenizer():
     def convert_new_array(self, vm_op, py_token=None,data=None):
 
         #push the length of the array
-        self.insert_push_integer(py_token.args)
+        if type(py_token.args) is int:
+
+            self.insert_push_integer(py_token.args)
+        else:
+            self.convert_load_local(py_token, py_token.args)
+
         self.convert1(OpCode.NEWARRAY,py_token)
 
 
@@ -533,9 +546,12 @@ class VMTokenizer():
         self.convert1(OpCode.ROLL)
         self.convert1(OpCode.SETITEM)
 
-    def convert_load_local(self, py_token):
+    def convert_load_local(self, py_token, name=None):
 
-        local_name = py_token.args
+        if name is not None:
+            local_name = name
+        else:
+            local_name = py_token.args
 
         position = self.method.local_stores[local_name]
 
@@ -565,11 +581,26 @@ class VMTokenizer():
 
         elif type(item) is bool:
             self.insert_push_data(item)
+        elif type(item) == type(None):
+            self.insert_push_data(bytearray(0))
+        else:
+            raise Exception("Could not load type %s for item %s " % (type(item), item))
 
     def convert_set_element(self, arg, position):
 
-        self.insert_push_integer(position)
-        self.insert_unknown_type(arg.array_item)
+#        print("converting set element %s %s" % (position, type(position)))
+
+        if type(position) is int:
+
+            self.insert_push_integer(position)
+        elif type(position) is str:
+            self.convert_load_local(None, name=position)
+
+        if type(arg.array_item) is str:
+            self.convert_load_local(None, name=arg.array_item)
+        else:
+            self.insert_unknown_type(arg.array_item)
+
         self.convert1(OpCode.SETITEM,arg)
 
     def convert_load_parameter(self, arg, position):
@@ -589,7 +620,23 @@ class VMTokenizer():
         self.insert1(OpCode.SETITEM)
 
 
+    def convert_built_in_list(self, pytoken):
+        new_array_len = 0
+        lenfound = False
+        for index,token in enumerate(pytoken.func_params):
+            if token.args=='length' and not lenfound:
+                new_array_len = pytoken.func_params[index + 1].args
+                lenfound=True
+        pytoken.args = new_array_len
+        self.convert_new_array(OpCode.NEWARRAY, pytoken)
+
+
     def convert_method_call(self, pytoken):
+
+        #special case for list initialization
+        if pytoken.func_name == 'list':
+            return self.convert_built_in_list(pytoken)
+
 
         for t in pytoken.func_params:
             t.to_vm(self)
@@ -609,7 +656,6 @@ class VMTokenizer():
             for i in range(0, half_p):
 
                 save_to = param_len - 1 - i
-                print("save to %s " % save_to)
 
                 self.insert_push_integer(save_to)
                 self.insert1(OpCode.PICK)
@@ -627,9 +673,76 @@ class VMTokenizer():
 
 
         self.insert1(OpCode.NOP)
-        vmtoken = self.convert1(OpCode.CALL,py_token=pytoken,data=bytearray(b'\x05\x00'))
 
-        vmtoken.src_method = self.method
-        vmtoken.target_method = pytoken.func_name
+
+        fname = pytoken.func_name
+
+        #operational call like len(items) or abs(value)
+        if self.is_op_call(fname):
+            vmtoken = self.convert_op_call(fname, pytoken)
+
+        #used for runtime.notify
+        elif self.is_notify_call(fname):
+            vmtoken = self.convert_notify_call(fname, pytoken)
+
+        #not sure yet
+        elif self.is_built_in(fname):
+            vmtoken = self.convert_built_in(fname, pytoken)
+
+        #otherwise we assume the method is defined by the module
+        else:
+            vmtoken = self.convert1(OpCode.CALL,py_token=pytoken,data=bytearray(b'\x05\x00'))
+
+            vmtoken.src_method = self.method
+            vmtoken.target_method = pytoken.func_name
 
         return vmtoken
+
+
+    def is_op_call(self, op):
+
+        if op in ['len','abs','min','max',]:
+            return True
+        return False
+
+    def convert_op_call(self, name, pytoken=None):
+
+        if name == 'len':
+            return self.convert1(OpCode.ARRAYSIZE, pytoken)
+        elif name == 'abs':
+            return self.convert1(OpCode.ABS, pytoken)
+        elif name == 'min':
+            return self.convert1(OpCode.MIN,pytoken)
+        elif name == 'max':
+            return self.convert1(OpCode.MAX,pytoken)
+        return None
+
+    def is_notify_call(self, op):
+        return False
+
+    def convert_notify_call(self, op, pytoken=None):
+        raise NotImplementedError()
+
+    def is_built_in(self, op):
+
+        if op in ['zip','type','tuple','super','str','slice',
+                  'set','reversed','property','memoryview',
+                  'map','list','frozenset','float','filter',
+                  'enumerate','dict','divmod','complex','bytes','bytearray','bool',
+                  'int','vars','sum','sorted','round','setattr','getattr',
+                  'rep','quit','print','pow','ord','oct','next','locals','license',
+                  'iter','isinstance','issubclass','input','id','hex',
+                  'help','hash','hasattr','globals','format','exit',
+                  'exec','eval','dir','deleteattr','credits','copyright',
+                  'compile','chr','callable','bin','ascii','any','all',]:
+
+            return True
+
+        return False
+
+    def convert_built_in(self, op, pytoken):
+        raise NotImplementedError("[Compilation error] Built in %s is not implemented" % op)
+
+
+#    def is_method_call(self, op):
+#        if op in self

@@ -54,6 +54,11 @@ class Block():
                     token.func_processed = True
                     param_count = token.args
 
+                    #why would param count be 256 when calling w/ kwargs?
+                    #when keyword args are sent, the param count is 256 * num paramms?
+                    if param_count % 256 == 0:
+                        param_count = 2 * int(param_count / 256)
+
                     params = self.oplist[index-param_count:index]
 
                     call_method_op = self.oplist[index-param_count-1]
@@ -155,6 +160,7 @@ class Block():
                         for index, item in enumerate(array_items):
                             #load the array to set the item into
                             ld_op = PyToken(Opcode(pyop.LOAD_FAST), token.line_no, args=array_name)
+                            print("changing loadop.... %s %s " % (token.line_no, array_name))
                             changed_items.append(ld_op)
                             #set the item into the array
                             settoken = PyToken(Opcode(pyop.SETITEM), token.line_no, args=index, array_item =item.args)

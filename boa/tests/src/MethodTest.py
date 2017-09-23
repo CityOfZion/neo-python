@@ -5,8 +5,6 @@ def Main():
 
     a = 1
 
-    b = 2
-
     c = stuff()
 
     return a + c

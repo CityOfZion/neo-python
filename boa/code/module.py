@@ -29,6 +29,8 @@ class Module():
     all_vm_tokens = None # dict for converting method tokens into linked method tokens for writing
 
 
+    loaded_modules = None
+
     @property
     def main_path(self):
         return sys.modules['__main__']
@@ -87,25 +89,48 @@ class Module():
         self.module_variables = []
         self.methods = []
         self.classes = []
+        self.loaded_modules = []
 
         self.split_lines()
 
         for lineset in self.lines:
 
             if lineset.is_import:
-                self.imports.append(Import(lineset.items))
+                imp = Import(lineset.items)
+                self.process_import(imp)
             elif lineset.is_definition:
                 self.module_variables.append(Definition(lineset.items))
             elif lineset.is_class:
                 self.classes.append(Klass(lineset.items, self))
             elif lineset.is_method:
-                self.methods.append(Method(lineset.code_object, self))
+                m = Method(lineset.code_object, self)
+                self.methods.append(m)
             else:
                 print('not sure what to do with line %s ' % lineset)
 
-        self.validate_imports()
 
-        self.build_classes()
+
+    def process_import(self, import_item):
+        self.imports.append(import_item)
+
+        self.loaded_modules.append(import_item.imported_module)
+
+        #go through all the methods in the imported module
+        for method in import_item.imported_module.methods:
+
+            #go through the methods in this module
+            do_add = True
+            for method2 in self.methods:
+
+                #check to see if a method with that definition is loaded
+                if method.name == method2.name:
+                    do_add = False
+                    print("already imported method named %s %s %s" % (import_item.imported_module, method,method2 ))
+
+
+            #if it hasn't been defined, add it to this modules' methods
+
+            self.methods.append(method)
 
     def split_lines(self):
 
@@ -124,13 +149,6 @@ class Module():
         if len(lineitem):
             self.lines.append(Line(lineitem))
 
-    def validate_imports(self):
-        #print('will validate imports... %s ' % self.imports)
-        pass
-
-    def build_classes(self):
-        #print('build classes %s ' % self.classes)
-        pass
 
 
 
