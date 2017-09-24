@@ -9,6 +9,8 @@ from boa.code.items import Definition, Klass, Import
 import sys
 from neo.VM import OpCode
 
+from collections import OrderedDict
+
 class Module():
 
     bp = None  # this is to store the byteplay reference
@@ -175,7 +177,7 @@ class Module():
 
     def link_methods(self):
 
-        self.all_vm_tokens = {}
+        self.all_vm_tokens = OrderedDict()
 
         address = 0
 

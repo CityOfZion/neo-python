@@ -8,7 +8,7 @@ from neo.VM import OpCode
 
 from neo.BigInteger import BigInteger
 
-
+from collections import OrderedDict
 
 
 class PyToken():
@@ -314,7 +314,7 @@ class VMTokenizer():
     def __init__(self, method):
         self.method = method
         self._address = 0
-        self.vm_tokens = {}
+        self.vm_tokens = OrderedDict()
 
         self.method_begin_items()
 
@@ -705,15 +705,15 @@ class VMTokenizer():
             return True
         return False
 
-    def convert_op_call(self, name, pytoken=None):
+    def convert_op_call(self, op, pytoken=None):
 
-        if name == 'len':
+        if op == 'len':
             return self.convert1(OpCode.ARRAYSIZE, pytoken)
-        elif name == 'abs':
+        elif op == 'abs':
             return self.convert1(OpCode.ABS, pytoken)
-        elif name == 'min':
+        elif op == 'min':
             return self.convert1(OpCode.MIN,pytoken)
-        elif name == 'max':
+        elif op == 'max':
             return self.convert1(OpCode.MAX,pytoken)
         return None
 
@@ -741,6 +741,16 @@ class VMTokenizer():
         return False
 
     def convert_built_in(self, op, pytoken):
+
+        if op == 'print':
+            syscall_name = 'Neo.Runtime.Log'.encode('utf-8')
+            length = len(syscall_name)
+            ba = bytearray([length]) + bytearray(syscall_name)
+            pytoken.is_sys_call = True
+            vmtoken = self.convert1(OpCode.SYSCALL, pytoken, data=ba)
+            self.insert1(OpCode.NOP)
+            return vmtoken
+
         raise NotImplementedError("[Compilation error] Built in %s is not implemented" % op)
 
 
