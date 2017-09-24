@@ -171,6 +171,8 @@ class Method():
 
     def process_block_groups(self):
 
+        iter_setup_block = None
+
         for index,block in enumerate(self.blocks):
 
             #if it is a return block
@@ -187,6 +189,8 @@ class Method():
                 block.oplist.insert(0, ret_token)
                 block.mark_as_end()
 
+
+
             if block.has_unprocessed_array:
                 block.preprocess_arrays()
 
@@ -195,6 +199,21 @@ class Method():
 
             if block.has_unprocessed_method_calls:
                 block.preprocess_method_calls()
+
+
+            if iter_setup_block is not None:
+                block.process_iter_body(iter_setup_block)
+                iter_setup_block = None
+
+            if block.is_iter:
+                block.preprocess_iter()
+                for localvar in block.iterable_local_vars:
+                    length = len(self.local_stores)
+                    self.local_stores[localvar] = length
+                iter_setup_block = block
+
+
+
 
         alltokens = []
 

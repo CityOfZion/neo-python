@@ -1,6 +1,6 @@
 
 from boa.code.builtins import list
-
+from neo.SmartContract.Framework.Neo.Runtime import Notify
 def Main():
 
     start = 4
@@ -18,11 +18,15 @@ def Main():
     index = 0
     orig_start = start
 
-    while start + orig_start < stop:
+    while start < stop:
         val = index + orig_start
         out[index] = val
         index = index + 1
         start = orig_start + index
+
+        Notify(start)
+
+        #d = stuff(1, 2) # this doesn't work at the moment
 
 
     return out[4]
@@ -30,3 +34,7 @@ def Main():
 
 
 
+def stuff(a, b):
+
+    out = a + b
+    return out

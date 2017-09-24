@@ -96,10 +96,10 @@ def range(start, stop):
     to stop (exclusive).  range(i, j) produces i, i+1, i+2, ..., j-1.
     """
 
-    out = []
+#    out = []
 
-    if start >= stop:
-        return out
+#    if start >= stop:
+#        return out
 
     length = stop - start
 

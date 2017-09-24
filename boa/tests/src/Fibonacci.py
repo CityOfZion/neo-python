@@ -1,5 +1,3 @@
-from neo.SmartContract.Framework.FunctionCode import FunctionCode
-
 
 def Main(fibnumber):
 
@@ -20,4 +18,6 @@ def fib(n):
     fibr1 = fib(n1)
     fibr2 = fib(n2)
 
-    return fibr1 + fibr2
+    res = fibr1 + fibr2
+
+    return res

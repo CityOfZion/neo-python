@@ -132,8 +132,8 @@ class PyToken():
             elif op == pyop.FOR_ITER:
                 token = tokenizer.convert1(OpCode.NOP, self)
 
-            elif op == pyop.GET_ITER:
-                token = tokenizer.convert1(OpCode.NOP, self)
+#            elif op == pyop.GET_ITER:
+#                token = tokenizer.convert1(OpCode.NOP, self)
 
             elif op == pyop.POP_BLOCK:
                 token = tokenizer.convert1(OpCode.NOP, self)
@@ -683,7 +683,6 @@ class VMTokenizer():
                 full_name = m.full_name
 #            print("all module method %s %s " % (m.name, m.full_name))
 
-        print("converting method %s %s " % (fname, full_name))
 
         #operational call like len(items) or abs(value)
         if self.is_op_call(fname):
@@ -740,7 +739,7 @@ class VMTokenizer():
         return False
 
     def convert_sys_call(self,op, pytoken=None):
-        print("converting sys call!! %s " % op)
+
         syscall_name = op.replace(NEO_SC_FRAMEWORK,'').encode('utf-8')
         length = len(syscall_name)
         ba = bytearray([length]) + bytearray(syscall_name)
