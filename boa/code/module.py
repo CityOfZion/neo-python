@@ -33,13 +33,14 @@ class Module():
 
     loaded_modules = None
 
-    @property
-    def main_path(self):
-        return sys.modules['__main__']
+    _module_name =None
+
 
     @property
     def module_path(self):
-        return sys.modules['__main__'].__file__
+        return self._module_name
+
+
 
     @property
     def main(self):
@@ -70,9 +71,11 @@ class Module():
                 return m
         return None
 
-    def __init__(self, path):
+    def __init__(self, path, module_name=''):
 
         self.path = path
+
+        self._module_name = module_name
 
         source = open(path, 'rb')
 

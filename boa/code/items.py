@@ -47,7 +47,7 @@ class Import(Item):
 
         filename = module.__file__
 
-        self.imported_module = Module(filename)
+        self.imported_module = Module(filename, module_name=self.module_path)
 
 
     def is_valid(self):

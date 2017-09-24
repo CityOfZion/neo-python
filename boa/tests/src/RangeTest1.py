@@ -1,11 +1,10 @@
-from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
 from boa.code.builtins import list
 
 def Main():
 
     start = 4
-    stop = 9
+    stop = 9 #int
 
 #    out = [10,2, 3, 4, 6, 7]
 
@@ -18,7 +17,8 @@ def Main():
 
     index = 0
     orig_start = start
-    while start < stop:
+
+    while start + orig_start < stop:
         val = index + orig_start
         out[index] = val
         index = index + 1

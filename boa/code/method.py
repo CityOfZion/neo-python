@@ -31,6 +31,12 @@ class Method():
         return self.bp.name
 
     @property
+    def full_name(self):
+        if len(self.module.module_path):
+            return '%s.%s' % (self.module.module_path, self.name)
+        return self.name
+
+    @property
     def args(self):
 #        alist = list(self.bp.args)
 #        if 'self' in alist:

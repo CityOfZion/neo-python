@@ -10,6 +10,7 @@ from neo.BigInteger import BigInteger
 
 from collections import OrderedDict
 
+NEO_SC_FRAMEWORK='neo.SmartContract.Framework.'
 
 class PyToken():
 
@@ -676,6 +677,13 @@ class VMTokenizer():
 
 
         fname = pytoken.func_name
+        full_name = None
+        for m in self.method.module.methods:
+            if fname == m.name:
+                full_name = m.full_name
+#            print("all module method %s %s " % (m.name, m.full_name))
+
+        print("converting method %s %s " % (fname, full_name))
 
         #operational call like len(items) or abs(value)
         if self.is_op_call(fname):
@@ -685,7 +693,10 @@ class VMTokenizer():
         elif self.is_notify_call(fname):
             vmtoken = self.convert_notify_call(fname, pytoken)
 
-        #not sure yet
+        elif self.is_sys_call(full_name):
+            vmtoken = self.convert_sys_call(full_name, pytoken)
+
+        #used for python specific built in methods like `enumerate` or `tuple`
         elif self.is_built_in(fname):
             vmtoken = self.convert_built_in(fname, pytoken)
 
@@ -722,6 +733,21 @@ class VMTokenizer():
 
     def convert_notify_call(self, op, pytoken=None):
         raise NotImplementedError()
+
+    def is_sys_call(self, op):
+        if op is not None and NEO_SC_FRAMEWORK in op:
+            return True
+        return False
+
+    def convert_sys_call(self,op, pytoken=None):
+        print("converting sys call!! %s " % op)
+        syscall_name = op.replace(NEO_SC_FRAMEWORK,'').encode('utf-8')
+        length = len(syscall_name)
+        ba = bytearray([length]) + bytearray(syscall_name)
+        pytoken.is_sys_call=True
+        vmtoken = self.convert1(OpCode.SYSCALL, pytoken, data=ba)
+        self.insert1(OpCode.NOP)
+        return vmtoken
 
     def is_built_in(self, op):
 
