@@ -1,16 +1,11 @@
-from neo.SmartContract.Framework.FunctionCode import FunctionCode
+
+def Main(a, b):
+
+    c = a + b
+
+    if c == 'hellogoodbye':
+
+        return 3
 
 
-class SCTest(FunctionCode):
-
-    @staticmethod
-    def Main(a, b):
-
-        c = a + b
-
-        if c == 'hellogoodbye':
-
-            return 3
-
-
-        return 1
+    return 1

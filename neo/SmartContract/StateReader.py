@@ -262,11 +262,13 @@ class StateReader(InteropService):
 
 
     def Blockchain_GetBlock(self, engine):
+        print("blockchaine get block")
         data = engine.EvaluationStack.Pop()
-
+        print("data %s " % data)
         if data:
             data = data.GetByteArray()
         else:
+            print("invalid data")
             return False
 
         block = None

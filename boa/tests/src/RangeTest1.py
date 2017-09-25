@@ -1,6 +1,7 @@
 
 from boa.code.builtins import list
-from neo.SmartContract.Framework.Neo.Runtime import Notify
+from boa.blockchain.vm.Neo.Runtime import Notify
+
 def Main():
 
     start = 4

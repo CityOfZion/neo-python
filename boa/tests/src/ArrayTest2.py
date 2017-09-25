@@ -1,37 +1,32 @@
-from neo.SmartContract.Framework.FunctionCode import FunctionCode
+
+def Main():
 
 
-class SCTest(FunctionCode):
+    #array sizes once they are created are immutable
 
-    @staticmethod
-    def Main():
+    #lets have fun with strings
 
+    m = ['awesome','fun','cool','neo']
 
-        #array sizes once they are created are immutable
+    q = m[1]
 
-        #lets have fun with strings
+    m2 = [1, 'wat', 'huzzah', 8]
 
-        m = ['awesome','fun','cool','neo']
-
-        q = m[1]
-
-        m2 = [1, 'wat', 'huzzah', 8]
-
-        q2 = m[3]
+    q2 = m[3]
 
 
-        m3 = [b'\x00',b'\x20',b'\xff',b'\xa0']
+    m3 = [b'\x00',b'\x20',b'\xff',b'\xa0']
 
-        q3 = m3[3]
+    q3 = m3[3]
 
 
-        #hmmm, something weird here.  almost works...
-        #m4 = [bytearray(b'\x0f\xf0'), bytearray(b'\xff\xff')]
+    #hmmm, something weird here.  almost works...
+    #m4 = [bytearray(b'\x0f\xf0'), bytearray(b'\xff\xff')]
 
-        # this doesnt work
+    # this doesnt work
 #        q4 = m4[1]
 
 
 
-        return q3
+    return q3
 

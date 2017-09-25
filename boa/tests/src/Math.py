@@ -1,14 +1,6 @@
-from neo.SmartContract.Framework.Neo.Storage import Storage, StorageContext
-from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
+def Main(a: int, b: int) -> int:
 
-class Math(FunctionCode):
+    j = 1
 
-    #    q = 1 # type: int
-
-    @staticmethod
-    def Main(a: int, b: int) -> int:
-
-        j = 1
-
-        return 2
+    return 2

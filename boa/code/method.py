@@ -1,6 +1,6 @@
-from byteplay3 import SetLinenoType,Opcode,Label,Code
+from byteplay3 import SetLinenoType,Label
 
-from boa.code.token import PyToken,VMToken,VMTokenizer
+from boa.code.token import PyToken,VMTokenizer
 from boa.code.block import Block
 from boa.code import pyop
 

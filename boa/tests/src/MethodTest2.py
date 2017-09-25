@@ -1,5 +1,3 @@
-from neo.SmartContract.Framework.FunctionCode import FunctionCode
-
 
 def Main():
 

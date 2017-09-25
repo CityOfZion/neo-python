@@ -4,13 +4,15 @@ from byteplay3 import Label,isopcode,haslocal,Code
 
 from opcode import opname
 
-from neo.VM import OpCode
+from boa.blockchain.vm import VMOp
 
 from neo.BigInteger import BigInteger
 
 from collections import OrderedDict
 
-NEO_SC_FRAMEWORK='neo.SmartContract.Framework.'
+NEO_SC_FRAMEWORK='boa.blockchain.vm.'
+
+
 
 class PyToken():
 
@@ -100,50 +102,50 @@ class PyToken():
 
 
             if op == pyop.NOP:
-                token = tokenizer.convert1(OpCode.NOP, self)
+                token = tokenizer.convert1(VMOp.NOP, self)
 
             elif op == pyop.RETURN_VALUE:
-                token = tokenizer.convert1(OpCode.RET, self)
+                token = tokenizer.convert1(VMOp.RET, self)
 
 
             #control flow
             elif op == pyop.BR_S:
-                token = tokenizer.convert1(OpCode.JMP, self, data=self.args)
+                token = tokenizer.convert1(VMOp.JMP, self, data=self.args)
 
             elif op == pyop.JUMP_FORWARD:
-                token = tokenizer.convert1(OpCode.JMP,self, data=bytearray(2))
+                token = tokenizer.convert1(VMOp.JMP,self, data=bytearray(2))
 
             elif op == pyop.JUMP_ABSOLUTE:
-                token = tokenizer.convert1(OpCode.JMP,self, data=bytearray(2))
+                token = tokenizer.convert1(VMOp.JMP,self, data=bytearray(2))
 
             elif op == pyop.POP_JUMP_IF_FALSE:
-                token = tokenizer.convert1(OpCode.JMPIFNOT, self, data=bytearray(2))
+                token = tokenizer.convert1(VMOp.JMPIFNOT, self, data=bytearray(2))
 
             elif op == pyop.POP_JUMP_IF_TRUE:
-                token = tokenizer.convert1(OpCode.JMPIF, self, data=bytearray(2))
+                token = tokenizer.convert1(VMOp.JMPIF, self, data=bytearray(2))
 
             #loops
             elif op == pyop.SETUP_LOOP:
-                token = tokenizer.convert1(OpCode.NOP, self)
+                token = tokenizer.convert1(VMOp.NOP, self)
 
             elif op == pyop.BREAK_LOOP:
-                token = tokenizer.convert1(OpCode.JMP, self, data=bytearray(2))
+                token = tokenizer.convert1(VMOp.JMP, self, data=bytearray(2))
 
             elif op == pyop.FOR_ITER:
-                token = tokenizer.convert1(OpCode.NOP, self)
+                token = tokenizer.convert1(VMOp.NOP, self)
 
 #            elif op == pyop.GET_ITER:
-#                token = tokenizer.convert1(OpCode.NOP, self)
+#                token = tokenizer.convert1(VMOp.NOP, self)
 
             elif op == pyop.POP_BLOCK:
-                token = tokenizer.convert1(OpCode.NOP, self)
+                token = tokenizer.convert1(VMOp.NOP, self)
 
 
 
             elif op == pyop.FROMALTSTACK:
-                token = tokenizer.convert1(OpCode.FROMALTSTACK, self)
+                token = tokenizer.convert1(VMOp.FROMALTSTACK, self)
             elif op == pyop.DROP:
-                token = tokenizer.convert1(OpCode.DROP, self)
+                token = tokenizer.convert1(VMOp.DROP, self)
 
             #loading constants ( ie 1, 2 etc)
             elif op == pyop.LOAD_CONST:
@@ -179,17 +181,17 @@ class PyToken():
             #unary ops
 
 #            elif op == pyop.UNARY_INVERT:
-#                token = tokenizer.convert1(OpCode.INVERT, self)
+#                token = tokenizer.convert1(VMOp.INVERT, self)
 
             elif op == pyop.UNARY_NEGATIVE:
-                token = tokenizer.convert1(OpCode.NEGATE, self)
+                token = tokenizer.convert1(VMOp.NEGATE, self)
 
             elif op == pyop.UNARY_NOT:
-                token = tokenizer.convert1(OpCode.NOT, self)
+                token = tokenizer.convert1(VMOp.NOT, self)
 
 #            elif op == pyop.UNARY_POSITIVE:
                 #hmmm
-#                token = tokenizer.convert1(OpCode.ABS, self)
+#                token = tokenizer.convert1(VMOp.ABS, self)
 #                pass
 
             #math
@@ -198,30 +200,30 @@ class PyToken():
 #we can't tell by looking up the last token what type of item it was
 #will need to figure out a different way of concatting strings
 #                if prev_token and type(prev_token.args) is str:
-#                    token = tokenizer.convert1(OpCode.CAT, self)
+#                    token = tokenizer.convert1(VMOp.CAT, self)
 #                else:
-                token = tokenizer.convert1(OpCode.ADD, self)
+                token = tokenizer.convert1(VMOp.ADD, self)
 
             elif op in [pyop.BINARY_SUBTRACT, pyop.INPLACE_SUBTRACT]:
-                token = tokenizer.convert1(OpCode.SUB, self)
+                token = tokenizer.convert1(VMOp.SUB, self)
 
             elif op in [pyop.BINARY_MULTIPLY, pyop.INPLACE_MULTIPLY]:
-                token = tokenizer.convert1(OpCode.MUL, self)
+                token = tokenizer.convert1(VMOp.MUL, self)
 
             elif op in [pyop.BINARY_FLOOR_DIVIDE, pyop.BINARY_TRUE_DIVIDE, pyop.INPLACE_FLOOR_DIVIDE, pyop.INPLACE_TRUE_DIVIDE]:
-                token = tokenizer.convert1(OpCode.DIV, self)
+                token = tokenizer.convert1(VMOp.DIV, self)
 
             elif op in [pyop.BINARY_MODULO, pyop.INPLACE_MODULO]:
-                token = tokenizer.convert1(OpCode.MOD, self)
+                token = tokenizer.convert1(VMOp.MOD, self)
 
             elif op == [pyop.BINARY_OR, pyop.INPLACE_OR]:
-                token = tokenizer.convert1(OpCode.BOOLOR, self)
+                token = tokenizer.convert1(VMOp.BOOLOR, self)
 
             elif op == [pyop.BINARY_AND, pyop.INPLACE_AND]:
-                token = tokenizer.convert1(OpCode.BOOLAND, self)
+                token = tokenizer.convert1(VMOp.BOOLAND, self)
 
             elif op == [pyop.BINARY_XOR, pyop.INPLACE_XOR]:
-                token = tokenizer.convert1(OpCode.XOR, self)
+                token = tokenizer.convert1(VMOp.XOR, self)
 
 
 
@@ -230,30 +232,30 @@ class PyToken():
             elif op == pyop.COMPARE_OP:
 
                 if self.args == '>':
-                    token = tokenizer.convert1(OpCode.GT, self)
+                    token = tokenizer.convert1(VMOp.GT, self)
                 elif self.args == '>=':
-                    token = tokenizer.convert1(OpCode.GTE, self)
+                    token = tokenizer.convert1(VMOp.GTE, self)
                 elif self.args == '<':
-                    token = tokenizer.convert1(OpCode.LT, self)
+                    token = tokenizer.convert1(VMOp.LT, self)
                 elif self.args == '<=':
-                    token = tokenizer.convert1(OpCode.LTE, self)
+                    token = tokenizer.convert1(VMOp.LTE, self)
                 elif self.args == '==':
-                    token = tokenizer.convert1(OpCode.EQUAL, self)
+                    token = tokenizer.convert1(VMOp.EQUAL, self)
                 elif self.args == 'is':
-                    token = tokenizer.convert1(OpCode.EQUAL, self)
+                    token = tokenizer.convert1(VMOp.EQUAL, self)
 
 
             #arrays
             elif op == pyop.BUILD_LIST:
-                token = tokenizer.convert_new_array(OpCode.NEWARRAY, self)
+                token = tokenizer.convert_new_array(VMOp.NEWARRAY, self)
             elif op == pyop.SETITEM:
                 token = tokenizer.convert_set_element(self, self.args)
-#                token = tokenizer.convert1(OpCode.SETITEM,self, data=self.args)
+#                token = tokenizer.convert1(VMOp.SETITEM,self, data=self.args)
             elif op == pyop.STORE_SUBSCR:
                 #this wont occur because this op is preprocessed into a SETITEM op
                 pass
             elif op == pyop.BINARY_SUBSCR:
-                token = tokenizer.convert1(OpCode.PICKITEM,self)
+                token = tokenizer.convert1(VMOp.PICKITEM,self)
 
 
             elif op == pyop.CALL_FUNCTION:
@@ -374,7 +376,7 @@ class VMTokenizer():
 
             b_array.append(vm_token.out_op)
 
-            if vm_token.data is not None and vm_token.vm_op != OpCode.NOP:
+            if vm_token.data is not None and vm_token.vm_op != VMOp.NOP:
                 b_array = b_array + vm_token.data
 
         return b_array
@@ -384,7 +386,7 @@ class VMTokenizer():
 
         #gotta start your day right with a nop ( actually i guess not)
 #        pytoken = PyToken(pyop.NOP,lineno=self.method.start_line_no)
-#        self.convert1(OpCode.NOP, pytoken)
+#        self.convert1(VMOp.NOP, pytoken)
 
         #we just need to inssert the total number of arguments + body variables
         #which is the length of the method `local_stores` dictionary
@@ -392,8 +394,8 @@ class VMTokenizer():
         total_items = self.method.total_lines + len(self.method.args)
 
         self.insert_push_integer(total_items)
-        self.insert1(OpCode.NEWARRAY)
-        self.insert1(OpCode.TOALTSTACK)
+        self.insert1(VMOp.NEWARRAY)
+        self.insert1(VMOp.TOALTSTACK)
 
         for index, arg in enumerate(self.method.args):
             self.convert_load_parameter(arg, index)
@@ -428,22 +430,22 @@ class VMTokenizer():
         dlen = len(data)
 
         if dlen == 0:
-            return self.insert1(OpCode.PUSH0)
+            return self.insert1(VMOp.PUSH0)
 
         elif dlen <= 75:
             return self.insert1(dlen,data)
 
         if dlen < 0x100:
             prefixlen = 1
-            code = OpCode.PUSHDATA1
+            code = VMOp.PUSHDATA1
 
         elif dlen < 0x1000:
             prefixlen = 2
-            code = OpCode.PUSHDATA2
+            code = VMOp.PUSHDATA2
 
         else:
             prefixlen = 4
-            code = OpCode.PUSHDATA4
+            code = VMOp.PUSHDATA4
 
         byts = bytearray(dlen.to_bytes(prefixlen, 'little')) + data
 
@@ -451,9 +453,9 @@ class VMTokenizer():
 
     def insert_push_integer(self, i):
         if i == 0:
-            return self.insert1(OpCode.PUSH0)
+            return self.insert1(VMOp.PUSH0)
         elif i == -1:
-            return self.insert1(OpCode.PUSHM1)
+            return self.insert1(VMOp.PUSHM1)
         elif i > 0 and i <= 16:
             out = 0x50 + i
             return self.insert1(out)
@@ -489,26 +491,26 @@ class VMTokenizer():
         else:
             self.convert_load_local(py_token, py_token.args)
 
-        self.convert1(OpCode.NEWARRAY,py_token)
+        self.convert1(VMOp.NEWARRAY,py_token)
 
 
     def convert_push_data(self, data, py_token=None):
 
         dlen = len(data)
         if dlen == 0:
-            return self.convert1(OpCode.PUSH0, py_token=py_token)
+            return self.convert1(VMOp.PUSH0, py_token=py_token)
         elif dlen <= 75:
             return self.convert1(len(data), py_token=py_token, data=data)
 
         if dlen < 0x100:
             prefixlen = 1
-            code = OpCode.PUSHDATA1
+            code = VMOp.PUSHDATA1
         elif dlen < 0x1000:
             prefixlen = 2
-            code = OpCode.PUSHDATA2
+            code = VMOp.PUSHDATA2
         else:
             prefixlen = 4
-            code = OpCode.PUSHDATA4
+            code = VMOp.PUSHDATA4
 
         byts = bytearray(dlen.to_bytes(prefixlen, 'little')) + data
 
@@ -517,15 +519,17 @@ class VMTokenizer():
 
     def convert_push_integer(self, i, py_token=None):
         if i == 0:
-            return self.convert1(OpCode.PUSH0, py_token=py_token)
+            return self.convert1(VMOp.PUSH0, py_token=py_token)
         elif i == -1:
-            return self.convert1(OpCode.PUSHM1, py_token=py_token)
+            return self.convert1(VMOp.PUSHM1, py_token=py_token)
         elif i > 0 and i <= 16:
             out = 0x50 + i
             return self.convert1(out, py_token=py_token)
 
         bigint = BigInteger(i)
-        outdata = bigint.ToByteArray()
+        print("Big integer! %s " % bigint)
+        outdata = bigint.ToByteArray(signed=False)
+        print("OUTDATA %s " % outdata)
 
         return self.convert_push_data(outdata, py_token=py_token)
 
@@ -534,9 +538,9 @@ class VMTokenizer():
 
 
         # set array
-        self.convert1(OpCode.FROMALTSTACK, py_token=py_token)
-        self.convert1(OpCode.DUP)
-        self.convert1(OpCode.TOALTSTACK)
+        self.convert1(VMOp.FROMALTSTACK, py_token=py_token)
+        self.convert1(VMOp.DUP)
+        self.convert1(VMOp.TOALTSTACK)
 
         local_name = py_token.args
 
@@ -547,8 +551,8 @@ class VMTokenizer():
 
         # set item
         self.convert_push_integer(2)
-        self.convert1(OpCode.ROLL)
-        self.convert1(OpCode.SETITEM)
+        self.convert1(VMOp.ROLL)
+        self.convert1(VMOp.SETITEM)
 
     def convert_load_local(self, py_token, name=None):
 
@@ -560,13 +564,13 @@ class VMTokenizer():
         position = self.method.local_stores[local_name]
 
         # get array
-        self.convert1(OpCode.FROMALTSTACK, py_token=py_token)
-        self.convert1(OpCode.DUP)
-        self.convert1(OpCode.TOALTSTACK)
+        self.convert1(VMOp.FROMALTSTACK, py_token=py_token)
+        self.convert1(VMOp.DUP)
+        self.convert1(VMOp.TOALTSTACK)
 
         # get i
         self.convert_push_integer(position)
-        self.convert1(OpCode.PICKITEM)
+        self.convert1(VMOp.PICKITEM)
 
 
     def insert_unknown_type(self, item):
@@ -605,7 +609,7 @@ class VMTokenizer():
         else:
             self.insert_unknown_type(arg.array_item)
 
-        self.convert1(OpCode.SETITEM,arg)
+        self.convert1(VMOp.SETITEM,arg)
 
     def convert_load_parameter(self, arg, position):
 
@@ -613,15 +617,15 @@ class VMTokenizer():
         self.method.local_stores[arg] = length
 
         # get array
-        self.insert1(OpCode.FROMALTSTACK)
-        self.insert1(OpCode.DUP)
-        self.insert1(OpCode.TOALTSTACK)
+        self.insert1(VMOp.FROMALTSTACK)
+        self.insert1(VMOp.DUP)
+        self.insert1(VMOp.TOALTSTACK)
 
         self.insert_push_integer(position)
         self.insert_push_integer(2)
 
-        self.insert1(OpCode.ROLL)
-        self.insert1(OpCode.SETITEM)
+        self.insert1(VMOp.ROLL)
+        self.insert1(VMOp.SETITEM)
 
 
     def convert_built_in_list(self, pytoken):
@@ -632,7 +636,7 @@ class VMTokenizer():
                 new_array_len = pytoken.func_params[index + 1].args
                 lenfound=True
         pytoken.args = new_array_len
-        self.convert_new_array(OpCode.NEWARRAY, pytoken)
+        self.convert_new_array(VMOp.NEWARRAY, pytoken)
 
 
     def convert_method_call(self, pytoken):
@@ -650,10 +654,10 @@ class VMTokenizer():
         if param_len <= 1:
             pass
         elif param_len == 2:
-            self.insert1(OpCode.SWAP)
+            self.insert1(VMOp.SWAP)
         elif param_len == 3:
             self.insert_push_integer(2)
-            self.insert1(OpCode.XSWAP)
+            self.insert1(VMOp.XSWAP)
         else:
             half_p = int(param_len/2)
 
@@ -662,21 +666,21 @@ class VMTokenizer():
                 save_to = param_len - 1 - i
 
                 self.insert_push_integer(save_to)
-                self.insert1(OpCode.PICK)
+                self.insert1(VMOp.PICK)
 
                 self.insert_push_integer(i + 1)
-                self.insert1(OpCode.PICK)
+                self.insert1(VMOp.PICK)
 
                 self.insert_push_integer(save_to + 2)
-                self.insert1(OpCode.XSWAP)
-                self.insert1(OpCode.DROP)
+                self.insert1(VMOp.XSWAP)
+                self.insert1(VMOp.DROP)
 
                 self.insert_push_integer(i + 1)
-                self.insert1(OpCode.XSWAP)
-                self.insert1(OpCode.DROP)
+                self.insert1(VMOp.XSWAP)
+                self.insert1(VMOp.DROP)
 
 
-        self.insert1(OpCode.NOP)
+        self.insert1(VMOp.NOP)
 
 
         fname = pytoken.func_name
@@ -704,7 +708,7 @@ class VMTokenizer():
 
         #otherwise we assume the method is defined by the module
         else:
-            vmtoken = self.convert1(OpCode.CALL,py_token=pytoken,data=bytearray(b'\x05\x00'))
+            vmtoken = self.convert1(VMOp.CALL,py_token=pytoken,data=bytearray(b'\x05\x00'))
 
             vmtoken.src_method = self.method
             vmtoken.target_method = pytoken.func_name
@@ -721,13 +725,13 @@ class VMTokenizer():
     def convert_op_call(self, op, pytoken=None):
 
         if op == 'len':
-            return self.convert1(OpCode.ARRAYSIZE, pytoken)
+            return self.convert1(VMOp.ARRAYSIZE, pytoken)
         elif op == 'abs':
-            return self.convert1(OpCode.ABS, pytoken)
+            return self.convert1(VMOp.ABS, pytoken)
         elif op == 'min':
-            return self.convert1(OpCode.MIN,pytoken)
+            return self.convert1(VMOp.MIN,pytoken)
         elif op == 'max':
-            return self.convert1(OpCode.MAX,pytoken)
+            return self.convert1(VMOp.MAX,pytoken)
         return None
 
     def is_notify_call(self, op):
@@ -747,8 +751,8 @@ class VMTokenizer():
         length = len(syscall_name)
         ba = bytearray([length]) + bytearray(syscall_name)
         pytoken.is_sys_call=False
-        vmtoken = self.convert1(OpCode.SYSCALL, pytoken, data=ba)
-        self.insert1(OpCode.NOP)
+        vmtoken = self.convert1(VMOp.SYSCALL, pytoken, data=ba)
+        self.insert1(VMOp.NOP)
         return vmtoken
 
     def is_built_in(self, op):
@@ -775,8 +779,8 @@ class VMTokenizer():
             length = len(syscall_name)
             ba = bytearray([length]) + bytearray(syscall_name)
 #            pytoken.is_sys_call = True
-            vmtoken = self.convert1(OpCode.SYSCALL, pytoken, data=ba)
-            self.insert1(OpCode.NOP)
+            vmtoken = self.convert1(VMOp.SYSCALL, pytoken, data=ba)
+            self.insert1(VMOp.NOP)
             return vmtoken
 
         raise NotImplementedError("[Compilation error] Built in %s is not implemented" % op)

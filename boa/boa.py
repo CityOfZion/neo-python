@@ -1,5 +1,4 @@
 import os
-import binascii
 from boa.code.module import Module
 
 from neo.IO.MemoryStream import StreamManager

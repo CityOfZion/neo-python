@@ -1,5 +1,5 @@
-from neo.SmartContract.Framework.Neo.Storage import Get,Put,Delete,GetContext
-from neo.SmartContract.Framework.Neo.Runtime import Notify
+from boa.blockchain.vm.Neo.Storage import Get,Put,Delete,GetContext
+from boa.blockchain.vm.Neo.Runtime import Notify
 
 def Main():
 

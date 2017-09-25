@@ -2,7 +2,6 @@ from byteplay3 import Code
 from boa.code.method import Method
 from boa.code import pyop
 import importlib
-import pdb
 
 class Item():
     items = None
@@ -20,11 +19,15 @@ class Definition(Item):
 
 class Import(Item):
 
+    NEO_SC_FRAMEWORK = 'neo.SmartContract.Framework.'
+
     module_path = None
     module_name = None
 
 
     imported_module = None
+
+    is_system_module = None
 
     def __init__(self, item_list):
         super(Import, self).__init__(item_list)
@@ -35,6 +38,8 @@ class Import(Item):
 
             elif op == pyop.STORE_NAME:
                 self.module_name = arg
+
+        self.is_system_module = False
 
         self.build()
 
@@ -47,8 +52,10 @@ class Import(Item):
 
         filename = module.__file__
 
-        self.imported_module = Module(filename, module_name=self.module_path)
+        if self.NEO_SC_FRAMEWORK in self.module_path:
+            self.is_system_module = True
 
+        self.imported_module = Module(filename, module_name=self.module_path, is_sys_module=self.is_system_module)
 
     def is_valid(self):
 

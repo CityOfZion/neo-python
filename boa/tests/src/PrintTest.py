@@ -1,6 +1,7 @@
 
 from boa.code.builtins import list,range
-from neo.SmartContract.Framework.Neo.Runtime import Log,Notify
+from boa.blockchain.vm.Neo.Runtime import Log,Notify
+
 
 def Main():
 

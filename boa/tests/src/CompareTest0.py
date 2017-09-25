@@ -1,16 +1,9 @@
-from neo.SmartContract.Framework.FunctionCode import FunctionCode
 
-expected = b'53c56b6c766b00527ac46c766b51527ac461006c766b52527ac46c766b00c36c766b51c3a06c766b52527ac4616c7566'
+def Main(a, b):
 
+    if a > b:
 
-class SCTest(FunctionCode):
-
-    @staticmethod
-    def Main(a, b):
-
-        if a > b:
-
-            return 3
+        return 3
 
 
-        return 2
+    return 2

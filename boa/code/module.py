@@ -6,8 +6,7 @@ from boa.code.line import Line
 from boa.code.method import Method
 from boa.code.items import Definition, Klass, Import
 
-from neo.VM import OpCode
-
+from boa.blockchain.vm import VMOp
 
 from collections import OrderedDict
 
@@ -27,6 +26,7 @@ class Module():
 
     methods = None # a list to keep all methods in the module
 
+    is_sys_module = None
 
     all_vm_tokens = None # dict for converting method tokens into linked method tokens for writing
 
@@ -71,11 +71,13 @@ class Module():
                 return m
         return None
 
-    def __init__(self, path, module_name=''):
+    def __init__(self, path, module_name='', is_sys_module=False):
 
         self.path = path
 
         self._module_name = module_name
+
+        self.is_sys_module = is_sys_module
 
         source = open(path, 'rb')
 
@@ -101,8 +103,13 @@ class Module():
         for lineset in self.lines:
 
             if lineset.is_import:
-                imp = Import(lineset.items)
-                self.process_import(imp)
+
+                if not self.is_sys_module:
+                    imp = Import(lineset.items)
+                    self.process_import(imp)
+                else:
+                    print("will not import items from sys module")
+
             elif lineset.is_definition:
                 self.module_variables.append(Definition(lineset.items))
             elif lineset.is_class:
@@ -115,6 +122,7 @@ class Module():
 
 
     def process_import(self, import_item):
+
         self.imports.append(import_item)
 
         self.loaded_modules.append(import_item.imported_module)
@@ -176,7 +184,7 @@ class Module():
 
             b_array.append(vm_token.out_op)
 
-            if vm_token.data is not None and vm_token.vm_op != OpCode.NOP:
+            if vm_token.data is not None and vm_token.vm_op != VMOp.NOP:
                 b_array = b_array + vm_token.data
 
         return b_array
@@ -216,4 +224,3 @@ class Module():
                 jump_len = target_method.method_address - vmtoken.addr
 
                 vmtoken.data = jump_len.to_bytes(2, 'little', signed=True)
-

@@ -1,10 +1,27 @@
-from neo.SmartContract.Framework.Neo.Runtime import Notify
 
 def Main():
 
     a = 0
-    b = 5
-    while a < b:
-        a += 1
+    b = 0
 
-    return a
+    c = 21
+
+    while a < 9:
+
+        a = a + 1
+
+        if a == 7:
+            break
+
+        while b < 4:
+
+            b = b + 1
+
+
+            while c > 20:
+
+                c = c - 5
+
+
+    return a + b + c # expect 27
+

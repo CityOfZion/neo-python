@@ -12,8 +12,9 @@ class BigInteger(int):
     def Equals(self, other):
         return super(BigInteger, self).__eq__(other)
 
-    def ToByteArray(self):
-        return self.to_bytes(self.bit_length(), byteorder='little', signed=True)
+    def ToByteArray(self, signed=True):
+        return self.to_bytes((self.bit_length() + 7) //8, byteorder='little', signed=signed)
+
 
     def __abs__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__abs__(*args, **kwargs))
