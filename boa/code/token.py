@@ -1,6 +1,6 @@
 from boa.code import pyop
 
-from byteplay3 import Label,isopcode,haslocal,hasflow
+from byteplay3 import Label,isopcode,haslocal,Code
 
 from opcode import opname
 
@@ -162,7 +162,10 @@ class PyToken():
                     token = tokenizer.convert_push_integer(self.args)
                 elif type(self.args) == type(None):
                     token = tokenizer.convert_push_data(bytearray(0))
+                elif type(self.args) == Code:
+                    pass
                 else:
+
                     raise Exception("Could not load type %s for item %s " % (type(self.args), self.args))
 
             #storing / loading local variables
@@ -743,7 +746,7 @@ class VMTokenizer():
         syscall_name = op.replace(NEO_SC_FRAMEWORK,'').encode('utf-8')
         length = len(syscall_name)
         ba = bytearray([length]) + bytearray(syscall_name)
-        pytoken.is_sys_call=True
+        pytoken.is_sys_call=False
         vmtoken = self.convert1(OpCode.SYSCALL, pytoken, data=ba)
         self.insert1(OpCode.NOP)
         return vmtoken
@@ -771,7 +774,7 @@ class VMTokenizer():
             syscall_name = 'Neo.Runtime.Log'.encode('utf-8')
             length = len(syscall_name)
             ba = bytearray([length]) + bytearray(syscall_name)
-            pytoken.is_sys_call = True
+#            pytoken.is_sys_call = True
             vmtoken = self.convert1(OpCode.SYSCALL, pytoken, data=ba)
             self.insert1(OpCode.NOP)
             return vmtoken

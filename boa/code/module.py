@@ -6,8 +6,8 @@ from boa.code.line import Line
 from boa.code.method import Method
 from boa.code.items import Definition, Klass, Import
 
-import sys
 from neo.VM import OpCode
+
 
 from collections import OrderedDict
 
@@ -108,8 +108,7 @@ class Module():
             elif lineset.is_class:
                 self.classes.append(Klass(lineset.items, self))
             elif lineset.is_method:
-                m = Method(lineset.code_object, self)
-                self.methods.append(m)
+                self.process_method(lineset)
             else:
                 print('not sure what to do with line %s ' % lineset)
 
@@ -136,6 +135,11 @@ class Module():
             #if it hasn't been defined, add it to this modules' methods
 
             self.methods.append(method)
+
+    def process_method(self, lineset):
+
+        m = Method(lineset.code_object, self)
+        self.methods.append(m)
 
     def split_lines(self):
 
@@ -204,6 +208,8 @@ class Module():
         for key, vmtoken in self.all_vm_tokens.items():
 
             if vmtoken.src_method is not None:
+
+                print("vm token target method %s " % vmtoken.target_method)
 
                 target_method = self.method_by_name( vmtoken.target_method )
 

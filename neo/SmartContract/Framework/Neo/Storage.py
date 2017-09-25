@@ -1,24 +1,19 @@
-from neo.SmartContract.Framework.System.Decorator import sys_call
 
-class StorageContext():
+
+
+def GetContext():
     pass
 
-class Storage():
 
 
-    @sys_call('Neo.Storage.GetContext')
-    @staticmethod
-    def CurrentContext():
-        pass
+#def CurrentContext():
+#    return GetContext()
 
-    @staticmethod
-    def Get(context, key):
-        pass
+def Get(context, key):
+    pass
 
-    @staticmethod
-    def Put(context, key, value):
-        pass
+def Put(context, key, value):
+    pass
 
-    @staticmethod
-    def Delete(context, key, value):
-        pass
+def Delete(context, key, value):
+    pass

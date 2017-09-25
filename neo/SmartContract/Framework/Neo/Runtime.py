@@ -1,5 +1,4 @@
 
-
 def Log(message):
     pass
 
