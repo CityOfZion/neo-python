@@ -491,8 +491,7 @@ class VMTokenizer():
         else:
             self.convert_load_local(py_token, py_token.args)
 
-        self.convert1(VMOp.NEWARRAY,py_token)
-
+        self.convert1(VMOp.PACK,py_token)
 
     def convert_push_data(self, data, py_token=None):
 
@@ -604,7 +603,13 @@ class VMTokenizer():
             self.convert_load_local(None, name=position)
 
         if type(arg.array_item) is str:
-            self.convert_load_local(None, name=arg.array_item)
+
+            #first we'll look for the local variable with name of the str
+            if arg.array_item in self.method.local_stores:
+                self.convert_load_local(None, name=arg.array_item)
+            #otherwise we'll do the unknown type thing
+            else:
+                self.insert_unknown_type(arg.array_item)
         else:
             self.insert_unknown_type(arg.array_item)
 

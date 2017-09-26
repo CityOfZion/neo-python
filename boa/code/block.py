@@ -281,46 +281,23 @@ class Block():
 
         while self.has_unprocessed_array:
 
-            start_index_change = None
-            end_index_change = None
-            changed_items = None
-
+            blist_start_index = None
+            blist_end_index = None
+            array_items = []
             for index, token in enumerate(self.oplist):
-                if token.py_op == pyop.BUILD_LIST and token.array_processed == False:
+                if token.py_op == pyop.BUILD_LIST and token.array_processed == False and blist_start_index == None:
 
                     num_list_items = token.args
+                    blist_start_index = index - num_list_items
+                    blist_end_index = index
+                    array_items = self.oplist[index - num_list_items:num_list_items]
+                    array_items.reverse()
 
                     token.array_processed = True
 
-                    if num_list_items > 0:
-                        array_items = self.oplist[index-num_list_items:num_list_items]
+            if blist_start_index is not None:
+                self.oplist = self.oplist[0:blist_start_index] + array_items + self.oplist[blist_end_index:]
 
-                        start_index_change =index - num_list_items
-                        end_index_change = index
-
-                        changed_items = []
-                        changed_items.append(token)
-
-                        #this is the store fast op
-                        next_token = self.oplist[index + 1]
-                        changed_items.append(next_token)
-
-                        #now we load  the new array
-                        array_name = next_token.args
-
-                        for index, item in enumerate(array_items):
-                            #load the array to set the item into
-                            ld_op = PyToken(Opcode(pyop.LOAD_FAST), token.line_no, args=array_name)
-                            changed_items.append(ld_op)
-                            #set the item into the array
-                            settoken = PyToken(Opcode(pyop.SETITEM), token.line_no, args=index, array_item =item.args)
-                            changed_items.append(settoken)
-
-            if start_index_change is not None and end_index_change is not None:
-
-                tstart = self.oplist[0:start_index_change]
-                tend = self.oplist[end_index_change+2:]
-                self.oplist = tstart + changed_items + tend
 
 
     def mark_as_end(self):
