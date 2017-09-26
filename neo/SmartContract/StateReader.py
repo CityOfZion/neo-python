@@ -166,6 +166,7 @@ class StateReader(InteropService):
 
     def Runtime_GetTrigger(self, engine):
         engine.EvaluationStack.PushT(engine.Trigger)
+        return True
 
 
     def CheckWitnessHash(self, engine, hash):
@@ -473,7 +474,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        inputs = [StackItem.FromInterface(input) for input in tx.Inputs]
+        inputs = [StackItem.FromInterface(input) for input in tx.inputs]
         engine.EvaluationStack.PushT(inputs)
         return True
 
@@ -483,7 +484,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        outputs = [StackItem.FromInterface(output) for output in tx.Outputs]
+        outputs = [StackItem.FromInterface(output) for output in tx.outputs]
         engine.EvaluationStack.PushT(outputs)
         return True
 
@@ -493,7 +494,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        refs = [StackItem.FromInterface(ref) for ref in tx.References]
+        refs = [StackItem.FromInterface(tx.References[input]) for input in tx.inputs]
         engine.EvaluationStack.PushT(refs)
         return True
 
