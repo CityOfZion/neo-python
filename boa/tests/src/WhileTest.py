@@ -4,7 +4,7 @@ def Main():
     a = 0
     b = 0
 
-    c = 21
+    c = 22
 
     while a < 9:
 

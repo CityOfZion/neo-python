@@ -1,15 +1,14 @@
 from boa.blockchain.vm.Neo.Blockchain import GetHeader
-from boa.blockchain.vm.Neo.Header import *
+from boa.blockchain.vm.Neo.Header import GetMerkleRoot,GetTimestamp,GetHash,GetVersion
 
 from boa.blockchain.vm.Neo.Runtime import Notify,Log
 
 
-def Main():
+def Main(block_height):
 
-    block_height = 12536
     header = GetHeader(block_height)
 
-    print("got header")
+    Log("got header")
 
     merkle = GetMerkleRoot(header)
 
@@ -29,13 +28,12 @@ def Main():
 
     Notify(merkle)
 
-
     print("getting timestamp")
     ts = GetTimestamp(header)
 
     Notify(ts)
 
-    if ts == 1494640527:
+    if ts == 1494640540:
 
         return 9
 

@@ -10,8 +10,10 @@ from boa.blockchain.vm.Neo.Contract import Contract
 def GetHeight() -> int:
     pass
 
+
 def GetHeader(height_or_hash) -> Header:
     pass
+
 
 def GetBlock(height_or_hash) -> Block:
     pass
@@ -19,6 +21,7 @@ def GetBlock(height_or_hash) -> Block:
 
 def GetTransaction(hash) -> Transaction:
     pass
+
 
 def GetAccount(script_hash) -> Account:
     pass

@@ -527,9 +527,8 @@ class VMTokenizer():
             return self.convert1(out, py_token=py_token)
 
         bigint = BigInteger(i)
-        print("Big integer! %s " % bigint)
-        outdata = bigint.ToByteArray(signed=False)
-        print("OUTDATA %s " % outdata)
+
+        outdata = bigint.ToByteArray()
 
         return self.convert_push_data(outdata, py_token=py_token)
 

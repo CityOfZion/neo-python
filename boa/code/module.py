@@ -137,12 +137,12 @@ class Module():
                 #check to see if a method with that definition is loaded
                 if method.name == method2.name:
                     do_add = False
-                    print("already imported method named %s %s %s" % (import_item.imported_module, method,method2 ))
+#                    print("already imported method named %s %s %s" % (import_item.imported_module, method,method2 ))
 
 
             #if it hasn't been defined, add it to this modules' methods
-
-            self.methods.append(method)
+            if do_add:
+                self.methods.append(method)
 
     def process_method(self, lineset):
 
@@ -217,7 +217,6 @@ class Module():
 
             if vmtoken.src_method is not None:
 
-                print("vm token target method %s " % vmtoken.target_method)
 
                 target_method = self.method_by_name( vmtoken.target_method )
 
