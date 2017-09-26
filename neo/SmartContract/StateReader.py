@@ -228,12 +228,12 @@ class StateReader(InteropService):
 
     def Blockchain_GetHeader(self, engine):
         data = engine.EvaluationStack.Pop().GetByteArray()
-
+        print("get header %s " % data)
         header = None
 
         if len(data) <= 5:
-
-            height = BigInteger(data)
+            print("data")
+            height = BigInteger.FromBytes(data)
 
             if Blockchain.Default() is not None:
 

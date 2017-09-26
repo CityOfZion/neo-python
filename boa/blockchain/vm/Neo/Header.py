@@ -4,12 +4,23 @@ class Header():
     pass
 
 
-def GetHash():
+def GetHash(header):
     pass
 
-def GetVersion():
+def GetVersion(header):
     pass
 
-def GetPrevHash():
+def GetPrevHash(header):
     pass
 
+def GetMerkleRoot(header):
+    pass
+
+def GetTimestamp(header):
+    pass
+
+def GetConsensusData(header):
+    pass
+
+def GetNextConsensus(header):
+    pass
