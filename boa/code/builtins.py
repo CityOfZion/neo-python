@@ -1,7 +1,7 @@
 
 class list(list):
 
-    def __init__(self, length):
+    def __init__(self, length=0):
 #        super(list, self).__init__()
         pass
 
@@ -96,16 +96,12 @@ def range(start, stop):
     to stop (exclusive).  range(i, j) produces i, i+1, i+2, ..., j-1.
     """
 
-#    out = []
-
-#    if start >= stop:
-#        return out
-
     length = stop - start
 
     out = list(length=length)
 
     index = 0
+
     orig_start = start
 
     while start < stop:

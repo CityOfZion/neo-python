@@ -54,7 +54,7 @@ class Module():
     @property
     def orderered_methods(self):
         om = []
-
+        self.methods.reverse()
         if self.main:
             om = [self.main]
 
@@ -63,7 +63,23 @@ class Module():
                 continue
             om.append(m)
 
+        for k in om:
+            print("MEthed:  ->  %s " % (k.name))
+
         return om
+
+    def add_method(self, method):
+        for m in self.methods:
+#            print("comparing method... %s %s " % (m.name, method.name))
+            if m.name == method.name:
+#                print("method %s already added " % m.name)
+                return False
+
+#        from boa.boa import Compiler
+#        if self == Compiler.instance().default:
+        print("[%s]     Adding method %s %s " % (self.module_path,method.name, method))
+
+        self.methods.append(method)
 
     def method_by_name(self, method_name):
         for m in self.methods:
@@ -129,25 +145,14 @@ class Module():
 
         #go through all the methods in the imported module
         for method in import_item.imported_module.methods:
-
-            #go through the methods in this module
-            do_add = True
-            for method2 in self.methods:
-
-                #check to see if a method with that definition is loaded
-                if method.name == method2.name:
-                    do_add = False
-#                    print("already imported method named %s %s %s" % (import_item.imported_module, method,method2 ))
-
-
-            #if it hasn't been defined, add it to this modules' methods
-            if do_add:
-                self.methods.append(method)
+            self.add_method(method)
 
     def process_method(self, lineset):
 
         m = Method(lineset.code_object, self)
-        self.methods.append(m)
+#        print("Adding method %s %s " % (m.name, m))
+        self.add_method(m)
+#        self.methods.append(m)
 
     def split_lines(self):
 
@@ -199,7 +204,7 @@ class Module():
         for method in self.orderered_methods:
 
             method.method_address = address
-
+            print("METHOD, ADDRESS %s %s" % (method.name, address) )
             for key, vmtoken in method.vm_tokens.items():
 
                 self.all_vm_tokens[address] = vmtoken
@@ -219,7 +224,10 @@ class Module():
 
 
                 target_method = self.method_by_name( vmtoken.target_method )
-
+                print("TARGET METHOD IS %s %s " % (target_method, vmtoken.src_method))
                 jump_len = target_method.method_address - vmtoken.addr
-
+                print("method address... token address %s %s " % (target_method.method_address, vmtoken.addr))
+                print("JUMP LEN %s " % jump_len)
+                jbytes = jump_len.to_bytes(2, 'little',signed=True)
+                print("jbytes %s " % jbytes)
                 vmtoken.data = jump_len.to_bytes(2, 'little', signed=True)

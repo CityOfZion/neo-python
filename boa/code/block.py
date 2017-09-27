@@ -3,7 +3,7 @@ from byteplay3 import Opcode
 from boa.code.token import PyToken
 from boa.code import pyop
 
-
+import pdb
 class Block():
 
     forloop_counter = 0
@@ -211,15 +211,16 @@ class Block():
                         param_count = 2 * int(param_count / 256)
 
                     params = self.oplist[index-param_count:index]
-
+                    print("params %s " % params)
                     call_method_op = self.oplist[index-param_count-1]
+
                     call_method_type = call_method_op.py_op
                     call_method_name = call_method_op.args
 
                     token.func_params = params
                     token.func_name = call_method_name
                     token.func_type = call_method_type
-
+#                    pdb.set_trace()
                     changed_items = [token]
 
                     start_index_change = index - param_count - 1

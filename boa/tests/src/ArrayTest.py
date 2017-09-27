@@ -1,24 +1,29 @@
-from boa.code.builtins import range
-from boa.blockchain.vm.Neo.Runtime import Notify
+
+from boa.code.builtins import list,range
+from boa.blockchain.vm.Neo.Runtime import Log,Notify
 def Main():
 
 
-    a = 3
+    mmm = range(2,14)
 
-    m = [1,2,3,4,5,6]
+    l = mmm[2]
 
-    print("m")
-    Notify(m)
+    Notify(l)
 
-#    b = get_thing()
+    empty = list()
 
-    return m[0]
+    b = get_thing()
+    c = get_items_from_range(mmm, 7)
+
+    k = range(10,12)
+
+    return l + b + c + k[0]
 
 
 def get_thing():
     return 7
 
-def get_items_from_range(items):
+def get_items_from_range(items, index):
 
 
-    return items[3]
+    return items[index]

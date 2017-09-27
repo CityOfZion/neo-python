@@ -636,12 +636,24 @@ class VMTokenizer():
         new_array_len = 0
         lenfound = False
         for index,token in enumerate(pytoken.func_params):
-            if token.args=='length' and not lenfound:
-                new_array_len = pytoken.func_params[index + 1].args
-                lenfound=True
-        pytoken.args = new_array_len
-        self.convert_new_array(VMOp.NEWARRAY, pytoken)
 
+            if token.args=='length' and not lenfound:
+                #first we see if a constant ( ie integer was passed in
+
+                new_array_len = pytoken.func_params[index + 1].args
+
+                if type(new_array_len) is int:
+                    self.insert_push_integer(new_array_len)
+                else:
+                    print("WILL CONVERT LOAD LOCAL... %s " % new_array_len)
+                    self.convert_load_local(None, name=new_array_len)
+                lenfound = True
+#        print("new array length %s " % new_array_len)
+#        self.insert_push_integer(new_array_len)
+
+        if not lenfound:
+            self.insert_push_integer(0)
+        self.convert1(VMOp.NEWARRAY, pytoken)
 
     def convert_method_call(self, pytoken):
 
