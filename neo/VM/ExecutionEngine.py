@@ -651,9 +651,8 @@ class ExecutionEngine():
 
             elif opcode == PACK:
 
-                print("DOING PACK")
                 size = estack.Pop().GetBigInteger()
-                print("PACK SIZE %s " % size)
+
                 if size < 0 or size > estack.Count:
                     self._VMState |= VMState.FAULT
                     return
@@ -662,10 +661,7 @@ class ExecutionEngine():
 
                 for i in range(0, size):
                     topack = estack.Pop()
-                    print("PACKING ITEM %s "  % topack)
                     items.append( topack)
-
-                print("items after pack %s " % items)
 
                 estack.PushT(items)
 
@@ -781,10 +777,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-        opname = ToName(op)
-        print("____________________________________________________")
-        print("%s -> %s" % (op, opname))
-        print("-----------------------------------")
+#        opname = ToName(op)
+#        print("____________________________________________________")
+#        print("%s -> %s" % (op, opname))
+#        print("-----------------------------------")
 
         try:
             self.ExecuteOp(op, self.CurrentContext)

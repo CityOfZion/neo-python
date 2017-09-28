@@ -213,10 +213,7 @@ class Method():
                     length = len(self.local_stores)
                     self.local_stores[localvar] = length
                 iter_setup_block = block
-
-                if block.has_dynamic_iterator:
-                    print("incrementing dynamic iterator!!!!!")
-                    self.dynamic_iterator_count +=1
+                self.dynamic_iterator_count +=1
 
 
 

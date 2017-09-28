@@ -63,21 +63,12 @@ class Module():
                 continue
             om.append(m)
 
-        for k in om:
-            print("MEthed:  ->  %s " % (k.name))
-
         return om
 
     def add_method(self, method):
         for m in self.methods:
-#            print("comparing method... %s %s " % (m.name, method.name))
             if m.name == method.name:
-#                print("method %s already added " % m.name)
                 return False
-
-#        from boa.boa import Compiler
-#        if self == Compiler.instance().default:
-        print("[%s]     Adding method %s %s " % (self.module_path,method.name, method))
 
         self.methods.append(method)
 
@@ -150,9 +141,7 @@ class Module():
     def process_method(self, lineset):
 
         m = Method(lineset.code_object, self)
-#        print("Adding method %s %s " % (m.name, m))
         self.add_method(m)
-#        self.methods.append(m)
 
     def split_lines(self):
 
@@ -204,7 +193,7 @@ class Module():
         for method in self.orderered_methods:
 
             method.method_address = address
-            print("METHOD, ADDRESS %s %s" % (method.name, address) )
+
             for key, vmtoken in method.vm_tokens.items():
 
                 self.all_vm_tokens[address] = vmtoken
@@ -222,14 +211,8 @@ class Module():
 
             if vmtoken.src_method is not None:
 
-
                 target_method = self.method_by_name( vmtoken.target_method )
-                print("TARGET METHOD IS %s %s " % (target_method, vmtoken.src_method))
                 jump_len = target_method.method_address - vmtoken.addr
-                print("method address... token address %s %s " % (target_method.method_address, vmtoken.addr))
-                print("JUMP LEN %s " % jump_len)
-                jbytes = jump_len.to_bytes(2, 'little',signed=True)
-                print("jbytes %s " % jbytes)
                 vmtoken.data = jump_len.to_bytes(2, 'little', signed=True)
 
 

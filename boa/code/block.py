@@ -70,8 +70,6 @@ class Block():
         #in a better world this would be done in a more efficient way
         #for now this is kept to be as understandable as possible
 
-        for o in self.oplist:
-            print("OP %s %s" % (o.py_op, o.args))
 
         loopsetup = self.oplist[0]
         loopsetup.args = None
@@ -169,18 +167,10 @@ class Block():
             new__popjump_op # POP_JUMP_IF_FALSE jumps to the loop exit when counter == length
         ]
 
-        print("BEFORE")
-        for o in self.oplist:
-            print("OP %s %s" % (o.py_op, o.args))
-
 
         if len(dynamic_iterable_items):
             self.oplist.insert(4,dynamic_iterable_items[0])
             self.oplist.insert(5,dynamic_iterable_items[1])
-
-        print("after")
-        for o in self.oplist:
-            print("OP %s %s" % (o.py_op, o.args))
 
         Block.forloop_counter += 1
 
@@ -252,7 +242,7 @@ class Block():
                         param_count = 2 * int(param_count / 256)
 
                     params = self.oplist[index-param_count:index]
-                    print("params %s " % params)
+
                     call_method_op = self.oplist[index-param_count-1]
 
                     call_method_type = call_method_op.py_op

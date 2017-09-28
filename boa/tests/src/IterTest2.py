@@ -1,16 +1,13 @@
+from boa.code.builtins import range
 
 def Main():
 
+    items = ['a', 'b', 'c', 1, 5]
 
-
-    items = [10, 3, 43, 4]
-
-    count = 0
-
+    count = 3
     for i in items:
 
-        count = count + i
-
+        count += 1
 
     return count
 

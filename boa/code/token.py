@@ -382,11 +382,6 @@ class VMTokenizer():
         b_array = bytearray()
         for key,vm_token in self.vm_tokens.items():
 
-#            if vm_token.pytoken:
-#                print("%s  -->  %s .... %s" % (vm_token.pytoken.py_op, vm_token.vm_op, vm_token.out_op))
-#            else:
-#                print("%s  -->  %s" % (vm_token.pytoken, vm_token.vm_op))
-
             b_array.append(vm_token.out_op)
 
             if vm_token.data is not None and vm_token.vm_op != VMOp.NOP:
@@ -415,20 +410,15 @@ class VMTokenizer():
             self.convert_load_parameter(arg, index)
 
     def update_method_begin_items(self):
-        print("total praam nad body count token %s " % self.total_param_and_body_count_token)
         num_current_items = self.total_param_and_body_count_token.updatable_data
-        print("num current items! %s %s" % (num_current_items, self.total_param_and_body_count_token.vm_op))
 
         if self.method.dynamic_iterator_count > 0:
             num_current_items += self.method.dynamic_iterator_count
-
-            print("new num current items %s " % num_current_items)
             newtoken = self.update_push_integer(self.total_param_and_body_count_token, num_current_items)
-            print("NEW TOKEN %s " % newtoken.vm_op)
 
 
     def insert_vm_token_at(self, vm_token, index):
-        #print("INSERTING VM TOKEN AT %s %s " % (vm_token.vm_op, index))
+
         self.vm_tokens[index] = vm_token
 
 
@@ -783,7 +773,6 @@ class VMTokenizer():
         for m in self.method.module.methods:
             if fname == m.name:
                 full_name = m.full_name
-#            print("all module method %s %s " % (m.name, m.full_name))
 
 
         #operational call like len(items) or abs(value)
