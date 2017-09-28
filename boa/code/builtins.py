@@ -1,4 +1,8 @@
 
+
+
+
+
 class list(list):
 
     def __init__(self, length=0):
@@ -86,6 +90,36 @@ class list(list):
         pass
 
 
+# @TODO this currently reverses the order of str1 and str2
+def concat(str1, str2):
+    """
+     range(str1, str2) -> str object
+
+     Return a string that is the concatenation of the two arguments
+     """
+    pass
+
+
+# @TODO this currently does not work
+#def substr(source,start_index, count):
+#    """
+#    substr(source, start_index, count) -> list object
+#
+#    Return a subset of a string `source`, starting at `start_index` and
+#    of length `count`
+#    """
+#    pass
+
+
+# @TODO this currently does not work
+#def take(source, count):
+#    """
+#    take(source, count) -> list object
+#
+#    Return a subset of a string or list `source`, starting
+#    at index 0 and of length `count`
+#    """
+#    pass
 
 
 def range(start, stop):

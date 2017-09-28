@@ -802,7 +802,7 @@ class VMTokenizer():
 
     def is_op_call(self, op):
 
-        if op in ['len','abs','min','max',]:
+        if op in ['len','abs','min','max','concat','substr','take']:
             return True
         return False
 
@@ -816,6 +816,12 @@ class VMTokenizer():
             return self.convert1(VMOp.MIN,pytoken)
         elif op == 'max':
             return self.convert1(VMOp.MAX,pytoken)
+        elif op == 'concat':
+            return self.convert1(VMOp.CAT,pytoken)
+        elif op == 'substr':
+            return self.convert1(VMOp.SUBSTR,pytoken)
+        elif op == 'take':
+            return self.convert1(VMOp.LEFT,pytoken)
         return None
 
     def is_notify_call(self, op):
