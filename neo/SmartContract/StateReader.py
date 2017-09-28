@@ -181,7 +181,7 @@ class StateReader(InteropService):
 
     def CheckWitnessPubkey(self, engine, pubkey):
         scripthash = Contract.CreateSignatureRedeemScript(pubkey)
-        return self.CheckWitnessHash(engine, Crypto.ToScriptHash( Contract.CreateSignatureRedeemScript(pubkey)))
+        return self.CheckWitnessHash(engine, Crypto.ToScriptHash( scripthash))
 
 
     def Runtime_CheckWitness(self, engine):
@@ -194,7 +194,7 @@ class StateReader(InteropService):
         result = False
 
         if len(hashOrPubkey) == 20:
-            result = self.CheckWitnessHash(engine, hashOrPubkey)
+            result = self.CheckWitnessHash(engine, UInt160(data=hashOrPubkey))
 
         elif len(hashOrPubkey) == 33:
             point = ECDSA.decode_secp256r1(hashOrPubkey, unhex=False).G

@@ -154,7 +154,7 @@ class ByteArray(StackItem):
 
     def GetBigInteger(self):
         try:
-            b = BigInteger.FromBytes(self._value, signed=True)
+            b = BigInteger(int.from_bytes(self._value, 'little', signed=True))
             return b
         except Exception as e:
             pass
@@ -243,6 +243,7 @@ class InteropInterface(StackItem):
 
 class Struct(Array):
 
+    @property
     def IsStruct(self):
         return True
 

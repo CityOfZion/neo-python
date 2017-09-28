@@ -655,11 +655,7 @@ class LevelDBBlockchain(Blockchain):
 
 
                         except Exception as e:
-                            print("COULD NOT EXECUTE %s " % e)
-#                            self.__log.debug("could not execute %s " % e)
-#                            traceback.print_stack()
-#                            traceback.print_exc()
-                            print("EXECUTION FAILLLLLLLLLLLLLLEDDDDDD")
+                            print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute result] Could not execute smart contract.  See logs for more details. %s " % e)
                     else:
 
                         if tx.Type != b'\x00' and tx.Type != 128:
