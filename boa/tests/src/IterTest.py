@@ -1,21 +1,19 @@
 from boa.code.builtins import range
+
 def Main():
-
-
-    range_list = range(1,2)
-
 
     count = 0
 
-    for i in range_list:
-
+    for i in range(0,5):
         count = count + i
+        count += awesome()
+        count += not_so_awesome()
 
-    a = awesome()
-
-    return count + a
-
+    return count
 
 def awesome():
 
     return 2
+
+def not_so_awesome():
+    return -1

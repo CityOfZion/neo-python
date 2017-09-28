@@ -281,6 +281,8 @@ class VMToken():
 
     is_annotation = None
 
+    updatable_data = None
+
     @property
     def out_op(self):
         if type(self.vm_op) is int:
@@ -314,7 +316,7 @@ class VMTokenizer():
 
     vm_tokens = None
 
-
+    total_param_and_body_count_token = None
 
 
     def __init__(self, method):
@@ -402,18 +404,87 @@ class VMTokenizer():
         #we just need to inssert the total number of arguments + body variables
         #which is the length of the method `local_stores` dictionary
         #then create a new array for the vm to store
-        total_items = self.method.total_lines + len(self.method.args)
+        total_items = self.method.total_lines + len(self.method.args) + self.method.dynamic_iterator_count
 
-        self.insert_push_integer(total_items)
+        self.total_param_and_body_count_token = self.insert_push_integer(total_items)
+        self.total_param_and_body_count_token.updatable_data = total_items
         self.insert1(VMOp.NEWARRAY)
         self.insert1(VMOp.TOALTSTACK)
 
         for index, arg in enumerate(self.method.args):
             self.convert_load_parameter(arg, index)
 
+    def update_method_begin_items(self):
+        print("total praam nad body count token %s " % self.total_param_and_body_count_token)
+        num_current_items = self.total_param_and_body_count_token.updatable_data
+        print("num current items! %s %s" % (num_current_items, self.total_param_and_body_count_token.vm_op))
+
+        if self.method.dynamic_iterator_count > 0:
+            num_current_items += self.method.dynamic_iterator_count
+
+            print("new num current items %s " % num_current_items)
+            newtoken = self.update_push_integer(self.total_param_and_body_count_token, num_current_items)
+            print("NEW TOKEN %s " % newtoken.vm_op)
+
+
     def insert_vm_token_at(self, vm_token, index):
         #print("INSERTING VM TOKEN AT %s %s " % (vm_token.vm_op, index))
         self.vm_tokens[index] = vm_token
+
+
+    def update1(self, vmtoken, vm_op, data=None):
+
+
+        vmtoken.vm_op = vm_op
+        vmtoken.data = data
+
+        self.insert_vm_token_at(vmtoken, vmtoken.addr)
+
+        return vmtoken
+
+    def update_push_data(self, vmtoken, data):
+
+        dlen = len(data)
+
+        if dlen == 0:
+            return self.update1(vmtoken,VMOp.PUSH0)
+
+        elif dlen <= 75:
+            return self.update1(vmtoken,dlen, data)
+
+        if dlen < 0x100:
+            prefixlen = 1
+            code = VMOp.PUSHDATA1
+
+        elif dlen < 0x1000:
+            prefixlen = 2
+            code = VMOp.PUSHDATA2
+
+        else:
+            prefixlen = 4
+            code = VMOp.PUSHDATA4
+
+        byts = bytearray(dlen.to_bytes(prefixlen, 'little')) + data
+
+        return self.update1(vmtoken,code, byts)
+
+
+    def update_push_integer(self,vmtoken, i):
+        if i == 0:
+            return self.update1(vmtoken,VMOp.PUSH0)
+        elif i == -1:
+            return self.insert1(vmtoken,VMOp.PUSHM1)
+        elif i > 0 and i <= 16:
+            out = 0x50 + i
+            return self.update1(vmtoken,out)
+
+        bigint = BigInteger(i)
+        outdata = bigint.ToByteArray()
+
+        return self.update_push_data(vmtoken,outdata)
+
+
+
 
 
     def insert1(self, vm_op, data=None):
@@ -581,7 +652,6 @@ class VMTokenizer():
         self.convert_push_integer(position)
         self.convert1(VMOp.PICKITEM)
 
-
     def insert_unknown_type(self, item):
         if type(item) is int:
             self.insert_push_integer(item)
@@ -656,11 +726,9 @@ class VMTokenizer():
                 if type(new_array_len) is int:
                     self.insert_push_integer(new_array_len)
                 else:
-                    print("WILL CONVERT LOAD LOCAL... %s " % new_array_len)
                     self.convert_load_local(None, name=new_array_len)
                 lenfound = True
-#        print("new array length %s " % new_array_len)
-#        self.insert_push_integer(new_array_len)
+
 
         if not lenfound:
             self.insert_push_integer(0)

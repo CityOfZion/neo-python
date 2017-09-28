@@ -26,6 +26,8 @@ class Method():
 
     method_address = None
 
+    dynamic_iterator_count = 0
+
     @property
     def name(self):
         return self.bp.name
@@ -212,6 +214,9 @@ class Method():
                     self.local_stores[localvar] = length
                 iter_setup_block = block
 
+                if block.has_dynamic_iterator:
+                    print("incrementing dynamic iterator!!!!!")
+                    self.dynamic_iterator_count +=1
 
 
 
@@ -227,6 +232,7 @@ class Method():
 
 
     def tokenize(self):
+        self.tokenizer.update_method_begin_items()
         prevtoken = None
         for t in self.tokens:
             t.to_vm(self.tokenizer, prevtoken)

@@ -18,8 +18,8 @@ class Block():
     iterable_variable = None
     iterable_loopcounter = None
     iterable_looplength = None
-
-
+    iterable_item_name = None
+    has_dynamic_iterator = False
 
     def __init__(self, operation_list):
         self.oplist = operation_list
@@ -28,6 +28,7 @@ class Block():
         self.iterable_loopcounter = None
         self.iterable_looplength = None
         self.iterable_item_name = None
+        self.has_dynamic_iterator = False
 
     def set_label(self, label):
         self._label = label
@@ -60,13 +61,17 @@ class Block():
     def iterable_local_vars(self):
         return [
             self.iterable_looplength,
-            self.iterable_loopcounter
+            self.iterable_loopcounter,
+            self.iterable_item_name,
         ]
 
     def preprocess_iter(self):
 
         #in a better world this would be done in a more efficient way
         #for now this is kept to be as understandable as possible
+
+        for o in self.oplist:
+            print("OP %s %s" % (o.py_op, o.args))
 
         loopsetup = self.oplist[0]
         loopsetup.args = None
@@ -82,9 +87,27 @@ class Block():
 
 
         #this loads the list that is going to be iterated over ( LOAD_FAST )
-        iterable_load = self.oplist[1] # this will be removed... its added into the call get length token function params
+        # this will be removed... its added into the call get length token function params
+        # unless this is a dynamic iteration, like for x in range(x,y)
+        dynamic_iterable_items = []
+
+        iterable_load = self.oplist[1]
 
         self.iterable_item_name = iterable_load.args
+
+        if iterable_load.py_op == pyop.CALL_FUNCTION:
+
+            self.has_dynamic_iterator = True
+
+            self.iterable_item_name = 'forloop_dynamic_range_%s' % Block.forloop_counter
+
+            dynamic_iterator_store_fast = PyToken(op=Opcode(pyop.STORE_FAST), lineno=loopsetup.line_no, index=-1,
+                                             args=self.iterable_item_name)
+
+            #if we're calling a method in this for i in, like for i in range(x,y) then we need
+            #to call the function
+            dynamic_iterable_items = [iterable_load, dynamic_iterator_store_fast]
+
 
         # Now we need to get the length of that list, and store that as a local variable
 
@@ -126,6 +149,8 @@ class Block():
             loopcounter_start_ld_const, # LOAD_CONST 0
             loopcounter_store_fast, # STORE_FAST forloopcounter_X
 
+            #dynamic load loop stuff would go here
+
             call_get_length_token, # CALL_FUNCTION 1
 
             looplength_store_op, # STORE_FAST forloop_length_X
@@ -143,6 +168,19 @@ class Block():
 
             new__popjump_op # POP_JUMP_IF_FALSE jumps to the loop exit when counter == length
         ]
+
+        print("BEFORE")
+        for o in self.oplist:
+            print("OP %s %s" % (o.py_op, o.args))
+
+
+        if len(dynamic_iterable_items):
+            self.oplist.insert(4,dynamic_iterable_items[0])
+            self.oplist.insert(5,dynamic_iterable_items[1])
+
+        print("after")
+        for o in self.oplist:
+            print("OP %s %s" % (o.py_op, o.args))
 
         Block.forloop_counter += 1
 
