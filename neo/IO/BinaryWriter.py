@@ -178,6 +178,7 @@ class BinaryWriter(object):
 #            print("WRITING HASH %s " % ba)
             self.WriteBytes(ba)
 
+
     def WriteFixed8(self, value, unsigned=False):
         if unsigned:
             return self.WriteUInt64(int(value.value))

@@ -118,11 +118,12 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt(max=max)
         items = []
-
+#        print("READING ITEM %s %s " % (length, class_name))
         try:
             for i in range(0, length):
                 item = klass()
                 item.Deserialize(self)
+#                print("deserialized item %s %s " % ( i, item))
                 items.append(item)
         except Exception as e:
             print("Coludnt deserialize %s " % e)
@@ -158,10 +159,11 @@ class BinaryReader(object):
 
     def ReadFixed8(self, unsigned=False):
 
+        fval=None
 
         if unsigned:
             fval = self.ReadUInt64()
         else:
             fval = self.ReadInt64()
 
-        return Fixed8(fval)
+        return Fixed8( fval )

@@ -71,9 +71,11 @@ class StateMachine(StateReader):
 
     def CheckStorageContext(self, context):
         if context is None:
+            print("context is none, return false")
             return False
 
         contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
+
         if contract is not None:
             if contract is not None and contract.HasStorage:
                 return True
@@ -267,6 +269,12 @@ class StateMachine(StateReader):
 
             asset.Expiration = sys.maxsize
 
+        #tx = engine.ScriptContainer
+        #print("*****************************************************")
+        #print("Renewed ASSET %s " % tx.Hash.ToBytes())
+        #print("*****************************************************")
+        engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
+
         engine.EvaluationStack.PushT(asset.Expiration)
 
         return True
@@ -323,9 +331,9 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-        #print("*****************************************************")
-        #print("CREATED CONTRACT %s " % hash.ToBytes())
-        #print("*****************************************************")
+#        print("*****************************************************")
+#        print("CREATED CONTRACT %s " % hash.ToBytes())
+#        print("*****************************************************")
         return True
 
 
@@ -454,24 +462,29 @@ class StateMachine(StateReader):
 
 
     def Storage_Put(self, engine):
+        print("trying to pu!!!")
         context = None
         try:
 
             context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+            print("found context!!!")
         except Exception as e:
             self.__log.debug("Storage Context Not found on stack")
+            print("couldnt get context %s " % e)
             return False
 
         if not self.CheckStorageContext(context):
+            print("check strage context return false")
             return False
-
+        print("key...")
         key = engine.EvaluationStack.Pop().GetByteArray()
-
+        print("key %s " % key)
         if len(key) > 1024:
             return False
 
 
         value = engine.EvaluationStack.Pop().GetByteArray()
+        print("value!!! %s " % value)
         new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
 

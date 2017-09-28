@@ -21,9 +21,10 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke
-from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails
-
+from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
+from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
+from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,GatherLoadedContractParams
+from neo.Prompt.Utils import get_arg
 from neo import Settings
 from neo.Fixed8 import Fixed8
 import traceback
@@ -39,6 +40,7 @@ from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 
+from boa.boa import Compiler
 
 logname = 'prompt.log'
 logging.basicConfig(
@@ -154,11 +156,11 @@ class PromptInterface(object):
         print_tokens(tokens, self.token_style)
 
     def do_open(self, arguments):
-        item = self.get_arg(arguments)
+        item = get_arg(arguments)
 
         if item and item == 'wallet':
 
-            path = self.get_arg(arguments, 1)
+            path = get_arg(arguments, 1)
 
             if path:
 
@@ -175,11 +177,11 @@ class PromptInterface(object):
                 print("Please specify a path")
 
     def do_create(self, arguments):
-        item = self.get_arg(arguments)
+        item = get_arg(arguments)
 
         if item and item == 'wallet':
 
-            path = self.get_arg(arguments, 1)
+            path = get_arg(arguments, 1)
 
             if path:
 
@@ -247,7 +249,7 @@ class PromptInterface(object):
 
 
     def do_import(self, arguments):
-        item = self.get_arg(arguments)
+        item = get_arg(arguments)
 
         if item:
 
@@ -257,7 +259,7 @@ class PromptInterface(object):
                     print("Please open a wallet before importing WIF")
                     return
 
-                wif = self.get_arg(arguments, 1)
+                wif = get_arg(arguments, 1)
 
                 if wif:
                     prikey = KeyPair.PrivateKeyFromWIF(wif)
@@ -278,17 +280,21 @@ class PromptInterface(object):
         return
 
 
+    def do_build(self, arguments):
+        BuildAndRun(arguments, self.Wallet)
 
+    def do_load_n_run(self, arguments):
+        LoadAndRun(arguments, self.Wallet)
 
     def do_export(self, arguments):
-        item = self.get_arg(arguments)
+        item = get_arg(arguments)
 
         if item == 'wif':
 
             if not self.Wallet:
                 print("please open a wallet")
                 return
-            addr = self.get_arg(arguments, 1)
+            addr = get_arg(arguments, 1)
 
             if not addr:
                 print('please specify an address')
@@ -332,7 +338,7 @@ class PromptInterface(object):
             print("please open a wallet")
             return
 
-        item = self.get_arg(arguments)
+        item = get_arg(arguments)
 
         if not item:
             print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
@@ -349,7 +355,7 @@ class PromptInterface(object):
         if item == 'rebuild':
             self.Wallet.Rebuild()
             try:
-                item2 = int(self.get_arg(arguments,1))
+                item2 = int(get_arg(arguments,1))
                 if item2 and item2 > 0:
                     print('restarting at %s ' % item2)
                     self.Wallet._current_height = item2
@@ -367,9 +373,9 @@ class PromptInterface(object):
                 print("Not enough arguments")
                 return
 
-            to_send = self.get_arg(arguments)
-            address = self.get_arg(arguments,1)
-            amount = self.get_arg(arguments,2)
+            to_send = get_arg(arguments)
+            address = get_arg(arguments,1)
+            amount = get_arg(arguments,2)
 
             assetId = None
 
@@ -395,8 +401,8 @@ class PromptInterface(object):
                 return
 
             fee = Fixed8.Zero()
-            if self.get_arg(arguments,3):
-                fee = Fixed8.TryParse(self.get_arg(arguments,3))
+            if get_arg(arguments,3):
+                fee = Fixed8.TryParse(get_arg(arguments,3))
 
             output = TransactionOutput(AssetId=assetId,Value=f8amount,script_hash=scripthash)
             tx = ContractTransaction(outputs=[output])
@@ -489,8 +495,8 @@ class PromptInterface(object):
 
 
     def show_block(self, args):
-        item = self.get_arg(args)
-        txarg = self.get_arg(args, 1)
+        item = get_arg(args)
+        txarg = get_arg(args, 1)
         if item is not None:
             block = Blockchain.Default().GetBlock(item)
 
@@ -511,7 +517,7 @@ class PromptInterface(object):
             print("please specify a block")
 
     def show_header(self, args):
-        item = self.get_arg(args)
+        item = get_arg(args)
         if item is not None:
             header = Blockchain.Default().GetHeaderBy(item)
             if header is not None:
@@ -523,7 +529,7 @@ class PromptInterface(object):
 
 
     def show_tx(self, args):
-        item = self.get_arg(args)
+        item = get_arg(args)
         if item is not None:
             try:
                 tx,height = Blockchain.Default().GetTransaction(item)
@@ -541,7 +547,7 @@ class PromptInterface(object):
 
 
     def show_account_state(self, args):
-        item = self.get_arg(args)
+        item = get_arg(args)
 
         if item is not None:
             account = Blockchain.Default().GetAccountState(item, print_all_accounts=True)
@@ -557,12 +563,12 @@ class PromptInterface(object):
             print("please specify an account address")
 
     def show_asset_state(self, args):
-        item = self.get_arg(args)
+        item = get_arg(args)
 
         if item is not None:
 
             if item == 'search':
-                query = self.get_arg(args, 1)
+                query = get_arg(args, 1)
                 results = Blockchain.Default().SearchAssetState(query)
                 print("Found %s results for %s " % (len(results), query))
                 for asset in results:
@@ -586,7 +592,7 @@ class PromptInterface(object):
             print("please specify an asset hash")
 
     def show_contract_state(self, args):
-        item = self.get_arg(args)
+        item = get_arg(args)
 
         if item is not None:
 
@@ -594,7 +600,7 @@ class PromptInterface(object):
                 contracts = Blockchain.Default().ShowAllContracts()
                 print("contracts: %s " % contracts)
             elif item.lower() == 'search':
-                query = self.get_arg(args, 1)
+                query = get_arg(args, 1)
                 if query:
 
                     contracts = Blockchain.Default().SearchContracts(query=query)
@@ -699,10 +705,10 @@ class PromptInterface(object):
         print_tokens([(Token.Number, out)], self.token_style)
 
     def configure(self, args):
-        what = self.get_arg(args)
+        what = get_arg(args)
 
         if what =='log' or what == 'logs':
-            c1 = self.get_arg(args, 1).lower()
+            c1 = get_arg(args, 1).lower()
             if c1 is not None:
                 if c1 == 'on' or c1 =='1':
                     print("turning on logging")
@@ -718,16 +724,6 @@ class PromptInterface(object):
         else:
             print("cannot configure %s " % what)
             print("Try 'config log on/off'")
-
-    def get_arg(self, arguments, index=0, convert_to_int=False):
-        try:
-            arg = arguments[index]
-            if convert_to_int:
-                return int(arg)
-            return arg
-        except Exception as e:
-            pass
-        return None
 
 
     def parse_result(self, result):
@@ -786,6 +782,10 @@ class PromptInterface(object):
                         self.do_create(arguments)
                     elif command == 'open':
                         self.do_open(arguments)
+                    elif command == 'build':
+                        self.do_build(arguments)
+                    elif command == 'load_run':
+                        self.do_load_n_run(arguments)
                     elif command == 'import':
                         self.do_import(arguments)
                     elif command == 'export':
@@ -833,7 +833,7 @@ if __name__ == "__main__":
 
     cli = PromptInterface()
 
-#    reactor.suggestThreadPoolSize(15)
+    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
     reactor.run()

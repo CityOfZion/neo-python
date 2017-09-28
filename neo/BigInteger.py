@@ -6,14 +6,15 @@ from neo.Cryptography.Helper import base256_encode
 class BigInteger(int):
 
     @staticmethod
-    def FromBytes(data):
-        return BigInteger( int.from_bytes(data,'little',signed=True))
+    def FromBytes(data, signed=True):
+        return BigInteger( int.from_bytes(data,'little',signed=signed))
 
     def Equals(self, other):
         return super(BigInteger, self).__eq__(other)
 
-    def ToByteArray(self):
-        return self.to_bytes(self.bit_length(), byteorder='little', signed=True)
+    def ToByteArray(self, signed=True):
+        return self.to_bytes((self.bit_length() + 7) //8, byteorder='little', signed=signed)
+
 
     def __abs__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__abs__(*args, **kwargs))

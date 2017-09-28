@@ -72,7 +72,6 @@ class ScriptBuilder(object):
             pass
         except binascii.Error:
             pass
-
         self.ms.write(value)
 
     def WriteBool(self, value, endian="<"):
@@ -136,9 +135,9 @@ class ScriptBuilder(object):
 
         if length <= 75:
             self.WriteByte(length)
-        if length < 0x100:
+        elif length < 0x100:
             self.ms.write(PUSHDATA1)
-            self.ms.write(length)
+            self.WriteByte(length)
         elif length < 0x1000:
             self.ms.write(PUSHDATA2)
             self.WriteBytes(length.to_bytes(2, 'little'))

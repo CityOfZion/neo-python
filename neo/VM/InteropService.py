@@ -21,7 +21,7 @@ class StackItem(EquatableMixin):
         return bytearray()
 
     def GetBigInteger(self):
-        return BigInteger(int.from_bytes(self.GetByteArray(),'little'))
+        return BigInteger(int.from_bytes(self.GetByteArray(),'little',signed=True))
 
     def GetBoolean(self):
         for p in self.GetByteArray():
@@ -35,6 +35,9 @@ class StackItem(EquatableMixin):
         self.__log.debug("You may need to push %s  using FromInterface " % t)
 #        raise Exception('Not Supported')
         return None
+
+    def GetString(self):
+        return 'Stack Item'
 
     def __str__(self):
         return 'Stack Item'
@@ -68,7 +71,7 @@ class Array(StackItem):
 
     _array = [] # a list of stack items
 
-
+    @property
     def IsArray(self):
         return True
 
@@ -95,6 +98,8 @@ class Array(StackItem):
 
     def GetByteArray(self):
         raise Exception("Not supported")
+
+
 
     def __str__(self):
         return "Array: %s" % self._array
@@ -147,12 +152,27 @@ class ByteArray(StackItem):
 
         return self._value == other._value
 
+    def GetBigInteger(self):
+        try:
+            b = BigInteger.FromBytes(self._value, signed=True)
+            return b
+        except Exception as e:
+            pass
+        return self._value
 
     def GetByteArray(self):
         return self._value
 
+    def GetString(self):
+        try:
+            return self._value.decode('utf-8')
+        except Exception as e:
+            pass
+        return str(self)
+
+
     def __str__(self):
-        return "ByteArray: %s %s" % (len(self._value),self._value.hex())
+        return "ByteArray: %s" % self._value
 
 class Integer(StackItem):
 

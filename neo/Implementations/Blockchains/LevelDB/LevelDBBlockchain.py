@@ -33,6 +33,7 @@ import pprint
 import json
 from twisted.internet import reactor
 import traceback
+from neo.BigInteger import BigInteger
 
 @logged
 class LevelDBBlockchain(Blockchain):
@@ -376,7 +377,7 @@ class LevelDBBlockchain(Blockchain):
         except Exception as e:
             pass
 
-        if len(height_or_hash) == 64:
+        if not type(height_or_hash) == BigInteger and len(height_or_hash) == 64:
             bhash = height_or_hash.encode('utf-8')
             if bhash in self._header_index:
                 hash = bhash

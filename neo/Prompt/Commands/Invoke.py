@@ -1,6 +1,7 @@
 from neo.Blockchain import GetBlockchain
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import parse_param
 
@@ -27,7 +28,7 @@ from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 
 from neo.BigInteger import BigInteger
-
+import traceback
 
 def InvokeContract(wallet, tx):
 
@@ -126,7 +127,7 @@ def test_invoke(script, wallet):
     tx.inputs = []
     tx.scripts = []
     tx.Script = binascii.unhexlify(script)
-
+    print("testing invokeeee %s " % tx.Script)
 
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
@@ -176,6 +177,140 @@ def test_invoke(script, wallet):
         print("COULD NOT EXECUTE %s " % e)
 
     return None,[]
+
+
+
+
+
+
+
+
+
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
+
+    bc = GetBlockchain()
+
+    sn = bc._db.snapshot()
+
+    accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
+    assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
+    validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
+    contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
+    storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
+
+    dtx = InvocationTransaction()
+    dtx.Version = 1
+    dtx.outputs = []
+    dtx.inputs = []
+    dtx.scripts = []
+    dtx.Script = binascii.unhexlify(deploy_script)
+
+    script_table = CachedScriptTable(contracts)
+    service = StateMachine(accounts, validators, assets, contracts, storages, None)
+
+    contract = wallet.GetDefaultContract()
+
+    dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
+
+    engine = ApplicationEngine(
+        trigger_type=TriggerType.Application,
+        container=dtx,
+        table=script_table,
+        service=service,
+        gas=dtx.Gas,
+        testMode=True
+    )
+
+    engine.LoadScript(dtx.Script, False)
+
+    #first we will execute the test deploy
+    #then right after, we execute the test invoke
+
+    try:
+        d_success = engine.Execute()
+
+        if d_success:
+
+            items = engine.EvaluationStack.Items
+
+            contract_state = None
+            for i in items:
+                if type(i) is ContractState:
+                    contract_state = i
+                    break
+                elif type(i) is InteropInterface:
+                    item = i.GetInterface('neo.whatever')
+                    if type(item) is ContractState:
+                        contract_state = item
+                        break
+
+
+            shash = contract_state.Code.ScriptHash()
+
+
+            invoke_args.reverse()
+
+            sb = ScriptBuilder()
+
+            for p in invoke_args:
+                item = parse_param(p)
+                sb.push(item)
+
+            sb.EmitAppCall(shash.Data)
+            out = sb.ToArray()
+
+            itx = InvocationTransaction()
+            itx.Version = 1
+            itx.outputs = []
+            itx.inputs = []
+            itx.scripts = []
+            itx.Attributes = dtx.Attributes
+            itx.Script = binascii.unhexlify(out)
+
+            engine = ApplicationEngine(
+                trigger_type=TriggerType.Application,
+                container=itx,
+                table=script_table,
+                service=service,
+                gas=itx.Gas,
+                testMode=True
+            )
+
+            engine.LoadScript(itx.Script, False)
+
+            i_success = engine.Execute()
+
+            if i_success:
+                service.TestCommit()
+                consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
+                consumed.value = int(consumed.value)
+
+                if consumed < Fixed8.One():
+                    consumed = Fixed8.One()
+
+                # set the amount of gas the tx will need
+                itx.Gas = consumed
+
+                result = engine.ResultsForCode(contract_state.Code)
+                return itx, result
+            else:
+                print("error executing invoke contract...")
+
+        else:
+            print("error executing deploy contract.....")
+
+    except Exception as e:
+        print("COULD NOT EXECUTE %s " % e)
+        traceback.print_stack()
+        traceback.print_exc()
+
+    return None,[]
+
+
+
+
+
+
 
 def descripe_contract(contract):
     print("invoking contract - %s" % contract.Name.decode('utf-8'))

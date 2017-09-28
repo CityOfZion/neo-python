@@ -50,7 +50,6 @@ class RandomAccessStack():
         return self.Remove(0)
 
     def PushT(self, item):
-
         if not type(item) is StackItem and not issubclass(type(item), StackItem):
             try:
                 item = StackItem.New(item)
@@ -90,7 +89,7 @@ class RandomAccessStack():
     def PrintFormat(self, operation, value):
         name = "{:<15}".format("[%s]" % self._name)
         op = "{:<10}".format(operation)
-        self.__log.debug("                                         %s  %s -> %s" % (name,op, value))
+#        print("                                         %s  %s -> %s" % (name,op, value))
 
 
     def PrintList(self, message=None):

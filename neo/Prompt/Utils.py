@@ -30,3 +30,15 @@ def parse_param(p, ignore_int=False, prefer_hex=True):
 
 
     return p
+
+
+
+def get_arg(arguments, index=0, convert_to_int=False):
+    try:
+        arg = arguments[index]
+        if convert_to_int:
+            return int(arg)
+        return arg
+    except Exception as e:
+        pass
+    return None
