@@ -229,11 +229,11 @@ class StateReader(InteropService):
 
     def Blockchain_GetHeader(self, engine):
         data = engine.EvaluationStack.Pop().GetByteArray()
-        print("get header %s " % data)
+
         header = None
 
         if len(data) <= 5:
-            print("data")
+
             height = BigInteger.FromBytes(data)
 
             if Blockchain.Default() is not None:
@@ -263,13 +263,12 @@ class StateReader(InteropService):
 
 
     def Blockchain_GetBlock(self, engine):
-        print("blockchaine get block")
+
         data = engine.EvaluationStack.Pop()
-        print("data %s " % data)
+
         if data:
             data = data.GetByteArray()
         else:
-            print("invalid data")
             return False
 
         block = None
@@ -658,12 +657,12 @@ class StateReader(InteropService):
         return True
 
     def Storage_GetContext(self, engine):
-        print("getting storage context!")
+
         hash = UInt160( data= engine.CurrentContext.ScriptHash())
         context = StorageContext(script_hash=hash)
-        print("got context!")
+
         engine.EvaluationStack.PushT(StackItem.FromInterface(context))
-        print("OK!")
+
         return True
 
     def Storage_Get(self, engine):
