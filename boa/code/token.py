@@ -342,28 +342,39 @@ class VMTokenizer():
                     lineno = pt.line_no
                     do_print_line_no = True
 
-
                 if pt.args and type(pt.args) is Label:
                     addr = value.addr
                     if value.data is not None:
-                        plus_addr = int.from_bytes(value.data,'little', signed=True)
+                        plus_addr = int.from_bytes(value.data, 'little', signed=True)
                         target_addr = addr + plus_addr
                         to_label = 'to %s    [ %s ]' % (target_addr, pt.args)
                     else:
                         to_label = 'from << %s ' % pt.args
-#                    to_label = 'to %s ' % pt.args
+                        #                    to_label = 'to %s ' % pt.args
                 elif pt.jump_label:
                     from_label = ' >> '
-                    to_label ='from [%s]' % pt.jump_label
+                    to_label = 'from [%s]' % pt.jump_label
+
+                ds = ''
+                if value.data is not None:
+                    try:
+                        ds = int.from_bytes(value.data, 'little', signed=True)
+                    except Exception as e:
+                        pass
+                    if type(ds) is not int and len(ds) < 1:
+                        try:
+                            ds = value.data.decode('utf-8')
+                        except Exception as e:
+                            pass
 
                 lno = "{:<10}".format(pt.line_no if do_print_line_no or pstart else '')
                 addr = "{:<4}".format(key)
                 op = "{:<20}".format(str(pt.py_op))
                 arg = "{:<50}".format(to_label if to_label is not None else pt.arg_s)
+                data = "[data] {:<20}".format(ds)
+                print("%s%s%s%s%s%s" % (lno, from_label, addr, op, arg, data))
 
-                print("%s%s%s%s%s" % (lno,from_label,addr,op,arg))
-
-            pstart=False
+            pstart = False
 
     def to_b(self):
         b_array = bytearray()

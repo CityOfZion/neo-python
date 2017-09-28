@@ -1,17 +1,21 @@
-
+from boa.code.builtins import range
 def Main():
 
 
+    range_list = range(1,2)
 
-    items = [10, 3, 43, 4]
 
     count = 0
 
-    for i in items:
+    for i in range_list:
 
         count = count + i
 
+    a = awesome()
 
-    return count
+    return count + a
 
 
+def awesome():
+
+    return 2

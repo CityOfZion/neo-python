@@ -69,6 +69,8 @@ class Block():
         #for now this is kept to be as understandable as possible
 
         loopsetup = self.oplist[0]
+        loopsetup.args = None
+        loopsetup.jump_label = None
 
         #first we need to create a loop counter variable
         self.iterable_loopcounter = 'forloop_counter_%s' % Block.forloop_counter
@@ -98,6 +100,7 @@ class Block():
 
         get_iter = self.oplist[2]
         for_iter = self.oplist[3]
+
         store_iterable_name = self.oplist[4]
 
         self.iterable_variable = store_iterable_name.args # set the iterable variable name ( for example, i ) so that the loop body can use it
@@ -110,7 +113,7 @@ class Block():
         new__compare_op = PyToken(op = Opcode(pyop.COMPARE_OP),lineno=loopsetup.line_no, index=-1,args='<')
         new__popjump_op = PyToken(op = Opcode(pyop.POP_JUMP_IF_FALSE), lineno= loopsetup.line_no, index=-1, args=for_iter.args)
 
-
+        for_iter.args = None
 
         self.oplist = [
             loopsetup, #SETUP_LOOP

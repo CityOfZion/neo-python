@@ -781,10 +781,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-#        opname = ToName(op)
-#        print("____________________________________________________")
-#        print("%s -> %s" % (op, opname))
-#        print("-----------------------------------")
+        opname = ToName(op)
+        print("____________________________________________________")
+        print("%s -> %s" % (op, opname))
+        print("-----------------------------------")
 
         try:
             self.ExecuteOp(op, self.CurrentContext)
