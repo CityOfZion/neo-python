@@ -157,8 +157,9 @@ class ExecutionEngine():
             elif opcode == NOP:
                 pass
             elif opcode in [JMP, JMPIF, JMPIFNOT]:
-                offset = context.OpReader.ReadInt16()
-                offset = context.InstructionPointer + offset - 3
+                offset_b = context.OpReader.ReadInt16()
+                offset = context.InstructionPointer + offset_b - 3
+
                 if offset < 0 or offset > len(context.Script):
                     self._VMState |= VMState.FAULT
                     return
@@ -175,6 +176,7 @@ class ExecutionEngine():
             elif opcode == CALL:
                 istack.PushT(context.Clone())
                 context.SetInstructionPointer( context.InstructionPointer + 2)
+
                 self.ExecuteOp(JMP, self.CurrentContext)
 
             elif opcode == RET:

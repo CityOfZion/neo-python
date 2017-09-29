@@ -1,4 +1,3 @@
-from boa.code.builtins import range
 
 def Main():
 

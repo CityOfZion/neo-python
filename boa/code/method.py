@@ -6,6 +6,7 @@ from boa.code import pyop
 
 import dis
 
+import collections
 
 
 class Method():
@@ -112,7 +113,7 @@ class Method():
 
         self.blocks = []
 
-        self.local_stores = {}
+        self.local_stores = collections.OrderedDict()
 
         current_line_no = None
 
@@ -210,11 +211,14 @@ class Method():
             if block.is_iter:
                 block.preprocess_iter()
                 for localvar in block.iterable_local_vars:
-                    length = len(self.local_stores)
-                    self.local_stores[localvar] = length
+
+                    if localvar in self.local_stores.keys():
+                        pass
+                    else:
+                        length = len(self.local_stores)
+                        self.local_stores[localvar] = length
                 iter_setup_block = block
                 self.dynamic_iterator_count +=1
-
 
 
         alltokens = []
