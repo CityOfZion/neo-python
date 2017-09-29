@@ -193,6 +193,11 @@ class Method():
                 block.mark_as_end()
 
 
+            if block.has_slice:
+                block.preprocess_slice()
+                if block.slice_item_length is not None:
+                    length = len(self.local_stores)
+                    self.local_stores[block.slice_item_length] = length
 
             if block.has_unprocessed_array:
                 block.preprocess_arrays()

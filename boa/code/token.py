@@ -257,6 +257,10 @@ class PyToken():
             elif op == pyop.BINARY_SUBSCR:
                 token = tokenizer.convert1(VMOp.PICKITEM,self)
 
+            elif op == pyop.BUILD_SLICE:
+                token = tokenizer.convert1(VMOp.SUBSTR, self)
+
+            #strings
 
             elif op == pyop.CALL_FUNCTION:
 
@@ -739,7 +743,10 @@ class VMTokenizer():
         if param_len <= 1:
             pass
         elif param_len == 2:
-            self.insert1(VMOp.SWAP)
+            # if we are using concat, we don't want to swap
+            if pytoken.func_name != 'concat':
+                self.insert1(VMOp.SWAP)
+
         elif param_len == 3:
             self.insert_push_integer(2)
             self.insert1(VMOp.XSWAP)
@@ -802,7 +809,7 @@ class VMTokenizer():
 
     def is_op_call(self, op):
 
-        if op in ['len','abs','min','max','concat','substr','take']:
+        if op in ['len','abs','min','max','concat','take']:
             return True
         return False
 
@@ -818,8 +825,6 @@ class VMTokenizer():
             return self.convert1(VMOp.MAX,pytoken)
         elif op == 'concat':
             return self.convert1(VMOp.CAT,pytoken)
-        elif op == 'substr':
-            return self.convert1(VMOp.SUBSTR,pytoken)
         elif op == 'take':
             return self.convert1(VMOp.LEFT,pytoken)
         return None

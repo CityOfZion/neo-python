@@ -90,17 +90,17 @@ class list(list):
         pass
 
 
-# @TODO this currently reverses the order of str1 and str2
+
 def concat(str1, str2):
     """
      range(str1, str2) -> str object
 
-     Return a string that is the concatenation of the two arguments
+     Return a string that is the concatenation of the two arguments ( str1 + str2 )
      """
     pass
 
 
-# @TODO this currently does not work
+# This is not necessary.  you can use mystring[start:end]
 #def substr(source,start_index, count):
 #    """
 #    substr(source, start_index, count) -> list object

@@ -19,6 +19,8 @@ class Block():
     iterable_loopcounter = None
     iterable_looplength = None
     iterable_item_name = None
+    slice_item_length = None
+
     has_dynamic_iterator = False
 
     def __init__(self, operation_list):
@@ -30,6 +32,8 @@ class Block():
         self.iterable_item_name = None
         self.has_dynamic_iterator = False
 
+        self.slice_item_length = None
+
     def set_label(self, label):
         self._label = label
         self.oplist[0].jump_label = label
@@ -40,6 +44,57 @@ class Block():
             token = self.oplist[0]
             return token.line_no
         return None
+
+
+    @property
+    def has_slice(self):
+        for token in self.oplist:
+            if token.py_op == pyop.BUILD_SLICE:
+                return True
+
+    def preprocess_slice(self):
+        print("TOTAL OPLIST: %s " % len(self.oplist))
+        index_to_remove=-1
+        do_calculate_item_length = False
+        getlength_token=None
+        slicelength_token = None
+        for index, token in enumerate(self.oplist):
+            if token.py_op == pyop.BUILD_SLICE:
+                #first, we want to take out the BINARY_SUBSC op, since we wont need it
+                index_to_remove = index + 1
+
+                #now we want to check the second item, for example item[2:4], we need to check 4
+                #if you do item[2:], in python, normally the end is inferred
+                #but we get None.
+                #in that case, we need to convert None into the length of the item being sliced
+                end_op = self.oplist[index-1]
+                print("ENDOP: %s " % end_op.args)
+
+                if end_op.args == None:
+                    print("END OP IS NONE, convert to function len call!")
+                    do_calculate_item_length = True
+                    getlength_token = PyToken(op=Opcode(pyop.CALL_FUNCTION), lineno=token.line_no, args=1)
+                    getlength_token.func_params = [self.oplist[0]]
+                    getlength_token.func_name = 'len'
+
+                    # now we need a variable name to store the length of the array
+                    self.slice_item_length = 'sliceitem_length_%s' % Block.forloop_counter
+
+                    # now store the variable which is the output of the len(items) call
+                    slicelength_token = PyToken(op=Opcode(pyop.STORE_FAST), lineno=token.line_no, index=-1,
+                                                  args=self.slice_item_length)
+
+                    end_op.py_op = Opcode(pyop.LOAD_FAST)
+                    end_op.args = self.slice_item_length
+
+        if index_to_remove > -1:
+            del self.oplist[index_to_remove]
+
+        if do_calculate_item_length:
+            print("DO CALCULATE!!!")
+            self.oplist = [getlength_token,slicelength_token] + self.oplist
+
+        print("TOTAL OPLIST: %s " % len(self.oplist))
 
     @property
     def is_return(self):
@@ -217,6 +272,8 @@ class Block():
 
     @property
     def has_unprocessed_method_calls(self):
+        if self.has_slice:
+            return False
         for token in self.oplist:
             if token.py_op == pyop.CALL_FUNCTION and token.func_processed == False:
                 return True
