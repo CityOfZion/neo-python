@@ -4,8 +4,10 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import parse_param
+from neo.VM.OpCode import *
 
 import binascii
+import struct
 
 
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
@@ -77,12 +79,13 @@ def TestInvokeContract(wallet, args):
             verbose = True
             args.remove('verbose')
 
-#
+
         params =  args[1:] if len(args) > 1 else []
 
         if len(params) > 0 and params[0] == 'describe':
             return
 
+        operation = params.pop(0)
 
         params.reverse()
 
@@ -93,11 +96,18 @@ def TestInvokeContract(wallet, args):
             item = parse_param(p)
             sb.push(item)
 
+        if len(params) > 0 and len(params) < 17:
+            sb.Emit(struct.pack("B", len(params) + 80)) # PUSH1, PUSH2, etc...
+        else:
+            sb.Emit(PUSH0)
 
+        sb.Emit(PACK)
+        item = parse_param(operation)
+        sb.push(item)
         sb.EmitAppCall(contract.Code.ScriptHash().Data)
 
         out = sb.ToArray()
-
+        print("Invoke script: {}".format(out))
         return test_invoke(out, wallet)
 
     else:
