@@ -10,6 +10,8 @@ from neo.BigInteger import BigInteger
 
 from collections import OrderedDict
 
+import pdb
+
 NEO_SC_FRAMEWORK='boa.blockchain.vm.'
 
 
@@ -146,6 +148,12 @@ class PyToken():
                 token = tokenizer.convert1(VMOp.FROMALTSTACK, self)
             elif op == pyop.DROP:
                 token = tokenizer.convert1(VMOp.DROP, self)
+            elif op == pyop.XSWAP:
+                token = tokenizer.convert1(VMOp.XSWAP, self)
+            elif op == pyop.ROLL:
+                token = tokenizer.convert1(VMOp.ROLL, self)
+            elif op == pyop.DROP_BODY:
+                token = tokenizer.convert_drop_body(self)
 
             #loading constants ( ie 1, 2 etc)
             elif op == pyop.LOAD_CONST:
@@ -403,7 +411,7 @@ class VMTokenizer():
         #we just need to inssert the total number of arguments + body variables
         #which is the length of the method `local_stores` dictionary
         #then create a new array for the vm to store
-        total_items = self.method.total_lines + len(self.method.args) + self.method.dynamic_iterator_count
+        total_items = self.method.total_lines -1 + len(self.method.args) + self.method.dynamic_iterator_count
 
         self.total_param_and_body_count_token = self.insert_push_integer(total_items)
         self.total_param_and_body_count_token.updatable_data = total_items
@@ -707,6 +715,13 @@ class VMTokenizer():
         self.insert1(VMOp.SETITEM)
 
 
+    def convert_drop_body(self, pytoken):
+#        vmtoken = self.convert1(VMOp.SWAP, pytoken)
+#        return vmtoken
+#        self.insert_push_integer(2)
+#        self.insert1(VMOp.XSWAP)
+        pass
+
     def convert_built_in_list(self, pytoken):
         new_array_len = 0
         lenfound = False
@@ -733,6 +748,10 @@ class VMTokenizer():
         #special case for list initialization
         if pytoken.func_name == 'list':
             return self.convert_built_in_list(pytoken)
+        elif pytoken.func_name == 'bytearray':
+            return self.convert_push_data(bytes(pytoken.func_params[0].args),pytoken)
+        elif pytoken.func_name == 'bytes':
+            return self.convert_push_data(pytoken.func_params[0].args,pytoken)
 
 
         for t in pytoken.func_params:
@@ -877,6 +896,17 @@ class VMTokenizer():
             vmtoken = self.convert1(VMOp.SYSCALL, pytoken, data=ba)
             self.insert1(VMOp.NOP)
             return vmtoken
+
+        if op == 'bytearray' or op == 'bytes':
+            pass
+#            self.convert1(VMOp.DUPFROMALTSTACK)
+#            self.convert_push_integer(2)
+#            self.convert1(VMOp.ROLL)
+#            self.convert_push_integer(2)
+#            self.convert1(VMOp.ROLL)
+#            vmtoken = self.convert1(VMOp.SETITEM, pytoken)
+#            return vmtoken
+#            pdb.set_trace()
 
         raise NotImplementedError("[Compilation error] Built in %s is not implemented" % op)
 

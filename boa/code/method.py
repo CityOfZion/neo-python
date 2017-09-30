@@ -1,4 +1,4 @@
-from byteplay3 import SetLinenoType,Label
+from byteplay3 import SetLinenoType,Label,Opcode
 
 from boa.code.token import PyToken,VMTokenizer
 from boa.code.block import Block
@@ -186,12 +186,13 @@ class Method():
                 #this jump needs to jump 3 bytes.  why? stay tuned to find out
                 block_addr = b'\x03\x00'
 
-                ret_token = PyToken(pyop.BR_S,block.line,args=block_addr)
+                ret_token = PyToken(Opcode(pyop.BR_S),block.line,args=block_addr)
                 ret_token.jump_label = block.oplist[0].jump_label
                 block.oplist[0].jump_label = None
                 block.oplist.insert(0, ret_token)
                 block.mark_as_end()
-
+#                length = len(self.local_stores)
+#                self.local_stores[block.local_return_name] = length
 
             if block.has_slice:
                 block.preprocess_slice()

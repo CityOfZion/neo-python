@@ -53,7 +53,6 @@ class Block():
                 return True
 
     def preprocess_slice(self):
-        print("TOTAL OPLIST: %s " % len(self.oplist))
         index_to_remove=-1
         do_calculate_item_length = False
         getlength_token=None
@@ -68,10 +67,10 @@ class Block():
                 #but we get None.
                 #in that case, we need to convert None into the length of the item being sliced
                 end_op = self.oplist[index-1]
-                print("ENDOP: %s " % end_op.args)
+#                print("ENDOP: %s " % end_op.args)
 
                 if end_op.args == None:
-                    print("END OP IS NONE, convert to function len call!")
+#                    print("END OP IS NONE, convert to function len call!")
                     do_calculate_item_length = True
                     getlength_token = PyToken(op=Opcode(pyop.CALL_FUNCTION), lineno=token.line_no, args=1)
                     getlength_token.func_params = [self.oplist[0]]
@@ -394,7 +393,10 @@ class Block():
         tstart = self.oplist[:-1]
         tend = self.oplist[-1:]
 
-        newitems = [PyToken(pyop.NOP,self.line), PyToken(pyop.FROMALTSTACK, self.line), PyToken(pyop.DROP, self.line)]
+        newitems = [PyToken(Opcode(pyop.NOP),self.line),
+#                    PyToken(pyop.DROP_BODY, self.line),
+                    PyToken(Opcode(pyop.FROMALTSTACK), self.line),
+                    PyToken(Opcode(pyop.DROP), self.line)]
 
         self.oplist = tstart + newitems + tend
 

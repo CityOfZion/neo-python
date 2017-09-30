@@ -11,7 +11,7 @@ from neo.VM.InteropService import Array,Struct
 import sys,os
 from neo.UInt160 import UInt160
 import traceback
-import binascii
+import pdb
 
 @logged
 class ExecutionEngine():
@@ -131,7 +131,9 @@ class ExecutionEngine():
             self._VMState |= VMState.FAULT
 
         if opcode >= PUSHBYTES1 and opcode <= PUSHBYTES75:
-            estack.PushT(context.OpReader.ReadBytes(int.from_bytes( opcode, 'little')))
+            bytestoread = context.OpReader.ReadBytes(int.from_bytes(opcode, 'little'))
+            print("bytes to read %s " % bytestoread)
+            estack.PushT(bytestoread)
         else:
 
             # push values
@@ -208,6 +210,9 @@ class ExecutionEngine():
 
             #stack operations
             elif opcode == DUPFROMALTSTACK:
+                print("ASTACK ITEMS %s " % astack.Items)
+                item = astack.Peek()
+                print("item is %s " % item)
                 estack.PushT(astack.Peek())
 
             elif opcode == TOALTSTACK:
@@ -779,10 +784,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-#        opname = ToName(op)
-#        print("____________________________________________________")
-#        print("%s -> %s" % (op, opname))
-#        print("-----------------------------------")
+        opname = ToName(op)
+        print("____________________________________________________")
+        print("%s -> %s" % (op, opname))
+        print("-----------------------------------")
 
         try:
             self.ExecuteOp(op, self.CurrentContext)

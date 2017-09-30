@@ -102,7 +102,7 @@ class Array(StackItem):
 
 
     def __str__(self):
-        return "Array: %s" % self._array
+        return "Array: %s" % [str(item) for item in self._array]
 
 
 class Boolean(StackItem):
