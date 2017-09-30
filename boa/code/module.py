@@ -70,8 +70,15 @@ class Module():
         print("ADDING METHODDDDDD")
         for m in self.methods:
             if m.name == method.name:
-                return False
 
+                if m.name != m.full_name:
+                    if m.full_name == method.full_name:
+                        return False
+                else:
+                    return False
+#                return False
+
+        print("appending method %s %s " % (method.name, method.full_name))
         self.methods.append(method)
 
     def method_by_name(self, method_name):

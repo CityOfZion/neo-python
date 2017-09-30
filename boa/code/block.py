@@ -59,19 +59,17 @@ class Block():
     def preprocess_make_function(self, method):
         code_obj = self.oplist[0].args
         code_obj_name = self.oplist[1].args
-        self.local_func_name = "%s_%s" % (code_obj_name, self.localmethod_counter)
-        self.localmethod_counter += 1
-
-        print("code object %s %s" % (code_obj, self.local_func_name))
+        self.local_func_name = "%s_%s" % (code_obj_name, Block.localmethod_counter)
+        print("HAS MAKE FUNCTION!!!!!!!!!!!")
+        Block.localmethod_counter += 1
 
         from boa.code.method import Method
 
         m = Method(code_object=code_obj,parent=method.parent, make_func_name=self.local_func_name)
+        print("will add method....")
         method.parent.add_method(m)
 
         self.local_func_varname = self.oplist[-1].args
-
-        print("localfunc var name, method %s %s " % (m, self.local_func_varname))
 
 
     @property
@@ -332,18 +330,16 @@ class Block():
                     call_method_type = call_method_op.py_op
                     call_method_name = call_method_op.args
 
-                    print("check orign method for local methods")
+                    #we need to check if this is a method
+                    #that is local to this block's method
                     for key, value in orig_method.local_methods.items():
-                        print("looking for %s " % call_method_name)
-                        print("checking local method %s %s " % (key,value))
                         if key == call_method_name:
-                            print("will use local method def")
                             call_method_name = value
 
                     token.func_params = params
                     token.func_name = call_method_name
                     token.func_type = call_method_type
-#                    pdb.set_trace()
+
                     changed_items = [token]
 
                     start_index_change = index - param_count - 1
