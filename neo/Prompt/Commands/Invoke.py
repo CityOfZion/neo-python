@@ -107,7 +107,7 @@ def TestInvokeContract(wallet, args):
         sb.EmitAppCall(contract.Code.ScriptHash().Data)
 
         out = sb.ToArray()
-        print("Invoke script: {}".format(out))
+
         return test_invoke(out, wallet)
 
     else:
