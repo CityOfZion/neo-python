@@ -1,5 +1,6 @@
 
 from byteplay3 import Code, SetLinenoType,Label
+from boa.code import pyop
 
 
 from boa.code.line import Line
@@ -66,6 +67,7 @@ class Module():
         return om
 
     def add_method(self, method):
+        print("ADDING METHODDDDDD")
         for m in self.methods:
             if m.name == method.name:
                 return False
@@ -75,6 +77,8 @@ class Module():
     def method_by_name(self, method_name):
         for m in self.methods:
             if m.name == method_name:
+                return m
+            elif m.full_name == method_name:
                 return m
         return None
 
@@ -193,7 +197,7 @@ class Module():
         for method in self.orderered_methods:
 
             method.method_address = address
-
+            print("linking method %s %s " % (method.full_name, address))
             for key, vmtoken in method.vm_tokens.items():
 
                 self.all_vm_tokens[address] = vmtoken
@@ -212,6 +216,7 @@ class Module():
             if vmtoken.src_method is not None:
 
                 target_method = self.method_by_name( vmtoken.target_method )
+                print("looking for method.... %s %s" % (vmtoken.target_method, target_method))
                 jump_len = target_method.method_address - vmtoken.addr
                 vmtoken.data = jump_len.to_bytes(2, 'little', signed=True)
 
@@ -257,6 +262,9 @@ class Module():
                             ds = value.data.decode('utf-8')
                         except Exception as e:
                             pass
+
+                if pt.py_op == pyop.CALL_FUNCTION:
+                    to_label = '%s %s ' % (pt.func_name, pt.func_params)
 
                 lno = "{:<10}".format(pt.line_no if do_print_line_no or pstart else '')
                 addr = "{:<4}".format(key)

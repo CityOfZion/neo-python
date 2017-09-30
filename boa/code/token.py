@@ -381,6 +381,9 @@ class VMTokenizer():
                         except Exception as e:
                             pass
 
+                if pt.py_op == pyop.CALL_FUNCTION:
+                    to_label = '%s %s ' % (pt.func_name, pt.func_params)
+
                 lno = "{:<10}".format(pt.line_no if do_print_line_no or pstart else '')
                 addr = "{:<4}".format(key)
                 op = "{:<20}".format(str(pt.py_op))

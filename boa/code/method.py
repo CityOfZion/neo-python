@@ -29,15 +29,22 @@ class Method():
 
     dynamic_iterator_count = 0
 
+    local_methods = None
+
+    __make_func_name=None
+
     @property
     def name(self):
         return self.bp.name
 
+
     @property
     def full_name(self):
-        if len(self.module.module_path):
-            return '%s.%s' % (self.module.module_path, self.name)
-        return self.name
+        if self.__make_func_name is None:
+            if len(self.module.module_path):
+                return '%s.%s' % (self.module.module_path, self.name)
+            return self.name
+        return self.__make_func_name
 
     @property
     def args(self):
@@ -83,11 +90,13 @@ class Method():
         return None
 
 
-    def __init__(self, code_object, parent):
+    def __init__(self, code_object, parent, make_func_name=None):
 
         self.bp = code_object
 
         self.parent = parent
+
+        self.__make_func_name = make_func_name
 
         self.read_initial_tokens()
 
@@ -112,6 +121,8 @@ class Method():
     def read_initial_tokens(self):
 
         self.blocks = []
+
+        self.local_methods = collections.OrderedDict()
 
         self.local_stores = collections.OrderedDict()
 
@@ -194,6 +205,12 @@ class Method():
 #                length = len(self.local_stores)
 #                self.local_stores[block.local_return_name] = length
 
+            if block.has_make_function:
+
+                block.preprocess_make_function(self)
+                self.local_methods[block.local_func_varname] = block.local_func_name
+
+
             if block.has_slice:
                 block.preprocess_slice()
                 if block.slice_item_length is not None:
@@ -207,7 +224,7 @@ class Method():
                 block.preprocess_array_subs()
 
             if block.has_unprocessed_method_calls:
-                block.preprocess_method_calls()
+                block.preprocess_method_calls(self)
 
 
             if iter_setup_block is not None:
@@ -230,13 +247,15 @@ class Method():
         alltokens = []
 
         for block in self.blocks:
-            alltokens = alltokens + block.oplist
+            if not block.has_make_function:
+                alltokens = alltokens + block.oplist
 
         self.tokens = alltokens
 
         for index,token in enumerate(self.tokens):
             token.addr = index
 
+        print("LOCAL FUNC METHODS %s " % self.local_methods)
 
     def tokenize(self):
         self.tokenizer.update_method_begin_items()
