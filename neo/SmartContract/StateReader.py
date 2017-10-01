@@ -536,7 +536,7 @@ class StateReader(InteropService):
         output = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionOutput')
         if output is None:
             return False
-        engine.EvaluationStack.PushT(output.AssetId)
+        engine.EvaluationStack.PushT(output.AssetId.ToArray())
         return True
 
     def Output_GetValue(self, engine):
