@@ -1,8 +1,29 @@
 import binascii
 from neo.BigInteger import BigInteger
 
+import pdb
+
+
 
 def parse_param(p, ignore_int=False, prefer_hex=True):
+
+    print("parsing param: %s " % p)
+
+#    pdb.set_trace()
+
+    #first, we'll try to parse an array
+    try:
+        items = eval(p)
+        if len(items) > 0 and type(items) is list:
+
+            parsed = []
+            for item in items:
+                parsed.append(parse_param(item))
+            print("PARSED %s " % parsed)
+            return parsed
+
+    except Exception as e:
+        print("couldnt eval items as array %s " % e)
 
     if not ignore_int:
         try:

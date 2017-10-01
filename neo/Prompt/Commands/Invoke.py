@@ -91,7 +91,15 @@ def TestInvokeContract(wallet, args):
         for p in params:
 
             item = parse_param(p)
-            sb.push(item)
+
+            if type(item) is list:
+                listlength = len(item)
+                print("ITEM IS LIST, PUSH LENGTH: %s " % listlength)
+                sb.push(listlength)
+                for listitem in item:
+                    sb.push(listitem)
+            else:
+                sb.push(item)
 
 
         sb.EmitAppCall(contract.Code.ScriptHash().Data)
