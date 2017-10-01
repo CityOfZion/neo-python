@@ -210,6 +210,15 @@ class Method():
                 block.preprocess_make_function(self)
                 self.local_methods[block.local_func_varname] = block.local_func_name
 
+            if block.is_list_comprehension:
+                block.preprocess_list_comprehension(self)
+                for localvar in block.list_comp_iterable_local_vars:
+                    if localvar in self.local_stores.keys():
+                        pass
+                    else:
+                        print("INSERTING LOCALVAR %s " % localvar)
+                        length = len(self.local_stores)
+                        self.local_stores[localvar] = length
 
             if block.has_slice:
                 block.preprocess_slice()
@@ -231,7 +240,8 @@ class Method():
                 block.process_iter_body(iter_setup_block)
                 iter_setup_block = None
 
-            if block.is_iter:
+            if block.is_iter and not block.is_list_comprehension:
+                print("PROCESSING BLOCK ITER!!!!!!!")
                 block.preprocess_iter()
                 for localvar in block.iterable_local_vars:
 
@@ -247,9 +257,11 @@ class Method():
         alltokens = []
 
         for block in self.blocks:
-            if not block.has_make_function:
+            if block.has_make_function:
+                if block.is_list_comprehension:
+                    alltokens = alltokens + block.oplist
+            else:
                 alltokens = alltokens + block.oplist
-
         self.tokens = alltokens
 
         for index,token in enumerate(self.tokens):

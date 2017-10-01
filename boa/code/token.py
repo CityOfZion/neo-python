@@ -414,7 +414,7 @@ class VMTokenizer():
         #we just need to inssert the total number of arguments + body variables
         #which is the length of the method `local_stores` dictionary
         #then create a new array for the vm to store
-        total_items = self.method.total_lines -1 + len(self.method.args) + self.method.dynamic_iterator_count
+        total_items = self.method.total_lines  + len(self.method.args) + self.method.dynamic_iterator_count
 
         self.total_param_and_body_count_token = self.insert_push_integer(total_items)
         self.total_param_and_body_count_token.updatable_data = total_items
