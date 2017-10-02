@@ -7,7 +7,7 @@ from autologging import logged
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.BigInteger import BigInteger
 import hashlib
-from neo.VM.InteropService import Array,Struct
+from neo.VM.InteropService import Array,Struct,StackItem
 import sys,os
 from neo.UInt160 import UInt160
 import traceback
@@ -204,8 +204,8 @@ class ExecutionEngine():
                 self.LoadScript(script)
 
             elif opcode == SYSCALL:
-
-                if not self._Service.Invoke( context.OpReader.ReadVarBytes(252).decode('ascii'), self):
+                call = context.OpReader.ReadVarBytes(252).decode('ascii')
+                if not self._Service.Invoke( call, self):
                     self._VMState |= VMState.FAULT
 
             #stack operations
@@ -448,7 +448,7 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-#                print("x2, x1 %s .. %s " % (x2, x1))
+
                 estack.PushT(x1 - x2)
 
             elif opcode == MUL:
@@ -503,10 +503,22 @@ class ExecutionEngine():
 
             elif opcode == NUMEQUAL:
 
-                x2 = estack.Pop().GetBigInteger()
-                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop()
+                x1 = estack.Pop()
 
-                estack.PushT( x1 == x2 )
+                try:
+                    x2_val = x2.GetBigInteger()
+                    x1_val = x1.GetBigInteger()
+
+                    result = x1_val == x2_val
+
+                    estack.PushT( result )
+
+                except Exception as e:
+                    print("Colud not compare %s and %s : types- %s %s" % (x2,x1, type(x2), type(x1)))
+
+                    estack.PushT(False)
+
 
             elif opcode == NUMNOTEQUAL:
 
@@ -714,14 +726,14 @@ class ExecutionEngine():
 
                 newItem = estack.Pop()
 
-                if newItem.IsStruct:
+                if issubclass(type(newItem), StackItem) and newItem.IsStruct:
                     newItem = newItem.Clone()
 
                 index = estack.Pop().GetBigInteger()
 
                 arrItem = estack.Pop()
 
-                if not arrItem.IsArray:
+                if not issubclass(type(arrItem), StackItem) or not arrItem.IsArray:
                     self._VMState |= VMState.FAULT
                     return
 
@@ -759,6 +771,8 @@ class ExecutionEngine():
 
 
 
+
+
     def LoadScript(self, script, push_only=False):
 
         context = ExecutionContext(self, script, push_only)
@@ -792,9 +806,8 @@ class ExecutionEngine():
         try:
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
-            print("could not execute op %s " % e)
-            traceback.print_stack()
-            traceback.print_exc()
+            self.__log.debug("could not execute op %s " % e)
+            self.__log.error("Exception", exc_info=1)
             raise e
 
     def StepOut(self):

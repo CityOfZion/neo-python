@@ -3,7 +3,7 @@ from neo.SmartContract.ContractParameterType import ContractParameterType, ToNam
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import parse_param
+from neo.Prompt.Utils import parse_param,get_asset_attachments
 
 import binascii
 
@@ -19,6 +19,7 @@ from neo.Core.State.StorageItem import StorageItem
 
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
+from neo.Core.TX.Transaction import TransactionOutput
 
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
@@ -27,8 +28,11 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 
+from neo.Core.Blockchain import Blockchain
+
 from neo.BigInteger import BigInteger
 import traceback
+import pdb
 
 def InvokeContract(wallet, tx):
 
@@ -84,6 +88,11 @@ def TestInvokeContract(wallet, args):
             return
 
 
+
+        params,neo_to_attach,gas_to_attach = get_asset_attachments(params)
+
+        #print("neo, gas %s %s " % (neo_to_attach,gas_to_attach.ToString()))
+
         params.reverse()
 
         sb = ScriptBuilder()
@@ -91,14 +100,40 @@ def TestInvokeContract(wallet, args):
         for p in params:
 
             item = parse_param(p)
-            sb.push(item)
+
+            if type(item) is list:
+                listlength = len(item)
+                sb.push(listlength)
+                for listitem in item:
+                    sb.push(listitem)
+            else:
+                sb.push(item)
 
 
         sb.EmitAppCall(contract.Code.ScriptHash().Data)
 
         out = sb.ToArray()
 
-        return test_invoke(out, wallet)
+        outputs = []
+
+        if neo_to_attach:
+
+            output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash,
+                                       Value=neo_to_attach,
+                                       script_hash=contract.Code.ScriptHash(),
+                                       )
+            outputs.append(output)
+
+        if gas_to_attach:
+
+            output = TransactionOutput(AssetId=Blockchain.SystemCoin().Hash,
+                                      Value=gas_to_attach,
+                                      script_hash=contract.Code.ScriptHash())
+
+            outputs.append(output)
+        
+
+        return test_invoke(out, wallet, outputs)
 
     else:
 
@@ -109,7 +144,9 @@ def TestInvokeContract(wallet, args):
 
 
 
-def test_invoke(script, wallet):
+def test_invoke(script, wallet, outputs):
+
+#    print("invoke script %s " % script)
 
     bc = GetBlockchain()
 
@@ -123,23 +160,35 @@ def test_invoke(script, wallet):
 
     tx = InvocationTransaction()
     tx.Version = 1
-    tx.outputs = []
+    tx.outputs = outputs
     tx.inputs = []
     tx.scripts = []
     tx.Script = binascii.unhexlify(script)
-    print("testing invokeeee %s " % tx.Script)
 
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
-    contract = wallet.GetDefaultContract()
+#    contract = wallet.GetDefaultContract()
 
-    tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
+#    tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
+
+
+    wallet_tx = wallet.MakeTransaction(tx=tx)
+
+    if wallet_tx:
+
+        context = ContractParametersContext(wallet_tx)
+        wallet.Sign(context)
+
+        if context.Completed:
+            tx.scripts = context.GetScripts()
+
+
 
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
-        container=tx,
+        container=wallet_tx,
         table=script_table,
         service=service,
         gas=tx.Gas,
@@ -172,6 +221,9 @@ def test_invoke(script, wallet):
             return tx, engine.EvaluationStack.Items
         else:
             print("error executing contract.....")
+            tx.Gas = Fixed8.One()
+            tx.Attributes = []
+            return tx, []
 
     except Exception as e:
         print("COULD NOT EXECUTE %s " % e)

@@ -71,7 +71,6 @@ class StateMachine(StateReader):
 
     def CheckStorageContext(self, context):
         if context is None:
-            print("context is none, return false")
             return False
 
         contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
@@ -450,7 +449,9 @@ class StateMachine(StateReader):
             return False
 
         key = engine.EvaluationStack.Pop().GetByteArray()
+
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
+
         item = self._storages.TryGet(storage_key.GetHashCodeBytes())
         if item is not None:
 
@@ -462,29 +463,26 @@ class StateMachine(StateReader):
 
 
     def Storage_Put(self, engine):
-        print("trying to pu!!!")
+
         context = None
         try:
 
             context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
-            print("found context!!!")
         except Exception as e:
             self.__log.debug("Storage Context Not found on stack")
-            print("couldnt get context %s " % e)
             return False
 
         if not self.CheckStorageContext(context):
-            print("check strage context return false")
             return False
-        print("key...")
+
         key = engine.EvaluationStack.Pop().GetByteArray()
-        print("key %s " % key)
+
         if len(key) > 1024:
             return False
 
 
         value = engine.EvaluationStack.Pop().GetByteArray()
-        print("value!!! %s " % value)
+
         new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
 

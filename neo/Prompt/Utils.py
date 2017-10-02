@@ -1,8 +1,52 @@
 import binascii
 from neo.BigInteger import BigInteger
+from neo.Fixed8 import Fixed8
+
+
+def get_asset_attachments(params):
+
+    to_remove = []
+    neo_to_attach = None
+    gas_to_attach = None
+    for item in params:
+        if '--attach-neo=' in item:
+            to_remove.append(item)
+            try:
+                neo_to_attach = Fixed8.TryParse(int(item.replace('--attach-neo=', '')))
+            except Exception as e:
+                pass
+        elif '--attach-gas=' in item:
+            to_remove.append(item)
+            try:
+                gas_to_attach = Fixed8.FromDecimal(float(item.replace('--attach-gas=', '')))
+            except Exception as e:
+                pass
+    for item in to_remove:
+        params.remove(item)
+
+
+    return params, neo_to_attach, gas_to_attach
 
 
 def parse_param(p, ignore_int=False, prefer_hex=True):
+
+#    print("parsing param: %s " % p)
+
+#    pdb.set_trace()
+
+    #first, we'll try to parse an array
+    try:
+        items = eval(p)
+        if len(items) > 0 and type(items) is list:
+
+            parsed = []
+            for item in items:
+                parsed.append(parse_param(item))
+            return parsed
+
+    except Exception as e:
+#        print("couldnt eval items as array %s " % e)
+        pass
 
     if not ignore_int:
         try:

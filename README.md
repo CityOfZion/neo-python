@@ -212,5 +212,10 @@ coverage report -m --omit=venv/*
 
 ## License
 
-- Open-source [Apache 2.0](https://github.com/CityOfZion/neo-python/blob/master/LICENSE).
+- Open-source [MIT](https://github.com/CityOfZion/neo-python/blob/master/LICENSE.md).
 - Main author is [@localhuman](https://github.com/localhuman).
+
+
+## Donations
+
+Accepted at __ATEMNPSjRVvsXmaJW4ZYJBSVuJ6uR2mjQU__

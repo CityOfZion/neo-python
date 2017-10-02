@@ -69,7 +69,7 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetType", self.Transaction_GetType)
         self.Register("Neo.Transaction.GetAttributes", self.Transaction_GetAttributes)
         self.Register("Neo.Transaction.GetInputs", self.Transaction_GetInputs)
-        self.Register("Neo.Transaction.GetOutpus", self.Transaction_GetOutputs)
+        self.Register("Neo.Transaction.GetOutputs", self.Transaction_GetOutputs)
         self.Register("Neo.Transaction.GetReferences", self.Transaction_GetReferences)
 
         self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
@@ -166,6 +166,7 @@ class StateReader(InteropService):
 
     def Runtime_GetTrigger(self, engine):
         engine.EvaluationStack.PushT(engine.Trigger)
+        return True
 
 
     def CheckWitnessHash(self, engine, hash):
@@ -180,7 +181,7 @@ class StateReader(InteropService):
 
     def CheckWitnessPubkey(self, engine, pubkey):
         scripthash = Contract.CreateSignatureRedeemScript(pubkey)
-        return self.CheckWitnessHash(engine, Crypto.ToScriptHash( Contract.CreateSignatureRedeemScript(pubkey)))
+        return self.CheckWitnessHash(engine, Crypto.ToScriptHash( scripthash))
 
 
     def Runtime_CheckWitness(self, engine):
@@ -193,7 +194,7 @@ class StateReader(InteropService):
         result = False
 
         if len(hashOrPubkey) == 20:
-            result = self.CheckWitnessHash(engine, hashOrPubkey)
+            result = self.CheckWitnessHash(engine, UInt160(data=hashOrPubkey))
 
         elif len(hashOrPubkey) == 33:
             point = ECDSA.decode_secp256r1(hashOrPubkey, unhex=False).G
@@ -209,6 +210,16 @@ class StateReader(InteropService):
     def Runtime_Notify(self, engine):
 
         state = engine.EvaluationStack.Pop()
+
+
+        try:
+            items = state.GetArray()
+            for item in items:
+                print("[neo.SmartContract.StateReader] -> RUNTIME.Notify: %s  " % str(item))
+                return True
+        except Exception as e:
+            print("Couldnt get array %s " % e)
+
         print("[neo.SmartContract.StateReader] -> RUNTIME.Notify: %s  " % str(state))
         return True
 
@@ -228,11 +239,11 @@ class StateReader(InteropService):
 
     def Blockchain_GetHeader(self, engine):
         data = engine.EvaluationStack.Pop().GetByteArray()
-        print("get header %s " % data)
+
         header = None
 
         if len(data) <= 5:
-            print("data")
+
             height = BigInteger.FromBytes(data)
 
             if Blockchain.Default() is not None:
@@ -262,13 +273,12 @@ class StateReader(InteropService):
 
 
     def Blockchain_GetBlock(self, engine):
-        print("blockchaine get block")
+
         data = engine.EvaluationStack.Pop()
-        print("data %s " % data)
+
         if data:
             data = data.GetByteArray()
         else:
-            print("invalid data")
             return False
 
         block = None
@@ -393,6 +403,7 @@ class StateReader(InteropService):
         if header is None:
             return False
         engine.EvaluationStack.PushT(header.Timestamp)
+
         return True
 
     def Header_GetConsensusData(self, engine):
@@ -475,27 +486,35 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        inputs = [StackItem.FromInterface(input) for input in tx.Inputs]
+        inputs = [StackItem.FromInterface(input) for input in tx.inputs]
         engine.EvaluationStack.PushT(inputs)
         return True
 
     def Transaction_GetOutputs(self, engine):
 
+
         tx = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.Transaction')
+
         if tx is None:
             return False
 
-        outputs = [StackItem.FromInterface(output) for output in tx.Outputs]
+        outputs = []
+        for output in tx.outputs:
+            stackoutput = StackItem.FromInterface(output)
+            outputs.append(stackoutput)
+
         engine.EvaluationStack.PushT(outputs)
         return True
 
     def Transaction_GetReferences(self, engine):
 
         tx = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.Transaction')
+
         if tx is None:
             return False
 
-        refs = [StackItem.FromInterface(ref) for ref in tx.References]
+        refs = [StackItem.FromInterface(tx.References[input]) for input in tx.inputs]
+
         engine.EvaluationStack.PushT(refs)
         return True
 
@@ -534,9 +553,11 @@ class StateReader(InteropService):
     def Output_GetAssetId(self, engine):
 
         output = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionOutput')
+
         if output is None:
             return False
-        engine.EvaluationStack.PushT(output.AssetId)
+
+        engine.EvaluationStack.PushT(output.AssetId.ToArray())
         return True
 
     def Output_GetValue(self, engine):
@@ -544,14 +565,17 @@ class StateReader(InteropService):
         output = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionOutput')
         if output is None:
             return False
+
         engine.EvaluationStack.PushT(output.Value.GetData())
         return True
 
     def Output_GetScriptHash(self, engine):
 
         output = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionOutput')
+
         if output is None:
             return False
+
         engine.EvaluationStack.PushT(output.ScriptHash.ToArray())
         return True
 
@@ -657,12 +681,12 @@ class StateReader(InteropService):
         return True
 
     def Storage_GetContext(self, engine):
-        print("getting storage context!")
+
         hash = UInt160( data= engine.CurrentContext.ScriptHash())
         context = StorageContext(script_hash=hash)
-        print("got context!")
+
         engine.EvaluationStack.PushT(StackItem.FromInterface(context))
-        print("OK!")
+
         return True
 
     def Storage_Get(self, engine):
@@ -679,6 +703,7 @@ class StateReader(InteropService):
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
 
         item = Blockchain.Default().GetStorageItem(storage_key)
+
 
         if item is not None:
 

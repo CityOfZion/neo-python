@@ -154,7 +154,7 @@ class ByteArray(StackItem):
 
     def GetBigInteger(self):
         try:
-            b = BigInteger.FromBytes(self._value, signed=True)
+            b = BigInteger(int.from_bytes(self._value, 'little', signed=True))
             return b
         except Exception as e:
             pass
@@ -243,6 +243,7 @@ class InteropInterface(StackItem):
 
 class Struct(Array):
 
+    @property
     def IsStruct(self):
         return True
 
@@ -289,7 +290,6 @@ class InteropService():
         self._dictionary[method] = func
 
     def Invoke(self, method, engine):
-
         if not method in self._dictionary.keys():
 
             self.__log.debug("method %s not found in ->" % method)
@@ -298,27 +298,26 @@ class InteropService():
             return False
 
         func = self._dictionary[method]
-        #print("invoking method -> %s" % func)
-    
+
         return func(engine)
 
     @staticmethod
     def GetScriptContainer(engine):
-
         engine.EvaluationStack.PushT( StackItem.FromInterface(engine.ScriptContainer))
         return True
 
     @staticmethod
     def GetExecutingScriptHash(engine):
-        engine.EvaluationStack.PushT( engine.CurrentContext.ScriptHash )
+        engine.EvaluationStack.PushT( engine.CurrentContext.ScriptHash() )
         return True
 
     @staticmethod
     def GetCallingScriptHash(engine):
-        engine.EvaluationStack.PushT( engine.CallingContext.ScriptHash )
+        engine.EvaluationStack.PushT( engine.CallingContext.ScriptHash() )
         return True
 
     @staticmethod
     def GetEntryScriptHash(engine):
-        engine.EvaluationStack.PushT( engine.EntryContext.ScriptHash )
+
+        engine.EvaluationStack.PushT( engine.EntryContext.ScriptHash() )
         return True

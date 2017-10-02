@@ -30,7 +30,7 @@ from base58 import b58decode
 from neo.Core.Helper import Helper
 from Crypto import Random
 from Crypto.Cipher import AES
-
+import pdb
 @logged
 class Wallet(object):
 
@@ -501,6 +501,9 @@ class Wallet(object):
     def MakeTransaction(self, tx, change_address = None, fee = Fixed8(0)):
         if not tx.outputs: tx.outputs = []
         if not tx.inputs: tx.inputs = []
+
+#        for o in tx.outputs:
+#            print("OUTPUT %s " % json.dumps(o.ToJson(), indent=4))
 
         fee = fee + tx.SystemFee()
 

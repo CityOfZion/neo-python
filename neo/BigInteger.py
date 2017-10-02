@@ -13,8 +13,12 @@ class BigInteger(int):
         return super(BigInteger, self).__eq__(other)
 
     def ToByteArray(self, signed=True):
-        return self.to_bytes((self.bit_length() + 7) //8, byteorder='little', signed=signed)
-
+        try:
+            return self.to_bytes((self.bit_length() + 7) //8, byteorder='little', signed=signed)
+        except OverflowError:
+            return self.to_bytes((self.bit_length() + 7) //8, byteorder='little', signed=False)
+        except Exception:
+            print("COULD NOT CONVERT %s to byte array" % self)
 
     def __abs__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__abs__(*args, **kwargs))
