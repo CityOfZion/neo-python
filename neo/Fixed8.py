@@ -24,6 +24,9 @@ class Fixed8:
         self.value = number
 
 
+    def GetData(self):
+        return self.value
+
 
     @staticmethod
     def FromDecimal(number):
@@ -115,5 +118,7 @@ class Fixed8:
     def __le__(self, other):
         return self.value <= other.value
 
+    def ToString(self):
+        return self.value / Fixed8.D
 #    def __str__(self):
 #        return self.value

@@ -200,8 +200,8 @@ class ExecutionEngine():
                 self.LoadScript(script)
 
             elif opcode == SYSCALL:
-
-                if not self._Service.Invoke( context.OpReader.ReadVarBytes(252).decode('ascii'), self):
+                call = context.OpReader.ReadVarBytes(252).decode('ascii')
+                if not self._Service.Invoke( call, self):
                     self._VMState |= VMState.FAULT
 
             #stack operations
@@ -441,7 +441,7 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-#                print("x2, x1 %s .. %s " % (x2, x1))
+
                 estack.PushT(x1 - x2)
 
             elif opcode == MUL:
