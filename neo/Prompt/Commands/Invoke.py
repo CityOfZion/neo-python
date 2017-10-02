@@ -128,7 +128,7 @@ def TestInvokeContract(wallet, args):
 
             output = TransactionOutput(AssetId=Blockchain.SystemCoin().Hash,
                                       Value=gas_to_attach,
-                                      script_hash=contract.Code.ScriptHash)
+                                      script_hash=contract.Code.ScriptHash())
 
             outputs.append(output)
         
