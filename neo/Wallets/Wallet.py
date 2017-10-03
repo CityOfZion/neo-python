@@ -499,11 +499,11 @@ class Wallet(object):
 
 
     def MakeTransaction(self, tx, change_address = None, fee = Fixed8(0)):
+
+        tx.ResetReferences()
+
         if not tx.outputs: tx.outputs = []
         if not tx.inputs: tx.inputs = []
-
-#        for o in tx.outputs:
-#            print("OUTPUT %s " % json.dumps(o.ToJson(), indent=4))
 
         fee = fee + tx.SystemFee()
 
@@ -522,7 +522,6 @@ class Wallet(object):
 
             if Blockchain.SystemCoin().Hash in paytotal.keys():
                 paytotal[Blockchain.SystemCoin().Hash] = paytotal[Blockchain.SystemCoin().Hash] + fee
-
             else:
                 paytotal[Blockchain.SystemCoin().Hash] = fee
 

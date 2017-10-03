@@ -15,7 +15,7 @@ def get_asset_attachments(params):
                 neo_to_attach = Fixed8.TryParse(int(item.replace('--attach-neo=', '')))
             except Exception as e:
                 pass
-        elif '--attach-gas=' in item:
+        if '--attach-gas=' in item:
             to_remove.append(item)
             try:
                 gas_to_attach = Fixed8.FromDecimal(float(item.replace('--attach-gas=', '')))
