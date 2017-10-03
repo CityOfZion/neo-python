@@ -45,7 +45,7 @@
 
 ## Getting started
 
-You will need to install the libleveldb library. Install Python 3.5 to make sure you don't run into any issues with your Python version [dist](https://www.python.org/downloads/release/python-354/)
+You will need to install the libleveldb library. Install [Python 3.5](https://www.python.org/downloads/release/python-354/) to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. 
 
 We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get you started with this library. There are other videos under the CityOfZion Youtube channel.
 
