@@ -79,6 +79,8 @@ Not sure. Installing the Python package plyvel seems to require C++ compiler sup
 
 -------------------
 
+### Virtual Environment
+
 Now navigate into the project, make a Python 3 virtual environment and activate
 it via
 
