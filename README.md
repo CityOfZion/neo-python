@@ -45,7 +45,9 @@
 
 ## Getting started
 
-You will need to install the libleveldb library.
+You will need to install the libleveldb library. Install Python 3.5 to make sure you don't run into any issues with your Python version [dist](https://www.python.org/downloads/release/python-354/)
+
+We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get you started with this library. There are other videos under the CityOfZion Youtube channel.
 
 ##### OSX:
 
@@ -82,6 +84,13 @@ it via
 
 ```
 python3 -m venv venv
+source venv/bin/activate
+```
+
+or to install Python 3.5 specifically
+
+```
+virtualenv -p /usr/local/bin/python3.5 venv
 source venv/bin/activate
 ```
 
