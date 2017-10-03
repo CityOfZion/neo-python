@@ -1,4 +1,9 @@
 
+from boa.blockchain.vm.Neo.Action import RegisterAction
+
+
+Transfer = RegisterAction('transfer', 'from','to','amount')
+
 def Main():
 
 
@@ -7,5 +12,8 @@ def Main():
     b = 5
 
     c = a + b
+
+
+    Transfer(a,b,c)
 
     return c

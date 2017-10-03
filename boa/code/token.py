@@ -804,6 +804,8 @@ class VMTokenizer():
                 full_name = m.full_name
 
 
+        print("converting function name %s " % fname)
+
         #operational call like len(items) or abs(value)
         if self.is_op_call(fname):
             vmtoken = self.convert_op_call(fname, pytoken)

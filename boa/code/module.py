@@ -5,11 +5,12 @@ from boa.code import pyop
 
 from boa.code.line import Line
 from boa.code.method import Method
-from boa.code.items import Definition, Klass, Import
+from boa.code.items import Definition, Klass, Import,Action
 
 from boa.blockchain.vm import VMOp
 
 from collections import OrderedDict
+import pdb
 
 class Module():
 
@@ -67,7 +68,7 @@ class Module():
         return om
 
     def add_method(self, method):
-        print("ADDING METHODDDDDD")
+        print("ADDING METHODDDDDD %s " % method.name)
         for m in self.methods:
             if m.name == method.name:
 
@@ -134,9 +135,12 @@ class Module():
                 self.classes.append(Klass(lineset.items, self))
             elif lineset.is_method:
                 self.process_method(lineset)
+            elif lineset.is_action_registration:
+                self.process_action(lineset)
             else:
                 print('not sure what to do with line %s ' % lineset)
-
+                #print("code %s " % lineset.code_object)
+                pdb.set_trace()
 
 
     def process_import(self, import_item):
@@ -153,6 +157,9 @@ class Module():
 
         m = Method(lineset.code_object, self)
         self.add_method(m)
+
+    def process_action(self, lineset):
+        action = Action(lineset)
 
     def split_lines(self):
 

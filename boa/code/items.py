@@ -16,6 +16,8 @@ class Item():
 class Definition(Item):
     pass
 
+class Action(Item):
+    pass
 
 class Import(Item):
 

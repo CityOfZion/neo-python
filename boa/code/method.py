@@ -305,3 +305,4 @@ class Method():
 
         out = self.tokenizer.to_b()
         return out
+

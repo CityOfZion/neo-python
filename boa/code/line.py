@@ -42,3 +42,9 @@ class Line():
             if type(arg) is Code:
                 return arg
         return None
+
+    @property
+    def is_action_registration(self):
+        for i, (op, arg) in enumerate(self.items):
+            if arg == 'RegisterAction':
+                return True
