@@ -30,6 +30,7 @@ from neo.Fixed8 import Fixed8
 
 from neo.Core.Blockchain import Blockchain
 
+from neo.VM.OpCode import *
 from neo.BigInteger import BigInteger
 import traceback
 import pdb
@@ -106,9 +107,10 @@ def TestInvokeContract(wallet, args):
 
             if type(item) is list:
                 listlength = len(item)
-                sb.push(listlength)
                 for listitem in item:
                     sb.push(listitem)
+                sb.push(listlength)
+                sb.Emit(PACK)
             else:
                 sb.push(item)
 
