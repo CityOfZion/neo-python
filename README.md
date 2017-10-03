@@ -65,7 +65,7 @@ apt-get -s install libleveldb-dev
 
 This is a bit more tricky...
 
-```
+``` 
 yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel
 ```
 
