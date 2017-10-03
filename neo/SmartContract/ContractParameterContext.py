@@ -35,7 +35,6 @@ class ContractParametersContext():
 
     def Add(self, contract, index, parameter):
 
-
         i = self.GetIndex(contract.ScriptHash)
 
         if i < 0:
@@ -59,7 +58,6 @@ class ContractParametersContext():
 
 
         else:
-
 
             index = -1
             for i, contractParam in enumerate(contract.ParameterList):

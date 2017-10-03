@@ -184,6 +184,9 @@ class Transaction(Inventory, InventoryMixin):
     def getAllInputs(self):
         return self.inputs
 
+    def ResetReferences(self):
+        self.__references = None
+
     @property
     def References(self):
 
