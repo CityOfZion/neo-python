@@ -132,7 +132,6 @@ class ExecutionEngine():
 
         if opcode >= PUSHBYTES1 and opcode <= PUSHBYTES75:
             bytestoread = context.OpReader.ReadBytes(int.from_bytes(opcode, 'little'))
-            print("bytes to read %s " % bytestoread)
             estack.PushT(bytestoread)
         else:
 

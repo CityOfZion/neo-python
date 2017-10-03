@@ -756,7 +756,6 @@ class VMTokenizer():
         elif pytoken.func_name == 'bytes':
             return self.convert_push_data(pytoken.func_params[0].args,pytoken)
 
-
         for t in pytoken.func_params:
             t.to_vm(self)
 
@@ -804,15 +803,14 @@ class VMTokenizer():
                 full_name = m.full_name
 
 
-        print("converting function name %s " % fname)
 
         #operational call like len(items) or abs(value)
         if self.is_op_call(fname):
             vmtoken = self.convert_op_call(fname, pytoken)
 
-        #used for runtime.notify
-        elif self.is_notify_call(fname):
-            vmtoken = self.convert_notify_call(fname, pytoken)
+        #runtime.notify event
+        elif self.is_notify_event(pytoken):
+           vmtoken = self.convert_notify_event(pytoken)
 
         elif self.is_sys_call(full_name):
             vmtoken = self.convert_sys_call(full_name, pytoken)
@@ -853,11 +851,6 @@ class VMTokenizer():
             return self.convert1(VMOp.LEFT,pytoken)
         return None
 
-    def is_notify_call(self, op):
-        return False
-
-    def convert_notify_call(self, op, pytoken=None):
-        raise NotImplementedError()
 
     def is_sys_call(self, op):
         if op is not None and NEO_SC_FRAMEWORK in op:
@@ -916,5 +909,41 @@ class VMTokenizer():
         raise NotImplementedError("[Compilation error] Built in %s is not implemented" % op)
 
 
-#    def is_method_call(self, op):
+    def is_notify_event(self, pytoken):
+
+        name= pytoken.func_name
+
+        for action in self.method.module.actions:
+            if action.method_name == name:
+                return True
+        return False
+
+
+    def convert_notify_event(self, pytoken):
+        event_action = None
+        for action in self.method.module.actions:
+            if action.method_name == pytoken.func_name:
+                event_action = action
+        if event_action is None:
+            raise Exception("Event action not found")
+
+        #push the event name
+        event_name = event_action.event_name.encode('utf-8')
+        self.convert_push_data(event_name, py_token=pytoken)
+
+        #push the num params
+        self.convert_push_integer(len(event_action.event_args))
+
+        #pack the array
+        self.convert1(VMOp.PACK)
+
+        #insert syscall
+        syscall_name = 'Neo.Runtime.Notify'.encode('utf-8')
+        length = len(syscall_name)
+        ba = bytearray([length]) + bytearray(syscall_name)
+        vmtoken = self.convert1(VMOp.SYSCALL, pytoken, data=ba)
+
+        return vmtoken
+
+        #    def is_method_call(self, op):
 #        if op in self

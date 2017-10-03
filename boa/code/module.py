@@ -28,6 +28,8 @@ class Module():
 
     methods = None # a list to keep all methods in the module
 
+    actions = None
+
     is_sys_module = None
 
     all_vm_tokens = None # dict for converting method tokens into linked method tokens for writing
@@ -68,7 +70,7 @@ class Module():
         return om
 
     def add_method(self, method):
-        print("ADDING METHODDDDDD %s " % method.name)
+#        print("ADDING METHODDDDDD %s " % method.name)
         for m in self.methods:
             if m.name == method.name:
 
@@ -79,7 +81,7 @@ class Module():
                     return False
 #                return False
 
-        print("appending method %s %s " % (method.name, method.full_name))
+#        print("appending method %s %s " % (method.name, method.full_name))
         self.methods.append(method)
 
     def method_by_name(self, method_name):
@@ -114,6 +116,7 @@ class Module():
         self.imports = []
         self.module_variables = []
         self.methods = []
+        self.actions = []
         self.classes = []
         self.loaded_modules = []
 
@@ -140,7 +143,6 @@ class Module():
             else:
                 print('not sure what to do with line %s ' % lineset)
                 #print("code %s " % lineset.code_object)
-                pdb.set_trace()
 
 
     def process_import(self, import_item):
@@ -160,6 +162,10 @@ class Module():
 
     def process_action(self, lineset):
         action = Action(lineset)
+        for act in self.actions:
+            if act.method_name == action.method_name:
+                return
+        self.actions.append(action)
 
     def split_lines(self):
 
@@ -211,7 +217,7 @@ class Module():
         for method in self.orderered_methods:
 
             method.method_address = address
-            print("linking method %s %s " % (method.full_name, address))
+
             for key, vmtoken in method.vm_tokens.items():
 
                 self.all_vm_tokens[address] = vmtoken
@@ -230,7 +236,6 @@ class Module():
             if vmtoken.src_method is not None:
 
                 target_method = self.method_by_name( vmtoken.target_method )
-                print("looking for method.... %s %s" % (vmtoken.target_method, target_method))
                 jump_len = target_method.method_address - vmtoken.addr
                 vmtoken.data = jump_len.to_bytes(2, 'little', signed=True)
 

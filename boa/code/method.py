@@ -216,7 +216,6 @@ class Method():
                     if localvar in self.local_stores.keys():
                         pass
                     else:
-                        print("INSERTING LOCALVAR %s " % localvar)
                         length = len(self.local_stores)
                         self.local_stores[localvar] = length
 
@@ -241,7 +240,6 @@ class Method():
                 iter_setup_block = None
 
             if block.is_iter and not block.is_list_comprehension:
-                print("PROCESSING BLOCK ITER!!!!!!!")
                 block.preprocess_iter()
                 for localvar in block.iterable_local_vars:
 
@@ -267,7 +265,6 @@ class Method():
         for index,token in enumerate(self.tokens):
             token.addr = index
 
-        print("LOCAL FUNC METHODS %s " % self.local_methods)
 
     def tokenize(self):
         self.tokenizer.update_method_begin_items()

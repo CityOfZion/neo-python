@@ -2,7 +2,7 @@ from byteplay3 import Code
 from boa.code.method import Method
 from boa.code import pyop
 import importlib
-
+import pdb
 class Item():
     items = None
 
@@ -17,7 +17,26 @@ class Definition(Item):
     pass
 
 class Action(Item):
-    pass
+
+    event_name = None
+    event_args = None
+
+    method_name = None
+
+    def __init__(self, item_list):
+        super(Action,self).__init__(item_list)
+
+        arguments = []
+
+        for i, (key,value) in enumerate(self.items.items):
+            if key == pyop.LOAD_CONST:
+                arguments.append(value)
+            elif key == pyop.STORE_NAME:
+                self.method_name = value
+
+        self.event_name = arguments[0]
+
+        self.event_args = arguments
 
 class Import(Item):
 

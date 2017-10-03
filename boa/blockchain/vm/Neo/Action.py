@@ -1,7 +1,4 @@
 
 
-def RegisterAction(name, *args):
-    #def _name(*args):
-    #    pass
-    #return _name
+def RegisterAction(event_name, *args):
     pass
