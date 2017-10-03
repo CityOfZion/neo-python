@@ -33,19 +33,23 @@ from neo.Core.Blockchain import Blockchain
 from neo.BigInteger import BigInteger
 import traceback
 import pdb
+import pdb
+import json
 
 def InvokeContract(wallet, tx):
+
 
     wallet_tx = wallet.MakeTransaction(tx=tx)
 
     if wallet_tx:
 
         context = ContractParametersContext(wallet_tx)
+
         wallet.Sign(context)
 
         if context.Completed:
 
-            tx.scripts = context.GetScripts()
+            wallet_tx.scripts = context.GetScripts()
 
             wallet.SaveTransaction(wallet_tx)
 
@@ -56,7 +60,6 @@ def InvokeContract(wallet, tx):
                 return True
             else:
                 print("Could not relay tx %s " % tx.Hash.ToString())
-
         else:
 
             print("Incomplete signature")
@@ -131,7 +134,6 @@ def TestInvokeContract(wallet, args):
                                       script_hash=contract.Code.ScriptHash())
 
             outputs.append(output)
-        
 
         return test_invoke(out, wallet, outputs)
 
@@ -169,9 +171,7 @@ def test_invoke(script, wallet, outputs):
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
 #    contract = wallet.GetDefaultContract()
-
 #    tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
-
 
     wallet_tx = wallet.MakeTransaction(tx=tx)
 
@@ -179,23 +179,19 @@ def test_invoke(script, wallet, outputs):
 
         context = ContractParametersContext(wallet_tx)
         wallet.Sign(context)
-
         if context.Completed:
-            tx.scripts = context.GetScripts()
-
-
-
+            wallet_tx.scripts = context.GetScripts()
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
         container=wallet_tx,
         table=script_table,
         service=service,
-        gas=tx.Gas,
+        gas=wallet_tx.Gas,
         testMode=True
     )
 
-    engine.LoadScript(tx.Script, False)
+    engine.LoadScript(wallet_tx.Script, False)
 
 
     try:
@@ -213,17 +209,18 @@ def test_invoke(script, wallet, outputs):
                 consumed = Fixed8.One()
 
             #set the amount of gas the tx will need
-            tx.Gas = consumed
+            wallet_tx.Gas = consumed
 
-            #remove the attributes that are used to add a verification script to the tx
-            tx.Attributes = []
+            #reset the wallet outputs
+            wallet_tx.outputs = outputs
 
-            return tx, engine.EvaluationStack.Items
+            return wallet_tx, engine.EvaluationStack.Items
         else:
             print("error executing contract.....")
-            tx.Gas = Fixed8.One()
-            tx.Attributes = []
-            return tx, []
+#            tx.Gas = Fixed8.One()
+#            tx.Attributes = []
+#            return tx, []
+            return None,[]
 
     except Exception as e:
         print("COULD NOT EXECUTE %s " % e)
