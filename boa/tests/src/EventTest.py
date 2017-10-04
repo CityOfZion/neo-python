@@ -4,6 +4,8 @@ from boa.blockchain.vm.Neo.Action import RegisterAction
 
 Transfer = RegisterAction('transfer', 'from','to','amount')
 
+Refund = RegisterAction('refund', 'to','amount')
+
 def Main():
 
 
@@ -15,5 +17,11 @@ def Main():
 
 
     Transfer(a,b,c)
+
+
+    to = 'me'
+    amount = 52
+
+    Refund(to, amount)
 
     return c

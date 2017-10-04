@@ -650,6 +650,10 @@ class LevelDBBlockchain(Blockchain):
                             if success:
                                 service.Commit()
 
+                                if len(service.notifications) > 0:
+                                    for n in service.notifications:
+                                        self.OnNotify(n)
+
                             for item in engine.EvaluationStack.Items:
                                 print( "[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute result] -> %s " % item)
 

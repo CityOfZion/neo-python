@@ -204,6 +204,10 @@ def test_invoke(script, wallet, outputs):
 
             service.TestCommit()
 
+            if len(service.notifications) > 0:
+                for n in service.notifications:
+                    Blockchain.Default().OnNotify(n)
+
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed.value = int(consumed.value)
 
@@ -333,6 +337,11 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             if i_success:
                 service.TestCommit()
+
+                if len(service.notifications) > 0:
+                    for n in service.notifications:
+                        Blockchain.Default().OnNotify(n)
+
                 consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
                 consumed.value = int(consumed.value)
 

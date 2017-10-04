@@ -211,16 +211,13 @@ class StateReader(InteropService):
 
         state = engine.EvaluationStack.Pop()
 
+        args = NotifyEventArgs(
+            engine.ScriptContainer,
+            UInt160(engine.CurrentContext.ScriptHash()),
+            state
+        )
 
-        try:
-            items = state.GetArray()
-            for item in items:
-                print("[neo.SmartContract.StateReader] -> RUNTIME.Notify: %s  " % str(item))
-                return True
-        except Exception as e:
-            print("Couldnt get array %s " % e)
-
-        print("[neo.SmartContract.StateReader] -> RUNTIME.Notify: %s  " % str(state))
+        self.NotifyEvent.on_change(args)
         return True
 
     def Runtime_Log(self, engine):

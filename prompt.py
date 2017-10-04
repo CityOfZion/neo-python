@@ -25,6 +25,7 @@ from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_in
 from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,GatherLoadedContractParams
 from neo.Prompt.Utils import get_arg
+from neo.Prompt.Notify import SubscribeNotifications
 from neo import Settings
 from neo.Fixed8 import Fixed8
 import traceback
@@ -51,6 +52,7 @@ logging.basicConfig(
 
 blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
+SubscribeNotifications()
 
 
 example_style = style_from_dict({
