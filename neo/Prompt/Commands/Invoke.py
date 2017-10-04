@@ -106,6 +106,7 @@ def TestInvokeContract(wallet, args):
             item = parse_param(p)
 
             if type(item) is list:
+                item.reverse()
                 listlength = len(item)
                 for listitem in item:
                     sb.push(listitem)
