@@ -381,6 +381,7 @@ def descripe_contract(contract):
 
     method_signature = []
     for p in parameters:
+        print("P: %s " % p)
         method_signature.append("{ %s } " % ToName(p))
     rettype = ToName(functionCode.ReturnType)
 
