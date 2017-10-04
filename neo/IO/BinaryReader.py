@@ -47,10 +47,10 @@ class BinaryReader(object):
         return self.unpack('c')
 
     def ReadFloat(self, endian="<"):
-        return self.unpack("%sf" % endian)
+        return self.unpack("%sf" % endian, 4)
 
     def ReadDouble(self, endian="<"):
-        return self.unpack("%sd" % endian)
+        return self.unpack("%sd" % endian, 8)
 
     def ReadInt8(self, endian="<"):
         return self.unpack('%sb' % endian)
