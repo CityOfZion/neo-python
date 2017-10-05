@@ -142,3 +142,22 @@ def range(start, stop):
         start = orig_start + index
 
     return out
+
+
+def sha1(data):
+    pass
+
+def sha256(data):
+    pass
+
+def hash160(data):
+    pass
+
+def hash256(data):
+    pass
+
+def verify_signature(signature, pubkey):
+    pass
+
+def verify_signatures(signatures, pubkeys):
+    pass

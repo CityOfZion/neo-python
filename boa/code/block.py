@@ -408,6 +408,9 @@ class Block():
             changed_items = None
 
             for index, token in enumerate(self.oplist):
+#                print("TOKEN::: %s %s " % (token.jump_label, token.args))
+
+
                 if token.py_op == pyop.CALL_FUNCTION and token.func_processed == False:
 
                     token.func_processed = True
@@ -420,10 +423,13 @@ class Block():
 
                     params = self.oplist[index-param_count:index]
 
+
                     call_method_op = self.oplist[index-param_count-1]
+
 
                     call_method_type = call_method_op.py_op
                     call_method_name = call_method_op.args
+
 
                     #we need to check if this is a method
                     #that is local to this block's method
@@ -431,9 +437,21 @@ class Block():
                         if key == call_method_name:
                             call_method_name = value
 
-                    token.func_params = params
                     token.func_name = call_method_name
                     token.func_type = call_method_type
+
+
+                    #if this method is the target of a jump
+                    #or if one of its parameters is the target of a jump
+                    #we need to catch that and use that jump label
+                    #otherwise bad things
+                    if call_method_op.jump_label is not None:
+                        if len(params) > 0:
+                            params[0].jump_label = call_method_op.jump_label
+                        else:
+                            token.jump_label = call_method_op.jump_label
+
+                    token.func_params = params
 
                     changed_items = [token]
 
@@ -444,8 +462,6 @@ class Block():
                 tstart = self.oplist[0:start_index_change]
                 tend = self.oplist[end_index_change+1:]
                 self.oplist = tstart + changed_items + tend
-
-
 
 
     def preprocess_array_subs(self):

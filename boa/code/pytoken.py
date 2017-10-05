@@ -173,7 +173,7 @@ class PyToken():
             elif op in [pyop.STORE_FAST, pyop.STORE_NAME]:
                 token = tokenizer.convert_store_local(self)
 
-            elif op in [pyop.LOAD_FAST, pyop.LOAD_NAME]:
+            elif op in [pyop.LOAD_FAST, pyop.LOAD_NAME, pyop.LOAD_GLOBAL]:
                 token = tokenizer.convert_load_local(self)
 
 

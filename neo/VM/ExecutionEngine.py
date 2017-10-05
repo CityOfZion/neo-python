@@ -392,8 +392,8 @@ class ExecutionEngine():
                 estack.PushT( x1 ^ x2 )
 
             elif opcode == EQUAL:
-                x2 = estack.Pop().GetBigInteger()
-                x1 = estack.Pop().GetBigInteger()
+                x2 = estack.Pop()
+                x1 = estack.Pop()
                 estack.PushT( x1.Equals(x2))
 
 

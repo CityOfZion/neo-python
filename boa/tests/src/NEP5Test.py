@@ -16,7 +16,7 @@ FACTOR = 100000000
 
 
 #ICO SETTINGS
-NEO_ASSET_ID = bytearray()
+NEO_ASSET_ID = b'\xc5o3\xfcn\xcf\xcd\x0c"\\J\xb3V\xfe\xe5\x93\x90\xaf\x85`\xbe\x0e\x93\x0f\xae\xbet\xa6\xda\xff|\x9b'
 
 # 5million times decimals
 TOTAL_AMOUNT = 5000000 * FACTOR

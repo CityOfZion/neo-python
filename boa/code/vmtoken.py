@@ -147,7 +147,9 @@ class VMTokenizer():
         #we just need to inssert the total number of arguments + body variables
         #which is the length of the method `local_stores` dictionary
         #then create a new array for the vm to store
-        total_items = self.method.total_lines  + len(self.method.args) + self.method.dynamic_iterator_count
+        total_items = self.method.total_lines  \
+                      + len(self.method.args) \
+                      + self.method.dynamic_iterator_count
 
         self.total_param_and_body_count_token = self.insert_push_integer(total_items)
         self.total_param_and_body_count_token.updatable_data = total_items
@@ -555,8 +557,10 @@ class VMTokenizer():
 
 
     def is_op_call(self, op):
-
-        if op in ['len','abs','min','max','concat','take']:
+        print("checking op: %s " % op)
+        if op in ['len','abs','min','max','concat','take',
+                  'sha1','sha256','hash160','hash256',
+                  'verify_signature','verify_signatures']:
             return True
         return False
 
@@ -574,12 +578,25 @@ class VMTokenizer():
             return self.convert1(VMOp.CAT,pytoken)
         elif op == 'take':
             return self.convert1(VMOp.LEFT,pytoken)
+        elif op == 'sha1':
+            return self.convert1(VMOp.SHA1, pytoken)
+        elif op == 'sha256':
+            return self.convert1(VMOp.SHA256, pytoken)
+        elif op == 'hash160':
+            return self.convert1(VMOp.HASH160, pytoken)
+        elif op == 'hash256':
+            return self.convert1(VMOp.HASH256, pytoken)
+        elif op == 'verify_signature':
+            return self.convert1(VMOp.CHECKSIG, pytoken)
+        elif op == 'verify_signatures':
+            return self.convert1(VMOp.CHECKMULTISIG, pytoken)
         return None
 
 
     def is_sys_call(self, op):
         if op is not None and NEO_SC_FRAMEWORK in op:
-            return True
+            if not 'TriggerType' in op: # we will compile TriggerType normally
+                return True
         return False
 
     def convert_sys_call(self,op, pytoken=None):
