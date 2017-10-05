@@ -100,9 +100,6 @@ class StateMachine(StateReader):
 
     def StateMachine_Notify(self, event_args):
 
-        print("state machine notify! %s " % event_args)
-#        pdb.set_trace()
-
         self.notifications.append(event_args)
 
     def Blockchain_GetAccount(self, engine):

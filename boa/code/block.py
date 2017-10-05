@@ -1,6 +1,6 @@
 
 from byteplay3 import Opcode,Label
-from boa.code.token import PyToken
+from boa.code.pytoken import PyToken
 from boa.code import pyop
 
 import pdb

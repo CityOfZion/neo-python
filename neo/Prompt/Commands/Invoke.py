@@ -308,9 +308,23 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             sb = ScriptBuilder()
 
+            # print("neo, gas %s %s " % (neo_to_attach,gas_to_attach.ToString()))
+
+            sb = ScriptBuilder()
+
             for p in invoke_args:
+
                 item = parse_param(p)
-                sb.push(item)
+
+                if type(item) is list:
+                    item.reverse()
+                    listlength = len(item)
+                    for listitem in item:
+                        sb.push(listitem)
+                    sb.push(listlength)
+                    sb.Emit(PACK)
+                else:
+                    sb.push(item)
 
             sb.EmitAppCall(shash.Data)
             out = sb.ToArray()

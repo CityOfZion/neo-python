@@ -2,7 +2,7 @@ from byteplay3 import Code
 from boa.code.method import Method
 from boa.code import pyop
 import importlib
-import pdb
+
 class Item():
     items = None
 

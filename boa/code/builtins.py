@@ -1,8 +1,5 @@
 
 
-
-
-
 class list(list):
 
     def __init__(self, length=0):

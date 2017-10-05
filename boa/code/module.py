@@ -10,7 +10,7 @@ from boa.code.items import Definition, Klass, Import,Action
 from boa.blockchain.vm import VMOp
 
 from collections import OrderedDict
-import pdb
+
 
 class Module():
 

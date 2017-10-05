@@ -8,7 +8,6 @@ def SubscribeNotifications():
 
 def HandleBlockchainNotification(notification):
 
-    print("handle blockchain notifications!!!")
 
     state = notification.State
     try:
@@ -23,8 +22,12 @@ def HandleBlockchainNotification(notification):
 
 
             if event_name == 'transfer':
-                for arg in event_args:
-                    print("transfer arg %s " % str(arg))
+
+                tfrom = event_args[0].GetByteArray()
+                tto = event_args[1].GetByteArray()
+                tamount = event_args[2].GetBigInteger()
+
+                print("Transfer %s from %s to %s " % (tamount, tfrom, tto))
 
             elif event_name == 'refund':
                 to = event_args[0]

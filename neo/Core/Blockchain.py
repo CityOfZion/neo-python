@@ -197,7 +197,7 @@ class Blockchain(object):
 
 
     def OnNotify(self, notification):
-        print("on notifiy %s " % notification)
+#        print("on notifiy %s " % notification)
         self.Notify.on_change(notification)
 
     def ContainsBlock(self,hash):
