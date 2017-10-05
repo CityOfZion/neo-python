@@ -19,7 +19,7 @@ import sys
 import json
 
 from autologging import logged
-
+import pdb
 
 @logged
 class StateMachine(StateReader):
@@ -35,6 +35,8 @@ class StateMachine(StateReader):
     _contracts_created = {}
 
 
+    notifications = None
+
     def __init__(self, accounts, validators, assets, contracts, storages, wb):
 
         super(StateMachine, self).__init__()
@@ -45,6 +47,9 @@ class StateMachine(StateReader):
         self._contracts = contracts
         self._storages = storages
         self._wb = wb
+        self.notifications = []
+
+        self.NotifyEvent.on_change += self.StateMachine_Notify
 
         self.Register("Neo.Account.SetVotes", self.Account_SetVotes)
         self.Register("Neo.Validator.Register", self.Validator_Register)
@@ -92,6 +97,10 @@ class StateMachine(StateReader):
     def TestCommit(self):
         #print("test commit items....")
         pass
+
+    def StateMachine_Notify(self, event_args):
+
+        self.notifications.append(event_args)
 
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())

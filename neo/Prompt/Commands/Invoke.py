@@ -205,6 +205,10 @@ def test_invoke(script, wallet, outputs):
 
             service.TestCommit()
 
+            if len(service.notifications) > 0:
+                for n in service.notifications:
+                    Blockchain.Default().OnNotify(n)
+
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed.value = int(consumed.value)
 
@@ -304,9 +308,23 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             sb = ScriptBuilder()
 
+            # print("neo, gas %s %s " % (neo_to_attach,gas_to_attach.ToString()))
+
+            sb = ScriptBuilder()
+
             for p in invoke_args:
+
                 item = parse_param(p)
-                sb.push(item)
+
+                if type(item) is list:
+                    item.reverse()
+                    listlength = len(item)
+                    for listitem in item:
+                        sb.push(listitem)
+                    sb.push(listlength)
+                    sb.Emit(PACK)
+                else:
+                    sb.push(item)
 
             sb.EmitAppCall(shash.Data)
             out = sb.ToArray()
@@ -334,6 +352,11 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             if i_success:
                 service.TestCommit()
+
+                if len(service.notifications) > 0:
+                    for n in service.notifications:
+                        Blockchain.Default().OnNotify(n)
+
                 consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
                 consumed.value = int(consumed.value)
 
@@ -373,6 +396,7 @@ def descripe_contract(contract):
 
     method_signature = []
     for p in parameters:
+        print("P: %s " % p)
         method_signature.append("{ %s } " % ToName(p))
     rettype = ToName(functionCode.ReturnType)
 

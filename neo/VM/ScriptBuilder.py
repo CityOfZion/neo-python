@@ -107,7 +107,10 @@ class ScriptBuilder(object):
             else:
                 return self.push(binascii.hexlify( base256_encode(data)))
         else:
-            buf = binascii.unhexlify(data)
+            if not type(data) == bytearray:
+                buf = binascii.unhexlify(data)
+            else:
+                buf = bytes(data)
         if len(buf) <= int.from_bytes( PUSHBYTES75, 'big'):
             self.add(len(buf))
             self.add(buf)

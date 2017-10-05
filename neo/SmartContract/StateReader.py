@@ -211,16 +211,13 @@ class StateReader(InteropService):
 
         state = engine.EvaluationStack.Pop()
 
+        args = NotifyEventArgs(
+            engine.ScriptContainer,
+            UInt160(engine.CurrentContext.ScriptHash()),
+            state
+        )
 
-        try:
-            items = state.GetArray()
-            for item in items:
-                print("[neo.SmartContract.StateReader] -> RUNTIME.Notify: %s  " % str(item))
-                return True
-        except Exception as e:
-            print("Couldnt get array %s " % e)
-
-        print("[neo.SmartContract.StateReader] -> RUNTIME.Notify: %s  " % str(state))
+        self.NotifyEvent.on_change(args)
         return True
 
     def Runtime_Log(self, engine):
@@ -436,7 +433,7 @@ class StateReader(InteropService):
         if block is None:
             return False
 
-        txlist = [StackItem.FromInterface(tx) for tx in block.Transactions]
+        txlist = [StackItem.FromInterface(tx) for tx in block.FullTransactions]
         engine.EvaluationStack.PushT(txlist)
         return True
 
@@ -448,7 +445,7 @@ class StateReader(InteropService):
         if block is None or index < 0 or index > len(block.Transactions):
             return False
 
-        tx= StackItem.FromInterface(block.Transactions[index])
+        tx= StackItem.FromInterface(block.FullTransactions[index])
         engine.EvaluationStack.PushT(tx)
         return True
 

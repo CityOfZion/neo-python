@@ -11,7 +11,7 @@ from neo.VM.InteropService import Array,Struct,StackItem
 import sys,os
 from neo.UInt160 import UInt160
 import traceback
-import binascii
+import pdb
 
 @logged
 class ExecutionEngine():
@@ -131,7 +131,8 @@ class ExecutionEngine():
             self._VMState |= VMState.FAULT
 
         if opcode >= PUSHBYTES1 and opcode <= PUSHBYTES75:
-            estack.PushT(context.OpReader.ReadBytes(int.from_bytes( opcode, 'little')))
+            bytestoread = context.OpReader.ReadBytes(int.from_bytes(opcode, 'little'))
+            estack.PushT(bytestoread)
         else:
 
             # push values
@@ -157,8 +158,9 @@ class ExecutionEngine():
             elif opcode == NOP:
                 pass
             elif opcode in [JMP, JMPIF, JMPIFNOT]:
-                offset = context.OpReader.ReadInt16()
-                offset = context.InstructionPointer + offset - 3
+                offset_b = context.OpReader.ReadInt16()
+                offset = context.InstructionPointer + offset_b - 3
+
                 if offset < 0 or offset > len(context.Script):
                     self._VMState |= VMState.FAULT
                     return
@@ -175,6 +177,7 @@ class ExecutionEngine():
             elif opcode == CALL:
                 istack.PushT(context.Clone())
                 context.SetInstructionPointer( context.InstructionPointer + 2)
+
                 self.ExecuteOp(JMP, self.CurrentContext)
 
             elif opcode == RET:
@@ -206,6 +209,9 @@ class ExecutionEngine():
 
             #stack operations
             elif opcode == DUPFROMALTSTACK:
+                print("ASTACK ITEMS %s " % astack.Items)
+                item = astack.Peek()
+                print("item is %s " % item)
                 estack.PushT(astack.Peek())
 
             elif opcode == TOALTSTACK:
@@ -791,10 +797,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-#        opname = ToName(op)
-#        print("____________________________________________________")
-#        print("%s -> %s" % (op, opname))
-#        print("-----------------------------------")
+ #       opname = ToName(op)
+ #       print("____________________________________________________")
+ #       print("%s -> %s" % (op, opname))
+ #       print("-----------------------------------")
 
         try:
             self.ExecuteOp(op, self.CurrentContext)

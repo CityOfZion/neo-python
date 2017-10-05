@@ -55,6 +55,8 @@ class Blockchain(object):
 
     PersistCompleted = Events()
 
+    Notify = Events()
+
     @staticmethod
     def StandbyValidators():
         if len(Blockchain.__validators) < 1:
@@ -192,6 +194,11 @@ class Blockchain(object):
         amount_claimed = Fixed8(0)
 
         raise NotImplementedError()
+
+
+    def OnNotify(self, notification):
+#        print("on notifiy %s " % notification)
+        self.Notify.on_change(notification)
 
     def ContainsBlock(self,hash):
         # abstract
