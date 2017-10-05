@@ -51,13 +51,13 @@ def HandleBlockchainNotification(notification):
                 hasjson = getattr(interface,'ToJson',None)
 
                 if hasjson:
-                    print("[Neo.Runtime.Notify] Item %s " % json.dumps(interface.ToJson(), indent=4))
+                    print("[Neo.Runtime.Notify] %s " % json.dumps(interface.ToJson(), indent=4))
 
                 else:
-                    print("[Neo.Runtime.Notify] Item %s " % str(interface))
+                    print("[Neo.Runtime.Notify] %s " % str(interface))
 
             else:
-                print("[Neo.Runtime.Notify] Item %s " % str(state))
+                print("[Neo.Runtime.Notify] %s " % str(state))
 
 
     except Exception as e:
