@@ -34,6 +34,8 @@ class Method():
 
     __make_func_name=None
 
+
+
     @property
     def name(self):
         return self.bp.name
@@ -78,6 +80,10 @@ class Method():
         return count
 
     @property
+    def total_module_variables(self):
+        return len(self.module.module_variables)
+
+    @property
     def module(self):
 
         from boa.code.module import Module
@@ -99,6 +105,8 @@ class Method():
 
         self.__make_func_name = make_func_name
 
+        self.read_module_variables()
+
         self.read_initial_tokens()
 
         self.process_block_groups()
@@ -118,6 +126,17 @@ class Method():
 
         out = self.bp.to_code()
         dis.dis(out)
+
+    def read_module_variables(self):
+
+        for definition in self.module.module_variables:
+
+            items = definition.items
+
+            print("insert items %s " % items)
+
+            self.bp.code = items + self.bp.code
+
 
     def read_initial_tokens(self):
 
@@ -161,7 +180,7 @@ class Method():
             else:
 
 
-                if op == pyop.STORE_FAST and not arg in self.local_stores.keys():
+                if op in [pyop.STORE_FAST,pyop.STORE_NAME,pyop.STORE_GLOBAL] and not arg in self.local_stores.keys():
                     length = len(self.local_stores)
                     self.local_stores[arg] = length
 

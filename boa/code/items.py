@@ -1,4 +1,4 @@
-from byteplay3 import Code
+from byteplay3 import Code,Opcode
 from boa.code.method import Method
 from boa.code import pyop
 import importlib
@@ -15,6 +15,10 @@ class Item():
 
 class Definition(Item):
     pass
+#    def __init__(self, item_list):
+#        super(Definition, self).__init__(item_list)
+#        self.items[-1] = (Opcode(pyop.STORE_FAST),self.items[-1][1])
+#       print("self items %s " % self.items)
 
 class Action(Item):
 

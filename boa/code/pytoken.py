@@ -170,10 +170,10 @@ class PyToken():
                     raise Exception("Could not load type %s for item %s " % (type(self.args), self.args))
 
             #storing / loading local variables
-            elif op == pyop.STORE_FAST:
+            elif op in [pyop.STORE_FAST, pyop.STORE_NAME, pyop.STORE_GLOBAL]:
                 token = tokenizer.convert_store_local(self)
 
-            elif op == pyop.LOAD_FAST:
+            elif op in [pyop.LOAD_FAST, pyop.LOAD_NAME, pyop.LOAD_GLOBAL]:
                 token = tokenizer.convert_load_local(self)
 
 
@@ -264,6 +264,10 @@ class PyToken():
             elif op == pyop.CALL_FUNCTION:
 
                 token = tokenizer.convert_method_call(self)
+
+
+            else:
+                print("OP NOT CONVERTED %s " % op)
 
         return token
 
