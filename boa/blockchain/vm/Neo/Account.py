@@ -1,6 +1,14 @@
 
 class Account():
-    pass
+
+    @property
+    def ScriptHash(self):
+        return GetScriptHash(self)
+
+    @property
+    def Votes(self):
+        return GetVotes(self)
+
 
 
 def GetScriptHash(account):
@@ -11,9 +19,10 @@ def GetVotes(account):
     pass
 
 
+
 def SetVotes(account, votes):
     pass
 
 
-def GetBalance(asset_id):
+def GetBalance(account, asset_id):
     pass

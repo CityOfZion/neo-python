@@ -1,6 +1,13 @@
 
 class Contract():
-    pass
+
+    @property
+    def Script(self):
+        return GetScript(self)
+
+    @property
+    def StorageContext(self):
+        return GetStorageContext(self)
 
 
 def GetScript(contract):

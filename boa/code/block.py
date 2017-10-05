@@ -70,6 +70,13 @@ class Block():
 
 
     @property
+    def has_load_attr(self):
+        for token in self.oplist:
+            if token.py_op == pyop.LOAD_ATTR:
+                return True
+        return False
+
+    @property
     def has_make_function(self):
         for token in self.oplist:
             if token.py_op == pyop.MAKE_FUNCTION:
@@ -160,6 +167,29 @@ class Block():
         return False
 
 
+    def preprocess_load_attr(self, method):
+        while self.has_load_attr:
+
+            index_to_rep = -1
+            new_call = None
+
+            for index, token in enumerate(self.oplist):
+
+                if token.py_op == pyop.LOAD_ATTR:
+
+                    what_to_load = 'Get%s' % token.args
+
+                    call_func = PyToken(Opcode(pyop.CALL_FUNCTION), lineno=self.line,index=-1, args=what_to_load)
+                    call_func.func_processed = True
+                    call_func.func_name = what_to_load
+                    call_func.func_params = [self.oplist[index-1]]
+
+                    index_to_rep = index
+                    new_call = call_func
+
+            if index_to_rep > -1 and new_call is not None:
+                self.oplist[index_to_rep] = new_call
+                del self.oplist[index_to_rep - 1]
 
     def preprocess_make_function(self, method):
         code_obj = self.oplist[0].args
@@ -511,7 +541,7 @@ class Block():
         # unless this is a dynamic iteration, like for x in range(x,y)
 
         iterable_load = self.oplist[0]
-        print("ITERABLE LOAD %s " % iterable_load)
+
         self.list_comp_iterable_item_name = iterable_load.args
 
         #the following is in the case that we're doing something like for i in range(x,y)

@@ -1,6 +1,15 @@
 
 class TransactionAttribute():
-    pass
+
+    @property
+    def Usage(self):
+        return GetUsage(self)
+
+    @property
+    def Data(self):
+        return GetData(self)
+
+
 
 
 def GetUsage(transaction_attr):

@@ -1,16 +1,18 @@
 
-class TransactionOutput():
+class TransactionInput():
+
+    @property
+    def Hash(self):
+        return GetHash(self)
+
+    @property
+    def Index(self):
+        return GetIndex(self)
+
+
+def GetHash(input):
     pass
 
 
-def GetAssetId(output):
+def GetIndex(input):
     pass
-
-
-def GetValue(output):
-    pass
-
-
-def GetScriptHash(output):
-    pass
-

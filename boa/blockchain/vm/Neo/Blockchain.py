@@ -1,9 +1,9 @@
-from boa.blockchain.vm.Neo.Header import Header
-from boa.blockchain.vm.Neo.Block import Block
-from boa.blockchain.vm.Neo.Transaction import Transaction
-from boa.blockchain.vm.Neo.Account import Account
-from boa.blockchain.vm.Neo.Asset import Asset
-from boa.blockchain.vm.Neo.Contract import Contract
+from boa.blockchain.vm.Neo.Header import *
+from boa.blockchain.vm.Neo.Block import *
+from boa.blockchain.vm.Neo.Transaction import *
+from boa.blockchain.vm.Neo.Account import *
+from boa.blockchain.vm.Neo.Asset import *
+from boa.blockchain.vm.Neo.Contract import *
 
 
 

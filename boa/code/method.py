@@ -133,7 +133,7 @@ class Method():
 
             items = definition.items
 
-            print("insert items %s " % items)
+#            print("insert items %s " % items)
 
             self.bp.code = items + self.bp.code
 
@@ -224,6 +224,9 @@ class Method():
                 block.mark_as_end()
 #                length = len(self.local_stores)
 #                self.local_stores[block.local_return_name] = length
+
+            if block.has_load_attr:
+                block.preprocess_load_attr(self)
 
             if block.has_make_function:
 

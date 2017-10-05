@@ -433,7 +433,7 @@ class StateReader(InteropService):
         if block is None:
             return False
 
-        txlist = [StackItem.FromInterface(tx) for tx in block.Transactions]
+        txlist = [StackItem.FromInterface(tx) for tx in block.FullTransactions]
         engine.EvaluationStack.PushT(txlist)
         return True
 
@@ -445,7 +445,7 @@ class StateReader(InteropService):
         if block is None or index < 0 or index > len(block.Transactions):
             return False
 
-        tx= StackItem.FromInterface(block.Transactions[index])
+        tx= StackItem.FromInterface(block.FullTransactions[index])
         engine.EvaluationStack.PushT(tx)
         return True
 

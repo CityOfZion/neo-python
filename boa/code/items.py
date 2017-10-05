@@ -54,15 +54,21 @@ class Import(Item):
 
     is_system_module = None
 
+    module_items_to_import = None
+
     def __init__(self, item_list):
         super(Import, self).__init__(item_list)
+        self.module_items_to_import = []
 
         for i, (op, arg) in enumerate(self.items):
             if op == pyop.IMPORT_NAME:
                 self.module_path = arg
-
             elif op == pyop.STORE_NAME:
-                self.module_name = arg
+                self.module_items_to_import.append(arg)
+#                print("SETTING MODALu nAme: %s " % self.module_name)
+
+            elif op == pyop.IMPORT_STAR:
+                self.module_items_to_import = ['STAR']
 
         self.is_system_module = False
 
@@ -80,7 +86,11 @@ class Import(Item):
         if self.NEO_SC_FRAMEWORK in self.module_path:
             self.is_system_module = True
 
-        self.imported_module = Module(filename, module_name=self.module_path, is_sys_module=self.is_system_module)
+
+        self.imported_module = Module(filename,
+                                      module_name=self.module_path,
+                                      is_sys_module=self.is_system_module,
+                                      items_to_import= self.module_items_to_import)
 
     def is_valid(self):
 

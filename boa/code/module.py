@@ -40,6 +40,8 @@ class Module():
     _module_name =None
 
 
+    _names_to_load = None
+
     @property
     def module_path(self):
         return self._module_name
@@ -70,7 +72,7 @@ class Module():
         return om
 
     def add_method(self, method):
-#        print("ADDING METHODDDDDD %s " % method.name)
+#        print("ADDING METHODDDDDD %s " % method.full_name)
         for m in self.methods:
             if m.name == method.name:
 
@@ -85,20 +87,26 @@ class Module():
         self.methods.append(method)
 
     def method_by_name(self, method_name):
+
         for m in self.methods:
-            if m.name == method_name:
+            if m.full_name == method_name:
                 return m
-            elif m.full_name == method_name:
+            elif m.name == method_name:
                 return m
         return None
 
-    def __init__(self, path, module_name='', is_sys_module=False):
+    def __init__(self, path, module_name='', is_sys_module=False, items_to_import=None):
 
         self.path = path
 
         self._module_name = module_name
 
         self.is_sys_module = is_sys_module
+
+        if items_to_import == None:
+            self._names_to_load = ['STAR']
+        else:
+            self._names_to_load = items_to_import
 
         source = open(path, 'rb')
 
@@ -158,7 +166,14 @@ class Module():
     def process_method(self, lineset):
 
         m = Method(lineset.code_object, self)
-        self.add_method(m)
+
+        if 'STAR' in self._names_to_load:
+            self.add_method(m)
+        else:
+
+            for item in self._names_to_load:
+                if item == m.name:
+                    self.add_method(m)
 
     def process_action(self, lineset):
         action = Action(lineset)
