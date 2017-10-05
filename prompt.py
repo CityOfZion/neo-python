@@ -109,7 +109,7 @@ class PromptInterface(object):
                 'wallet {verbose}',
                 'wallet rebuild {start block}',
                 'send {assetId or name} {address} {amount}',
-                'testinvoke contract {contract hash} {params}',
+                'testinvoke {contract hash} {params}',
                 'invoke',
                 'cancel',
                 ]
