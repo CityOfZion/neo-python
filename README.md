@@ -24,30 +24,30 @@
 ### What does it currently do
 
 - This project aims to be a full port of the original C#
-[neo project](https://github.com/neo-project)
-- Run a python based P2P node
-- Interactive CLI for configuring node and inspecting block chain
-- Runs smart contracts on the block chain in a python virtual machine
-- Very basic Wallet functionality (Not fully tested, please do not use on mainnet)
+[NEO project](https://github.com/neo-project)
+- Run a Python based P2P node
+- Interactive CLI for configuring node and inspecting blockchain
+- Runs smart contracts on the blockchain in a Python virtual machine
+- Very basic Wallet functionality (not fully tested, please do not use on mainnet)
 
 ### What will it do
 
-- Full python RPC client
-- Compile smart contracts written python and deploy to blockchain
+- Full Python RPC client
+- Compile smart contracts written in Python and deploy them to the blockchain
 - Full smart contract debugging and inspection
 
 ### Get Help or give help
 
 - Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
 - Or ping **@localhuman** on the [NEO Slack](https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA).
-- Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome.  All successful pull requests will be rewarded with one photo of a cat or kitten.
+- Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome. All successful pull requests will be rewarded with one photo of a cat or kitten.
 
 
 ## Getting started
 
 You will need to install the libleveldb library. Install [Python 3.5](https://www.python.org/downloads/release/python-354/) to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. 
 
-We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get you started with this library. There are other videos under the CityOfZion Youtube channel.
+We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get you started with this library. There are other videos under the [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube channel.
 
 ##### OSX:
 
@@ -197,13 +197,13 @@ Currently, `prompt.py` logs to `prompt.log`
 
 ## Tests
 
-Tests are important.  Currently there are not enough, but we are working on that.  You can start them by running this command
+Tests are important. Currently there are not enough, but we are working on that. You can start them by running this command.
 
-Note that some of the unit tests use a giant blockchain fixture database ( around 800mb ).  This file is not kept in the repo.
+Note that some of the unit tests use a giant blockchain fixture database ( around 800mb ). This file is not kept in the repo.
 
-When running tests the first time, the test setup will try to download the file and extract it to the proper directory
+When running tests the first time, the test setup will try to download the file and extract it to the proper directory.
 
-Long story short, the first time you run your tests, it will take a while to download those fixtures. After that it should be pretty quick.
+**Long story short**: the first time you run your tests, it will take a while to download those fixtures. After that it should be pretty quick.
 
 ```
 python -m unittest discover neo
