@@ -1,7 +1,7 @@
 
 from neo.IO.Mixins import SerializableMixin
 import mmh3
-
+from neo.BigInteger import BigInteger
 
 class StorageKey(SerializableMixin):
 
@@ -20,7 +20,8 @@ class StorageKey(SerializableMixin):
         return abs(self.ScriptHash.GetHashCode() + self._murmur())
 
     def GetHashCodeBytes(self):
-        return self.GetHashCode().to_bytes(8, 'little')
+        bigint = BigInteger(self.GetHashCode())
+        return bigint.ToByteArray()
 
     def Deserialize(self, reader):
         self.ScriptHash = reader.ReadUInt160()

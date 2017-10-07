@@ -82,9 +82,11 @@ class ApplicationEngine(ExecutionEngine):
             if self.CurrentContext.InstructionPointer + 4 >= len(self.CurrentContext.Script):
                 return False
 
-            #TODO this should be double checked
-            databytes = self.CurrentContext.Script[self.CurrentContext.InstructionPointer + 1:]
-            length = int.from_bytes( databytes,'little')
+            #TODO this should be double checked.  it has been
+            #double checked and seems to work, but could possibly not work
+            position = self.CurrentContext.InstructionPointer + 1
+            lengthpointer = self.CurrentContext.Script[position:position+4]
+            length = int.from_bytes(lengthpointer, 'little')
 
             if length > maxItemSize:
                 return False
@@ -113,6 +115,7 @@ class ApplicationEngine(ExecutionEngine):
 
 
     def CheckStackSize(self):
+
         maxStackSize = 2 * 1024
 
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
@@ -145,6 +148,7 @@ class ApplicationEngine(ExecutionEngine):
         size += self.EvaluationStack.Count + self.AltStack.Count
 
         if size > maxStackSize:
+            print("SIZE IS OVER MAX STACK SIZE!!!!")
             return False
 
         return True

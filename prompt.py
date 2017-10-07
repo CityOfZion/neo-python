@@ -22,6 +22,7 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
+#from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,GatherLoadedContractParams
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
@@ -280,12 +281,6 @@ class PromptInterface(object):
         print("please specify something to import")
         return
 
-
-#    def do_build(self, arguments):
-#        BuildAndRun(arguments, self.Wallet)
-
-#    def do_load_n_run(self, arguments):
-#        LoadAndRun(arguments, self.Wallet)
 
     def do_export(self, arguments):
         item = get_arg(arguments)
@@ -639,7 +634,7 @@ class PromptInterface(object):
 
             if contract_script is not None:
 
-                tx, results = test_invoke(contract_script, self.Wallet)
+                tx, results = test_invoke(contract_script, self.Wallet, [])
 
                 if tx is not None and results is not None:
                     self._invoke_test_tx = tx
@@ -783,10 +778,6 @@ class PromptInterface(object):
                         self.do_create(arguments)
                     elif command == 'open':
                         self.do_open(arguments)
-                    elif command == 'build':
-                        self.do_build(arguments)
-                    elif command == 'load_run':
-                        self.do_load_n_run(arguments)
                     elif command == 'import':
                         self.do_import(arguments)
                     elif command == 'export':

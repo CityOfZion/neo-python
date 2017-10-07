@@ -30,7 +30,6 @@ class ExecutionEngine():
     _AltStack = None
 
 
-
     @property
     def ScriptContainer(self):
         return self._ScriptContainer
@@ -209,9 +208,7 @@ class ExecutionEngine():
 
             #stack operations
             elif opcode == DUPFROMALTSTACK:
-                print("ASTACK ITEMS %s " % astack.Items)
                 item = astack.Peek()
-                print("item is %s " % item)
                 estack.PushT(astack.Peek())
 
             elif opcode == TOALTSTACK:
@@ -509,9 +506,7 @@ class ExecutionEngine():
                     x2_val = x2.GetBigInteger()
                     x1_val = x1.GetBigInteger()
 
-                    result = x1_val == x2_val
-
-                    estack.PushT( result )
+                    estack.PushT( x1_val == x2_val )
 
                 except Exception as e:
                     print("Colud not compare %s and %s : types- %s %s" % (x2,x1, type(x2), type(x1)))
@@ -531,6 +526,7 @@ class ExecutionEngine():
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
 
+
                 estack.PushT(x1 < x2)
 
             elif opcode == GT:
@@ -549,10 +545,17 @@ class ExecutionEngine():
 
             elif opcode == GTE:
 
-                x2 = estack.Pop().GetBigInteger()
-                x1 = estack.Pop().GetBigInteger()
+                x22 = estack.Pop()
+                x11 = estack.Pop()
 
-                estack.PushT(x1 >= x2)
+                try:
+                    x2 = x22.GetBigInteger()
+                    x1 =  x11.GetBigInteger()
+                    res = x1 >= x2
+                    estack.PushT(res)
+                except Exception as e:
+                    print("error converting gte... %s " % e)
+                    estack.PushT(False)
 
 
             elif opcode == MIN:
@@ -599,7 +602,9 @@ class ExecutionEngine():
 
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
-
+#                print("pubkey: %s " % pubkey)
+#                print("signature %s " % sig)
+#                print("message %s " % ( self.ScriptContainer.GetMessage()))
                 try:
 
                     self.Crypto.VerifySignature( self.ScriptContainer.GetMessage(), pubkey, sig)
@@ -797,10 +802,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
- #       opname = ToName(op)
- #       print("____________________________________________________")
- #       print("%s -> %s" % (op, opname))
- #       print("-----------------------------------")
+#        opname = ToName(op)
+#        print("____________________________________________________")
+#        print("%s -> %s" % (op, opname))
+#        print("-----------------------------------")
 
         try:
             self.ExecuteOp(op, self.CurrentContext)

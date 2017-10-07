@@ -16,7 +16,7 @@ class ContractParameterType(object):
     ByteArray = 0x05        # 字节数组
     PublicKey = 0x06
     String = 0x07
-    Array = 16
+    Array = 0xf0
     Void = 0xff
 
 

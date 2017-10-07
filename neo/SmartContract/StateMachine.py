@@ -446,30 +446,6 @@ class StateMachine(StateReader):
 
         return True
 
-    def Storage_Get(self, engine):
-        context = None
-        try:
-            context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
-        except Exception as e:
-            self.__log.debug("Storage Context not found")
-            return False
-
-        if not self.CheckStorageContext(context):
-            return False
-
-        key = engine.EvaluationStack.Pop().GetByteArray()
-
-        storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
-
-        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
-        if item is not None:
-
-            engine.EvaluationStack.PushT(item.Value)
-        else:
-            engine.EvaluationStack.PushT(bytearray(0))
-
-        return True
-
 
     def Storage_Put(self, engine):
 
@@ -485,7 +461,6 @@ class StateMachine(StateReader):
             return False
 
         key = engine.EvaluationStack.Pop().GetByteArray()
-
         if len(key) > 1024:
             return False
 
@@ -494,11 +469,21 @@ class StateMachine(StateReader):
 
         new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
+        item = self._storages.GetOrAdd(storage_key.GetHashCodeBytes(), new_item)
 
-        item = self._storages.GetAndChange(storage_key.GetHashCodeBytes(), new_instance=new_item)
-        item.Value = value
+        keystr = key
+        valStr = bytearray(item.Value)
 
-        self.__log.debug("Put stored item %s %s " % (item, item.Value))
+        if len(key) == 20:
+            keystr = Crypto.ToAddress(UInt160(data=key))
+
+            try:
+                valStr = int.from_bytes(valStr, 'little')
+            except Exception as e:
+                pass
+
+
+        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash,keystr, valStr))
 
         return True
 
@@ -513,6 +498,13 @@ class StateMachine(StateReader):
 
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 
-        self._storages.Delete(storage_key.GetHashCodeBytes())
+        keystr = key
+
+        if len(key) == 20:
+            keystr = Crypto.ToAddress(UInt160(data=key))
+
+        print("[Neo.Storage.Delete] [Script %s] Delete %s " % (context.ScriptHash, keystr))
+
+        self._storages.Remove(storage_key.GetHashCodeBytes())
 
         return True

@@ -4,6 +4,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import parse_param,get_asset_attachments
+from neo.Core.TX.Transaction import Transaction
 
 import binascii
 
@@ -92,10 +93,7 @@ def TestInvokeContract(wallet, args):
             return
 
 
-
         params,neo_to_attach,gas_to_attach = get_asset_attachments(params)
-
-        #print("neo, gas %s %s " % (neo_to_attach,gas_to_attach.ToString()))
 
         params.reverse()
 
@@ -173,8 +171,9 @@ def test_invoke(script, wallet, outputs):
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
-#    contract = wallet.GetDefaultContract()
-#    tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
+    if len(outputs) < 1:
+        contract = wallet.GetDefaultContract()
+        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script).Data)]
 
     wallet_tx = wallet.MakeTransaction(tx=tx)
 
@@ -220,6 +219,7 @@ def test_invoke(script, wallet, outputs):
 
             #reset the wallet outputs
             wallet_tx.outputs = outputs
+            wallet_tx.Attributes = []
 
             return wallet_tx, engine.EvaluationStack.Items
         else:
@@ -261,11 +261,15 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
     dtx.scripts = []
     dtx.Script = binascii.unhexlify(deploy_script)
 
+    dtx = wallet.MakeTransaction(tx=dtx)
+    context = ContractParametersContext(dtx)
+    wallet.Sign(context)
+    dtx.scripts = context.GetScripts()
+
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
     contract = wallet.GetDefaultContract()
-
     dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
 
     engine = ApplicationEngine(
@@ -303,6 +307,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             shash = contract_state.Code.ScriptHash()
 
+            invoke_args, neo_to_attach, gas_to_attach = get_asset_attachments(invoke_args)
 
             invoke_args.reverse()
 
@@ -329,13 +334,43 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             sb.EmitAppCall(shash.Data)
             out = sb.ToArray()
 
+            outputs = []
+
+            if neo_to_attach:
+                output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash,
+                                           Value=neo_to_attach,
+                                           script_hash=contract_state.Code.ScriptHash(),
+                                           )
+                outputs.append(output)
+                print("NEO TO ATTACH: %s " % outputs)
+
+            if gas_to_attach:
+                output = TransactionOutput(AssetId=Blockchain.SystemCoin().Hash,
+                                           Value=gas_to_attach,
+                                           script_hash=contract_state.Code.ScriptHash())
+
+                outputs.append(output)
+
+
             itx = InvocationTransaction()
             itx.Version = 1
-            itx.outputs = []
+            itx.outputs = outputs
             itx.inputs = []
             itx.scripts = []
-            itx.Attributes = dtx.Attributes
+            itx.Attributes = []
             itx.Script = binascii.unhexlify(out)
+
+            if len(outputs) < 1:
+                contract = wallet.GetDefaultContract()
+                itx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                                       data=Crypto.ToScriptHash(contract.Script).Data)]
+
+            itx = wallet.MakeTransaction(tx=itx)
+            context = ContractParametersContext(itx)
+            wallet.Sign(context)
+            itx.scripts = context.GetScripts()
+
+#            print("tx: %s " % json.dumps(itx.ToJson(), indent=4))
 
             engine = ApplicationEngine(
                 trigger_type=TriggerType.Application,
@@ -365,7 +400,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
                 # set the amount of gas the tx will need
                 itx.Gas = consumed
-
+                itx.Attributes = []
                 result = engine.ResultsForCode(contract_state.Code)
                 return itx, result
             else:
@@ -389,17 +424,4 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
 def descripe_contract(contract):
     print("invoking contract - %s" % contract.Name.decode('utf-8'))
-
-    functionCode = contract.Code
-
-    parameters = functionCode.ParameterList
-
-    method_signature = []
-    for p in parameters:
-        print("P: %s " % p)
-        method_signature.append("{ %s } " % ToName(p))
-    rettype = ToName(functionCode.ReturnType)
-
-    print("method signature %s  -->  %s" % (' '.join(method_signature), rettype))
-
 
