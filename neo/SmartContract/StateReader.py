@@ -165,17 +165,17 @@ class StateReader(InteropService):
 
 
     def Runtime_GetTrigger(self, engine):
+
         engine.EvaluationStack.PushT(engine.Trigger)
+
         return True
 
 
     def CheckWitnessHash(self, engine, hash):
 
-        print("CHECKING WITNESS HASH.... %s %s %s" % (hash, type(hash), hash.Data))
         if self._hashes_for_verifying is None:
             container = engine.ScriptContainer
             self._hashes_for_verifying = container.GetScriptHashesForVerifying()
-            print("HASHES FOR VERIFYinG: %s " % self._hashes_for_verifying)
 
         return True if hash in self._hashes_for_verifying else False
 
@@ -189,16 +189,12 @@ class StateReader(InteropService):
 
         hashOrPubkey = engine.EvaluationStack.Pop().GetByteArray()
 
-
-        print("runtime checkwitness... %s " % hashOrPubkey)
-
         if len(hashOrPubkey) == 66 or len(hashOrPubkey) == 40:
             hashOrPubkey = binascii.unhexlify(hashOrPubkey)
 
         result = False
 
         if len(hashOrPubkey) == 20:
-            print("CHECKING WITNESS HASH...")
             result = self.CheckWitnessHash(engine, UInt160(data=hashOrPubkey))
 
         elif len(hashOrPubkey) == 33:
@@ -207,7 +203,6 @@ class StateReader(InteropService):
         else:
             result = False
 
-        print("RESULT IS... %s " % result)
         engine.EvaluationStack.PushT(result)
 
         return True
@@ -711,12 +706,24 @@ class StateReader(InteropService):
 
         item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
+        keystr = key
+        valStr = bytearray(item.Value)
+
+        if len(key) == 20:
+            keystr = Crypto.ToAddress(UInt160(data=key))
+
+            try:
+                valStr = int.from_bytes(valStr, 'little')
+            except Exception as e:
+                print("couldnt convert %s to number: %s " % (valStr, e))
+
         if item is not None:
-            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash,key, bytearray(item.Value)))
+
+            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash,keystr, valStr))
             engine.EvaluationStack.PushT( bytearray(item.Value))
 
         else:
-            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, key))
+            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
             engine.EvaluationStack.PushT( bytearray(0))
 
         return True

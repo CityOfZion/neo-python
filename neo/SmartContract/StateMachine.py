@@ -471,7 +471,19 @@ class StateMachine(StateReader):
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
         item = self._storages.GetOrAdd(storage_key.GetHashCodeBytes(), new_item)
 
-        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash,key, item.Value))
+        keystr = key
+        valStr = bytearray(item.Value)
+
+        if len(key) == 20:
+            keystr = Crypto.ToAddress(UInt160(data=key))
+
+            try:
+                valStr = int.from_bytes(valStr, 'little')
+            except Exception as e:
+                pass
+
+
+        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash,keystr, valStr))
 
         return True
 
@@ -486,7 +498,12 @@ class StateMachine(StateReader):
 
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 
-        print("[Neo.Storage.Delete] [Script %s] Delete %s " % (context.ScriptHash, key))
+        keystr = key
+
+        if len(key) == 20:
+            keystr = Crypto.ToAddress(UInt160(data=key))
+
+        print("[Neo.Storage.Delete] [Script %s] Delete %s " % (context.ScriptHash, keystr))
 
         self._storages.Remove(storage_key.GetHashCodeBytes())
 

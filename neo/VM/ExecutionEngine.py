@@ -30,7 +30,6 @@ class ExecutionEngine():
     _AltStack = None
 
 
-
     @property
     def ScriptContainer(self):
         return self._ScriptContainer
@@ -507,9 +506,7 @@ class ExecutionEngine():
                     x2_val = x2.GetBigInteger()
                     x1_val = x1.GetBigInteger()
 
-                    result = x1_val == x2_val
-
-                    estack.PushT( result )
+                    estack.PushT( x1_val == x2_val )
 
                 except Exception as e:
                     print("Colud not compare %s and %s : types- %s %s" % (x2,x1, type(x2), type(x1)))
@@ -529,7 +526,6 @@ class ExecutionEngine():
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
 
-                print("less than, comparing.... %s %s " % (x1, x2))
 
                 estack.PushT(x1 < x2)
 
@@ -549,25 +545,17 @@ class ExecutionEngine():
 
             elif opcode == GTE:
 
-                print("GTE::::")
                 x22 = estack.Pop()
                 x11 = estack.Pop()
 
                 try:
-                    print("x22,x11, %s %s %s %s " % (x22,type(x22), x11, type(x11)))
                     x2 = x22.GetBigInteger()
                     x1 =  x11.GetBigInteger()
-                    print("comparing %s %s " %  ( x2, x1))
-#                    x2 = estack.Pop().GetBigInteger()
- #                   x1 = estack.Pop().GetBigInteger()
                     res = x1 >= x2
-                    print("result is %s " % res)
                     estack.PushT(res)
                 except Exception as e:
-                    print("error converting ... %s " % e)
-
+                    print("error converting gte... %s " % e)
                     estack.PushT(False)
-    #                estack.PushT(x1 >= x2)
 
 
             elif opcode == MIN:
@@ -614,9 +602,9 @@ class ExecutionEngine():
 
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
-                print("pubkey: %s " % pubkey)
-                print("signature %s " % sig)
-                print("message %s " % ( self.ScriptContainer.GetMessage()))
+#                print("pubkey: %s " % pubkey)
+#                print("signature %s " % sig)
+#                print("message %s " % ( self.ScriptContainer.GetMessage()))
                 try:
 
                     self.Crypto.VerifySignature( self.ScriptContainer.GetMessage(), pubkey, sig)

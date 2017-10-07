@@ -93,10 +93,7 @@ def TestInvokeContract(wallet, args):
             return
 
 
-
         params,neo_to_attach,gas_to_attach = get_asset_attachments(params)
-
-        #print("neo, gas %s %s " % (neo_to_attach,gas_to_attach.ToString()))
 
         params.reverse()
 
@@ -186,13 +183,6 @@ def test_invoke(script, wallet, outputs):
         wallet.Sign(context)
         if context.Completed:
             wallet_tx.scripts = context.GetScripts()
-
-
-#    rawtx = b'd10121000a6d696e74546f6b656e736711c4d1f4fba619f2628870d36e3a9773e874705b80969800000000000003f38e94e58188994fbc8254ba57d20ad072a056d4883cd1d4daa02530744688de0000533f1fcbeaa87b8277b2854bd244ee9cbaf28701e2627f39673a6673375f89c50100768148f5d70e81d3959d7d24a197b8652d67426c9d4e1f96d2a6da47408321f00000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000011c4d1f4fba619f2628870d36e3a9773e874705be72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6027588105000000003775292229eccdf904f16fff8e83e7cffdc0f0ce014140f8ca5c84fe603e9839f6fa6e8f79f6705b4c99bc74009f9a75a8917bfb6fee185526c3f4ac9304bc1f53fa1a1a67bd9f447279ca388530f9512fd965b87369c1232102028a99826edc0c97d18e22b6932373d908d323aa7f92656a77ec26e8861699efac'
-#    rhex = binascii.unhexlify(rawtx)
-#    tx = Transaction.DeserializeFromBufer(rhex)
-#    print("TX: %s " % tx)
-#    wallet_tx = tx
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
@@ -362,7 +352,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 outputs.append(output)
 
 
-            print("OUTPUTS:: %s " % outputs)
             itx = InvocationTransaction()
             itx.Version = 1
             itx.outputs = outputs
@@ -381,10 +370,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             wallet.Sign(context)
             itx.scripts = context.GetScripts()
 
-            print("tx: %s " % json.dumps(itx.ToJson(), indent=4))
-
-
-
+#            print("tx: %s " % json.dumps(itx.ToJson(), indent=4))
 
             engine = ApplicationEngine(
                 trigger_type=TriggerType.Application,
@@ -438,17 +424,4 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
 def descripe_contract(contract):
     print("invoking contract - %s" % contract.Name.decode('utf-8'))
-
-    functionCode = contract.Code
-
-    parameters = functionCode.ParameterList
-
-    method_signature = []
-    for p in parameters:
-        print("P: %s " % p)
-        method_signature.append("{ %s } " % ToName(p))
-    rettype = ToName(functionCode.ReturnType)
-
-    print("method signature %s  -->  %s" % (' '.join(method_signature), rettype))
-
 

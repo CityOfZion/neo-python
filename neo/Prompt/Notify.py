@@ -1,6 +1,7 @@
 from neo.Core.Blockchain import Blockchain
 import json
-
+from neo.UInt160 import UInt160
+from neo.Cryptography.Crypto import Crypto
 
 def SubscribeNotifications():
 
@@ -17,7 +18,7 @@ def HandleBlockchainNotification(notification):
 
             if len(notification_items) > 0:
                 event_name = notification_items[0].GetString()
-                print("event name %s " % event_name)
+                print("[Neo.Runtime.Notify] event name -> %s " % event_name)
 
                 event_args = notification_items[1:]
 
@@ -28,19 +29,35 @@ def HandleBlockchainNotification(notification):
                     tto = event_args[1].GetByteArray()
                     tamount = event_args[2].GetBigInteger()
 
-                    print("Transfer %s from %s to %s " % (tamount, tfrom, tto))
+                    fromaddr = tfrom
+                    toaddr = tto
+                    try:
+                        if len(fromaddr) == 20:
+                            fromaddr = Crypto.ToAddress( UInt160(data=tfrom))
+                        if len(toaddr) == 20:
+                            toaddr = Crypto.ToAddress(UInt160(data=tto))
+                    except Exception as e:
+                        print("Couldnt convert from/to to address %s " % e)
+
+                    print("[Neo.Runtime.Notify :: Transfer] %s from %s to %s " % (tamount, fromaddr, toaddr))
 
                 elif event_name == 'refund':
-                    to = event_args[0]
-                    print("REFUND TO %s " % to.GetString())
+
+
+                    to = event_args[0].GetByteArray()
+
+                    if len(to) == 20:
+                        to = Crypto.ToAddress(UInt160(data=to))
+
+                    print("[Neo.Runtime.Notify :: REFUND] TO %s " % to)
                     amount = event_args[1].GetBigInteger()
-                    print("refund amount %s " % amount)
+                    print("[Neo.Runtime.Notify :: REFUND] amount %s " % amount)
 
                 else:
 #                    print("event name not handled %s " % event_args)
 
                     for arg in event_args:
-                        print("argument is %s " % str(arg))
+                        print("[Neo.Runtime.Notify] item %s " % str(arg))
 
         else:
 
@@ -61,5 +78,5 @@ def HandleBlockchainNotification(notification):
 
 
     except Exception as e:
-        print("could not process notificatiot state %s %s " % (state, e))
-        print("notify item %s " % str(state))
+#        print("could not process notificatiot state %s %s " % (state, e))
+        print("[Neo.Runtime.Notify] notify item %s " % str(state))

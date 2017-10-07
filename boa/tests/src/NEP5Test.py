@@ -1,4 +1,4 @@
-from boa.blockchain.vm.Neo.Runtime import Log,Notify
+from boa.blockchain.vm.Neo.Runtime import Log
 from boa.blockchain.vm.System.ExecutionEngine import GetScriptContainer,GetExecutingScriptHash
 from boa.blockchain.vm.Neo.Transaction import *
 from boa.blockchain.vm.Neo.Output import *
@@ -77,11 +77,11 @@ def Main(operation, args):
         elif operation == 'totalSupply':
             return TotalSupply()
         elif operation == 'name':
-            return TOKEN_NAME
+            return Name()
         elif operation == 'decimals':
-            return DECIMALS
+            return Decimals()
         elif operation == 'symbol':
-            return SYMBOL
+            return Symbol()
 
         elif operation == 'transfer':
             print("do transfers")
@@ -110,13 +110,23 @@ def Main(operation, args):
     return False
 
 
+def Name():
+    print("getting name!")
+    return TOKEN_NAME
+
+def Symbol():
+    print("getting symbol!")
+    return SYMBOL
+
+def Decimals():
+    return DECIMALS
+
+
 def Deploy():
     print("deploying!")
 
-    Notify(OWNER)
     isowner = CheckWitness(OWNER)
 
-    Notify(isowner)
 
     if isowner:
 
@@ -125,10 +135,6 @@ def Deploy():
 
         total = Get(context, 'totalSupply')
 
-        Notify(total)
-
-        tlen = len(total)
-        Notify(tlen)
 
         if len(total) == 0:
 
@@ -181,7 +187,6 @@ def MintTokens():
 
         num_tokens = value * rate / 100000000
 
-        Notify(num_tokens)
 
         context = GetContext()
 
@@ -212,15 +217,10 @@ def TotalSupply():
 
     res = Get(context, "totalSupply")
 
-    Notify(res)
 
     return res
 
 def DoTransfer(t_from, t_to, amount):
-
-    Notify(t_from)
-    Notify(t_to)
-    Notify(amount)
 
     if amount <= 0:
         print("cannot transfer zero or less")
@@ -236,7 +236,7 @@ def DoTransfer(t_from, t_to, amount):
         context = GetContext()
 
         from_val = Get(context, t_from)
-        Notify(from_val)
+
         if from_val < amount:
             print("Insufficient funds")
             return False
@@ -246,18 +246,13 @@ def DoTransfer(t_from, t_to, amount):
             Delete(context, t_from)
 
         else:
-
             difference = from_val - amount
-            print("amount to transfer...")
-            Notify(difference)
             Put(context, t_from, difference)
 
         to_value = Get(context, t_to)
 
         to_total = to_value + amount
 
-        print("amount to transfer to..")
-        Notify(to_total)
 
         Put(context, t_to, to_total)
 
