@@ -707,7 +707,11 @@ class StateReader(InteropService):
         item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         keystr = key
-        valStr = bytearray(item.Value)
+
+        valStr = bytearray(0)
+
+        if item.Value is not None:
+            valStr = bytearray(item.Value)
 
         if len(key) == 20:
             keystr = Crypto.ToAddress(UInt160(data=key))
