@@ -22,7 +22,11 @@ class BigInteger(int):
                 return False
 
         try:
-            return self.to_bytes((self.bit_length() + 7) //8, byteorder='little', signed=signed)
+            if signed:
+                return self.to_bytes(1 + ((self.bit_length() + 7) //8), byteorder='little', signed=signed)
+            else:
+                return self.to_bytes((self.bit_length() + 7) // 8, byteorder='little', signed=signed)
+
         except OverflowError:
             return self.to_bytes((self.bit_length() + 7) //8, byteorder='little', signed=False)
         except Exception:

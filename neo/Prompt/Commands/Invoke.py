@@ -174,8 +174,9 @@ def test_invoke(script, wallet, outputs):
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
-#    contract = wallet.GetDefaultContract()
-#    tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
+    if len(outputs) < 1:
+        contract = wallet.GetDefaultContract()
+        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script).Data)]
 
     wallet_tx = wallet.MakeTransaction(tx=tx)
 
@@ -228,6 +229,7 @@ def test_invoke(script, wallet, outputs):
 
             #reset the wallet outputs
             wallet_tx.outputs = outputs
+            wallet_tx.Attributes = []
 
             return wallet_tx, engine.EvaluationStack.Items
         else:
@@ -269,11 +271,15 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
     dtx.scripts = []
     dtx.Script = binascii.unhexlify(deploy_script)
 
+    dtx = wallet.MakeTransaction(tx=dtx)
+    context = ContractParametersContext(dtx)
+    wallet.Sign(context)
+    dtx.scripts = context.GetScripts()
+
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
     contract = wallet.GetDefaultContract()
-
     dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
 
     engine = ApplicationEngine(
@@ -365,7 +371,15 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             itx.Attributes = []
             itx.Script = binascii.unhexlify(out)
 
+            if len(outputs) < 1:
+                contract = wallet.GetDefaultContract()
+                itx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                                       data=Crypto.ToScriptHash(contract.Script).Data)]
+
             itx = wallet.MakeTransaction(tx=itx)
+            context = ContractParametersContext(itx)
+            wallet.Sign(context)
+            itx.scripts = context.GetScripts()
 
             print("tx: %s " % json.dumps(itx.ToJson(), indent=4))
 

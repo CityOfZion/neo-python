@@ -640,7 +640,7 @@ class PromptInterface(object):
 
             if contract_script is not None:
 
-                tx, results = test_invoke(contract_script, self.Wallet)
+                tx, results = test_invoke(contract_script, self.Wallet, [])
 
                 if tx is not None and results is not None:
                     self._invoke_test_tx = tx

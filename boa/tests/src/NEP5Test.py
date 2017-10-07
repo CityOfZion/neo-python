@@ -236,7 +236,7 @@ def DoTransfer(t_from, t_to, amount):
         context = GetContext()
 
         from_val = Get(context, t_from)
-
+        Notify(from_val)
         if from_val < amount:
             print("Insufficient funds")
             return False

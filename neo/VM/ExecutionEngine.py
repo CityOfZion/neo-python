@@ -529,6 +529,8 @@ class ExecutionEngine():
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
 
+                print("less than, comparing.... %s %s " % (x1, x2))
+
                 estack.PushT(x1 < x2)
 
             elif opcode == GT:

@@ -171,10 +171,11 @@ class StateReader(InteropService):
 
     def CheckWitnessHash(self, engine, hash):
 
+        print("CHECKING WITNESS HASH.... %s %s %s" % (hash, type(hash), hash.Data))
         if self._hashes_for_verifying is None:
             container = engine.ScriptContainer
             self._hashes_for_verifying = container.GetScriptHashesForVerifying()
-
+            print("HASHES FOR VERIFYinG: %s " % self._hashes_for_verifying)
 
         return True if hash in self._hashes_for_verifying else False
 
@@ -188,12 +189,16 @@ class StateReader(InteropService):
 
         hashOrPubkey = engine.EvaluationStack.Pop().GetByteArray()
 
+
+        print("runtime checkwitness... %s " % hashOrPubkey)
+
         if len(hashOrPubkey) == 66 or len(hashOrPubkey) == 40:
             hashOrPubkey = binascii.unhexlify(hashOrPubkey)
 
         result = False
 
         if len(hashOrPubkey) == 20:
+            print("CHECKING WITNESS HASH...")
             result = self.CheckWitnessHash(engine, UInt160(data=hashOrPubkey))
 
         elif len(hashOrPubkey) == 33:
@@ -202,6 +207,7 @@ class StateReader(InteropService):
         else:
             result = False
 
+        print("RESULT IS... %s " % result)
         engine.EvaluationStack.PushT(result)
 
         return True
