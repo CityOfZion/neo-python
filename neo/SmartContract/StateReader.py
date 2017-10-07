@@ -710,7 +710,7 @@ class StateReader(InteropService):
 
         valStr = bytearray(0)
 
-        if item.Value is not None:
+        if item is not None:
             valStr = bytearray(item.Value)
 
         if len(key) == 20:
