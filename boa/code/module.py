@@ -10,7 +10,7 @@ from boa.code.items import Definition, Klass, Import,Action
 from boa.blockchain.vm import VMOp
 
 from collections import OrderedDict
-
+import pdb
 
 class Module():
 
@@ -150,6 +150,7 @@ class Module():
                 self.process_action(lineset)
             else:
                 print('not sure what to do with line %s ' % lineset)
+                pdb.set_trace()
                 #print("code %s " % lineset.code_object)
 
 

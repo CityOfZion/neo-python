@@ -37,7 +37,7 @@ def HandleBlockchainNotification(notification):
                     print("refund amount %s " % amount)
 
                 else:
-                    print("event name not handled %s " % event_args)
+#                    print("event name not handled %s " % event_args)
 
                     for arg in event_args:
                         print("argument is %s " % str(arg))

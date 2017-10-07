@@ -311,6 +311,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             shash = contract_state.Code.ScriptHash()
 
+            invoke_args, neo_to_attach, gas_to_attach = get_asset_attachments(invoke_args)
 
             invoke_args.reverse()
 
@@ -337,13 +338,39 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             sb.EmitAppCall(shash.Data)
             out = sb.ToArray()
 
+            outputs = []
+
+            if neo_to_attach:
+                output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash,
+                                           Value=neo_to_attach,
+                                           script_hash=contract_state.Code.ScriptHash(),
+                                           )
+                outputs.append(output)
+                print("NEO TO ATTACH: %s " % outputs)
+
+            if gas_to_attach:
+                output = TransactionOutput(AssetId=Blockchain.SystemCoin().Hash,
+                                           Value=gas_to_attach,
+                                           script_hash=contract_state.Code.ScriptHash())
+
+                outputs.append(output)
+
+
+            print("OUTPUTS:: %s " % outputs)
             itx = InvocationTransaction()
             itx.Version = 1
-            itx.outputs = []
+            itx.outputs = outputs
             itx.inputs = []
             itx.scripts = []
-            itx.Attributes = dtx.Attributes
+            itx.Attributes = []
             itx.Script = binascii.unhexlify(out)
+
+            itx = wallet.MakeTransaction(tx=itx)
+
+            print("tx: %s " % json.dumps(itx.ToJson(), indent=4))
+
+
+
 
             engine = ApplicationEngine(
                 trigger_type=TriggerType.Application,
@@ -373,7 +400,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
                 # set the amount of gas the tx will need
                 itx.Gas = consumed
-
+                itx.Attributes = []
                 result = engine.ResultsForCode(contract_state.Code)
                 return itx, result
             else:

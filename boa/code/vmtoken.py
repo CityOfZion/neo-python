@@ -149,7 +149,10 @@ class VMTokenizer():
         #then create a new array for the vm to store
         total_items = self.method.total_lines  \
                       + len(self.method.args) \
-                      + self.method.dynamic_iterator_count
+                      + self.method.dynamic_iterator_count #\
+ #                     + len(self.method.module.module_variables)
+
+#        print("total items %s " % total_items)
 
         self.total_param_and_body_count_token = self.insert_push_integer(total_items)
         self.total_param_and_body_count_token.updatable_data = total_items
@@ -557,7 +560,6 @@ class VMTokenizer():
 
 
     def is_op_call(self, op):
-        print("checking op: %s " % op)
         if op in ['len','abs','min','max','concat','take',
                   'sha1','sha256','hash160','hash256',
                   'verify_signature','verify_signatures']:

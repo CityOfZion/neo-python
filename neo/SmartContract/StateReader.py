@@ -688,25 +688,29 @@ class StateReader(InteropService):
 
     def Storage_Get(self, engine):
 
-        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+        context = None
+        try:
+            item =engine.EvaluationStack.Pop()
+            context = item.GetInterface('neo.SmartContract.StorageContext.StorageContext')
+            shash = context.ScriptHash
+        except Exception as e:
+            return False
 
-        contract = Blockchain.Default().GetContract( context.ScriptHash.ToBytes())
 
-        if contract is None or not contract.HasStorage:
+        if not self.CheckStorageContext(context):
             return False
 
         key = engine.EvaluationStack.Pop().GetByteArray()
-
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
 
-        item = Blockchain.Default().GetStorageItem(storage_key)
-
+        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         if item is not None:
-
-            engine.EvaluationStack.PushT( item.Value)
+            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash,key, bytearray(item.Value)))
+            engine.EvaluationStack.PushT( bytearray(item.Value))
 
         else:
+            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, key))
             engine.EvaluationStack.PushT( bytearray(0))
 
         return True

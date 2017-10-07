@@ -15,5 +15,5 @@ def Get(context, key):
 def Put(context, key, value):
     pass
 
-def Delete(context, key, value):
+def Delete(context, key):
     pass

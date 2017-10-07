@@ -13,6 +13,14 @@ class BigInteger(int):
         return super(BigInteger, self).__eq__(other)
 
     def ToByteArray(self, signed=True):
+
+        if self < 0:
+            try:
+                return self.to_bytes(1 + ((self.bit_length() + 7) // 8), byteorder='little', signed=True)
+            except Exception as e:
+                print("coludnt convert negative number %s " % e)
+                return False
+
         try:
             return self.to_bytes((self.bit_length() + 7) //8, byteorder='little', signed=signed)
         except OverflowError:

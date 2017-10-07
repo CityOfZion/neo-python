@@ -209,9 +209,7 @@ class ExecutionEngine():
 
             #stack operations
             elif opcode == DUPFROMALTSTACK:
-                print("ASTACK ITEMS %s " % astack.Items)
                 item = astack.Peek()
-                print("item is %s " % item)
                 estack.PushT(astack.Peek())
 
             elif opcode == TOALTSTACK:
@@ -392,8 +390,8 @@ class ExecutionEngine():
                 estack.PushT( x1 ^ x2 )
 
             elif opcode == EQUAL:
-                x2 = estack.Pop()
-                x1 = estack.Pop()
+                x2 = estack.Pop().GetBigInteger()
+                x1 = estack.Pop().GetBigInteger()
                 estack.PushT( x1.Equals(x2))
 
 
@@ -549,10 +547,25 @@ class ExecutionEngine():
 
             elif opcode == GTE:
 
-                x2 = estack.Pop().GetBigInteger()
-                x1 = estack.Pop().GetBigInteger()
+                print("GTE::::")
+                x22 = estack.Pop()
+                x11 = estack.Pop()
 
-                estack.PushT(x1 >= x2)
+                try:
+                    print("x22,x11, %s %s %s %s " % (x22,type(x22), x11, type(x11)))
+                    x2 = x22.GetBigInteger()
+                    x1 =  x11.GetBigInteger()
+                    print("comparing %s %s " %  ( x2, x1))
+#                    x2 = estack.Pop().GetBigInteger()
+ #                   x1 = estack.Pop().GetBigInteger()
+                    res = x1 >= x2
+                    print("result is %s " % res)
+                    estack.PushT(res)
+                except Exception as e:
+                    print("error converting ... %s " % e)
+
+                    estack.PushT(False)
+    #                estack.PushT(x1 >= x2)
 
 
             elif opcode == MIN:
@@ -599,7 +612,9 @@ class ExecutionEngine():
 
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
-
+                print("pubkey: %s " % pubkey)
+                print("signature %s " % sig)
+                print("message %s " % ( self.ScriptContainer.GetMessage()))
                 try:
 
                     self.Crypto.VerifySignature( self.ScriptContainer.GetMessage(), pubkey, sig)
@@ -797,10 +812,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
- #       opname = ToName(op)
- #       print("____________________________________________________")
- #       print("%s -> %s" % (op, opname))
- #       print("-----------------------------------")
+#        opname = ToName(op)
+#        print("____________________________________________________")
+#        print("%s -> %s" % (op, opname))
+#        print("-----------------------------------")
 
         try:
             self.ExecuteOp(op, self.CurrentContext)

@@ -180,6 +180,9 @@ class Transaction(Inventory, InventoryMixin):
         return Helper.GetHashData(self)
 
 
+    def GetMessage(self):
+        return self.GetHashData()
+
 
     def getAllInputs(self):
         return self.inputs
