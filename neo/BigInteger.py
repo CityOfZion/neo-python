@@ -6,13 +6,13 @@ from neo.Cryptography.Helper import base256_encode
 class BigInteger(int):
 
     @staticmethod
-    def FromBytes(data, signed=True):
+    def FromBytes(data, signed=False):
         return BigInteger( int.from_bytes(data,'little',signed=signed))
 
     def Equals(self, other):
         return super(BigInteger, self).__eq__(other)
 
-    def ToByteArray(self, signed=False):
+    def ToByteArray(self, signed=True):
 
         if self < 0:
             try:
@@ -21,9 +21,9 @@ class BigInteger(int):
                 print("coludnt convert negative number %s " % e)
                 return False
         try:
-            return self.to_bytes((self.bit_length() + 7) // 8, byteorder='little', signed=False)
+            return self.to_bytes((self.bit_length() + 7) // 8, byteorder='little', signed=signed)
         except OverflowError:
-            return self.to_bytes(1+ ((self.bit_length() + 7) //8), byteorder='little', signed=False)
+            return self.to_bytes(1+ ((self.bit_length() + 7) //8), byteorder='little', signed=signed)
         except Exception:
             print("COULD NOT CONVERT %s to byte array" % self)
 

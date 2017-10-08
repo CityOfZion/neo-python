@@ -290,14 +290,12 @@ class InteropService():
         self._dictionary[method] = func
 
     def Invoke(self, method, engine):
-#        print("calling method ... %s " % method)
         if not method in self._dictionary.keys():
 
             self.__log.debug("method %s not found in ->" % method)
             for k,v in self._dictionary.items():
                 self.__log.debug("%s -> %s " % (k, v))
             return False
-
 
         func = self._dictionary[method]
 
