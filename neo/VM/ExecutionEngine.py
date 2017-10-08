@@ -752,6 +752,15 @@ class ExecutionEngine():
 
                 estack.PushT(Struct(items))
 
+            elif opcode == THROW:
+                self._VMState |= VMState.FAULT
+                return
+
+            elif opcode == THROWIFNOT:
+                if estack.Pop().GetBoolean() == False:
+                    self._VMState |= VMState.FAULT
+                    return
+
             else:
 
                 self._VMState |= VMState.FAULT
