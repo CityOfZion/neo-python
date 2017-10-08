@@ -38,6 +38,11 @@ SYSCALL = b'\x68'
 TAILCALL = b'\x69'
 
 
+# Exceptions
+THROW = b'\xf0'
+THROWIFNOT = b'\xf1'
+
+
 #  Stack
 DUPFROMALTSTACK = b'\x6A'
 TOALTSTACK = b'\x6B' #  Puts the input onto the top of the alt stack. Removes it from the main stack.
