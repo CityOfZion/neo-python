@@ -30,6 +30,7 @@ class ExecutionEngine():
     _AltStack = None
 
 
+    ops_processed = 0
 
     @property
     def ScriptContainer(self):
@@ -80,6 +81,7 @@ class ExecutionEngine():
         self._EvaluationStack = RandomAccessStack(name='Evaluation')
         self._AltStack = RandomAccessStack(name='Alt')
 
+        self.ops_processed = 0
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
@@ -797,6 +799,8 @@ class ExecutionEngine():
  #       print("____________________________________________________")
  #       print("%s -> %s" % (op, opname))
  #       print("-----------------------------------")
+
+        self.ops_processed += 1
 
         try:
             self.ExecuteOp(op, self.CurrentContext)

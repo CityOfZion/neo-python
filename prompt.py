@@ -22,7 +22,6 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
-#from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,GatherLoadedContractParams
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
@@ -41,7 +40,6 @@ from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 
-#from boa.boa import Compiler
 
 logname = 'prompt.log'
 logging.basicConfig(
@@ -89,6 +87,7 @@ class PromptInterface(object):
     _wallet_send_tx = None
 
     _invoke_test_tx = None
+    _invoke_test_tx_fee = None
 
     Wallet = None
 
@@ -634,14 +633,17 @@ class PromptInterface(object):
 
             if contract_script is not None:
 
-                tx, results = test_invoke(contract_script, self.Wallet, [])
+                tx, fee, results, num_ops = test_invoke(contract_script, self.Wallet, [])
 
                 if tx is not None and results is not None:
                     self._invoke_test_tx = tx
+                    self._invoke_test_tx_fee = fee
                     print("\n-------------------------------------------------------------------------------------------------------------------------------------")
                     print("Test deploy invoke successful")
+                    print("Total operations executed: %s " % num_ops)
                     print("Results %s " % [str(item) for item in results])
-                    print("Deploy Invoke TX gas cost: %s " % (int(tx.Gas.value / Fixed8.D)))
+                    print("Deploy Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
+                    print("Deploy Invoke TX Fee: %s " % (fee.value / Fixed8.D))
                     print("-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("You may now deploy this contract on the blockchain by using the 'invoke' command with no arguments or type 'cancel' to cancel deploy\n")
                     return
@@ -652,6 +654,7 @@ class PromptInterface(object):
 
     def test_invoke_contract(self, args):
         self._invoke_test_tx = None
+        self._invoke_test_tx_fee = None
 
         if not self.Wallet:
             print("please open a wallet")
@@ -659,14 +662,17 @@ class PromptInterface(object):
 
 
         if args and len(args) > 0:
-            tx, results = TestInvokeContract(self.Wallet, args)
+            tx, fee, results,num_ops = TestInvokeContract(self.Wallet, args)
 
             if tx is not None and results is not None:
                 self._invoke_test_tx = tx
+                self._invoke_test_tx_fee = fee
                 print("\n-------------------------------------------------------------------------------------------------------------------------------------")
                 print("Test invoke successful")
+                print("Total operations: %s " % num_ops)
                 print("Results %s " % [str(item) for item in results])
                 print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
+                print("Invoke TX Fee: %s " % (fee.value / Fixed8.D))
                 print("-------------------------------------------------------------------------------------------------------------------------------------\n")
                 print("You may now invoke this on the blockchain by using the 'invoke' command with no arguments or type 'cancel' to cancel invoke\n")
                 return
@@ -682,9 +688,10 @@ class PromptInterface(object):
             print("Please test your invoke before deploying it with the 'testinvoke {contracthash} *args' command")
             return
 
-        result = InvokeContract(self.Wallet, self._invoke_test_tx)
+        result = InvokeContract(self.Wallet, self._invoke_test_tx, self._invoke_test_tx_fee)
 
         self._invoke_test_tx = None
+        self._invoke_test_tx_fee = None
         return
 
     def cancel_operations(self):

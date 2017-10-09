@@ -579,9 +579,12 @@ class StateReader(InteropService):
 
     def Account_GetScriptHash(self, engine):
 
+        print("getting account script hash!!!! ")
         account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
+        print("acccount isssss...... %s " % account)
         if account is None:
             return False
+        print("pushing account script hash onto account....")
         engine.EvaluationStack.PushT(account.ScriptHash.ToArray())
         return True
 
@@ -695,6 +698,7 @@ class StateReader(InteropService):
             context = item.GetInterface('neo.SmartContract.StorageContext.StorageContext')
             shash = context.ScriptHash
         except Exception as e:
+            print("could not get storage context %s " % e)
             return False
 
 
