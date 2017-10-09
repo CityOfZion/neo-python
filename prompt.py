@@ -640,14 +640,15 @@ class PromptInterface(object):
 
             if contract_script is not None:
 
-                tx, results = test_invoke(contract_script, self.Wallet, [])
+                tx, results, num_ops = test_invoke(contract_script, self.Wallet, [])
 
                 if tx is not None and results is not None:
                     self._invoke_test_tx = tx
                     print("\n-------------------------------------------------------------------------------------------------------------------------------------")
                     print("Test deploy invoke successful")
+                    print("Total operations executed: %s " % num_ops)
                     print("Results %s " % [str(item) for item in results])
-                    print("Deploy Invoke TX gas cost: %s " % (int(tx.Gas.value / Fixed8.D)))
+                    print("Deploy Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("You may now deploy this contract on the blockchain by using the 'invoke' command with no arguments or type 'cancel' to cancel deploy\n")
                     return
@@ -665,12 +666,13 @@ class PromptInterface(object):
 
 
         if args and len(args) > 0:
-            tx, results = TestInvokeContract(self.Wallet, args)
+            tx, results,num_ops = TestInvokeContract(self.Wallet, args)
 
             if tx is not None and results is not None:
                 self._invoke_test_tx = tx
                 print("\n-------------------------------------------------------------------------------------------------------------------------------------")
                 print("Test invoke successful")
+                print("Total operations: %s " % num_ops)
                 print("Results %s " % [str(item) for item in results])
                 print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                 print("-------------------------------------------------------------------------------------------------------------------------------------\n")

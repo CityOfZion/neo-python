@@ -1,11 +1,11 @@
-from boa.blockchain.vm.Neo.Runtime import Log
+from boa.blockchain.vm.Neo.Runtime import Log,Notify
 from boa.blockchain.vm.System.ExecutionEngine import GetScriptContainer,GetExecutingScriptHash
 from boa.blockchain.vm.Neo.Transaction import *
-from boa.blockchain.vm.Neo.Output import *
 from boa.blockchain.vm.Neo.Blockchain import GetHeight,GetHeader
 from boa.blockchain.vm.Neo.Action import RegisterAction
 from boa.blockchain.vm.Neo.Runtime import GetTrigger,CheckWitness
 from boa.blockchain.vm.Neo.TriggerType import Application,Verification
+from boa.blockchain.vm.Neo.Output import GetScriptHash,GetValue,GetAssetId
 from boa.blockchain.vm.Neo.Storage import GetContext,Get,Put,Delete
 
 from boa.code.builtins import verify_signature
@@ -14,8 +14,8 @@ from boa.code.builtins import verify_signature
 # ICO SETTINGS
 #-------------------------------------------
 
-TOKEN_NAME ='PyToken'
-SYMBOL = 'BOA'
+TOKEN_NAME ='LOCALTOKEN'
+SYMBOL = 'LWTF'
 
 OWNER = b'F\xc2\xbb\x9c\x17Ci\x89\xca\xa7\x85>|\xbd\x87B>H#\xf2'
 
@@ -33,7 +33,7 @@ NEO_ASSET_ID = b'\x9b|\xff\xda\xa6t\xbe\xae\x0f\x93\x0e\xbe`\x85\xaf\x90\x93\xe5
 # 5million times decimals ( factor )
 TOTAL_AMOUNT = 500000000000000
 
-PRE_ICO_CAP = 100000000 # this is FACTOR
+PRE_ICO_CAP = 1000000000 # amount for the owner to start with
 
 ICO_START_TIME = 1502726400 # August 14 2017
 ICO_END_TIME = 1513936000 # December 22 2017
@@ -71,17 +71,27 @@ def Main(operation, args):
         print("doing application!")
 
         if operation == 'deploy':
-            return Deploy()
+            out = Deploy()
+            print("deployed!")
+            return out
         elif operation == 'mintTokens':
-            return MintTokens()
+            domint = MintTokens()
+            print("minted token!")
+            return domint
         elif operation == 'totalSupply':
-            return TotalSupply()
+            supply = TotalSupply()
+            print("got total supply")
+            Notify(supply)
+            return supply
         elif operation == 'name':
-            return Name()
+            n = Name()
+            return n
         elif operation == 'decimals':
-            return Decimals()
+            d = Decimals()
+            return d
         elif operation == 'symbol':
-            return Symbol()
+            sym = Symbol()
+            return sym
 
         elif operation == 'transfer':
             print("do transfers")
@@ -101,7 +111,11 @@ def Main(operation, args):
 
                 account = args[0]
 
-                return BalanceOf(account)
+                balance = BalanceOf(account)
+                print("got balance")
+                Notify(balance)
+
+                return balance
 
             else:
 
@@ -119,6 +133,7 @@ def Symbol():
     return SYMBOL
 
 def Decimals():
+    print("getting decimals...")
     return DECIMALS
 
 
@@ -161,26 +176,38 @@ def MintTokens():
 
     references = tx.References
 
+    print("helol1")
     if len(references) < 1:
         print("no neo attached")
         return False
 
+    print("hello2")
     reference = references[0]
+    print("hello2")
+#    sender = reference.ScriptHash
 
-    sender = reference.ScriptHash
+    sender = GetScriptHash(reference)
+    print("hello4")
 
     value = 0
+    print("hello5")
+    output_asset_id = GetAssetId(reference)
+    if output_asset_id == NEO_ASSET_ID:
 
-    if reference.AssetId == NEO_ASSET_ID:
-
+        print("hello6")
         receiver = GetExecutingScriptHash()
-
+        print("hello7")
         for output in tx.Outputs:
-            if output.ScriptHash == receiver:
-                value = value + output.Value
+            shash = GetScriptHash(output)
+            print("getting shash..")
+            if shash == receiver:
+                print("adding value?")
+                output_val = GetValue(output)
+                value = value + output_val
 
+        print("getting rate")
         rate = CurrentSwapRate()
-
+        print("got rate")
         if rate == 0:
             OnRefund(sender, value)
             return False
@@ -217,6 +244,8 @@ def TotalSupply():
 
     res = Get(context, "totalSupply")
 
+    print("got total supply")
+    Notify(res)
 
     return res
 
@@ -266,9 +295,11 @@ def DoTransfer(t_from, t_to, amount):
 
 def BalanceOf(account):
 
+    print("getting balance of...")
     context = GetContext()
-
+    print("getting context...")
     balance = Get(context, account)
+    print("got balance...")
 
     return balance
 
@@ -277,17 +308,19 @@ def CurrentSwapRate():
 
     basic = 1000 * FACTOR
     duration = ICO_END_TIME - ICO_START_TIME
-
+    print("getting swap rate")
     context = GetContext()
+    print("got context")
 
     total_supply = Get(context, 'totalSupply')
-
+    print("got total supply")
     if total_supply >= TOTAL_AMOUNT:
         return False
-
+    print("getting current height...")
     currentHeight = GetHeight()
+    print("got current height")
     currentBlock  = GetHeader(currentHeight)
-
+    print("got current block...")
     time = currentBlock.Timestamp - ICO_START_TIME
 
     if time < 0:

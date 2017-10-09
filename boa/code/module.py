@@ -252,9 +252,13 @@ class Module():
             if vmtoken.src_method is not None:
 
                 target_method = self.method_by_name( vmtoken.target_method )
-                jump_len = target_method.method_address - vmtoken.addr
-                vmtoken.data = jump_len.to_bytes(2, 'little', signed=True)
 
+                if target_method:
+
+                    jump_len = target_method.method_address - vmtoken.addr
+                    vmtoken.data = jump_len.to_bytes(2, 'little', signed=True)
+                else:
+                    raise Exception("Target method %s not found" % vmtoken.target_method)
 
     def to_s(self):
 

@@ -221,7 +221,7 @@ def test_invoke(script, wallet, outputs):
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = []
 
-            return wallet_tx, engine.EvaluationStack.Items
+            return wallet_tx, engine.EvaluationStack.Items, engine.ops_processed
         else:
             print("error executing contract.....")
 #            tx.Gas = Fixed8.One()
@@ -342,7 +342,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                                            script_hash=contract_state.Code.ScriptHash(),
                                            )
                 outputs.append(output)
-                print("NEO TO ATTACH: %s " % outputs)
 
             if gas_to_attach:
                 output = TransactionOutput(AssetId=Blockchain.SystemCoin().Hash,
@@ -396,13 +395,16 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 consumed.value = int(consumed.value)
 
                 if consumed < Fixed8.One():
-                    consumed = Fixed8.One()
+                    consumed = Fixed8.FromDecimal(.001)
+
+
+                total_ops = engine.ops_processed
 
                 # set the amount of gas the tx will need
                 itx.Gas = consumed
                 itx.Attributes = []
                 result = engine.ResultsForCode(contract_state.Code)
-                return itx, result
+                return itx, result, total_ops
             else:
                 print("error executing invoke contract...")
 

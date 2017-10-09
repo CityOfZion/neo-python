@@ -61,15 +61,16 @@ def DoRun(contract_script, arguments, wallet, path):
 
                 script = GatherLoadedContractParams(f_args, contract_script)
 
-                tx ,result = test_deploy_and_invoke(script, i_args, wallet)
+                tx ,result,total_ops = test_deploy_and_invoke(script, i_args, wallet)
                 i_args.reverse()
 
                 if tx is not None and result is not None:
                     print("\n-----------------------------------------------------------")
                     print("Calling %s with arguments %s " % (path, i_args))
                     print("Test deploy invoke successful")
+                    print("Used total of %s operations " % total_ops)
                     print("Result %s " % result)
-                    print("Invoke TX gas cost: %s " % (int(tx.Gas.value / Fixed8.D)))
+                    print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("-------------------------------------------------------------\n")
                     return
                 else:
