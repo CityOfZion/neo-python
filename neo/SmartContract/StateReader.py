@@ -692,21 +692,17 @@ class StateReader(InteropService):
 
     def Storage_Get(self, engine):
 
-        print("Tring to get storage")
         context = None
         try:
             item =engine.EvaluationStack.Pop()
             context = item.GetInterface('neo.SmartContract.StorageContext.StorageContext')
-            print("got context??")
             shash = context.ScriptHash
-            print("shash.... %s" % shash)
         except Exception as e:
             print("could not get storage context %s " % e)
             return False
 
 
         if not self.CheckStorageContext(context):
-            print("NO STORAGE CONTEXT")
             return False
 
         key = engine.EvaluationStack.Pop().GetByteArray()

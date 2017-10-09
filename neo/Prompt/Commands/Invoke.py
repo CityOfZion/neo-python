@@ -38,10 +38,10 @@ import pdb
 import pdb
 import json
 
-def InvokeContract(wallet, tx):
+def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
 
-    wallet_tx = wallet.MakeTransaction(tx=tx)
+    wallet_tx = wallet.MakeTransaction(tx=tx,fee=fee)
 
     if wallet_tx:
 
@@ -211,17 +211,24 @@ def test_invoke(script, wallet, outputs):
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed.value = int(consumed.value)
 
+            net_fee = None
+            tx_gas = None
+
             if consumed < Fixed8.One():
-                consumed = Fixed8.One()
+                net_fee = Fixed8.FromDecimal(.001)
+                tx_gas = Fixed8.Zero()
+            else:
+                tx_gas = consumed
+                net_fee = Fixed8.Zero()
 
             #set the amount of gas the tx will need
-            wallet_tx.Gas = consumed
+            wallet_tx.Gas = tx_gas
 
             #reset the wallet outputs
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = []
 
-            return wallet_tx, engine.EvaluationStack.Items, engine.ops_processed
+            return wallet_tx, net_fee, engine.EvaluationStack.Items, engine.ops_processed
         else:
             print("error executing contract.....")
 #            tx.Gas = Fixed8.One()
