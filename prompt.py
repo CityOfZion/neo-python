@@ -241,12 +241,11 @@ class PromptInterface(object):
 
             dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
             dbloop.start(1)
-
             print("Opened wallet at %s" % path)
         except Exception as e:
-            print("could not open wallet %s " % e)
-            traceback.print_stack()
-            traceback.print_exc()
+            print("could not open wallet: %s " % e)
+#            traceback.print_stack()
+#            traceback.print_exc()
 
 
     def do_import(self, arguments):
@@ -770,62 +769,63 @@ class PromptInterface(object):
 
             else:
 
+                try:
+                    command, arguments = self.parse_result(result)
 
-                command, arguments = self.parse_result(result)
-
-                if command is not None and len(command) > 0:
-                    command = command.lower()
+                    if command is not None and len(command) > 0:
+                        command = command.lower()
 
 
-                    if command == 'quit' or command == 'exit':
-                        self.quit()
-                    elif command == 'help':
-                        self.help()
-                    elif command == 'create':
-                        self.do_create(arguments)
-                    elif command == 'open':
-                        self.do_open(arguments)
-                    elif command == 'import':
-                        self.do_import(arguments)
-                    elif command == 'export':
-                        self.do_export(arguments)
-                    elif command == 'wallet':
-                        self.show_wallet(arguments)
-                    elif command == 'send':
-                        self.do_send(arguments)
-                    elif command == 'block':
-                        self.show_block(arguments)
-                    elif command == 'tx':
-                        self.show_tx(arguments)
-                    elif command == 'header':
-                        self.show_header(arguments)
-                    elif command == 'account':
-                        self.show_account_state(arguments)
-                    elif command == 'asset':
-                        self.show_asset_state(arguments)
-                    elif command == 'contract':
-                        self.show_contract_state(arguments)
-                    elif command == 'invoke':
-                        self.invoke_contract(arguments)
-                    elif command == 'testinvoke':
-                        self.test_invoke_contract(arguments)
-                    elif command == 'cancel':
-                        self.cancel_operations()
-                    elif command == 'mem':
-                        self.show_mem()
-                    elif command == 'nodes' or command == 'node':
-                        self.show_nodes()
-                    elif command == 'state':
-                        self.show_state()
-                    elif command == 'config':
-                        self.configure(arguments)
-                    elif command == None:
-                        print('please specify a command')
-                    else:
-                        print("command %s not found" % command)
+                        if command == 'quit' or command == 'exit':
+                            self.quit()
+                        elif command == 'help':
+                            self.help()
+                        elif command == 'create':
+                            self.do_create(arguments)
+                        elif command == 'open':
+                            self.do_open(arguments)
+                        elif command == 'import':
+                            self.do_import(arguments)
+                        elif command == 'export':
+                            self.do_export(arguments)
+                        elif command == 'wallet':
+                            self.show_wallet(arguments)
+                        elif command == 'send':
+                            self.do_send(arguments)
+                        elif command == 'block':
+                            self.show_block(arguments)
+                        elif command == 'tx':
+                            self.show_tx(arguments)
+                        elif command == 'header':
+                            self.show_header(arguments)
+                        elif command == 'account':
+                            self.show_account_state(arguments)
+                        elif command == 'asset':
+                            self.show_asset_state(arguments)
+                        elif command == 'contract':
+                            self.show_contract_state(arguments)
+                        elif command == 'invoke':
+                            self.invoke_contract(arguments)
+                        elif command == 'testinvoke':
+                            self.test_invoke_contract(arguments)
+                        elif command == 'cancel':
+                            self.cancel_operations()
+                        elif command == 'mem':
+                            self.show_mem()
+                        elif command == 'nodes' or command == 'node':
+                            self.show_nodes()
+                        elif command == 'state':
+                            self.show_state()
+                        elif command == 'config':
+                            self.configure(arguments)
+                        elif command == None:
+                            print('please specify a command')
+                        else:
+                            print("command %s not found" % command)
 
-                else:
-                    pass
+                except Exception as e:
+
+                    print("could not execute command: %s " % e)
 
 
 if __name__ == "__main__":
