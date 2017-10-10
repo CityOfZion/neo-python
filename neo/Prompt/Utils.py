@@ -1,7 +1,7 @@
 import binascii
 from neo.BigInteger import BigInteger
 from neo.Fixed8 import Fixed8
-
+from neo.Core.Helper import Helper
 
 def get_asset_attachments(params):
 
@@ -67,6 +67,13 @@ def parse_param(p, ignore_int=False, prefer_hex=True):
         pass
 
     if type(p) is str:
+
+        # check for address strings like 'ANE2ECgA6YAHR5Fh2BrSsiqTyGb5KaS19u' and
+        # convert them to a bytearray
+        if len(p) == 34 and p[0] == 'A':
+            addr = Helper.AddrStrToScriptHash(p).Data
+            return addr
+
         if prefer_hex:
             return binascii.hexlify( p.encode('utf-8'))
         else:
