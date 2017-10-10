@@ -23,6 +23,7 @@ from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,GatherLoadedContractParams
+from neo.Prompt.Commands.Send import construct_and_send
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo import Settings
@@ -359,101 +360,8 @@ class PromptInterface(object):
             self.Wallet.FindUnspentCoins()
 
     def do_send(self, arguments):
-        try:
-            if not self.Wallet:
-                print("please open a wallet")
-                return
-            if len(arguments) < 3:
-                print("Not enough arguments")
-                return
+        construct_and_send(self, self.Wallet, arguments)
 
-            to_send = get_arg(arguments)
-            address = get_arg(arguments,1)
-            amount = get_arg(arguments,2)
-
-            assetId = None
-
-            if to_send.lower() == 'neo':
-                assetId = Blockchain.Default().SystemShare().Hash
-            elif to_send.lower() == 'gas':
-                assetId = Blockchain.Default().SystemCoin().Hash
-            elif Blockchain.Default().GetAssetState(to_send):
-                assetId = Blockchain.Default().GetAssetState(to_send).AssetId
-
-            scripthash = self.Wallet.ToScriptHash(address)
-            if scripthash is None:
-                print("invalid address")
-                return
-
-            f8amount = Fixed8.TryParse(amount)
-            if f8amount is None:
-                print("invalid amount format")
-                return
-
-            if f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
-                print("incorrect amount precision")
-                return
-
-            fee = Fixed8.Zero()
-            if get_arg(arguments,3):
-                fee = Fixed8.TryParse(get_arg(arguments,3))
-
-            output = TransactionOutput(AssetId=assetId,Value=f8amount,script_hash=scripthash)
-            tx = ContractTransaction(outputs=[output])
-            ttx = self.Wallet.MakeTransaction(tx=tx,change_address=None,fee=fee)
-
-
-            if ttx is None:
-                print("insufficient funds")
-                return
-
-            self._wallet_send_tx = ttx
-
-            self._num_passwords_req = 1
-            self._gathered_passwords = []
-            self._gathering_password = True
-            self._gather_password_action = self.do_send_created_tx
-
-
-        except Exception as e:
-            print("could not send: %s " % e)
-            traceback.print_stack()
-            traceback.print_exc()
-
-    def do_send_created_tx(self):
-        passwd = self._gathered_passwords[0]
-        tx = self._wallet_send_tx
-        self._wallet_send_tx = None
-        self._gathered_passwords = None
-        self._gather_password_action = None
-
-        if not self.Wallet.ValidatePassword(passwd):
-            print("incorrect password")
-            return
-
-
-        try:
-            context = ContractParametersContext(tx)
-            self.Wallet.Sign(context)
-
-            if context.Completed:
-
-                tx.scripts = context.GetScripts()
-
-                self.Wallet.SaveTransaction(tx)
-
-                relayed = NodeLeader.Instance().Relay(tx)
-
-                if relayed:
-                    print("Relayed Tx: %s " % tx.Hash.ToString())
-                else:
-                    print("Could not relay tx %s " % tx.Hash.ToString())
-
-
-        except Exception as e:
-            print("could not sign %s " % e)
-            traceback.print_stack()
-            traceback.print_exc()
 
 
     def show_state(self):
