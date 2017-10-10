@@ -791,6 +791,10 @@ class PromptInterface(object):
                             self.do_create(arguments)
                         elif command == 'open':
                             self.do_open(arguments)
+                        elif command == 'build':
+                            self.do_build(arguments)
+                        elif command == 'load_run':
+                            self.do_load_n_run(arguments)
                         elif command == 'import':
                             self.do_import(arguments)
                         elif command == 'export':
