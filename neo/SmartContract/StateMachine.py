@@ -102,15 +102,6 @@ class StateMachine(StateReader):
 
         self.notifications.append(event_args)
 
-    def Blockchain_GetAccount(self, engine):
-        hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
-        address = Crypto.ToAddress(hash).encode('utf-8')
-        account = self._accounts.TryGet(address)
-        if account:
-            engine.EvaluationStack.PushT(StackItem.FromInterface(account))
-            return True
-
-        return False
 
     def Blockchain_GetAsset(self, engine):
 

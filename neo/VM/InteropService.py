@@ -4,7 +4,7 @@ from neo.BigInteger import BigInteger
 import sys
 import traceback
 from autologging import logged
-
+import pdb
 @logged
 class StackItem(EquatableMixin):
 
@@ -298,7 +298,7 @@ class InteropService():
             return False
 
         func = self._dictionary[method]
-
+        #print("[InteropService Method] %s " % func)
         return func(engine)
 
     @staticmethod

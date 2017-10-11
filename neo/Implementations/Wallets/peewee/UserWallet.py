@@ -28,7 +28,6 @@ from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, Co
 
 from autologging import logged
 import json
-from playhouse.migrate import *
 
 @logged
 class UserWallet(Wallet):
@@ -51,14 +50,6 @@ class UserWallet(Wallet):
         except Exception as e:
             print("Couldnt build database %s " % e)
             self.__log.debug("couldnt build database %s " % e)
-
-    def Migrate(self):
-        db = PWDatabase.ContextDB()
-        migrator = SqliteMigrator(db)
-
-        migrate(
-            migrator.drop_not_null('Contract','Account_id')
-        )
 
     def DB(self):
         return PWDatabase.Context()
@@ -116,9 +107,6 @@ class UserWallet(Wallet):
         db_account.save()
         self.__dbaccount = db_account
 
-
-
-
     def AddContract(self, contract):
 
         super(UserWallet, self).AddContract(contract)
@@ -135,9 +123,6 @@ class UserWallet(Wallet):
             sh = bytes(contract.ScriptHash.ToArray())
             address, created = Address.get_or_create(ScriptHash = sh)
             address.save()
-
-
-
             db_contract = Contract.create(RawData=contract.ToArray(),
                                           ScriptHash = contract.ScriptHash.ToBytes(),
                                           PublicKeyHash = contract.PublicKeyHash.ToBytes(),
@@ -325,7 +310,6 @@ class UserWallet(Wallet):
         for k in keys.values():
             addr = Crypto.ToAddress(k.PublicKeyHash)
             pub = k.PublicKey.encode_point(True)
-            pubkeyHash = k.PublicKeyHash.Data
             signature_contract = None
             for ct in self._contracts.values():
                 if ct.PublicKeyHash == k.PublicKeyHash:
@@ -333,11 +317,7 @@ class UserWallet(Wallet):
 
             addr = signature_contract.Address
 
-            jsn.append(
-                {'Address': addr,
-                 'Public Key': pub.decode('utf-8')})
-
-            print("PUBLICK KEY HASH: %s " % pubkeyHash)
+            jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
 
         return jsn
 
@@ -349,19 +329,10 @@ class UserWallet(Wallet):
         else:
             percent_synced = int(100 * self._current_height / Blockchain.Default().Height)
 
-#        for ct in self._contracts
-
         jsn = {}
         jsn['path'] = self._path
-        addresses = []
-        for key, contract in self._contracts.items():
-            addresses.append(
-                {
-                    'address': contract.Address,
-                    'is standard': contract.IsStandard
-                }
-            )
 
+        addresses = [Crypto.ToAddress(UInt160(data=addr.ScriptHash)) for addr in Address.select()]
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
         jsn['percent_synced'] = percent_synced

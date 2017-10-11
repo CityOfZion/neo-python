@@ -16,6 +16,7 @@ from neo.VM.InteropService import StackItem
 
 import events
 import binascii
+import pdb
 
 class StateReader(InteropService):
 
@@ -322,15 +323,14 @@ class StateReader(InteropService):
         return True
 
     def Blockchain_GetAccount(self, engine):
+        hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
+        address = Crypto.ToAddress(hash).encode('utf-8')
+        account = self._accounts.TryGet(address)
+        if account:
+            engine.EvaluationStack.PushT(StackItem.FromInterface(account))
+            return True
 
-        data = engine.EvaluationStack.Pop().GetByteArray()
-        account = None
-
-        if Blockchain.Default() is not None:
-            account = Blockchain.Default().GetAccountState(UInt160(data=data))
-
-        engine.EvaluationStack.PushT(StackItem.FromInterface(account))
-        return True
+        return False
 
     def Blockchain_GetValidators(self, engine):
 
@@ -579,12 +579,9 @@ class StateReader(InteropService):
 
     def Account_GetScriptHash(self, engine):
 
-        print("getting account script hash!!!! ")
         account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
-        print("acccount isssss...... %s " % account)
         if account is None:
             return False
-        print("pushing account script hash onto account....")
         engine.EvaluationStack.PushT(account.ScriptHash.ToArray())
         return True
 
@@ -601,10 +598,10 @@ class StateReader(InteropService):
     def Account_GetBalance(self, engine):
 
         account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
-        assetId = UInt256( engine.EvaluationStack.Pop().GetByteArray())
+        assetId = UInt256( data=engine.EvaluationStack.Pop().GetByteArray())
+
         if account is None:
             return False
-
         balance = account.BalanceFor(assetId)
         engine.EvaluationStack.PushT(balance.GetData())
         return True

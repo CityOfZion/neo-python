@@ -145,7 +145,6 @@ class Wallet(object):
             raise Exception('Invalid operation- public key mismatch')
 
         self._contracts[contract.ScriptHash.ToBytes()] = contract
-
         if contract.ScriptHash.ToBytes() in self._watch_only:
             self._watch_only.remove(contract.ScriptHash.ToBytes())
 

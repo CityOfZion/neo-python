@@ -84,14 +84,12 @@ def parse_param(p, ignore_int=False, prefer_hex=True):
 
 
 
-def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
+def get_arg(arguments, index=0, convert_to_int=False):
     try:
         arg = arguments[index]
         if convert_to_int:
             return int(arg)
-        if do_parse:
-            return parse_param(arg)
-        return arg
+        return parse_param(arg)
     except Exception as e:
         pass
     return None

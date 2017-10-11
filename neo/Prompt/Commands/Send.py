@@ -60,14 +60,23 @@ def construct_and_send(prompter, wallet, arguments):
             return
 
 
+<<<<<<< Updated upstream
         passwd = prompt("[Password]> ",
                    completer=prompter.completer,
                    is_password=True,
+=======
+        passwd = prompt("[Password] > ",
+                   completer=prompter.completer,
+>>>>>>> Stashed changes
                    history=prompter.history,
                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                    style=prompter.token_style)
 
+<<<<<<< Updated upstream
         if not wallet.ValidatePassword(passwd):
+=======
+        if not self.Wallet.ValidatePassword(passwd):
+>>>>>>> Stashed changes
             print("incorrect password")
             return
 
