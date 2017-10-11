@@ -423,7 +423,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
         traceback.print_stack()
         traceback.print_exc()
 
-    return None,[]
+    return None,[], 0
 
 
 

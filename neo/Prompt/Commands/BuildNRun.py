@@ -4,7 +4,7 @@ from neo.Prompt.Commands.Invoke import test_deploy_and_invoke
 from neo.Fixed8 import Fixed8
 from boa.boa import Compiler
 import binascii
-
+import traceback
 
 def LoadAndRun(arguments, wallet):
 
@@ -23,6 +23,7 @@ def LoadAndRun(arguments, wallet):
 
             script = content
 
+            print("arguments.... %s " % arguments)
             DoRun(script, arguments, wallet, path)
 
     except Exception as e:
@@ -88,3 +89,5 @@ def DoRun(contract_script, arguments, wallet, path):
 
     except Exception as e:
         print("could not bulid %s " % e)
+        traceback.print_stack()
+        traceback.print_exc()

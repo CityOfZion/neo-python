@@ -428,6 +428,7 @@ class PromptInterface(object):
             traceback.print_exc()
 
     def do_send_created_tx(self):
+        print("will send cerated txt?")
         passwd = self._gathered_passwords[0]
         tx = self._wallet_send_tx
         self._wallet_send_tx = None
@@ -438,7 +439,7 @@ class PromptInterface(object):
             print("incorrect password")
             return
 
-
+        print("hello/?/")
         try:
             context = ContractParametersContext(tx)
             self.Wallet.Sign(context)
