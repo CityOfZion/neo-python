@@ -206,10 +206,25 @@ class Wallet(object):
         raise NotImplementedError()
 
     def DeleteAddress(self, script_hash):
-        raise NotImplementedError()
+        coin_keys_toremove = []
+        coins_to_remove = []
+        for key, coinref in self._coins.items():
+            if coinref.Output.ScriptHash.ToBytes() == script_hash.ToBytes():
+                coin_keys_toremove.append(key)
+                coins_to_remove.append(coinref)
 
+        for k in coin_keys_toremove:
+            del self._coins[k]
 
+        ok = False
+        if script_hash.ToBytes() in self._contracts.keys():
+            ok=True
+            del self._contracts[script_hash.ToBytes()]
+        elif script_hash.ToBytes() in self._watch_only.keys():
+            ok=True
+            del self._contracts[script_hash.ToBytes()]
 
+        return ok, coins_to_remove
 
     def FindUnspentCoins(self):
 
@@ -461,11 +476,12 @@ class Wallet(object):
 
 
     def GetChangeAddress(self):
-        for key,contract in self._contracts.items():
+        for contract in self._contracts.values():
             if contract.IsStandard:
                 return contract.ScriptHash
-            else:
-                print("contract isnt stardard? %s " % contract)
+
+        if len(self._contracts.values()):
+            return self._contracts.values()[0]
 
         raise Exception("Could not find change address")
 
@@ -583,17 +599,25 @@ class Wallet(object):
 
         for hash in context.ScriptHashes:
 
+            print("checkhing hash...")
             contract = self.GetContract(hash)
             if contract is None:
+                print("contract is none, return")
                 continue
 
             key = self.GetKeyByScriptHash(hash)
+            print("key is %s " % key)
             if key is None:
+                print("key is none")
                 continue
 
+            print("Signing.... %s %s " % (context.Verifiable, key))
             signature = Helper.Sign(context.Verifiable, key)
-            success |= context.AddSignature(contract, key.PublicKey, signature)
-
+            print("signature %s " % signature)
+            res = context.AddSignature(contract, key.PublicKey, signature)
+            print("result is %s " % res)
+            success |=res
+            print("success is %s " % success)
         return success
 
 

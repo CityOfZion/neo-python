@@ -321,6 +321,25 @@ class UserWallet(Wallet):
 
         return jsn
 
+    def DeleteAddress(self, script_hash):
+
+        success, coins_toremove = super(UserWallet, self).DeleteAddress(script_hash)
+
+        for coin in coins_toremove:
+            try:
+                c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
+                c.delete_instance()
+                print("deleted coin!!!")
+            except Exception as e:
+                print("Couldnt delete coin %s %s " % (e, coin))
+                self.__log.debug("could not delete coin %s %s " % (coin, e))
+
+        address = Address.get(ScriptHash = bytes(script_hash.ToArray()))
+        address.delete_instance()
+
+        return True,coins_toremove
+
+
     def ToJson(self, verbose=False):
 
         assets = self.GetCoinAssets()
