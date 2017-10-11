@@ -22,7 +22,7 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
-from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,GatherLoadedContractParams
+from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr
 from neo.Prompt.Commands.Send import construct_and_send
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
@@ -53,6 +53,8 @@ blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
 SubscribeNotifications()
 
+
+import csv
 
 example_style = style_from_dict({
     # User input.
@@ -274,8 +276,13 @@ class PromptInterface(object):
                         print("invalid wif")
                     return
 
-            if item == 'contract':
+            elif item == 'contract':
                 return self.load_smart_contract(arguments)
+
+
+            elif item == 'contract_addr':
+                return ImportContractAddr(self.Wallet, arguments[1:])
+
 
         print("please specify something to import")
         return
@@ -343,6 +350,11 @@ class PromptInterface(object):
             print("Wallet %s " % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
             return
 
+        if item == 'migrate' and self.Wallet is not None:
+            print("migrating wallet...")
+            self.Wallet.Migrate()
+            print("migrated wallet")
+
         if item == 'close':
             print('closed wallet')
             self.Wallet = None
@@ -361,7 +373,6 @@ class PromptInterface(object):
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
-
 
 
     def show_state(self):
@@ -403,15 +414,19 @@ class PromptInterface(object):
             block = Blockchain.Default().GetBlock(item)
 
             if block is not None:
+
+
                 bjson = json.dumps(block.ToJson(), indent=4)
                 tokens = [(Token.Number, bjson)]
                 print_tokens(tokens, self.token_style)
                 print('\n')
                 if txarg and 'tx' in txarg:
 
-                    for tx in block.Transactions:
-                        self.show_tx([tx])
-
+#                    with open("b_1445025.txt",'w') as myfile:
+#                        for tx in block.FullTransactions:
+#                            myfile.write(json.dumps(tx.ToJson(), indent=4))
+                    for tx in block.FullTransactions:
+                        print(json.dumps(tx.ToJson(), indent=4))
 
             else:
                 print("could not locate block %s" % item)
@@ -516,6 +531,7 @@ class PromptInterface(object):
                     print("Please specify a search query")
             else:
                 contract = Blockchain.Default().GetContract(item)
+
                 if contract is not None:
                     bjson = json.dumps(contract.ToJson(), indent=4)
                     tokens = [(Token.Number, bjson)]
@@ -734,6 +750,8 @@ class PromptInterface(object):
                 except Exception as e:
 
                     print("could not execute command: %s " % e)
+                    traceback.print_stack()
+                    traceback.print_exc()
 
 
 if __name__ == "__main__":
