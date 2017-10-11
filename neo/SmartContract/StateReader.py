@@ -440,8 +440,8 @@ class StateReader(InteropService):
 
     def Block_GetTransaction(self, engine):
 
-        block = engine.EvaluationStack.Pop().GetInterface('neo.Core.Block.Block')
         index = engine.EvaluationStack.Pop().GetBigInteger()
+        block = engine.EvaluationStack.Pop().GetInterface('neo.Core.Block.Block')
 
         if block is None or index < 0 or index > len(block.Transactions):
             return False
@@ -597,8 +597,8 @@ class StateReader(InteropService):
 
     def Account_GetBalance(self, engine):
 
-        account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
         assetId = UInt256( data=engine.EvaluationStack.Pop().GetByteArray())
+        account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
 
         if account is None:
             return False
