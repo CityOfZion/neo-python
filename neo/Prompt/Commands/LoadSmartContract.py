@@ -8,6 +8,56 @@ import json
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.VM import OpCode
+from neo.Prompt.Utils import get_arg
+from neo.Cryptography.Crypto import Crypto
+from neo.Core.Blockchain import Blockchain
+from neo.SmartContract.Contract import Contract
+
+import pdb
+
+def ImportContractAddr(wallet, args):
+
+
+    if wallet is None:
+        print("please open a wallet")
+        return
+
+    contract_hash = get_arg(args, 0)
+    pubkey = get_arg(args, 1)
+
+    if contract_hash and pubkey:
+
+        if len(pubkey) != 66:
+            print("invalid public key format")
+
+
+        pubkey_script_hash = Crypto.ToScriptHash(pubkey,unhex=True)
+
+        print("import contract address %s %s " % (contract_hash, pubkey))
+        print("pubkey script hash %s " % pubkey_script_hash)
+        contract = Blockchain.Default().GetContract(contract_hash)
+
+        if contract is not None:
+
+
+            reedeem_script = contract.Code.Script
+            param_list = contract.Code.ParameterList
+
+
+
+            verification_contract = Contract.Create(pubkey_script_hash,param_list,reedeem_script)
+
+            address = verification_contract.Address
+
+            print("address %s " % address)
+
+            print("contract objcet is %s " % contract)
+
+            wallet.AddContract(verification_contract)
+
+            print("Added contract addres %s to wallet" % address)
+
+    return 'Hello'
 
 def LoadContract(args):
 

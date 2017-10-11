@@ -179,6 +179,8 @@ class PromptInterface(object):
                 self._gather_password_action = self.do_open_wallet
             else:
                 print("Please specify a path")
+        else:
+            print("item is? %s " % item)
 
     def do_create(self, arguments):
         item = get_arg(arguments)
