@@ -234,12 +234,12 @@ def test_invoke(script, wallet, outputs):
 #            tx.Gas = Fixed8.One()
 #            tx.Attributes = []
 #            return tx, []
-            return None,[]
+            return None,None, None, None
 
     except Exception as e:
         print("COULD NOT EXECUTE %s " % e)
 
-    return None,[]
+    return None,None, None, None
 
 
 
