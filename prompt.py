@@ -24,6 +24,7 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr
 from neo.Prompt.Commands.Send import construct_and_send
+from neo.Prompt.Commands.Wallet import DeleteAddress
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo import Settings
@@ -356,6 +357,11 @@ class PromptInterface(object):
             print("migrating wallet...")
             self.Wallet.Migrate()
             print("migrated wallet")
+
+        if item == 'delete_addr':
+            addr_to_delete = get_arg(arguments, 1)
+            print("address to delete %s" % addr_to_delete)
+            DeleteAddress(self, self.Wallet, addr_to_delete)
 
         if item == 'close':
             print('closed wallet')

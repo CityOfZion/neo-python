@@ -37,8 +37,10 @@ class Helper(object):
     def Sign(verifiable, keypair):
 
         prikey = bytes(keypair.PrivateKey)
+        print("private key %s " % prikey)
         hashdata = verifiable.GetHashData()
         res = Crypto.Default().Sign(hashdata, prikey, keypair.PublicKey)
+        print("result is %s " % res)
         return res
 
     @staticmethod

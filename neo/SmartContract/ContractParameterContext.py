@@ -5,6 +5,29 @@ from neo.VM import OpCode
 from neo.Core.Witness import Witness
 import json
 import binascii
+import pdb
+
+class ContractParamater():
+
+
+    Type = None
+    Value = None
+
+    def __init__(self, type):
+        self.Type = type
+
+class ContextItem():
+
+    Script = None
+    ContractParameters = None
+    Signatures = None
+
+    def __init__(self, contract):
+        self.Script = contract.Script
+        self.ContractParameters = []
+        for b in bytearray(contract.ParameterList):
+            p = ContractParamater(b)
+            self.ContractParameters.append(p)
 
 class ContractParametersContext():
 
@@ -12,42 +35,63 @@ class ContractParametersContext():
     Verifiable = None
 
     ScriptHashes = None
-    Verifications = None
-    Parameters = None
+
+    ContextItems = None
 
     def __init__(self, verifiable):
 
         self.Verifiable = verifiable
         self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
-        self.Verifications = [None] * len(self.ScriptHashes)
-        self.Parameters = [None] * len(self.ScriptHashes)
+
+        self.ContextItems = {}
 
     @property
     def Completed(self):
-        for p in self.Parameters:
-            if p is None:
+
+        if len(self.ContextItems) < len(self.ScriptHashes):
+            print("context items, script hashes %s %s " % (self.ContextItems, self.ScriptHashes))
+            return False
+
+        for item in self.ContextItems.values():
+            print("going through items %s " % item.Script)
+            if item is None:
+                print("item is none...")
                 return False
-            for p2 in p:
-                if p2 is None:
+
+            for p in item.ContractParameters:
+                print("item parameters??? %s" % p)
+                if p is None or p.Value is None:
+                    print("parameter is none")
                     return False
+
         return True
 
 
     def Add(self, contract, index, parameter):
 
-        i = self.GetIndex(contract.ScriptHash)
+        item = self.CreateItem(contract)
+        print("ADDING iTEM:: %s " % item)
+        item.ContractParameters[index].Value = parameter
 
-        if i < 0:
-            return False
-
-        if self.Verifications[i] is None:
-            self.Verifications[i] = contract.Script
-
-        if self.Parameters[i] is None:
-            self.Parameters[i] = [None] * len(contract.ParameterList)
-            self.Parameters[i][index] = binascii.hexlify( parameter )
+#        pdb.set_trace()
 
         return True
+
+
+    def CreateItem(self, contract):
+
+        if contract.ScriptHash.ToBytes() in self.ContextItems.keys():
+            return self.ContextItems[ contract.ScriptHash.ToBytes()]
+
+        if not contract.ScriptHash in self.ScriptHashes:
+            print("script hash not in self script hashes...")
+            return None
+
+        item = ContextItem(contract)
+
+        self.ContextItems[contract.ScriptHash.ToBytes()] = item
+
+        return item
 
 
     def AddSignature(self, contract, pubkey, signature):
@@ -60,13 +104,16 @@ class ContractParametersContext():
         else:
 
             index = -1
-            for i, contractParam in enumerate(contract.ParameterList):
-                if contractParam == ContractParameterType.Signature:
+            length = len(contract.ParameterList)
+            for i in range(0, length):
+
+                if contract.ParameterList[i] == ContractParameterType.Signature:
                     if index >=0:
                         raise Exception("Signature must be first")
                     else:
                         index = i
 
+            print("ADDING SIG!! .... %s %s %s " % (contract, index,signature))
             return self.Add(contract, index, signature)
 
     def GetIndex(self, script_hash):
@@ -75,8 +122,17 @@ class ContractParametersContext():
                 return index
         return -1
 
+
+
+    def GetParameters(self, script_hash):
+        if script_hash.ToBytes() in self.ContextItems.keys():
+            return self.ContextItems[script_hash.ToBytes()].Parameters
+
     def GetParameter(self, scriptHash, index):
-        return self.Parameters[self.GetIndex(scriptHash)][index]
+        params = self.GetParameters(scriptHash)
+        if params:
+            return params[index]
+        return None
 
 
     def GetScripts(self):
@@ -86,17 +142,29 @@ class ContractParametersContext():
 
         scripts = []
 
-        for i in range(0, len(self.Parameters)):
+        for i in range(0, len(self.ScriptHashes)):
+
+            item = self.ContextItems[self.ScriptHashes[i].ToBytes()]
+            print("GETTING SCRIPTS, item is %s " % item)
 
             sb = ScriptBuilder()
 
-            plist = list(self.Parameters[i])
+            plist = list(item.ContractParameters)
             plist.reverse()
 
             for p in plist:
-                sb.push(p)
+                sb.push(p.Value)
 
-            witness = Witness(invocation_script=sb.ToArray(), verification_script=self.Verifications[i])
+            vscript = bytearray(0)
+
+            if item.Script is not None:
+                vscript = item.Script
+
+            witness = Witness(
+                invocation_script=sb.ToArray(),
+                verification_script=vscript
+            )
+
             scripts.append(witness)
 
 
