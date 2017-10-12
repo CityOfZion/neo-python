@@ -191,6 +191,10 @@ class Transaction(Inventory, InventoryMixin):
         self.__references = None
 
     @property
+    def Scripts(self):
+        return self.scripts
+
+    @property
     def References(self):
 
         if self.__references is None:
@@ -384,8 +388,11 @@ class Transaction(Inventory, InventoryMixin):
     def Verify(self, mempool):
         self.__log.debug("Verifying transaction: %s " % self.Hash.ToBytes())
 
+
+        return Helper.VerifyScripts(self)
+
 #        print("return true for now ...")
-        return True
+#        return True
 
 #        for i in range(1, len(self.inputs)):
 #            j=0
@@ -456,7 +463,6 @@ class Transaction(Inventory, InventoryMixin):
 #                if usageECDH > 1:
 #                    return False
 #
-#        return Helper.VerifyScripts(self)
 
 
 

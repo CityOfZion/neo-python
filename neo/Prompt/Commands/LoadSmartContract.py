@@ -30,28 +30,18 @@ def ImportContractAddr(wallet, args):
         if len(pubkey) != 66:
             print("invalid public key format")
 
-
         pubkey_script_hash = Crypto.ToScriptHash(pubkey,unhex=True)
 
-        print("import contract address %s %s " % (contract_hash, pubkey))
-        print("pubkey script hash %s " % pubkey_script_hash)
         contract = Blockchain.Default().GetContract(contract_hash)
 
         if contract is not None:
 
+            reedeem_script = contract.Code.Script.hex()
+            param_list = bytearray(b'\x00')
 
-            reedeem_script = contract.Code.Script
-            param_list = contract.Code.ParameterList
-
-
-
-            verification_contract = Contract.Create(pubkey_script_hash,param_list,reedeem_script)
+            verification_contract = Contract.Create(reedeem_script,param_list,pubkey_script_hash)
 
             address = verification_contract.Address
-
-            print("address %s " % address)
-
-            print("contract objcet is %s " % contract)
 
             wallet.AddContract(verification_contract)
 

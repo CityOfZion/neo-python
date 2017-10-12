@@ -591,11 +591,14 @@ class ExecutionEngine():
 
                 try:
 
-                    self.Crypto.VerifySignature( self.ScriptContainer.GetMessage(), pubkey, sig)
+                    res = self.Crypto.VerifySignature( self.ScriptContainer.GetMessage(), sig, pubkey)
+                    estack.PushT(res)
 
                 except Exception as e:
-
+                    print("couldnt operate signature verification")
                     estack.PushT(False)
+                    traceback.print_stack()
+                    traceback.print_exc()
 
 
             elif opcode == CHECKMULTISIG:
@@ -795,10 +798,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
- #       opname = ToName(op)
- #       print("____________________________________________________")
- #       print("%s -> %s" % (op, opname))
- #       print("-----------------------------------")
+#        opname = ToName(op)
+#        print("____________________________________________________")
+#        print("%s -> %s" % (op, opname))
+#        print("-----------------------------------")
 
         self.ops_processed += 1
 

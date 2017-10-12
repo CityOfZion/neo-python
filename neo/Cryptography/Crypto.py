@@ -75,6 +75,8 @@ class Crypto(object):
     @staticmethod
     def VerifySignature(message, signature, public_key):
 
+        Crypto.SetupSignatureCurve()
+
         if type(public_key) is EllipticCurve.ECPoint:
 
             pubkey_x = public_key.x.value.to_bytes(32,'big')
@@ -82,8 +84,20 @@ class Crypto(object):
 
             public_key = pubkey_x + pubkey_y
 
+        m = message
+        try:
+            m = binascii.unhexlify(message)
+        except Exception as e:
+            print("could not get m")
+
+        if len(public_key) == 33:
+
+            public_key = bitcoin.decompress(public_key)
+            public_key = public_key[1:]
+
         vk = VerifyingKey.from_string( public_key,curve=NIST256p, hashfunc=hashlib.sha256 )
-        return vk.verify(signature, message)
+        res = vk.verify(signature, m,hashfunc=hashlib.sha256)
+        return res
 
 
 class CryptoInstance():

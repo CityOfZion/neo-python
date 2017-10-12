@@ -68,7 +68,7 @@ class Contract(SerializableMixin, VerificationCode):
         self._address = None
 
     @staticmethod
-    def Create(publicKeyHash, parameterList, redeemScript):
+    def Create(redeemScript, parameterList, publicKeyHash):
 
         return Contract(redeemScript, parameterList, publicKeyHash)
 
