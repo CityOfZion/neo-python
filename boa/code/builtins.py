@@ -108,15 +108,14 @@ def concat(str1, str2):
 #    pass
 
 
-# @TODO this currently does not work
-#def take(source, count):
-#    """
-#    take(source, count) -> list object
-#
-#    Return a subset of a string or list `source`, starting
-#    at index 0 and of length `count`
-#    """
-#    pass
+def take(source, count):
+    """
+    take(source, count) -> list object
+
+    Return a subset of a string or list `source`, starting
+    at index 0 and of length `count`
+    """
+    pass
 
 
 def range(start, stop):

@@ -495,8 +495,8 @@ class VMTokenizer():
         if param_len <= 1:
             pass
         elif param_len == 2:
-            # if we are using concat, we don't want to swap
-            if pytoken.func_name != 'concat':
+            # if we are using concat or take, we don't want to swap
+            if pytoken.func_name != 'concat' and pytoken.func_name != 'take':
                 self.insert1(VMOp.SWAP)
 
         elif param_len == 3:
