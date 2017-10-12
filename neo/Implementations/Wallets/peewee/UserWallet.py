@@ -43,6 +43,7 @@ class UserWallet(Wallet):
         self.__log.debug("initialized user wallet!! %s " % self)
 
     def BuildDatabase(self):
+        PWDatabase.Destroy()
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
         try:
