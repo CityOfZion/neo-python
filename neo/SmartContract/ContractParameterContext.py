@@ -49,19 +49,14 @@ class ContractParametersContext():
     def Completed(self):
 
         if len(self.ContextItems) < len(self.ScriptHashes):
-            print("context items, script hashes %s %s " % (self.ContextItems, self.ScriptHashes))
             return False
 
         for item in self.ContextItems.values():
-            print("going through items %s " % item.Script)
             if item is None:
-                print("item is none...")
                 return False
 
             for p in item.ContractParameters:
-                print("item parameters??? %s" % p)
                 if p is None or p.Value is None:
-                    print("parameter is none")
                     return False
 
         return True
@@ -70,7 +65,6 @@ class ContractParametersContext():
     def Add(self, contract, index, parameter):
 
         item = self.CreateItem(contract)
-        print("ADDING iTEM:: %s " % item)
         item.ContractParameters[index].Value = parameter
 
 #        pdb.set_trace()
@@ -84,7 +78,6 @@ class ContractParametersContext():
             return self.ContextItems[ contract.ScriptHash.ToBytes()]
 
         if not contract.ScriptHash in self.ScriptHashes:
-            print("script hash not in self script hashes...")
             return None
 
         item = ContextItem(contract)
@@ -113,7 +106,6 @@ class ContractParametersContext():
                     else:
                         index = i
 
-            print("ADDING SIG!! .... %s %s %s " % (contract, index,signature))
             return self.Add(contract, index, signature)
 
     def GetIndex(self, script_hash):
@@ -145,7 +137,6 @@ class ContractParametersContext():
         for i in range(0, len(self.ScriptHashes)):
 
             item = self.ContextItems[self.ScriptHashes[i].ToBytes()]
-            print("GETTING SCRIPTS, item is %s " % item)
 
             sb = ScriptBuilder()
 

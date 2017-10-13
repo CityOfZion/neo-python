@@ -599,25 +599,21 @@ class Wallet(object):
 
         for hash in context.ScriptHashes:
 
-            print("checkhing hash...")
             contract = self.GetContract(hash)
             if contract is None:
-                print("contract is none, return")
                 continue
 
             key = self.GetKeyByScriptHash(hash)
-            print("key is %s " % key)
+
             if key is None:
-                print("key is none")
                 continue
 
-            print("Signing.... %s %s " % (context.Verifiable, key))
             signature = Helper.Sign(context.Verifiable, key)
-            print("signature %s " % signature)
+
             res = context.AddSignature(contract, key.PublicKey, signature)
-            print("result is %s " % res)
+
             success |=res
-            print("success is %s " % success)
+
         return success
 
 

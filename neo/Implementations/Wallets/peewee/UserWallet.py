@@ -115,6 +115,9 @@ class UserWallet(Wallet):
         db_contract = None
         try:
             db_contract = Contract.get(ScriptHash = contract.ScriptHash.ToBytes())
+            db_contract.delete_instance()
+            db_contract = None
+            print("got existing contract??")
         except Exception as e:
             self.__log.debug("contract does not exist yet")
 
@@ -133,6 +136,7 @@ class UserWallet(Wallet):
             self.__log.debug("Creating db contract %s " % db_contract)
 
             db_contract.save()
+            print("created db contract: %s " % db_contract)
 
     def AddWatchOnly(self, script_hash):
         super(UserWallet,self).AddWatchOnly(script_hash)

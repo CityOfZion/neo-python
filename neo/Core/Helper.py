@@ -9,7 +9,7 @@ from neo.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo import Settings
 from base58 import b58decode
-
+import pdb
 class Helper(object):
 
 
@@ -37,10 +37,8 @@ class Helper(object):
     def Sign(verifiable, keypair):
 
         prikey = bytes(keypair.PrivateKey)
-        print("private key %s " % prikey)
         hashdata = verifiable.GetHashData()
         res = Crypto.Default().Sign(hashdata, prikey, keypair.PublicKey)
-        print("result is %s " % res)
         return res
 
     @staticmethod
@@ -105,29 +103,29 @@ class Helper(object):
             verification = verifiable.Scripts[i].VerificationScript
 
 
-
             if len(verification) == 0:
+#                print("VERIFICATION IS 0, EMITTING APP CALL")
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
                 verification = sb.ToArray()
 
             else:
-                if hashes[i] != verification:
+                verification_hash = Crypto.ToScriptHash(verification,unhex=False)
+                if hashes[i] != verification_hash:
                     print("hashes not equal to script hash!")
                     return False
 
             engine = ApplicationEngine(TriggerType.Verification, verifiable, GetBlockchain(), GetStateReader(), Fixed8.Zero())
             engine.LoadScript(verification, False)
-            engine.LoadScript(verifiable.Scripts[i].InvocationScript, True)
+            invoction = verifiable.Scripts[i].InvocationScript
+            engine.LoadScript(invoction, True)
 
             res =  engine.Execute()
             if not res:
                 print("engine did not execute")
                 return False
 
-
             if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
-#                print("stack not one, or stack false")
                 return False
 
         return True
