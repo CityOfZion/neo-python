@@ -167,7 +167,7 @@ class ApplicationEngine(ExecutionEngine):
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 self.__log.debug(exc_type, fname, exc_tb.tb_lineno)
                 self.__log.debug("exception calculating gas consumed %s " % e)
-                print("Exception calculating gas consumbed %s " % e)
+                print("Exception calculating gas consumed %s " % e)
                 return False
 
             if not self.testMode and self.gas_consumed > self.gas_amount:
