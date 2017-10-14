@@ -9,7 +9,7 @@ from neo.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo import Settings
 from base58 import b58decode
-import pdb
+
 class Helper(object):
 
 
@@ -76,12 +76,7 @@ class Helper(object):
     @staticmethod
     def RawBytesToScriptHash(raw):
         rawh = binascii.unhexlify(raw)
-
         rawhashstr = binascii.unhexlify(bytes(Crypto.Hash160(rawh), encoding='utf-8'))
-#        h160bytes = bytearray(rawhashstr)
-#        h160bytes.reverse()
-#        out = bytes(h160bytes.hex(), encoding='utf-8')
-#        return out
         return UInt160(data=rawhashstr)
 
     @staticmethod
@@ -95,8 +90,8 @@ class Helper(object):
             print("couldng get script hashes %s " % e)
             return False
 
+
         if len(hashes) != len(verifiable.Scripts):
-            print("hashes not same length as verifiable scripts")
             return False
 
         for i in range(0, len(hashes)):
@@ -112,7 +107,6 @@ class Helper(object):
             else:
                 verification_hash = Crypto.ToScriptHash(verification,unhex=False)
                 if hashes[i] != verification_hash:
-                    print("hashes not equal to script hash!")
                     return False
 
             engine = ApplicationEngine(TriggerType.Verification, verifiable, GetBlockchain(), GetStateReader(), Fixed8.Zero())

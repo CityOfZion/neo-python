@@ -20,7 +20,7 @@ class UInt160(UIntBase):
 
         length = len(x)
 
-        for i in range(0, length):
+        for i in range(length-1, 0, -1):
 
             if x[i] > y[i]:
                 return 1

@@ -254,7 +254,6 @@ class Wallet(object):
         for coin in coins:
             sum = sum + coin.Output.Value
 
-
         if sum < amount:
             return None
 
@@ -288,10 +287,15 @@ class Wallet(object):
     def GetBalance(self, asset_id):
         total=Fixed8(0)
         for coin in self.GetCoins():
-            if coin.State & CoinState.Spent == 0 \
-                and coin.Output.AssetId == asset_id:
+            if coin.Output.AssetId == asset_id:
 
-                total = total + coin.Output.Value
+                if coin.State & CoinState.Confirmed > 0 and \
+                    coin.State & CoinState.Spent == 0 and \
+                    coin.State & CoinState.Locked == 0 and \
+                    coin.State & CoinState.Frozen == 0 and \
+                    coin.State & CoinState.WatchOnly == 0:
+
+                    total = total + coin.Output.Value
 
         return total
 

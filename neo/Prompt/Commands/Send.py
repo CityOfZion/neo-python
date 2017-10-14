@@ -7,8 +7,8 @@ from neo.Core.TX.Transaction import TransactionOutput,ContractTransaction
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import parse_param,get_arg
-
-
+import json
+from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
 
 def construct_and_send(prompter, wallet, arguments):
     try:
@@ -71,6 +71,12 @@ def construct_and_send(prompter, wallet, arguments):
             print("incorrect password")
             return
 
+        standard_contract = wallet.GetChangeAddress()
+        data = standard_contract.Data
+        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                              data=data)]
+
+
         context = ContractParametersContext(tx)
         wallet.Sign(context)
 
@@ -78,7 +84,10 @@ def construct_and_send(prompter, wallet, arguments):
 
             tx.scripts = context.GetScripts()
 
+
             wallet.SaveTransaction(tx)
+
+#            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
 
             relayed = NodeLeader.Instance().Relay(tx)
 

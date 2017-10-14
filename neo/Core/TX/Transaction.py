@@ -494,7 +494,6 @@ class Transaction(Inventory, InventoryMixin):
 
         hashlist = list(hashes)
         hashlist.sort()
-
         return hashlist
 
 

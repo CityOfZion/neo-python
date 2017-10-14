@@ -57,7 +57,11 @@ class ContractParametersContext():
 
             for p in item.ContractParameters:
                 if p is None or p.Value is None:
-                    return False
+#
+                    if p.Type == 16:
+                        p.Value = []
+                    else:
+                        return False
 
         return True
 
@@ -85,6 +89,7 @@ class ContractParametersContext():
         self.ContextItems[contract.ScriptHash.ToBytes()] = item
 
         return item
+
 
 
     def AddSignature(self, contract, pubkey, signature):
@@ -144,11 +149,17 @@ class ContractParametersContext():
             plist.reverse()
 
             for p in plist:
-                sb.push(p.Value)
+
+                if type(p.Value) is list:
+                    sb.push(0)
+                else:
+                    sb.push(p.Value)
 
             vscript = bytearray(0)
 
             if item.Script is not None:
+                if type(item.Script) is str:
+                    item.Script = item.Script.encode('utf-8')
                 vscript = item.Script
 
             witness = Witness(

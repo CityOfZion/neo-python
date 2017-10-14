@@ -107,7 +107,6 @@ class NodeLeader():
 
 
     def ResetBlockRequestsAndCache(self):
-        print("RESETTING BLOCK REQUESTS AND CACHE!")
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
             p.myblockrequests= set()

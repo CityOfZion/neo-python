@@ -32,7 +32,7 @@ class Contract(ModelBase):
     RawData = CharField()
     ScriptHash = CharField()
     PublicKeyHash = CharField()
-    Account = ForeignKeyField(Account)
+    Account = ForeignKeyField(Account, null=True)
     Address = ForeignKeyField(Address)
 
 class Key(ModelBase):

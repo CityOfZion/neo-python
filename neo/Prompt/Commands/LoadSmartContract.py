@@ -37,7 +37,7 @@ def ImportContractAddr(wallet, args):
         if contract is not None:
 
             reedeem_script = contract.Code.Script.hex()
-            param_list = bytearray(b'\x00')
+            param_list = bytearray(b'\x00\x10')
 
             verification_contract = Contract.Create(reedeem_script,param_list,pubkey_script_hash)
 

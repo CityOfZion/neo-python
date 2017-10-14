@@ -28,6 +28,7 @@ from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, Co
 
 from autologging import logged
 import json
+from playhouse.migrate import *
 
 @logged
 class UserWallet(Wallet):
@@ -51,6 +52,14 @@ class UserWallet(Wallet):
         except Exception as e:
             print("Couldnt build database %s " % e)
             self.__log.debug("couldnt build database %s " % e)
+
+    def Migrate(self):
+        db = PWDatabase.ContextDB()
+        migrator = SqliteMigrator(db)
+
+        migrate(
+            migrator.drop_not_null('Contract','Account_id')
+        )
 
     def DB(self):
         return PWDatabase.Context()
@@ -319,10 +328,10 @@ class UserWallet(Wallet):
             for ct in self._contracts.values():
                 if ct.PublicKeyHash == k.PublicKeyHash:
                     signature_contract = ct
+            if signature_contract:
+                addr = signature_contract.Address
 
-            addr = signature_contract.Address
-
-            jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
+                jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
 
         return jsn
 
@@ -334,14 +343,28 @@ class UserWallet(Wallet):
             try:
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.delete_instance()
-                print("deleted coin!!!")
             except Exception as e:
                 print("Couldnt delete coin %s %s " % (e, coin))
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
 
-        address = Address.get(ScriptHash = bytes(script_hash.ToArray()))
-        address.delete_instance()
 
+        todelete = bytes(script_hash.ToArray())
+
+        for c in Contract.select():
+
+            address = c.Address
+            if address.ScriptHash == todelete:
+
+                c.delete_instance()
+                address.delete_instance()
+
+        try:
+            address = Address.get(ScriptHash = todelete)
+            address.delete_instance()
+        except Exception as e:
+            pass
+
+        print("Deleted address %s " % script_hash)
         return True,coins_toremove
 
 
@@ -357,10 +380,17 @@ class UserWallet(Wallet):
         jsn['path'] = self._path
 
         addresses = [Crypto.ToAddress(UInt160(data=addr.ScriptHash)) for addr in Address.select()]
+
+        balances = []
+        for asset in assets:
+            bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
+            total = self.GetBalance(asset).value / Fixed8.D
+            balances.append("[%s]: %s " % (bc_asset.GetName(), total))
+
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
         jsn['percent_synced'] = percent_synced
-        jsn['balances'] = ["%s : %s " % (asset.ToString(), self.GetBalance(asset).value / Fixed8.D) for asset in assets]
+        jsn['balances'] = balances
         jsn['public_keys'] = self.PubKeys()
 
         if verbose:
