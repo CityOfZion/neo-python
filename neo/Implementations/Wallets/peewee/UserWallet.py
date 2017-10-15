@@ -379,7 +379,15 @@ class UserWallet(Wallet):
         jsn = {}
         jsn['path'] = self._path
 
-        addresses = [Crypto.ToAddress(UInt160(data=addr.ScriptHash)) for addr in Address.select()]
+        addresses = []
+        for addr in Address.select():
+            print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
+            addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
+            acct = Blockchain.Default().GetAccountState(addr_str)
+            if acct:
+                addresses.append( acct.ToJson())
+            else:
+                addresses.append(addr_str)
 
         balances = []
         for asset in assets:
@@ -390,7 +398,7 @@ class UserWallet(Wallet):
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
         jsn['percent_synced'] = percent_synced
-        jsn['balances'] = balances
+        jsn['synced_balances'] = balances
         jsn['public_keys'] = self.PubKeys()
 
         if verbose:

@@ -57,12 +57,8 @@ class ContractParametersContext():
 
             for p in item.ContractParameters:
                 if p is None or p.Value is None:
-#
-                    if p.Type == 16:
-                        p.Value = []
-                    else:
-                        return False
-
+                    if p.Type is not None:
+                        p.Value = 0
         return True
 
 
@@ -150,10 +146,10 @@ class ContractParametersContext():
 
             for p in plist:
 
-                if type(p.Value) is list:
-                    sb.push(0)
-                else:
-                    sb.push(p.Value)
+#                if p.Value =:
+#                    sb.push(0)
+#                else:
+                sb.push(p.Value)
 
             vscript = bytearray(0)
 

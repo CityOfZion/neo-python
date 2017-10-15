@@ -37,6 +37,6 @@
     "UriPrefix": [ "http://*:10332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "VersionName":"/NEO:2.1.0/"
+    "VersionName":"/NEO-PYTHON:2.3.4/"
   }
 }

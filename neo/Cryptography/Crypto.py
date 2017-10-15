@@ -95,9 +95,14 @@ class Crypto(object):
             public_key = bitcoin.decompress(public_key)
             public_key = public_key[1:]
 
-        vk = VerifyingKey.from_string( public_key,curve=NIST256p, hashfunc=hashlib.sha256 )
-        res = vk.verify(signature, m,hashfunc=hashlib.sha256)
-        return res
+        try:
+            vk = VerifyingKey.from_string( public_key,curve=NIST256p, hashfunc=hashlib.sha256 )
+            res = vk.verify(signature, m,hashfunc=hashlib.sha256)
+            return res
+        except Exception as e:
+            pass
+
+        return False
 
 
 class CryptoInstance():
