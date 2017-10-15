@@ -37,7 +37,19 @@ def ImportContractAddr(wallet, args):
         if contract is not None:
 
             reedeem_script = contract.Code.Script.hex()
-            param_list = bytearray(b'\x00\x10')
+
+            # there has to be at least 1 param, and the first
+            # one needs to be a signature param
+            param_list = bytearray(b'\x00')
+
+            # if there's more than one param
+            # we set the first parameter to be the signature param
+            if len(contract.Code.ParameterList) > 1:
+                param_list = bytearray(contract.Code.ParameterList)
+                param_list[0] = 0
+
+
+            print("self param list: %s " % param_list)
 
             verification_contract = Contract.Create(reedeem_script,param_list,pubkey_script_hash)
 
@@ -69,6 +81,11 @@ def LoadContract(args):
     needs_storage = bool(parse_param(args[3]))
 
     script = None
+
+
+    if '.py' in path:
+        print("Please load a compiled .avm file")
+        return False
 
     with open(path, 'rb') as f:
 

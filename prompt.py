@@ -287,6 +287,7 @@ class PromptInterface(object):
         return
 
 
+
     def do_export(self, arguments):
         item = get_arg(arguments)
 
@@ -553,7 +554,7 @@ class PromptInterface(object):
 
         function_code = LoadContract(args[1:])
 
-        if function_code is not None:
+        if function_code:
 
 
             contract_script = GatherContractDetails(function_code, self)

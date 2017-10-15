@@ -84,13 +84,8 @@ class NeoNode(Protocol):
 
     def connectionLost(self, reason=None):
 
-#        self.buffer_in = None
-#        self.pm = None
-
-#        reactor.callInThread(self.ReleaseBlockRequests)
         self.ReleaseBlockRequests()
         self.leader.RemoveConnectedPeer(self)
-#        self.leader = None
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
 
 
@@ -117,7 +112,6 @@ class NeoNode(Protocol):
 
         self.CheckDataReceived()
 
-#    @profile
     def CheckDataReceived(self):
 
         if len(self.buffer_in) >= 24:
@@ -140,13 +134,7 @@ class NeoNode(Protocol):
                 StreamManager.ReleaseStream(ms)
                 del reader
 
-            try:
-                #make this threadsafe
-#                reactor.callFromThread(self.CheckMessageData)
-                self.CheckMessageData()
-            except RecursionError:
-                self.Log("Recursion error!!!")
-                self.Disconnect()
+            self.CheckMessageData()
 
     def CheckMessageData(self):
         if not self.pm: return
@@ -167,7 +155,7 @@ class NeoNode(Protocol):
             self.pm = None
             self.MessageReceived(message)
             self.reset_counter = False
-            while len(self.buffer_in) > 24 and not self.reset_counter:
+            if len(self.buffer_in) > 24 and not self.reset_counter:
                 self.CheckDataReceived()
 
         else:
@@ -190,7 +178,8 @@ class NeoNode(Protocol):
         elif m.Command == 'block':
             self.HandleBlockReceived(m.Payload)
         elif m.Command == 'headers':
-            self.HandleBlockHeadersReceived(m.Payload)
+            reactor.callFromThread(self.HandleBlockHeadersReceived, m.Payload)
+#            self.HandleBlockHeadersReceived(m.Payload)
         elif m.Command == 'addr':
             self.HandlePeerInfoReceived(m.Payload)
         else:
@@ -277,14 +266,18 @@ class NeoNode(Protocol):
 #       dont send peer info now
         pass
 
+    def RequestVersion(self):
+        m = Message("getversion")
+        self.SendSerializedMessage(m)
+
     def SendVersion(self):
-        m = Message("version", VersionPayload(Settings.NODE_PORT, self.nodeid, Settings.VERSION_NAME))
+        m = Message("version", VersionPayload(Settings.NODE_PORT, self.remote_nodeid, Settings.VERSION_NAME))
         self.SendSerializedMessage(m)
 
 
     def HandleVersion(self, payload):
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
-        self.remote_nodeid = self.Version.Nonce
+        self.nodeid = self.Version.Nonce
         self.Log("Remote version %s " % vars(self.Version))
         self.SendVersion()
 

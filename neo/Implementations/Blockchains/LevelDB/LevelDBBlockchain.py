@@ -198,7 +198,7 @@ class LevelDBBlockchain(Blockchain):
         acct = accounts.TryGet(keyval=script_hash)
 
         if acct is None:
-            print("Could not find account. Length of accounts %s " % len(accounts.Keys))
+#            print("Could not find account. Length of accounts %s " % len(accounts.Keys))
             if print_all_accounts:
                 print("All accounts: %s " % accounts.Keys)
 
