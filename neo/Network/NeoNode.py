@@ -134,7 +134,10 @@ class NeoNode(Protocol):
                 StreamManager.ReleaseStream(ms)
                 del reader
 
-            self.CheckMessageData()
+            try:
+                self.CheckMessageData()
+            except Exception as e:
+                print("Could not check message data %s " % e)
 
     def CheckMessageData(self):
         if not self.pm: return
