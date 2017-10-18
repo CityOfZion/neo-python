@@ -4,20 +4,17 @@
 import json
 import logging
 import datetime
-import time
 import os
 from neo.IO.MemoryStream import StreamManager
-from neo.Network.NodeLeader import NodeLeader
 import resource
 
 from neo.Core.Blockchain import Blockchain
-from neo.Core.TX.Transaction import Transaction,ContractTransaction,TransactionOutput
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
+from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr
 from neo.Prompt.Commands.Send import construct_and_send
 from neo.Prompt.Commands.Wallet import DeleteAddress
@@ -286,7 +283,11 @@ class PromptInterface(object):
         print("please specify something to import")
         return
 
+    def do_build(self, arguments):
+        BuildAndRun(arguments, self.Wallet)
 
+    def do_load_n_run(self, arguments):
+        LoadAndRun(arguments, self.Wallet)
 
     def do_export(self, arguments):
         item = get_arg(arguments)
@@ -713,6 +714,10 @@ class PromptInterface(object):
                             self.do_create(arguments)
                         elif command == 'open':
                             self.do_open(arguments)
+                        elif command == 'build':
+                            self.do_build(arguments)
+                        elif command == 'load_run':
+                            self.do_load_n_run(arguments)
                         elif command == 'import':
                             self.do_import(arguments)
                         elif command == 'export':
