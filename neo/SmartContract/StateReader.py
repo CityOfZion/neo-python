@@ -227,6 +227,7 @@ class StateReader(InteropService):
         print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
         return True
 
+
     def Blockchain_GetHeight(self, engine):
         if Blockchain.Default() is None:
             engine.EvaluationStack.PushT(0)
@@ -322,15 +323,19 @@ class StateReader(InteropService):
         engine.EvaluationStack.PushT(StackItem.FromInterface(tx))
         return True
 
+
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
         address = Crypto.ToAddress(hash).encode('utf-8')
-        account = self._accounts.TryGet(address)
+
+        account = Blockchain.Default().GetAccountState(address)
+
         if account:
             engine.EvaluationStack.PushT(StackItem.FromInterface(account))
             return True
 
         return False
+
 
     def Blockchain_GetValidators(self, engine):
 
@@ -340,7 +345,8 @@ class StateReader(InteropService):
 
         engine.EvaluationStack.PushT(items)
 
-        raise NotImplementedError()
+        return True
+
 
     def Blockchain_GetAsset(self, engine):
         data = engine.EvaluationStack.Pop().GetByteArray()
@@ -705,7 +711,9 @@ class StateReader(InteropService):
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
 
-        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
+        # @TODO Replace _storages in state reader
+        item = Blockchain.Default().GetStorageItem(storage_key.GetHashCodeBytes())
+#        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         keystr = key
 
