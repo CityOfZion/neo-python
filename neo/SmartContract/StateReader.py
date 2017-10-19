@@ -717,9 +717,7 @@ class StateReader(InteropService):
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
 
-        # @TODO Replace _storages in state reader
         item = Blockchain.Default().GetStorageItem(storage_key.GetHashCodeBytes())
-#        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         keystr = key
 
