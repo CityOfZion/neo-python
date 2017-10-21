@@ -59,13 +59,7 @@ def construct_and_send(prompter, wallet, arguments):
             print("insufficient funds")
             return
 
-
-        passwd = prompt("[Password]> ",
-                   completer=prompter.completer,
-                   is_password=True,
-                   history=prompter.history,
-                   get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                   style=prompter.token_style)
+        passwd = prompt("[Password]> ", is_password=True)
 
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
