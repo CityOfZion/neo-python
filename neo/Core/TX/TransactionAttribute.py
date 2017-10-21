@@ -126,18 +126,10 @@ class TransactionAttribute(Inventory, SerializableMixin):
 
     def ToJson(self):
 
-        outstr = self.Data
-
-        try:
-            outstr = binascii.unhexlify(self.Data)
-        except Exception as e:
-
-            print("couldnt decode data %s " % self.Data)
-            outstr = self.Data.decode('utf-8')
 
 
         obj = {
             'usage': self.Usage,
-            'data': outstr
+            'data': '' if not self.Data else self.Data.hex()
         }
         return obj
