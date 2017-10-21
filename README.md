@@ -45,7 +45,7 @@
 
 ## Getting started
 
-You will need to install the libleveldb library. Install [Python 3.5](https://www.python.org/downloads/release/python-354/) to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. 
+You will need to install the libleveldb library. Install [Python 3.5](https://www.python.org/downloads/release/python-354/) to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.6 is not currently supported due to incompatibilities with the byteplay module. 
 
 We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get you started with this library. There are other videos under the CityOfZion Youtube channel.
 
@@ -117,17 +117,24 @@ You may need to uninstall plyvel (python libleveldb library), and reinstall with
 
 ```
 pip uninstall plyvel
-CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel --no-cache-dir
+CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel --no-cache-dir --global-option=build_ext --global-option="-I/usr/local/Cellar/leveldb/1.20_2/include/" --global-option="-L/usr/local/lib"
 ```
 
-Moreover, this pip installation must see the leveldb header file db.h.
-You may need to add flags similar to the following to the
-installation command
+You may also encounter issues when installing the pycrypto module on OSX:
 
 ```
---global-option=build_ext
---global-option="-I/usr/local/Cellar/leveldb/1.20_2/include/"
---global-option="-L/usr/local/lib"
+src/_fastmath.c:36:11: fatal error: 'gmp.h' file not found
+# include <gmp.h>
+          ^~~~~~~
+330 warnings and 1 error generated.
+error: command 'clang' failed with exit status 1
+```
+
+This may be fixed by installing the gmp library using homebrew and running pip install with the following commandline:
+
+```
+brew install gmp
+CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel pycrypto --no-cache-dir --global-option=build_ext --global-option="-I/usr/local/Cellar/gmp/6.1.2/include/" --global-option="-L/usr/local/lib"
 ```
 
 ## Running

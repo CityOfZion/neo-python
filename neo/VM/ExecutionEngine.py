@@ -800,7 +800,7 @@ class ExecutionEngine():
 
 #        opname = ToName(op)
 #        print("____________________________________________________")
-#        print("%s -> %s" % (op, opname))
+#        print("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
 #        print("-----------------------------------")
 
         self.ops_processed += 1
