@@ -705,15 +705,19 @@ class StateReader(InteropService):
             return False
 
 
-        if not self.CheckStorageContext(context):
+        contract = Blockchain.Default().GetContract(context.ScriptHash.ToBytes())
+
+        if contract is not None:
+            if not contract.HasStorage:
+                return False
+        else:
             return False
+
 
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
 
-        # @TODO Replace _storages in state reader
         item = Blockchain.Default().GetStorageItem(storage_key.GetHashCodeBytes())
-#        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         keystr = key
 

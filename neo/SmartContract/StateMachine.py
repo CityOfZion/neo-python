@@ -81,7 +81,7 @@ class StateMachine(StateReader):
         contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
 
         if contract is not None:
-            if contract is not None and contract.HasStorage:
+            if contract.HasStorage:
                 return True
 
         return False
