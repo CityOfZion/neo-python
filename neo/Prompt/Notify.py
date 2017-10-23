@@ -53,6 +53,21 @@ def HandleBlockchainNotification(notification):
                     amount = event_args[1].GetBigInteger()
                     print("[Neo.Runtime.Notify :: REFUND] amount %s " % amount)
 
+
+                elif event_name in ['deposit','withdraw','withdraw_reconcile']:
+                    to = event_args[0].GetByteArray()
+
+                    if len(to) == 20:
+                        to = Crypto.ToAddress(UInt160(data=to))
+
+                    ename = event_name.upper()
+                    print("[Neo.Runtime.Notify :: %s] TO %s " % (ename,to))
+                    amount = event_args[1].GetBigInteger()
+                    print("[Neo.Runtime.Notify :: %s] amount %s " % (ename,amount))
+
+
+
+
                 else:
 #                    print("event name not handled %s " % event_args)
 

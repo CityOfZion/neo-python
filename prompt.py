@@ -33,7 +33,7 @@ from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.history import FileHistory
 
 
 logname = 'prompt.log'
@@ -103,7 +103,7 @@ class PromptInterface(object):
                 'config log {on/off}',
                 'import wif {wif}',
                 'import contract {path} {params} {returntype}',
-                'export wif {address}'
+                'export wif {address}',
                 'open wallet {path}',
                 'create wallet {path}',
                 'wallet {verbose}',
@@ -121,7 +121,7 @@ class PromptInterface(object):
         Token.Number: "#ffffff",
     })
 
-    history = InMemoryHistory()
+    history = FileHistory('.prompt.py.history')
 
     start_height = Blockchain.Default().Height
     start_dt = datetime.datetime.utcnow()
