@@ -3,7 +3,6 @@
 from neo.Core.BlockBase import BlockBase
 from neo.IO.MemoryStream import MemoryStream,StreamManager
 from neo.IO.BinaryReader import BinaryReader
-from bitarray import bitarray
 from neo.Core.Witness import Witness
 
 
