@@ -41,7 +41,7 @@ import json
 def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
 
-    wallet_tx = wallet.MakeTransaction(tx=tx,fee=fee)
+    wallet_tx = wallet.MakeTransaction(tx=tx,fee=fee, use_standard=True)
 
     if wallet_tx:
 

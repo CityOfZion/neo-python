@@ -226,7 +226,7 @@ class Wallet(object):
 
         return ok, coins_to_remove
 
-    def FindUnspentCoins(self, from_addr=None):
+    def FindUnspentCoins(self, from_addr=None, use_standard=False):
 
         ret=[]
         for coin in self.GetCoins():
@@ -239,19 +239,24 @@ class Wallet(object):
                 if from_addr is not None:
                     if coin.Output.ScriptHash == from_addr:
                         ret.append(coin)
+                elif use_standard:
+
+                    contract = self._contracts[coin.Output.ScriptHash.ToBytes()]
+                    if contract.IsStandard:
+                        ret.append(coin)
                 else:
                     ret.append(coin)
 
         return ret
 
-    def FindUnspentCoinsByAsset(self, asset_id, from_addr=None):
-        coins = self.FindUnspentCoins(from_addr=from_addr)
+    def FindUnspentCoinsByAsset(self, asset_id, from_addr=None, use_standard=False):
+        coins = self.FindUnspentCoins(from_addr=from_addr, use_standard=use_standard)
 
         return [coin for coin in coins if coin.Output.AssetId == asset_id]
 
-    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None):
+    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False):
 
-        coins = self.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr)
+        coins = self.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr, use_standard=use_standard)
 
         sum = Fixed8(0)
 
@@ -536,7 +541,7 @@ class Wallet(object):
 #        return self._contracts
 
 
-    def MakeTransaction(self, tx, change_address = None, fee = Fixed8(0), from_addr=None):
+    def MakeTransaction(self, tx, change_address = None, fee = Fixed8(0), from_addr=None, use_standard=False):
 
         tx.ResetReferences()
 
@@ -567,7 +572,7 @@ class Wallet(object):
 
 
         for assetId,amount in paytotal.items():
-            paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr)
+            paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard)
 
         for key,unspents in paycoins.items():
             if unspents == None:
@@ -584,6 +589,8 @@ class Wallet(object):
 
         if not change_address:
             change_address = self.GetChangeAddress(from_addr=from_addr)
+
+        print("GOT CHANGE ADDRSS %s " % change_address)
 
         new_outputs = []
 

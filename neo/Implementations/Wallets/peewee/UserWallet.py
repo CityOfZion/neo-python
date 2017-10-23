@@ -157,8 +157,8 @@ class UserWallet(Wallet):
             address.save()
 
 
-    def FindUnspentCoins(self, from_addr=None):
-        return super(UserWallet,self).FindUnspentCoins(from_addr)
+    def FindUnspentCoins(self, from_addr=None, use_standard=False):
+        return super(UserWallet,self).FindUnspentCoins(from_addr, use_standard)
 
     def GetTransactions(self):
         transactions = []
