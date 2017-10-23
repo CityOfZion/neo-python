@@ -145,7 +145,7 @@ to use `prompt.py` file for you to run the node as well as some basic interactiv
 python prompt.py
 NEO cli. Type 'help' to get started
 
-neo> show state
+neo> state
 Progress: 1054913 / 1237188
 
 neo>
@@ -157,7 +157,7 @@ You can query for a block in the current server by hash or by block index:
 python prompt.py
 NEO cli. Type 'help' to get started
 
-neo> show block 122235
+neo> block 122235
 {
     "index": 122235,
     "script": "",
