@@ -101,7 +101,13 @@ def LoadContract(args):
 
     if script is not None:
 
-        function_code = FunctionCode(script=script,param_list=bytearray(binascii.unhexlify(params)), return_type=binascii.unhexlify(return_type), needs_storage=needs_storage)
+        plist = params
+
+        try:
+            plist = bytearray(binascii.unhexlify(params))
+        except Exception as e:
+            plist = bytearray(b'\x10')
+        function_code = FunctionCode(script=script,param_list=bytearray(plist), return_type=binascii.unhexlify(return_type), needs_storage=needs_storage)
 
         return function_code
 
@@ -190,6 +196,15 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
                            description='test', needs_storage=False, return_type=b'\xff', parameter_list=[]):
     sb = ScriptBuilder()
 
+    print("paramater list: %s " % parameter_list)
+
+    plist = parameter_list
+
+    try:
+        plist = binascii.unhexlify(parameter_list)
+    except Exception as e:
+        pass
+
     sb.push(binascii.hexlify(description.encode('utf-8')))
     sb.push(binascii.hexlify(email.encode('utf-8')))
     sb.push(binascii.hexlify(author.encode('utf-8')))
@@ -197,7 +212,7 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
     sb.push(binascii.hexlify(name.encode('utf-8')))
     sb.WriteBool(needs_storage)
     sb.push(return_type)
-    sb.push(binascii.hexlify(parameter_list))
+    sb.push(plist)
     sb.WriteVarData(script)
     sb.EmitSysCall("Neo.Contract.Create")
     script = sb.ToArray()
