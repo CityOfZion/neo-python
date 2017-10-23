@@ -26,7 +26,6 @@ def construct_and_send(prompter, wallet, arguments):
         address_to = get_arg(arguments, 1)
         amount = get_arg(arguments, 2)
 
-        print("FROM ADDRESS: %s " % from_address)
 
         assetId = None
 
@@ -74,7 +73,7 @@ def construct_and_send(prompter, wallet, arguments):
             print("incorrect password")
             return
 
-        standard_contract = wallet.GetChangeAddress(from_addr=scripthash_from)
+        standard_contract = wallet.GetStandardAddress()
         data = standard_contract.Data
         tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                               data=data)]

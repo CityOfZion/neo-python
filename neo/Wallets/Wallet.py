@@ -483,15 +483,19 @@ class Wallet(object):
 
 
 
-    def GetChangeAddress(self, from_addr=None):
+    def GetStandardAddress(self):
+        for contract in self._contracts.values():
+            if contract.IsStandard:
+                return contract.ScriptHash
 
-        print("looking for from addr %s " % from_addr)
+        raise Exception("Could not find a standard contract address")
+
+
+    def GetChangeAddress(self, from_addr=None):
 
         if from_addr is not None:
             for contract in self._contracts.values():
-                print("comparing script hashess %s %s " % (contract.ScriptHash, from_addr))
                 if contract.ScriptHash == from_addr:
-                    print("found change addr %s " % contract.ScriptHash)
                     return contract.ScriptHash
 
         for contract in self._contracts.values():
