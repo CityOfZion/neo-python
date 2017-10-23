@@ -6,7 +6,7 @@ from neo.Fixed8 import Fixed8
 from neo.Core.TX.Transaction import TransactionOutput,ContractTransaction
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import parse_param,get_arg
+from neo.Prompt.Utils import parse_param,get_arg,get_from_addr
 import json
 from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
 
@@ -19,10 +19,14 @@ def construct_and_send(prompter, wallet, arguments):
             print("Not enough arguments")
             return
 
+
+        arguments, from_address = get_from_addr(arguments)
+
         to_send = get_arg(arguments)
         address_to = get_arg(arguments, 1)
         amount = get_arg(arguments, 2)
-        address_from = get_arg(arguments, 3)
+
+        print("FROM ADDRESS: %s " % from_address)
 
         assetId = None
 
@@ -33,10 +37,15 @@ def construct_and_send(prompter, wallet, arguments):
         elif Blockchain.Default().GetAssetState(to_send):
             assetId = Blockchain.Default().GetAssetState(to_send).AssetId
 
-        scripthash = wallet.ToScriptHash(address_to)
-        if scripthash is None:
+        scripthash_to = wallet.ToScriptHash(address_to)
+        if scripthash_to is None:
             print("invalid address")
             return
+
+        scripthash_from = None
+
+        if from_address is not None:
+            scripthash_from = wallet.ToScriptHash(from_address)
 
         f8amount = Fixed8.TryParse(amount)
         if f8amount is None:
@@ -51,9 +60,9 @@ def construct_and_send(prompter, wallet, arguments):
         if get_arg(arguments, 3):
             fee = Fixed8.TryParse(get_arg(arguments, 3))
 
-        output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash)
+        output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         tx = ContractTransaction(outputs=[output])
-        ttx = wallet.MakeTransaction(tx=tx, change_address=None, fee=fee)
+        ttx = wallet.MakeTransaction(tx=tx, change_address=None, fee=fee,from_addr=scripthash_from)
 
         if ttx is None:
             print("insufficient funds")
@@ -65,7 +74,7 @@ def construct_and_send(prompter, wallet, arguments):
             print("incorrect password")
             return
 
-        standard_contract = wallet.GetChangeAddress()
+        standard_contract = wallet.GetChangeAddress(from_addr=scripthash_from)
         data = standard_contract.Data
         tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                               data=data)]

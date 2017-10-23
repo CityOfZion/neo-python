@@ -28,6 +28,23 @@ def get_asset_attachments(params):
     return params, neo_to_attach, gas_to_attach
 
 
+def get_from_addr(params):
+    to_remove = []
+    from_addr = None
+    for item in params:
+        if '--from-addr=' in item:
+            to_remove.append(item)
+            try:
+                from_addr = item.replace('--from-addr=', '')
+            except Exception as e:
+                pass
+    for item in to_remove:
+        params.remove(item)
+
+
+    return params, from_addr
+
+
 def parse_param(p, ignore_int=False, prefer_hex=True):
 
 #    print("parsing param: %s " % p)
