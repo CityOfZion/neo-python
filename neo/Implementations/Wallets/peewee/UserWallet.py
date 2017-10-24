@@ -170,8 +170,8 @@ class UserWallet(Wallet):
             raise Exception("Address already exists in wallet")
 
 
-    def FindUnspentCoins(self, from_addr=None, use_standard=False):
-        return super(UserWallet,self).FindUnspentCoins(from_addr, use_standard)
+    def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
+        return super(UserWallet,self).FindUnspentCoins(from_addr, use_standard, watch_only_val=watch_only_val)
 
     def GetTransactions(self):
         transactions = []

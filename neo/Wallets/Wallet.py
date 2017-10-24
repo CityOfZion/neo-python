@@ -227,7 +227,7 @@ class Wallet(object):
 
         return ok, coins_to_remove
 
-    def FindUnspentCoins(self, from_addr=None, use_standard=False):
+    def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
 
         ret=[]
         for coin in self.GetCoins():
@@ -235,7 +235,7 @@ class Wallet(object):
                 coin.State & CoinState.Spent == 0 and \
                 coin.State & CoinState.Locked == 0 and \
                 coin.State & CoinState.Frozen == 0 and \
-                coin.State & CoinState.WatchOnly == 0:
+                coin.State & CoinState.WatchOnly == watch_only_val:
 
                 if from_addr is not None:
                     if coin.Output.ScriptHash == from_addr:
@@ -250,14 +250,14 @@ class Wallet(object):
 
         return ret
 
-    def FindUnspentCoinsByAsset(self, asset_id, from_addr=None, use_standard=False):
-        coins = self.FindUnspentCoins(from_addr=from_addr, use_standard=use_standard)
+    def FindUnspentCoinsByAsset(self, asset_id, from_addr=None, use_standard=False, watch_only_val=0):
+        coins = self.FindUnspentCoins(from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
 
         return [coin for coin in coins if coin.Output.AssetId == asset_id]
 
-    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False):
+    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0):
 
-        coins = self.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr, use_standard=use_standard)
+        coins = self.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
 
         sum = Fixed8(0)
 
@@ -550,7 +550,13 @@ class Wallet(object):
 #        return self._contracts
 
 
-    def MakeTransaction(self, tx, change_address = None, fee = Fixed8(0), from_addr=None, use_standard=False):
+    def MakeTransaction(self,
+                        tx,
+                        change_address = None,
+                        fee = Fixed8(0),
+                        from_addr=None,
+                        use_standard=False,
+                        watch_only_val=0):
 
         tx.ResetReferences()
 
@@ -581,7 +587,7 @@ class Wallet(object):
 
 
         for assetId,amount in paytotal.items():
-            paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard)
+            paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
 
         for key,unspents in paycoins.items():
             if unspents == None:
@@ -624,11 +630,10 @@ class Wallet(object):
 
 
     def SaveTransaction(self, tx):
-#        changes = set()
-
-#        for input in tx.inputs:
-#            if self input in self._coins.
-#        print("wallet SaveTransaction not impletmented yet")
+        # this is not currently implemented
+        # instead, we just wait to relay to network
+        # and then when the network verifies, it comes back
+        # and flows into the wallet that way
         pass
 
     def Sign(self, context):

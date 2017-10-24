@@ -6,6 +6,7 @@ from neo.Core.Witness import Witness
 import json
 import binascii
 import pdb
+from neo.Core.FunctionCode import FunctionCode
 
 class ContractParamater():
 
@@ -42,17 +43,21 @@ class ContractParametersContext():
 
         self.Verifiable = verifiable
         self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
-
+        print("SCRIPT HASHES FOR VERIFYING! %s " % self.ScriptHashes)
         self.ContextItems = {}
+
+
 
     @property
     def Completed(self):
 
         if len(self.ContextItems) < len(self.ScriptHashes):
+            print("CONTEXT ITEMS, SCRIPT HASHES %s %s " % (len(self.ContextItems), len(self.ScriptHashes)))
             return False
 
         for item in self.ContextItems.values():
             if item is None:
+                print("ITEM IN CONTEXT ITEMS IS NONE!!")
                 return False
 
             for p in item.ContractParameters:
@@ -146,9 +151,6 @@ class ContractParametersContext():
 
             for p in plist:
 
-#                if p.Value =:
-#                    sb.push(0)
-#                else:
                 sb.push(p.Value)
 
             vscript = bytearray(0)
@@ -157,9 +159,10 @@ class ContractParametersContext():
                 if type(item.Script) is str:
                     item.Script = item.Script.encode('utf-8')
                 vscript = item.Script
+#                print("SCRIPT IS %s " % item.Script)
 
             witness = Witness(
-                invocation_script=sb.ToArray(),
+                invocation_script='40fdb984faf0a400b6894c1ce5b317cf894ba3eb89b899cefda2ac307b278418b943534ad298884f9200dc4b7e1dc244db16c62a44a830a860060ec11d3e6e9717',
                 verification_script=vscript
             )
 

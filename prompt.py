@@ -13,7 +13,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
+from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,InvokeWithdrawTx
 from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr
 from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal
@@ -85,9 +85,6 @@ class PromptInterface(object):
 
     _invoke_test_tx = None
     _invoke_test_tx_fee = None
-
-    _invoke_withdraw_tx = None
-    _invoke_withdraw_tx_fee = None
 
     Wallet = None
 
@@ -435,9 +432,6 @@ class PromptInterface(object):
                 print('\n')
                 if txarg and 'tx' in txarg:
 
-#                    with open("b_1445025.txt",'w') as myfile:
-#                        for tx in block.FullTransactions:
-#                            myfile.write(json.dumps(tx.ToJson(), indent=4))
                     for tx in block.FullTransactions:
                         print(json.dumps(tx.ToJson(), indent=4))
 
@@ -593,9 +587,6 @@ class PromptInterface(object):
 
         'withdraw_from {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT} {CONTRACT_SCRIPT} {CONTRACT PARAMS}'
 
-        self._invoke_withdraw_tx = None
-        self._invoke_withdraw_tx_fee = None
-
         if not self.Wallet:
             print("please open a wallet")
             return
@@ -604,45 +595,55 @@ class PromptInterface(object):
         withdrawal_params = args[0:4]
         print("withdrawal params %s " % withdrawal_params)
 
-        tx_output = construct_contract_withdrawal(self, self.Wallet, withdrawal_params)
+        withdrawal_tx = construct_contract_withdrawal(self, self.Wallet, withdrawal_params)
+        outputs = withdrawal_tx.outputs
 
-        if tx_output:
+        if withdrawal_tx:
 
             invoke_params = args[4:]
             print("invoke params %s " % invoke_params)
 
+            contract_hash = invoke_params[0]
+
             if len(invoke_params) >= 2:
-                tx, fee, results,num_ops = TestInvokeContract(self.Wallet, invoke_params)
+                tx, fee, results,num_ops = TestInvokeContract(self.Wallet, invoke_params, withdrawal_tx)
 
                 if tx is not None and results is not None:
-                    self._invoke_withdraw_tx = tx
-                    self._invoke_withdraw_tx_fee = fee
                     print("\n-------------------------------------------------------------------------------------------------------------------------------------")
                     print("Test invoke withdraw successful")
-                    print("Total operations: %s " % num_ops)
                     print("Results %s " % [str(item) for item in results])
-                    print("Withdrawal Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("Withdrawal Invoke TX Fee: %s " % (fee.value / Fixed8.D))
                     print("-------------------------------------------------------------------------------------------------------------------------------------\n")
-                    print("You may now invoke this withdrawal on the blockchain by using the 'invoke_withdraw' command with no arguments or type 'cancel' to cancel invoke\n")
+                    print("Please enter your password to complete this transaction.\n")
+
+                    withdrawal_tx.scripts = []
+                    withdrawal_tx.Script = tx.Script
+                    withdrawal_tx.outputs = outputs
+
+                    result = prompt("password > ", is_password=True)
+
+                    if not self.Wallet.ValidatePassword(result):
+                        print("incorrect password")
+                        return
+
+
+                    print("OUTPUTS: %s " % withdrawal_tx.outputs)
+                    invoke_withdraw = InvokeWithdrawTx(self.Wallet, withdrawal_tx, contract_addr=contract_hash)
+                    print("will invoke withdraw")
+
+                        #                    print("will invoke withdraw")
+#                    if not self._invoke_withdraw_tx:
+#                        print("Please test your withdrawal invoke")
+#                        return
+#                    result = InvokeWithdrawTx(self.Wallet, self._invoke_withdraw_tx, self._invoke_withdraw_tx_fee)
+#                    print("invoke withdraw test %s " % result)
+
                     return
                 else:
-                    print("Error testing contract invoke")
+                    print("Error testing contract withdrawal invoke")
                     return
 
             print("please specify a contract to invoke")
-
-    def invoke_withdraw(self, args):
-        print("will invoke withdraw")
-        if not self._invoke_withdraw_tx:
-            print("Please test your withdrawal invoke")
-            return
-
-        result = InvokeContract(self.Wallet, self._invoke_test_tx, self._invoke_test_tx_fee)
-
-        self._invoke_withdraw_tx = None
-        self._invoke_withdraw_tx_fee = None
-        return
 
 
     def test_invoke_contract(self, args):
@@ -811,8 +812,6 @@ class PromptInterface(object):
                             self.test_invoke_contract(arguments)
                         elif command == 'withdraw_from':
                             self.test_withdraw_from(arguments)
-                        elif command == 'invoke_withdraw':
-                            self.invoke_withdraw(arguments)
                         elif command == 'cancel':
                             self.cancel_operations()
                         elif command == 'mem':

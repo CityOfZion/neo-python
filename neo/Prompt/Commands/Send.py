@@ -8,6 +8,7 @@ from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import parse_param,get_arg,get_from_addr
+from neo.Wallets.Coin import CoinState
 import json
 from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
 import pdb
@@ -91,7 +92,7 @@ def construct_and_send(prompter, wallet, arguments):
 
             wallet.SaveTransaction(tx)
 
-#            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
+            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
 
             relayed = NodeLeader.Instance().Relay(tx)
 
@@ -151,19 +152,31 @@ def construct_contract_withdrawal(prompter, wallet, arguments):
         return False
 
 
+    withdraw_from_watch_only=0
+    #check to see if contract address is in the wallet
     wallet_contract = wallet.GetContract(scripthash_from)
 
+    #if it is not, check to see if it in the wallet watch_addr
     if wallet_contract is None:
-        print("please import this contract into your wallet before withdrawing from it")
-        print("Example: import contract_addr {SCRIPT_HASH} {YOUR_PUB_KEY}")
-        print("Alternatively, you can use add watch_addr {ADDR}")
+        if scripthash_from in wallet._watch_only:
+            print("found contract in watch only")
+            withdraw_from_watch_only = CoinState.WatchOnly
+            wallet_contract = scripthash_from
+
+    if wallet_contract is None:
+        print("please add this contract into your wallet before withdrawing from it")
+        print("Use import watch_addr {ADDR}, then rebuild your wallet")
+
         return False
 
     output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
     withdraw_tx = InvocationTransaction(outputs=[output])
     withdraw_constructed_tx = wallet.MakeTransaction(tx=withdraw_tx,
                                                      change_address=None,
-                                                     fee=Fixed8.Zero(),
-                                                     from_addr=scripthash_from)
+                                                     fee=  Fixed8.FromDecimal(.001),
+                                                     from_addr=scripthash_from,
+                                                     use_standard=False,
+                                                     watch_only_val=withdraw_from_watch_only)
 
-
+    if withdraw_constructed_tx is not None:
+        return withdraw_constructed_tx
