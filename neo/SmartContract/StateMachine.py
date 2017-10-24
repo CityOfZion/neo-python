@@ -466,7 +466,6 @@ class StateMachine(StateReader):
 
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-
         item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         keystr = key

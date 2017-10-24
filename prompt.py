@@ -596,9 +596,10 @@ class PromptInterface(object):
         print("withdrawal params %s " % withdrawal_params)
 
         withdrawal_tx = construct_contract_withdrawal(self, self.Wallet, withdrawal_params)
-        outputs = withdrawal_tx.outputs
 
         if withdrawal_tx:
+
+            outputs = withdrawal_tx.outputs
 
             invoke_params = args[4:]
             print("invoke params %s " % invoke_params)
@@ -629,21 +630,13 @@ class PromptInterface(object):
 
                     print("OUTPUTS: %s " % withdrawal_tx.outputs)
                     invoke_withdraw = InvokeWithdrawTx(self.Wallet, withdrawal_tx, contract_addr=contract_hash)
-                    print("will invoke withdraw")
-
-                        #                    print("will invoke withdraw")
-#                    if not self._invoke_withdraw_tx:
-#                        print("Please test your withdrawal invoke")
-#                        return
-#                    result = InvokeWithdrawTx(self.Wallet, self._invoke_withdraw_tx, self._invoke_withdraw_tx_fee)
-#                    print("invoke withdraw test %s " % result)
 
                     return
                 else:
                     print("Error testing contract withdrawal invoke")
                     return
-
-            print("please specify a contract to invoke")
+        else:
+            print("invalid withdrawal")
 
 
     def test_invoke_contract(self, args):

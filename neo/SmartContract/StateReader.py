@@ -213,7 +213,6 @@ class StateReader(InteropService):
 
         state = engine.EvaluationStack.Pop()
 
-        print("RUNTIME NOTIFY %s " % str(state))
         args = NotifyEventArgs(
             engine.ScriptContainer,
             UInt160(engine.CurrentContext.ScriptHash()),
@@ -717,8 +716,7 @@ class StateReader(InteropService):
 
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
-
-        item = Blockchain.Default().GetStorageItem(storage_key.GetHashCodeBytes())
+        item = Blockchain.Default().GetStorageItem(storage_key)
 
         keystr = key
 

@@ -298,7 +298,7 @@ class InteropService():
             return False
 
         func = self._dictionary[method]
-        print("[InteropService Method] %s " % func)
+        #print("[InteropService Method] %s " % func)
         return func(engine)
 
     @staticmethod

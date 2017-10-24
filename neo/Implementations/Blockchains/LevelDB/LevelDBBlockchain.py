@@ -207,6 +207,13 @@ class LevelDBBlockchain(Blockchain):
         return acct
 
 
+    def GetStorageItem(self, storage_key):
+        sn = self._db.snapshot()
+        storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
+        item = storages.TryGet(storage_key.GetHashCodeBytes())
+        sn.close()
+        return item
+
     def SearchContracts(self, query):
         res = []
         sn = self._db.snapshot()

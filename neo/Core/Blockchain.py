@@ -318,7 +318,8 @@ class Blockchain(object):
     def GetScript(self, script_hash):
         return self.GetContract(script_hash)
 
-    def GetStorageItem(self, key):
+    def GetStorageItem(self, storage_key):
+        print("BLOCKCHAIN DEFAULT GETTING STORAGE ITEMMMMM")
         #abstract
         pass
 
