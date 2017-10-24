@@ -44,8 +44,8 @@ def InvokeWithdrawTx(wallet, tx, contract_addr):
     print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
 
     requestor_contract = wallet.GetDefaultContract()
-    tx.Attributes = [
-        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)]
+#    tx.Attributes = [
+#        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)]
 
 
     withdraw_contract_hash = contract_addr.encode('utf-8')

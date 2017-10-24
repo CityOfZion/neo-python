@@ -162,7 +162,8 @@ class ContractParametersContext():
 #                print("SCRIPT IS %s " % item.Script)
 
             witness = Witness(
-                invocation_script='40fdb984faf0a400b6894c1ce5b317cf894ba3eb89b899cefda2ac307b278418b943534ad298884f9200dc4b7e1dc244db16c62a44a830a860060ec11d3e6e9717',
+#                invocation_script='40fdb984faf0a400b6894c1ce5b317cf894ba3eb89b899cefda2ac307b278418b943534ad298884f9200dc4b7e1dc244db16c62a44a830a860060ec11d3e6e9717',
+                invocation_script=sb.ToArray(),
                 verification_script=vscript
             )
 

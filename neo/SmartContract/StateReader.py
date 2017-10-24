@@ -213,6 +213,7 @@ class StateReader(InteropService):
 
         state = engine.EvaluationStack.Pop()
 
+        print("RUNTIME NOTIFY %s " % str(state))
         args = NotifyEventArgs(
             engine.ScriptContainer,
             UInt160(engine.CurrentContext.ScriptHash()),
