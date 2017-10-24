@@ -29,6 +29,7 @@ from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, Co
 from autologging import logged
 import json
 from playhouse.migrate import *
+from neo.Wallets.Coin import CoinState
 
 @logged
 class UserWallet(Wallet):
@@ -58,7 +59,8 @@ class UserWallet(Wallet):
         migrator = SqliteMigrator(db)
 
         migrate(
-            migrator.drop_not_null('Contract','Account_id')
+            migrator.drop_not_null('Contract','Account_id'),
+            migrator.add_column('Address','IsWatchOnly', BooleanField(default=False)),
         )
 
     def DB(self):
@@ -126,7 +128,6 @@ class UserWallet(Wallet):
             db_contract = Contract.get(ScriptHash = contract.ScriptHash.ToBytes())
             db_contract.delete_instance()
             db_contract = None
-            print("got existing contract??")
         except Exception as e:
             self.__log.debug("contract does not exist yet")
 
@@ -135,6 +136,7 @@ class UserWallet(Wallet):
         else:
             sh = bytes(contract.ScriptHash.ToArray())
             address, created = Address.get_or_create(ScriptHash = sh)
+            address.IsWatchOnly = False
             address.save()
             db_contract = Contract.create(RawData=contract.ToArray(),
                                           ScriptHash = contract.ScriptHash.ToBytes(),
@@ -150,11 +152,22 @@ class UserWallet(Wallet):
     def AddWatchOnly(self, script_hash):
         super(UserWallet,self).AddWatchOnly(script_hash)
 
-        address = Address.get(ScriptHash = script_hash)
+        script_hash_bytes = bytes(script_hash.ToArray())
+        print("adding watch only %s " % script_hash_bytes)
+        address = None
+
+        try:
+            address = Address.get(ScriptHash = script_hash_bytes)
+        except Exception as e:
+            #Address.DoesNotExist
+            pass
 
         if address is None:
-            address = Address.create(ScriptHash=script_hash)
+            address = Address.create(ScriptHash=script_hash_bytes, IsWatchOnly=True)
             address.save()
+            return address
+        else:
+            raise Exception("Address already exists in wallet")
 
 
     def FindUnspentCoins(self, from_addr=None, use_standard=False):
@@ -169,7 +182,22 @@ class UserWallet(Wallet):
         return transactions
 
     def LoadWatchOnly(self):
-        return {}
+        items = []
+
+        try:
+            for addr in Address.select():
+                if addr.IsWatchOnly:
+                    watchOnly = UInt160(data=addr.ScriptHash)
+                    print("adding watch only %s " % watchOnly)
+                    items.append(watchOnly)
+
+            return items
+
+        except Exception as e:
+            print("couldnt load watch only : %s " % e)
+            print("You may need to migrate your wallet. Run 'wallet migrate', then re-open your wallet")
+
+        return []
 
     def LoadCoins(self):
 
@@ -380,25 +408,38 @@ class UserWallet(Wallet):
         jsn['path'] = self._path
 
         addresses = []
+        has_watch_addr=False
         for addr in Address.select():
             print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
             acct = Blockchain.Default().GetAccountState(addr_str)
             if acct:
-                addresses.append( acct.ToJson())
+                json = acct.ToJson()
+                json['is_watch_only'] = addr.IsWatchOnly
+                addresses.append( json )
+                if addr.IsWatchOnly:
+                    has_watch_addr=True
             else:
                 addresses.append(addr_str)
 
         balances = []
+        watch_balances = []
         for asset in assets:
             bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
             total = self.GetBalance(asset).value / Fixed8.D
+            watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
             balances.append("[%s]: %s " % (bc_asset.GetName(), total))
+            watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
+
 
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
         jsn['percent_synced'] = percent_synced
         jsn['synced_balances'] = balances
+
+        if has_watch_addr:
+            jsn['synced_watch_only_balances'] = watch_balances
+
         jsn['public_keys'] = self.PubKeys()
 
         if verbose:

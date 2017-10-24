@@ -16,8 +16,8 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,test_deploy_and_invoke
 from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr
-from neo.Prompt.Commands.Send import construct_and_send
-from neo.Prompt.Commands.Wallet import DeleteAddress
+from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal
+from neo.Prompt.Commands.Wallet import DeleteAddress,ImportWatchAddr
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo import Settings
@@ -85,6 +85,9 @@ class PromptInterface(object):
 
     _invoke_test_tx = None
     _invoke_test_tx_fee = None
+
+    _invoke_withdraw_tx = None
+    _invoke_withdraw_tx_fee = None
 
     Wallet = None
 
@@ -278,6 +281,10 @@ class PromptInterface(object):
 
             elif item == 'contract_addr':
                 return ImportContractAddr(self.Wallet, arguments[1:])
+
+            elif item == 'watch_addr':
+                return ImportWatchAddr(self.Wallet, get_arg(arguments,1))
+
 
 
         print("please specify something to import")
@@ -581,6 +588,63 @@ class PromptInterface(object):
                     print("tx is, results are %s %s " % (tx, results))
                     return
 
+
+    def test_withdraw_from(self, args):
+
+        'withdraw_from {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT} {CONTRACT_SCRIPT} {CONTRACT PARAMS}'
+
+        self._invoke_withdraw_tx = None
+        self._invoke_withdraw_tx_fee = None
+
+        if not self.Wallet:
+            print("please open a wallet")
+            return
+
+
+        withdrawal_params = args[0:4]
+        print("withdrawal params %s " % withdrawal_params)
+
+        tx_output = construct_contract_withdrawal(self, self.Wallet, withdrawal_params)
+
+        if tx_output:
+
+            invoke_params = args[4:]
+            print("invoke params %s " % invoke_params)
+
+            if len(invoke_params) >= 2:
+                tx, fee, results,num_ops = TestInvokeContract(self.Wallet, invoke_params)
+
+                if tx is not None and results is not None:
+                    self._invoke_withdraw_tx = tx
+                    self._invoke_withdraw_tx_fee = fee
+                    print("\n-------------------------------------------------------------------------------------------------------------------------------------")
+                    print("Test invoke withdraw successful")
+                    print("Total operations: %s " % num_ops)
+                    print("Results %s " % [str(item) for item in results])
+                    print("Withdrawal Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
+                    print("Withdrawal Invoke TX Fee: %s " % (fee.value / Fixed8.D))
+                    print("-------------------------------------------------------------------------------------------------------------------------------------\n")
+                    print("You may now invoke this withdrawal on the blockchain by using the 'invoke_withdraw' command with no arguments or type 'cancel' to cancel invoke\n")
+                    return
+                else:
+                    print("Error testing contract invoke")
+                    return
+
+            print("please specify a contract to invoke")
+
+    def invoke_withdraw(self, args):
+        print("will invoke withdraw")
+        if not self._invoke_withdraw_tx:
+            print("Please test your withdrawal invoke")
+            return
+
+        result = InvokeContract(self.Wallet, self._invoke_test_tx, self._invoke_test_tx_fee)
+
+        self._invoke_withdraw_tx = None
+        self._invoke_withdraw_tx_fee = None
+        return
+
+
     def test_invoke_contract(self, args):
         self._invoke_test_tx = None
         self._invoke_test_tx_fee = None
@@ -625,6 +689,9 @@ class PromptInterface(object):
 
     def cancel_operations(self):
         self._invoke_test_tx = None
+        self._invoke_test_tx_fee = None
+        self._invoke_withdraw_tx_fee = None
+        self._invoke_withdraw_tx = None
         print("Operation cancelled")
         return
 
@@ -742,6 +809,10 @@ class PromptInterface(object):
                             self.invoke_contract(arguments)
                         elif command == 'testinvoke':
                             self.test_invoke_contract(arguments)
+                        elif command == 'withdraw_from':
+                            self.test_withdraw_from(arguments)
+                        elif command == 'invoke_withdraw':
+                            self.invoke_withdraw(arguments)
                         elif command == 'cancel':
                             self.cancel_operations()
                         elif command == 'mem':

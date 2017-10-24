@@ -44,7 +44,7 @@ class Wallet(object):
     _keys = {} #holds keypairs
     _contracts = {} #holds Contracts
 
-    _watch_only = set() # holds set of hashes
+    _watch_only = [] # holds set of hashes
     _coins = {} #holds Coin References
 
     _current_height=0
@@ -145,16 +145,17 @@ class Wallet(object):
             raise Exception('Invalid operation- public key mismatch')
 
         self._contracts[contract.ScriptHash.ToBytes()] = contract
-        if contract.ScriptHash.ToBytes() in self._watch_only:
-            self._watch_only.remove(contract.ScriptHash.ToBytes())
+        if contract.ScriptHash in self._watch_only:
+            self._watch_only.remove(contract.ScriptHash)
 
 
     def AddWatchOnly(self, script_hash):
 
         if script_hash in self._contracts:
+            print("Address already in contracts")
             return
 
-        self._watch_only.add(script_hash)
+        self._watch_only.append(script_hash)
 
 
     def ChangePassword(self, password_old, password_new):
@@ -220,9 +221,9 @@ class Wallet(object):
         if script_hash.ToBytes() in self._contracts.keys():
             ok=True
             del self._contracts[script_hash.ToBytes()]
-        elif script_hash.ToBytes() in self._watch_only.keys():
+        elif script_hash in self._watch_only:
             ok=True
-            del self._contracts[script_hash.ToBytes()]
+            self._watch_only.remove(script_hash)
 
         return ok, coins_to_remove
 
@@ -293,16 +294,17 @@ class Wallet(object):
     def GetAvailable(self, asset_id):
         raise NotImplementedError()
 
-    def GetBalance(self, asset_id):
+    def GetBalance(self, asset_id, watch_only=0):
         total=Fixed8(0)
         for coin in self.GetCoins():
             if coin.Output.AssetId == asset_id:
-
                 if coin.State & CoinState.Confirmed > 0 and \
                     coin.State & CoinState.Spent == 0 and \
                     coin.State & CoinState.Locked == 0 and \
                     coin.State & CoinState.Frozen == 0 and \
-                    coin.State & CoinState.WatchOnly == 0:
+                    coin.State & CoinState.WatchOnly == watch_only:
+
+
 
                     total = total + coin.Output.Value
 
@@ -451,18 +453,25 @@ class Wallet(object):
                         return True
 
 
-            #do watch only stuff... not sure yet what it is...
+        for watch_script_hash in self._watch_only:
+            for output in tx.outputs:
+                if output.ScriptHash == watch_script_hash:
+                    return True
+            for script in tx.scripts:
+                # this needs to be tested out
+                if script.VerificationScript == watch_script_hash.ToBytes():
+                    return True
 
-            return False
+        return False
 
 
     def CheckAddressState(self, script_hash):
         for key,contract in self._contracts.items():
             if contract.ScriptHash.ToBytes() == script_hash.ToBytes():
                 return AddressState.InWallet
-#        for watch in self._watch_only:
-#            if watch.ScriptHash == script_hash:
-#                return AddressState.WatchOnly
+        for watch in self._watch_only:
+            if watch == script_hash:
+                return AddressState.InWallet | AddressState.WatchOnly
         return AddressState.NoState
 
     @staticmethod

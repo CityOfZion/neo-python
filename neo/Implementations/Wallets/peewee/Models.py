@@ -15,6 +15,7 @@ class Account(ModelBase):
 class Address(ModelBase):
     Id = PrimaryKeyField()
     ScriptHash = CharField(unique=True)
+    IsWatchOnly = BooleanField(default=False)
 
 class Coin(ModelBase):
     Id = PrimaryKeyField()

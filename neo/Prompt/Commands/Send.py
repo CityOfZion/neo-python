@@ -4,11 +4,13 @@ import traceback
 from neo.Core.Blockchain import Blockchain
 from neo.Fixed8 import Fixed8
 from neo.Core.TX.Transaction import TransactionOutput,ContractTransaction
+from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import parse_param,get_arg,get_from_addr
 import json
 from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
+import pdb
 
 def construct_and_send(prompter, wallet, arguments):
     try:
@@ -109,3 +111,59 @@ def construct_and_send(prompter, wallet, arguments):
         print("could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
+
+
+def construct_contract_withdrawal(prompter, wallet, arguments):
+
+    if len(arguments) < 4:
+        print("not enough arguments")
+        return False
+
+    #AG5xbb6QqHSUgDw8cHdyU73R1xy4qD7WEE neo AdMDZGto3xWozB1HSjjVv27RL3zUM8LzpV 20
+    from_address = get_arg(arguments,0)
+    to_send = get_arg(arguments,1)
+    to_address = get_arg(arguments, 2)
+    amount = get_arg(arguments, 3)
+
+    assetId = None
+
+    if to_send.lower() == 'neo':
+        assetId = Blockchain.Default().SystemShare().Hash
+    elif to_send.lower() == 'gas':
+        assetId = Blockchain.Default().SystemCoin().Hash
+    elif Blockchain.Default().GetAssetState(to_send):
+        assetId = Blockchain.Default().GetAssetState(to_send).AssetId
+
+    scripthash_to = wallet.ToScriptHash(to_address)
+    if scripthash_to is None:
+        print("invalid address")
+        return False
+
+    scripthash_from = wallet.ToScriptHash(from_address)
+
+    f8amount = Fixed8.TryParse(amount)
+    if f8amount is None:
+        print("invalid amount format")
+        return False
+
+    if f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
+        print("incorrect amount precision")
+        return False
+
+
+    wallet_contract = wallet.GetContract(scripthash_from)
+
+    if wallet_contract is None:
+        print("please import this contract into your wallet before withdrawing from it")
+        print("Example: import contract_addr {SCRIPT_HASH} {YOUR_PUB_KEY}")
+        print("Alternatively, you can use add watch_addr {ADDR}")
+        return False
+
+    output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
+    withdraw_tx = InvocationTransaction(outputs=[output])
+    withdraw_constructed_tx = wallet.MakeTransaction(tx=withdraw_tx,
+                                                     change_address=None,
+                                                     fee=Fixed8.Zero(),
+                                                     from_addr=scripthash_from)
+
+
