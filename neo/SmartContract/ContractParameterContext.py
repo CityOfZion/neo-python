@@ -43,7 +43,6 @@ class ContractParametersContext():
 
         self.Verifiable = verifiable
         self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
-        print("SCRIPT HASHES FOR VERIFYING! %s " % self.ScriptHashes)
         self.ContextItems = {}
 
 

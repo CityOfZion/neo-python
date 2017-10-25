@@ -605,7 +605,6 @@ class Wallet(object):
         if not change_address:
             change_address = self.GetChangeAddress(from_addr=from_addr)
 
-        print("GOT CHANGE ADDRSS %s " % change_address)
 
         new_outputs = []
 

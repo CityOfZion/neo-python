@@ -334,6 +334,7 @@ class ExecutionEngine():
                     return
 
                 x = estack.Pop().GetByteArray()
+
                 estack.PushT( x[index:count+index])
 
             elif opcode == LEFT:
