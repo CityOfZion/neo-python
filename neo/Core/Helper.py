@@ -9,7 +9,7 @@ from neo.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo import Settings
 from base58 import b58decode
-
+import pdb
 class Helper(object):
 
 
@@ -119,6 +119,7 @@ class Helper(object):
                 print("engine did not execute")
                 return False
 
+#            pdb.set_trace()
             if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
                 return False
 

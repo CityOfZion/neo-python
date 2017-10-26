@@ -219,6 +219,13 @@ class StateReader(InteropService):
             state
         )
 
+        if type(self) is StateReader:
+            if state.IsArray:
+                for item in state.GetArray():
+                    print("NOTIFY ITEM %s " % str(item))
+            else:
+                print("ITEM: %s " % str(state))
+
         self.NotifyEvent.on_change(args)
         return True
 
@@ -471,7 +478,9 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        engine.EvaluationStack.PushT(tx.Type)
+        type = int.from_bytes(tx.Type,'little')
+        print("PUSHISG TYPE: %s " % type)
+        engine.EvaluationStack.PushT(type)
         return True
 
     def Transaction_GetAttributes(self, engine):
