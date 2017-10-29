@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 
 import json
@@ -794,6 +794,8 @@ class PromptInterface(object):
                             self.show_wallet(arguments)
                         elif command == 'send':
                             self.do_send(arguments)
+                        elif command == 'sign':
+                            self.do_sign(arguments)
                         elif command == 'block':
                             self.show_block(arguments)
                         elif command == 'tx':

@@ -15,6 +15,7 @@ from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
+from neo.Cryptography.ECCurve import ECDSA
 from autologging import logged
 
 
@@ -68,7 +69,7 @@ class Contract(SerializableMixin, VerificationCode):
     def Type(self):
         if self.IsStandard:
             return ContractType.SignatureContract
-        elif self.IsMultiSigContract():
+        elif self.IsMultiSigContract:
             return ContractType.MultiSigContract
         return ContractType.CustomContract
 
@@ -110,7 +111,7 @@ class Contract(SerializableMixin, VerificationCode):
 
 
     @staticmethod
-    def CreateMultiSigContract(publickKeyHash, m, publicKeys):
+    def CreateMultiSigContract(publicKeyHash, m, publicKeys):
 
         pk = [ECDSA.decode_secp256r1(p).G for p in publicKeys]
         return Contract(Contract.CreateMultiSigRedeemScript(m, pk),

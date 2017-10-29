@@ -104,7 +104,7 @@ def construct_and_send(prompter, wallet, arguments):
 
         else:
             print ("Transaction initiated, but the signature is incomplete")
-            print(context.ToJson())
+            print(json.dumps(context.ToJson()))
             return
 
 

@@ -327,8 +327,9 @@ class Transaction(Inventory, InventoryMixin):
         return tx
 
     def DeserializeUnsigned(self, reader):
-        if reader.ReadByte() != self.Type:
-            raise Exception('incorrect type')
+        txtype = reader.ReadByte()
+        if txtype != int.from_bytes(self.Type, 'little'):
+            raise Exception('incorrect type {}, wanted {}'.format(txtype, int.from_bytes(self.Type, 'little')))
         self.DeserializeUnsignedWithoutType(reader)
 
     def DeserializeUnsignedWithoutType(self,reader):

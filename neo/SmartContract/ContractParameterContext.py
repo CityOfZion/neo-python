@@ -1,6 +1,10 @@
+from neo.Core.TX.Transaction import ContractTransaction
 from neo.SmartContract.Contract import Contract,ContractType
-from neo.SmartContract.ContractParameterType import ContractParameterType
+from neo.SmartContract.ContractParameterType import ContractParameterType,ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.IO.MemoryStream import MemoryStream
+from neo.IO.BinaryReader import BinaryReader
+from neo.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
 import json
@@ -16,6 +20,13 @@ class ContractParamater():
 
     def __init__(self, type):
         self.Type = type
+
+
+    def ToJson(self):
+        jsn = {}
+        jsn['type'] = ToName(self.Type)
+        return jsn
+
 
 class ContextItem():
 
@@ -84,7 +95,8 @@ class ContractParametersContext():
                 if p is None or p.Value is None:
                     return False
                 if p.Type is not None:
-                    p.Value = 0
+                    if p.Value == 0:
+                        return False
         return True
 
 
@@ -128,16 +140,15 @@ class ContractParametersContext():
                 item.Signatures = {}
             elif item.Signatures.ContainsKey(pubkey.encode_point(True)):
                 return False
+
             points = []
             temp = binascii.unhexlify(contract.Script)
-            i = 1
-            if temp[i] == 1:
-                ++i
-            elif temp[i] == 2:
-                i += 2
-            while temp[++i] == 33:
-                points.append(binascii.hexlify(temp[i+1:i+34]))
-                i += 33
+            ms = MemoryStream(binascii.unhexlify(contract.Script))
+            reader = BinaryReader(ms)
+            numr = reader.ReadUInt8()
+            while reader.ReadUInt8() == 33:
+                points.append(binascii.hexlify(reader.ReadBytes(33)))
+            ms.close()
 
             if pubkey.encode_point(True) not in points:
                 return False
