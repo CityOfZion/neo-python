@@ -217,3 +217,32 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
     script = sb.ToArray()
 
     return script
+
+
+def ImportMultiSigContractAddr(wallet, args):
+
+    if len(args) < 4:
+        print("please specify multisig contract like such: 'import multisig {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
+        return
+
+    if wallet is None:
+        print("please open a wallet")
+        return
+
+    pubkey = get_arg(args, 0)
+    m = get_arg(args, 1)
+    publicKeys = args[2:]
+
+    if publicKeys[1]:
+
+        pubkey_script_hash = Crypto.ToScriptHash(pubkey,unhex=True)
+
+        verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)
+
+        address = verification_contract.Address
+
+        wallet.AddContract(verification_contract)
+
+        print("Added multi-sig contract address %s to wallet" % address)
+
+    return 'Hello'

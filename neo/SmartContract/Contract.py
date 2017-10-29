@@ -50,6 +50,20 @@ class Contract(SerializableMixin, VerificationCode):
 
         return True
 
+
+    @property
+    def IsMultiSigContract(self):
+        scp = binascii.unhexlify(self.Script)
+
+        if len(scp) < 37:
+            return False
+
+        if scp[len(scp)-1] != int.from_bytes(CHECKMULTISIG, 'little'):
+            return False
+
+        return True
+
+
     @property
     def Type(self):
         if self.IsStandard:
@@ -73,11 +87,6 @@ class Contract(SerializableMixin, VerificationCode):
         return Contract(redeemScript, parameterList, publicKeyHash)
 
 
-
-    @staticmethod
-    def CreateMultiSigContract(publickKeyHash, m, publicKeys):
-        raise NotImplementedError()
-
     @staticmethod
     def CreateMultiSigRedeemScript(m, publicKeys):
 
@@ -98,6 +107,16 @@ class Contract(SerializableMixin, VerificationCode):
         sb.add(CHECKMULTISIG)
 
         return sb.ToArray()
+
+
+    @staticmethod
+    def CreateMultiSigContract(publickKeyHash, m, publicKeys):
+
+        pk = [ECDSA.decode_secp256r1(p).G for p in publicKeys]
+        return Contract(Contract.CreateMultiSigRedeemScript(m, pk),
+                     bytearray([ContractParameterType.Signature] * 3),
+                     publicKeyHash)
+
 
     @staticmethod
     def CreateSignatureContract(publicKey):
@@ -142,10 +161,6 @@ class Contract(SerializableMixin, VerificationCode):
         writer.WriteUInt160(self.PublicKeyHash)
         writer.WriteVarBytes(self.ParameterList)
         writer.WriteVarBytes(self.Script)
-
-    def IsMultiSigContract(self):
-        #Not implemented
-        return False
 
 
     @staticmethod

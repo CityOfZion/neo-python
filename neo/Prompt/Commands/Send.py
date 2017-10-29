@@ -99,11 +99,14 @@ def construct_and_send(prompter, wallet, arguments):
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())
             else:
+
                 print("Could not relay tx %s " % tx.Hash.ToString())
 
         else:
-            print("Could not sign transaction")
+            print ("Transaction initiated, but the signature is incomplete")
+            print(context.ToJson())
             return
+
 
 
 
@@ -180,3 +183,26 @@ def construct_contract_withdrawal(prompter, wallet, arguments):
 
     if withdraw_constructed_tx is not None:
         return withdraw_constructed_tx
+
+
+def parse_and_sign(prompter, wallet, jsn):
+
+    try:
+        context = ContractParametersContext.FromJson(jsn)
+        if context is None:
+            print("Failed to parse JSON")
+            return
+        #print("Parsed content: {}".format(json.dumps(context.ToJson(), indent=4)))
+        wallet.Sign(context)
+        if context.Completed:
+            print("Signature complete, relay now?")
+            return
+        else:
+            print ("Transaction initiated, but the signature is incomplete")
+            print(context.ToJson())
+            return
+
+    except Exception as e:
+        print("could not send: %s " % e)
+        traceback.print_stack()
+        traceback.print_exc()
