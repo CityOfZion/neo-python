@@ -16,7 +16,7 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,InvokeWithdrawTx
 from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr,ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal
+from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal,parse_and_sign
 from neo.Prompt.Commands.Wallet import DeleteAddress,ImportWatchAddr
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
