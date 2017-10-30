@@ -798,9 +798,9 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-        opname = ToName(op)
+#        opname = ToName(op)
 #        print("____________________________________________________")
-        print("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
+#        print("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
 #        print("-----------------------------------")
 
         self.ops_processed += 1

@@ -77,9 +77,17 @@ def construct_and_send(prompter, wallet, arguments):
             return
 
         standard_contract = wallet.GetStandardAddress()
-        data = standard_contract.Data
-        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                              data=data)]
+
+        if scripthash_from is not None:
+            signer_contract = wallet.GetContract(scripthash_from)
+        else:
+            signer_contract = wallet.GetContract(standard_contract)
+
+        if signer_contract.IsMultiSigContract == False:
+
+            data = standard_contract.Data
+            tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                               data=data)]
 
 
         context = ContractParametersContext(tx)
