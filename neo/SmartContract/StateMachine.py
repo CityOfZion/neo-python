@@ -433,19 +433,19 @@ class StateMachine(StateReader):
         return False
 
     def Contract_Destroy(self, engine):
-        hash = UInt160( data= engine.CurrentContext.ScriptHash)
+        hash = UInt160( data= engine.CurrentContext.ScriptHash())
 
         contract = self._contracts.TryGet(hash.ToBytes())
 
         if contract is not None:
 
-            self._contracts.Delete(hash.ToBytes())
+            self._contracts.Remove(hash.ToBytes())
 
             if contract.HasStorage:
 
                 for pair in self._storages.Find( hash.ToBytes()):
 
-                    self._storages.Delete(pair.Key)
+                    self._storages.Remove(pair.Key)
 
         return True
 
