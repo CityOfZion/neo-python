@@ -44,8 +44,8 @@ def InvokeWithdrawTx(wallet, tx, contract_addr):
     print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
 
     requestor_contract = wallet.GetDefaultContract()
-#    tx.Attributes = [
-#        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)]
+    tx.Attributes = [
+        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)]
 
 
     withdraw_contract_hash = contract_addr.encode('utf-8')
@@ -135,7 +135,7 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
     return False
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None):
+def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
 
     BC = GetBlockchain()
 
@@ -165,7 +165,10 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None):
 
         for p in params:
 
-            item = parse_param(p)
+            if parse_params:
+                item = parse_param(p)
+            else:
+                item = p
 
             if type(item) is list:
                 item.reverse()
@@ -295,7 +298,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
             net_fee = None
             tx_gas = None
 
-            if consumed < Fixed8.One():
+            if consumed < Fixed8.FromDecimal(10.0):
                 net_fee = Fixed8.FromDecimal(.001)
                 tx_gas = Fixed8.Zero()
             else:

@@ -331,8 +331,8 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Transaction.DeserializeFromBufer(outhex, 0), height
 
-        raise Exception("Colud not find transaction for hash %s " % hash)
-
+        print("Colud not find transaction for hash %s " % hash)
+        return None, -1
 
     def AddBlock(self, block):
 

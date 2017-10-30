@@ -28,7 +28,7 @@ incremental==17.5.0
 memory-profiler==0.47
 mmh3==2.4
 mpmath==0.19
-neo-boa==0.1.7
+-e git+git@github.com:localhuman/neo-boa.git@eaf4baf97cb1caa767918cc90d1915c7e66593a7#egg=neo_boa
 numpy==1.13.1
 peewee==2.10.1
 plyvel==0.9

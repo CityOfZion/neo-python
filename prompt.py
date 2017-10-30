@@ -16,7 +16,8 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,InvokeWithdrawTx
 from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr
-from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal
+from neo.Prompt.Commands.Send import construct_and_send
+from neo.Prompt.Commands.Withdraw import RequestWithdraw,construct_contract_withdrawal
 from neo.Prompt.Commands.Wallet import DeleteAddress,ImportWatchAddr
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
@@ -34,7 +35,9 @@ from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
-
+import binascii
+from neo.Core.Helper import Helper
+from neo.Prompt.Utils import parse_param
 
 logname = 'prompt.log'
 logging.basicConfig(
@@ -85,6 +88,8 @@ class PromptInterface(object):
 
     _invoke_test_tx = None
     _invoke_test_tx_fee = None
+
+    _walletdb_loop = None
 
     Wallet = None
 
@@ -154,6 +159,11 @@ class PromptInterface(object):
         print_tokens(tokens, self.token_style)
 
     def do_open(self, arguments):
+
+        if self.Wallet:
+            self.do_close_wallet()
+
+
         item = get_arg(arguments)
 
         if item and item == 'wallet':
@@ -165,6 +175,7 @@ class PromptInterface(object):
                 if not os.path.exists(path):
                     print("wallet file not found")
                     return
+
 
                 self._num_passwords_req = 1
                 self._wallet_create_path = path
@@ -198,8 +209,16 @@ class PromptInterface(object):
             else:
                 print("Please specify a path")
 
+
+
+
+
     def do_create_wallet(self):
 #        print("do create wallet with passwords %s "% self._gathered_passwords)
+
+        if self.Wallet:
+            self.do_close_wallet()
+
         psswds = self._gathered_passwords
         path = self._wallet_create_path
         self._wallet_create_path = None
@@ -224,11 +243,21 @@ class PromptInterface(object):
         print("pubkey %s " % key.PublicKey.encode_point(True))
 
 
-        dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
-        dbloop.start(1)
+        self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+        self._walletdb_loop.start(1)
 
+
+    def do_close_wallet(self):
+        if self.Wallet:
+            path = self.Wallet._path
+            self._walletdb_loop.stop()
+            self._walletdb_loop = None
+            self.Wallet = None
+            print("closed wallet %s " % path)
 
     def do_open_wallet(self):
+
+
         passwd = self._gathered_passwords[0]
         path = self._wallet_create_path
         self._wallet_create_path = None
@@ -238,8 +267,8 @@ class PromptInterface(object):
         try:
             self.Wallet = UserWallet.Open(path, passwd)
 
-            dbloop = task.LoopingCall(self.Wallet.ProcessBlocks)
-            dbloop.start(1)
+            self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+            self._walletdb_loop.start(1)
             print("Opened wallet at %s" % path)
         except Exception as e:
             print("could not open wallet: %s " % e)
@@ -366,8 +395,7 @@ class PromptInterface(object):
             DeleteAddress(self, self.Wallet, addr_to_delete)
 
         if item == 'close':
-            print('closed wallet')
-            self.Wallet = None
+            self.do_close_wallet()
 
         if item == 'rebuild':
             self.Wallet.Rebuild()
@@ -583,10 +611,17 @@ class PromptInterface(object):
                     return
 
 
+    def test_request_withdraw(self, args):
+        """
+        request_withdraw {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
+
+        """
+        RequestWithdraw(self, self.Wallet, args)
+
     def test_withdraw_from(self, args):
-
-        'withdraw_from {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT} {CONTRACT_SCRIPT} {CONTRACT PARAMS}'
-
+        """
+        withdraw_from {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT} {CONTRACT_SCRIPT} {CONTRACT PARAMS}
+        """
         if not self.Wallet:
             print("please open a wallet")
             return
@@ -803,6 +838,8 @@ class PromptInterface(object):
                             self.invoke_contract(arguments)
                         elif command == 'testinvoke':
                             self.test_invoke_contract(arguments)
+                        elif command == 'request_withdraw':
+                            self.test_request_withdraw(arguments)
                         elif command == 'withdraw_from':
                             self.test_withdraw_from(arguments)
                         elif command == 'cancel':

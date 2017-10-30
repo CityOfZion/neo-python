@@ -64,7 +64,11 @@ def construct_and_send(prompter, wallet, arguments):
 
         output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         tx = ContractTransaction(outputs=[output])
-        ttx = wallet.MakeTransaction(tx=tx, change_address=None, fee=fee,from_addr=scripthash_from)
+
+        ttx = wallet.MakeTransaction(tx=tx,
+                                     change_address=None,
+                                     fee=fee,
+                                     from_addr=scripthash_from)
 
         if ttx is None:
             print("insufficient funds")
@@ -77,6 +81,7 @@ def construct_and_send(prompter, wallet, arguments):
             return
 
         standard_contract = wallet.GetStandardAddress()
+        print("STANDard contract... %s " % standard_contract.Data)
         data = standard_contract.Data
         tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                               data=data)]
@@ -113,70 +118,3 @@ def construct_and_send(prompter, wallet, arguments):
         traceback.print_stack()
         traceback.print_exc()
 
-
-def construct_contract_withdrawal(prompter, wallet, arguments):
-
-    if len(arguments) < 4:
-        print("not enough arguments")
-        return False
-
-    #AG5xbb6QqHSUgDw8cHdyU73R1xy4qD7WEE neo AdMDZGto3xWozB1HSjjVv27RL3zUM8LzpV 20
-    from_address = get_arg(arguments,0)
-    to_send = get_arg(arguments,1)
-    to_address = get_arg(arguments, 2)
-    amount = get_arg(arguments, 3)
-
-    assetId = None
-
-    if to_send.lower() == 'neo':
-        assetId = Blockchain.Default().SystemShare().Hash
-    elif to_send.lower() == 'gas':
-        assetId = Blockchain.Default().SystemCoin().Hash
-    elif Blockchain.Default().GetAssetState(to_send):
-        assetId = Blockchain.Default().GetAssetState(to_send).AssetId
-
-    scripthash_to = wallet.ToScriptHash(to_address)
-    if scripthash_to is None:
-        print("invalid address")
-        return False
-
-    scripthash_from = wallet.ToScriptHash(from_address)
-
-    f8amount = Fixed8.TryParse(amount)
-    if f8amount is None:
-        print("invalid amount format")
-        return False
-
-    if f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
-        print("incorrect amount precision")
-        return False
-
-
-    withdraw_from_watch_only=0
-    #check to see if contract address is in the wallet
-    wallet_contract = wallet.GetContract(scripthash_from)
-
-    #if it is not, check to see if it in the wallet watch_addr
-    if wallet_contract is None:
-        if scripthash_from in wallet._watch_only:
-            print("found contract in watch only")
-            withdraw_from_watch_only = CoinState.WatchOnly
-            wallet_contract = scripthash_from
-
-    if wallet_contract is None:
-        print("please add this contract into your wallet before withdrawing from it")
-        print("Use import watch_addr {ADDR}, then rebuild your wallet")
-
-        return False
-
-    output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
-    withdraw_tx = InvocationTransaction(outputs=[output])
-    withdraw_constructed_tx = wallet.MakeTransaction(tx=withdraw_tx,
-                                                     change_address=None,
-                                                     fee=  Fixed8.FromDecimal(.001),
-                                                     from_addr=scripthash_from,
-                                                     use_standard=False,
-                                                     watch_only_val=withdraw_from_watch_only)
-
-    if withdraw_constructed_tx is not None:
-        return withdraw_constructed_tx

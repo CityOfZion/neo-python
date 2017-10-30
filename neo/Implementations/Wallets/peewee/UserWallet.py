@@ -188,7 +188,6 @@ class UserWallet(Wallet):
             for addr in Address.select():
                 if addr.IsWatchOnly:
                     watchOnly = UInt160(data=addr.ScriptHash)
-                    print("adding watch only %s " % watchOnly)
                     items.append(watchOnly)
 
             return items
@@ -310,9 +309,10 @@ class UserWallet(Wallet):
 
         for coin in added:
             addr_hash = bytes(coin.Output.ScriptHash.Data)
-            address = Address.get(ScriptHash=addr_hash)
 
             try:
+                address = Address.get(ScriptHash=addr_hash)
+
                 c = Coin(
                     TxId = bytes(coin.Reference.PrevHash.Data),
                     Index = coin.Reference.PrevIndex,
@@ -349,17 +349,17 @@ class UserWallet(Wallet):
     def PubKeys(self):
         keys = self.LoadKeyPairs()
         jsn = []
+        addrout = []
         for k in keys.values():
-            addr = Crypto.ToAddress(k.PublicKeyHash)
             pub = k.PublicKey.encode_point(True)
-            signature_contract = None
             for ct in self._contracts.values():
                 if ct.PublicKeyHash == k.PublicKeyHash:
                     signature_contract = ct
-            if signature_contract:
-                addr = signature_contract.Address
 
-                jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
+                    if signature_contract and not signature_contract.Address in addrout:
+                        addr = signature_contract.Address
+                        addrout.append(addr)
+                        jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
 
         return jsn
 

@@ -8,19 +8,22 @@ def get_asset_attachments(params):
     to_remove = []
     neo_to_attach = None
     gas_to_attach = None
+
     for item in params:
-        if '--attach-neo=' in item:
-            to_remove.append(item)
-            try:
-                neo_to_attach = Fixed8.TryParse(int(item.replace('--attach-neo=', '')))
-            except Exception as e:
-                pass
-        if '--attach-gas=' in item:
-            to_remove.append(item)
-            try:
-                gas_to_attach = Fixed8.FromDecimal(float(item.replace('--attach-gas=', '')))
-            except Exception as e:
-                pass
+
+        if type(item) is str:
+            if '--attach-neo=' in item:
+                to_remove.append(item)
+                try:
+                    neo_to_attach = Fixed8.TryParse(int(item.replace('--attach-neo=', '')))
+                except Exception as e:
+                    pass
+            if '--attach-gas=' in item:
+                to_remove.append(item)
+                try:
+                    gas_to_attach = Fixed8.FromDecimal(float(item.replace('--attach-gas=', '')))
+                except Exception as e:
+                    pass
     for item in to_remove:
         params.remove(item)
 

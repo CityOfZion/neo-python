@@ -3,8 +3,11 @@ from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams
 from neo.Prompt.Commands.Invoke import test_deploy_and_invoke
 from neo.Fixed8 import Fixed8
 from boa.compiler import Compiler
+
 import binascii
 import traceback
+from prompt_toolkit import prompt
+from neo.Prompt.Commands.Invoke import InvokeContract
 
 def LoadAndRun(arguments, wallet):
 
@@ -73,6 +76,7 @@ def DoRun(contract_script, arguments, wallet, path):
                     print("Result %s " % result)
                     print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("-------------------------------------------------------------\n")
+
                     return
                 else:
                     print("test ivoke failed")

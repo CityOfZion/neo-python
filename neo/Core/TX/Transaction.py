@@ -388,7 +388,6 @@ class Transaction(Inventory, InventoryMixin):
     def Verify(self, mempool):
         self.__log.debug("Verifying transaction: %s " % self.Hash.ToBytes())
 
-
         return Helper.VerifyScripts(self)
 
 #        print("return true for now ...")

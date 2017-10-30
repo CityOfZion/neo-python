@@ -395,7 +395,6 @@ class ExecutionEngine():
             elif opcode == EQUAL:
                 x2 = estack.Pop()
                 x1 = estack.Pop()
-                print("CHECKING EQUAL: %s %s " % (x2, x1))
                 estack.PushT( x1.Equals(x2))
 
 

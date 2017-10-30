@@ -31,6 +31,8 @@ from neo.Core.Helper import Helper
 from Crypto import Random
 from Crypto.Cipher import AES
 import pdb
+import json
+
 @logged
 class Wallet(object):
 
@@ -57,6 +59,8 @@ class Wallet(object):
 
     _blockThread = None
     _lock = Lock()
+
+    _vin_exclude = None
 
     @property
     def WalletHeight(self):
@@ -191,7 +195,7 @@ class Wallet(object):
 
         key = KeyPair(priv_key = private_key)
         self._keys[key.PublicKeyHash.ToBytes()] = key
-        self.__log.debug("keys %s " % self._keys.items())
+#        self.__log.debug("keys %s " % self._keys.items())
         return key
 
 
@@ -236,6 +240,18 @@ class Wallet(object):
                 coin.State & CoinState.Locked == 0 and \
                 coin.State & CoinState.Frozen == 0 and \
                 coin.State & CoinState.WatchOnly == watch_only_val:
+
+
+                do_exclude = False
+                if self._vin_exclude:
+                    for to_exclude in self._vin_exclude:
+
+                        if coin.Reference.PrevIndex == to_exclude.PrevIndex and \
+                            coin.Reference.PrevHash == to_exclude.PrevHash:
+                            do_exclude = True
+
+                if do_exclude:
+                    continue
 
                 if from_addr is not None:
                     if coin.Output.ScriptHash == from_addr:
@@ -556,7 +572,8 @@ class Wallet(object):
                         fee = Fixed8(0),
                         from_addr=None,
                         use_standard=False,
-                        watch_only_val=0):
+                        watch_only_val=0,
+                        exclude_vin=None):
 
         tx.ResetReferences()
 
@@ -586,8 +603,12 @@ class Wallet(object):
         paycoins = {}
 
 
+        self._vin_exclude = exclude_vin
+
         for assetId,amount in paytotal.items():
             paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
+
+        self._vin_exclude = None
 
         for key,unspents in paycoins.items():
             if unspents == None:

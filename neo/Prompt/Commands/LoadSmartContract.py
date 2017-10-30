@@ -196,11 +196,9 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
                            description='test', needs_storage=False, return_type=b'\xff', parameter_list=[]):
     sb = ScriptBuilder()
 
-
     plist = parameter_list
-
     try:
-        plist = binascii.unhexlify(parameter_list)
+        plist = bytearray(binascii.unhexlify(parameter_list))
     except Exception as e:
         pass
 

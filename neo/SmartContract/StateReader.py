@@ -479,7 +479,6 @@ class StateReader(InteropService):
             return False
 
         type = int.from_bytes(tx.Type,'little')
-        print("PUSHISG TYPE: %s " % type)
         engine.EvaluationStack.PushT(type)
         return True
 
