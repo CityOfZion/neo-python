@@ -216,14 +216,18 @@ class LevelDBBlockchain(Blockchain):
         for item in keys:
 
             contract = contracts.TryGet(keyval=item)
-            if query in contract.Name.decode('utf-8'):
-                res.append(contract)
-            elif query in contract.Author.decode('utf-8'):
-                res.append(contract)
-            elif query in contract.Description.decode('utf-8'):
-                res.append(contract)
-            elif query in contract.Email.decode('utf-8'):
-                res.append(contract)
+            try:
+                if query in contract.Name.decode('utf-8'):
+                    res.append(contract)
+                elif query in contract.Author.decode('utf-8'):
+                    res.append(contract)
+                elif query in contract.Description.decode('utf-8'):
+                    res.append(contract)
+                elif query in contract.Email.decode('utf-8'):
+                    res.append(contract)
+            except Exception as e:
+                #print("error querying contract %s %s " % (contract,e))
+                pass
 
         sn.close()
 

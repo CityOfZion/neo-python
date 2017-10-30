@@ -102,3 +102,5 @@ ENV/
 .idea
 
 endpoints.txt
+
+.prompt.py.history

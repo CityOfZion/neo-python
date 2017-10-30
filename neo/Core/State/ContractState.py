@@ -69,12 +69,19 @@ class ContractState(StateBase):
 
         codejson = self.Code.ToJson()
 
+        name = 'Contract'
+
+        try:
+            name= self.Name.decode('utf-8')
+        except Exception as e:
+            pass
+
         return {
 
             'version':self.StateVersion,
             'code': codejson,
             'storage': self.HasStorage,
-            'name': self.Name.decode('utf-8'),
+            'name': name,
             'code_version': self.CodeVersion.decode('utf-8'),
             'author': self.Author.decode('utf-8'),
             'email': self.Email.decode('utf-8'),
