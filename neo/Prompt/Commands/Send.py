@@ -77,9 +77,17 @@ def construct_and_send(prompter, wallet, arguments):
             return
 
         standard_contract = wallet.GetStandardAddress()
-        data = standard_contract.Data
-        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                              data=data)]
+
+        if scripthash_from is not None:
+            signer_contract = wallet.GetContract(scripthash_from)
+        else:
+            signer_contract = wallet.GetContract(standard_contract)
+
+        if signer_contract.IsMultiSigContract == False:
+
+            data = standard_contract.Data
+            tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                               data=data)]
 
 
         context = ContractParametersContext(tx)
@@ -99,11 +107,14 @@ def construct_and_send(prompter, wallet, arguments):
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())
             else:
+
                 print("Could not relay tx %s " % tx.Hash.ToString())
 
         else:
-            print("Could not sign transaction")
+            print ("Transaction initiated, but the signature is incomplete")
+            print(json.dumps(context.ToJson(), separators=(',',':')))
             return
+
 
 
 
@@ -180,3 +191,42 @@ def construct_contract_withdrawal(prompter, wallet, arguments):
 
     if withdraw_constructed_tx is not None:
         return withdraw_constructed_tx
+
+
+def parse_and_sign(prompter, wallet, jsn):
+
+    try:
+        context = ContractParametersContext.FromJson(jsn)
+        if context is None:
+            print("Failed to parse JSON")
+            return
+
+        wallet.Sign(context)
+
+        if context.Completed:
+
+            print("Signature complete, relaying...")
+
+            tx = context.Verifiable
+            tx.scripts = context.GetScripts()
+
+            wallet.SaveTransaction(tx)
+
+            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
+
+            relayed = NodeLeader.Instance().Relay(tx)
+
+            if relayed:
+                print("Relayed Tx: %s " % tx.Hash.ToString())
+            else:
+                print("Could not relay tx %s " % tx.Hash.ToString())
+            return
+        else:
+            print ("Transaction initiated, but the signature is incomplete")
+            print(json.dumps(context.ToJson(), separators=(',',':')))
+            return
+
+    except Exception as e:
+        print("could not send: %s " % e)
+        traceback.print_stack()
+        traceback.print_exc()

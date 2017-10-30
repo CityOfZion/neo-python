@@ -355,11 +355,8 @@ class UserWallet(Wallet):
             signature_contract = None
             for ct in self._contracts.values():
                 if ct.PublicKeyHash == k.PublicKeyHash:
-                    signature_contract = ct
-            if signature_contract:
-                addr = signature_contract.Address
-
-                jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
+                    addr = ct.Address
+                    jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
 
         return jsn
 

@@ -612,7 +612,7 @@ class ExecutionEngine():
 
                 pubkeys = []
                 for i in range(0, n):
-                    pubkeys[i] = estack.Pop().GetByteArray()
+                    pubkeys.append(estack.Pop().GetByteArray())
 
                 m = estack.Pop().GetBigInteger()
 
@@ -623,7 +623,7 @@ class ExecutionEngine():
                 sigs = []
 
                 for i in range(0, m):
-                    m[i] = estack.Pop().GetByteArray()
+                    sigs.append(estack.Pop().GetByteArray())
 
                 message = self.ScriptContainer.GetMessage()
 
@@ -640,7 +640,7 @@ class ExecutionEngine():
                             i+=1
                         j+=1
 
-                        if m - i > j - n:
+                        if m - i > n - j:
                             fSuccess = False
 
                 except Exception as e:

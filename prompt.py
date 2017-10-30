@@ -15,8 +15,8 @@ from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,InvokeWithdrawTx
 from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
-from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr
-from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal
+from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr,ImportMultiSigContractAddr
+from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal,parse_and_sign
 from neo.Prompt.Commands.Wallet import DeleteAddress,ImportWatchAddr
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
@@ -109,6 +109,7 @@ class PromptInterface(object):
                 'wallet {verbose}',
                 'wallet rebuild {start block}',
                 'send {assetId or name} {address} {amount}',
+                'sign {transaction in JSON format}',
                 'testinvoke {contract hash} {params}',
                 'invoke',
                 'cancel',
@@ -282,6 +283,9 @@ class PromptInterface(object):
             elif item == 'watch_addr':
                 return ImportWatchAddr(self.Wallet, get_arg(arguments,1))
 
+            elif item == 'multisig_addr':
+                return ImportMultiSigContractAddr(self.Wallet, arguments[1:])
+
 
 
         print("please specify something to import")
@@ -384,6 +388,9 @@ class PromptInterface(object):
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
 
+    def do_sign(self, arguments):
+        jsn = get_arg(arguments)
+        parse_and_sign(self, self.Wallet, jsn)
 
     def show_state(self):
         height = Blockchain.Default().Height
@@ -787,6 +794,8 @@ class PromptInterface(object):
                             self.show_wallet(arguments)
                         elif command == 'send':
                             self.do_send(arguments)
+                        elif command == 'sign':
+                            self.do_sign(arguments)
                         elif command == 'block':
                             self.show_block(arguments)
                         elif command == 'tx':

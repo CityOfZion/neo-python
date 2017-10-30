@@ -40,7 +40,7 @@ def ToName(param_type):
     for item in items:
         name = item[0]
         val = int(item[1])
-        print("name, val %s %s %s" % (name,val, param_type))
+        #print("name, val %s %s %s" % (name,val, param_type))
 
         if val == param_type:
             return name
