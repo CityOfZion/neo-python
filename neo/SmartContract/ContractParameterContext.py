@@ -138,7 +138,7 @@ class ContractParametersContext():
                     return False
             if item.Signatures is None:
                 item.Signatures = {}
-            elif item.Signatures.ContainsKey(pubkey.encode_point(True)):
+            elif pubkey.encode_point(True) in item.Signatures:
                 return False
 
             points = []
@@ -156,9 +156,13 @@ class ContractParametersContext():
             item.Signatures[pubkey.encode_point(True).decode()] = binascii.hexlify(signature)
 
             if len(item.Signatures) == len(contract.ParameterList):
+                i = 0
+                points.sort(reverse=True)
                 for k in points:
-                    if self.Add(contract, i, item.Signatures[k]) == None:
-                        raise Exception("Invalid operation")
+                    if k.decode() in item.Signatures:
+                        if self.Add(contract, i, item.Signatures[k.decode()]) == None:
+                            raise Exception("Invalid operation")
+                        i += 1
                 item.Signatures = None
             return True
 
@@ -266,12 +270,16 @@ class ContractParametersContext():
                 for key, value in parsed['items'].items():
                     if "0x" in key:
                         key = key[2:]
+                    key = key.encode()
                     parameterbytes = []
                     for pt in value['parameters']:
                         if pt['type'] == 'Signature':
                             parameterbytes.append(0)
-                    contract = Contract.Create(value['script'], parameterbytes, value['signatures'])
+                    contract = Contract.Create(value['script'], parameterbytes, key)
                     context.ContextItems[key] = ContextItem(contract)
+                    if 'signatures' in value:
+                        context.ContextItems[key].Signatures = value['signatures']
+
                 return context
             else:
                 raise ("Unsupported transaction type in JSON")

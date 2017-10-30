@@ -104,7 +104,7 @@ def construct_and_send(prompter, wallet, arguments):
 
         else:
             print ("Transaction initiated, but the signature is incomplete")
-            print(json.dumps(context.ToJson()))
+            print(json.dumps(context.ToJson(), separators=(',',':')))
             return
 
 
@@ -192,14 +192,30 @@ def parse_and_sign(prompter, wallet, jsn):
         if context is None:
             print("Failed to parse JSON")
             return
-        #print("Parsed content: {}".format(json.dumps(context.ToJson(), indent=4)))
+
         wallet.Sign(context)
+
         if context.Completed:
-            print("Signature complete, relay now?")
+
+            print("Signature complete, relaying...")
+
+            tx = context.Verifiable
+            tx.scripts = context.GetScripts()
+
+            wallet.SaveTransaction(tx)
+
+            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
+
+            relayed = NodeLeader.Instance().Relay(tx)
+
+            if relayed:
+                print("Relayed Tx: %s " % tx.Hash.ToString())
+            else:
+                print("Could not relay tx %s " % tx.Hash.ToString())
             return
         else:
             print ("Transaction initiated, but the signature is incomplete")
-            print(context.ToJson())
+            print(json.dumps(context.ToJson(), separators=(',',':')))
             return
 
     except Exception as e:
