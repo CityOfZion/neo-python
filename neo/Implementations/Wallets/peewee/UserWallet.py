@@ -349,17 +349,12 @@ class UserWallet(Wallet):
     def PubKeys(self):
         keys = self.LoadKeyPairs()
         jsn = []
-        addrout = []
         for k in keys.values():
             pub = k.PublicKey.encode_point(True)
             for ct in self._contracts.values():
                 if ct.PublicKeyHash == k.PublicKeyHash:
-                    signature_contract = ct
-
-                    if signature_contract and not signature_contract.Address in addrout:
-                        addr = signature_contract.Address
-                        addrout.append(addr)
-                        jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
+                    addr = ct.Address
+                    jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
 
         return jsn
 
