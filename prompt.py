@@ -693,8 +693,11 @@ class PromptInterface(object):
                                     get_bottom_toolbar_tokens=self.get_bottom_toolbar,
                                     style=self.token_style)
                 except EOFError:
-                    # Control-D pressed
+                    # Control-D pressed: quit
                     return self.quit()
+                except KeyboardInterrupt:
+                    # Control-C pressed: do nothing
+                    continue
 
 
             if self._gathering_password:
