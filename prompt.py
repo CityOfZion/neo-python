@@ -690,8 +690,8 @@ class PromptInterface(object):
                                 completer=self.completer,
                                 history=self.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                                style=self.token_style)
-
+                                style=self.token_style,
+                                refresh_interval=.5)
 
 
             if self._gathering_password:
