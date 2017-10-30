@@ -129,8 +129,9 @@ class PromptInterface(object):
 
     def get_bottom_toolbar(self, cli=None):
         out = []
+        net = "[MainNet]" if Settings.NODE_PORT == 10333 else "[TestNet]"
         try:
-            out =[(Token.Command, 'Progress: '),
+            out =[(Token.Command, '%s Progress: ' % net),
                     (Token.Number, str(Blockchain.Default().Height)),
                     (Token.Neo, '/'),
                     (Token.Number, str(Blockchain.Default().HeaderHeight))]
