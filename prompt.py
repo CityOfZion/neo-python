@@ -686,12 +686,18 @@ class PromptInterface(object):
                 result = prompt("password> ", is_password=True)
 
             else:
-                result = prompt("neo> ",
-                                completer=self.completer,
-                                history=self.history,
-                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                                style=self.token_style)
-
+                try:
+                    result = prompt("neo> ",
+                                    completer=self.completer,
+                                    history=self.history,
+                                    get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                    style=self.token_style)
+                except EOFError:
+                    # Control-D pressed: quit
+                    return self.quit()
+                except KeyboardInterrupt:
+                    # Control-C pressed: do nothing
+                    continue
 
 
             if self._gathering_password:
