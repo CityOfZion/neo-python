@@ -132,8 +132,9 @@ class PromptInterface(object):
 
     def get_bottom_toolbar(self, cli=None):
         out = []
+        net = "[MainNet]" if Settings.NODE_PORT == 10333 else "[TestNet]"
         try:
-            out =[(Token.Command, 'Progress: '),
+            out =[(Token.Command, '%s Progress: ' % net),
                     (Token.Number, str(Blockchain.Default().Height)),
                     (Token.Neo, '/'),
                     (Token.Number, str(Blockchain.Default().HeaderHeight))]
@@ -803,13 +804,19 @@ class PromptInterface(object):
                 result = prompt("password> ", is_password=True)
 
             else:
-                result = prompt("neo> ",
-                                completer=self.get_completer(),
-                                history=self.history,
-                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                                style=self.token_style,
-                                refresh_interval=.5)
-
+                try:
+                    result = prompt("neo> ",
+                                    completer=self.get_completer(),
+                                    history=self.history,
+                                    get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                    style=self.token_style,
+                                    refresh_interval=.5)
+                except EOFError:
+                    # Control-D pressed: quit
+                    return self.quit()
+                except KeyboardInterrupt:
+                    # Control-C pressed: do nothing
+                    continue
 
 
             if self._gathering_password:
