@@ -150,7 +150,7 @@ class LevelDBBlockchain(Blockchain):
             if self._stored_header_count == 0:
                 headers = []
                 for key, value in self._db.iterator(prefix=DBPrefix.DATA_Block):
-                    dbhash = bytearray(value)[4:]
+                    dbhash = bytearray(value)[8:]
                     headers.append(  Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
 
                 headers.sort(key=lambda h: h.Index)
