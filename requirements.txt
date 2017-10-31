@@ -3,7 +3,6 @@ attrs==17.2.0
 Autologging==1.1.0
 Automat==0.6.0
 base58==0.2.5
-bitarray==0.8.1
 bitcoin==1.1.42
 blessings==1.6
 bpython==0.16
@@ -43,7 +42,7 @@ pyparsing==2.2.0
 python-dateutil==2.6.1
 pytz==2017.2
 requests==2.18.1
-six==1.10.0
+six==1.11.0
 Twisted==17.5.0
 urllib3==1.21.1
 wcwidth==0.1.7
