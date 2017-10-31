@@ -49,8 +49,6 @@ def ImportContractAddr(wallet, args):
                 param_list[0] = 0
 
 
-            print("self param list: %s " % param_list)
-
             verification_contract = Contract.Create(reedeem_script,param_list,pubkey_script_hash)
 
             address = verification_contract.Address

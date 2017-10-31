@@ -93,8 +93,7 @@ def construct_and_send(prompter, wallet, arguments):
             tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                                data=data)]
 
-
-        context = ContractParametersContext(tx)
+        context = ContractParametersContext(tx, isMultiSig=signer_contract.IsMultiSigContract)
         wallet.Sign(context)
 
         if context.Completed:
@@ -104,7 +103,7 @@ def construct_and_send(prompter, wallet, arguments):
 
             wallet.SaveTransaction(tx)
 
-            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
+#            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
 
             relayed = NodeLeader.Instance().Relay(tx)
 

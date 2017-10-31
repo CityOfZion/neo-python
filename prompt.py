@@ -35,16 +35,15 @@ from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
-import binascii
-from neo.Core.Helper import Helper
-from neo.Prompt.Utils import parse_param
 
-logname = 'prompt.log'
+debug_logname = 'prompt.log'
+
 logging.basicConfig(
      level=logging.DEBUG,
      filemode='a',
-     filename=logname,
-     format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
+     filename=debug_logname,
+     format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
+
 
 blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
@@ -73,10 +72,6 @@ class PromptInterface(object):
 
     go_on = True
 
-    completer = WordCompleter(['block','tx','header','mem',
-                               'help','state','node','exit','quit',
-                               'config', 'import','export','open',
-                               'wallet','contract','asset',])
 
     _gathering_password = False
     _gathered_passwords = []
@@ -92,6 +87,8 @@ class PromptInterface(object):
     _walletdb_loop = None
 
     Wallet = None
+
+    _known_addresses = []
 
     commands = ['quit',
                 'help',
@@ -145,6 +142,24 @@ class PromptInterface(object):
 
         return out
 
+
+    def get_completer(self):
+        standard_completions = ['block', 'tx', 'header', 'mem', 'neo','gas',
+                                   'help', 'state', 'node', 'exit', 'quit',
+                                   'config', 'import', 'export', 'open',
+                                   'wallet', 'contract', 'asset', 'wif',
+                                    'watch_addr','contract_addr', 'testinvoke',]
+
+        if self.Wallet:
+            for addr in self.Wallet.Addresses:
+                if not addr in self._known_addresses:
+                    self._known_addresses.append(addr)
+
+        all_completions = standard_completions + self._known_addresses
+
+        completer = WordCompleter(all_completions)
+
+        return completer
 
     def quit(self):
         print('Shutting down.  This may take a bit...')
@@ -395,7 +410,6 @@ class PromptInterface(object):
 
         if item == 'delete_addr':
             addr_to_delete = get_arg(arguments, 1)
-            print("address to delete %s" % addr_to_delete)
             DeleteAddress(self, self.Wallet, addr_to_delete)
 
         if item == 'close':
@@ -790,10 +804,11 @@ class PromptInterface(object):
 
             else:
                 result = prompt("neo> ",
-                                completer=self.completer,
+                                completer=self.get_completer(),
                                 history=self.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                                style=self.token_style)
+                                style=self.token_style,
+                                refresh_interval=.5)
 
 
 

@@ -71,11 +71,14 @@ class ContractParametersContext():
 
     ContextItems = None
 
-    def __init__(self, verifiable):
+    IsMultiSig = None
+
+    def __init__(self, verifiable, isMultiSig=False):
 
         self.Verifiable = verifiable
         self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
         self.ContextItems = {}
+        self.IsMultiSig = isMultiSig
 
 
 
@@ -83,20 +86,31 @@ class ContractParametersContext():
     def Completed(self):
 
         if len(self.ContextItems) < len(self.ScriptHashes):
-            print("CONTEXT ITEMS, SCRIPT HASHES %s %s " % (len(self.ContextItems), len(self.ScriptHashes)))
             return False
 
         for item in self.ContextItems.values():
             if item is None:
-                print("ITEM IN CONTEXT ITEMS IS NONE!!")
                 return False
 
             for p in item.ContractParameters:
-                if p is None or p.Value is None:
-                    return False
-                if p.Type is not None:
-                    if p.Value == 0:
+
+                # for multi signature contracts, we need to make sure
+                # that this check runs
+                if self.IsMultiSig:
+                    if p is None or p.Value is None:
                         return False
+                    if p.Type is not None:
+                        if p.Value == 0:
+                            return False
+
+                # for non-multisig contracts ( specifically, sending from contract
+                # addresses that have more than one param ) we need to allow an empty
+                # value, or, if it is empty, to fill it with 0
+                else:
+                    if p is None or p.Value is None:
+                        if p.Type is not None:
+                            p.Value = 0
+
         return True
 
 

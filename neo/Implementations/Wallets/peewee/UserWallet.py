@@ -147,13 +147,11 @@ class UserWallet(Wallet):
             self.__log.debug("Creating db contract %s " % db_contract)
 
             db_contract.save()
-            print("created db contract: %s " % db_contract)
 
     def AddWatchOnly(self, script_hash):
         super(UserWallet,self).AddWatchOnly(script_hash)
 
         script_hash_bytes = bytes(script_hash.ToArray())
-        print("adding watch only %s " % script_hash_bytes)
         address = None
 
         try:
@@ -194,7 +192,7 @@ class UserWallet(Wallet):
 
         except Exception as e:
             print("couldnt load watch only : %s " % e)
-            print("You may need to migrate your wallet. Run 'wallet migrate', then re-open your wallet")
+            print("You may need to migrate your wallet. Run 'wallet migrate'.")
 
         return []
 
@@ -272,7 +270,6 @@ class UserWallet(Wallet):
         for tx in block.FullTransactions:
 
             if self.IsWalletTransaction(tx):
-#                print("PROCESSING WALLET TRANSACTION %s " % json.dumps(tx.ToJson(), indent=4))
                 db_tx = None
                 try:
                     db_tx = Transaction.get(Hash=tx.Hash.ToBytes())
@@ -345,6 +342,10 @@ class UserWallet(Wallet):
                 print("Couldnt delete coin %s %s " % (e, coin))
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
 
+    @property
+    def Addresses(self):
+        result = [ct.Address for ct in self._contracts.values()]
+        return result
 
     def PubKeys(self):
         keys = self.LoadKeyPairs()
@@ -387,7 +388,6 @@ class UserWallet(Wallet):
         except Exception as e:
             pass
 
-        print("Deleted address %s " % script_hash)
         return True,coins_toremove
 
 

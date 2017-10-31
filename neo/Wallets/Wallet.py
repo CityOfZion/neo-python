@@ -541,7 +541,7 @@ class Wallet(object):
         try:
             return self.GetContracts()[0]
         except Exception as e:
-            print("NO CONTRACTS!")
+            print("Could not find default contract")
         return None
 
     def GetKeys(self):
