@@ -7,7 +7,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
-from neo import Settings
+from neo.Settings import settings
 from base58 import b58decode
 import pdb
 class Helper(object):
@@ -51,7 +51,7 @@ class Helper(object):
 
         retVal = ms.ToArray()
         StreamManager.ReleaseStream(ms)
-        
+
         return retVal
 
 
@@ -60,7 +60,7 @@ class Helper(object):
         data = b58decode(address)
         if len(data) != 25:
             raise ValueError('Not correct Address, wrong length.')
-        if data[0] != Settings.ADDRESS_VERSION:
+        if data[0] != settings.ADDRESS_VERSION:
             raise ValueError('Not correct Coin Version')
 
         checksum = Crypto.Default().Hash256(data[:21])[:4]

@@ -16,7 +16,7 @@ from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
 
-from neo import Settings
+from neo.Settings import settings
 from neo.Fixed8 import Fixed8
 
 
@@ -76,7 +76,7 @@ In English:
 
 
     def SystemFee(self):
-        return Fixed8(int(Settings.REGISTER_TX_FEE))
+        return Fixed8(int(settings.REGISTER_TX_FEE))
 
     def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""

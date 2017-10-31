@@ -1,32 +1,77 @@
-
+"""
+The settings are dynamically configurable, for instance to set them depending on CLI arguments.
+By default these are the testnet settings, but you can reconfigure them by calling the `setup(..)`
+method.
+"""
 import json
 
+class SettingsHolder:
+    """
+    This class holds all the settings. Needs to be setup with one of the
+    `setup` methdos before using it.
+    """
+    MAGIC = None
+    ADDRESS_VERSION = None
+    STANDBY_VALIDATORS = None
+    SEED_LIST = None
 
-with open('protocol.testnet.json') as data_file:
+    ENROLLMENT_TX_FEE = None
+    ISSUE_TX_FEE = None
+    PUBLISH_TX_FEE = None
+    REGISTER_TX_FEE = None
 
-    data = json.load(data_file)
+    LEVELDB_PATH = None
+    NODE_PORT = None
+    WS_PORT = None
+    URI_PREFIX = None
+    VERSION_NAME = None
 
-config = data['ProtocolConfiguration']
+    # Helpers
+    @property
+    def is_mainnet(self):
+        """ Returns True if settings point to MainNet """
+        return self.NODE_PORT == 10333
 
+    @property
+    def is_testnet(self):
+        """ Returns True if settings point to TestNet """
+        return self.NODE_PORT == 20333
 
-MAGIC = config['Magic']
-ADDRESS_VERSION = config['AddressVersion']
-STANDBY_VALIDATORS = config['StandbyValidators']
-SEED_LIST = config['SeedList']
+    # Setup methods
+    def setup(self, config_file):
+        """ Load settings from a JSON config file """
+        with open(config_file) as data_file:
+            data = json.load(data_file)
 
-fees = config['SystemFee']
+        config = data['ProtocolConfiguration']
+        self.MAGIC = config['Magic']
+        self.ADDRESS_VERSION = config['AddressVersion']
+        self.STANDBY_VALIDATORS = config['StandbyValidators']
+        self.SEED_LIST = config['SeedList']
 
-ENROLLMENT_TX_FEE = fees['EnrollmentTransaction']
-ISSUE_TX_FEE = fees['IssueTransaction']
-PUBLISH_TX_FEE = fees['PublishTransaction']
-REGISTER_TX_FEE = fees['RegisterTransaction']
+        fees = config['SystemFee']
+        self.ENROLLMENT_TX_FEE = fees['EnrollmentTransaction']
+        self.ISSUE_TX_FEE = fees['IssueTransaction']
+        self.PUBLISH_TX_FEE = fees['PublishTransaction']
+        self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
+        config = data['ApplicationConfiguration']
+        self.LEVELDB_PATH= config['DataDirectoryPath']
+        self.NODE_PORT = int(config['NodePort'])
+        self.WS_PORT = config['WsPort']
+        self.URI_PREFIX = config['UriPrefix']
+        self.VERSION_NAME = config['VersionName']
 
+    def setup_mainnet(self):
+        """ Load settings from the mainnet JSON config file """
+        self.setup('protocol.mainnet.json')
 
-config = data['ApplicationConfiguration']
+    def setup_testnet(self):
+        """ Load settings from the testnet JSON config file """
+        self.setup('protocol.testnet.json')
 
-LEVELDB_PATH= config['DataDirectoryPath']
-NODE_PORT = int(config['NodePort'])
-WS_PORT = config['WsPort']
-URI_PREFIX = config['UriPrefix']
-VERSION_NAME = config['VersionName']
+# Settings instance used by external modules
+settings = SettingsHolder()
+
+# Load testnet settings as default
+settings.setup_testnet()

@@ -4,7 +4,7 @@ from neo.Core.Blockchain import Blockchain as BC
 from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode
-from neo import Settings
+from neo.Settings import settings
 
 
 from autologging import logged
@@ -63,7 +63,7 @@ class NodeLeader():
     def Start(self):
         # start up endpoints
         start_delay=0
-        for bootstrap in Settings.SEED_LIST:
+        for bootstrap in settings.SEED_LIST:
             host, port = bootstrap.split(":")
             self.ADDRS.append('%s:%s' % (host,port))
             reactor.callLater( start_delay, self.SetupConnection,host, port)
