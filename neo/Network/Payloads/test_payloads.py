@@ -6,7 +6,7 @@ from neo.IO.Helper import Helper as IOHelper
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream,StreamManager
-from neo import Settings
+from neo.Settings import settings
 from neo.Core.Helper import Helper
 import random
 import binascii
@@ -79,7 +79,7 @@ class PayloadTestCase(NeoTestCase):
 
         self.assertEqual(dm.Command, 'version')
 
-        self.assertEqual(dm.Magic, Settings.MAGIC)
+        self.assertEqual(dm.Magic, settings.MAGIC)
 
         checksum = Message.GetChecksum(dm.Payload)
 

@@ -11,7 +11,7 @@ from neo.VM.OpCode import *
 from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.Helper import Helper
 from neo.SmartContract.Contract import Contract
-from neo import Settings
+from neo.Settings import settings
 from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
 from collections import Counter
@@ -60,8 +60,8 @@ class Blockchain(object):
     @staticmethod
     def StandbyValidators():
         if len(Blockchain.__validators) < 1:
-            vlist = Settings.STANDBY_VALIDATORS
-            for pkey in Settings.STANDBY_VALIDATORS:
+            vlist = settings.STANDBY_VALIDATORS
+            for pkey in settings.STANDBY_VALIDATORS:
                 Blockchain.__validators.append( ECDSA.decode_secp256r1(pkey).G)
 
         return Blockchain.__validators

@@ -8,7 +8,7 @@ Usage:
 from neo.Core.TX.Transaction import Transaction,TransactionType
 
 import random
-from neo import Settings
+from neo.Settings import settings
 from neo.Fixed8 import Fixed8
 
 
@@ -22,7 +22,7 @@ class IssueTransaction(Transaction):
         self.Type = TransactionType.IssueTransaction  # 0x40
 
     def SystemFee(self):
-        return Fixed8( int(Settings.ISSUE_TX_FEE))
+        return Fixed8(int(settings.ISSUE_TX_FEE))
 
 
     def GetScriptHashesForVerifying(self):

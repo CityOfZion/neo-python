@@ -17,10 +17,10 @@ from twisted.internet import reactor, task
 
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo import Settings
+from neo.Settings import settings
 
 
-blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
+blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
 
 

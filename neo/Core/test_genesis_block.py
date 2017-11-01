@@ -8,7 +8,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
-from neo import Settings
+from neo.Settings import settings
 from neo.Cryptography.Crypto import Crypto
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 import shutil
@@ -78,7 +78,7 @@ class GenesisBlockTestCase(VerifiableTestCase):
 
         script = Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators())
 
-        if Settings.MAGIC == 1953787457:
+        if settings.MAGIC == 1953787457:
             self.assertEqual(script, self.contractraw)
             out = Crypto.ToScriptHash(script)
 
@@ -125,7 +125,7 @@ class GenesisBlockTestCase(VerifiableTestCase):
 
 #        rd = block.RawData()
 
-        if Settings.MAGIC == 1953787457:
+        if settings.MAGIC == 1953787457:
             self.assertEqual(block.MerkleRoot.ToBytes(), self.testnet_genesis_merkle)
             self.assertEqual(txhashes, self.test_genesis_tx_hashes)
             self.assertEqual(block.RawData(), self.testnet_genesis_raw)

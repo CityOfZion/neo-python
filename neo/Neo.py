@@ -1,7 +1,7 @@
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neo import Settings
+from neo.Settings import settings
 from neo.Network.LocalNode import LocalNode
 
 class CLI(object):
@@ -14,7 +14,7 @@ class CLI(object):
 
     def __init__(self):
 
-        self._blockchain = LevelDBBlockchain( Settings.LEVELDB_PATH )
+        self._blockchain = LevelDBBlockchain( settings.LEVELDB_PATH )
         Blockchain.RegisterBlockchain(self._blockchain)
         self._localnode = LocalNode()
         self._localnode.Start(20333, 20334)
