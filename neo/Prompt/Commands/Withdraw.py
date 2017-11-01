@@ -5,7 +5,7 @@ from neo.Core.Helper import Helper
 from neo.Fixed8 import Fixed8
 from neo.Core.TX.Transaction import TransactionOutput,TransactionInput
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
-from neo.Prompt.Utils import parse_param,get_arg
+from neo.Prompt.Utils import parse_param,get_arg,get_asset_id
 from neo.Prompt.Commands.Invoke import TestInvokeContract,InvokeContract
 from neo.Wallets.Coin import CoinState
 from neo.UInt256 import UInt256
@@ -77,6 +77,31 @@ def RequestWithdraw(prompter, wallet, args):
 
 
 
+def RedeemWithdraw(prompter, wallet, args):
+    """
+    withdraw_from {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
+    """
+
+    if not wallet:
+        print("please open a wallet")
+        return
+
+    from_address = get_arg(args,0)
+    assetId = get_asset_id( get_arg(args,1))
+    to_address = get_arg(args, 2)
+    amount = get_arg(args, 3)
+
+    scripthash_to = wallet.ToScriptHash(to_address)
+    scripthash_from = wallet.ToScriptHash(from_address)
+
+    contract = Blockchain.Default().GetContract(scripthash_from)
+
+    requested_vins = get_contract_holds_for_address(wallet,scripthash_from,to_address)
+
+    print("contract.. %s " % contract)
+
+    print("requested vins %s " % requested_vins)
+
 def construct_contract_withdrawal(prompter, wallet, arguments, fee=Fixed8.FromDecimal(.001), check_holds=False):
 
     if len(arguments) < 4:
@@ -89,14 +114,7 @@ def construct_contract_withdrawal(prompter, wallet, arguments, fee=Fixed8.FromDe
     to_address = get_arg(arguments, 2)
     amount = get_arg(arguments, 3)
 
-    assetId = None
-
-    if to_send.lower() == 'neo':
-        assetId = Blockchain.Default().SystemShare().Hash
-    elif to_send.lower() == 'gas':
-        assetId = Blockchain.Default().SystemCoin().Hash
-    elif Blockchain.Default().GetAssetState(to_send):
-        assetId = Blockchain.Default().GetAssetState(to_send).AssetId
+    assetId = get_asset_id(to_send)
 
     scripthash_to = wallet.ToScriptHash(to_address)
     if scripthash_to is None:
@@ -153,6 +171,44 @@ def construct_contract_withdrawal(prompter, wallet, arguments, fee=Fixed8.FromDe
         return withdraw_constructed_tx
 
 
+
+
+def get_contract_holds_for_address(wallet, contract_hash, addr):
+
+    print("contract hash %s " % contract_hash)
+    contract = Blockchain.Default().GetContract( contract_hash.ToBytes())
+
+    print("contract: %s " % contract)
+
+    invoke_args = [contract_hash.ToString(), parse_param('getHolds'), [addr]]
+
+    tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, False)
+
+    if tx is not None and len(results) > 0:
+        print("results!!! %s " % results)
+        holds = results[0].GetByteArray()
+        holdlen = len(holds)
+        numholds =  int( holdlen/33)
+        print("holds, holdlen, numholds %s %s " % (holds, numholds))
+        vins = []
+        for i in range(0, numholds):
+            hstart = i*33
+            hend = hstart + 33
+            item = holds[hstart:hend]
+
+            vin_index = item[0]
+            vin_tx_id = UInt256(data=item[1:])
+            print("VIN INDEX, VIN TX ID: %s %s" % (vin_index,vin_tx_id))
+
+            t_input = TransactionInput(prevHash=vin_tx_id,prevIndex=vin_index)
+
+            print("found tinput: %s " % json.dumps(t_input.ToJson(), indent=4))
+
+            vins.append(t_input)
+
+        return vins
+
+    raise Exception("Could not lookup contract holds")
 
 
 def lookup_contract_holds(wallet, contract_hash):

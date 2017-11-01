@@ -2,6 +2,7 @@ import binascii
 from neo.BigInteger import BigInteger
 from neo.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
+from neo.Core.Blockchain import Blockchain
 
 def get_asset_attachments(params):
 
@@ -30,6 +31,18 @@ def get_asset_attachments(params):
 
     return params, neo_to_attach, gas_to_attach
 
+
+def get_asset_id(asset_str):
+    assetId = None
+
+    if asset_str.lower() == 'neo':
+        assetId = Blockchain.Default().SystemShare().Hash
+    elif asset_str.lower() == 'gas':
+        assetId = Blockchain.Default().SystemCoin().Hash
+    elif Blockchain.Default().GetAssetState(asset_str):
+        assetId = Blockchain.Default().GetAssetState(asset_str).AssetId
+
+    return assetId
 
 def get_from_addr(params):
     to_remove = []
