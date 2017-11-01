@@ -94,13 +94,12 @@ def RedeemWithdraw(prompter, wallet, args):
     scripthash_to = wallet.ToScriptHash(to_address)
     scripthash_from = wallet.ToScriptHash(from_address)
 
-    contract = Blockchain.Default().GetContract(scripthash_from)
+    contract = Blockchain.Default().GetContract(scripthash_from.ToBytes())
 
-    requested_vins = get_contract_holds_for_address(wallet,scripthash_from,to_address)
-
-    print("contract.. %s " % contract)
+    requested_vins = get_contract_holds_for_address(wallet,scripthash_from,scripthash_to)
 
     print("requested vins %s " % requested_vins)
+    
 
 def construct_contract_withdrawal(prompter, wallet, arguments, fee=Fixed8.FromDecimal(.001), check_holds=False):
 
@@ -175,21 +174,14 @@ def construct_contract_withdrawal(prompter, wallet, arguments, fee=Fixed8.FromDe
 
 def get_contract_holds_for_address(wallet, contract_hash, addr):
 
-    print("contract hash %s " % contract_hash)
-    contract = Blockchain.Default().GetContract( contract_hash.ToBytes())
-
-    print("contract: %s " % contract)
-
-    invoke_args = [contract_hash.ToString(), parse_param('getHolds'), [addr]]
+    invoke_args = [contract_hash.ToString(), parse_param('getHold'), [addr.Data]]
 
     tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, False)
 
     if tx is not None and len(results) > 0:
-        print("results!!! %s " % results)
         holds = results[0].GetByteArray()
         holdlen = len(holds)
         numholds =  int( holdlen/33)
-        print("holds, holdlen, numholds %s %s " % (holds, numholds))
         vins = []
         for i in range(0, numholds):
             hstart = i*33
@@ -198,11 +190,8 @@ def get_contract_holds_for_address(wallet, contract_hash, addr):
 
             vin_index = item[0]
             vin_tx_id = UInt256(data=item[1:])
-            print("VIN INDEX, VIN TX ID: %s %s" % (vin_index,vin_tx_id))
 
             t_input = TransactionInput(prevHash=vin_tx_id,prevIndex=vin_index)
-
-            print("found tinput: %s " % json.dumps(t_input.ToJson(), indent=4))
 
             vins.append(t_input)
 

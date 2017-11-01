@@ -103,11 +103,11 @@ class PromptInterface(object):
                 'nodes',
                 'state',
                 'config log {on/off}',
-                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {test_params})'
+                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {test_params})',
                 'import wif {wif}',
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage}',
                 'import contract_addr {contract_hash} {pubkey}',
-                'import watch_addr {address}'
+                'import watch_addr {address}',
                 'export wif {address}',
                 'open wallet {path}',
                 'create wallet {path}',
