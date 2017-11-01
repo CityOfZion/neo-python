@@ -33,9 +33,9 @@ from neo.Core.TX.Transaction import TransactionOutput,ContractTransaction
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from twisted.internet import reactor, task
+from neo.Settings import settings
 
-
-blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
+blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
 Blockchain.RegisterBlockchain(blockchain)
 SubscribeNotifications()
 
