@@ -5,6 +5,7 @@ import json
 import logging
 import datetime
 import os
+import argparse
 from neo.IO.MemoryStream import StreamManager
 import resource
 
@@ -21,7 +22,7 @@ from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withd
 from neo.Prompt.Commands.Wallet import DeleteAddress,ImportWatchAddr
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
-from neo import Settings
+from neo.Settings import settings
 from neo.Fixed8 import Fixed8
 import traceback
 
@@ -45,9 +46,6 @@ logging.basicConfig(
      format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 
-blockchain = LevelDBBlockchain(Settings.LEVELDB_PATH)
-Blockchain.RegisterBlockchain(blockchain)
-SubscribeNotifications()
 
 
 import csv
@@ -132,13 +130,17 @@ class PromptInterface(object):
 
     history = FileHistory('.prompt.py.history')
 
-    start_height = Blockchain.Default().Height
-    start_dt = datetime.datetime.utcnow()
+    start_height = None
+    start_dt = None
+
+    def __init__(self):
+        self.start_height = Blockchain.Default().Height
+        self.start_dt = datetime.datetime.utcnow()
 
 
     def get_bottom_toolbar(self, cli=None):
         out = []
-        net = "[MainNet]" if Settings.NODE_PORT == 10333 else "[TestNet]"
+        net = "[MainNet]" if settings.is_mainnet else "[TestNet]"
         try:
             out =[(Token.Command, '%s Progress: ' % net),
                     (Token.Number, str(Blockchain.Default().Height)),
@@ -855,10 +857,32 @@ class PromptInterface(object):
                     traceback.print_exc()
 
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mainnet", action="store_true", default=False, help="use MainNet instead of the default TestNet")
+    parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
+    args = parser.parse_args()
+
+    if args.mainnet and args.config:
+        print("Cannot use bot --config and --mainnet parameters, please use only one.")
+        exit(1)
+
+    # Setup depending on command line arguments. By default, the testnet settings are already loaded.
+    if args.config:
+        settings.setup(args.config)
+    elif args.mainnet:
+        settings.setup_mainnet()
+
+    # Instantiate the blockchain and subscribe to notifications
+    blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
+    Blockchain.RegisterBlockchain(blockchain)
+    SubscribeNotifications()
+
+    # Start the prompt interface
     cli = PromptInterface()
 
+    # Run
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()

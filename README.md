@@ -45,7 +45,7 @@
 
 ## Getting started
 
-You will need to install the libleveldb library. Install [Python 3.5](https://www.python.org/downloads/release/python-354/) to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.6 is not currently supported due to incompatibilities with the byteplay module. 
+You will need to install the libleveldb library. Install [Python 3.5](https://www.python.org/downloads/release/python-354/) to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.6 is not currently supported due to incompatibilities with the byteplay module.
 
 We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get you started with this library. There are other videos under the [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube channel.
 
@@ -65,7 +65,7 @@ apt-get -s install libleveldb-dev
 
 This is a bit more tricky...
 
-``` 
+```
 yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel
 ```
 
@@ -192,6 +192,20 @@ send { ASSET_ID } { ADDRESS } { AMOUNT }
 
 
 #### Extra notes
+
+To run the prompt on mainnet, you can use the cli argument `-m`:
+
+```
+$ python prompt.py -h
+usage: prompt.py [-h] [-m] [-c CONFIG]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m, --mainnet         use MainNet instead of the default TestNet
+  -c CONFIG, --config CONFIG
+                        Use a specific config file
+```
+
 On OSX, if you would like to run the process in the background, even when your computer is sleeping, you can use the built in `caffeinate` command
 
 ```

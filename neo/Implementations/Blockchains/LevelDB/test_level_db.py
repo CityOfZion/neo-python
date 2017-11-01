@@ -5,7 +5,7 @@ from neo.Core.Header import Header
 from neo.IO.Helper import Helper
 import shutil
 import binascii
-from neo import Settings
+from neo.Settings import settings
 
 class LevelDBTest(NeoTestCase):
 
@@ -56,7 +56,7 @@ class LevelDBTest(NeoTestCase):
         block_one = Helper.AsSerializableWithType(hexdata,'neo.Core.Block.Block')
         header = block_one.Header
 
-        if Settings.MAGIC == 1953787457:
+        if settings.MAGIC == 1953787457:
             self.assertEqual(self._blockchain.CurrentHeaderHash, b'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef')
         else:
             self.assertEqual(self._blockchain.CurrentHeaderHash, b'd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf')
@@ -93,4 +93,4 @@ class LevelDBTest(NeoTestCase):
 
 
         #test contains block functions
-#        self.assertTrue( self._blockchain.ContainsBlock(block_one_again.Index))
+#        self.assertTrue(self._blockchain.ContainsBlock(block_one_again.Index))
