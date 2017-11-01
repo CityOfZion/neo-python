@@ -24,7 +24,7 @@ from .InventoryType import InventoryType
 
 import random
 
-from neo import Settings
+from neo.Settings import settings
 
 @logged
 class NeoNode(Protocol):
@@ -274,7 +274,7 @@ class NeoNode(Protocol):
         self.SendSerializedMessage(m)
 
     def SendVersion(self):
-        m = Message("version", VersionPayload(Settings.NODE_PORT, self.remote_nodeid, Settings.VERSION_NAME))
+        m = Message("version", VersionPayload(settings.NODE_PORT, self.remote_nodeid, settings.VERSION_NAME))
         self.SendSerializedMessage(m)
 
 

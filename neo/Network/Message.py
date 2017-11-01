@@ -2,7 +2,7 @@ from neo.IO.Mixins import SerializableMixin
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream,StreamManager
-from neo import Settings
+from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
 import ctypes
@@ -35,7 +35,7 @@ class Message(SerializableMixin):
     def __init__(self, command=None, payload = None, print_payload=False):
 
         self.Command = command
-        self.Magic = Settings.MAGIC
+        self.Magic = settings.MAGIC
 
         if payload is None:
             payload = bytearray()

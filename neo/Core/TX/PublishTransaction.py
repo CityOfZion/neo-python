@@ -4,7 +4,7 @@ from neo.Core.TX.Transaction import Transaction,TransactionType
 import sys
 from neo.Core.FunctionCode import FunctionCode
 import binascii
-from neo import Settings
+from neo.Settings import settings
 from neo.Fixed8 import Fixed8
 
 class PublishTransaction(Transaction):
@@ -24,7 +24,7 @@ class PublishTransaction(Transaction):
         self.Type = TransactionType.PublishTransaction
 
     def SystemFee(self):
-        return Fixed8(int(Settings.PUBLISH_TX_FEE))
+        return Fixed8(int(settings.PUBLISH_TX_FEE))
 
     def DeserializeExclusiveData(self, reader):
         if self.Version > 1:

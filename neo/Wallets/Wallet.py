@@ -15,11 +15,10 @@ from neo.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
 from neo.Wallets.KeyPair import KeyPair
-from neo import Settings
+from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from autologging import logged
 import hashlib
-from neo import Settings
 from threading import Thread
 from threading import Lock
 import traceback
@@ -38,7 +37,7 @@ class Wallet(object):
 
 
 
-    AddressVersion = Settings.ADDRESS_VERSION
+    AddressVersion = None
 
     _path = ''
     _iv = None
@@ -72,7 +71,7 @@ class Wallet(object):
 
     """docstring for Wallet"""
     def __init__(self, path, passwordKey, create):
-
+        self.AddressVersion = settings.ADDRESS_VERSION
         self._path = path
 
         if create:
@@ -83,7 +82,7 @@ class Wallet(object):
             self._coins = {}
 
             if Blockchain.Default() is None:
-                self._indexedDB= LevelDBBlockchain(Settings.LEVELDB_PATH)
+                self._indexedDB= LevelDBBlockchain(settings.LEVELDB_PATH)
                 Blockchain.RegisterBlockchain(self._indexedDB)
             else:
                 self._indexedDB = Blockchain.Default()
