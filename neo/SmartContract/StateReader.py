@@ -559,7 +559,8 @@ class StateReader(InteropService):
         input = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.TransactionInput')
         if input is None:
             return False
-        engine.EvaluationStack.PushT(input.PrevIndex)
+
+        engine.EvaluationStack.PushT(int(input.PrevIndex))
         return True
 
     def Output_GetAssetId(self, engine):

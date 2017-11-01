@@ -3,6 +3,11 @@ from neo.BigInteger import BigInteger
 from neo.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
+from neo.Wallets.Coin import CoinState
+from neo.Core.TX.Transaction import TransactionInput
+from neo.UInt256 import UInt256
+import json
+
 
 def get_asset_attachments(params):
 
@@ -43,6 +48,37 @@ def get_asset_id(asset_str):
         assetId = Blockchain.Default().GetAssetState(asset_str).AssetId
 
     return assetId
+
+def get_asset_amount(amount, assetId):
+
+    f8amount = Fixed8.TryParse(amount)
+    if f8amount is None:
+        print("invalid amount format")
+
+    elif f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
+        print("incorrect amount precision")
+        return None
+
+    return f8amount
+
+
+def get_withdraw_from_watch_only(wallet, scripthash_from):
+    withdraw_from_watch_only=0
+    #check to see if contract address is in the wallet
+    wallet_contract = wallet.GetContract(scripthash_from)
+
+    #if it is not, check to see if it in the wallet watch_addr
+    if wallet_contract is None:
+        if scripthash_from in wallet._watch_only:
+            withdraw_from_watch_only = CoinState.WatchOnly
+            wallet_contract = scripthash_from
+
+    if wallet_contract is None:
+        print("please add this contract into your wallet before withdrawing from it")
+        print("Use import watch_addr {ADDR}, then rebuild your wallet")
+        return None
+
+    return withdraw_from_watch_only
 
 def get_from_addr(params):
     to_remove = []
@@ -128,3 +164,29 @@ def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
     except Exception as e:
         pass
     return None
+
+
+def parse_hold_vins(results):
+    print("results!!! %s " % results)
+
+    holds = results[0].GetByteArray()
+    holdlen = len(holds)
+    numholds = int(holdlen / 33)
+    print("holds, holdlen, numholds %s %s " % (holds, numholds))
+    vins = []
+    for i in range(0, numholds):
+        hstart = i * 33
+        hend = hstart + 33
+        item = holds[hstart:hend]
+
+        vin_index = item[0]
+        vin_tx_id = UInt256(data=item[1:])
+        print("VIN INDEX, VIN TX ID: %s %s" % (vin_index, vin_tx_id))
+
+        t_input = TransactionInput(prevHash=vin_tx_id, prevIndex=vin_index)
+
+        print("found tinput: %s " % json.dumps(t_input.ToJson(), indent=4))
+
+        vins.append(t_input)
+
+    return vins

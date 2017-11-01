@@ -16,7 +16,7 @@ from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,InvokeWithdrawTx
 from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
-from neo.Prompt.Commands.Withdraw import RequestWithdraw,construct_contract_withdrawal,RedeemWithdraw
+from neo.Prompt.Commands.Withdraw import RequestWithdraw,RedeemWithdraw
 from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr,ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal,parse_and_sign
 from neo.Prompt.Commands.Wallet import DeleteAddress,ImportWatchAddr
@@ -644,14 +644,14 @@ class PromptInterface(object):
 
     def do_request_withdraw(self, args):
         """
-        request_withdraw {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
-
+        withdraw_request {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
         """
+
         RequestWithdraw(self, self.Wallet, args)
 
     def do_withdraw_from(self, args):
         """
-        withdraw_from {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
+        withdraw {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
         """
 
         RedeemWithdraw(self, self.Wallet, args)

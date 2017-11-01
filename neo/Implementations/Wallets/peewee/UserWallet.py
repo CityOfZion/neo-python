@@ -342,9 +342,14 @@ class UserWallet(Wallet):
                 print("Couldnt delete coin %s %s " % (e, coin))
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
 
+
     @property
     def Addresses(self):
-        result = [ct.Address for ct in self._contracts.values()]
+        result = []
+        for addr in Address.select():
+            addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
+            result.append(addr_str)
+
         return result
 
     def PubKeys(self):

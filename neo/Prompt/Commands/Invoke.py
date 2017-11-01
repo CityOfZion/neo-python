@@ -39,17 +39,17 @@ import pdb
 import json
 from neo.UInt160 import UInt160
 
-def InvokeWithdrawTx(wallet, tx, contract_addr):
+def InvokeWithdrawTx(wallet, tx, contract_hash):
 
     print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
 
     requestor_contract = wallet.GetDefaultContract()
     tx.Attributes = [
-        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)]
+        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)
+    ]
 
 
-    withdraw_contract_hash = contract_addr.encode('utf-8')
-    withdraw_contract_state = Blockchain.Default().GetContract(withdraw_contract_hash)
+    withdraw_contract_state = Blockchain.Default().GetContract(contract_hash.encode('utf-8'))
 
     withdraw_verification = None
 

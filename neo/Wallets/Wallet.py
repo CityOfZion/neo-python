@@ -230,6 +230,17 @@ class Wallet(object):
 
         return ok, coins_to_remove
 
+    def FindCoinsByVins(self, vins):
+        ret = []
+        for coin in self.GetCoins():
+            coinref = coin.Reference
+            for vin in vins:
+                if coinref.PrevIndex == vin.PrevIndex and \
+                    coinref.PrevHash == vin.PrevHash:
+
+                    ret.append(coin)
+        return ret
+
     def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
 
         ret=[]
@@ -572,7 +583,8 @@ class Wallet(object):
                         from_addr=None,
                         use_standard=False,
                         watch_only_val=0,
-                        exclude_vin=None):
+                        exclude_vin=None,
+                        use_vins_for_asset=None):
 
         tx.ResetReferences()
 
@@ -601,11 +613,14 @@ class Wallet(object):
 
         paycoins = {}
 
-
         self._vin_exclude = exclude_vin
 
         for assetId,amount in paytotal.items():
-            paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
+
+            if use_vins_for_asset is not None and len(use_vins_for_asset) > 0 and use_vins_for_asset[1] == assetId:
+                paycoins[assetId] = self.FindCoinsByVins(use_vins_for_asset[0])
+            else:
+                paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
 
         self._vin_exclude = None
 
@@ -646,6 +661,10 @@ class Wallet(object):
         tx.outputs = tx.outputs + new_outputs
 
         return tx
+
+
+
+
 
 
     def SaveTransaction(self, tx):
