@@ -8,6 +8,7 @@ from neo.Fixed8 import Fixed8
 from neo.BigInteger import BigInteger
 from neo.UIntBase import UIntBase
 
+
 class Fixed8TestCase(NeoTestCase):
     def test_fixed8_add(self):
         f1 = Fixed8(100)

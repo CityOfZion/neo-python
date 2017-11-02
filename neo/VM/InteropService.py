@@ -5,9 +5,10 @@ import sys
 import traceback
 from autologging import logged
 import pdb
+
+
 @logged
 class StackItem(EquatableMixin):
-
 
     @property
     def IsArray(self):
@@ -21,11 +22,12 @@ class StackItem(EquatableMixin):
         return bytearray()
 
     def GetBigInteger(self):
-        return BigInteger(int.from_bytes(self.GetByteArray(),'little',signed=True))
+        return BigInteger(int.from_bytes(self.GetByteArray(), 'little', signed=True))
 
     def GetBoolean(self):
         for p in self.GetByteArray():
-            if p > 0: return True
+            if p > 0:
+                return True
         return False
 
     def GetArray(self):
@@ -46,8 +48,6 @@ class StackItem(EquatableMixin):
     def FromInterface(value):
         return InteropInterface(value)
 
-
-
     @staticmethod
     def New(value):
         typ = type(value)
@@ -55,7 +55,7 @@ class StackItem(EquatableMixin):
         if typ is BigInteger:
             return Integer(value)
         elif typ is int:
-            return Integer( BigInteger(value))
+            return Integer(BigInteger(value))
         elif typ is bool:
             return Boolean(value)
         elif typ is bytearray or typ is bytes:
@@ -66,10 +66,10 @@ class StackItem(EquatableMixin):
 #        print("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 
+
 class Array(StackItem):
 
-
-    _array = [] # a list of stack items
+    _array = []  # a list of stack items
 
     @property
     def IsArray(self):
@@ -79,8 +79,10 @@ class Array(StackItem):
         self._array = value
 
     def Equals(self, other):
-        if other is None: return False
-        if other is self: return True
+        if other is None:
+            return False
+        if other is self:
+            return True
 
         if type(other) is not Array:
             return False
@@ -99,8 +101,6 @@ class Array(StackItem):
     def GetByteArray(self):
         raise Exception("Not supported")
 
-
-
     def __str__(self):
         return "Array: %s" % [str(item) for item in self._array]
 
@@ -116,14 +116,15 @@ class Boolean(StackItem):
         self._value = value
 
     def Equals(self, other):
-        if other is None: return False
-        if other is self: return True
+        if other is None:
+            return False
+        if other is self:
+            return True
 
         if type(other) is not Boolean:
             return self.GetByteArray() == other.GetByteArray()
 
         return self._value == other._value
-
 
     def GetBigInteger(self):
         return 1 if self._value else 0
@@ -140,15 +141,16 @@ class Boolean(StackItem):
 
 class ByteArray(StackItem):
 
-
     _value = None
 
     def __init__(self, value):
         self._value = value
 
     def Equals(self, other):
-        if other is None: return False
-        if other is self: return True
+        if other is None:
+            return False
+        if other is self:
+            return True
 
         return self._value == other._value
 
@@ -170,12 +172,11 @@ class ByteArray(StackItem):
             pass
         return str(self)
 
-
     def __str__(self):
         return "ByteArray: %s" % self._value
 
-class Integer(StackItem):
 
+class Integer(StackItem):
 
     _value = None
 
@@ -185,14 +186,15 @@ class Integer(StackItem):
         self._value = value
 
     def Equals(self, other):
-        if other is None: return False
-        if other is self: return True
+        if other is None:
+            return False
+        if other is self:
+            return True
 
         if type(other) is not Integer:
             return self.GetByteArray() == other.GetByteArray()
 
         return self._value == other._value
-
 
     def GetBigInteger(self):
         return self._value
@@ -206,6 +208,7 @@ class Integer(StackItem):
     def __str__(self):
         return "Integer: %s " % self._value
 
+
 class InteropInterface(StackItem):
 
     _object = None
@@ -214,8 +217,10 @@ class InteropInterface(StackItem):
         self._object = value
 
     def Equals(self, other):
-        if other is None: return False
-        if other is self: return True
+        if other is None:
+            return False
+        if other is self:
+            return True
 
         if type(other) is not InteropInterface:
             return False
@@ -241,6 +246,7 @@ class InteropInterface(StackItem):
             pass
         return "IOp Interface Item"
 
+
 class Struct(Array):
 
     @property
@@ -262,8 +268,10 @@ class Struct(Array):
         return Struct(newArray)
 
     def Equals(self, other):
-        if other is None: return False
-        if other is self: return True
+        if other is None:
+            return False
+        if other is self:
+            return True
 
         if type(other) is not Struct:
             return False
@@ -276,9 +284,7 @@ class Struct(Array):
 @logged
 class InteropService():
 
-
     _dictionary = {}
-
 
     def __init__(self):
         self.Register("System.ExecutionEngine.GetScriptContainer", self.GetScriptContainer)
@@ -293,7 +299,7 @@ class InteropService():
         if not method in self._dictionary.keys():
 
             self.__log.debug("method %s not found in ->" % method)
-            for k,v in self._dictionary.items():
+            for k, v in self._dictionary.items():
                 self.__log.debug("%s -> %s " % (k, v))
             return False
 
@@ -303,21 +309,21 @@ class InteropService():
 
     @staticmethod
     def GetScriptContainer(engine):
-        engine.EvaluationStack.PushT( StackItem.FromInterface(engine.ScriptContainer))
+        engine.EvaluationStack.PushT(StackItem.FromInterface(engine.ScriptContainer))
         return True
 
     @staticmethod
     def GetExecutingScriptHash(engine):
-        engine.EvaluationStack.PushT( engine.CurrentContext.ScriptHash() )
+        engine.EvaluationStack.PushT(engine.CurrentContext.ScriptHash())
         return True
 
     @staticmethod
     def GetCallingScriptHash(engine):
-        engine.EvaluationStack.PushT( engine.CallingContext.ScriptHash() )
+        engine.EvaluationStack.PushT(engine.CallingContext.ScriptHash())
         return True
 
     @staticmethod
     def GetEntryScriptHash(engine):
 
-        engine.EvaluationStack.PushT( engine.EntryContext.ScriptHash() )
+        engine.EvaluationStack.PushT(engine.EntryContext.ScriptHash())
         return True

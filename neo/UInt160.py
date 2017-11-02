@@ -1,5 +1,6 @@
 from neo.UIntBase import UIntBase
 
+
 class UInt160(UIntBase):
     def __init__(self, data=None):
         super(UInt160, self).__init__(num_bytes=20, data=data)
@@ -10,7 +11,7 @@ class UInt160(UIntBase):
 
         length = len(x)
 
-        for i in range(length-1, 0, -1):
+        for i in range(length - 1, 0, -1):
             if x[i] > y[i]:
                 return 1
             if x[i] < y[i]:

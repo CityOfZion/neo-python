@@ -17,8 +17,8 @@ class SerializableMixin(object):
     def ToArray(self):
         pass
 
+
 class TrackableMixin(object):
 
     Key = None
     TrackingState = None
-

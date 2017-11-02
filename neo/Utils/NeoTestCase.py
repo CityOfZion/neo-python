@@ -1,8 +1,8 @@
 from unittest import TestCase
 import logging
 
-class NeoTestCase(TestCase):
 
+class NeoTestCase(TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -12,5 +12,3 @@ class NeoTestCase(TestCase):
             filemode='a',
             filename=logname,
             format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
-
-

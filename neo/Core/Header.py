@@ -1,16 +1,15 @@
 # -*- coding: UTF-8 -*-
 
 from neo.Core.BlockBase import BlockBase
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.Core.Witness import Witness
 
 
 class Header(BlockBase):
 
-
-    def __init__(self, prevhash=None,merlke_root=None,timestamp=None,
-                    index=None, consensus_data=None, next_consenus=None, script=None):
+    def __init__(self, prevhash=None, merlke_root=None, timestamp=None,
+                 index=None, consensus_data=None, next_consenus=None, script=None):
 
         super(Header, self).__init__()
 
@@ -22,9 +21,8 @@ class Header(BlockBase):
         self.NextConsensus = next_consenus
         self.Script = script
 
-
     def Size(self):
-        return super(Header,self).Size() + 1
+        return super(Header, self).Size() + 1
 
     def Deserialize(self, reader):
         super(Header, self).Deserialize(reader)
@@ -33,8 +31,10 @@ class Header(BlockBase):
 
     def Equals(self, other):
 
-        if other is None: return False
-        if other is self: return True
+        if other is None:
+            return False
+        if other is self:
+            return True
         return self.Hash == other.Hash
 
     @staticmethod
@@ -59,10 +59,7 @@ class Header(BlockBase):
     def GetHashCode(self):
         return self.Hash
 
-
     def Serialize(self, writer):
 
         super(Header, self).Serialize(writer)
         writer.WriteByte(0)
-
-

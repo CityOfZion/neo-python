@@ -2,11 +2,11 @@
 from .StateBase import StateBase
 import sys
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
-from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
+from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
+
 
 class ValidatorState(StateBase):
-
 
     PublicKey = None
 
@@ -16,8 +16,6 @@ class ValidatorState(StateBase):
             raise Exception("Pubkey must be ECPoint Instance")
 
         self.PublicKey = pub_key
-
-
 
     def Size(self):
         return super(ValidatorState, self).Size()

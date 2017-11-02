@@ -3,6 +3,7 @@ from neo.IO.Mixins import SerializableMixin
 import sys
 from autologging import logged
 
+
 @logged
 class InvPayload(SerializableMixin):
 
@@ -15,19 +16,17 @@ class InvPayload(SerializableMixin):
 
 #    @property
 #    def DistinctHashes(self):
-##        return [h.ToBytes() for h in self.Hashes]
+# return [h.ToBytes() for h in self.Hashes]
 #        return set(self.Hashes)
 
     def Size(self):
         return sys.getsizeof(self.Type) + sys.getsizeof(self.Hashes)
-
 
     def Deserialize(self, reader):
 
         self.Type = reader.ReadByte()
 
         self.Hashes = reader.ReadHashes()
-
 
     def Serialize(self, writer):
         try:
@@ -38,4 +37,4 @@ class InvPayload(SerializableMixin):
             self.__log.debug("COULD NOT WRITE INVENTORY HASHES %s " % e)
 
     def ToString(self):
-        return "INVENTORY Type %s hashes %s " % (self.Type,[h for h in self.Hashes])
+        return "INVENTORY Type %s hashes %s " % (self.Type, [h for h in self.Hashes])

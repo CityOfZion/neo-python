@@ -3,8 +3,8 @@
 from neo.Network.Mixins import InventoryMixin
 from neo.Network.InventoryType import InventoryType
 from neo.Core.BlockBase import BlockBase
-from neo.Core.TX.Transaction import Transaction,TransactionType
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.Core.TX.Transaction import Transaction, TransactionType
+from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.Cryptography.MerkleTree import MerkleTree
@@ -20,6 +20,7 @@ import pdb
 #  < summary >
 #  区块或区块头
 #  < / summary >
+
 
 @logged
 class Block(BlockBase, InventoryMixin):
@@ -40,7 +41,6 @@ class Block(BlockBase, InventoryMixin):
     #  资产清单的类型
     #  < / summary >
     InventoryType = InventoryType.Block
-
 
     def __init__(self, prevHash=None, timestamp=None, index=None,
                  consensusData=None, nextConsensus=None,
@@ -64,7 +64,6 @@ class Block(BlockBase, InventoryMixin):
         if build_root:
             self.RebuildMerkleRoot()
 
-
     @property
     def FullTransactions(self):
 
@@ -72,7 +71,7 @@ class Block(BlockBase, InventoryMixin):
         try:
             tx = self.Transactions[0]
             if type(tx) is str:
-                is_trimmed=True
+                is_trimmed = True
         except Exception as e:
             pass
 
@@ -81,8 +80,8 @@ class Block(BlockBase, InventoryMixin):
 
         txs = []
         for hash in self.Transactions:
-            tx,height = GetBlockchain().GetTransaction(hash)
-            txs.append( tx )
+            tx, height = GetBlockchain().GetTransaction(hash)
+            txs.append(tx)
 
         self.Transactions = txs
 
@@ -93,28 +92,26 @@ class Block(BlockBase, InventoryMixin):
         if not self.__header:
 
             self.__header = Header(self.PrevHash, self.MerkleRoot, self.Timestamp,
-                            self.Index, self.ConsensusData, self.NextConsensus, self.Script)
+                                   self.Index, self.ConsensusData, self.NextConsensus, self.Script)
 
         return self.__header
 
-
     def Size(self):
-        s = super(Block,self).Size()
+        s = super(Block, self).Size()
         s = s + sys.getsizeof(self.Transactions)
 
         return s
 
-
     def CalculatneNetFee(self, transactions):
-#        Transaction[] ts = transactions.Where(p= > p.Type != TransactionType.MinerTransaction & & p.Type != TransactionType.ClaimTransaction).ToArray();
-#        Fixed8 amount_in = ts.SelectMany(p= > p.References.Values.Where(o= > o.AssetId == Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
-#        Fixed8 amount_out = ts.SelectMany(p= > p.Outputs.Where(o= > o.AssetId == Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
-#        Fixed8 amount_sysfee = ts.Sum(p= > p.SystemFee);
-#        return amount_in - amount_out - amount_sysfee;
+        #        Transaction[] ts = transactions.Where(p= > p.Type != TransactionType.MinerTransaction & & p.Type != TransactionType.ClaimTransaction).ToArray();
+        #        Fixed8 amount_in = ts.SelectMany(p= > p.References.Values.Where(o= > o.AssetId == Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
+        #        Fixed8 amount_out = ts.SelectMany(p= > p.Outputs.Where(o= > o.AssetId == Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
+        #        Fixed8 amount_sysfee = ts.Sum(p= > p.SystemFee);
+        #        return amount_in - amount_out - amount_sysfee;
         return 0
 
     def TotalFees(self):
-        amount=0
+        amount = 0
         for tx in self.Transactions:
             if type(tx.SystemFee()) is int:
                 raise Exception("TX %s is baddddddd %s %s" % (tx, tx.Type))
@@ -124,13 +121,12 @@ class Block(BlockBase, InventoryMixin):
         return Fixed8(amount)
 #        return Fixed8(sum( tx.SystemFee().value for tx in self.Transactions))
 
-
     #  < summary >
     #  反序列化
     #  < / summary >
     #  < param name = "reader" > 数据来源 < / param >
     def Deserialize(self, reader):
-        super(Block,self).Deserialize(reader)
+        super(Block, self).Deserialize(reader)
 
         self.Transactions = []
         byt = reader.ReadVarInt()
@@ -143,10 +139,8 @@ class Block(BlockBase, InventoryMixin):
             tx = Transaction.DeserializeFrom(reader)
             self.Transactions.append(tx)
 
-        if MerkleTree.ComputeRoot( [tx.Hash for tx in self.Transactions]) != self.MerkleRoot:
+        if MerkleTree.ComputeRoot([tx.Hash for tx in self.Transactions]) != self.MerkleRoot:
             raise Exception("Merkle Root Mismatch")
-
-
 
     #  < summary >
     #  比较当前区块与指定区块是否相等
@@ -156,11 +150,11 @@ class Block(BlockBase, InventoryMixin):
 
     def Equals(self, other):
 
-        if other is None: return False
-        if other is self: return True
+        if other is None:
+            return False
+        if other is self:
+            return True
         return self.Hash == other.Hash
-
-
 
     @staticmethod
     def FromTrimmedData(byts, index, transaction_method=None):
@@ -177,7 +171,6 @@ class Block(BlockBase, InventoryMixin):
         block.witness = witness
 
         block.Transactions = reader.ReadHashes()
-
 
         StreamManager.ReleaseStream(ms)
 
@@ -203,7 +196,7 @@ class Block(BlockBase, InventoryMixin):
     # < / summary >
     # < param name = "writer" > 存放序列化后的数据 < / param >
     def Serialize(self, writer):
-        super(BlockBase,self).Serialize(writer)
+        super(BlockBase, self).Serialize(writer)
         writer.WriteSerializableArray(self.Transactions)
 
     # < summary >
@@ -248,30 +241,28 @@ class Block(BlockBase, InventoryMixin):
         self.__log.debug("Verifying BLOCK!!")
         from neo.Blockchain import GetBlockchain, GetConsensusAddress
 
-
-        #first TX has to be a miner transaction. other tx after that cant be miner tx
-        if self.Transactions[0].Type != TransactionType.MinerTransaction: return False
+        # first TX has to be a miner transaction. other tx after that cant be miner tx
+        if self.Transactions[0].Type != TransactionType.MinerTransaction:
+            return False
         for tx in self.Transactions[1:]:
-            if tx.Type == TransactionType.MinerTransaction: return False
-
+            if tx.Type == TransactionType.MinerTransaction:
+                return False
 
         if completely:
             bc = GetBlockchain()
 
             if self.NextConsensus != GetConsensusAddress(bc.GetValidators(self.Transactions).ToArray()):
                 return False
-            
+
             for tx in self.Transactions:
                 if not tx.Verify():
                     pass
             self.__log.debug("Blocks cannot be fully validated at this moment.  please pass completely=False")
             raise NotImplementedError()
-            ## do this below!
-            #foreach(Transaction tx in Transactions)
-            #if (!tx.Verify(Transactions.Where(p = > !p.Hash.Equals(tx.Hash)))) return false;
-            #Transaction tx_gen = Transactions.FirstOrDefault(p= > p.Type == TransactionType.MinerTransaction);
-            #if (tx_gen?.Outputs.Sum(p = > p.Value) != CalculateNetFee(Transactions)) return false;
+            # do this below!
+            # foreach(Transaction tx in Transactions)
+            # if (!tx.Verify(Transactions.Where(p = > !p.Hash.Equals(tx.Hash)))) return false;
+            # Transaction tx_gen = Transactions.FirstOrDefault(p= > p.Type == TransactionType.MinerTransaction);
+            # if (tx_gen?.Outputs.Sum(p = > p.Value) != CalculateNetFee(Transactions)) return false;
 
         return True
-            
-            

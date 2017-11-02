@@ -2,7 +2,7 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
-from neo.Core.TX.Transaction import Transaction,TransactionType
+from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
@@ -14,7 +14,7 @@ from neo.UInt160 import UInt160
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.CoinState import CoinState
-from neo.Core.State.SpentCoinState import SpentCoinState,SpentCoinItem
+from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.ContractState import ContractState
@@ -32,9 +32,9 @@ import binascii
 import pprint
 import json
 
+
 @logged
 class TestLevelDBBlockchain(LevelDBBlockchain):
-
 
     def Persist(self, block):
 
@@ -49,7 +49,6 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
 
         amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(8, 'little')
-
 
         with self._db.write_batch() as wb:
             for tx in block.Transactions:
@@ -144,7 +143,6 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                     )
 
                     engine.LoadScript(tx.Script, False)
-
 
                     # normally, this function does not return true/false
                     # for testing purposes, we try to execute and if an exception is raised

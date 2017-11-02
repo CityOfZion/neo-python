@@ -1,6 +1,7 @@
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Settings import SettingsHolder
 
+
 class SettingsTestCase(NeoTestCase):
     def test_settings(self):
         _settings = SettingsHolder()

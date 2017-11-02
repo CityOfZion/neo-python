@@ -2,8 +2,9 @@
 from .StateBase import StateBase
 import sys
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.Core.FunctionCode import FunctionCode
+
 
 class ContractState(StateBase):
 
@@ -72,13 +73,13 @@ class ContractState(StateBase):
         name = 'Contract'
 
         try:
-            name= self.Name.decode('utf-8')
+            name = self.Name.decode('utf-8')
         except Exception as e:
             pass
 
         return {
 
-            'version':self.StateVersion,
+            'version': self.StateVersion,
             'code': codejson,
             'storage': self.HasStorage,
             'name': name,

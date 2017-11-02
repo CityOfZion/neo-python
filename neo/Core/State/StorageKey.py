@@ -3,11 +3,11 @@ from neo.IO.Mixins import SerializableMixin
 import mmh3
 from neo.BigInteger import BigInteger
 
+
 class StorageKey(SerializableMixin):
 
     ScriptHash = None
     Key = None
-
 
     def __init__(self, script_hash=None, key=None):
         self.ScriptHash = script_hash

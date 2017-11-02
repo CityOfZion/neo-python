@@ -4,9 +4,10 @@ from neo.Core.Blockchain import Blockchain
 from neo.Settings import settings
 from neo.Network.LocalNode import LocalNode
 
+
 class CLI(object):
 
-    __instance__=None
+    __instance__ = None
 
     _blockchain = None
     _wallet = None
@@ -14,11 +15,10 @@ class CLI(object):
 
     def __init__(self):
 
-        self._blockchain = LevelDBBlockchain( settings.LEVELDB_PATH )
+        self._blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
         Blockchain.RegisterBlockchain(self._blockchain)
         self._localnode = LocalNode()
         self._localnode.Start(20333, 20334)
-
 
     def SetWallet(self, wallet):
         self._wallet = wallet
@@ -34,6 +34,5 @@ class CLI(object):
 
     @staticmethod
     def OpenWallet(path, password, create):
-        CLI.Instance().SetWallet(  UserWallet(path, password, create))
+        CLI.Instance().SetWallet(UserWallet(path, password, create))
         return CLI.Instance().GetWallet()
-

@@ -3,12 +3,12 @@ from neo.Core.BlockBase import BlockBase
 from neo.Cryptography.MerkleTree import MerkleTree
 import sys
 
+
 class MerkleBlockPayload(BlockBase):
 
     TxCount = 0
     Hashes = []
     Flags = None
-
 
     def __init__(self, block, flags):
 
@@ -29,13 +29,11 @@ class MerkleBlockPayload(BlockBase):
             self.Hashes = tree.ToHashArray()
             self.Flags = flags
 
-
     def Deserialize(self, reader):
         super(MerkleBlockPayload, self).Deserialize(reader)
         self.TxCount = reader.ReadVarInt(sys.maxsize)
         self.Hashes = reader.ReadSerializableArray()
         self.Flags = reader.ReadVarBytes()
-
 
     def Serialize(self, writer):
         super(MerkleBlockPayload, self).Serialize(writer)

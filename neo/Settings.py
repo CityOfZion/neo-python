@@ -5,6 +5,7 @@ method.
 """
 import json
 
+
 class SettingsHolder:
     """
     This class holds all the settings. Needs to be setup with one of the
@@ -56,7 +57,7 @@ class SettingsHolder:
         self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
         config = data['ApplicationConfiguration']
-        self.LEVELDB_PATH= config['DataDirectoryPath']
+        self.LEVELDB_PATH = config['DataDirectoryPath']
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
@@ -69,6 +70,7 @@ class SettingsHolder:
     def setup_testnet(self):
         """ Load settings from the testnet JSON config file """
         self.setup('protocol.testnet.json')
+
 
 # Settings instance used by external modules
 settings = SettingsHolder()

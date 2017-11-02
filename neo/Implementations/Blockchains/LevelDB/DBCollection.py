@@ -3,12 +3,13 @@ from autologging import logged
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 import inspect
 
+
 @logged
 class DBCollection():
 
-    DB=None
-    SN=None
-    Prefix=None
+    DB = None
+    SN = None
+    Prefix = None
 
     ClassRef = None
 
@@ -19,9 +20,7 @@ class DBCollection():
 
     Debug = False
 
-
-    _built_keys=False
-
+    _built_keys = False
 
     def __init__(self, db, sn, prefix, class_ref, debug=False):
 
@@ -37,7 +36,6 @@ class DBCollection():
         self.Changed = []
         self.Deleted = []
 
-
     @property
     def Keys(self):
         if not self._built_keys:
@@ -45,12 +43,11 @@ class DBCollection():
 
         return self.Collection.keys()
 
-
     @property
     def Current(self):
         try:
             ret = {}
-            for key,val in self.Collection.items():
+            for key, val in self.Collection.items():
                 if val is not None:
                     ret[key] = val
             return ret
@@ -75,7 +72,7 @@ class DBCollection():
                     print("THIS IS BAD %s " % self.Collection.items())
                     raise Exception("ITEM NONONEEEE %s " % keyval)
                 else:
-                    wb.put( self.Prefix + keyval, self.Collection[keyval].ToByteArray() )
+                    wb.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
             for keyval in self.Deleted:
                 wb.delete(self.Prefix + keyval)
             if destroy:
@@ -89,7 +86,6 @@ class DBCollection():
              function_name, lines, index) = inspect.getouterframes(inspect.currentframe())[1]
             print(frame, filename, line_number, function_name, lines, index)
             raise Exception("BAD")
-
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
@@ -114,13 +110,12 @@ class DBCollection():
         if keyval in self.Deleted:
             self.Deleted.remove(keyval)
 
-        self.Add(keyval,item)
+        self.Add(keyval, item)
 
         return item
 
     def GetItemBy(self, keyval):
         return self.GetAndChange(keyval)
-
 
     def TryGet(self, keyval):
 
@@ -131,10 +126,10 @@ class DBCollection():
             self.MarkChanged(keyval)
             return item
 
-        #otherwise, chekc in the database
-        key= self.SN.get(self.Prefix + keyval)
+        # otherwise, chekc in the database
+        key = self.SN.get(self.Prefix + keyval)
 
-        #if the key is there, get the item
+        # if the key is there, get the item
         if key is not None:
 
             self.MarkChanged(keyval)
@@ -144,7 +139,6 @@ class DBCollection():
             return item
 
         return None
-
 
     def _GetItem(self, keyval):
         try:
@@ -156,7 +150,6 @@ class DBCollection():
             print("Could not deserialize item from key %s : %s" % (keyval, e))
 
         return None
-
 
     def Add(self, keyval, item):
         self.Collection[keyval] = item
@@ -170,7 +163,6 @@ class DBCollection():
 
         if not keyval in self.Changed:
             self.Changed.append(keyval)
-
 
     def Destroy(self):
         self.DB = None

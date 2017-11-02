@@ -6,7 +6,7 @@ Usage:
     from neo.Wallets.Wallet import Wallet
 """
 
-from neo.Core.TX.Transaction import TransactionType,TransactionOutput
+from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
@@ -32,23 +32,22 @@ from Crypto.Cipher import AES
 import pdb
 import json
 
+
 @logged
 class Wallet(object):
-
-
 
     AddressVersion = None
 
     _path = ''
     _iv = None
     _master_key = None
-    _keys = {} #holds keypairs
-    _contracts = {} #holds Contracts
+    _keys = {}  # holds keypairs
+    _contracts = {}  # holds Contracts
 
-    _watch_only = [] # holds set of hashes
-    _coins = {} #holds Coin References
+    _watch_only = []  # holds set of hashes
+    _coins = {}  # holds Coin References
 
-    _current_height=0
+    _current_height = 0
 
     _is_running = True
     _db_path = _path
@@ -65,24 +64,21 @@ class Wallet(object):
     def WalletHeight(self):
         return self._current_height
 
-
-
-
-
     """docstring for Wallet"""
+
     def __init__(self, path, passwordKey, create):
         self.AddressVersion = settings.ADDRESS_VERSION
         self._path = path
 
         if create:
-            self._iv = bytes( Random.get_random_bytes(16))
+            self._iv = bytes(Random.get_random_bytes(16))
             self._master_key = bytes(Random.get_random_bytes(32))
             self._keys = {}
             self._contracts = {}
             self._coins = {}
 
             if Blockchain.Default() is None:
-                self._indexedDB= LevelDBBlockchain(settings.LEVELDB_PATH)
+                self._indexedDB = LevelDBBlockchain(settings.LEVELDB_PATH)
                 Blockchain.RegisterBlockchain(self._indexedDB)
             else:
                 self._indexedDB = Blockchain.Default()
@@ -109,14 +105,14 @@ class Wallet(object):
             if passwordHash is None:
                 raise Exception("Password hash not found in database")
 
-            hkey= hashlib.sha256(passwordKey.encode('utf-8'))
+            hkey = hashlib.sha256(passwordKey.encode('utf-8'))
 
             if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
                 raise Exception("Incorrect Password")
 
             self._iv = self.LoadStoredData('IV')
             master_stored = self.LoadStoredData('MasterKey')
-            aes = AES.new(hkey.digest(),AES.MODE_CBC,self._iv)
+            aes = AES.new(hkey.digest(), AES.MODE_CBC, self._iv)
             self._master_key = aes.decrypt(master_stored)
 
             self._keys = self.LoadKeyPairs()
@@ -134,13 +130,9 @@ class Wallet(object):
 
             del passwordKey
 
-
-
-
     def BuildDatabase(self):
-        #abstract
+        # abstract
         pass
-
 
     def AddContract(self, contract):
 
@@ -151,7 +143,6 @@ class Wallet(object):
         if contract.ScriptHash in self._watch_only:
             self._watch_only.remove(contract.ScriptHash)
 
-
     def AddWatchOnly(self, script_hash):
 
         if script_hash in self._contracts:
@@ -159,7 +150,6 @@ class Wallet(object):
             return
 
         self._watch_only.append(script_hash)
-
 
     def ChangePassword(self, password_old, password_new):
         if not self.ValidatePassword(password_old):
@@ -169,10 +159,8 @@ class Wallet(object):
         self.SaveStoredData("PasswordHash", password_key)
         self.SaveStoredData("MasterKey", AES.new(self._master_key, AES.MODE_CBC, self._iv))
 
-
-
     def ContainsKey(self, public_key):
-        return self.ContainsKeyHash(Crypto.ToScriptHash(public_key.encode_point(True),unhex=False))
+        return self.ContainsKeyHash(Crypto.ToScriptHash(public_key.encode_point(True), unhex=False))
 
     def ContainsKeyHash(self, public_key_hash):
 
@@ -182,21 +170,19 @@ class Wallet(object):
         return self.CheckAddressState(script_hash) >= AddressState.InWallet
 
     def ContainsAddressStr(self, address):
-        for key,contract in self._contracts.items():
+        for key, contract in self._contracts.items():
             if contract.Address == address:
                 return True
         return False
-
 
     def CreateKey(self):
         private_key = bytes(Random.get_random_bytes(32))
 #        self.__log.debug("private key %s " % private_key)
 
-        key = KeyPair(priv_key = private_key)
+        key = KeyPair(priv_key=private_key)
         self._keys[key.PublicKeyHash.ToBytes()] = key
 #        self.__log.debug("keys %s " % self._keys.items())
         return key
-
 
     def EncryptPrivateKey(self, decrypted):
         aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
@@ -222,10 +208,10 @@ class Wallet(object):
 
         ok = False
         if script_hash.ToBytes() in self._contracts.keys():
-            ok=True
+            ok = True
             del self._contracts[script_hash.ToBytes()]
         elif script_hash in self._watch_only:
-            ok=True
+            ok = True
             self._watch_only.remove(script_hash)
 
         return ok, coins_to_remove
@@ -236,28 +222,27 @@ class Wallet(object):
             coinref = coin.Reference
             for vin in vins:
                 if coinref.PrevIndex == vin.PrevIndex and \
-                    coinref.PrevHash == vin.PrevHash:
+                        coinref.PrevHash == vin.PrevHash:
 
                     ret.append(coin)
         return ret
 
     def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
 
-        ret=[]
+        ret = []
         for coin in self.GetCoins():
             if coin.State & CoinState.Confirmed > 0 and \
-                coin.State & CoinState.Spent == 0 and \
-                coin.State & CoinState.Locked == 0 and \
-                coin.State & CoinState.Frozen == 0 and \
-                coin.State & CoinState.WatchOnly == watch_only_val:
-
+                    coin.State & CoinState.Spent == 0 and \
+                    coin.State & CoinState.Locked == 0 and \
+                    coin.State & CoinState.Frozen == 0 and \
+                    coin.State & CoinState.WatchOnly == watch_only_val:
 
                 do_exclude = False
                 if self._vin_exclude:
                     for to_exclude in self._vin_exclude:
 
                         if coin.Reference.PrevIndex == to_exclude.PrevIndex and \
-                            coin.Reference.PrevHash == to_exclude.PrevHash:
+                                coin.Reference.PrevHash == to_exclude.PrevHash:
                             do_exclude = True
 
                 if do_exclude:
@@ -297,12 +282,10 @@ class Wallet(object):
 
         total = Fixed8(0)
 
-        for index,coin in enumerate(coins):
+        for index, coin in enumerate(coins):
             total = total + coin.Output.Value
             if total >= amount:
-                return coins[0:index+1]
-
-
+                return coins[0:index + 1]
 
     def GetKey(self, public_key_hash):
         if public_key_hash.ToBytes() in self._keys.keys():
@@ -316,27 +299,22 @@ class Wallet(object):
             return self.GetKey(contract.PublicKeyHash)
         return None
 
-
     def GetAvailable(self, asset_id):
         raise NotImplementedError()
 
     def GetBalance(self, asset_id, watch_only=0):
-        total=Fixed8(0)
+        total = Fixed8(0)
         for coin in self.GetCoins():
             if coin.Output.AssetId == asset_id:
                 if coin.State & CoinState.Confirmed > 0 and \
-                    coin.State & CoinState.Spent == 0 and \
-                    coin.State & CoinState.Locked == 0 and \
-                    coin.State & CoinState.Frozen == 0 and \
-                    coin.State & CoinState.WatchOnly == watch_only:
-
-
+                        coin.State & CoinState.Spent == 0 and \
+                        coin.State & CoinState.Locked == 0 and \
+                        coin.State & CoinState.Frozen == 0 and \
+                        coin.State & CoinState.WatchOnly == watch_only:
 
                     total = total + coin.Output.Value
 
         return total
-
-
 
     def SaveStoredData(self, key, value):
         # abstract
@@ -347,7 +325,7 @@ class Wallet(object):
         pass
 
     def LoadKeyPairs(self):
-        #abstract
+        # abstract
         pass
 
     def LoadContracts(self):
@@ -358,14 +336,13 @@ class Wallet(object):
         # abstract
         pass
 
-
     def LoadCoins(self):
         # abstract
         pass
 
     def ProcessBlocks(self):
 
-#        start = time.clock()
+        #        start = time.clock()
         blockcount = 0
 
         while self._current_height <= Blockchain.Default().Height and self._is_running and blockcount < 500:
@@ -375,7 +352,7 @@ class Wallet(object):
             if block is not None:
                 self.ProcessNewBlock(block)
 
-            blockcount+=1
+            blockcount += 1
 
         self.SaveStoredData("Height", self._current_height)
         self.__log.debug("Wallet processed block to %s " % self._current_height)
@@ -387,12 +364,11 @@ class Wallet(object):
         changed = set()
         deleted = set()
 
-
         try:
 
             for tx in block.FullTransactions:
 
-                for index,output in enumerate(tx.outputs):
+                for index, output in enumerate(tx.outputs):
 
                     state = self.CheckAddressState(output.ScriptHash)
 
@@ -406,7 +382,7 @@ class Wallet(object):
                             changed.add(coin)
 
                         else:
-                            newcoin = Coin.CoinFromRef(coin_ref=key,tx_output=output, state=CoinState.Confirmed)
+                            newcoin = Coin.CoinFromRef(coin_ref=key, tx_output=output, state=CoinState.Confirmed)
                             self._coins[key] = newcoin
                             added.add(newcoin)
 
@@ -414,7 +390,6 @@ class Wallet(object):
 
                             self._coins[key].State |= CoinState.WatchOnly
                             changed.add(self._coins[key])
-
 
             for tx in block.FullTransactions:
 
@@ -430,8 +405,6 @@ class Wallet(object):
                             deleted.add(self._coins[input])
                             del self._coins[input]
 
-
-
             for claimTx in [tx for tx in block.Transactions if tx.Type == TransactionType.ClaimTransaction]:
 
                 for ref in claimTx.Claims:
@@ -439,7 +412,7 @@ class Wallet(object):
                         deleted.add(self._coins[ref])
                         del self._coins[ref]
 
-            self._current_height+=1
+            self._current_height += 1
             self.OnProcessNewBlock(block, added, changed, deleted)
 
             if len(added) + len(deleted) + len(changed) > 0:
@@ -450,11 +423,9 @@ class Wallet(object):
             traceback.print_exc()
             print("could not process %s " % e)
 
-
     def Rebuild(self):
         self._coins = {}
         self._current_height = 0
-
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
         # abstract
@@ -466,7 +437,7 @@ class Wallet(object):
 
     def IsWalletTransaction(self, tx):
 
-        for key,contract in self._contracts.items():
+        for key, contract in self._contracts.items():
 
             for output in tx.outputs:
                 if output.ScriptHash.ToBytes() == contract.ScriptHash.ToBytes():
@@ -477,7 +448,6 @@ class Wallet(object):
                 if script.VerificationScript:
                     if bytes(contract.ScriptHash.Data) == script.VerificationScript:
                         return True
-
 
         for watch_script_hash in self._watch_only:
             for output in tx.outputs:
@@ -490,9 +460,8 @@ class Wallet(object):
 
         return False
 
-
     def CheckAddressState(self, script_hash):
-        for key,contract in self._contracts.items():
+        for key, contract in self._contracts.items():
             if contract.ScriptHash.ToBytes() == script_hash.ToBytes():
                 return AddressState.InWallet
         for watch in self._watch_only:
@@ -516,12 +485,9 @@ class Wallet(object):
             raise Exception('Address format error')
         return UInt160(data=data[1:21])
 
-
     def ValidatePassword(self, password):
 
         return hashlib.sha256(password.encode('utf-8')).digest() == self.LoadStoredData('PasswordHash')
-
-
 
     def GetStandardAddress(self):
         for contract in self._contracts.values():
@@ -529,7 +495,6 @@ class Wallet(object):
                 return contract.ScriptHash
 
         raise Exception("Could not find a standard contract address")
-
 
     def GetChangeAddress(self, from_addr=None):
 
@@ -575,11 +540,10 @@ class Wallet(object):
         return [contract for contract in self._contracts.values()]
 #        return self._contracts
 
-
     def MakeTransaction(self,
                         tx,
-                        change_address = None,
-                        fee = Fixed8(0),
+                        change_address=None,
+                        fee=Fixed8(0),
                         from_addr=None,
                         use_standard=False,
                         watch_only_val=0,
@@ -588,13 +552,15 @@ class Wallet(object):
 
         tx.ResetReferences()
 
-        if not tx.outputs: tx.outputs = []
-        if not tx.inputs: tx.inputs = []
+        if not tx.outputs:
+            tx.outputs = []
+        if not tx.inputs:
+            tx.inputs = []
 
         fee = fee + tx.SystemFee()
 
         paytotal = {}
-        if tx.Type != int.from_bytes( TransactionType.IssueTransaction, 'little'):
+        if tx.Type != int.from_bytes(TransactionType.IssueTransaction, 'little'):
 
             for key, group in groupby(tx.outputs, lambda x: x.AssetId):
                 sum = Fixed8(0)
@@ -615,7 +581,7 @@ class Wallet(object):
 
         self._vin_exclude = exclude_vin
 
-        for assetId,amount in paytotal.items():
+        for assetId, amount in paytotal.items():
 
             if use_vins_for_asset is not None and len(use_vins_for_asset) > 0 and use_vins_for_asset[1] == assetId:
                 paycoins[assetId] = self.FindCoinsByVins(use_vins_for_asset[0])
@@ -624,15 +590,15 @@ class Wallet(object):
 
         self._vin_exclude = None
 
-        for key,unspents in paycoins.items():
+        for key, unspents in paycoins.items():
             if unspents == None:
                 print("insufficient funds for asset id: %s " % key)
                 return None
 
         input_sums = {}
 
-        for assetId,unspents in paycoins.items():
-            sum=Fixed8(0)
+        for assetId, unspents in paycoins.items():
+            sum = Fixed8(0)
             for coin in unspents:
                 sum = sum + coin.Output.Value
             input_sums[assetId] = sum
@@ -640,15 +606,13 @@ class Wallet(object):
         if not change_address:
             change_address = self.GetChangeAddress(from_addr=from_addr)
 
-
         new_outputs = []
 
-        for assetId,sum in input_sums.items():
+        for assetId, sum in input_sums.items():
             if sum > paytotal[assetId]:
                 difference = sum - paytotal[assetId]
-                output = TransactionOutput(AssetId=assetId,Value=difference,script_hash=change_address)
+                output = TransactionOutput(AssetId=assetId, Value=difference, script_hash=change_address)
                 new_outputs.append(output)
-
 
         inputs = []
 
@@ -656,16 +620,10 @@ class Wallet(object):
             for ref in item:
                 inputs.append(ref.Reference)
 
-
         tx.inputs = inputs
         tx.outputs = tx.outputs + new_outputs
 
         return tx
-
-
-
-
-
 
     def SaveTransaction(self, tx):
         # this is not currently implemented
@@ -692,12 +650,10 @@ class Wallet(object):
 
             res = context.AddSignature(contract, key.PublicKey, signature)
 
-            success |=res
+            success |= res
 
         return success
 
-
     def ToJson(self, verbose=False):
-        #abstract
+        # abstract
         pass
-

@@ -2,14 +2,13 @@
 from .StateBase import StateBase
 import sys
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import MemoryStream, StreamManager
 from .CoinState import CoinState
 from autologging import logged
 
 
 @logged
 class UnspentCoinState(StateBase):
-
 
     Items = None
 
@@ -46,11 +45,8 @@ class UnspentCoinState(StateBase):
 
         self.Items[index] |= value
 
-
-
     def Deserialize(self, reader):
         super(UnspentCoinState, self).Deserialize(reader)
-
 
         blen = reader.ReadVarInt()
         self.Items = [0] * blen
@@ -67,8 +63,6 @@ class UnspentCoinState(StateBase):
         StreamManager.ReleaseStream(m)
 
         return uns
-
-
 
     def Serialize(self, writer):
         super(UnspentCoinState, self).Serialize(writer)

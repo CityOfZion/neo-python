@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger('peewee')
 logger.setLevel(logging.ERROR)
-#logger.addHandler(logging.StreamHandler())
+# logger.addHandler(logging.StreamHandler())
 
 
 class PWDatabase(object):
@@ -28,15 +28,12 @@ class PWDatabase(object):
         PWDatabase.DBProxy().initialize(self._db)
         self.startup()
 
-
     def close(self):
         self._db.close()
         self._db = None
 
     def startup(self):
         self._db.connect()
-
-
 
     @property
     def DB(self):
@@ -56,8 +53,6 @@ class PWDatabase(object):
     @staticmethod
     def ContextDB():
         return PWDatabase.Context().DB
-
-
 
     @staticmethod
     def Destroy():

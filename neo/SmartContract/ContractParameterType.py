@@ -20,7 +20,6 @@ class ContractParameterType(object):
     Void = 0xff
 
 
-
 import inspect
 #import sys
 #import importlib

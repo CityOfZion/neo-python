@@ -4,7 +4,7 @@ from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
 from neo.Core.Helper import Helper
 import ctypes
-from neo.Blockchain import GetBlockchain,GetGenesis
+from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream
@@ -13,21 +13,22 @@ from autologging import logged
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 
+
 @logged
 class BlockBase(VerifiableMixin):
 
     #  <summary>
     #  区块版本
     #  </summary>
-    Version=0
+    Version = 0
     #  <summary>
     #  前一个区块的散列值
     #  </summary>
-    PrevHash= 0 #UInt256
+    PrevHash = 0  # UInt256
     #  <summary>
     #  该区块中所有交易的Merkle树的根
     #  </summary>
-    MerkleRoot = 0 #UInt256
+    MerkleRoot = 0  # UInt256
     #  <summary>
     #  时间戳
     #  </summary>
@@ -35,13 +36,13 @@ class BlockBase(VerifiableMixin):
     #  <summary>
     #  区块高度
     #  </summary>
-    Index =0
+    Index = 0
 
-    ConsensusData=None
+    ConsensusData = None
     #  <summary>
     #  下一个区块的记账合约的散列值
     #  </summary>
-    NextConsensus = None #UInt160
+    NextConsensus = None  # UInt160
     #  <summary>
     #  用于验证该区块的脚本
     #  </summary>
@@ -50,7 +51,6 @@ class BlockBase(VerifiableMixin):
     __hash = None
 
     __htbs = None
-
 
     @property
     def Hash(self):
@@ -62,13 +62,11 @@ class BlockBase(VerifiableMixin):
 
         return self.__hash
 
-
     def ToArray(self):
         return Helper.ToArray(self)
 
     def RawData(self):
         return Helper.GetHashData(self)
-
 
     @property
     def Scripts(self):
@@ -83,7 +81,6 @@ class BlockBase(VerifiableMixin):
             scriptsize = self.Script.Size()
         return uintsize + 32 + 32 + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
 
-
     def IndexBytes(self):
         return self.Index.to_bytes(4, 'little')
 
@@ -97,16 +94,14 @@ class BlockBase(VerifiableMixin):
         witness.Deserialize(reader)
         self.Script = witness
 
-
     def DeserializeUnsigned(self, reader):
         self.Version = reader.ReadUInt32()
         self.PrevHash = reader.ReadUInt256()
         self.MerkleRoot = reader.ReadUInt256()
         self.Timestamp = reader.ReadUInt32()
         self.Index = reader.ReadUInt32()
-        self.ConsensusData =  reader.ReadUInt64()
+        self.ConsensusData = reader.ReadUInt64()
         self.NextConsensus = reader.ReadUInt160()
-
 
     def SerializeUnsigned(self, writer):
         writer.WriteUInt32(self.Version)
@@ -117,37 +112,29 @@ class BlockBase(VerifiableMixin):
         writer.WriteUInt64(self.ConsensusData)
         writer.WriteUInt160(self.NextConsensus)
 
-
-
     def GetMessage(self):
         return Helper.GetHashData(self)
 
-
     def GetScriptHashesForVerifying(self):
-        #if this is the genesis block, we dont have a prev hash!
+        # if this is the genesis block, we dont have a prev hash!
         if self.PrevHash.Data == bytearray(32):
-#            print("verificiation script %s"  %(self.Script.ToJson()))
+            #            print("verificiation script %s"  %(self.Script.ToJson()))
             if type(self.Script.VerificationScript) is bytes:
                 return [bytearray(self.Script.VerificationScript)]
             elif type(self.Script.VerificationScript) is bytearray:
-                return [ self.Script.VerificationScript]
+                return [self.Script.VerificationScript]
             else:
                 raise Exception('Invalid Verification script')
 
         prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
         if prev_header == None:
             raise Exception('Invalid operation')
-        return [ prev_header.NextConsensus ]
-
-
+        return [prev_header.NextConsensus]
 
     def Serialize(self, writer):
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)
-
-
-
 
     def ToJson(self):
         json = {}
@@ -165,7 +152,8 @@ class BlockBase(VerifiableMixin):
         return json
 
     def Verify(self):
-        if not self.Hash.ToBytes() == GetGenesis().Hash.ToBytes(): return False
+        if not self.Hash.ToBytes() == GetGenesis().Hash.ToBytes():
+            return False
 
         bc = GetBlockchain()
 
@@ -175,15 +163,17 @@ class BlockBase(VerifiableMixin):
         if self.Index > 0:
             prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
 
-            if prev_header == None: return False
+            if prev_header == None:
+                return False
 
-            if prev_header.Index + 1 != self.Index: return False
+            if prev_header.Index + 1 != self.Index:
+                return False
 
-            if prev_header.Timestamp >= self.Timestamp: return False
+            if prev_header.Timestamp >= self.Timestamp:
+                return False
 
-        #this should be done to actually verify the block
+        # this should be done to actually verify the block
         if not Helper.VerifyScripts(self):
             return False
 
         return True
-

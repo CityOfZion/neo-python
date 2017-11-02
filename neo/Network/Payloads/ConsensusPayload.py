@@ -5,10 +5,11 @@ from neo.Cryptography.Helper import *
 from neo.Core.Helper import Helper
 from neo.Network.InventoryType import InventoryType
 
+
 class ConsensusPayload(SerializableMixin):
 
     InventoryType = InventoryType.Consensus
-    Version=None
+    Version = None
     PrevHash = None
     BlockIndex = None
     ValidatorIndex = None
@@ -18,12 +19,9 @@ class ConsensusPayload(SerializableMixin):
 
     _hash = None
 
-
-
-
     def Hash(self):
         if not self._hash:
-            self._hash = bin_dbl_sha256( Helper.GetHashData(self))
+            self._hash = bin_dbl_sha256(Helper.GetHashData(self))
         return self._hash
 
     def Size(self):
@@ -49,4 +47,3 @@ class ConsensusPayload(SerializableMixin):
 
     def Verify(self):
         raise NotImplementedError()
-

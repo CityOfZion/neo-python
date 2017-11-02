@@ -2,7 +2,7 @@
 
 class VoteState(object):
 
-    PublicKeys=None
+    PublicKeys = None
 
     Count = 0
 

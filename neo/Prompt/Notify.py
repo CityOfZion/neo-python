@@ -4,12 +4,13 @@ from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Cryptography.Crypto import Crypto
 
+
 def SubscribeNotifications():
 
     Blockchain.Default().Notify.on_change += HandleBlockchainNotification
 
-def HandleBlockchainNotification(notification):
 
+def HandleBlockchainNotification(notification):
 
     state = notification.State
     try:
@@ -23,7 +24,6 @@ def HandleBlockchainNotification(notification):
 
                 event_args = notification_items[1:]
 
-
                 if event_name == 'transfer':
 
                     notify_transfer(event_args)
@@ -36,23 +36,22 @@ def HandleBlockchainNotification(notification):
 
                     notify_withdraw_approved(event_args)
 
-                elif event_name in ['deposit','withdraw','withdraw_reconcile']:
+                elif event_name in ['deposit', 'withdraw', 'withdraw_reconcile']:
 
                     notify_other(event_name, event_args)
 
                 else:
-#                    print("event name not handled %s " % event_args)
+                    #                    print("event name not handled %s " % event_args)
 
                     for arg in event_args:
                         print("[Neo.Runtime.Notify] item %s " % str(arg))
 
         else:
 
-
             interface = state.GetInterface('t')
 
             if interface is not None:
-                hasjson = getattr(interface,'ToJson',None)
+                hasjson = getattr(interface, 'ToJson', None)
 
                 if hasjson:
                     print("[Neo.Runtime.Notify] %s " % json.dumps(interface.ToJson(), indent=4))
@@ -61,14 +60,12 @@ def HandleBlockchainNotification(notification):
                     print("[Neo.Runtime.Notify] %s " % str(interface))
 
             else:
-                output = {'string':str(state),'integer':state.GetBigInteger()}
-                print("[Neo.Runtime.Notify] %s" % json.dumps(output,indent=4))
-
+                output = {'string': str(state), 'integer': state.GetBigInteger()}
+                print("[Neo.Runtime.Notify] %s" % json.dumps(output, indent=4))
 
     except Exception as e:
-#        print("could not process notificatiot state %s %s " % (state, e))
+        #        print("could not process notificatiot state %s %s " % (state, e))
         print("[Neo.Runtime.Notify] notify item %s " % str(state))
-
 
 
 def notify_transfer(event_args):
@@ -90,8 +87,6 @@ def notify_transfer(event_args):
     print("[Neo.Runtime.Notify :: Transfer] %s from %s to %s " % (tamount, fromaddr, toaddr))
 
 
-
-
 def notify_refund(event_args):
     to = event_args[0].GetByteArray()
 
@@ -101,6 +96,7 @@ def notify_refund(event_args):
     print("[Neo.Runtime.Notify :: REFUND] TO %s " % to)
     amount = event_args[1].GetBigInteger()
     print("[Neo.Runtime.Notify :: REFUND] amount %s " % amount)
+
 
 def notify_other(event_name, event_args):
     to = event_args[0].GetByteArray()
@@ -112,7 +108,6 @@ def notify_other(event_name, event_args):
     print("[Neo.Runtime.Notify :: %s] TO %s " % (ename, to))
     amount = event_args[1].GetBigInteger()
     print("[Neo.Runtime.Notify :: %s] amount %s " % (ename, amount))
-
 
 
 def notify_withdraw_approved(event_args):
@@ -134,7 +129,7 @@ def notify_withdraw_approved(event_args):
             vin = item.GetArray()
             txid = UInt256(data=vin[0].GetByteArray())
             index = vin[1].GetBigInteger()
-            output.append({'txid':txid.ToString(), 'index':index})
+            output.append({'txid': txid.ToString(), 'index': index})
 
         res['vins'] = output
 

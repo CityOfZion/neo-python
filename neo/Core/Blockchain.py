@@ -24,33 +24,33 @@ import traceback
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 
-### not sure of the origin of these
-Issuer = ECDSA.decode_secp256r1( '030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
+# not sure of the origin of these
+Issuer = ECDSA.decode_secp256r1('030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
 Admin = b'Abf2qMs1pzQb8kYk9RuxtUb9jtRKJVuBJt'
 
-class Blockchain(object):
 
+class Blockchain(object):
 
     SECONDS_PER_BLOCK = 15
 
     DECREMENT_INTERVAL = 2000000
 
-    GENERATION_AMOUNT = [ 8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
+    GENERATION_AMOUNT = [8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
     __blockchain = None
 
     __validators = []
 
-    __genesis_block=None
+    __genesis_block = None
 
     __instance = None
 
     __blockrequests = set()
 
-    BlockSearchTries=0
+    BlockSearchTries = 0
 
-    CACHELIM=4000
-    CMISSLIM=5
+    CACHELIM = 4000
+    CMISSLIM = 5
     LOOPTIME = .1
 
     PersistCompleted = Events()
@@ -62,42 +62,41 @@ class Blockchain(object):
         if len(Blockchain.__validators) < 1:
             vlist = settings.STANDBY_VALIDATORS
             for pkey in settings.STANDBY_VALIDATORS:
-                Blockchain.__validators.append( ECDSA.decode_secp256r1(pkey).G)
+                Blockchain.__validators.append(ECDSA.decode_secp256r1(pkey).G)
 
         return Blockchain.__validators
 
     @staticmethod
     def SystemShare():
-        amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL )
+        amount = Fixed8.FromDecimal(sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
         owner = ECDSA.secp256r1().Curve.Infinity
         admin = Crypto.ToScriptHash(PUSHT)
-        return RegisterTransaction([],[], AssetType.GoverningToken,
-                                 "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
-                                 amount,0, owner, admin)
+        return RegisterTransaction([], [], AssetType.GoverningToken,
+                                   "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
+                                   amount, 0, owner, admin)
 
     @staticmethod
     def SystemCoin():
-        amount =Fixed8.FromDecimal(  sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
+        amount = Fixed8.FromDecimal(sum(Blockchain.GENERATION_AMOUNT) * Blockchain.DECREMENT_INTERVAL)
 
         owner = ECDSA.secp256r1().Curve.Infinity
 
-        precision=8
+        precision = 8
         admin = Crypto.ToScriptHash(PUSHF)
 
-        return RegisterTransaction([],[], AssetType.UtilityToken,
-                                         "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
-                                         amount,precision,owner, admin)
+        return RegisterTransaction([], [], AssetType.UtilityToken,
+                                   "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
+                                   amount, precision, owner, admin)
 
     @staticmethod
     def GenesisBlock():
 
-
         prev_hash = UInt256(data=bytearray(32))
-        timestamp = int(datetime(2016, 7, 15, 15, 8, 21, tzinfo= pytz.utc ).timestamp())
+        timestamp = int(datetime(2016, 7, 15, 15, 8, 21, tzinfo=pytz.utc).timestamp())
         index = 0
-        consensus_data = 2083236893 #向比特币致敬 ( Pay Tribute To Bitcoin )
+        consensus_data = 2083236893  # 向比特币致敬 ( Pay Tribute To Bitcoin )
         next_consensus = Blockchain.GetConsensusAddress(Blockchain.StandbyValidators())
-        script = Witness( bytearray(0), bytearray(PUSHT))
+        script = Witness(bytearray(0), bytearray(PUSHT))
 
         mt = MinerTransaction()
         mt.Nonce = 2083236893
@@ -108,13 +107,12 @@ class Blockchain(object):
             Crypto.ToScriptHash(Contract.CreateMultiSigRedeemScript(int(len(Blockchain.StandbyValidators()) / 2) + 1, Blockchain.StandbyValidators()))
         )
 
-        it = IssueTransaction([],[output],[], [script])
+        it = IssueTransaction([], [output], [], [script])
 
-        return Block(prev_hash,timestamp,index,consensus_data,
-                     next_consensus,script,
-                     [mt,Blockchain.SystemShare(),Blockchain.SystemCoin(),it],
+        return Block(prev_hash, timestamp, index, consensus_data,
+                     next_consensus, script,
+                     [mt, Blockchain.SystemShare(), Blockchain.SystemCoin(), it],
                      True)
-
 
     @staticmethod
     def Default():
@@ -124,7 +122,6 @@ class Blockchain(object):
             Blockchain.GenesisBlock().RebuildMerkleRoot()
 
         return Blockchain.__instance
-
 
     @property
     def CurrentBlockHash(self):
@@ -158,7 +155,6 @@ class Blockchain(object):
     def BlockRequests(self):
         return self.__blockrequests
 
-
     @staticmethod
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
         raise NotImplementedError()
@@ -168,11 +164,13 @@ class Blockchain(object):
         unclaimed = []
         hashes = Counter([input.PrevHash for input in inputs]).items()
         for hash in hashes:
-            height_start=0
-            tx,height = Blockchain.Default().GetTransaction(hash)
+            height_start = 0
+            tx, height = Blockchain.Default().GetTransaction(hash)
             height_start = height
-            if tx is None: return False
-            if height_start == height_end: continue
+            if tx is None:
+                return False
+            if height_start == height_end:
+                continue
 
             to_be_checked = []
             [to_be_checked.append(input) for input in inputs if input.PrevHash == hash]
@@ -188,19 +186,17 @@ class Blockchain(object):
             raise NotImplementedError()
         return Blockchain.CalculateBonusInternal(unclaimed)
 
-
     @staticmethod
     def CalculateBonusInternal(unclaimed):
         amount_claimed = Fixed8(0)
 
         raise NotImplementedError()
 
-
     def OnNotify(self, notification):
-#        print("on notifiy %s " % notification)
+        #        print("on notifiy %s " % notification)
         self.Notify.on_change(notification)
 
-    def ContainsBlock(self,hash):
+    def ContainsBlock(self, hash):
         # abstract
         pass
 
@@ -237,7 +233,7 @@ class Blockchain(object):
         pass
 
     def GetBlock(self, height_or_hash):
-#        return self.GetBlockByHash(self.GetBlockHash(height))
+        #        return self.GetBlockByHash(self.GetBlockHash(height))
         pass
 
     def GetBlockByHash(self, hash):
@@ -248,7 +244,7 @@ class Blockchain(object):
         # abstract
         pass
 
-    def GetSpentCoins(self,tx_hash):
+    def GetSpentCoins(self, tx_hash):
         pass
 
     def GetAllSpentCoins(self):
@@ -275,11 +271,10 @@ class Blockchain(object):
     def GetHeaderByHeight(self, height):
         pass
 
-
     @staticmethod
     def GetConsensusAddress(validators):
         vlen = len(validators)
-        script = Contract.CreateMultiSigRedeemScript(vlen - int((vlen - 1)/3) , validators)
+        script = Contract.CreateMultiSigRedeemScript(vlen - int((vlen - 1) / 3), validators)
         return Crypto.ToScriptHash(script)
 
     def GetValidators(self, others):
@@ -306,13 +301,10 @@ class Blockchain(object):
 #            return validators.OrderByDescending(p => p.Value).ThenBy(p => p.Key).Select(p => p.Key).Concat(StandbyValidators).Take(validators_count)
 #        }
 
-
         raise NotImplementedError()
 
-
-
     def GetNextBlockHash(self, hash):
-        #abstract
+        # abstract
         pass
 
     def GetScript(self, script_hash):
@@ -320,11 +312,11 @@ class Blockchain(object):
 
     def GetStorageItem(self, storage_key):
         print("BLOCKCHAIN DEFAULT GETTING STORAGE ITEMMMMM")
-        #abstract
+        # abstract
         pass
 
     def GetSysFeeAmount(self, hash):
-        #abstract
+        # abstract
 
         pass
 
@@ -332,16 +324,15 @@ class Blockchain(object):
         # abstract
         # should return both transaction and height
         # return tx, height
-        return None,0
+        return None, 0
 
     def GetUnClaimed(self, hash):
-        #abstract
+        # abstract
         pass
 
     def GetUnspent(self, hash, index):
-        #abstract
+        # abstract
         pass
-
 
     def GetVotes(self, transactions):
         # abstract
@@ -353,7 +344,7 @@ class Blockchain(object):
 
     def OnPersistCompleted(self, block):
 
-#        self.__validators = []
+        #        self.__validators = []
         pass
 
     def StartPersist(self):
@@ -365,13 +356,10 @@ class Blockchain(object):
     def BlockCacheCount(self):
         pass
 
-
-
     @staticmethod
     def RegisterBlockchain(blockchain):
         if Blockchain.__instance is None:
             Blockchain.__instance = blockchain
-
 
     @staticmethod
     def DeregisterBlockchain():

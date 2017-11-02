@@ -16,11 +16,9 @@ class BlockchainFixtureTestCase(NeoTestCase):
     FIXTURE_FILENAME = './Chains/fixtures.tar.gz'
     _blockchain = None
 
-
     @classmethod
     def leveldb_testpath(self):
         return 'Override Me!'
-
 
     @classmethod
     def setUpClass(self):
@@ -37,10 +35,9 @@ class BlockchainFixtureTestCase(NeoTestCase):
             response = requests.get(self.FIXTURE_REMOTE_LOC, stream=True)
 
             response.raise_for_status()
-            with open(self.FIXTURE_FILENAME,'wb+') as handle:
+            with open(self.FIXTURE_FILENAME, 'wb+') as handle:
                 for block in response.iter_content(1024):
                     handle.write(block)
-
 
         self.__log.debug("opening tar file")
         try:
@@ -51,7 +48,6 @@ class BlockchainFixtureTestCase(NeoTestCase):
         except Exception as e:
             self.__log.debug("Could not extract tar file %s " % e)
 
-
         if os.path.exists(self.leveldb_testpath()):
             self.__log.debug('loading blockchain')
             self._blockchain = TestLevelDBBlockchain(path=self.leveldb_testpath())
@@ -59,7 +55,6 @@ class BlockchainFixtureTestCase(NeoTestCase):
             self.__log.debug("Starting Tests")
         else:
             self.__log.debug("Error downloading fixtures")
-
 
     @classmethod
     def tearDownClass(self):

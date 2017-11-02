@@ -1,6 +1,7 @@
 from neo.IO.Mixins import SerializableMixin
 import binascii
 
+
 class UIntBase(SerializableMixin):
     Data = bytearray()
     __hash = None

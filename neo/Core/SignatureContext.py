@@ -10,15 +10,17 @@ from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.VM import ScriptBuilder
 from io import BytesIO
 
+
 class SingatureContext(BytesIO):
     """docstring for SingatureContext"""
+
     def __init__(self, signable):
         super(SingatureContext, self).__init__()
         self.signable = signable
         self.scriptHashes = self.signable.getScriptHashesForVerifying()
-        self.redeemScripts = [ None for i in len(self.scriptHashes)]
-        self.signatures = [ None for i in len(self.scriptHashes)]
-        self.completed = [ False for i in len(self.scriptHashes)]
+        self.redeemScripts = [None for i in len(self.scriptHashes)]
+        self.signatures = [None for i in len(self.scriptHashes)]
+        self.completed = [False for i in len(self.scriptHashes)]
 
     def isCompleted(self):
         for x in self.completed:
@@ -31,7 +33,7 @@ class SingatureContext(BytesIO):
         for scripthash in self.scriptHashes:
             if scripthash == contract.scriptHash:
                 i = self.scriptHashes.index(scripthash)
-                if  self.redeemScripts[i] == None:
+                if self.redeemScripts[i] == None:
                     self.redeemScripts[i] = contract.redeemScript
                 if self.signatures[i] == None:
                     self.signatures[i] = (pubkey.toString(), signature)
@@ -49,10 +51,10 @@ class SingatureContext(BytesIO):
     def getScripts(self):
         if not self.completed:
             raise Exception("isCompleted == False")
-        scripts = [ None for i in len(self.signatures)]
+        scripts = [None for i in len(self.signatures)]
         for script in self.scripts:
             i = self.scripts.index(script)
-            array = [{'pubkey':key, 'signature': signature} for (signature, key) in self.signatures[i]]
+            array = [{'pubkey': key, 'signature': signature} for (signature, key) in self.signatures[i]]
             array.sort(key=lambda x: x['pubkey'])
             sb = ScriptBuilder()
             for item in array:

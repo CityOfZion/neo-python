@@ -4,6 +4,7 @@ import sys
 from autologging import logged
 from neo.UInt256 import UInt256
 
+
 @logged
 class GetBlocksPayload(SerializableMixin):
 
@@ -15,18 +16,15 @@ class GetBlocksPayload(SerializableMixin):
         self.HashStart = hash_start
         self.HashStop = hash_stop
 
-
     def Size(self):
         return sys.getsizeof(self.HashStart) + sys.getsizeof(self.HashStop)
-
 
     def Deserialize(self, reader):
         self.HashStart = reader.ReadHashes()
         self.HashStop = reader.ReadUInt256()
 
-
     def Serialize(self, writer):
-#        self.__log.debug("Writing hash start... %s %s" % (len(self.HashStart), self.HashStart[0].ToArray()))
+        #        self.__log.debug("Writing hash start... %s %s" % (len(self.HashStart), self.HashStart[0].ToArray()))
         writer.WriteHashes(self.HashStart)
         if self.HashStop is not None:
             writer.WriteUInt256(self.HashStop)
