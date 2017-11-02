@@ -3,6 +3,7 @@ attrs==17.2.0
 Autologging==1.1.0
 Automat==0.6.0
 base58==0.2.5
+bitarray==0.8.1
 bitcoin==1.1.42
 blessings==1.6
 bpython==0.16
@@ -28,7 +29,7 @@ incremental==17.5.0
 memory-profiler==0.47
 mmh3==2.4
 mpmath==0.19
-neo-boa==0.1.7
+neo-boa==0.1.8
 numpy==1.13.1
 peewee==2.10.1
 plyvel==0.9
