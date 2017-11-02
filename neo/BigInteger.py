@@ -18,7 +18,7 @@ class BigInteger(int):
             try:
                 return self.to_bytes(1 + ((self.bit_length() + 7) // 8), byteorder='little', signed=True)
             except Exception as e:
-                print("coludnt convert negative number %s " % e)
+                print("Couldn't convert negative number %s " % e)
                 return False
         try:
             return self.to_bytes((self.bit_length() + 7) // 8, byteorder='little', signed=signed)
