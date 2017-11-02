@@ -1,9 +1,8 @@
 import bitcoin
-from neo.Cryptography.ECCurve import ECDSA,EllipticCurve,FiniteField
+from neo.Cryptography.ECCurve import ECDSA
 from neo.Cryptography.Crypto import Crypto
 import base58
-import bitcoin
-import binascii
+
 
 class KeyPair(object):
 
@@ -12,8 +11,6 @@ class KeyPair(object):
     PublicKey = None
 
     PrivateKey = None
-
-
 
     def setup_curve(self):
 
@@ -26,9 +23,7 @@ class KeyPair(object):
             36134250956749795798585127919587881956611106672985015071877198253568414405109
         )
 
-
     def __init__(self, priv_key):
-
 
         self.setup_curve()
 
@@ -66,8 +61,6 @@ class KeyPair(object):
 
         self.PublicKeyHash = Crypto.ToScriptHash(self.PublicKey.encode_point(True), unhex=True)
 
-
-
     @staticmethod
     def PrivateKeyFromWIF(wif):
 
@@ -87,7 +80,6 @@ class KeyPair(object):
 
         return data[1:33]
 
-
     def Export(self):
 
         data = bytearray(38)
@@ -95,7 +87,7 @@ class KeyPair(object):
         data[1:33] = self.PrivateKey[0:32]
         data[33] = 0x01
 
-        checksum= Crypto.Default().Hash256(data[0:34])
+        checksum = Crypto.Default().Hash256(data[0:34])
         data[34:38] = checksum[0:4]
         b58 = base58.b58encode(bytes(data))
 
