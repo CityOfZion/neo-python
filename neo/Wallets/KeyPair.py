@@ -30,15 +30,17 @@ class KeyPair(object):
         length = len(priv_key)
 
         if length != 32 and length != 96 and length != 104:
-            raise Exception("Invalid private key")
+            raise ValueError("Invalid private key")
 
         self.PrivateKey = bytearray(priv_key[-32:])
 
         pubkey_encoded_not_compressed = None
 
         if length == 32:
-
-            pubkey_encoded_not_compressed = bitcoin.privkey_to_pubkey(priv_key)
+            try:
+                pubkey_encoded_not_compressed = bitcoin.privkey_to_pubkey(priv_key)
+            except Exception as e:
+                raise Exception("Could not determine public key")
 
         elif length == 64 or length == 72:
             skip = length - 64
@@ -56,9 +58,6 @@ class KeyPair(object):
             edcsa = ECDSA.secp256r1()
             self.PublicKey = edcsa.Curve.point(pubx, puby)
 
-        else:
-            raise Exception("Could not determine public key")
-
         self.PublicKeyHash = Crypto.ToScriptHash(self.PublicKey.encode_point(True), unhex=True)
 
     @staticmethod
@@ -72,12 +71,12 @@ class KeyPair(object):
         length = len(data)
 
         if length is not 38 or data[0] is not 0x80 or data[33] is not 0x01:
-            raise Exception("Invalid format!")
+            raise ValueError("Invalid format!")
 
         checksum = Crypto.Hash256(data[0:34])[0:4]
 
         if checksum != data[34:]:
-            raise Exception("Invalid WIF Checksum")
+            raise ValueError("Invalid WIF Checksum!")
 
         return data[1:33]
 
