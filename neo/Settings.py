@@ -5,10 +5,11 @@ method.
 """
 import json
 
+
 class SettingsHolder:
     """
     This class holds all the settings. Needs to be setup with one of the
-    `setup` methdos before using it.
+    `setup` methods before using it.
     """
     MAGIC = None
     ADDRESS_VERSION = None
@@ -25,6 +26,9 @@ class SettingsHolder:
     WS_PORT = None
     URI_PREFIX = None
     VERSION_NAME = None
+
+    token_style = None
+    config_file = None
 
     # Helpers
     @property
@@ -56,11 +60,14 @@ class SettingsHolder:
         self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
         config = data['ApplicationConfiguration']
-        self.LEVELDB_PATH= config['DataDirectoryPath']
+        self.LEVELDB_PATH = config['DataDirectoryPath']
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
         self.VERSION_NAME = config['VersionName']
+
+        self.token_style = config['themes'][config['theme']]
+        self.config_file = config_file
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
@@ -69,6 +76,17 @@ class SettingsHolder:
     def setup_testnet(self):
         """ Load settings from the testnet JSON config file """
         self.setup('protocol.testnet.json')
+
+    def set_theme(self, theme_name):
+        with open(self.config_file) as data_file:
+            data = json.load(data_file)
+
+        data["ApplicationConfiguration"]["theme"] = theme_name
+        with open(self.config_file, "w") as data_file:
+            data_file.write(json.dumps(data, indent=4, sort_keys=True))
+
+        self.token_style = data['ApplicationConfiguration']['themes'][theme_name]
+
 
 # Settings instance used by external modules
 settings = SettingsHolder()
