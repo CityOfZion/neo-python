@@ -26,7 +26,6 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Wallets.KeyPair import KeyPair
 from neo.Prompt.Commands.LoadSmartContract import ImportMultiSigContractAddr
 from neo.Prompt.Notify import SubscribeNotifications
-from neo import Settings
 from neo.Core.Blockchain import Blockchain
 from neo.Fixed8 import Fixed8
 from neo.Core.TX.Transaction import TransactionOutput,ContractTransaction

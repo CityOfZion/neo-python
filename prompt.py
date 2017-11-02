@@ -24,6 +24,8 @@ from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo.Settings import settings
 from neo.Fixed8 import Fixed8
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 import traceback
 
 from twisted.internet import reactor, task
