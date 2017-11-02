@@ -30,12 +30,22 @@ class SettingsHolder:
     @property
     def is_mainnet(self):
         """ Returns True if settings point to MainNet """
-        return self.NODE_PORT == 10333
+        return self.NODE_PORT == 10333 and self.MAGIC == 7630401
 
     @property
     def is_testnet(self):
         """ Returns True if settings point to TestNet """
-        return self.NODE_PORT == 20333
+        return self.NODE_PORT == 20333 and self.MAGIC == 1953787457
+
+    @property
+    def net_name(self):
+        if self.MAGIC is None:
+            return 'None'
+        if self.NODE_PORT == 10333 and self.MAGIC == 7630401:
+            return 'MainNet'
+        if self.NODE_PORT == 20333 and self.MAGIC == 1953787457:
+            return 'TestNet'
+        return 'PrivateNet'
 
     # Setup methods
     def setup(self, config_file):
