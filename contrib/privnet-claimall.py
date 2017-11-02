@@ -14,13 +14,17 @@ python3 privnet-claimall.py {address to receive all 100000000 NEO}
 
 """
 
+import os
 import sys
-sys.path.append("..")
 import json
 import time
 import datetime
-import os
-os.chdir('../')
+
+if os.getcwd().endswith("/contrib"):
+    os.chdir('../')  # use config and Chains folder from main directory
+
+sys.path.append(os.getcwd())
+
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.KeyPair import KeyPair
@@ -97,7 +101,7 @@ class PrivnetClaimall(object):
             print("insufficient funds, were funds already moved from multi-sig contract?")
             return None
 
-        context = ContractParametersContext(tx)
+        context = ContractParametersContext(tx, isMultiSig=True)
         wallet.Sign(context)
 
         if context.Completed:
