@@ -134,12 +134,11 @@ class PromptInterface(object):
 
     def get_bottom_toolbar(self, cli=None):
         out = []
-        net = "[MainNet]" if settings.is_mainnet else "[TestNet]"
         try:
-            out = [(Token.Command, '%s Progress: ' % net),
-                   (Token.Number, str(Blockchain.Default().Height)),
-                   (Token.Neo, '/'),
-                   (Token.Number, str(Blockchain.Default().HeaderHeight))]
+            out =[(Token.Command, '[%s] Progress: ' % settings.net_name),
+                    (Token.Number, str(Blockchain.Default().Height)),
+                    (Token.Neo, '/'),
+                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
             pass
 
