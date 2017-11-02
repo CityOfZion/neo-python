@@ -3,6 +3,7 @@ attrs==17.2.0
 Autologging==1.1.0
 Automat==0.6.0
 base58==0.2.5
+bitarray==0.8.1
 bitcoin==1.1.42
 blessings==1.6
 bpython==0.16

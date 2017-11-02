@@ -1,35 +1,31 @@
+from io import BytesIO
+
 from neo.Utils.NeoTestCase import NeoTestCase
+from neo.IO.BinaryWriter import BinaryWriter
+from neo.IO.BinaryReader import BinaryReader
+
 from neo.Fixed8 import Fixed8
-
 from neo.BigInteger import BigInteger
+from neo.UIntBase import UIntBase
 
-class FancyNumberTestCase(NeoTestCase):
-
-
-
+class Fixed8TestCase(NeoTestCase):
     def test_fixed8_add(self):
-
         f1 = Fixed8(100)
         f2 = Fixed8(300)
 
         f3 = f1 + f2
 
         self.assertIsInstance(f3, Fixed8)
-
         self.assertEqual(f3.value, 400)
 
     def test_fixed8_sub(self):
-
-
         f1 = Fixed8(100)
         f2 = Fixed8(300)
 
         f3 = f1 - f2
 
         self.assertIsInstance(f3, Fixed8)
-
         self.assertEqual(f3.value, -200)
-
 
     def test_fixed8_mul(self):
         f1 = Fixed8(3)
@@ -38,7 +34,6 @@ class FancyNumberTestCase(NeoTestCase):
         f3 = f1 * f2
 
         self.assertIsInstance(f3, Fixed8)
-
         self.assertEqual(f3.value, 27)
 
     def test_fixed8_div(self):
@@ -48,7 +43,6 @@ class FancyNumberTestCase(NeoTestCase):
         f3 = f1 / f2
 
         self.assertIsInstance(f3, Fixed8)
-
         self.assertEqual(f3.value, 9)
 
     def test_fixed8_pow(self):
@@ -58,7 +52,6 @@ class FancyNumberTestCase(NeoTestCase):
         f3 = pow(f1, f2)
 
         self.assertIsInstance(f3, Fixed8)
-
         self.assertEqual(f3.value, 8)
 
     def test_fixed8_mod(self):
@@ -82,23 +75,18 @@ class FancyNumberTestCase(NeoTestCase):
 
         f1 = -f1
         self.assertIsInstance(f1, Fixed8)
-
         self.assertEqual(f1.value, -2)
 
     def test_from_decimal(self):
-
         decimal = 2042.02556
-
         f8 = Fixed8.FromDecimal(decimal)
-
 
         self.assertIsInstance(f8, Fixed8)
         self.assertEqual(f8.value, 204202556000)
 
 
-
+class BigIntegerTestCase(NeoTestCase):
     def test_big_integer_add(self):
-
         b1 = BigInteger(10)
         b2 = BigInteger(20)
 
@@ -142,13 +130,101 @@ class FancyNumberTestCase(NeoTestCase):
         self.assertIsInstance(b3, BigInteger)
         self.assertEqual(b3, 60560)
 
-
     def test_big_integer_to_ba(self):
-
         b1 = BigInteger(8972340892734890723)
-
         ba = b1.ToByteArray()
 
         integer = BigInteger.from_bytes(ba, 'little')
-
         self.assertEqual(integer, 8972340892734890723)
+
+
+class UIntBaseTestCase(NeoTestCase):
+    def test_initialization(self):
+        u0 = UIntBase(0)
+        self.assertEqual(hash(u0), 0)
+
+        u1 = UIntBase(10)
+        self.assertEqual(hash(u1), 0)
+
+        u2 = UIntBase(3, bytearray(b'abc'))
+        self.assertEqual(hash(u2), 6513249)
+
+        u3 = UIntBase(3, b'abc')
+        self.assertEqual(hash(u3), 6513249)
+
+    def test_initialization_with_bytes(self):
+        u1 = UIntBase(3, b'abc')
+        self.assertEqual(hash(u1), 6513249)
+
+    def test_initialization_with_bytearray(self):
+        u1 = UIntBase(3, bytearray(b'abc'))
+        self.assertEqual(hash(u1), 6513249)
+
+    def test_initialization_with_invalid_datalen(self):
+        with self.assertRaises(Exception):
+            UIntBase(3, bytearray(b'abcd'))
+
+    def test_initialization_with_invalid_datatype(self):
+        with self.assertRaises(Exception):
+            UIntBase(3, 'abc')
+
+    def test_size(self):
+        u1 = UIntBase(3, bytearray(b'abc'))
+        self.assertEqual(u1.Size, 3)
+
+    def test_serialize(self):
+        data = b'abc'
+
+        stream = BytesIO()
+        u1 = UIntBase(3, bytearray(data))
+        u1.Serialize(BinaryWriter(stream))
+        self.assertEqual(stream.getvalue(), data)
+
+        stream = BytesIO()
+        u1 = UIntBase(3, data)
+        u1.Serialize(BinaryWriter(stream))
+        self.assertEqual(stream.getvalue(), data)
+
+    def test_deserialize(self):
+        u1 = UIntBase(2)
+        self.assertEqual(hash(u1), 0)
+
+        # deserialize from stream now. hash should equal hash of b'ab',
+        # because size was set to 2.
+        u1.Deserialize(BinaryReader(BytesIO(b'abc')))
+        self.assertEqual(hash(u1), 25185)
+
+    def test_toarray(self):
+        data = b'abc'
+        u1 = UIntBase(3, data)
+        self.assertEqual(u1.ToArray(), data)
+
+    def test_str(self):
+        u1 = UIntBase(3, b'abc')
+        self.assertEqual(str(u1), '636261')
+
+    def test_tostring(self):
+        u1 = UIntBase(3, b'abc')
+        self.assertEqual(u1.ToString(), '636261')
+
+    def test_tostring2(self):
+        u1 = UIntBase(3, b'abc')
+        self.assertEqual(u1.ToString2(), '616263')
+
+    def test_tobytes(self):
+        u1 = UIntBase(3, b'abc')
+        self.assertEqual(u1.ToBytes(), b'636261')
+
+    def test_eq(self):
+        u1 = UIntBase(3, b'abc')
+
+        # Should equal
+        self.assertEqual(u1, u1)
+        self.assertEqual(u1, UIntBase(3, b'abc'))
+        self.assertEqual(u1, UIntBase(3, bytearray(b'abc')))
+
+        # Should not equal
+        self.assertNotEqual(u1, None)
+        self.assertNotEqual(u1, 123)
+        self.assertNotEqual(u1, 'abc')
+        self.assertNotEqual(u1, UIntBase(3, b'abd'))
