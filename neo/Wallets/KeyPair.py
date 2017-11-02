@@ -1,9 +1,8 @@
 import bitcoin
-from neo.Cryptography.ECCurve import ECDSA,EllipticCurve,FiniteField
+from neo.Cryptography.ECCurve import ECDSA
 from neo.Cryptography.Crypto import Crypto
 import base58
-import bitcoin
-import binascii
+
 
 class KeyPair(object):
 
@@ -12,8 +11,6 @@ class KeyPair(object):
     PublicKey = None
 
     PrivateKey = None
-
-
 
     def setup_curve(self):
 
@@ -26,24 +23,24 @@ class KeyPair(object):
             36134250956749795798585127919587881956611106672985015071877198253568414405109
         )
 
-
     def __init__(self, priv_key):
-
 
         self.setup_curve()
 
         length = len(priv_key)
 
         if length != 32 and length != 96 and length != 104:
-            raise Exception("Invalid private key")
+            raise ValueError("Invalid private key")
 
         self.PrivateKey = bytearray(priv_key[-32:])
 
         pubkey_encoded_not_compressed = None
 
         if length == 32:
-
-            pubkey_encoded_not_compressed = bitcoin.privkey_to_pubkey(priv_key)
+            try:
+                pubkey_encoded_not_compressed = bitcoin.privkey_to_pubkey(priv_key)
+            except Exception as e:
+                raise Exception("Could not determine public key")
 
         elif length == 64 or length == 72:
             skip = length - 64
@@ -61,32 +58,27 @@ class KeyPair(object):
             edcsa = ECDSA.secp256r1()
             self.PublicKey = edcsa.Curve.point(pubx, puby)
 
-        else:
-            raise Exception("Could not determine public key")
-
         self.PublicKeyHash = Crypto.ToScriptHash(self.PublicKey.encode_point(True), unhex=True)
-
-
 
     @staticmethod
     def PrivateKeyFromWIF(wif):
 
-        if wif is None:
-            raise Exception('Please provide wif')
+        if wif is None or len(wif) is not 52:
+            raise ValueError('Please provide a wif with a length of 52 bytes (LEN: {0:d})'.format(len(wif)))
+
         data = base58.b58decode(wif)
 
         length = len(data)
 
-        if length is not 38 and data[0] is not 0x80 and data[33] is not 0x01:
-            raise Exception("Invalid format!")
+        if length is not 38 or data[0] is not 0x80 or data[33] is not 0x01:
+            raise ValueError("Invalid format!")
 
         checksum = Crypto.Hash256(data[0:34])[0:4]
 
         if checksum != data[34:]:
-            raise Exception("Invalid WIF Checksum")
+            raise ValueError("Invalid WIF Checksum!")
 
         return data[1:33]
-
 
     def Export(self):
 
@@ -95,7 +87,7 @@ class KeyPair(object):
         data[1:33] = self.PrivateKey[0:32]
         data[33] = 0x01
 
-        checksum= Crypto.Default().Hash256(data[0:34])
+        checksum = Crypto.Default().Hash256(data[0:34])
         data[34:38] = checksum[0:4]
         b58 = base58.b58encode(bytes(data))
 
