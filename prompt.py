@@ -14,12 +14,12 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract,TestInvokeContract,test_invoke,InvokeWithdrawTx
-from neo.Prompt.Commands.BuildNRun import BuildAndRun,LoadAndRun
-from neo.Prompt.Commands.Withdraw import RequestWithdraw,RedeemWithdraw
-from neo.Prompt.Commands.LoadSmartContract import LoadContract,GatherContractDetails,ImportContractAddr,ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_and_send,construct_contract_withdrawal,parse_and_sign
-from neo.Prompt.Commands.Wallet import DeleteAddress,ImportWatchAddr
+from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke, InvokeWithdrawTx
+from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
+from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
+from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, ImportMultiSigContractAddr
+from neo.Prompt.Commands.Send import construct_and_send, construct_contract_withdrawal, parse_and_sign
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo.Settings import settings
@@ -42,36 +42,32 @@ from prompt_toolkit.history import FileHistory
 debug_logname = 'prompt.log'
 
 logging.basicConfig(
-     level=logging.DEBUG,
-     filemode='a',
-     filename=debug_logname,
-     format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
-
-
+    level=logging.DEBUG,
+    filemode='a',
+    filename=debug_logname,
+    format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 
 import csv
 
 example_style = style_from_dict({
     # User input.
-    Token:          '#ff0066',
+    Token: '#ff0066',
 
     # Prompt.
     Token.Username: '#884444',
-    Token.At:       '#00aa00',
-    Token.Colon:    '#00aa00',
-    Token.Pound:    '#00aa00',
-    Token.Host:     '#000088 bg:#aaaaff',
-    Token.Path:     '#884444 underline',
+    Token.At: '#00aa00',
+    Token.Colon: '#00aa00',
+    Token.Pound: '#00aa00',
+    Token.Host: '#000088 bg:#aaaaff',
+    Token.Path: '#884444 underline',
 })
 
 
 @logged
 class PromptInterface(object):
 
-
     go_on = True
-
 
     _gathering_password = False
     _gathered_passwords = []
@@ -139,32 +135,30 @@ class PromptInterface(object):
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
 
-
     def get_bottom_toolbar(self, cli=None):
         out = []
         net = "[MainNet]" if settings.is_mainnet else "[TestNet]"
         try:
-            out =[(Token.Command, '%s Progress: ' % net),
-                    (Token.Number, str(Blockchain.Default().Height)),
-                    (Token.Neo, '/'),
-                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
+            out = [(Token.Command, '%s Progress: ' % net),
+                   (Token.Number, str(Blockchain.Default().Height)),
+                   (Token.Neo, '/'),
+                   (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
             pass
 
         return out
 
-
     def get_completer(self):
-        standard_completions = ['block', 'tx', 'header', 'mem', 'neo','gas',
-                                    'help', 'state', 'node', 'exit', 'quit',
-                                    'config', 'import', 'export', 'open',
-                                    'wallet', 'contract', 'asset', 'wif',
-                                    'withdraw_request','withdraw',
-                                    'watch_addr','contract_addr', 'testinvoke',]
+        standard_completions = ['block', 'tx', 'header', 'mem', 'neo', 'gas',
+                                'help', 'state', 'node', 'exit', 'quit',
+                                'config', 'import', 'export', 'open',
+                                'wallet', 'contract', 'asset', 'wif',
+                                'withdraw_request', 'withdraw',
+                                'watch_addr', 'contract_addr', 'testinvoke', ]
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
-                if not addr in self._known_addresses:
+                if addr not in self._known_addresses:
                     self._known_addresses.append(addr)
 
         all_completions = standard_completions + self._known_addresses
@@ -183,14 +177,13 @@ class PromptInterface(object):
     def help(self):
         tokens = []
         for c in self.commands:
-            tokens.append((Token.Command, "%s\n" %c))
+            tokens.append((Token.Command, "%s\n" % c))
         print_tokens(tokens, self.token_style)
 
     def do_open(self, arguments):
 
         if self.Wallet:
             self.do_close_wallet()
-
 
         item = get_arg(arguments)
 
@@ -203,7 +196,6 @@ class PromptInterface(object):
                 if not os.path.exists(path):
                     print("wallet file not found")
                     return
-
 
                 self._num_passwords_req = 1
                 self._wallet_create_path = path
@@ -233,16 +225,11 @@ class PromptInterface(object):
                 self._gathered_passwords = []
                 self._gathering_password = True
                 self._gather_password_action = self.do_create_wallet
-     #           print("create wallet! Please specify a password")
             else:
                 print("Please specify a path")
 
-
-
-
-
     def do_create_wallet(self):
-#        print("do create wallet with passwords %s "% self._gathered_passwords)
+        #        print("do create wallet with passwords %s "% self._gathered_passwords)
 
         if self.Wallet:
             self.do_close_wallet()
@@ -260,7 +247,7 @@ class PromptInterface(object):
         passwd = psswds[1]
 
         try:
-            self.Wallet = UserWallet.Create(path=path , password=passwd)
+            self.Wallet = UserWallet.Create(path=path, password=passwd)
         except Exception as e:
             print("Exception creating wallet: %s " % e)
 
@@ -270,10 +257,8 @@ class PromptInterface(object):
         print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
         print("pubkey %s " % key.PublicKey.encode_point(True))
 
-
         self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
         self._walletdb_loop.start(1)
-
 
     def do_close_wallet(self):
         if self.Wallet:
@@ -284,7 +269,6 @@ class PromptInterface(object):
             print("closed wallet %s " % path)
 
     def do_open_wallet(self):
-
 
         passwd = self._gathered_passwords[0]
         path = self._wallet_create_path
@@ -302,7 +286,6 @@ class PromptInterface(object):
             print("could not open wallet: %s " % e)
 #            traceback.print_stack()
 #            traceback.print_exc()
-
 
     def do_import(self, arguments):
         item = get_arg(arguments)
@@ -332,17 +315,14 @@ class PromptInterface(object):
             elif item == 'contract':
                 return self.load_smart_contract(arguments)
 
-
             elif item == 'contract_addr':
                 return ImportContractAddr(self.Wallet, arguments[1:])
 
             elif item == 'watch_addr':
-                return ImportWatchAddr(self.Wallet, get_arg(arguments,1))
+                return ImportWatchAddr(self.Wallet, get_arg(arguments, 1))
 
             elif item == 'multisig_addr':
                 return ImportMultiSigContractAddr(self.Wallet, arguments[1:])
-
-
 
         print("please specify something to import")
         return
@@ -391,15 +371,12 @@ class PromptInterface(object):
             print("incorrect password")
             return
 
-
         keys = self.Wallet.GetKeys()
         for key in keys:
             export = key.Export()
             print("key export : %s " % export)
 
-
     def show_wallet(self, arguments):
-
 
         if not self.Wallet:
             print("please open a wallet")
@@ -411,7 +388,7 @@ class PromptInterface(object):
             print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
             return
 
-        if item in ['v','--v','verbose']:
+        if item in ['v', '--v', 'verbose']:
             print("Wallet %s " % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
             return
 
@@ -430,7 +407,7 @@ class PromptInterface(object):
         if item == 'rebuild':
             self.Wallet.Rebuild()
             try:
-                item2 = int(get_arg(arguments,1))
+                item2 = int(get_arg(arguments, 1))
                 if item2 and item2 > 0:
                     print('restarting at %s ' % item2)
                     self.Wallet._current_height = item2
@@ -469,14 +446,13 @@ class PromptInterface(object):
         print_tokens(tokens, self.token_style)
 
     def show_nodes(self):
-        if len( NodeLeader.Instance().Peers) > 0:
+        if len(NodeLeader.Instance().Peers) > 0:
             out = ''
             for peer in NodeLeader.Instance().Peers:
-                out+='Peer %s - IO: %s\n' % (peer.Name(), peer.IOStats())
+                out += 'Peer %s - IO: %s\n' % (peer.Name(), peer.IOStats())
             print_tokens([(Token.Number, out)], self.token_style)
         else:
             print('Not connected yet\n')
-
 
     def show_block(self, args):
         item = get_arg(args)
@@ -485,7 +461,6 @@ class PromptInterface(object):
             block = Blockchain.Default().GetBlock(item)
 
             if block is not None:
-
 
                 bjson = json.dumps(block.ToJson(), indent=4)
                 tokens = [(Token.Number, bjson)]
@@ -512,13 +487,12 @@ class PromptInterface(object):
         else:
             print("please specify a header")
 
-
     def show_tx(self, args):
         item = get_arg(args)
         if item is not None:
             try:
-                tx,height = Blockchain.Default().GetTransaction(item)
-                if height  > -1:
+                tx, height = Blockchain.Default().GetTransaction(item)
+                if height > -1:
 
                     bjson = json.dumps(tx.ToJson(), indent=4)
                     tokens = [(Token.Command, bjson)]
@@ -529,7 +503,6 @@ class PromptInterface(object):
                 print("Please specify a tx hash like 'db55b4d97cf99db6826967ef4318c2993852dff3e79ec446103f141c716227f6'")
         else:
             print("please specify a tx hash")
-
 
     def show_account_state(self, args):
         item = get_arg(args)
@@ -608,7 +581,6 @@ class PromptInterface(object):
         else:
             print("please specify a contract")
 
-
     def load_smart_contract(self, args):
 
         if not self.Wallet:
@@ -618,7 +590,6 @@ class PromptInterface(object):
         function_code = LoadContract(args[1:])
 
         if function_code:
-
 
             contract_script = GatherContractDetails(function_code, self)
 
@@ -643,7 +614,6 @@ class PromptInterface(object):
                     print("tx is, results are %s %s " % (tx, results))
                     return
 
-
     def do_request_withdraw(self, args):
         """
         withdraw_request {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
@@ -658,8 +628,6 @@ class PromptInterface(object):
 
         RedeemWithdraw(self, self.Wallet, args)
 
-
-
     def test_invoke_contract(self, args):
         self._invoke_test_tx = None
         self._invoke_test_tx_fee = None
@@ -668,9 +636,8 @@ class PromptInterface(object):
             print("please open a wallet")
             return
 
-
         if args and len(args) > 0:
-            tx, fee, results,num_ops = TestInvokeContract(self.Wallet, args)
+            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args)
 
             if tx is not None and results is not None:
                 self._invoke_test_tx = tx
@@ -710,7 +677,6 @@ class PromptInterface(object):
         print("Operation cancelled")
         return
 
-
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
@@ -721,10 +687,10 @@ class PromptInterface(object):
     def configure(self, args):
         what = get_arg(args)
 
-        if what =='log' or what == 'logs':
+        if what == 'log' or what == 'logs':
             c1 = get_arg(args, 1).lower()
             if c1 is not None:
-                if c1 == 'on' or c1 =='1':
+                if c1 == 'on' or c1 == '1':
                     print("turning on logging")
                     logger = logging.getLogger()
                     logger.setLevel(logging.DEBUG)
@@ -739,12 +705,11 @@ class PromptInterface(object):
             print("cannot configure %s " % what)
             print("Try 'config log on/off'")
 
-
     def parse_result(self, result):
         if len(result):
             commandParts = [s for s in result.split()]
             return commandParts[0], commandParts[1:]
-        return None,None
+        return None, None
 
     def run(self):
 
@@ -753,12 +718,11 @@ class PromptInterface(object):
 
         Blockchain.Default().PersistBlocks()
 
-        tokens = [(Token.Neo, 'NEO'),(Token.Default,' cli. Type '),(Token.Command, "'help' "), (Token.Default, 'to get started')]
+        tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '), (Token.Command, "'help' "), (Token.Default, 'to get started')]
         print_tokens(tokens, self.token_style)
         print("\n")
 
         while self.go_on:
-
 
             if self._gathered_passwords and len(self._gathered_passwords) == self._num_passwords_req:
                 self._gathering_password = False
@@ -782,7 +746,6 @@ class PromptInterface(object):
                     # Control-C pressed: do nothing
                     continue
 
-
             if self._gathering_password:
                 self._gathered_passwords.append(result)
 
@@ -793,7 +756,6 @@ class PromptInterface(object):
 
                     if command is not None and len(command) > 0:
                         command = command.lower()
-
 
                         if command == 'quit' or command == 'exit':
                             self.quit()
@@ -847,7 +809,7 @@ class PromptInterface(object):
                             self.show_state()
                         elif command == 'config':
                             self.configure(arguments)
-                        elif command == None:
+                        elif command is None:
                             print('please specify a command')
                         else:
                             print("command %s not found" % command)
@@ -857,7 +819,6 @@ class PromptInterface(object):
                     print("could not execute command: %s " % e)
                     traceback.print_stack()
                     traceback.print_exc()
-
 
 
 if __name__ == "__main__":
