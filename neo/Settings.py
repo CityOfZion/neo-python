@@ -41,9 +41,9 @@ class SettingsHolder:
     def net_name(self):
         if self.MAGIC is None:
             return 'None'
-        if self.NODE_PORT == 10333 and self.MAGIC == 7630401:
+        if self.is_mainnet:
             return 'MainNet'
-        if self.NODE_PORT == 20333 and self.MAGIC == 1953787457:
+        if self.is_testnet:
             return 'TestNet'
         return 'PrivateNet'
 
