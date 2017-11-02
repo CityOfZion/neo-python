@@ -47,20 +47,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 
-example_style = style_from_dict({
-    # User input.
-    Token:          '#ff0066',
-
-    # Prompt.
-    Token.Username: '#884444',
-    Token.At:       '#00aa00',
-    Token.Colon:    '#00aa00',
-    Token.Pound:    '#00aa00',
-    Token.Host:     '#000088 bg:#aaaaff',
-    Token.Path:     '#884444 underline',
-})
-
-
 @logged
 class PromptInterface(object):
 
@@ -116,21 +102,21 @@ class PromptInterface(object):
                 'cancel',
                 ]
 
-    token_style = style_from_dict({
-        Token.Command: '#ff0066',
-        Token.Neo: '#0000ee',
-        Token.Default: '#00ee00',
-        Token.Number: "#ffffff",
-    })
-
     history = FileHistory('.prompt.py.history')
 
+    token_style = None
     start_height = None
     start_dt = None
 
     def __init__(self):
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
+        self.token_style = style_from_dict({
+            Token.Command: settings.token_style['Command'],
+            Token.Neo: settings.token_style['Neo'],
+            Token.Default: settings.token_style['Default'],
+            Token.Number: settings.token_style['Number'],
+        })
 
     def get_bottom_toolbar(self, cli=None):
         out = []
@@ -821,11 +807,16 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
                         help="use MainNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
+    parser.add_argument("-t", "--set-default-theme", dest="theme",
+                        choices=["dark", "light"], help="Set the default theme to be loaded from the config file. Default: 'dark'")
     args = parser.parse_args()
 
     if args.mainnet and args.config:
         print("Cannot use bot --config and --mainnet parameters, please use only one.")
         exit(1)
+
+    if args.theme:
+        settings.set_theme(args.theme)
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:

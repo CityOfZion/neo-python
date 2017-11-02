@@ -37,6 +37,21 @@
     "UriPrefix": [ "http://*:10332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "VersionName":"/NEO-PYTHON:2.3.4/"
+    "VersionName":"/NEO-PYTHON:2.3.4/",
+    "theme": "dark",
+    "themes": {
+        "dark": {
+            "Command": "#ff0066",
+            "Default": "#00ee00",
+            "Neo": "#0000ee",
+            "Number": "#ffffff"
+        },
+        "light": {
+            "Command": "#ff0066",
+            "Default": "#008800",
+            "Neo": "#0000ee",
+            "Number": "#000000"
+        }
+    }
   }
 }
