@@ -57,6 +57,7 @@ class SettingsHolder:
         with open(config_file) as data_file:
             data = json.load(data_file)
 
+        self.config_file = config_file
         config = data['ProtocolConfiguration']
         self.MAGIC = config['Magic']
         self.ADDRESS_VERSION = config['AddressVersion']
@@ -76,8 +77,8 @@ class SettingsHolder:
         self.URI_PREFIX = config['UriPrefix']
         self.VERSION_NAME = config['VersionName']
 
-        self.token_style = config['themes'][config['theme']]
-        self.config_file = config_file
+        if 'themes' in config:
+            self.token_style = config['themes'][config['theme']]
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
