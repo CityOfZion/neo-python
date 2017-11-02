@@ -76,8 +76,17 @@ class SettingsHolder:
         self.URI_PREFIX = config['UriPrefix']
         self.VERSION_NAME = config['VersionName']
 
-        self.token_style = config['themes'][config['theme']]
         self.config_file = config_file
+
+        try:
+            self.token_style = config['themes'][config['theme']]
+        except Exception as e:
+            self.token_style = {
+                "Command": "#ff0066",
+                "Default": "#00ee00",
+                "Neo": "#0000ee",
+                "Number": "#ffffff"
+            }
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
