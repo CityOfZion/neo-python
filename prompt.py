@@ -300,7 +300,7 @@ class PromptInterface(object):
                         print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
                         print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
                     except ValueError as e:
-                        print(type(e))
+                        print(str(e))
                     except Exception as e:
                         print(str(e))
 
