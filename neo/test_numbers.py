@@ -7,6 +7,8 @@ from neo.IO.BinaryReader import BinaryReader
 from neo.Fixed8 import Fixed8
 from neo.BigInteger import BigInteger
 from neo.UIntBase import UIntBase
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 class Fixed8TestCase(NeoTestCase):
     def test_fixed8_add(self):
@@ -228,3 +230,84 @@ class UIntBaseTestCase(NeoTestCase):
         self.assertNotEqual(u1, 123)
         self.assertNotEqual(u1, 'abc')
         self.assertNotEqual(u1, UIntBase(3, b'abd'))
+
+    def test_compareto_valid(self):
+        u1 = UInt160(b'12345678901234567890')
+
+        # Same value should return 0
+        u2 = UIntBase(20, b'12345678901234567890')
+        self.assertEqual(u1.CompareTo(u2), 0)
+
+        # Higher digit in 'other' should return -1
+        u2 = UIntBase(20, b'12345678901234567891')
+        self.assertEqual(u1.CompareTo(u2), -1)
+
+        # Lower digit in 'other' should return 1
+        u2 = UIntBase(20, b'12345678901234567980')
+        self.assertEqual(u1.CompareTo(u2), 1)
+
+        # CompareTo across different UIntBase subclasses
+        data = b'12345678901234567890'
+        self.assertEqual(UInt160(data).CompareTo(UIntBase(len(data), data)), 0)
+        self.assertEqual(UIntBase(len(data), data).CompareTo(UInt160(data)), 0)
+
+        data = b'12345678901234567890123456789012'
+        self.assertEqual(UInt256(data).CompareTo(UIntBase(len(data), data)), 0)
+        self.assertEqual(UIntBase(len(data), data).CompareTo(UInt256(data)), 0)
+
+    def test_compareto_invalid_datatype(self):
+        u1 = UIntBase(20, b'12345678901234567890')
+
+        with self.assertRaises(Exception):
+            self.assertEqual(u1.CompareTo('asd'), 0)
+
+        with self.assertRaises(Exception):
+            self.assertEqual(u1.CompareTo(b'asd'), 0)
+
+        with self.assertRaises(Exception):
+            self.assertEqual(u1.CompareTo(123), 0)
+
+    def test_dunder_methods(self):
+        u1 = UInt160(b'12345678901234567890')
+        u1b = UIntBase(20, b'12345678901234567890')
+
+        u_larger = UInt160(b'12345678901234567891')
+        u_smaller = UInt160(b'12345678901234567880')
+
+        self.assertTrue(u1 < u_larger)
+        self.assertTrue(u1 <= u_larger)
+        self.assertTrue(u1 <= u1b)
+        self.assertTrue(u1 == u1b)
+        self.assertTrue(u1b == u1)
+        self.assertTrue(u1 >= u1b)
+        self.assertTrue(u1 >= u_smaller)
+        self.assertTrue(u1 > u_smaller)
+
+
+class UInt160TestCase(NeoTestCase):
+    def test_initialization(self):
+        u0 = UInt160()
+        self.assertEqual(hash(u0), 0)
+
+        u1 = UInt160(b'12345678901234567890')
+        self.assertEqual(hash(u1), 875770417)
+
+    def test_initialization_invalid_length(self):
+        with self.assertRaises(Exception):
+            u1 = UInt160(b'12345')
+
+
+class UInt256TestCase(NeoTestCase):
+    def test_initialization(self):
+        u0 = UInt256()
+        self.assertEqual(hash(u0), 0)
+
+        u1 = UInt256(b'12345678901234567890123456789012')
+        self.assertEqual(hash(u1), 875770417)
+
+    def test_initialization_invalid(self):
+        with self.assertRaises(Exception):
+            u1 = UInt256(b'12345')
+
+        with self.assertRaises(Exception):
+            u1 = UInt256('12345678901234567890123456789012')
