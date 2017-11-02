@@ -46,20 +46,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 
-example_style = style_from_dict({
-    # User input.
-    Token:          '#ff0066',
-
-    # Prompt.
-    Token.Username: '#884444',
-    Token.At:       '#00aa00',
-    Token.Colon:    '#00aa00',
-    Token.Pound:    '#00aa00',
-    Token.Host:     '#000088 bg:#aaaaff',
-    Token.Path:     '#884444 underline',
-})
-
-
 @logged
 class PromptInterface(object):
 
