@@ -258,7 +258,7 @@ class ContractParametersContext():
 
         return jsn
 
-    def FromJson(jsn):
+    def FromJson(jsn, isMultiSig=True):
         try:
             parsed = json.loads(jsn)
             if parsed['type'] == 'Neo.Core.ContractTransaction':
@@ -266,7 +266,7 @@ class ContractParametersContext():
                 ms = MemoryStream(binascii.unhexlify(parsed['hex']))
                 r = BinaryReader(ms)
                 verifiable.DeserializeUnsigned(r)
-                context = ContractParametersContext(verifiable)
+                context = ContractParametersContext(verifiable, isMultiSig=isMultiSig)
                 for key, value in parsed['items'].items():
                     if "0x" in key:
                         key = key[2:]

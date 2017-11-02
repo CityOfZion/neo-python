@@ -57,7 +57,7 @@ class UIntBase(SerializableMixin):
         if other is None:
             return False
 
-        if type(other) != type(self):
+        if not isinstance(other, UIntBase):
             return False
 
         if other is self:
@@ -71,3 +71,35 @@ class UIntBase(SerializableMixin):
 
     def __str__(self):
         return self.ToString()
+
+    def CompareTo(self, other):
+        if not isinstance(other, UIntBase):
+            raise Exception('Cannot compare %s to type %s' % (type(self).__name__, type(other).__name__))
+
+        x = self.ToArray()
+        y = other.ToArray()
+
+        if len(x) != len(y):
+            raise Exception('Cannot compare %s with length %s to %s with length %s' % (type(self).__name__, len(x), type(other).__name__, len(y)))
+
+        length = len(x)
+
+        for i in range(length-1, 0, -1):
+            if x[i] > y[i]:
+                return 1
+            if x[i] < y[i]:
+                return -1
+
+        return 0
+
+    def __lt__(self, other):
+        return self.CompareTo(other) < 0
+
+    def __gt__(self, other):
+        return self.CompareTo(other) > 0
+
+    def __le__(self, other):
+        return self.CompareTo(other) <= 0
+
+    def __ge__(self, other):
+        return self.CompareTo(other) >= 0

@@ -6,27 +6,26 @@ import logging
 import datetime
 import os
 import argparse
-from neo.IO.MemoryStream import StreamManager
 import resource
+import traceback
+from neo.IO.MemoryStream import StreamManager
 
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.KeyPair import KeyPair
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke, InvokeWithdrawTx
+from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
 from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_and_send, construct_contract_withdrawal, parse_and_sign
+from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo.Settings import settings
 from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
-import traceback
+
 
 from twisted.internet import reactor, task
 
@@ -46,22 +45,6 @@ logging.basicConfig(
     filemode='a',
     filename=debug_logname,
     format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
-
-
-import csv
-
-example_style = style_from_dict({
-    # User input.
-    Token: '#ff0066',
-
-    # Prompt.
-    Token.Username: '#884444',
-    Token.At: '#00aa00',
-    Token.Colon: '#00aa00',
-    Token.Pound: '#00aa00',
-    Token.Host: '#000088 bg:#aaaaff',
-    Token.Path: '#884444 underline',
-})
 
 
 @logged
@@ -119,15 +102,9 @@ class PromptInterface(object):
                 'cancel',
                 ]
 
-    token_style = style_from_dict({
-        Token.Command: '#ff0066',
-        Token.Neo: '#0000ee',
-        Token.Default: '#00ee00',
-        Token.Number: "#ffffff",
-    })
-
     history = FileHistory('.prompt.py.history')
 
+    token_style = None
     start_height = None
     start_dt = None
 
@@ -135,14 +112,20 @@ class PromptInterface(object):
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
 
+        self.token_style = style_from_dict({
+            Token.Command: settings.token_style['Command'],
+            Token.Neo: settings.token_style['Neo'],
+            Token.Default: settings.token_style['Default'],
+            Token.Number: settings.token_style['Number'],
+        })
+
     def get_bottom_toolbar(self, cli=None):
         out = []
-        net = "[MainNet]" if settings.is_mainnet else "[TestNet]"
         try:
-            out = [(Token.Command, '%s Progress: ' % net),
-                   (Token.Number, str(Blockchain.Default().Height)),
-                   (Token.Neo, '/'),
-                   (Token.Number, str(Blockchain.Default().HeaderHeight))]
+            out =[(Token.Command, '[%s] Progress: ' % settings.net_name),
+                    (Token.Number, str(Blockchain.Default().Height)),
+                    (Token.Neo, '/'),
+                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
             pass
 
@@ -229,7 +212,6 @@ class PromptInterface(object):
                 print("Please specify a path")
 
     def do_create_wallet(self):
-        #        print("do create wallet with passwords %s "% self._gathered_passwords)
 
         if self.Wallet:
             self.do_close_wallet()
@@ -284,8 +266,7 @@ class PromptInterface(object):
             print("Opened wallet at %s" % path)
         except Exception as e:
             print("could not open wallet: %s " % e)
-#            traceback.print_stack()
-#            traceback.print_exc()
+
 
     def do_import(self, arguments):
         item = get_arg(arguments)
@@ -301,15 +282,17 @@ class PromptInterface(object):
                 wif = get_arg(arguments, 1)
 
                 if wif:
-                    prikey = KeyPair.PrivateKeyFromWIF(wif)
-                    if prikey:
-
+                    try:
+                        prikey = KeyPair.PrivateKeyFromWIF(wif)
                         key = self.Wallet.CreateKey(prikey)
                         print("imported key %s " % wif)
                         print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
                         print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
-                    else:
-                        print("invalid wif")
+                    except ValueError as e:
+                        print(str(e))
+                    except Exception as e:
+                        print(str(e))
+
                     return
 
             elif item == 'contract':
@@ -718,7 +701,9 @@ class PromptInterface(object):
 
         Blockchain.Default().PersistBlocks()
 
-        tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '), (Token.Command, "'help' "), (Token.Default, 'to get started')]
+        tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
+                  (Token.Command, "'help' "), (Token.Default, 'to get started')]
+
         print_tokens(tokens, self.token_style)
         print("\n")
 
@@ -823,13 +808,19 @@ class PromptInterface(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mainnet", action="store_true", default=False, help="use MainNet instead of the default TestNet")
+    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
+                        help="use MainNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
+    parser.add_argument("-t", "--set-default-theme", dest="theme",
+                        choices=["dark", "light"], help="Set the default theme to be loaded from the config file. Default: 'dark'")
     args = parser.parse_args()
 
     if args.mainnet and args.config:
         print("Cannot use bot --config and --mainnet parameters, please use only one.")
         exit(1)
+
+    if args.theme:
+        settings.set_theme(args.theme)
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
