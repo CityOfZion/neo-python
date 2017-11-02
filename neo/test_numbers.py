@@ -139,6 +139,19 @@ class BigIntegerTestCase(NeoTestCase):
         integer = BigInteger.from_bytes(ba, 'little')
         self.assertEqual(integer, 8972340892734890723)
 
+        b2 = BigInteger(-100)
+        b2ba = b2.ToByteArray()
+        integer2 = BigInteger.from_bytes(b2ba, 'little')
+        self.assertEqual(integer2, 65436)
+
+    def test_big_integer_frombytes(self):
+        b1 = BigInteger(8972340892734890723)
+        ba = b1.ToByteArray()
+
+        b2 = BigInteger.FromBytes(ba)
+        self.assertEqual(b1, b2)
+        self.assertTrue(b1.Equals(b2))
+
 
 class UIntBaseTestCase(NeoTestCase):
     def test_initialization(self):
@@ -266,6 +279,12 @@ class UIntBaseTestCase(NeoTestCase):
 
         with self.assertRaises(Exception):
             self.assertEqual(u1.CompareTo(123), 0)
+
+        # Cannot compare uints with different lengths
+        with self.assertRaises(Exception):
+            a = UInt256(b'12345678901234567890123456789012')
+            b = UIntBase(20, b'12345678901234567890')
+            a.CompareTo(b)
 
     def test_dunder_methods(self):
         u1 = UInt160(b'12345678901234567890')

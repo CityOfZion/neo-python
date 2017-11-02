@@ -78,6 +78,9 @@ class UIntBase(SerializableMixin):
         x = self.ToArray()
         y = other.ToArray()
 
+        if len(x) != len(y):
+            raise Exception('Cannot compare %s with length %s to %s with length %s' % (type(self).__name__, len(x), type(other).__name__, len(y)))
+
         length = len(x)
 
         for i in range(length-1, 0, -1):
