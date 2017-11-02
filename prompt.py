@@ -26,6 +26,7 @@ from neo.Prompt.Notify import SubscribeNotifications
 from neo.Settings import settings
 from neo.Fixed8 import Fixed8
 
+
 from twisted.internet import reactor, task
 
 from autologging import logged
