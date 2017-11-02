@@ -7,11 +7,14 @@ This script will allow you do the initial claim to transfer all NEO from the def
 a private network such as the one created by the neo-privatenet-docker image, without having to
 use the neo-gui client (or Windows at all).
 
-Set up the neo-python config file (config.testnet.json) to point to your newly-created private
-network nodes, create a wallet for transferring the NEO to, and then call this script as shown:
+Set up neo-python config file for your privnet (eg. 'config.privnet.json' see [1]) and make sure it works
+with the newly-created private network nodes by running `python prompt.py -c config.privnet.json`. You
+can find an example config.privnet.json here: https://gist.github.com/metachris/a17c3ceea1af96f6aa2b7f947eea2a4f
 
-python3 privnet-claimall.py {address to receive all 100000000 NEO}
+If the new privnet works with prompt.py create a wallet for transferring the NEO to, and then call this
+script like this:
 
+    python3 privnet-claimall.py -c config.privnet.json -a {address to receive all 100000000 NEO}
 """
 
 import os
@@ -19,11 +22,12 @@ import sys
 import json
 import time
 import datetime
+import argparse
 
-if os.getcwd().endswith("/contrib"):
-    os.chdir('../')  # use config and Chains folder from main directory
-
-sys.path.append(os.getcwd())
+# Allow importing 'neo' from parent path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
+sys.path.insert(0, parent_dir)
 
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
@@ -37,10 +41,6 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from twisted.internet import reactor, task
 from neo.Settings import settings
-
-blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
-Blockchain.RegisterBlockchain(blockchain)
-SubscribeNotifications()
 
 mypassword = 'supersekritpassword'
 
@@ -56,8 +56,14 @@ nodekeys = { '02b3622bf4017bdfe317c58aed5f4c753f206b7db896046fa7d774bbc4bf7f8dc2
 
 class PrivnetClaimall(object):
 
-    start_height = Blockchain.Default().Height
-    start_dt = datetime.datetime.utcnow()
+    start_height = None
+    start_dt = None
+    target_address = None
+
+    def __init__(self, target_address):
+        self.start_height = Blockchain.Default().Height
+        self.start_dt = datetime.datetime.utcnow()
+        self.target_address = target_address
 
     def quit(self):
         print('Shutting down.  This may take a bit...')
@@ -140,12 +146,10 @@ class PrivnetClaimall(object):
                 foundtx = False
                 count = 0
                 while foundtx == False and count < 100:
-                    try:
-                        tx, height = Blockchain.Default().GetTransaction(tx.Hash.ToString())
-                        if height > -1:
-                            foundtx = True
-                    except Exception as e:
-                        print("Waiting for tx {} to show up on blockchain...".format(tx.Hash.ToString()))
+                    _tx, height = Blockchain.Default().GetTransaction(tx.Hash.ToString())
+                    if height > -1:
+                        foundtx = True
+                    print("Waiting for tx {} to show up on blockchain...".format(tx.Hash.ToString()))
                     time.sleep(3)
                     count += 1
                 if foundtx == True:
@@ -163,7 +167,7 @@ class PrivnetClaimall(object):
 
     def run(self):
 
-        to_addr = sys.argv[1]
+        to_addr = self.target_address
 
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
@@ -178,7 +182,8 @@ class PrivnetClaimall(object):
 
         for pkey, wif in nodekeys.items():
             walletpath="wallet{}.db3".format(i+1)
-            os.remove(walletpath)
+            if os.path.exists(walletpath):
+                os.remove(walletpath)
             wallet = UserWallet.Create(path=walletpath, password=mypassword)
             wallets.append(wallet)
 
@@ -217,12 +222,22 @@ class PrivnetClaimall(object):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", action="store", help="Config file (eg. protocol.privnet.json)", required=True)
+    parser.add_argument("-a", "--address", action="store", help="Address to receive all NEO", required=True)
+    args = parser.parse_args()
 
-    if len(sys.argv) != 2:
-        print("Usage: {} {{Address to receive all NEO}}".format(sys.argv[0]))
-        sys.exit(1)
+    settings.setup(args.config)
 
-    pc = PrivnetClaimall()
+    print("Blockchain DB path:", settings.LEVELDB_PATH)
+
+    # Setup the Blockchain
+    blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
+    Blockchain.RegisterBlockchain(blockchain)
+    SubscribeNotifications()
+
+    # Create the claim
+    pc = PrivnetClaimall(args.address)
 
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(pc.run)
