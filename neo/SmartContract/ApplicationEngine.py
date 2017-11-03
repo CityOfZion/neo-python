@@ -7,6 +7,12 @@ import sys
 import os
 from autologging import logged
 
+# used for ApplicationEngine.Run
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
+from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Core.State import ContractState,AssetState,AccountState,ValidatorState,StorageItem
+from neo.SmartContract import TriggerType
 
 @logged
 class ApplicationEngine(ExecutionEngine):
@@ -291,3 +297,37 @@ class ApplicationEngine(ExecutionEngine):
             return 100
 
         return 1
+
+
+
+    @staticmethod
+    def Run(script, container=None):
+
+        from neo.Core.Blockchain import Blockchain
+        from neo.SmartContract.StateMachine import StateMachine
+
+        bc = Blockchain.Default()
+
+        sn = bc._db.snapshot()
+
+        accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
+        assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
+        validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
+        contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
+        storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
+
+        script_table = CachedScriptTable(contracts)
+        service = StateMachine(accounts, validators, assets, contracts, storages, None)
+
+        engine = ApplicationEngine(
+            trigger_type=TriggerType.Application,
+            container=container,
+            table=script_table,
+            service=service,
+            gas=Fixed8.Zero(),
+            testMode=True
+        )
+
+        engine.LoadScript(script, False)
+        engine.Execute()
+        return engine

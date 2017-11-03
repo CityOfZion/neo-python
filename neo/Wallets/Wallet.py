@@ -40,7 +40,7 @@ class Wallet(object):
     _master_key = None
     _keys = {}  # holds keypairs
     _contracts = {}  # holds Contracts
-
+    _tokens = {} # holds references to NEP5 tokens
     _watch_only = []  # holds set of hashes
     _coins = {}  # holds Coin References
 
@@ -110,6 +110,7 @@ class Wallet(object):
             self._keys = self.LoadKeyPairs()
             self._contracts = self.LoadContracts()
             self._watch_only = self.LoadWatchOnly()
+            self._tokens = self.LoadNEP5Tokens()
             self._coins = self.LoadCoins()
             try:
                 h = int(self.LoadStoredData('Height'))
@@ -142,6 +143,12 @@ class Wallet(object):
             return
 
         self._watch_only.append(script_hash)
+
+    def AddNEP5Token(self, token):
+        if token.ScriptHash.ToBytes() in self._tokens.keys():
+            print("Token already in wallet")
+            return
+        self._tokens[token.ScriptHash.ToBytes()] = token
 
     def ChangePassword(self, password_old, password_new):
         if not self.ValidatePassword(password_old):
@@ -329,6 +336,10 @@ class Wallet(object):
         pass
 
     def LoadCoins(self):
+        # abstract
+        pass
+
+    def LoadNEP5Tokens(self):
         # abstract
         pass
 

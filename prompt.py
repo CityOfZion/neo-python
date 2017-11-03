@@ -20,7 +20,7 @@ from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr,ImportToken
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo.Settings import settings
@@ -305,6 +305,9 @@ class PromptInterface(object):
 
             elif item == 'multisig_addr':
                 return ImportMultiSigContractAddr(self.Wallet, arguments[1:])
+
+            elif item == 'token':
+                return ImportToken(self.Wallet, get_arg(arguments, 1))
 
         print("please specify something to import")
         return

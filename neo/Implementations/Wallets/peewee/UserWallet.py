@@ -3,7 +3,6 @@
 from neo.Wallets.Wallet import Wallet
 from neo.Wallets.Coin import Coin as WalletCoin
 from neo.SmartContract.Contract import Contract as WalletContract
-from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
@@ -11,20 +10,20 @@ from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.Transaction import Transaction as CoreTransaction
 
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
+from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
 from Crypto import Random
 from neo.Cryptography.Crypto import Crypto
-import os
 from neo.UInt160 import UInt160
 import binascii
-import pdb
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 
 from .PWDatabase import PWDatabase
 
-from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, Contract, Key, Transaction, \
-    TransactionInfo
+from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
+                                                        Contract, Key, Transaction, \
+                                                            TransactionInfo, NEP5Token
 
 from autologging import logged
 import json
@@ -49,7 +48,7 @@ class UserWallet(Wallet):
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
         try:
-            db.create_tables([Account, Address, Coin, Contract, Key, Transaction, TransactionInfo, ], safe=True)
+            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, Transaction, TransactionInfo, ], safe=True)
         except Exception as e:
             print("Couldnt build database %s " % e)
             self.__log.debug("couldnt build database %s " % e)
@@ -163,6 +162,27 @@ class UserWallet(Wallet):
         else:
             raise Exception("Address already exists in wallet")
 
+
+    def AddNEP5Token(self,token):
+
+        super(UserWallet, self).AddNEP5Token(token)
+
+        try:
+            db_token = NEP5Token.get(ContractHash=token.ScriptHash.ToBytes())
+            db_token.delete_instance()
+        except Exception as e:
+            pass
+
+        db_token = NEP5Token.create(
+            ContractHash = token.ScriptHash.ToBytes(),
+            Name = token.name,
+            Symbol = token.symbol,
+            Decimals = token.decimals
+        )
+        db_token.save()
+        return True
+
+
     def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
         return super(UserWallet, self).FindUnspentCoins(from_addr, use_standard, watch_only_val=watch_only_val)
 
@@ -230,6 +250,16 @@ class UserWallet(Wallet):
             keypairs[acct.PublicKeyHash.ToBytes()] = acct
 
         return keypairs
+
+    def LoadNEP5Tokens(self):
+        tokens = {}
+
+        for db_token in NEP5Token.select():
+            token = WalletNEP5Token.FromDBInstance(db_token)
+            print("token %s " % json.dumps(token.ToJson(), indent=4))
+            tokens[token.ScriptHash.ToBytes()] = token
+
+        return tokens
 
     def LoadStoredData(self, key):
         self.__log.debug("Looking for key %s " % key)

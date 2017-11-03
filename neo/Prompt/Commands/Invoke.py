@@ -140,11 +140,11 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
     contract = BC.GetContract(args[0])
 
     if contract:
-        descripe_contract(contract)
 
         verbose = False
 
         if 'verbose' in args:
+            descripe_contract(contract)
             verbose = True
             args.remove('verbose')
 
