@@ -8,7 +8,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.Transaction import Transaction as CoreTransaction
-
+from neo.Core.State.AssetState import AssetState
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
 from Crypto import Random
@@ -254,7 +254,6 @@ class UserWallet(Wallet):
 
         for db_token in NEP5Token.select():
             token = WalletNEP5Token.FromDBInstance(db_token)
-            print("token %s " % json.dumps(token.ToJson(), indent=4))
             tokens[token.ScriptHash.ToBytes()] = token
 
         return tokens
@@ -411,9 +410,12 @@ class UserWallet(Wallet):
 
         return True, coins_toremove
 
+
     def ToJson(self, verbose=False):
 
         assets = self.GetCoinAssets()
+        assets = assets + list(self._tokens.values())
+
         if Blockchain.Default().Height == 0:
             percent_synced = 0
         else:
@@ -440,11 +442,20 @@ class UserWallet(Wallet):
         balances = []
         watch_balances = []
         for asset in assets:
-            bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
-            total = self.GetBalance(asset).value / Fixed8.D
-            watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
-            balances.append("[%s]: %s " % (bc_asset.GetName(), total))
-            watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
+            if type(asset) is UInt256:
+                bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
+                total = self.GetBalance(asset).value / Fixed8.D
+                watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
+                balances.append("[%s]: %s " % (bc_asset.GetName(), total))
+                watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
+            elif type(asset) is WalletNEP5Token:
+                balance=0
+                balances.append("[%s]: %s " % (asset.symbol, 0))
+                watch_balances.append("[%s]: %s " % (asset.symbol, 0))
+
+        tokens = []
+        for t in self._tokens.values():
+            tokens.append(t.ToJson())
 
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
@@ -455,7 +466,7 @@ class UserWallet(Wallet):
             jsn['synced_watch_only_balances'] = watch_balances
 
         jsn['public_keys'] = self.PubKeys()
-
+        jsn['tokens'] = tokens
         if verbose:
             jsn['coins'] = [coin.ToJson() for coin in self.FindUnspentCoins()]
             jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
