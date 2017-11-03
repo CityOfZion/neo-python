@@ -123,7 +123,7 @@ class ContractParametersContext():
         if contract.ScriptHash.ToBytes() in self.ContextItems.keys():
             return self.ContextItems[contract.ScriptHash.ToBytes()]
 
-        if not contract.ScriptHash in self.ScriptHashes:
+        if contract.ScriptHash not in self.ScriptHashes:
             return None
 
         item = ContextItem(contract)
@@ -166,7 +166,7 @@ class ContractParametersContext():
                 points.sort(reverse=True)
                 for k in points:
                     if k.decode() in item.Signatures:
-                        if self.Add(contract, i, item.Signatures[k.decode()]) == None:
+                        if self.Add(contract, i, item.Signatures[k.decode()]) is None:
                             raise Exception("Invalid operation")
                         i += 1
                 item.Signatures = None

@@ -222,8 +222,7 @@ class LevelDBBlockchain(Blockchain):
                 elif query in contract.Email.decode('utf-8'):
                     res.append(contract)
             except Exception as e:
-                #print("error querying contract %s %s " % (contract,e))
-                pass
+                self.__log.debug("Could not query contract: %s " % e)
 
         sn.close()
 
@@ -495,7 +494,7 @@ class LevelDBBlockchain(Blockchain):
 
         hHash = header.Hash.ToBytes()
 
-        if not hHash in self._header_index:
+        if hHash not in self._header_index:
 
             self._header_index.append(hHash)
 
@@ -563,7 +562,7 @@ class LevelDBBlockchain(Blockchain):
                     # go through all tx inputs
                     unique_tx_input_hashes = []
                     for input in tx.inputs:
-                        if not input.PrevHash in unique_tx_input_hashes:
+                        if input.PrevHash not in unique_tx_input_hashes:
                             unique_tx_input_hashes.append(input.PrevHash)
 
                     for txhash in unique_tx_input_hashes:
@@ -706,7 +705,7 @@ class LevelDBBlockchain(Blockchain):
 
             hash = self._header_index[self._current_block_height + 1]
 
-            if not hash in self._block_cache:
+            if hash not in self._block_cache:
                 self.BlockSearchTries += 1
                 break
 

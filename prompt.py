@@ -122,10 +122,10 @@ class PromptInterface(object):
     def get_bottom_toolbar(self, cli=None):
         out = []
         try:
-            out =[(Token.Command, '[%s] Progress: ' % settings.net_name),
-                    (Token.Number, str(Blockchain.Default().Height)),
-                    (Token.Neo, '/'),
-                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
+            out = [(Token.Command, '[%s] Progress: ' % settings.net_name),
+                   (Token.Number, str(Blockchain.Default().Height)),
+                   (Token.Neo, '/'),
+                   (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
             pass
 
@@ -266,7 +266,6 @@ class PromptInterface(object):
             print("Opened wallet at %s" % path)
         except Exception as e:
             print("could not open wallet: %s " % e)
-
 
     def do_import(self, arguments):
         item = get_arg(arguments)

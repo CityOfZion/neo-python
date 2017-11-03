@@ -17,20 +17,17 @@ from neo.Wallets.Coin import Coin
 from neo.Wallets.KeyPair import KeyPair
 from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from autologging import logged
-import hashlib
-from threading import Thread
-from threading import Lock
-import traceback
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
+from neo.Core.Helper import Helper
+
 from itertools import groupby
 from base58 import b58decode
-from neo.Core.Helper import Helper
+from autologging import logged
+import hashlib
+import traceback
 from Crypto import Random
 from Crypto.Cipher import AES
-import pdb
-import json
 
 
 @logged
@@ -53,10 +50,6 @@ class Wallet(object):
     _db_path = _path
 
     _indexedDB = None
-    #_node = None
-
-    _blockThread = None
-    _lock = Lock()
 
     _vin_exclude = None
 
@@ -82,7 +75,6 @@ class Wallet(object):
                 Blockchain.RegisterBlockchain(self._indexedDB)
             else:
                 self._indexedDB = Blockchain.Default()
-            #self._node = RemoteNode(url=TEST_NODE)
 
             self._current_height = 0
 
@@ -591,7 +583,7 @@ class Wallet(object):
         self._vin_exclude = None
 
         for key, unspents in paycoins.items():
-            if unspents == None:
+            if unspents is None:
                 print("insufficient funds for asset id: %s " % key)
                 return None
 

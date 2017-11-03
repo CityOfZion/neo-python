@@ -21,12 +21,6 @@ class ContractParameterType(object):
 
 
 import inspect
-#import sys
-#import importlib
-import binascii
-
-#module = importlib.import_module('neo.SmartContract.ContractParameterType')
-#items = dir(sys.modules[__name__])
 
 
 def ToName(param_type):
@@ -39,7 +33,6 @@ def ToName(param_type):
     for item in items:
         name = item[0]
         val = int(item[1])
-        #print("name, val %s %s %s" % (name,val, param_type))
 
         if val == param_type:
             return name

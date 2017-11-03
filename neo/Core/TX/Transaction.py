@@ -391,7 +391,7 @@ class Transaction(Inventory, InventoryMixin):
 #                j = j+1
 #                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
 #                    return False
-##        self.__log.debug("Verified inputs 1")
+#        self.__log.debug("Verified inputs 1")
 #       for tx in mempool:
 #           if tx is not self:
 #               for ip in self.inputs:

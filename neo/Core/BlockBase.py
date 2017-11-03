@@ -127,7 +127,7 @@ class BlockBase(VerifiableMixin):
                 raise Exception('Invalid Verification script')
 
         prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
-        if prev_header == None:
+        if prev_header is None:
             raise Exception('Invalid operation')
         return [prev_header.NextConsensus]
 
@@ -163,7 +163,7 @@ class BlockBase(VerifiableMixin):
         if self.Index > 0:
             prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
 
-            if prev_header == None:
+            if prev_header is None:
                 return False
 
             if prev_header.Index + 1 != self.Index:

@@ -70,7 +70,7 @@ class ClaimTransaction(Transaction):
         # and gather all the claims of those claim transactions
         # and see if they intersect the claims of this transaction
         # and if that number is greater than zero that we do not verify
-        #(now, to do that in python)
+        # (now, to do that in python)
         # if (mempool.OfType < ClaimTransaction > ().Where(p => p != this).SelectMany(p= > p.Claims).Intersect(Claims).Count() > 0)
         # return false;
 

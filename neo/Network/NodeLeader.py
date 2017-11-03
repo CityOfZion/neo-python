@@ -71,7 +71,7 @@ class NodeLeader():
 
     def RemoteNodePeerReceived(self, host, port):
         addr = '%s:%s' % (host, port)
-        if not addr in self.ADDRS:
+        if addr not in self.ADDRS:
             if len(self.Peers) < self.ConnectedPeersMax:
                 self.ADDRS.append(addr)
                 self.SetupConnection(host, port)
@@ -94,7 +94,7 @@ class NodeLeader():
             p.Disconnect()
 
     def AddConnectedPeer(self, peer):
-        if not peer in self.Peers:
+        if peer not in self.Peers:
             self.Peers.append(peer)
 
     def RemoveConnectedPeer(self, peer):
@@ -121,7 +121,7 @@ class NodeLeader():
             return False
 
         if type(inventory) is Block:
-            if BC.Default() == None:
+            if BC.Default() is None:
                 return False
 
             if BC.Default().ContainsBlock(inventory.Index):

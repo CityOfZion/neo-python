@@ -94,7 +94,7 @@ class StateMachine(StateReader):
             self._storages.Commit(self._wb, False)
 
     def TestCommit(self):
-        #print("test commit items....")
+        # print("test commit items....")
         pass
 
     def StateMachine_Notify(self, event_args):
@@ -152,19 +152,17 @@ class StateMachine(StateReader):
         balance = account.BalanceFor(Blockchain.SystemShare().Hash)
 
         if balance == Fixed8.Zero() and len(vote_list) > 0:
-            #            print("no balance, return false!")
             return False
-
-#        print("Setting votes!!!")
 
         acct = self._accounts.GetAndChange(account.AddressBytes)
         voteset = []
         for v in vote_list:
-            if not v in vote_list:
+            if v not in voteset:
                 voteset.append(v.GetByteArray())
         acct.Votes = voteset
+
         # print("*****************************************************")
-        #print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
+        # print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
         # print("*****************************************************")
         return True
 
@@ -188,7 +186,7 @@ class StateMachine(StateReader):
 
         asset_type = int(engine.EvaluationStack.Pop().GetBigInteger())
 
-        if not asset_type in AssetType.AllTypes() or \
+        if asset_type not in AssetType.AllTypes() or \
                 asset_type == AssetType.CreditFlag or \
                 asset_type == AssetType.DutyFlag or \
                 asset_type == AssetType.GoverningToken or \
@@ -245,7 +243,7 @@ class StateMachine(StateReader):
         asset = self._assets.GetOrAdd(tx.Hash.ToBytes(), new_asset)
 
         # print("*****************************************************")
-        #print("CREATED ASSET %s " % tx.Hash.ToBytes())
+        # print("CREATED ASSET %s " % tx.Hash.ToBytes())
         # print("*****************************************************")
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
@@ -274,9 +272,9 @@ class StateMachine(StateReader):
 
             asset.Expiration = sys.maxsize
 
-        #tx = engine.ScriptContainer
+        # tx = engine.ScriptContainer
         # print("*****************************************************")
-        #print("Renewed ASSET %s " % tx.Hash.ToBytes())
+        # print("Renewed ASSET %s " % tx.Hash.ToBytes())
         # print("*****************************************************")
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
@@ -324,7 +322,7 @@ class StateMachine(StateReader):
 
         contract = self._contracts.TryGet(hash.ToBytes())
 
-        if contract == None:
+        if contract is None:
 
             code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
 
@@ -404,7 +402,7 @@ class StateMachine(StateReader):
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
         # print("*****************************************************")
-        #print("MIGRATED CONTRACT %s " % hash.ToBytes())
+        # print("MIGRATED CONTRACT %s " % hash.ToBytes())
         # print("*****************************************************")
 
         return True

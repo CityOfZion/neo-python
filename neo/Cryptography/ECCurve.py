@@ -449,19 +449,20 @@ class EllipticCurve:
         if q.iszero():
             return p
 
+        lft = 0
         # calculate the slope of the intersection line
         if p == q:
             if p.y == 0:
                 return self.zero()
-            l = (3 * p.x**2 + self.a) / (2 * p.y)
+            lft = (3 * p.x**2 + self.a) / (2 * p.y)
         elif p.x == q.x:
             return self.zero()
         else:
-            l = (p.y - q.y) / (p.x - q.x)
+            lft = (p.y - q.y) / (p.x - q.x)
 
         # calculate the intersection point
-        x = l**2 - (p.x + q.x)
-        y = l * (p.x - x) - p.y
+        x = lft**2 - (p.x + q.x)
+        y = lft * (p.x - x) - p.y
         return self.point(x, y)
 
     # subtraction is :  a - b  =  a + -b
@@ -573,7 +574,7 @@ class EllipticCurve:
             X1 = int.from_bytes(data, 'little')
             return self.decompress_from_curve(X1, yTilde)
 
-        #uncompressed or hybrid
+        # uncompressed or hybrid
         elif f == 4:
 
             if len(ba) != (2 * expected_byte_len) + 1:
@@ -582,14 +583,14 @@ class EllipticCurve:
             x_data = bytearray(ba[1:1 + expected_byte_len])
             x_data.reverse()
             x_data.append(0)
-            #print("x data %s %s" % (x_data, len(x_data)))
+
             y_data = bytearray(ba[1 + expected_byte_len:])
             y_data.reverse()
             y_data.append(0)
-            #print("y data %s " % y_data)
+
             x = int.from_bytes(x_data, 'little')
             y = int.from_bytes(y_data, 'little')
-#            print("y data %s %s" % (x,y))
+
             pnt = self.point(x, y)
             return pnt
 
@@ -685,8 +686,8 @@ class ECDSA:
         R = self.G * (m / s) + pubkey * (r / s)
 
         # alternative methods of verifying
-        #RORG= self.ec.decompress(r, 0)
-        #RR = self.G * m + pubkey * r
+        # RORG= self.ec.decompress(r, 0)
+        # RR = self.G * m + pubkey * r
         # print "#1: %s .. %s"  % (RR, RORG*s)
         # print "#2: %s .. %s"  % (RR*(1/s), r)
         # print "#3: %s .. %s"  % (R, r)
@@ -805,14 +806,13 @@ class ECDSA:
         elif length == 64 or length == 72:
             skip = length - 64
             out = bytearray(b'04').hex() + pubkey[skip:]
-            #print("out %s %s " % (out, len(out)))
             return ECDSA.decode_secp256r1(out)
 
         elif length == 96 or length == 104:
             skip = length - 96
 
             out = bytearray(b'\x04') + bytearray(pubkey[skip:skip + 64])
-            #print("out %s %s" % (out,len(out)))
+
             return ECDSA.decode_secp256r1(out, unhex=False, check_on_curve=False)
 
     @staticmethod

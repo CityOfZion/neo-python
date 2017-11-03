@@ -181,14 +181,14 @@ class ExecutionEngine():
                     self._VMState |= VMState.HALT
 
             elif opcode == APPCALL or opcode == TAILCALL:
-                if self._Table == None:
+                if self._Table is None:
                     self._VMState |= VMState.FAULT
                     return
 
                 script_hash = UInt160(data=context.OpReader.ReadBytes(20)).ToBytes()
                 script = self._Table.GetScript(script_hash)
 
-                if script == None:
+                if script is None:
                     self._VMState |= VMState.FAULT
                     return
 

@@ -211,7 +211,9 @@ class NeoNode(Protocol):
         while hashstart < current_header_height and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
             if not do_go_ahead:
-                if hash is not None and not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
+                if hash is not None and hash not in BC.Default().BlockRequests \
+                        and hash not in self.myblockrequests:
+
                     if not first:
                         first = hashstart
                     BC.Default().BlockRequests.add(hash)

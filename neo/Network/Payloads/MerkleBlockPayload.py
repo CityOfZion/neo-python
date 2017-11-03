@@ -15,7 +15,7 @@ class MerkleBlockPayload(BlockBase):
         if block and flags:
             tree = MerkleTree([hash for hash in block.Transactions])
             tree.Trim(flags)
-            #buffer = bytearray( int(len(flags) + 7 / 8))
+            # buffer = bytearray( int(len(flags) + 7 / 8))
 
             self.Version = block.Version
             self.PrevHash = block.PrevHash

@@ -1,11 +1,6 @@
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
-from neo.Core.Header import Header
-from neo.Core.Block import Block
-from neo.Core.TX.Transaction import Transaction, TransactionType
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.Core.TX.Transaction import TransactionType
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neo.Fixed8 import Fixed8
@@ -25,12 +20,7 @@ from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 
-import time
-import plyvel
 from autologging import logged
-import binascii
-import pprint
-import json
 
 
 @logged
@@ -68,7 +58,7 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                 # go through all tx inputs
                 unique_tx_input_hashes = []
                 for input in tx.inputs:
-                    if not input.PrevHash in unique_tx_input_hashes:
+                    if input.PrevHash not in unique_tx_input_hashes:
                         unique_tx_input_hashes.append(input.PrevHash)
 
                 for txhash in unique_tx_input_hashes:

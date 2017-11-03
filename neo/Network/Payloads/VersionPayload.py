@@ -1,6 +1,4 @@
-
 from neo.IO.Mixins import SerializableMixin
-#from neo.Network.LocalNode import LocalNode
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Core.Blockchain import Blockchain
 

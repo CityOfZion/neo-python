@@ -109,7 +109,7 @@ class MerkleTree(object):
 
     @staticmethod
     def __TrimNode(node, index, depth, flags):
-        if depth == 1 or node.LeftChild == None:
+        if depth == 1 or node.LeftChild is None:
             return
 
         if depth == 2:

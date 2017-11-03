@@ -59,7 +59,7 @@ class DBCollection():
     def _BuildCollectionKeys(self):
         for key in self.SN.iterator(prefix=self.Prefix, include_value=False):
             key = key[1:]
-            if not key in self.Collection.keys():
+            if key not in self.Collection.keys():
                 self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
@@ -156,12 +156,11 @@ class DBCollection():
         self.MarkChanged(keyval)
 
     def Remove(self, keyval):
-        if not keyval in self.Deleted:
+        if keyval not in self.Deleted:
             self.Deleted.append(keyval)
 
     def MarkChanged(self, keyval):
-
-        if not keyval in self.Changed:
+        if keyval not in self.Changed:
             self.Changed.append(keyval)
 
     def Destroy(self):

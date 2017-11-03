@@ -92,7 +92,7 @@ class ScriptBuilder(object):
         return
 
     def push(self, data):
-        if data == None:
+        if data is None:
             return
 
         if type(data) is bool:

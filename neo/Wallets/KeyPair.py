@@ -1,12 +1,7 @@
 import bitcoin
-<<<<<<< HEAD
-from neo.Cryptography.ECCurve import ECDSA, EllipticCurve, FiniteField
-=======
 from neo.Cryptography.ECCurve import ECDSA
->>>>>>> development
 from neo.Cryptography.Crypto import Crypto
 import base58
-
 
 
 class KeyPair(object):
