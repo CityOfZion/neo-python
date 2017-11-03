@@ -3,12 +3,12 @@ from neo.IO.Mixins import SerializableMixin
 import sys
 import ctypes
 
+
 class FilterLoadPayload(SerializableMixin):
 
     Filter = None
     K = None
     Tweak = None
-
 
     def __init__(self, filter=None):
 
@@ -20,12 +20,8 @@ class FilterLoadPayload(SerializableMixin):
             self.K = filter.K
             self.Tweak = filter.Tweak
 
-
-
     def Size(self):
         return sys.getsizeof(self.Filter) + ctypes.sizeof(ctypes.c_byte) + ctypes.sizeof(ctypes.c_uint)
-
-
 
     def Deserialize(self, reader):
         self.Filter = reader.ReadVarBytes(36000)

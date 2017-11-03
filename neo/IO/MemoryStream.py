@@ -11,13 +11,11 @@ from io import BytesIO
 from binascii import hexlify
 
 
-
-__mstreams__=[]
+__mstreams__ = []
 __mstreams_available__ = []
 
 
 class StreamManager(object):
-
 
     @staticmethod
     def TotalBuffers():
@@ -45,18 +43,16 @@ class StreamManager(object):
 
         return mstream
 
-
     @staticmethod
     def ReleaseStream(mstream):
         mstream.Cleanup()
         __mstreams_available__.append(mstream)
 
+
 class MemoryStream(BytesIO):
 
-
-
-
     """docstring for MemoryStream"""
+
     def __init__(self, *args, **kwargs):
         super(MemoryStream, self).__init__(*args, **kwargs)
 
@@ -75,4 +71,3 @@ class MemoryStream(BytesIO):
     def Cleanup(self):
         self.seek(0)
         self.truncate(0)
-

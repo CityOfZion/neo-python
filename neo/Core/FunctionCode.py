@@ -5,8 +5,8 @@ from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
 
-class FunctionCode(SerializableMixin):
 
+class FunctionCode(SerializableMixin):
 
     Script = bytearray()
 
@@ -14,9 +14,7 @@ class FunctionCode(SerializableMixin):
 
     ReturnType = None
 
-
     _scriptHash = None
-
 
     NeedsStorage = False
 
@@ -44,13 +42,11 @@ class FunctionCode(SerializableMixin):
         self.ParameterList = reader.ReadVarBytes()
         self.ReturnType = reader.ReadByte()
 
-
     def Serialize(self, writer):
         writer.WriteVarBytes(self.Script)
 
-        writer.WriteVarBytes( self.ParameterList)
+        writer.WriteVarBytes(self.ParameterList)
         writer.WriteByte(self.ReturnType)
-
 
     def ToJson(self):
         return {

@@ -14,6 +14,6 @@ class InventoryType(object):
 
     @staticmethod
     def AllInventoriesInt():
-        return [int.from_bytes(InventoryType.TX,'little'), \
-                int.from_bytes(InventoryType.Block,'little'), \
-                int.from_bytes(InventoryType.Consensus,'little')]
+        return [int.from_bytes(InventoryType.TX, 'little'),
+                int.from_bytes(InventoryType.Block, 'little'),
+                int.from_bytes(InventoryType.Consensus, 'little')]

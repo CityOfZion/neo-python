@@ -111,6 +111,7 @@ class PromptInterface(object):
     def __init__(self):
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
+
         self.token_style = style_from_dict({
             Token.Command: settings.token_style['Command'],
             Token.Neo: settings.token_style['Neo'],
@@ -121,10 +122,10 @@ class PromptInterface(object):
     def get_bottom_toolbar(self, cli=None):
         out = []
         try:
-            out =[(Token.Command, '[%s] Progress: ' % settings.net_name),
-                    (Token.Number, str(Blockchain.Default().Height)),
-                    (Token.Neo, '/'),
-                    (Token.Number, str(Blockchain.Default().HeaderHeight))]
+            out = [(Token.Command, '[%s] Progress: ' % settings.net_name),
+                   (Token.Number, str(Blockchain.Default().Height)),
+                   (Token.Neo, '/'),
+                   (Token.Number, str(Blockchain.Default().HeaderHeight))]
         except Exception as e:
             pass
 
@@ -211,6 +212,7 @@ class PromptInterface(object):
                 print("Please specify a path")
 
     def do_create_wallet(self):
+
         if self.Wallet:
             self.do_close_wallet()
 
@@ -700,6 +702,7 @@ class PromptInterface(object):
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, "'help' "), (Token.Default, 'to get started')]
+
         print_tokens(tokens, self.token_style)
         print("\n")
 

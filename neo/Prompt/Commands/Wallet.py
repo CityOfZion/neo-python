@@ -1,7 +1,6 @@
 
 
-def DeleteAddress(prompter,wallet, addr):
-
+def DeleteAddress(prompter, wallet, addr):
 
     scripthash = wallet.ToScriptHash(addr)
 
@@ -22,10 +21,7 @@ def ImportWatchAddr(wallet, addr):
 
     script_hash = wallet.ToScriptHash(addr)
 
-
-
     print("will import watch address %s %s " % (addr, script_hash))
-
 
     result = wallet.AddWatchOnly(script_hash)
 

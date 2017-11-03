@@ -17,13 +17,14 @@ import binascii
 
 class Inventory(object):
     """docstring for Inventory"""
+
     def __init__(self):
         super(Inventory, self).__init__()
         self.hash = None
 
     def EnsureHash(self):
         self.hash = big_or_little(binascii.hexlify(
-                        bin_dbl_sha256(binascii.unhexlify(self.GetHashData()))))
+            bin_dbl_sha256(binascii.unhexlify(self.GetHashData()))))
         return self.hash
 
     def GetHashData(self):

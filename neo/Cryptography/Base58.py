@@ -27,10 +27,13 @@ def b58encode(v):
     # leading 0-bytes in the input become leading-1s
     nPad = 0
     for c in v:
-        if c == '\0': nPad += 1
-        else: break
+        if c == '\0':
+            nPad += 1
+        else:
+            break
 
-    return (__b58chars[0]*nPad) + result
+    return (__b58chars[0] * nPad) + result
+
 
 def b58decode(v):
     """ decode v into a string of len bytes
@@ -48,9 +51,11 @@ def b58decode(v):
 
     nPad = 0
     for c in v:
-        if c == __b58chars[0]: nPad += 1
-        else: break
+        if c == __b58chars[0]:
+            nPad += 1
+        else:
+            break
 
-    result = chr(0)*nPad + result
+    result = chr(0) * nPad + result
 
     return result

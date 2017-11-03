@@ -5,7 +5,7 @@ from neo.Network.Message import Message
 from neo.IO.Helper import Helper as IOHelper
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.Settings import settings
 from neo.Core.Helper import Helper
 import random
@@ -13,16 +13,17 @@ import binascii
 from autologging import logged
 from datetime import datetime
 
+
 @logged
 class PayloadTestCase(NeoTestCase):
 
     port = 20333
-    nonce = random.randint(12949672,42949672)
+    nonce = random.randint(12949672, 42949672)
     ua = "/NEO:2.0.1/"
 
     payload = None
-    def setUp(self):
 
+    def setUp(self):
 
         self.payload = VersionPayload(self.port, self.nonce, self.ua)
 
@@ -32,10 +33,9 @@ class PayloadTestCase(NeoTestCase):
         self.assertEqual(self.payload.Port, self.port)
         self.assertEqual(self.payload.UserAgent, self.ua)
 
-
     def test_version_serialization(self):
 
-        serialized = binascii.unhexlify( Helper.ToArray(self.payload))
+        serialized = binascii.unhexlify(Helper.ToArray(self.payload))
 
         deserialized_version = IOHelper.AsSerializableWithType(serialized, 'neo.Network.Payloads.VersionPayload.VersionPayload')
 
@@ -49,7 +49,6 @@ class PayloadTestCase(NeoTestCase):
         self.assertEqual(v.Services, self.payload.Services)
         self.assertEqual(v.Relay, self.payload.Relay)
 
-
     def test_message_serialization(self):
 
         message = Message('version', payload=self.payload)
@@ -61,17 +60,14 @@ class PayloadTestCase(NeoTestCase):
 
         message.Serialize(writer)
 
-
-        result = binascii.unhexlify( ms.ToArray())
+        result = binascii.unhexlify(ms.ToArray())
         StreamManager.ReleaseStream(ms)
-
-
 
         ms = StreamManager.GetStream(result)
         reader = BinaryReader(ms)
 
         deserialized_message = Message()
-        deserialized_message.Deserialize( reader )
+        deserialized_message.Deserialize(reader)
 
         StreamManager.ReleaseStream(ms)
 
@@ -85,20 +81,17 @@ class PayloadTestCase(NeoTestCase):
 
         self.assertEqual(checksum, dm.Checksum)
 
-
         deserialized_version = IOHelper.AsSerializableWithType(dm.Payload, 'neo.Network.Payloads.VersionPayload.VersionPayload')
-
 
         self.assertEqual(deserialized_version.Port, self.port)
         self.assertEqual(deserialized_version.UserAgent, self.ua)
 
         self.assertEqual(deserialized_version.Timestamp, self.payload.Timestamp)
 
-
     def test_network_addrtime(self):
 
-        addr="55.15.69.104"
-        port=10333
+        addr = "55.15.69.104"
+        port = 10333
         ts = int(datetime.now().timestamp())
         services = 0
 

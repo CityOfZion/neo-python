@@ -31,9 +31,9 @@ import json
 from playhouse.migrate import *
 from neo.Wallets.Coin import CoinState
 
+
 @logged
 class UserWallet(Wallet):
-
 
     Version = None
 
@@ -49,7 +49,7 @@ class UserWallet(Wallet):
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
         try:
-            db.create_tables([Account,Address,Coin,Contract,Key,Transaction,TransactionInfo,], safe=True)
+            db.create_tables([Account, Address, Coin, Contract, Key, Transaction, TransactionInfo, ], safe=True)
         except Exception as e:
             print("Couldnt build database %s " % e)
             self.__log.debug("couldnt build database %s " % e)
@@ -59,8 +59,8 @@ class UserWallet(Wallet):
         migrator = SqliteMigrator(db)
 
         migrate(
-            migrator.drop_not_null('Contract','Account_id'),
-            migrator.add_column('Address','IsWatchOnly', BooleanField(default=False)),
+            migrator.drop_not_null('Contract', 'Account_id'),
+            migrator.add_column('Address', 'IsWatchOnly', BooleanField(default=False)),
         )
 
     def DB(self):
@@ -78,15 +78,13 @@ class UserWallet(Wallet):
 
     @staticmethod
     def Open(path, password):
-        return UserWallet(path=path, passwordKey=password,create=False)
-
+        return UserWallet(path=path, passwordKey=password, create=False)
 
     @staticmethod
     def Create(path, password):
-        wallet = UserWallet(path=path, passwordKey=password,create=True)
+        wallet = UserWallet(path=path, passwordKey=password, create=True)
         wallet.CreateKey()
         return wallet
-
 
     def CreateKey(self, prikey=None):
         if prikey:
@@ -102,8 +100,6 @@ class UserWallet(Wallet):
         self.AddContract(contract)
         return account
 
-
-
     def OnCreateAccount(self, account):
 
         pubkey = account.PublicKey.encode_point(False)
@@ -114,7 +110,7 @@ class UserWallet(Wallet):
         decrypted = pub + priv
         encrypted_pk = self.EncryptPrivateKey(bytes(decrypted))
 
-        db_account,created = Account.get_or_create(PrivateKeyEncrypted=encrypted_pk, PublicKeyHash= account.PublicKeyHash.ToBytes())
+        db_account, created = Account.get_or_create(PrivateKeyEncrypted=encrypted_pk, PublicKeyHash=account.PublicKeyHash.ToBytes())
         db_account.PrivateKeyEncrypted = encrypted_pk
         db_account.save()
         self.__dbaccount = db_account
@@ -125,7 +121,7 @@ class UserWallet(Wallet):
 
         db_contract = None
         try:
-            db_contract = Contract.get(ScriptHash = contract.ScriptHash.ToBytes())
+            db_contract = Contract.get(ScriptHash=contract.ScriptHash.ToBytes())
             db_contract.delete_instance()
             db_contract = None
         except Exception as e:
@@ -135,12 +131,12 @@ class UserWallet(Wallet):
             db_contract.PublicKeyHash = contract.PublicKeyHash.ToBytes()
         else:
             sh = bytes(contract.ScriptHash.ToArray())
-            address, created = Address.get_or_create(ScriptHash = sh)
+            address, created = Address.get_or_create(ScriptHash=sh)
             address.IsWatchOnly = False
             address.save()
             db_contract = Contract.create(RawData=contract.ToArray(),
-                                          ScriptHash = contract.ScriptHash.ToBytes(),
-                                          PublicKeyHash = contract.PublicKeyHash.ToBytes(),
+                                          ScriptHash=contract.ScriptHash.ToBytes(),
+                                          PublicKeyHash=contract.PublicKeyHash.ToBytes(),
                                           Address=address,
                                           Account=self.__dbaccount)
 
@@ -149,15 +145,15 @@ class UserWallet(Wallet):
             db_contract.save()
 
     def AddWatchOnly(self, script_hash):
-        super(UserWallet,self).AddWatchOnly(script_hash)
+        super(UserWallet, self).AddWatchOnly(script_hash)
 
         script_hash_bytes = bytes(script_hash.ToArray())
         address = None
 
         try:
-            address = Address.get(ScriptHash = script_hash_bytes)
+            address = Address.get(ScriptHash=script_hash_bytes)
         except Exception as e:
-            #Address.DoesNotExist
+            # Address.DoesNotExist
             pass
 
         if address is None:
@@ -167,15 +163,14 @@ class UserWallet(Wallet):
         else:
             raise Exception("Address already exists in wallet")
 
-
     def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
-        return super(UserWallet,self).FindUnspentCoins(from_addr, use_standard, watch_only_val=watch_only_val)
+        return super(UserWallet, self).FindUnspentCoins(from_addr, use_standard, watch_only_val=watch_only_val)
 
     def GetTransactions(self):
         transactions = []
         for db_tx in Transaction.select():
-            raw = binascii.unhexlify( db_tx.RawData )
-            tx = CoreTransaction.DeserializeFromBufer(raw,0)
+            raw = binascii.unhexlify(db_tx.RawData)
+            tx = CoreTransaction.DeserializeFromBufer(raw, 0)
             transactions.append(tx)
         return transactions
 
@@ -198,19 +193,18 @@ class UserWallet(Wallet):
 
     def LoadCoins(self):
 
-        coins ={}
+        coins = {}
 
         try:
             for coin in Coin.select():
                 reference = CoinReference(prev_hash=UInt256(coin.TxId), prev_index=coin.Index)
                 output = TransactionOutput(UInt256(coin.AssetId), Fixed8(coin.Value), UInt160(coin.ScriptHash))
-                walletcoin = WalletCoin.CoinFromRef(reference,output, coin.State)
+                walletcoin = WalletCoin.CoinFromRef(reference, output, coin.State)
                 coins[reference] = walletcoin
         except Exception as e:
             print("could not load coins %s " % e)
 
         return coins
-
 
     def LoadContracts(self):
 
@@ -218,14 +212,14 @@ class UserWallet(Wallet):
 
         for ct in Contract.select():
 
-            data = binascii.unhexlify( ct.RawData)
+            data = binascii.unhexlify(ct.RawData)
             contract = Helper.AsSerializableWithType(data, 'neo.SmartContract.Contract.Contract')
             ctr[contract.ScriptHash.ToBytes()] = contract
 
         return ctr
 
     def LoadKeyPairs(self):
-        keypairs={}
+        keypairs = {}
         for db_account in Account.select():
             encrypted = db_account.PrivateKeyEncrypted
             decrypted = self.DecryptPrivateKey(encrypted)
@@ -249,7 +243,6 @@ class UserWallet(Wallet):
     def LoadTransactions(self):
         return Transaction.select()
 
-
     def SaveStoredData(self, key, value):
 
         k = None
@@ -260,10 +253,9 @@ class UserWallet(Wallet):
             pass
 
         if k is None:
-            k = Key.create(Name=key,Value=value)
+            k = Key.create(Name=key, Value=value)
 
         k.save()
-
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
 
@@ -284,20 +276,18 @@ class UserWallet(Wallet):
                     db_tx = Transaction.create(
                         Hash=tx.Hash.ToBytes(),
                         TransactionType=ttype,
-                        RawData = tx.ToArray(),
-                        Height = block.Index,
-                        DateTime = block.Timestamp
+                        RawData=tx.ToArray(),
+                        Height=block.Index,
+                        DateTime=block.Timestamp
                     )
                 else:
                     db_tx.Height = block.Index
 
                 db_tx.save()
 
-        self.OnCoinsChanged(added,changed,deleted)
-
+        self.OnCoinsChanged(added, changed, deleted)
 
         # @TODO more stuff dealiing with transactions here...
-
 
     def OnCoinsChanged(self, added, changed, deleted):
 
@@ -311,13 +301,13 @@ class UserWallet(Wallet):
                 address = Address.get(ScriptHash=addr_hash)
 
                 c = Coin(
-                    TxId = bytes(coin.Reference.PrevHash.Data),
-                    Index = coin.Reference.PrevIndex,
-                    AssetId = bytes(coin.Output.AssetId.Data),
-                    Value = coin.Output.Value.value,
-                    ScriptHash = bytes(coin.Output.ScriptHash.Data),
-                    State = coin.State,
-                    Address= address
+                    TxId=bytes(coin.Reference.PrevHash.Data),
+                    Index=coin.Reference.PrevIndex,
+                    AssetId=bytes(coin.Output.AssetId.Data),
+                    Value=coin.Output.Value.value,
+                    ScriptHash=bytes(coin.Output.ScriptHash.Data),
+                    State=coin.State,
+                    Address=address
                 )
                 c.save()
                 self.__log.debug("saved coin %s " % c)
@@ -330,8 +320,8 @@ class UserWallet(Wallet):
                 c.State = coin.State
                 c.save()
             except Exception as e:
-                print("Coulndnt change coin %s %s" % (coin,e))
-                self.__log.debug("coin to change not found! %s %s " % (coin,e))
+                print("Coulndnt change coin %s %s" % (coin, e))
+                self.__log.debug("coin to change not found! %s %s " % (coin, e))
 
         for coin in deleted:
             try:
@@ -341,7 +331,6 @@ class UserWallet(Wallet):
             except Exception as e:
                 print("Couldnt delete coin %s %s " % (e, coin))
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
-
 
     @property
     def Addresses(self):
@@ -360,7 +349,7 @@ class UserWallet(Wallet):
             for ct in self._contracts.values():
                 if ct.PublicKeyHash == k.PublicKeyHash:
                     addr = ct.Address
-                    jsn.append( {'Address': addr, 'Public Key': pub.decode('utf-8')})
+                    jsn.append({'Address': addr, 'Public Key': pub.decode('utf-8')})
 
         return jsn
 
@@ -376,7 +365,6 @@ class UserWallet(Wallet):
                 print("Couldnt delete coin %s %s " % (e, coin))
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
 
-
         todelete = bytes(script_hash.ToArray())
 
         for c in Contract.select():
@@ -388,13 +376,12 @@ class UserWallet(Wallet):
                 address.delete_instance()
 
         try:
-            address = Address.get(ScriptHash = todelete)
+            address = Address.get(ScriptHash=todelete)
             address.delete_instance()
         except Exception as e:
             pass
 
-        return True,coins_toremove
-
+        return True, coins_toremove
 
     def ToJson(self, verbose=False):
 
@@ -408,7 +395,7 @@ class UserWallet(Wallet):
         jsn['path'] = self._path
 
         addresses = []
-        has_watch_addr=False
+        has_watch_addr = False
         for addr in Address.select():
             print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
@@ -416,9 +403,9 @@ class UserWallet(Wallet):
             if acct:
                 json = acct.ToJson()
                 json['is_watch_only'] = addr.IsWatchOnly
-                addresses.append( json )
+                addresses.append(json)
                 if addr.IsWatchOnly:
-                    has_watch_addr=True
+                    has_watch_addr = True
             else:
                 addresses.append(addr_str)
 
@@ -430,7 +417,6 @@ class UserWallet(Wallet):
             watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
             balances.append("[%s]: %s " % (bc_asset.GetName(), total))
             watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
-
 
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
@@ -446,4 +432,3 @@ class UserWallet(Wallet):
             jsn['coins'] = [coin.ToJson() for coin in self.FindUnspentCoins()]
             jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
         return jsn
-

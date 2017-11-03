@@ -1,6 +1,4 @@
-
 from neo.IO.Mixins import SerializableMixin
-#from neo.Network.LocalNode import LocalNode
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Core.Blockchain import Blockchain
 
@@ -13,8 +11,7 @@ from autologging import logged
 @logged
 class VersionPayload(SerializableMixin):
 
-
-    Version=None
+    Version = None
     Services = None
     Timestamp = None
     Port = None
@@ -37,12 +34,10 @@ class VersionPayload(SerializableMixin):
 
             self.Relay = True
 
-
     def Size(self):
         return ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_ulong) + ctypes.sizeof(ctypes.c_uint) + \
-                ctypes.sizeof(ctypes.c_ushort) + ctypes.sizeof(ctypes.c_uint) + \
-                  sys.getsizeof(self.UserAgent) + ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_bool)
-
+            ctypes.sizeof(ctypes.c_ushort) + ctypes.sizeof(ctypes.c_uint) + \
+            sys.getsizeof(self.UserAgent) + ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_bool)
 
     def Deserialize(self, reader):
         self.__log.debug("DESERIALIZING VERSION!!!!")

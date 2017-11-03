@@ -10,6 +10,7 @@ from neo.UIntBase import UIntBase
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 
+
 class Fixed8TestCase(NeoTestCase):
     def test_fixed8_add(self):
         f1 = Fixed8(100)

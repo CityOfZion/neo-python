@@ -1,7 +1,7 @@
 from neo.VM.Mixins import InteropMixin
 
-class StorageContext(InteropMixin):
 
+class StorageContext(InteropMixin):
 
     ScriptHash = None
 
@@ -9,9 +9,7 @@ class StorageContext(InteropMixin):
 
         self.ScriptHash = script_hash
 
-
-
     def ToArray(self):
-        #hmmm... script hashes are already a byte array at the moment, i think?
-        #return self.ScriptHash.ToArray()
+        # hmmm... script hashes are already a byte array at the moment, i think?
+        # return self.ScriptHash.ToArray()
         return self.ScriptHash

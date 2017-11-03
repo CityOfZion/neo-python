@@ -13,6 +13,7 @@ from neo.Core.State.CoinState import CoinState
 from neo.IO.Mixins import TrackableMixin
 from neo.Cryptography.Crypto import Crypto
 
+
 class Coin(TrackableMixin):
 
     Output = None
@@ -21,14 +22,10 @@ class Coin(TrackableMixin):
     _address = None
     _state = CoinState.Unconfirmed
 
-
-
-
     @staticmethod
     def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed):
         coin = Coin(coin_reference=coin_ref, tx_output=tx_output, state=state)
         return coin
-
 
     def __init__(self, prev_hash=None, prev_index=None, tx_output=None, coin_reference=None, state=CoinState.Unconfirmed):
         if prev_hash and prev_index:
@@ -39,7 +36,6 @@ class Coin(TrackableMixin):
             self.Reference = None
         self.Output = tx_output
         self._state = state
-
 
     @property
     def Address(self):
@@ -52,15 +48,13 @@ class Coin(TrackableMixin):
         return self._state
 
     @State.setter
-    def State(self,value):
+    def State(self, value):
         self._state = value
 
-
-
     def Equals(self, other):
-        if other is None or other is not self: return False
+        if other is None or other is not self:
+            return False
         return True
-
 
     def ToJson(self):
         return {

@@ -35,10 +35,8 @@ class SmartContractTest(BlockchainFixtureTestCase):
 
         self.assertIsNotNone(invtx)
 
-
         self.assertEqual(len(invtx.Script), 100)
         self.assertEqual(invtx.Script.hex(), self.invtxh)
-
 
     def test_a_run_sc(self):
 
@@ -49,6 +47,3 @@ class SmartContractTest(BlockchainFixtureTestCase):
         result = self._blockchain.Persist(block)
 
         self.assertTrue(result)
-
-
-

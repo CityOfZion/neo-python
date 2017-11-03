@@ -4,9 +4,9 @@ class EquatableMixin():
     def Equals(self, other):
         pass
 
+
 class InteropMixin():
     pass
-
 
 
 class ScriptTableMixin():
@@ -15,12 +15,10 @@ class ScriptTableMixin():
         pass
 
 
-
 class ScriptContainerMixin(InteropMixin):
 
     def GetMessage(self):
         pass
-
 
 
 class CryptoMixin():

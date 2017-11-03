@@ -5,17 +5,16 @@ import binascii
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import MemoryStream, StreamManager
 from autologging import logged
 import time
 from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
 from neo.IO.BinaryWriter import BinaryWriter
 
+
 @logged
 class AccountState(StateBase):
-
-
 
     ScriptHash = None
     IsFrozen = False
@@ -34,7 +33,6 @@ class AccountState(StateBase):
             self.Balances = {}
         else:
             self.Balances = balances
-
 
     @property
     def Address(self):
@@ -76,7 +74,7 @@ class AccountState(StateBase):
         num_balances = reader.ReadVarInt()
         self.Balances = {}
         for i in range(0, num_balances):
-            assetid =reader.ReadUInt256()
+            assetid = reader.ReadUInt256()
             amount = reader.ReadFixed8()
             self.Balances[assetid] = amount
 
@@ -90,11 +88,10 @@ class AccountState(StateBase):
         for vote in self.Votes:
             writer.WriteBytes(vote)
 
-
         blen = len(self.Balances)
         writer.WriteVarInt(blen)
 
-        for key,fixed8 in self.Balances.items():
+        for key, fixed8 in self.Balances.items():
             writer.WriteUInt256(key)
             writer.WriteFixed8(fixed8)
 
@@ -105,14 +102,14 @@ class AccountState(StateBase):
         return False
 
     def BalanceFor(self, assetId):
-        for key,fixed8 in self.Balances.items():
+        for key, fixed8 in self.Balances.items():
             if key == assetId:
                 return fixed8
         return Fixed8(0)
 
     def SetBalanceFor(self, assetId, fixed8_val):
-        found=False
-        for key,val in self.Balances.items():
+        found = False
+        for key, val in self.Balances.items():
             if key == assetId:
                 self.Balances[key] = fixed8_val
                 found = True
@@ -139,7 +136,7 @@ class AccountState(StateBase):
             self.Balances[assetId] = fixed8_val * Fixed8(-1)
 
     def AllBalancesZeroOrLess(self):
-        for key,fixed8 in self.Balances.items():
+        for key, fixed8 in self.Balances.items():
             if fixed8.value > 0:
                 return False
         return True
@@ -164,7 +161,7 @@ class AccountState(StateBase):
 
         balances = {}
         for key, value in self.Balances.items():
-            balances[key.ToString()] = str( value.value / Fixed8.D )
+            balances[key.ToString()] = str(value.value / Fixed8.D)
 
         json['balances'] = balances
         return json

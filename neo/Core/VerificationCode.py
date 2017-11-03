@@ -1,16 +1,15 @@
 
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.Cryptography.Crypto import Crypto
-class VerificationCode():
 
+
+class VerificationCode():
 
     Script = None
 
     ParameterList = None
 
     ReturnType = ContractParameterType.Boolean
-
-
 
     _scriptHash = None
 
@@ -22,7 +21,6 @@ class VerificationCode():
             self._scriptHash = Crypto.ToScriptHash(self.Script)
 
         return self._scriptHash
-
 
     def __init__(self, script=None, param_list=None):
         self.Script = script

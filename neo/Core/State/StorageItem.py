@@ -2,10 +2,10 @@
 from .StateBase import StateBase
 import sys
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import MemoryStream, StreamManager
+
 
 class StorageItem(StateBase):
-
 
     Value = None
 

@@ -1,5 +1,6 @@
-from neo.IO.MemoryStream import MemoryStream,StreamManager
-from neo.IO.BinaryReader import  BinaryReader
+from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neo.IO.BinaryReader import BinaryReader
+
 
 class ExecutionContext():
 
@@ -9,7 +10,7 @@ class ExecutionContext():
 
     PushOnly = False
 
-    __OpReader =None
+    __OpReader = None
 
     __mstream = None
 
@@ -32,9 +33,7 @@ class ExecutionContext():
 
     @property
     def NextInstruction(self):
-        return self.Script[ self.__OpReader.stream.tell()].to_bytes(1,'little')
-
-
+        return self.Script[self.__OpReader.stream.tell()].to_bytes(1, 'little')
 
     _script_hash = None
 
@@ -42,7 +41,6 @@ class ExecutionContext():
         if self._script_hash is None:
             self._script_hash = self._Engine.Crypto.Hash160(self.Script)
         return self._script_hash
-
 
     def __init__(self, engine=None, script=None, push_only=False, break_points=set()):
         self._Engine = engine
@@ -62,5 +60,3 @@ class ExecutionContext():
     def Dispose(self):
         self.__OpReader = None
         StreamManager.ReleaseStream(self.__mstream)
-
-
