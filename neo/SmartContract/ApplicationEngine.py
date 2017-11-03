@@ -11,8 +11,9 @@ from autologging import logged
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Core.State import ContractState,AssetState,AccountState,ValidatorState,StorageItem
+from neo.Core.State import ContractState, AssetState, AccountState, ValidatorState, StorageItem
 from neo.SmartContract import TriggerType
+
 
 @logged
 class ApplicationEngine(ExecutionEngine):
@@ -297,8 +298,6 @@ class ApplicationEngine(ExecutionEngine):
             return 100
 
         return 1
-
-
 
     @staticmethod
     def Run(script, container=None):

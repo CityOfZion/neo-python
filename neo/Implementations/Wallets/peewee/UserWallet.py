@@ -22,8 +22,8 @@ from neo.UInt256 import UInt256
 from .PWDatabase import PWDatabase
 
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
-                                                        Contract, Key, Transaction, \
-                                                            TransactionInfo, NEP5Token
+    Contract, Key, Transaction, \
+    TransactionInfo, NEP5Token
 
 from autologging import logged
 import json
@@ -162,8 +162,7 @@ class UserWallet(Wallet):
         else:
             raise Exception("Address already exists in wallet")
 
-
-    def AddNEP5Token(self,token):
+    def AddNEP5Token(self, token):
 
         super(UserWallet, self).AddNEP5Token(token)
 
@@ -174,14 +173,13 @@ class UserWallet(Wallet):
             pass
 
         db_token = NEP5Token.create(
-            ContractHash = token.ScriptHash.ToBytes(),
-            Name = token.name,
-            Symbol = token.symbol,
-            Decimals = token.decimals
+            ContractHash=token.ScriptHash.ToBytes(),
+            Name=token.name,
+            Symbol=token.symbol,
+            Decimals=token.decimals
         )
         db_token.save()
         return True
-
 
     def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
         return super(UserWallet, self).FindUnspentCoins(from_addr, use_standard, watch_only_val=watch_only_val)

@@ -40,7 +40,7 @@ class Wallet(object):
     _master_key = None
     _keys = {}  # holds keypairs
     _contracts = {}  # holds Contracts
-    _tokens = {} # holds references to NEP5 tokens
+    _tokens = {}  # holds references to NEP5 tokens
     _watch_only = []  # holds set of hashes
     _coins = {}  # holds Coin References
 

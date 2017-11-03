@@ -3,6 +3,7 @@ from neo.Wallets.NEP5Token import NEP5Token
 import binascii
 import json
 
+
 def DeleteAddress(prompter, wallet, addr):
 
     scripthash = wallet.ToScriptHash(addr)
@@ -39,7 +40,7 @@ def ImportToken(wallet, contract_hash):
 
     if contract:
         hex_script = binascii.hexlify(contract.Code.Script)
-        token = NEP5Token(script= hex_script)
+        token = NEP5Token(script=hex_script)
 
         result = token.Query(wallet)
 
@@ -52,6 +53,3 @@ def ImportToken(wallet, contract_hash):
         else:
 
             print("Could not import token")
-
-
-
