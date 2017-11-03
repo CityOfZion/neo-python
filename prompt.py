@@ -232,6 +232,7 @@ class PromptInterface(object):
             self.Wallet = UserWallet.Create(path=path, password=passwd)
         except Exception as e:
             print("Exception creating wallet: %s " % e)
+            return
 
         contract = self.Wallet.GetDefaultContract()
         key = self.Wallet.GetKey(contract.PublicKeyHash)
