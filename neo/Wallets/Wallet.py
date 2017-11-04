@@ -303,6 +303,9 @@ class Wallet(object):
     def GetAvailable(self, asset_id):
         raise NotImplementedError()
 
+    def GetTokens(self):
+        return self._tokens
+
     def GetTokenBalance(self, token, watch_only=0):
         total = Decimal(0)
 

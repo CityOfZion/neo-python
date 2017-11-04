@@ -141,7 +141,7 @@ def construct_contract_withdrawal_request(wallet, arguments, fee=Fixed8.FromDeci
     to_address = get_arg(arguments, 2)
     amount = get_arg(arguments, 3)
 
-    assetId = get_asset_id(to_send)
+    assetId = get_asset_id(wallet,to_send)
 
     f8amount = get_asset_amount(amount, assetId)
 
@@ -179,7 +179,7 @@ def construct_contract_withdrawal_request(wallet, arguments, fee=Fixed8.FromDeci
 def construct_withdrawal_tx(wallet, args):
 
     from_address = get_arg(args, 0)
-    assetId = get_asset_id(get_arg(args, 1))
+    assetId = get_asset_id(wallet,get_arg(args, 1))
     to_address = get_arg(args, 2)
     f8amount = get_asset_amount(get_arg(args, 3), assetId)
 

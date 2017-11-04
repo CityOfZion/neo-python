@@ -36,8 +36,15 @@ def get_asset_attachments(params):
     return params, neo_to_attach, gas_to_attach
 
 
-def get_asset_id(asset_str):
+def get_asset_id(wallet, asset_str):
     assetId = None
+
+    # check to see if this is a token
+    for token in wallet.GetTokens().values():
+        if asset_str == token.symbol:
+            return token
+        elif asset_str == token.ScriptHash.ToString():
+            return token
 
     if asset_str.lower() == 'neo':
         assetId = Blockchain.Default().SystemShare().Hash
@@ -47,7 +54,6 @@ def get_asset_id(asset_str):
         assetId = Blockchain.Default().GetAssetState(asset_str).AssetId
 
     return assetId
-
 
 def get_asset_amount(amount, assetId):
 
