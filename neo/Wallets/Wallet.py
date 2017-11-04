@@ -301,6 +301,11 @@ class Wallet(object):
     def GetAvailable(self, asset_id):
         raise NotImplementedError()
 
+
+    def GetNEP5TokenBalance(self, token, address):
+        balance = token.GetBalance(self, address)
+        return balance
+
     def GetBalance(self, asset_id, watch_only=0):
         total = Fixed8(0)
         for coin in self.GetCoins():

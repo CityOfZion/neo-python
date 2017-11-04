@@ -368,6 +368,19 @@ class UserWallet(Wallet):
 
         return result
 
+
+    def TokenBalancesForAddress(self, address):
+        if len(self._tokens):
+            jsn = []
+            tokens = list(self._tokens.values())
+            for t in tokens:
+                jsn.append(
+                        '[%s] %s : %s' %  (t.ScriptHash.ToString(),t.symbol,t.GetBalance(self,address,as_string=True))
+                )
+            return jsn
+
+        return None
+
     def PubKeys(self):
         keys = self.LoadKeyPairs()
         jsn = []
@@ -414,7 +427,7 @@ class UserWallet(Wallet):
     def ToJson(self, verbose=False):
 
         assets = self.GetCoinAssets()
-        assets = assets + list(self._tokens.values())
+        tokens = list(self._tokens.values())
 
         if Blockchain.Default().Height == 0:
             percent_synced = 0
@@ -430,10 +443,13 @@ class UserWallet(Wallet):
             print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
             acct = Blockchain.Default().GetAccountState(addr_str)
+            token_balances = self.TokenBalancesForAddress(addr_str)
             if acct:
                 json = acct.ToJson()
                 json['is_watch_only'] = addr.IsWatchOnly
                 addresses.append(json)
+                if token_balances:
+                    json['tokens'] = token_balances
                 if addr.IsWatchOnly:
                     has_watch_addr = True
             else:
@@ -448,10 +464,10 @@ class UserWallet(Wallet):
                 watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
                 balances.append("[%s]: %s " % (bc_asset.GetName(), total))
                 watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
-            elif type(asset) is WalletNEP5Token:
-                balance=0
-                balances.append("[%s]: %s " % (asset.symbol, 0))
-                watch_balances.append("[%s]: %s " % (asset.symbol, 0))
+#            elif type(asset) is WalletNEP5Token:
+#                balance=0
+#                balances.append("[%s]: %s " % (asset.symbol, 0))
+#                watch_balances.append("[%s]: %s " % (asset.symbol, 0))
 
         tokens = []
         for t in self._tokens.values():
