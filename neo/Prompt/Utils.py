@@ -55,6 +55,7 @@ def get_asset_id(wallet, asset_str):
 
     return assetId
 
+
 def get_asset_amount(amount, assetId):
 
     f8amount = Fixed8.TryParse(amount)

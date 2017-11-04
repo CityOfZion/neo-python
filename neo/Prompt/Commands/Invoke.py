@@ -42,7 +42,7 @@ from neo.UInt160 import UInt160
 
 def InvokeWithdrawTx(wallet, tx, contract_hash):
 
-    print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
+    #    print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
 
     requestor_contract = wallet.GetDefaultContract()
     tx.Attributes = [
@@ -70,13 +70,10 @@ def InvokeWithdrawTx(wallet, tx, contract_hash):
         verification_contract = Contract.Create(reedeem_script, param_list, requestor_contract.PublicKeyHash)
 
         address = verification_contract.Address
-        print("address is.... %s " % address)
         withdraw_verification = verification_contract
 
     context = ContractParametersContext(tx)
     wallet.Sign(context)
-
-    print("withdraw tx 2 %s " % json.dumps(tx.ToJson(), indent=4))
 
     context.Add(withdraw_verification, 0, 0)
 
@@ -84,7 +81,7 @@ def InvokeWithdrawTx(wallet, tx, contract_hash):
 
         tx.scripts = context.GetScripts()
 
-        print("withdraw tx 3 %s " % json.dumps(tx.ToJson(), indent=4))
+        print("withdraw tx %s " % json.dumps(tx.ToJson(), indent=4))
 
         wallet.SaveTransaction(tx)
 

@@ -4,8 +4,8 @@ from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import get_arg, get_from_addr,get_asset_id
-from neo.Prompt.Commands.Invoke import InvokeContract
+from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id
+from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Wallets.Coin import CoinState
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.UInt256 import UInt256
@@ -43,13 +43,10 @@ def construct_and_send(prompter, wallet, arguments):
         if from_address is not None:
             scripthash_from = wallet.ToScriptHash(from_address)
 
-
         # if this is a token, we will use a different
         # transfer mechanism
         if type(assetId) is NEP5Token:
-            return do_token_transfer(assetId, wallet, from_address, address_to, amount)
-
-
+            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount))
 
         f8amount = Fixed8.TryParse(amount)
         if f8amount is None:
@@ -61,7 +58,6 @@ def construct_and_send(prompter, wallet, arguments):
             return
 
         fee = Fixed8.Zero()
-
 
         output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         tx = ContractTransaction(outputs=[output])
@@ -220,36 +216,3 @@ def parse_and_sign(prompter, wallet, jsn):
         print("could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
-
-
-
-
-def do_token_transfer(token, wallet,from_address,to_address,amount_str):
-    if from_address is None:
-        print("Please specify --from-addr={addr} to send NEP5 tokens")
-        return
-
-
-    precision_mult = pow(10, token.decimals)
-
-    amount = float(amount_str) * precision_mult
-
-    tx, fee, results = token.Transfer(wallet, from_address, to_address, amount)
-
-    if tx is not None and results is not None and len(results) > 0:
-
-        if results[0].GetBigInteger() == 1:
-            print("\n-----------------------------------------------------------")
-            print("Will transfer %s %s from %s to %s" % (amount_str, token.symbol, from_address, to_address))
-            print("Transfer fee: %s " % (fee.value / Fixed8.D))
-            print("-------------------------------------------------------------\n")
-
-            passwd = prompt("[Password]> ", is_password=True)
-
-            if not wallet.ValidatePassword(passwd):
-                print("incorrect password")
-                return
-
-            InvokeContract(wallet,tx,fee)
-        else:
-            print("could not transfer tokens")

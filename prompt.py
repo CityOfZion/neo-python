@@ -21,6 +21,7 @@ from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken
+from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo.Settings import settings
@@ -87,6 +88,7 @@ class PromptInterface(object):
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage}',
                 'import contract_addr {contract_hash} {pubkey}',
                 'import watch_addr {address}',
+                'import token {token_contract_hash}',
                 'export wif {address}',
                 'open wallet {path}',
                 'create wallet {path}',
@@ -94,6 +96,10 @@ class PromptInterface(object):
                 'wallet migrate',
                 'wallet rebuild {start block}',
                 'wallet delete_addr {addr}',
+                'wallet tkn_send {token symbol} {address_from} {address to} {amount} ',
+                'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
+                'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
+                'wallet tkn_allowance {token symbol} {address_from} {address to}',
                 'wallet close',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
@@ -132,12 +138,14 @@ class PromptInterface(object):
         return out
 
     def get_completer(self):
+
         standard_completions = ['block', 'tx', 'header', 'mem', 'neo', 'gas',
                                 'help', 'state', 'node', 'exit', 'quit',
                                 'config', 'import', 'export', 'open',
                                 'wallet', 'contract', 'asset', 'wif',
-                                'withdraw_request', 'withdraw',
-                                'watch_addr', 'contract_addr', 'testinvoke', ]
+                                'withdraw_request', 'withdraw', 'watch_addr',
+                                'contract_addr', 'testinvoke', 'tkn_send',
+                                'tkn_send_from', 'tkn_approve', 'tkn_allowance', ]
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
@@ -376,20 +384,16 @@ class PromptInterface(object):
         if item in ['v', '--v', 'verbose']:
             print("Wallet %s " % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
             return
-
-        if item == 'migrate' and self.Wallet is not None:
+        elif item == 'migrate' and self.Wallet is not None:
             print("migrating wallet...")
             self.Wallet.Migrate()
             print("migrated wallet")
-
-        if item == 'delete_addr':
+        elif item == 'delete_addr':
             addr_to_delete = get_arg(arguments, 1)
             DeleteAddress(self, self.Wallet, addr_to_delete)
-
-        if item == 'close':
+        elif item == 'close':
             self.do_close_wallet()
-
-        if item == 'rebuild':
+        elif item == 'rebuild':
             self.Wallet.Rebuild()
             try:
                 item2 = int(get_arg(arguments, 1))
@@ -398,8 +402,16 @@ class PromptInterface(object):
                     self.Wallet._current_height = item2
             except Exception as e:
                 pass
-        if item == 'unspent':
+        elif item == 'unspent':
             self.Wallet.FindUnspentCoins()
+        elif item == 'tkn_send':
+            token_send(self.Wallet, arguments[1:])
+        elif item == 'tkn_send_from':
+            token_send_from(self.Wallet, arguments[1:])
+        elif item == 'tkn_approve':
+            token_approve_allowance(self.Wallet, arguments[1:])
+        elif item == 'tkn_allowance':
+            token_get_allowance(self.Wallet, arguments[1:])
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
