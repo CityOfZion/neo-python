@@ -6,7 +6,7 @@ Usage:
     from neo.Core.TX.RegisterTransaction import RegisterTransaction
 """
 from neo.Fixed8 import Fixed8
-from neo.Core.TX.Transaction import Transaction,TransactionType
+from neo.Core.TX.Transaction import Transaction, TransactionType
 
 import binascii
 from neo.Core.AssetType import AssetType
@@ -14,7 +14,7 @@ from neo.Cryptography.ECCurve import ECDSA
 from autologging import logged
 from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
-from neo.Cryptography.ECCurve import EllipticCurve,ECDSA
+from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
 
 from neo.Settings import settings
 from neo.Fixed8 import Fixed8
@@ -43,13 +43,13 @@ In English:
 """
 
     def __init__(self, inputs=None,
-                        outputs=None,
-                        assettype=AssetType.GoverningToken,
-                        assetname='',
-                        amount=Fixed8(0),
-                        precision=0,
-                        owner=None,
-                        admin=None):
+                 outputs=None,
+                 assettype=AssetType.GoverningToken,
+                 assetname='',
+                 amount=Fixed8(0),
+                 precision=0,
+                 owner=None,
+                 admin=None):
 
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.Type = TransactionType.RegisterTransaction  # 0x40
@@ -74,7 +74,6 @@ In English:
         self.Admin = admin
         self.Precision = precision
 
-
     def SystemFee(self):
         return Fixed8(int(settings.REGISTER_TX_FEE))
 
@@ -84,7 +83,6 @@ In English:
         # super(RegisterTransaction, self).getScriptHashesForVerifying()
         pass
 
-
     def DeserializeExclusiveData(self, reader):
         self.Type = TransactionType.RegisterTransaction
         self.AssetType = reader.ReadByte()
@@ -93,7 +91,7 @@ In English:
         self.Precision = reader.ReadByte()
         self.Owner = ECDSA.Deserialize_Secp256r1(reader)
 #        self.Owner = ecdsa.G
-        self.Admin =reader.ReadUInt160()
+        self.Admin = reader.ReadUInt160()
 
     def SerializeExclusiveData(self, writer):
         writer.WriteByte(self.AssetType)
@@ -103,8 +101,7 @@ In English:
 
         self.Owner.Serialize(writer)
 
-        writer.WriteUInt160( self.Admin )
-
+        writer.WriteUInt160(self.Admin)
 
     def ToJson(self):
         jsn = super(RegisterTransaction, self).ToJson()

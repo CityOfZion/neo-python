@@ -10,11 +10,12 @@ from neo.Settings import settings
 from autologging import logged
 from twisted.internet.protocol import Factory
 from twisted.application.internet import ClientService
-from twisted.internet import reactor,task
+from twisted.internet import reactor, task
 from twisted.internet.endpoints import clientFromString
 from twisted.application.internet import backoffPolicy
 
 import random
+
 
 @logged
 class NodeLeader():
@@ -30,12 +31,11 @@ class NodeLeader():
 
     NodeId = None
 
-    _MissedBlocks=[]
+    _MissedBlocks = []
 
-
-    BREQPART=150
-    NREQMAX =150
-    BREQMAX= 4000
+    BREQPART = 150
+    NREQMAX = 150
+    BREQMAX = 4000
 
     KnownHashes = []
     MemPool = {}
@@ -54,7 +54,7 @@ class NodeLeader():
         self.Peers = []
         self.UnconnectedPeers = []
         self.ADDRS = []
-        self.NodeId = random.randint(1294967200,4294967200)
+        self.NodeId = random.randint(1294967200, 4294967200)
 
     def Restart(self):
         if len(self.Peers) == 0:
@@ -62,16 +62,16 @@ class NodeLeader():
 
     def Start(self):
         # start up endpoints
-        start_delay=0
+        start_delay = 0
         for bootstrap in settings.SEED_LIST:
             host, port = bootstrap.split(":")
-            self.ADDRS.append('%s:%s' % (host,port))
-            reactor.callLater( start_delay, self.SetupConnection,host, port)
-            start_delay+=10
+            self.ADDRS.append('%s:%s' % (host, port))
+            reactor.callLater(start_delay, self.SetupConnection, host, port)
+            start_delay += 10
 
     def RemoteNodePeerReceived(self, host, port):
-        addr = '%s:%s' % (host,port)
-        if not addr in self.ADDRS:
+        addr = '%s:%s' % (host, port)
+        if addr not in self.ADDRS:
             if len(self.Peers) < self.ConnectedPeersMax:
                 self.ADDRS.append(addr)
                 self.SetupConnection(host, port)
@@ -80,7 +80,7 @@ class NodeLeader():
         self.__log.debug("Setting up connection! %s %s " % (host, port))
 
         factory = Factory.forProtocol(NeoNode)
-        endpoint = clientFromString(reactor,"tcp:host=%s:port=%s:timeout=5" % (host,port))
+        endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=5" % (host, port))
 
         connectingService = ClientService(
             endpoint,
@@ -93,9 +93,8 @@ class NodeLeader():
         for p in self.Peers:
             p.Disconnect()
 
-
     def AddConnectedPeer(self, peer):
-        if not peer in self.Peers:
+        if peer not in self.Peers:
             self.Peers.append(peer)
 
     def RemoveConnectedPeer(self, peer):
@@ -105,26 +104,25 @@ class NodeLeader():
         if len(self.Peers) == 0:
             reactor.callLater(10, self.Restart)
 
-
     def ResetBlockRequestsAndCache(self):
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
-            p.myblockrequests= set()
+            p.myblockrequests = set()
         BC.Default().__blockrequests = set()
         BC.Default()._block_cache = {}
 
     #    @profile()
     def InventoryReceived(self, inventory):
 
-
         if inventory.Hash.ToBytes() in self._MissedBlocks:
             self._MissedBlocks.remove(inventory.Hash.ToBytes())
 
-        if inventory is MinerTransaction: return False
-
+        if inventory is MinerTransaction:
+            return False
 
         if type(inventory) is Block:
-            if BC.Default() == None: return False
+            if BC.Default() is None:
+                return False
 
             if BC.Default().ContainsBlock(inventory.Index):
                 return False
@@ -133,9 +131,8 @@ class NodeLeader():
                 return False
 
         else:
-            if not inventory.Verify(): return False
-
-
+            if not inventory.Verify():
+                return False
 
     def RelayDirectly(self, inventory):
 
@@ -148,7 +145,6 @@ class NodeLeader():
             relayed |= peer.Relay(inventory)
 
         return relayed
-
 
     def Relay(self, inventory):
 
@@ -171,7 +167,7 @@ class NodeLeader():
             pass
 
         relayed = self.RelayDirectly(inventory)
-        #self.
+        # self.
         return relayed
 
     def AddTransaction(self, tx):

@@ -1,6 +1,5 @@
 from neo.UIntBase import UIntBase
 
-import binascii
 
 class UInt256(UIntBase):
     def __init__(self, data=None):

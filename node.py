@@ -1,11 +1,10 @@
-token.array_processed = True
 import sys
 import logging
 
-#no logging for the node
+# no logging for the node
 
-#logname = 'nodes.log'
-#logging.basicConfig(
+# logname = 'nodes.log'
+# logging.basicConfig(
 #     level=logging.DEBUG,
 #     filemode='a',
 #     filename=logname,

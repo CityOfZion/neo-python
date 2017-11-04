@@ -13,6 +13,7 @@ import shutil
 
 from neo.Utils.NeoTestCase import NeoTestCase
 
+
 class VerifiableTestCase(NeoTestCase):
 
     LEVELDB_TESTPATH = './VerifiableUnitTest'

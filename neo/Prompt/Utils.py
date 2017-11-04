@@ -33,7 +33,6 @@ def get_asset_attachments(params):
     for item in to_remove:
         params.remove(item)
 
-
     return params, neo_to_attach, gas_to_attach
 
 
@@ -49,6 +48,7 @@ def get_asset_id(asset_str):
 
     return assetId
 
+
 def get_asset_amount(amount, assetId):
 
     f8amount = Fixed8.TryParse(amount)
@@ -63,11 +63,11 @@ def get_asset_amount(amount, assetId):
 
 
 def get_withdraw_from_watch_only(wallet, scripthash_from):
-    withdraw_from_watch_only=0
-    #check to see if contract address is in the wallet
+    withdraw_from_watch_only = 0
+    # check to see if contract address is in the wallet
     wallet_contract = wallet.GetContract(scripthash_from)
 
-    #if it is not, check to see if it in the wallet watch_addr
+    # if it is not, check to see if it in the wallet watch_addr
     if wallet_contract is None:
         if scripthash_from in wallet._watch_only:
             withdraw_from_watch_only = CoinState.WatchOnly
@@ -79,6 +79,7 @@ def get_withdraw_from_watch_only(wallet, scripthash_from):
         return None
 
     return withdraw_from_watch_only
+
 
 def get_from_addr(params):
     to_remove = []
@@ -93,17 +94,16 @@ def get_from_addr(params):
     for item in to_remove:
         params.remove(item)
 
-
     return params, from_addr
 
 
 def parse_param(p, ignore_int=False, prefer_hex=True):
 
-#    print("parsing param: %s " % p)
+    #    print("parsing param: %s " % p)
 
-#    pdb.set_trace()
+    #    pdb.set_trace()
 
-    #first, we'll try to parse an array
+    # first, we'll try to parse an array
     try:
         items = eval(p)
         if len(items) > 0 and type(items) is list:
@@ -114,7 +114,7 @@ def parse_param(p, ignore_int=False, prefer_hex=True):
             return parsed
 
     except Exception as e:
-#        print("couldnt eval items as array %s " % e)
+        #        print("couldnt eval items as array %s " % e)
         pass
 
     if not ignore_int:
@@ -144,13 +144,11 @@ def parse_param(p, ignore_int=False, prefer_hex=True):
             return addr
 
         if prefer_hex:
-            return binascii.hexlify( p.encode('utf-8'))
+            return binascii.hexlify(p.encode('utf-8'))
         else:
             return p.encode('utf-8')
 
-
     return p
-
 
 
 def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):

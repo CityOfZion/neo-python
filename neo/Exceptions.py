@@ -9,6 +9,7 @@ Usage:
 
 class WorkIdError(Exception):
     """Work Id Error"""
+
     def __init__(self, info):
         super(Exception, self).__init__(info)
         self.error_code = 0x0002
@@ -16,6 +17,7 @@ class WorkIdError(Exception):
 
 class OutputError(Exception):
     """Output Error"""
+
     def __init__(self, info):
         super(Exception, self).__init__(info)
         self.error_code = 0x0003
@@ -23,6 +25,7 @@ class OutputError(Exception):
 
 class RegisterNameError(Exception):
     """Regiser Transaction Name Error"""
+
     def __init__(self, info):
         super(Exception, self).__init__(info)
         self.error_code = 0x0004

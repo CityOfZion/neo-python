@@ -1,8 +1,9 @@
 
-from .MemoryStream import MemoryStream,StreamManager
+from .MemoryStream import MemoryStream, StreamManager
 from .BinaryReader import BinaryReader
 import importlib
 from neo.Core.TX.Transaction import Transaction
+
 
 class Helper(object):
 

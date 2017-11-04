@@ -1,6 +1,6 @@
 from neo.Core.TX.Transaction import ContractTransaction
-from neo.SmartContract.Contract import Contract,ContractType
-from neo.SmartContract.ContractParameterType import ContractParameterType,ToName
+from neo.SmartContract.Contract import Contract, ContractType
+from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryReader import BinaryReader
@@ -12,15 +12,14 @@ import binascii
 import pdb
 from neo.Core.FunctionCode import FunctionCode
 
-class ContractParamater():
 
+class ContractParamater():
 
     Type = None
     Value = None
 
     def __init__(self, type):
         self.Type = type
-
 
     def ToJson(self):
         jsn = {}
@@ -64,7 +63,6 @@ class ContextItem():
 
 class ContractParametersContext():
 
-
     Verifiable = None
 
     ScriptHashes = None
@@ -79,8 +77,6 @@ class ContractParametersContext():
         self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
         self.ContextItems = {}
         self.IsMultiSig = isMultiSig
-
-
 
     @property
     def Completed(self):
@@ -113,7 +109,6 @@ class ContractParametersContext():
 
         return True
 
-
     def Add(self, contract, index, parameter):
 
         item = self.CreateItem(contract)
@@ -123,13 +118,12 @@ class ContractParametersContext():
 
         return True
 
-
     def CreateItem(self, contract):
 
         if contract.ScriptHash.ToBytes() in self.ContextItems.keys():
-            return self.ContextItems[ contract.ScriptHash.ToBytes()]
+            return self.ContextItems[contract.ScriptHash.ToBytes()]
 
-        if not contract.ScriptHash in self.ScriptHashes:
+        if contract.ScriptHash not in self.ScriptHashes:
             return None
 
         item = ContextItem(contract)
@@ -137,8 +131,6 @@ class ContractParametersContext():
         self.ContextItems[contract.ScriptHash.ToBytes()] = item
 
         return item
-
-
 
     def AddSignature(self, contract, pubkey, signature):
 
@@ -174,7 +166,7 @@ class ContractParametersContext():
                 points.sort(reverse=True)
                 for k in points:
                     if k.decode() in item.Signatures:
-                        if self.Add(contract, i, item.Signatures[k.decode()]) == None:
+                        if self.Add(contract, i, item.Signatures[k.decode()]) is None:
                             raise Exception("Invalid operation")
                         i += 1
                 item.Signatures = None
@@ -187,7 +179,7 @@ class ContractParametersContext():
             for i in range(0, length):
 
                 if contract.ParameterList[i] == ContractParameterType.Signature:
-                    if index >=0:
+                    if index >= 0:
                         raise Exception("Signature must be first")
                     else:
                         index = i
@@ -200,8 +192,6 @@ class ContractParametersContext():
                 return index
         return -1
 
-
-
     def GetParameters(self, script_hash):
         if script_hash.ToBytes() in self.ContextItems.keys():
             return self.ContextItems[script_hash.ToBytes()].Parameters
@@ -211,7 +201,6 @@ class ContractParametersContext():
         if params:
             return params[index]
         return None
-
 
     def GetScripts(self):
 
@@ -242,16 +231,14 @@ class ContractParametersContext():
 #                print("SCRIPT IS %s " % item.Script)
 
             witness = Witness(
-#                invocation_script='40fdb984faf0a400b6894c1ce5b317cf894ba3eb89b899cefda2ac307b278418b943534ad298884f9200dc4b7e1dc244db16c62a44a830a860060ec11d3e6e9717',
+                #                invocation_script='40fdb984faf0a400b6894c1ce5b317cf894ba3eb89b899cefda2ac307b278418b943534ad298884f9200dc4b7e1dc244db16c62a44a830a860060ec11d3e6e9717',
                 invocation_script=sb.ToArray(),
                 verification_script=vscript
             )
 
             scripts.append(witness)
 
-
         return scripts
-
 
     def ToJson(self):
         jsn = {}
@@ -270,7 +257,6 @@ class ContractParametersContext():
             jsn['items'][shkey] = value.ToJson()
 
         return jsn
-
 
     def FromJson(jsn, isMultiSig=True):
         try:
@@ -300,4 +286,3 @@ class ContractParametersContext():
 
         except Exception as e:
             print("Failed to import ContractParametersContext from JSON: {}".format(e))
-

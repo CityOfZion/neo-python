@@ -3,15 +3,16 @@ import traceback
 
 from neo.Core.Blockchain import Blockchain
 from neo.Fixed8 import Fixed8
-from neo.Core.TX.Transaction import TransactionOutput,ContractTransaction
+from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import parse_param,get_arg,get_from_addr
+from neo.Prompt.Utils import parse_param, get_arg, get_from_addr
 from neo.Wallets.Coin import CoinState
 import json
-from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 import pdb
+
 
 def construct_and_send(prompter, wallet, arguments):
     try:
@@ -22,13 +23,11 @@ def construct_and_send(prompter, wallet, arguments):
             print("Not enough arguments")
             return
 
-
         arguments, from_address = get_from_addr(arguments)
 
         to_send = get_arg(arguments)
         address_to = get_arg(arguments, 1)
         amount = get_arg(arguments, 2)
-
 
         assetId = None
 
@@ -87,11 +86,11 @@ def construct_and_send(prompter, wallet, arguments):
         else:
             signer_contract = wallet.GetContract(standard_contract)
 
-        if signer_contract.IsMultiSigContract == False:
+        if not signer_contract.IsMultiSigContract:
 
             data = standard_contract.Data
             tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                               data=data)]
+                                                  data=data)]
 
         context = ContractParametersContext(tx, isMultiSig=signer_contract.IsMultiSigContract)
         wallet.Sign(context)
@@ -99,7 +98,6 @@ def construct_and_send(prompter, wallet, arguments):
         if context.Completed:
 
             tx.scripts = context.GetScripts()
-
 
             wallet.SaveTransaction(tx)
 
@@ -114,13 +112,9 @@ def construct_and_send(prompter, wallet, arguments):
                 print("Could not relay tx %s " % tx.Hash.ToString())
 
         else:
-            print ("Transaction initiated, but the signature is incomplete")
-            print(json.dumps(context.ToJson(), separators=(',',':')))
+            print("Transaction initiated, but the signature is incomplete")
+            print(json.dumps(context.ToJson(), separators=(',', ':')))
             return
-
-
-
-
 
     except Exception as e:
         print("could not send: %s " % e)
@@ -134,8 +128,8 @@ def construct_contract_withdrawal(prompter, wallet, arguments):
         print("not enough arguments")
         return False
 
-    from_address = get_arg(arguments,0)
-    to_send = get_arg(arguments,1)
+    from_address = get_arg(arguments, 0)
+    to_send = get_arg(arguments, 1)
     to_address = get_arg(arguments, 2)
     amount = get_arg(arguments, 3)
 
@@ -164,12 +158,11 @@ def construct_contract_withdrawal(prompter, wallet, arguments):
         print("incorrect amount precision")
         return False
 
-
-    withdraw_from_watch_only=0
-    #check to see if contract address is in the wallet
+    withdraw_from_watch_only = 0
+    # check to see if contract address is in the wallet
     wallet_contract = wallet.GetContract(scripthash_from)
 
-    #if it is not, check to see if it in the wallet watch_addr
+    # if it is not, check to see if it in the wallet watch_addr
     if wallet_contract is None:
         if scripthash_from in wallet._watch_only:
             print("found contract in watch only")
@@ -186,7 +179,7 @@ def construct_contract_withdrawal(prompter, wallet, arguments):
     withdraw_tx = InvocationTransaction(outputs=[output])
     withdraw_constructed_tx = wallet.MakeTransaction(tx=withdraw_tx,
                                                      change_address=None,
-                                                     fee=  Fixed8.FromDecimal(.001),
+                                                     fee=Fixed8.FromDecimal(.001),
                                                      from_addr=scripthash_from,
                                                      use_standard=False,
                                                      watch_only_val=withdraw_from_watch_only)
@@ -214,7 +207,7 @@ def parse_and_sign(prompter, wallet, jsn):
 
             wallet.SaveTransaction(tx)
 
-            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
+            print("will send tx: %s " % json.dumps(tx.ToJson(), indent=4))
 
             relayed = NodeLeader.Instance().Relay(tx)
 
@@ -224,8 +217,8 @@ def parse_and_sign(prompter, wallet, jsn):
                 print("Could not relay tx %s " % tx.Hash.ToString())
             return
         else:
-            print ("Transaction initiated, but the signature is incomplete")
-            print(json.dumps(context.ToJson(), separators=(',',':')))
+            print("Transaction initiated, but the signature is incomplete")
+            print(json.dumps(context.ToJson(), separators=(',', ':')))
             return
 
     except Exception as e:
