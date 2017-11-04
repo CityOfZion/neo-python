@@ -46,7 +46,6 @@ def ImportToken(wallet, contract_hash):
 
         if result:
 
-
             wallet.AddNEP5Token(token)
             print("added token %s " % json.dumps(token.ToJson(), indent=4))
 

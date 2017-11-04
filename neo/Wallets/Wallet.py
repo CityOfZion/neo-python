@@ -15,6 +15,7 @@ from neo.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
 from neo.Wallets.KeyPair import KeyPair
+from neo.Wallets.NEP5Token import NEP5Token
 from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Fixed8 import Fixed8
@@ -28,6 +29,7 @@ import hashlib
 import traceback
 from Crypto import Random
 from Crypto.Cipher import AES
+from decimal import Decimal
 
 
 @logged
@@ -301,13 +303,25 @@ class Wallet(object):
     def GetAvailable(self, asset_id):
         raise NotImplementedError()
 
+    def GetTokenBalance(self, token, watch_only=0):
+        total = Decimal(0)
 
-    def GetNEP5TokenBalance(self, token, address):
-        balance = token.GetBalance(self, address)
-        return balance
+        if watch_only > 0:
+            for addr in self._watch_only:
+                balance = token.GetBalance(self, addr)
+                total += balance
+        else:
+            for contract in self._contracts.values():
+                balance = token.GetBalance(self, contract.Address)
+                total += balance
+        return total
 
     def GetBalance(self, asset_id, watch_only=0):
         total = Fixed8(0)
+
+        if type(asset_id) is NEP5Token:
+            return self.GetTokenBalance(asset_id, watch_only)
+
         for coin in self.GetCoins():
             if coin.Output.AssetId == asset_id:
                 if coin.State & CoinState.Confirmed > 0 and \

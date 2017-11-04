@@ -368,14 +368,13 @@ class UserWallet(Wallet):
 
         return result
 
-
     def TokenBalancesForAddress(self, address):
         if len(self._tokens):
             jsn = []
             tokens = list(self._tokens.values())
             for t in tokens:
                 jsn.append(
-                        '[%s] %s : %s' %  (t.ScriptHash.ToString(),t.symbol,t.GetBalance(self,address,as_string=True))
+                    '[%s] %s : %s' % (t.ScriptHash.ToString(), t.symbol, t.GetBalance(self, address, as_string=True))
                 )
             return jsn
 
@@ -423,11 +422,11 @@ class UserWallet(Wallet):
 
         return True, coins_toremove
 
-
     def ToJson(self, verbose=False):
 
         assets = self.GetCoinAssets()
         tokens = list(self._tokens.values())
+        assets = assets + tokens
 
         if Blockchain.Default().Height == 0:
             percent_synced = 0
@@ -464,10 +463,9 @@ class UserWallet(Wallet):
                 watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
                 balances.append("[%s]: %s " % (bc_asset.GetName(), total))
                 watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
-#            elif type(asset) is WalletNEP5Token:
-#                balance=0
-#                balances.append("[%s]: %s " % (asset.symbol, 0))
-#                watch_balances.append("[%s]: %s " % (asset.symbol, 0))
+            elif type(asset) is WalletNEP5Token:
+                balances.append("[%s]: %s " % (asset.symbol, self.GetBalance(asset)))
+                watch_balances.append("[%s]: %s " % (asset.symbol, self.GetBalance(asset, True)))
 
         tokens = []
         for t in self._tokens.values():
