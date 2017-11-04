@@ -96,7 +96,7 @@ class SettingsHolder:
             data = json.load(data_file)
 
         data["theme"] = theme_name
-        with open(self.config_file, "w") as data_file:
+        with open('preferences.json', "w") as data_file:
             data_file.write(json.dumps(data, indent=4, sort_keys=True))
 
         self.token_style = data['themes'][theme_name]
