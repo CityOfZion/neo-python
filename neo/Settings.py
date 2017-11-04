@@ -78,15 +78,10 @@ class SettingsHolder:
 
         self.config_file = config_file
 
-        try:
-            self.token_style = config['themes'][config['theme']]
-        except Exception as e:
-            self.token_style = {
-                "Command": "#ff0066",
-                "Default": "#00ee00",
-                "Neo": "#0000ee",
-                "Number": "#ffffff"
-            }
+        with open('preferences.json') as data_file:
+            prefs = json.load(data_file)
+
+        self.token_style = prefs['themes'][prefs['theme']]
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
@@ -97,14 +92,14 @@ class SettingsHolder:
         self.setup('protocol.testnet.json')
 
     def set_theme(self, theme_name):
-        with open(self.config_file) as data_file:
+        with open('preferences.json') as data_file:
             data = json.load(data_file)
 
-        data["ApplicationConfiguration"]["theme"] = theme_name
+        data["theme"] = theme_name
         with open(self.config_file, "w") as data_file:
             data_file.write(json.dumps(data, indent=4, sort_keys=True))
 
-        self.token_style = data['ApplicationConfiguration']['themes'][theme_name]
+        self.token_style = data['themes'][theme_name]
 
 
 # Settings instance used by external modules
