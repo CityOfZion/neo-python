@@ -36,7 +36,6 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
     def wallet_2_pass(cls):
         return 'testwallet'
 
-
     @classmethod
     def new_wallet_dest(cls):
         return './newwallet.db3'
@@ -67,6 +66,7 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
         try:
             os.remove(cls.wallet_1_dest())
             os.remove(cls.wallet_2_dest())
-            os.remove(cls.new_wallet_dest())
+            if os.path.exists(cls.new_wallet_dest()):
+                os.remove(cls.new_wallet_dest())
         except Exception as e:
             print("couldn't remove wallets %s " % e)

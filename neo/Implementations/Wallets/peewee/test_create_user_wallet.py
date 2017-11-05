@@ -7,6 +7,7 @@ from neo.Wallets.KeyPair import KeyPair
 import json
 from sqlite3 import OperationalError
 
+
 class UserWalletTestCase(WalletFixtureTestCase):
 
     wallet_1_script_hash = UInt160(data=b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)')
@@ -28,10 +29,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
-            print("RECREATING GET WALLET!")
             cls._wallet1 = UserWallet.Create(UserWalletTestCase.new_wallet_dest(), 'awesomepassword')
         return cls._wallet1
-
 
     def test_1_initial_setup(self):
 
@@ -42,7 +41,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         addr = jsn['addresses'][0]
 
         self.assertEqual(len(jsn['addresses']), 1)
-
 
     def test_3_import_wif(self):
 
@@ -59,11 +57,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertEqual(len(wallet.GetContracts()), 2)
 
-
     def test_4_delete_addr(self):
 
         wallet = self.GetWallet1()
-
 
         self.assertEqual(len(wallet.GetContracts()), 2)
 
@@ -72,7 +68,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet.DeleteAddress(imported_addr)
 
         self.assertEqual(len(wallet.GetContracts()), 1)
-
 
     def test_5_addr_conv(self):
 
@@ -85,7 +80,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertEqual(to_uint, addr)
 
-
     def test_6_standard_addr(self):
 
         wallet = self.GetWallet1()
@@ -94,11 +88,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertIsInstance(addr, UInt160)
 
-
         default = wallet.GetDefaultContract()
 
         self.assertEqual(default.ScriptHash, addr)
-
 
     def test_7_change_password(self):
 
@@ -108,7 +100,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertIsNotNone(wallet)
 
-
     def test_8_create_bad_path(self):
 
-        self.assertRaises(Exception, UserWallet.Create, './path/to/nonexistent/wallet.db3','blah')
+        self.assertRaises(Exception, UserWallet.Create, './path/to/nonexistent/wallet.db3', 'blah')

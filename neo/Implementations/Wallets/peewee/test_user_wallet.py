@@ -4,7 +4,9 @@ from neo.Core.Blockchain import Blockchain
 from neo.UInt160 import UInt160
 from neo.Fixed8 import Fixed8
 from neo.Wallets.KeyPair import KeyPair
+from neo.Wallets.NEP5Token import NEP5Token
 import json
+import binascii
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -55,7 +57,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertEqual(balance_should_be, neo_balance)
 
-
         self.assertEqual(wallet.WalletHeight, 743131)
 
     def test_2_transactions(self):
@@ -88,11 +89,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertTrue(found)
 
-
         # now add it again
 
         self.assertRaises(Exception, wallet.AddWatchOnly, self.import_watch_addr)
-
 
     def test_4_get_change_address(self):
 
@@ -132,4 +131,20 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
 #        self.assertTrue( wallet.ContainsKey(keypair.PublicKey))
 
+    def test_7_import_token(self):
 
+        wallet = self.GetWallet1()
+
+        token_hash = b'f8d448b227991cf07cb96a6f9c0322437f1599b9'
+        contract = Blockchain.Default().GetContract(token_hash)
+
+        token = NEP5Token(binascii.hexlify(contract.Code.Script))
+        token.Query(wallet)
+
+        self.assertEqual(token.name, 'NEP5 Standard')
+        self.assertEqual(token.decimals, 8)
+        self.assertEqual(token.symbol, 'NEP5')
+
+        wallet.AddNEP5Token(token)
+
+        self.assertEqual(len(wallet.GetTokens()), 1)
