@@ -8,8 +8,9 @@ import os
 import argparse
 import resource
 import traceback
-from neo.IO.MemoryStream import StreamManager
 
+from neo import __version__
+from neo.IO.MemoryStream import StreamManager
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
@@ -26,7 +27,6 @@ from neo.Prompt.Notify import SubscribeNotifications
 from neo.Settings import settings
 from neo.Fixed8 import Fixed8
 
-
 from twisted.internet import reactor, task
 
 from autologging import logged
@@ -37,6 +37,7 @@ from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
+
 
 debug_logname = 'prompt.log'
 
@@ -813,6 +814,8 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
     parser.add_argument("-t", "--set-default-theme", dest="theme",
                         choices=["dark", "light"], help="Set the default theme to be loaded from the config file. Default: 'dark'")
+    parser.add_argument('--version', action='version',
+                        version='neo-python v{version}'.format(version=__version__))
     args = parser.parse_args()
 
     if args.mainnet and args.config:
