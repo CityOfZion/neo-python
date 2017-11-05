@@ -38,6 +38,8 @@ from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
 
+__version__ = '0.3.1'
+
 debug_logname = 'prompt.log'
 
 logging.basicConfig(
@@ -813,6 +815,8 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
     parser.add_argument("-t", "--set-default-theme", dest="theme",
                         choices=["dark", "light"], help="Set the default theme to be loaded from the config file. Default: 'dark'")
+    parser.add_argument('--version', action='version',
+                        version='neo-python v{version}'.format(version=__version__))
     args = parser.parse_args()
 
     if args.mainnet and args.config:
