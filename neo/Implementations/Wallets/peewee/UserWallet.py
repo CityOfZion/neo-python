@@ -3,28 +3,27 @@
 from neo.Wallets.Wallet import Wallet
 from neo.Wallets.Coin import Coin as WalletCoin
 from neo.SmartContract.Contract import Contract as WalletContract
-from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.Transaction import Transaction as CoreTransaction
-
+from neo.Core.State.AssetState import AssetState
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
+from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
 from Crypto import Random
 from neo.Cryptography.Crypto import Crypto
-import os
 from neo.UInt160 import UInt160
 import binascii
-import pdb
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 
 from .PWDatabase import PWDatabase
 
-from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, Contract, Key, Transaction, \
-    TransactionInfo
+from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
+    Contract, Key, Transaction, \
+    TransactionInfo, NEP5Token
 
 from autologging import logged
 import json
@@ -49,7 +48,7 @@ class UserWallet(Wallet):
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
         try:
-            db.create_tables([Account, Address, Coin, Contract, Key, Transaction, TransactionInfo, ], safe=True)
+            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, Transaction, TransactionInfo, ], safe=True)
         except Exception as e:
             print("Couldnt build database %s " % e)
             self.__log.debug("couldnt build database %s " % e)
@@ -163,6 +162,25 @@ class UserWallet(Wallet):
         else:
             raise Exception("Address already exists in wallet")
 
+    def AddNEP5Token(self, token):
+
+        super(UserWallet, self).AddNEP5Token(token)
+
+        try:
+            db_token = NEP5Token.get(ContractHash=token.ScriptHash.ToBytes())
+            db_token.delete_instance()
+        except Exception as e:
+            pass
+
+        db_token = NEP5Token.create(
+            ContractHash=token.ScriptHash.ToBytes(),
+            Name=token.name,
+            Symbol=token.symbol,
+            Decimals=token.decimals
+        )
+        db_token.save()
+        return True
+
     def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
         return super(UserWallet, self).FindUnspentCoins(from_addr, use_standard, watch_only_val=watch_only_val)
 
@@ -230,6 +248,15 @@ class UserWallet(Wallet):
             keypairs[acct.PublicKeyHash.ToBytes()] = acct
 
         return keypairs
+
+    def LoadNEP5Tokens(self):
+        tokens = {}
+
+        for db_token in NEP5Token.select():
+            token = WalletNEP5Token.FromDBInstance(db_token)
+            tokens[token.ScriptHash.ToBytes()] = token
+
+        return tokens
 
     def LoadStoredData(self, key):
         self.__log.debug("Looking for key %s " % key)
@@ -341,6 +368,18 @@ class UserWallet(Wallet):
 
         return result
 
+    def TokenBalancesForAddress(self, address):
+        if len(self._tokens):
+            jsn = []
+            tokens = list(self._tokens.values())
+            for t in tokens:
+                jsn.append(
+                    '[%s] %s : %s' % (t.ScriptHash.ToString(), t.symbol, t.GetBalance(self, address, as_string=True))
+                )
+            return jsn
+
+        return None
+
     def PubKeys(self):
         keys = self.LoadKeyPairs()
         jsn = []
@@ -386,6 +425,9 @@ class UserWallet(Wallet):
     def ToJson(self, verbose=False):
 
         assets = self.GetCoinAssets()
+        tokens = list(self._tokens.values())
+        assets = assets + tokens
+
         if Blockchain.Default().Height == 0:
             percent_synced = 0
         else:
@@ -400,10 +442,13 @@ class UserWallet(Wallet):
             print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
             acct = Blockchain.Default().GetAccountState(addr_str)
+            token_balances = self.TokenBalancesForAddress(addr_str)
             if acct:
                 json = acct.ToJson()
                 json['is_watch_only'] = addr.IsWatchOnly
                 addresses.append(json)
+                if token_balances:
+                    json['tokens'] = token_balances
                 if addr.IsWatchOnly:
                     has_watch_addr = True
             else:
@@ -412,11 +457,19 @@ class UserWallet(Wallet):
         balances = []
         watch_balances = []
         for asset in assets:
-            bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
-            total = self.GetBalance(asset).value / Fixed8.D
-            watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
-            balances.append("[%s]: %s " % (bc_asset.GetName(), total))
-            watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
+            if type(asset) is UInt256:
+                bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
+                total = self.GetBalance(asset).value / Fixed8.D
+                watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
+                balances.append("[%s]: %s " % (bc_asset.GetName(), total))
+                watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
+            elif type(asset) is WalletNEP5Token:
+                balances.append("[%s]: %s " % (asset.symbol, self.GetBalance(asset)))
+                watch_balances.append("[%s]: %s " % (asset.symbol, self.GetBalance(asset, True)))
+
+        tokens = []
+        for t in self._tokens.values():
+            tokens.append(t.ToJson())
 
         jsn['addresses'] = addresses
         jsn['height'] = self._current_height
@@ -427,7 +480,7 @@ class UserWallet(Wallet):
             jsn['synced_watch_only_balances'] = watch_balances
 
         jsn['public_keys'] = self.PubKeys()
-
+        jsn['tokens'] = tokens
         if verbose:
             jsn['coins'] = [coin.ToJson() for coin in self.FindUnspentCoins()]
             jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
