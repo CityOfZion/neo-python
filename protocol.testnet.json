@@ -9,7 +9,7 @@
         ],
         "VersionName": "/NEO-PYTHON:2.3.4/",
         "WsPort": 20334,
-        "theme": "light",
+        "theme": "dark",
         "themes": {
             "dark": {
                 "Command": "#ff0066",

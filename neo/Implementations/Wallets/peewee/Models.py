@@ -42,8 +42,15 @@ class Contract(ModelBase):
 
 class Key(ModelBase):
     Id = PrimaryKeyField()
-    Name = CharField(unique=True, )
+    Name = CharField(unique=True)
     Value = CharField()
+
+
+class NEP5Token(ModelBase):
+    ContractHash = CharField(unique=True)
+    Name = CharField()
+    Symbol = CharField()
+    Decimals = IntegerField()
 
 
 class Transaction(ModelBase):
