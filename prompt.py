@@ -411,7 +411,7 @@ class PromptInterface(object):
         elif item == 'tkn_approve':
             token_approve_allowance(self.Wallet, arguments[1:])
         elif item == 'tkn_allowance':
-            token_get_allowance(self.Wallet, arguments[1:])
+            token_get_allowance(self.Wallet, arguments[1:], verbose=True)
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)

@@ -106,7 +106,7 @@ class ScriptBuilder(object):
             elif data > 0 and data <= 16:
                 return self.add(int.from_bytes(PUSH1, 'little') - 1 + data)
             else:
-                return self.push( binascii.hexlify( data.ToByteArray()))
+                return self.push(binascii.hexlify(data.ToByteArray()))
         else:
             if not type(data) == bytearray:
                 buf = binascii.unhexlify(data)
