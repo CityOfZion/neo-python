@@ -822,7 +822,7 @@ class PromptInterface(object):
                     traceback.print_exc()
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
                         help="use MainNet instead of the default TestNet")
@@ -837,14 +837,14 @@ if __name__ == "__main__":
         print("Cannot use bot --config and --mainnet parameters, please use only one.")
         exit(1)
 
-    if args.theme:
-        settings.set_theme(args.theme)
-
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
         settings.setup(args.config)
     elif args.mainnet:
         settings.setup_mainnet()
+
+    if args.theme:
+        settings.set_theme(args.theme)
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
@@ -859,3 +859,7 @@ if __name__ == "__main__":
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
     reactor.run()
+
+
+if __name__ == "__main__":
+    main()

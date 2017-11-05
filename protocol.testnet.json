@@ -8,22 +8,7 @@
             "http://*:20332"
         ],
         "VersionName": "/NEO-PYTHON:2.3.4/",
-        "WsPort": 20334,
-        "theme": "dark",
-        "themes": {
-            "dark": {
-                "Command": "#ff0066",
-                "Default": "#00ee00",
-                "Neo": "#0000ee",
-                "Number": "#ffffff"
-            },
-            "light": {
-                "Command": "#ff0066",
-                "Default": "#008800",
-                "Neo": "#0000ee",
-                "Number": "#000000"
-            }
-        }
+        "WsPort": 20334
     },
     "ProtocolConfiguration": {
         "AddressVersion": 23,
