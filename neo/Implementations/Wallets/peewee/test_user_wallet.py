@@ -25,10 +25,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def NEO(self):
         return Blockchain.Default().SystemShare().Hash
 
-    def GetWallet1(self, recreate=False):
-        if self._wallet1 is None or recreate:
-            self._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), UserWalletTestCase.wallet_1_pass())
-        return self._wallet1
+    @classmethod
+    def GetWallet1(cls, recreate=False):
+        if cls._wallet1 is None or recreate:
+            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), UserWalletTestCase.wallet_1_pass())
+        return cls._wallet1
 
     def test_0_bad_password(self):
 

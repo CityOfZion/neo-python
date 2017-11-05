@@ -159,7 +159,7 @@ class Wallet(object):
 
         if isinstance(password_new, str):
             password_new = password_new.encode('utf-8')
-            
+
         password_key = hashlib.sha256(password_new)
         self.SaveStoredData("PasswordHash", password_key)
         self.SaveStoredData("MasterKey", AES.new(self._master_key, AES.MODE_CBC, self._iv))
