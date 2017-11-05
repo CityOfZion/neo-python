@@ -54,6 +54,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertEqual(balance_should_be, neo_balance)
 
+
+        self.assertEqual(wallet.WalletHeight, 743131)
+
     def test_2_transactions(self):
 
         wallet = self.GetWallet1()
@@ -83,6 +86,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 found = True
 
         self.assertTrue(found)
+
+
+        # now add it again
+
+        self.assertRaises(Exception, wallet.AddWatchOnly, self.import_watch_addr)
+
 
     def test_4_get_change_address(self):
 
@@ -118,3 +127,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
         key_out = keypair.PublicKey.encode_point(True).decode('utf-8')
 
         self.assertEqual(key_out, '03f3a3b5a4d873933fc7f4b53113e8eb999fb20038271fbbb10255585670c3c312')
+
+
+#        self.assertTrue( wallet.ContainsKey(keypair.PublicKey))
+
+
