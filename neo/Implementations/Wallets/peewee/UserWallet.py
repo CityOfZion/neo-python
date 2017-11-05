@@ -316,10 +316,12 @@ class UserWallet(Wallet):
 
         # @TODO more stuff dealiing with transactions here...
 
-    def OnCoinsChanged(self, added, changed, deleted):
+    def OnSaveTransaction(self, tx, added, changed, deleted):
 
-        if len(added) > 0 or len(changed) > 0 or len(deleted) > 0:
-            pass
+        print("on save transaction!")
+        self.OnCoinsChanged(added, changed, deleted)
+
+    def OnCoinsChanged(self, added, changed, deleted):
 
         for coin in added:
             addr_hash = bytes(coin.Output.ScriptHash.Data)
@@ -358,6 +360,7 @@ class UserWallet(Wallet):
             except Exception as e:
                 print("Couldnt delete coin %s %s " % (e, coin))
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
+
 
     @property
     def Addresses(self):

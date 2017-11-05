@@ -10,6 +10,7 @@ from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
+from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Cryptography.Helper import *
 from neo.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
@@ -456,6 +457,10 @@ class Wallet(object):
         # abstract
         pass
 
+    def OnSaveTransaction(self, tx, added, changed, deleted):
+        # abstract
+        pass
+
     def BalanceChanged(self):
         # abstract
         pass
@@ -651,11 +656,52 @@ class Wallet(object):
         return tx
 
     def SaveTransaction(self, tx):
-        # this is not currently implemented
-        # instead, we just wait to relay to network
-        # and then when the network verifies, it comes back
-        # and flows into the wallet that way
-        pass
+
+        coins = self.GetCoins()
+        changed = []
+        added = []
+        deleted = []
+        for input in tx.inputs:
+            coin = None
+            index = coins.index(input)
+            if index < 0:
+                print("tx input not in coins")
+                return False
+            coin = coins[index]
+            if coin.State & CoinState.Spent > 0:
+                print("coin state is already spent")
+                return False
+            elif coin.State & CoinState.Confirmed > 0:
+                print("coin state already confirmed!")
+                return False
+
+            coin.State |= CoinState.Spent
+            coin.State &= ~CoinState.Confirmed
+
+            changed.append(coin)
+
+
+        for index,output in enumerate(tx.outputs):
+
+            state = self.CheckAddressState(output.ScriptHash)
+
+            key = CoinReference(tx.Hash, index)
+
+            if state & AddressState.InWallet > 0:
+                newcoin = Coin.CoinFromRef(coin_ref=key, tx_output=output, state=CoinState.Unconfirmed)
+                self._coins[key] = newcoin
+
+                if state & AddressState.WatchOnly > 0:
+                    newcoin.State |= CoinState.WatchOnly
+
+                added.append(newcoin)
+
+        if isinstance(tx, ClaimTransaction):
+            # do claim stuff
+            pass
+
+        return self.OnSaveTransaction(tx, added, changed, deleted)
+
 
     def Sign(self, context):
         success = False
