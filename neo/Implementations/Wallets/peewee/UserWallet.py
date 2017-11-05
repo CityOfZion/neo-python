@@ -314,8 +314,6 @@ class UserWallet(Wallet):
 
         self.OnCoinsChanged(added, changed, deleted)
 
-        # @TODO more stuff dealiing with transactions here...
-
     def OnSaveTransaction(self, tx, added, changed, deleted):
 
         self.OnCoinsChanged(added, changed, deleted)
@@ -359,7 +357,6 @@ class UserWallet(Wallet):
             except Exception as e:
                 print("Couldnt delete coin %s %s " % (e, coin))
                 self.__log.debug("could not delete coin %s %s " % (coin, e))
-
 
     @property
     def Addresses(self):
@@ -441,7 +438,7 @@ class UserWallet(Wallet):
         addresses = []
         has_watch_addr = False
         for addr in Address.select():
-            print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
+            #            print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
             acct = Blockchain.Default().GetAccountState(addr_str)
             token_balances = self.TokenBalancesForAddress(addr_str)

@@ -722,4 +722,5 @@ class LevelDBBlockchain(Blockchain):
                 self.__log.debug("COULD NOT PERSIST OR ON PERSIST COMPLETE %s " % e)
 
     def Dispose(self):
+        self._db.close()
         self._disposed = True

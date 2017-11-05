@@ -685,8 +685,7 @@ class Wallet(object):
 
             changed.append(coin)
 
-
-        for index,output in enumerate(tx.outputs):
+        for index, output in enumerate(tx.outputs):
 
             state = self.CheckAddressState(output.ScriptHash)
 

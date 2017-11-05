@@ -94,6 +94,7 @@ def token_approve_allowance(wallet, args, prompt_passwd=True):
     print("could not transfer tokens")
     return False
 
+
 def token_get_allowance(wallet, args, verbose=False):
 
     if len(args) != 3:
@@ -146,6 +147,7 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
 
     print("could not transfer tokens")
     return False
+
 
 def amount_from_string(token, amount_str):
 

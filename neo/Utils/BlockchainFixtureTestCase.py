@@ -7,57 +7,58 @@ import tarfile
 import requests
 import os
 from autologging import logged
+import shutil
+import time
 
 
 @logged
 class BlockchainFixtureTestCase(NeoTestCase):
 
-    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures.tar.gz'
-    FIXTURE_FILENAME = './Chains/fixtures.tar.gz'
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v2.tar.gz'
+    FIXTURE_FILENAME = './Chains/fixtures_v2.tar.gz'
     _blockchain = None
 
     @classmethod
-    def leveldb_testpath(self):
+    def leveldb_testpath(cls):
         return 'Override Me!'
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
 
-        super(BlockchainFixtureTestCase, self).setUpClass()
+        Blockchain.DeregisterBlockchain()
 
-        if os.path.exists(self.FIXTURE_FILENAME):
-            self.__log.debug("fixtures already downloaded")
+        super(BlockchainFixtureTestCase, cls).setUpClass()
 
-        else:
+        if not os.path.exists(cls.FIXTURE_FILENAME):
 
-            self.__log.debug("downloading fixture block database. this may take a while")
+            print("downloading fixture block database. this may take a while")
 
-            response = requests.get(self.FIXTURE_REMOTE_LOC, stream=True)
+            response = requests.get(cls.FIXTURE_REMOTE_LOC, stream=True)
 
             response.raise_for_status()
-            with open(self.FIXTURE_FILENAME, 'wb+') as handle:
+            with open(cls.FIXTURE_FILENAME, 'wb+') as handle:
                 for block in response.iter_content(1024):
                     handle.write(block)
 
-        self.__log.debug("opening tar file")
         try:
-            tar = tarfile.open(self.FIXTURE_FILENAME)
+            tar = tarfile.open(cls.FIXTURE_FILENAME)
             tar.extractall()
             tar.close()
-            self.__log.debug("extracted tar file")
         except Exception as e:
-            self.__log.debug("Could not extract tar file %s " % e)
+            print("Could not extract tar file %s " % e)
 
-        if os.path.exists(self.leveldb_testpath()):
-            self.__log.debug('loading blockchain')
-            self._blockchain = TestLevelDBBlockchain(path=self.leveldb_testpath())
-            Blockchain.RegisterBlockchain(self._blockchain)
-            self.__log.debug("Starting Tests")
+        if os.path.exists(cls.leveldb_testpath()):
+            cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath())
+
+            Blockchain.RegisterBlockchain(cls._blockchain)
         else:
-            self.__log.debug("Error downloading fixtures")
+            print("Error downloading fixtures")
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
+
         Blockchain.Default().DeregisterBlockchain()
-        if self._blockchain is not None:
-            self._blockchain.Dispose()
+        if cls._blockchain is not None:
+            cls._blockchain.Dispose()
+
+        shutil.rmtree(cls.leveldb_testpath())
