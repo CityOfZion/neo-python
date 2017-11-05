@@ -661,18 +661,23 @@ class Wallet(object):
         changed = []
         added = []
         deleted = []
+        found_coin = False
         for input in tx.inputs:
             coin = None
-            index = coins.index(input)
-            if index < 0:
+
+            for coinref in coins:
+                test_coin = coinref.Reference
+                if test_coin == input:
+                    coin = coinref
+
+            if coin is None:
                 print("tx input not in coins")
                 return False
-            coin = coins[index]
             if coin.State & CoinState.Spent > 0:
                 print("coin state is already spent")
                 return False
-            elif coin.State & CoinState.Confirmed > 0:
-                print("coin state already confirmed!")
+            elif coin.State & CoinState.Confirmed == 0:
+                print("coin state not confirmed!")
                 return False
 
             coin.State |= CoinState.Spent
@@ -700,8 +705,9 @@ class Wallet(object):
             # do claim stuff
             pass
 
-        return self.OnSaveTransaction(tx, added, changed, deleted)
+        self.OnSaveTransaction(tx, added, changed, deleted)
 
+        return True
 
     def Sign(self, context):
         success = False

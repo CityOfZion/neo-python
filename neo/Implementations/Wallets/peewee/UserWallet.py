@@ -318,7 +318,6 @@ class UserWallet(Wallet):
 
     def OnSaveTransaction(self, tx, added, changed, deleted):
 
-        print("on save transaction!")
         self.OnCoinsChanged(added, changed, deleted)
 
     def OnCoinsChanged(self, added, changed, deleted):

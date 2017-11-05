@@ -111,9 +111,15 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
             wallet_tx.scripts = context.GetScripts()
 
-            wallet.SaveTransaction(wallet_tx)
+            relayed = False
 
-            relayed = NodeLeader.Instance().Relay(wallet_tx)
+            # check if we can save the tx first
+            save_tx = wallet.SaveTransaction(wallet_tx)
+
+            if save_tx:
+                relayed = NodeLeader.Instance().Relay(wallet_tx)
+            else:
+                print("Could not save tx to wallet, will not send tx")
 
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())
