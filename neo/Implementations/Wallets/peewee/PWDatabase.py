@@ -1,11 +1,8 @@
-
 from peewee import *
-from neo.Defaults import PEEWEE_DB
 import logging
 
 logger = logging.getLogger('peewee')
 logger.setLevel(logging.ERROR)
-# logger.addHandler(logging.StreamHandler())
 
 
 class PWDatabase(object):
@@ -19,7 +16,7 @@ class PWDatabase(object):
         return PWDatabase.__proxy
 
     __instance__ = None
-    __dbpath__ = PEEWEE_DB
+    __dbpath__ = 'accounts.db3'
 
     _db = None
 

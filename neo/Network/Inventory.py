@@ -9,10 +9,6 @@ Usage:
 from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryWriter import BinaryWriter
 
-from neo.Cryptography.Helper import *
-from neo.Helper import *
-from bitcoin import *
-import binascii
 
 
 class Inventory(object):
@@ -21,11 +17,6 @@ class Inventory(object):
     def __init__(self):
         super(Inventory, self).__init__()
         self.hash = None
-
-    def EnsureHash(self):
-        self.hash = big_or_little(binascii.hexlify(
-            bin_dbl_sha256(binascii.unhexlify(self.GetHashData()))))
-        return self.hash
 
     def GetHashData(self):
         ms = MemoryStream()

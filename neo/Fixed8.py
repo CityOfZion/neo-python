@@ -7,9 +7,6 @@ Usage:
 """
 
 
-from decimal import Decimal as D
-from neo.Helper import big_or_little
-
 
 class Fixed8:
 
