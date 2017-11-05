@@ -1,17 +1,19 @@
-from prompt_toolkit import prompt
-import traceback
-
 from neo.Core.Blockchain import Blockchain
-from neo.Fixed8 import Fixed8
 from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import parse_param, get_arg, get_from_addr
+from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id
+from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Wallets.Coin import CoinState
+from neo.Wallets.NEP5Token import NEP5Token
+from neo.UInt256 import UInt256
+from neo.Fixed8 import Fixed8
+
 import json
-from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
-import pdb
+from prompt_toolkit import prompt
+import traceback
 
 
 def construct_and_send(prompter, wallet, arguments):
@@ -29,14 +31,7 @@ def construct_and_send(prompter, wallet, arguments):
         address_to = get_arg(arguments, 1)
         amount = get_arg(arguments, 2)
 
-        assetId = None
-
-        if to_send.lower() == 'neo':
-            assetId = Blockchain.Default().SystemShare().Hash
-        elif to_send.lower() == 'gas':
-            assetId = Blockchain.Default().SystemCoin().Hash
-        elif Blockchain.Default().GetAssetState(to_send):
-            assetId = Blockchain.Default().GetAssetState(to_send).AssetId
+        assetId = get_asset_id(wallet, to_send)
 
         scripthash_to = wallet.ToScriptHash(address_to)
         if scripthash_to is None:
@@ -48,18 +43,21 @@ def construct_and_send(prompter, wallet, arguments):
         if from_address is not None:
             scripthash_from = wallet.ToScriptHash(from_address)
 
+        # if this is a token, we will use a different
+        # transfer mechanism
+        if type(assetId) is NEP5Token:
+            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount))
+
         f8amount = Fixed8.TryParse(amount)
         if f8amount is None:
             print("invalid amount format")
             return
 
-        if f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
+        if type(assetId) is UInt256 and f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
             print("incorrect amount precision")
             return
 
         fee = Fixed8.Zero()
-        if get_arg(arguments, 3):
-            fee = Fixed8.TryParse(get_arg(arguments, 3))
 
         output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         tx = ContractTransaction(outputs=[output])
@@ -133,14 +131,7 @@ def construct_contract_withdrawal(prompter, wallet, arguments):
     to_address = get_arg(arguments, 2)
     amount = get_arg(arguments, 3)
 
-    assetId = None
-
-    if to_send.lower() == 'neo':
-        assetId = Blockchain.Default().SystemShare().Hash
-    elif to_send.lower() == 'gas':
-        assetId = Blockchain.Default().SystemCoin().Hash
-    elif Blockchain.Default().GetAssetState(to_send):
-        assetId = Blockchain.Default().GetAssetState(to_send).AssetId
+    assetId = get_asset_id(wallet, to_send)
 
     scripthash_to = wallet.ToScriptHash(to_address)
     if scripthash_to is None:
