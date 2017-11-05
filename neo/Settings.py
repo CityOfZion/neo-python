@@ -122,9 +122,6 @@ class SettingsHolder:
             data_file.write(json.dumps(data, indent=4, sort_keys=True))
 
     def set_theme(self, theme_name):
-        if not os.path.isfile(self.prefs_file_name):
-            self.restore_theme_preferences()
-
         data = self._load_preferences()
         data["theme"] = theme_name
         with open(self.prefs_file_name, "w") as data_file:
@@ -133,6 +130,10 @@ class SettingsHolder:
         self.token_style = data['themes'][theme_name]
 
     def _load_preferences(self):
+        if not os.path.isfile(self.prefs_file_name):
+            self.logger.info("{} not found".format(self.prefs_file_name))
+            sys.exit(-1)
+
         with open(self.prefs_file_name) as data_file:
             try:
                 prefs = json.load(data_file)
