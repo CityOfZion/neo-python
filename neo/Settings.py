@@ -4,6 +4,10 @@ By default these are the testnet settings, but you can reconfigure them by calli
 method.
 """
 import json
+import os
+import sys
+import logging
+from json.decoder import JSONDecodeError
 
 
 class SettingsHolder:
@@ -30,6 +34,8 @@ class SettingsHolder:
     token_style = None
     config_file = None
 
+    prefs_file_name = 'preferences.json'
+
     # Helpers
     @property
     def is_mainnet(self):
@@ -50,6 +56,11 @@ class SettingsHolder:
         if self.is_testnet:
             return 'TestNet'
         return 'PrivateNet'
+
+    def __init__(self):
+        logging.basicConfig(level=logging.ERROR, format='%(levelname)s - %(name)s(L:%(lineno)s) - %(message)s')
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     # Setup methods
     def setup(self, config_file):
@@ -78,10 +89,9 @@ class SettingsHolder:
 
         self.config_file = config_file
 
-        with open('preferences.json') as data_file:
-            prefs = json.load(data_file)
-
-        self.token_style = prefs['themes'][prefs['theme']]
+        prefs = self._load_preferences()
+        if self._validate_or_restore_theme_data(prefs):
+            self.token_style = prefs['themes'][prefs['theme']]
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
@@ -91,15 +101,54 @@ class SettingsHolder:
         """ Load settings from the testnet JSON config file """
         self.setup('protocol.testnet.json')
 
-    def set_theme(self, theme_name):
-        with open('preferences.json') as data_file:
-            data = json.load(data_file)
+    def restore_theme_preferences(self):
+        data = self._load_preferences()
+        data["theme"] = "dark"
+        data["themes"] = {
+            "dark": {
+                "Command": "#ff0066",
+                "Default": "#00ee00",
+                "Neo": "#0000ee",
+                "Number": "#ffffff"
+            },
+            "light": {
+                "Command": "#ff0066",
+                "Default": "#008800",
+                "Neo": "#0000ee",
+                "Number": "#000000"
+            }
+        }
+        with open(self.prefs_file_name, "w") as data_file:
+            data_file.write(json.dumps(data, indent=4, sort_keys=True))
 
+    def set_theme(self, theme_name):
+        if not os.path.isfile(self.prefs_file_name):
+            self.restore_theme_preferences()
+
+        data = self._load_preferences()
         data["theme"] = theme_name
-        with open('preferences.json', "w") as data_file:
+        with open(self.prefs_file_name, "w") as data_file:
             data_file.write(json.dumps(data, indent=4, sort_keys=True))
 
         self.token_style = data['themes'][theme_name]
+
+    def _load_preferences(self):
+        with open(self.prefs_file_name) as data_file:
+            try:
+                prefs = json.load(data_file)
+            except JSONDecodeError as e:
+                self.logger.info("JSONDecodeError: {} in {}".format(e.msg, self.prefs_file_name))
+                sys.exit(-1)
+        return prefs
+
+    def _validate_or_restore_theme_data(self, data):
+        if "theme" not in data.keys() or "themes" not in data.keys():
+            self.logger.info(
+                "Theme data not found in {}. Restoring default theme preferences".format(self.prefs_file_name))
+            self.restore_theme_preferences()
+            sys.exit(-1)
+        else:
+            return True
 
 
 # Settings instance used by external modules

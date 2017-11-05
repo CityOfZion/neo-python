@@ -805,7 +805,7 @@ class PromptInterface(object):
                     traceback.print_exc()
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
                         help="use MainNet instead of the default TestNet")
@@ -840,3 +840,7 @@ if __name__ == "__main__":
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
     reactor.run()
+
+
+if __name__ == "__main__":
+    main()
