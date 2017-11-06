@@ -82,8 +82,9 @@ ENV/
 endpoints.txt
 
 # prompt history
-
 .prompt.py.history
+
+preferences.json
 prompt.log
 .pylint
 .vscode
