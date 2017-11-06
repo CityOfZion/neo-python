@@ -16,14 +16,14 @@ from prompt_toolkit import prompt
 import traceback
 
 
-def construct_and_send(prompter, wallet, arguments):
+def construct_and_send(prompter, wallet, arguments, prompt_password=True):
     try:
         if not wallet:
             print("please open a wallet")
-            return
+            return False
         if len(arguments) < 3:
             print("Not enough arguments")
-            return
+            return False
 
         arguments, from_address = get_from_addr(arguments)
 
@@ -33,10 +33,14 @@ def construct_and_send(prompter, wallet, arguments):
 
         assetId = get_asset_id(wallet, to_send)
 
+        if assetId is None:
+            print("Asset id not found")
+            return False
+
         scripthash_to = wallet.ToScriptHash(address_to)
         if scripthash_to is None:
             print("invalid address")
-            return
+            return False
 
         scripthash_from = None
 
@@ -46,16 +50,16 @@ def construct_and_send(prompter, wallet, arguments):
         # if this is a token, we will use a different
         # transfer mechanism
         if type(assetId) is NEP5Token:
-            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount))
+            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), prompt_passwd=prompt_password)
 
-        f8amount = Fixed8.TryParse(amount)
+        f8amount = Fixed8.TryParse(amount, require_positive=True)
         if f8amount is None:
             print("invalid amount format")
-            return
+            return False
 
         if type(assetId) is UInt256 and f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
             print("incorrect amount precision")
-            return
+            return False
 
         fee = Fixed8.Zero()
 
@@ -69,13 +73,14 @@ def construct_and_send(prompter, wallet, arguments):
 
         if ttx is None:
             print("insufficient funds")
-            return
+            return False
 
-        passwd = prompt("[Password]> ", is_password=True)
+        if prompt_password:
+            passwd = prompt("[Password]> ", is_password=True)
 
-        if not wallet.ValidatePassword(passwd):
-            print("incorrect password")
-            return
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return False
 
         standard_contract = wallet.GetStandardAddress()
 
@@ -105,6 +110,7 @@ def construct_and_send(prompter, wallet, arguments):
 
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())
+                return True
             else:
 
                 print("Could not relay tx %s " % tx.Hash.ToString())
@@ -112,12 +118,14 @@ def construct_and_send(prompter, wallet, arguments):
         else:
             print("Transaction initiated, but the signature is incomplete")
             print(json.dumps(context.ToJson(), separators=(',', ':')))
-            return
+            return False
 
     except Exception as e:
         print("could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
+
+    return False
 
 
 def construct_contract_withdrawal(prompter, wallet, arguments):

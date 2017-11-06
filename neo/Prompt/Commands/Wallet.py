@@ -16,6 +16,8 @@ def DeleteAddress(prompter, wallet, addr):
     else:
         print("error deleting addr %s " % addr)
 
+    return success
+
 
 def ImportWatchAddr(wallet, addr):
 
@@ -27,7 +29,7 @@ def ImportWatchAddr(wallet, addr):
 
     result = wallet.AddWatchOnly(script_hash)
 
-    print("result %s " % result)
+    return result
 
 
 def ImportToken(wallet, contract_hash):

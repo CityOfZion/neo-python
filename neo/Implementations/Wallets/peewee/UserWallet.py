@@ -44,6 +44,7 @@ class UserWallet(Wallet):
         self.__log.debug("initialized user wallet!! %s " % self)
 
     def BuildDatabase(self):
+
         PWDatabase.Destroy()
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
@@ -314,12 +315,11 @@ class UserWallet(Wallet):
 
         self.OnCoinsChanged(added, changed, deleted)
 
-        # @TODO more stuff dealiing with transactions here...
+    def OnSaveTransaction(self, tx, added, changed, deleted):
+
+        self.OnCoinsChanged(added, changed, deleted)
 
     def OnCoinsChanged(self, added, changed, deleted):
-
-        if len(added) > 0 or len(changed) > 0 or len(deleted) > 0:
-            pass
 
         for coin in added:
             addr_hash = bytes(coin.Output.ScriptHash.Data)
@@ -439,7 +439,7 @@ class UserWallet(Wallet):
         addresses = []
         has_watch_addr = False
         for addr in Address.select():
-            print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
+            #            print("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
             acct = Blockchain.Default().GetAccountState(addr_str)
             token_balances = self.TokenBalancesForAddress(addr_str)

@@ -10,6 +10,7 @@ from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
+from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Cryptography.Helper import *
 from neo.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
@@ -155,6 +156,9 @@ class Wallet(object):
     def ChangePassword(self, password_old, password_new):
         if not self.ValidatePassword(password_old):
             return False
+
+        if isinstance(password_new, str):
+            password_new = password_new.encode('utf-8')
 
         password_key = hashlib.sha256(password_new)
         self.SaveStoredData("PasswordHash", password_key)
@@ -456,6 +460,10 @@ class Wallet(object):
         # abstract
         pass
 
+    def OnSaveTransaction(self, tx, added, changed, deleted):
+        # abstract
+        pass
+
     def BalanceChanged(self):
         # abstract
         pass
@@ -651,11 +659,57 @@ class Wallet(object):
         return tx
 
     def SaveTransaction(self, tx):
-        # this is not currently implemented
-        # instead, we just wait to relay to network
-        # and then when the network verifies, it comes back
-        # and flows into the wallet that way
-        pass
+
+        coins = self.GetCoins()
+        changed = []
+        added = []
+        deleted = []
+        found_coin = False
+        for input in tx.inputs:
+            coin = None
+
+            for coinref in coins:
+                test_coin = coinref.Reference
+                if test_coin == input:
+                    coin = coinref
+
+            if coin is None:
+                print("tx input not in coins")
+                return False
+            if coin.State & CoinState.Spent > 0:
+                print("coin state is already spent")
+                return False
+            elif coin.State & CoinState.Confirmed == 0:
+                print("coin state not confirmed!")
+                return False
+
+            coin.State |= CoinState.Spent
+            coin.State &= ~CoinState.Confirmed
+
+            changed.append(coin)
+
+        for index, output in enumerate(tx.outputs):
+
+            state = self.CheckAddressState(output.ScriptHash)
+
+            key = CoinReference(tx.Hash, index)
+
+            if state & AddressState.InWallet > 0:
+                newcoin = Coin.CoinFromRef(coin_ref=key, tx_output=output, state=CoinState.Unconfirmed)
+                self._coins[key] = newcoin
+
+                if state & AddressState.WatchOnly > 0:
+                    newcoin.State |= CoinState.WatchOnly
+
+                added.append(newcoin)
+
+        if isinstance(tx, ClaimTransaction):
+            # do claim stuff
+            pass
+
+        self.OnSaveTransaction(tx, added, changed, deleted)
+
+        return True
 
     def Sign(self, context):
         success = False
