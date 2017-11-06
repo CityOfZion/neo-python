@@ -292,6 +292,30 @@ class Wallet(object):
             if total >= amount:
                 return coins[0:index + 1]
 
+    def GetUnclaimedCoins(self):
+        unclaimed = []
+
+        neo = Blockchain.SystemShare().Hash
+
+        for coin in self.GetCoins():
+            if coin.Output.AssetId == neo and \
+                coin.State & CoinState.Confirmed > 0 and \
+                coin.State & CoinState.Spent > 0 and \
+                coin.State & CoinState.Claimed == 0 and \
+                coin.State & CoinState.Frozen == 0 and \
+                coin.State & CoinState.WatchOnly == 0:
+
+                unclaimed.append(coin)
+
+        return unclaimed
+
+
+    def GetAvailableClaimTotal(self):
+        coinrefs = [coin.Reference for coin in self.GetUnclaimedCoins()]
+        print("Coin refs!")
+        bonus = Blockchain.CalculateBonusIgnoreClaimed(coinrefs, True)
+        print("bonus %s " % bonus)
+
     def GetKey(self, public_key_hash):
         if public_key_hash.ToBytes() in self._keys.keys():
             return self._keys[public_key_hash.ToBytes()]
@@ -425,10 +449,10 @@ class Wallet(object):
                 for input in tx.inputs:
 
                     if input in self._coins.keys():
-
-                        if self._coins[input].Output.AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                            self._coins[input].State |= CoinState.Spent | CoinState.Confirmed
-                            changed.add(self._coins[input])
+                        if self._coins[input].Output.AssetId == Blockchain.SystemShare().Hash:
+                            coin = self._coins[input]
+                            coin.State |= CoinState.Spent | CoinState.Confirmed
+                            changed.add(coin)
 
                         else:
                             deleted.add(self._coins[input])
@@ -685,7 +709,7 @@ class Wallet(object):
 
             coin.State |= CoinState.Spent
             coin.State &= ~CoinState.Confirmed
-
+            print("changin coin to spent!")
             changed.append(coin)
 
         for index, output in enumerate(tx.outputs):

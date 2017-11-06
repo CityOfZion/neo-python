@@ -14,7 +14,7 @@ from neo.UInt256 import UInt256
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.CoinState import CoinState
-from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem
+from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem,SpentCoin
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.ContractState import ContractState
@@ -25,15 +25,12 @@ from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 from neo.Cryptography.Crypto import Crypto
+from neo.BigInteger import BigInteger
+
 import time
 import plyvel
 from autologging import logged
 import binascii
-import pprint
-import json
-from twisted.internet import reactor
-import traceback
-from neo.BigInteger import BigInteger
 
 
 @logged
@@ -265,7 +262,31 @@ class LevelDBBlockchain(Blockchain):
         sn = self._db.snapshot()
         coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
 
-        return coins.TryGet(keyval=tx_hash)
+        result = coins.TryGet(keyval=tx_hash)
+
+        sn.close()
+
+        return result
+
+    def GetUnclaimed(self, hash):
+
+        tx, height = self.GetTransaction(hash)
+
+        if tx is None:
+            return None
+
+        out = {}
+        sn = self._db.snapshot()
+        coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
+
+        state = coins.TryGet(keyval=hash.ToBytes())
+
+        for item in state.Items:
+            out[item.index] = SpentCoin(tx.outputs[item.index], height, item.height)
+
+        sn.close()
+
+        return out
 
     def SearchAssetState(self, query):
         res = []
@@ -317,6 +338,7 @@ class LevelDBBlockchain(Blockchain):
 
         print("Colud not find transaction for hash %s " % hash)
         return None, -1
+
 
     def AddBlock(self, block):
 

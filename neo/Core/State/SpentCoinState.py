@@ -16,6 +16,28 @@ class SpentCoinItem():
         self.height = height
 
 
+class SpentCoin():
+
+    Output = None
+    StartHeight = None
+    EndHeight = None
+
+    @property
+    def Value(self):
+        return self.Output.Value
+
+    def __init__(self, output, start_height, end_height):
+        self.Output = output
+        self.StartHeight = start_height
+        self.EndHeight = end_height
+
+    def ToJson(self):
+        return {
+            'output': self.Output.ToJson(),
+            'start': self.StartHeight,
+            'end': self.EndHeight
+        }
+
 @logged
 class SpentCoinState(StateBase):
     Output = None

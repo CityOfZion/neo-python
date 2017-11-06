@@ -23,6 +23,7 @@ import pytz
 import traceback
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
+from itertools import groupby
 
 # not sure of the origin of these
 Issuer = ECDSA.decode_secp256r1('030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
@@ -157,7 +158,32 @@ class Blockchain(object):
 
     @staticmethod
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
-        raise NotImplementedError()
+        unclaimed = []
+
+        # group by the input prevhash
+        for hash, group in groupby(inputs, lambda x: x.PrevHash):
+            print("going through claimable :%s " % hash)
+            claimable = Blockchain.Default().GetUnclaimed(hash)
+            print("got claimed %s " % claimable)
+            if claimable is None or len(claimable) < 1:
+                if ignore_claimed:
+                    continue
+                else:
+                    raise Exception("Error calculating bonus without ignoring claimed")
+
+            for coinref in group:
+
+                if coinref.PrevIndex in group.keys():
+                    claimed = claimable[coinref.PrevIndex]
+                    unclaimed.add(claimed)
+                else:
+                    if ignore_claimed:
+                        continue
+                    else:
+                        raise Exception("Error calculating bonus without ignoring claimed")
+
+        return Blockchain.CalculateBonusInternal(unclaimed)
+
 
     @staticmethod
     def CalculateBonus(inputs, height_end):
@@ -188,7 +214,9 @@ class Blockchain(object):
 
     @staticmethod
     def CalculateBonusInternal(unclaimed):
-        amount_claimed = Fixed8(0)
+        amount_claimed = Fixed8.Zero()
+
+
 
         raise NotImplementedError()
 
@@ -326,7 +354,7 @@ class Blockchain(object):
         # return tx, height
         return None, 0
 
-    def GetUnClaimed(self, hash):
+    def GetUnclaimed(self, hash):
         # abstract
         pass
 
