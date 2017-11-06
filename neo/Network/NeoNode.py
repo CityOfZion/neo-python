@@ -43,8 +43,6 @@ class NeoNode(Protocol):
         self.remote_nodeid = random.randint(1294967200, 4294967200)
         self.endpoint = ''
         self.buffer_in = bytearray()
-        self.pm = None
-        self.reset_counter = False
         self.myblockrequests = set()
         self.bytes_in = 0
         self.bytes_out = 0
@@ -101,64 +99,74 @@ class NeoNode(Protocol):
         self.myblockrequests = set()
 
     def dataReceived(self, data):
-
+        """ Called from Twisted whenever data is received. """
         self.bytes_in += (len(data))
-
         self.buffer_in = self.buffer_in + data
-
         self.CheckDataReceived()
 
     def CheckDataReceived(self):
+        currentLength = len(self.buffer_in)
+        if currentLength < 24:
+            return
 
-        if len(self.buffer_in) >= 24:
-
+        # Extract the message header from the buffer, and return if not enough
+        # buffer to fully deserialize the message object.
+        try:
+            # Construct message
             mstart = self.buffer_in[:24]
             ms = StreamManager.GetStream(mstart)
             reader = BinaryReader(ms)
+            m = Message()
 
-            try:
-                m = Message()
-                m.Magic = reader.ReadUInt32()
-                m.Command = reader.ReadFixedString(12).decode('utf-8')
-                m.Length = reader.ReadUInt32()
-                m.Checksum = reader.ReadUInt32()
-                self.pm = m
-            except Exception as e:
-                self.Log('could not read initial bytes %s ' % e)
-            finally:
-                StreamManager.ReleaseStream(ms)
-                del reader
+            # Extract message metadata
+            m.Magic = reader.ReadUInt32()
+            m.Command = reader.ReadFixedString(12).decode('utf-8')
+            m.Length = reader.ReadUInt32()
+            m.Checksum = reader.ReadUInt32()
 
-            try:
-                self.CheckMessageData()
-            except Exception as e:
-                print("Could not check message data %s " % e)
+            # Return if not enough buffer to fully deserialize object.
+            messageExpectedLength = 24 + m.Length
+            # percentcomplete = int(100 * (currentLength / messageExpectedLength))
+            # self.Log("Receiving %s data: %s percent complete" % (m.Command, percentcomplete))
+            if currentLength < messageExpectedLength:
+                return
 
-    def CheckMessageData(self):
-        if not self.pm:
+        except Exception as e:
+            self.Log('Error: Could not read initial bytes %s ' % e)
             return
 
-        currentlength = len(self.buffer_in)
-        messageExpectedLength = 24 + self.pm.Length
-#        percentcomplete = int(100 * (currentlength / messageExpectedLength))
-#        self.Log("Receiving %s data: %s percent complete" % (self.pm.Command, percentcomplete))
+        finally:
+            StreamManager.ReleaseStream(ms)
+            del reader
 
-        if currentlength >= messageExpectedLength:
+        # The message header was successfully extracted, and we have enough enough buffer
+        # to extract the full payload
+        try:
+            # Extract message bytes from buffer and truncate buffer
             mdata = self.buffer_in[:messageExpectedLength]
+            self.buffer_in = self.buffer_in[messageExpectedLength:]
+
+            # Deserialize message with payload
             stream = StreamManager.GetStream(mdata)
             reader = BinaryReader(stream)
             message = Message()
             message.Deserialize(reader)
-            StreamManager.ReleaseStream(stream)
-            self.buffer_in = self.buffer_in[messageExpectedLength:]
-            self.pm = None
-            self.MessageReceived(message)
-            self.reset_counter = False
-            if len(self.buffer_in) > 24 and not self.reset_counter:
-                self.CheckDataReceived()
 
-        else:
-            self.reset_counter = True
+            # Propagate new message
+            self.MessageReceived(message)
+
+        except Exception as e:
+            self.Log('Error: Could not extract message: %s ' % e)
+            return
+
+        finally:
+            StreamManager.ReleaseStream(stream)
+
+        # Finally, after a message has been fully deserialized and propagated,
+        # check if another message can be extracted with the current buffer:
+        if len(self.buffer_in) > 24:
+            self.CheckDataReceived()
+
 
     def MessageReceived(self, m):
 
