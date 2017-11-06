@@ -298,10 +298,6 @@ class LevelDBBlockchain(Blockchain):
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
         asset = assets.TryGet(assetId)
 
-        if asset is None:
-            print("Available assets: %s " % assets.Keys)
-            return
-
         return asset
 
     def GetTransaction(self, hash):

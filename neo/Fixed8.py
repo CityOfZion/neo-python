@@ -43,7 +43,7 @@ class Fixed8:
         return Fixed8(0)
 
     @staticmethod
-    def TryParse(value):
+    def TryParse(value, require_positive=False):
         val = None
         try:
             val = float(value)
@@ -55,7 +55,12 @@ class Fixed8:
             except Exception as e:
                 pass
         if val:
+
+            if require_positive and val < 0:
+                return None
+
             return Fixed8(int(val * Fixed8.D))
+
         return None
 
     def __add__(self, other):
