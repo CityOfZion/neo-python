@@ -164,7 +164,7 @@ class NeoNode(Protocol):
 
         # Finally, after a message has been fully deserialized and propagated,
         # check if another message can be extracted with the current buffer:
-        if len(self.buffer_in) > 24:
+        if len(self.buffer_in) >= 24:
             self.CheckDataReceived()
 
     def MessageReceived(self, m):
