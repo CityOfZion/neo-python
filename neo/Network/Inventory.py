@@ -10,7 +10,6 @@ from neo.IO.MemoryStream import MemoryStream
 from neo.IO.BinaryWriter import BinaryWriter
 
 
-
 class Inventory(object):
     """docstring for Inventory"""
 

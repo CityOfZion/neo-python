@@ -7,7 +7,6 @@ Usage:
 """
 
 
-
 class Fixed8:
 
     value = 0

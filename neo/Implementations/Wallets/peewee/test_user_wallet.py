@@ -128,7 +128,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertEqual(key_out, '03f3a3b5a4d873933fc7f4b53113e8eb999fb20038271fbbb10255585670c3c312')
 
-
     def test_7_import_token(self):
 
         wallet = self.GetWallet1()
