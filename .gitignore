@@ -85,5 +85,7 @@ endpoints.txt
 
 .prompt.py.history
 prompt.log
+test.log
+
 .pylint
 .vscode

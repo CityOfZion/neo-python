@@ -298,10 +298,6 @@ class LevelDBBlockchain(Blockchain):
         assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
         asset = assets.TryGet(assetId)
 
-        if asset is None:
-            print("Available assets: %s " % assets.Keys)
-            return
-
         return asset
 
     def GetTransaction(self, hash):
@@ -722,4 +718,5 @@ class LevelDBBlockchain(Blockchain):
                 self.__log.debug("COULD NOT PERSIST OR ON PERSIST COMPLETE %s " % e)
 
     def Dispose(self):
+        self._db.close()
         self._disposed = True
