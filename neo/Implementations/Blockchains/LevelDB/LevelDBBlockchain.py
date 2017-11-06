@@ -128,7 +128,7 @@ class LevelDBBlockchain(Blockchain):
     #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
 
             except Exception as e:
-                self.__log.debug("Coludnt get stored header hash list: %s " % e)
+                self.__log.debug("Couldnt get stored header hash list: %s " % e)
 
             if len(hashes):
                 hashes.sort(key=lambda x: x['k'])
@@ -315,7 +315,7 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Transaction.DeserializeFromBufer(outhex, 0), height
 
-        print("Colud not find transaction for hash %s " % hash)
+        print("Could not find transaction for hash %s " % hash)
         return None, -1
 
     def AddBlock(self, block):

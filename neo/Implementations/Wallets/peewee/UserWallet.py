@@ -339,7 +339,7 @@ class UserWallet(Wallet):
                 c.save()
                 self.__log.debug("saved coin %s " % c)
             except Exception as e:
-                print("COLUDNT SAVE!!!! %s " % e)
+                print("COULDN'T SAVE!!!! %s " % e)
 
         for coin in changed:
             try:
