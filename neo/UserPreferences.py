@@ -31,6 +31,7 @@ PREFERENCES_DEFAULT = {
     }
 }
 
+
 class UserPreferencesHolder:
     # Merged default preferences with user-specific overrides
     _prefs = {}
@@ -63,7 +64,7 @@ class UserPreferencesHolder:
             data_file.write(json.dumps(self._userprefs, indent=4, sort_keys=True))
 
     def set_theme(self, theme_name):
-        if not theme_name in self._prefs["themes"].keys():
+        if theme_name not in self._prefs["themes"].keys():
             raise ValueError("Error: cannot set theme_name '%s', no theme with this name" % theme_name)
 
         self._userprefs["theme"] = theme_name

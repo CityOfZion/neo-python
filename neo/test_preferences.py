@@ -41,5 +41,5 @@ class PreferencesTestCase(NeoTestCase):
 
             # Make sure it persists user-preferences to JSON file
             prefs2 = UserPreferencesHolder(prefs_file.name)
-            self.assertEqual(prefs2._userprefs, { "theme": "light" })
+            self.assertEqual(prefs2._userprefs, {"theme": "light"})
             self.assertEqual(prefs2.token_style, PREFERENCES_DEFAULT["themes"]["light"])
