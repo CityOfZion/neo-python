@@ -167,7 +167,6 @@ class NeoNode(Protocol):
         if len(self.buffer_in) > 24:
             self.CheckDataReceived()
 
-
     def MessageReceived(self, m):
 
         #        self.Log("Messagereceived and processed ...: %s " % m.Command)
