@@ -22,6 +22,10 @@ class Fixed8:
         return self.value
 
     @staticmethod
+    def FD():
+        return Fixed8(Fixed8.D)
+
+    @staticmethod
     def FromDecimal(number):
         out = int(number * Fixed8.D)
         return Fixed8(out)

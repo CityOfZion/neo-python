@@ -45,6 +45,8 @@ class SettingsHolder:
     URI_PREFIX = None
     VERSION_NAME = None
 
+    ALL_FEES = None
+
     # Helpers
     @property
     def is_mainnet(self):
@@ -79,6 +81,7 @@ class SettingsHolder:
         self.SEED_LIST = config['SeedList']
 
         fees = config['SystemFee']
+        self.ALL_FEES = fees
         self.ENROLLMENT_TX_FEE = fees['EnrollmentTransaction']
         self.ISSUE_TX_FEE = fees['IssueTransaction']
         self.PUBLISH_TX_FEE = fees['PublishTransaction']

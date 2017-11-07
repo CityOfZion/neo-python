@@ -561,14 +561,15 @@ class LevelDBBlockchain(Blockchain):
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
 
-        amount_sysfee = (self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value).to_bytes(8, 'little')
 
-        print("persisting block: %s %s " % ( block.Index, amount_sysfee))
+        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
+        amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
+        self.__log.debug("[BlockFee] : %s %s " % ( block.Index, amount_sysfee))
 
         try:
             with self._db.write_batch() as wb:
 
-                wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee + block.Trim())
+                wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
 
                 for tx in block.Transactions:
 

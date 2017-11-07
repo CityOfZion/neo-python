@@ -75,6 +75,10 @@ In English:
         self.Precision = precision
 
     def SystemFee(self):
+
+        if self.AssetType == AssetType.GoverningToken or self.AssetType == AssetType.UtilityToken:
+            return Fixed8.Zero()
+
         return Fixed8(int(settings.REGISTER_TX_FEE))
 
     def GetScriptHashesForVerifying(self):
