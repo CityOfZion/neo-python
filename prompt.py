@@ -25,7 +25,8 @@ from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportTok
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
-from neo.Settings import settings
+from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
+from neo.UserPreferences import preferences
 from neo.Fixed8 import Fixed8
 
 from twisted.internet import reactor, task
@@ -40,7 +41,7 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
 
 
-debug_logname = 'prompt.log'
+debug_logname = FILENAME_PROMPT_LOG
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -109,7 +110,7 @@ class PromptInterface(object):
                 'cancel',
                 ]
 
-    history = FileHistory('.prompt.py.history')
+    history = FileHistory(FILENAME_PROMPT_HISTORY)
 
     token_style = None
     start_height = None
@@ -120,10 +121,10 @@ class PromptInterface(object):
         self.start_dt = datetime.datetime.utcnow()
 
         self.token_style = style_from_dict({
-            Token.Command: settings.token_style['Command'],
-            Token.Neo: settings.token_style['Neo'],
-            Token.Default: settings.token_style['Default'],
-            Token.Number: settings.token_style['Number'],
+            Token.Command: preferences.token_style['Command'],
+            Token.Neo: preferences.token_style['Neo'],
+            Token.Default: preferences.token_style['Default'],
+            Token.Number: preferences.token_style['Number'],
         })
 
     def get_bottom_toolbar(self, cli=None):
@@ -844,7 +845,7 @@ def main():
         settings.setup_mainnet()
 
     if args.theme:
-        settings.set_theme(args.theme)
+        preferences.set_theme(args.theme)
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
