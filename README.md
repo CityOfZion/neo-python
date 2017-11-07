@@ -58,7 +58,8 @@ brew install leveldb
 ##### ubuntu/debian
 
 ```
-apt-get -s install libleveldb-dev
+apt-get install libleveldb-dev python3.5-dev
+pip install wheel
 ```
 
 ##### Centos/Redhat/Fedora
