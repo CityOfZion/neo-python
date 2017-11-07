@@ -126,7 +126,7 @@ class BinaryReader(object):
 #                print("deserialized item %s %s " % ( i, item))
                 items.append(item)
         except Exception as e:
-            print("Coludnt deserialize %s " % e)
+            print("Couldn't deserialize %s " % e)
 
         return items
 

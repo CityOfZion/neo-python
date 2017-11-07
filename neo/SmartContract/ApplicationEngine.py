@@ -109,7 +109,7 @@ class ApplicationEngine(ExecutionEngine):
             try:
                 length = len(self.EvaluationStack.Peek(0).GetByteArray()) + len(self.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
-                self.__log.debug("colud not get length %s " % e)
+                self.__log.debug("Could not get length: %s " % e)
 
             if length > maxItemSize:
                 return False
