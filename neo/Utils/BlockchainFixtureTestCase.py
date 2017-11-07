@@ -45,14 +45,13 @@ class BlockchainFixtureTestCase(NeoTestCase):
             tar.extractall()
             tar.close()
         except Exception as e:
-            print("Could not extract tar file %s " % e)
+            raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.FIXTURE_FILENAME))
 
-        if os.path.exists(cls.leveldb_testpath()):
-            cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath())
+        if not os.path.exists(cls.leveldb_testpath()):
+            raise Exception("Error downloading fixtures")
 
-            Blockchain.RegisterBlockchain(cls._blockchain)
-        else:
-            print("Error downloading fixtures")
+        cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath())
+        Blockchain.RegisterBlockchain(cls._blockchain)
 
     @classmethod
     def tearDownClass(cls):
