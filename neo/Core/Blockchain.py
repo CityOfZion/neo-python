@@ -160,11 +160,8 @@ class Blockchain(object):
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
         unclaimed = []
 
-        # group by the input prevhash
         for hash, group in groupby(inputs, lambda x: x.PrevHash):
-            print("going through claimable :%s " % hash)
             claimable = Blockchain.Default().GetUnclaimed(hash)
-            print("got claimed %s " % claimable)
             if claimable is None or len(claimable) < 1:
                 if ignore_claimed:
                     continue
@@ -172,10 +169,9 @@ class Blockchain(object):
                     raise Exception("Error calculating bonus without ignoring claimed")
 
             for coinref in group:
-
-                if coinref.PrevIndex in group.keys():
+                if coinref.PrevIndex in claimable:
                     claimed = claimable[coinref.PrevIndex]
-                    unclaimed.add(claimed)
+                    unclaimed.append(claimed)
                 else:
                     if ignore_claimed:
                         continue
@@ -216,9 +212,56 @@ class Blockchain(object):
     def CalculateBonusInternal(unclaimed):
         amount_claimed = Fixed8.Zero()
 
+        decInterval = Blockchain.DECREMENT_INTERVAL
+        genAmount = Blockchain.GENERATION_AMOUNT
+        genLen = len(genAmount)
+
+        for coinheight, group in groupby(unclaimed, lambda x: x.Heights):
+            amount = 0
+            ustart = int(coinheight.start / decInterval)
+
+            if ustart < genLen:
+
+                istart = coinheight.start % decInterval
+                uend = int(coinheight.end / decInterval)
+                iend = coinheight.end % decInterval
+
+                if uend >= genLen:
+                    iend = 0
+
+                if iend == 0:
+                    uend -= 1
+                    iend = decInterval
+
+                while ustart < uend:
+
+                    amount += (decInterval - istart) * genAmount[ustart]
+                    ustart+=1
+                    istart = 0
+
+                amount += (iend - istart) * genAmount[ustart]
+#                print("added amount %s " % amount)
 
 
-        raise NotImplementedError()
+            endamount = Blockchain.Default().GetSysFeeAmountByHeight(coinheight.end - 1)
+            startamount = 0 if coinheight.start == 0 else Blockchain.Default().GetSysFeeAmountByHeight(coinheight.start - 1)
+            amount += endamount - startamount
+
+
+            outputSum = Fixed8.Zero()
+
+            for spentcoin in group:
+                outputSum += spentcoin.Value
+
+            print("output sum %s " % outputSum.value)
+
+            outputSum /= Fixed8(100000000 * amount)
+            print("output sum %s " % outputSum.value)
+
+            amount_claimed += outputSum
+            print("amount claimed now %s " % amount_claimed.value)
+
+        return amount_claimed
 
     def OnNotify(self, notification):
         #        print("on notifiy %s " % notification)
@@ -261,7 +304,6 @@ class Blockchain(object):
         pass
 
     def GetBlock(self, height_or_hash):
-        #        return self.GetBlockByHash(self.GetBlockHash(height))
         pass
 
     def GetBlockByHash(self, hash):
@@ -339,19 +381,19 @@ class Blockchain(object):
         return self.GetContract(script_hash)
 
     def GetStorageItem(self, storage_key):
-        print("BLOCKCHAIN DEFAULT GETTING STORAGE ITEMMMMM")
         # abstract
         pass
+
 
     def GetSysFeeAmount(self, hash):
         # abstract
-
         pass
 
+    def GetSysFeeAmountByHeight(self, height):
+        hash = self.GetBlockHash(height)
+        return self.GetSysFeeAmount(hash)
+
     def GetTransaction(self, hash):
-        # abstract
-        # should return both transaction and height
-        # return tx, height
         return None, 0
 
     def GetUnclaimed(self, hash):
@@ -371,14 +413,6 @@ class Blockchain(object):
         pass
 
     def OnPersistCompleted(self, block):
-
-        #        self.__validators = []
-        pass
-
-    def StartPersist(self):
-        pass
-
-    def StopPersist(self):
         pass
 
     def BlockCacheCount(self):

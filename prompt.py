@@ -407,8 +407,7 @@ class PromptInterface(object):
         elif item == 'unspent':
             self.Wallet.FindUnspentCoins()
         elif item == 'unclaimed':
-            coins = self.Wallet.GetAvailableClaimTotal()
-
+            coins = self.Wallet.GetUnclaimedCoins()
             print("Coins %s " % coins)
         elif item == 'tkn_send':
             token_send(self.Wallet, arguments[1:])

@@ -427,7 +427,17 @@ class LevelDBBlockchain(Blockchain):
         return self._header_index[height]
 
     def GetSysFeeAmount(self, hash):
-        return Fixed8(0)
+
+        if type(hash) is UInt256:
+            hash = hash.ToBytes()
+        try:
+            value = self._db.get(DBPrefix.DATA_Block + hash)[0:8]
+            amount = int.from_bytes(value,'little',signed=False)
+            return amount
+        except Exception as e:
+            print("couldnt get sys fee: %s " % e)
+
+        return 0
 
     def GetBlockByHeight(self, height):
         hash = self.GetBlockHash(height)
@@ -543,7 +553,6 @@ class LevelDBBlockchain(Blockchain):
         start = time.clock()
 
         sn = self._db.snapshot()
-
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
@@ -552,7 +561,9 @@ class LevelDBBlockchain(Blockchain):
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
 
-        amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(8, 'little')
+        amount_sysfee = (self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value).to_bytes(8, 'little')
+
+        print("persisting block: %s %s " % ( block.Index, amount_sysfee))
 
         try:
             with self._db.write_batch() as wb:
