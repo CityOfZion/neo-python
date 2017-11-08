@@ -62,13 +62,13 @@ class PrivateKeyFromWIFTestCase(NeoTestCase):
 class PrivateKeyFromNEP2TestCase(NeoTestCase):
     def test_should_throw_error_on_too_short_nep2_key(self):
         with self.assertRaises(ValueError) as context:
-            KeyPair.PrivKeyFromNEP2('invalid', 'pwd')
+            KeyPair.PrivateKeyFromNEP2('invalid', 'pwd')
 
         self.assertIn('Please provide a nep2_key with a length of 58 bytes', str(context.exception))
 
     def test_should_throw_error_on_invalid_nep2_key(self):
         with self.assertRaises(ValueError) as context:
-            KeyPair.PrivKeyFromNEP2(58 * 'A', 'pwd')
+            KeyPair.PrivateKeyFromNEP2(58 * 'A', 'pwd')
 
         self.assertEqual('Invalid nep2_key', str(context.exception))
 
@@ -76,7 +76,7 @@ class PrivateKeyFromNEP2TestCase(NeoTestCase):
         nep2_key = "6PYVPVe1fQznphjbUxXP9KZJqPMVnVwCx5s5pr5axRJ8uHkMtZg97eT5kL"
         pwd = "TestingOneTwoThree"
         should_equal_private_key = b"cbf4b9f70470856bb4f40f80b87edb90865997ffee6df315ab166d713af433a5"
-        privkey = KeyPair.PrivKeyFromNEP2(nep2_key, pwd)
+        privkey = KeyPair.PrivateKeyFromNEP2(nep2_key, pwd)
         privkey_hex = binascii.hexlify(privkey)
         self.assertEqual(privkey_hex, should_equal_private_key)
 
@@ -84,7 +84,7 @@ class PrivateKeyFromNEP2TestCase(NeoTestCase):
         nep2_key = "6PYVPVe1fQznphjbUxXP9KZJqPMVnVwCx5s5pr5axRJ8uHkMtZg97eT5kL"
         pwd = "invalid-pwd"
         with self.assertRaises(ValueError) as context:
-            KeyPair.PrivKeyFromNEP2(nep2_key, pwd)
+            KeyPair.PrivateKeyFromNEP2(nep2_key, pwd)
 
         self.assertEqual('Wrong passphrase', str(context.exception))
 

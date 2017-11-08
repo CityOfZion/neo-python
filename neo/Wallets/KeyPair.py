@@ -103,7 +103,7 @@ class KeyPair(object):
         return data[1:33]
 
     @staticmethod
-    def PrivKeyFromNEP2(nep2_key, passphrase):
+    def PrivateKeyFromNEP2(nep2_key, passphrase):
         """
         Build the private key from a NEP-2 encrypted private key
         """
