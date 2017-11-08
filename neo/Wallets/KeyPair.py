@@ -83,7 +83,13 @@ class KeyPair(object):
     @staticmethod
     def PrivateKeyFromWIF(wif):
         """
-        Build the private key from a WIF key
+        Get the private key from a WIF key
+
+        Args:
+            wif (str): The wif key
+
+        Returns:
+            bytes: The private key
         """
         if wif is None or len(wif) is not 52:
             raise ValueError('Please provide a wif with a length of 52 bytes (LEN: {0:d})'.format(len(wif)))
@@ -105,7 +111,14 @@ class KeyPair(object):
     @staticmethod
     def PrivateKeyFromNEP2(nep2_key, passphrase):
         """
-        Build the private key from a NEP-2 encrypted private key
+        Gets the private key from a NEP-2 encrypted private key
+
+        Args:
+            nep2_key (str): The nep-2 encrypted private key
+            passphrase (str): The password to encrypt the private key with, as unicode string
+
+        Returns:
+            bytes: The private key
         """
         if not nep2_key or len(nep2_key) != 58:
             raise ValueError('Please provide a nep2_key with a length of 58 bytes (LEN: {0:d})'.format(len(nep2_key)))
@@ -147,13 +160,21 @@ class KeyPair(object):
         return private_key
 
     def GetAddress(self):
-        """ Returns the public NEO address for this KeyPair """
+        """
+        Returns the public NEO address for this KeyPair
+
+        Returns:
+            str: The private key
+        """
         contract = Contract.CreateSignatureContract(self.PublicKey)
         return contract.Address
 
     def Export(self):
         """
-        returns the private key in WIF format.
+        Export this KeyPair's private key in WIF format.
+
+        Returns:
+            str: The key in wif format
         """
         data = bytearray(38)
         data[0] = 0x80
@@ -168,7 +189,13 @@ class KeyPair(object):
 
     def ExportNEP2(self, passphrase):
         """
-        returns the encrypted private key in NEP-2 format.
+        Export the encrypted private key in NEP-2 format.
+
+        Args:
+            passphrase (str): The password to encrypt the private key with, as unicode string
+
+        Returns:
+            str: The NEP-2 encrypted private key
         """
         if len(passphrase) < 2:
             raise ValueError("Passphrase must have a minimum of 2 characters")
