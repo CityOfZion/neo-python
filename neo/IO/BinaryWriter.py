@@ -182,7 +182,7 @@ class BinaryWriter(object):
             self.WriteBytes(ba)
 
     def WriteFixed8(self, value, unsigned=False):
-#        if unsigned:
-#            return self.WriteUInt64(int(value.value))
+        #        if unsigned:
+        #            return self.WriteUInt64(int(value.value))
 
         return self.WriteInt64(value.value)

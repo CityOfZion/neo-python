@@ -198,7 +198,6 @@ def parse_hold_vins(results):
     return vins
 
 
-
 def string_from_fixed8(amount, decimals):
 
     precision_mult = pow(10, decimals)

@@ -16,6 +16,7 @@ from neo.Fixed8 import Fixed8
 from neo.Blockchain import GetBlockchain
 from neo.Settings import settings
 
+
 @logged
 class Block(BlockBase, InventoryMixin):
 

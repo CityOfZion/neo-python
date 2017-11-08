@@ -102,6 +102,3 @@ class WalletTestCase(NeoTestCase):
         sig = Crypto.Sign(self.nmsg, key.PrivateKey, key.PublicKey)
 
         self.assertEqual(sig.hex(), self.neon_sig)
-
-
-

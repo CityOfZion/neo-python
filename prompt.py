@@ -202,7 +202,6 @@ class PromptInterface(object):
         else:
             print("please specify something to open")
 
-
     def do_create(self, arguments):
         item = get_arg(arguments)
 
@@ -238,10 +237,8 @@ class PromptInterface(object):
                 self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                 self._walletdb_loop.start(1)
 
-
             else:
                 print("Please specify a path")
-
 
     def do_close_wallet(self):
         if self.Wallet:
@@ -250,7 +247,6 @@ class PromptInterface(object):
             self._walletdb_loop = None
             self.Wallet = None
             print("closed wallet %s " % path)
-
 
     def do_import(self, arguments):
         item = get_arg(arguments)
@@ -322,9 +318,7 @@ class PromptInterface(object):
                 export = key.Export()
                 print("key export : %s " % export)
 
-
         print("Command export %s not found" % item)
-
 
     def show_wallet(self, arguments):
 
@@ -692,7 +686,6 @@ class PromptInterface(object):
             except KeyboardInterrupt:
                 # Control-C pressed: do nothing
                 continue
-
 
             try:
                 command, arguments = self.parse_result(result)

@@ -14,7 +14,7 @@ from neo.UInt256 import UInt256
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.CoinState import CoinState
-from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem,SpentCoin
+from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem, SpentCoin
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.ContractState import ContractState
@@ -339,7 +339,6 @@ class LevelDBBlockchain(Blockchain):
         print("Could not find transaction for hash %s " % hash)
         return None, -1
 
-
     def AddBlock(self, block):
 
         if not block.Hash.ToBytes() in self._block_cache:
@@ -432,7 +431,7 @@ class LevelDBBlockchain(Blockchain):
             hash = hash.ToBytes()
         try:
             value = self._db.get(DBPrefix.DATA_Block + hash)[0:8]
-            amount = int.from_bytes(value,'little',signed=False)
+            amount = int.from_bytes(value, 'little', signed=False)
             return amount
         except Exception as e:
             print("couldnt get sys fee: %s " % e)
@@ -561,10 +560,9 @@ class LevelDBBlockchain(Blockchain):
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
 
-
         amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
         amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
-        self.__log.debug("[BlockFee] : %s %s " % ( block.Index, amount_sysfee))
+        self.__log.debug("[BlockFee] : %s %s " % (block.Index, amount_sysfee))
 
         try:
             with self._db.write_batch() as wb:

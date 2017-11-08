@@ -7,6 +7,7 @@ import binascii
 from autologging import logged
 from collections import namedtuple
 
+
 class SpentCoinItem():
     index = None
     height = None
@@ -28,8 +29,8 @@ class SpentCoin():
 
     @property
     def Heights(self):
-        CoinHeight = namedtuple("CoinHeight","start end")
-        return CoinHeight(self.StartHeight,self.EndHeight)
+        CoinHeight = namedtuple("CoinHeight", "start end")
+        return CoinHeight(self.StartHeight, self.EndHeight)
 
     def __init__(self, output, start_height, end_height):
         self.Output = output
@@ -42,6 +43,7 @@ class SpentCoin():
             'start': self.StartHeight,
             'end': self.EndHeight
         }
+
 
 @logged
 class SpentCoinState(StateBase):

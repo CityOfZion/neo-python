@@ -6,6 +6,7 @@ from autologging import logged
 import sys
 from itertools import groupby
 
+
 @logged
 class ClaimTransaction(Transaction):
 
@@ -57,7 +58,7 @@ class ClaimTransaction(Transaction):
 
                 script_hash = tx.outputs[claim.PrevIndex].ScriptHash
 
-                if not script_hash in hashes:
+                if script_hash not in hashes:
                     hashes.append(script_hash)
 
         hashes.sort()

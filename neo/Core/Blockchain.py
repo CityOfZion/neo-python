@@ -22,8 +22,6 @@ from neo.UInt256 import UInt256
 from itertools import groupby
 
 
-
-
 class Blockchain(object):
 
     SECONDS_PER_BLOCK = 15
@@ -174,13 +172,12 @@ class Blockchain(object):
 
         return Blockchain.CalculateBonusInternal(unclaimed)
 
-
     @staticmethod
     def CalculateBonus(inputs, height_end):
         unclaimed = []
 
         for hash, group in groupby(inputs, lambda x: x.PrevHash):
-            tx,height_start = Blockchain.Default().GetTransaction(hash)
+            tx, height_start = Blockchain.Default().GetTransaction(hash)
 
             if tx is None:
                 raise Exception("Could Not calculate bonus")
@@ -191,7 +188,7 @@ class Blockchain(object):
             for coinref in group:
                 if coinref.PrevIndex >= len(tx.outputs) or tx.outputs[coinref.PrevIndex].AssetId != Blockchain.SystemShare().Hash:
                     raise Exception("Invalid coin reference")
-                spent_coin = SpentCoin(output=tx.outputs[coinref.PrevIndex],start_height=height_start, end_height=height_end)
+                spent_coin = SpentCoin(output=tx.outputs[coinref.PrevIndex], start_height=height_start, end_height=height_end)
                 unclaimed.append(spent_coin)
 
         return Blockchain.CalculateBonusInternal(unclaimed)
@@ -225,7 +222,7 @@ class Blockchain(object):
                 while ustart < uend:
 
                     amount += (decInterval - istart) * genAmount[ustart]
-                    ustart+=1
+                    ustart += 1
                     istart = 0
 
                 amount += (iend - istart) * genAmount[ustart]
@@ -365,7 +362,6 @@ class Blockchain(object):
     def GetStorageItem(self, storage_key):
         # abstract
         pass
-
 
     def GetSysFeeAmount(self, hash):
         # abstract

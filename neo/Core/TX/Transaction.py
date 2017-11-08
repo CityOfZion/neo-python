@@ -27,6 +27,7 @@ import sys
 from itertools import groupby
 import json
 
+
 class TransactionResult():
     AssetId = None
     Amount = Fixed8(0)

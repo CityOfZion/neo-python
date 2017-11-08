@@ -299,22 +299,20 @@ class Wallet(object):
 
         for coin in self.GetCoins():
             if coin.Output.AssetId == neo and \
-                coin.State & CoinState.Confirmed > 0 and \
-                coin.State & CoinState.Spent > 0 and \
-                coin.State & CoinState.Claimed == 0 and \
-                coin.State & CoinState.Frozen == 0 and \
-                coin.State & CoinState.WatchOnly == 0:
+                    coin.State & CoinState.Confirmed > 0 and \
+                    coin.State & CoinState.Spent > 0 and \
+                    coin.State & CoinState.Claimed == 0 and \
+                    coin.State & CoinState.Frozen == 0 and \
+                    coin.State & CoinState.WatchOnly == 0:
 
                 unclaimed.append(coin)
 
         return unclaimed
 
-
     def GetAvailableClaimTotal(self):
         coinrefs = [coin.Reference for coin in self.GetUnclaimedCoins()]
         bonus = Blockchain.CalculateBonusIgnoreClaimed(coinrefs, True)
         return bonus
-
 
     def GetUnavailableBonus(self):
         height = Blockchain.Default().Height + 1

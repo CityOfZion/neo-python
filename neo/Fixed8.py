@@ -89,7 +89,7 @@ class Fixed8:
         return Fixed8(int(self.value / other.value))
 
     def __floordiv__(self, other):
-        return Fixed8( self.value // other.value)
+        return Fixed8(self.value // other.value)
 
     def __itruediv__(self, other):
         return self.__truediv__(other)

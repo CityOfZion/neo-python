@@ -66,7 +66,7 @@ def ImportToken(wallet, contract_hash):
 def ClaimGas(wallet, require_password=True):
 
     unclaimed_coins = wallet.GetUnclaimedCoins()
-    unclaimed_coin_refs =  [coin.Reference for coin in unclaimed_coins]
+    unclaimed_coin_refs = [coin.Reference for coin in unclaimed_coins]
 
     if len(unclaimed_coin_refs) == 0:
         print("no claims to process")
@@ -79,13 +79,12 @@ def ClaimGas(wallet, require_password=True):
         print("No gas to claim")
         return False
 
-
     claim_tx = ClaimTransaction()
     claim_tx.Claims = unclaimed_coin_refs
     claim_tx.Attributes = []
     claim_tx.inputs = []
     claim_tx.outputs = [
-        TransactionOutput(AssetId=Blockchain.SystemCoin().Hash,Value=available_bonus, script_hash=wallet.GetChangeAddress())
+        TransactionOutput(AssetId=Blockchain.SystemCoin().Hash, Value=available_bonus, script_hash=wallet.GetChangeAddress())
     ]
 
     context = ContractParametersContext(claim_tx)

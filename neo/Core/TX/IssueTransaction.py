@@ -10,7 +10,8 @@ from neo.Core.TX.Transaction import Transaction, TransactionType
 import random
 from neo.Settings import settings
 from neo.Fixed8 import Fixed8
-from neo.Blockchain import GetSystemCoin,GetSystemShare
+from neo.Blockchain import GetSystemCoin, GetSystemShare
+
 
 class IssueTransaction(Transaction):
 

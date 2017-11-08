@@ -54,9 +54,7 @@ class LevelDBTest(NeoTestCase):
 
         self.assertEqual(self._blockchain.HeaderHeight, 0)
 
-
     def test_sys_block_fees(self):
 
         block_num = 14103
         fee_should_be = 435
-
