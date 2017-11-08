@@ -50,3 +50,4 @@ Twisted==17.5.0
 urllib3==1.21.1
 wcwidth==0.1.7
 zope.interface==4.4.2
+scrypt==0.8.0
