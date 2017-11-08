@@ -23,6 +23,10 @@ FILENAME_PREFERENCES = os.path.join(dir_project_root, 'preferences.json')
 FILENAME_PROMPT_HISTORY = os.path.join(dir_project_root, '.prompt.py.history')
 FILENAME_PROMPT_LOG = os.path.join(dir_project_root, 'prompt.log')
 
+# The protocol json files are always in the project root
+FILENAME_SETTINGS_MAINNET = os.path.join(dir_project_root, 'protocol.mainnet.json')
+FILENAME_SETTINGS_TESTNET = os.path.join(dir_project_root, 'protocol.testnet.json')
+
 
 class SettingsHolder:
     """
@@ -85,7 +89,7 @@ class SettingsHolder:
         self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
         config = data['ApplicationConfiguration']
-        self.LEVELDB_PATH = config['DataDirectoryPath']
+        self.LEVELDB_PATH = os.path.join(dir_project_root, config['DataDirectoryPath'])
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
@@ -93,11 +97,11 @@ class SettingsHolder:
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
-        self.setup('protocol.mainnet.json')
+        self.setup(FILENAME_SETTINGS_MAINNET)
 
     def setup_testnet(self):
         """ Load settings from the testnet JSON config file """
-        self.setup('protocol.testnet.json')
+        self.setup(FILENAME_SETTINGS_TESTNET)
 
 
 # Settings instance used by external modules
