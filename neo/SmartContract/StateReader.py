@@ -322,9 +322,10 @@ class StateReader(InteropService):
 
         if account:
             engine.EvaluationStack.PushT(StackItem.FromInterface(account))
-            return True
+        else:
+            engine.EvaluationStack.PushT(False)
 
-        return False
+        return True
 
     def Blockchain_GetValidators(self, engine):
 

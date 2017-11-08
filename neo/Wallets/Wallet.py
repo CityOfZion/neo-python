@@ -312,9 +312,16 @@ class Wallet(object):
 
     def GetAvailableClaimTotal(self):
         coinrefs = [coin.Reference for coin in self.GetUnclaimedCoins()]
-        print("Coin refs!")
         bonus = Blockchain.CalculateBonusIgnoreClaimed(coinrefs, True)
-        print("bonus %s " % bonus)
+        return bonus
+
+
+    def GetUnavailableBonus(self):
+        height = Blockchain.Default().Height + 1
+        unspents = self.FindUnspentCoinsByAsset(Blockchain.SystemShare().Hash)
+        refs = [coin.Reference for coin in unspents]
+        unavailable_bonus = Blockchain.CalculateBonus(refs, height_end=height)
+        return unavailable_bonus
 
     def GetKey(self, public_key_hash):
         if public_key_hash.ToBytes() in self._keys.keys():
@@ -511,7 +518,6 @@ class Wallet(object):
                 if output.ScriptHash == watch_script_hash:
                     return True
             for script in tx.scripts:
-                # this needs to be tested out
                 if script.VerificationScript == watch_script_hash.ToBytes():
                     return True
 
@@ -643,7 +649,8 @@ class Wallet(object):
             if use_vins_for_asset is not None and len(use_vins_for_asset) > 0 and use_vins_for_asset[1] == assetId:
                 paycoins[assetId] = self.FindCoinsByVins(use_vins_for_asset[0])
             else:
-                paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
+                paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(
+                    assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
 
         self._vin_exclude = None
 
@@ -698,18 +705,14 @@ class Wallet(object):
                     coin = coinref
 
             if coin is None:
-                print("tx input not in coins")
                 return False
             if coin.State & CoinState.Spent > 0:
-                print("coin state is already spent")
                 return False
             elif coin.State & CoinState.Confirmed == 0:
-                print("coin state not confirmed!")
                 return False
 
             coin.State |= CoinState.Spent
             coin.State &= ~CoinState.Confirmed
-            print("changin coin to spent!")
             changed.append(coin)
 
         for index, output in enumerate(tx.outputs):
@@ -729,7 +732,12 @@ class Wallet(object):
 
         if isinstance(tx, ClaimTransaction):
             # do claim stuff
-            pass
+            for claim in tx.Claims:
+                claim_coin = self._coins[claim]
+                print("claim coin: %s " % claim_coin)
+                claim_coin.State |= CoinState.Claimed
+                claim_coin.State &= ~CoinState.Confirmed
+                changed.append(claim_coin)
 
         self.OnSaveTransaction(tx, added, changed, deleted)
 

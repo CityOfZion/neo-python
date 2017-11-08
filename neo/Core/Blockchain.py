@@ -8,7 +8,7 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
-from neo.Core.State.SpentCoinState import SpentCoinState
+from neo.Core.State.SpentCoinState import SpentCoinState,SpentCoin
 from neo.Core.Helper import Helper
 from neo.SmartContract.Contract import Contract
 from neo.Settings import settings
@@ -25,9 +25,7 @@ from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from itertools import groupby
 
-# not sure of the origin of these
-Issuer = ECDSA.decode_secp256r1('030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
-Admin = b'Abf2qMs1pzQb8kYk9RuxtUb9jtRKJVuBJt'
+
 
 
 class Blockchain(object):
@@ -184,32 +182,27 @@ class Blockchain(object):
     @staticmethod
     def CalculateBonus(inputs, height_end):
         unclaimed = []
-        hashes = Counter([input.PrevHash for input in inputs]).items()
-        for hash in hashes:
-            height_start = 0
-            tx, height = Blockchain.Default().GetTransaction(hash)
-            height_start = height
+
+        for hash, group in groupby(inputs, lambda x: x.PrevHash):
+            tx,height_start = Blockchain.Default().GetTransaction(hash)
+
             if tx is None:
-                return False
+                raise Exception("Could Not calculate bonus")
+
             if height_start == height_end:
                 continue
 
-            to_be_checked = []
-            [to_be_checked.append(input) for input in inputs if input.PrevHash == hash]
+            for coinref in group:
+                if coinref.PrevIndex >= len(tx.outputs) or tx.outputs[coinref.PrevIndex].AssetId != Blockchain.SystemShare().Hash:
+                    raise Exception("Invalid coin reference")
+                spent_coin = SpentCoin(output=tx.outputs[coinref.PrevIndex],start_height=height_start, end_height=height_end)
+                unclaimed.append(spent_coin)
 
-            for claim in to_be_checked:
-
-                if claim.PrevIndex >= len(tx.Outputs) or tx.Outputs[claim.PrevIndex].AssetId == Blockchain.SystemShare().Hash:
-                    raise Exception('Invalid claim')
-
-
-#                coin = SpentCoin(tx.Outputs[claim.PrevIndex], height_start, height_end)
-#                unclaimed.append(coin)
-            raise NotImplementedError()
         return Blockchain.CalculateBonusInternal(unclaimed)
 
     @staticmethod
     def CalculateBonusInternal(unclaimed):
+
         amount_claimed = Fixed8.Zero()
 
         decInterval = Blockchain.DECREMENT_INTERVAL
@@ -240,26 +233,19 @@ class Blockchain(object):
                     istart = 0
 
                 amount += (iend - istart) * genAmount[ustart]
-#                print("added amount %s " % amount)
-
 
             endamount = Blockchain.Default().GetSysFeeAmountByHeight(coinheight.end - 1)
             startamount = 0 if coinheight.start == 0 else Blockchain.Default().GetSysFeeAmountByHeight(coinheight.start - 1)
             amount += endamount - startamount
 
-
-            outputSum = Fixed8.Zero()
+            outputSum = 0
 
             for spentcoin in group:
-                outputSum += spentcoin.Value
+                outputSum += spentcoin.Value.value
 
-            print("output sum %s " % outputSum.value)
-
-            outputSum /= Fixed8(100000000 * amount)
-            print("output sum %s " % outputSum.value)
-
-            amount_claimed += outputSum
-            print("amount claimed now %s " % amount_claimed.value)
+            outputSum = outputSum / 100000000
+            outputSumFixed8 = Fixed8(outputSum * amount)
+            amount_claimed += outputSumFixed8
 
         return amount_claimed
 

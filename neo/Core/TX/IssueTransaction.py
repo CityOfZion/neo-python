@@ -24,7 +24,7 @@ class IssueTransaction(Transaction):
 
     def SystemFee(self):
 
-        if self.Version > 1:
+        if self.Version >= 1:
             return Fixed8.Zero()
 
         # if all outputs are NEO or gas, return 0
