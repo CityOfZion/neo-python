@@ -63,7 +63,7 @@ def ImportToken(wallet, contract_hash):
             print("Could not import token")
 
 
-def Claim(wallet, require_password=True):
+def ClaimGas(wallet, require_password=True):
 
     unclaimed_coins = wallet.GetUnclaimedCoins()
     unclaimed_coin_refs =  [coin.Reference for coin in unclaimed_coins]
@@ -92,7 +92,7 @@ def Claim(wallet, require_password=True):
     wallet.Sign(context)
 
     print("\n---------------------------------------------------------------")
-    print("Will make claim for %s GAS" % string_from_fixed8(available_bonus, 8))
+    print("Will make claim for %s GAS" % available_bonus.ToString())
     print("------------------------------------------------------------------\n")
 
     if require_password:
@@ -113,13 +113,13 @@ def Claim(wallet, require_password=True):
 
         if relayed:
             print("Relayed Tx: %s " % claim_tx.Hash.ToString())
-            return True
         else:
 
             print("Could not relay tx %s " % claim_tx.Hash.ToString())
+        return claim_tx, relayed
 
     else:
 
         print("could not sign tx")
 
-    return False
+    return None, False

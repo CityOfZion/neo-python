@@ -1,15 +1,13 @@
 # -*- coding:utf-8 -*-
 
 from neo.Core.Block import Block
-from neo.Core.AssetType import AssetType
 from neo.Core.TX.Transaction import *
 from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
-from neo.Core.State.SpentCoinState import SpentCoinState,SpentCoin
-from neo.Core.Helper import Helper
+from neo.Core.State.SpentCoinState import SpentCoin
 from neo.SmartContract.Contract import Contract
 from neo.Settings import settings
 from neo.Cryptography.Crypto import *
@@ -20,8 +18,6 @@ from datetime import datetime
 from events import Events
 from neo.Cryptography.ECCurve import ECDSA
 import pytz
-import traceback
-from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from itertools import groupby
 
@@ -244,7 +240,7 @@ class Blockchain(object):
                 outputSum += spentcoin.Value.value
 
             outputSum = outputSum / 100000000
-            outputSumFixed8 = Fixed8(outputSum * amount)
+            outputSumFixed8 = Fixed8(int(outputSum * amount))
             amount_claimed += outputSumFixed8
 
         return amount_claimed

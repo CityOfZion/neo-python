@@ -21,7 +21,7 @@ from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
@@ -90,6 +90,7 @@ class PromptInterface(object):
                 'open wallet {path}',
                 'create wallet {path}',
                 'wallet {verbose}',
+                'wallet claim',
                 'wallet migrate',
                 'wallet rebuild {start block}',
                 'wallet delete_addr {addr}',
@@ -348,6 +349,8 @@ class PromptInterface(object):
             DeleteAddress(self, self.Wallet, addr_to_delete)
         elif item == 'close':
             self.do_close_wallet()
+        elif item == 'claim':
+            ClaimGas(self.Wallet)
         elif item == 'rebuild':
             self.Wallet.Rebuild()
             try:

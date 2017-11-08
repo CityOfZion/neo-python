@@ -1,11 +1,10 @@
 
 from neo.Core.TX.Transaction import *
 from neo.Fixed8 import Fixed8
-import sys
 from neo.Core.Blockchain import Blockchain
-
 from autologging import logged
-
+import sys
+from itertools import groupby
 
 @logged
 class ClaimTransaction(Transaction):
@@ -44,8 +43,26 @@ class ClaimTransaction(Transaction):
             raise Exception('Format Exception')
 
     def GetScriptHashesForVerifying(self):
+        hashes = super(ClaimTransaction, self).GetScriptHashesForVerifying()
 
-        raise NotImplementedError()
+        for hash, group in groupby(self.Claims, lambda x: x.PrevHash):
+            tx, height = Blockchain.Default().GetTransaction(hash)
+
+            if tx is None:
+                raise Exception("Invalid Claim Operation")
+
+            for claim in group:
+                if len(tx.outputs) <= claim.PrevIndex:
+                    raise Exception("Invalid Claim Operation")
+
+                script_hash = tx.outputs[claim.PrevIndex].ScriptHash
+
+                if not script_hash in hashes:
+                    hashes.append(script_hash)
+
+        hashes.sort()
+
+        return hashes
 
     def SerializeExclusiveData(self, writer):
 

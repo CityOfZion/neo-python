@@ -734,7 +734,6 @@ class Wallet(object):
             # do claim stuff
             for claim in tx.Claims:
                 claim_coin = self._coins[claim]
-                print("claim coin: %s " % claim_coin)
                 claim_coin.State |= CoinState.Claimed
                 claim_coin.State &= ~CoinState.Confirmed
                 changed.append(claim_coin)
