@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import binascii
 from neo.Wallets.Wallet import Wallet
 from neo.Wallets.Coin import Coin as WalletCoin
 from neo.SmartContract.Contract import Contract as WalletContract
@@ -14,19 +15,14 @@ from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
 from Crypto import Random
 from neo.Cryptography.Crypto import Crypto
 from neo.UInt160 import UInt160
-import binascii
 from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
-
 from .PWDatabase import PWDatabase
-
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
     TransactionInfo, NEP5Token
 
 from autologging import logged
-import json
 from playhouse.migrate import *
 from neo.Wallets.Coin import CoinState
 
@@ -44,12 +40,12 @@ class UserWallet(Wallet):
         self.__log.debug("initialized user wallet!! %s " % self)
 
     def BuildDatabase(self):
-
         PWDatabase.Destroy()
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
         try:
-            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, Transaction, TransactionInfo, ], safe=True)
+            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token,
+                              Transaction, TransactionInfo, ], safe=True)
         except Exception as e:
             print("Couldnt build database %s " % e)
             self.__log.debug("couldnt build database %s " % e)
@@ -74,7 +70,8 @@ class UserWallet(Wallet):
         for tx in Transaction.select():
             tx.delete_instance()
 
-        self.__log.debug("deleted coins and transactions %s %s " % (Coin.select().count(), Transaction.select().count()))
+        self.__log.debug("deleted coins and transactions %s %s " %
+                         (Coin.select().count(), Transaction.select().count()))
 
     @staticmethod
     def Open(path, password):
@@ -87,10 +84,7 @@ class UserWallet(Wallet):
         return wallet
 
     def CreateKey(self, prikey=None):
-        if prikey:
-            private_key = prikey
-        else:
-            private_key = bytes(Random.get_random_bytes(32))
+        super(UserWallet, self).CreateKey(private_key=prikey)
 
         account = WalletKeyPair(priv_key=private_key)
         self._keys[account.PublicKeyHash.ToBytes()] = account
@@ -110,7 +104,8 @@ class UserWallet(Wallet):
         decrypted = pub + priv
         encrypted_pk = self.EncryptPrivateKey(bytes(decrypted))
 
-        db_account, created = Account.get_or_create(PrivateKeyEncrypted=encrypted_pk, PublicKeyHash=account.PublicKeyHash.ToBytes())
+        db_account, created = Account.get_or_create(
+            PrivateKeyEncrypted=encrypted_pk, PublicKeyHash=account.PublicKeyHash.ToBytes())
         db_account.PrivateKeyEncrypted = encrypted_pk
         db_account.save()
         self.__dbaccount = db_account

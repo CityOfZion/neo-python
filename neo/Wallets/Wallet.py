@@ -89,7 +89,6 @@ class Wallet(object):
             self.SaveStoredData('PasswordHash', passwordHash)
             self.SaveStoredData('IV', self._iv),
             self.SaveStoredData('MasterKey', mk)
-    #        self.SaveStoredData('Version') { Version.Major, Version.Minor, Version.Build, Version.Revision }.Select(p => BitConverter.GetBytes(p)).SelectMany(p => p).ToArray());
 
             self.SaveStoredData('Height', self._current_height.to_bytes(4, 'little'))
 
@@ -122,8 +121,6 @@ class Wallet(object):
                 print("couldnt load height data %s " % e)
                 self._current_height = 0
 
-#            self._current_height = 470000
-
             del passwordKey
 
     def BuildDatabase(self):
@@ -131,16 +128,40 @@ class Wallet(object):
         pass
 
     def AddContract(self, contract):
+        """
+        Add a contract to the wallet
 
+        Args:
+            contract (Contract): a contract of type neo.SmartContract.Contract.
+
+        Raises:
+            Exception: Invalid operation - public key mismatch.
+
+        Returns:
+            void
+
+        """
         if not contract.PublicKeyHash.ToBytes() in self._keys.keys():
-            raise Exception('Invalid operation- public key mismatch')
+            raise Exception('Invalid operation - public key mismatch')
 
         self._contracts[contract.ScriptHash.ToBytes()] = contract
         if contract.ScriptHash in self._watch_only:
             self._watch_only.remove(contract.ScriptHash)
 
     def AddWatchOnly(self, script_hash):
+        """
+        Add a watch only address to the wallet.
 
+        Args:
+            script_hash (UInt160): a bytearray (len 20) representing the public key.
+
+        Returns:
+            void
+
+        Note:
+            Prints a warning to the console if the address already exists in the wallet.
+
+        """
         if script_hash in self._contracts:
             print("Address already in contracts")
             return
@@ -148,12 +169,37 @@ class Wallet(object):
         self._watch_only.append(script_hash)
 
     def AddNEP5Token(self, token):
+        """
+        Add a NEP-5 compliant token to the wallet.
+
+        Args:
+            token (NEP5Token): an instance of type neo.Wallets.NEP5Token.
+
+        Returns:
+            void
+
+        Note:
+            Prints a warning to the console if the token already exists in the wallet.
+
+        """
         if token.ScriptHash.ToBytes() in self._tokens.keys():
             print("Token already in wallet")
             return
         self._tokens[token.ScriptHash.ToBytes()] = token
 
     def ChangePassword(self, password_old, password_new):
+        """
+        Change the password used to protect the private key.
+
+        Args:
+            password_old (str): the current password used to encrypt the private key.
+            password_new (str): the new to be used password to encrypt the private key.
+
+        Returns:
+            bool: False, if the old password does not match the current saved password.
+            void: If succesfully changed the password.
+
+        """
         if not self.ValidatePassword(password_old):
             return False
 
@@ -165,35 +211,105 @@ class Wallet(object):
         self.SaveStoredData("MasterKey", AES.new(self._master_key, AES.MODE_CBC, self._iv))
 
     def ContainsKey(self, public_key):
+        """
+        Test if the wallet contains the supplied public key.
+
+        Args:
+            public_key (edcsa.Curve.point): a public key to test for its existance. i.e. KeyPair.PublicKey
+
+        Returns:
+            bool: True if exists, False otherwise.
+
+        """
         return self.ContainsKeyHash(Crypto.ToScriptHash(public_key.encode_point(True), unhex=False))
 
     def ContainsKeyHash(self, public_key_hash):
+        """
+        Test if the wallet contains the supplied public key hash in its key list.
 
+        Args:
+            public_key_hash (UInt160): a public key hash to test for its existance.
+
+        Returns:
+            bool: True if exists in wallet key list, False otherwise.
+
+        """
         return public_key_hash.ToBytes() in self._keys.keys()
 
     def ContainsAddress(self, script_hash):
+        """
+        Determine if the wallet contains the address.
+
+        Args:
+            script_hash (UInt160): a bytearray (len 20) representing the public key.
+
+        Returns:
+            bool: True, if the address is present in the wallet. False otherwise.
+
+        """
         return self.CheckAddressState(script_hash) >= AddressState.InWallet
 
     def ContainsAddressStr(self, address):
+        """
+        Determine if the wallet contains the address.
+
+        Args:
+            address (str): a string representing the public key.
+
+        Returns:
+            bool: True, if the address is present in the wallet. False otherwise.
+
+        """
+
         for key, contract in self._contracts.items():
             if contract.Address == address:
                 return True
         return False
 
-    def CreateKey(self):
-        private_key = bytes(Random.get_random_bytes(32))
-#        self.__log.debug("private key %s " % private_key)
+    def CreateKey(self, private_key=None):
+        """
+        Create a KeyPair
+
+        Args:
+            private_key (iterable_of_ints): (optional) 32 byte private key
+
+        Returns:
+            KeyPair: a KeyPair instance
+
+        """
+
+        if private_key is None:
+            private_key = bytes(Random.get_random_bytes(32))
 
         key = KeyPair(priv_key=private_key)
         self._keys[key.PublicKeyHash.ToBytes()] = key
-#        self.__log.debug("keys %s " % self._keys.items())
         return key
 
     def EncryptPrivateKey(self, decrypted):
+        """
+        Encrypt the provided plaintext with the initialized private key.
+
+        Args:
+            decrypted (byte string): the plaintext to be encrypted.
+
+        Returns:
+            byte string: the ciphertext.
+
+        """
         aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
         return aes.encrypt(decrypted)
 
     def DecryptPrivateKey(self, encrypted_private_key):
+        """
+        Decrypt the provided ciphertext with the initialized private key.
+
+        Args:
+            encrypted_private_key (byte string): the ciphertext to be decrypted.
+
+        Returns:
+            byte string: the ciphertext.
+
+        """
         aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
         return aes.decrypt(encrypted_private_key)
 
@@ -201,6 +317,18 @@ class Wallet(object):
         raise NotImplementedError()
 
     def DeleteAddress(self, script_hash):
+        """
+        Deletes an address from the wallet (includes watch-only addresses).
+
+        Args:
+            script_hash (UInt160): a bytearray (len 20) representing the public key.
+
+        Returns:
+            tuple:
+                bool: True if address removed, False otherwise.
+                list: TODO: unclear wat `coins_to_remove` represents. returns empty list in testcases.
+
+        """
         coin_keys_toremove = []
         coins_to_remove = []
         for key, coinref in self._coins.items():
@@ -273,7 +401,8 @@ class Wallet(object):
 
     def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0):
 
-        coins = self.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
+        coins = self.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr,
+                                             use_standard=use_standard, watch_only_val=watch_only_val)
 
         sum = Fixed8(0)
 
@@ -293,12 +422,33 @@ class Wallet(object):
                 return coins[0:index + 1]
 
     def GetKey(self, public_key_hash):
+        """
+        Get the KeyPair belonging to the public key hash.
+
+        Args:
+            public_key_hash (UInt160): a public key hash to get the KeyPair for.
+
+        Returns:
+            KeyPair: If successful, the KeyPair belonging to the public key hash.
+            None: If unsuccessful
+
+        """
         if public_key_hash.ToBytes() in self._keys.keys():
             return self._keys[public_key_hash.ToBytes()]
         return None
 
     def GetKeyByScriptHash(self, script_hash):
+        """
+        Get the KeyPair belonging to the script hash.
 
+        Args:
+            script_hash (UInt160): a bytearray (len 20) representing the public key.
+
+        Returns:
+            KeyPair: If successful, the KeyPair belonging to the public key hash.
+            None: If unsuccessful
+
+        """
         contract = self.GetContract(script_hash)
         if contract:
             return self.GetKey(contract.PublicKeyHash)
@@ -494,6 +644,16 @@ class Wallet(object):
         return False
 
     def CheckAddressState(self, script_hash):
+        """
+        Determine the address state of the provided script hash.A
+
+        Args:
+            script_hash (UInt160): a script hash to determine the address state of.
+
+        Returns:
+            AddressState: the address state
+
+        """
         for key, contract in self._contracts.items():
             if contract.ScriptHash.ToBytes() == script_hash.ToBytes():
                 return AddressState.InWallet
@@ -504,9 +664,33 @@ class Wallet(object):
 
     @staticmethod
     def ToAddress(scripthash):
+        """
+        Transform a script hash to an address.
+
+        Args:
+            script_hash (UInt160): a bytearray (len 20) representing the public key.
+
+        Returns:
+            address (str): the base58check encoded address.
+
+        """
         return scripthash_to_address(scripthash)
 
     def ToScriptHash(self, address):
+        """
+        Retrieve the script_hash based from an address.
+
+        Args:
+            address (str): a base58 encoded address.
+
+        Raises:
+            ValuesError: if an invalid address is supplied or the coin version is incorrect.
+            Exception: if the address checksum fails.
+
+        Returns:
+            UInt160: script hash
+
+        """
         data = b58decode(address)
         if len(data) != 25:
             raise ValueError('Not correct Address, wrong length.')
@@ -519,7 +703,16 @@ class Wallet(object):
         return UInt160(data=data[1:21])
 
     def ValidatePassword(self, password):
+        """
+        Validates if the provided password matches with the stored password.
 
+        Args:
+            password (string): a password.
+
+        Returns:
+            bool: the provided password matches with the stored password.
+
+        """
         return hashlib.sha256(password.encode('utf-8')).digest() == self.LoadStoredData('PasswordHash')
 
     def GetStandardAddress(self):
@@ -546,6 +739,17 @@ class Wallet(object):
         raise Exception("Could not find change address")
 
     def GetDefaultContract(self):
+        """
+        Get the default contract.
+
+        Returns:
+            contract (Contract): if Successful, a contract of type neo.SmartContract.Contract.
+            None: it unsuccessful.
+
+        Note:
+            Prints a warning to the console if the default contract could not be found.
+
+        """
         try:
             return self.GetContracts()[0]
         except Exception as e:
@@ -553,6 +757,13 @@ class Wallet(object):
         return None
 
     def GetKeys(self):
+        """
+        Get all keys pairs present in the wallet.
+
+        Returns:
+            list: of KeyPairs.
+
+        """
         return [key for key in self._keys.values()]
 
     def GetCoinAssets(self):
@@ -619,7 +830,8 @@ class Wallet(object):
             if use_vins_for_asset is not None and len(use_vins_for_asset) > 0 and use_vins_for_asset[1] == assetId:
                 paycoins[assetId] = self.FindCoinsByVins(use_vins_for_asset[0])
             else:
-                paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
+                paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(
+                    assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
 
         self._vin_exclude = None
 
