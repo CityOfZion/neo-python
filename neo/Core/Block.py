@@ -199,6 +199,8 @@ class Block(BlockBase, InventoryMixin):
         else:
             json['tx'] = [tx.ToJson() for tx in self.Transactions]
 
+        json['total_fees'] = self.TotalFees().value
+        json['sys_fee'] = GetBlockchain().GetSysFeeAmount(self.Hash)
         return json
 
     # < summary >

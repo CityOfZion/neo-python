@@ -11,7 +11,7 @@ class InvocationTransaction(Transaction):
     Gas = None
 
     def SystemFee(self):
-        return self.Gas / Fixed8.FD()
+        return self.Gas // Fixed8.FD()
 
     def __init__(self, *args, **kwargs):
         super(InvocationTransaction, self).__init__(*args, **kwargs)
