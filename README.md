@@ -55,11 +55,10 @@ We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get yo
 brew install leveldb
 ```
 
-##### ubuntu/debian
+##### Ubuntu/Debian
 
 ```
-apt-get install libleveldb-dev python3.5-dev
-pip install wheel
+apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
 ```
 
 ##### Centos/Redhat/Fedora
