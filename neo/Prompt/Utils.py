@@ -6,6 +6,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Wallets.Coin import CoinState
 from neo.Core.TX.Transaction import TransactionInput
 from neo.UInt256 import UInt256
+from decimal import Decimal
 import json
 
 
@@ -195,3 +196,13 @@ def parse_hold_vins(results):
         vins.append(t_input)
 
     return vins
+
+
+def string_from_fixed8(amount, decimals):
+
+    precision_mult = pow(10, decimals)
+    amount = Decimal(amount) / Decimal(precision_mult)
+    formatter_str = '.%sf' % decimals
+    amount_str = format(amount, formatter_str)
+
+    return amount_str

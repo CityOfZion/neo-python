@@ -38,7 +38,8 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
 
-        amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(8, 'little')
+        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
+        amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
 
         with self._db.write_batch() as wb:
             for tx in block.Transactions:

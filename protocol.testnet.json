@@ -1,6 +1,6 @@
 {
     "ApplicationConfiguration": {
-        "DataDirectoryPath": "./Chains/SC234",
+        "DataDirectoryPath": "Chains/SC234",
         "NodePort": 20333,
         "SslCert": "",
         "SslCertPassword": "",
@@ -8,7 +8,8 @@
             "http://*:20332"
         ],
         "VersionName": "/NEO-PYTHON:2.3.4/",
-        "WsPort": 20334
+        "WsPort": 20334,
+        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/Chain780000.tar.gz"
     },
     "ProtocolConfiguration": {
         "AddressVersion": 23,

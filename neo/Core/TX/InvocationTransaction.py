@@ -11,7 +11,7 @@ class InvocationTransaction(Transaction):
     Gas = None
 
     def SystemFee(self):
-        return self.Gas
+        return self.Gas // Fixed8.FD()
 
     def __init__(self, *args, **kwargs):
         super(InvocationTransaction, self).__init__(*args, **kwargs)
@@ -33,6 +33,8 @@ class InvocationTransaction(Transaction):
 
         if self.Version >= 1:
             self.Gas = reader.ReadFixed8()
+            if self.Gas < Fixed8.Zero():
+                raise Exception("Invalid Format")
         else:
             self.Gas = Fixed8(0)
 

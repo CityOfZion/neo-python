@@ -481,6 +481,12 @@ class UserWallet(Wallet):
 
         jsn['public_keys'] = self.PubKeys()
         jsn['tokens'] = tokens
+
+        jsn['claims'] = {
+            'available': self.GetAvailableClaimTotal().ToString(),
+            'unavailable': self.GetUnavailableBonus().ToString()
+        }
+
         if verbose:
             jsn['coins'] = [coin.ToJson() for coin in self.FindUnspentCoins()]
             jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]

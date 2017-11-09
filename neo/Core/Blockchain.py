@@ -1,15 +1,13 @@
 # -*- coding:utf-8 -*-
 
 from neo.Core.Block import Block
-from neo.Core.AssetType import AssetType
 from neo.Core.TX.Transaction import *
 from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
-from neo.Core.State.SpentCoinState import SpentCoinState
-from neo.Core.Helper import Helper
+from neo.Core.State.SpentCoinState import SpentCoin
 from neo.SmartContract.Contract import Contract
 from neo.Settings import settings
 from neo.Cryptography.Crypto import *
@@ -20,13 +18,8 @@ from datetime import datetime
 from events import Events
 from neo.Cryptography.ECCurve import ECDSA
 import pytz
-import traceback
-from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
-
-# not sure of the origin of these
-Issuer = ECDSA.decode_secp256r1('030fe41d11cc34a667cf1322ddc26ea4a8acad3b8eefa6f6c3f49c7673e4b33e4b').G
-Admin = b'Abf2qMs1pzQb8kYk9RuxtUb9jtRKJVuBJt'
+from itertools import groupby
 
 
 class Blockchain(object):
@@ -157,40 +150,97 @@ class Blockchain(object):
 
     @staticmethod
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
-        raise NotImplementedError()
+        unclaimed = []
+
+        for hash, group in groupby(inputs, lambda x: x.PrevHash):
+            claimable = Blockchain.Default().GetUnclaimed(hash)
+            if claimable is None or len(claimable) < 1:
+                if ignore_claimed:
+                    continue
+                else:
+                    raise Exception("Error calculating bonus without ignoring claimed")
+
+            for coinref in group:
+                if coinref.PrevIndex in claimable:
+                    claimed = claimable[coinref.PrevIndex]
+                    unclaimed.append(claimed)
+                else:
+                    if ignore_claimed:
+                        continue
+                    else:
+                        raise Exception("Error calculating bonus without ignoring claimed")
+
+        return Blockchain.CalculateBonusInternal(unclaimed)
 
     @staticmethod
     def CalculateBonus(inputs, height_end):
         unclaimed = []
-        hashes = Counter([input.PrevHash for input in inputs]).items()
-        for hash in hashes:
-            height_start = 0
-            tx, height = Blockchain.Default().GetTransaction(hash)
-            height_start = height
+
+        for hash, group in groupby(inputs, lambda x: x.PrevHash):
+            tx, height_start = Blockchain.Default().GetTransaction(hash)
+
             if tx is None:
-                return False
+                raise Exception("Could Not calculate bonus")
+
             if height_start == height_end:
                 continue
 
-            to_be_checked = []
-            [to_be_checked.append(input) for input in inputs if input.PrevHash == hash]
+            for coinref in group:
+                if coinref.PrevIndex >= len(tx.outputs) or tx.outputs[coinref.PrevIndex].AssetId != Blockchain.SystemShare().Hash:
+                    raise Exception("Invalid coin reference")
+                spent_coin = SpentCoin(output=tx.outputs[coinref.PrevIndex], start_height=height_start, end_height=height_end)
+                unclaimed.append(spent_coin)
 
-            for claim in to_be_checked:
-
-                if claim.PrevIndex >= len(tx.Outputs) or tx.Outputs[claim.PrevIndex].AssetId == Blockchain.SystemShare().Hash:
-                    raise Exception('Invalid claim')
-
-
-#                coin = SpentCoin(tx.Outputs[claim.PrevIndex], height_start, height_end)
-#                unclaimed.append(coin)
-            raise NotImplementedError()
         return Blockchain.CalculateBonusInternal(unclaimed)
 
     @staticmethod
     def CalculateBonusInternal(unclaimed):
-        amount_claimed = Fixed8(0)
 
-        raise NotImplementedError()
+        amount_claimed = Fixed8.Zero()
+
+        decInterval = Blockchain.DECREMENT_INTERVAL
+        genAmount = Blockchain.GENERATION_AMOUNT
+        genLen = len(genAmount)
+
+        for coinheight, group in groupby(unclaimed, lambda x: x.Heights):
+            amount = 0
+            ustart = int(coinheight.start / decInterval)
+
+            if ustart < genLen:
+
+                istart = coinheight.start % decInterval
+                uend = int(coinheight.end / decInterval)
+                iend = coinheight.end % decInterval
+
+                if uend >= genLen:
+                    iend = 0
+
+                if iend == 0:
+                    uend -= 1
+                    iend = decInterval
+
+                while ustart < uend:
+
+                    amount += (decInterval - istart) * genAmount[ustart]
+                    ustart += 1
+                    istart = 0
+
+                amount += (iend - istart) * genAmount[ustart]
+
+            endamount = Blockchain.Default().GetSysFeeAmountByHeight(coinheight.end - 1)
+            startamount = 0 if coinheight.start == 0 else Blockchain.Default().GetSysFeeAmountByHeight(coinheight.start - 1)
+            amount += endamount - startamount
+
+            outputSum = 0
+
+            for spentcoin in group:
+                outputSum += spentcoin.Value.value
+
+            outputSum = outputSum / 100000000
+            outputSumFixed8 = Fixed8(int(outputSum * amount))
+            amount_claimed += outputSumFixed8
+
+        return amount_claimed
 
     def OnNotify(self, notification):
         #        print("on notifiy %s " % notification)
@@ -233,7 +283,6 @@ class Blockchain(object):
         pass
 
     def GetBlock(self, height_or_hash):
-        #        return self.GetBlockByHash(self.GetBlockHash(height))
         pass
 
     def GetBlockByHash(self, hash):
@@ -311,22 +360,21 @@ class Blockchain(object):
         return self.GetContract(script_hash)
 
     def GetStorageItem(self, storage_key):
-        print("BLOCKCHAIN DEFAULT GETTING STORAGE ITEMMMMM")
         # abstract
         pass
 
     def GetSysFeeAmount(self, hash):
         # abstract
-
         pass
 
+    def GetSysFeeAmountByHeight(self, height):
+        hash = self.GetBlockHash(height)
+        return self.GetSysFeeAmount(hash)
+
     def GetTransaction(self, hash):
-        # abstract
-        # should return both transaction and height
-        # return tx, height
         return None, 0
 
-    def GetUnClaimed(self, hash):
+    def GetUnclaimed(self, hash):
         # abstract
         pass
 
@@ -343,14 +391,6 @@ class Blockchain(object):
         pass
 
     def OnPersistCompleted(self, block):
-
-        #        self.__validators = []
-        pass
-
-    def StartPersist(self):
-        pass
-
-    def StopPersist(self):
         pass
 
     def BlockCacheCount(self):

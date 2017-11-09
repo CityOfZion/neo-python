@@ -1,7 +1,6 @@
 from neo.Utils.NeoTestCase import NeoTestCase
-from .LevelDBBlockchain import LevelDBBlockchain
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
-from neo.Core.Header import Header
 from neo.IO.Helper import Helper
 import shutil
 import binascii
@@ -47,7 +46,6 @@ class LevelDBTest(NeoTestCase):
         hexdata = binascii.unhexlify(self.block_one_raw)
 
         block_one = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
-        header = block_one.Header
 
         if settings.MAGIC == 1953787457:
             self.assertEqual(self._blockchain.CurrentHeaderHash, b'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef')
@@ -56,31 +54,7 @@ class LevelDBTest(NeoTestCase):
 
         self.assertEqual(self._blockchain.HeaderHeight, 0)
 
-        # add it to leveldb
-#        self._blockchain.AddHeader( header )
-#        self.assertEqual(self._blockchain.HeaderHeight, 1)
+    def test_sys_block_fees(self):
 
-        # now retrieve it
-#        block_one_again = self._blockchain.GetHeader(header.Hash)
-
-#        self.assertEqual(type(block_one_again), Header)
-#        self.assertEqual(block_one_again.Hash.ToBytes(), self.block_one_hash)
-        # check to see if the header hash in correct
-#        self.assertEqual(block_one_again.Hash.ToBytes(), self._blockchain.CurrentHeaderHash.ToBytes())
-
-        # now try adding the same block again and see if the height changes
-#        self._blockchain.AddHeader(header)
-#        self.assertEqual(self._blockchain.HeaderHeight, 1)
-
-        # current block height should still be zero
-#        self.assertEqual(self._blockchain.Height, 0)
-
-        # now test adding the second block
-
-#        self._blockchain.Persist(block_one)
-
-        # now the block height should be 1
-#        self.assertEqual(self._blockchain.Height, 1)
-
-        # test contains block functions
-#        self.assertTrue(self._blockchain.ContainsBlock(block_one_again.Index))
+        block_num = 14103
+        fee_should_be = 435

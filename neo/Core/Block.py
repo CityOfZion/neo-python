@@ -8,18 +8,13 @@ from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.Cryptography.MerkleTree import MerkleTree
-from json import dumps
 import sys
 from autologging import logged
 from neo.Core.Header import Header
 from neo.Core.Witness import Witness
-import json
 from neo.Fixed8 import Fixed8
 from neo.Blockchain import GetBlockchain
-import pdb
-#  < summary >
-#  区块或区块头
-#  < / summary >
+from neo.Settings import settings
 
 
 @logged
@@ -111,15 +106,10 @@ class Block(BlockBase, InventoryMixin):
         return 0
 
     def TotalFees(self):
-        amount = 0
+        amount = Fixed8.Zero()
         for tx in self.Transactions:
-            if type(tx.SystemFee()) is int:
-                raise Exception("TX %s is baddddddd %s %s" % (tx, tx.Type))
-            elif type(tx.SystemFee().value) is Fixed8:
-                raise Exception("TX ISSS BADD:::: %s %s" % (tx, tx.Type))
-            amount += tx.SystemFee().value
-        return Fixed8(amount)
-#        return Fixed8(sum( tx.SystemFee().value for tx in self.Transactions))
+            amount += tx.SystemFee()
+        return amount
 
     #  < summary >
     #  反序列化
@@ -210,6 +200,7 @@ class Block(BlockBase, InventoryMixin):
         else:
             json['tx'] = [tx.ToJson() for tx in self.Transactions]
 
+        json['sys_fee'] = GetBlockchain().GetSysFeeAmount(self.Hash)
         return json
 
     # < summary >

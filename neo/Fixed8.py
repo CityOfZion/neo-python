@@ -22,6 +22,10 @@ class Fixed8:
         return self.value
 
     @staticmethod
+    def FD():
+        return Fixed8(Fixed8.D)
+
+    @staticmethod
     def FromDecimal(number):
         out = int(number * Fixed8.D)
         return Fixed8(out)
@@ -83,6 +87,9 @@ class Fixed8:
 
     def __truediv__(self, other):
         return Fixed8(int(self.value / other.value))
+
+    def __floordiv__(self, other):
+        return Fixed8(self.value // other.value)
 
     def __itruediv__(self, other):
         return self.__truediv__(other)

@@ -21,11 +21,11 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from autologging import logged
 from neo.UInt256 import UInt256
+from neo.Core.AssetType import AssetType
 
 import sys
 from itertools import groupby
-from neo.Core.AssetType import AssetType
-import pdb
+import json
 
 
 class TransactionResult():

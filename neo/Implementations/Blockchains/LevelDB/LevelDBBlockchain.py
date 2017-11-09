@@ -14,7 +14,7 @@ from neo.UInt256 import UInt256
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.CoinState import CoinState
-from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem
+from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem, SpentCoin
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.ContractState import ContractState
@@ -25,15 +25,12 @@ from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 from neo.Cryptography.Crypto import Crypto
+from neo.BigInteger import BigInteger
+
 import time
 import plyvel
 from autologging import logged
 import binascii
-import pprint
-import json
-from twisted.internet import reactor
-import traceback
-from neo.BigInteger import BigInteger
 
 
 @logged
@@ -265,7 +262,31 @@ class LevelDBBlockchain(Blockchain):
         sn = self._db.snapshot()
         coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
 
-        return coins.TryGet(keyval=tx_hash)
+        result = coins.TryGet(keyval=tx_hash)
+
+        sn.close()
+
+        return result
+
+    def GetUnclaimed(self, hash):
+
+        tx, height = self.GetTransaction(hash)
+
+        if tx is None:
+            return None
+
+        out = {}
+        sn = self._db.snapshot()
+        coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
+
+        state = coins.TryGet(keyval=hash.ToBytes())
+
+        for item in state.Items:
+            out[item.index] = SpentCoin(tx.outputs[item.index], height, item.height)
+
+        sn.close()
+
+        return out
 
     def SearchAssetState(self, query):
         res = []
@@ -405,7 +426,17 @@ class LevelDBBlockchain(Blockchain):
         return self._header_index[height]
 
     def GetSysFeeAmount(self, hash):
-        return Fixed8(0)
+
+        if type(hash) is UInt256:
+            hash = hash.ToBytes()
+        try:
+            value = self._db.get(DBPrefix.DATA_Block + hash)[0:8]
+            amount = int.from_bytes(value, 'little', signed=False)
+            return amount
+        except Exception as e:
+            print("couldnt get sys fee: %s " % e)
+
+        return 0
 
     def GetBlockByHeight(self, height):
         hash = self.GetBlockHash(height)
@@ -521,7 +552,6 @@ class LevelDBBlockchain(Blockchain):
         start = time.clock()
 
         sn = self._db.snapshot()
-
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
@@ -530,12 +560,14 @@ class LevelDBBlockchain(Blockchain):
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
 
-        amount_sysfee = (self.GetSysFeeAmount(block.PrevHash).value + block.TotalFees().value).to_bytes(8, 'little')
+        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
+        amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
+        self.__log.debug("[BlockFee] : %s %s " % (block.Index, amount_sysfee))
 
         try:
             with self._db.write_batch() as wb:
 
-                wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee + block.Trim())
+                wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
 
                 for tx in block.Transactions:
 

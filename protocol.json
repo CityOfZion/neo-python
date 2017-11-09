@@ -38,21 +38,6 @@
     "SslCert": "",
     "SslCertPassword": "",
     "VersionName":"/NEO-PYTHON:2.3.4/",
-    "theme": "dark",
-    "themes": {
-        "dark": {
-            "Command": "#ff0066",
-            "Default": "#00ee00",
-            "Neo": "#0000ee",
-            "Number": "#ffffff"
-        },
-        "light": {
-            "Command": "#ff0066",
-            "Default": "#008800",
-            "Neo": "#0000ee",
-            "Number": "#000000"
-        }
-    }
-
+    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_mainnet/Chain1550000.tar.gz"
   }
 }

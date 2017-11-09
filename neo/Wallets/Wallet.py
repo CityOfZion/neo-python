@@ -292,6 +292,35 @@ class Wallet(object):
             if total >= amount:
                 return coins[0:index + 1]
 
+    def GetUnclaimedCoins(self):
+        unclaimed = []
+
+        neo = Blockchain.SystemShare().Hash
+
+        for coin in self.GetCoins():
+            if coin.Output.AssetId == neo and \
+                    coin.State & CoinState.Confirmed > 0 and \
+                    coin.State & CoinState.Spent > 0 and \
+                    coin.State & CoinState.Claimed == 0 and \
+                    coin.State & CoinState.Frozen == 0 and \
+                    coin.State & CoinState.WatchOnly == 0:
+
+                unclaimed.append(coin)
+
+        return unclaimed
+
+    def GetAvailableClaimTotal(self):
+        coinrefs = [coin.Reference for coin in self.GetUnclaimedCoins()]
+        bonus = Blockchain.CalculateBonusIgnoreClaimed(coinrefs, True)
+        return bonus
+
+    def GetUnavailableBonus(self):
+        height = Blockchain.Default().Height + 1
+        unspents = self.FindUnspentCoinsByAsset(Blockchain.SystemShare().Hash)
+        refs = [coin.Reference for coin in unspents]
+        unavailable_bonus = Blockchain.CalculateBonus(refs, height_end=height)
+        return unavailable_bonus
+
     def GetKey(self, public_key_hash):
         if public_key_hash.ToBytes() in self._keys.keys():
             return self._keys[public_key_hash.ToBytes()]
@@ -425,10 +454,10 @@ class Wallet(object):
                 for input in tx.inputs:
 
                     if input in self._coins.keys():
-
-                        if self._coins[input].Output.AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                            self._coins[input].State |= CoinState.Spent | CoinState.Confirmed
-                            changed.add(self._coins[input])
+                        if self._coins[input].Output.AssetId == Blockchain.SystemShare().Hash:
+                            coin = self._coins[input]
+                            coin.State |= CoinState.Spent | CoinState.Confirmed
+                            changed.add(coin)
 
                         else:
                             deleted.add(self._coins[input])
@@ -487,7 +516,6 @@ class Wallet(object):
                 if output.ScriptHash == watch_script_hash:
                     return True
             for script in tx.scripts:
-                # this needs to be tested out
                 if script.VerificationScript == watch_script_hash.ToBytes():
                     return True
 
@@ -619,7 +647,8 @@ class Wallet(object):
             if use_vins_for_asset is not None and len(use_vins_for_asset) > 0 and use_vins_for_asset[1] == assetId:
                 paycoins[assetId] = self.FindCoinsByVins(use_vins_for_asset[0])
             else:
-                paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
+                paycoins[assetId] = self.FindUnspentCoinsByAssetAndTotal(
+                    assetId, amount, from_addr=from_addr, use_standard=use_standard, watch_only_val=watch_only_val)
 
         self._vin_exclude = None
 
@@ -674,18 +703,14 @@ class Wallet(object):
                     coin = coinref
 
             if coin is None:
-                print("tx input not in coins")
                 return False
             if coin.State & CoinState.Spent > 0:
-                print("coin state is already spent")
                 return False
             elif coin.State & CoinState.Confirmed == 0:
-                print("coin state not confirmed!")
                 return False
 
             coin.State |= CoinState.Spent
             coin.State &= ~CoinState.Confirmed
-
             changed.append(coin)
 
         for index, output in enumerate(tx.outputs):
@@ -705,7 +730,11 @@ class Wallet(object):
 
         if isinstance(tx, ClaimTransaction):
             # do claim stuff
-            pass
+            for claim in tx.Claims:
+                claim_coin = self._coins[claim]
+                claim_coin.State |= CoinState.Claimed
+                claim_coin.State &= ~CoinState.Confirmed
+                changed.append(claim_coin)
 
         self.OnSaveTransaction(tx, added, changed, deleted)
 

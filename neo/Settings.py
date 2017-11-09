@@ -48,6 +48,9 @@ class SettingsHolder:
     WS_PORT = None
     URI_PREFIX = None
     VERSION_NAME = None
+    BOOTSTRAP_FILE = None
+
+    ALL_FEES = None
 
     # Helpers
     @property
@@ -83,6 +86,7 @@ class SettingsHolder:
         self.SEED_LIST = config['SeedList']
 
         fees = config['SystemFee']
+        self.ALL_FEES = fees
         self.ENROLLMENT_TX_FEE = fees['EnrollmentTransaction']
         self.ISSUE_TX_FEE = fees['IssueTransaction']
         self.PUBLISH_TX_FEE = fees['PublishTransaction']
@@ -94,6 +98,7 @@ class SettingsHolder:
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
         self.VERSION_NAME = config['VersionName']
+        self.BOOTSTRAP_FILE = config['BootstrapFile']
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """

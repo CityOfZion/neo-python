@@ -3,15 +3,8 @@ from neo.Wallets.KeyPair import KeyPair
 from neo.UInt160 import UInt160
 from neo.SmartContract.Contract import Contract
 import binascii
-from neo.Core.Helper import Helper
-from neo.IO.MemoryStream import StreamManager
-from neo.IO.BinaryReader import BinaryReader
 from neo.Cryptography.Crypto import Crypto
-from neo.Core.TX.Transaction import Transaction
-from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.VM import OpCode
 import hashlib
-import json
 
 
 class WalletTestCase(NeoTestCase):
@@ -109,15 +102,3 @@ class WalletTestCase(NeoTestCase):
         sig = Crypto.Sign(self.nmsg, key.PrivateKey, key.PublicKey)
 
         self.assertEqual(sig.hex(), self.neon_sig)
-
-
-#    def test_sig_verify(self):
-#        key = KeyPair(priv_key=self.nmpk)
-
-#        sig = Crypto.Sign(self.nmsg, key.PrivateKey, key.PublicKey)
-
-#        self.assertEqual(sig.hex(), self.neon_sig)
-
-#        verify = Crypto.VerifySignature(self.nmsg, sig, key.PublicKey)
-
-#        print("verify? " % verify)

@@ -5,6 +5,7 @@ from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
 from autologging import logged
+from collections import namedtuple
 
 
 class SpentCoinItem():
@@ -14,6 +15,34 @@ class SpentCoinItem():
     def __init__(self, index, height):
         self.index = index
         self.height = height
+
+
+class SpentCoin():
+
+    Output = None
+    StartHeight = None
+    EndHeight = None
+
+    @property
+    def Value(self):
+        return self.Output.Value
+
+    @property
+    def Heights(self):
+        CoinHeight = namedtuple("CoinHeight", "start end")
+        return CoinHeight(self.StartHeight, self.EndHeight)
+
+    def __init__(self, output, start_height, end_height):
+        self.Output = output
+        self.StartHeight = start_height
+        self.EndHeight = end_height
+
+    def ToJson(self):
+        return {
+            'output': self.Output.ToJson(),
+            'start': self.StartHeight,
+            'end': self.EndHeight
+        }
 
 
 @logged

@@ -21,7 +21,7 @@ from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
@@ -55,12 +55,6 @@ class PromptInterface(object):
 
     go_on = True
 
-    _gathering_password = False
-    _gathered_passwords = []
-    _gather_password_action = None
-    _gather_address_str = None
-    _num_passwords_req = 0
-    _wallet_create_path = None
     _wallet_send_tx = None
 
     _invoke_test_tx = None
@@ -95,6 +89,7 @@ class PromptInterface(object):
                 'open wallet {path}',
                 'create wallet {path}',
                 'wallet {verbose}',
+                'wallet claim',
                 'wallet migrate',
                 'wallet rebuild {start block}',
                 'wallet delete_addr {addr}',
@@ -190,15 +185,21 @@ class PromptInterface(object):
                     print("wallet file not found")
                     return
 
-                self._num_passwords_req = 1
-                self._wallet_create_path = path
-                self._gathered_passwords = []
-                self._gathering_password = True
-                self._gather_password_action = self.do_open_wallet
+                passwd = prompt("[Password]> ", is_password=True)
+
+                try:
+                    self.Wallet = UserWallet.Open(path, passwd)
+
+                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+                    self._walletdb_loop.start(1)
+                    print("Opened wallet at %s" % path)
+                except Exception as e:
+                    print("could not open wallet: %s " % e)
+
             else:
                 print("Please specify a path")
         else:
-            print("item is? %s " % item)
+            print("please specify something to open")
 
     def do_create(self, arguments):
         item = get_arg(arguments)
@@ -213,45 +214,30 @@ class PromptInterface(object):
                     print("File already exists")
                     return
 
-                self._num_passwords_req = 2
-                self._wallet_create_path = path
-                self._gathered_passwords = []
-                self._gathering_password = True
-                self._gather_password_action = self.do_create_wallet
+                passwd1 = prompt("[Password 1]> ", is_password=True)
+                passwd2 = prompt("[Password 2]> ", is_password=True)
+
+                if passwd1 != passwd2 or len(passwd1) < 10:
+                    print("please provide matching passwords that are at least 10 characters long")
+                    return
+
+                try:
+                    self.Wallet = UserWallet.Create(path=path, password=passwd1)
+                except Exception as e:
+                    print("Exception creating wallet: %s " % e)
+                    return
+
+                contract = self.Wallet.GetDefaultContract()
+                key = self.Wallet.GetKey(contract.PublicKeyHash)
+
+                print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+                print("pubkey %s " % key.PublicKey.encode_point(True))
+
+                self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+                self._walletdb_loop.start(1)
+
             else:
                 print("Please specify a path")
-
-    def do_create_wallet(self):
-
-        if self.Wallet:
-            self.do_close_wallet()
-
-        psswds = self._gathered_passwords
-        path = self._wallet_create_path
-        self._wallet_create_path = None
-        self._gathered_passwords = None
-        self._gather_password_action = None
-
-        if len(psswds) != 2 or psswds[0] != psswds[1] or len(psswds[0]) < 10:
-            print("please provide matching passwords that are at least 10 characters long")
-            return
-
-        passwd = psswds[1]
-
-        try:
-            self.Wallet = UserWallet.Create(path=path, password=passwd)
-        except Exception as e:
-            print("Exception creating wallet: %s " % e)
-            return
-
-        contract = self.Wallet.GetDefaultContract()
-        key = self.Wallet.GetKey(contract.PublicKeyHash)
-
-        print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
-        print("pubkey %s " % key.PublicKey.encode_point(True))
-
-        self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-        self._walletdb_loop.start(1)
 
     def do_close_wallet(self):
         if self.Wallet:
@@ -260,23 +246,6 @@ class PromptInterface(object):
             self._walletdb_loop = None
             self.Wallet = None
             print("closed wallet %s " % path)
-
-    def do_open_wallet(self):
-
-        passwd = self._gathered_passwords[0]
-        path = self._wallet_create_path
-        self._wallet_create_path = None
-        self._gathered_passwords = None
-        self._gather_password_action = None
-
-        try:
-            self.Wallet = UserWallet.Open(path, passwd)
-
-            self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-            self._walletdb_loop.start(1)
-            print("Opened wallet at %s" % path)
-        except Exception as e:
-            print("could not open wallet: %s " % e)
 
     def do_import(self, arguments):
         item = get_arg(arguments)
@@ -337,40 +306,18 @@ class PromptInterface(object):
             if not self.Wallet:
                 print("please open a wallet")
                 return
-            addr = get_arg(arguments, 1)
+            passwd = prompt("[Password]> ", is_password=True)
 
-            if not addr:
-                print('please specify an address')
+            if not self.Wallet.ValidatePassword(passwd):
+                print("incorrect password")
                 return
 
-            if not self.Wallet.ContainsAddressStr(addr):
-                print("address %s not found in wallet" % addr)
-                return
-
-            self._num_passwords_req = 1
-            self._gather_address_str = addr
-            self._gathered_passwords = []
-            self._gathering_password = True
-            self._gather_password_action = self.do_export_wif
-            return
+            keys = self.Wallet.GetKeys()
+            for key in keys:
+                export = key.Export()
+                print("key export : %s " % export)
 
         print("Command export %s not found" % item)
-
-    def do_export_wif(self):
-        passwd = self._gathered_passwords[0]
-        address = self._gather_address_str
-        self._gather_address_str = None
-        self._gathered_passwords = None
-        self._gather_password_action = None
-
-        if not self.Wallet.ValidatePassword(passwd):
-            print("incorrect password")
-            return
-
-        keys = self.Wallet.GetKeys()
-        for key in keys:
-            export = key.Export()
-            print("key export : %s " % export)
 
     def show_wallet(self, arguments):
 
@@ -388,7 +335,6 @@ class PromptInterface(object):
             print("Wallet %s " % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
             return
         elif item == 'migrate' and self.Wallet is not None:
-            print("migrating wallet...")
             self.Wallet.Migrate()
             print("migrated wallet")
         elif item == 'delete_addr':
@@ -396,6 +342,8 @@ class PromptInterface(object):
             DeleteAddress(self, self.Wallet, addr_to_delete)
         elif item == 'close':
             self.do_close_wallet()
+        elif item == 'claim':
+            ClaimGas(self.Wallet)
         elif item == 'rebuild':
             self.Wallet.Rebuild()
             try:
@@ -405,8 +353,6 @@ class PromptInterface(object):
                     self.Wallet._current_height = item2
             except Exception as e:
                 pass
-        elif item == 'unspent':
-            self.Wallet.FindUnspentCoins()
         elif item == 'tkn_send':
             token_send(self.Wallet, arguments[1:])
         elif item == 'tkn_send_from':
@@ -726,101 +672,88 @@ class PromptInterface(object):
 
         while self.go_on:
 
-            if self._gathered_passwords and len(self._gathered_passwords) == self._num_passwords_req:
-                self._gathering_password = False
-                self._gather_password_action()
+            try:
+                result = prompt("neo> ",
+                                completer=self.get_completer(),
+                                history=self.history,
+                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                style=self.token_style,
+                                refresh_interval=.5)
+            except EOFError:
+                # Control-D pressed: quit
+                return self.quit()
+            except KeyboardInterrupt:
+                # Control-C pressed: do nothing
+                continue
 
-            if self._gathering_password:
-                result = prompt("password> ", is_password=True)
+            try:
+                command, arguments = self.parse_result(result)
 
-            else:
-                try:
-                    result = prompt("neo> ",
-                                    completer=self.get_completer(),
-                                    history=self.history,
-                                    get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                                    style=self.token_style,
-                                    refresh_interval=.5)
-                except EOFError:
-                    # Control-D pressed: quit
-                    return self.quit()
-                except KeyboardInterrupt:
-                    # Control-C pressed: do nothing
-                    continue
+                if command is not None and len(command) > 0:
+                    command = command.lower()
 
-            if self._gathering_password:
-                self._gathered_passwords.append(result)
+                    if command == 'quit' or command == 'exit':
+                        self.quit()
+                    elif command == 'help':
+                        self.help()
+                    elif command == 'create':
+                        self.do_create(arguments)
+                    elif command == 'open':
+                        self.do_open(arguments)
+                    elif command == 'build':
+                        self.do_build(arguments)
+                    elif command == 'load_run':
+                        self.do_load_n_run(arguments)
+                    elif command == 'import':
+                        self.do_import(arguments)
+                    elif command == 'export':
+                        self.do_export(arguments)
+                    elif command == 'wallet':
+                        self.show_wallet(arguments)
+                    elif command == 'send':
+                        self.do_send(arguments)
+                    elif command == 'sign':
+                        self.do_sign(arguments)
+                    elif command == 'block':
+                        self.show_block(arguments)
+                    elif command == 'tx':
+                        self.show_tx(arguments)
+                    elif command == 'header':
+                        self.show_header(arguments)
+                    elif command == 'account':
+                        self.show_account_state(arguments)
+                    elif command == 'asset':
+                        self.show_asset_state(arguments)
+                    elif command == 'contract':
+                        self.show_contract_state(arguments)
+                    elif command == 'invoke':
+                        self.invoke_contract(arguments)
+                    elif command == 'testinvoke':
+                        self.test_invoke_contract(arguments)
+                    elif command == 'withdraw_request':
+                        self.do_request_withdraw(arguments)
+                    elif command == 'withdraw':
+                        self.do_withdraw_from(arguments)
+                    elif command == 'cancel':
+                        self.cancel_operations()
+                    elif command == 'mem':
+                        self.show_mem()
+                    elif command == 'nodes' or command == 'node':
+                        self.show_nodes()
+                    elif command == 'state':
+                        self.show_state()
+                    elif command == 'config':
+                        self.configure(arguments)
+                    elif command is None:
+                        print('please specify a command')
+                    else:
+                        print("command %s not found" % command)
 
-            else:
+            except Exception as e:
 
-                try:
-                    command, arguments = self.parse_result(result)
-
-                    if command is not None and len(command) > 0:
-                        command = command.lower()
-
-                        if command == 'quit' or command == 'exit':
-                            self.quit()
-                        elif command == 'help':
-                            self.help()
-                        elif command == 'create':
-                            self.do_create(arguments)
-                        elif command == 'open':
-                            self.do_open(arguments)
-                        elif command == 'build':
-                            self.do_build(arguments)
-                        elif command == 'load_run':
-                            self.do_load_n_run(arguments)
-                        elif command == 'import':
-                            self.do_import(arguments)
-                        elif command == 'export':
-                            self.do_export(arguments)
-                        elif command == 'wallet':
-                            self.show_wallet(arguments)
-                        elif command == 'send':
-                            self.do_send(arguments)
-                        elif command == 'sign':
-                            self.do_sign(arguments)
-                        elif command == 'block':
-                            self.show_block(arguments)
-                        elif command == 'tx':
-                            self.show_tx(arguments)
-                        elif command == 'header':
-                            self.show_header(arguments)
-                        elif command == 'account':
-                            self.show_account_state(arguments)
-                        elif command == 'asset':
-                            self.show_asset_state(arguments)
-                        elif command == 'contract':
-                            self.show_contract_state(arguments)
-                        elif command == 'invoke':
-                            self.invoke_contract(arguments)
-                        elif command == 'testinvoke':
-                            self.test_invoke_contract(arguments)
-                        elif command == 'withdraw_request':
-                            self.do_request_withdraw(arguments)
-                        elif command == 'withdraw':
-                            self.do_withdraw_from(arguments)
-                        elif command == 'cancel':
-                            self.cancel_operations()
-                        elif command == 'mem':
-                            self.show_mem()
-                        elif command == 'nodes' or command == 'node':
-                            self.show_nodes()
-                        elif command == 'state':
-                            self.show_state()
-                        elif command == 'config':
-                            self.configure(arguments)
-                        elif command is None:
-                            print('please specify a command')
-                        else:
-                            print("command %s not found" % command)
-
-                except Exception as e:
-
-                    print("could not execute command: %s " % e)
-                    traceback.print_stack()
-                    traceback.print_exc()
+                print("could not execute command: %s " % e)
+                traceback.print_stack()
+                traceback.print_exc()
 
 
 def main():
@@ -832,10 +765,11 @@ def main():
                         choices=["dark", "light"], help="Set the default theme to be loaded from the config file. Default: 'dark'")
     parser.add_argument('--version', action='version',
                         version='neo-python v{version}'.format(version=__version__))
+
     args = parser.parse_args()
 
     if args.mainnet and args.config:
-        print("Cannot use bot --config and --mainnet parameters, please use only one.")
+        print("Cannot use both --config and --mainnet parameters, please use only one.")
         exit(1)
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
