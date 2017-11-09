@@ -23,6 +23,7 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
+from neo.Prompt.Commands.Bootstrap import BootstrapBlockchain
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Notify import SubscribeNotifications
 from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
@@ -55,7 +56,6 @@ class PromptInterface(object):
 
     go_on = True
 
-    _wallet_create_path = None
     _wallet_send_tx = None
 
     _invoke_test_tx = None
@@ -218,7 +218,7 @@ class PromptInterface(object):
                 passwd1 = prompt("[Password 1]> ", is_password=True)
                 passwd2 = prompt("[Password 2]> ", is_password=True)
 
-                if passwd1 == passwd2 and len(passwd1) > 9:
+                if passwd1 != passwd2 or len(passwd1) < 10:
                     print("please provide matching passwords that are at least 10 characters long")
                     return
 
@@ -766,10 +766,11 @@ def main():
                         choices=["dark", "light"], help="Set the default theme to be loaded from the config file. Default: 'dark'")
     parser.add_argument('--version', action='version',
                         version='neo-python v{version}'.format(version=__version__))
+
     args = parser.parse_args()
 
     if args.mainnet and args.config:
-        print("Cannot use bot --config and --mainnet parameters, please use only one.")
+        print("Cannot use both --config and --mainnet parameters, please use only one.")
         exit(1)
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
@@ -780,6 +781,10 @@ def main():
 
     if args.theme:
         preferences.set_theme(args.theme)
+
+    if args.bootstrap:
+        BootstrapBlockchain()
+        return
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)

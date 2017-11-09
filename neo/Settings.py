@@ -48,6 +48,7 @@ class SettingsHolder:
     WS_PORT = None
     URI_PREFIX = None
     VERSION_NAME = None
+    BOOTSTRAP_FILE = None
 
     ALL_FEES = None
 
@@ -97,6 +98,7 @@ class SettingsHolder:
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
         self.VERSION_NAME = config['VersionName']
+        self.BOOTSTRAP_FILE = config['BootstrapFile']
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """

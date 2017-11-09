@@ -57,7 +57,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertEqual(balance_should_be, neo_balance)
 
-        self.assertEqual(wallet.WalletHeight, 743131)
+        self.assertEqual(wallet.WalletHeight, 750131)
 
     def test_2_transactions(self):
 

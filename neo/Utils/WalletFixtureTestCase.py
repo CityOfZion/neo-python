@@ -1,9 +1,6 @@
-from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
-
 import os
 import shutil
-from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
 
 class WalletFixtureTestCase(BlockchainFixtureTestCase):
@@ -37,6 +34,18 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
         return 'testwallet'
 
     @classmethod
+    def wallet_3_path(cls):
+        return './fixtures/testwallet3.db3'
+
+    @classmethod
+    def wallet_3_dest(cls):
+        return './wallet3.db3'
+
+    @classmethod
+    def wallet_3_pass(cls):
+        return 'testpassword'
+
+    @classmethod
     def new_wallet_dest(cls):
         return './newwallet.db3'
 
@@ -68,5 +77,7 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
             os.remove(cls.wallet_2_dest())
             if os.path.exists(cls.new_wallet_dest()):
                 os.remove(cls.new_wallet_dest())
+            if os.path.exists(cls.wallet_3_dest()):
+                os.remove(cls.wallet_3_dest())
         except Exception as e:
             print("couldn't remove wallets %s " % e)
