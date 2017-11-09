@@ -136,7 +136,6 @@ class Wallet(object):
 
         Raises:
             Exception: Invalid operation - public key mismatch.
-
         """
         if not contract.PublicKeyHash.ToBytes() in self._keys.keys():
             raise Exception('Invalid operation - public key mismatch')
@@ -154,7 +153,6 @@ class Wallet(object):
 
         Note:
             Prints a warning to the console if the address already exists in the wallet.
-
         """
         if script_hash in self._contracts:
             print("Address already in contracts")
@@ -171,7 +169,6 @@ class Wallet(object):
 
         Note:
             Prints a warning to the console if the token already exists in the wallet.
-
         """
         if token.ScriptHash.ToBytes() in self._tokens.keys():
             print("Token already in wallet")
@@ -189,7 +186,6 @@ class Wallet(object):
         Returns:
             bool: False, if the old password does not match the current saved password.
             None: If succesfully changed the password.
-
         """
         if not self.ValidatePassword(password_old):
             return False
@@ -210,7 +206,6 @@ class Wallet(object):
 
         Returns:
             bool: True if exists, False otherwise.
-
         """
         return self.ContainsKeyHash(Crypto.ToScriptHash(public_key.encode_point(True), unhex=False))
 
@@ -223,7 +218,6 @@ class Wallet(object):
 
         Returns:
             bool: True if exists in wallet key list, False otherwise.
-
         """
         return public_key_hash.ToBytes() in self._keys.keys()
 
@@ -236,7 +230,6 @@ class Wallet(object):
 
         Returns:
             bool: True, if the address is present in the wallet. False otherwise.
-
         """
         return self.CheckAddressState(script_hash) >= AddressState.InWallet
 
@@ -249,9 +242,7 @@ class Wallet(object):
 
         Returns:
             bool: True, if the address is present in the wallet. False otherwise.
-
         """
-
         for key, contract in self._contracts.items():
             if contract.Address == address:
                 return True
@@ -266,9 +257,7 @@ class Wallet(object):
 
         Returns:
             KeyPair: a KeyPair instance
-
         """
-
         if private_key is None:
             private_key = bytes(Random.get_random_bytes(32))
 
@@ -285,7 +274,6 @@ class Wallet(object):
 
         Returns:
             byte string: the ciphertext.
-
         """
         aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
         return aes.encrypt(decrypted)
@@ -299,7 +287,6 @@ class Wallet(object):
 
         Returns:
             byte string: the ciphertext.
-
         """
         aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
         return aes.decrypt(encrypted_private_key)
@@ -318,7 +305,6 @@ class Wallet(object):
             tuple:
                 bool: True if address removed, False otherwise.
                 list: TODO: unclear wat `coins_to_remove` represents. returns empty list in testcases.
-
         """
         coin_keys_toremove = []
         coins_to_remove = []
@@ -422,7 +408,6 @@ class Wallet(object):
         Returns:
             KeyPair: If successful, the KeyPair belonging to the public key hash.
             None: If unsuccessful
-
         """
         if public_key_hash.ToBytes() in self._keys.keys():
             return self._keys[public_key_hash.ToBytes()]
@@ -438,7 +423,6 @@ class Wallet(object):
         Returns:
             KeyPair: If successful, the KeyPair belonging to the public key hash.
             None: If unsuccessful
-
         """
         contract = self.GetContract(script_hash)
         if contract:
@@ -484,7 +468,6 @@ class Wallet(object):
 
         Returns:
             Fixed8: total balance.
-
         """
         total = Fixed8(0)
 
@@ -639,7 +622,6 @@ class Wallet(object):
 
         Returns:
             bool: True, if transaction belongs to wallet. False, if not.
-
         """
         for key, contract in self._contracts.items():
 
@@ -673,7 +655,6 @@ class Wallet(object):
 
         Returns:
             AddressState: the address state.
-
         """
         for key, contract in self._contracts.items():
             if contract.ScriptHash.ToBytes() == script_hash.ToBytes():
@@ -693,7 +674,6 @@ class Wallet(object):
 
         Returns:
             address (str): the base58check encoded address.
-
         """
         return scripthash_to_address(scripthash)
 
@@ -710,7 +690,6 @@ class Wallet(object):
 
         Returns:
             UInt160: script hash.
-
         """
         data = b58decode(address)
         if len(data) != 25:
@@ -732,7 +711,6 @@ class Wallet(object):
 
         Returns:
             bool: the provided password matches with the stored password.
-
         """
         return hashlib.sha256(password.encode('utf-8')).digest() == self.LoadStoredData('PasswordHash')
 
@@ -745,7 +723,6 @@ class Wallet(object):
 
         Returns:
             UInt160: script hash.
-
         """
         for contract in self._contracts.values():
             if contract.IsStandard:
@@ -765,7 +742,6 @@ class Wallet(object):
 
         Returns:
             UInt160: script hash.
-
         """
         if from_addr is not None:
             for contract in self._contracts.values():
@@ -791,7 +767,6 @@ class Wallet(object):
 
         Note:
             Prints a warning to the console if the default contract could not be found.
-
         """
         try:
             return self.GetContracts()[0]
@@ -805,7 +780,6 @@ class Wallet(object):
 
         Returns:
             list: of KeyPairs.
-
         """
         return [key for key in self._keys.values()]
 
@@ -815,7 +789,6 @@ class Wallet(object):
 
         Returns:
             list: of UInt256 asset id's.
-
         """
         assets = set()
         for coin in self.GetCoins():
@@ -828,7 +801,6 @@ class Wallet(object):
 
         Returns:
             list: a list of neo.Wallets.Coin objects.
-
         """
         return [coin for coin in self._coins.values()]
 
@@ -842,7 +814,6 @@ class Wallet(object):
         Returns:
             Contract: if a contract was found matching the provided script hash.
             None: if no contract was found matching the provided script hash.
-
         """
         if script_hash.ToBytes() in self._contracts.keys():
             return self._contracts[script_hash.ToBytes()]
@@ -854,7 +825,6 @@ class Wallet(object):
 
         Returns:
             list: a list of neo.SmartContract.Contract objects.
-
         """
         return [contract for contract in self._contracts.values()]
 
@@ -955,7 +925,6 @@ class Wallet(object):
             bool:
                 True is successfully saved TODO:<where?>
                 False if input is not in the coin list, already spent or not confirmed.
-
         """
         coins = self.GetCoins()
         changed = []
