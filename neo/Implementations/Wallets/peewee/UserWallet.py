@@ -84,18 +84,14 @@ class UserWallet(Wallet):
         return wallet
 
     def CreateKey(self, prikey=None):
-        super(UserWallet, self).CreateKey(private_key=prikey)
-
-        account = WalletKeyPair(priv_key=private_key)
+        account = super(UserWallet, self).CreateKey(private_key=prikey)
         self._keys[account.PublicKeyHash.ToBytes()] = account
-
         self.OnCreateAccount(account)
         contract = WalletContract.CreateSignatureContract(account.PublicKey)
         self.AddContract(contract)
         return account
 
     def OnCreateAccount(self, account):
-
         pubkey = account.PublicKey.encode_point(False)
         pubkeyunhex = binascii.unhexlify(pubkey)
         pub = pubkeyunhex[1:65]
@@ -111,7 +107,6 @@ class UserWallet(Wallet):
         self.__dbaccount = db_account
 
     def AddContract(self, contract):
-
         super(UserWallet, self).AddContract(contract)
 
         db_contract = None
@@ -206,7 +201,6 @@ class UserWallet(Wallet):
         return []
 
     def LoadCoins(self):
-
         coins = {}
 
         try:
@@ -221,7 +215,6 @@ class UserWallet(Wallet):
         return coins
 
     def LoadContracts(self):
-
         ctr = {}
 
         for ct in Contract.select():
@@ -267,7 +260,6 @@ class UserWallet(Wallet):
         return Transaction.select()
 
     def SaveStoredData(self, key, value):
-
         k = None
         try:
             k = Key.get(Name=key)
@@ -281,7 +273,6 @@ class UserWallet(Wallet):
         k.save()
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
-
         for tx in block.FullTransactions:
 
             if self.IsWalletTransaction(tx):
@@ -311,11 +302,9 @@ class UserWallet(Wallet):
         self.OnCoinsChanged(added, changed, deleted)
 
     def OnSaveTransaction(self, tx, added, changed, deleted):
-
         self.OnCoinsChanged(added, changed, deleted)
 
     def OnCoinsChanged(self, added, changed, deleted):
-
         for coin in added:
             addr_hash = bytes(coin.Output.ScriptHash.Data)
 
@@ -388,7 +377,6 @@ class UserWallet(Wallet):
         return jsn
 
     def DeleteAddress(self, script_hash):
-
         success, coins_toremove = super(UserWallet, self).DeleteAddress(script_hash)
 
         for coin in coins_toremove:
@@ -418,7 +406,6 @@ class UserWallet(Wallet):
         return True, coins_toremove
 
     def ToJson(self, verbose=False):
-
         assets = self.GetCoinAssets()
         tokens = list(self._tokens.values())
         assets = assets + tokens
