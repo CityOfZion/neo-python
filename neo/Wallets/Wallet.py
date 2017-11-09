@@ -452,6 +452,16 @@ class Wallet(object):
         return self._tokens
 
     def GetTokenBalance(self, token, watch_only=0):
+        """
+        Get the balance of the specified token.
+
+        Args:
+            token (NEP5Token): an instance of type neo.Wallets.NEP5Token to get the balance from.
+            watch_only (bool): True, to limit to watch only wallets.
+
+        Returns:
+            Decimal: total balance for `token`.
+        """
         total = Decimal(0)
 
         if watch_only > 0:
@@ -465,6 +475,17 @@ class Wallet(object):
         return total
 
     def GetBalance(self, asset_id, watch_only=0):
+        """
+        Get the balance of a specific token by its asset id.
+
+        Args:
+            asset_id (NEP5Token|TransactionOutput): an instance of type neo.Wallets.NEP5Token or neo.Core.TX.Transaction.TransactionOutput to get the balance from.
+            watch_only (bool): True, to limit to watch only wallets.
+
+        Returns:
+            Fixed8: total balance.
+
+        """
         total = Fixed8(0)
 
         if type(asset_id) is NEP5Token:
@@ -610,7 +631,16 @@ class Wallet(object):
         pass
 
     def IsWalletTransaction(self, tx):
+        """
+        Verifies if a transaction belongs to the wallet.
 
+        Args:
+            tx (TransactionOutput):an instance of type neo.Core.TX.Transaction.TransactionOutput to verify.
+
+        Returns:
+            bool: True, if transaction belongs to wallet. False, if not.
+
+        """
         for key, contract in self._contracts.items():
 
             for output in tx.outputs:
@@ -636,13 +666,13 @@ class Wallet(object):
 
     def CheckAddressState(self, script_hash):
         """
-        Determine the address state of the provided script hash.A
+        Determine the address state of the provided script hash.
 
         Args:
             script_hash (UInt160): a script hash to determine the address state of.
 
         Returns:
-            AddressState: the address state
+            AddressState: the address state.
 
         """
         for key, contract in self._contracts.items():
@@ -679,7 +709,7 @@ class Wallet(object):
             Exception: if the address checksum fails.
 
         Returns:
-            UInt160: script hash
+            UInt160: script hash.
 
         """
         data = b58decode(address)
@@ -707,6 +737,16 @@ class Wallet(object):
         return hashlib.sha256(password.encode('utf-8')).digest() == self.LoadStoredData('PasswordHash')
 
     def GetStandardAddress(self):
+        """
+        Get the Wallet's default address.
+
+        Raises:
+            Exception: if no default contract address is set.
+
+        Returns:
+            UInt160: script hash.
+
+        """
         for contract in self._contracts.values():
             if contract.IsStandard:
                 return contract.ScriptHash
@@ -714,7 +754,19 @@ class Wallet(object):
         raise Exception("Could not find a standard contract address")
 
     def GetChangeAddress(self, from_addr=None):
+        """
+        Get the address where change is send to.
 
+        Args:
+            from_address (UInt160): (optional) from address script hash.
+
+        Raises:
+            Exception: if change address could not be found.
+
+        Returns:
+            UInt160: script hash.
+
+        """
         if from_addr is not None:
             for contract in self._contracts.values():
                 if contract.ScriptHash == from_addr:
@@ -758,22 +810,53 @@ class Wallet(object):
         return [key for key in self._keys.values()]
 
     def GetCoinAssets(self):
+        """
+        Get asset ids of all coins present in the wallet.
+
+        Returns:
+            list: of UInt256 asset id's.
+
+        """
         assets = set()
         for coin in self.GetCoins():
             assets.add(coin.Output.AssetId)
         return list(assets)
 
     def GetCoins(self):
+        """
+        Get all coins in the wallet.
+
+        Returns:
+            list: a list of neo.Wallets.Coin objects.
+
+        """
         return [coin for coin in self._coins.values()]
 
     def GetContract(self, script_hash):
+        """
+        Get contract for specified script_hash.
+
+        Args:
+            script_hash (UInt160): a bytearray (len 20).
+
+        Returns:
+            Contract: if a contract was found matching the provided script hash.
+            None: if no contract was found matching the provided script hash.
+
+        """
         if script_hash.ToBytes() in self._contracts.keys():
             return self._contracts[script_hash.ToBytes()]
         return None
 
     def GetContracts(self):
+        """
+        Get all contracts in the wallet.
+
+        Returns:
+            list: a list of neo.SmartContract.Contract objects.
+
+        """
         return [contract for contract in self._contracts.values()]
-#        return self._contracts
 
     def MakeTransaction(self,
                         tx,
@@ -862,7 +945,18 @@ class Wallet(object):
         return tx
 
     def SaveTransaction(self, tx):
+        """
+        TODO: Save a transaction <when> <where>?
 
+        Args:
+            tx (Transaction):
+
+        Returns:
+            bool:
+                True is successfully saved TODO:<where?>
+                False if input is not in the coin list, already spent or not confirmed.
+
+        """
         coins = self.GetCoins()
         changed = []
         added = []
@@ -915,6 +1009,16 @@ class Wallet(object):
         return True
 
     def Sign(self, context):
+        """
+        Sign the script hashes in the context.
+
+        Args:
+            context (ContractParameterContext): the context to sign
+
+        Returns:
+            bool: if signing is successfull for all the script hashes in the context.
+            TODO: verify the above statement is true. specifically the "all" part.
+        """
         success = False
 
         for hash in context.ScriptHashes:
