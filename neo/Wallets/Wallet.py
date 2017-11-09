@@ -137,9 +137,6 @@ class Wallet(object):
         Raises:
             Exception: Invalid operation - public key mismatch.
 
-        Returns:
-            void
-
         """
         if not contract.PublicKeyHash.ToBytes() in self._keys.keys():
             raise Exception('Invalid operation - public key mismatch')
@@ -154,9 +151,6 @@ class Wallet(object):
 
         Args:
             script_hash (UInt160): a bytearray (len 20) representing the public key.
-
-        Returns:
-            void
 
         Note:
             Prints a warning to the console if the address already exists in the wallet.
@@ -174,9 +168,6 @@ class Wallet(object):
 
         Args:
             token (NEP5Token): an instance of type neo.Wallets.NEP5Token.
-
-        Returns:
-            void
 
         Note:
             Prints a warning to the console if the token already exists in the wallet.
@@ -197,7 +188,7 @@ class Wallet(object):
 
         Returns:
             bool: False, if the old password does not match the current saved password.
-            void: If succesfully changed the password.
+            None: If succesfully changed the password.
 
         """
         if not self.ValidatePassword(password_old):
