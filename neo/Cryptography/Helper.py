@@ -342,3 +342,23 @@ def base256_encode(n, minwidth=0):  # int/long to byte array
     b.reverse()
 
     return b
+
+
+def xor_bytes(a, b):
+    """
+    XOR on two bytes objects
+
+    Args:
+        a (bytes): object 1
+        b (bytes): object 2
+
+    Returns:
+        bytes: The XOR result
+    """
+    assert isinstance(a, bytes)
+    assert isinstance(b, bytes)
+    assert len(a) == len(b)
+    res = bytearray()
+    for i in range(len(a)):
+        res.append(a[i] ^ b[i])
+    return bytes(res)
