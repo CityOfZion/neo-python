@@ -81,11 +81,13 @@ class PromptInterface(object):
                 'config log {on/off}',
                 'build {path/to/file.py} (test {params} {returntype} {needs_storage} {test_params})',
                 'import wif {wif}',
+                'import nep2 {nep2_encrypted_key}',
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage}',
                 'import contract_addr {contract_hash} {pubkey}',
                 'import watch_addr {address}',
                 'import token {token_contract_hash}',
                 'export wif {address}',
+                'export nep2 {address}',
                 'open wallet {path}',
                 'create wallet {path}',
                 'wallet {verbose}',
@@ -250,47 +252,75 @@ class PromptInterface(object):
     def do_import(self, arguments):
         item = get_arg(arguments)
 
-        if item:
+        if not item:
+            print("please specify something to import")
+            return
 
-            if item == 'wif':
+        if item == 'wif':
+            if not self.Wallet:
+                print("Please open a wallet before importing WIF")
+                return
 
-                if not self.Wallet:
-                    print("Please open a wallet before importing WIF")
-                    return
+            wif = get_arg(arguments, 1)
+            if not wif:
+                print("Please supply a valid WIF key")
+                return
 
-                wif = get_arg(arguments, 1)
+            try:
+                prikey = KeyPair.PrivateKeyFromWIF(wif)
+                key = self.Wallet.CreateKey(prikey)
+                print("Imported key %s " % wif)
+                print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
+                print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+            except ValueError as e:
+                print(str(e))
+            except Exception as e:
+                print(str(e))
 
-                if wif:
-                    try:
-                        prikey = KeyPair.PrivateKeyFromWIF(wif)
-                        key = self.Wallet.CreateKey(prikey)
-                        print("imported key %s " % wif)
-                        print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
-                        print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
-                    except ValueError as e:
-                        print(str(e))
-                    except Exception as e:
-                        print(str(e))
+            return
 
-                    return
+        elif item == 'nep2':
+            if not self.Wallet:
+                print("Please open a wallet before importing a NEP2 key")
+                return
 
-            elif item == 'contract':
-                return self.load_smart_contract(arguments)
+            nep2_key = get_arg(arguments, 1)
+            if not nep2_key:
+                print("Please supply a valid nep2 encrypted private key")
+                return
 
-            elif item == 'contract_addr':
-                return ImportContractAddr(self.Wallet, arguments[1:])
+            nep2_passwd = prompt("[Key Password]> ", is_password=True)
 
-            elif item == 'watch_addr':
-                return ImportWatchAddr(self.Wallet, get_arg(arguments, 1))
+            try:
+                prikey = KeyPair.PrivateKeyFromNEP2(nep2_key, nep2_passwd)
+                key = self.Wallet.CreateKey(prikey)
+                print("Imported nep2 key: %s " % nep2_key)
+                print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
+                print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+            except ValueError as e:
+                print(str(e))
+            except Exception as e:
+                print(str(e))
 
-            elif item == 'multisig_addr':
-                return ImportMultiSigContractAddr(self.Wallet, arguments[1:])
+            return
 
-            elif item == 'token':
-                return ImportToken(self.Wallet, get_arg(arguments, 1))
+        elif item == 'contract':
+            return self.load_smart_contract(arguments)
 
-        print("please specify something to import")
-        return
+        elif item == 'contract_addr':
+            return ImportContractAddr(self.Wallet, arguments[1:])
+
+        elif item == 'watch_addr':
+            return ImportWatchAddr(self.Wallet, get_arg(arguments, 1))
+
+        elif item == 'multisig_addr':
+            return ImportMultiSigContractAddr(self.Wallet, arguments[1:])
+
+        elif item == 'token':
+            return ImportToken(self.Wallet, get_arg(arguments, 1))
+
+        else:
+            print("Import of '%s' not implemented" % item)
 
     def do_build(self, arguments):
         BuildAndRun(arguments, self.Wallet)
@@ -302,20 +332,49 @@ class PromptInterface(object):
         item = get_arg(arguments)
 
         if item == 'wif':
-
             if not self.Wallet:
-                print("please open a wallet")
-                return
-            passwd = prompt("[Password]> ", is_password=True)
+                return print("please open a wallet")
 
+            address = get_arg(arguments, 1)
+            if not address:
+                return print("Please specify an address")
+
+            passwd = prompt("[Wallet Password]> ", is_password=True)
             if not self.Wallet.ValidatePassword(passwd):
-                print("incorrect password")
-                return
+                return print("Incorrect password")
 
             keys = self.Wallet.GetKeys()
             for key in keys:
-                export = key.Export()
-                print("key export : %s " % export)
+                if key.GetAddress() == address:
+                    export = key.Export()
+                    print("WIF key export: %s" % export)
+            return
+
+        elif item == 'nep2':
+            if not self.Wallet:
+                return print("please open a wallet")
+
+            address = get_arg(arguments, 1)
+            if not address:
+                return print("Please specify an address")
+
+            passwd = prompt("[Wallet Password]> ", is_password=True)
+            if not self.Wallet.ValidatePassword(passwd):
+                return print("Incorrect password")
+
+            nep2_passwd1 = prompt("[Key Password 1]> ", is_password=True)
+            if len(nep2_passwd1) < 10:
+                return print("Please provide a password with at least 10 characters")
+
+            nep2_passwd2 = prompt("[Key Password 2]> ", is_password=True)
+            if nep2_passwd1 != nep2_passwd2:
+                return print("Passwords don't match")
+
+            keys = self.Wallet.GetKeys()
+            for key in keys:
+                export = key.ExportNEP2(nep2_passwd1)
+                print("NEP2 key export: %s" % export)
+            return
 
         print("Command export %s not found" % item)
 
