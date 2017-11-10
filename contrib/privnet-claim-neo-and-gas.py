@@ -225,6 +225,9 @@ class PrivnetClaimall(object):
         claim_tx, relayed = ClaimGas(self.wallet, require_password=False)
         self.wait_for_tx(claim_tx)
 
+        # Finally, need to rebuild the wallet
+        self.wallet.Rebuild()
+
         print("\nAll done!")
         print("- WIF key: %s" % wif)
         print("- Wallet file: %s" % self.wallet_fn)
