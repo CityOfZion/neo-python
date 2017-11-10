@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+import traceback
+import binascii
+import json
+
+from Crypto import Random
+from autologging import logged
+from playhouse.migrate import *
 
 from neo.Wallets.Wallet import Wallet
 from neo.Wallets.Coin import Coin as WalletCoin
@@ -11,24 +18,17 @@ from neo.Core.TX.Transaction import Transaction as CoreTransaction
 from neo.Core.State.AssetState import AssetState
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
-from Crypto import Random
 from neo.Cryptography.Crypto import Crypto
 from neo.UInt160 import UInt160
-import binascii
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
-
-from .PWDatabase import PWDatabase
-
+from neo.Wallets.Coin import CoinState
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
     TransactionInfo, NEP5Token
 
-from autologging import logged
-import json
-from playhouse.migrate import *
-from neo.Wallets.Coin import CoinState
+from .PWDatabase import PWDatabase
 
 
 @logged
@@ -320,7 +320,6 @@ class UserWallet(Wallet):
         self.OnCoinsChanged(added, changed, deleted)
 
     def OnCoinsChanged(self, added, changed, deleted):
-
         for coin in added:
             addr_hash = bytes(coin.Output.ScriptHash.Data)
 
