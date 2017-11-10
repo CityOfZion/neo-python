@@ -31,6 +31,7 @@ import traceback
 from Crypto import Random
 from Crypto.Cipher import AES
 from decimal import Decimal
+import pdb
 
 
 @logged
@@ -618,7 +619,9 @@ class Wallet(object):
         if not tx.inputs:
             tx.inputs = []
 
-        fee = fee + tx.SystemFee()
+        fee = fee + (tx.SystemFee() * Fixed8.FD())
+
+#        pdb.set_trace()
 
         paytotal = {}
         if tx.Type != int.from_bytes(TransactionType.IssueTransaction, 'little'):

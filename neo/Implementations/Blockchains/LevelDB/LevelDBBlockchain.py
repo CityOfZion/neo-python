@@ -281,8 +281,9 @@ class LevelDBBlockchain(Blockchain):
 
         state = coins.TryGet(keyval=hash.ToBytes())
 
-        for item in state.Items:
-            out[item.index] = SpentCoin(tx.outputs[item.index], height, item.height)
+        if state:
+            for item in state.Items:
+                out[item.index] = SpentCoin(tx.outputs[item.index], height, item.height)
 
         sn.close()
 

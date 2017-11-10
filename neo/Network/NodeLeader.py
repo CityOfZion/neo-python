@@ -142,7 +142,6 @@ class NodeLeader():
         self.RelayCache[inventory.Hash.ToBytes()] = inventory
 
         for peer in self.Peers:
-
             relayed |= peer.Relay(inventory)
 
         if len(self.Peers) == 0:
@@ -166,7 +165,7 @@ class NodeLeader():
         self.KnownHashes.append(inventory.Hash.ToBytes())
 
         if type(inventory) is Block:
-            print("should relay block...")
+            pass
 
         elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
             if not self.AddTransaction(inventory):
@@ -191,6 +190,7 @@ class NodeLeader():
             return False
 
         if not tx.Verify(self.MemPool.values()):
+            print("Veryfiying tx result... failed")
             return False
 
         self.MemPool[tx.Hash.ToBytes()] = tx

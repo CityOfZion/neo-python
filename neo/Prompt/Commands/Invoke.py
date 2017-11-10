@@ -101,6 +101,8 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
     wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
 
+#    pdb.set_trace()
+
     if wallet_tx:
 
         context = ContractParametersContext(wallet_tx)
@@ -208,7 +210,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
 
         print("Contract %s not found" % args[0])
 
-    return None, None
+    return None, None, None, None
 
 
 def test_invoke(script, wallet, outputs, withdrawal_tx=None):
@@ -298,7 +300,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
 
             # set the amount of gas the tx will need
             wallet_tx.Gas = tx_gas
-
             # reset the wallet outputs
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = []
@@ -306,9 +307,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
             return wallet_tx, net_fee, engine.EvaluationStack.Items, engine.ops_processed
         else:
             print("error executing contract.....")
-#            tx.Gas = Fixed8.One()
-#            tx.Attributes = []
-#            return tx, []
             return None, None, None, None
 
     except Exception as e:

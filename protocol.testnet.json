@@ -9,7 +9,7 @@
         ],
         "VersionName": "/NEO-PYTHON:2.3.4/",
         "WsPort": 20334,
-        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/Chain780000.tar.gz"
+        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/Chain.tar.gz"
     },
     "ProtocolConfiguration": {
         "AddressVersion": 23,
@@ -17,6 +17,8 @@
         "SeedList": [
             "seed1.neo.org:20333",
             "seed2.neo.org:20333",
+            "seed3.neo.org:20333",
+            "seed4.neo.org:20333",
             "seed5.neo.org:20333",
             "18.221.221.195:20333",
             "18.221.139.152:20333",

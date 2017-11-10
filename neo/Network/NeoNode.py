@@ -342,7 +342,6 @@ class NeoNode(Protocol):
 
             if item:
                 if inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
-
                     message = Message(command='tx', payload=item, print_payload=True)
                     self.SendSerializedMessage(message)
 
