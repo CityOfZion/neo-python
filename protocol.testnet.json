@@ -9,7 +9,7 @@
         ],
         "VersionName": "/NEO-PYTHON:2.3.4/",
         "WsPort": 20334,
-        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/Chain.tar.gz"
+        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/Chain780000.tar.gz"
     },
     "ProtocolConfiguration": {
         "AddressVersion": 23,
