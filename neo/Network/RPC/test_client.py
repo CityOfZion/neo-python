@@ -1,5 +1,5 @@
 from unittest import TestCase
-from neo.Network.RPC.Client import RPCClient,RPCEnpoint
+from neo.Network.RPC.Client import RPCClient, RPCEnpoint
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction
 import json
@@ -9,14 +9,12 @@ from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Cryptography.Crypto import Crypto
 
-class RPCClientTestCase(TestCase):
 
+class RPCClientTestCase(TestCase):
 
     sample_addr = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-    sample_asset= 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'
-
-
+    sample_asset = 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'
 
     def test_client(self):
 
@@ -29,7 +27,6 @@ class RPCClientTestCase(TestCase):
         self.assertIsInstance(client.default_enpoint, RPCEnpoint)
 
         self.assertEqual(client.default_enpoint.height, None)
-
 
     def test_client_setup(self):
 
@@ -50,9 +47,6 @@ class RPCClientTestCase(TestCase):
 
 #        self.assertGreaterEqual(client0.height, client1.height)
 
-
-
-
     def test_height(self):
         client = RPCClient()
 
@@ -61,7 +55,6 @@ class RPCClientTestCase(TestCase):
         height = int(response)
 
         self.assertGreaterEqual(height, 0)
-
 
     def test_account_state(self):
 
@@ -85,7 +78,6 @@ class RPCClientTestCase(TestCase):
         self.assertIsNotNone(balances)
         self.assertGreater(len(balances), 0)
 
-
     def test_asset_state(self):
 
         client = RPCClient()
@@ -94,22 +86,20 @@ class RPCClientTestCase(TestCase):
 
         self.assertEqual(asset['type'], 'GoverningToken')
 
-        self.assertEqual(int(asset['available']), 100000000 )
+        self.assertEqual(int(asset['available']), 100000000)
 
         self.assertEqual(int(asset['precision']), 0)
-
 
     def test_best_blockhash(self):
 
         client = RPCClient()
 
-        hash = bytearray(binascii.unhexlify( client.get_best_blockhash()[2:]))
+        hash = bytearray(binascii.unhexlify(client.get_best_blockhash()[2:]))
         hash.reverse()
 
         hash = UInt256(data=hash)
 
         self.assertIsNotNone(hash)
-
 
     def test_get_block_json(self):
 
@@ -128,7 +118,6 @@ class RPCClientTestCase(TestCase):
 
         self.assertEqual(height, blockjson1['index'])
 
-
     def test_block_block(self):
 
         client = RPCClient()
@@ -141,8 +130,7 @@ class RPCClientTestCase(TestCase):
 
         self.assertEqual(height, block.Index)
 
-        self.assertEqual(block.Hash.ToString(),'1e67372c158a4cfbb17b9ad3aaae77001a4247a00318e354c62e53b56af4006f')
-
+        self.assertEqual(block.Hash.ToString(), '1e67372c158a4cfbb17b9ad3aaae77001a4247a00318e354c62e53b56af4006f')
 
     def test_getblockhash(self):
 
@@ -154,7 +142,6 @@ class RPCClientTestCase(TestCase):
 
         self.assertEqual(hash[2:], '1e67372c158a4cfbb17b9ad3aaae77001a4247a00318e354c62e53b56af4006f')
 
-
     def test_sysfee(self):
 
         client = RPCClient()
@@ -164,7 +151,6 @@ class RPCClientTestCase(TestCase):
         fee = int(client.get_block_sysfee(height))
 
         self.assertEqual(fee, 469014)
-
 
     def test_contract_state(self):
 
@@ -177,7 +163,6 @@ class RPCClientTestCase(TestCase):
         hash = contract['hash'][2:]
 
         self.assertEqual(hash, contract_hash)
-
 
     def test_connection_count(self):
 
@@ -195,7 +180,6 @@ class RPCClientTestCase(TestCase):
 
         self.assertIsInstance(mempool, list)
 
-
     def test_tx_json(self):
 
         client = RPCClient()
@@ -203,10 +187,9 @@ class RPCClientTestCase(TestCase):
         hash = '58c634f81fbd4ae2733d7e3930a9849021840fc19dc6af064d6f2812a333f91d'
         tx = client.get_transaction(hash)
 
-        self.assertEqual(tx['blocktime'],1510283768)
+        self.assertEqual(tx['blocktime'], 1510283768)
 
         self.assertEqual(tx['txid'][2:], hash)
-
 
     def test_tx_astx(self):
         client = RPCClient()
@@ -218,7 +201,6 @@ class RPCClientTestCase(TestCase):
 
         self.assertEqual(tx.Hash.ToString(), hash)
 
-
     def test_get_storage(self):
 
         client = RPCClient()
@@ -226,14 +208,13 @@ class RPCClientTestCase(TestCase):
         contract_hash = 'd7678dd97c000be3f33e9362e673101bac4ca654'
         key = 'totalSupply'
 
-        storage = client.get_storage(contract_hash,key)
+        storage = client.get_storage(contract_hash, key)
 
         self.assertIsInstance(storage, bytearray)
 
         intval = int.from_bytes(storage, 'little')
 
         self.assertEqual(intval, 196800000000000)
-
 
     def test_tx_out(self):
 
@@ -243,8 +224,6 @@ class RPCClientTestCase(TestCase):
         index = 0
         txout = client.get_tx_out(tx_hash, index)
 
-        self.assertEqual(txout['asset'][2:],'602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7')
+        self.assertEqual(txout['asset'][2:], '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7')
         self.assertEqual(txout['n'], index)
         self.assertEqual(txout['address'], self.sample_addr)
-
-
