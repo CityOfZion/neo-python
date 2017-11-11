@@ -144,7 +144,6 @@ class Wallet(object):
 
         Raises:
             Exception: Invalid operation - public key mismatch.
-
         """
         if not contract.PublicKeyHash.ToBytes() in self._keys.keys():
             raise Exception('Invalid operation - public key mismatch')
@@ -162,7 +161,6 @@ class Wallet(object):
 
         Note:
             Prints a warning to the console if the address already exists in the wallet.
-
         """
         if script_hash in self._contracts:
             print("Address already in contracts")
@@ -179,7 +177,6 @@ class Wallet(object):
 
         Note:
             Prints a warning to the console if the token already exists in the wallet.
-
         """
         if token.ScriptHash.ToBytes() in self._tokens.keys():
             print("Token already in wallet")
@@ -196,7 +193,6 @@ class Wallet(object):
 
         Returns:
             bool: whether the password has been changed
-
         """
         if not self.ValidatePassword(password_old):
             return False
@@ -219,7 +215,6 @@ class Wallet(object):
 
         Returns:
             bool: True if exists, False otherwise.
-
         """
         return self.ContainsKeyHash(Crypto.ToScriptHash(public_key.encode_point(True), unhex=False))
 
@@ -232,7 +227,6 @@ class Wallet(object):
 
         Returns:
             bool: True if exists in wallet key list, False otherwise.
-
         """
         return public_key_hash.ToBytes() in self._keys.keys()
 
@@ -245,7 +239,6 @@ class Wallet(object):
 
         Returns:
             bool: True, if the address is present in the wallet. False otherwise.
-
         """
         return self.CheckAddressState(script_hash) >= AddressState.InWallet
 
@@ -258,9 +251,7 @@ class Wallet(object):
 
         Returns:
             bool: True, if the address is present in the wallet. False otherwise.
-
         """
-
         for key, contract in self._contracts.items():
             if contract.Address == address:
                 return True
@@ -275,9 +266,7 @@ class Wallet(object):
 
         Returns:
             KeyPair: a KeyPair instance
-
         """
-
         if private_key is None:
             private_key = bytes(Random.get_random_bytes(32))
 
@@ -294,7 +283,6 @@ class Wallet(object):
 
         Returns:
             bytes: the ciphertext.
-
         """
         aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
         return aes.encrypt(decrypted)
@@ -308,7 +296,6 @@ class Wallet(object):
 
         Returns:
             bytes: the ciphertext.
-
         """
         aes = AES.new(self._master_key, AES.MODE_CBC, self._iv)
         return aes.decrypt(encrypted_private_key)
@@ -327,7 +314,6 @@ class Wallet(object):
             tuple:
                 bool: True if address removed, False otherwise.
                 list: a list of any ``neo.Wallet.Coin`` objects to be removed from the wallet.
-
         """
         coin_keys_toremove = []
         coins_to_remove = []
@@ -517,7 +503,6 @@ class Wallet(object):
 
         Returns:
             KeyPair: If successful, the KeyPair belonging to the public key hash, otherwise None
-
         """
         if public_key_hash.ToBytes() in self._keys.keys():
             return self._keys[public_key_hash.ToBytes()]
@@ -532,7 +517,6 @@ class Wallet(object):
 
         Returns:
             KeyPair: If successful, the KeyPair belonging to the public key hash, otherwise None
-
         """
         contract = self.GetContract(script_hash)
         if contract:
@@ -578,7 +562,6 @@ class Wallet(object):
 
         Returns:
             Fixed8: total balance.
-
         """
         total = Fixed8(0)
 
@@ -760,7 +743,6 @@ class Wallet(object):
 
         Returns:
             bool: True, if transaction belongs to wallet. False, if not.
-
         """
         for key, contract in self._contracts.items():
 
@@ -1084,7 +1066,6 @@ class Wallet(object):
 
         Returns:
             bool: True is successfully processes, otherwise False if input is not in the coin list, already spent or not confirmed.
-
         """
         coins = self.GetCoins()
         changed = []
