@@ -38,6 +38,7 @@ class SettingsHolder:
     ADDRESS_VERSION = None
     STANDBY_VALIDATORS = None
     SEED_LIST = None
+    RPC_LIST = None
 
     ENROLLMENT_TX_FEE = None
     ISSUE_TX_FEE = None
@@ -85,6 +86,7 @@ class SettingsHolder:
         self.ADDRESS_VERSION = config['AddressVersion']
         self.STANDBY_VALIDATORS = config['StandbyValidators']
         self.SEED_LIST = config['SeedList']
+        self.RPC_LIST = config['RPCList']
 
         fees = config['SystemFee']
         self.ALL_FEES = fees
