@@ -202,6 +202,96 @@ class RPCClient():
         """
         return self._call_endpoint(GET_TX_OUT, params=[tx_hash, vout_id], id=id, endpoint=endpoint)
 
+    def invoke_contract(self, contract_hash, params, id=None, endpoint=None):
+        """
+        Invokes a contract
+        Args:
+            contract_hash: (str) hash of the contract, for example 'd7678dd97c000be3f33e9362e673101bac4ca654'
+            params: (list) a list of json ContractParameters to pass along with the invocation, example [{'type':7,'value':'symbol'},{'type':16, 'value':[]}]
+            id: (int, optional) id to use for response tracking
+            endpoint: (RPCEndpoint, optional) endpoint to specify to use
+        Returns:
+            json object of the result or the error encountered in the RPC call
+        """
+        return self._call_endpoint(INVOKE, params=[contract_hash, params], id=id, endpoint=endpoint)
+
+    def invoke_contract_fn(self, contract_hash, operation, params=None, id=None, endpoint=None):
+        """
+        Invokes a contract
+        Args:
+            contract_hash: (str) hash of the contract, for example 'd7678dd97c000be3f33e9362e673101bac4ca654'
+            operation: (str) the operation to call on the contract
+            params: (list) a list of json ContractParameters to pass along with the invocation, example [{'type':7,'value':'symbol'},{'type':16, 'value':[]}]
+            id: (int, optional) id to use for response tracking
+            endpoint: (RPCEndpoint, optional) endpoint to specify to use
+        Returns:
+            json object of the result or the error encountered in the RPC call
+        """
+        return self._call_endpoint(INVOKE_FUNCTION, params=[contract_hash, operation, params if params else []], id=id, endpoint=endpoint)
+
+    def invoke_script(self, script, id=None, endpoint=None):
+        """
+        Invokes a script that has been assembled
+        Args:
+            script: (str) a hexlified string of a contract invocation script, example '00c10b746f74616c537570706c796754a64cac1b1073e662933ef3e30b007cd98d67d7'
+            id: (int, optional) id to use for response tracking
+            endpoint: (RPCEndpoint, optional) endpoint to specify to use
+        Returns:
+            json object of the result or the error encountered in the RPC call
+        """
+        return self._call_endpoint(INVOKE_SCRIPT, params=[script], id=id, endpoint=endpoint)
+
+    def send_raw_tx(self, serialized_tx, id=None, endpoint=None):
+        """
+        Submits a serialized tx to the network
+        Args:
+            serialized_tx: (str) a hexlified string of a transaction
+            id: (int, optional) id to use for response tracking
+            endpoint: (RPCEndpoint, optional) endpoint to specify to use
+        Returns:
+            bool: whether the tx was accepted or not
+        """
+        return self._call_endpoint(SEND_TX, params=[serialized_tx], id=id, endpoint=endpoint)
+
+    def validate_addr(self, address, id=None, endpoint=None):
+        """
+        returns whether or not addr string is valid
+
+        Args:
+            address: (str) address to lookup ( in format 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK')
+            id: (int, optional) id to use for response tracking
+            endpoint: (RPCEndpoint, optional) endpoint to specify to use
+
+        Returns:
+            json object of the result or the error encountered in the RPC call
+
+        """
+        return self._call_endpoint(VALIDATE_ADDR, params=[address], id=id, endpoint=endpoint)
+
+    def get_peers(self, id=None, endpoint=None):
+        """
+        Get the current peers of a remote node
+        Args:
+            id: (int, optional) id to use for response tracking
+            endpoint: (RPCEndpoint, optional) endpoint to specify to use
+
+        Returns:
+            json object of the result or the error encountered in the RPC call
+        """
+        return self._call_endpoint(GET_PEERS, id=id, endpoint=endpoint)
+
+# Not all endpoints currently implement this method
+#    def get_version(self, id=None, endpoint=None):
+#        """
+#        Get the current version of the endpoint
+#        Args:
+#            id: (int, optional) id to use for response tracking
+#            endpoint: (RPCEndpoint, optional) endpoint to specify to use
+#        Returns:
+#            json object of the result or the error encountered in the RPC call
+#        """
+#        return self._call_endpoint(GET_VERSION, id=id, endpoint=endpoint)
+
     def __init__(self, config=None, setup=False):
 
         if config:
@@ -275,7 +365,7 @@ SUBMIT_BLOCK = 'submitblock'
 VALIDATE_ADDR = 'validateaddress'
 
 
-TIMEOUT = 2
+TIMEOUT = 10
 
 
 class RPCEnpoint():

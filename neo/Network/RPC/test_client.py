@@ -2,6 +2,7 @@ from unittest import TestCase
 from neo.Network.RPC.Client import RPCClient, RPCEnpoint
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction
+from neo.Settings import SettingsHolder
 import json
 import binascii
 
@@ -28,6 +29,14 @@ class RPCClientTestCase(TestCase):
 
         self.assertEqual(client.default_enpoint.height, None)
 
+    def test_settings(self):
+        settings = SettingsHolder()
+        settings.setup('protocol.testnet.json')
+
+        client = RPCClient(config=settings)
+
+        self.assertIsNotNone(client.endpoints)
+
     def test_client_setup(self):
 
         client = RPCClient(setup=True)
@@ -41,11 +50,6 @@ class RPCClientTestCase(TestCase):
         self.assertIsNotNone(client.default_enpoint.height)
 
         self.assertEqual(client.default_enpoint.status, 200)
-
-        client0 = client.default_enpoint
-        client1 = client.endpoints[1]
-
-#        self.assertGreaterEqual(client0.height, client1.height)
 
     def test_height(self):
         client = RPCClient()
@@ -227,3 +231,115 @@ class RPCClientTestCase(TestCase):
         self.assertEqual(txout['asset'][2:], '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7')
         self.assertEqual(txout['n'], index)
         self.assertEqual(txout['address'], self.sample_addr)
+
+    def test_invoke(self):
+
+        client = RPCClient()
+
+        contract_hash = 'd7678dd97c000be3f33e9362e673101bac4ca654'
+        params = [{'type': 7, 'value': 'symbol'}, {'type': 16, 'value': []}]
+
+        result = client.invoke_contract(contract_hash, params)
+
+        self.assertEqual(result['state'], 'HALT, BREAK')
+        invoke_result = result['stack']
+        self.assertEqual(len(invoke_result), 1)
+
+        stack_item = invoke_result[0]
+
+        self.assertEqual(stack_item['type'], 'ByteArray')
+        self.assertEqual(binascii.hexlify('LWTF'.encode('utf-8')).decode('utf-8'), stack_item['value'])
+
+    def test_invoke_fn(self):
+
+        client = RPCClient()
+
+        contract_hash = 'd7678dd97c000be3f33e9362e673101bac4ca654'
+
+        result = client.invoke_contract_fn(contract_hash, 'name')
+
+        self.assertEqual(result['state'], 'HALT, BREAK')
+        invoke_result = result['stack']
+        self.assertEqual(len(invoke_result), 1)
+
+        invoke_result = result['stack']
+        self.assertEqual(len(invoke_result), 1)
+
+        stack_item = invoke_result[0]
+
+        self.assertEqual(stack_item['type'], 'ByteArray')
+
+        val = binascii.unhexlify(stack_item['value'].encode('utf-8')).decode('utf-8')
+
+        self.assertEqual(val, 'LOCALTOKEN')
+
+    def test_invoke_script(self):
+
+        client = RPCClient()
+
+        script = '00c10b746f74616c537570706c796754a64cac1b1073e662933ef3e30b007cd98d67d7'
+
+        result = client.invoke_script(script)
+
+        self.assertEqual(result['state'], 'HALT, BREAK')
+        invoke_result = result['stack']
+        self.assertEqual(len(invoke_result), 1)
+
+        invoke_result = result['stack']
+        self.assertEqual(len(invoke_result), 1)
+
+        stack_item = invoke_result[0]
+
+        self.assertEqual(stack_item['type'], 'ByteArray')
+
+        val = int.from_bytes(binascii.unhexlify(stack_item['value'].encode('utf-8')), 'little')
+
+        self.assertEqual(val, 196800000000000)
+
+    def test_send_raw_tx(self):
+
+        client = RPCClient()
+
+        raw_tx = '80000120d8edd2df8d6907caacd4af8872a596cb75c5829d015ce72895ce376d12def9a780ba502ae28ad7a4b7fbcf6baa4856edb537417d2a0000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500a3e11100000000d8edd2df8d6907caacd4af8872a596cb75c5829d9b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500bbeea000000000d8edd2df8d6907caacd4af8872a596cb75c5829d01414044dfd2b360e548607ece3d453173079233040c2484a99671a7346a8ca16969245b946bfa4c13125f4c931b0cbab216e0d241d908f37ad96abb776890832a3a4b2321025de86902ed42aca7246207a70869b22253aeb7cc84a4cb5eee3773fd78b3f339ac'
+
+        # this will result in a false, since this tx has already been made
+        # but, if it were badly formmated, it would be an error
+        # so we are testing if we get back a false
+        result = client.send_raw_tx(raw_tx)
+
+        self.assertEqual(result, False)
+
+    def test_validate_addr(self):
+
+        client = RPCClient()
+
+        result = client.validate_addr(self.sample_addr)
+
+        self.assertEqual(result['isvalid'], True)
+        self.assertEqual(result['address'], self.sample_addr)
+
+        bad_addr = 'BXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+
+        result = client.validate_addr(bad_addr)
+
+        self.assertEqual(result['isvalid'], False)
+
+    def test_get_peers(self):
+
+        client = RPCClient()
+
+        result = client.get_peers()
+
+        self.assertIn('connected', result)
+        self.assertIn('unconnected', result)
+
+
+# Not all endpoints currently implement this method
+#
+#    def test_get_version(self):
+#
+#        client = RPCClient()
+#
+#        version = client.get_version()
+#
+#        print("versin: %s " % version)
