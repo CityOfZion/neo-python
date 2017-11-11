@@ -415,7 +415,6 @@ class Wallet(object):
 
         return [coin for coin in coins if coin.Output.AssetId == asset_id]
 
-
     def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0):
         """
         Finds unspent coin objects totalling a requested value in the wallet limited to those of a certain asset type
@@ -648,7 +647,7 @@ class Wallet(object):
 
                 for index, output in enumerate(tx.outputs):
 
-                    #check to see if the outputs in the tx are in this wallet
+                    # check to see if the outputs in the tx are in this wallet
                     state = self.CheckAddressState(output.ScriptHash)
 
                     if state & AddressState.InWallet > 0:
@@ -720,7 +719,6 @@ class Wallet(object):
         """
         self._coins = {}
         self._current_height = 0
-
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
         # abstract
@@ -955,7 +953,6 @@ class Wallet(object):
                         watch_only_val=0,
                         exclude_vin=None,
                         use_vins_for_asset=None):
-
         """
         This method is used to to calculate the necessary TransactionInputs (CoinReferences) and TransactionOutputs to
         be used when creating a transaction that involves an exchange of system assets, ( NEO, Gas, etc )
