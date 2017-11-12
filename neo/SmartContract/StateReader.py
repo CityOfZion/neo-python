@@ -222,7 +222,7 @@ class StateReader(InteropService):
                 print("ITEM: %s " % str(state))
 
             # Build and emit smart contract event
-            payload = [str(item) for item in state.GetArray()] if state.GetArray() else str(state)
+            payload = [str(item) for item in state.GetArray()] if state.GetArray() else [str(state)]
             dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_NOTIFY, payload, "contract_hash", "block_number", "transaction_id")
 
         self.NotifyEvent.on_change(args)
