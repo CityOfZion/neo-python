@@ -35,9 +35,11 @@ SMART_CONTRACT_EXECUTION_INVOKE = "SMART_CONTRACT_EXECUTION_INVOKE"
 SMART_CONTRACT_EXECUTION_SUCCESS = "SMART_CONTRACT_EXECUTION_SUCCESS"
 SMART_CONTRACT_EXECUTION_FAIL = "SMART_CONTRACT_EXECUTION_FAIL"
 
+
 def dispatch_smart_contract_event(event_type, event_payload, contract_hash, block_number, transaction_id):
     sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, transaction_id)
     events.emit(event_type, sc_event)
+
 
 #
 # These handlers are only for temporary development and testing
