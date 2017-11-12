@@ -56,3 +56,4 @@ virtualenv==15.1.0
 wcwidth==0.1.7
 zope.interface==4.4.2
 scrypt==0.8.0
+pymitter==0.2.3
