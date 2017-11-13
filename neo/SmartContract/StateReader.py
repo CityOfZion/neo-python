@@ -15,7 +15,7 @@ from neo.EventHub import dispatch_smart_contract_event, \
     SMART_CONTRACT_RUNTIME_LOG, \
     SMART_CONTRACT_RUNTIME_NOTIFY
 
-from neo.VM.InteropService import StackItem
+from neo.VM.InteropService import StackItem, stack_item_to_py
 
 import events
 import binascii
@@ -214,16 +214,22 @@ class StateReader(InteropService):
             state
         )
 
+        # Build and emit smart contract event
+        payload = stack_item_to_py(state)
+        sc_hash = str(UInt160(engine.CurrentContext.ScriptHash()))
+        tx_hash = str(engine.ScriptContainer.Hash)
+        block_no = None
+        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_NOTIFY, payload, sc_hash, block_no, tx_hash)
+
+        # print("engine.ScriptContainer:", engine.ScriptContainer)
+        # print("engine.ScriptContainer.ToJson():", engine.ScriptContainer.ToJson())
+
         if type(self) is StateReader:
             if state.IsArray:
                 for item in state.GetArray():
                     print("NOTIFY ITEM %s " % str(item))
             else:
                 print("ITEM: %s " % str(state))
-
-            # Build and emit smart contract event
-            payload = [str(item) for item in state.GetArray()] if state.GetArray() else [str(state)]
-            dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_NOTIFY, payload, "contract_hash", "block_number", "transaction_id")
 
         self.NotifyEvent.on_change(args)
         return True
@@ -232,7 +238,11 @@ class StateReader(InteropService):
         message = engine.EvaluationStack.Pop().GetByteArray()
         print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
 
-        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_LOG, message, "contract_hash", "block_number", "transaction_id")
+        # Build and emit smart contract event
+        sc_hash = str(UInt160(engine.CurrentContext.ScriptHash()))
+        tx_hash = str(engine.ScriptContainer.Hash)
+        block_no = None
+        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_LOG, message, sc_hash, block_no, tx_hash)
         return True
 
     def Blockchain_GetHeight(self, engine):

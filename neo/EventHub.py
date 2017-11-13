@@ -25,7 +25,7 @@ from pymitter import EventEmitter
 events = EventEmitter(wildcard=True)
 
 # Default smart contract event. See https://docs.python.org/3/library/collections.html#collections.namedtuple
-SmartContractEvent = namedtuple("SmartContractEvent", ["event_type", "event_payload", "contract_hash", "block_number", "transaction_id"])
+SmartContractEvent = namedtuple("SmartContractEvent", ["event_type", "event_payload", "contract_hash", "block_number", "tx_hash"])
 
 # Smart Contract Event Types
 SMART_CONTRACT_RUNTIME_NOTIFY = "SMART_CONTRACT_RUNTIME_NOTIFY"  # payload: str[]
@@ -36,8 +36,8 @@ SMART_CONTRACT_EXECUTION_SUCCESS = "SMART_CONTRACT_EXECUTION_SUCCESS"
 SMART_CONTRACT_EXECUTION_FAIL = "SMART_CONTRACT_EXECUTION_FAIL"
 
 
-def dispatch_smart_contract_event(event_type, event_payload, contract_hash, block_number, transaction_id):
-    sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, transaction_id)
+def dispatch_smart_contract_event(event_type, event_payload, contract_hash, block_number, tx_hash):
+    sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, tx_hash)
     events.emit(event_type, sc_event)
 
 
@@ -46,4 +46,6 @@ def dispatch_smart_contract_event(event_type, event_payload, contract_hash, bloc
 #
 @events.on("*")
 def on_any_event(*args):
+    print("")
     print("=EVENT:", args)
+    print("")

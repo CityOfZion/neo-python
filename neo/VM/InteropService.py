@@ -327,3 +327,35 @@ class InteropService():
 
         engine.EvaluationStack.PushT(engine.EntryContext.ScriptHash())
         return True
+
+
+def stack_item_to_py(stack_item):
+    """
+    Helper to convert a StackItem subclass to the specific Python object.
+    eg. Integer(StackItem) -> int, or ByteArray(StackItem) -> bytes
+
+    Works also with Array(StackItem).
+
+    Args:
+        stack_item (object): the StackItem subclass
+
+    Returns:
+        object: The StackItem subclass converted to it's native Python representation.
+    """
+    if isinstance(stack_item, Array):
+        return [stack_item_to_py(item) for item in stack_item.GetArray()]
+
+    elif isinstance(stack_item, Boolean):
+        return stack_item.GetBoolean()
+
+    elif isinstance(stack_item, ByteArray):
+        return bytes(stack_item.GetByteArray())
+
+    elif isinstance(stack_item, Integer):
+        return stack_item.GetBigInteger()
+
+    elif isinstance(stack_item, ByteArray):
+        return stack_item.GetBigInteger()
+
+    else:
+        raise ValueError('Not supported')
