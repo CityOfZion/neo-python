@@ -1,45 +1,43 @@
 #!/usr/bin/env python
 
 
+import argparse
+import datetime
 import json
 import logging
-import datetime
 import os
-import argparse
 import resource
 import traceback
 
-from neo import __version__
-from neo.IO.MemoryStream import StreamManager
-from neo.Core.Blockchain import Blockchain
-from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Wallets.KeyPair import KeyPair
-from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
-from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
-from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
-from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
-from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
-from neo.Prompt.Utils import get_arg
-from neo.Prompt.Notify import SubscribeNotifications
-from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
-from neo.UserPreferences import preferences
-from neo.Fixed8 import Fixed8
-
-from twisted.internet import reactor, task
-
 from autologging import logged
-
 from prompt_toolkit import prompt
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.shortcuts import print_tokens
-from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
+from prompt_toolkit.shortcuts import print_tokens
+from prompt_toolkit.styles import style_from_dict
+from prompt_toolkit.token import Token
+from twisted.internet import reactor, task
 
+from neo import __version__
+from neo.Core.Blockchain import Blockchain
+from neo.Fixed8 import Fixed8
+from neo.IO.MemoryStream import StreamManager
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Network.NodeLeader import NodeLeader
+from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
+from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
+from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
+    ImportMultiSigContractAddr
+from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
+from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
+from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
+from neo.Prompt.Notify import SubscribeNotifications
+from neo.Prompt.Utils import get_arg
+from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
+from neo.UserPreferences import preferences
+from neo.Wallets.KeyPair import KeyPair
 
 debug_logname = FILENAME_PROMPT_LOG
 

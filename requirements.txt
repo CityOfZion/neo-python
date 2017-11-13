@@ -31,6 +31,7 @@ mmh3==2.4
 mock==2.0.0
 mpmath==0.19
 neo-boa==0.1.8
+neo-python-rpc==0.1.6
 numpy==1.13.1
 pbr==3.1.1
 peewee==2.10.1
@@ -48,6 +49,7 @@ pyparsing==2.2.0
 python-dateutil==2.6.1
 pytz==2017.2
 requests==2.18.1
+scrypt==0.8.0
 six==1.11.0
 tqdm==4.19.4
 Twisted==17.5.0
@@ -55,4 +57,3 @@ urllib3==1.21.1
 virtualenv==15.1.0
 wcwidth==0.1.7
 zope.interface==4.4.2
-scrypt==0.8.0
