@@ -26,6 +26,7 @@ FILENAME_PROMPT_LOG = os.path.join(dir_project_root, 'prompt.log')
 # The protocol json files are always in the project root
 FILENAME_SETTINGS_MAINNET = os.path.join(dir_project_root, 'protocol.mainnet.json')
 FILENAME_SETTINGS_TESTNET = os.path.join(dir_project_root, 'protocol.testnet.json')
+FILENAME_SETTINGS_PRIVNET = os.path.join(dir_project_root, 'protocol.privnet.json')
 
 
 class SettingsHolder:
@@ -37,6 +38,7 @@ class SettingsHolder:
     ADDRESS_VERSION = None
     STANDBY_VALIDATORS = None
     SEED_LIST = None
+    RPC_LIST = None
 
     ENROLLMENT_TX_FEE = None
     ISSUE_TX_FEE = None
@@ -84,6 +86,7 @@ class SettingsHolder:
         self.ADDRESS_VERSION = config['AddressVersion']
         self.STANDBY_VALIDATORS = config['StandbyValidators']
         self.SEED_LIST = config['SeedList']
+        self.RPC_LIST = config['RPCList']
 
         fees = config['SystemFee']
         self.ALL_FEES = fees
@@ -107,6 +110,10 @@ class SettingsHolder:
     def setup_testnet(self):
         """ Load settings from the testnet JSON config file """
         self.setup(FILENAME_SETTINGS_TESTNET)
+
+    def setup_privnet(self):
+        """ Load settings from the privnet JSON config file """
+        self.setup(FILENAME_SETTINGS_PRIVNET)
 
 
 # Settings instance used by external modules

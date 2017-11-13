@@ -110,7 +110,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
 
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())
-                return True
+                return tx
             else:
 
                 print("Could not relay tx %s " % tx.Hash.ToString())

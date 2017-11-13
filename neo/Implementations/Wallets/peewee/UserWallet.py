@@ -8,27 +8,23 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.Transaction import Transaction as CoreTransaction
-from neo.Core.State.AssetState import AssetState
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
-from Crypto import Random
 from neo.Cryptography.Crypto import Crypto
 from neo.UInt160 import UInt160
-import binascii
 from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
-
-from .PWDatabase import PWDatabase
-
+from neo.Wallets.Coin import CoinState
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
     TransactionInfo, NEP5Token
 
+
+from .PWDatabase import PWDatabase
 from autologging import logged
-import json
-from playhouse.migrate import *
-from neo.Wallets.Coin import CoinState
+from playhouse.migrate import SqliteMigrator, BooleanField, migrate
+
+import binascii
 
 
 @logged
@@ -44,12 +40,12 @@ class UserWallet(Wallet):
         self.__log.debug("initialized user wallet!! %s " % self)
 
     def BuildDatabase(self):
-
         PWDatabase.Destroy()
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
         try:
-            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, Transaction, TransactionInfo, ], safe=True)
+            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token,
+                              Transaction, TransactionInfo, ], safe=True)
         except Exception as e:
             print("Couldnt build database %s " % e)
             self.__log.debug("couldnt build database %s " % e)
@@ -74,7 +70,8 @@ class UserWallet(Wallet):
         for tx in Transaction.select():
             tx.delete_instance()
 
-        self.__log.debug("deleted coins and transactions %s %s " % (Coin.select().count(), Transaction.select().count()))
+        self.__log.debug("deleted coins and transactions %s %s " %
+                         (Coin.select().count(), Transaction.select().count()))
 
     @staticmethod
     def Open(path, password):
@@ -87,21 +84,14 @@ class UserWallet(Wallet):
         return wallet
 
     def CreateKey(self, prikey=None):
-        if prikey:
-            private_key = prikey
-        else:
-            private_key = bytes(Random.get_random_bytes(32))
-
-        account = WalletKeyPair(priv_key=private_key)
+        account = super(UserWallet, self).CreateKey(private_key=prikey)
         self._keys[account.PublicKeyHash.ToBytes()] = account
-
         self.OnCreateAccount(account)
         contract = WalletContract.CreateSignatureContract(account.PublicKey)
         self.AddContract(contract)
         return account
 
     def OnCreateAccount(self, account):
-
         pubkey = account.PublicKey.encode_point(False)
         pubkeyunhex = binascii.unhexlify(pubkey)
         pub = pubkeyunhex[1:65]
@@ -110,13 +100,13 @@ class UserWallet(Wallet):
         decrypted = pub + priv
         encrypted_pk = self.EncryptPrivateKey(bytes(decrypted))
 
-        db_account, created = Account.get_or_create(PrivateKeyEncrypted=encrypted_pk, PublicKeyHash=account.PublicKeyHash.ToBytes())
+        db_account, created = Account.get_or_create(
+            PrivateKeyEncrypted=encrypted_pk, PublicKeyHash=account.PublicKeyHash.ToBytes())
         db_account.PrivateKeyEncrypted = encrypted_pk
         db_account.save()
         self.__dbaccount = db_account
 
     def AddContract(self, contract):
-
         super(UserWallet, self).AddContract(contract)
 
         db_contract = None
@@ -211,7 +201,6 @@ class UserWallet(Wallet):
         return []
 
     def LoadCoins(self):
-
         coins = {}
 
         try:
@@ -226,7 +215,6 @@ class UserWallet(Wallet):
         return coins
 
     def LoadContracts(self):
-
         ctr = {}
 
         for ct in Contract.select():
@@ -272,7 +260,6 @@ class UserWallet(Wallet):
         return Transaction.select()
 
     def SaveStoredData(self, key, value):
-
         k = None
         try:
             k = Key.get(Name=key)
@@ -286,7 +273,6 @@ class UserWallet(Wallet):
         k.save()
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
-
         for tx in block.FullTransactions:
 
             if self.IsWalletTransaction(tx):
@@ -316,11 +302,9 @@ class UserWallet(Wallet):
         self.OnCoinsChanged(added, changed, deleted)
 
     def OnSaveTransaction(self, tx, added, changed, deleted):
-
         self.OnCoinsChanged(added, changed, deleted)
 
     def OnCoinsChanged(self, added, changed, deleted):
-
         for coin in added:
             addr_hash = bytes(coin.Output.ScriptHash.Data)
 
@@ -393,7 +377,6 @@ class UserWallet(Wallet):
         return jsn
 
     def DeleteAddress(self, script_hash):
-
         success, coins_toremove = super(UserWallet, self).DeleteAddress(script_hash)
 
         for coin in coins_toremove:
@@ -423,7 +406,6 @@ class UserWallet(Wallet):
         return True, coins_toremove
 
     def ToJson(self, verbose=False):
-
         assets = self.GetCoinAssets()
         tokens = list(self._tokens.values())
         assets = assets + tokens
@@ -460,7 +442,7 @@ class UserWallet(Wallet):
             if type(asset) is UInt256:
                 bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
                 total = self.GetBalance(asset).value / Fixed8.D
-                watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
+                watch_total = self.GetBalance(asset, bool(CoinState.WatchOnly)).value / Fixed8.D
                 balances.append("[%s]: %s " % (bc_asset.GetName(), total))
                 watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
             elif type(asset) is WalletNEP5Token:

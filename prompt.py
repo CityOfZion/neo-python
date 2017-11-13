@@ -1,45 +1,43 @@
 #!/usr/bin/env python
 
 
+import argparse
+import datetime
 import json
 import logging
-import datetime
 import os
-import argparse
 import resource
 import traceback
 
-from neo import __version__
-from neo.IO.MemoryStream import StreamManager
-from neo.Core.Blockchain import Blockchain
-from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Wallets.KeyPair import KeyPair
-from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
-from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
-from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
-from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
-from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
-from neo.Prompt.Utils import get_arg
-from neo.Prompt.Notify import SubscribeNotifications
-from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
-from neo.UserPreferences import preferences
-from neo.Fixed8 import Fixed8
-
-from twisted.internet import reactor, task
-
 from autologging import logged
-
 from prompt_toolkit import prompt
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.shortcuts import print_tokens
-from prompt_toolkit.token import Token
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
+from prompt_toolkit.shortcuts import print_tokens
+from prompt_toolkit.styles import style_from_dict
+from prompt_toolkit.token import Token
+from twisted.internet import reactor, task
 
+from neo import __version__
+from neo.Core.Blockchain import Blockchain
+from neo.Fixed8 import Fixed8
+from neo.IO.MemoryStream import StreamManager
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Network.NodeLeader import NodeLeader
+from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
+from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
+from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
+    ImportMultiSigContractAddr
+from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
+from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
+from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
+from neo.Prompt.Notify import SubscribeNotifications
+from neo.Prompt.Utils import get_arg
+from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
+from neo.UserPreferences import preferences
+from neo.Wallets.KeyPair import KeyPair
 
 debug_logname = FILENAME_PROMPT_LOG
 
@@ -797,7 +795,9 @@ class PromptInterface(object):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
-                        help="use MainNet instead of the default TestNet")
+                        help="Use MainNet instead of the default TestNet")
+    parser.add_argument("-p", "--privnet", action="store_true", default=False,
+                        help="Use PrivNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
     parser.add_argument("-t", "--set-default-theme", dest="theme",
                         choices=["dark", "light"], help="Set the default theme to be loaded from the config file. Default: 'dark'")
@@ -806,8 +806,11 @@ def main():
 
     args = parser.parse_args()
 
-    if args.mainnet and args.config:
-        print("Cannot use both --config and --mainnet parameters, please use only one.")
+    if args.config and (args.mainnet or args.privnet):
+        print("Cannot use both --config and --mainnet/--privnet arguments, please use only one.")
+        exit(1)
+    if args.mainnet and args.privnet:
+        print("Cannot use both --mainnet and --privnet arguments")
         exit(1)
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
@@ -815,6 +818,8 @@ def main():
         settings.setup(args.config)
     elif args.mainnet:
         settings.setup_mainnet()
+    elif args.privnet:
+        settings.setup_privnet()
 
     if args.theme:
         preferences.set_theme(args.theme)
