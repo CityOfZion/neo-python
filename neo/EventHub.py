@@ -10,25 +10,19 @@
 #   def handler1(*args):
 #       print("handler1 called with args", args)
 #
-# Dev Notes:
-#
-# EXECUTION_SUCCESS
-#
-#   Gets result value as type neo.VM.InteropService.ByteArray
-#
 from collections import namedtuple
 
 # pymitter manages the event bus: https://github.com/riga/pymitter#examples
 from pymitter import EventEmitter
 
-# Instantiate event bus singleton, which can be imported and used from all parts of the code
+# EventHub singleton which can be imported and used from all parts of the code
 events = EventEmitter(wildcard=True)
 
-# Default smart contract event. See https://docs.python.org/3/library/collections.html#collections.namedtuple
+# Smart contract event object (see also https://docs.python.org/3/library/collections.html#collections.namedtuple)
 SmartContractEvent = namedtuple("SmartContractEvent", ["event_type", "event_payload", "contract_hash", "block_number", "tx_hash"])
 
-# Smart Contract Event Types
-SMART_CONTRACT_RUNTIME_NOTIFY = "SMART_CONTRACT_RUNTIME_NOTIFY"  # payload: str[]
+# Smart contract event types
+SMART_CONTRACT_RUNTIME_NOTIFY = "SMART_CONTRACT_RUNTIME_NOTIFY"  # payload: object[]
 SMART_CONTRACT_RUNTIME_LOG = "SMART_CONTRACT_RUNTIME_LOG"        # payload: bytes
 
 SMART_CONTRACT_EXECUTION_INVOKE = "SMART_CONTRACT_EXECUTION_INVOKE"

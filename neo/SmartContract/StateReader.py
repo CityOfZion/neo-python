@@ -215,7 +215,8 @@ class StateReader(InteropService):
         )
 
         # Build and emit smart contract event
-        payload = stack_item_to_py(state)
+        state_py = stack_item_to_py(state)
+        payload = state_py if isinstance(state_py, list) else [state_py]  # Runtime.Notify payload must be a list
         sc_hash = str(UInt160(engine.CurrentContext.ScriptHash()))
         tx_hash = str(engine.ScriptContainer.Hash)
         block_no = None
