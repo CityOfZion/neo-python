@@ -23,6 +23,16 @@ import sys
 sys.path.append('/Users/thomassaunders/Workshop/neo-python/')
 
 
+# need to mock plyvel so it will compile on rtd.org
+from unittest.mock import MagicMock
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+MOCK_MODULES = ['plyvel',]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 
 # -- General configuration ------------------------------------------------
 
