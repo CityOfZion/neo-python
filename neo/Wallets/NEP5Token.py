@@ -5,7 +5,7 @@ from neo.Prompt.Utils import parse_param
 from neo.UInt160 import UInt160
 import binascii
 from decimal import getcontext, Decimal
-
+import traceback
 
 class NEP5Token(VerificationCode):
 
@@ -84,6 +84,8 @@ class NEP5Token(VerificationCode):
             return balance
         except Exception as e:
             print("could not get balance: %s " % e)
+            traceback.print_stack()
+
         return 0
 
     def Transfer(self, wallet, from_addr, to_addr, amount):

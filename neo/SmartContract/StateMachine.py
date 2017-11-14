@@ -11,10 +11,10 @@ from neo.Cryptography.ECCurve import ECDSA
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Fixed8 import Fixed8
-from neo.VM.InteropService import StackItem
+from neo.VM.InteropService import StackItem,stack_item_to_py
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
-
+from neo.EventHub import dispatch_smart_contract_event,SMART_CONTRACT_EXECUTION_FAIL,SMART_CONTRACT_EXECUTION_SUCCESS,SMART_CONTRACT_RUNTIME_NOTIFY
 import sys
 import json
 
@@ -85,6 +85,52 @@ class StateMachine(StateReader):
 
         return False
 
+
+
+
+
+    def ExecutionCompleted(self, engine, success, error=None):
+
+        # commit storages right away
+        if success:
+            self.Commit()
+
+
+
+        height = Blockchain.Default().Height
+        tx_hash = engine.ScriptContainer.Hash
+
+        # dispatch all notify events, along with the success of the contract execution
+        for notify_event_args in self.notifications:
+
+            dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_NOTIFY,notify_event_args.State, notify_event_args.ScriptHash.ToString(), height, tx_hash.ToString(), success)
+
+
+
+        # get the first script that was executed
+        # this is usually the script that sets up the script to be executed
+        entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
+
+        # ExecutedScriptHashes[1] will usually be the first contract executed
+        if len(engine.ExecutedScriptHashes) > 0:
+            entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
+
+
+        if success:
+
+            payload = []
+            for item in engine.EvaluationStack.Items:
+
+                payload_item = stack_item_to_py(item)
+                payload.append(payload_item)
+
+            dispatch_smart_contract_event(SMART_CONTRACT_EXECUTION_SUCCESS, payload, entry_script.ToString(),height,tx_hash.ToString(),success)
+
+        else:
+
+            dispatch_smart_contract_event(SMART_CONTRACT_EXECUTION_FAIL, error, entry_script.ToString(), height, tx_hash.ToString(), success)
+
+
     def Commit(self):
         if self._wb is not None:
             self._accounts.Commit(self._wb, False)
@@ -92,6 +138,7 @@ class StateMachine(StateReader):
             self._assets.Commit(self._wb, False)
             self._contracts.Commit(self._wb, False)
             self._storages.Commit(self._wb, False)
+
 
     def TestCommit(self):
         # print("test commit items....")

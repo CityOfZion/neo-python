@@ -328,5 +328,12 @@ class ApplicationEngine(ExecutionEngine):
         )
 
         engine.LoadScript(script, False)
-        engine.Execute()
+
+        try:
+            success = engine.Execute()
+            service.ExecutionCompleted(engine, success)
+        except Exception as e:
+            service.ExecutionCompleted(engine, False, e)
+
+
         return engine

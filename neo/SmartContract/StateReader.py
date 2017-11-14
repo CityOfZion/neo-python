@@ -208,42 +208,43 @@ class StateReader(InteropService):
 
         state = engine.EvaluationStack.Pop()
 
-        args = NotifyEventArgs(
-            engine.ScriptContainer,
-            UInt160(engine.CurrentContext.ScriptHash()),
-            state
-        )
-
         # Build and emit smart contract event
         state_py = stack_item_to_py(state)
         payload = state_py if isinstance(state_py, list) else [state_py]  # Runtime.Notify payload must be a list
-        sc_hash = str(UInt160(engine.CurrentContext.ScriptHash()))
-        tx_hash = str(engine.ScriptContainer.Hash)
-        block_no = None
-        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_NOTIFY, payload, sc_hash, block_no, tx_hash)
 
-        # print("engine.ScriptContainer:", engine.ScriptContainer)
-        # print("engine.ScriptContainer.ToJson():", engine.ScriptContainer.ToJson())
 
-        if type(self) is StateReader:
-            if state.IsArray:
-                for item in state.GetArray():
-                    print("NOTIFY ITEM %s " % str(item))
-            else:
-                print("ITEM: %s " % str(state))
+# We will need to move this, as notify events shouldn't be dispatched until the contract has fully executed
+#        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_LOG,
+#                                      payload,
+#                                      engine.EntryContext.ScriptHash(),
+#                                      Blockchain.Default().Height,
+#                                      engine.ScriptContainer.Hash)
+
+
+        # this will bubble up to where the script was initially run
+
+        args = NotifyEventArgs(
+            engine.ScriptContainer,
+            UInt160(data=engine.CurrentContext.ScriptHash()),
+            payload
+        )
 
         self.NotifyEvent.on_change(args)
         return True
 
     def Runtime_Log(self, engine):
         message = engine.EvaluationStack.Pop().GetByteArray()
-        print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
+
+# Turn of automatic printing for now
+#        print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
+        hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
         # Build and emit smart contract event
-        sc_hash = str(UInt160(engine.CurrentContext.ScriptHash()))
-        tx_hash = str(engine.ScriptContainer.Hash)
-        block_no = None
-        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_LOG, message, sc_hash, block_no, tx_hash)
+        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_LOG,
+                                      message,
+                                      hash.ToString(),
+                                      Blockchain.Default().Height,
+                                      engine.ScriptContainer.Hash.ToString())
         return True
 
     def Blockchain_GetHeight(self, engine):

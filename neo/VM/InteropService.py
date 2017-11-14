@@ -358,5 +358,8 @@ def stack_item_to_py(stack_item):
     elif isinstance(stack_item, InteropInterface):
         return stack_item.GetInterface()
 
+    elif isinstance(stack_item, Struct):
+        return stack_item.GetArray()
+
     else:
         raise ValueError('Not supported')

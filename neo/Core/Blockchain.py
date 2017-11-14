@@ -242,6 +242,7 @@ class Blockchain(object):
 
         return amount_claimed
 
+
     def OnNotify(self, notification):
         #        print("on notifiy %s " % notification)
         self.Notify.on_change(notification)

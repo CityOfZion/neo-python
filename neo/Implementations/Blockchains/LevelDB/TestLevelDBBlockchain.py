@@ -145,9 +145,8 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                     # the changes made by the contract to the database
                     try:
                         success = engine.Execute()
-                        if success:
-                            service.Commit()
+                        service.ExecutionCompleted(engine, success)
                         return True
                     except Exception as e:
-                        print("could not execute %s " % e)
+                        service.ExecutionCompleted(self, False, e)
                         return False
