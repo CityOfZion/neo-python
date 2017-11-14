@@ -12,29 +12,44 @@
 #
 from collections import namedtuple
 
-# pymitter manages the event bus: https://github.com/riga/pymitter#examples
+# pymitter manages the event dispatching (https://github.com/riga/pymitter#examples)
 from pymitter import EventEmitter
 
-# EventHub singleton which can be imported and used from all parts of the code
+# `events` is a singleton which can be imported and used from all parts of the code
 events = EventEmitter(wildcard=True)
 
-# SmartContractEvent has the following properties:
-#
-# - event_type (str)
-# - contract_hash (str)
-# - tx_hash (str)
-# - event_payload (object[])
-#
-#  `event_payload` is always a list of object, depending on what data types you sent in the smart contract.
-SmartContractEvent = namedtuple("SmartContractEvent", ["event_type", "event_payload", "contract_hash", "block_number", "tx_hash"])
 
-# Smart contract event types
-SMART_CONTRACT_RUNTIME_NOTIFY = "SMART_CONTRACT_RUNTIME_NOTIFY"  # payload: object[]
-SMART_CONTRACT_RUNTIME_LOG = "SMART_CONTRACT_RUNTIME_LOG"        # payload: bytes
+class SmartContractEvent:
+    """
+    SmartContractEvent is sent as argument to all smart contract event handlers. It
+    includes all the information about the current event, such as type, payload,
+    contract hash, transaction hash, and block number.
 
-SMART_CONTRACT_EXECUTION_INVOKE = "SMART_CONTRACT_EXECUTION_INVOKE"
-SMART_CONTRACT_EXECUTION_SUCCESS = "SMART_CONTRACT_EXECUTION_SUCCESS"
-SMART_CONTRACT_EXECUTION_FAIL = "SMART_CONTRACT_EXECUTION_FAIL"
+    `event_payload` is always a list of object, depending on what data types you sent
+    in the smart contract.
+    """
+    RUNTIME_NOTIFY = "SmartContract.RuntimeNotify"  # payload: object[]
+    RUNTIME_LOG = "SmartContract.RuntimeLog"        # payload: bytes
+
+    # EXECUTION_INVOKE = "SmartContract.ExecutionInvoke"
+    # EXECUTION_SUCCESS = "SmartContract.ExecutionSuccess"
+    # EXECUTION_FAIL = "SmartContract.ExecutionFail"
+
+    event_type = None
+    event_payload = None
+    contract_hash = None
+    block_number = None
+    tx_hash = None
+
+    def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash):
+        self.event_type = event_type
+        self.event_payload = event_payload
+        self.contract_hash = contract_hash
+        self.block_number = block_number
+        self.tx_hash = tx_hash
+
+    def __str__(self):
+        return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s)" % (self.event_type, self.event_payload, self.contract_hash, self.block_number, self.tx_hash)
 
 
 # Helper for easier dispatching of events from somewhere in the project
@@ -47,7 +62,8 @@ def dispatch_smart_contract_event(event_type, event_payload, contract_hash, bloc
 # These handlers are only for temporary development and testing
 #
 @events.on("*")
+@events.on("*.*")
 def on_any_event(*args):
     print("")
-    print("=EVENT:", args)
+    print("=EVENT: %s" % args)
     print("")

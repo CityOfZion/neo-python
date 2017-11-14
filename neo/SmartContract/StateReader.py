@@ -11,9 +11,7 @@ from neo.BigInteger import BigInteger
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Cryptography.ECCurve import ECDSA
-from neo.EventHub import dispatch_smart_contract_event, \
-    SMART_CONTRACT_RUNTIME_LOG, \
-    SMART_CONTRACT_RUNTIME_NOTIFY
+from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
 
@@ -220,7 +218,7 @@ class StateReader(InteropService):
         sc_hash = str(UInt160(engine.CurrentContext.ScriptHash()))
         tx_hash = str(engine.ScriptContainer.Hash)
         block_no = None
-        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_NOTIFY, payload, sc_hash, block_no, tx_hash)
+        dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, payload, sc_hash, block_no, tx_hash)
 
         # print("engine.ScriptContainer:", engine.ScriptContainer)
         # print("engine.ScriptContainer.ToJson():", engine.ScriptContainer.ToJson())
@@ -243,7 +241,7 @@ class StateReader(InteropService):
         sc_hash = str(UInt160(engine.CurrentContext.ScriptHash()))
         tx_hash = str(engine.ScriptContainer.Hash)
         block_no = None
-        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_LOG, message, sc_hash, block_no, tx_hash)
+        dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG, message, sc_hash, block_no, tx_hash)
         return True
 
     def Blockchain_GetHeight(self, engine):
