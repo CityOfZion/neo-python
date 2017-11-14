@@ -30,6 +30,8 @@ class ExecutionEngine():
     _EvaluationStack = None
     _AltStack = None
 
+    _ExecutedScriptHashes = None
+
     ops_processed = 0
 
     @property
@@ -70,6 +72,10 @@ class ExecutionEngine():
     def EntryContext(self):
         return self.InvocationStack.Peek(self.InvocationStack.Count - 1)
 
+    @property
+    def ExecutedScriptHashes(self):
+        return self._ExecutedScriptHashes
+
     def __init__(self, container=None, crypto=None, table=None, service=None):
         self._ScriptContainer = container
         self._Crypto = crypto
@@ -79,7 +85,7 @@ class ExecutionEngine():
         self._InvocationStack = RandomAccessStack(name='Invocation')
         self._EvaluationStack = RandomAccessStack(name='Evaluation')
         self._AltStack = RandomAccessStack(name='Alt')
-
+        self._ExecutedScriptHashes = []
         self.ops_processed = 0
 
     def AddBreakPoint(self, position):
@@ -757,6 +763,8 @@ class ExecutionEngine():
 
         context = ExecutionContext(self, script, push_only)
         self._InvocationStack.PushT(context)
+
+        self._ExecutedScriptHashes.append(context.ScriptHash())
 
     def RemoveBreakPoint(self, position):
 

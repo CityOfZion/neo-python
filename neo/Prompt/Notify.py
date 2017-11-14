@@ -7,7 +7,10 @@ from neo.Cryptography.Crypto import Crypto
 
 def SubscribeNotifications():
 
-    Blockchain.Default().Notify.on_change += HandleBlockchainNotification
+    # Moving to neo.EventHub
+
+    #    Blockchain.Default().Notify.on_change += HandleBlockchainNotification
+    pass
 
 
 def HandleBlockchainNotification(notification):
@@ -48,7 +51,7 @@ def HandleBlockchainNotification(notification):
 
         else:
 
-            interface = state.GetInterface('t')
+            interface = state.GetInterface()
 
             if interface is not None:
                 hasjson = getattr(interface, 'ToJson', None)

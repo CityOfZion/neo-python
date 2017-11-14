@@ -33,9 +33,7 @@ class StackItem(EquatableMixin):
     def GetArray(self):
         raise Exception('Not supported')
 
-    def GetInterface(self, t):
-        self.__log.debug("You may need to push %s  using FromInterface " % t)
-#        raise Exception('Not Supported')
+    def GetInterface(self):
         return None
 
     def GetString(self):
@@ -236,7 +234,7 @@ class InteropInterface(StackItem):
 #        print("calling frame %s " % sys._getframe(2))
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._object))
 
-    def GetInterface(self, t):
+    def GetInterface(self):
         return self._object
 
     def __str__(self):
@@ -356,6 +354,12 @@ def stack_item_to_py(stack_item):
 
     elif isinstance(stack_item, ByteArray):
         return stack_item.GetBigInteger()
+
+    elif isinstance(stack_item, InteropInterface):
+        return stack_item.GetInterface()
+
+    elif isinstance(stack_item, Struct):
+        return stack_item.GetArray()
 
     else:
         raise ValueError('Not supported')

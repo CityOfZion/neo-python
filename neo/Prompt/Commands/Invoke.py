@@ -277,10 +277,11 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
         # drum roll?
         success = engine.Execute()
 
+        service.ExecutionCompleted(engine, success)
+
         if success:
 
-            service.TestCommit()
-
+            # this will be removed in favor of neo.EventHub
             if len(service.notifications) > 0:
                 for n in service.notifications:
                     Blockchain.Default().OnNotify(n)
@@ -305,12 +306,10 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
             wallet_tx.Attributes = []
 
             return wallet_tx, net_fee, engine.EvaluationStack.Items, engine.ops_processed
-        else:
-            print("error executing contract.....")
-            return None, None, None, None
 
     except Exception as e:
-        print("COULD NOT EXECUTE %s " % e)
+        service.ExecutionCompleted(engine, False, e)
+#        print("COULD NOT EXECUTE %s " % e)
 
     return None, None, None, None
 
@@ -372,7 +371,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                     contract_state = i
                     break
                 elif type(i) is InteropInterface:
-                    item = i.GetInterface('neo.whatever')
+                    item = i.GetInterface()
                     if type(item) is ContractState:
                         contract_state = item
                         break
@@ -455,6 +454,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             i_success = engine.Execute()
 
+            service.ExecutionCompleted(engine, i_success)
+
             if i_success:
                 service.TestCommit()
 
@@ -482,9 +483,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             print("error executing deploy contract.....")
 
     except Exception as e:
-        print("COULD NOT EXECUTE %s " % e)
-        traceback.print_stack()
-        traceback.print_exc()
+        service.ExecutionCompleted(engine, False, e)
 
     return None, [], 0
 

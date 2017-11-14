@@ -31,6 +31,7 @@ import time
 import plyvel
 from autologging import logged
 import binascii
+import traceback
 
 
 @logged
@@ -661,21 +662,17 @@ class LevelDBBlockchain(Blockchain):
                         engine.LoadScript(tx.Script, False)
 
                         try:
-                            # drum roll?
                             success = engine.Execute()
-                            print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute] -> Success")
-                            if success:
-                                service.Commit()
+                            service.ExecutionCompleted(engine, success)
 
-                                if len(service.notifications) > 0:
-                                    for n in service.notifications:
-                                        self.OnNotify(n)
-
-                            for item in engine.EvaluationStack.Items:
-                                print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute result] -> %s " % item)
+                            # this will be deprecated in favor of neo.EventHub
+                            if len(service.notifications) > 0:
+                                for n in service.notifications:
+                                    self.OnNotify(n)
 
                         except Exception as e:
-                            print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute result] Could not execute smart contract.  See logs for more details. %s " % e)
+                            service.ExecutionCompleted(engine, False, e)
+
                     else:
 
                         if tx.Type != b'\x00' and tx.Type != 128:
@@ -723,6 +720,7 @@ class LevelDBBlockchain(Blockchain):
                 self.__log.debug("PERSISTING BLOCK %s (cache) %s %s " % (block.Index, len(self._block_cache), end - start))
         except Exception as e:
             print("couldnt persist block %s " % e)
+            traceback.print_stack()
 
     def PersistBlocks(self):
         #        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))

@@ -11,15 +11,13 @@ from neo.Cryptography.ECCurve import ECDSA
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Fixed8 import Fixed8
-from neo.VM.InteropService import StackItem
+from neo.VM.InteropService import StackItem, stack_item_to_py
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
-
+from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 import sys
-import json
 
 from autologging import logged
-import pdb
 
 
 @logged
@@ -85,6 +83,42 @@ class StateMachine(StateReader):
 
         return False
 
+    def ExecutionCompleted(self, engine, success, error=None):
+
+        # commit storages right away
+        if success:
+            self.Commit()
+
+        height = Blockchain.Default().Height
+        tx_hash = engine.ScriptContainer.Hash
+
+        # dispatch all notify events, along with the success of the contract execution
+        for notify_event_args in self.notifications:
+
+            dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State, notify_event_args.ScriptHash.ToString(), height, tx_hash.ToString(), success)
+
+        # get the first script that was executed
+        # this is usually the script that sets up the script to be executed
+        entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
+
+        # ExecutedScriptHashes[1] will usually be the first contract executed
+        if len(engine.ExecutedScriptHashes) > 0:
+            entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
+
+        if success:
+
+            payload = []
+            for item in engine.EvaluationStack.Items:
+
+                payload_item = stack_item_to_py(item)
+                payload.append(payload_item)
+
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script.ToString(), height, tx_hash.ToString(), success)
+
+        else:
+
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, error, entry_script.ToString(), height, tx_hash.ToString(), success)
+
     def Commit(self):
         if self._wb is not None:
             self._accounts.Commit(self._wb, False)
@@ -136,7 +170,7 @@ class StateMachine(StateReader):
     def Account_SetVotes(self, engine):
 
         try:
-            account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
+            account = engine.EvaluationStack.Pop().GetInterface()
 
             vote_list = engine.EvaluationStack.Pop().GetArray()
         except Exception as e:
@@ -251,7 +285,7 @@ class StateMachine(StateReader):
 
     def Asset_Renew(self, engine):
 
-        current_asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
+        current_asset = engine.EvaluationStack.Pop().GetInterface()
 
         if current_asset is None:
             return False
@@ -409,7 +443,7 @@ class StateMachine(StateReader):
 
     def Contract_GetStorageContext(self, engine):
 
-        contract = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.ContractState.ContractState')
+        contract = engine.EvaluationStack.Pop().GetInterface()
 
         self.__log.debug("CONTRACT Get storage context %s " % contract)
         if contract.ScriptHash.ToBytes() in self._contracts_created:
@@ -445,7 +479,7 @@ class StateMachine(StateReader):
         context = None
         try:
             item = engine.EvaluationStack.Pop()
-            context = item.GetInterface('neo.SmartContract.StorageContext.StorageContext')
+            context = item.GetInterface()
             shash = context.ScriptHash
         except Exception as e:
             print("could not get storage context %s " % e)
@@ -489,7 +523,7 @@ class StateMachine(StateReader):
         context = None
         try:
 
-            context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+            context = engine.EvaluationStack.Pop().GetInterface()
         except Exception as e:
             self.__log.debug("Storage Context Not found on stack")
             return False
@@ -524,7 +558,7 @@ class StateMachine(StateReader):
 
     def Storage_Delete(self, engine):
 
-        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+        context = engine.EvaluationStack.Pop().GetInterface()
 
         if not self.CheckStorageContext(context):
             return False
