@@ -18,7 +18,14 @@ from pymitter import EventEmitter
 # EventHub singleton which can be imported and used from all parts of the code
 events = EventEmitter(wildcard=True)
 
-# Smart contract event object (see also https://docs.python.org/3/library/collections.html#collections.namedtuple)
+# SmartContractEvent has the following properties:
+#
+# - event_type (str)
+# - contract_hash (str)
+# - tx_hash (str)
+# - event_payload (object[])
+#
+#  `event_payload` is always a list of object, depending on what data types you sent in the smart contract.
 SmartContractEvent = namedtuple("SmartContractEvent", ["event_type", "event_payload", "contract_hash", "block_number", "tx_hash"])
 
 # Smart contract event types
@@ -30,6 +37,7 @@ SMART_CONTRACT_EXECUTION_SUCCESS = "SMART_CONTRACT_EXECUTION_SUCCESS"
 SMART_CONTRACT_EXECUTION_FAIL = "SMART_CONTRACT_EXECUTION_FAIL"
 
 
+# Helper for easier dispatching of events from somewhere in the project
 def dispatch_smart_contract_event(event_type, event_payload, contract_hash, block_number, tx_hash):
     sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, tx_hash)
     events.emit(event_type, sc_event)
