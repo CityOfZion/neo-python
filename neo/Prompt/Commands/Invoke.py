@@ -372,7 +372,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                     contract_state = i
                     break
                 elif type(i) is InteropInterface:
-                    item = i.GetInterface('neo.whatever')
+                    item = i.GetInterface()
                     if type(item) is ContractState:
                         contract_state = item
                         break

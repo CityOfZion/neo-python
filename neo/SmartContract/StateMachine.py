@@ -136,7 +136,7 @@ class StateMachine(StateReader):
     def Account_SetVotes(self, engine):
 
         try:
-            account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
+            account = engine.EvaluationStack.Pop().GetInterface()
 
             vote_list = engine.EvaluationStack.Pop().GetArray()
         except Exception as e:
@@ -251,7 +251,7 @@ class StateMachine(StateReader):
 
     def Asset_Renew(self, engine):
 
-        current_asset = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AssetState.AssetState')
+        current_asset = engine.EvaluationStack.Pop().GetInterface()
 
         if current_asset is None:
             return False
@@ -409,7 +409,7 @@ class StateMachine(StateReader):
 
     def Contract_GetStorageContext(self, engine):
 
-        contract = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.ContractState.ContractState')
+        contract = engine.EvaluationStack.Pop().GetInterface()
 
         self.__log.debug("CONTRACT Get storage context %s " % contract)
         if contract.ScriptHash.ToBytes() in self._contracts_created:
@@ -445,7 +445,7 @@ class StateMachine(StateReader):
         context = None
         try:
             item = engine.EvaluationStack.Pop()
-            context = item.GetInterface('neo.SmartContract.StorageContext.StorageContext')
+            context = item.GetInterface()
             shash = context.ScriptHash
         except Exception as e:
             print("could not get storage context %s " % e)
@@ -489,7 +489,7 @@ class StateMachine(StateReader):
         context = None
         try:
 
-            context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+            context = engine.EvaluationStack.Pop().GetInterface()
         except Exception as e:
             self.__log.debug("Storage Context Not found on stack")
             return False
@@ -524,7 +524,7 @@ class StateMachine(StateReader):
 
     def Storage_Delete(self, engine):
 
-        context = engine.EvaluationStack.Pop().GetInterface('neo.SmartContract.StorageContext.StorageContext')
+        context = engine.EvaluationStack.Pop().GetInterface()
 
         if not self.CheckStorageContext(context):
             return False
