@@ -33,6 +33,7 @@ from autologging import logged
 import binascii
 import traceback
 
+
 @logged
 class LevelDBBlockchain(Blockchain):
 
@@ -670,7 +671,7 @@ class LevelDBBlockchain(Blockchain):
                                     self.OnNotify(n)
 
                         except Exception as e:
-                            service.ExecutionCompleted(engine,False, e)
+                            service.ExecutionCompleted(engine, False, e)
 
                     else:
 

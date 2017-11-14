@@ -286,7 +286,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
                 for n in service.notifications:
                     Blockchain.Default().OnNotify(n)
 
-
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed.value = int(consumed.value)
 
@@ -310,7 +309,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
 
     except Exception as e:
         service.ExecutionCompleted(engine, False, e)
- #       print("COULD NOT EXECUTE %s " % e)
+#        print("COULD NOT EXECUTE %s " % e)
 
     return None, None, None, None
 
@@ -455,7 +454,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             i_success = engine.Execute()
 
-            service.ExecutionCompleted(engine,i_success)
+            service.ExecutionCompleted(engine, i_success)
 
             if i_success:
                 service.TestCommit()

@@ -217,7 +217,6 @@ class StateReader(InteropService):
 #                                      Blockchain.Default().Height,
 #                                      engine.ScriptContainer.Hash)
 
-
         # this will bubble up to where the script was initially run
 
         args = NotifyEventArgs(

@@ -34,8 +34,6 @@ class ExecutionEngine():
 
     ops_processed = 0
 
-
-
     @property
     def ScriptContainer(self):
         return self._ScriptContainer
@@ -73,7 +71,6 @@ class ExecutionEngine():
     @property
     def EntryContext(self):
         return self.InvocationStack.Peek(self.InvocationStack.Count - 1)
-
 
     @property
     def ExecutedScriptHashes(self):

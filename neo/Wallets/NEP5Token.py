@@ -7,6 +7,7 @@ import binascii
 from decimal import getcontext, Decimal
 import traceback
 
+
 class NEP5Token(VerificationCode):
 
     name = None

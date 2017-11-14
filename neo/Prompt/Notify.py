@@ -7,10 +7,11 @@ from neo.Cryptography.Crypto import Crypto
 
 def SubscribeNotifications():
 
-# Moving to neo.EventHub
+    # Moving to neo.EventHub
 
-#    Blockchain.Default().Notify.on_change += HandleBlockchainNotification
+    #    Blockchain.Default().Notify.on_change += HandleBlockchainNotification
     pass
+
 
 def HandleBlockchainNotification(notification):
 

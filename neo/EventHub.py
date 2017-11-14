@@ -51,7 +51,7 @@ class SmartContractEvent:
     contract_hash = None
     block_number = None
     tx_hash = None
-    execution_success=None
+    execution_success = None
 
     def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False):
         self.event_type = event_type
@@ -87,7 +87,7 @@ def dispatch_smart_contract_event(event_type,
 def on_sc_log(*args):
     if len(args) > 0 and type(args[0]) is SmartContractEvent:
         sc_event = args[0]
-        print("[Log] [%s] %s" % (sc_event.contract_hash,sc_event.event_payload))
+        print("[Log] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
 
 
 @events.on(SmartContractEvent.EXECUTION_SUCCESS)
@@ -95,20 +95,19 @@ def on_execution_succes(*args):
 
     if len(args) > 0 and type(args[0]) is SmartContractEvent:
         sc_event = args[0]
-        print("[Execution Success] [%s] %s" % (sc_event.contract_hash,sc_event.event_payload))
+        print("[Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
 
 
 @events.on(SmartContractEvent.EXECUTION_FAIL)
 def on_execution_fail(*args):
     if len(args) > 0 and type(args[0]) is SmartContractEvent:
         sc_event = args[0]
-        print("[Execution Fail] [Error: %s] %s" % (sc_event.contract_hash,sc_event.event_payload))
+        print("[Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
 
 
-
-#@events.on("*")
-#@events.on("*.*")
-#def on_any_event(*args):
+# @events.on("*")
+# @events.on("*.*")
+# def on_any_event(*args):
 #    print("")
 #    print("=EVENT: %s" % args)
 #    print("")
