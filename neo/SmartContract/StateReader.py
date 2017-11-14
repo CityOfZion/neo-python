@@ -11,9 +11,7 @@ from neo.BigInteger import BigInteger
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Cryptography.ECCurve import ECDSA
-from neo.EventHub import dispatch_smart_contract_event, \
-    SMART_CONTRACT_RUNTIME_LOG, \
-    SMART_CONTRACT_RUNTIME_NOTIFY
+from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
 
@@ -212,7 +210,6 @@ class StateReader(InteropService):
         state_py = stack_item_to_py(state)
         payload = state_py if isinstance(state_py, list) else [state_py]  # Runtime.Notify payload must be a list
 
-
 # We will need to move this, as notify events shouldn't be dispatched until the contract has fully executed
 #        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_LOG,
 #                                      payload,
@@ -240,11 +237,13 @@ class StateReader(InteropService):
         hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
         # Build and emit smart contract event
-        dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_LOG,
+
+        dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG,
                                       message,
                                       hash.ToString(),
                                       Blockchain.Default().Height,
                                       engine.ScriptContainer.Hash.ToString())
+
         return True
 
     def Blockchain_GetHeight(self, engine):

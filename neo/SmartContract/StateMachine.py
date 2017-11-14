@@ -14,12 +14,10 @@ from neo.Fixed8 import Fixed8
 from neo.VM.InteropService import StackItem,stack_item_to_py
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
-from neo.EventHub import dispatch_smart_contract_event,SMART_CONTRACT_EXECUTION_FAIL,SMART_CONTRACT_EXECUTION_SUCCESS,SMART_CONTRACT_RUNTIME_NOTIFY
+from neo.EventHub import dispatch_smart_contract_event,SmartContractEvent
 import sys
-import json
 
 from autologging import logged
-import pdb
 
 
 @logged
@@ -103,7 +101,7 @@ class StateMachine(StateReader):
         # dispatch all notify events, along with the success of the contract execution
         for notify_event_args in self.notifications:
 
-            dispatch_smart_contract_event(SMART_CONTRACT_RUNTIME_NOTIFY,notify_event_args.State, notify_event_args.ScriptHash.ToString(), height, tx_hash.ToString(), success)
+            dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY,notify_event_args.State, notify_event_args.ScriptHash.ToString(), height, tx_hash.ToString(), success)
 
 
 
@@ -124,11 +122,11 @@ class StateMachine(StateReader):
                 payload_item = stack_item_to_py(item)
                 payload.append(payload_item)
 
-            dispatch_smart_contract_event(SMART_CONTRACT_EXECUTION_SUCCESS, payload, entry_script.ToString(),height,tx_hash.ToString(),success)
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script.ToString(),height,tx_hash.ToString(),success)
 
         else:
 
-            dispatch_smart_contract_event(SMART_CONTRACT_EXECUTION_FAIL, error, entry_script.ToString(), height, tx_hash.ToString(), success)
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, error, entry_script.ToString(), height, tx_hash.ToString(), success)
 
 
     def Commit(self):

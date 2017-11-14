@@ -3,7 +3,7 @@ import time
 from collections import defaultdict
 from functools import wraps
 
-from neo.EventHub import events, SMART_CONTRACT_RUNTIME_NOTIFY, SMART_CONTRACT_RUNTIME_LOG
+from neo.EventHub import events, SmartContractEvent
 
 
 class SmartContract:
@@ -30,7 +30,7 @@ class SmartContract:
     - tx_hash (str)
     - event_payload (object[])
 
-    `event_payload` is always a list of object, depending on what data types you
+    `event_payload` is always a list of objects, depending on what data types you
     sent in the smart contract.
     """
     contract_hash = None
@@ -40,9 +40,13 @@ class SmartContract:
         self.contract_hash = contract_hash
         assert contract_hash
 
-        @events.on(SMART_CONTRACT_RUNTIME_NOTIFY)
+        @events.on(SmartContractEvent.RUNTIME_NOTIFY)
         def call_on_notify(smart_contract_event):
-            self._handle_event(SMART_CONTRACT_RUNTIME_NOTIFY, smart_contract_event)
+            self._handle_event(SmartContractEvent.RUNTIME_NOTIFY, smart_contract_event)
+
+        @events.on(SmartContractEvent.RUNTIME_LOG)
+        def call_on_notify(smart_contract_event):
+            self._handle_event(SmartContractEvent.RUNTIME_LOG, smart_contract_event)
 
     def _handle_event(self, event_type, smart_contract_event):
         if smart_contract_event.contract_hash != self.contract_hash:
@@ -58,12 +62,12 @@ class SmartContract:
 
     def on_notify(self, func):
         """ @on_notify decorator: calls method on Runtime.Notify events """
-        return self._add_decorator(SMART_CONTRACT_RUNTIME_NOTIFY, func)
+        return self._add_decorator(SmartContractEvent.RUNTIME_NOTIFY, func)
 
     def on_log(self, func):
         """ @on_log decorator: calls method on Runtime.Log events """
         # Append function to handler list
-        return self._add_decorator(SMART_CONTRACT_RUNTIME_LOG, func)
+        return self._add_decorator(SmartContractEvent.RUNTIME_LOG, func)
 
     def _add_decorator(self, event_type, func):
         self.event_handlers[event_type].append(func)
