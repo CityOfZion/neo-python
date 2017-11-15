@@ -48,6 +48,19 @@ class SmartContract:
         def call_on_notify(smart_contract_event):
             self._handle_event(SmartContractEvent.RUNTIME_LOG, smart_contract_event)
 
+        @events.on(SmartContractEvent.EXECUTION_SUCCESS)
+        def call_on_execution_success(smart_contract_event):
+            self._handle_event(SmartContractEvent.EXECUTION_SUCCESS, smart_contract_event)
+
+        @events.on(SmartContractEvent.EXECUTION_FAIL)
+        def call_on_execution_fail(smart_contract_event):
+            self._handle_event(SmartContractEvent.EXECUTION_FAIL, smart_contract_event)
+
+        @events.on(SmartContractEvent.STORAGE)
+        def call_on_storage(smart_contract_event):
+            self._handle_event(SmartContractEvent.STORAGE, smart_contract_event)
+
+
     def _handle_event(self, event_type, smart_contract_event):
         if smart_contract_event.contract_hash != self.contract_hash:
             return
@@ -68,6 +81,11 @@ class SmartContract:
         """ @on_log decorator: calls method on Runtime.Log events """
         # Append function to handler list
         return self._add_decorator(SmartContractEvent.RUNTIME_LOG, func)
+
+    def on_storage(self, func):
+        """ @on_storage decorator: calls method on Neo.Storage.* events """
+        # Append function to handler list
+        return self._add_decorator(SmartContractEvent.STORAGE, func)
 
     def _add_decorator(self, event_type, func):
         self.event_handlers[event_type].append(func)

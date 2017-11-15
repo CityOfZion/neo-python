@@ -102,7 +102,7 @@ class StateMachine(StateReader):
         entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
 
         # ExecutedScriptHashes[1] will usually be the first contract executed
-        if len(engine.ExecutedScriptHashes) > 0:
+        if len(engine.ExecutedScriptHashes) > 1:
             entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
 
         if success:
@@ -505,16 +505,20 @@ class StateMachine(StateReader):
             try:
                 valStr = int.from_bytes(valStr, 'little')
             except Exception as e:
-                print("couldnt convert %s to number: %s " % (valStr, e))
+#                print("couldnt convert %s to number: %s " % (valStr, e))
+                pass
 
         if item is not None:
 
-            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
+#            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
             engine.EvaluationStack.PushT(bytearray(item.Value))
 
         else:
-            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
+#            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
             engine.EvaluationStack.PushT(bytearray(0))
+
+        dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr,valStr),
+                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
 
         return True
 
@@ -552,7 +556,11 @@ class StateMachine(StateReader):
             except Exception as e:
                 pass
 
-        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash, keystr, valStr))
+        dispatch_smart_contract_event(SmartContractEvent.STORAGE_PUT, '%s -> %s' % (keystr,valStr),
+                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
+
+
+#        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash, keystr, valStr))
 
         return True
 
@@ -572,7 +580,10 @@ class StateMachine(StateReader):
         if len(key) == 20:
             keystr = Crypto.ToAddress(UInt160(data=key))
 
-        print("[Neo.Storage.Delete] [Script %s] Delete %s " % (context.ScriptHash, keystr))
+        dispatch_smart_contract_event(SmartContractEvent.STORAGE_DELETE, keystr,
+                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
+
+#        print("[Neo.Storage.Delete] [Script %s] Delete %s " % (context.ScriptHash, keystr))
 
         self._storages.Remove(storage_key.GetHashCodeBytes())
 

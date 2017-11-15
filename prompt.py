@@ -33,7 +33,6 @@ from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
-from neo.Prompt.Notify import SubscribeNotifications
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
 from neo.UserPreferences import preferences
@@ -827,7 +826,6 @@ def main():
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
     Blockchain.RegisterBlockchain(blockchain)
-    SubscribeNotifications()
 
     # Start the prompt interface
     cli = PromptInterface()

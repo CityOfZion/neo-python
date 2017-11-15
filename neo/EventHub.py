@@ -39,12 +39,17 @@ class SmartContractEvent:
     `event_payload` is always a list of object, depending on what data types you sent
     in the smart contract.
     """
-    RUNTIME_NOTIFY = "SmartContract.RuntimeNotify"  # payload: object[]
-    RUNTIME_LOG = "SmartContract.RuntimeLog"        # payload: bytes
+    RUNTIME_NOTIFY = "SmartContract.Runtime.Notify"  # payload: object[]
+    RUNTIME_LOG = "SmartContract.Runtime.Log"        # payload: bytes
 
-    EXECUTION_INVOKE = "SmartContract.ExecutionInvoke"
-    EXECUTION_SUCCESS = "SmartContract.ExecutionSuccess"
-    EXECUTION_FAIL = "SmartContract.ExecutionFail"
+    EXECUTION_INVOKE = "SmartContract.Execution.Invoke"
+    EXECUTION_SUCCESS = "SmartContract.Execution.Success"
+    EXECUTION_FAIL = "SmartContract.Execution.Fail"
+
+    STORAGE = "SmartContract.Storage.*"
+    STORAGE_GET = "SmartContract.Storage.Get"
+    STORAGE_PUT = "SmartContract.Storage.Put"
+    STORAGE_DELETE = "SmartContract.Storage.Delete"
 
     event_type = None
     event_payload = None
@@ -84,25 +89,23 @@ def dispatch_smart_contract_event(event_type,
 
 
 @events.on(SmartContractEvent.RUNTIME_LOG)
-def on_sc_log(*args):
-    if len(args) > 0 and type(args[0]) is SmartContractEvent:
-        sc_event = args[0]
-        print("[Log] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+def on_sc_log(sc_event):
+    print("[Log] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
 
 
 @events.on(SmartContractEvent.EXECUTION_SUCCESS)
-def on_execution_succes(*args):
-
-    if len(args) > 0 and type(args[0]) is SmartContractEvent:
-        sc_event = args[0]
-        print("[Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+def on_execution_succes(sc_event):
+    print("[Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
 
 
 @events.on(SmartContractEvent.EXECUTION_FAIL)
-def on_execution_fail(*args):
-    if len(args) > 0 and type(args[0]) is SmartContractEvent:
-        sc_event = args[0]
-        print("[Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+def on_execution_fail(sc_event):
+    print("[Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+
+# This should allow you to listen to all storage events?
+@events.on(SmartContractEvent.STORAGE)
+def on_storage_event(sc_event):
+    print("[%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
 
 
 # @events.on("*")
