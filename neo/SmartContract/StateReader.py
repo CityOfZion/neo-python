@@ -206,34 +206,43 @@ class StateReader(InteropService):
 
         state = engine.EvaluationStack.Pop()
 
-        # Build and emit smart contract event
-        state_py = stack_item_to_py(state)
-        payload = state_py if isinstance(state_py, list) else [state_py]  # Runtime.Notify payload must be a list
+        try:
+            # Build and emit smart contract event
+            state_py = stack_item_to_py(state)
+            payload = state_py if isinstance(state_py, list) else [state_py]  # Runtime.Notify payload must be a list
 
 
-        args = NotifyEventArgs(
-            engine.ScriptContainer,
-            UInt160(data=engine.CurrentContext.ScriptHash()),
-            payload
-        )
+            args = NotifyEventArgs(
+                engine.ScriptContainer,
+                UInt160(data=engine.CurrentContext.ScriptHash()),
+                payload
+            )
 
-        self.NotifyEvent.on_change(args)
+            self.NotifyEvent.on_change(args)
+        except Exception as e:
+            print("COULDNT NOTIFY : %s " % e)
+            pdb.set_trace()
+
         return True
 
     def Runtime_Log(self, engine):
         message = engine.EvaluationStack.Pop().GetByteArray()
 
-# Turn of automatic printing for now
-#        print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
-        hash = UInt160(data=engine.CurrentContext.ScriptHash())
+        try:
+    # Turn of automatic printing for now
+    #        print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
+            hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
-        # Build and emit smart contract event
+            # Build and emit smart contract event
 
-        dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG,
-                                      message,
-                                      hash.ToString(),
-                                      Blockchain.Default().Height,
-                                      engine.ScriptContainer.Hash.ToString())
+            dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG,
+                                          message,
+                                          hash.ToString(),
+                                          Blockchain.Default().Height,
+                                          engine.ScriptContainer.Hash.ToString())
+        except Exception as e:
+            print("Could not LOG: %s " % e)
+            pdb.set_trace()
 
         return True
 

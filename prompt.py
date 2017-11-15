@@ -716,8 +716,8 @@ class PromptInterface(object):
                                 completer=self.get_completer(),
                                 history=self.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                                style=self.token_style,
-                                refresh_interval=.5)
+                                style=self.token_style
+                                )
             except EOFError:
                 # Control-D pressed: quit
                 return self.quit()

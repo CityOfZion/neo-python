@@ -14,6 +14,7 @@ from collections import namedtuple
 
 # pymitter manages the event dispatching (https://github.com/riga/pymitter#examples)
 from pymitter import EventEmitter
+import pdb
 
 # `events` is a singleton which can be imported and used from all parts of the code
 events = EventEmitter(wildcard=True)
@@ -79,10 +80,12 @@ def dispatch_smart_contract_event(event_type,
                                   tx_hash,
                                   execution_success=False):
 
-    sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, tx_hash, execution_success)
-    events.emit(event_type, sc_event)
-
-
+    try:
+        sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, tx_hash, execution_success)
+        events.emit(event_type, sc_event)
+    except Exception as e:
+        print("EXECPTION DISPATCHING EVENT: %s " % e)
+        pdb.set_trace()
 #
 # These handlers are only for temporary development and testing
 #

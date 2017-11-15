@@ -664,9 +664,9 @@ class LevelDBBlockchain(Blockchain):
                             service.ExecutionCompleted(engine, success)
 
                             # this will be deprecated in favor of neo.EventHub
-                            if len(service.notifications) > 0:
-                                for n in service.notifications:
-                                    self.OnNotify(n)
+#                            if len(service.notifications) > 0:
+#                                for n in service.notifications:
+#                                    self.OnNotify(n)
 
                         except Exception as e:
                             service.ExecutionCompleted(engine, False, e)

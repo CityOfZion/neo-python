@@ -92,10 +92,6 @@ class StateMachine(StateReader):
         height = Blockchain.Default().Height
         tx_hash = engine.ScriptContainer.Hash
 
-        # dispatch all notify events, along with the success of the contract execution
-        for notify_event_args in self.notifications:
-
-            dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State, notify_event_args.ScriptHash.ToString(), height, tx_hash.ToString(), success)
 
         # get the first script that was executed
         # this is usually the script that sets up the script to be executed
@@ -105,19 +101,25 @@ class StateMachine(StateReader):
         if len(engine.ExecutedScriptHashes) > 1:
             entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
 
+        payload = []
+        for item in engine.EvaluationStack.Items:
+            payload_item = stack_item_to_py(item)
+            payload.append(payload_item)
+
         if success:
 
-            payload = []
-            for item in engine.EvaluationStack.Items:
+            # dispatch all notify events, along with the success of the contract execution
+            for notify_event_args in self.notifications:
+                dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
+                                              notify_event_args.ScriptHash.ToString(), height, tx_hash.ToString(),
+                                              success)
 
-                payload_item = stack_item_to_py(item)
-                payload.append(payload_item)
 
             dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script.ToString(), height, tx_hash.ToString(), success)
 
         else:
 
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, error, entry_script.ToString(), height, tx_hash.ToString(), success)
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload,error], entry_script.ToString(), height, tx_hash.ToString(), success)
 
     def Commit(self):
         if self._wb is not None:
