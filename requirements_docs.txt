@@ -53,7 +53,7 @@ Pympler==0.5
 pyparsing==2.2.0
 python-dateutil==2.6.1
 pytz==2017.3
-requests==2.18.1
+requests==2.18.4
 scrypt==0.8.0
 six==1.11.0
 snowballstemmer==1.2.1
