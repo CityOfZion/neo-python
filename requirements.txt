@@ -11,7 +11,7 @@ byteplay3==3.5.0
 certifi==2017.11.5
 cffi==1.11.2
 chardet==3.0.4
-colorlog==3.0.0
+colorlog==3.1.0
 constantly==15.1.0
 coverage==4.4.1
 coveralls==1.1
