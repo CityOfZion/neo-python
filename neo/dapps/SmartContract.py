@@ -60,7 +60,6 @@ class SmartContract:
         def call_on_storage(smart_contract_event):
             self._handle_event(SmartContractEvent.STORAGE, smart_contract_event)
 
-
     def _handle_event(self, event_type, smart_contract_event):
         if smart_contract_event.contract_hash != self.contract_hash:
             return

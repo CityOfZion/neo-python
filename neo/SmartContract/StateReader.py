@@ -211,7 +211,6 @@ class StateReader(InteropService):
             state_py = stack_item_to_py(state)
             payload = state_py if isinstance(state_py, list) else [state_py]  # Runtime.Notify payload must be a list
 
-
             args = NotifyEventArgs(
                 engine.ScriptContainer,
                 UInt160(data=engine.CurrentContext.ScriptHash()),
@@ -229,8 +228,8 @@ class StateReader(InteropService):
         message = engine.EvaluationStack.Pop().GetByteArray()
 
         try:
-    # Turn of automatic printing for now
-    #        print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
+            # Turn of automatic printing for now
+            #        print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
             hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
             # Build and emit smart contract event
@@ -742,15 +741,14 @@ class StateReader(InteropService):
 
         if item is not None:
 
-#            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
+            #            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
             engine.EvaluationStack.PushT(bytearray(item.Value))
 
         else:
-#            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
+            #            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
             engine.EvaluationStack.PushT(bytearray(0))
 
-        dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr,valStr),
+        dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
                                       context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
-
 
         return True

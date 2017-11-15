@@ -92,7 +92,6 @@ class StateMachine(StateReader):
         height = Blockchain.Default().Height
         tx_hash = engine.ScriptContainer.Hash
 
-
         # get the first script that was executed
         # this is usually the script that sets up the script to be executed
         entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
@@ -114,12 +113,11 @@ class StateMachine(StateReader):
                                               notify_event_args.ScriptHash.ToString(), height, tx_hash.ToString(),
                                               success)
 
-
             dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script.ToString(), height, tx_hash.ToString(), success)
 
         else:
 
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload,error], entry_script.ToString(), height, tx_hash.ToString(), success)
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error], entry_script.ToString(), height, tx_hash.ToString(), success)
 
     def Commit(self):
         if self._wb is not None:
@@ -507,19 +505,19 @@ class StateMachine(StateReader):
             try:
                 valStr = int.from_bytes(valStr, 'little')
             except Exception as e:
-#                print("couldnt convert %s to number: %s " % (valStr, e))
+                #                print("couldnt convert %s to number: %s " % (valStr, e))
                 pass
 
         if item is not None:
 
-#            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
+            #            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
             engine.EvaluationStack.PushT(bytearray(item.Value))
 
         else:
-#            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
+            #            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
             engine.EvaluationStack.PushT(bytearray(0))
 
-        dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr,valStr),
+        dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
                                       context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
 
         return True
@@ -558,7 +556,7 @@ class StateMachine(StateReader):
             except Exception as e:
                 pass
 
-        dispatch_smart_contract_event(SmartContractEvent.STORAGE_PUT, '%s -> %s' % (keystr,valStr),
+        dispatch_smart_contract_event(SmartContractEvent.STORAGE_PUT, '%s -> %s' % (keystr, valStr),
                                       context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
 
 

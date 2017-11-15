@@ -106,6 +106,8 @@ def on_execution_fail(sc_event):
     print("[Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
 
 # This should allow you to listen to all storage events?
+
+
 @events.on(SmartContractEvent.STORAGE)
 def on_storage_event(sc_event):
     print("[%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
