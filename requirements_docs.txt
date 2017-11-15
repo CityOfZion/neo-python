@@ -33,7 +33,7 @@ incremental==17.5.0
 Jinja2==2.10
 MarkupSafe==1.0
 memory-profiler==0.47
-mmh3==2.4
+mmh3==2.5.1
 mock==2.0.0
 mpmath==0.19
 neo-boa==0.1.8
