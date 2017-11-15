@@ -1,4 +1,4 @@
-asn1crypto==0.22.0
+asn1crypto==0.23.0
 attrs==17.2.0
 Autologging==1.1.0
 Automat==0.6.0
