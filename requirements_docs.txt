@@ -40,7 +40,7 @@ neo-boa==0.1.8
 neo-python-rpc==0.1.6
 numpy==1.13.3
 pbr==3.1.1
-peewee==2.10.1
+peewee==2.10.2
 pluggy==0.5.2
 prompt-toolkit==1.0.15
 psutil==5.2.2
