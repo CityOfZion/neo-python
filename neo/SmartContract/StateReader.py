@@ -236,9 +236,10 @@ class StateReader(InteropService):
 
             dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG,
                                           message,
-                                          hash.ToString(),
+                                          hash,
                                           Blockchain.Default().Height,
-                                          engine.ScriptContainer.Hash.ToString())
+                                          engine.ScriptContainer.Hash,
+                                          test_mode=engine.testMode)
         except Exception as e:
             print("Could not LOG: %s " % e)
             pdb.set_trace()
@@ -749,6 +750,6 @@ class StateReader(InteropService):
             engine.EvaluationStack.PushT(bytearray(0))
 
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
-                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
+                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash, test_mode=engine.testMode)
 
         return True

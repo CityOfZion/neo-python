@@ -110,14 +110,16 @@ class StateMachine(StateReader):
             # dispatch all notify events, along with the success of the contract execution
             for notify_event_args in self.notifications:
                 dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
-                                              notify_event_args.ScriptHash.ToString(), height, tx_hash.ToString(),
-                                              success)
+                                              notify_event_args.ScriptHash, height, tx_hash,
+                                              success, engine.testMode)
 
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script.ToString(), height, tx_hash.ToString(), success)
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
+                                          height, tx_hash, success, engine.testMode)
 
         else:
 
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error], entry_script.ToString(), height, tx_hash.ToString(), success)
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error],
+                                          entry_script, height, tx_hash, success, engine.testMode)
 
     def Commit(self):
         if self._wb is not None:
@@ -518,7 +520,8 @@ class StateMachine(StateReader):
             engine.EvaluationStack.PushT(bytearray(0))
 
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
-                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
+                                      context.ScriptHash, Blockchain.Default().Height,
+                                      engine.ScriptContainer.Hash, test_mode=engine.testMode)
 
         return True
 
@@ -557,7 +560,8 @@ class StateMachine(StateReader):
                 pass
 
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_PUT, '%s -> %s' % (keystr, valStr),
-                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
+                                      context.ScriptHash, Blockchain.Default().Height,
+                                      engine.ScriptContainer.Hash, test_mode=engine.testMode)
 
 
 #        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash, keystr, valStr))
@@ -581,7 +585,8 @@ class StateMachine(StateReader):
             keystr = Crypto.ToAddress(UInt160(data=key))
 
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_DELETE, keystr,
-                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash)
+                                      context.ScriptHash, Blockchain.Default().Height,
+                                      engine.ScriptContainer.Hash, test_mode=engine.testMode)
 
 #        print("[Neo.Storage.Delete] [Script %s] Delete %s " % (context.ScriptHash, keystr))
 

@@ -58,14 +58,16 @@ class SmartContractEvent:
     block_number = None
     tx_hash = None
     execution_success = None
+    test_mode = None
 
-    def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False):
+    def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False, test_mode=False):
         self.event_type = event_type
         self.event_payload = event_payload
         self.contract_hash = contract_hash
         self.block_number = block_number
         self.tx_hash = tx_hash
         self.execution_success = execution_success
+        self.test_mode = test_mode
 
     def __str__(self):
         return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s, execution_success=%s)" \
@@ -78,14 +80,11 @@ def dispatch_smart_contract_event(event_type,
                                   contract_hash,
                                   block_number,
                                   tx_hash,
-                                  execution_success=False):
+                                  execution_success=False,
+                                  test_mode=False):
 
-    try:
-        sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, tx_hash, execution_success)
-        events.emit(event_type, sc_event)
-    except Exception as e:
-        print("EXECPTION DISPATCHING EVENT: %s " % e)
-        pdb.set_trace()
+    sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, tx_hash, execution_success, test_mode)
+    events.emit(event_type, sc_event)
 #
 # These handlers are only for temporary development and testing
 #
@@ -93,24 +92,36 @@ def dispatch_smart_contract_event(event_type,
 
 @events.on(SmartContractEvent.RUNTIME_LOG)
 def on_sc_log(sc_event):
-    print("[Log] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    if sc_event.test_mode:
+        print("[test_mode][Log] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    else:
+        print("[%s][Log] [%s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
 
 
 @events.on(SmartContractEvent.EXECUTION_SUCCESS)
 def on_execution_succes(sc_event):
-    print("[Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    if sc_event.test_mode:
+        print("[test_mode][Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    else:
+        print("[%s][Execution Success] [%s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
 
 
 @events.on(SmartContractEvent.EXECUTION_FAIL)
 def on_execution_fail(sc_event):
-    print("[Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    if sc_event.test_mode:
+        print("[test_mode][Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    else:
+        print("[%s][Execution Fail] [Error: %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
 
 # This should allow you to listen to all storage events?
 
 
 @events.on(SmartContractEvent.STORAGE)
 def on_storage_event(sc_event):
-    print("[%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
+    if sc_event.test_mode:
+        print("[test_mode][%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
+    else:
+        print("[%s][%s] [%s] %s" % (sc_event.block_number, sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
 
 
 # @events.on("*")
