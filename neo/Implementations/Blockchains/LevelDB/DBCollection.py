@@ -8,7 +8,7 @@ import inspect
 class DBCollection():
 
     DB = None
-    SN = None
+#    SN = None
     Prefix = None
 
     ClassRef = None
@@ -25,7 +25,6 @@ class DBCollection():
     def __init__(self, db, sn, prefix, class_ref, debug=False):
 
         self.DB = db
-        self.SN = sn
 
         self.Prefix = prefix
 
@@ -57,7 +56,7 @@ class DBCollection():
         return {}
 
     def _BuildCollectionKeys(self):
-        for key in self.SN.iterator(prefix=self.Prefix, include_value=False):
+        for key in self.DB.iterator(prefix=self.Prefix, include_value=False):
             key = key[1:]
             if key not in self.Collection.keys():
                 self.Collection[key] = None
@@ -67,19 +66,21 @@ class DBCollection():
 
             for keyval in self.Changed:
                 item = self.Collection[keyval]
-                if item is None:
-                    print("key %s %s " % (keyval, self.Collection[keyval]))
-                    print("THIS IS BAD %s " % self.Collection.items())
-                    raise Exception("ITEM NONONEEEE %s " % keyval)
-                else:
-                    wb.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+                if item:
+#                    print("key %s %s " % (keyval, self.Collection[keyval]))
+#                    print("THIS IS BAD %s " % self.Collection.items())
+#                    raise Exception("ITEM NONONEEEE %s " % keyval)
+#                else:
+                    self.DB.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
             for keyval in self.Deleted:
-                wb.delete(self.Prefix + keyval)
+                self.DB.delete(self.Prefix + keyval)
+                self.Collection[keyval] = None
             if destroy:
                 self.Destroy()
-            else:
+#            else:
                 self.Changed = []
                 self.Deleted = []
+
         except Exception as e:
             print("COULD NOT COMMIT %s %s " % (e, self.ClassRef))
             (frame, filename, line_number,
@@ -127,7 +128,7 @@ class DBCollection():
             return item
 
         # otherwise, chekc in the database
-        key = self.SN.get(self.Prefix + keyval)
+        key = self.DB.get(self.Prefix + keyval)
 
         # if the key is there, get the item
         if key is not None:
@@ -142,10 +143,12 @@ class DBCollection():
 
     def _GetItem(self, keyval):
         try:
-            buffer = self.SN.get(self.Prefix + keyval)
-            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
-            self.Collection[keyval] = item
-            return item
+            buffer = self.DB.get(self.Prefix + keyval)
+            if buffer:
+                item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
+                self.Collection[keyval] = item
+                return item
+            return None
         except Exception as e:
             print("Could not deserialize item from key %s : %s" % (keyval, e))
 
@@ -165,7 +168,7 @@ class DBCollection():
 
     def Destroy(self):
         self.DB = None
-        self.SN = None
+#        self.SN = None
         self.Collection = None
         self.ClassRef = None
         self.Prefix = None
