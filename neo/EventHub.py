@@ -94,7 +94,6 @@ def dispatch_smart_contract_event(event_type,
 #
 
 
-
 @events.on(SmartContractEvent.EXECUTION_SUCCESS)
 def on_execution_succes(sc_event):
     if sc_event.test_mode:
@@ -102,12 +101,14 @@ def on_execution_succes(sc_event):
     else:
         print("[%s][Execution Success] [%s] [tx %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
 
+
 @events.on(SmartContractEvent.RUNTIME_NOTIFY)
 def on_sc_notify(sc_event):
     if sc_event.test_mode:
         print("[test_mode][Notify][%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
     else:
         print("[%s][Notify][%s][tx %s] -> %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
+
 
 """
 total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to=0

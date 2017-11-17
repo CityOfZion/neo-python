@@ -124,10 +124,10 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
                 print("Could not save tx to wallet, will not send tx")
 
             if relayed:
-                print("Relayed Tx: %s " % tx.Hash.ToString())
+                print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
                 return True
             else:
-                print("Could not relay tx %s " % tx.Hash.ToString())
+                print("Could not relay tx %s " % wallet_tx.Hash.ToString())
         else:
 
             print("Incomplete signature")

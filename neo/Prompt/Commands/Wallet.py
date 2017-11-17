@@ -25,6 +25,7 @@ def DeleteAddress(prompter, wallet, addr):
 
     return success
 
+
 def DeleteToken(wallet, contract_hash):
 
     contract = Blockchain.Default().GetContract(contract_hash)
@@ -44,7 +45,6 @@ def DeleteToken(wallet, contract_hash):
         print("Contract %s not found " % contract_hash)
 
     return False
-
 
 
 def ImportWatchAddr(wallet, addr):

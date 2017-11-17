@@ -190,6 +190,9 @@ class Transaction(Inventory, InventoryMixin):
     def ResetReferences(self):
         self.__references = None
 
+    def ResetHashData(self):
+        self.__hash = None
+
     @property
     def Scripts(self):
         return self.scripts

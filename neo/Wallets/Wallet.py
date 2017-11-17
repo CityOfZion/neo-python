@@ -183,12 +183,9 @@ class Wallet(object):
             return
         self._tokens[token.ScriptHash.ToBytes()] = token
 
-
     def DeleteNEP5Token(self, token):
 
         return self._tokens.pop(token.ScriptHash.ToBytes())
-
-
 
     def ChangePassword(self, password_old, password_new):
         """
@@ -983,6 +980,7 @@ class Wallet(object):
         """
 
         tx.ResetReferences()
+        tx.ResetHashData()
 
         if not tx.outputs:
             tx.outputs = []

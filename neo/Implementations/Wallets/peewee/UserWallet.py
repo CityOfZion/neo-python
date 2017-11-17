@@ -376,7 +376,6 @@ class UserWallet(Wallet):
 
         return jsn
 
-
     def DeleteNEP5Token(self, token):
 
         success = super(UserWallet, self).DeleteNEP5Token(token)
@@ -387,8 +386,6 @@ class UserWallet(Wallet):
         except Exception as e:
             pass
         return success
-
-
 
     def DeleteAddress(self, script_hash):
         success, coins_toremove = super(UserWallet, self).DeleteAddress(script_hash)
