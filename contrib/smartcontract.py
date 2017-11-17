@@ -40,6 +40,7 @@ class SmartContract:
         self.contract_hash = contract_hash
         assert contract_hash
 
+        # Register EventHub.events handlers to forward for SmartContract decorators
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
         def call_on_notify(smart_contract_event):
             self._handle_event(SmartContractEvent.RUNTIME_NOTIFY, smart_contract_event)
@@ -61,7 +62,8 @@ class SmartContract:
             self._handle_event(SmartContractEvent.STORAGE, smart_contract_event)
 
     def _handle_event(self, event_type, smart_contract_event):
-        if smart_contract_event.contract_hash != self.contract_hash:
+        # Make sure this event is for this specific smart contract
+        if str(smart_contract_event.contract_hash) != self.contract_hash:
             return
 
         # call event handlers. set(..) removes duplicates.
@@ -87,6 +89,7 @@ class SmartContract:
         return self._add_decorator(SmartContractEvent.STORAGE, func)
 
     def _add_decorator(self, event_type, func):
+        # First, add handler function to handlers
         self.event_handlers[event_type].append(func)
 
         # Return the wrapper

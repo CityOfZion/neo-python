@@ -21,23 +21,20 @@ from neo.Cryptography.Crypto import Crypto
 # `events` is a singleton which can be imported and used from all parts of the code
 events = EventEmitter(wildcard=True)
 
-# SmartContractEvent has the following properties:
-#
-# - event_type (str)
-# - contract_hash (UInt160)
-# - tx_hash (UInt256)
-# - block_number (int)
-# - event_payload (object[])
-# - execution_success (bool)
-#
-#  `event_payload` is always a list of object, depending on what data types you sent in the smart contract.
-
 
 class SmartContractEvent:
     """
     SmartContractEvent is sent as argument to all smart contract event handlers. It
     includes all the information about the current event, such as type, payload,
     contract hash, transaction hash, and block number.
+
+    - event_type (str)
+    - contract_hash (UInt160)
+    - tx_hash (UInt256)
+    - block_number (int)
+    - event_payload (object[])
+    - execution_success (bool)
+    - test_mode (bool)
 
     `event_payload` is always a list of object, depending on what data types you sent
     in the smart contract.
@@ -84,7 +81,6 @@ def dispatch_smart_contract_event(event_type,
                                   tx_hash,
                                   execution_success=False,
                                   test_mode=False):
-
     sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, tx_hash, execution_success, test_mode)
     events.emit(event_type, sc_event)
 
@@ -92,8 +88,6 @@ def dispatch_smart_contract_event(event_type,
 #
 # These handlers are only for temporary development and testing
 #
-
-
 @events.on(SmartContractEvent.EXECUTION_SUCCESS)
 def on_execution_succes(sc_event):
     if sc_event.test_mode:
@@ -186,8 +180,7 @@ def on_storage_event(sc_event):
         print("[%s][%s] [%s] %s" % (sc_event.block_number, sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
 
 
-@events.on("*")
-@events.on("*.*")
+@events.on_any
 def on_any_event(*args):
     print("")
     print("=EVENT: %s" % args)
