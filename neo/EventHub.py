@@ -14,6 +14,8 @@ from collections import namedtuple
 
 # pymitter manages the event dispatching (https://github.com/riga/pymitter#examples)
 from pymitter import EventEmitter
+from neo.UInt160 import UInt160
+from neo.Cryptography.Crypto import Crypto
 
 
 # `events` is a singleton which can be imported and used from all parts of the code
@@ -92,7 +94,45 @@ def dispatch_smart_contract_event(event_type,
 #
 
 
+
+@events.on(SmartContractEvent.EXECUTION_SUCCESS)
+def on_execution_succes(sc_event):
+    if sc_event.test_mode:
+        print("[test_mode][Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    else:
+        print("[%s][Execution Success] [%s] [tx %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
+
+@events.on(SmartContractEvent.RUNTIME_NOTIFY)
+def on_sc_notify(sc_event):
+    if sc_event.test_mode:
+        print("[test_mode][Notify][%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    else:
+        print("[%s][Notify][%s][tx %s] -> %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
+
 """
+total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to=0
+
+@events.on(SmartContractEvent.RUNTIME_NOTIFY)
+def on_sc_notify(sc_event):
+    if sc_event.contract_hash.ToString() == 'ecc6b20d3ccac1ee9ef109af5a7cdb85706b1df9':
+
+        evt = sc_event.event_payload[0]
+        if evt == b'transfer':
+            m = 'AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v'
+            pl = sc_event.event_payload[1:]
+            addr_fr = Crypto.ToAddress(UInt160(data=pl[0]))
+            addr_to = Crypto.ToAddress(UInt160(data=pl[1]))
+            amount = int.from_bytes(pl[2], 'little') / 100000000
+
+            if addr_to== m or addr_fr== m:
+                global total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to
+                total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to += 1
+                print('%s %s %s' % (total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to, sc_event.tx_hash.ToString(), amount))
+#                print("[%s][RPX Transfer][%s : %s] %s -> %s : %s " % (sc_event.block_number,total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to,total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_fr,addr_fr,addr_to, amount))
+
+
+
+
 
 @events.on(SmartContractEvent.RUNTIME_NOTIFY)
 def on_sc_notify(sc_event):

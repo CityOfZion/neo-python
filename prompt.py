@@ -31,7 +31,7 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
     ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas,DeleteToken
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
@@ -391,6 +391,9 @@ class PromptInterface(object):
         elif item == 'delete_addr':
             addr_to_delete = get_arg(arguments, 1)
             DeleteAddress(self, self.Wallet, addr_to_delete)
+        elif item == 'delete_token':
+            token_to_delete = get_arg(arguments,1)
+            DeleteToken(self.Wallet, token_to_delete)
         elif item == 'close':
             self.do_close_wallet()
         elif item == 'claim':

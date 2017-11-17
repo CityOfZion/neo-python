@@ -183,6 +183,13 @@ class Wallet(object):
             return
         self._tokens[token.ScriptHash.ToBytes()] = token
 
+
+    def DeleteNEP5Token(self, token):
+
+        return self._tokens.pop(token.ScriptHash.ToBytes())
+
+
+
     def ChangePassword(self, password_old, password_new):
         """
         Change the password used to protect the private key.

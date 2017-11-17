@@ -789,7 +789,7 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-#        opname = ToName(op)
+        opname = ToName(op)
 #        print("____________________________________________________")
 #        print("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
 #        print("-----------------------------------")
@@ -799,10 +799,10 @@ class ExecutionEngine():
         try:
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
-            #            self.__log.debug("could not execute op %s " % e)
-            #            self.__log.error("Exception", exc_info=1)
-            print("COULD NOT EXECUTE OPP!!!!! %s ", e)
-            raise e
+            self.__log.debug("could not execute op %s " % e)
+            self.__log.error("Exception", exc_info=1)
+            print("COULD NOT EXECUTE OP: %s %s %s" % (e, op, opname))
+#            raise e
 
     def StepOut(self):
         self._VMState &= ~VMState.BREAK

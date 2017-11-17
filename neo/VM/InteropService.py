@@ -31,6 +31,7 @@ class StackItem(EquatableMixin):
         return False
 
     def GetArray(self):
+        print("trying to get array:: %s " % self)
         raise Exception('Not supported')
 
     def GetInterface(self):
@@ -93,12 +94,15 @@ class Array(StackItem):
         return self._array
 
     def GetBigInteger(self):
+        print("Trying to get big integer %s " % self)
         raise Exception("Not Supported")
 
     def GetBoolean(self):
         return len(self._array) > 0
 
     def GetByteArray(self):
+        print("Trying to get bytearray integer %s " % self)
+
         raise Exception("Not supported")
 
     def __str__(self):
@@ -231,9 +235,6 @@ class InteropInterface(StackItem):
         return True if self._object is not None else False
 
     def GetByteArray(self):
-        frame = sys._getframe(2)
-        traceback.print_stack(frame)
-#        print("calling frame %s " % sys._getframe(2))
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._object))
 
     def GetInterface(self):
@@ -362,6 +363,7 @@ def stack_item_to_py(stack_item):
 
     elif isinstance(stack_item, Struct):
         return stack_item.GetArray()
-
+    elif stack_item is None:
+        return None
     else:
         raise ValueError('Not supported')
