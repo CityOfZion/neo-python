@@ -490,9 +490,12 @@ class Wallet(object):
         height = Blockchain.Default().Height + 1
         unspents = self.FindUnspentCoinsByAsset(Blockchain.SystemShare().Hash)
         refs = [coin.Reference for coin in unspents]
-        unavailable_bonus = Blockchain.CalculateBonus(refs, height_end=height)
-        return unavailable_bonus
-
+        try:
+            unavailable_bonus = Blockchain.CalculateBonus(refs, height_end=height)
+            return unavailable_bonus
+        except Exception as e:
+            pass
+        return Fixed8(0)
     def GetKey(self, public_key_hash):
         """
         Get the KeyPair belonging to the public key hash.

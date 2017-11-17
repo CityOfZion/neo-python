@@ -434,7 +434,9 @@ class UserWallet(Wallet):
                 if addr.IsWatchOnly:
                     has_watch_addr = True
             else:
-                addresses.append(addr_str)
+                token_balances = self.TokenBalancesForAddress(addr_str)
+                json ={'script_hash': addr_str, 'tokens':token_balances}
+                addresses.append(json)
 
         balances = []
         watch_balances = []

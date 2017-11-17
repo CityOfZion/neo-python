@@ -54,6 +54,8 @@ class StackItem(EquatableMixin):
             return Integer(value)
         elif typ is int:
             return Integer(BigInteger(value))
+        elif typ is float:
+            return Integer(BigInteger(int(value)))
         elif typ is bool:
             return Boolean(value)
         elif typ is bytearray or typ is bytes:

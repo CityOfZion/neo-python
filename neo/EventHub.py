@@ -15,6 +15,8 @@ from collections import namedtuple
 # pymitter manages the event dispatching (https://github.com/riga/pymitter#examples)
 from pymitter import EventEmitter
 import pdb
+from neo.Cryptography.Crypto import Crypto
+from neo.UInt160 import UInt160
 
 # `events` is a singleton which can be imported and used from all parts of the code
 events = EventEmitter(wildcard=True)
@@ -89,6 +91,46 @@ def dispatch_smart_contract_event(event_type,
 # These handlers are only for temporary development and testing
 #
 
+total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to=0
+total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_fr=0
+
+@events.on(SmartContractEvent.RUNTIME_NOTIFY)
+def on_sc_notify(sc_event):
+    if sc_event.contract_hash.ToString() == 'ecc6b20d3ccac1ee9ef109af5a7cdb85706b1df9':
+
+        evt = sc_event.event_payload[0]
+        if evt == b'transfer':
+            m = 'AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v'
+            pl = sc_event.event_payload[1:]
+            addr_fr = Crypto.ToAddress(UInt160(data=pl[0]))
+            addr_to = Crypto.ToAddress(UInt160(data=pl[1]))
+            amount = int.from_bytes(pl[2], 'little') / 100000000
+
+            if addr_to== m or addr_fr== m:
+                global total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to
+                global total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_fr
+                if addr_to == m:
+                    total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to += 1
+                else:
+                    total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_fr += 1
+                print("[%s][RPX Transfer][%s : %s] %s -> %s : %s " % (sc_event.block_number,total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to,total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_fr,addr_fr,addr_to, amount))
+
+
+@events.on(SmartContractEvent.EXECUTION_FAIL)
+def on_execution_fail(sc_event):
+    if sc_event.test_mode:
+        print("[test_mode][Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    else:
+        print("[%s][Execution Fail] [Error: %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
+
+"""
+@events.on(SmartContractEvent.EXECUTION_SUCCESS)
+def on_execution_succes(sc_event):
+    if sc_event.test_mode:
+        print("[test_mode][Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    else:
+        print("[%s][Execution Success] [%s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
+
 
 @events.on(SmartContractEvent.RUNTIME_LOG)
 def on_sc_log(sc_event):
@@ -106,12 +148,7 @@ def on_execution_succes(sc_event):
         print("[%s][Execution Success] [%s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
 
 
-@events.on(SmartContractEvent.EXECUTION_FAIL)
-def on_execution_fail(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
-    else:
-        print("[%s][Execution Fail] [Error: %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
+"""
 
 # This should allow you to listen to all storage events?
 
@@ -130,3 +167,5 @@ def on_storage_event(sc_event):
 #    print("")
 #    print("=EVENT: %s" % args)
 #    print("")
+
+

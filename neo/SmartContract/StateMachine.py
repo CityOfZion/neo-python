@@ -118,7 +118,7 @@ class StateMachine(StateReader):
 
         else:
 
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error],
+            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error, engine._VMState],
                                           entry_script, height, tx_hash, success, engine.testMode)
 
     def Commit(self):
@@ -517,7 +517,7 @@ class StateMachine(StateReader):
 
         else:
             #            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
-            engine.EvaluationStack.PushT(bytearray(0))
+            engine.EvaluationStack.PushT(bytearray([0]))
 
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
                                       context.ScriptHash, Blockchain.Default().Height,

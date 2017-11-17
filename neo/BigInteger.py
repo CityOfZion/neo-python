@@ -26,6 +26,9 @@ class BigInteger(int):
         except Exception:
             print("COULD NOT CONVERT %s to byte array" % self)
 
+        return bytearray([0])
+
+
     def __abs__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__abs__(*args, **kwargs))
 
@@ -47,8 +50,11 @@ class BigInteger(int):
     def __sub__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__sub__(*args, **kwargs))
 
+    def __floordiv__(self, *args, **kwargs):
+        return BigInteger(super(BigInteger, self).__floordiv__(*args, **kwargs))
+
     def __truediv__(self, *args, **kwargs):  # real signature unknown
-        return BigInteger(int(super(BigInteger, self).__truediv__(*args, **kwargs)))
+        return BigInteger(super(BigInteger, self).__truediv__(*args, **kwargs))
 
 
 ZERO = BigInteger(0)

@@ -62,31 +62,19 @@ class DBCollection():
                 self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
-        try:
 
-            for keyval in self.Changed:
-                item = self.Collection[keyval]
-                if item:
-#                    print("key %s %s " % (keyval, self.Collection[keyval]))
-#                    print("THIS IS BAD %s " % self.Collection.items())
-#                    raise Exception("ITEM NONONEEEE %s " % keyval)
-#                else:
-                    self.DB.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
-            for keyval in self.Deleted:
-                self.DB.delete(self.Prefix + keyval)
-                self.Collection[keyval] = None
-            if destroy:
-                self.Destroy()
-#            else:
-                self.Changed = []
-                self.Deleted = []
-
-        except Exception as e:
-            print("COULD NOT COMMIT %s %s " % (e, self.ClassRef))
-            (frame, filename, line_number,
-             function_name, lines, index) = inspect.getouterframes(inspect.currentframe())[1]
-            print(frame, filename, line_number, function_name, lines, index)
-            raise Exception("BAD")
+        for keyval in self.Changed:
+            item = self.Collection[keyval]
+            if item:
+                self.DB.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+        for keyval in self.Deleted:
+            self.DB.delete(self.Prefix + keyval)
+            self.Collection[keyval] = None
+        if destroy:
+            self.Destroy()
+        else:
+            self.Changed = []
+            self.Deleted = []
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 

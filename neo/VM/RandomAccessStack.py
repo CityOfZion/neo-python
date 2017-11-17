@@ -37,8 +37,7 @@ class RandomAccessStack():
 
     def Peek(self, index=0):
         index = int(index)
-
-        if index < 0 or index > self.Count:
+        if index >= self.Count:
             raise Exception("Invalid list operation")
 
         return self._list[self.Count - 1 - index]
@@ -49,12 +48,8 @@ class RandomAccessStack():
 
     def PushT(self, item):
         if not type(item) is StackItem and not issubclass(type(item), StackItem):
-            try:
-                item = StackItem.New(item)
-            except Exception as e:
-                self.__log.debug("Could not create stack item from %s %s " % (item, type(item)))
+            item = StackItem.New(item)
 
-        self.PrintFormat('PUSHT', item)
         self._list.append(item)
 
     def Remove(self, index):
@@ -74,19 +69,8 @@ class RandomAccessStack():
             raise Exception("Invalid list operation")
 
         if not type(item) is StackItem and not issubclass(type(item), StackItem):
-            try:
-                item = StackItem.New(item)
-            except Exception as e:
-                self.__log.debug("Could not create stack item from %s %s " % (item, type(item)))
-
-        self.PrintFormat('SET', item)
+            item = StackItem.New(item)
 
         self._list[self.Count - index - 1] = item
 
-    def PrintFormat(self, operation, value):
-        name = "{:<15}".format("[%s]" % self._name)
-        op = "{:<10}".format(operation)
-#        print("                                         %s  %s -> %s" % (name,op, value))
 
-    def PrintList(self, message=None):
-        print("%s %s" % (message, [str(item) for item in self._list]))

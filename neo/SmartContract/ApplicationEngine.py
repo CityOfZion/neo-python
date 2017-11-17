@@ -48,9 +48,11 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == PACK or opcode == NEWARRAY:
 
+
             size = self.EvaluationStack.Peek().GetBigInteger()
 
             if size > maxArraySize:
+                print("ARRAY SIZE TOO BIG!!!")
                 return False
 
             return True
@@ -68,6 +70,7 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == CALL or opcode == APPCALL:
             if self.InvocationStack.Count >= maxStackSize:
+                print("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
 
             return True
@@ -95,6 +98,7 @@ class ApplicationEngine(ExecutionEngine):
             length = int.from_bytes(lengthpointer, 'little')
 
             if length > maxItemSize:
+                print("ITEM IS GREATER THAN MAX ITEM SIZE!")
                 return False
 
             return True
@@ -102,6 +106,7 @@ class ApplicationEngine(ExecutionEngine):
         elif opcode == CAT:
 
             if self.EvaluationStack.Count < 2:
+                print("NOT ENOUGH ITEMS TO CONCAT")
                 return False
 
             length = 0
@@ -109,9 +114,11 @@ class ApplicationEngine(ExecutionEngine):
             try:
                 length = len(self.EvaluationStack.Peek(0).GetByteArray()) + len(self.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
-                self.__log.debug("Could not get length: %s " % e)
+                print("COULD NOT GET STR LENGTH!")
+                raise e
 
             if length > maxItemSize:
+                print("ITEM IS GREATER THAN MAX SIZE!!!")
                 return False
 
             return True
@@ -142,6 +149,7 @@ class ApplicationEngine(ExecutionEngine):
                 item = self.EvaluationStack.Peek()
 
                 if not item.IsArray:
+                    print("ITEM NOT ARRAY:")
                     return False
 
                 size = len(item.GetArray())
@@ -166,26 +174,27 @@ class ApplicationEngine(ExecutionEngine):
                 self.gas_consumed = self.gas_consumed + self.GetPrice() * self.ratio
 
             except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                self.__log.debug(exc_type, fname, exc_tb.tb_lineno)
-                self.__log.debug("exception calculating gas consumed %s " % e)
                 print("Exception calculating gas consumed %s " % e)
                 return False
 
             if not self.testMode and self.gas_consumed > self.gas_amount:
+                print("NOT ENOUGH GAS")
                 return False
 
             if not self.CheckItemSize():
+                print("ITEM SIZE TOO BIG")
                 return False
 
             if not self.CheckStackSize():
+                print("STACK SIZE TOO BIG")
                 return False
 
             if not self.CheckArraySize():
+                print("ARRAY SIZE TOO BIG")
                 return False
 
             if not self.CheckInvocationStack():
+                print("INVOCATION SIZE TO BIIG")
                 return False
 
             self.StepInto()

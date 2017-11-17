@@ -747,7 +747,7 @@ class StateReader(InteropService):
 
         else:
             #            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
-            engine.EvaluationStack.PushT(bytearray(0))
+            engine.EvaluationStack.PushT(bytearray([0]))
 
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
                                       context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash, test_mode=engine.testMode)
