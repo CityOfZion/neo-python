@@ -28,7 +28,6 @@ class BigInteger(int):
 
         return bytearray([0])
 
-
     def __abs__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__abs__(*args, **kwargs))
 

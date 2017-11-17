@@ -435,7 +435,7 @@ class UserWallet(Wallet):
                     has_watch_addr = True
             else:
                 token_balances = self.TokenBalancesForAddress(addr_str)
-                json ={'script_hash': addr_str, 'tokens':token_balances}
+                json = {'script_hash': addr_str, 'tokens': token_balances}
                 addresses.append(json)
 
         balances = []

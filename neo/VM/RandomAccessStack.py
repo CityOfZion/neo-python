@@ -72,5 +72,3 @@ class RandomAccessStack():
             item = StackItem.New(item)
 
         self._list[self.Count - index - 1] = item
-
-

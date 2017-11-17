@@ -496,6 +496,7 @@ class Wallet(object):
         except Exception as e:
             pass
         return Fixed8(0)
+
     def GetKey(self, public_key_hash):
         """
         Get the KeyPair belonging to the public key hash.

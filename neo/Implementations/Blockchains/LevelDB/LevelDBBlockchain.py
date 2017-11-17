@@ -34,6 +34,7 @@ import binascii
 import traceback
 import pdb
 
+
 @logged
 class LevelDBBlockchain(Blockchain):
 
@@ -551,7 +552,7 @@ class LevelDBBlockchain(Blockchain):
 
     def Persist(self, block):
 
-#        start = time.clock()
+        #        start = time.clock()
 
         sn = self._db.snapshot()
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
@@ -713,8 +714,6 @@ class LevelDBBlockchain(Blockchain):
             wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
             self._current_block_height = block.Index
 
-
-
     def PersistBlocks(self):
         #        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
@@ -732,12 +731,9 @@ class LevelDBBlockchain(Blockchain):
             self.BlockSearchTries = 0
             block = self._block_cache[hash]
 
-
             self.Persist(block)
             self.OnPersistCompleted(block)
             del self._block_cache[hash]
-
-
 
     def Dispose(self):
         self._db.close()

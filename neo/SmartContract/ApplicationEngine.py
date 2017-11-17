@@ -48,7 +48,6 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == PACK or opcode == NEWARRAY:
 
-
             size = self.EvaluationStack.Peek().GetBigInteger()
 
             if size > maxArraySize:
