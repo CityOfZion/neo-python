@@ -22,13 +22,16 @@ class SmartContract:
             if len(event.event_payload):
                 print(event.event_payload[0].decode("utf-8"))
 
-    Handlers receive as `event` argument an instance of the
-    `neo.EventHub.SmartContractEvent` object. It has the following properties:
+    Handlers receive as `event` argument an instance of the `neo.EventHub.SmartContractEvent`
+    object. It has the following properties:
 
     - event_type (str)
-    - contract_hash (str)
-    - tx_hash (str)
+    - contract_hash (UInt160)
+    - tx_hash (UInt256)
+    - block_number (int)
     - event_payload (object[])
+    - execution_success (bool)
+    - test_mode (bool)
 
     `event_payload` is always a list of objects, depending on what data types you
     sent in the smart contract.
@@ -37,8 +40,8 @@ class SmartContract:
     event_handlers = defaultdict(list)
 
     def __init__(self, contract_hash):
-        self.contract_hash = contract_hash
         assert contract_hash
+        self.contract_hash = str(contract_hash)
 
         # Register EventHub.events handlers to forward for SmartContract decorators
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
@@ -46,20 +49,17 @@ class SmartContract:
         @events.on(SmartContractEvent.EXECUTION_SUCCESS)
         @events.on(SmartContractEvent.EXECUTION_FAIL)
         @events.on(SmartContractEvent.STORAGE)
-        def call_on_event(smart_contract_event):
-            self._handle_event(SmartContractEvent.STORAGE, smart_contract_event)
+        def call_on_event(sc_event):
+            # Make sure this event is for this specific smart contract
+            if str(sc_event.contract_hash) != self.contract_hash:
+                return
 
-    def _handle_event(self, event_type, smart_contract_event):
-        # Make sure this event is for this specific smart contract
-        if str(smart_contract_event.contract_hash) != self.contract_hash:
-            return
+            # call event handlers
+            handlers = set(self.event_handlers["*"] + self.event_handlers[sc_event.event_type])  # set(..) removes duplicates
+            [event_handler(sc_event) for event_handler in handlers]
 
-        # call event handlers. set(..) removes duplicates.
-        handlers = set(self.event_handlers["*"] + self.event_handlers[event_type])
-        [event_handler(smart_contract_event) for event_handler in handlers]
-
-    def on_all(self, func):
-        """ @on_all decorator: calls method on any event for this smart contract """
+    def on_any(self, func):
+        """ @on_any decorator: calls method on any event for this smart contract """
         return self._add_decorator("*", func)
 
     def on_notify(self, func):

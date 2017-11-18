@@ -69,8 +69,8 @@ class SmartContractEvent:
         self.test_mode = test_mode
 
     def __str__(self):
-        return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s, execution_success=%s)" \
-               % (self.event_type, self.event_payload, self.contract_hash, self.block_number, self.tx_hash, self.execution_success)
+        return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s, execution_success=%s, test_mode=%s)" \
+               % (self.event_type, self.event_payload, self.contract_hash, self.block_number, self.tx_hash, self.execution_success, self.test_mode)
 
 
 # Helper for easier dispatching of events from somewhere in the project
