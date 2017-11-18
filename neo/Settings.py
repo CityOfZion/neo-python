@@ -8,9 +8,9 @@ reconfigure them by calling the `setup(..)` methods.
 """
 import json
 import os
-import sys
-import logging
 from json.decoder import JSONDecodeError
+
+import logzero
 
 # Create am absolute references to the project root folder. Used for
 # specifying the various filenames.
@@ -53,6 +53,12 @@ class SettingsHolder:
     BOOTSTRAP_FILE = None
 
     ALL_FEES = None
+
+    # Logging settings
+    log_smart_contract_events = True
+    logfile = None
+    logfile_max_bytes = None
+    logfile_backup_count = None
 
     # Helpers
     @property
@@ -115,9 +121,25 @@ class SettingsHolder:
         """ Load settings from the privnet JSON config file """
         self.setup(FILENAME_SETTINGS_PRIVNET)
 
+    def log_smart_contract_events(self, is_enabled=True):
+        self.log_smart_contract_events = is_enabled
+
+    def logfile(self, fn, max_bytes=0, backup_count=0):
+        """
+        Setup logging to a (rotating) logfile.
+
+        Args:
+            fn (str): Logfile. If fn is None, disable file logging
+            max_bytes (int): Maximum number of bytes per logfile. If used together with backup_count,
+                             logfile will be rotated when it reaches this amount of bytes.
+            backup_count (int): Number of rotated logfiles to keep
+        """
+        logzero.logfile(fn, maxBytes=max_bytes, backupCount=backup_count)
+
 
 # Settings instance used by external modules
 settings = SettingsHolder()
 
 # Load testnet settings as default
 settings.setup_testnet()
+settings.logfile("/tmp/test.log")

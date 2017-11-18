@@ -10,15 +10,17 @@
 #   def handler1(*args):
 #       print("handler1 called with args", args)
 #
-from collections import namedtuple
+from neo.UInt160 import UInt160
+from neo.Cryptography.Crypto import Crypto
+from neo.Settings import settings
+
+# See https://logzero.readthedocs.io/en/latest/#example-usage
+from logzero import logger
 
 # pymitter manages the event dispatching (https://github.com/riga/pymitter#examples)
 from pymitter import EventEmitter
-from neo.UInt160 import UInt160
-from neo.Cryptography.Crypto import Crypto
 
-
-# `events` is a singleton which can be imported and used from all parts of the code
+# `events` is can be imported and used from all parts of the code to dispatch or receive events
 events = EventEmitter(wildcard=True)
 
 
@@ -83,6 +85,18 @@ def dispatch_smart_contract_event(event_type,
                                   test_mode=False):
     sc_event = SmartContractEvent(event_type, event_payload, contract_hash, block_number, tx_hash, execution_success, test_mode)
     events.emit(event_type, sc_event)
+
+
+@events.on("SmartContract.*")
+@events.on("SmartContract.*.*")
+def on_sc_event(sc_event):
+    if not settings.log_smart_contract_events:
+        return
+
+    if sc_event.test_mode:
+        logger.info("[test_mode][%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
+    else:
+        logger.info("[%s][%s] [%s] [tx %s] %s" % (sc_event.event_type, sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
 
 
 """
