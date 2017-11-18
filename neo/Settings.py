@@ -142,5 +142,4 @@ settings = SettingsHolder()
 
 # Load testnet settings as default
 settings.setup_testnet()
-settings.set_log_smart_contract_events(False)
 settings.set_logfile("/tmp/test.log")
