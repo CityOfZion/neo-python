@@ -121,10 +121,10 @@ class SettingsHolder:
         """ Load settings from the privnet JSON config file """
         self.setup(FILENAME_SETTINGS_PRIVNET)
 
-    def log_smart_contract_events(self, is_enabled=True):
+    def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled
 
-    def logfile(self, fn, max_bytes=0, backup_count=0):
+    def set_logfile(self, fn, max_bytes=0, backup_count=0):
         """
         Setup logging to a (rotating) logfile.
 
@@ -142,4 +142,5 @@ settings = SettingsHolder()
 
 # Load testnet settings as default
 settings.setup_testnet()
-settings.logfile("/tmp/test.log")
+settings.set_log_smart_contract_events(False)
+settings.set_logfile("/tmp/test.log")

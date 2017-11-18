@@ -92,13 +92,17 @@ class StateMachine(StateReader):
         height = Blockchain.Default().Height
         tx_hash = engine.ScriptContainer.Hash
 
-        # get the first script that was executed
-        # this is usually the script that sets up the script to be executed
-        entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
+        entry_script = None
+        try:
+            # get the first script that was executed
+            # this is usually the script that sets up the script to be executed
+            entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
 
-        # ExecutedScriptHashes[1] will usually be the first contract executed
-        if len(engine.ExecutedScriptHashes) > 1:
-            entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
+            # ExecutedScriptHashes[1] will usually be the first contract executed
+            if len(engine.ExecutedScriptHashes) > 1:
+                entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
+        except Exception as e:
+            print("Could not get entry script: %s " % e)
 
         payload = []
         for item in engine.EvaluationStack.Items:
