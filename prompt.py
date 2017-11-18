@@ -681,10 +681,10 @@ class PromptInterface(object):
             if c1 is not None:
                 if c1 == 'on' or c1 == '1':
                     print("debug logging is now enabled")
-                    settings.loglevel(logging.DEBUG)
+                    settings.set_loglevel(logging.DEBUG)
                 if c1 == 'off' or c1 == '0':
                     print("debug logging is now disabled")
-                    settings.loglevel(logging.INFO)
+                    settings.set_loglevel(logging.INFO)
 
             else:
                 print("cannot configure log.  Please specify on or off")
@@ -694,10 +694,10 @@ class PromptInterface(object):
             if c1 is not None:
                 if c1 == 'on' or c1 == '1':
                     print("smart contract event logging is now enabled")
-                    settings.log_smart_contract_events(True)
+                    settings.set_log_smart_contract_events(True)
                 if c1 == 'off' or c1 == '0':
                     print("smart contract event logging is now enabled")
-                    settings.log_smart_contract_events(False)
+                    settings.set_log_smart_contract_events(False)
 
             else:
                 print("cannot configure log.  Please specify on or off")

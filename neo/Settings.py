@@ -54,7 +54,7 @@ class SettingsHolder:
     ALL_FEES = None
 
     # Logging settings
-    _log_smart_contract_events = True
+    log_smart_contract_events = True
 
     # Helpers
     @property
@@ -117,11 +117,10 @@ class SettingsHolder:
         """ Load settings from the privnet JSON config file """
         self.setup(FILENAME_SETTINGS_PRIVNET)
 
-    def log_smart_contract_events(self, is_enabled=True):
-        """ Enable or disable smart contract event logs """
-        self._log_smart_contract_events = is_enabled
+    def set_log_smart_contract_events(self, is_enabled=True):
+        self.log_smart_contract_events = is_enabled
 
-    def logfile(self, fn, max_bytes=0, backup_count=0):
+    def set_logfile(self, fn, max_bytes=0, backup_count=0):
         """
         Setup logging to a (rotating) logfile.
 
@@ -133,7 +132,7 @@ class SettingsHolder:
         """
         logzero.logfile(fn, maxBytes=max_bytes, backupCount=backup_count)
 
-    def loglevel(self, level):
+    def set_loglevel(self, level):
         """
         Set the minimum loglevel for the default logger
 

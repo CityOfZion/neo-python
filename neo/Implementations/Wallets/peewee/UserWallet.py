@@ -68,7 +68,7 @@ class UserWallet(Wallet):
             tx.delete_instance()
 
         logger.info("deleted coins and transactions %s %s " %
-                         (Coin.select().count(), Transaction.select().count()))
+                    (Coin.select().count(), Transaction.select().count()))
 
     @staticmethod
     def Open(path, password):

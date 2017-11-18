@@ -90,7 +90,7 @@ def dispatch_smart_contract_event(event_type,
 @events.on("SmartContract.*")
 @events.on("SmartContract.*.*")
 def on_sc_event(sc_event):
-    if not settings._log_smart_contract_events:
+    if not settings.log_smart_contract_events:
         return
 
     if sc_event.test_mode:
