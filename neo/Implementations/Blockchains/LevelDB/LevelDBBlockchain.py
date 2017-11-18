@@ -1,3 +1,11 @@
+import time
+import plyvel
+import binascii
+import traceback
+import pdb
+
+from logzero import logger
+
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
@@ -27,15 +35,7 @@ from neo.SmartContract import TriggerType
 from neo.Cryptography.Crypto import Crypto
 from neo.BigInteger import BigInteger
 
-import time
-import plyvel
-from autologging import logged
-import binascii
-import traceback
-import pdb
 
-
-@logged
 class LevelDBBlockchain(Blockchain):
 
     _path = None
@@ -58,7 +58,7 @@ class LevelDBBlockchain(Blockchain):
         try:
             return self._header_index[self._current_block_height]
         except Exception as e:
-            self.__log.debug("Couldnt get current block hash, returning none: %s ", )
+            logger.debug("Couldnt get current block hash, returning none: %s ", )
 
         return None
 
@@ -98,7 +98,7 @@ class LevelDBBlockchain(Blockchain):
             self._db = plyvel.DB(self._path, create_if_missing=True)
 #            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
         except Exception as e:
-            self.__log.debug("leveldb unavailable, you may already be running this process: %s " % e)
+            logger.debug("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
 
         version = self._db.get(DBPrefix.SYS_Version)
@@ -112,8 +112,8 @@ class LevelDBBlockchain(Blockchain):
             current_header_height = int.from_bytes(ba[-4:], 'little')
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
-#            self.__log.debug("current header hash!! %s " % current_header_hash)
-#            self.__log.debug("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
+#            logger.debug("current header hash!! %s " % current_header_hash)
+#            logger.debug("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
 
             hashes = []
             try:
@@ -127,7 +127,7 @@ class LevelDBBlockchain(Blockchain):
     #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
 
             except Exception as e:
-                self.__log.debug("Couldnt get stored header hash list: %s " % e)
+                logger.debug("Couldnt get stored header hash list: %s " % e)
 
             if len(hashes):
                 hashes.sort(key=lambda x: x['k'])
@@ -179,7 +179,7 @@ class LevelDBBlockchain(Blockchain):
             try:
                 script_hash = script_hash.encode('utf-8')
             except Exception as e:
-                self.__log.debug("could not convert argument to bytes :%s " % e)
+                logger.debug("could not convert argument to bytes :%s " % e)
                 return None
 
         sn = self._db.snapshot()
@@ -216,7 +216,7 @@ class LevelDBBlockchain(Blockchain):
                 elif query in contract.Email.decode('utf-8'):
                     res.append(contract)
             except Exception as e:
-                self.__log.debug("Could not query contract: %s " % e)
+                logger.debug("Could not query contract: %s " % e)
 
         sn.close()
 
@@ -236,7 +236,7 @@ class LevelDBBlockchain(Blockchain):
             try:
                 hash = hash.encode('utf-8')
             except Exception as e:
-                self.__log.debug("could not convert argument to bytes :%s " % e)
+                logger.debug("could not convert argument to bytes :%s " % e)
                 return None
 
         sn = self._db.snapshot()
@@ -310,7 +310,7 @@ class LevelDBBlockchain(Blockchain):
             try:
                 assetId = assetId.encode('utf-8')
             except Exception as e:
-                self.__log.debug("could not convert argument to bytes :%s " % e)
+                logger.debug("could not convert argument to bytes :%s " % e)
                 return None
 
         sn = self._db.snapshot()
@@ -334,7 +334,7 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Transaction.DeserializeFromBufer(outhex, 0), height
 
-        print("Could not find transaction for hash %s " % hash)
+        logger.debug("Could not find transaction for hash %s " % hash)
         return None, -1
 
     def AddBlock(self, block):
@@ -375,7 +375,7 @@ class LevelDBBlockchain(Blockchain):
         except TypeError as e2:
             pass
         except Exception as e:
-            self.__log.debug("OTHER ERRROR %s " % e)
+            logger.debug("OTHER ERRROR %s " % e)
         return None
 
     def GetHeaderBy(self, height_or_hash):
@@ -432,7 +432,7 @@ class LevelDBBlockchain(Blockchain):
             amount = int.from_bytes(value, 'little', signed=False)
             return amount
         except Exception as e:
-            self.__log.debug("couldnt get sys fee: %s " % e)
+            logger.debug("couldnt get sys fee: %s " % e)
 
         return 0
 
@@ -471,7 +471,7 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Block.FromTrimmedData(outhex, 0)
         except Exception as e:
-            self.__log.debug("couldnt get block %s " % e)
+            logger.debug("couldnt get block %s " % e)
         return None
 
     def AddHeader(self, header):
@@ -484,7 +484,7 @@ class LevelDBBlockchain(Blockchain):
         for header in headers:
 
             if header.Index - 1 >= len(self._header_index) + count:
-                self.__log.debug("header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
+                logger.debug("header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
                 break
 
             if header.Index < count + len(self._header_index):
@@ -510,7 +510,7 @@ class LevelDBBlockchain(Blockchain):
 
         self._header_index = self._header_index + hashes
 
-        self.__log.debug("Process Headers: %s %s" % (lastheader, (time.clock() - start)))
+        logger.debug("Process Headers: %s %s" % (lastheader, (time.clock() - start)))
 
         if lastheader is not None:
             self.OnAddHeader(lastheader)
@@ -535,7 +535,7 @@ class LevelDBBlockchain(Blockchain):
 
             self._stored_header_count += 2000
 
-            self.__log.debug("Trimming stored header index!!!!! %s" % self._stored_header_count)
+            logger.debug("Trimming stored header index!!!!! %s" % self._stored_header_count)
 
         with self._db.write_batch() as wb:
             wb.put(DBPrefix.DATA_Block + hHash, bytes(8) + header.ToArray())
@@ -666,7 +666,7 @@ class LevelDBBlockchain(Blockchain):
                 else:
 
                     if tx.Type != b'\x00' and tx.Type != 128:
-                        self.__log.debug("TX Not Found %s " % tx.Type)
+                        logger.debug("TX Not Found %s " % tx.Type)
 
             # do save all the accounts, unspent, coins, validators, assets, etc
             # now sawe the current sys block
@@ -707,7 +707,7 @@ class LevelDBBlockchain(Blockchain):
             self._current_block_height = block.Index
 
     def PersistBlocks(self):
-        #        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
+        #        logger.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
         while not self._disposed:
 
@@ -728,7 +728,7 @@ class LevelDBBlockchain(Blockchain):
                 self.OnPersistCompleted(block)
                 del self._block_cache[hash]
             except Exception as e:
-                print("Could not persist block %s " % e)
+                logger.debug("Could not persist block %s " % e)
                 raise e
 
     def Dispose(self):

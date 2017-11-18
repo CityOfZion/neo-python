@@ -1,3 +1,8 @@
+import pdb
+
+from base58 import b58decode
+from logzero import logger
+
 from neo.Blockchain import GetBlockchain, GetStateReader
 from neo.Cryptography.Crypto import *
 from neo.IO.BinaryWriter import BinaryWriter
@@ -8,8 +13,6 @@ from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo.Settings import settings
-from base58 import b58decode
-import pdb
 
 
 class Helper(object):
@@ -82,7 +85,7 @@ class Helper(object):
         try:
             hashes = verifiable.GetScriptHashesForVerifying()
         except Exception as e:
-            print("couldng get script hashes %s " % e)
+            logger.error("couldn't get script hashes %s " % e)
             return False
 
         if len(hashes) != len(verifiable.Scripts):
@@ -92,7 +95,7 @@ class Helper(object):
             verification = verifiable.Scripts[i].VerificationScript
 
             if len(verification) == 0:
-                #                print("VERIFICATION IS 0, EMITTING APP CALL")
+                #                logger.debug("VERIFICATION IS 0, EMITTING APP CALL")
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
                 verification = sb.ToArray()
@@ -109,7 +112,7 @@ class Helper(object):
 
             res = engine.Execute()
             if not res:
-                print("engine did not execute")
+                logger.error("engine did not execute")
                 return False
 
 #            pdb.set_trace()

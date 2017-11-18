@@ -1,21 +1,21 @@
+import hashlib
+import sys
+import os
+import traceback
+import pdb
+
+from logzero import logger
 
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.OpCode import *
-from autologging import logged
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.BigInteger import BigInteger
-import hashlib
 from neo.VM.InteropService import Array, Struct, StackItem
-import sys
-import os
 from neo.UInt160 import UInt160
-import traceback
-import pdb
 
 
-@logged
 class ExecutionEngine():
 
     _Table = None
@@ -107,7 +107,7 @@ class ExecutionEngine():
             elif return_type == ContractParameterType.Array:
                 return item.GetArray()
             else:
-                print("couldnt format results for return type %s " % return_type)
+                logger.error("couldnt format results for return type %s " % return_type)
             return item
         except Exception as e:
             pass
@@ -773,11 +773,11 @@ class ExecutionEngine():
 
     def StepInto(self):
         if self._InvocationStack.Count == 0:
-            self.__log.debug("INVOCATION COUNT IS 0, HALT")
+            logger.debug("INVOCATION COUNT IS 0, HALT")
             self._VMState |= VMState.HALT
 
         if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-            self.__log.debug("stopping because vm state is %s " % self._VMState)
+            logger.debug("stopping because vm state is %s " % self._VMState)
             return
 
         op = None
@@ -788,17 +788,17 @@ class ExecutionEngine():
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
 #        opname = ToName(op)
-#        print("____________________________________________________")
-#        print("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
-#        print("-----------------------------------")
+#        logger.debug("____________________________________________________")
+#        logger.debug("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
+#        logger.debug("-----------------------------------")
 
         self.ops_processed += 1
 
         try:
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
-            self.__log.debug("COULD NOT EXECUTE OP: %s %s %s" % (e, op, ToName(op)))
-            self.__log.error("Exception", exc_info=1)
+            logger.error("COULD NOT EXECUTE OP: %s %s %s" % (e, op, ToName(op)))
+            logger.exception(e)
 
     def StepOut(self):
         self._VMState &= ~VMState.BREAK

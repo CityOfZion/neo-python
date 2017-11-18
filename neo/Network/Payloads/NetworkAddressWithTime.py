@@ -1,13 +1,11 @@
-
-from neo.IO.Mixins import SerializableMixin
 import sys
 import ctypes
-from neo.Network.IPEndpoint import IPEndpoint
 from datetime import datetime
-from autologging import logged
+
+from neo.Network.IPEndpoint import IPEndpoint
+from neo.IO.Mixins import SerializableMixin
 
 
-@logged
 class NetworkAddressWithTime(SerializableMixin):
 
     NODE_NETWORK = 1

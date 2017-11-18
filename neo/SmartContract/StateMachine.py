@@ -1,3 +1,7 @@
+import sys
+
+from logzero import logger
+
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.Blockchain import Blockchain
@@ -15,12 +19,8 @@ from neo.VM.InteropService import StackItem, stack_item_to_py
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
 from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
-import sys
-
-from autologging import logged
 
 
-@logged
 class StateMachine(StateReader):
 
     _accounts = None
@@ -175,7 +175,7 @@ class StateMachine(StateReader):
 
             vote_list = engine.EvaluationStack.Pop().GetArray()
         except Exception as e:
-            self.__log.debug("could not get account or votes: %s " % e)
+            logger.error("could not get account or votes: %s " % e)
             return False
 
         if account is None or len(vote_list) > 1024:
@@ -261,7 +261,7 @@ class StateMachine(StateReader):
             return False
 
         if not self.CheckWitnessPubkey(engine, owner):
-            self.__log.debug("check witness false...")
+            logger.error("check witness false...")
             return False
 
         admin = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
@@ -303,7 +303,7 @@ class StateMachine(StateReader):
             asset.Expiration = asset.Expiration + years * 2000000
 
         except Exception as e:
-            self.__log.debug("could not set expiration date %s " % e)
+            logger.error("could not set expiration date %s " % e)
 
             asset.Expiration = sys.maxsize
 
@@ -446,7 +446,7 @@ class StateMachine(StateReader):
 
         contract = engine.EvaluationStack.Pop().GetInterface()
 
-        self.__log.debug("CONTRACT Get storage context %s " % contract)
+        logger.debug("CONTRACT Get storage context %s " % contract)
         if contract.ScriptHash.ToBytes() in self._contracts_created:
             created = self._contracts_created[contract.ScriptHash.ToBytes()]
 
@@ -483,7 +483,7 @@ class StateMachine(StateReader):
             context = item.GetInterface()
             shash = context.ScriptHash
         except Exception as e:
-            self.__log.debug("could not get storage context %s " % e)
+            logger.error("could not get storage context %s " % e)
             return False
 
         if not self.CheckStorageContext(context):
@@ -528,7 +528,7 @@ class StateMachine(StateReader):
 
             context = engine.EvaluationStack.Pop().GetInterface()
         except Exception as e:
-            self.__log.debug("Storage Context Not found on stack")
+            logger.error("Storage Context Not found on stack")
             return False
 
         if not self.CheckStorageContext(context):

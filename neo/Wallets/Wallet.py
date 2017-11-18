@@ -5,6 +5,16 @@ Description:
 Usage:
     from neo.Wallets.Wallet import Wallet
 """
+import hashlib
+import traceback
+import pdb
+
+from itertools import groupby
+from base58 import b58decode
+from decimal import Decimal
+from Crypto import Random
+from Crypto.Cipher import AES
+from logzero import logger
 
 from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
@@ -23,18 +33,7 @@ from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
 from neo.Core.Helper import Helper
 
-from itertools import groupby
-from base58 import b58decode
-from autologging import logged
-import hashlib
-import traceback
-from Crypto import Random
-from Crypto.Cipher import AES
-from decimal import Decimal
-import pdb
 
-
-@logged
 class Wallet(object):
 
     AddressVersion = None
@@ -126,7 +125,7 @@ class Wallet(object):
                 h = int(self.LoadStoredData('Height'))
                 self._current_height = h
             except Exception as e:
-                print("couldnt load height data %s " % e)
+                logger.error("couldnt load height data %s " % e)
                 self._current_height = 0
 
             del passwordKey
@@ -163,7 +162,7 @@ class Wallet(object):
             Prints a warning to the console if the address already exists in the wallet.
         """
         if script_hash in self._contracts:
-            print("Address already in contracts")
+            logger.error("Address already in contracts")
             return
 
         self._watch_only.append(script_hash)
@@ -179,7 +178,7 @@ class Wallet(object):
             Prints a warning to the console if the token already exists in the wallet.
         """
         if token.ScriptHash.ToBytes() in self._tokens.keys():
-            print("Token already in wallet")
+            logger.error("Token already in wallet")
             return
         self._tokens[token.ScriptHash.ToBytes()] = token
 
@@ -718,7 +717,7 @@ class Wallet(object):
         except Exception as e:
             traceback.print_stack()
             traceback.print_exc()
-            print("could not process %s " % e)
+            logger.error("could not process %s " % e)
 
     def Rebuild(self):
         """
@@ -896,7 +895,7 @@ class Wallet(object):
         try:
             return self.GetContracts()[0]
         except Exception as e:
-            print("Could not find default contract")
+            logger.error("Could not find default contract")
         return None
 
     def GetKeys(self):
@@ -1025,7 +1024,7 @@ class Wallet(object):
 
         for key, unspents in paycoins.items():
             if unspents is None:
-                print("insufficient funds for asset id: %s " % key)
+                logger.error("insufficient funds for asset id: %s " % key)
                 return None
 
         input_sums = {}

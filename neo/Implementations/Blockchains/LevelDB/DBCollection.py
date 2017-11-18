@@ -1,10 +1,10 @@
 import binascii
-from autologging import logged
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 import inspect
+from logzero import logger
+
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 
 
-@logged
 class DBCollection():
 
     DB = None
@@ -51,7 +51,7 @@ class DBCollection():
                     ret[key] = val
             return ret
         except Exception as e:
-            self.__log.debug("error getting items %s " % e)
+            logger.error("error getting items %s " % e)
 
         return {}
 
@@ -138,7 +138,7 @@ class DBCollection():
                 return item
             return None
         except Exception as e:
-            self.__log.debug("Could not deserialize item from key %s : %s" % (keyval, e))
+            logger.error("Could not deserialize item from key %s : %s" % (keyval, e))
 
         return None
 
@@ -162,4 +162,4 @@ class DBCollection():
         self.Prefix = None
         self.Deleted = None
         self.Changed = None
-        self.__log = None
+        logger = None

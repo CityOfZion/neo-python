@@ -1,13 +1,13 @@
+import sys
+import traceback
+import pdb
+
+from logzero import logger
 
 from neo.VM.Mixins import EquatableMixin
 from neo.BigInteger import BigInteger
-import sys
-import traceback
-from autologging import logged
-import pdb
 
 
-@logged
 class StackItem(EquatableMixin):
 
     @property
@@ -31,7 +31,7 @@ class StackItem(EquatableMixin):
         return False
 
     def GetArray(self):
-        self.__log.debug("trying to get array:: %s " % self)
+        logger.debug("trying to get array:: %s " % self)
         raise Exception('Not supported')
 
     def GetInterface(self):
@@ -64,7 +64,7 @@ class StackItem(EquatableMixin):
         elif typ is list:
             return Array(value)
 
-#        self.__log.debug("Could not create stack item for vaule %s %s " % (typ, value))
+#        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 
 
@@ -94,14 +94,14 @@ class Array(StackItem):
         return self._array
 
     def GetBigInteger(self):
-        self.__log.debug("Trying to get big integer %s " % self)
+        logger.debug("Trying to get big integer %s " % self)
         raise Exception("Not Supported")
 
     def GetBoolean(self):
         return len(self._array) > 0
 
     def GetByteArray(self):
-        self.__log.debug("Trying to get bytearray integer %s " % self)
+        logger.debug("Trying to get bytearray integer %s " % self)
 
         raise Exception("Not supported")
 
@@ -282,7 +282,6 @@ class Struct(Array):
         return "Struct: %s " % self._array
 
 
-@logged
 class InteropService():
 
     _dictionary = {}
@@ -299,13 +298,13 @@ class InteropService():
     def Invoke(self, method, engine):
         if method not in self._dictionary.keys():
 
-            self.__log.debug("method %s not found in ->" % method)
+            logger.debug("method %s not found in ->" % method)
             for k, v in self._dictionary.items():
-                self.__log.debug("%s -> %s " % (k, v))
+                logger.debug("%s -> %s " % (k, v))
             return False
 
         func = self._dictionary[method]
-        # self.__log.debug("[InteropService Method] %s " % func)
+        # logger.debug("[InteropService Method] %s " % func)
         return func(engine)
 
     @staticmethod

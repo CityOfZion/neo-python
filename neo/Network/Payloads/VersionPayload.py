@@ -1,14 +1,14 @@
+import sys
+import ctypes
+import datetime
+
+from logzero import logger
+
 from neo.IO.Mixins import SerializableMixin
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Core.Blockchain import Blockchain
 
-import sys
-import ctypes
-import datetime
-from autologging import logged
 
-
-@logged
 class VersionPayload(SerializableMixin):
 
     Version = None
@@ -40,7 +40,7 @@ class VersionPayload(SerializableMixin):
             sys.getsizeof(self.UserAgent) + ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_bool)
 
     def Deserialize(self, reader):
-        self.__log.debug("DESERIALIZING VERSION!!!!")
+        logger.debug("DESERIALIZING VERSION!!!!")
         self.Version = reader.ReadUInt32()
 
         self.Services = reader.ReadUInt64()
@@ -49,7 +49,7 @@ class VersionPayload(SerializableMixin):
         self.Nonce = reader.ReadUInt32()
         self.UserAgent = reader.ReadVarString().decode('utf-8')
         self.StartHeight = reader.ReadUInt32()
-        self.__log.debug("VERSION START HEIGH:T %s " % self.StartHeight)
+        logger.debug("VERSION START HEIGH:T %s " % self.StartHeight)
         self.Relay = reader.ReadBool()
 
     def Serialize(self, writer):

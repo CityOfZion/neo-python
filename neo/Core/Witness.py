@@ -1,9 +1,10 @@
-# -*- coding:utf-8 -*-
-
-from neo.IO.Mixins import SerializableMixin
 import sys
 import json
 import binascii
+
+from logzero import logger
+
+from neo.IO.Mixins import SerializableMixin
 
 
 class Witness(SerializableMixin):
@@ -33,16 +34,16 @@ class Witness(SerializableMixin):
         self.VerificationScript = reader.ReadVarBytes()
 
     def Serialize(self, writer):
-        #        print("Serializing Witnes.....")
-        #        print("INVOCATION %s " % self.InvocationScript)
+        #        logger.debug("Serializing Witnes.....")
+        #        logger.debug("INVOCATION %s " % self.InvocationScript)
         writer.WriteVarBytes(self.InvocationScript)
-#        print("writer after invocation %s " % writer.stream.ToArray())
-#        print("Now wringi verificiation script %s " % self.VerificationScript)
+#        logger.debug("writer after invocation %s " % writer.stream.ToArray())
+#        logger.debug("Now wringi verificiation script %s " % self.VerificationScript)
         writer.WriteVarBytes(self.VerificationScript)
-#        print("Wrote verification script %s " % writer.stream.ToArray())
+#        logger.debug("Wrote verification script %s " % writer.stream.ToArray())
 
     def ToJson(self):
-        #        print("invocation %s " % self.InvocationScript)
+        #        logger.debug("invocation %s " % self.InvocationScript)
         data = {
             'invocation': self.InvocationScript.hex(),
             'verification': self.VerificationScript.hex()

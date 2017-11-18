@@ -1,4 +1,10 @@
-# -*- coding:utf-8 -*-
+import pytz
+
+from datetime import datetime
+from events import Events
+from itertools import groupby
+
+from logzero import logger
 
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import *
@@ -14,12 +20,8 @@ from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
 from collections import Counter
 from neo.Fixed8 import Fixed8
-from datetime import datetime
-from events import Events
 from neo.Cryptography.ECCurve import ECDSA
-import pytz
 from neo.UInt256 import UInt256
-from itertools import groupby
 
 
 class Blockchain(object):
@@ -243,7 +245,7 @@ class Blockchain(object):
         return amount_claimed
 
     def OnNotify(self, notification):
-        #        print("on notifiy %s " % notification)
+        #        logger.debug("on notifiy %s " % notification)
         self.Notify.on_change(notification)
 
     def ContainsBlock(self, hash):

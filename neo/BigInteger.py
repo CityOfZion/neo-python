@@ -1,3 +1,4 @@
+from logzero import logger
 
 from neo.Cryptography.Helper import base256_encode
 
@@ -17,14 +18,14 @@ class BigInteger(int):
             try:
                 return self.to_bytes(1 + ((self.bit_length() + 7) // 8), byteorder='little', signed=True)
             except Exception as e:
-                print("Couldn't convert negative number %s " % e)
+                logger.error("Couldn't convert negative number %s " % e)
                 return False
         try:
             return self.to_bytes((self.bit_length() + 7) // 8, byteorder='little', signed=signed)
         except OverflowError:
             return self.to_bytes(1 + ((self.bit_length() + 7) // 8), byteorder='little', signed=signed)
         except Exception:
-            print("COULD NOT CONVERT %s to byte array" % self)
+            logger.error("COULD NOT CONVERT %s to byte array" % self)
 
         return bytearray([0])
 

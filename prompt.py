@@ -4,12 +4,12 @@
 import argparse
 import datetime
 import json
-import logging
 import os
 import resource
 import traceback
+import logging
 
-from autologging import logged
+import logzero
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -34,20 +34,20 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Utils import get_arg
-from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
+from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 from neo.Wallets.KeyPair import KeyPair
 
-debug_logname = FILENAME_PROMPT_LOG
+# Logfile settings & setup
+LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'prompt.log')
+LOGFILE_MAX_BYTES = 5e7   # 50 MB
+LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
+settings.logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    filemode='a',
-    filename=debug_logname,
-    format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
+# Prompt history filename
+FILENAME_PROMPT_HISTORY = os.path.join(DIR_PROJECT_ROOT, '.prompt.py.history')
 
 
-@logged
 class PromptInterface(object):
 
     go_on = True
@@ -680,12 +680,10 @@ class PromptInterface(object):
             if c1 is not None:
                 if c1 == 'on' or c1 == '1':
                     print("turning on logging")
-                    logger = logging.getLogger()
-                    logger.setLevel(logging.DEBUG)
+                    settings.loglevel(logging.DEBUG)
                 if c1 == 'off' or c1 == '0':
                     print("turning off logging")
-                    logger = logging.getLogger()
-                    logger.setLevel(logging.ERROR)
+                    settings.loglevel(logging.ERROR)
 
             else:
                 print("cannot configure log.  Please specify on or off")
@@ -719,7 +717,8 @@ class PromptInterface(object):
                                 completer=self.get_completer(),
                                 history=self.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
-                                style=self.token_style
+                                style=self.token_style,
+                                refresh_interval=3
                                 )
             except EOFError:
                 # Control-D pressed: quit

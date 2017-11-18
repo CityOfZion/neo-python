@@ -5,12 +5,11 @@ Description:
 Usage:
     from neo.Core.TX.TransactionAttribute import TransactionAttribute
 """
+import binascii
+from logzero import logger
 
 from neo.Network.Inventory import Inventory
 from neo.IO.Mixins import SerializableMixin
-
-import binascii
-from autologging import logged
 
 
 class TransactionAttributeUsage(object):
@@ -61,7 +60,6 @@ class TransactionAttributeUsage(object):
     Remark15 = int.from_bytes(b'\xff', 'little')
 
 
-@logged
 class TransactionAttribute(Inventory, SerializableMixin):
 
     MAX_ATTR_DATA_SIZE = 65535
@@ -94,7 +92,7 @@ class TransactionAttribute(Inventory, SerializableMixin):
         elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
             self.Data = reader.ReadVarBytes(max=self.MAX_ATTR_DATA_SIZE)
         else:
-            self.__log.debug("format error!!!")
+            logger.error("format error!!!")
 
     def Serialize(self, writer):
         writer.WriteByte(self.Usage)
@@ -120,7 +118,7 @@ class TransactionAttribute(Inventory, SerializableMixin):
         elif self.Usage == TransactionAttributeUsage.Description or self.Usage >= TransactionAttributeUsage.Remark:
             writer.WriteVarString(self.Data)
         else:
-            self.__log.debug("format error!!!")
+            logger.error("format error!!!")
 
     def ToJson(self):
 

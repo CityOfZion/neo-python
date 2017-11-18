@@ -1,13 +1,12 @@
+import sys
 
 from .StateBase import StateBase
-import sys
+from .CoinState import CoinState
+
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
-from .CoinState import CoinState
-from autologging import logged
 
 
-@logged
 class UnspentCoinState(StateBase):
 
     Items = None

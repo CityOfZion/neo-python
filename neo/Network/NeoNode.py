@@ -1,11 +1,14 @@
-from twisted.internet.protocol import Protocol
-from twisted.internet import reactor, task
 import json
 import time
 import binascii
-from autologging import logged
-
 import pprint
+import random
+
+from logzero import logger
+
+from twisted.internet.protocol import Protocol
+from twisted.internet import reactor, task
+
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Network.Message import Message, ChecksumException
@@ -21,13 +24,9 @@ from .Payloads.InvPayload import InvPayload
 from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
-
-import random
-
 from neo.Settings import settings
 
 
-@logged
 class NeoNode(Protocol):
 
     Version = None
@@ -346,10 +345,10 @@ class NeoNode(Protocol):
                     self.SendSerializedMessage(message)
 
                 elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-                    print("handle block!")
+                    logger.debug("handle block!")
 
                 elif inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
-                    print("handle consensus")
+                    logger.debug("handle consensus")
 
     def Relay(self, inventory):
 
@@ -360,4 +359,4 @@ class NeoNode(Protocol):
         return True
 
     def Log(self, msg):
-        self.__log.debug("%s - %s" % (self.endpoint, msg))
+        logger.debug("%s - %s" % (self.endpoint, msg))

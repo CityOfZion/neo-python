@@ -1,11 +1,14 @@
-# -*- coding: UTF-8 -*-
 import hashlib
 import binascii
+import bitcoin
+
 from ecdsa import SigningKey, NIST256p, VerifyingKey
+from logzero import logger
+
 from .Helper import *
+
 from neo.UInt256 import UInt256
 from neo.UInt160 import UInt160
-import bitcoin
 from neo.Cryptography.ECCurve import EllipticCurve
 
 
@@ -82,7 +85,7 @@ class Crypto(object):
         try:
             m = binascii.unhexlify(message)
         except Exception as e:
-            print("could not get m")
+            logger.error("could not get m: %s" % e)
 
         if len(public_key) == 33:
 

@@ -1,3 +1,9 @@
+import events
+import binascii
+import pdb
+
+from logzero import logger
+
 from neo.VM.InteropService import InteropService
 from neo.SmartContract.Contract import Contract
 from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
@@ -14,10 +20,6 @@ from neo.Cryptography.ECCurve import ECDSA
 from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
-
-import events
-import binascii
-import pdb
 
 
 class StateReader(InteropService):
@@ -699,7 +701,7 @@ class StateReader(InteropService):
             context = item.GetInterface()
             shash = context.ScriptHash
         except Exception as e:
-            self.__log.debug("could not get storage context %s " % e)
+            logger.error("could not get storage context %s " % e)
             return False
 
         contract = Blockchain.Default().GetContract(context.ScriptHash.ToBytes())
@@ -727,7 +729,7 @@ class StateReader(InteropService):
             try:
                 valStr = int.from_bytes(valStr, 'little')
             except Exception as e:
-                self.__log.debug("couldnt convert %s to number: %s " % (valStr, e))
+                logger.error("couldnt convert %s to number: %s " % (valStr, e))
 
         if item is not None:
             engine.EvaluationStack.PushT(bytearray(item.Value))

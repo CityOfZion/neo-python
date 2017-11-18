@@ -5,16 +5,16 @@ Description:
 Usage:
     from neo.IO.BinaryWriter import BinaryWriter
 """
-
-
-import struct
-import binascii
-from autologging import logged
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
 import sys
 import os
 import inspect
+import struct
+import binascii
+
+from logzero import logger
+
+from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 
 
 def swap32(i):
@@ -29,7 +29,6 @@ def convert_to_uint256(value):
     return bin(value + 2**32)[-32:]
 
 
-@logged
 class BinaryWriter(object):
     """docstring for BinaryWriter"""
 
@@ -71,7 +70,7 @@ class BinaryWriter(object):
         return self.pack('%sb' % endian, value)
 
     def WriteUInt8(self, value, endian="<"):
-        print("writing uint 8 %s " % value)
+        logger.debug("writing uint 8 %s " % value)
         return self.pack('%sB' % endian, value)
 
     def WriteBool(self, value, endian="<"):
@@ -178,7 +177,7 @@ class BinaryWriter(object):
         for item in arr:
             ba = bytearray(binascii.unhexlify(item))
             ba.reverse()
-#            print("WRITING HASH %s " % ba)
+#            logger.debug("WRITING HASH %s " % ba)
             self.WriteBytes(ba)
 
     def WriteFixed8(self, value, unsigned=False):
