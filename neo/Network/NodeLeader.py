@@ -148,7 +148,7 @@ class NodeLeader():
                 # mock a true result for tests
                 return True
 
-            logger.debug("no connected peers")
+            logger.info("no connected peers")
 
         return relayed
 

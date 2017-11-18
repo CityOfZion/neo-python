@@ -446,7 +446,7 @@ class StateMachine(StateReader):
 
         contract = engine.EvaluationStack.Pop().GetInterface()
 
-        logger.debug("CONTRACT Get storage context %s " % contract)
+        logger.info("CONTRACT Get storage context %s " % contract)
         if contract.ScriptHash.ToBytes() in self._contracts_created:
             created = self._contracts_created[contract.ScriptHash.ToBytes()]
 

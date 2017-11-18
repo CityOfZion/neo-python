@@ -31,7 +31,7 @@ class InvPayload(SerializableMixin):
     def Serialize(self, writer):
         try:
             writer.WriteByte(self.Type)
-#            logger.debug("WILL WRITE HASHES %s " % self.Hashes)
+#            logger.info("WILL WRITE HASHES %s " % self.Hashes)
             writer.WriteHashes(self.Hashes)
         except Exception as e:
             logger.error("COULD NOT WRITE INVENTORY HASHES %s " % e)

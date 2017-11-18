@@ -95,7 +95,7 @@ class Helper(object):
             verification = verifiable.Scripts[i].VerificationScript
 
             if len(verification) == 0:
-                #                logger.debug("VERIFICATION IS 0, EMITTING APP CALL")
+                #                logger.info("VERIFICATION IS 0, EMITTING APP CALL")
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
                 verification = sb.ToArray()

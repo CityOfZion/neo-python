@@ -70,7 +70,8 @@ class PromptInterface(object):
                 'mem',
                 'nodes',
                 'state',
-                'config log {on/off}',
+                'config debug {on/off}',
+                'config sc-events {on/off}',
                 'build {path/to/file.py} (test {params} {returntype} {needs_storage} {test_params})',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
@@ -675,18 +676,32 @@ class PromptInterface(object):
     def configure(self, args):
         what = get_arg(args)
 
-        if what == 'log' or what == 'logs':
+        if what == 'debug':
             c1 = get_arg(args, 1).lower()
             if c1 is not None:
                 if c1 == 'on' or c1 == '1':
-                    print("turning on logging")
+                    print("debug logging is now enabled")
                     settings.loglevel(logging.DEBUG)
                 if c1 == 'off' or c1 == '0':
-                    print("turning off logging")
-                    settings.loglevel(logging.ERROR)
+                    print("debug logging is now disabled")
+                    settings.loglevel(logging.INFO)
 
             else:
                 print("cannot configure log.  Please specify on or off")
+
+        elif what == 'sc-events':
+            c1 = get_arg(args, 1).lower()
+            if c1 is not None:
+                if c1 == 'on' or c1 == '1':
+                    print("smart contract event logging is now enabled")
+                    settings.log_smart_contract_events(True)
+                if c1 == 'off' or c1 == '0':
+                    print("smart contract event logging is now enabled")
+                    settings.log_smart_contract_events(False)
+
+            else:
+                print("cannot configure log.  Please specify on or off")
+
         else:
             print("cannot configure %s " % what)
             print("Try 'config log on/off'")

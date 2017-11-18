@@ -47,7 +47,7 @@ class Message(SerializableMixin):
         self.Payload = payload
 
 #        if print_payload:
-#            logger.debug("PAYLOAD: %s " % self.Payload)
+#            logger.info("PAYLOAD: %s " % self.Payload)
 
     def Size(self):
         return ctypes.sizeof(ctypes.c_uint) + 12 + ctypes.sizeof(ctypes.c_int) + ctypes.sizeof(ctypes.c_uint) + len(self.Payload)
@@ -71,7 +71,7 @@ class Message(SerializableMixin):
         if checksum != self.Checksum:
             raise ChecksumException("checksum mismatch")
 
-#        logger.debug("Deserialized Message %s " % self.Command)
+#        logger.info("Deserialized Message %s " % self.Command)
 
     @staticmethod
     def GetChecksum(value):

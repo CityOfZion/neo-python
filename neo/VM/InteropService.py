@@ -31,7 +31,7 @@ class StackItem(EquatableMixin):
         return False
 
     def GetArray(self):
-        logger.debug("trying to get array:: %s " % self)
+        logger.info("trying to get array:: %s " % self)
         raise Exception('Not supported')
 
     def GetInterface(self):
@@ -64,7 +64,7 @@ class StackItem(EquatableMixin):
         elif typ is list:
             return Array(value)
 
-#        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
+#        logger.info("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 
 
@@ -94,14 +94,14 @@ class Array(StackItem):
         return self._array
 
     def GetBigInteger(self):
-        logger.debug("Trying to get big integer %s " % self)
+        logger.info("Trying to get big integer %s " % self)
         raise Exception("Not Supported")
 
     def GetBoolean(self):
         return len(self._array) > 0
 
     def GetByteArray(self):
-        logger.debug("Trying to get bytearray integer %s " % self)
+        logger.info("Trying to get bytearray integer %s " % self)
 
         raise Exception("Not supported")
 
@@ -261,7 +261,9 @@ class Struct(Array):
         newArray = []
 
         for i in range(0, len(self._array)):
-            if self._array[i].IsStruct:
+            if self._array[i] is None:
+                newArray[i] = None
+            elif self._array[i].IsStruct:
                 newArray[i] = self._array[i].Clone()
             else:
                 newArray[i] = self._array[i]
@@ -298,13 +300,13 @@ class InteropService():
     def Invoke(self, method, engine):
         if method not in self._dictionary.keys():
 
-            logger.debug("method %s not found in ->" % method)
+            logger.info("method %s not found in ->" % method)
             for k, v in self._dictionary.items():
-                logger.debug("%s -> %s " % (k, v))
+                logger.info("%s -> %s " % (k, v))
             return False
 
         func = self._dictionary[method]
-        # logger.debug("[InteropService Method] %s " % func)
+        # logger.info("[InteropService Method] %s " % func)
         return func(engine)
 
     @staticmethod

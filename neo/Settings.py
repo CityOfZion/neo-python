@@ -8,6 +8,7 @@ reconfigure them by calling the `setup(..)` methods.
 """
 import json
 import os
+import logging
 from json.decoder import JSONDecodeError
 
 import logzero
@@ -53,7 +54,7 @@ class SettingsHolder:
     ALL_FEES = None
 
     # Logging settings
-    log_smart_contract_events = True
+    _log_smart_contract_events = True
 
     # Helpers
     @property
@@ -118,7 +119,7 @@ class SettingsHolder:
 
     def log_smart_contract_events(self, is_enabled=True):
         """ Enable or disable smart contract event logs """
-        self.log_smart_contract_events = is_enabled
+        self._log_smart_contract_events = is_enabled
 
     def logfile(self, fn, max_bytes=0, backup_count=0):
         """
@@ -147,3 +148,6 @@ settings = SettingsHolder()
 
 # Load testnet settings as default
 settings.setup_testnet()
+
+# By default, set loglevel to INFO. DEBUG just print a lot of internal debug statements
+settings.loglevel(logging.INFO)

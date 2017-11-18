@@ -118,7 +118,7 @@ class BlockBase(VerifiableMixin):
     def GetScriptHashesForVerifying(self):
         # if this is the genesis block, we dont have a prev hash!
         if self.PrevHash.Data == bytearray(32):
-            #            logger.debug("verificiation script %s"  %(self.Script.ToJson()))
+            #            logger.info("verificiation script %s"  %(self.Script.ToJson()))
             if type(self.Script.VerificationScript) is bytes:
                 return [bytearray(self.Script.VerificationScript)]
             elif type(self.Script.VerificationScript) is bytearray:

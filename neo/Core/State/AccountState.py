@@ -78,7 +78,7 @@ class AccountState(StateBase):
             amount = reader.ReadFixed8()
             self.Balances[assetid] = amount
 
-#        logger.debug("balances: %s %s " % (len(self.Balances),self.Balances))
+#        logger.info("balances: %s %s " % (len(self.Balances),self.Balances))
 
     def Serialize(self, writer):
         super(AccountState, self).Serialize(writer)

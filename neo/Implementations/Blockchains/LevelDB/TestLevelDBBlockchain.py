@@ -109,7 +109,7 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                 elif tx.Type == TransactionType.EnrollmentTransaction:
 
                     validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
-                    #                        logger.debug("VALIDATOR %s " % validator.ToJson())
+                    #                        logger.info("VALIDATOR %s " % validator.ToJson())
 
                 elif tx.Type == TransactionType.PublishTransaction:
 

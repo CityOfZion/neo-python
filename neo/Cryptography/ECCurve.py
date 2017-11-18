@@ -741,8 +741,8 @@ class ECDSA:
         x2 = self.crack1(r, s2, m2, secret)
 
         if x1 != x2:
-            logger.debug("x1= %s" % x1)
-            logger.debug("x2= %s" % x2)
+            logger.info("x1= %s" % x1)
+            logger.info("x2= %s" % x2)
 
         return (secret, x1)
 

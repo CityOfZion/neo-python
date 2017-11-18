@@ -24,10 +24,10 @@ class GetBlocksPayload(SerializableMixin):
         self.HashStop = reader.ReadUInt256()
 
     def Serialize(self, writer):
-        #        logger.debug("Writing hash start... %s %s" % (len(self.HashStart), self.HashStart[0].ToArray()))
+        #        logger.info("Writing hash start... %s %s" % (len(self.HashStart), self.HashStart[0].ToArray()))
         writer.WriteHashes(self.HashStart)
         if self.HashStop is not None:
             writer.WriteUInt256(self.HashStop)
 #        else:
 #            writer.WriteUInt256( UInt256(data=bytearray(32)))
-#        logger.debug("Wrote Hash start ...")
+#        logger.info("Wrote Hash start ...")

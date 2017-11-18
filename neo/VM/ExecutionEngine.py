@@ -773,11 +773,11 @@ class ExecutionEngine():
 
     def StepInto(self):
         if self._InvocationStack.Count == 0:
-            logger.debug("INVOCATION COUNT IS 0, HALT")
+            logger.info("INVOCATION COUNT IS 0, HALT")
             self._VMState |= VMState.HALT
 
         if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-            logger.debug("stopping because vm state is %s " % self._VMState)
+            logger.info("stopping because vm state is %s " % self._VMState)
             return
 
         op = None
@@ -788,9 +788,9 @@ class ExecutionEngine():
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
 #        opname = ToName(op)
-#        logger.debug("____________________________________________________")
-#        logger.debug("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
-#        logger.debug("-----------------------------------")
+#        logger.info("____________________________________________________")
+#        logger.info("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
+#        logger.info("-----------------------------------")
 
         self.ops_processed += 1
 

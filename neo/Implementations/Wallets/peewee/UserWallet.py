@@ -34,7 +34,7 @@ class UserWallet(Wallet):
     def __init__(self, path, passwordKey, create):
 
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)
-        logger.debug("initialized user wallet!! %s " % self)
+        logger.info("initialized user wallet!! %s " % self)
 
     def BuildDatabase(self):
         PWDatabase.Destroy()
@@ -44,8 +44,8 @@ class UserWallet(Wallet):
             db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token,
                               Transaction, TransactionInfo, ], safe=True)
         except Exception as e:
-            logger.debug("Couldnt build database %s " % e)
-            logger.debug("couldnt build database %s " % e)
+            logger.info("Couldnt build database %s " % e)
+            logger.info("couldnt build database %s " % e)
 
     def Migrate(self):
         db = PWDatabase.ContextDB()
@@ -67,7 +67,7 @@ class UserWallet(Wallet):
         for tx in Transaction.select():
             tx.delete_instance()
 
-        logger.debug("deleted coins and transactions %s %s " %
+        logger.info("deleted coins and transactions %s %s " %
                          (Coin.select().count(), Transaction.select().count()))
 
     @staticmethod
@@ -112,7 +112,7 @@ class UserWallet(Wallet):
             db_contract.delete_instance()
             db_contract = None
         except Exception as e:
-            logger.debug("contract does not exist yet")
+            logger.info("contract does not exist yet")
 
         if db_contract is not None:
             db_contract.PublicKeyHash = contract.PublicKeyHash.ToBytes()
@@ -127,7 +127,7 @@ class UserWallet(Wallet):
                                           Address=address,
                                           Account=self.__dbaccount)
 
-            logger.debug("Creating db contract %s " % db_contract)
+            logger.info("Creating db contract %s " % db_contract)
 
             db_contract.save()
 
@@ -192,8 +192,8 @@ class UserWallet(Wallet):
             return items
 
         except Exception as e:
-            logger.debug("couldnt load watch only : %s " % e)
-            logger.debug("You may need to migrate your wallet. Run 'wallet migrate'.")
+            logger.info("couldnt load watch only : %s " % e)
+            logger.info("You may need to migrate your wallet. Run 'wallet migrate'.")
 
         return []
 
@@ -207,7 +207,7 @@ class UserWallet(Wallet):
                 walletcoin = WalletCoin.CoinFromRef(reference, output, coin.State)
                 coins[reference] = walletcoin
         except Exception as e:
-            logger.debug("could not load coins %s " % e)
+            logger.info("could not load coins %s " % e)
 
         return coins
 
@@ -245,11 +245,11 @@ class UserWallet(Wallet):
         return tokens
 
     def LoadStoredData(self, key):
-        logger.debug("Looking for key %s " % key)
+        logger.info("Looking for key %s " % key)
         try:
             return Key.get(Name=key).Value
         except Exception as e:
-            logger.debug("Could not get key %s " % e)
+            logger.info("Could not get key %s " % e)
 
         return None
 
@@ -318,9 +318,9 @@ class UserWallet(Wallet):
                     Address=address
                 )
                 c.save()
-                logger.debug("saved coin %s " % c)
+                logger.info("saved coin %s " % c)
             except Exception as e:
-                logger.debug("COULDN'T SAVE!!!! %s " % e)
+                logger.info("COULDN'T SAVE!!!! %s " % e)
 
         for coin in changed:
             try:
@@ -328,8 +328,8 @@ class UserWallet(Wallet):
                 c.State = coin.State
                 c.save()
             except Exception as e:
-                logger.debug("Coulndnt change coin %s %s" % (coin, e))
-                logger.debug("coin to change not found! %s %s " % (coin, e))
+                logger.info("Coulndnt change coin %s %s" % (coin, e))
+                logger.info("coin to change not found! %s %s " % (coin, e))
 
         for coin in deleted:
             try:
@@ -337,8 +337,8 @@ class UserWallet(Wallet):
                 c.delete_instance()
 
             except Exception as e:
-                logger.debug("Couldnt delete coin %s %s " % (e, coin))
-                logger.debug("could not delete coin %s %s " % (coin, e))
+                logger.info("Couldnt delete coin %s %s " % (e, coin))
+                logger.info("could not delete coin %s %s " % (coin, e))
 
     @property
     def Addresses(self):
@@ -392,8 +392,8 @@ class UserWallet(Wallet):
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.delete_instance()
             except Exception as e:
-                logger.debug("Couldnt delete coin %s %s " % (e, coin))
-                logger.debug("could not delete coin %s %s " % (coin, e))
+                logger.info("Couldnt delete coin %s %s " % (e, coin))
+                logger.info("could not delete coin %s %s " % (coin, e))
 
         todelete = bytes(script_hash.ToArray())
 
@@ -429,7 +429,7 @@ class UserWallet(Wallet):
         addresses = []
         has_watch_addr = False
         for addr in Address.select():
-            #            logger.debug("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
+            #            logger.info("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
             acct = Blockchain.Default().GetAccountState(addr_str)
             token_balances = self.TokenBalancesForAddress(addr_str)

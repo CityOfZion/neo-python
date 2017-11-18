@@ -70,7 +70,7 @@ class BinaryWriter(object):
         return self.pack('%sb' % endian, value)
 
     def WriteUInt8(self, value, endian="<"):
-        logger.debug("writing uint 8 %s " % value)
+        logger.info("writing uint 8 %s " % value)
         return self.pack('%sB' % endian, value)
 
     def WriteBool(self, value, endian="<"):
@@ -177,7 +177,7 @@ class BinaryWriter(object):
         for item in arr:
             ba = bytearray(binascii.unhexlify(item))
             ba.reverse()
-#            logger.debug("WRITING HASH %s " % ba)
+#            logger.info("WRITING HASH %s " % ba)
             self.WriteBytes(ba)
 
     def WriteFixed8(self, value, unsigned=False):

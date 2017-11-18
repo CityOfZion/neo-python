@@ -40,7 +40,7 @@ class VersionPayload(SerializableMixin):
             sys.getsizeof(self.UserAgent) + ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_bool)
 
     def Deserialize(self, reader):
-        logger.debug("DESERIALIZING VERSION!!!!")
+        # logger.info("DESERIALIZING VERSION!!!!")
         self.Version = reader.ReadUInt32()
 
         self.Services = reader.ReadUInt64()
@@ -49,7 +49,7 @@ class VersionPayload(SerializableMixin):
         self.Nonce = reader.ReadUInt32()
         self.UserAgent = reader.ReadVarString().decode('utf-8')
         self.StartHeight = reader.ReadUInt32()
-        logger.debug("VERSION START HEIGH:T %s " % self.StartHeight)
+        logger.debug("Version start height: T %s " % self.StartHeight)
         self.Relay = reader.ReadBool()
 
     def Serialize(self, writer):

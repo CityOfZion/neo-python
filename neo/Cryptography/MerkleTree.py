@@ -97,7 +97,7 @@ class MerkleTree(object):
         return list(hashes)
 
     def Trim(self, flags):
-        logger.debug("Trimming!")
+        logger.info("Trimming!")
         flags = bytearray(flags)
         length = 1 << len(self.Depth - 1)
         while len(flags) < length:

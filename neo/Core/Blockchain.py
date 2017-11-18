@@ -245,7 +245,7 @@ class Blockchain(object):
         return amount_claimed
 
     def OnNotify(self, notification):
-        #        logger.debug("on notifiy %s " % notification)
+        #        logger.info("on notifiy %s " % notification)
         self.Notify.on_change(notification)
 
     def ContainsBlock(self, hash):

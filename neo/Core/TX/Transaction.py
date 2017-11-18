@@ -241,7 +241,7 @@ class Transaction(Inventory, InventoryMixin):
 
             self.__network_fee = input - output - self.SystemFee()
 
-#            logger.debug("Determined network fee to be %s " % (self.__network_fee.value))
+#            logger.info("Determined network fee to be %s " % (self.__network_fee.value))
 
         return self.__network_fee
 
@@ -377,11 +377,11 @@ class Transaction(Inventory, InventoryMixin):
         return jsn
 
     def Verify(self, mempool):
-        logger.debug("Verifying transaction: %s " % self.Hash.ToBytes())
+        logger.info("Verifying transaction: %s " % self.Hash.ToBytes())
 
         return Helper.VerifyScripts(self)
 
-#        logger.debug("return true for now ...")
+#        logger.info("return true for now ...")
 #        return True
 
 #        for i in range(1, len(self.inputs)):
@@ -390,19 +390,19 @@ class Transaction(Inventory, InventoryMixin):
 #                j = j+1
 #                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
 #                    return False
-#        logger.debug("Verified inputs 1")
+#        logger.info("Verified inputs 1")
 #       for tx in mempool:
 #           if tx is not self:
 #               for ip in self.inputs:
 #                   if ip in tx.inputs:
 #                       return False
 #
-#        logger.debug("Verified inputs 2, checking double spend")
+#        logger.info("Verified inputs 2, checking double spend")
 #
 #        if GetBlockchain().IsDoubleSpend(self):
 #            return False
 #
-#        logger.debug("verifying outputs ...")
+#        logger.info("verifying outputs ...")
 #        for txOutput in self.outputs:
 #            asset = GetBlockchain().GetAssetState(txOutput.AssetId)
 #
@@ -411,7 +411,7 @@ class Transaction(Inventory, InventoryMixin):
 #            if txOutput.Value % pow(10, 8 - asset.Precision) != 0:
 #                return False
 #
-#        logger.debug("unimplemented after here ...")
+#        logger.info("unimplemented after here ...")
 #        return True
 #        txResults = self.GetTransactionResults()
 #

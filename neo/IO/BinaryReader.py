@@ -116,12 +116,12 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt(max=max)
         items = []
-#        logger.debug("READING ITEM %s %s " % (length, class_name))
+#        logger.info("READING ITEM %s %s " % (length, class_name))
         try:
             for i in range(0, length):
                 item = klass()
                 item.Deserialize(self)
-#                logger.debug("deserialized item %s %s " % ( i, item))
+#                logger.info("deserialized item %s %s " % ( i, item))
                 items.append(item)
         except Exception as e:
             logger.error("Couldn't deserialize %s " % e)

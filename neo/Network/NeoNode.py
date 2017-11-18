@@ -196,7 +196,7 @@ class NeoNode(Protocol):
 #        self.RequestPeerInfo()
 
     def AskForMoreHeaders(self):
-        self.Log("asking for more headers...")
+        # self.Log("asking for more headers...")
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
@@ -240,7 +240,7 @@ class NeoNode(Protocol):
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             self.SendSerializedMessage(message)
         else:
-            self.Log("all caught up!!!!!! hashes is zero")
+            # self.Log("all caught up!!!!!! hashes is zero")
             self.AskForMoreHeaders()
             reactor.callLater(20, self.DoAskForMoreBlocks)
 
@@ -345,10 +345,10 @@ class NeoNode(Protocol):
                     self.SendSerializedMessage(message)
 
                 elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-                    logger.debug("handle block!")
+                    logger.info("handle block!")
 
                 elif inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
-                    logger.debug("handle consensus")
+                    logger.info("handle consensus")
 
     def Relay(self, inventory):
 

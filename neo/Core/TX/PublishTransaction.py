@@ -27,7 +27,7 @@ class PublishTransaction(Transaction):
 
     def DeserializeExclusiveData(self, reader):
         if self.Version > 1:
-            logger.debug("format exception...")
+            logger.error("format exception...")
 
         self.Code = FunctionCode()
         self.Code.Deserialize(reader)

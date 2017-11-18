@@ -34,16 +34,16 @@ class Witness(SerializableMixin):
         self.VerificationScript = reader.ReadVarBytes()
 
     def Serialize(self, writer):
-        #        logger.debug("Serializing Witnes.....")
-        #        logger.debug("INVOCATION %s " % self.InvocationScript)
+        #        logger.info("Serializing Witnes.....")
+        #        logger.info("INVOCATION %s " % self.InvocationScript)
         writer.WriteVarBytes(self.InvocationScript)
-#        logger.debug("writer after invocation %s " % writer.stream.ToArray())
-#        logger.debug("Now wringi verificiation script %s " % self.VerificationScript)
+#        logger.info("writer after invocation %s " % writer.stream.ToArray())
+#        logger.info("Now wringi verificiation script %s " % self.VerificationScript)
         writer.WriteVarBytes(self.VerificationScript)
-#        logger.debug("Wrote verification script %s " % writer.stream.ToArray())
+#        logger.info("Wrote verification script %s " % writer.stream.ToArray())
 
     def ToJson(self):
-        #        logger.debug("invocation %s " % self.InvocationScript)
+        #        logger.info("invocation %s " % self.InvocationScript)
         data = {
             'invocation': self.InvocationScript.hex(),
             'verification': self.VerificationScript.hex()
