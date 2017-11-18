@@ -206,43 +206,32 @@ class StateReader(InteropService):
 
         state = engine.EvaluationStack.Pop()
 
-        try:
-            # Build and emit smart contract event
-            state_py = stack_item_to_py(state)
-            payload = state_py if isinstance(state_py, list) else [state_py]  # Runtime.Notify payload must be a list
+        # Build and emit smart contract event
+        state_py = stack_item_to_py(state)
+        payload = state_py if isinstance(state_py, list) else [state_py]  # Runtime.Notify payload must be a list
 
-            args = NotifyEventArgs(
-                engine.ScriptContainer,
-                UInt160(data=engine.CurrentContext.ScriptHash()),
-                payload
-            )
+        args = NotifyEventArgs(
+            engine.ScriptContainer,
+            UInt160(data=engine.CurrentContext.ScriptHash()),
+            payload
+        )
 
-            self.NotifyEvent.on_change(args)
-        except Exception as e:
-            print("COULDNT NOTIFY : %s " % e)
-            pdb.set_trace()
+        self.NotifyEvent.on_change(args)
 
         return True
 
     def Runtime_Log(self, engine):
         message = engine.EvaluationStack.Pop().GetByteArray()
 
-        try:
-            # Turn of automatic printing for now
-            #        print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
-            hash = UInt160(data=engine.CurrentContext.ScriptHash())
+        hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
-            # Build and emit smart contract event
-
-            dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG,
-                                          message,
-                                          hash,
-                                          Blockchain.Default().Height,
-                                          engine.ScriptContainer.Hash,
-                                          test_mode=engine.testMode)
-        except Exception as e:
-            print("Could not LOG: %s " % e)
-            pdb.set_trace()
+        # Build and emit smart contract event
+        dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG,
+                                      message,
+                                      hash,
+                                      Blockchain.Default().Height,
+                                      engine.ScriptContainer.Hash,
+                                      test_mode=engine.testMode)
 
         return True
 
@@ -710,7 +699,7 @@ class StateReader(InteropService):
             context = item.GetInterface()
             shash = context.ScriptHash
         except Exception as e:
-            print("could not get storage context %s " % e)
+            self.__log.debug("could not get storage context %s " % e)
             return False
 
         contract = Blockchain.Default().GetContract(context.ScriptHash.ToBytes())
@@ -738,15 +727,12 @@ class StateReader(InteropService):
             try:
                 valStr = int.from_bytes(valStr, 'little')
             except Exception as e:
-                print("couldnt convert %s to number: %s " % (valStr, e))
+                self.__log.debug("couldnt convert %s to number: %s " % (valStr, e))
 
         if item is not None:
-
-            #            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
             engine.EvaluationStack.PushT(bytearray(item.Value))
 
         else:
-            #            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
             engine.EvaluationStack.PushT(bytearray([0]))
 
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),

@@ -85,6 +85,8 @@ def dispatch_smart_contract_event(event_type,
     events.emit(event_type, sc_event)
 
 
+"""
+
 #
 # These handlers are only for temporary development and testing
 #
@@ -98,43 +100,20 @@ def on_execution_succes(sc_event):
 
 @events.on(SmartContractEvent.RUNTIME_NOTIFY)
 def on_sc_notify(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][Notify][%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+    evt = sc_event.event_payload[0]
+    if evt == b'transfer':
+        pl = sc_event.event_payload[1:]
+        addr_fr = Crypto.ToAddress(UInt160(data=pl[0]))
+        addr_to = Crypto.ToAddress(UInt160(data=pl[1]))
+        amount = int.from_bytes(pl[2], 'little') / 100000000
+        print("[%s][Transfer] %s -> %s : %s " % (sc_event.block_number, addr_fr, addr_to, amount))
     else:
-        print("[%s][Notify][%s][tx %s] -> %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
+        if sc_event.test_mode:
+            print("[test_mode][Notify][%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
+        else:
+            print("[%s][Notify][%s] %s" % (
+            sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
 
-
-"""
-total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to=0
-
-@events.on(SmartContractEvent.RUNTIME_NOTIFY)
-def on_sc_notify(sc_event):
-    if sc_event.contract_hash.ToString() == 'ecc6b20d3ccac1ee9ef109af5a7cdb85706b1df9':
-
-        evt = sc_event.event_payload[0]
-        if evt == b'transfer':
-            m = 'AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v'
-            pl = sc_event.event_payload[1:]
-            addr_fr = Crypto.ToAddress(UInt160(data=pl[0]))
-            addr_to = Crypto.ToAddress(UInt160(data=pl[1]))
-            amount = int.from_bytes(pl[2], 'little') / 100000000
-
-            if addr_to== m or addr_fr== m:
-                global total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to
-                total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to += 1
-                print('%s %s %s' % (total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to, sc_event.tx_hash.ToString(), amount))
-#                print("[%s][RPX Transfer][%s : %s] %s -> %s : %s " % (sc_event.block_number,total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_to,total_AQZXgVco6Qmv152YtxoKfhAYJVE5u7RV8v_fr,addr_fr,addr_to, amount))
-
-
-
-
-
-@events.on(SmartContractEvent.RUNTIME_NOTIFY)
-def on_sc_notify(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
-    else:
-        print("[%s][Execution Fail] [Error: %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
 
 @events.on(SmartContractEvent.EXECUTION_FAIL)
 def on_execution_fail(sc_event):
@@ -144,28 +123,12 @@ def on_execution_fail(sc_event):
         print("[%s][Execution Fail] [Error: %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
 
 
-@events.on(SmartContractEvent.EXECUTION_SUCCESS)
-def on_execution_succes(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
-    else:
-        print("[%s][Execution Success] [%s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
-
-
 @events.on(SmartContractEvent.RUNTIME_LOG)
 def on_sc_log(sc_event):
     if sc_event.test_mode:
         print("[test_mode][Log] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
     else:
         print("[%s][Log] [%s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
-
-
-@events.on(SmartContractEvent.EXECUTION_SUCCESS)
-def on_execution_succes(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
-    else:
-        print("[%s][Execution Success] [%s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
 
 
 
@@ -179,12 +142,9 @@ def on_storage_event(sc_event):
     else:
         print("[%s][%s] [%s] %s" % (sc_event.block_number, sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
 
-
 @events.on_any
 def on_any_event(*args):
     print("")
     print("=EVENT: %s" % args)
     print("")
-
-
 """

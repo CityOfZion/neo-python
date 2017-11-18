@@ -186,11 +186,6 @@ class LevelDBBlockchain(Blockchain):
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         acct = accounts.TryGet(keyval=script_hash)
 
-        if acct is None:
-            #            print("Could not find account. Length of accounts %s " % len(accounts.Keys))
-            if print_all_accounts:
-                print("All accounts: %s " % accounts.Keys)
-
         sn.close()
 
         return acct
@@ -437,7 +432,7 @@ class LevelDBBlockchain(Blockchain):
             amount = int.from_bytes(value, 'little', signed=False)
             return amount
         except Exception as e:
-            print("couldnt get sys fee: %s " % e)
+            self.__log.debug("couldnt get sys fee: %s " % e)
 
         return 0
 
@@ -552,8 +547,6 @@ class LevelDBBlockchain(Blockchain):
 
     def Persist(self, block):
 
-        #        start = time.clock()
-
         sn = self._db.snapshot()
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
@@ -565,7 +558,6 @@ class LevelDBBlockchain(Blockchain):
 
         amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
         amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
-#        self.__log.debug("[BlockFee] : %s %s " % (block.Index, amount_sysfee))
 
         with self._db.write_batch() as wb:
 
@@ -731,9 +723,13 @@ class LevelDBBlockchain(Blockchain):
             self.BlockSearchTries = 0
             block = self._block_cache[hash]
 
-            self.Persist(block)
-            self.OnPersistCompleted(block)
-            del self._block_cache[hash]
+            try:
+                self.Persist(block)
+                self.OnPersistCompleted(block)
+                del self._block_cache[hash]
+            except Exception as e:
+                print("Could not persist block %s " % e)
+                raise e
 
     def Dispose(self):
         self._db.close()

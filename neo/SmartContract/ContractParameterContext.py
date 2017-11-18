@@ -57,7 +57,7 @@ class ContextItem():
                     else:
                         jsn['signatures'][key] = value.decode()
                 else:
-                    print("Seems like {} has empty signature".format(key))
+                    self.__log.debug("Seems like {} has empty signature".format(key))
         return jsn
 
 

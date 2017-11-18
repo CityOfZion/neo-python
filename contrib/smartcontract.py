@@ -42,23 +42,11 @@ class SmartContract:
 
         # Register EventHub.events handlers to forward for SmartContract decorators
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
-        def call_on_notify(smart_contract_event):
-            self._handle_event(SmartContractEvent.RUNTIME_NOTIFY, smart_contract_event)
-
         @events.on(SmartContractEvent.RUNTIME_LOG)
-        def call_on_notify(smart_contract_event):
-            self._handle_event(SmartContractEvent.RUNTIME_LOG, smart_contract_event)
-
         @events.on(SmartContractEvent.EXECUTION_SUCCESS)
-        def call_on_execution_success(smart_contract_event):
-            self._handle_event(SmartContractEvent.EXECUTION_SUCCESS, smart_contract_event)
-
         @events.on(SmartContractEvent.EXECUTION_FAIL)
-        def call_on_execution_fail(smart_contract_event):
-            self._handle_event(SmartContractEvent.EXECUTION_FAIL, smart_contract_event)
-
         @events.on(SmartContractEvent.STORAGE)
-        def call_on_storage(smart_contract_event):
+        def call_on_event(smart_contract_event):
             self._handle_event(SmartContractEvent.STORAGE, smart_contract_event)
 
     def _handle_event(self, event_type, smart_contract_event):

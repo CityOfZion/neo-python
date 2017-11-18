@@ -31,7 +31,7 @@ class StackItem(EquatableMixin):
         return False
 
     def GetArray(self):
-        print("trying to get array:: %s " % self)
+        self.__log.debug("trying to get array:: %s " % self)
         raise Exception('Not supported')
 
     def GetInterface(self):
@@ -64,7 +64,7 @@ class StackItem(EquatableMixin):
         elif typ is list:
             return Array(value)
 
-#        print("Could not create stack item for vaule %s %s " % (typ, value))
+#        self.__log.debug("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 
 
@@ -94,14 +94,14 @@ class Array(StackItem):
         return self._array
 
     def GetBigInteger(self):
-        print("Trying to get big integer %s " % self)
+        self.__log.debug("Trying to get big integer %s " % self)
         raise Exception("Not Supported")
 
     def GetBoolean(self):
         return len(self._array) > 0
 
     def GetByteArray(self):
-        print("Trying to get bytearray integer %s " % self)
+        self.__log.debug("Trying to get bytearray integer %s " % self)
 
         raise Exception("Not supported")
 
@@ -305,7 +305,7 @@ class InteropService():
             return False
 
         func = self._dictionary[method]
-        # print("[InteropService Method] %s " % func)
+        # self.__log.debug("[InteropService Method] %s " % func)
         return func(engine)
 
     @staticmethod

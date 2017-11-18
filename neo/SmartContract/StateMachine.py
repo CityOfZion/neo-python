@@ -130,7 +130,6 @@ class StateMachine(StateReader):
             self._storages.Commit(self._wb, False)
 
     def TestCommit(self):
-        # print("test commit items....")
         pass
 
     def StateMachine_Notify(self, event_args):
@@ -484,7 +483,7 @@ class StateMachine(StateReader):
             context = item.GetInterface()
             shash = context.ScriptHash
         except Exception as e:
-            print("could not get storage context %s " % e)
+            self.__log.debug("could not get storage context %s " % e)
             return False
 
         if not self.CheckStorageContext(context):
@@ -507,16 +506,13 @@ class StateMachine(StateReader):
             try:
                 valStr = int.from_bytes(valStr, 'little')
             except Exception as e:
-                #                print("couldnt convert %s to number: %s " % (valStr, e))
                 pass
 
         if item is not None:
 
-            #            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
             engine.EvaluationStack.PushT(bytearray(item.Value))
 
         else:
-            #            print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
             engine.EvaluationStack.PushT(bytearray([0]))
 
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
@@ -563,9 +559,6 @@ class StateMachine(StateReader):
                                       context.ScriptHash, Blockchain.Default().Height,
                                       engine.ScriptContainer.Hash, test_mode=engine.testMode)
 
-
-#        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash, keystr, valStr))
-
         return True
 
     def Storage_Delete(self, engine):
@@ -587,8 +580,6 @@ class StateMachine(StateReader):
         dispatch_smart_contract_event(SmartContractEvent.STORAGE_DELETE, keystr,
                                       context.ScriptHash, Blockchain.Default().Height,
                                       engine.ScriptContainer.Hash, test_mode=engine.testMode)
-
-#        print("[Neo.Storage.Delete] [Script %s] Delete %s " % (context.ScriptHash, keystr))
 
         self._storages.Remove(storage_key.GetHashCodeBytes())
 

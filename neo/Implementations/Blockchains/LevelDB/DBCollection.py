@@ -51,7 +51,7 @@ class DBCollection():
                     ret[key] = val
             return ret
         except Exception as e:
-            print("error getting items %s " % e)
+            self.__log.debug("error getting items %s " % e)
 
         return {}
 
@@ -138,7 +138,7 @@ class DBCollection():
                 return item
             return None
         except Exception as e:
-            print("Could not deserialize item from key %s : %s" % (keyval, e))
+            self.__log.debug("Could not deserialize item from key %s : %s" % (keyval, e))
 
         return None
 
