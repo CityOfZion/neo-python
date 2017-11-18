@@ -149,4 +149,4 @@ settings = SettingsHolder()
 settings.setup_testnet()
 
 # By default, set loglevel to INFO. DEBUG just print a lot of internal debug statements
-settings.loglevel(logging.INFO)
+settings.set_loglevel(logging.INFO)
