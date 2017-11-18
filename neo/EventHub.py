@@ -99,66 +99,6 @@ def on_sc_event(sc_event):
         logger.info("[%s][%s] [%s] [tx %s] %s" % (sc_event.event_type, sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
 
 
-"""
-
-#
-# These handlers are only for temporary development and testing
-#
-@events.on(SmartContractEvent.EXECUTION_SUCCESS)
-def on_execution_succes(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][Execution Success] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
-    else:
-        print("[%s][Execution Success] [%s] [tx %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
-
-
-@events.on(SmartContractEvent.RUNTIME_NOTIFY)
-def on_sc_notify(sc_event):
-    evt = sc_event.event_payload[0]
-    if evt == b'transfer':
-        pl = sc_event.event_payload[1:]
-        addr_fr = Crypto.ToAddress(UInt160(data=pl[0]))
-        addr_to = Crypto.ToAddress(UInt160(data=pl[1]))
-        amount = int.from_bytes(pl[2], 'little') / 100000000
-        print("[%s][Transfer] %s -> %s : %s " % (sc_event.block_number, addr_fr, addr_to, amount))
-    else:
-        if sc_event.test_mode:
-            print("[test_mode][Notify][%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
-        else:
-            print("[%s][Notify][%s] %s" % (
-            sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
-
-
-@events.on(SmartContractEvent.EXECUTION_FAIL)
-def on_execution_fail(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][Execution Fail] [Error: %s] %s" % (sc_event.contract_hash, sc_event.event_payload))
-    else:
-        print("[%s][Execution Fail] [Error: %s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
-
-
-@events.on(SmartContractEvent.RUNTIME_LOG)
-def on_sc_log(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][Log] [%s] %s" % (sc_event.contract_hash, sc_event.event_payload))
-    else:
-        print("[%s][Log] [%s] %s" % (sc_event.block_number, sc_event.contract_hash, sc_event.event_payload))
-
-
-
-
-# This should allow you to listen to all storage events?
-
-@events.on(SmartContractEvent.STORAGE)
-def on_storage_event(sc_event):
-    if sc_event.test_mode:
-        print("[test_mode][%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
-    else:
-        print("[%s][%s] [%s] %s" % (sc_event.block_number, sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
-
-@events.on_any
-def on_any_event(*args):
-    print("")
-    print("=EVENT: %s" % args)
-    print("")
-"""
+# @events.on_any
+# def on_any_event(*args):
+#     print("=EVENT: %s" % args)

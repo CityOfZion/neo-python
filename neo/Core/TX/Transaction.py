@@ -5,6 +5,10 @@ Description:
 Usage:
     from neo.Core.Transaction import Transaction
 """
+import sys
+import json
+from itertools import groupby
+from logzero import logger
 
 from neo.Blockchain import *
 from neo.Core.TX.TransactionAttribute import *
@@ -19,13 +23,8 @@ from neo.IO.MemoryStream import StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
-from autologging import logged
 from neo.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
-
-import sys
-from itertools import groupby
-import json
 
 
 class TransactionResult():
@@ -53,7 +52,6 @@ class TransactionType(object):
     InvocationTransaction = b'\xd1'
 
 
-@logged
 class TransactionOutput(SerializableMixin):
 
     Value = None  # should be fixed 8
@@ -99,7 +97,6 @@ class TransactionOutput(SerializableMixin):
         }
 
 
-@logged
 class TransactionInput(SerializableMixin):
     """docstring for TransactionInput"""
 
@@ -130,7 +127,6 @@ class TransactionInput(SerializableMixin):
         }
 
 
-@logged
 class Transaction(Inventory, InventoryMixin):
 
     Type = None
@@ -245,7 +241,7 @@ class Transaction(Inventory, InventoryMixin):
 
             self.__network_fee = input - output - self.SystemFee()
 
-#            print("Determined network fee to be %s " % (self.__network_fee.value))
+#            logger.info("Determined network fee to be %s " % (self.__network_fee.value))
 
         return self.__network_fee
 
@@ -381,11 +377,11 @@ class Transaction(Inventory, InventoryMixin):
         return jsn
 
     def Verify(self, mempool):
-        self.__log.debug("Verifying transaction: %s " % self.Hash.ToBytes())
+        logger.info("Verifying transaction: %s " % self.Hash.ToBytes())
 
         return Helper.VerifyScripts(self)
 
-#        print("return true for now ...")
+#        logger.info("return true for now ...")
 #        return True
 
 #        for i in range(1, len(self.inputs)):
@@ -394,19 +390,19 @@ class Transaction(Inventory, InventoryMixin):
 #                j = j+1
 #                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
 #                    return False
-#        self.__log.debug("Verified inputs 1")
+#        logger.info("Verified inputs 1")
 #       for tx in mempool:
 #           if tx is not self:
 #               for ip in self.inputs:
 #                   if ip in tx.inputs:
 #                       return False
 #
-#        self.__log.debug("Verified inputs 2, checking double spend")
+#        logger.info("Verified inputs 2, checking double spend")
 #
 #        if GetBlockchain().IsDoubleSpend(self):
 #            return False
 #
-#        self.__log.debug("verifying outputs ...")
+#        logger.info("verifying outputs ...")
 #        for txOutput in self.outputs:
 #            asset = GetBlockchain().GetAssetState(txOutput.AssetId)
 #
@@ -415,7 +411,7 @@ class Transaction(Inventory, InventoryMixin):
 #            if txOutput.Value % pow(10, 8 - asset.Precision) != 0:
 #                return False
 #
-#        self.__log.debug("unimplemented after here ...")
+#        logger.info("unimplemented after here ...")
 #        return True
 #        txResults = self.GetTransactionResults()
 #

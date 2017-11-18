@@ -1,3 +1,6 @@
+import random
+
+from logzero import logger
 
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
@@ -7,18 +10,13 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
 
-
-from autologging import logged
 from twisted.internet.protocol import Factory
 from twisted.application.internet import ClientService
 from twisted.internet import reactor, task
 from twisted.internet.endpoints import clientFromString
 from twisted.application.internet import backoffPolicy
 
-import random
 
-
-@logged
 class NodeLeader():
     __LEAD = None
 
@@ -78,7 +76,7 @@ class NodeLeader():
                 self.SetupConnection(host, port)
 
     def SetupConnection(self, host, port):
-        self.__log.debug("Setting up connection! %s %s " % (host, port))
+        logger.debug("Setting up connection! %s %s " % (host, port))
 
         factory = Factory.forProtocol(NeoNode)
         endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=5" % (host, port))
@@ -150,7 +148,7 @@ class NodeLeader():
                 # mock a true result for tests
                 return True
 
-            print("no connected peers")
+            logger.info("no connected peers")
 
         return relayed
 
@@ -190,7 +188,7 @@ class NodeLeader():
             return False
 
         if not tx.Verify(self.MemPool.values()):
-            print("Veryfiying tx result... failed")
+            logger.error("Veryfiying tx result... failed")
             return False
 
         self.MemPool[tx.Hash.ToBytes()] = tx

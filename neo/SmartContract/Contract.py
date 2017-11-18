@@ -16,7 +16,6 @@ from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
 from neo.Cryptography.ECCurve import ECDSA
-from autologging import logged
 
 
 class ContractType():
@@ -25,7 +24,6 @@ class ContractType():
     CustomContract = 2
 
 
-@logged
 class Contract(SerializableMixin, VerificationCode):
     """docstring for Contract"""
 

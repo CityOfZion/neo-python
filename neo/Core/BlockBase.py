@@ -1,20 +1,20 @@
-# -*- coding: UTF-8 -*-
+import ctypes
+import pprint
+
+from logzero import logger
+
 from .Mixins import VerifiableMixin
 from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
 from neo.Core.Helper import Helper
-import ctypes
 from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream
-import pprint
-from autologging import logged
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 
 
-@logged
 class BlockBase(VerifiableMixin):
 
     #  <summary>
@@ -118,7 +118,7 @@ class BlockBase(VerifiableMixin):
     def GetScriptHashesForVerifying(self):
         # if this is the genesis block, we dont have a prev hash!
         if self.PrevHash.Data == bytearray(32):
-            #            print("verificiation script %s"  %(self.Script.ToJson()))
+            #            logger.info("verificiation script %s"  %(self.Script.ToJson()))
             if type(self.Script.VerificationScript) is bytes:
                 return [bytearray(self.Script.VerificationScript)]
             elif type(self.Script.VerificationScript) is bytearray:

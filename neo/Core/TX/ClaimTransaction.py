@@ -1,13 +1,12 @@
+import sys
+from itertools import groupby
+from logzero import logger
 
 from neo.Core.TX.Transaction import *
 from neo.Fixed8 import Fixed8
 from neo.Core.Blockchain import Blockchain
-from autologging import logged
-import sys
-from itertools import groupby
 
 
-@logged
 class ClaimTransaction(Transaction):
 
     Claims = set()
@@ -111,6 +110,6 @@ class ClaimTransaction(Transaction):
             return Blockchain.CalculateBonusIgnoreClaimed(self.Claims, False) == -txResult.Amount
 
         except Exception as e:
-            self.__log.debug('couldnt calculate bonus: %s ' % e)
+            logger.error('couldnt calculate bonus: %s ' % e)
 
         return False

@@ -1,8 +1,6 @@
 from neo.VM.InteropService import StackItem
-from autologging import logged
 
 
-@logged
 class RandomAccessStack():
 
     _list = []

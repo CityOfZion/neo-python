@@ -1,11 +1,13 @@
+import sys
+import os
+
+from logzero import logger
+
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.OpCode import *
 from neo.VM import VMState
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
-import sys
-import os
-from autologging import logged
 
 # used for ApplicationEngine.Run
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -15,7 +17,6 @@ from neo.Core.State import ContractState, AssetState, AccountState, ValidatorSta
 from neo.SmartContract import TriggerType
 
 
-@logged
 class ApplicationEngine(ExecutionEngine):
 
     ratio = 100000
@@ -51,7 +52,7 @@ class ApplicationEngine(ExecutionEngine):
             size = self.EvaluationStack.Peek().GetBigInteger()
 
             if size > maxArraySize:
-                self.__log.debug("ARRAY SIZE TOO BIG!!!")
+                logger.error("ARRAY SIZE TOO BIG!!!")
                 return False
 
             return True
@@ -69,7 +70,7 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == CALL or opcode == APPCALL:
             if self.InvocationStack.Count >= maxStackSize:
-                self.__log.debug("INVOCATION STACK TOO BIG, RETURN FALSE")
+                logger.error("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
 
             return True
@@ -97,7 +98,7 @@ class ApplicationEngine(ExecutionEngine):
             length = int.from_bytes(lengthpointer, 'little')
 
             if length > maxItemSize:
-                self.__log.debug("ITEM IS GREATER THAN MAX ITEM SIZE!")
+                logger.error("ITEM IS GREATER THAN MAX ITEM SIZE!")
                 return False
 
             return True
@@ -105,7 +106,7 @@ class ApplicationEngine(ExecutionEngine):
         elif opcode == CAT:
 
             if self.EvaluationStack.Count < 2:
-                self.__log.debug("NOT ENOUGH ITEMS TO CONCAT")
+                logger.error("NOT ENOUGH ITEMS TO CONCAT")
                 return False
 
             length = 0
@@ -113,11 +114,11 @@ class ApplicationEngine(ExecutionEngine):
             try:
                 length = len(self.EvaluationStack.Peek(0).GetByteArray()) + len(self.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
-                self.__log.debug("COULD NOT GET STR LENGTH!")
+                logger.error("COULD NOT GET STR LENGTH!")
                 raise e
 
             if length > maxItemSize:
-                self.__log.debug("ITEM IS GREATER THAN MAX SIZE!!!")
+                logger.error("ITEM IS GREATER THAN MAX SIZE!!!")
                 return False
 
             return True
@@ -148,7 +149,7 @@ class ApplicationEngine(ExecutionEngine):
                 item = self.EvaluationStack.Peek()
 
                 if not item.IsArray:
-                    self.__log.debug("ITEM NOT ARRAY:")
+                    logger.error("ITEM NOT ARRAY:")
                     return False
 
                 size = len(item.GetArray())
@@ -159,7 +160,7 @@ class ApplicationEngine(ExecutionEngine):
         size += self.EvaluationStack.Count + self.AltStack.Count
 
         if size > maxStackSize:
-            self.__log.debug("SIZE IS OVER MAX STACK SIZE!!!!")
+            logger.error("SIZE IS OVER MAX STACK SIZE!!!!")
             return False
 
         return True
@@ -173,27 +174,27 @@ class ApplicationEngine(ExecutionEngine):
                 self.gas_consumed = self.gas_consumed + self.GetPrice() * self.ratio
 
             except Exception as e:
-                self.__log.debug("Exception calculating gas consumed %s " % e)
+                logger.error("Exception calculating gas consumed %s " % e)
                 return False
 
             if not self.testMode and self.gas_consumed > self.gas_amount:
-                self.__log.debug("NOT ENOUGH GAS")
+                logger.error("NOT ENOUGH GAS")
                 return False
 
             if not self.CheckItemSize():
-                self.__log.debug("ITEM SIZE TOO BIG")
+                logger.error("ITEM SIZE TOO BIG")
                 return False
 
             if not self.CheckStackSize():
-                self.__log.debug("STACK SIZE TOO BIG")
+                logger.error("STACK SIZE TOO BIG")
                 return False
 
             if not self.CheckArraySize():
-                self.__log.debug("ARRAY SIZE TOO BIG")
+                logger.error("ARRAY SIZE TOO BIG")
                 return False
 
             if not self.CheckInvocationStack():
-                self.__log.debug("INVOCATION SIZE TO BIIG")
+                logger.error("INVOCATION SIZE TO BIIG")
                 return False
 
             self.StepInto()

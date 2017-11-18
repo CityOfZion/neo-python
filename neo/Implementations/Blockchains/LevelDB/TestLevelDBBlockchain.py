@@ -1,3 +1,5 @@
+from logzero import logger
+
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import TransactionType
@@ -20,10 +22,7 @@ from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 
-from autologging import logged
 
-
-@logged
 class TestLevelDBBlockchain(LevelDBBlockchain):
 
     def Persist(self, block):
@@ -110,7 +109,7 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                 elif tx.Type == TransactionType.EnrollmentTransaction:
 
                     validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
-                    #                        print("VALIDATOR %s " % validator.ToJson())
+                    #                        logger.info("VALIDATOR %s " % validator.ToJson())
 
                 elif tx.Type == TransactionType.PublishTransaction:
 

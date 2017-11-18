@@ -1,19 +1,19 @@
-
-from .StateBase import StateBase
 import sys
+import time
 import binascii
+
+from logzero import logger
+from .StateBase import StateBase
+
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
-from autologging import logged
-import time
 from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
 from neo.IO.BinaryWriter import BinaryWriter
 
 
-@logged
 class AccountState(StateBase):
 
     ScriptHash = None
@@ -78,7 +78,7 @@ class AccountState(StateBase):
             amount = reader.ReadFixed8()
             self.Balances[assetid] = amount
 
-#        self.__log.debug("balances: %s %s " % (len(self.Balances),self.Balances))
+#        logger.info("balances: %s %s " % (len(self.Balances),self.Balances))
 
     def Serialize(self, writer):
         super(AccountState, self).Serialize(writer)

@@ -1,23 +1,21 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Binary Reader
 Usage:
     from neo.IO.BinaryReader import BinaryReader
 """
-
-
+import sys
 import struct
 import binascii
 import importlib
-from autologging import logged
+
+from logzero import logger
+
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
-import sys
 
 
-@logged
 class BinaryReader(object):
     """docstring for BinaryReader"""
 
@@ -34,7 +32,7 @@ class BinaryReader(object):
                 return ord(self.stream.read(1))
             return self.stream.read(1)
         except Exception as e:
-            self.__log.debug("ord expected character but got none")
+            logger.error("ord expected character but got none")
         return 0
 
     def ReadBytes(self, length):
@@ -118,15 +116,15 @@ class BinaryReader(object):
         klass = getattr(importlib.import_module(module), klassname)
         length = self.ReadVarInt(max=max)
         items = []
-#        print("READING ITEM %s %s " % (length, class_name))
+#        logger.info("READING ITEM %s %s " % (length, class_name))
         try:
             for i in range(0, length):
                 item = klass()
                 item.Deserialize(self)
-#                print("deserialized item %s %s " % ( i, item))
+#                logger.info("deserialized item %s %s " % ( i, item))
                 items.append(item)
         except Exception as e:
-            print("Couldn't deserialize %s " % e)
+            logger.error("Couldn't deserialize %s " % e)
 
         return items
 
