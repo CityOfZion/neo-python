@@ -31,6 +31,7 @@ from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 from neo.Core.Helper import Helper
 
 
@@ -1153,6 +1154,25 @@ class Wallet(object):
             success |= res
 
         return success
+
+    def GetSyncedBalances(self):
+        """
+        Returns a list of synced balances. The list looks like this:
+        [('NEO', 100.0), ('NEOGas', 100.0)]
+
+        Returns
+            list: [(asset_name, amount), ...]
+        """
+        assets = self.GetCoinAssets()
+        balances = []
+        for asset in assets:
+            if type(asset) is UInt256:
+                bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
+                total = self.GetBalance(asset).value / Fixed8.D
+                balances.append((bc_asset.GetName(), total))
+            elif type(asset) is NEP5Token:
+                balances.append((asset.symbol, self.GetBalance(asset)))
+        return balances
 
     def ToJson(self, verbose=False):
         # abstract
