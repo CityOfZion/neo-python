@@ -1,3 +1,11 @@
+import time
+import plyvel
+import binascii
+import traceback
+import pdb
+
+from logzero import logger
+
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
@@ -27,13 +35,7 @@ from neo.SmartContract import TriggerType
 from neo.Cryptography.Crypto import Crypto
 from neo.BigInteger import BigInteger
 
-import time
-import plyvel
-from autologging import logged
-import binascii
 
-
-@logged
 class LevelDBBlockchain(Blockchain):
 
     _path = None
@@ -56,7 +58,7 @@ class LevelDBBlockchain(Blockchain):
         try:
             return self._header_index[self._current_block_height]
         except Exception as e:
-            self.__log.debug("Couldnt get current block hash, returning none: %s ", )
+            logger.info("Couldnt get current block hash, returning none: %s ", )
 
         return None
 
@@ -96,7 +98,7 @@ class LevelDBBlockchain(Blockchain):
             self._db = plyvel.DB(self._path, create_if_missing=True)
 #            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
         except Exception as e:
-            self.__log.debug("leveldb unavailable, you may already be running this process: %s " % e)
+            logger.info("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
 
         version = self._db.get(DBPrefix.SYS_Version)
@@ -110,8 +112,8 @@ class LevelDBBlockchain(Blockchain):
             current_header_height = int.from_bytes(ba[-4:], 'little')
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
-#            self.__log.debug("current header hash!! %s " % current_header_hash)
-#            self.__log.debug("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
+#            logger.info("current header hash!! %s " % current_header_hash)
+#            logger.info("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
 
             hashes = []
             try:
@@ -125,7 +127,7 @@ class LevelDBBlockchain(Blockchain):
     #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
 
             except Exception as e:
-                self.__log.debug("Couldnt get stored header hash list: %s " % e)
+                logger.info("Couldnt get stored header hash list: %s " % e)
 
             if len(hashes):
                 hashes.sort(key=lambda x: x['k'])
@@ -177,17 +179,12 @@ class LevelDBBlockchain(Blockchain):
             try:
                 script_hash = script_hash.encode('utf-8')
             except Exception as e:
-                self.__log.debug("could not convert argument to bytes :%s " % e)
+                logger.info("could not convert argument to bytes :%s " % e)
                 return None
 
         sn = self._db.snapshot()
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         acct = accounts.TryGet(keyval=script_hash)
-
-        if acct is None:
-            #            print("Could not find account. Length of accounts %s " % len(accounts.Keys))
-            if print_all_accounts:
-                print("All accounts: %s " % accounts.Keys)
 
         sn.close()
 
@@ -219,7 +216,7 @@ class LevelDBBlockchain(Blockchain):
                 elif query in contract.Email.decode('utf-8'):
                     res.append(contract)
             except Exception as e:
-                self.__log.debug("Could not query contract: %s " % e)
+                logger.info("Could not query contract: %s " % e)
 
         sn.close()
 
@@ -239,7 +236,7 @@ class LevelDBBlockchain(Blockchain):
             try:
                 hash = hash.encode('utf-8')
             except Exception as e:
-                self.__log.debug("could not convert argument to bytes :%s " % e)
+                logger.info("could not convert argument to bytes :%s " % e)
                 return None
 
         sn = self._db.snapshot()
@@ -313,7 +310,7 @@ class LevelDBBlockchain(Blockchain):
             try:
                 assetId = assetId.encode('utf-8')
             except Exception as e:
-                self.__log.debug("could not convert argument to bytes :%s " % e)
+                logger.info("could not convert argument to bytes :%s " % e)
                 return None
 
         sn = self._db.snapshot()
@@ -337,7 +334,7 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Transaction.DeserializeFromBufer(outhex, 0), height
 
-        print("Could not find transaction for hash %s " % hash)
+        logger.info("Could not find transaction for hash %s " % hash)
         return None, -1
 
     def AddBlock(self, block):
@@ -378,7 +375,7 @@ class LevelDBBlockchain(Blockchain):
         except TypeError as e2:
             pass
         except Exception as e:
-            self.__log.debug("OTHER ERRROR %s " % e)
+            logger.info("OTHER ERRROR %s " % e)
         return None
 
     def GetHeaderBy(self, height_or_hash):
@@ -435,7 +432,7 @@ class LevelDBBlockchain(Blockchain):
             amount = int.from_bytes(value, 'little', signed=False)
             return amount
         except Exception as e:
-            print("couldnt get sys fee: %s " % e)
+            logger.info("couldnt get sys fee: %s " % e)
 
         return 0
 
@@ -474,7 +471,7 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Block.FromTrimmedData(outhex, 0)
         except Exception as e:
-            self.__log.debug("couldnt get block %s " % e)
+            logger.info("couldnt get block %s " % e)
         return None
 
     def AddHeader(self, header):
@@ -487,7 +484,7 @@ class LevelDBBlockchain(Blockchain):
         for header in headers:
 
             if header.Index - 1 >= len(self._header_index) + count:
-                self.__log.debug("header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
+                logger.info("header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
                 break
 
             if header.Index < count + len(self._header_index):
@@ -513,7 +510,7 @@ class LevelDBBlockchain(Blockchain):
 
         self._header_index = self._header_index + hashes
 
-        self.__log.debug("Process Headers: %s %s" % (lastheader, (time.clock() - start)))
+        logger.debug("Process Headers: %s %s" % (lastheader, (time.clock() - start)))
 
         if lastheader is not None:
             self.OnAddHeader(lastheader)
@@ -538,7 +535,7 @@ class LevelDBBlockchain(Blockchain):
 
             self._stored_header_count += 2000
 
-            self.__log.debug("Trimming stored header index!!!!! %s" % self._stored_header_count)
+            logger.info("Trimming stored header index!!!!! %s" % self._stored_header_count)
 
         with self._db.write_batch() as wb:
             wb.put(DBPrefix.DATA_Block + hHash, bytes(8) + header.ToArray())
@@ -549,8 +546,6 @@ class LevelDBBlockchain(Blockchain):
         return len(self._block_cache)
 
     def Persist(self, block):
-
-        start = time.clock()
 
         sn = self._db.snapshot()
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
@@ -563,169 +558,151 @@ class LevelDBBlockchain(Blockchain):
 
         amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
         amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
-        self.__log.debug("[BlockFee] : %s %s " % (block.Index, amount_sysfee))
 
-        try:
-            with self._db.write_batch() as wb:
+        with self._db.write_batch() as wb:
 
-                wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
+            wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
 
-                for tx in block.Transactions:
+            for tx in block.Transactions:
 
-                    wb.put(DBPrefix.DATA_Transaction + tx.Hash.ToBytes(), block.IndexBytes() + tx.ToArray())
+                wb.put(DBPrefix.DATA_Transaction + tx.Hash.ToBytes(), block.IndexBytes() + tx.ToArray())
 
-                    # go through all outputs and add unspent coins to them
+                # go through all outputs and add unspent coins to them
 
-                    unspentcoinstate = UnspentCoinState.FromTXOutputsConfirmed(tx.outputs)
-                    unspentcoins.Add(tx.Hash.ToBytes(), unspentcoinstate)
+                unspentcoinstate = UnspentCoinState.FromTXOutputsConfirmed(tx.outputs)
+                unspentcoins.Add(tx.Hash.ToBytes(), unspentcoinstate)
 
-                    # go through all the accounts in the tx outputs
-                    for output in tx.outputs:
-                        account = accounts.GetAndChange(output.AddressBytes, AccountState(output.ScriptHash))
+                # go through all the accounts in the tx outputs
+                for output in tx.outputs:
+                    account = accounts.GetAndChange(output.AddressBytes, AccountState(output.ScriptHash))
 
-                        if account.HasBalance(output.AssetId):
-                            account.AddToBalance(output.AssetId, output.Value)
-                        else:
-                            account.SetBalanceFor(output.AssetId, output.Value)
-
-                    # go through all tx inputs
-                    unique_tx_input_hashes = []
-                    for input in tx.inputs:
-                        if input.PrevHash not in unique_tx_input_hashes:
-                            unique_tx_input_hashes.append(input.PrevHash)
-
-                    for txhash in unique_tx_input_hashes:
-                        prevTx, height = self.GetTransaction(txhash.ToBytes())
-                        coin_refs_by_hash = [coinref for coinref in tx.inputs if coinref.PrevHash.ToBytes() == txhash.ToBytes()]
-                        for input in coin_refs_by_hash:
-
-                            uns = unspentcoins.GetAndChange(input.PrevHash.ToBytes())
-                            uns.OrEqValueForItemAt(input.PrevIndex, CoinState.Spent)
-
-                            if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                                sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(), SpentCoinState(input.PrevHash, height, []))
-                                sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
-
-                            output = prevTx.outputs[input.PrevIndex]
-                            acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes, AccountState(output.ScriptHash))
-                            assetid = prevTx.outputs[input.PrevIndex].AssetId
-                            acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
-
-                    # do a whole lotta stuff with tx here...
-                    if tx.Type == TransactionType.RegisterTransaction:
-                        asset = AssetState(tx.Hash, tx.AssetType, tx.Name, tx.Amount,
-                                           Fixed8(0), tx.Precision, Fixed8(0), Fixed8(0), UInt160(data=bytearray(20)),
-                                           tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False)
-
-                        assets.Add(tx.Hash.ToBytes(), asset)
-
-                    elif tx.Type == TransactionType.IssueTransaction:
-
-                        txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
-                        for result in txresults:
-                            asset = assets.GetAndChange(result.AssetId.ToBytes())
-                            asset.Available = asset.Available - result.Amount
-
-                    elif tx.Type == TransactionType.ClaimTransaction:
-                        for input in tx.Claims:
-
-                            sc = spentcoins.TryGet(input.PrevHash.ToBytes())
-                            if sc and sc.HasIndex(input.PrevIndex):
-                                sc.DeleteIndex(input.PrevIndex)
-                                spentcoins.GetAndChange(input.PrevHash.ToBytes())
-
-                    elif tx.Type == TransactionType.EnrollmentTransaction:
-                        newvalidator = ValidatorState(pub_key=tx.PublicKey)
-                        validators.GetAndChange(tx.PublicKey.ToBytes(), newvalidator)
-                    elif tx.Type == TransactionType.PublishTransaction:
-                        contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
-                                                 tx.Author, tx.Email, tx.Description)
-
-                        contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
-                    elif tx.Type == TransactionType.InvocationTransaction:
-
-                        #                        print("RUNNING INVOCATION TRASACTION!!!!!! %s %s " % (block.Index, tx.Hash.ToBytes()))
-                        print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: Invoke tx] -> index, tx hash %s %s " % (block.Index, tx.Hash.ToBytes()))
-                        script_table = CachedScriptTable(contracts)
-                        service = StateMachine(accounts, validators, assets, contracts, storages, wb)
-
-                        engine = ApplicationEngine(
-                            trigger_type=TriggerType.Application,
-                            container=tx,
-                            table=script_table,
-                            service=service,
-                            gas=tx.Gas,
-                            testMode=False
-                        )
-
-                        engine.LoadScript(tx.Script, False)
-
-                        try:
-                            # drum roll?
-                            success = engine.Execute()
-                            print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute] -> Success")
-                            if success:
-                                service.Commit()
-
-                                if len(service.notifications) > 0:
-                                    for n in service.notifications:
-                                        self.OnNotify(n)
-
-                            for item in engine.EvaluationStack.Items:
-                                print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute result] -> %s " % item)
-
-                        except Exception as e:
-                            print("[neo.Implementations.Blockchains.LevelDBBlockchain.PersistBlock: engine execute result] Could not execute smart contract.  See logs for more details. %s " % e)
+                    if account.HasBalance(output.AssetId):
+                        account.AddToBalance(output.AssetId, output.Value)
                     else:
+                        account.SetBalanceFor(output.AssetId, output.Value)
 
-                        if tx.Type != b'\x00' and tx.Type != 128:
-                            self.__log.debug("TX Not Found %s " % tx.Type)
+                # go through all tx inputs
+                unique_tx_input_hashes = []
+                for input in tx.inputs:
+                    if input.PrevHash not in unique_tx_input_hashes:
+                        unique_tx_input_hashes.append(input.PrevHash)
 
-                # do save all the accounts, unspent, coins, validators, assets, etc
-                # now sawe the current sys block
+                for txhash in unique_tx_input_hashes:
+                    prevTx, height = self.GetTransaction(txhash.ToBytes())
+                    coin_refs_by_hash = [coinref for coinref in tx.inputs if coinref.PrevHash.ToBytes() == txhash.ToBytes()]
+                    for input in coin_refs_by_hash:
 
-                # filter out accounts to delete then commit
-                for key, account in accounts.Current.items():
-                    if not account.IsFrozen and len(account.Votes) == 0 and account.AllBalancesZeroOrLess():
-                        accounts.Remove(key)
+                        uns = unspentcoins.GetAndChange(input.PrevHash.ToBytes())
+                        uns.OrEqValueForItemAt(input.PrevIndex, CoinState.Spent)
 
-                accounts.Commit(wb)
+                        if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
+                            sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(), SpentCoinState(input.PrevHash, height, []))
+                            sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
 
-                # filte out unspent coins to delete then commit
-                for key, unspent in unspentcoins.Current.items():
-                    unspentcoins.Remove(key)
-                unspentcoins.Commit(wb)
+                        output = prevTx.outputs[input.PrevIndex]
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes, AccountState(output.ScriptHash))
+                        assetid = prevTx.outputs[input.PrevIndex].AssetId
+                        acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
-                # filter out spent coins to delete then commit to db
-                for key, spent in spentcoins.Current.items():
-                    if len(spent.Items) == 0:
-                        spentcoins.Remove(key)
-                spentcoins.Commit(wb)
+                # do a whole lotta stuff with tx here...
+                if tx.Type == TransactionType.RegisterTransaction:
+                    asset = AssetState(tx.Hash, tx.AssetType, tx.Name, tx.Amount,
+                                       Fixed8(0), tx.Precision, Fixed8(0), Fixed8(0), UInt160(data=bytearray(20)),
+                                       tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False)
 
-                # commit validators
-                validators.Commit(wb)
+                    assets.Add(tx.Hash.ToBytes(), asset)
 
-                # commit assets
-                assets.Commit(wb)
+                elif tx.Type == TransactionType.IssueTransaction:
 
-                # commit contracts
-                contracts.Commit(wb)
+                    txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
+                    for result in txresults:
+                        asset = assets.GetAndChange(result.AssetId.ToBytes())
+                        asset.Available = asset.Available - result.Amount
 
-                # commit storages ( not implemented )
-                storages.Commit(wb)
+                elif tx.Type == TransactionType.ClaimTransaction:
+                    for input in tx.Claims:
 
-                sn.close()
+                        sc = spentcoins.TryGet(input.PrevHash.ToBytes())
+                        if sc and sc.HasIndex(input.PrevIndex):
+                            sc.DeleteIndex(input.PrevIndex)
+                            spentcoins.GetAndChange(input.PrevHash.ToBytes())
 
-                wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
-                self._current_block_height = block.Index
+                elif tx.Type == TransactionType.EnrollmentTransaction:
+                    newvalidator = ValidatorState(pub_key=tx.PublicKey)
+                    validators.GetAndChange(tx.PublicKey.ToBytes(), newvalidator)
+                elif tx.Type == TransactionType.PublishTransaction:
+                    contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
+                                             tx.Author, tx.Email, tx.Description)
 
-                end = time.clock()
-                self.__log.debug("PERSISTING BLOCK %s (cache) %s %s " % (block.Index, len(self._block_cache), end - start))
-        except Exception as e:
-            print("couldnt persist block %s " % e)
+                    contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
+                elif tx.Type == TransactionType.InvocationTransaction:
+
+                    script_table = CachedScriptTable(contracts)
+                    service = StateMachine(accounts, validators, assets, contracts, storages, wb)
+
+                    engine = ApplicationEngine(
+                        trigger_type=TriggerType.Application,
+                        container=tx,
+                        table=script_table,
+                        service=service,
+                        gas=tx.Gas,
+                        testMode=False
+                    )
+
+                    engine.LoadScript(tx.Script, False)
+
+                    try:
+                        success = engine.Execute()
+                        service.ExecutionCompleted(engine, success)
+
+                    except Exception as e:
+                        service.ExecutionCompleted(engine, False, e)
+
+                else:
+
+                    if tx.Type != b'\x00' and tx.Type != 128:
+                        logger.info("TX Not Found %s " % tx.Type)
+
+            # do save all the accounts, unspent, coins, validators, assets, etc
+            # now sawe the current sys block
+
+            # filter out accounts to delete then commit
+            for key, account in accounts.Current.items():
+                if not account.IsFrozen and len(account.Votes) == 0 and account.AllBalancesZeroOrLess():
+                    accounts.Remove(key)
+
+            accounts.Commit(wb)
+
+            # filte out unspent coins to delete then commit
+            for key, unspent in unspentcoins.Current.items():
+                unspentcoins.Remove(key)
+            unspentcoins.Commit(wb)
+
+            # filter out spent coins to delete then commit to db
+            for key, spent in spentcoins.Current.items():
+                if len(spent.Items) == 0:
+                    spentcoins.Remove(key)
+            spentcoins.Commit(wb)
+
+            # commit validators
+            validators.Commit(wb)
+
+            # commit assets
+            assets.Commit(wb)
+
+            # commit contracts
+            contracts.Commit(wb)
+
+            # commit storages ( not implemented )
+            storages.Commit(wb)
+
+            sn.close()
+
+            wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
+            self._current_block_height = block.Index
 
     def PersistBlocks(self):
-        #        self.__log.debug("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
+        #        logger.info("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
         while not self._disposed:
 
@@ -742,13 +719,12 @@ class LevelDBBlockchain(Blockchain):
             block = self._block_cache[hash]
 
             try:
-
                 self.Persist(block)
                 self.OnPersistCompleted(block)
                 del self._block_cache[hash]
-
             except Exception as e:
-                self.__log.debug("COULD NOT PERSIST OR ON PERSIST COMPLETE %s " % e)
+                logger.info("Could not persist block %s " % e)
+                raise e
 
     def Dispose(self):
         self._db.close()

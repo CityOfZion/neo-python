@@ -6,8 +6,9 @@ Usage:
     from neo.Cryptography.ECCurve import ECCurve
 """
 import random
-from mpmath.libmp import bitcount as _bitlength
 import binascii
+from mpmath.libmp import bitcount as _bitlength
+from logzero import logger
 
 modpow = pow
 
@@ -154,7 +155,7 @@ def sqrtCQ(val, CQ):
     qMinusOne = CQ - 1
     legendreExponent = qMinusOne >> 1
     if modpow(val, legendreExponent, CQ) != 1:
-        print("legendaire exponent error")
+        logger.error("legendaire exponent error")
         return None
 
     u = qMinusOne >> 2
@@ -740,8 +741,8 @@ class ECDSA:
         x2 = self.crack1(r, s2, m2, secret)
 
         if x1 != x2:
-            print("x1= %s" % x1)
-            print("x2= %s" % x2)
+            logger.info("x1= %s" % x1)
+            logger.info("x2= %s" % x2)
 
         return (secret, x1)
 

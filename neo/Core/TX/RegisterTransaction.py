@@ -5,13 +5,13 @@ Description:
 Usage:
     from neo.Core.TX.RegisterTransaction import RegisterTransaction
 """
+import binascii
+
 from neo.Fixed8 import Fixed8
 from neo.Core.TX.Transaction import Transaction, TransactionType
 
-import binascii
 from neo.Core.AssetType import AssetType
 from neo.Cryptography.ECCurve import ECDSA
-from autologging import logged
 from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
@@ -20,7 +20,6 @@ from neo.Settings import settings
 from neo.Fixed8 import Fixed8
 
 
-@logged
 class RegisterTransaction(Transaction):
     """
         # 发行总量，共有2种模式：

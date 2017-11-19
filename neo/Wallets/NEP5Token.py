@@ -1,10 +1,14 @@
+import binascii
+import traceback
+
+from decimal import getcontext, Decimal
+from logzero import logger
+
 from neo.Core.VerificationCode import VerificationCode
 from neo.Cryptography.Crypto import Crypto
 from neo.Prompt.Commands.Invoke import TestInvokeContract
 from neo.Prompt.Utils import parse_param
 from neo.UInt160 import UInt160
-import binascii
-from decimal import getcontext, Decimal
 
 
 class NEP5Token(VerificationCode):
@@ -61,7 +65,7 @@ class NEP5Token(VerificationCode):
             self.decimals = decimalResults[0].GetBigInteger()
             return True
         except Exception as e:
-            print("could not query token %s " % e)
+            logger.error("could not query token %s " % e)
 
         return False
 
@@ -83,7 +87,9 @@ class NEP5Token(VerificationCode):
                 return balance_str
             return balance
         except Exception as e:
-            print("could not get balance: %s " % e)
+            logger.error("could not get balance: %s " % e)
+            traceback.print_stack()
+
         return 0
 
     def Transfer(self, wallet, from_addr, to_addr, amount):

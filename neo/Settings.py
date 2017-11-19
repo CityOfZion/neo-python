@@ -8,25 +8,24 @@ reconfigure them by calling the `setup(..)` methods.
 """
 import json
 import os
-import sys
 import logging
 from json.decoder import JSONDecodeError
+
+import logzero
 
 # Create am absolute references to the project root folder. Used for
 # specifying the various filenames.
 dir_current = os.path.dirname(os.path.abspath(__file__))
-dir_project_root = os.path.abspath(os.path.join(dir_current, ".."))
+DIR_PROJECT_ROOT = os.path.abspath(os.path.join(dir_current, ".."))
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
-FILENAME_PREFERENCES = os.path.join(dir_project_root, 'preferences.json')
-FILENAME_PROMPT_HISTORY = os.path.join(dir_project_root, '.prompt.py.history')
-FILENAME_PROMPT_LOG = os.path.join(dir_project_root, 'prompt.log')
+FILENAME_PREFERENCES = os.path.join(DIR_PROJECT_ROOT, 'preferences.json')
 
 # The protocol json files are always in the project root
-FILENAME_SETTINGS_MAINNET = os.path.join(dir_project_root, 'protocol.mainnet.json')
-FILENAME_SETTINGS_TESTNET = os.path.join(dir_project_root, 'protocol.testnet.json')
-FILENAME_SETTINGS_PRIVNET = os.path.join(dir_project_root, 'protocol.privnet.json')
+FILENAME_SETTINGS_MAINNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.mainnet.json')
+FILENAME_SETTINGS_TESTNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.testnet.json')
+FILENAME_SETTINGS_PRIVNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.privnet.json')
 
 
 class SettingsHolder:
@@ -53,6 +52,9 @@ class SettingsHolder:
     BOOTSTRAP_FILE = None
 
     ALL_FEES = None
+
+    # Logging settings
+    log_smart_contract_events = True
 
     # Helpers
     @property
@@ -96,7 +98,7 @@ class SettingsHolder:
         self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
         config = data['ApplicationConfiguration']
-        self.LEVELDB_PATH = os.path.join(dir_project_root, config['DataDirectoryPath'])
+        self.LEVELDB_PATH = os.path.join(DIR_PROJECT_ROOT, config['DataDirectoryPath'])
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
@@ -115,9 +117,36 @@ class SettingsHolder:
         """ Load settings from the privnet JSON config file """
         self.setup(FILENAME_SETTINGS_PRIVNET)
 
+    def set_log_smart_contract_events(self, is_enabled=True):
+        self.log_smart_contract_events = is_enabled
+
+    def set_logfile(self, fn, max_bytes=0, backup_count=0):
+        """
+        Setup logging to a (rotating) logfile.
+
+        Args:
+            fn (str): Logfile. If fn is None, disable file logging
+            max_bytes (int): Maximum number of bytes per logfile. If used together with backup_count,
+                             logfile will be rotated when it reaches this amount of bytes.
+            backup_count (int): Number of rotated logfiles to keep
+        """
+        logzero.logfile(fn, maxBytes=max_bytes, backupCount=backup_count)
+
+    def set_loglevel(self, level):
+        """
+        Set the minimum loglevel for the default logger
+
+        Args:
+            level (int): eg. logging.DEBUG or logging.ERROR. See also https://docs.python.org/2/library/logging.html#logging-levels
+        """
+        logzero.loglevel(level)
+
 
 # Settings instance used by external modules
 settings = SettingsHolder()
 
 # Load testnet settings as default
 settings.setup_testnet()
+
+# By default, set loglevel to INFO. DEBUG just print a lot of internal debug statements
+settings.set_loglevel(logging.INFO)
