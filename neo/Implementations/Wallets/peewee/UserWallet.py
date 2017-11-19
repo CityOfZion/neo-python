@@ -122,8 +122,6 @@ class UserWallet(Wallet):
 
         db_account, created = Account.get_or_create(
             PrivateKeyEncrypted=encrypted_pk, PublicKeyHash=account.PublicKeyHash.ToBytes())
-        if not created:
-            db_account.PrivateKeyEncrypted = encrypted_pk
         db_account.save()
         self.__dbaccount = db_account
 
