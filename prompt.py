@@ -4,12 +4,12 @@
 import argparse
 import datetime
 import json
-import logging
 import os
 import resource
 import traceback
+import logging
 
-from autologging import logged
+import logzero
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -31,24 +31,23 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
     ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
-from neo.Prompt.Notify import SubscribeNotifications
 from neo.Prompt.Utils import get_arg
-from neo.Settings import settings, FILENAME_PROMPT_HISTORY, FILENAME_PROMPT_LOG
+from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 from neo.Wallets.KeyPair import KeyPair
 
-debug_logname = FILENAME_PROMPT_LOG
+# Logfile settings & setup
+LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'prompt.log')
+LOGFILE_MAX_BYTES = 5e7   # 50 MB
+LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
+settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    filemode='a',
-    filename=debug_logname,
-    format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s")
+# Prompt history filename
+FILENAME_PROMPT_HISTORY = os.path.join(DIR_PROJECT_ROOT, '.prompt.py.history')
 
 
-@logged
 class PromptInterface(object):
 
     go_on = True
@@ -71,7 +70,8 @@ class PromptInterface(object):
                 'mem',
                 'nodes',
                 'state',
-                'config log {on/off}',
+                'config debug {on/off}',
+                'config sc-events {on/off}',
                 'build {path/to/file.py} (test {params} {returntype} {needs_storage} {test_params})',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
@@ -394,6 +394,9 @@ class PromptInterface(object):
         elif item == 'delete_addr':
             addr_to_delete = get_arg(arguments, 1)
             DeleteAddress(self, self.Wallet, addr_to_delete)
+        elif item == 'delete_token':
+            token_to_delete = get_arg(arguments, 1)
+            DeleteToken(self.Wallet, token_to_delete)
         elif item == 'close':
             self.do_close_wallet()
         elif item == 'claim':
@@ -675,20 +678,32 @@ class PromptInterface(object):
     def configure(self, args):
         what = get_arg(args)
 
-        if what == 'log' or what == 'logs':
+        if what == 'debug':
             c1 = get_arg(args, 1).lower()
             if c1 is not None:
                 if c1 == 'on' or c1 == '1':
-                    print("turning on logging")
-                    logger = logging.getLogger()
-                    logger.setLevel(logging.DEBUG)
+                    print("debug logging is now enabled")
+                    settings.set_loglevel(logging.DEBUG)
                 if c1 == 'off' or c1 == '0':
-                    print("turning off logging")
-                    logger = logging.getLogger()
-                    logger.setLevel(logging.ERROR)
+                    print("debug logging is now disabled")
+                    settings.set_loglevel(logging.INFO)
 
             else:
                 print("cannot configure log.  Please specify on or off")
+
+        elif what == 'sc-events':
+            c1 = get_arg(args, 1).lower()
+            if c1 is not None:
+                if c1 == 'on' or c1 == '1':
+                    print("smart contract event logging is now enabled")
+                    settings.set_log_smart_contract_events(True)
+                if c1 == 'off' or c1 == '0':
+                    print("smart contract event logging is now enabled")
+                    settings.set_log_smart_contract_events(False)
+
+            else:
+                print("cannot configure log.  Please specify on or off")
+
         else:
             print("cannot configure %s " % what)
             print("Try 'config log on/off'")
@@ -720,7 +735,8 @@ class PromptInterface(object):
                                 history=self.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
                                 style=self.token_style,
-                                refresh_interval=.5)
+                                refresh_interval=3
+                                )
             except EOFError:
                 # Control-D pressed: quit
                 return self.quit()
@@ -829,7 +845,6 @@ def main():
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
     Blockchain.RegisterBlockchain(blockchain)
-    SubscribeNotifications()
 
     # Start the prompt interface
     cli = PromptInterface()

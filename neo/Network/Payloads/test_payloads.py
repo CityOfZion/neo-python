@@ -1,3 +1,7 @@
+import random
+import binascii
+from datetime import datetime
+
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Network.Payloads.VersionPayload import VersionPayload
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
@@ -8,13 +12,8 @@ from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.Settings import settings
 from neo.Core.Helper import Helper
-import random
-import binascii
-from autologging import logged
-from datetime import datetime
 
 
-@logged
 class PayloadTestCase(NeoTestCase):
 
     port = 20333

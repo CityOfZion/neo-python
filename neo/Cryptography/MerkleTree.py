@@ -1,13 +1,12 @@
-# -*- coding: UTF-8 -*-
+import sys
+
+from logzero import logger
 
 from neo.Cryptography.Crypto import *
-import sys
-from autologging import logged
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 
 
-@logged
 class MerkleTreeNode(object):
     Hash = None
     Parent = None
@@ -29,7 +28,6 @@ class MerkleTreeNode(object):
         return sys.getsizeof(self)
 
 
-@logged
 class MerkleTree(object):
 
     Root = None
@@ -99,7 +97,7 @@ class MerkleTree(object):
         return list(hashes)
 
     def Trim(self, flags):
-        print("Trimming!")
+        logger.info("Trimming!")
         flags = bytearray(flags)
         length = 1 << len(self.Depth - 1)
         while len(flags) < length:

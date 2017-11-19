@@ -1,17 +1,14 @@
-from neo.Utils.NeoTestCase import NeoTestCase
-from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
-
-from neo.Core.Blockchain import Blockchain
-
 import tarfile
 import requests
 import os
-from autologging import logged
 import shutil
 import time
 
+from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
+from neo.Core.Blockchain import Blockchain
 
-@logged
+
 class BlockchainFixtureTestCase(NeoTestCase):
 
     FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v4.tar.gz'

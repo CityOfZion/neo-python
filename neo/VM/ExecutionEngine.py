@@ -1,21 +1,21 @@
+import hashlib
+import sys
+import os
+import traceback
+import pdb
+
+from logzero import logger
 
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.OpCode import *
-from autologging import logged
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.BigInteger import BigInteger
-import hashlib
 from neo.VM.InteropService import Array, Struct, StackItem
-import sys
-import os
 from neo.UInt160 import UInt160
-import traceback
-import pdb
 
 
-@logged
 class ExecutionEngine():
 
     _Table = None
@@ -29,6 +29,8 @@ class ExecutionEngine():
     _InvocationStack = None
     _EvaluationStack = None
     _AltStack = None
+
+    _ExecutedScriptHashes = None
 
     ops_processed = 0
 
@@ -70,6 +72,10 @@ class ExecutionEngine():
     def EntryContext(self):
         return self.InvocationStack.Peek(self.InvocationStack.Count - 1)
 
+    @property
+    def ExecutedScriptHashes(self):
+        return self._ExecutedScriptHashes
+
     def __init__(self, container=None, crypto=None, table=None, service=None):
         self._ScriptContainer = container
         self._Crypto = crypto
@@ -79,7 +85,7 @@ class ExecutionEngine():
         self._InvocationStack = RandomAccessStack(name='Invocation')
         self._EvaluationStack = RandomAccessStack(name='Evaluation')
         self._AltStack = RandomAccessStack(name='Alt')
-
+        self._ExecutedScriptHashes = []
         self.ops_processed = 0
 
     def AddBreakPoint(self, position):
@@ -101,7 +107,7 @@ class ExecutionEngine():
             elif return_type == ContractParameterType.Array:
                 return item.GetArray()
             else:
-                print("couldnt format results for return type %s " % return_type)
+                logger.error("couldnt format results for return type %s " % return_type)
             return item
         except Exception as e:
             pass
@@ -582,7 +588,6 @@ class ExecutionEngine():
                     estack.PushT(res)
 
                 except Exception as e:
-                    print("couldnt operate signature verification")
                     estack.PushT(False)
                     traceback.print_stack()
                     traceback.print_exc()
@@ -758,6 +763,8 @@ class ExecutionEngine():
         context = ExecutionContext(self, script, push_only)
         self._InvocationStack.PushT(context)
 
+        self._ExecutedScriptHashes.append(context.ScriptHash())
+
     def RemoveBreakPoint(self, position):
 
         if self._InvocationStack.Count == 0:
@@ -766,10 +773,12 @@ class ExecutionEngine():
 
     def StepInto(self):
         if self._InvocationStack.Count == 0:
+            logger.info("INVOCATION COUNT IS 0, HALT")
             self._VMState |= VMState.HALT
 
         if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-            self.__log.debug("stopping because vm state is %s " % self._VMState)
+            logger.info("stopping because vm state is %s " % self._VMState)
+            return
 
         op = None
 
@@ -779,18 +788,17 @@ class ExecutionEngine():
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
 #        opname = ToName(op)
-#        print("____________________________________________________")
-#        print("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
-#        print("-----------------------------------")
+#        logger.info("____________________________________________________")
+#        logger.info("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
+#        logger.info("-----------------------------------")
 
         self.ops_processed += 1
 
         try:
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
-            self.__log.debug("could not execute op %s " % e)
-            self.__log.error("Exception", exc_info=1)
-            raise e
+            logger.error("COULD NOT EXECUTE OP: %s %s %s" % (e, op, ToName(op)))
+            logger.exception(e)
 
     def StepOut(self):
         self._VMState &= ~VMState.BREAK

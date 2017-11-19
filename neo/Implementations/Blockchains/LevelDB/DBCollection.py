@@ -1,14 +1,14 @@
 import binascii
-from autologging import logged
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 import inspect
+from logzero import logger
+
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 
 
-@logged
 class DBCollection():
 
     DB = None
-    SN = None
+#    SN = None
     Prefix = None
 
     ClassRef = None
@@ -25,7 +25,6 @@ class DBCollection():
     def __init__(self, db, sn, prefix, class_ref, debug=False):
 
         self.DB = db
-        self.SN = sn
 
         self.Prefix = prefix
 
@@ -52,40 +51,30 @@ class DBCollection():
                     ret[key] = val
             return ret
         except Exception as e:
-            print("error getting items %s " % e)
+            logger.error("error getting items %s " % e)
 
         return {}
 
     def _BuildCollectionKeys(self):
-        for key in self.SN.iterator(prefix=self.Prefix, include_value=False):
+        for key in self.DB.iterator(prefix=self.Prefix, include_value=False):
             key = key[1:]
             if key not in self.Collection.keys():
                 self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
-        try:
 
-            for keyval in self.Changed:
-                item = self.Collection[keyval]
-                if item is None:
-                    print("key %s %s " % (keyval, self.Collection[keyval]))
-                    print("THIS IS BAD %s " % self.Collection.items())
-                    raise Exception("ITEM NONONEEEE %s " % keyval)
-                else:
-                    wb.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
-            for keyval in self.Deleted:
-                wb.delete(self.Prefix + keyval)
-            if destroy:
-                self.Destroy()
-            else:
-                self.Changed = []
-                self.Deleted = []
-        except Exception as e:
-            print("COULD NOT COMMIT %s %s " % (e, self.ClassRef))
-            (frame, filename, line_number,
-             function_name, lines, index) = inspect.getouterframes(inspect.currentframe())[1]
-            print(frame, filename, line_number, function_name, lines, index)
-            raise Exception("BAD")
+        for keyval in self.Changed:
+            item = self.Collection[keyval]
+            if item:
+                self.DB.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+        for keyval in self.Deleted:
+            self.DB.delete(self.Prefix + keyval)
+            self.Collection[keyval] = None
+        if destroy:
+            self.Destroy()
+        else:
+            self.Changed = []
+            self.Deleted = []
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
@@ -127,7 +116,7 @@ class DBCollection():
             return item
 
         # otherwise, chekc in the database
-        key = self.SN.get(self.Prefix + keyval)
+        key = self.DB.get(self.Prefix + keyval)
 
         # if the key is there, get the item
         if key is not None:
@@ -142,12 +131,14 @@ class DBCollection():
 
     def _GetItem(self, keyval):
         try:
-            buffer = self.SN.get(self.Prefix + keyval)
-            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
-            self.Collection[keyval] = item
-            return item
+            buffer = self.DB.get(self.Prefix + keyval)
+            if buffer:
+                item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
+                self.Collection[keyval] = item
+                return item
+            return None
         except Exception as e:
-            print("Could not deserialize item from key %s : %s" % (keyval, e))
+            logger.error("Could not deserialize item from key %s : %s" % (keyval, e))
 
         return None
 
@@ -165,10 +156,10 @@ class DBCollection():
 
     def Destroy(self):
         self.DB = None
-        self.SN = None
+#        self.SN = None
         self.Collection = None
         self.ClassRef = None
         self.Prefix = None
         self.Deleted = None
         self.Changed = None
-        self.__log = None
+        logger = None

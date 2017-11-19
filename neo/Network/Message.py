@@ -1,3 +1,10 @@
+import ctypes
+import asyncio
+import binascii
+import pympler
+
+from logzero import logger
+
 from neo.IO.Mixins import SerializableMixin
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
@@ -5,18 +12,12 @@ from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
-import ctypes
-import asyncio
-import binascii
-from autologging import logged
-import pympler
 
 
 class ChecksumException(Exception):
     pass
 
 
-@logged
 class Message(SerializableMixin):
 
     PayloadMaxSize = b'\x02000000'
@@ -46,7 +47,7 @@ class Message(SerializableMixin):
         self.Payload = payload
 
 #        if print_payload:
-#            print("PAYLOAD: %s " % self.Payload)
+#            logger.info("PAYLOAD: %s " % self.Payload)
 
     def Size(self):
         return ctypes.sizeof(ctypes.c_uint) + 12 + ctypes.sizeof(ctypes.c_int) + ctypes.sizeof(ctypes.c_uint) + len(self.Payload)
@@ -70,7 +71,7 @@ class Message(SerializableMixin):
         if checksum != self.Checksum:
             raise ChecksumException("checksum mismatch")
 
-#        self.__log.debug("Deserialized Message %s " % self.Command)
+#        logger.info("Deserialized Message %s " % self.Command)
 
     @staticmethod
     def GetChecksum(value):

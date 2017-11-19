@@ -1,11 +1,14 @@
-from twisted.internet.protocol import Protocol
-from twisted.internet import reactor, task
 import json
 import time
 import binascii
-from autologging import logged
-
 import pprint
+import random
+
+from logzero import logger
+
+from twisted.internet.protocol import Protocol
+from twisted.internet import reactor, task
+
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Network.Message import Message, ChecksumException
@@ -21,13 +24,9 @@ from .Payloads.InvPayload import InvPayload
 from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
-
-import random
-
 from neo.Settings import settings
 
 
-@logged
 class NeoNode(Protocol):
 
     Version = None
@@ -197,7 +196,7 @@ class NeoNode(Protocol):
 #        self.RequestPeerInfo()
 
     def AskForMoreHeaders(self):
-        self.Log("asking for more headers...")
+        # self.Log("asking for more headers...")
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
@@ -241,7 +240,7 @@ class NeoNode(Protocol):
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             self.SendSerializedMessage(message)
         else:
-            self.Log("all caught up!!!!!! hashes is zero")
+            # self.Log("all caught up!!!!!! hashes is zero")
             self.AskForMoreHeaders()
             reactor.callLater(20, self.DoAskForMoreBlocks)
 
@@ -346,10 +345,10 @@ class NeoNode(Protocol):
                     self.SendSerializedMessage(message)
 
                 elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-                    print("handle block!")
+                    logger.info("handle block!")
 
                 elif inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
-                    print("handle consensus")
+                    logger.info("handle consensus")
 
     def Relay(self, inventory):
 
@@ -360,4 +359,4 @@ class NeoNode(Protocol):
         return True
 
     def Log(self, msg):
-        self.__log.debug("%s - %s" % (self.endpoint, msg))
+        logger.debug("%s - %s" % (self.endpoint, msg))
