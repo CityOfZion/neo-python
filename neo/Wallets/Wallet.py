@@ -67,9 +67,9 @@ class Wallet(object):
         """
 
         Args:
-            path: (str) A path indicating where to create or open the wallet
-            passwordKey: (str) A password to use in creating or opening the wallet
-            create: (bool) Whether to create the wallet or simply open
+            path: (str) A path indicating where to create or open the wallet.
+            passwordKey: (str) A password to use in creating or opening the wallet.
+            create: (bool) Whether to create the wallet or simply open.
         """
 
         self.AddressVersion = settings.ADDRESS_VERSION
@@ -138,7 +138,7 @@ class Wallet(object):
 
     def AddContract(self, contract):
         """
-        Add a contract to the wallet
+        Add a contract to the wallet.
 
         Args:
             contract (Contract): a contract of type neo.SmartContract.Contract.
@@ -611,14 +611,13 @@ class Wallet(object):
     def ProcessBlocks(self):
         """
         Method called on a loop to check the current height of the blockchain.  If the height of the blockchain
-        is less than the current stored height in the wallet, we get the next block in line and
+        is more than the current stored height in the wallet, we get the next block in line and
         processes it.
 
         In the case that the wallet height is far behind the height of the blockchain, we do this 500
         blocks at a time.
         """
         blockcount = 0
-
         while self._current_height <= Blockchain.Default().Height and blockcount < 500:
 
             block = Blockchain.Default().GetBlockByHeight(self._current_height)

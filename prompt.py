@@ -222,11 +222,13 @@ class PromptInterface(object):
                     print("Exception creating wallet: %s " % e)
                     return
 
-                contract = self.Wallet.GetDefaultContract()
-                key = self.Wallet.GetKey(contract.PublicKeyHash)
-
                 print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
-                print("pubkey %s " % key.PublicKey.encode_point(True))
+
+                contract = self.Wallet.GetDefaultContract()
+                if contract is not None:
+                    key = self.Wallet.GetKey(contract.PublicKeyHash)
+                    if key is not None:
+                        print("pubkey %s " % key.PublicKey.encode_point(True))
 
                 self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                 self._walletdb_loop.start(1)

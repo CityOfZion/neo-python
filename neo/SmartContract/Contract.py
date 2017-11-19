@@ -115,7 +115,15 @@ class Contract(SerializableMixin, VerificationCode):
 
     @staticmethod
     def CreateSignatureContract(publicKey):
+        """
+        Create a signature contract.
 
+        Args:
+            publicKey (edcsa.Curve.point): i.e. KeyPair.PublicKey.
+
+        Returns:
+            neo.SmartContract.Contract: a Contract instance.
+        """
         script = Contract.CreateSignatureRedeemScript(publicKey)
         params = bytearray([ContractParameterType.Signature])
         encoded = publicKey.encode_point(True)
