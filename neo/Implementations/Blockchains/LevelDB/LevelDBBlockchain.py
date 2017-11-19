@@ -535,7 +535,7 @@ class LevelDBBlockchain(Blockchain):
 
             self._stored_header_count += 2000
 
-            logger.info("Trimming stored header index!!!!! %s" % self._stored_header_count)
+            logger.debug("Trimming stored header index %s" % self._stored_header_count)
 
         with self._db.write_batch() as wb:
             wb.put(DBPrefix.DATA_Block + hHash, bytes(8) + header.ToArray())

@@ -12,8 +12,6 @@ class SmartContract:
     In the current version it allows to get event callbackes, for instance
     on smart contract calls to `Runtime.Notify` or `Runtime.Log`:
 
-        from neo.dapps.SmartContract import SmartContract
-
         smart_contract = SmartContract("6537b4bd100e514119e3a7ab49d520d20ef2c2a4")
 
         @smart_contract.on_notify
