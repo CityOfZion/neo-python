@@ -224,11 +224,13 @@ class PromptInterface(object):
 
                 print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
 
-                contract = self.Wallet.GetDefaultContract()
-                if contract is not None:
+                try:
+                    contract = self.Wallet.GetDefaultContract()
                     key = self.Wallet.GetKey(contract.PublicKeyHash)
                     if key is not None:
                         print("pubkey %s " % key.PublicKey.encode_point(True))
+                except Exception as e:
+                    print("Exception getting default contract: %s " % e)
 
                 self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                 self._walletdb_loop.start(1)

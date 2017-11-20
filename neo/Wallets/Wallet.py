@@ -894,16 +894,21 @@ class Wallet(object):
         Get the default contract.
 
         Returns:
-            contract (Contract): if Successful, a contract of type neo.SmartContract.Contract, otherwise None
+            contract (Contract): if Successful, a contract of type neo.SmartContract.Contract, otherwise an Exception.
+
+        Raises:
+            Exception: if no default contract is found.
 
         Note:
             Prints a warning to the console if the default contract could not be found.
         """
         try:
-            return self.GetContracts()[0]
-        except Exception as e:
-            logger.error("Could not find default contract")
-        return None
+            default = self.GetContracts()[0]
+        except Exception:
+            error_msg = "Could not find default contract"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        return default
 
     def GetKeys(self):
         """
