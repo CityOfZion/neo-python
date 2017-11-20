@@ -5,6 +5,7 @@ from neo.Blockchain import GetGenesis
 import binascii
 from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
+from neo.Core.Block import Block
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.MerkleTree import MerkleTree
 import json
@@ -238,3 +239,31 @@ class BlocksTestCase(NeoTestCase):
                 self.assertTrue(hash in self.b_132156_txids)
 
             self.assertEqual(block.MerkleRoot.ToString(), self.b_1321456_merlke)
+
+    def test_testnet797966(self):
+
+        path = '%s/fixtures/797966.txt' % os.getcwd()
+
+        with open(path, 'rb') as f:
+
+            blockraw = f.read().strip()
+
+            hex = binascii.unhexlify(blockraw)
+
+            block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
+
+            trimmed = block.Trim()
+
+            trimmed_unhex = binascii.unhexlify(trimmed)
+
+            blockfrom_trimmed = Block.FromTrimmedData(trimmed_unhex, 0)
+
+            self.assertEqual(blockfrom_trimmed.Version, block.Version)
+            self.assertEqual(blockfrom_trimmed.Index, block.Index)
+            self.assertEqual(blockfrom_trimmed.PrevHash, block.PrevHash)
+            self.assertEqual(blockfrom_trimmed.MerkleRoot, block.MerkleRoot)
+            self.assertEqual(blockfrom_trimmed.Timestamp, block.Timestamp)
+            self.assertEqual(blockfrom_trimmed.Index, block.Index)
+            self.assertEqual(blockfrom_trimmed.ConsensusData, block.ConsensusData)
+            self.assertEqual(blockfrom_trimmed.NextConsensus, block.NextConsensus)
+            self.assertEqual(len(block.Transactions), len(blockfrom_trimmed.Transactions))

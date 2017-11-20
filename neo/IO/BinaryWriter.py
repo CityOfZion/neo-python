@@ -44,18 +44,19 @@ class BinaryWriter(object):
         elif type(value) is int:
             self.stream.write(bytes([value]))
 
-    def WriteBytes(self, value):
-        try:
-            value = binascii.unhexlify(value)
-        except TypeError:
-            pass
-        except binascii.Error:
-            pass
+    def WriteBytes(self, value, unhex=True):
+        if unhex:
+            try:
+                value = binascii.unhexlify(value)
+            except TypeError as t:
+                pass
+            except binascii.Error as be:
+                pass
 
         self.stream.write(value)
 
     def pack(self, fmt, data):
-        return self.WriteBytes(struct.pack(fmt, data))
+        return self.WriteBytes(struct.pack(fmt, data), unhex=False)
 
     def WriteChar(self, value, endian="<"):
         return self.pack('c', value)
@@ -70,7 +71,6 @@ class BinaryWriter(object):
         return self.pack('%sb' % endian, value)
 
     def WriteUInt8(self, value, endian="<"):
-        logger.info("writing uint 8 %s " % value)
         return self.pack('%sB' % endian, value)
 
     def WriteBool(self, value, endian="<"):
