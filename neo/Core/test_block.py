@@ -240,8 +240,6 @@ class BlocksTestCase(NeoTestCase):
 
             self.assertEqual(block.MerkleRoot.ToString(), self.b_1321456_merlke)
 
-
-
     def test_testnet797966(self):
 
         path = '%s/fixtures/797966.txt' % os.getcwd()
@@ -254,26 +252,18 @@ class BlocksTestCase(NeoTestCase):
 
             block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
 
-            print("block index: %s " % block.Index)
-
-            print("tx len: %s " % len(block.Transactions))
-
-
             trimmed = block.Trim()
 
             trimmed_unhex = binascii.unhexlify(trimmed)
 
             blockfrom_trimmed = Block.FromTrimmedData(trimmed_unhex, 0)
 
-
+            self.assertEqual(blockfrom_trimmed.Version, block.Version)
             self.assertEqual(blockfrom_trimmed.Index, block.Index)
-
+            self.assertEqual(blockfrom_trimmed.PrevHash, block.PrevHash)
             self.assertEqual(blockfrom_trimmed.MerkleRoot, block.MerkleRoot)
-
-
+            self.assertEqual(blockfrom_trimmed.Timestamp, block.Timestamp)
+            self.assertEqual(blockfrom_trimmed.Index, block.Index)
+            self.assertEqual(blockfrom_trimmed.ConsensusData, block.ConsensusData)
+            self.assertEqual(blockfrom_trimmed.NextConsensus, block.NextConsensus)
             self.assertEqual(len(block.Transactions), len(blockfrom_trimmed.Transactions))
-
-            print("block trimmed: %s " % blockfrom_trimmed.Index)
-
-            print("block trimmed tx len: %s " % len(blockfrom_trimmed.Transactions))
-
