@@ -5,6 +5,7 @@ from neo.Blockchain import GetGenesis
 import binascii
 from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
+from neo.Core.Block import Block
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.MerkleTree import MerkleTree
 import json
@@ -238,3 +239,41 @@ class BlocksTestCase(NeoTestCase):
                 self.assertTrue(hash in self.b_132156_txids)
 
             self.assertEqual(block.MerkleRoot.ToString(), self.b_1321456_merlke)
+
+
+
+    def test_testnet797966(self):
+
+        path = '%s/fixtures/797966.txt' % os.getcwd()
+
+        with open(path, 'rb') as f:
+
+            blockraw = f.read().strip()
+
+            hex = binascii.unhexlify(blockraw)
+
+            block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
+
+            print("block index: %s " % block.Index)
+
+            print("tx len: %s " % len(block.Transactions))
+
+
+            trimmed = block.Trim()
+
+            trimmed_unhex = binascii.unhexlify(trimmed)
+
+            blockfrom_trimmed = Block.FromTrimmedData(trimmed_unhex, 0)
+
+
+            self.assertEqual(blockfrom_trimmed.Index, block.Index)
+
+            self.assertEqual(blockfrom_trimmed.MerkleRoot, block.MerkleRoot)
+
+
+            self.assertEqual(len(block.Transactions), len(blockfrom_trimmed.Transactions))
+
+            print("block trimmed: %s " % blockfrom_trimmed.Index)
+
+            print("block trimmed tx len: %s " % len(blockfrom_trimmed.Transactions))
+
