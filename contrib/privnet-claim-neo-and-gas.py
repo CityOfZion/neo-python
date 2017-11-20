@@ -43,7 +43,6 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.KeyPair import KeyPair
 from neo.Prompt.Commands.LoadSmartContract import ImportMultiSigContractAddr
-from neo.Prompt.Notify import SubscribeNotifications
 from neo.Core.Blockchain import Blockchain
 from neo.Fixed8 import Fixed8
 from neo.Prompt.Commands.Send import construct_and_send
@@ -301,7 +300,6 @@ if __name__ == "__main__":
 
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
     Blockchain.RegisterBlockchain(blockchain)
-    SubscribeNotifications()
 
     reactor.suggestThreadPoolSize(15)
     NodeLeader.Instance().Start()

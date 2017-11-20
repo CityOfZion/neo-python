@@ -1,3 +1,6 @@
+"""
+Smart contract API to easily react to events from specific smart contracts.
+"""
 import time
 
 from collections import defaultdict
@@ -41,7 +44,7 @@ class SmartContract:
         assert contract_hash
         self.contract_hash = str(contract_hash)
 
-        # Register EventHub.events handlers to forward for SmartContract decorators
+        # Handle EventHub events for SmartContract decorators
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
         @events.on(SmartContractEvent.RUNTIME_LOG)
         @events.on(SmartContractEvent.EXECUTION_SUCCESS)
