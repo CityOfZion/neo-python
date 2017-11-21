@@ -258,9 +258,10 @@ class Struct(Array):
         super(Struct, self).__init__(value)
 
     def Clone(self):
-        newArray = []
+        length = len(self._array)
+        newArray = [None for i in range(0, length)]
 
-        for i in range(0, len(self._array)):
+        for i in range(0, length):
             if self._array[i] is None:
                 newArray[i] = None
             elif self._array[i].IsStruct:

@@ -700,7 +700,7 @@ class PromptInterface(object):
                     print("smart contract event logging is now enabled")
                     settings.set_log_smart_contract_events(True)
                 if c1 == 'off' or c1 == '0':
-                    print("smart contract event logging is now enabled")
+                    print("smart contract event logging is now disabled")
                     settings.set_log_smart_contract_events(False)
 
             else:
