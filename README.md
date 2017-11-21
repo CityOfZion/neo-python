@@ -20,7 +20,7 @@
   <a href='https://coveralls.io/github/CityOfZion/neo-python?branch=master'>
     <img src='https://coveralls.io/repos/github/CityOfZion/neo-python/badge.svg?branch=master' alt='Coverage Status' />
   </a>
-  
+
 </p>
 
 ## Overview
@@ -104,6 +104,13 @@ Then install requirements
 ```
 pip install -r requirements.txt
 ```
+
+Finally, install a reference to the `neo` working directory, which allows to `import neo` from
+anywhere in the project (eg. examples):
+```
+pip install -e .
+```
+
 
 ### Installing on OSX
 
