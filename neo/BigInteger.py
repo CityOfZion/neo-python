@@ -5,6 +5,14 @@ from neo.Cryptography.Helper import base256_encode
 
 class BigInteger(int):
 
+    @property
+    def Sign(self):
+        if self > 0:
+            return 1
+        elif self == 0:
+            return 0
+        return -1
+
     @staticmethod
     def FromBytes(data, signed=False):
         return BigInteger(int.from_bytes(data, 'little', signed=signed))
