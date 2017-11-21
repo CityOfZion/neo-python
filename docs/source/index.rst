@@ -1,3 +1,6 @@
+=======================================================
+neo-python - Python Node and SDK for the NEO blockchain
+=======================================================
 
 .. raw:: html
     <p align="center">
@@ -26,15 +29,17 @@
 
 
 .. toctree::
-    :maxdepth: 10
+    :maxdepth: 2
 
     overview
     install
     basicusage
+    prompt
+    settings-and-logging
+    smartcontracts
     contribute
     license
     tests
-    prompt
 
 .. _issue: https://github.com/CityOfZion/neo-python/issues/new
 .. _NEO Slack: https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA

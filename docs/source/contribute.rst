@@ -6,8 +6,8 @@ Help
 ----
 
 -  Open a new `issue`_ if you encounter a problem.
--  Or ping **@localhuman** on the `NEO Slack`_.
--  Pull requests are welcome. New features, writing tests and 
+-  Or ping **@localhuman** or **@metachris** on the `NEO Slack`_.
+-  Pull requests are welcome. New features, writing tests and
    documentation are all needed.
 
 Donations
