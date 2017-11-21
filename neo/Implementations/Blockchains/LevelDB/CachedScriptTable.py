@@ -8,7 +8,6 @@ class CachedScriptTable(ScriptTableMixin):
     def __init__(self, contracts):
         self.contracts = contracts
 
-
     def GetScript(self, script_hash):
 
         contract = self.contracts.TryGet(script_hash)
@@ -17,4 +16,3 @@ class CachedScriptTable(ScriptTableMixin):
             return contract.Code.Script
 
         return None
-

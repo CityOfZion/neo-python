@@ -14,8 +14,10 @@ from neo.Cryptography.Helper import base256_encode
 from neo.BigInteger import BigInteger
 import struct
 
+
 class ScriptBuilder(object):
     """docstring for ScriptBuilder"""
+
     def __init__(self):
         super(ScriptBuilder, self).__init__()
         self.ms = MemoryStream()  # MemoryStream
@@ -25,7 +27,6 @@ class ScriptBuilder(object):
 
     def WriteUInt32(self, value, endian="<"):
         return self.pack('%sI' % endian, value)
-
 
     def WriteUInt64(self, value, endian="<"):
         return self.pack('%sQ' % endian, value)
@@ -91,7 +92,7 @@ class ScriptBuilder(object):
         return
 
     def push(self, data):
-        if data == None:
+        if data is None:
             return
 
         if type(data) is bool:
@@ -103,15 +104,15 @@ class ScriptBuilder(object):
             elif data == 0:
                 return self.add(PUSH0)
             elif data > 0 and data <= 16:
-                return self.add(int.from_bytes(PUSH1,'little') -1  + data)
+                return self.add(int.from_bytes(PUSH1, 'little') - 1 + data)
             else:
-                return self.push(binascii.hexlify( base256_encode(data)))
+                return self.push(binascii.hexlify(data.ToByteArray()))
         else:
             if not type(data) == bytearray:
                 buf = binascii.unhexlify(data)
             else:
                 buf = bytes(data)
-        if len(buf) <= int.from_bytes( PUSHBYTES75, 'big'):
+        if len(buf) <= int.from_bytes(PUSHBYTES75, 'big'):
             self.add(len(buf))
             self.add(buf)
         elif len(buf) < 0x100:
@@ -131,7 +132,6 @@ class ScriptBuilder(object):
             self.add(len(buf) >> 24)
             self.add(buf)
         return
-
 
     def WriteVarData(self, data):
         length = len(data)
@@ -156,10 +156,12 @@ class ScriptBuilder(object):
             self.ms.write(arg)
 
     def EmitPushBigInteger(self, number):
-        if number == -1: return self.Emit(PUSHM1)
-        if number == 0: return self.Emit(PUSH0)
+        if number == -1:
+            return self.Emit(PUSHM1)
+        if number == 0:
+            return self.Emit(PUSH0)
         if number > 0 and number <= 16:
-            return self.Emit(int.from_bytes(PUSH1,'little') - 1 + number)
+            return self.Emit(int.from_bytes(PUSH1, 'little') - 1 + number)
         return self.Emit(number)
 
     def EmitAppCall(self, scriptHash, useTailCall=False):
@@ -179,7 +181,6 @@ class ScriptBuilder(object):
         out = length_bytes + api_bytes
         return self.Emit(SYSCALL, out)
 
-
     def EmitSysCallWithArguments(self, api, args):
 
         args.reverse()
@@ -190,12 +191,9 @@ class ScriptBuilder(object):
             elif type(argument) is bytes and len(argument) == 1:
                 self.WriteByte(argument)
             else:
-                self.push( binascii.hexlify(argument))
+                self.push(binascii.hexlify(argument))
 
         self.EmitSysCall(api)
-
-
-
 
     def ToArray(self, cleanup=True):
         retval = self.ms.ToArray()
@@ -204,5 +202,3 @@ class ScriptBuilder(object):
             self.ms = None
 
         return retval
-
-

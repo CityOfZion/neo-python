@@ -5,31 +5,32 @@ from neo.Blockchain import GetGenesis
 import binascii
 from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
+from neo.Core.Block import Block
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.MerkleTree import MerkleTree
 import json
 
+
 class BlocksTestCase(NeoTestCase):
 
-
-    #raw block ( block # 343892 )
+    # raw block ( block # 343892 )
     rawblock = b'00000000b7def681f0080262aa293071c53b41fc3146b196067243700b68acd059734fd19543108bf9ddc738cbee2ed1160f153aa0d057f062de0aa3cbb64ba88735c23d43667e59543f050095df82b02e324c5ff3812db982f3b0089a21a278988efeec6a027b2501fd450140113ac66657c2f544e8ad13905fcb2ebaadfef9502cbefb07960fbe56df098814c223dcdd3d0efa0b43a9459e654d948516dcbd8b370f50fbecfb8b411d48051a408500ce85591e516525db24065411f6a88f43de90fa9c167c2e6f5af43bc84e65e5a4bb174bc83a19b6965ff10f476b1b151ae15439a985f33916abc6822b0bb140f4aae522ffaea229987a10d01beec826c3b9a189fe02aa82680581b78f3df0ea4d3f93ca8ea35ffc90f15f7db9017f92fafd9380d9ba3237973cf4313cf626fc40e30e50e3588bd047b39f478b59323868cd50c7ab54355d8245bf0f1988d37528f9bbfc68110cf917debbdbf1f4bdd02cdcccdc3269fdf18a6c727ee54b6934d840e43918dd1ec6123550ec37a513e72b34b2c2a3baa510dec3037cbef2fa9f6ed1e7ccd1f3f6e19d4ce2c0919af55249a970c2685217f75a5589cf9e54dff8449af155210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae01000095df82b000000000'
 
     rawblock_hex = b'\x00\x00\x00\x00\xb7\xde\xf6\x81\xf0\x08\x02b\xaa)0q\xc5;A\xfc1F\xb1\x96\x06rCp\x0bh\xac\xd0YsO\xd1\x95C\x10\x8b\xf9\xdd\xc78\xcb\xee.\xd1\x16\x0f\x15:\xa0\xd0W\xf0b\xde\n\xa3\xcb\xb6K\xa8\x875\xc2=Cf~YT?\x05\x00\x95\xdf\x82\xb0.2L_\xf3\x81-\xb9\x82\xf3\xb0\x08\x9a!\xa2x\x98\x8e\xfe\xecj\x02{%\x01\xfdE\x01@\x11:\xc6fW\xc2\xf5D\xe8\xad\x13\x90_\xcb.\xba\xad\xfe\xf9P,\xbe\xfb\x07\x96\x0f\xbeV\xdf\t\x88\x14\xc2#\xdc\xdd=\x0e\xfa\x0bC\xa9E\x9eeM\x94\x85\x16\xdc\xbd\x8b7\x0fP\xfb\xec\xfb\x8bA\x1dH\x05\x1a@\x85\x00\xce\x85Y\x1eQe%\xdb$\x06T\x11\xf6\xa8\x8fC\xde\x90\xfa\x9c\x16|.oZ\xf4;\xc8Ne\xe5\xa4\xbb\x17K\xc8:\x19\xb6\x96_\xf1\x0fGk\x1b\x15\x1a\xe1T9\xa9\x85\xf39\x16\xab\xc6\x82+\x0b\xb1@\xf4\xaa\xe5"\xff\xae\xa2)\x98z\x10\xd0\x1b\xee\xc8&\xc3\xb9\xa1\x89\xfe\x02\xaa\x82h\x05\x81\xb7\x8f=\xf0\xeaM?\x93\xca\x8e\xa3_\xfc\x90\xf1_}\xb9\x01\x7f\x92\xfa\xfd\x93\x80\xd9\xba27\x97<\xf41<\xf6&\xfc@\xe3\x0eP\xe3X\x8b\xd0G\xb3\x9fG\x8bY28h\xcdP\xc7\xabT5]\x82E\xbf\x0f\x19\x88\xd3u(\xf9\xbb\xfch\x11\x0c\xf9\x17\xde\xbb\xdb\xf1\xf4\xbd\xd0,\xdc\xcc\xdc2i\xfd\xf1\x8alr~\xe5Ki4\xd8@\xe49\x18\xdd\x1e\xc6\x125P\xec7\xa5\x13\xe7+4\xb2\xc2\xa3\xba\xa5\x10\xde\xc3\x03|\xbe\xf2\xfa\x9fn\xd1\xe7\xcc\xd1\xf3\xf6\xe1\x9dL\xe2\xc0\x91\x9a\xf5RI\xa9p\xc2hR\x17\xf7ZU\x89\xcf\x9eT\xdf\xf8D\x9a\xf1U!\x02\t\xe7\xfdA\xdf\xb5\xc2\xf8\xdcr\xeb05\x8a\xc1\x00\xea\x8cr\xda\x18\x84{\xef\xe0n\xad\xe6\x8c\xeb\xfc\xb9!\x03\'\xda\x12\xb5\xc4\x02\x00\xe9\xf6UiGk\xbf\xf2!\x8d\xa4\xf3%H\xffC\xb68~\xc1Aj#\x1e\xe8!\x03O\xf5\xce\xea\xc4\x1a\xcf"\xcd^\xd2\xda\x17\xa6\xdfM\xd85\x8f\xcb+\xfb\x1aC \x8a\xd0\xfe\xaa\xb2tk!\x02l\xe3[)\x14z\xd0\x9eJ\xfeN\xc4\xa71\x90\x95\xf0\x81\x98\xfa\x8b\xab\xbe<V\xe9p\xb1CR\x8d"!\x03\x8d\xdd\xc0l\xe6\x87gzS\xd5O\tm%\x91\xba#\x02\x06\x8c\xf1#\xc1\xf2\xd7\\-\xdd\xc5BUy!\x03\x9d\xaf\xd8W\x1ad\x10X\xcc\xc82\xc5\xe2\x11\x1e\xa3\x9b\t\xc0\xbd\xe3`P\x91C\x84\xf7\xa4\x8b\xce\x9b\xf9!\x02\xd0+\x18s\xa0\x86<\xd0B\xccq}\xa3\x1c\xea\r|\xf9\xdb2\xb7MLr\xc0\x1b\x00\x11P>."W\xae\x01\x00\x00\x95\xdf\x82\xb0\x00\x00\x00\x00'
-    rb_hash=b'922ba0c0d06afbeec4c50b0541a29153feaa46c5d7304e7bf7f40870d9f3aeb0'
-    rb_prev=b'd14f7359d0ac680b7043720696b14631fc413bc5713029aa620208f081f6deb7'
-    rb_merlke=b'3dc23587a84bb6cba30ade62f057d0a03a150f16d12eeecb38c7ddf98b104395'
+    rb_hash = b'922ba0c0d06afbeec4c50b0541a29153feaa46c5d7304e7bf7f40870d9f3aeb0'
+    rb_prev = b'd14f7359d0ac680b7043720696b14631fc413bc5713029aa620208f081f6deb7'
+    rb_merlke = b'3dc23587a84bb6cba30ade62f057d0a03a150f16d12eeecb38c7ddf98b104395'
     rb_ts = 1501455939
     rb_h = 343892
-    rb_nonce = int.from_bytes( binascii.unhexlify( b'5f4c322eb082df95'), 'big')
+    rb_nonce = int.from_bytes(binascii.unhexlify(b'5f4c322eb082df95'), 'big')
     rconsenusdata = 6866918707944415125
 
     rblock_tx_id = b'3dc23587a84bb6cba30ade62f057d0a03a150f16d12eeecb38c7ddf98b104395'
-    rblock_tx_nonce=2961366933
+    rblock_tx_nonce = 2961366933
     rblock_inputs = []
     rblock_outputs = []
 
-    #raw block 2 ( block #1)
+    # raw block 2 ( block #1)
     b2raw = b'00000000ef1f8f66a16fba100ed760f4ac6aa5a0d0bb8f4a0e92705b106761ef181718b3d0765298ceb5f57de7d2b0dab00ed25be4134706ada2d90adb8b7e3aba323a8e1abd125901000000d11f7a289214bdaff3812db982f3b0089a21a278988efeec6a027b2501fd450140884037dd265cb5f5a54802f53c2c8593b31d5b8a9c0bad4c7e366b153d878989d168080ac36b930036a9eb966b48c70bb41792e698fa021116f27c09643563b840e83ab14404d964a91dbac45f5460e88ad57196b1779478e3475334af8c1b49cd9f0213257895c60b5b92a4800eb32d785cbb39ae1f022528943909fd37deba63403677848bf98cc9dbd8fbfd7f2e4f34471866ea82ca6bffbf0f778b6931483700c17829b4bd066eb04983d3aac0bd46b9c8d03a73a8e714d3119de93cd9522e314054d16853b22014190063f77d9edf6fbccefcf71fffd1234f688823b4e429ae5fa639d0a664c842fbdfcb4d6e21f39d81c23563b92cffa09696d93c95bc4893a6401a43071d00d3e854f7f1f321afa7d5301d36f2195dc1e2643463f34ae637d2b02ae0eb11d4256c507a4f8304cea6396a7fce640f50acb301c2f6336d27717e84f155210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae010000d11f7a2800000000'
     b2hash = '0012f8566567a9d7ddf25acb5cf98286c9703297de675d01ba73fbfe6bcb841c'
     b2prev_hash = b'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef'
@@ -48,7 +49,6 @@ class BlocksTestCase(NeoTestCase):
     b2tx_nonce = 679092177
     b2tx_vin = []
     b2tx_vout = []
-
 
     @staticmethod
     def BlockIndexOne():
@@ -70,7 +70,6 @@ class BlocksTestCase(NeoTestCase):
 
         self.assertEqual(tx.Nonce, self.rblock_tx_nonce)
 
-
         self.assertEqual(len(tx.inputs), 0)
         self.assertEqual(len(tx.outputs), 0)
         self.assertEqual(len(tx.Attributes), 0)
@@ -86,7 +85,6 @@ class BlocksTestCase(NeoTestCase):
         root = MerkleTree.ComputeRoot([tx.Hash for tx in block.Transactions])
         self.assertEqual(root, block.MerkleRoot)
 
-
     def test_block_two(self):
 
         hexdata = binascii.unhexlify(self.b2raw)
@@ -97,9 +95,7 @@ class BlocksTestCase(NeoTestCase):
         self.assertEqual(block.Timestamp, self.b2timestamp)
         self.assertEqual(block.PrevHash.ToBytes(), self.b2prev_hash)
 
-
         self.assertEqual(block.Hash.ToString(), self.b2hash)
-
 
         next_consensus_address = Crypto.ToAddress(block.NextConsensus)
 
@@ -126,8 +122,6 @@ class BlocksTestCase(NeoTestCase):
         root = MerkleTree.ComputeRoot([tx.Hash for tx in block.Transactions])
         self.assertEqual(root, block.MerkleRoot)
 
-
-
     sf_hash = b'6bfcdff84a3341d7a9299b358f098504e14c99c6774ebaa5dfd631371155533c'
     sf_raw = b'00000000cf9d9c77df2a27eabeaac0b69c282017c328c2da3ec9fbd2ca45b18fdb8cb68a9b6c99d55ac0358b114add3c399357412e9f9878213660dd9daa984332d0e507c5c412594a0000000b5a4046e108122cf3812db982f3b0089a21a278988efeec6a027b2501fd4501405bd82ea1d16a0855c112735a43d83161669b209b1d2d34a2b5c9f744021742ca5671fee68ce62cbe3df2cc231d6ea639fe3d47b70b36b22c8f445b8475069a69405cf8636e0f4e9c4b9e938271e13b020cddd51456c5cb3365a8a052aa03ca5a3cc822e7692907f4b4835b0e237d5cd2a66bda5a1e8d127aa80054de775a1e9ebe408013053b4260eabd2ef03ceed72886d60ae756a25c6cbc5e1dccbbbee3ccd8e6e6f139b9b7d8c7361493eb8706bd9d5ad14c7dbbe89b3a2c4be5a8b68f1592f0405df68939bcf0b218b5a67e9f57c00145ade69fd5f54a6fd5221fb5a8e183b611a4569c642ac5c266b2bacea0e7d89725348e2a2c424a95a1fa5007f03a28346940b3d5c4c7b967ff7f975295f38ffe18a7d2d6f376fd7266aecef690333a6569e6f1e492cde85cb49d4b45b31488663ea7850404186afbc108aceb9c0c7862c43ef155210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae0200000b5a404600000000800000014a4dfb91023b1b2086029e03af739d9ceab35fffa8d528de9a6fee3e62bbecbd0000019b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50000c16ff286230067f97110a66136d38badc7b9f88eab013027ce4901fd04014099546819767644bbef323e428aab48c8801e66b8c7fb452dcd11205c13f5b198c9b37e9aa6808d6c3a74e50931d3413115e2a86a4a4a99fcae894219c092ca6340a0de35bc6c04c25b8f6cca46b91a35144db40fc94967293500f08c58df81f7c9ecb59cc13bcaca4d932e27a8d9a8204f48d488b6ccdfccd830c22bf4b7353dd64039346418372b541dfe7fdc99611bfc59cee881044da2912cb2404b885c6472310a2b771153e6a0022abb11aa41288ef98a2aed1bb42714fa6a1c6e85e415b8bb4045cc681dbe07155b554b0291f0352546223e49e3192c221249c29eb97651aec3c5f2f6adfc85a87cfdfef3a15d57391cf99190e8d80b01fcc1ebf8f48c745957f154210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae'
     sf_merk = b'07e5d0324398aa9ddd60362178989f2e415793393cdd4a118b35c05ad5996c9b'
@@ -137,15 +131,11 @@ class BlocksTestCase(NeoTestCase):
     sf2_vin_len = 1
     sf2_vo_len = 1
 
-
-
     def test_block_seventyfour(self):
-
 
         hexdata = binascii.unhexlify(self.sf_raw)
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
-
 
         self.assertEqual(block.MerkleRoot.ToBytes(), self.sf_merk)
         self.assertEqual(block.Hash.ToBytes(), self.sf_hash)
@@ -161,11 +151,10 @@ class BlocksTestCase(NeoTestCase):
 
         self.assertEqual(block.Hash.ToBytes(), self.pb_hash)
 
-
-
     t992 = b'000000001db78fc59944ef5a8c865efc09b244896e8f32253fb21fb47e13128706cae385b9c95339d1fa2ea86bcdb3e79d05a5b42c35789dff5c54027d24fa549a66684c3f9b1359b00b000066666542ed4bbc15f3812db982f3b0089a21a278988efeec6a027b2501fd4501400bfee22cb2e369debb4fe5c52bcc33c17b25aa9402aa915e3db82fd41e711966d15e255434b4a99622a831ba0fc6cc99f288a2605818cd4bc0b807a05ffe1c9740e16607602ca56dec01c17d3ad1ffa9b425bc38bd7a4bca7348fed11b867bdf16cb9d571bab51f56d7e8c8114f6a01d4e0c107ea99dd5e23a4ae488cbd26d17c340d3771b97e559fc116680ff7cf4e9aa36826a40d8cd3c59a578d45078fbcac9f1b98f125acb7de9235ff1087c1efde2ecfc2b82e95ec98769adb39ee88da9745740caced10c3b24ad134da0561396abfa4d94c3847226214c9ff451b593b0d3959e2ea6abe3afd9bbce1f7d3cd9ab61b80dd5afd81dbc987a488160f9dafaacd8b2408038ce11fa724bba34987ff001fba349735273a3b7a580828c3b762b837b958100fc65acae1598b23b32303d10ec99ee2421cbc5838a7e261d8e3accbef7ff5ef155210209e7fd41dfb5c2f8dc72eb30358ac100ea8c72da18847befe06eade68cebfcb9210327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee821034ff5ceeac41acf22cd5ed2da17a6df4dd8358fcb2bfb1a43208ad0feaab2746b21026ce35b29147ad09e4afe4ec4a7319095f08198fa8babbe3c56e970b143528d2221038dddc06ce687677a53d54f096d2591ba2302068cf123c1f2d75c2dddc542557921039dafd8571a641058ccc832c5e2111ea39b09c0bde36050914384f7a48bce9bf92102d02b1873a0863cd042cc717da31cea0d7cf9db32b74d4c72c01b0011503e2e2257ae0100006666654200000000'
     t992h = b'bcfc016b33f6abc1f1109878f6d69a8aaf42b9ac09c5793507afbbdccdb8f68f'
     t992m = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'
+
     def test_2992(self):
 
         hexdata = binascii.unhexlify(self.t992)
@@ -173,7 +162,6 @@ class BlocksTestCase(NeoTestCase):
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
         self.assertEqual(block.MerkleRoot.ToBytes(), self.t992m)
         self.assertEqual(block.Hash.ToBytes(), self.t992h)
-
 
         json = block.ToJson()
         self.assertEqual(json['index'], 2992)
@@ -188,8 +176,8 @@ class BlocksTestCase(NeoTestCase):
 
         path = '%s/fixtures/1050514.txt' % os.getcwd()
 
-        with open(path,'rb') as f:
-#
+        with open(path, 'rb') as f:
+            #
             blockraw = f.read().strip()
 
             hex = binascii.unhexlify(blockraw)
@@ -204,7 +192,6 @@ class BlocksTestCase(NeoTestCase):
         self.assertEqual(json['hash'], self.big_tx_hash.decode('utf-8'))
         self.assertEqual(len(json['tx']), 65)
 
-
         for tx in json['tx']:
             if tx['txid'] == '1dc3543a5b54fcfce3fefba6c772f3a59740b2b1784690b3c66e2f7052f002bb':
                 bigclaim = tx
@@ -212,8 +199,6 @@ class BlocksTestCase(NeoTestCase):
                 vout = bigclaim['vout'][0]
                 self.assertEqual(vout['ScriptHash'], 'AFnRHRQceaUgFQxPTttAQzAZvsjGSNtHCH')
                 self.assertEqual(vout['Value'], 5786800133972)
-
-
 
     b_1321456_merlke = '7020347797526cea93a0cd47303e3274afe6f79dd0d184a0e55cc673fdd1d382'
 
@@ -247,12 +232,38 @@ class BlocksTestCase(NeoTestCase):
 
             block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
 
-
             for tx in block.Transactions:
 
                 hash = tx.Hash.ToString()
 
                 self.assertTrue(hash in self.b_132156_txids)
 
-
             self.assertEqual(block.MerkleRoot.ToString(), self.b_1321456_merlke)
+
+    def test_testnet797966(self):
+
+        path = '%s/fixtures/797966.txt' % os.getcwd()
+
+        with open(path, 'rb') as f:
+
+            blockraw = f.read().strip()
+
+            hex = binascii.unhexlify(blockraw)
+
+            block = Helper.AsSerializableWithType(hex, 'neo.Core.Block.Block')
+
+            trimmed = block.Trim()
+
+            trimmed_unhex = binascii.unhexlify(trimmed)
+
+            blockfrom_trimmed = Block.FromTrimmedData(trimmed_unhex, 0)
+
+            self.assertEqual(blockfrom_trimmed.Version, block.Version)
+            self.assertEqual(blockfrom_trimmed.Index, block.Index)
+            self.assertEqual(blockfrom_trimmed.PrevHash, block.PrevHash)
+            self.assertEqual(blockfrom_trimmed.MerkleRoot, block.MerkleRoot)
+            self.assertEqual(blockfrom_trimmed.Timestamp, block.Timestamp)
+            self.assertEqual(blockfrom_trimmed.Index, block.Index)
+            self.assertEqual(blockfrom_trimmed.ConsensusData, block.ConsensusData)
+            self.assertEqual(blockfrom_trimmed.NextConsensus, block.NextConsensus)
+            self.assertEqual(len(block.Transactions), len(blockfrom_trimmed.Transactions))

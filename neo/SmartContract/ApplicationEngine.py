@@ -3,12 +3,20 @@ from neo.VM.OpCode import *
 from neo.VM import VMState
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
-import sys,os
+import sys
+import os
 from autologging import logged
+
+# used for ApplicationEngine.Run
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
+from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Core.State import ContractState, AssetState, AccountState, ValidatorState, StorageItem
+from neo.SmartContract import TriggerType
+
 
 @logged
 class ApplicationEngine(ExecutionEngine):
-
 
     ratio = 100000
     gas_free = 10 * 100000000
@@ -23,12 +31,11 @@ class ApplicationEngine(ExecutionEngine):
 
     def __init__(self, trigger_type, container, table, service, gas, testMode=False):
 
-        super(ApplicationEngine, self).__init__(container=container,crypto=Crypto.Default(), table=table, service=service)
+        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=table, service=service)
 
         self.Trigger = trigger_type
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
-
 
     def CheckArraySize(self):
 
@@ -49,7 +56,6 @@ class ApplicationEngine(ExecutionEngine):
             return True
 
         return True
-
 
     def CheckInvocationStack(self):
 
@@ -82,10 +88,10 @@ class ApplicationEngine(ExecutionEngine):
             if self.CurrentContext.InstructionPointer + 4 >= len(self.CurrentContext.Script):
                 return False
 
-            #TODO this should be double checked.  it has been
-            #double checked and seems to work, but could possibly not work
+            # TODO this should be double checked.  it has been
+            # double checked and seems to work, but could possibly not work
             position = self.CurrentContext.InstructionPointer + 1
-            lengthpointer = self.CurrentContext.Script[position:position+4]
+            lengthpointer = self.CurrentContext.Script[position:position + 4]
             length = int.from_bytes(lengthpointer, 'little')
 
             if length > maxItemSize:
@@ -93,18 +99,17 @@ class ApplicationEngine(ExecutionEngine):
 
             return True
 
-
         elif opcode == CAT:
 
             if self.EvaluationStack.Count < 2:
                 return False
 
-            length=0
+            length = 0
 
             try:
                 length = len(self.EvaluationStack.Peek(0).GetByteArray()) + len(self.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
-                self.__log.debug("colud not get length %s " % e)
+                self.__log.debug("Could not get length: %s " % e)
 
             if length > maxItemSize:
                 return False
@@ -112,7 +117,6 @@ class ApplicationEngine(ExecutionEngine):
             return True
 
         return True
-
 
     def CheckStackSize(self):
 
@@ -140,7 +144,7 @@ class ApplicationEngine(ExecutionEngine):
                 if not item.IsArray:
                     return False
 
-                size = len( item.GetArray())
+                size = len(item.GetArray())
 
         if size == 0:
             return True
@@ -152,7 +156,6 @@ class ApplicationEngine(ExecutionEngine):
             return False
 
         return True
-
 
     def Execute(self):
 
@@ -189,10 +192,9 @@ class ApplicationEngine(ExecutionEngine):
 
         return not self._VMState & VMState.FAULT > 0
 
-
     def GetPrice(self):
 
-        if self.CurrentContext.InstructionPointer >= len( self.CurrentContext.Script):
+        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             return 0
 
         opcode = self.CurrentContext.NextInstruction
@@ -224,7 +226,6 @@ class ApplicationEngine(ExecutionEngine):
 
         return 1
 
-
     def GetPriceForSysCall(self):
 
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script) - 3:
@@ -235,11 +236,11 @@ class ApplicationEngine(ExecutionEngine):
         if self.CurrentContext.InstructionPointer > len(self.CurrentContext.Script) - length - 2:
             return 1
 
-        strbytes = self.CurrentContext.Script[self.CurrentContext.InstructionPointer+2:length + self.CurrentContext.InstructionPointer + 2]
+        strbytes = self.CurrentContext.Script[self.CurrentContext.InstructionPointer + 2:length + self.CurrentContext.InstructionPointer + 2]
 
         api_name = strbytes.decode('utf-8')
 
-        api = api_name.replace('Antshares.','Neo.')
+        api = api_name.replace('Antshares.', 'Neo.')
 
         if api == "Neo.Runtime.CheckWitness":
             return 200
@@ -296,6 +297,36 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Storage.Delete":
             return 100
 
-
         return 1
 
+    @staticmethod
+    def Run(script, container=None):
+
+        from neo.Core.Blockchain import Blockchain
+        from neo.SmartContract.StateMachine import StateMachine
+
+        bc = Blockchain.Default()
+
+        sn = bc._db.snapshot()
+
+        accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
+        assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
+        validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
+        contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
+        storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
+
+        script_table = CachedScriptTable(contracts)
+        service = StateMachine(accounts, validators, assets, contracts, storages, None)
+
+        engine = ApplicationEngine(
+            trigger_type=TriggerType.Application,
+            container=container,
+            table=script_table,
+            service=service,
+            gas=Fixed8.Zero(),
+            testMode=True
+        )
+
+        engine.LoadScript(script, False)
+        engine.Execute()
+        return engine

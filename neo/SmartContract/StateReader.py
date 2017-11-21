@@ -18,23 +18,21 @@ import events
 import binascii
 import pdb
 
-class StateReader(InteropService):
 
+class StateReader(InteropService):
 
     NotifyEvent = events.Events()
     LogEvent = events.Events()
 
     __Instance = None
 
-
-    _hashes_for_verifying=None
+    _hashes_for_verifying = None
 
     @staticmethod
     def Instance():
         if StateReader.__Instance is None:
             StateReader.__Instance = StateReader()
         return StateReader.__Instance
-
 
     def __init__(self):
 
@@ -101,7 +99,7 @@ class StateReader(InteropService):
         self.Register("Neo.Storage.GetContext", self.Storage_GetContext)
         self.Register("Neo.Storage.Get", self.Storage_Get)
 
-        #OLD API
+        # OLD API
 
         self.Register("AntShares.Runtime.GetTrigger", self.Runtime_GetTrigger)
         self.Register("AntShares.Runtime.CheckWitness", self.Runtime_CheckWitness)
@@ -163,14 +161,11 @@ class StateReader(InteropService):
         self.Register("AntShares.Storage.GetContext", self.Storage_GetContext)
         self.Register("AntShares.Storage.Get", self.Storage_Get)
 
-
-
     def Runtime_GetTrigger(self, engine):
 
         engine.EvaluationStack.PushT(engine.Trigger)
 
         return True
-
 
     def CheckWitnessHash(self, engine, hash):
 
@@ -180,11 +175,9 @@ class StateReader(InteropService):
 
         return True if hash in self._hashes_for_verifying else False
 
-
     def CheckWitnessPubkey(self, engine, pubkey):
         scripthash = Contract.CreateSignatureRedeemScript(pubkey)
-        return self.CheckWitnessHash(engine, Crypto.ToScriptHash( scripthash))
-
+        return self.CheckWitnessHash(engine, Crypto.ToScriptHash(scripthash))
 
     def Runtime_CheckWitness(self, engine):
 
@@ -207,7 +200,6 @@ class StateReader(InteropService):
         engine.EvaluationStack.PushT(result)
 
         return True
-
 
     def Runtime_Notify(self, engine):
 
@@ -234,15 +226,13 @@ class StateReader(InteropService):
         print("[neo.SmartContract.StateReader] -> RUNTIME.Log: %s  " % message)
         return True
 
-
     def Blockchain_GetHeight(self, engine):
         if Blockchain.Default() is None:
             engine.EvaluationStack.PushT(0)
         else:
-            engine.EvaluationStack.PushT( Blockchain.Default().Height )
+            engine.EvaluationStack.PushT(Blockchain.Default().Height)
 
         return True
-
 
     def Blockchain_GetHeader(self, engine):
         data = engine.EvaluationStack.Pop().GetByteArray()
@@ -261,7 +251,6 @@ class StateReader(InteropService):
 
                 header = Blockchain.GenesisBlock().Header
 
-
         elif len(data) == 32:
 
             hash = UInt256(data=data)
@@ -274,10 +263,8 @@ class StateReader(InteropService):
 
                 header = Blockchain.GenesisBlock().Header
 
-
-        engine.EvaluationStack.PushT( StackItem.FromInterface(header))
+        engine.EvaluationStack.PushT(StackItem.FromInterface(header))
         return True
-
 
     def Blockchain_GetBlock(self, engine):
 
@@ -301,7 +288,6 @@ class StateReader(InteropService):
 
                 block = Blockchain.GenesisBlock()
 
-
         elif len(data) == 32:
 
             hash = UInt256(data=data).ToBytes()
@@ -314,10 +300,8 @@ class StateReader(InteropService):
 
                 block = Blockchain.GenesisBlock().Header
 
-
-        engine.EvaluationStack.PushT( StackItem.FromInterface(block))
+        engine.EvaluationStack.PushT(StackItem.FromInterface(block))
         return True
-
 
     def Blockchain_GetTransaction(self, engine):
 
@@ -325,11 +309,10 @@ class StateReader(InteropService):
         tx = None
 
         if Blockchain.Default() is not None:
-            tx, height = Blockchain.Default().GetTransaction( UInt256(data=data))
+            tx, height = Blockchain.Default().GetTransaction(UInt256(data=data))
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(tx))
         return True
-
 
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
@@ -339,21 +322,20 @@ class StateReader(InteropService):
 
         if account:
             engine.EvaluationStack.PushT(StackItem.FromInterface(account))
-            return True
+        else:
+            engine.EvaluationStack.PushT(False)
 
-        return False
-
+        return True
 
     def Blockchain_GetValidators(self, engine):
 
         validators = Blockchain.Default().GetValidators()
 
-        items = [ StackItem(validator.encode_point(compressed=True)) for validator in validators]
+        items = [StackItem(validator.encode_point(compressed=True)) for validator in validators]
 
         engine.EvaluationStack.PushT(items)
 
         return True
-
 
     def Blockchain_GetAsset(self, engine):
         data = engine.EvaluationStack.Pop().GetByteArray()
@@ -366,7 +348,7 @@ class StateReader(InteropService):
         return True
 
     def Blockchain_GetContract(self, engine):
-        hash = UInt160(data = engine.EvaluationStack.Pop().GetByteArray())
+        hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
         contract = None
 
         if Blockchain.Default() is not None:
@@ -382,7 +364,6 @@ class StateReader(InteropService):
             return False
         engine.EvaluationStack.PushT(header.Hash.ToArray())
         return True
-
 
     def Header_GetVersion(self, engine):
 
@@ -438,7 +419,7 @@ class StateReader(InteropService):
         block = engine.EvaluationStack.Pop().GetInterface('neo.Core.Block.Block')
         if block is None:
             return False
-        engine.EvaluationStack.PushT( len(block.Transactions))
+        engine.EvaluationStack.PushT(len(block.Transactions))
         return True
 
     def Block_GetTransactions(self, engine):
@@ -459,7 +440,7 @@ class StateReader(InteropService):
         if block is None or index < 0 or index > len(block.Transactions):
             return False
 
-        tx= StackItem.FromInterface(block.FullTransactions[index])
+        tx = StackItem.FromInterface(block.FullTransactions[index])
         engine.EvaluationStack.PushT(tx)
         return True
 
@@ -478,7 +459,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        type = int.from_bytes(tx.Type,'little')
+        type = int.from_bytes(tx.Type, 'little')
         engine.EvaluationStack.PushT(type)
         return True
 
@@ -503,7 +484,6 @@ class StateReader(InteropService):
         return True
 
     def Transaction_GetOutputs(self, engine):
-
 
         tx = engine.EvaluationStack.Pop().GetInterface('neo.Core.TX.Transaction.Transaction')
 
@@ -613,7 +593,7 @@ class StateReader(InteropService):
     def Account_GetBalance(self, engine):
 
         account = engine.EvaluationStack.Pop().GetInterface('neo.Core.State.AccountState.AccountState')
-        assetId = UInt256( data=engine.EvaluationStack.Pop().GetByteArray())
+        assetId = UInt256(data=engine.EvaluationStack.Pop().GetByteArray())
 
         if account is None:
             return False
@@ -695,7 +675,7 @@ class StateReader(InteropService):
 
     def Storage_GetContext(self, engine):
 
-        hash = UInt160( data= engine.CurrentContext.ScriptHash())
+        hash = UInt160(data=engine.CurrentContext.ScriptHash())
         context = StorageContext(script_hash=hash)
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(context))
@@ -706,13 +686,12 @@ class StateReader(InteropService):
 
         context = None
         try:
-            item =engine.EvaluationStack.Pop()
+            item = engine.EvaluationStack.Pop()
             context = item.GetInterface('neo.SmartContract.StorageContext.StorageContext')
             shash = context.ScriptHash
         except Exception as e:
             print("could not get storage context %s " % e)
             return False
-
 
         contract = Blockchain.Default().GetContract(context.ScriptHash.ToBytes())
 
@@ -722,9 +701,8 @@ class StateReader(InteropService):
         else:
             return False
 
-
         key = engine.EvaluationStack.Pop().GetByteArray()
-        storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
+        storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
         item = Blockchain.Default().GetStorageItem(storage_key)
 
         keystr = key
@@ -744,11 +722,11 @@ class StateReader(InteropService):
 
         if item is not None:
 
-            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash,keystr, valStr))
-            engine.EvaluationStack.PushT( bytearray(item.Value))
+            print("[Neo.Storage.Get] [Script:%s] [%s] -> %s " % (context.ScriptHash, keystr, valStr))
+            engine.EvaluationStack.PushT(bytearray(item.Value))
 
         else:
             print("[Neo.Storage.Get] [Script:%s] [%s] -> 0 " % (context.ScriptHash, keystr))
-            engine.EvaluationStack.PushT( bytearray(0))
+            engine.EvaluationStack.PushT(bytearray(0))
 
         return True

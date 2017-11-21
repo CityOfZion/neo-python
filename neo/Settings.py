@@ -1,9 +1,32 @@
 """
-The settings are dynamically configurable, for instance to set them depending on CLI arguments.
-By default these are the testnet settings, but you can reconfigure them by calling the `setup(..)`
-method.
+These are the core network and system settings. For user-preferences, take a
+look at `UserPreferences.py`.
+
+The settings are dynamically configurable, for instance to set them depending
+on CLI arguments. By default these are the testnet settings, but you can
+reconfigure them by calling the `setup(..)` methods.
 """
 import json
+import os
+import sys
+import logging
+from json.decoder import JSONDecodeError
+
+# Create am absolute references to the project root folder. Used for
+# specifying the various filenames.
+dir_current = os.path.dirname(os.path.abspath(__file__))
+dir_project_root = os.path.abspath(os.path.join(dir_current, ".."))
+
+# The filenames for various files. Might be improved by using system
+# user directories: https://github.com/ActiveState/appdirs
+FILENAME_PREFERENCES = os.path.join(dir_project_root, 'preferences.json')
+FILENAME_PROMPT_HISTORY = os.path.join(dir_project_root, '.prompt.py.history')
+FILENAME_PROMPT_LOG = os.path.join(dir_project_root, 'prompt.log')
+
+# The protocol json files are always in the project root
+FILENAME_SETTINGS_MAINNET = os.path.join(dir_project_root, 'protocol.mainnet.json')
+FILENAME_SETTINGS_TESTNET = os.path.join(dir_project_root, 'protocol.testnet.json')
+FILENAME_SETTINGS_PRIVNET = os.path.join(dir_project_root, 'protocol.privnet.json')
 
 
 class SettingsHolder:
@@ -15,6 +38,7 @@ class SettingsHolder:
     ADDRESS_VERSION = None
     STANDBY_VALIDATORS = None
     SEED_LIST = None
+    RPC_LIST = None
 
     ENROLLMENT_TX_FEE = None
     ISSUE_TX_FEE = None
@@ -26,9 +50,9 @@ class SettingsHolder:
     WS_PORT = None
     URI_PREFIX = None
     VERSION_NAME = None
+    BOOTSTRAP_FILE = None
 
-    token_style = None
-    config_file = None
+    ALL_FEES = None
 
     # Helpers
     @property
@@ -62,49 +86,34 @@ class SettingsHolder:
         self.ADDRESS_VERSION = config['AddressVersion']
         self.STANDBY_VALIDATORS = config['StandbyValidators']
         self.SEED_LIST = config['SeedList']
+        self.RPC_LIST = config['RPCList']
 
         fees = config['SystemFee']
+        self.ALL_FEES = fees
         self.ENROLLMENT_TX_FEE = fees['EnrollmentTransaction']
         self.ISSUE_TX_FEE = fees['IssueTransaction']
         self.PUBLISH_TX_FEE = fees['PublishTransaction']
         self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
         config = data['ApplicationConfiguration']
-        self.LEVELDB_PATH = config['DataDirectoryPath']
+        self.LEVELDB_PATH = os.path.join(dir_project_root, config['DataDirectoryPath'])
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
         self.VERSION_NAME = config['VersionName']
-
-        self.config_file = config_file
-
-        try:
-            self.token_style = config['themes'][config['theme']]
-        except Exception as e:
-            self.token_style = {
-                "Command": "#ff0066",
-                "Default": "#00ee00",
-                "Neo": "#0000ee",
-                "Number": "#ffffff"
-            }
+        self.BOOTSTRAP_FILE = config['BootstrapFile']
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
-        self.setup('protocol.mainnet.json')
+        self.setup(FILENAME_SETTINGS_MAINNET)
 
     def setup_testnet(self):
         """ Load settings from the testnet JSON config file """
-        self.setup('protocol.testnet.json')
+        self.setup(FILENAME_SETTINGS_TESTNET)
 
-    def set_theme(self, theme_name):
-        with open(self.config_file) as data_file:
-            data = json.load(data_file)
-
-        data["ApplicationConfiguration"]["theme"] = theme_name
-        with open(self.config_file, "w") as data_file:
-            data_file.write(json.dumps(data, indent=4, sort_keys=True))
-
-        self.token_style = data['ApplicationConfiguration']['themes'][theme_name]
+    def setup_privnet(self):
+        """ Load settings from the privnet JSON config file """
+        self.setup(FILENAME_SETTINGS_PRIVNET)
 
 
 # Settings instance used by external modules

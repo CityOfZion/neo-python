@@ -21,6 +21,7 @@ import json
 from autologging import logged
 import pdb
 
+
 @logged
 class StateMachine(StateReader):
 
@@ -33,7 +34,6 @@ class StateMachine(StateReader):
     _wb = None
 
     _contracts_created = {}
-
 
     notifications = None
 
@@ -73,7 +73,6 @@ class StateMachine(StateReader):
         self.Register("AntShares.Storage.Put", self.Storage_Put)
         self.Register("AntShares.Storage.Delete", self.Storage_Delete)
 
-
     def CheckStorageContext(self, context):
         if context is None:
             return False
@@ -95,13 +94,12 @@ class StateMachine(StateReader):
             self._storages.Commit(self._wb, False)
 
     def TestCommit(self):
-        #print("test commit items....")
+        # print("test commit items....")
         pass
 
     def StateMachine_Notify(self, event_args):
 
         self.notifications.append(event_args)
-
 
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
@@ -151,29 +149,26 @@ class StateMachine(StateReader):
         if account.IsFrozen:
             return False
 
-        balance = account.BalanceFor( Blockchain.SystemShare().Hash)
+        balance = account.BalanceFor(Blockchain.SystemShare().Hash)
 
         if balance == Fixed8.Zero() and len(vote_list) > 0:
-#            print("no balance, return false!")
             return False
-
-#        print("Setting votes!!!")
 
         acct = self._accounts.GetAndChange(account.AddressBytes)
         voteset = []
         for v in vote_list:
-            if not v in vote_list:
+            if v not in voteset:
                 voteset.append(v.GetByteArray())
         acct.Votes = voteset
-        #print("*****************************************************")
-        #print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
-        #print("*****************************************************")
-        return True
 
+        # print("*****************************************************")
+        # print("SET ACCOUNT VOTES %s " % json.dumps(acct.ToJson(), indent=4))
+        # print("*****************************************************")
+        return True
 
     def Validator_Register(self, engine):
 
-        pubkey = ECDSA.decode_secp256r1( engine.EvaluationStack.Pop().GetByteArray(),unhex=False,check_on_curve=True).G
+        pubkey = ECDSA.decode_secp256r1(engine.EvaluationStack.Pop().GetByteArray(), unhex=False, check_on_curve=True).G
         if pubkey.IsInfinity:
             return False
 
@@ -185,18 +180,17 @@ class StateMachine(StateReader):
         engine.EvaluationStack.PushT(StackItem.FromInterface(validator))
         return True
 
-
     def Asset_Create(self, engine):
 
         tx = engine.ScriptContainer
 
         asset_type = int(engine.EvaluationStack.Pop().GetBigInteger())
 
-        if not asset_type in AssetType.AllTypes() or \
-                        asset_type == AssetType.CreditFlag or \
-                        asset_type == AssetType.DutyFlag or \
-                        asset_type == AssetType.GoverningToken or \
-                        asset_type == AssetType.UtilityToken:
+        if asset_type not in AssetType.AllTypes() or \
+                asset_type == AssetType.CreditFlag or \
+                asset_type == AssetType.DutyFlag or \
+                asset_type == AssetType.GoverningToken or \
+                asset_type == AssetType.UtilityToken:
 
             return False
 
@@ -226,7 +220,7 @@ class StateMachine(StateReader):
 
         ownerData = engine.EvaluationStack.Pop().GetByteArray()
 
-        owner = ECDSA.decode_secp256r1( ownerData ,unhex=False).G
+        owner = ECDSA.decode_secp256r1(ownerData, unhex=False).G
 
         if owner.IsInfinity:
             return False
@@ -235,27 +229,25 @@ class StateMachine(StateReader):
             self.__log.debug("check witness false...")
             return False
 
-
         admin = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
 
         issuer = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
 
         new_asset = AssetState(
             asset_id=tx.Hash, asset_type=asset_type, name=name, amount=amount,
-            available=Fixed8.Zero(),precision=precision,fee_mode=0,fee=Fixed8.Zero(),
-            fee_addr=UInt160(),owner=owner,admin=admin,issuer=issuer,
-            expiration= Blockchain.Default().Height + 1 + 2000000, is_frozen=False
+            available=Fixed8.Zero(), precision=precision, fee_mode=0, fee=Fixed8.Zero(),
+            fee_addr=UInt160(), owner=owner, admin=admin, issuer=issuer,
+            expiration=Blockchain.Default().Height + 1 + 2000000, is_frozen=False
         )
 
         asset = self._assets.GetOrAdd(tx.Hash.ToBytes(), new_asset)
 
-        #print("*****************************************************")
-        #print("CREATED ASSET %s " % tx.Hash.ToBytes())
-        #print("*****************************************************")
+        # print("*****************************************************")
+        # print("CREATED ASSET %s " % tx.Hash.ToBytes())
+        # print("*****************************************************")
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
         return True
-
 
     def Asset_Renew(self, engine):
 
@@ -280,10 +272,10 @@ class StateMachine(StateReader):
 
             asset.Expiration = sys.maxsize
 
-        #tx = engine.ScriptContainer
-        #print("*****************************************************")
-        #print("Renewed ASSET %s " % tx.Hash.ToBytes())
-        #print("*****************************************************")
+        # tx = engine.ScriptContainer
+        # print("*****************************************************")
+        # print("Renewed ASSET %s " % tx.Hash.ToBytes())
+        # print("*****************************************************")
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
         engine.EvaluationStack.PushT(asset.Expiration)
@@ -330,15 +322,15 @@ class StateMachine(StateReader):
 
         contract = self._contracts.TryGet(hash.ToBytes())
 
-        if contract == None:
+        if contract is None:
 
             code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
 
-            contract = ContractState(code,needs_storage,name,code_version,author,email,description)
+            contract = ContractState(code, needs_storage, name, code_version, author, email, description)
 
             self._contracts.GetAndChange(code.ScriptHash().ToBytes(), contract)
 
-            self._contracts_created[hash.ToBytes()] = UInt160( data = engine.CurrentContext.ScriptHash())
+            self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
@@ -346,7 +338,6 @@ class StateMachine(StateReader):
 #        print("CREATED CONTRACT %s " % hash.ToBytes())
 #        print("*****************************************************")
         return True
-
 
     def Contract_Migrate(self, engine):
 
@@ -398,21 +389,21 @@ class StateMachine(StateReader):
 
             self._contracts.Add(hash.ToBytes(), contract)
 
-            self._contracts_created[hash.ToBytes()] = UInt160( data = engine.CurrentContext.ScriptHash)
+            self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash)
 
             if needs_storage:
 
                 for pair in self._storages.Find(engine.CurrentContext.ScriptHash()):
 
-                    key = StorageKey(script_hash = hash, key = pair.Key.Key)
+                    key = StorageKey(script_hash=hash, key=pair.Key.Key)
                     item = StorageItem(pair.Value.Value)
                     self._storages.Add(key, item)
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-        #print("*****************************************************")
-        #print("MIGRATED CONTRACT %s " % hash.ToBytes())
-        #print("*****************************************************")
+        # print("*****************************************************")
+        # print("MIGRATED CONTRACT %s " % hash.ToBytes())
+        # print("*****************************************************")
 
         return True
 
@@ -433,7 +424,7 @@ class StateMachine(StateReader):
         return False
 
     def Contract_Destroy(self, engine):
-        hash = UInt160( data= engine.CurrentContext.ScriptHash())
+        hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
         contract = self._contracts.TryGet(hash.ToBytes())
 
@@ -443,12 +434,11 @@ class StateMachine(StateReader):
 
             if contract.HasStorage:
 
-                for pair in self._storages.Find( hash.ToBytes()):
+                for pair in self._storages.Find(hash.ToBytes()):
 
                     self._storages.Remove(pair.Key)
 
         return True
-
 
     def Storage_Get(self, engine):
 
@@ -494,7 +484,6 @@ class StateMachine(StateReader):
 
         return True
 
-
     def Storage_Put(self, engine):
 
         context = None
@@ -512,11 +501,10 @@ class StateMachine(StateReader):
         if len(key) > 1024:
             return False
 
-
         value = engine.EvaluationStack.Pop().GetByteArray()
 
         new_item = StorageItem(value=value)
-        storage_key = StorageKey(script_hash=context.ScriptHash, key = key)
+        storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
         item = self._storages.GetOrAdd(storage_key.GetHashCodeBytes(), new_item)
 
         keystr = key
@@ -530,8 +518,7 @@ class StateMachine(StateReader):
             except Exception as e:
                 pass
 
-
-        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash,keystr, valStr))
+        print("[Neo.Storage.Put] [Script: %s] [%s] -> %s" % (context.ScriptHash, keystr, valStr))
 
         return True
 

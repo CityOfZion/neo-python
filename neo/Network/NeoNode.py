@@ -1,5 +1,5 @@
 from twisted.internet.protocol import Protocol
-from twisted.internet import reactor,task
+from twisted.internet import reactor, task
 import json
 import time
 import binascii
@@ -8,9 +8,9 @@ from autologging import logged
 import pprint
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
-from neo.Network.Message import Message,ChecksumException
+from neo.Network.Message import Message, ChecksumException
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.IO.Helper import Helper as IOHelper
 from neo.Core.Helper import Helper
 from neo.Core.TX.Transaction import Transaction
@@ -26,6 +26,7 @@ import random
 
 from neo.Settings import settings
 
+
 @logged
 class NeoNode(Protocol):
 
@@ -37,14 +38,12 @@ class NeoNode(Protocol):
 
         from neo.Network.NodeLeader import NodeLeader
 
-        self.leader =NodeLeader.Instance()
+        self.leader = NodeLeader.Instance()
         self.nodeid = self.leader.NodeId
-        self.remote_nodeid = random.randint(1294967200,4294967200)
+        self.remote_nodeid = random.randint(1294967200, 4294967200)
         self.endpoint = ''
         self.buffer_in = bytearray()
-        self.pm = None
-        self.reset_counter = False
-        self.myblockrequests=set()
+        self.myblockrequests = set()
         self.bytes_in = 0
         self.bytes_out = 0
 
@@ -52,8 +51,6 @@ class NeoNode(Protocol):
         self.port = None
 
         self.Log("CREATED NEO NODE!!!!!!!!! %s " % self.remote_nodeid)
-
-
 
     def Disconnect(self):
         self.transport.loseConnection()
@@ -67,7 +64,7 @@ class NeoNode(Protocol):
         return None
 
     def IOStats(self):
-        biM = self.bytes_in / 1000000 #megabyes
+        biM = self.bytes_in / 1000000  # megabyes
         boM = self.bytes_out / 1000000
 
         return "%s MB in / %s MB out" % (biM, boM)
@@ -81,13 +78,11 @@ class NeoNode(Protocol):
 
         self.Log("Connection from %s" % self.endpoint)
 
-
     def connectionLost(self, reason=None):
 
         self.ReleaseBlockRequests()
         self.leader.RemoveConnectedPeer(self)
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
-
 
     def ReleaseBlockRequests(self):
         bcr = BC.Default().BlockRequests
@@ -103,70 +98,78 @@ class NeoNode(Protocol):
 
         self.myblockrequests = set()
 
-
     def dataReceived(self, data):
-
+        """ Called from Twisted whenever data is received. """
         self.bytes_in += (len(data))
-
         self.buffer_in = self.buffer_in + data
-
         self.CheckDataReceived()
 
     def CheckDataReceived(self):
+        currentLength = len(self.buffer_in)
+        if currentLength < 24:
+            return
 
-        if len(self.buffer_in) >= 24:
-
+        # Extract the message header from the buffer, and return if not enough
+        # buffer to fully deserialize the message object.
+        try:
+            # Construct message
             mstart = self.buffer_in[:24]
             ms = StreamManager.GetStream(mstart)
             reader = BinaryReader(ms)
+            m = Message()
 
+            # Extract message metadata
+            m.Magic = reader.ReadUInt32()
+            m.Command = reader.ReadFixedString(12).decode('utf-8')
+            m.Length = reader.ReadUInt32()
+            m.Checksum = reader.ReadUInt32()
 
-            try:
-                m = Message()
-                m.Magic =reader.ReadUInt32()
-                m.Command = reader.ReadFixedString(12).decode('utf-8')
-                m.Length = reader.ReadUInt32()
-                m.Checksum = reader.ReadUInt32()
-                self.pm = m
-            except Exception as e:
-                self.Log('could not read initial bytes %s ' % e)
-            finally:
-                StreamManager.ReleaseStream(ms)
-                del reader
+            # Return if not enough buffer to fully deserialize object.
+            messageExpectedLength = 24 + m.Length
+            # percentcomplete = int(100 * (currentLength / messageExpectedLength))
+            # self.Log("Receiving %s data: %s percent complete" % (m.Command, percentcomplete))
+            if currentLength < messageExpectedLength:
+                return
 
-            try:
-                self.CheckMessageData()
-            except Exception as e:
-                print("Could not check message data %s " % e)
+        except Exception as e:
+            self.Log('Error: Could not read initial bytes %s ' % e)
+            return
 
-    def CheckMessageData(self):
-        if not self.pm: return
+        finally:
+            StreamManager.ReleaseStream(ms)
+            del reader
 
-        currentlength = len(self.buffer_in)
-        messageExpectedLength = 24 + self.pm.Length
-#        percentcomplete = int(100 * (currentlength / messageExpectedLength))
-#        self.Log("Receiving %s data: %s percent complete" % (self.pm.Command, percentcomplete))
-
-        if currentlength >= messageExpectedLength:
+        # The message header was successfully extracted, and we have enough enough buffer
+        # to extract the full payload
+        try:
+            # Extract message bytes from buffer and truncate buffer
             mdata = self.buffer_in[:messageExpectedLength]
+            self.buffer_in = self.buffer_in[messageExpectedLength:]
+
+            # Deserialize message with payload
             stream = StreamManager.GetStream(mdata)
             reader = BinaryReader(stream)
             message = Message()
             message.Deserialize(reader)
-            StreamManager.ReleaseStream(stream)
-            self.buffer_in = self.buffer_in[messageExpectedLength:]
-            self.pm = None
-            self.MessageReceived(message)
-            self.reset_counter = False
-            if len(self.buffer_in) > 24 and not self.reset_counter:
-                self.CheckDataReceived()
 
-        else:
-            self.reset_counter = True
+            # Propagate new message
+            self.MessageReceived(message)
+
+        except Exception as e:
+            self.Log('Error: Could not extract message: %s ' % e)
+            return
+
+        finally:
+            StreamManager.ReleaseStream(stream)
+
+        # Finally, after a message has been fully deserialized and propagated,
+        # check if another message can be extracted with the current buffer:
+        if len(self.buffer_in) >= 24:
+            self.CheckDataReceived()
 
     def MessageReceived(self, m):
 
-#        self.Log("Messagereceived and processed ...: %s " % m.Command)
+        #        self.Log("Messagereceived and processed ...: %s " % m.Command)
 
         if m.Command == 'verack':
             self.HandleVerack()
@@ -188,7 +191,6 @@ class NeoNode(Protocol):
         else:
             self.Log("Command %s not implemented " % m.Command)
 
-
     def ProtocolReady(self):
         self.AskForMoreHeaders()
         self.AskForMoreBlocks()
@@ -198,7 +200,6 @@ class NeoNode(Protocol):
         self.Log("asking for more headers...")
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
-
 
     def AskForMoreBlocks(self):
         reactor.callInThread(self.DoAskForMoreBlocks)
@@ -213,11 +214,13 @@ class NeoNode(Protocol):
         if BC.Default().BlockSearchTries > 400 and len(BC.Default().BlockRequests) > 0:
             do_go_ahead = True
 
-        first=None
+        first = None
         while hashstart < current_header_height and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
             if not do_go_ahead:
-                if hash is not None and not hash in BC.Default().BlockRequests and not hash in self.myblockrequests:
+                if hash is not None and hash not in BC.Default().BlockRequests \
+                        and hash not in self.myblockrequests:
+
                     if not first:
                         first = hashstart
                     BC.Default().BlockRequests.add(hash)
@@ -232,8 +235,7 @@ class NeoNode(Protocol):
 
             hashstart += 1
 
-        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first,hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
-
+        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
@@ -248,25 +250,24 @@ class NeoNode(Protocol):
 
     def HandlePeerInfoReceived(self, payload):
 
-        addrs = IOHelper.AsSerializableWithType(payload,'neo.Network.Payloads.AddrPayload.AddrPayload')
+        addrs = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.AddrPayload.AddrPayload')
 
         for nawt in addrs.NetworkAddressesWithTime:
             self.leader.RemoteNodePeerReceived(nawt.Address, nawt.Port)
 
-
     def SendPeerInfo(self):
 
-#        self.Log("SENDING PEER INFO %s " % self)
+        #        self.Log("SENDING PEER INFO %s " % self)
 
-#        peerlist = []
-#        for peer in self.leader.Peers:
-#            peerlist.append( peer.GetNetworkAddressWithTime())
-#        self.Log("Peer list %s " % peerlist)
+        #        peerlist = []
+        #        for peer in self.leader.Peers:
+        #            peerlist.append( peer.GetNetworkAddressWithTime())
+        #        self.Log("Peer list %s " % peerlist)
 
-#        addrpayload = AddrPayload(addresses=peerlist)
-#        message = Message('addr',addrpayload)
-#        self.SendSerializedMessage(message)
-#       dont send peer info now
+        #        addrpayload = AddrPayload(addresses=peerlist)
+        #        message = Message('addr',addrpayload)
+        #        self.SendSerializedMessage(message)
+        #       dont send peer info now
         pass
 
     def RequestVersion(self):
@@ -276,7 +277,6 @@ class NeoNode(Protocol):
     def SendVersion(self):
         m = Message("version", VersionPayload(settings.NODE_PORT, self.remote_nodeid, settings.VERSION_NAME))
         self.SendSerializedMessage(m)
-
 
     def HandleVersion(self, payload):
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
@@ -292,13 +292,11 @@ class NeoNode(Protocol):
     def HandleInvMessage(self, payload):
         pass
 
-
     def SendSerializedMessage(self, message):
         ba = Helper.ToArray(message)
         ba2 = binascii.unhexlify(ba)
         self.bytes_out += len(ba2)
         self.transport.write(ba2)
-
 
     def HandleBlockHeadersReceived(self, inventory):
 
@@ -314,7 +312,7 @@ class NeoNode(Protocol):
 
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
 
-        blockhash =  block.Hash.ToBytes()
+        blockhash = block.Hash.ToBytes()
 
         if blockhash in BC.Default().BlockRequests:
             BC.Default().BlockRequests.remove(blockhash)
@@ -326,37 +324,32 @@ class NeoNode(Protocol):
         if len(self.myblockrequests) < self.leader.NREQMAX:
             self.DoAskForMoreBlocks()
 
-
     def HandleBlockReset(self, hash):
         self.myblockrequests = []
-
 
     def HandleGetDataMessageReceived(self, payload):
 
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
 
-
         for hash in inventory.Hashes:
             hash = hash.encode('utf-8')
 
             item = None
-            #try to get the inventory to send from relay cache
+            # try to get the inventory to send from relay cache
 
             if hash in self.leader.RelayCache.keys():
                 item = self.leader.RelayCache[hash]
 
             if item:
-                if inventory.Type == int.from_bytes( InventoryType.TX,'little'):
-
-                    message = Message(command='tx',payload=item, print_payload=True)
+                if inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
+                    message = Message(command='tx', payload=item, print_payload=True)
                     self.SendSerializedMessage(message)
 
-                elif inventory.Type == int.from_bytes( InventoryType.Block, 'little'):
+                elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
                     print("handle block!")
 
-                elif inventory.Type == int.from_bytes( InventoryType.Consensus, 'little'):
+                elif inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
                     print("handle consensus")
-
 
     def Relay(self, inventory):
 

@@ -1,21 +1,13 @@
-from neo.Core.TX.RegisterTransaction import RegisterTransaction
-from neo.Core.TX.MinerTransaction import MinerTransaction
-from neo.Core.TX.IssueTransaction import IssueTransaction
-from neo.Core.TX.Transaction import *
-from neo.SmartContract.Contract import Contract
 from neo.Core.Blockchain import Blockchain
-from neo.Core.Helper import Helper
-from neo.Core.Witness import Witness
-from neo.VM.OpCode import *
-from neo.Cryptography.Crypto import Crypto
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 import shutil
-
+import time
 from neo.Utils.NeoTestCase import NeoTestCase
+
 
 class VerifiableTestCase(NeoTestCase):
 
-    LEVELDB_TESTPATH = './VerifiableUnitTest'
+    LEVELDB_TESTPATH = './fixtures/test_chain'
 
     _blockchain = None
 
@@ -25,6 +17,6 @@ class VerifiableTestCase(NeoTestCase):
         Blockchain.RegisterBlockchain(self._blockchain)
 
     @classmethod
-    def tearDownClass(self):
-        self._blockchain.Dispose()
-        shutil.rmtree(self.LEVELDB_TESTPATH)
+    def tearDownClass(cls):
+        cls._blockchain.Dispose()
+        shutil.rmtree(cls.LEVELDB_TESTPATH)

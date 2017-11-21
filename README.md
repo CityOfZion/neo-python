@@ -14,9 +14,13 @@
   <a href="https://travis-ci.org/CityOfZion/neo-python">
     <img src="https://travis-ci.org/CityOfZion/neo-python.svg?branch=master">
   </a>
+  <a href="https://neo-python.readthedocs.io/en/latest/?badge=latest" rel="nofollow">
+    <img src="https://readthedocs.org/projects/neo-python/badge/?version=latest">
+  </a>
   <a href='https://coveralls.io/github/CityOfZion/neo-python?branch=master'>
     <img src='https://coveralls.io/repos/github/CityOfZion/neo-python/badge.svg?branch=master' alt='Coverage Status' />
   </a>
+  
 </p>
 
 ## Overview
@@ -55,10 +59,10 @@ We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get yo
 brew install leveldb
 ```
 
-##### ubuntu/debian
+##### Ubuntu/Debian
 
 ```
-apt-get -s install libleveldb-dev
+apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
 ```
 
 ##### Centos/Redhat/Fedora

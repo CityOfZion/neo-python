@@ -15,8 +15,8 @@ from neo.SmartContract.Contract import Contract
 
 import pdb
 
-def ImportContractAddr(wallet, args):
 
+def ImportContractAddr(wallet, args):
 
     if wallet is None:
         print("please open a wallet")
@@ -30,7 +30,7 @@ def ImportContractAddr(wallet, args):
         if len(pubkey) != 66:
             print("invalid public key format")
 
-        pubkey_script_hash = Crypto.ToScriptHash(pubkey,unhex=True)
+        pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
 
         contract = Blockchain.Default().GetContract(contract_hash)
 
@@ -48,8 +48,7 @@ def ImportContractAddr(wallet, args):
                 param_list = bytearray(contract.Code.ParameterList)
                 param_list[0] = 0
 
-
-            verification_contract = Contract.Create(reedeem_script,param_list,pubkey_script_hash)
+            verification_contract = Contract.Create(reedeem_script, param_list, pubkey_script_hash)
 
             address = verification_contract.Address
 
@@ -58,6 +57,7 @@ def ImportContractAddr(wallet, args):
             print("Added contract addres %s to wallet" % address)
 
     return 'Hello'
+
 
 def LoadContract(args):
 
@@ -80,7 +80,6 @@ def LoadContract(args):
 
     script = None
 
-
     if '.py' in path:
         print("Please load a compiled .avm file")
         return False
@@ -96,7 +95,6 @@ def LoadContract(args):
 
         script = content
 
-
     if script is not None:
 
         plist = params
@@ -105,10 +103,9 @@ def LoadContract(args):
             plist = bytearray(binascii.unhexlify(params))
         except Exception as e:
             plist = bytearray(b'\x10')
-        function_code = FunctionCode(script=script,param_list=bytearray(plist), return_type=binascii.unhexlify(return_type), needs_storage=needs_storage)
+        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=binascii.unhexlify(return_type), needs_storage=needs_storage)
 
         return function_code
-
 
     print("error loading contract for path %s" % path)
     return None
@@ -128,9 +125,10 @@ def GatherLoadedContractParams(args, script):
 
     needs_storage = bool(parse_param(args[2]))
 
-    out = generate_deploy_script(script,needs_storage=needs_storage,return_type=return_type,parameter_list=params)
+    out = generate_deploy_script(script, needs_storage=needs_storage, return_type=return_type, parameter_list=params)
 
     return out
+
 
 def GatherContractDetails(function_code, prompter):
 
@@ -142,40 +140,34 @@ def GatherContractDetails(function_code, prompter):
 
     print("Please fill out the following contract details:")
     name = prompt("[Contract Name] > ",
-                    completer=prompter.get_completer(),
-                    history=prompter.history,
-                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                    style=prompter.token_style)
-
-
-    version = prompt("[Contract Version] > ",
                   completer=prompter.get_completer(),
                   history=prompter.history,
                   get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                   style=prompter.token_style)
 
-
-    author = prompt("[Contract Author] > ",
+    version = prompt("[Contract Version] > ",
                      completer=prompter.get_completer(),
                      history=prompter.history,
                      get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                      style=prompter.token_style)
 
-
+    author = prompt("[Contract Author] > ",
+                    completer=prompter.get_completer(),
+                    history=prompter.history,
+                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
+                    style=prompter.token_style)
 
     email = prompt("[Contract Email] > ",
-                    completer=prompter.get_completer(),
-                    history=prompter.history,
-                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                    style=prompter.token_style)
-
+                   completer=prompter.get_completer(),
+                   history=prompter.history,
+                   get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
+                   style=prompter.token_style)
 
     description = prompt("[Contract Description] > ",
-                    completer=prompter.get_completer(),
-                    history=prompter.history,
-                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                    style=prompter.token_style)
-
+                         completer=prompter.get_completer(),
+                         history=prompter.history,
+                         get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
+                         style=prompter.token_style)
 
     print("Creating smart contract....")
     print("         Name: %s " % name)
@@ -189,6 +181,7 @@ def GatherContractDetails(function_code, prompter):
     return generate_deploy_script(function_code.Script, name, version, author, email, description,
                                   function_code.NeedsStorage, ord(function_code.ReturnType),
                                   function_code.ParameterList)
+
 
 def generate_deploy_script(script, name='test', version='test', author='test', email='test',
                            description='test', needs_storage=False, return_type=b'\xff', parameter_list=[]):
@@ -231,7 +224,7 @@ def ImportMultiSigContractAddr(wallet, args):
 
     if publicKeys[1]:
 
-        pubkey_script_hash = Crypto.ToScriptHash(pubkey,unhex=True)
+        pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
 
         verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)
 

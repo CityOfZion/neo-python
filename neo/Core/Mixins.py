@@ -2,15 +2,18 @@
 
 from neo.IO.Mixins import SerializableMixin
 
+
 class ClonableMixin(object):
     def clone(self):
         pass
+
 
 class CodeMixin(object):
     scripts = []
     parameter_list = []
     return_type = None
     script_hash = None
+
 
 class VerifiableMixin(SerializableMixin):
 
@@ -29,7 +32,6 @@ class VerifiableMixin(SerializableMixin):
     # <returns>返回需要校验的脚本Hash值</returns>
     def GetScriptHashesForVerifying(self):
         pass
-
 
     # <summary>
     # 序列化未签名的数据

@@ -23,6 +23,13 @@
       "13.59.14.206:10333",
       "18.216.9.7:10333"
     ],
+    "RPCList":[
+      "http://13.59.52.94:8080",
+      "http://18.220.214.143:8080",
+      "http://13.58.198.112:8080",
+      "http://13.59.14.206:8080",
+      "http://18.216.9.7:8080"
+    ],
     "SystemFee": {
       "EnrollmentTransaction": 1000,
       "IssueTransaction": 500,
@@ -31,27 +38,13 @@
     }
   },
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/Main",
+    "DataDirectoryPath": "Chains/Main",
     "NodePort": 10333,
     "WsPort": 10334,
     "UriPrefix": [ "http://*:10332" ],
     "SslCert": "",
     "SslCertPassword": "",
     "VersionName":"/NEO-PYTHON:2.3.4/",
-    "theme": "dark",
-    "themes": {
-        "dark": {
-            "Command": "#ff0066",
-            "Default": "#00ee00",
-            "Neo": "#0000ee",
-            "Number": "#ffffff"
-        },
-        "light": {
-            "Command": "#ff0066",
-            "Default": "#008800",
-            "Neo": "#0000ee",
-            "Number": "#000000"
-        }
-    }
+    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Chain1550000.tar.gz"
   }
 }

@@ -1,14 +1,12 @@
 # -*- coding: UTF-8 -*-
 import hashlib
 import binascii
-from ecdsa import SigningKey, NIST256p,VerifyingKey
+from ecdsa import SigningKey, NIST256p, VerifyingKey
 from .Helper import *
 from neo.UInt256 import UInt256
 from neo.UInt160 import UInt160
 import bitcoin
 from neo.Cryptography.ECCurve import EllipticCurve
-
-
 
 
 class Crypto(object):
@@ -24,9 +22,6 @@ class Crypto(object):
             int("6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296", 16),
             int("4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5", 16)
         )
-
-
-
 
     @staticmethod
     def Default():
@@ -49,8 +44,7 @@ class Crypto(object):
     def ToScriptHash(data, unhex=True):
         if len(data) > 1 and unhex:
             data = binascii.unhexlify(data)
-        return UInt160( data = binascii.unhexlify(bytes(Crypto.Hash160(data), encoding='utf-8')))
-
+        return UInt160(data=binascii.unhexlify(bytes(Crypto.Hash160(data), encoding='utf-8')))
 
     @staticmethod
     def ToAddress(uint160):
@@ -63,7 +57,7 @@ class Crypto(object):
 
         hash = hashlib.sha256(binascii.unhexlify(message)).hexdigest()
 
-        v,r,s = bitcoin.ecdsa_raw_sign(hash, private_key)
+        v, r, s = bitcoin.ecdsa_raw_sign(hash, private_key)
 
         rb = bytearray(r.to_bytes(32, 'big'))
         sb = bytearray(s.to_bytes(32, 'big'))
@@ -79,8 +73,8 @@ class Crypto(object):
 
         if type(public_key) is EllipticCurve.ECPoint:
 
-            pubkey_x = public_key.x.value.to_bytes(32,'big')
-            pubkey_y = public_key.y.value.to_bytes(32,'big')
+            pubkey_x = public_key.x.value.to_bytes(32, 'big')
+            pubkey_y = public_key.y.value.to_bytes(32, 'big')
 
             public_key = pubkey_x + pubkey_y
 
@@ -96,8 +90,8 @@ class Crypto(object):
             public_key = public_key[1:]
 
         try:
-            vk = VerifyingKey.from_string( public_key,curve=NIST256p, hashfunc=hashlib.sha256 )
-            res = vk.verify(signature, m,hashfunc=hashlib.sha256)
+            vk = VerifyingKey.from_string(public_key, curve=NIST256p, hashfunc=hashlib.sha256)
+            res = vk.verify(signature, m, hashfunc=hashlib.sha256)
             return res
         except Exception as e:
             pass

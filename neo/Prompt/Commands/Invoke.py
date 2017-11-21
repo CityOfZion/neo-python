@@ -3,7 +3,7 @@ from neo.SmartContract.ContractParameterType import ContractParameterType, ToNam
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import parse_param,get_asset_attachments
+from neo.Prompt.Utils import parse_param, get_asset_attachments
 from neo.Core.TX.Transaction import Transaction
 import json
 import binascii
@@ -19,7 +19,7 @@ from neo.Core.State.ContractState import ContractState
 from neo.Core.State.StorageItem import StorageItem
 
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
-from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.Core.TX.Transaction import TransactionOutput
 
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
@@ -39,15 +39,15 @@ import pdb
 import json
 from neo.UInt160 import UInt160
 
+
 def InvokeWithdrawTx(wallet, tx, contract_hash):
 
-    print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
+    #    print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
 
     requestor_contract = wallet.GetDefaultContract()
     tx.Attributes = [
         TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)
     ]
-
 
     withdraw_contract_state = Blockchain.Default().GetContract(contract_hash.encode('utf-8'))
 
@@ -70,23 +70,18 @@ def InvokeWithdrawTx(wallet, tx, contract_hash):
         verification_contract = Contract.Create(reedeem_script, param_list, requestor_contract.PublicKeyHash)
 
         address = verification_contract.Address
-        print("address is.... %s " % address)
         withdraw_verification = verification_contract
-
 
     context = ContractParametersContext(tx)
     wallet.Sign(context)
 
-
-    print("withdraw tx 2 %s " % json.dumps(tx.ToJson(), indent=4))
-
-    context.Add(withdraw_verification,0,0)
+    context.Add(withdraw_verification, 0, 0)
 
     if context.Completed:
 
         tx.scripts = context.GetScripts()
 
-        print("withdraw tx 3 %s " % json.dumps(tx.ToJson(), indent=4))
+        print("withdraw tx %s " % json.dumps(tx.ToJson(), indent=4))
 
         wallet.SaveTransaction(tx)
 
@@ -104,8 +99,9 @@ def InvokeWithdrawTx(wallet, tx, contract_hash):
 
 def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
+    wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
 
-    wallet_tx = wallet.MakeTransaction(tx=tx,fee=fee, use_standard=True)
+#    pdb.set_trace()
 
     if wallet_tx:
 
@@ -117,9 +113,15 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
             wallet_tx.scripts = context.GetScripts()
 
-            wallet.SaveTransaction(wallet_tx)
+            relayed = False
 
-            relayed = NodeLeader.Instance().Relay(wallet_tx)
+            # check if we can save the tx first
+            save_tx = wallet.SaveTransaction(wallet_tx)
+
+            if save_tx:
+                relayed = NodeLeader.Instance().Relay(wallet_tx)
+            else:
+                print("Could not save tx to wallet, will not send tx")
 
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())
@@ -135,6 +137,7 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
     return False
 
+
 def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
 
     BC = GetBlockchain()
@@ -142,22 +145,21 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
     contract = BC.GetContract(args[0])
 
     if contract:
-        descripe_contract(contract)
 
         verbose = False
 
         if 'verbose' in args:
+            descripe_contract(contract)
             verbose = True
             args.remove('verbose')
 
 #
-        params =  args[1:] if len(args) > 1 else []
+        params = args[1:] if len(args) > 1 else []
 
         if len(params) > 0 and params[0] == 'describe':
             return
 
-
-        params,neo_to_attach,gas_to_attach = get_asset_attachments(params)
+        params, neo_to_attach, gas_to_attach = get_asset_attachments(params)
 
         params.reverse()
 
@@ -180,7 +182,6 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
             else:
                 sb.push(item)
 
-
         sb.EmitAppCall(contract.Code.ScriptHash().Data)
 
         out = sb.ToArray()
@@ -198,12 +199,10 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
         if gas_to_attach:
 
             output = TransactionOutput(AssetId=Blockchain.SystemCoin().Hash,
-                                      Value=gas_to_attach,
-                                      script_hash=contract.Code.ScriptHash())
+                                       Value=gas_to_attach,
+                                       script_hash=contract.Code.ScriptHash())
 
             outputs.append(output)
-
-
 
         return test_invoke(out, wallet, outputs, withdrawal_tx)
 
@@ -211,14 +210,12 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
 
         print("Contract %s not found" % args[0])
 
-    return None,None
-
-
+    return None, None, None, None
 
 
 def test_invoke(script, wallet, outputs, withdrawal_tx=None):
 
-#    print("invoke script %s " % script)
+    #    print("invoke script %s " % script)
 
     bc = GetBlockchain()
 
@@ -230,13 +227,11 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
     contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
     storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
 
-
     # if we are using a withdrawal tx, don't recreate the invocation tx
     # also, we don't want to reset the inputs / outputs
     # since those were already calculated
     if withdrawal_tx is not None:
         tx = withdrawal_tx
-
 
     else:
         tx = InvocationTransaction()
@@ -252,14 +247,13 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
 
     if len(outputs) < 1:
         contract = wallet.GetDefaultContract()
-        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script).Data)]
+        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script).Data)]
 
     # same as above. we don't want to re-make the transaction if it is a withdrawal tx
     if withdrawal_tx is not None:
         wallet_tx = tx
     else:
         wallet_tx = wallet.MakeTransaction(tx=tx)
-
 
     if wallet_tx:
 
@@ -278,7 +272,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
     )
 
     engine.LoadScript(wallet_tx.Script, False)
-
 
     try:
         # drum roll?
@@ -305,32 +298,21 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
                 tx_gas = consumed
                 net_fee = Fixed8.Zero()
 
-            #set the amount of gas the tx will need
+            # set the amount of gas the tx will need
             wallet_tx.Gas = tx_gas
-
-            #reset the wallet outputs
+            # reset the wallet outputs
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = []
 
             return wallet_tx, net_fee, engine.EvaluationStack.Items, engine.ops_processed
         else:
             print("error executing contract.....")
-#            tx.Gas = Fixed8.One()
-#            tx.Attributes = []
-#            return tx, []
-            return None,None, None, None
+            return None, None, None, None
 
     except Exception as e:
         print("COULD NOT EXECUTE %s " % e)
 
-    return None,None, None, None
-
-
-
-
-
-
-
+    return None, None, None, None
 
 
 def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
@@ -361,7 +343,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
     contract = wallet.GetDefaultContract()
-    dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash( contract.Script))]
+    dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script))]
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
@@ -374,8 +356,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
     engine.LoadScript(dtx.Script, False)
 
-    #first we will execute the test deploy
-    #then right after, we execute the test invoke
+    # first we will execute the test deploy
+    # then right after, we execute the test invoke
 
     try:
         d_success = engine.Execute()
@@ -394,7 +376,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                     if type(item) is ContractState:
                         contract_state = item
                         break
-
 
             shash = contract_state.Code.ScriptHash()
 
@@ -440,7 +421,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                                            script_hash=contract_state.Code.ScriptHash())
 
                 outputs.append(output)
-
 
             itx = InvocationTransaction()
             itx.Version = 1
@@ -488,7 +468,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 if consumed < Fixed8.One():
                     consumed = Fixed8.FromDecimal(.001)
 
-
                 total_ops = engine.ops_processed
 
                 # set the amount of gas the tx will need
@@ -507,14 +486,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
         traceback.print_stack()
         traceback.print_exc()
 
-    return None,[], 0
-
-
-
-
-
+    return None, [], 0
 
 
 def descripe_contract(contract):
     print("invoking contract - %s" % contract.Name.decode('utf-8'))
-

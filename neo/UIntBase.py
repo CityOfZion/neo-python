@@ -1,6 +1,7 @@
 from neo.IO.Mixins import SerializableMixin
 import binascii
 
+
 class UIntBase(SerializableMixin):
     Data = bytearray()
     __hash = None
@@ -83,7 +84,7 @@ class UIntBase(SerializableMixin):
 
         length = len(x)
 
-        for i in range(length-1, 0, -1):
+        for i in range(length - 1, 0, -1):
             if x[i] > y[i]:
                 return 1
             if x[i] < y[i]:

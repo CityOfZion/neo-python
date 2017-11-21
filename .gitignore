@@ -11,6 +11,8 @@ UnitTestChain
 
 Contracts
 
+/Wallets
+
 # Distribution / packaging
 .Python
 env/
@@ -80,8 +82,11 @@ ENV/
 endpoints.txt
 
 # prompt history
-
 .prompt.py.history
+
+preferences.json
 prompt.log
+test.log
+
 .pylint
 .vscode

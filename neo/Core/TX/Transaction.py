@@ -21,15 +21,16 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from autologging import logged
 from neo.UInt256 import UInt256
+from neo.Core.AssetType import AssetType
 
 import sys
 from itertools import groupby
-from neo.Core.AssetType import AssetType
-import pdb
+import json
+
 
 class TransactionResult():
-    AssetId=None
-    Amount=Fixed8(0)
+    AssetId = None
+    Amount = Fixed8(0)
 
     def __init__(self, asset_id, amount):
         self.AssetId = asset_id
@@ -37,6 +38,7 @@ class TransactionResult():
 
     def ToString(self):
         return "%s -> %s " % (self.AssetId.ToString(), self.Amount.value)
+
 
 class TransactionType(object):
     MinerTransaction = b'\x00'
@@ -50,15 +52,16 @@ class TransactionType(object):
     PublishTransaction = b'\xd0'
     InvocationTransaction = b'\xd1'
 
+
 @logged
 class TransactionOutput(SerializableMixin):
 
-
-    Value = None # should be fixed 8
+    Value = None  # should be fixed 8
     ScriptHash = None
     AssetId = None
 
     """docstring for TransactionOutput"""
+
     def __init__(self, AssetId=None, Value=None, script_hash=None):
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
@@ -88,7 +91,6 @@ class TransactionOutput(SerializableMixin):
         if self.ScriptHash is None:
             raise Exception("Script hash is required from deserialize!!!!!!!!")
 
-
     def ToJson(self):
         return {
             'AssetId': self.AssetId.ToString(),
@@ -96,12 +98,13 @@ class TransactionOutput(SerializableMixin):
             'ScriptHash': self.Address
         }
 
+
 @logged
 class TransactionInput(SerializableMixin):
     """docstring for TransactionInput"""
 
-    PrevHash=None
-    PrevIndex=None
+    PrevHash = None
+    PrevIndex = None
 
     def __init__(self, prevHash=None, prevIndex=None):
         super(TransactionInput, self).__init__()
@@ -126,9 +129,9 @@ class TransactionInput(SerializableMixin):
             'PrevIndex': self.PrevIndex
         }
 
+
 @logged
 class Transaction(Inventory, InventoryMixin):
-
 
     Type = None
 
@@ -142,11 +145,10 @@ class Transaction(Inventory, InventoryMixin):
 
     scripts = []
 
-    __system_fee =  None
+    __system_fee = None
     __network_fee = None
 
     InventoryType = InventoryType.TX
-
 
     __hash = None
     __htbs = None
@@ -155,14 +157,15 @@ class Transaction(Inventory, InventoryMixin):
 
     __references = None
 
-    MAX_TX_ATTRIBUTES=16
+    MAX_TX_ATTRIBUTES = 16
 
     """docstring for Transaction"""
-    def __init__(self, inputs=[], outputs=[], attributes = [], scripts=[] ):
+
+    def __init__(self, inputs=[], outputs=[], attributes=[], scripts=[]):
         super(Transaction, self).__init__()
         self.inputs = inputs
         self.outputs = outputs
-        self.Attributes= attributes
+        self.Attributes = attributes
         self.scripts = scripts
         self.InventoryType = 0x01  # InventoryType TX 0x01
         self.__references = None
@@ -175,14 +178,11 @@ class Transaction(Inventory, InventoryMixin):
             self.__hash = UInt256(data=hash)
         return self.__hash
 
-
     def GetHashData(self):
         return Helper.GetHashData(self)
 
-
     def GetMessage(self):
         return self.GetHashData()
-
 
     def getAllInputs(self):
         return self.inputs
@@ -201,10 +201,10 @@ class Transaction(Inventory, InventoryMixin):
 
             refs = {}
 
-            #group by the input prevhash
+            # group by the input prevhash
             for hash, group in groupby(self.inputs, lambda x: x.PrevHash):
 
-                tx,height = GetBlockchain().GetTransaction(hash.ToBytes())
+                tx, height = GetBlockchain().GetTransaction(hash.ToBytes())
                 if tx is not None:
                     for input in group:
                         refs[input] = tx.outputs[input.PrevIndex]
@@ -213,13 +213,10 @@ class Transaction(Inventory, InventoryMixin):
 
         return self.__references
 
-
-
     def Size(self):
         return sys.getsizeof(self.Type) + sys.getsizeof(0) \
-               + sys.getsizeof(self.Attributes) + sys.getsizeof(self.inputs) + \
-                    sys.getsizeof(self.outputs) + sys.getsizeof(self.scripts)
-
+            + sys.getsizeof(self.Attributes) + sys.getsizeof(self.inputs) + \
+            sys.getsizeof(self.outputs) + sys.getsizeof(self.scripts)
 
     def Height(self):
         return self.__height
@@ -257,7 +254,6 @@ class Transaction(Inventory, InventoryMixin):
 
 #        return self.__network_fee
 
-
     def Deserialize(self, reader):
 
         self.DeserializeUnsigned(reader)
@@ -265,10 +261,8 @@ class Transaction(Inventory, InventoryMixin):
         self.scripts = reader.ReadSerializableArray()
         self.OnDeserialized()
 
-
     def DeserializeExclusiveData(self, reader):
         pass
-
 
     @staticmethod
     def DeserializeFromBufer(buffer, offset=0):
@@ -292,15 +286,15 @@ class Transaction(Inventory, InventoryMixin):
         from neo.Core.TX.InvocationTransaction import InvocationTransaction
         from neo.Core.TX.EnrollmentTransaction import EnrollmentTransaction
 
-        if ttype == int.from_bytes( TransactionType.RegisterTransaction, 'little'):
+        if ttype == int.from_bytes(TransactionType.RegisterTransaction, 'little'):
             tx = RegisterTransaction()
-        elif ttype == int.from_bytes( TransactionType.MinerTransaction, 'little'):
+        elif ttype == int.from_bytes(TransactionType.MinerTransaction, 'little'):
             tx = MinerTransaction()
-        elif ttype == int.from_bytes( TransactionType.IssueTransaction, 'little'):
+        elif ttype == int.from_bytes(TransactionType.IssueTransaction, 'little'):
             tx = IssueTransaction()
-        elif ttype == int.from_bytes( TransactionType.ClaimTransaction, 'little'):
+        elif ttype == int.from_bytes(TransactionType.ClaimTransaction, 'little'):
             tx = ClaimTransaction()
-        elif ttype == int.from_bytes( TransactionType.PublishTransaction, 'little'):
+        elif ttype == int.from_bytes(TransactionType.PublishTransaction, 'little'):
             tx = PublishTransaction()
         elif ttype == int.from_bytes(TransactionType.InvocationTransaction, 'little'):
             tx = InvocationTransaction()
@@ -332,11 +326,11 @@ class Transaction(Inventory, InventoryMixin):
             raise Exception('incorrect type {}, wanted {}'.format(txtype, int.from_bytes(self.Type, 'little')))
         self.DeserializeUnsignedWithoutType(reader)
 
-    def DeserializeUnsignedWithoutType(self,reader):
+    def DeserializeUnsignedWithoutType(self, reader):
         self.Version = reader.ReadByte()
         self.DeserializeExclusiveData(reader)
-        self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute',max=self.MAX_TX_ATTRIBUTES)
-        self.inputs = reader.ReadSerializableArray( 'neo.Core.CoinReference.CoinReference')
+        self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute', max=self.MAX_TX_ATTRIBUTES)
+        self.inputs = reader.ReadSerializableArray('neo.Core.CoinReference.CoinReference')
         self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
 
     def Equals(self, other):
@@ -364,10 +358,8 @@ class Transaction(Inventory, InventoryMixin):
         writer.WriteSerializableArray(self.inputs)
         writer.WriteSerializableArray(self.outputs)
 
-
     def SerializeExclusiveData(self, writer):
         pass
-
 
     def OnDeserialized(self):
         pass
@@ -375,7 +367,7 @@ class Transaction(Inventory, InventoryMixin):
     def ToJson(self):
         jsn = {}
         jsn["txid"] = self.Hash.ToString()
-        jsn["type"] = self.Type if type(self.Type) is int else int.from_bytes( self.Type, 'little')
+        jsn["type"] = self.Type if type(self.Type) is int else int.from_bytes(self.Type, 'little')
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
         jsn["vout"] = [out.ToJson() for out in self.outputs]
@@ -384,7 +376,6 @@ class Transaction(Inventory, InventoryMixin):
         jsn["net_fee"] = self.NetworkFee().value
         jsn["scripts"] = [script.ToJson() for script in self.scripts]
         return jsn
-
 
     def Verify(self, mempool):
         self.__log.debug("Verifying transaction: %s " % self.Hash.ToBytes())
@@ -400,7 +391,7 @@ class Transaction(Inventory, InventoryMixin):
 #                j = j+1
 #                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
 #                    return False
-##        self.__log.debug("Verified inputs 1")
+#        self.__log.debug("Verified inputs 1")
 #       for tx in mempool:
 #           if tx is not self:
 #               for ip in self.inputs:
@@ -464,16 +455,13 @@ class Transaction(Inventory, InventoryMixin):
 #                    return False
 #
 
-
-
     def GetScriptHashesForVerifying(self):
-
 
         if not self.References and len(self.Attributes) < 1:
             return []
 
         hashes = set()
-        for coinref,output in self.References.items():
+        for coinref, output in self.References.items():
             hashes.add(output.ScriptHash)
 
         for attr in self.Attributes:
@@ -481,7 +469,7 @@ class Transaction(Inventory, InventoryMixin):
                 if type(attr.Data) is UInt160:
                     hashes.add(attr.Data)
                 else:
-                    hashes.add( UInt160(data=attr.Data))
+                    hashes.add(UInt160(data=attr.Data))
 
         for key, group in groupby(self.outputs, lambda p: p.AssetId):
             asset = GetBlockchain().GetAssetState(key.ToBytes())
@@ -496,9 +484,9 @@ class Transaction(Inventory, InventoryMixin):
         hashlist.sort()
         return hashlist
 
-
     def GetTransactionResults(self):
-        if self.References is None: return None
+        if self.References is None:
+            return None
 
         results = []
         realresults = []
@@ -509,13 +497,13 @@ class Transaction(Inventory, InventoryMixin):
             results.append(TransactionResult(output.AssetId, output.Value * Fixed8(-1)))
 
         for key, group in groupby(results, lambda x: x.AssetId):
-            sum=Fixed8(0)
+            sum = Fixed8(0)
             for item in group:
                 sum = sum + item.Amount
 
             if sum != Fixed8.Zero():
 
-                realresults.append( TransactionResult(key, sum))
+                realresults.append(TransactionResult(key, sum))
 
         return realresults
 

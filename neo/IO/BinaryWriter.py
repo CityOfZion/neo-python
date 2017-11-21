@@ -12,21 +12,27 @@ import binascii
 from autologging import logged
 from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
-import sys,os
+import sys
+import os
 import inspect
+
 
 def swap32(i):
     return struct.unpack("<I", struct.pack(">I", i))[0]
 
+
 def convert_to_uint160(value):
-    return bin(value+2**20)[-20:]
+    return bin(value + 2**20)[-20:]
+
 
 def convert_to_uint256(value):
-    return bin(value+2**32)[-32:]
+    return bin(value + 2**32)[-32:]
+
 
 @logged
 class BinaryWriter(object):
     """docstring for BinaryWriter"""
+
     def __init__(self, stream):
         super(BinaryWriter, self).__init__()
         self.stream = stream
@@ -39,18 +45,19 @@ class BinaryWriter(object):
         elif type(value) is int:
             self.stream.write(bytes([value]))
 
-    def WriteBytes(self, value):
-        try:
-            value = binascii.unhexlify(value)
-        except TypeError:
-            pass
-        except binascii.Error:
-            pass
+    def WriteBytes(self, value, unhex=True):
+        if unhex:
+            try:
+                value = binascii.unhexlify(value)
+            except TypeError:
+                pass
+            except binascii.Error:
+                pass
 
         self.stream.write(value)
 
     def pack(self, fmt, data):
-        return self.WriteBytes(struct.pack(fmt, data))
+        return self.WriteBytes(struct.pack(fmt, data), unhex=False)
 
     def WriteChar(self, value, endian="<"):
         return self.pack('c', value)
@@ -102,9 +109,8 @@ class BinaryWriter(object):
             raise Exception("Cannot write value that is not UInt256")
     #        return self.pack('%sQ' % endian, value)
 
-
     def WriteVarInt(self, value, endian="<"):
-        if not isinstance(value ,int):
+        if not isinstance(value, int):
             raise TypeError('%s not int type.' % value)
 
         if value < 0:
@@ -141,7 +147,6 @@ class BinaryWriter(object):
         self.WriteVarInt(length)
         self.WriteBytes(string)
 
-
     def WriteFixedString(self, value, length):
         towrite = value.encode('utf-8')
         slen = len(towrite)
@@ -152,7 +157,7 @@ class BinaryWriter(object):
 
         while diff > 0:
             self.WriteByte(0)
-            diff -=1
+            diff -= 1
 
     def WriteSerializableArray(self, array):
         if array is None:
@@ -168,7 +173,6 @@ class BinaryWriter(object):
             ba.reverse()
             self.WriteBytes(ba)
 
-
     def WriteHashes(self, arr):
         length = len(arr)
         self.WriteVarInt(length)
@@ -178,9 +182,7 @@ class BinaryWriter(object):
 #            print("WRITING HASH %s " % ba)
             self.WriteBytes(ba)
 
-
     def WriteFixed8(self, value, unsigned=False):
-        if unsigned:
-            return self.WriteUInt64(int(value.value))
-
+        #        if unsigned:
+        #            return self.WriteUInt64(int(value.value))
         return self.WriteInt64(value.value)

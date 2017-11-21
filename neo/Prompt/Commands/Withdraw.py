@@ -3,14 +3,15 @@ from prompt_toolkit import prompt
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
 from neo.Fixed8 import Fixed8
-from neo.Core.TX.Transaction import TransactionOutput,TransactionInput
+from neo.Core.TX.Transaction import TransactionOutput, TransactionInput
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
-from neo.Prompt.Utils import parse_param,get_arg,get_asset_id,get_asset_amount,get_withdraw_from_watch_only,parse_hold_vins
-from neo.Prompt.Commands.Invoke import TestInvokeContract,InvokeContract,InvokeWithdrawTx
+from neo.Prompt.Utils import parse_param, get_arg, get_asset_id, get_asset_amount, get_withdraw_from_watch_only, parse_hold_vins
+from neo.Prompt.Commands.Invoke import TestInvokeContract, InvokeContract, InvokeWithdrawTx
 from neo.Wallets.Coin import CoinState
 from neo.UInt256 import UInt256
 import json
 import pdb
+
 
 def RequestWithdraw(prompter, wallet, args):
 
@@ -76,7 +77,6 @@ def RequestWithdraw(prompter, wallet, args):
             return
 
 
-
 def RedeemWithdraw(prompter, wallet, args):
     """
     withdraw {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
@@ -85,7 +85,7 @@ def RedeemWithdraw(prompter, wallet, args):
         print("please open a wallet")
         return
 
-    withdrawal_tx = construct_withdrawal_tx(wallet,args)
+    withdrawal_tx = construct_withdrawal_tx(wallet, args)
 
     if withdrawal_tx:
 
@@ -129,20 +129,19 @@ def RedeemWithdraw(prompter, wallet, args):
             return
 
 
-
 def construct_contract_withdrawal_request(wallet, arguments, fee=Fixed8.FromDecimal(.001), check_holds=False):
 
     if len(arguments) < 4:
         print("not enough arguments")
         return False
 
-    #AG5xbb6QqHSUgDw8cHdyU73R1xy4qD7WEE neo AdMDZGto3xWozB1HSjjVv27RL3zUM8LzpV 20
-    from_address = get_arg(arguments,0)
-    to_send = get_arg(arguments,1)
+    # AG5xbb6QqHSUgDw8cHdyU73R1xy4qD7WEE neo AdMDZGto3xWozB1HSjjVv27RL3zUM8LzpV 20
+    from_address = get_arg(arguments, 0)
+    to_send = get_arg(arguments, 1)
     to_address = get_arg(arguments, 2)
     amount = get_arg(arguments, 3)
 
-    assetId = get_asset_id(to_send)
+    assetId = get_asset_id(wallet, to_send)
 
     f8amount = get_asset_amount(amount, assetId)
 
@@ -150,7 +149,7 @@ def construct_contract_withdrawal_request(wallet, arguments, fee=Fixed8.FromDeci
 
     scripthash_from = wallet.ToScriptHash(from_address)
 
-    withdraw_from_watch_only= get_withdraw_from_watch_only(wallet,scripthash_from)
+    withdraw_from_watch_only = get_withdraw_from_watch_only(wallet, scripthash_from)
 
     if f8amount is None or scripthash_to is None or withdraw_from_watch_only is None:
         print("Could not process to or from addr or amount")
@@ -165,10 +164,9 @@ def construct_contract_withdrawal_request(wallet, arguments, fee=Fixed8.FromDeci
 
         exclude_vin = lookup_contract_holds(wallet, scripthash_from)
 
-
     withdraw_constructed_tx = wallet.MakeTransaction(tx=withdraw_tx,
                                                      change_address=scripthash_from,
-                                                     fee=  fee,
+                                                     fee=fee,
                                                      from_addr=scripthash_from,
                                                      use_standard=False,
                                                      watch_only_val=withdraw_from_watch_only,
@@ -178,35 +176,31 @@ def construct_contract_withdrawal_request(wallet, arguments, fee=Fixed8.FromDeci
         return withdraw_constructed_tx
 
 
-
-
 def construct_withdrawal_tx(wallet, args):
 
-    from_address = get_arg(args,0)
-    assetId = get_asset_id( get_arg(args,1))
+    from_address = get_arg(args, 0)
+    assetId = get_asset_id(wallet, get_arg(args, 1))
     to_address = get_arg(args, 2)
-    f8amount = get_asset_amount( get_arg(args, 3), assetId)
+    f8amount = get_asset_amount(get_arg(args, 3), assetId)
 
     scripthash_to = wallet.ToScriptHash(to_address)
     scripthash_from = wallet.ToScriptHash(from_address)
 
-    withdraw_from_watch_only= get_withdraw_from_watch_only(wallet,scripthash_from)
+    withdraw_from_watch_only = get_withdraw_from_watch_only(wallet, scripthash_from)
 
     if f8amount is None or scripthash_to is None or withdraw_from_watch_only is None:
         print("Could not process to or from addr or amount")
         return False
 
-
-    requested_vins = get_contract_holds_for_address(wallet,scripthash_from,scripthash_to)
+    requested_vins = get_contract_holds_for_address(wallet, scripthash_from, scripthash_to)
     use_vins_for_asset = [requested_vins, assetId]
 
     output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
     withdraw_tx = InvocationTransaction(outputs=[output])
 
-
     withdraw_constructed_tx = wallet.MakeTransaction(tx=withdraw_tx,
                                                      change_address=scripthash_from,
-                                                     fee= Fixed8.FromDecimal(.001),
+                                                     fee=Fixed8.FromDecimal(.001),
                                                      from_addr=scripthash_from,
                                                      use_standard=False,
                                                      watch_only_val=withdraw_from_watch_only,
@@ -214,7 +208,6 @@ def construct_withdrawal_tx(wallet, args):
 
     if withdraw_constructed_tx is not None:
         return withdraw_constructed_tx
-
 
 
 def get_contract_holds_for_address(wallet, contract_hash, addr):

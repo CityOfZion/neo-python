@@ -6,6 +6,7 @@ addons:
   apt:
     packages:
     - libleveldb-dev
+    - libsqlite3-dev
 
 
 # command to install dependencies
@@ -14,7 +15,11 @@ install:
   - pip install coveralls
 
 # command to run tests
-script: coverage run -m unittest discover neo
+script:
+  - coverage run -m unittest discover neo
+  - pycodestyle prompt.py
+  - pycodestyle neo
+  - python prompt.py --version
 
 
 after_success:

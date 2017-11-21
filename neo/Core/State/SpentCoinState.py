@@ -2,9 +2,10 @@
 
 from .StateBase import StateBase
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream,StreamManager
+from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
 from autologging import logged
+from collections import namedtuple
 
 
 class SpentCoinItem():
@@ -16,6 +17,32 @@ class SpentCoinItem():
         self.height = height
 
 
+class SpentCoin():
+
+    Output = None
+    StartHeight = None
+    EndHeight = None
+
+    @property
+    def Value(self):
+        return self.Output.Value
+
+    @property
+    def Heights(self):
+        CoinHeight = namedtuple("CoinHeight", "start end")
+        return CoinHeight(self.StartHeight, self.EndHeight)
+
+    def __init__(self, output, start_height, end_height):
+        self.Output = output
+        self.StartHeight = start_height
+        self.EndHeight = end_height
+
+    def ToJson(self):
+        return {
+            'output': self.Output.ToJson(),
+            'start': self.StartHeight,
+            'end': self.EndHeight
+        }
 
 
 @logged
@@ -24,19 +51,17 @@ class SpentCoinState(StateBase):
     StartHeight = None
     EndHeight = None
 
-
     TransactionHash = None
     TransactionHeight = None
     Items = []
 
-    def __init__(self, hash=None, height = None, items = None):
+    def __init__(self, hash=None, height=None, items=None):
         self.TransactionHash = hash
         self.TransactionHeight = height
         if items is None:
             self.Items = []
         else:
             self.Items = items
-
 
     def HasIndex(self, index):
         for i in self.Items:
@@ -80,7 +105,6 @@ class SpentCoinState(StateBase):
 
         self.Items = items
 
-
     def Serialize(self, writer):
 
         super(SpentCoinState, self).Serialize(writer)
@@ -88,24 +112,21 @@ class SpentCoinState(StateBase):
         writer.WriteUInt256(self.TransactionHash)
         writer.WriteUInt32(self.TransactionHeight)
 
-        writer.WriteVarInt( len( self.Items))
+        writer.WriteVarInt(len(self.Items))
 
         for item in self.Items:
             writer.WriteUInt16(item.index)
             writer.WriteUInt32(item.height)
 
-
-
     def ToJson(self):
 
         items = []
 
-
         for i in self.Items:
-            items.append({'index': i.index, 'height':i.height})
+            items.append({'index': i.index, 'height': i.height})
 
         return {
-            'version':self.StateVersion,
+            'version': self.StateVersion,
             'txHash': self.TransactionHash.ToString(),
             'txHeight': self.TransactionHeight,
             'items': items
