@@ -1,9 +1,9 @@
 
 ======
-prompt
+Prompt
 ======
 
-This is the default interface for running and interacting with the NEO blockchain
+This is the default interface for running and interacting with the NEO blockchain.
 
 Usage::
 
@@ -131,6 +131,8 @@ You may want to export a `WIF <https://en.bitcoin.it/wiki/Wallet_import_format>`
 Import NEP2 Passphrase protected WIF
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+You can import a `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>`_ encrypted private key like this:
+
 .. code-block:: sh
 
     neo> import nep2 6PYVPVe1fQznphjbUxXP9KZJqPMVnVwCx5s5pr5axRJ8uHkMtZg97eT5kL
@@ -140,6 +142,8 @@ Import NEP2 Passphrase protected WIF
 
 Export NEP2 Passphrase protected WIF
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can export an address as `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>`_ encrypted private key like this:
 
 .. code-block:: sh
 

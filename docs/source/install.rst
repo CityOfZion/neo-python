@@ -34,9 +34,25 @@ Then install the requirements via
 
     pip install -r requirements.txt
 
-If you plan on doing development, install ``requirements_dev.txt`` instead
+
+Finally, install a reference to the `neo` working directory, in order to be able to `import neo` from
+anywhere in the project (eg. examples):
+
+::
+
+    pip install -e .
 
 
+Updating neo-python from Git
+""""""""""""""""""""""""""""
+
+If you are updating neo-python with ``git pull``, make sure you also update the dependencies with ``pip install -r requirements.txt``.
+
+
+Bootstrapping the Blockchain
+""""""""""""""""""""""""""""
+
+If you use neo-python for the first time, you need to synchronize the blockchain, which may take a long time. Included in this project is ``bootstrap.py`` to automatically download a chain directory for you. To bootstrap for testnet, run ``python bootstrap.py``, get a cup of coffee and wait. To bootstrap for mainnet, use ``python bootstrap.py -m`` and get 8 cups of coffee (3.3 GB file).
 
 
 Platform Specific Instructions
@@ -55,6 +71,7 @@ Ubuntu/Debian
 ::
 
     apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
+
 
 Centos/Redhat/Fedora
 ^^^^^^^^^^^^^^^^^^^^
