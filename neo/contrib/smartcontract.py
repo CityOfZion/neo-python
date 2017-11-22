@@ -15,6 +15,8 @@ class SmartContract:
     In the current version it allows to get event callbackes, for instance
     on smart contract calls to `Runtime.Notify` or `Runtime.Log`:
 
+        from neo.contrib.smartcontract import SmartContract
+
         smart_contract = SmartContract("6537b4bd100e514119e3a7ab49d520d20ef2c2a4")
 
         @smart_contract.on_notify
@@ -69,13 +71,15 @@ class SmartContract:
 
     def on_log(self, func):
         """ @on_log decorator: calls method on Runtime.Log events """
-        # Append function to handler list
         return self._add_decorator(SmartContractEvent.RUNTIME_LOG, func)
 
     def on_storage(self, func):
         """ @on_storage decorator: calls method on Neo.Storage.* events """
-        # Append function to handler list
         return self._add_decorator(SmartContractEvent.STORAGE, func)
+
+    def on_execution(self, func):
+        """ @on_execution decorator: calls method on Neo.Execution.* events """
+        return self._add_decorator(SmartContractEvent.EXECUTION, func)
 
     def _add_decorator(self, event_type, func):
         # First, add handler function to handlers

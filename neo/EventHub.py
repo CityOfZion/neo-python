@@ -44,6 +44,7 @@ class SmartContractEvent:
     RUNTIME_NOTIFY = "SmartContract.Runtime.Notify"  # payload: object[]
     RUNTIME_LOG = "SmartContract.Runtime.Log"        # payload: bytes
 
+    EXECUTION = "SmartContract.Execution.*"
     EXECUTION_INVOKE = "SmartContract.Execution.Invoke"
     EXECUTION_SUCCESS = "SmartContract.Execution.Success"
     EXECUTION_FAIL = "SmartContract.Execution.Fail"

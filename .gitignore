@@ -85,7 +85,7 @@ endpoints.txt
 .prompt.py.history
 
 preferences.json
-prompt.log
+prompt.log*
 test.log
 
 .pylint

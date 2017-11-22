@@ -16,8 +16,8 @@ What does it currently do
 What will it do
 ^^^^^^^^^^^^^^^
 
-- RPC Server
-- Consensus
+- RPC server
+- Consensus nodes
 - Full smart contract debugging and inspection
 
 
@@ -28,3 +28,10 @@ Please follow directions in `the install section <install.html>`_
 The main functionality for this project is contained within the cli application ``prompt.py``.  You can `view usage details here <prompt.html>`_
 
 We have published a Youtube `video <https://youtu.be/oy6Z_zd42-4>`_ to help get you started with this library. There are other videos under the `CityOfZion <(https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg>`_ Youtube channel.
+
+
+Sister projects
+^^^^^^^^^^^^^^^
+
+- `neo-python-rpc <https://github.com/CityOfZion/neo-python-rpc>`_: NEO RPC client in Python
+- `neo-boa <https://github.com/CityOfZion/neo-boa>`_: Write smart contracts with Python
