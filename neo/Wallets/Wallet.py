@@ -903,12 +903,10 @@ class Wallet(object):
             Prints a warning to the console if the default contract could not be found.
         """
         try:
-            default = self.GetContracts()[0]
+            return self.GetContracts()[0]
         except Exception:
-            error_msg = "Could not find default contract"
-            logger.error(error_msg)
-            raise Exception(error_msg)
-        return default
+            logger.error("Could not find default contract: %s" % str(e))
+            raise
 
     def GetKeys(self):
         """
