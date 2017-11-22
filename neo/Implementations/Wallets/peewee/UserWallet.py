@@ -137,23 +137,22 @@ class UserWallet(Wallet):
         db_contract = None
         try:
             db_contract = Contract.get(ScriptHash=contract.ScriptHash.ToBytes())
+            db_contract.delete_instance()
+            db_contract = None
         except Exception as e:
             logger.error("contract does not exist yet")
 
-        if db_contract is not None:
-            db_contract.PublicKeyHash = contract.PublicKeyHash.ToBytes()
-        else:
-            sh = bytes(contract.ScriptHash.ToArray())
-            address, created = Address.get_or_create(ScriptHash=sh)
-            address.IsWatchOnly = False
-            address.save()
-            db_contract = Contract.create(RawData=contract.ToArray(),
-                                          ScriptHash=contract.ScriptHash.ToBytes(),
-                                          PublicKeyHash=contract.PublicKeyHash.ToBytes(),
-                                          Address=address,
-                                          Account=self.__dbaccount)
+        sh = bytes(contract.ScriptHash.ToArray())
+        address, created = Address.get_or_create(ScriptHash=sh)
+        address.IsWatchOnly = False
+        address.save()
+        db_contract = Contract.create(RawData=contract.ToArray(),
+                                      ScriptHash=contract.ScriptHash.ToBytes(),
+                                      PublicKeyHash=contract.PublicKeyHash.ToBytes(),
+                                      Address=address,
+                                      Account=self.__dbaccount)
 
-            logger.debug("Creating db contract %s " % db_contract)
+        logger.debug("Creating db contract %s " % db_contract)
 
         db_contract.save()
 

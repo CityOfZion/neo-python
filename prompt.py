@@ -218,19 +218,19 @@ class PromptInterface(object):
 
                 try:
                     self.Wallet = UserWallet.Create(path=path, password=passwd1)
-                except Exception as e:
-                    print("Exception creating wallet: %s " % e)
-                    return
-
-                print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
-
-                try:
                     contract = self.Wallet.GetDefaultContract()
                     key = self.Wallet.GetKey(contract.PublicKeyHash)
-                    if key is not None:
-                        print("pubkey %s " % key.PublicKey.encode_point(True))
+                    print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+                    print("pubkey %s " % key.PublicKey.encode_point(True))
                 except Exception as e:
-                    print("Exception getting default contract: %s " % e)
+                    print("Exception creating wallet: %s " % e)
+                    self.Wallet = None
+                    if os.path.isfile(path):
+                        try:
+                            os.remove(path)
+                        except Exception as e:
+                            print("Could not remove {}: {}".format(path, e))
+                    return
 
                 self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                 self._walletdb_loop.start(1)
