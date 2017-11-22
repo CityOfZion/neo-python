@@ -75,19 +75,43 @@ class UserWallet(Wallet):
 
     @staticmethod
     def Create(path, password):
+        """
+        Create a new user wallet.
+
+        Args:
+            path (str): A path indicating where to create or open the wallet i.e. "/Wallets/mywallet".
+            password (str): a 10 characters minimum password to secure the wallet with.
+
+        Returns:
+             UserWallet: a UserWallet instance.
+        """
         wallet = UserWallet(path=path, passwordKey=password, create=True)
         wallet.CreateKey()
         return wallet
 
     def CreateKey(self, prikey=None):
+        """
+        Create a KeyPair and store it encrypted in the database.
+
+        Args:
+            private_key (iterable_of_ints): (optional) 32 byte private key.
+
+        Returns:
+            KeyPair: a KeyPair instance.
+        """
         account = super(UserWallet, self).CreateKey(private_key=prikey)
-        self._keys[account.PublicKeyHash.ToBytes()] = account
         self.OnCreateAccount(account)
         contract = WalletContract.CreateSignatureContract(account.PublicKey)
         self.AddContract(contract)
         return account
 
     def OnCreateAccount(self, account):
+        """
+        Save a KeyPair in encrypted form into the database.
+
+        Args:
+            account (KeyPair):
+        """
         pubkey = account.PublicKey.encode_point(False)
         pubkeyunhex = binascii.unhexlify(pubkey)
         pub = pubkeyunhex[1:65]
@@ -98,11 +122,16 @@ class UserWallet(Wallet):
 
         db_account, created = Account.get_or_create(
             PrivateKeyEncrypted=encrypted_pk, PublicKeyHash=account.PublicKeyHash.ToBytes())
-        db_account.PrivateKeyEncrypted = encrypted_pk
         db_account.save()
         self.__dbaccount = db_account
 
     def AddContract(self, contract):
+        """
+        Add a contract to the database.
+
+        Args:
+            contract(neo.SmartContract.Contract): a Contract instance.
+        """
         super(UserWallet, self).AddContract(contract)
 
         db_contract = None
@@ -113,22 +142,19 @@ class UserWallet(Wallet):
         except Exception as e:
             logger.error("contract does not exist yet")
 
-        if db_contract is not None:
-            db_contract.PublicKeyHash = contract.PublicKeyHash.ToBytes()
-        else:
-            sh = bytes(contract.ScriptHash.ToArray())
-            address, created = Address.get_or_create(ScriptHash=sh)
-            address.IsWatchOnly = False
-            address.save()
-            db_contract = Contract.create(RawData=contract.ToArray(),
-                                          ScriptHash=contract.ScriptHash.ToBytes(),
-                                          PublicKeyHash=contract.PublicKeyHash.ToBytes(),
-                                          Address=address,
-                                          Account=self.__dbaccount)
+        sh = bytes(contract.ScriptHash.ToArray())
+        address, created = Address.get_or_create(ScriptHash=sh)
+        address.IsWatchOnly = False
+        address.save()
+        db_contract = Contract.create(RawData=contract.ToArray(),
+                                      ScriptHash=contract.ScriptHash.ToBytes(),
+                                      PublicKeyHash=contract.PublicKeyHash.ToBytes(),
+                                      Address=address,
+                                      Account=self.__dbaccount)
 
-            logger.debug("Creating db contract %s " % db_contract)
+        logger.debug("Creating db contract %s " % db_contract)
 
-            db_contract.save()
+        db_contract.save()
 
     def AddWatchOnly(self, script_hash):
         super(UserWallet, self).AddWatchOnly(script_hash)
