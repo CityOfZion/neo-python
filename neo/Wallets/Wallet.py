@@ -904,7 +904,7 @@ class Wallet(object):
         """
         try:
             return self.GetContracts()[0]
-        except Exception:
+        except Exception as e:
             logger.error("Could not find default contract: %s" % str(e))
             raise
 
