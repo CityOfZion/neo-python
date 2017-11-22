@@ -1,5 +1,5 @@
 [run]
-source = neo
+source = .
 
 [report]
 omit =
