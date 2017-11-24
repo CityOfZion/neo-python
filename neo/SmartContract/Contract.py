@@ -16,7 +16,6 @@ from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *
 from neo.Cryptography.ECCurve import ECDSA
-from autologging import logged
 
 
 class ContractType():
@@ -25,7 +24,6 @@ class ContractType():
     CustomContract = 2
 
 
-@logged
 class Contract(SerializableMixin, VerificationCode):
     """docstring for Contract"""
 
@@ -115,7 +113,15 @@ class Contract(SerializableMixin, VerificationCode):
 
     @staticmethod
     def CreateSignatureContract(publicKey):
+        """
+        Create a signature contract.
 
+        Args:
+            publicKey (edcsa.Curve.point): i.e. KeyPair.PublicKey.
+
+        Returns:
+            neo.SmartContract.Contract: a Contract instance.
+        """
         script = Contract.CreateSignatureRedeemScript(publicKey)
         params = bytearray([ContractParameterType.Signature])
         encoded = publicKey.encode_point(True)

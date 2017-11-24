@@ -5,6 +5,16 @@ Description:
 Usage:
     from neo.Wallets.Wallet import Wallet
 """
+import hashlib
+import traceback
+import pdb
+
+from itertools import groupby
+from base58 import b58decode
+from decimal import Decimal
+from Crypto import Random
+from Crypto.Cipher import AES
+from logzero import logger
 
 from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
@@ -21,20 +31,10 @@ from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Fixed8 import Fixed8
 from neo.UInt160 import UInt160
+from neo.UInt256 import UInt256
 from neo.Core.Helper import Helper
 
-from itertools import groupby
-from base58 import b58decode
-from autologging import logged
-import hashlib
-import traceback
-from Crypto import Random
-from Crypto.Cipher import AES
-from decimal import Decimal
-import pdb
 
-
-@logged
 class Wallet(object):
 
     AddressVersion = None
@@ -66,9 +66,9 @@ class Wallet(object):
         """
 
         Args:
-            path: (str) A path indicating where to create or open the wallet
-            passwordKey: (str) A password to use in creating or opening the wallet
-            create: (bool) Whether to create the wallet or simply open
+            path (str): A path indicating where to create or open the wallet.
+            passwordKey (str): A password to use in creating or opening the wallet.
+            create (bool): Whether to create the wallet or simply open.
         """
 
         self.AddressVersion = settings.ADDRESS_VERSION
@@ -126,7 +126,7 @@ class Wallet(object):
                 h = int(self.LoadStoredData('Height'))
                 self._current_height = h
             except Exception as e:
-                print("couldnt load height data %s " % e)
+                logger.error("couldnt load height data %s " % e)
                 self._current_height = 0
 
             del passwordKey
@@ -137,7 +137,7 @@ class Wallet(object):
 
     def AddContract(self, contract):
         """
-        Add a contract to the wallet
+        Add a contract to the wallet.
 
         Args:
             contract (Contract): a contract of type neo.SmartContract.Contract.
@@ -163,7 +163,7 @@ class Wallet(object):
             Prints a warning to the console if the address already exists in the wallet.
         """
         if script_hash in self._contracts:
-            print("Address already in contracts")
+            logger.error("Address already in contracts")
             return
 
         self._watch_only.append(script_hash)
@@ -179,9 +179,13 @@ class Wallet(object):
             Prints a warning to the console if the token already exists in the wallet.
         """
         if token.ScriptHash.ToBytes() in self._tokens.keys():
-            print("Token already in wallet")
+            logger.error("Token already in wallet")
             return
         self._tokens[token.ScriptHash.ToBytes()] = token
+
+    def DeleteNEP5Token(self, token):
+
+        return self._tokens.pop(token.ScriptHash.ToBytes())
 
     def ChangePassword(self, password_old, password_new):
         """
@@ -337,14 +341,14 @@ class Wallet(object):
 
     def FindCoinsByVins(self, vins):
         """
-
         Looks through the current collection of coins in a wallet
-        and chooses coins that match the specified CoinReference objects
+        and chooses coins that match the specified CoinReference objects.
+
         Args:
-            vins: A list of ``neo.Core.CoinReference`` objects
+            vins: A list of ``neo.Core.CoinReference`` objects.
 
         Returns:
-            list: A list of ``neo.Wallet.Coin`` objects
+            list: A list of ``neo.Wallet.Coin`` objects.
         """
         ret = []
         for coin in self.GetCoins():
@@ -358,14 +362,15 @@ class Wallet(object):
 
     def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
         """
-        Finds unspent coin objects in the wallet
+        Finds unspent coin objects in the wallet.
+
         Args:
-            from_addr: (UInt160): a bytearray (len 20) representing an address
-            use_standard: (bool): whether or not to only include standard contracts ( i.e not a smart contract addr )
-            watch_only_val: (int): a flag ( 0 or 64 ) indicating whether or not to find coins that are in 'watch only' addresses
+            from_addr (UInt160): a bytearray (len 20) representing an address.
+            use_standard (bool): whether or not to only include standard contracts ( i.e not a smart contract addr ).
+            watch_only_val (int): a flag ( 0 or 64 ) indicating whether or not to find coins that are in 'watch only' addresses.
 
         Returns:
-            list: a list of ``neo.Wallet.Coins`` in the wallet that are not spent
+            list: a list of ``neo.Wallet.Coins`` in the wallet that are not spent.
         """
         ret = []
         for coin in self.GetCoins():
@@ -401,12 +406,13 @@ class Wallet(object):
 
     def FindUnspentCoinsByAsset(self, asset_id, from_addr=None, use_standard=False, watch_only_val=0):
         """
-        Finds unspent coin objects in the wallet limited to those of a certain asset type
+        Finds unspent coin objects in the wallet limited to those of a certain asset type.
+
         Args:
-            asset_id: (UInt256): a bytearray (len 32) representing an asset on the blockchain
-            from_addr: (UInt160): a bytearray (len 20) representing an address
-            use_standard: (bool): whether or not to only include standard contracts ( i.e not a smart contract addr )
-            watch_only_val: (int): a flag ( 0 or 64 ) indicating whether or not to find coins that are in 'watch only' addresses
+            asset_id (UInt256): a bytearray (len 32) representing an asset on the blockchain.
+            from_addr (UInt160): a bytearray (len 20) representing an address.
+            use_standard (bool): whether or not to only include standard contracts ( i.e not a smart contract addr ).
+            watch_only_val (int): a flag ( 0 or 64 ) indicating whether or not to find coins that are in 'watch only' addresses.
 
         Returns:
             list: a list of ``neo.Wallet.Coin`` in the wallet that are not spent
@@ -417,16 +423,17 @@ class Wallet(object):
 
     def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0):
         """
-        Finds unspent coin objects totalling a requested value in the wallet limited to those of a certain asset type
+        Finds unspent coin objects totalling a requested value in the wallet limited to those of a certain asset type.
+
         Args:
-            asset_id: (UInt256): a bytearray (len 32) representing an asset on the blockchain
-            amount: (int): the amount of unspent coins that are being requested
-            from_addr: (UInt160): a bytearray (len 20) representing an address
-            use_standard: (bool): whether or not to only include standard contracts ( i.e not a smart contract addr )
-            watch_only_val: (int): a flag ( 0 or 64 ) indicating whether or not to find coins that are in 'watch only' addresses
+            asset_id (UInt256): a bytearray (len 32) representing an asset on the blockchain.
+            amount (int): the amount of unspent coins that are being requested.
+            from_addr (UInt160): a bytearray (len 20) representing an address.
+            use_standard (bool): whether or not to only include standard contracts ( i.e not a smart contract addr ).
+            watch_only_val (int): a flag ( 0 or 64 ) indicating whether or not to find coins that are in 'watch only' addresses.
 
         Returns:
-            list: a list of ``neo.Wallet.Coin`` in the wallet that are not spent. this list is empty if there are not enough coins to satisfy the request
+            list: a list of ``neo.Wallet.Coin`` in the wallet that are not spent. this list is empty if there are not enough coins to satisfy the request.
         """
         coins = self.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr,
                                              use_standard=use_standard, watch_only_val=watch_only_val)
@@ -450,7 +457,8 @@ class Wallet(object):
 
     def GetUnclaimedCoins(self):
         """
-        Gets coins in the wallet that have not been 'claimed', or redeemed for their gas value on the blockchain
+        Gets coins in the wallet that have not been 'claimed', or redeemed for their gas value on the blockchain.
+
         Returns:
             list: a list of ``neo.Wallet.Coin`` that have 'claimable' value
         """
@@ -472,9 +480,10 @@ class Wallet(object):
 
     def GetAvailableClaimTotal(self):
         """
-        Gets the total amount of Gas that this wallet is able to claim at a given moment
+        Gets the total amount of Gas that this wallet is able to claim at a given moment.
+
         Returns:
-            Fixed8: the amount of Gas available to claim as a Fixed8 number
+            Fixed8: the amount of Gas available to claim as a Fixed8 number.
         """
         coinrefs = [coin.Reference for coin in self.GetUnclaimedCoins()]
         bonus = Blockchain.CalculateBonusIgnoreClaimed(coinrefs, True)
@@ -483,15 +492,20 @@ class Wallet(object):
     def GetUnavailableBonus(self):
         """
         Gets the total claimable amount of Gas in the wallet that is not available to claim
-        because it has not yet been spent
+        because it has not yet been spent.
+
         Returns:
-            Fixed8: the amount of Gas unavailable to claim
+            Fixed8: the amount of Gas unavailable to claim.
         """
         height = Blockchain.Default().Height + 1
         unspents = self.FindUnspentCoinsByAsset(Blockchain.SystemShare().Hash)
         refs = [coin.Reference for coin in unspents]
-        unavailable_bonus = Blockchain.CalculateBonus(refs, height_end=height)
-        return unavailable_bonus
+        try:
+            unavailable_bonus = Blockchain.CalculateBonus(refs, height_end=height)
+            return unavailable_bonus
+        except Exception as e:
+            pass
+        return Fixed8(0)
 
     def GetKey(self, public_key_hash):
         """
@@ -610,14 +624,13 @@ class Wallet(object):
     def ProcessBlocks(self):
         """
         Method called on a loop to check the current height of the blockchain.  If the height of the blockchain
-        is less than the current stored height in the wallet, we get the next block in line and
+        is more than the current stored height in the wallet, we get the next block in line and
         processes it.
 
         In the case that the wallet height is far behind the height of the blockchain, we do this 500
         blocks at a time.
         """
         blockcount = 0
-
         while self._current_height <= Blockchain.Default().Height and blockcount < 500:
 
             block = Blockchain.Default().GetBlockByHeight(self._current_height)
@@ -633,8 +646,9 @@ class Wallet(object):
         """
         Processes a block on the blockchain.  This should be done in a sequential order, ie block 4 should be
         only processed after block 3.
+
         Args:
-            block: (neo.Core.Block) a block on the blockchain
+            block: (neo.Core.Block) a block on the blockchain.
         """
         added = set()
         changed = set()
@@ -710,12 +724,12 @@ class Wallet(object):
         except Exception as e:
             traceback.print_stack()
             traceback.print_exc()
-            print("could not process %s " % e)
+            logger.error("could not process %s " % e)
 
     def Rebuild(self):
         """
         Sets the current height to 0 and now `ProcessBlocks` will start from
-        the beginning of the blockchain
+        the beginning of the blockchain.
         """
         self._coins = {}
         self._current_height = 0
@@ -880,7 +894,10 @@ class Wallet(object):
         Get the default contract.
 
         Returns:
-            contract (Contract): if Successful, a contract of type neo.SmartContract.Contract, otherwise None
+            contract (Contract): if Successful, a contract of type neo.SmartContract.Contract, otherwise an Exception.
+
+        Raises:
+            Exception: if no default contract is found.
 
         Note:
             Prints a warning to the console if the default contract could not be found.
@@ -888,8 +905,8 @@ class Wallet(object):
         try:
             return self.GetContracts()[0]
         except Exception as e:
-            print("Could not find default contract")
-        return None
+            logger.error("Could not find default contract: %s" % str(e))
+            raise
 
     def GetKeys(self):
         """
@@ -955,23 +972,24 @@ class Wallet(object):
                         use_vins_for_asset=None):
         """
         This method is used to to calculate the necessary TransactionInputs (CoinReferences) and TransactionOutputs to
-        be used when creating a transaction that involves an exchange of system assets, ( NEO, Gas, etc )
+        be used when creating a transaction that involves an exchange of system assets, ( NEO, Gas, etc ).
 
         Args:
-            tx: (Transaction) The Transaction to be used
-            change_address: (UInt160) The address any change for the transaction should be returned to
-            fee: (Fixed8) A fee to be attached to the Transaction for network processing purposes
-            from_addr: (UInt160) If present, all CoinReferences selected will only come from this address
-            use_standard: (bool) If true, only CoinReferences from standard addresses ( not contracts that are smart contracts ) will be used
-            watch_only_val: (int) 0 or CoinState.WATCH_ONLY, if present only choose coins that are in a WatchOnly address
-            exclude_vin: (list) A list of CoinReferences to NOT use in the making of this tx
-            use_vins_for_asset: (list) A list of CoinReferences to use
+            tx (Transaction): The Transaction to be used.
+            change_address (UInt160): The address any change for the transaction should be returned to.
+            fee (Fixed8): A fee to be attached to the Transaction for network processing purposes.
+            from_addr (UInt160): If present, all CoinReferences selected will only come from this address.
+            use_standard (bool): If true, only CoinReferences from standard addresses ( not contracts that are smart contracts ) will be used.
+            watch_only_val (int): 0 or CoinState.WATCH_ONLY, if present only choose coins that are in a WatchOnly address.
+            exclude_vin (list): A list of CoinReferences to NOT use in the making of this tx.
+            use_vins_for_asset (list): A list of CoinReferences to use.
 
         Returns:
-            tx: (Transaction) Returns the transaction with oupdated inputs and outputs
+            tx: (Transaction) Returns the transaction with oupdated inputs and outputs.
         """
 
         tx.ResetReferences()
+        tx.ResetHashData()
 
         if not tx.outputs:
             tx.outputs = []
@@ -1016,7 +1034,7 @@ class Wallet(object):
 
         for key, unspents in paycoins.items():
             if unspents is None:
-                print("insufficient funds for asset id: %s " % key)
+                logger.error("insufficient funds for asset id: %s " % key)
                 return None
 
         input_sums = {}
@@ -1059,7 +1077,7 @@ class Wallet(object):
         persisting the results to a database.
 
         Args:
-            tx (Transaction): The transaction that has been made by this wallet
+            tx (Transaction): The transaction that has been made by this wallet.
 
         Returns:
             bool: True is successfully processes, otherwise False if input is not in the coin list, already spent or not confirmed.
@@ -1120,7 +1138,7 @@ class Wallet(object):
         Sign the verifiable items ( Transaction, Block, etc ) in the context with the Keypairs in this wallet.
 
         Args:
-            context (ContractParameterContext): the context to sign
+            context (ContractParameterContext): the context to sign.
 
         Returns:
             bool: if signing is successful for all contracts in this wallet.
@@ -1145,6 +1163,25 @@ class Wallet(object):
             success |= res
 
         return success
+
+    def GetSyncedBalances(self):
+        """
+        Returns a list of synced balances. The list looks like this:
+        [('NEO', 100.0), ('NEOGas', 100.0)]
+
+        Returns
+            list: [(asset_name, amount), ...]
+        """
+        assets = self.GetCoinAssets()
+        balances = []
+        for asset in assets:
+            if type(asset) is UInt256:
+                bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
+                total = self.GetBalance(asset).value / Fixed8.D
+                balances.append((bc_asset.GetName(), total))
+            elif type(asset) is NEP5Token:
+                balances.append((asset.symbol, self.GetBalance(asset)))
+        return balances
 
     def ToJson(self, verbose=False):
         # abstract

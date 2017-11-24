@@ -1,4 +1,6 @@
-# -*- coding:utf-8 -*-
+import sys
+
+from logzero import logger
 
 from neo.Network.Mixins import InventoryMixin
 from neo.Network.InventoryType import InventoryType
@@ -8,8 +10,6 @@ from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.Cryptography.MerkleTree import MerkleTree
-import sys
-from autologging import logged
 from neo.Core.Header import Header
 from neo.Core.Witness import Witness
 from neo.Fixed8 import Fixed8
@@ -17,7 +17,6 @@ from neo.Blockchain import GetBlockchain
 from neo.Settings import settings
 
 
-@logged
 class Block(BlockBase, InventoryMixin):
 
     #  < summary >
@@ -177,7 +176,7 @@ class Block(BlockBase, InventoryMixin):
     # 根据区块中所有交易的Hash生成MerkleRoot
     # < / summary >
     def RebuildMerkleRoot(self):
-        self.__log.debug("Rebuilding merlke root!")
+        logger.debug("Rebuilding merlke root!")
         if self.Transactions is not None and len(self.Transactions) > 0:
             self.MerkleRoot = MerkleTree.ComputeRoot([tx.Hash for tx in self.Transactions])
 
@@ -213,6 +212,7 @@ class Block(BlockBase, InventoryMixin):
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)
+
         writer.WriteHashes([tx.Hash.ToBytes() for tx in self.Transactions])
         retVal = ms.ToArray()
         StreamManager.ReleaseStream(ms)
@@ -229,7 +229,7 @@ class Block(BlockBase, InventoryMixin):
         if not res:
             return False
 
-        self.__log.debug("Verifying BLOCK!!")
+        logger.debug("Verifying BLOCK!!")
         from neo.Blockchain import GetBlockchain, GetConsensusAddress
 
         # first TX has to be a miner transaction. other tx after that cant be miner tx
@@ -248,7 +248,7 @@ class Block(BlockBase, InventoryMixin):
             for tx in self.Transactions:
                 if not tx.Verify():
                     pass
-            self.__log.debug("Blocks cannot be fully validated at this moment.  please pass completely=False")
+            logger.error("Blocks cannot be fully validated at this moment.  please pass completely=False")
             raise NotImplementedError()
             # do this below!
             # foreach(Transaction tx in Transactions)

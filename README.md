@@ -20,7 +20,7 @@
   <a href='https://coveralls.io/github/CityOfZion/neo-python?branch=master'>
     <img src='https://coveralls.io/repos/github/CityOfZion/neo-python/badge.svg?branch=master' alt='Coverage Status' />
   </a>
-  
+
 </p>
 
 ## Overview
@@ -33,12 +33,20 @@
 - Interactive CLI for configuring node and inspecting blockchain
 - Runs smart contracts on the blockchain in a Python virtual machine
 - Very basic Wallet functionality (not fully tested, please do not use on mainnet)
+- [NEP2](https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>) and [NEP5](https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki) compliant wallet functionality
+- RPC Client
+- ``Runtime.Log`` and ``Runtime.Notify`` event monitoring
+
 
 ### What will it do
 
-- Full Python RPC client
-- Compile smart contracts written in Python and deploy them to the blockchain
-- Full smart contract debugging and inspection
+- RPC server
+- Consensus nodes
+- More robust smart contract debugging and inspection
+
+### Documentation
+
+- Installation, Configuration, and usage documentation available at [Read The Docs](https://neo-python.readthedocs.io/en/latest/)
 
 ### Get Help or give help
 
@@ -104,6 +112,13 @@ Then install requirements
 ```
 pip install -r requirements.txt
 ```
+
+Finally, install a reference to the `neo` working directory, which allows to `import neo` from
+anywhere in the project (eg. examples):
+```
+pip install -e .
+```
+
 
 ### Installing on OSX
 

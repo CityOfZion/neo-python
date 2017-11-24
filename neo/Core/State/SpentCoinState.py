@@ -1,11 +1,10 @@
-# -*- coding:utf-8 -*-
+import binascii
+from collections import namedtuple
 
 from .StateBase import StateBase
+
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
-import binascii
-from autologging import logged
-from collections import namedtuple
 
 
 class SpentCoinItem():
@@ -45,7 +44,6 @@ class SpentCoin():
         }
 
 
-@logged
 class SpentCoinState(StateBase):
     Output = None
     StartHeight = None

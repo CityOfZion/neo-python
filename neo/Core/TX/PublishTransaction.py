@@ -1,9 +1,9 @@
-
+import sys
+import binascii
+from logzero import logger
 
 from neo.Core.TX.Transaction import Transaction, TransactionType
-import sys
 from neo.Core.FunctionCode import FunctionCode
-import binascii
 from neo.Settings import settings
 from neo.Fixed8 import Fixed8
 
@@ -27,7 +27,7 @@ class PublishTransaction(Transaction):
 
     def DeserializeExclusiveData(self, reader):
         if self.Version > 1:
-            self.__log.debug("format exception...")
+            logger.error("format exception...")
 
         self.Code = FunctionCode()
         self.Code.Deserialize(reader)

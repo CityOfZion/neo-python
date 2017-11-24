@@ -1,5 +1,6 @@
-from peewee import *
 import logging
+from peewee import *
+from logzero import logger
 
 logger = logging.getLogger('peewee')
 logger.setLevel(logging.ERROR)
@@ -26,7 +27,7 @@ class PWDatabase(object):
             PWDatabase.DBProxy().initialize(self._db)
             self.startup()
         except Exception as e:
-            print("database file does not exist, or incorrect permissions")
+            logger.error("database file does not exist, or incorrect permissions")
 
     def close(self):
         self._db.close()

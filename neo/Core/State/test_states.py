@@ -1,3 +1,6 @@
+import json
+import binascii
+
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.State.AssetState import AssetState
@@ -9,9 +12,6 @@ from neo.IO.MemoryStream import StreamManager
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.BinaryWriter import BinaryWriter
 from neo.Core.Blockchain import Blockchain
-
-import json
-import binascii
 
 
 class StateTestCase(NeoTestCase):

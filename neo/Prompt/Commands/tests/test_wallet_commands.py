@@ -69,3 +69,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(token.symbol, 'NEP5')
         self.assertEqual(token.decimals, 8)
         self.assertEqual(token.Address, 'AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg')
+
+    def test_4_get_synced_balances(self):
+        wallet = self.GetWallet1()
+        synced_balances = wallet.GetSyncedBalances()
+        self.assertEqual(len(synced_balances), 2)

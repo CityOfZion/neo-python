@@ -153,6 +153,24 @@ class BigIntegerTestCase(NeoTestCase):
         self.assertEqual(b1, b2)
         self.assertTrue(b1.Equals(b2))
 
+    def test_big_integer_sign(self):
+
+        b1 = BigInteger(3)
+        b2 = BigInteger(0)
+        b3 = BigInteger(-4)
+        self.assertEqual(b1.Sign, 1)
+        self.assertEqual(b2.Sign, 0)
+        self.assertEqual(b3.Sign, -1)
+
+        c1 = BigInteger(-100)
+        c1_bytes = c1.ToByteArray()
+
+        c2 = BigInteger.FromBytes(c1_bytes, signed=True)
+        self.assertEqual(c2.Sign, -1)
+
+        c2_unsigned = BigInteger.FromBytes(c1_bytes, signed=False)
+        self.assertEqual(c2_unsigned.Sign, 1)
+
 
 class UIntBaseTestCase(NeoTestCase):
     def test_initialization(self):

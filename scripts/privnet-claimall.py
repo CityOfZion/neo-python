@@ -33,10 +33,9 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.KeyPair import KeyPair
 from neo.Prompt.Commands.LoadSmartContract import ImportMultiSigContractAddr
-from neo.Prompt.Notify import SubscribeNotifications
 from neo.Core.Blockchain import Blockchain
 from neo.Fixed8 import Fixed8
-from neo.Core.TX.Transaction import TransactionOutput,ContractTransaction
+from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from twisted.internet import reactor, task
@@ -48,7 +47,7 @@ mypassword = 'supersekritpassword'
 # configuration, you'll need to add all your node keys and multi-sig address in place of the ones below
 
 multisig_addr = 'AZ81H31DMWzbSnFDLFkzh9vHwaDLayV7fU'
-nodekeys = { '02b3622bf4017bdfe317c58aed5f4c753f206b7db896046fa7d774bbc4bf7f8dc2': 'KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY',
+nodekeys = {'02b3622bf4017bdfe317c58aed5f4c753f206b7db896046fa7d774bbc4bf7f8dc2': 'KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY',
             '02103a7f7dd016558597f7960d27c516a4394fd968b9e65155eb4b013e4040406e': 'KzfPUYDC9n2yf4fK5ro4C8KMcdeXtFuEnStycbZgX3GomiUsvX6W',
             '03d90c07df63e690ce77912e10ab51acc944b66860237b608c4f8f8309e71ee699': 'L2oEXKRAAMiPEZukwR5ho2S6SMeQLhcK9mF71ZnF7GvT8dU4Kkgz',
             '02a7bc55fe8684e0119768d104ba30795bdcc86619e864add26156723ed185cd62': 'KzgWE3u3EDp13XPXXuTKZxeJ3Gi8Bsm8f9ijY3ZsCKKRvZUo1Cdn'}
@@ -86,7 +85,6 @@ class PrivnetClaimall(object):
             assetId = Blockchain.Default().SystemShare().Hash
         else:
             assetId = Blockchain.Default().SystemCoin().Hash
-
 
         scripthash_to = wallet.ToScriptHash(address_to)
         scripthash_from = wallet.ToScriptHash(from_address)
@@ -164,7 +162,6 @@ class PrivnetClaimall(object):
             print("Transaction signed, but the signature is still incomplete")
             return(json.dumps(context.ToJson(), separators=(',', ':')))
 
-
     def run(self):
 
         to_addr = self.target_address
@@ -181,7 +178,7 @@ class PrivnetClaimall(object):
         print("Signing new transaction with 3 of 4 node keys...")
 
         for pkey, wif in nodekeys.items():
-            walletpath="wallet{}.db3".format(i+1)
+            walletpath = "wallet{}.db3".format(i + 1)
             if os.path.exists(walletpath):
                 os.remove(walletpath)
             wallet = UserWallet.Create(path=walletpath, password=mypassword)
@@ -234,7 +231,6 @@ if __name__ == "__main__":
     # Setup the Blockchain
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
     Blockchain.RegisterBlockchain(blockchain)
-    SubscribeNotifications()
 
     # Create the claim
     pc = PrivnetClaimall(args.address)
