@@ -138,7 +138,72 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
+
+def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
+
+    wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
+
+
+    if wallet_tx:
+
+
+        token_contract_state = Blockchain.Default().GetContract(token.ScriptHash.ToString())
+        print("token contract  %s " % token_contract_state)
+
+        tx.Attributes = [
+            TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                 data=token.ScriptHash.Data)
+        ]
+
+
+        reedeem_script = token_contract_state.Code.Script.hex()
+
+        # there has to be at least 1 param, and the first
+        # one needs to be a signature param
+        param_list = bytearray(b'\x00\x00')
+
+        verification_contract = Contract.Create(reedeem_script, param_list, wallet.GetDefaultContract().PublicKeyHash)
+
+        context = ContractParametersContext(wallet_tx)
+
+        wallet.Sign(context)
+
+        context.Add(verification_contract, 0, 0)
+
+
+        if context.Completed:
+
+            wallet_tx.scripts = context.GetScripts()
+
+            relayed = False
+
+
+            print("full wallet tx: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
+
+            # check if we can save the tx first
+            save_tx = wallet.SaveTransaction(wallet_tx)
+
+            if save_tx:
+                relayed = NodeLeader.Instance().Relay(wallet_tx)
+            else:
+                print("Could not save tx to wallet, will not send tx")
+
+            if relayed:
+                print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
+                return wallet_tx
+            else:
+                print("Could not relay tx %s " % wallet_tx.Hash.ToString())
+        else:
+
+            print("Incomplete signature")
+
+    else:
+        print("Insufficient funds")
+
+    return False
+
+
+def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None):
 
     BC = GetBlockchain()
 
@@ -213,7 +278,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
     return None, None, None, None
 
 
-def test_invoke(script, wallet, outputs, withdrawal_tx=None):
+def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
 
     #    print("invoke script %s " % script)
 
@@ -253,7 +318,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None):
     if withdrawal_tx is not None:
         wallet_tx = tx
     else:
-        wallet_tx = wallet.MakeTransaction(tx=tx)
+        wallet_tx = wallet.MakeTransaction(tx=tx, from_addr=from_addr)
 
     if wallet_tx:
 

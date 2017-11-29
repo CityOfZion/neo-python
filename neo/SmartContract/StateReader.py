@@ -180,7 +180,7 @@ class StateReader(InteropService):
             if len(engine.ExecutedScriptHashes) > 1:
                 entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
         except Exception as e:
-            print("Could not get entry script: %s " % e)
+            logger.error("Could not get entry script: %s " % e)
 
         payload = []
         for item in engine.EvaluationStack.Items:
