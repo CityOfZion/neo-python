@@ -450,7 +450,7 @@ class UserWallet(Wallet):
         addresses = []
         has_watch_addr = False
         for addr in Address.select():
-            #            logger.info("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
+            logger.info("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
             acct = Blockchain.Default().GetAccountState(addr_str)
             token_balances = self.TokenBalancesForAddress(addr_str)

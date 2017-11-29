@@ -9,6 +9,7 @@ from neo.Cryptography.Crypto import Crypto
 from neo.Prompt.Commands.Invoke import TestInvokeContract
 from neo.Prompt.Utils import parse_param
 from neo.UInt160 import UInt160
+from neo.Fixed8 import Fixed8
 
 
 class NEP5Token(VerificationCode):
@@ -111,7 +112,7 @@ class NEP5Token(VerificationCode):
 
     def Allowance(self, wallet, owner_addr, requestor_addr):
         invoke_args = [self.ScriptHash.ToString(), 'allowance',
-                       [parse_param(owner_addr), parse_param(requestor_addr), parse_param(0)]]
+                       [parse_param(owner_addr), parse_param(requestor_addr)]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
@@ -120,6 +121,24 @@ class NEP5Token(VerificationCode):
     def Approve(self, wallet, owner_addr, requestor_addr, amount):
         invoke_args = [self.ScriptHash.ToString(), 'approve',
                        [parse_param(owner_addr), parse_param(requestor_addr), parse_param(amount)]]
+
+        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
+
+        return tx, fee, results
+
+    def Mint(self, wallet, mint_to_addr, attachment_args):
+
+        invoke_args = [self.ScriptHash.ToString(), 'crowdsale', []]
+
+        invoke_args = invoke_args + attachment_args
+
+        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
+
+        return tx, fee, results
+
+    def CrowdsaleRegister(self, wallet, register_addresses):
+
+        invoke_args = [self.ScriptHash.ToString(), 'crowdsale_register', [parse_param(p) for p in register_addresses]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 

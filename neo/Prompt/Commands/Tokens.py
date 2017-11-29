@@ -1,8 +1,9 @@
 from neo.Prompt.Commands.Invoke import InvokeContract
-from neo.Prompt.Utils import get_asset_id
+from neo.Prompt.Utils import get_asset_id, get_asset_attachments
 from neo.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
+
 import json
 
 
@@ -118,6 +119,69 @@ def token_get_allowance(wallet, args, verbose=False):
             print("Could not get allowance for token %s " % token.symbol)
 
     return 0
+
+
+def token_mint(wallet, args, prompt_passwd=True):
+
+    token = get_asset_id(wallet, args[0])
+    mint_to_addr = args[1]
+
+    if len(args) < 3:
+        raise Exception("please specify assets to attach")
+
+    asset_attachments = args[2:]
+
+    tx, fee, results = token.Mint(wallet, mint_to_addr, asset_attachments)
+
+    if results[0].GetBigInteger() > 0:
+        print("\n-----------------------------------------------------------")
+        print("[%s] Will mint tokens to address: %s " % (token.symbol, mint_to_addr))
+        print("Fee: %s " % (fee.value / Fixed8.D))
+        print("-------------------------------------------------------------\n")
+
+        if prompt_passwd:
+            passwd = prompt("[Password]> ", is_password=True)
+
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return
+
+        return InvokeContract(wallet, tx, fee)
+
+    else:
+        print("Could not register addresses: %s " % str(results[0]))
+
+    return False
+
+
+def token_crowdsale_register(wallet, args, prompt_passwd=True):
+    token = get_asset_id(wallet, args[0])
+
+    if len(args) < 2:
+        raise Exception("Specify addr to register for crowdsale")
+    register_addr = args[1:]
+
+    tx, fee, results = token.CrowdsaleRegister(wallet, register_addr)
+
+    if results[0].GetBigInteger() > 0:
+        print("\n-----------------------------------------------------------")
+        print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
+        print("Fee: %s " % (fee.value / Fixed8.D))
+        print("-------------------------------------------------------------\n")
+
+        if prompt_passwd:
+            passwd = prompt("[Password]> ", is_password=True)
+
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return
+
+        return InvokeContract(wallet, tx, fee)
+
+    else:
+        print("Could not register addresses: %s " % str(results[0]))
+
+    return False
 
 
 def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True):

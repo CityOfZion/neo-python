@@ -789,7 +789,7 @@ class ExecutionEngine():
 
 #        opname = ToName(op)
 #        logger.info("____________________________________________________")
-#        logger.info("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
+#        logger.info("[%s] %02x -> %s" % (self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
 #        logger.info("-----------------------------------")
 
         self.ops_processed += 1

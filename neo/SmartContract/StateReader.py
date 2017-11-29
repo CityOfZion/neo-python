@@ -7,7 +7,6 @@ from logzero import logger
 from neo.VM.InteropService import InteropService
 from neo.SmartContract.Contract import Contract
 from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
-from neo.SmartContract.LogEventArgs import LogEventArgs
 from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.State.StorageItem import StorageItem
@@ -18,14 +17,14 @@ from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 from neo.Cryptography.ECCurve import ECDSA
 from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
+from neo.SmartContract.TriggerType import Application, Verification
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
 
 
 class StateReader(InteropService):
 
-    NotifyEvent = events.Events()
-    LogEvent = events.Events()
+    notifications = None
 
     __Instance = None
 
@@ -40,6 +39,8 @@ class StateReader(InteropService):
     def __init__(self):
 
         super(StateReader, self).__init__()
+
+        self.notifications = []
 
         self.Register("Neo.Runtime.GetTrigger", self.Runtime_GetTrigger)
         self.Register("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness)
@@ -164,6 +165,52 @@ class StateReader(InteropService):
         self.Register("AntShares.Storage.GetContext", self.Storage_GetContext)
         self.Register("AntShares.Storage.Get", self.Storage_Get)
 
+    def ExecutionCompleted(self, engine, success, error=None):
+
+        height = Blockchain.Default().Height
+        tx_hash = engine.ScriptContainer.Hash
+
+        entry_script = None
+        try:
+            # get the first script that was executed
+            # this is usually the script that sets up the script to be executed
+            entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
+
+            # ExecutedScriptHashes[1] will usually be the first contract executed
+            if len(engine.ExecutedScriptHashes) > 1:
+                entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
+        except Exception as e:
+            print("Could not get entry script: %s " % e)
+
+        payload = []
+        for item in engine.EvaluationStack.Items:
+            payload_item = stack_item_to_py(item)
+            payload.append(payload_item)
+
+        if success:
+
+            # dispatch all notify events, along with the success of the contract execution
+            for notify_event_args in self.notifications:
+                dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
+                                              notify_event_args.ScriptHash, height, tx_hash,
+                                              success, engine.testMode)
+
+            if engine.Trigger == Application:
+                dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
+                                              height, tx_hash, success, engine.testMode)
+            else:
+                dispatch_smart_contract_event(SmartContractEvent.VERIFICATION_SUCCESS, payload, entry_script,
+                                              height, tx_hash, success, engine.testMode)
+
+        else:
+            if engine.Trigger == Application:
+
+                dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error, engine._VMState],
+                                              entry_script, height, tx_hash, success, engine.testMode)
+            else:
+                dispatch_smart_contract_event(SmartContractEvent.VERIFICATION_FAIL, [payload, error, engine._VMState],
+                                              entry_script, height, tx_hash, success, engine.testMode)
+
     def Runtime_GetTrigger(self, engine):
 
         engine.EvaluationStack.PushT(engine.Trigger)
@@ -218,7 +265,7 @@ class StateReader(InteropService):
             payload
         )
 
-        self.NotifyEvent.on_change(args)
+        self.notifications.append(args)
 
         return True
 

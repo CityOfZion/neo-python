@@ -49,6 +49,10 @@ class SmartContractEvent:
     EXECUTION_SUCCESS = "SmartContract.Execution.Success"
     EXECUTION_FAIL = "SmartContract.Execution.Fail"
 
+    VERIFICATION = "SmartContract.Verification.*"
+    VERIFICATION_SUCCESS = "SmartContract.Verification.Success"
+    VERIFICATION_FAIL = "SmartContract.Verification.Fail"
+
     STORAGE = "SmartContract.Storage.*"
     STORAGE_GET = "SmartContract.Storage.Get"
     STORAGE_PUT = "SmartContract.Storage.Put"

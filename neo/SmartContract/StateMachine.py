@@ -33,8 +33,6 @@ class StateMachine(StateReader):
 
     _contracts_created = {}
 
-    notifications = None
-
     def __init__(self, accounts, validators, assets, contracts, storages, wb):
 
         super(StateMachine, self).__init__()
@@ -45,9 +43,6 @@ class StateMachine(StateReader):
         self._contracts = contracts
         self._storages = storages
         self._wb = wb
-        self.notifications = []
-
-        self.NotifyEvent.on_change += self.StateMachine_Notify
 
         self.Register("Neo.Account.SetVotes", self.Account_SetVotes)
         self.Register("Neo.Validator.Register", self.Validator_Register)
@@ -89,41 +84,7 @@ class StateMachine(StateReader):
         if success:
             self.Commit()
 
-        height = Blockchain.Default().Height
-        tx_hash = engine.ScriptContainer.Hash
-
-        entry_script = None
-        try:
-            # get the first script that was executed
-            # this is usually the script that sets up the script to be executed
-            entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
-
-            # ExecutedScriptHashes[1] will usually be the first contract executed
-            if len(engine.ExecutedScriptHashes) > 1:
-                entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
-        except Exception as e:
-            print("Could not get entry script: %s " % e)
-
-        payload = []
-        for item in engine.EvaluationStack.Items:
-            payload_item = stack_item_to_py(item)
-            payload.append(payload_item)
-
-        if success:
-
-            # dispatch all notify events, along with the success of the contract execution
-            for notify_event_args in self.notifications:
-                dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
-                                              notify_event_args.ScriptHash, height, tx_hash,
-                                              success, engine.testMode)
-
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
-                                          height, tx_hash, success, engine.testMode)
-
-        else:
-
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error, engine._VMState],
-                                          entry_script, height, tx_hash, success, engine.testMode)
+        super(StateMachine, self).ExecutionCompleted(engine, success, error)
 
     def Commit(self):
         if self._wb is not None:
@@ -135,10 +96,6 @@ class StateMachine(StateReader):
 
     def TestCommit(self):
         pass
-
-    def StateMachine_Notify(self, event_args):
-
-        self.notifications.append(event_args)
 
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())

@@ -160,7 +160,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True):
             return
 
         params, neo_to_attach, gas_to_attach = get_asset_attachments(params)
-
+        print("PARAMS: %s %s %s " % (params, neo_to_attach, gas_to_attach))
         params.reverse()
 
         sb = ScriptBuilder()

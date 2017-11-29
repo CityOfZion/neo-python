@@ -30,7 +30,7 @@ from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
     ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
+from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken
 from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Utils import get_arg
@@ -92,6 +92,7 @@ class PromptInterface(object):
                 'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
+                'wallet tkn_mint {token symbol} {mint_to_addr} {amount_attach_neo} {amount_attach_gas}',
                 'wallet close',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
@@ -136,7 +137,7 @@ class PromptInterface(object):
                                 'config', 'import', 'export', 'open',
                                 'wallet', 'contract', 'asset', 'wif',
                                 'withdraw_request', 'withdraw', 'watch_addr',
-                                'contract_addr', 'testinvoke', 'tkn_send',
+                                'contract_addr', 'testinvoke', 'tkn_send', 'tkn_mint',
                                 'tkn_send_from', 'tkn_approve', 'tkn_allowance', ]
 
         if self.Wallet:
@@ -420,6 +421,10 @@ class PromptInterface(object):
             token_approve_allowance(self.Wallet, arguments[1:])
         elif item == 'tkn_allowance':
             token_get_allowance(self.Wallet, arguments[1:], verbose=True)
+        elif item == 'tkn_mint':
+            token_mint(self.Wallet, arguments[1:])
+        elif item == 'tkn_register':
+            token_crowdsale_register(self.Wallet, arguments[1:])
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
