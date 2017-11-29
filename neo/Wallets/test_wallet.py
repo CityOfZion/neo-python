@@ -1,10 +1,13 @@
+import binascii
+import hashlib
+from tempfile import NamedTemporaryFile
+
+from neo.Wallets.Wallet import Wallet
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Wallets.KeyPair import KeyPair
 from neo.UInt160 import UInt160
 from neo.SmartContract.Contract import Contract
-import binascii
 from neo.Cryptography.Crypto import Crypto
-import hashlib
 
 
 class WalletTestCase(NeoTestCase):
@@ -102,3 +105,10 @@ class WalletTestCase(NeoTestCase):
         sig = Crypto.Sign(self.nmsg, key.PrivateKey, key.PublicKey)
 
         self.assertEqual(sig.hex(), self.neon_sig)
+
+    def test_wallet_getassetamount(self):
+        with NamedTemporaryFile() as wallet_file:
+            wallet = Wallet(path=wallet_file.name, passwordKey="test", create=True)
+            wallet.CreateKey()
+            gas_amount = wallet.GetAssetAmount("NEOGas")
+            self.assertIsNone(gas_amount)

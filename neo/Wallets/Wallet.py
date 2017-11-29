@@ -1183,6 +1183,25 @@ class Wallet(object):
                 balances.append((asset.symbol, self.GetBalance(asset)))
         return balances
 
+    def GetAssetAmount(self, asset_symbol):
+        """
+        Return the amount of an asset in this wallets synced balances
+
+        Usage:
+
+            gas_amount = wallet.GetAssetAmount("NEOGas")
+
+        Returns:
+            None: if asset not in this wallet's synced balances
+            float: the amount of the asset in this wallet's synced balances
+        """
+        synced_balances = self.GetSyncedBalances()
+        for balance in synced_balances:
+            asset, amount = balance
+            if asset == asset_symbol:
+                return amount
+        return None
+
     def ToJson(self, verbose=False):
         # abstract
         pass

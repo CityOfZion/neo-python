@@ -145,3 +145,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet.AddNEP5Token(token)
 
         self.assertEqual(len(wallet.GetTokens()), 1)
+
+        # Test for a working `wallet.GetAssetAmount(..)` response
+        gas_amount = wallet.GetAssetAmount("NEOGas")
+        self.assertEqual(gas_amount, 100.0)
