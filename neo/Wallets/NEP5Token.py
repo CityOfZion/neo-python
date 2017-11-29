@@ -9,8 +9,9 @@ from neo.Cryptography.Crypto import Crypto
 from neo.Prompt.Commands.Invoke import TestInvokeContract
 from neo.Prompt.Utils import parse_param
 from neo.UInt160 import UInt160
-from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 import json
+
 
 class NEP5Token(VerificationCode):
 
@@ -133,7 +134,6 @@ class NEP5Token(VerificationCode):
         invoke_args = invoke_args + attachment_args
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True, from_addr=mint_to_addr)
-
 
         return tx, fee, results
 

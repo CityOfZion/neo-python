@@ -138,14 +138,11 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
     return False
 
 
-
 def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
 
     wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
 
-
     if wallet_tx:
-
 
         token_contract_state = Blockchain.Default().GetContract(token.ScriptHash.ToString())
         print("token contract  %s " % token_contract_state)
@@ -154,7 +151,6 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
             TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                  data=token.ScriptHash.Data)
         ]
-
 
         reedeem_script = token_contract_state.Code.Script.hex()
 
@@ -170,13 +166,11 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
 
         context.Add(verification_contract, 0, 0)
 
-
         if context.Completed:
 
             wallet_tx.scripts = context.GetScripts()
 
             relayed = False
-
 
             print("full wallet tx: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
 

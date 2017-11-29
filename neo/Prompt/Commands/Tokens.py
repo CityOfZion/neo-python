@@ -1,10 +1,10 @@
-from neo.Prompt.Commands.Invoke import InvokeContract,InvokeWithTokenVerificationScript
+from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
 from neo.Prompt.Utils import get_asset_id, get_asset_attachments
 from neo.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
-from neo.Core.TX.TransactionAttribute import TransactionAttribute,TransactionAttributeUsage
-from neo.SmartContract.Contract import Contract,ContractParameterType
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
+from neo.SmartContract.Contract import Contract, ContractParameterType
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 
 import json
@@ -148,7 +148,6 @@ def token_mint(wallet, args, prompt_passwd=True):
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
                 return
-
 
         return InvokeWithTokenVerificationScript(wallet, tx, token, fee)
 
