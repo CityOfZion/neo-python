@@ -80,7 +80,7 @@ def LoadContract(args):
     needs_storage = bool(parse_param(args[3]))
     needs_dynamic_invoke = bool(parse_param(args[4]))
 
-    contract_properties = ContractPropertyState.NoProperty
+    contract_properties = 0
 
     if needs_storage:
         contract_properties += ContractPropertyState.HasStorage
@@ -125,6 +125,8 @@ def LoadContract(args):
 
 def GatherLoadedContractParams(args, script):
 
+    if len(args) < 4:
+        raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke}")
     params = parse_param(args[0], ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
@@ -138,7 +140,7 @@ def GatherLoadedContractParams(args, script):
     needs_storage = bool(parse_param(args[2]))
     needs_dynamic_invoke = bool(parse_param(args[3]))
 
-    contract_properties = ContractPropertyState.NoProperty
+    contract_properties = 0
 
     if needs_storage:
         contract_properties += ContractPropertyState.HasStorage
@@ -206,7 +208,7 @@ def GatherContractDetails(function_code, prompter):
 
 
 def generate_deploy_script(script, name='test', version='test', author='test', email='test',
-                           description='test', contract_properties=ContractPropertyState.NoProperty, return_type=b'\xff', parameter_list=[]):
+                           description='test', contract_properties=0, return_type=b'\xff', parameter_list=[]):
     sb = ScriptBuilder()
 
     plist = parameter_list
@@ -220,7 +222,7 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
     sb.push(binascii.hexlify(author.encode('utf-8')))
     sb.push(binascii.hexlify(version.encode('utf-8')))
     sb.push(binascii.hexlify(name.encode('utf-8')))
-    sb.WriteByte(contract_properties)
+    sb.push(contract_properties)
     sb.push(return_type)
     sb.push(plist)
     sb.WriteVarData(script)

@@ -1,6 +1,3 @@
-import sys
-import os
-
 from logzero import logger
 
 from neo.VM.ExecutionEngine import ExecutionEngine
@@ -16,6 +13,8 @@ from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScri
 from neo.Core.State import ContractState, AssetState, AccountState, ValidatorState, StorageItem
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
+
+import pdb
 
 
 class ApplicationEngine(ExecutionEngine):
@@ -295,7 +294,7 @@ class ApplicationEngine(ExecutionEngine):
 
             fee = int(100 * 100000000 / self.ratio)  # 100 gas for contract with no storage no dynamic invoke
 
-            contract_properties = self.EvaluationStack.Peek(4).GetBigInteger()
+            contract_properties = self.EvaluationStack.Peek(3).GetBigInteger()
 
             if contract_properties & ContractPropertyState.HasStorage > 0:
                 logger.info("contract has storage")
