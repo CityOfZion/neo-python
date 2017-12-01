@@ -200,6 +200,7 @@ SETITEM = b'\xC4'
 NEWARRAY = b'\xC5'  # 用作引用類型
 NEWSTRUCT = b'\xC6'  # 用作值類型
 
+DYNAMICCALL = b'\xFA'
 
 import sys
 import importlib

@@ -14,6 +14,7 @@ from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neo.Core.State import ContractState, AssetState, AccountState, ValidatorState, StorageItem
+from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
 
 
@@ -213,7 +214,7 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == NOP:
             return 0
-        elif opcode == APPCALL or opcode == TAILCALL:
+        elif opcode == APPCALL or opcode == TAILCALL or opcode == DYNAMICCALL:
             return 10
         elif opcode == SYSCALL:
             return self.GetPriceForSysCall()
@@ -266,7 +267,7 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Blockchain.GetAccount":
             return 100
 
-        elif api == "Neo.Blockchain..GetValidators":
+        elif api == "Neo.Blockchain.GetValidators":
             return 200
 
         elif api == "Neo.Blockchain.GetAsset":
@@ -291,8 +292,22 @@ class ApplicationEngine(ExecutionEngine):
             return int(self.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio)
 
         elif api == "Neo.Contract.Create" or api == "Neo.Contract.Migrate":
-            amount = int(500 * 100000000 / self.ratio)
-            return amount
+
+            fee = int(100 * 100000000 / self.ratio)  # 100 gas for contract with no storage no dynamic invoke
+
+            contract_properties = self.EvaluationStack.Peek(4).GetBigInteger()
+
+            if contract_properties & ContractPropertyState.HasStorage > 0:
+                logger.info("contract has storage")
+                fee += int(400 * 100000000 / self.ratio)  # if contract has storage, we add 400 gas
+
+            if contract_properties & ContractPropertyState.HasDynamicInvoke > 0:
+                logger.info("contract has dynamic invoke")
+                fee += int(500 * 100000000 / self.ratio)  # if it has dynamic invoke, add extra 500 gas
+
+            logger.info("Will create contract with fee: %s " % fee)
+
+            return fee
 
         elif api == "Neo.Storage.Get":
             return 100

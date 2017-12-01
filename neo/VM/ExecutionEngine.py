@@ -186,19 +186,31 @@ class ExecutionEngine():
                 if istack.Count == 0:
                     self._VMState |= VMState.HALT
 
-            elif opcode == APPCALL or opcode == TAILCALL:
+            elif opcode == APPCALL or opcode == TAILCALL or opcode == DYNAMICCALL:
                 if self._Table is None:
                     self._VMState |= VMState.FAULT
                     return
 
-                script_hash = UInt160(data=context.OpReader.ReadBytes(20)).ToBytes()
+                script_hash = None
+
+                if opcode == DYNAMICCALL:
+                    try:
+                        script_hash = UInt160(data=estack.Pop().GetByteArray()).ToBytes()
+                    except Exception as e:
+                        logger.error("Could not read dynamic script hash data %s " % e)
+                        self._VMState |= VMState.FAULT
+                        return
+                else:
+                    script_hash = UInt160(data=context.OpReader.ReadBytes(20)).ToBytes()
+
                 script = self._Table.GetScript(script_hash)
 
                 if script is None:
+                    logger.error("Could not find script from script table: %s " % script_hash)
                     self._VMState |= VMState.FAULT
                     return
 
-                if opcode == TAILCALL:
+                if opcode == TAILCALL or opcode == DYNAMICCALL:
                     istack.Pop().Dispose()
 
                 self.LoadScript(script)
