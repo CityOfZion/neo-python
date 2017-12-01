@@ -217,6 +217,22 @@ class StateReader(InteropService):
 
         return True
 
+    def LoadDynamicContractState(self, engine):
+
+        script_hash = False
+        hash = engine.EvaluationStack.Pop().GetByteArray()
+
+        if len(hash) == 40:
+            script_hash = hash
+        elif len(hash) == 20:
+            try:
+                script_hash = UInt160(data=hash).ToBytes()
+            except Exception as e:
+                logger.error("Could not read dynamic script hash data %s " % e)
+                return False
+
+        return script_hash
+
     def CheckWitnessHash(self, engine, hash):
 
         if self._hashes_for_verifying is None:

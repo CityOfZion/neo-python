@@ -194,12 +194,22 @@ class ExecutionEngine():
                 script_hash = None
 
                 if opcode == DYNAMICCALL:
-                    try:
-                        script_hash = UInt160(data=estack.Pop().GetByteArray()).ToBytes()
-                    except Exception as e:
-                        logger.error("Could not read dynamic script hash data %s " % e)
+
+                    script_hash = self._Service.LoadDynamicContractState(self)
+
+                    if not script_hash:
+                        logger.error("Could not load dynamic contract state")
                         self._VMState |= VMState.FAULT
                         return
+
+                    current = UInt160(data=self.CurrentContext.ScriptHash())
+                    current_contract_state = self._Table.GetContractState(current.ToBytes())
+
+                    if not current_contract_state.HasDynamicInvoke:
+                        logger.error("Contract has no dynamic invoke privileges")
+                        self._VMState |= VMState.FAULT
+                        return
+
                 else:
                     script_hash = UInt160(data=context.OpReader.ReadBytes(20)).ToBytes()
 
@@ -210,7 +220,7 @@ class ExecutionEngine():
                     self._VMState |= VMState.FAULT
                     return
 
-                if opcode == TAILCALL or opcode == DYNAMICCALL:
+                if opcode == TAILCALL:
                     istack.Pop().Dispose()
 
                 self.LoadScript(script)
@@ -222,7 +232,6 @@ class ExecutionEngine():
 
             # stack operations
             elif opcode == DUPFROMALTSTACK:
-                item = astack.Peek()
                 estack.PushT(astack.Peek())
 
             elif opcode == TOALTSTACK:
@@ -715,7 +724,6 @@ class ExecutionEngine():
                 estack.PushT(to_pick)
 
             elif opcode == SETITEM:
-
                 newItem = estack.Pop()
 
                 if issubclass(type(newItem), StackItem) and newItem.IsStruct:

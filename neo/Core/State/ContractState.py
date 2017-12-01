@@ -49,7 +49,7 @@ class ContractState(StateBase):
         code.Deserialize(reader)
         self.Code = code
 
-        self.ContractProperties = reader.ReadByte()
+        self.ContractProperties = reader.ReadUInt8()
         self.Name = reader.ReadVarString(max=252)
         self.CodeVersion = reader.ReadVarString(max=252)
         self.Author = reader.ReadVarString(max=252)
@@ -71,7 +71,7 @@ class ContractState(StateBase):
         super(ContractState, self).Serialize(writer)
 
         self.Code.Serialize(writer)
-        writer.WriteByte(self.ContractProperties)
+        writer.WriteUInt8(self.ContractProperties)
         writer.WriteVarString(self.Name)
         writer.WriteVarString(self.CodeVersion)
         writer.WriteVarString(self.Author)
@@ -88,6 +88,8 @@ class ContractState(StateBase):
             name = self.Name.decode('utf-8')
         except Exception as e:
             pass
+
+        print("self contract properties: %s " % self.ContractProperties)
 
         return {
 

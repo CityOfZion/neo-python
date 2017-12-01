@@ -68,7 +68,7 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = self.CurrentContext.NextInstruction
 
-        if opcode == CALL or opcode == APPCALL:
+        if opcode == CALL or opcode == APPCALL or opcode == DYNAMICCALL:
             if self.InvocationStack.Count >= maxStackSize:
                 logger.error("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
@@ -297,14 +297,10 @@ class ApplicationEngine(ExecutionEngine):
             contract_properties = self.EvaluationStack.Peek(3).GetBigInteger()
 
             if contract_properties & ContractPropertyState.HasStorage > 0:
-                logger.info("contract has storage")
                 fee += int(400 * 100000000 / self.ratio)  # if contract has storage, we add 400 gas
 
             if contract_properties & ContractPropertyState.HasDynamicInvoke > 0:
-                logger.info("contract has dynamic invoke")
                 fee += int(500 * 100000000 / self.ratio)  # if it has dynamic invoke, add extra 500 gas
-
-            logger.info("Will create contract with fee: %s " % fee)
 
             return fee
 
