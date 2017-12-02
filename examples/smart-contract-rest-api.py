@@ -2,7 +2,14 @@
 Example of running a NEO node, receiving smart contract notifications and
 integrating a simple REST API.
 
-Start this example like this:
+Smart contract events include Runtime.Notify, Runtime.Log, Storage.*,
+Execution.Success and several more. See the documentation here:
+http://neo-python.readthedocs.io/en/latest/smartcontracts.html
+
+This example requires the environment variable NEO_REST_API_TOKEN, and can
+optionally use NEO_REST_LOGFILE and NEO_REST_API_PORT.
+
+Example usage (with "123" as valid API token):
 
     NEO_REST_API_TOKEN="123" python examples/smart-contract-rest-api.py
 
@@ -10,16 +17,11 @@ Example API calls:
 
     $ curl localhost:8080
     $ curl -H "Authorization: Bearer 123" localhost:8080/echo/hello123
-    $ curl -X POST -H "Authorization: Bearer 123" -d '{ "msg": "foo" }' localhost:8080/echo-post
+    $ curl -X POST -H "Authorization: Bearer 123" -d '{ "hello": "world" }' localhost:8080/echo-post
 
 The REST API is using the Python package 'klein', which makes it possible to
 create HTTP routes and handlers with Twisted in a similar style to Flask:
 https://github.com/twisted/klein
-
-Smart contract events include Runtime.Notify, Runtime.Log, Storage.*,
-Execution.Success and several more. See the documentation here:
-
-http://neo-python.readthedocs.io/en/latest/smartcontracts.html
 """
 import os
 import threading
