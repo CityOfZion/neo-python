@@ -65,7 +65,7 @@ app = Klein()
 #
 @smart_contract.on_notify
 def sc_notify(event):
-    logger.info("SmartContract Runtime.Notify event:", event)
+    logger.info("SmartContract Runtime.Notify event: %s", event)
 
     # Make sure that the event payload list has at least one element.
     if not len(event.event_payload):
@@ -74,7 +74,7 @@ def sc_notify(event):
     # The event payload list has at least one element. As developer of the smart contract
     # you should know what data-type is in the bytes, and how to decode it. In this example,
     # it's just a string, so we decode it with utf-8:
-    logger.info("- payload part 1:", event.event_payload[0].decode("utf-8"))
+    logger.info("- payload part 1: %s", event.event_payload[0].decode("utf-8"))
 
 
 #
