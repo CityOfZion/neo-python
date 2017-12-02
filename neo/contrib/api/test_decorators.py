@@ -3,6 +3,7 @@ from neo.Utils.NeoTestCase import NeoTestCase
 
 from neo.contrib.api.decorators import json_response, catch_exceptions, gen_authenticated_decorator
 
+
 class DummyReqHeaders:
     headers = {}
 
@@ -11,6 +12,7 @@ class DummyReqHeaders:
 
     def getRawHeaders(self, key):
         return self.headers[key]
+
 
 class DummyReq:
     headers = {}
@@ -32,7 +34,7 @@ class Fixed8TestCase(NeoTestCase):
 
         @json_response
         def _test(request):
-            return { "test": 123 }
+            return {"test": 123}
 
         _req = DummyReq()
         _res = _test(_req)
@@ -42,7 +44,7 @@ class Fixed8TestCase(NeoTestCase):
     def test_catch_exceptions(self):
         @catch_exceptions
         def _test(request):
-            1/0
+            1 / 0
 
         _req = DummyReq()
 
@@ -54,14 +56,13 @@ class Fixed8TestCase(NeoTestCase):
 
     def test_gen_authenticated_decorator(self):
         authenticated = gen_authenticated_decorator("123")
+
         @authenticated
         def _test(request):
-            return { "this": "works" }
+            return 123
 
         _req = DummyReq()
         _req.setHeader("Authorization", "Bearer 123")
         _res = _test(_req)
-        self.assertEqual(_res["this"], "works")
+        self.assertEqual(_res, 123)
         self.assertEqual(_req.headers["Content-Type"], "application/json")
-
-

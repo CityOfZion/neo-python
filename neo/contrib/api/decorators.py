@@ -103,4 +103,3 @@ def gen_authenticated_decorator(api_tokens=[]):
 
     # Return the decorator itself
     return authenticated
-
