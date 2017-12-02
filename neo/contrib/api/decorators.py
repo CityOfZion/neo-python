@@ -6,28 +6,33 @@ from logzero import logger
 
 
 # Get the API token from an environment variable
-API_AUTH_TOKEN = os.getenv("API_TOKEN", None)
+API_AUTH_TOKEN = os.getenv("NEO_REST_API_TOKEN", None)
 if not API_AUTH_TOKEN:
-    raise Exception("No API_TOKEN environment variable found!")
+    raise Exception("No NEO_REST_API_TOKEN environment variable found!")
 
 
 def json_response(func):
     """
     @json_response decorator adds response header for content type,
     and json-dumps response object.
+
+    Example usage:
+
+        @json_response
+        def test(request):
+            return { "hello": "world" }
     """
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         res = func(request, *args, **kwargs)
         request.setHeader('Content-Type', 'application/json')
-        return json.dumps(res) if isinstance(res, dict) else res
+        return json.dumps(res)
     return wrapper
 
 
 def authenticated(func):
     """
-    @authenticated decorator, which makes sure the HTTP request has the correct access token
-
+    @authenticated decorator, which makes sure the HTTP request has the correct access token.
     Header has to be in the format "Authorization: Bearer {token}"
 
     If no valid header is part of the request's HTTP headers, this decorator automatically
