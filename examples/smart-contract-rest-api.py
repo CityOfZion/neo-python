@@ -37,7 +37,7 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Settings import settings
 
 from neo.contrib.smartcontract import SmartContract
-from neo.contrib.api.decorators import json_response, authenticated, catch_exceptions
+from neo.contrib.api.decorators import json_response, gen_authenticated_decorator, catch_exceptions
 
 # Set the hash of your contract here:
 SMART_CONTRACT_HASH = "6537b4bd100e514119e3a7ab49d520d20ef2c2a4"
@@ -46,12 +46,17 @@ SMART_CONTRACT_HASH = "6537b4bd100e514119e3a7ab49d520d20ef2c2a4"
 API_PORT = os.getenv("NEO_REST_API_PORT", 8080)
 
 # If you want to enable logging to a file, set the filename here:
-LOGFILE = None
+LOGFILE = os.getenv("NEO_REST_LOGFILE", None)
 
 # Internal: if LOGFILE is set, file logging will be setup with max
 # 10 MB per file and 3 rotations:
 if LOGFILE:
     settings.set_logfile(LOGFILE, max_bytes=1e7, backup_count=3)
+
+# Internal: get the API token from an environment variable
+API_AUTH_TOKEN = os.getenv("NEO_REST_API_TOKEN", None)
+if not API_AUTH_TOKEN:
+    raise Exception("No NEO_REST_API_TOKEN environment variable found!")
 
 # Internal: setup the smart contract instance
 smart_contract = SmartContract(SMART_CONTRACT_HASH)
@@ -59,6 +64,8 @@ smart_contract = SmartContract(SMART_CONTRACT_HASH)
 # Internal: setup the klein instance
 app = Klein()
 
+# Internal: generate the @authenticated decorator with valid tokens
+authenticated = gen_authenticated_decorator(API_AUTH_TOKEN)
 
 #
 # Smart contract event handler for Runtime.Notify events
