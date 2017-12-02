@@ -39,14 +39,14 @@ def authenticated(func):
         if not request.requestHeaders.hasHeader("Authorization"):
             request.setHeader('Content-Type', 'application/json')
             request.setResponseCode(403)
-            return json.dumps({ "error": "No Authorization header found" })
+            return json.dumps({"error": "No Authorization header found"})
 
         # Make sure Authorization header is valid
         user_auth_token = str(request.requestHeaders.getRawHeaders("Authorization")[0])
         if user_auth_token != "Bearer %s" % API_AUTH_TOKEN:
             request.setHeader('Content-Type', 'application/json')
             request.setResponseCode(403)
-            return json.dumps({ "error": "Invalid Authorization header" })
+            return json.dumps({"error": "Invalid Authorization header"})
 
         # If all good, proceed to request handler
         return func(request, *args, **kwargs)
@@ -70,7 +70,6 @@ def catch_exceptions(func):
             logger.exception(e)
             request.setResponseCode(500)
             request.setHeader('Content-Type', 'application/json')
-            return json.dumps({ "error": str(e) })
+            return json.dumps({"error": str(e)})
         return res
     return wrapper
-
