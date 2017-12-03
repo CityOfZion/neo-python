@@ -73,6 +73,7 @@ class PromptInterface(object):
                 'config debug {on/off}',
                 'config sc-events {on/off}',
                 'build {path/to/file.py} (test {params} {returntype} {needs_storage} {test_params})',
+                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {test_params})',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage}',
