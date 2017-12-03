@@ -121,6 +121,9 @@ class Fixed8:
     def __le__(self, other):
         return self.value <= other.value
 
+    def ToInt(self):
+        return int(self.value / Fixed8.D)
+
     def ToString(self):
         return self.value / Fixed8.D
 #    def __str__(self):
