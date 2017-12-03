@@ -6,6 +6,8 @@ import binascii
 from neo.Cryptography.Crypto import Crypto
 import hashlib
 
+from neo.Wallets.Wallet import Wallet
+
 
 class WalletTestCase(NeoTestCase):
 
@@ -102,3 +104,15 @@ class WalletTestCase(NeoTestCase):
         sig = Crypto.Sign(self.nmsg, key.PrivateKey, key.PublicKey)
 
         self.assertEqual(sig.hex(), self.neon_sig)
+
+    def test_get_contains_key_should_be_found(self):
+        wallet = Wallet("fakepath", "123", True)
+        wallet.CreateKey()
+        keypair = wallet.GetKeys()[0]
+        self.assertTrue(wallet.ContainsKey(keypair.PublicKey))
+
+    def test_get_contains_key_should_not_be_found(self):
+        wallet = Wallet("fakepath", "123", True)
+        wallet.CreateKey()
+        keypair = KeyPair(priv_key=self.pk)
+        self.assertFalse(wallet.ContainsKey(keypair.PublicKey))
