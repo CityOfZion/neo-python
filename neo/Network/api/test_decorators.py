@@ -1,7 +1,7 @@
 import json
 from neo.Utils.NeoTestCase import NeoTestCase
 
-from neo.contrib.api.decorators import json_response, catch_exceptions, gen_authenticated_decorator
+from neo.Network.api.decorators import json_response, catch_exceptions, gen_authenticated_decorator
 
 
 class DummyReqHeaders:
