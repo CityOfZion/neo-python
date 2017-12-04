@@ -38,8 +38,8 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Settings import settings
 
+from neo.Network.api.decorators import json_response, gen_authenticated_decorator, catch_exceptions
 from neo.contrib.smartcontract import SmartContract
-from neo.contrib.api.decorators import json_response, gen_authenticated_decorator, catch_exceptions
 
 # Set the hash of your contract here:
 SMART_CONTRACT_HASH = "6537b4bd100e514119e3a7ab49d520d20ef2c2a4"
