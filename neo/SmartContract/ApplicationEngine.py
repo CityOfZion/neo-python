@@ -17,6 +17,7 @@ from neo.SmartContract import TriggerType
 import pdb
 from neo.UInt160 import UInt160
 
+
 class ApplicationEngine(ExecutionEngine):
 
     ratio = 100000
@@ -177,7 +178,6 @@ class ApplicationEngine(ExecutionEngine):
             # read the current position of the stream
             start_pos = self.CurrentContext.OpReader.stream.tell()
 
-
             # normal app calls are stored in the op reader
             # we read ahead past the next instruction 1 the next 20 bytes
             script_hash = self.CurrentContext.OpReader.ReadBytes(21)[1:]
@@ -189,7 +189,6 @@ class ApplicationEngine(ExecutionEngine):
                 # if any of the bytes are greater than 0, this is a normal app call
                 if b > 0:
                     return True
-
 
             # if this is a dynamic app call, we will arrive here
             # get the current executing script hash
@@ -236,7 +235,6 @@ class ApplicationEngine(ExecutionEngine):
             if not self.CheckDynamicInvoke():
                 logger.error("Dynamic invoke without proper contract")
                 return False
-
 
             self.StepInto()
 

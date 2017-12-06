@@ -193,10 +193,10 @@ class ExecutionEngine():
 
                 script_hash = context.OpReader.ReadBytes(20)
 
-                is_normal_call =False
+                is_normal_call = False
                 for b in script_hash:
                     if b > 0:
-                        is_normal_call=True
+                        is_normal_call = True
 
                 if not is_normal_call:
                     script_hash = self.EvaluationStack.Pop().GetByteArray()
