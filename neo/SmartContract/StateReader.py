@@ -56,6 +56,7 @@ class StateReader(InteropService):
         self.Register("Neo.Blockchain.GetAsset", self.Blockchain_GetAsset)
         self.Register("Neo.Blockchain.GetContract", self.Blockchain_GetContract)
 
+        self.Register("Neo.Header.GetIndex", self.Header_GetIndex)
         self.Register("Neo.Header.GetHash", self.Header_GetHash)
         self.Register("Neo.Header.GetVersion", self.Header_GetVersion)
         self.Register("Neo.Header.GetPrevHash", self.Header_GetPrevHash)
@@ -74,6 +75,7 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetInputs", self.Transaction_GetInputs)
         self.Register("Neo.Transaction.GetOutputs", self.Transaction_GetOutputs)
         self.Register("Neo.Transaction.GetReferences", self.Transaction_GetReferences)
+        self.Register("Neo.Transaction.GetUnspentCoins", self.Transaction_GetUnspentCoins)
 
         self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
         self.Register("Neo.Attribute.GetUsage", self.Attribute_GetUsage)
@@ -415,6 +417,13 @@ class StateReader(InteropService):
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
         return True
 
+    def Header_GetIndex(self, engine):
+        header = engine.EvaluationStack.Pop().GetInterface()
+        if header is None:
+            return False
+        engine.EvaluationStack.PushT(header.Index)
+        return True
+
     def Header_GetHash(self, engine):
 
         header = engine.EvaluationStack.Pop().GetInterface()
@@ -566,6 +575,16 @@ class StateReader(InteropService):
         refs = [StackItem.FromInterface(tx.References[input]) for input in tx.inputs]
 
         engine.EvaluationStack.PushT(refs)
+        return True
+
+    def Transaction_GetUnspentCoins(self, engine):
+        tx = engine.EvaluationStack.Pop().GetInterface()
+
+        if tx is None:
+            return False
+
+        unspents = Blockchain.Default().GetUnspent()
+
         return True
 
     def Attribute_GetUsage(self, engine):

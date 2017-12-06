@@ -138,6 +138,11 @@ class Blockchain(object):
         # abstract
         pass
 
+    @property
+    def CurrentBlock(self):
+        # abstract
+        pass
+
     def AddBlock(self, block):
         # abstract
         pass

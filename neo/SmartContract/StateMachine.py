@@ -55,6 +55,11 @@ class StateMachine(StateReader):
         self.Register("Neo.Storage.Put", self.Storage_Put)
         self.Register("Neo.Storage.Delete", self.Storage_Delete)
 
+
+        # new 12-5
+        self.Register("Neo.Runtime.GetCurrentBlock", self.Runtime_GetCurrentBlock)
+
+
         self.Register("AntShares.Account.SetVotes", self.Account_SetVotes)
         self.Register("AntShares.Validator.Register", self.Validator_Register)
         self.Register("AntShares.Asset.Create", self.Asset_Create)
@@ -96,6 +101,13 @@ class StateMachine(StateReader):
 
     def TestCommit(self):
         pass
+
+
+    def Runtime_GetCurrentBlock(self, engine):
+
+        engine.EvaluationStack.PushT(StackItem.FromInterface(Blockchain.Default().CurrentBlock))
+        return True
+
 
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
