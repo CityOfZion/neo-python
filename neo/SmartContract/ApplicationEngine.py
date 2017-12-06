@@ -15,7 +15,7 @@ from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
 
 import pdb
-
+from neo.UInt160 import UInt160
 
 class ApplicationEngine(ExecutionEngine):
 
@@ -68,7 +68,7 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = self.CurrentContext.NextInstruction
 
-        if opcode == CALL or opcode == APPCALL or opcode == DYNAMICCALL:
+        if opcode == CALL or opcode == APPCALL:
             if self.InvocationStack.Count >= maxStackSize:
                 logger.error("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
@@ -165,6 +165,42 @@ class ApplicationEngine(ExecutionEngine):
 
         return True
 
+    def CheckDynamicInvoke(self):
+
+        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+            return True
+
+        opcode = self.CurrentContext.NextInstruction
+
+        if opcode == APPCALL:
+
+            # read the current position of the stream
+            start_pos = self.CurrentContext.OpReader.stream.tell()
+
+
+            # normal app calls are stored in the op reader
+            # we read ahead past the next instruction 1 the next 20 bytes
+            script_hash = self.CurrentContext.OpReader.ReadBytes(21)[1:]
+
+            # then reset the position
+            self.CurrentContext.OpReader.stream.seek(start_pos)
+
+            for b in script_hash:
+                # if any of the bytes are greater than 0, this is a normal app call
+                if b > 0:
+                    return True
+
+
+            # if this is a dynamic app call, we will arrive here
+            # get the current executing script hash
+            current = UInt160(data=self.CurrentContext.ScriptHash())
+            current_contract_state = self._Table.GetContractState(current.ToBytes())
+
+            # if current contract state cant do dynamic calls, return False
+            return current_contract_state.HasDynamicInvoke
+
+        return True
+
     def Execute(self):
 
         while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
@@ -197,6 +233,11 @@ class ApplicationEngine(ExecutionEngine):
                 logger.error("INVOCATION SIZE TO BIIG")
                 return False
 
+            if not self.CheckDynamicInvoke():
+                logger.error("Dynamic invoke without proper contract")
+                return False
+
+
             self.StepInto()
 
         return not self._VMState & VMState.FAULT > 0
@@ -213,7 +254,7 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == NOP:
             return 0
-        elif opcode == APPCALL or opcode == TAILCALL or opcode == DYNAMICCALL:
+        elif opcode == APPCALL or opcode == TAILCALL:
             return 10
         elif opcode == SYSCALL:
             return self.GetPriceForSysCall()

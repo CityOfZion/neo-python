@@ -186,34 +186,22 @@ class ExecutionEngine():
                 if istack.Count == 0:
                     self._VMState |= VMState.HALT
 
-            elif opcode == APPCALL or opcode == TAILCALL or opcode == DYNAMICCALL:
+            elif opcode == APPCALL or opcode == TAILCALL:
                 if self._Table is None:
                     self._VMState |= VMState.FAULT
                     return
 
-                script_hash = None
+                script_hash = context.OpReader.ReadBytes(20)
 
-                if opcode == DYNAMICCALL:
+                is_normal_call =False
+                for b in script_hash:
+                    if b > 0:
+                        is_normal_call=True
 
-                    script_hash = self._Service.LoadDynamicContractState(self)
+                if not is_normal_call:
+                    script_hash = self.EvaluationStack.Pop().GetByteArray()
 
-                    if not script_hash:
-                        logger.error("Could not load dynamic contract state")
-                        self._VMState |= VMState.FAULT
-                        return
-
-                    current = UInt160(data=self.CurrentContext.ScriptHash())
-                    current_contract_state = self._Table.GetContractState(current.ToBytes())
-
-                    if not current_contract_state.HasDynamicInvoke:
-                        logger.error("Contract has no dynamic invoke privileges")
-                        self._VMState |= VMState.FAULT
-                        return
-
-                else:
-                    script_hash = UInt160(data=context.OpReader.ReadBytes(20)).ToBytes()
-
-                script = self._Table.GetScript(script_hash)
+                script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
 
                 if script is None:
                     logger.error("Could not find script from script table: %s " % script_hash)
