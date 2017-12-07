@@ -46,6 +46,8 @@ class StateReader(InteropService):
         self.Register("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness)
         self.Register("Neo.Runtime.Notify", self.Runtime_Notify)
         self.Register("Neo.Runtime.Log", self.Runtime_Log)
+        self.Register("Neo.Runtime.GetCurrentBlock", self.Runtime_GetCurrentBlock)
+        self.Register("Neo.Runtime.GetTime", self.Runtime_GetCurrentTime)
 
         self.Register("Neo.Blockchain.GetHeight", self.Blockchain_GetHeight)
         self.Register("Neo.Blockchain.GetHeader", self.Blockchain_GetHeader)
@@ -111,6 +113,7 @@ class StateReader(InteropService):
         self.Register("AntShares.Runtime.CheckWitness", self.Runtime_CheckWitness)
         self.Register("AntShares.Runtime.Notify", self.Runtime_Notify)
         self.Register("AntShares.Runtime.Log", self.Runtime_Log)
+
         self.Register("AntShares.Blockchain.GetHeight", self.Blockchain_GetHeight)
         self.Register("AntShares.Blockchain.GetHeader", self.Blockchain_GetHeader)
         self.Register("AntShares.Blockchain.GetBlock", self.Blockchain_GetBlock)
@@ -284,6 +287,14 @@ class StateReader(InteropService):
                                       engine.ScriptContainer.Hash,
                                       test_mode=engine.testMode)
 
+        return True
+
+    def Runtime_GetCurrentBlock(self, engine):
+        engine.EvaluationStack.PushT(StackItem.FromInterface(Blockchain.Default().CurrentBlock))
+        return True
+
+    def Runtime_GetCurrentTime(self, engine):
+        engine.EvaluationStack.PushT(Blockchain.Default().CurrentBlock.Timestamp)
         return True
 
     def Blockchain_GetHeight(self, engine):

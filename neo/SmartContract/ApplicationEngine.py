@@ -257,8 +257,11 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Blockchain.GetHeader":
             return 100
 
-        elif api == "Neo.Blockchain.GetBlock":
+        elif api in ["Neo.Blockchain.GetBlock", "Neo.Runtime.GetCurrentBlock"]:
             return 200
+
+        elif api == "Neo.Runtime.GetTime":
+            return 100
 
         elif api == "Neo.Blockchain.GetTransaction":
             return 100

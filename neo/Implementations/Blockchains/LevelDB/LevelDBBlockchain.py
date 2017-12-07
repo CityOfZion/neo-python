@@ -259,8 +259,6 @@ class LevelDBBlockchain(Blockchain):
 
         return coins.Keys
 
-
-
     def GetUnspent(self, hash, index):
 
         sn = self._db.snapshot()
@@ -274,7 +272,7 @@ class LevelDBBlockchain(Blockchain):
             return None
         if state.Items[index] & CoinState.Spent > 0:
             return None
-        tx,height = self.GetTransaction(hash)
+        tx, height = self.GetTransaction(hash)
 
         return tx.outputs[index]
 
