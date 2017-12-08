@@ -22,6 +22,7 @@ from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 from neo.VM.InteropService import StackItem, stack_item_to_py
 import json
 
+
 class StateReader(InteropService):
 
     NotifyEvent = events.Events()
@@ -533,7 +534,6 @@ class StateReader(InteropService):
 
         engine.EvaluationStack.PushT(refs)
         return True
-
 
     def Attribute_GetUsage(self, engine):
 

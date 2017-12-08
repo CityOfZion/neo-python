@@ -6,6 +6,7 @@ from .CoinState import CoinState
 from neo.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 
+
 class UnspentCoinState(StateBase):
 
     Items = None
@@ -49,7 +50,7 @@ class UnspentCoinState(StateBase):
         blen = reader.ReadVarInt()
         self.Items = [0] * blen
         for i in range(0, blen):
-            self.Items[i] = int.from_bytes(reader.ReadByte(do_ord=False),'little')
+            self.Items[i] = int.from_bytes(reader.ReadByte(do_ord=False), 'little')
 
     @staticmethod
     def DeserializeFromDB(buffer):

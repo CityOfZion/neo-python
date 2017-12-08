@@ -388,7 +388,6 @@ class Blockchain(object):
         # abstract
         pass
 
-
     def GetVotes(self, transactions):
         # abstract
         pass

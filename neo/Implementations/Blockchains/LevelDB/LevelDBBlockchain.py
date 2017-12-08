@@ -265,7 +265,6 @@ class LevelDBBlockchain(Blockchain):
 
         return result
 
-
     def GetUnspent(self, hash, index):
         # abstract
         pass
@@ -287,7 +286,6 @@ class LevelDBBlockchain(Blockchain):
                     unspents.append(tx.outputs[index])
 
         return unspents
-
 
     def GetUnclaimed(self, hash):
 
