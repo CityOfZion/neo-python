@@ -265,6 +265,30 @@ class LevelDBBlockchain(Blockchain):
 
         return result
 
+
+    def GetUnspent(self, hash, index):
+        # abstract
+        pass
+
+    def GetAllUnspent(self, hash):
+
+        unspents = []
+
+        sn = self._db.snapshot()
+        unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
+
+        state = unspentcoins.TryGet(keyval=hash.ToBytes())
+
+        if state:
+            tx, height = self.GetTransaction(hash)
+
+            for index, item in enumerate(state.Items):
+                if item & CoinState.Spent == 0:
+                    unspents.append(tx.outputs[index])
+
+        return unspents
+
+
     def GetUnclaimed(self, hash):
 
         tx, height = self.GetTransaction(hash)
@@ -675,7 +699,8 @@ class LevelDBBlockchain(Blockchain):
 
             # filte out unspent coins to delete then commit
             for key, unspent in unspentcoins.Current.items():
-                unspentcoins.Remove(key)
+                if unspent.IsAllSpent:
+                    unspentcoins.Remove(key)
             unspentcoins.Commit(wb)
 
             # filter out spent coins to delete then commit to db

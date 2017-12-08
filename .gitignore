@@ -85,6 +85,7 @@ endpoints.txt
 .prompt.py.history
 
 preferences.json
+protocol.nex.json
 prompt.log*
 test.log
 
