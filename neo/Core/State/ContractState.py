@@ -101,5 +101,9 @@ class ContractState(StateBase):
             'code_version': self.CodeVersion.decode('utf-8'),
             'author': self.Author.decode('utf-8'),
             'email': self.Email.decode('utf-8'),
-            'description': self.Description.decode('utf-8')
+            'description': self.Description.decode('utf-8'),
+            'properties':{
+                'storage': self.HasStorage,
+                'dynamic_invoke': self.HasDynamicInvoke
+            }
         }
