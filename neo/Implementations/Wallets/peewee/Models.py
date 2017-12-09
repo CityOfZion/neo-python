@@ -1,6 +1,8 @@
 
 from peewee import *
 from .PWDatabase import PWDatabase
+from neo.Cryptography.Crypto import Crypto
+from neo.UInt160 import UInt160
 
 
 class ModelBase(Model):
@@ -18,6 +20,21 @@ class Address(ModelBase):
     Id = PrimaryKeyField()
     ScriptHash = CharField(unique=True)
     IsWatchOnly = BooleanField(default=False)
+
+    def ToString(self):
+        return Crypto.ToAddress(UInt160(data=self.ScriptHash))
+
+
+class NamedAddress(ModelBase):
+    Id = PrimaryKeyField()
+    ScriptHash = CharField(unique=True)
+    Title = CharField()
+
+    def UInt160ScriptHash(self):
+        return UInt160(data=self.ScriptHash)
+
+    def ToString(self):
+        return Crypto.ToAddress(UInt160(data=self.ScriptHash))
 
 
 class Coin(ModelBase):
