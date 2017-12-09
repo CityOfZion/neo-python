@@ -22,7 +22,7 @@ from neo.UInt256 import UInt256
 from neo.Wallets.Coin import CoinState
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
-    TransactionInfo, NEP5Token
+    TransactionInfo, NEP5Token, NamedAddress
 
 
 class UserWallet(Wallet):
@@ -31,10 +31,13 @@ class UserWallet(Wallet):
 
     __dbaccount = None
 
+    _aliases = None
+
     def __init__(self, path, passwordKey, create):
 
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)
         logger.debug("initialized user wallet %s " % self)
+        self.LoadNamedAddresses()
 
     def BuildDatabase(self):
         PWDatabase.Destroy()
@@ -42,7 +45,7 @@ class UserWallet(Wallet):
         db = PWDatabase.ContextDB()
         try:
             db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token,
-                              Transaction, TransactionInfo, ], safe=True)
+                              Transaction, TransactionInfo, NamedAddress], safe=True)
         except Exception as e:
             logger.error("couldnt build database %s " % e)
 
@@ -194,6 +197,13 @@ class UserWallet(Wallet):
         db_token.save()
         return True
 
+    def AddNamedAddress(self, script_hash, title):
+        script_hash_bytes = bytes(script_hash.ToArray())
+
+        alias, created = NamedAddress.get_or_create(ScriptHash=script_hash_bytes, Title=title)
+
+        self.LoadNamedAddresses()
+
     def FindUnspentCoins(self, from_addr=None, use_standard=False, watch_only_val=0):
         return super(UserWallet, self).FindUnspentCoins(from_addr, use_standard, watch_only_val=watch_only_val)
 
@@ -279,6 +289,13 @@ class UserWallet(Wallet):
 
     def LoadTransactions(self):
         return Transaction.select()
+
+    def LoadNamedAddresses(self):
+        self._aliases = NamedAddress.select()
+
+    @property
+    def NamedAddr(self):
+        return self._aliases
 
     def SaveStoredData(self, key, value):
         k = None
@@ -366,8 +383,8 @@ class UserWallet(Wallet):
     def Addresses(self):
         result = []
         for addr in Address.select():
-            addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
-            result.append(addr_str)
+            #            addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
+            result.append(addr.ToString())
 
         return result
 
@@ -499,6 +516,13 @@ class UserWallet(Wallet):
             'available': self.GetAvailableClaimTotal().ToString(),
             'unavailable': self.GetUnavailableBonus().ToString()
         }
+
+        alia = NamedAddress.select()
+        if len(alia):
+            na = {}
+            for n in alia:
+                na[n.Title] = n.ToString()
+            jsn['named_addr'] = na
 
         if verbose:
             jsn['coins'] = [coin.ToJson() for coin in self.FindUnspentCoins()]

@@ -1,5 +1,7 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Prompt.Commands.Wallet import AddAlias
+from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
 from neo.UInt160 import UInt160
 from neo.Fixed8 import Fixed8
@@ -145,3 +147,27 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet.AddNEP5Token(token)
 
         self.assertEqual(len(wallet.GetTokens()), 1)
+
+    def test_8_named_addr(self):
+
+        wallet = self.GetWallet1()
+
+        AddAlias(wallet, self.wallet_1_addr, 'my_named_addr')
+
+        named = [n.Title for n in wallet.NamedAddr]
+
+        self.assertIn('my_named_addr', named)
+
+        param = 'my_named_addr'
+
+        addr = lookup_addr_str(wallet, param)
+
+        self.assertIsInstance(addr, UInt160)
+
+        self.assertEqual(addr, self.wallet_1_script_hash)
+
+        presult = parse_param(param, wallet)
+
+        self.assertIsInstance(presult, bytearray)
+
+        self.assertEqual(presult, self.wallet_1_script_hash.Data)
