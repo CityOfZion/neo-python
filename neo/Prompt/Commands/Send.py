@@ -4,7 +4,7 @@ from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id
+from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str
 from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Wallets.Coin import CoinState
 from neo.Wallets.NEP5Token import NEP5Token
@@ -37,7 +37,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
             print("Asset id not found")
             return False
 
-        scripthash_to = wallet.ToScriptHash(address_to)
+        scripthash_to = lookup_addr_str(wallet, address_to)
         if scripthash_to is None:
             print("invalid address")
             return False
@@ -45,7 +45,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         scripthash_from = None
 
         if from_address is not None:
-            scripthash_from = wallet.ToScriptHash(from_address)
+            scripthash_from = lookup_addr_str(wallet, from_address)
 
         # if this is a token, we will use a different
         # transfer mechanism

@@ -219,7 +219,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
             return
 
         params, neo_to_attach, gas_to_attach = get_asset_attachments(params)
-        print("PARAMS: %s %s %s " % (params, neo_to_attach, gas_to_attach))
+
         params.reverse()
 
         sb = ScriptBuilder()
@@ -227,7 +227,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
         for p in params:
 
             if parse_params:
-                item = parse_param(p)
+                item = parse_param(p, wallet)
             else:
                 item = p
 
@@ -449,7 +449,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             for p in invoke_args:
 
-                item = parse_param(p)
+                item = parse_param(p, wallet)
 
                 if type(item) is list:
                     item.reverse()
