@@ -76,7 +76,7 @@ class NEP5Token(VerificationCode):
         if type(address) is UInt160:
             address = Crypto.ToAddress(address)
 
-        invoke_args = [self.ScriptHash.ToString(), parse_param('balanceOf'), [parse_param(address)]]
+        invoke_args = [self.ScriptHash.ToString(), parse_param('balanceOf'), [parse_param(address, wallet)]]
         tx, fee, balanceResults, num_ops = TestInvokeContract(wallet, invoke_args, None, False)
 
         try:
@@ -97,7 +97,7 @@ class NEP5Token(VerificationCode):
     def Transfer(self, wallet, from_addr, to_addr, amount):
 
         invoke_args = [self.ScriptHash.ToString(), 'transfer',
-                       [parse_param(from_addr), parse_param(to_addr), parse_param(amount)]]
+                       [parse_param(from_addr, wallet), parse_param(to_addr, wallet), parse_param(amount)]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
@@ -105,7 +105,7 @@ class NEP5Token(VerificationCode):
 
     def TransferFrom(self, wallet, from_addr, to_addr, amount):
         invoke_args = [self.ScriptHash.ToString(), 'transferFrom',
-                       [parse_param(from_addr), parse_param(to_addr), parse_param(amount)]]
+                       [parse_param(from_addr, wallet), parse_param(to_addr, wallet), parse_param(amount)]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
@@ -113,7 +113,7 @@ class NEP5Token(VerificationCode):
 
     def Allowance(self, wallet, owner_addr, requestor_addr):
         invoke_args = [self.ScriptHash.ToString(), 'allowance',
-                       [parse_param(owner_addr), parse_param(requestor_addr)]]
+                       [parse_param(owner_addr, wallet), parse_param(requestor_addr, wallet)]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
@@ -121,7 +121,7 @@ class NEP5Token(VerificationCode):
 
     def Approve(self, wallet, owner_addr, requestor_addr, amount):
         invoke_args = [self.ScriptHash.ToString(), 'approve',
-                       [parse_param(owner_addr), parse_param(requestor_addr), parse_param(amount)]]
+                       [parse_param(owner_addr, wallet), parse_param(requestor_addr, wallet), parse_param(amount)]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
@@ -129,7 +129,7 @@ class NEP5Token(VerificationCode):
 
     def Mint(self, wallet, mint_to_addr, attachment_args):
 
-        invoke_args = [self.ScriptHash.ToString(), 'crowdsale', []]
+        invoke_args = [self.ScriptHash.ToString(), 'mintTokens', []]
 
         invoke_args = invoke_args + attachment_args
 
@@ -139,7 +139,7 @@ class NEP5Token(VerificationCode):
 
     def CrowdsaleRegister(self, wallet, register_addresses):
 
-        invoke_args = [self.ScriptHash.ToString(), 'crowdsale_register', [parse_param(p) for p in register_addresses]]
+        invoke_args = [self.ScriptHash.ToString(), 'crowdsale_register', [parse_param(p, wallet) for p in register_addresses]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 

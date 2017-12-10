@@ -20,6 +20,7 @@ from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 from neo.SmartContract.TriggerType import Application, Verification
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
+import json
 
 
 class StateReader(InteropService):

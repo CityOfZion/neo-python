@@ -38,7 +38,6 @@ class UnspentCoinState(StateBase):
     def OrEqValueForItemAt(self, index, value):
 
         length = len(self.Items)
-
         while length < index + 1:
             self.Items.append(0)
             length = len(self.Items)

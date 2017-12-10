@@ -222,8 +222,16 @@ class ContractParametersContext():
             plist.reverse()
 
             for p in plist:
-
-                sb.push(p.Value)
+                if type(p.Value) is list:
+                    pa = p.Value
+                    pa.reverse()
+                    listlength = len(pa)
+                    for listitem in pa:
+                        sb.push(listitem)
+                    sb.push(listlength)
+                    sb.Emit(OpCode.PACK)
+                else:
+                    sb.push(p.Value)
 
             vscript = bytearray(0)
 

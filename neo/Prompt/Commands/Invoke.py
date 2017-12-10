@@ -1,12 +1,8 @@
 from neo.Blockchain import GetBlockchain
-from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import parse_param, get_asset_attachments
-from neo.Core.TX.Transaction import Transaction
-import json
-import binascii
 
 
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
@@ -33,68 +29,7 @@ from neo.Fixed8 import Fixed8
 from neo.Core.Blockchain import Blockchain
 
 from neo.VM.OpCode import *
-from neo.BigInteger import BigInteger
-import traceback
-import pdb
 import json
-from neo.UInt160 import UInt160
-
-
-def InvokeWithdrawTx(wallet, tx, contract_hash):
-
-    #    print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
-
-    requestor_contract = wallet.GetDefaultContract()
-    tx.Attributes = [
-        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)
-    ]
-
-    withdraw_contract_state = Blockchain.Default().GetContract(contract_hash.encode('utf-8'))
-
-    withdraw_verification = None
-
-    if withdraw_contract_state is not None:
-
-        reedeem_script = withdraw_contract_state.Code.Script.hex()
-
-        # there has to be at least 1 param, and the first
-        # one needs to be a signature param
-        param_list = bytearray(b'\x00')
-
-        # if there's more than one param
-        # we set the first parameter to be the signature param
-        if len(withdraw_contract_state.Code.ParameterList) > 1:
-            param_list = bytearray(withdraw_contract_state.Code.ParameterList)
-            param_list[0] = 0
-
-        verification_contract = Contract.Create(reedeem_script, param_list, requestor_contract.PublicKeyHash)
-
-        address = verification_contract.Address
-        withdraw_verification = verification_contract
-
-    context = ContractParametersContext(tx)
-    wallet.Sign(context)
-
-    context.Add(withdraw_verification, 0, 0)
-
-    if context.Completed:
-
-        tx.scripts = context.GetScripts()
-
-        print("withdraw tx %s " % json.dumps(tx.ToJson(), indent=4))
-
-        wallet.SaveTransaction(tx)
-
-        relayed = NodeLeader.Instance().Relay(tx)
-
-        if relayed:
-            print("Relayed Withdrawal Tx: %s " % tx.Hash.ToString())
-            return True
-        else:
-            print("Could not relay witdrawal tx %s " % tx.Hash.ToString())
-    else:
-
-        print("Incomplete signature")
 
 
 def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
@@ -114,6 +49,8 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
             wallet_tx.scripts = context.GetScripts()
 
             relayed = False
+
+#            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
 
             # check if we can save the tx first
             save_tx = wallet.SaveTransaction(wallet_tx)
@@ -172,7 +109,7 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
 
             relayed = False
 
-            print("full wallet tx: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
+#            print("full wallet tx: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
 
             # check if we can save the tx first
             save_tx = wallet.SaveTransaction(wallet_tx)
@@ -219,7 +156,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
             return
 
         params, neo_to_attach, gas_to_attach = get_asset_attachments(params)
-        print("PARAMS: %s %s %s " % (params, neo_to_attach, gas_to_attach))
+
         params.reverse()
 
         sb = ScriptBuilder()
@@ -227,7 +164,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
         for p in params:
 
             if parse_params:
-                item = parse_param(p)
+                item = parse_param(p, wallet)
             else:
                 item = p
 
@@ -449,7 +386,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             for p in invoke_args:
 
-                item = parse_param(p)
+                item = parse_param(p, wallet)
 
                 if type(item) is list:
                     item.reverse()

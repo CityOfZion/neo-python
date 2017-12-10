@@ -278,7 +278,10 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Blockchain.GetContract":
             return 100
 
-        elif api == "Neo.Blockchain.GetReferences":
+        elif api == "Neo.Transaction.GetReferences":
+            return 200
+
+        elif api == "Neo.Transaction.GetUnspentCoins":
             return 200
 
         elif api == "Neo.Account.SetVotes":

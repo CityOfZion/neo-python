@@ -84,6 +84,17 @@ def ImportToken(wallet, contract_hash):
             print("Could not import token")
 
 
+def AddAlias(wallet, addr, title):
+    if wallet is None:
+        print("Please open a wallet")
+        return False
+    try:
+        script_hash = wallet.ToScriptHash(addr)
+        wallet.AddNamedAddress(script_hash, title)
+    except Exception as e:
+        print(e)
+
+
 def ClaimGas(wallet, require_password=True):
 
     unclaimed_coins = wallet.GetUnclaimedCoins()

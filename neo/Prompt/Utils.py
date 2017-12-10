@@ -105,20 +105,17 @@ def get_from_addr(params):
     return params, from_addr
 
 
-def parse_param(p, ignore_int=False, prefer_hex=True):
-
-    #    print("parsing param: %s " % p)
-
-    #    pdb.set_trace()
+def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     # first, we'll try to parse an array
+
     try:
         items = eval(p)
         if len(items) > 0 and type(items) is list:
 
             parsed = []
             for item in items:
-                parsed.append(parse_param(item))
+                parsed.append(parse_param(item, wallet))
             return parsed
 
     except Exception as e:
@@ -145,6 +142,11 @@ def parse_param(p, ignore_int=False, prefer_hex=True):
 
     if type(p) is str:
 
+        if wallet is not None:
+            for na in wallet.NamedAddr:
+                if na.Title == p:
+                    return bytearray(na.ScriptHash)
+
         # check for address strings like 'ANE2ECgA6YAHR5Fh2BrSsiqTyGb5KaS19u' and
         # convert them to a bytearray
         if len(p) == 34 and p[0] == 'A':
@@ -170,6 +172,18 @@ def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
     except Exception as e:
         pass
     return None
+
+
+def lookup_addr_str(wallet, addr):
+
+    for alias in wallet.NamedAddr:
+        if addr == alias.Title:
+            return alias.UInt160ScriptHash()
+    try:
+        script_hash = wallet.ToScriptHash(addr)
+        return script_hash
+    except Exception as e:
+        print(e)
 
 
 def parse_hold_vins(results):

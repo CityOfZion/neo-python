@@ -6,8 +6,6 @@ from boa.compiler import Compiler
 
 import binascii
 import traceback
-from prompt_toolkit import prompt
-from neo.Prompt.Commands.Invoke import InvokeContract
 
 
 def LoadAndRun(arguments, wallet):
