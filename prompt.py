@@ -32,7 +32,6 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias
-from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -138,9 +137,8 @@ class PromptInterface(object):
                                 'help', 'state', 'node', 'exit', 'quit',
                                 'config', 'import', 'export', 'open',
                                 'wallet', 'contract', 'asset', 'wif',
-                                'withdraw_request', 'withdraw', 'watch_addr',
-                                'contract_addr', 'testinvoke', 'tkn_send', 'tkn_mint',
-                                'tkn_send_from', 'tkn_approve', 'tkn_allowance', ]
+                                'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
+                                'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance', ]
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
@@ -674,20 +672,6 @@ class PromptInterface(object):
                     print("tx is, results are %s %s " % (tx, results))
                     return
 
-    def do_request_withdraw(self, args):
-        """
-        withdraw_request {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
-        """
-
-        RequestWithdraw(self, self.Wallet, args)
-
-    def do_withdraw_from(self, args):
-        """
-        withdraw {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
-        """
-
-        RedeemWithdraw(self, self.Wallet, args)
-
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
@@ -806,10 +790,6 @@ class PromptInterface(object):
                         self.show_contract_state(arguments)
                     elif command == 'testinvoke':
                         self.test_invoke_contract(arguments)
-                    elif command == 'withdraw_request':
-                        self.do_request_withdraw(arguments)
-                    elif command == 'withdraw':
-                        self.do_withdraw_from(arguments)
                     elif command == 'mem':
                         self.show_mem()
                     elif command == 'nodes' or command == 'node':

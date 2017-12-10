@@ -129,7 +129,7 @@ class NEP5Token(VerificationCode):
 
     def Mint(self, wallet, mint_to_addr, attachment_args):
 
-        invoke_args = [self.ScriptHash.ToString(), 'crowdsale', []]
+        invoke_args = [self.ScriptHash.ToString(), 'mintTokens', []]
 
         invoke_args = invoke_args + attachment_args
 

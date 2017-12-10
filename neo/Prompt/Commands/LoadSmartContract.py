@@ -1,19 +1,13 @@
-
-import os
 import binascii
 from neo.Prompt.Utils import parse_param
 from neo.Core.FunctionCode import FunctionCode
 from prompt_toolkit import prompt
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.Core.TX.InvocationTransaction import InvocationTransaction
-from neo.VM import OpCode
 from neo.Prompt.Utils import get_arg
 from neo.Cryptography.Crypto import Crypto
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
-
-import pdb
 
 
 def ImportContractAddr(wallet, args):
