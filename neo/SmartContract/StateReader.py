@@ -20,6 +20,7 @@ from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 from neo.SmartContract.TriggerType import Application, Verification
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
+import json
 
 
 class StateReader(InteropService):
@@ -74,6 +75,7 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetInputs", self.Transaction_GetInputs)
         self.Register("Neo.Transaction.GetOutputs", self.Transaction_GetOutputs)
         self.Register("Neo.Transaction.GetReferences", self.Transaction_GetReferences)
+        self.Register("Neo.Transaction.GetUnspentCoins", self.Transaction_GetUnspentCoins)
 
         self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
         self.Register("Neo.Attribute.GetUsage", self.Attribute_GetUsage)
@@ -564,6 +566,18 @@ class StateReader(InteropService):
             return False
 
         refs = [StackItem.FromInterface(tx.References[input]) for input in tx.inputs]
+
+        engine.EvaluationStack.PushT(refs)
+        return True
+
+    def Transaction_GetUnspentCoins(self, engine):
+
+        tx = engine.EvaluationStack.Pop().GetInterface()
+
+        if tx is None:
+            return False
+
+        refs = [StackItem.FromInterface(unspent) for unspent in Blockchain.Default().GetAllUnspent(tx.Hash)]
 
         engine.EvaluationStack.PushT(refs)
         return True

@@ -384,6 +384,10 @@ class Blockchain(object):
         # abstract
         pass
 
+    def GetAllUnspent(self, hash):
+        # abstract
+        pass
+
     def GetVotes(self, transactions):
         # abstract
         pass
