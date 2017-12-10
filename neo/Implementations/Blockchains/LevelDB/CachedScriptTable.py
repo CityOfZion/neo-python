@@ -16,3 +16,9 @@ class CachedScriptTable(ScriptTableMixin):
             return contract.Code.Script
 
         return None
+
+    def GetContractState(self, script_hash):
+
+        contract = self.contracts.TryGet(script_hash)
+
+        return contract

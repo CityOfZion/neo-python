@@ -47,6 +47,7 @@ class StateReader(InteropService):
         self.Register("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness)
         self.Register("Neo.Runtime.Notify", self.Runtime_Notify)
         self.Register("Neo.Runtime.Log", self.Runtime_Log)
+        self.Register("Neo.Runtime.GetTime", self.Runtime_GetCurrentTime)
 
         self.Register("Neo.Blockchain.GetHeight", self.Blockchain_GetHeight)
         self.Register("Neo.Blockchain.GetHeader", self.Blockchain_GetHeader)
@@ -57,6 +58,7 @@ class StateReader(InteropService):
         self.Register("Neo.Blockchain.GetAsset", self.Blockchain_GetAsset)
         self.Register("Neo.Blockchain.GetContract", self.Blockchain_GetContract)
 
+        self.Register("Neo.Header.GetIndex", self.Header_GetIndex)
         self.Register("Neo.Header.GetHash", self.Header_GetHash)
         self.Register("Neo.Header.GetVersion", self.Header_GetVersion)
         self.Register("Neo.Header.GetPrevHash", self.Header_GetPrevHash)
@@ -111,6 +113,7 @@ class StateReader(InteropService):
         self.Register("AntShares.Runtime.CheckWitness", self.Runtime_CheckWitness)
         self.Register("AntShares.Runtime.Notify", self.Runtime_Notify)
         self.Register("AntShares.Runtime.Log", self.Runtime_Log)
+
         self.Register("AntShares.Blockchain.GetHeight", self.Blockchain_GetHeight)
         self.Register("AntShares.Blockchain.GetHeader", self.Blockchain_GetHeader)
         self.Register("AntShares.Blockchain.GetBlock", self.Blockchain_GetBlock)
@@ -286,6 +289,17 @@ class StateReader(InteropService):
 
         return True
 
+    def Runtime_GetCurrentTime(self, engine):
+        if Blockchain.Default() is None:
+            engine.EvaluationStack.PushT(0)
+        else:
+            current_time = Blockchain.Default().CurrentBlock.Timestamp
+            if engine.Trigger == Verification:
+                current_time += Blockchain.SECONDS_PER_BLOCK
+            engine.EvaluationStack.PushT(current_time)
+
+        return True
+
     def Blockchain_GetHeight(self, engine):
         if Blockchain.Default() is None:
             engine.EvaluationStack.PushT(0)
@@ -415,6 +429,13 @@ class StateReader(InteropService):
             contract = Blockchain.Default().GetContract(hash)
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+        return True
+
+    def Header_GetIndex(self, engine):
+        header = engine.EvaluationStack.Pop().GetInterface()
+        if header is None:
+            return False
+        engine.EvaluationStack.PushT(header.Index)
         return True
 
     def Header_GetHash(self, engine):
@@ -571,14 +592,12 @@ class StateReader(InteropService):
         return True
 
     def Transaction_GetUnspentCoins(self, engine):
-
         tx = engine.EvaluationStack.Pop().GetInterface()
 
         if tx is None:
             return False
 
         refs = [StackItem.FromInterface(unspent) for unspent in Blockchain.Default().GetAllUnspent(tx.Hash)]
-
         engine.EvaluationStack.PushT(refs)
         return True
 

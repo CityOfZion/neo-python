@@ -20,6 +20,8 @@ from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
 from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 
+import pdb
+
 
 class StateMachine(StateReader):
 
@@ -291,7 +293,7 @@ class StateMachine(StateReader):
 
         return_type = int(engine.EvaluationStack.Pop().GetBigInteger())
 
-        needs_storage = engine.EvaluationStack.Pop().GetBoolean()
+        contract_properties = int(engine.EvaluationStack.Pop().GetBigInteger())
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
@@ -320,9 +322,9 @@ class StateMachine(StateReader):
 
         if contract is None:
 
-            code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
+            code = FunctionCode(script=script, param_list=param_list, return_type=return_type, contract_properties=contract_properties)
 
-            contract = ContractState(code, needs_storage, name, code_version, author, email, description)
+            contract = ContractState(code, contract_properties, name, code_version, author, email, description)
 
             self._contracts.GetAndChange(code.ScriptHash().ToBytes(), contract)
 
@@ -330,9 +332,9 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-#        print("*****************************************************")
-#        print("CREATED CONTRACT %s " % hash.ToBytes())
-#        print("*****************************************************")
+        # logger.info("*****************************************************")
+        # logger.info("CREATED CONTRACT %s " % hash.ToBytes())
+        # logger.info("*****************************************************")
         return True
 
     def Contract_Migrate(self, engine):
@@ -349,7 +351,7 @@ class StateMachine(StateReader):
 
         return_type = int(engine.EvaluationStack.Pop().GetBigInteger())
 
-        needs_storage = engine.EvaluationStack.Pop().GetBoolean()
+        contract_properties = engine.EvaluationStack.Pop().GetBigInteger()
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
@@ -379,7 +381,7 @@ class StateMachine(StateReader):
 
             code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
 
-            contract = ContractState(code=code, has_storage=needs_storage,
+            contract = ContractState(code=code, contract_properties=contract_properties,
                                      name=name, version=version, author=author,
                                      email=email, description=description)
 
@@ -387,7 +389,7 @@ class StateMachine(StateReader):
 
             self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash)
 
-            if needs_storage:
+            if contract.HasStorage:
 
                 for pair in self._storages.Find(engine.CurrentContext.ScriptHash()):
 
