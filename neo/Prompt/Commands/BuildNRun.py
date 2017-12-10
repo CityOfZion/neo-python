@@ -58,7 +58,7 @@ def DoRun(contract_script, arguments, wallet, path):
             if wallet is not None:
 
                 f_args = arguments[2:]
-                i_args = arguments[5:]
+                i_args = arguments[6:]
 
                 script = GatherLoadedContractParams(f_args, contract_script)
 

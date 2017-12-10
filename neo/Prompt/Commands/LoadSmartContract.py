@@ -1,6 +1,7 @@
 import binascii
 from neo.Prompt.Utils import parse_param
 from neo.Core.FunctionCode import FunctionCode
+from neo.Core.State.ContractState import ContractPropertyState
 from prompt_toolkit import prompt
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
@@ -55,8 +56,8 @@ def ImportContractAddr(wallet, args):
 
 def LoadContract(args):
 
-    if len(args) < 4:
-        print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage}'")
+    if len(args) < 5:
+        print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage} {needs_dynamic_invoke}'")
         return
 
     path = args[0]
@@ -71,6 +72,17 @@ def LoadContract(args):
         return_type = return_type.encode('utf-8')
 
     needs_storage = bool(parse_param(args[3]))
+    needs_dynamic_invoke = bool(parse_param(args[4]))
+
+    contract_properties = 0
+
+    if needs_storage:
+        contract_properties += ContractPropertyState.HasStorage
+
+    if needs_dynamic_invoke:
+        contract_properties += ContractPropertyState.HasDynamicInvoke
+
+    print("contract properties: %s " % contract_properties)
 
     script = None
 
@@ -97,7 +109,7 @@ def LoadContract(args):
             plist = bytearray(binascii.unhexlify(params))
         except Exception as e:
             plist = bytearray(b'\x10')
-        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=binascii.unhexlify(return_type), needs_storage=needs_storage)
+        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=binascii.unhexlify(return_type), contract_properties=contract_properties)
 
         return function_code
 
@@ -107,6 +119,8 @@ def LoadContract(args):
 
 def GatherLoadedContractParams(args, script):
 
+    if len(args) < 4:
+        raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke}")
     params = parse_param(args[0], ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
@@ -118,8 +132,17 @@ def GatherLoadedContractParams(args, script):
         return_type = return_type.encode('utf-8')
 
     needs_storage = bool(parse_param(args[2]))
+    needs_dynamic_invoke = bool(parse_param(args[3]))
 
-    out = generate_deploy_script(script, needs_storage=needs_storage, return_type=return_type, parameter_list=params)
+    contract_properties = 0
+
+    if needs_storage:
+        contract_properties += ContractPropertyState.HasStorage
+
+    if needs_dynamic_invoke:
+        contract_properties += ContractPropertyState.HasDynamicInvoke
+
+    out = generate_deploy_script(script, contract_properties=contract_properties, return_type=return_type, parameter_list=params)
 
     return out
 
@@ -164,21 +187,22 @@ def GatherContractDetails(function_code, prompter):
                          style=prompter.token_style)
 
     print("Creating smart contract....")
-    print("         Name: %s " % name)
-    print("      Version: %s" % version)
-    print("       Author: %s " % author)
-    print("        Email: %s " % email)
-    print("  Description: %s " % description)
-    print("Needs Storage: %s " % function_code.NeedsStorage)
+    print("                 Name: %s " % name)
+    print("              Version: %s" % version)
+    print("               Author: %s " % author)
+    print("                Email: %s " % email)
+    print("          Description: %s " % description)
+    print("        Needs Storage: %s " % function_code.HasStorage)
+    print(" Needs Dynamic Invoke: %s " % function_code.HasDynamicInvoke)
     print(json.dumps(function_code.ToJson(), indent=4))
 
     return generate_deploy_script(function_code.Script, name, version, author, email, description,
-                                  function_code.NeedsStorage, ord(function_code.ReturnType),
+                                  function_code.ContractProperties, ord(function_code.ReturnType),
                                   function_code.ParameterList)
 
 
 def generate_deploy_script(script, name='test', version='test', author='test', email='test',
-                           description='test', needs_storage=False, return_type=b'\xff', parameter_list=[]):
+                           description='test', contract_properties=0, return_type=b'\xff', parameter_list=[]):
     sb = ScriptBuilder()
 
     plist = parameter_list
@@ -192,7 +216,7 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
     sb.push(binascii.hexlify(author.encode('utf-8')))
     sb.push(binascii.hexlify(version.encode('utf-8')))
     sb.push(binascii.hexlify(name.encode('utf-8')))
-    sb.WriteBool(needs_storage)
+    sb.push(contract_properties)
     sb.push(return_type)
     sb.push(plist)
     sb.WriteVarData(script)
