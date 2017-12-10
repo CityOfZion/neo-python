@@ -87,6 +87,7 @@ endpoints.txt
 preferences.json
 prompt.log*
 test.log
+protocol.nex.json
 
 .pylint
 .vscode
