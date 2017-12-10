@@ -596,8 +596,8 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        unspents = Blockchain.Default().GetUnspent()
-
+        refs = [StackItem.FromInterface(unspent) for unspent in Blockchain.Default().GetAllUnspent(tx.Hash)]
+        engine.EvaluationStack.PushT(refs)
         return True
 
     def Attribute_GetUsage(self, engine):
