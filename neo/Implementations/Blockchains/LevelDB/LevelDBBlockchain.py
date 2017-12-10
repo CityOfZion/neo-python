@@ -51,7 +51,7 @@ class LevelDBBlockchain(Blockchain):
 
     _verify_blocks = False
 
-    _sysversion = b'/NEO:2.0.1/'
+    _sysversion = b'/NEO:2.4.1/'
 
     _persisting_block = None
 

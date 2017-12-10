@@ -95,8 +95,6 @@ class ContractState(StateBase):
 
             'version': self.StateVersion,
             'code': codejson,
-            'storage': self.HasStorage,
-            'dynamic_invoke': self.HasDynamicInvoke,
             'name': name,
             'code_version': self.CodeVersion.decode('utf-8'),
             'author': self.Author.decode('utf-8'),
