@@ -98,8 +98,6 @@ class PromptInterface(object):
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount)',
-                'invoke',
-                'cancel',
                 ]
 
     history = FileHistory(FILENAME_PROMPT_HISTORY)
