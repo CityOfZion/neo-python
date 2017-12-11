@@ -71,11 +71,11 @@ class PromptInterface(object):
                 'state',
                 'config debug {on/off}',
                 'config sc-events {on/off}',
-                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {test_params})',
-                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {test_params})',
+                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
+                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
-                'import contract {path/to/file.avm} {params} {returntype} {needs_storage}',
+                'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke}',
                 'import contract_addr {contract_hash} {pubkey}',
                 'import watch_addr {address}',
                 'import token {token_contract_hash}',
@@ -98,8 +98,6 @@ class PromptInterface(object):
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount)',
-                'invoke',
-                'cancel',
                 ]
 
     history = FileHistory(FILENAME_PROMPT_HISTORY)
