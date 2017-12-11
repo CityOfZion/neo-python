@@ -15,11 +15,11 @@ The output of the script is two things:
 
 Run it like this:
 
-    python3 contrib/privnet-claim-neo-and-gas.py
+    python3 scripts/privnet-claim-neo-and-gas.py
 
 There are several parameters you can configure with cli args. Take a look at the help:
 
-    python3 contrib/privnet-claim-neo-and-gas.py -h
+    python3 scripts/privnet-claim-neo-and-gas.py -h
 
 This script takes several minutes to complete. Be patient!
 """
