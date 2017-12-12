@@ -111,16 +111,14 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
 
 #            print("full wallet tx: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
 
-            # check if we can save the tx first
-            save_tx = wallet.SaveTransaction(wallet_tx)
-
-            if save_tx:
-                relayed = NodeLeader.Instance().Relay(wallet_tx)
-            else:
-                print("Could not save tx to wallet, will not send tx")
+            relayed = NodeLeader.Instance().Relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
+
+                # if it was relayed, we save tx
+                wallet.SaveTransaction(wallet_tx)
+
                 return wallet_tx
             else:
                 print("Could not relay tx %s " % wallet_tx.Hash.ToString())
