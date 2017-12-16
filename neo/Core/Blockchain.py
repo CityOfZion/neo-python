@@ -138,6 +138,11 @@ class Blockchain(object):
         # abstract
         pass
 
+    @property
+    def CurrentBlock(self):
+        # abstract
+        pass
+
     def AddBlock(self, block):
         # abstract
         pass
@@ -381,6 +386,10 @@ class Blockchain(object):
         pass
 
     def GetUnspent(self, hash, index):
+        # abstract
+        pass
+
+    def GetAllUnspent(self, hash):
         # abstract
         pass
 

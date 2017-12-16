@@ -6,8 +6,6 @@ from boa.compiler import Compiler
 
 import binascii
 import traceback
-from prompt_toolkit import prompt
-from neo.Prompt.Commands.Invoke import InvokeContract
 
 
 def LoadAndRun(arguments, wallet):
@@ -60,7 +58,7 @@ def DoRun(contract_script, arguments, wallet, path):
             if wallet is not None:
 
                 f_args = arguments[2:]
-                i_args = arguments[5:]
+                i_args = arguments[6:]
 
                 script = GatherLoadedContractParams(f_args, contract_script)
 

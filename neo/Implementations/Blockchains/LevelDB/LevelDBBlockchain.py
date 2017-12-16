@@ -51,7 +51,11 @@ class LevelDBBlockchain(Blockchain):
 
     _verify_blocks = False
 
+    # this is the version of the database
+    # should not be updated for network version changes
     _sysversion = b'/NEO:2.0.1/'
+
+    _persisting_block = None
 
     @property
     def CurrentBlockHash(self):
@@ -82,6 +86,12 @@ class LevelDBBlockchain(Blockchain):
     @property
     def Height(self):
         return self._current_block_height
+
+    @property
+    def CurrentBlock(self):
+        if self._persisting_block:
+            return self._persisting_block
+        return self.GetBlockByHeight(self.Height)
 
     @property
     def Path(self):
@@ -251,6 +261,23 @@ class LevelDBBlockchain(Blockchain):
 
         return coins.Keys
 
+    def GetUnspent(self, hash, index):
+
+        sn = self._db.snapshot()
+        coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, UnspentCoinState)
+
+        state = coins.TryGet(hash)
+
+        if state is None:
+            return None
+        if index >= len(state.Items):
+            return None
+        if state.Items[index] & CoinState.Spent > 0:
+            return None
+        tx, height = self.GetTransaction(hash)
+
+        return tx.outputs[index]
+
     def GetSpentCoins(self, tx_hash):
 
         if type(tx_hash) is not bytes:
@@ -264,6 +291,28 @@ class LevelDBBlockchain(Blockchain):
         sn.close()
 
         return result
+
+    def GetUnspent(self, hash, index):
+        # abstract
+        pass
+
+    def GetAllUnspent(self, hash):
+
+        unspents = []
+
+        sn = self._db.snapshot()
+        unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
+
+        state = unspentcoins.TryGet(keyval=hash.ToBytes())
+
+        if state:
+            tx, height = self.GetTransaction(hash)
+
+            for index, item in enumerate(state.Items):
+                if item & CoinState.Spent == 0:
+                    unspents.append(tx.outputs[index])
+
+        return unspents
 
     def GetUnclaimed(self, hash):
 
@@ -547,6 +596,8 @@ class LevelDBBlockchain(Blockchain):
 
     def Persist(self, block):
 
+        self._persisting_block = block
+
         sn = self._db.snapshot()
         accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
@@ -675,7 +726,8 @@ class LevelDBBlockchain(Blockchain):
 
             # filte out unspent coins to delete then commit
             for key, unspent in unspentcoins.Current.items():
-                unspentcoins.Remove(key)
+                if unspent.IsAllSpent:
+                    unspentcoins.Remove(key)
             unspentcoins.Commit(wb)
 
             # filter out spent coins to delete then commit to db
@@ -700,6 +752,7 @@ class LevelDBBlockchain(Blockchain):
 
             wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
             self._current_block_height = block.Index
+            self._persisting_block = None
 
     def PersistBlocks(self):
         #        logger.info("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))

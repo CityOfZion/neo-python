@@ -191,10 +191,20 @@ class ExecutionEngine():
                     self._VMState |= VMState.FAULT
                     return
 
-                script_hash = UInt160(data=context.OpReader.ReadBytes(20)).ToBytes()
-                script = self._Table.GetScript(script_hash)
+                script_hash = context.OpReader.ReadBytes(20)
+
+                is_normal_call = False
+                for b in script_hash:
+                    if b > 0:
+                        is_normal_call = True
+
+                if not is_normal_call:
+                    script_hash = self.EvaluationStack.Pop().GetByteArray()
+
+                script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
 
                 if script is None:
+                    logger.error("Could not find script from script table: %s " % script_hash)
                     self._VMState |= VMState.FAULT
                     return
 
@@ -210,7 +220,6 @@ class ExecutionEngine():
 
             # stack operations
             elif opcode == DUPFROMALTSTACK:
-                item = astack.Peek()
                 estack.PushT(astack.Peek())
 
             elif opcode == TOALTSTACK:
@@ -703,7 +712,6 @@ class ExecutionEngine():
                 estack.PushT(to_pick)
 
             elif opcode == SETITEM:
-
                 newItem = estack.Pop()
 
                 if issubclass(type(newItem), StackItem) and newItem.IsStruct:
@@ -789,7 +797,7 @@ class ExecutionEngine():
 
 #        opname = ToName(op)
 #        logger.info("____________________________________________________")
-#        logger.info("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
+#        logger.info("[%s] %02x -> %s" % (self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
 #        logger.info("-----------------------------------")
 
         self.ops_processed += 1

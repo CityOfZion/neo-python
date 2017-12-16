@@ -1,6 +1,3 @@
-import sys
-import os
-
 from logzero import logger
 
 from neo.VM.ExecutionEngine import ExecutionEngine
@@ -14,7 +11,11 @@ from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neo.Core.State import ContractState, AssetState, AccountState, ValidatorState, StorageItem
+from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
+
+import pdb
+from neo.UInt160 import UInt160
 
 
 class ApplicationEngine(ExecutionEngine):
@@ -165,6 +166,40 @@ class ApplicationEngine(ExecutionEngine):
 
         return True
 
+    def CheckDynamicInvoke(self):
+
+        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+            return True
+
+        opcode = self.CurrentContext.NextInstruction
+
+        if opcode == APPCALL:
+
+            # read the current position of the stream
+            start_pos = self.CurrentContext.OpReader.stream.tell()
+
+            # normal app calls are stored in the op reader
+            # we read ahead past the next instruction 1 the next 20 bytes
+            script_hash = self.CurrentContext.OpReader.ReadBytes(21)[1:]
+
+            # then reset the position
+            self.CurrentContext.OpReader.stream.seek(start_pos)
+
+            for b in script_hash:
+                # if any of the bytes are greater than 0, this is a normal app call
+                if b > 0:
+                    return True
+
+            # if this is a dynamic app call, we will arrive here
+            # get the current executing script hash
+            current = UInt160(data=self.CurrentContext.ScriptHash())
+            current_contract_state = self._Table.GetContractState(current.ToBytes())
+
+            # if current contract state cant do dynamic calls, return False
+            return current_contract_state.HasDynamicInvoke
+
+        return True
+
     def Execute(self):
 
         while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
@@ -195,6 +230,10 @@ class ApplicationEngine(ExecutionEngine):
 
             if not self.CheckInvocationStack():
                 logger.error("INVOCATION SIZE TO BIIG")
+                return False
+
+            if not self.CheckDynamicInvoke():
+                logger.error("Dynamic invoke without proper contract")
                 return False
 
             self.StepInto()
@@ -260,13 +299,16 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Blockchain.GetBlock":
             return 200
 
+        elif api == "Neo.Runtime.GetTime":
+            return 100
+
         elif api == "Neo.Blockchain.GetTransaction":
             return 100
 
         elif api == "Neo.Blockchain.GetAccount":
             return 100
 
-        elif api == "Neo.Blockchain..GetValidators":
+        elif api == "Neo.Blockchain.GetValidators":
             return 200
 
         elif api == "Neo.Blockchain.GetAsset":
@@ -275,7 +317,10 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Blockchain.GetContract":
             return 100
 
-        elif api == "Neo.Blockchain.GetReferences":
+        elif api == "Neo.Transaction.GetReferences":
+            return 200
+
+        elif api == "Neo.Transaction.GetUnspentCoins":
             return 200
 
         elif api == "Neo.Account.SetVotes":
@@ -291,8 +336,18 @@ class ApplicationEngine(ExecutionEngine):
             return int(self.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio)
 
         elif api == "Neo.Contract.Create" or api == "Neo.Contract.Migrate":
-            amount = int(500 * 100000000 / self.ratio)
-            return amount
+
+            fee = int(100 * 100000000 / self.ratio)  # 100 gas for contract with no storage no dynamic invoke
+
+            contract_properties = self.EvaluationStack.Peek(3).GetBigInteger()
+
+            if contract_properties & ContractPropertyState.HasStorage > 0:
+                fee += int(400 * 100000000 / self.ratio)  # if contract has storage, we add 400 gas
+
+            if contract_properties & ContractPropertyState.HasDynamicInvoke > 0:
+                fee += int(500 * 100000000 / self.ratio)  # if it has dynamic invoke, add extra 500 gas
+
+            return fee
 
         elif api == "Neo.Storage.Get":
             return 100

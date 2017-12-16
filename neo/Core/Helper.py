@@ -91,6 +91,9 @@ class Helper(object):
         if len(hashes) != len(verifiable.Scripts):
             return False
 
+        state_reader = GetStateReader()
+        blockchain = GetBlockchain()
+
         for i in range(0, len(hashes)):
             verification = verifiable.Scripts[i].VerificationScript
 
@@ -105,15 +108,17 @@ class Helper(object):
                 if hashes[i] != verification_hash:
                     return False
 
-            engine = ApplicationEngine(TriggerType.Verification, verifiable, GetBlockchain(), GetStateReader(), Fixed8.Zero())
+            engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
             engine.LoadScript(verification, False)
             invoction = verifiable.Scripts[i].InvocationScript
             engine.LoadScript(invoction, True)
 
-            res = engine.Execute()
-            if not res:
-                logger.error("engine did not execute")
-                return False
+            try:
+                success = engine.Execute()
+                state_reader.ExecutionCompleted(engine, success)
+
+            except Exception as e:
+                state_reader.ExecutionCompleted(engine, False, e)
 
 #            pdb.set_trace()
             if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():

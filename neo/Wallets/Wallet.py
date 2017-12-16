@@ -220,7 +220,7 @@ class Wallet(object):
         Returns:
             bool: True if exists, False otherwise.
         """
-        return self.ContainsKeyHash(Crypto.ToScriptHash(public_key.encode_point(True), unhex=False))
+        return self.ContainsKeyHash(Crypto.ToScriptHash(public_key.encode_point(True), unhex=True))
 
     def ContainsKeyHash(self, public_key_hash):
         """

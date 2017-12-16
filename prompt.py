@@ -30,9 +30,8 @@ from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
     ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken
-from neo.Prompt.Commands.Withdraw import RequestWithdraw, RedeemWithdraw
+from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -56,7 +55,7 @@ class PromptInterface(object):
 
     Wallet = None
 
-    _known_addresses = []
+    _known_things = []
 
     commands = ['quit',
                 'help',
@@ -72,10 +71,11 @@ class PromptInterface(object):
                 'state',
                 'config debug {on/off}',
                 'config sc-events {on/off}',
-                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {test_params})',
+                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
+                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
-                'import contract {path/to/file.avm} {params} {returntype} {needs_storage}',
+                'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke}',
                 'import contract_addr {contract_hash} {pubkey}',
                 'import watch_addr {address}',
                 'import token {token_contract_hash}',
@@ -88,16 +88,16 @@ class PromptInterface(object):
                 'wallet migrate',
                 'wallet rebuild {start block}',
                 'wallet delete_addr {addr}',
+                'wallet alias {addr} {title}',
                 'wallet tkn_send {token symbol} {address_from} {address to} {amount} ',
                 'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
+                'wallet tkn_mint {token symbol} {mint_to_addr} {amount_attach_neo} {amount_attach_gas}',
                 'wallet close',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount)',
-                'invoke',
-                'cancel',
                 ]
 
     history = FileHistory(FILENAME_PROMPT_HISTORY)
@@ -132,19 +132,25 @@ class PromptInterface(object):
     def get_completer(self):
 
         standard_completions = ['block', 'tx', 'header', 'mem', 'neo', 'gas',
-                                'help', 'state', 'node', 'exit', 'quit',
+                                'help', 'state', 'nodes', 'exit', 'quit',
                                 'config', 'import', 'export', 'open',
                                 'wallet', 'contract', 'asset', 'wif',
-                                'withdraw_request', 'withdraw', 'watch_addr',
-                                'contract_addr', 'testinvoke', 'tkn_send',
-                                'tkn_send_from', 'tkn_approve', 'tkn_allowance', ]
+                                'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
+                                'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance', 
+                                'build', ]
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
-                if addr not in self._known_addresses:
-                    self._known_addresses.append(addr)
+                if addr not in self._known_things:
+                    self._known_things.append(addr)
+            for alias in self.Wallet.NamedAddr:
+                if alias.Title not in self._known_things:
+                    self._known_things.append(alias.Title)
+            for tkn in self.Wallet.GetTokens().values():
+                if tkn.symbol not in self._known_things:
+                    self._known_things.append(tkn.symbol)
 
-        all_completions = standard_completions + self._known_addresses
+        all_completions = standard_completions + self._known_things
 
         completer = WordCompleter(all_completions)
 
@@ -420,6 +426,15 @@ class PromptInterface(object):
             token_approve_allowance(self.Wallet, arguments[1:])
         elif item == 'tkn_allowance':
             token_get_allowance(self.Wallet, arguments[1:], verbose=True)
+        elif item == 'tkn_mint':
+            token_mint(self.Wallet, arguments[1:])
+        elif item == 'tkn_register':
+            token_crowdsale_register(self.Wallet, arguments[1:])
+        elif item == 'alias':
+            if len(arguments) == 3:
+                AddAlias(self.Wallet, arguments[1], arguments[2])
+            else:
+                print("Please supply an address and title")
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
@@ -656,20 +671,6 @@ class PromptInterface(object):
                     print("tx is, results are %s %s " % (tx, results))
                     return
 
-    def do_request_withdraw(self, args):
-        """
-        withdraw_request {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
-        """
-
-        RequestWithdraw(self, self.Wallet, args)
-
-    def do_withdraw_from(self, args):
-        """
-        withdraw {CONTRACT_ADDR} {ASSET} {TO_ADDR} {AMOUNT}
-        """
-
-        RedeemWithdraw(self, self.Wallet, args)
-
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
@@ -788,10 +789,6 @@ class PromptInterface(object):
                         self.show_contract_state(arguments)
                     elif command == 'testinvoke':
                         self.test_invoke_contract(arguments)
-                    elif command == 'withdraw_request':
-                        self.do_request_withdraw(arguments)
-                    elif command == 'withdraw':
-                        self.do_withdraw_from(arguments)
                     elif command == 'mem':
                         self.show_mem()
                     elif command == 'nodes' or command == 'node':

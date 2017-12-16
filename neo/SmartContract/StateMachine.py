@@ -20,6 +20,8 @@ from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
 from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
 
+import pdb
+
 
 class StateMachine(StateReader):
 
@@ -33,8 +35,6 @@ class StateMachine(StateReader):
 
     _contracts_created = {}
 
-    notifications = None
-
     def __init__(self, accounts, validators, assets, contracts, storages, wb):
 
         super(StateMachine, self).__init__()
@@ -45,9 +45,6 @@ class StateMachine(StateReader):
         self._contracts = contracts
         self._storages = storages
         self._wb = wb
-        self.notifications = []
-
-        self.NotifyEvent.on_change += self.StateMachine_Notify
 
         self.Register("Neo.Account.SetVotes", self.Account_SetVotes)
         self.Register("Neo.Validator.Register", self.Validator_Register)
@@ -89,41 +86,7 @@ class StateMachine(StateReader):
         if success:
             self.Commit()
 
-        height = Blockchain.Default().Height
-        tx_hash = engine.ScriptContainer.Hash
-
-        entry_script = None
-        try:
-            # get the first script that was executed
-            # this is usually the script that sets up the script to be executed
-            entry_script = UInt160(data=engine.ExecutedScriptHashes[0])
-
-            # ExecutedScriptHashes[1] will usually be the first contract executed
-            if len(engine.ExecutedScriptHashes) > 1:
-                entry_script = UInt160(data=engine.ExecutedScriptHashes[1])
-        except Exception as e:
-            print("Could not get entry script: %s " % e)
-
-        payload = []
-        for item in engine.EvaluationStack.Items:
-            payload_item = stack_item_to_py(item)
-            payload.append(payload_item)
-
-        if success:
-
-            # dispatch all notify events, along with the success of the contract execution
-            for notify_event_args in self.notifications:
-                dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
-                                              notify_event_args.ScriptHash, height, tx_hash,
-                                              success, engine.testMode)
-
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
-                                          height, tx_hash, success, engine.testMode)
-
-        else:
-
-            dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error, engine._VMState],
-                                          entry_script, height, tx_hash, success, engine.testMode)
+        super(StateMachine, self).ExecutionCompleted(engine, success, error)
 
     def Commit(self):
         if self._wb is not None:
@@ -135,10 +98,6 @@ class StateMachine(StateReader):
 
     def TestCommit(self):
         pass
-
-    def StateMachine_Notify(self, event_args):
-
-        self.notifications.append(event_args)
 
     def Blockchain_GetAccount(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
@@ -334,7 +293,7 @@ class StateMachine(StateReader):
 
         return_type = int(engine.EvaluationStack.Pop().GetBigInteger())
 
-        needs_storage = engine.EvaluationStack.Pop().GetBoolean()
+        contract_properties = int(engine.EvaluationStack.Pop().GetBigInteger())
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
@@ -363,9 +322,9 @@ class StateMachine(StateReader):
 
         if contract is None:
 
-            code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
+            code = FunctionCode(script=script, param_list=param_list, return_type=return_type, contract_properties=contract_properties)
 
-            contract = ContractState(code, needs_storage, name, code_version, author, email, description)
+            contract = ContractState(code, contract_properties, name, code_version, author, email, description)
 
             self._contracts.GetAndChange(code.ScriptHash().ToBytes(), contract)
 
@@ -373,9 +332,9 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-#        print("*****************************************************")
-#        print("CREATED CONTRACT %s " % hash.ToBytes())
-#        print("*****************************************************")
+        # logger.info("*****************************************************")
+        # logger.info("CREATED CONTRACT %s " % hash.ToBytes())
+        # logger.info("*****************************************************")
         return True
 
     def Contract_Migrate(self, engine):
@@ -392,7 +351,7 @@ class StateMachine(StateReader):
 
         return_type = int(engine.EvaluationStack.Pop().GetBigInteger())
 
-        needs_storage = engine.EvaluationStack.Pop().GetBoolean()
+        contract_properties = engine.EvaluationStack.Pop().GetBigInteger()
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
@@ -422,7 +381,7 @@ class StateMachine(StateReader):
 
             code = FunctionCode(script=script, param_list=param_list, return_type=return_type)
 
-            contract = ContractState(code=code, has_storage=needs_storage,
+            contract = ContractState(code=code, contract_properties=contract_properties,
                                      name=name, version=version, author=author,
                                      email=email, description=description)
 
@@ -430,7 +389,7 @@ class StateMachine(StateReader):
 
             self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash)
 
-            if needs_storage:
+            if contract.HasStorage:
 
                 for pair in self._storages.Find(engine.CurrentContext.ScriptHash()):
 

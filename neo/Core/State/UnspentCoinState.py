@@ -22,22 +22,22 @@ class UnspentCoinState(StateBase):
         uns = UnspentCoinState()
         uns.Items = [0] * len(outputs)
         for i in range(0, len(outputs)):
-            uns.Items[i] = CoinState.Confirmed
+            uns.Items[i] = int(CoinState.Confirmed)
         return uns
 
     def Size(self):
         return super(UnspentCoinState, self).Size() + sys.getsizeof(self.Items)
 
+    @property
     def IsAllSpent(self):
         for item in self.Items:
-            if item & CoinState.Spent > 0:
+            if item == CoinState.Confirmed:
                 return False
         return True
 
     def OrEqValueForItemAt(self, index, value):
 
         length = len(self.Items)
-
         while length < index + 1:
             self.Items.append(0)
             length = len(self.Items)
@@ -50,7 +50,7 @@ class UnspentCoinState(StateBase):
         blen = reader.ReadVarInt()
         self.Items = [0] * blen
         for i in range(0, blen):
-            self.Items[i] = reader.ReadByte()
+            self.Items[i] = int.from_bytes(reader.ReadByte(do_ord=False), 'little')
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -68,4 +68,6 @@ class UnspentCoinState(StateBase):
 
         writer.WriteVarInt(len(self.Items))
 
-        [writer.WriteByte(item) for item in self.Items]
+        for item in self.Items:
+            byt = item.to_bytes(1, 'little')
+            writer.WriteByte(byt)

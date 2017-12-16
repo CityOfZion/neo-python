@@ -2,7 +2,6 @@
 from neo.IO.Mixins import SerializableMixin
 import binascii
 from neo.Cryptography.Helper import hash_to_wallet_address
-from neo.Cryptography.Helper import hash_to_wallet_address
 from neo.Cryptography.Crypto import Crypto
 
 
@@ -16,9 +15,19 @@ class FunctionCode(SerializableMixin):
 
     _scriptHash = None
 
-    NeedsStorage = False
+    ContractProperties = None
 
-    def __init__(self, script=None, param_list=None, return_type=None, needs_storage=False):
+    @property
+    def HasStorage(self):
+        from neo.Core.State.ContractState import ContractPropertyState
+        return self.ContractProperties & ContractPropertyState.HasStorage > 0
+
+    @property
+    def HasDynamicInvoke(self):
+        from neo.Core.State.ContractState import ContractPropertyState
+        return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
+
+    def __init__(self, script=None, param_list=None, return_type=None, contract_properties=0):
         self.Script = script
         if param_list is None:
             self.ParameterList = []
@@ -27,7 +36,7 @@ class FunctionCode(SerializableMixin):
 
         self.ReturnType = return_type
 
-        self.NeedsStorage = needs_storage
+        self.ContractProperties = contract_properties
 
     def ScriptHash(self):
         if self._scriptHash is None:

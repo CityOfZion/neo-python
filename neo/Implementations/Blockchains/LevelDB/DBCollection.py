@@ -108,6 +108,9 @@ class DBCollection():
 
     def TryGet(self, keyval):
 
+        if keyval in self.Deleted:
+            return None
+
         if keyval in self.Collection.keys():
             item = self.Collection[keyval]
             if item is None:
@@ -130,6 +133,9 @@ class DBCollection():
         return None
 
     def _GetItem(self, keyval):
+        if keyval in self.Deleted:
+            return None
+
         try:
             buffer = self.DB.get(self.Prefix + keyval)
             if buffer:

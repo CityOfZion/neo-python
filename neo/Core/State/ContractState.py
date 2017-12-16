@@ -1,24 +1,38 @@
-
 from .StateBase import StateBase
-import sys
 from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neo.IO.MemoryStream import StreamManager
 from neo.Core.FunctionCode import FunctionCode
+
+from enum import IntEnum
+
+
+class ContractPropertyState(IntEnum):
+    NoProperty = 0
+    HasStorage = 1 << 0
+    HasDynamicInvoke = 1 << 1
 
 
 class ContractState(StateBase):
 
     Code = None
-    HasStorage = False
+    ContractProperties = None
     Name = None
     CodeVersion = None
     Author = None
     Email = None
     Description = None
 
-    def __init__(self, code=None, has_storage=False, name=None, version=None, author=None, email=None, description=None):
+    @property
+    def HasStorage(self):
+        return self.ContractProperties & ContractPropertyState.HasStorage > 0
+
+    @property
+    def HasDynamicInvoke(self):
+        return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
+
+    def __init__(self, code=None, contract_properties=0, name=None, version=None, author=None, email=None, description=None):
         self.Code = code
-        self.HasStorage = has_storage
+        self.ContractProperties = contract_properties
         self.Name = name
         self.CodeVersion = version
         self.Author = author
@@ -35,7 +49,7 @@ class ContractState(StateBase):
         code.Deserialize(reader)
         self.Code = code
 
-        self.HasStorage = reader.ReadBool()
+        self.ContractProperties = reader.ReadUInt8()
         self.Name = reader.ReadVarString(max=252)
         self.CodeVersion = reader.ReadVarString(max=252)
         self.Author = reader.ReadVarString(max=252)
@@ -57,7 +71,7 @@ class ContractState(StateBase):
         super(ContractState, self).Serialize(writer)
 
         self.Code.Serialize(writer)
-        writer.WriteBool(self.HasStorage)
+        writer.WriteUInt8(self.ContractProperties)
         writer.WriteVarString(self.Name)
         writer.WriteVarString(self.CodeVersion)
         writer.WriteVarString(self.Author)
@@ -75,14 +89,19 @@ class ContractState(StateBase):
         except Exception as e:
             pass
 
+        print("self contract properties: %s " % self.ContractProperties)
+
         return {
 
             'version': self.StateVersion,
             'code': codejson,
-            'storage': self.HasStorage,
             'name': name,
             'code_version': self.CodeVersion.decode('utf-8'),
             'author': self.Author.decode('utf-8'),
             'email': self.Email.decode('utf-8'),
-            'description': self.Description.decode('utf-8')
+            'description': self.Description.decode('utf-8'),
+            'properties': {
+                'storage': self.HasStorage,
+                'dynamic_invoke': self.HasDynamicInvoke
+            }
         }

@@ -18,7 +18,7 @@ class PayloadTestCase(NeoTestCase):
 
     port = 20333
     nonce = random.randint(12949672, 42949672)
-    ua = "/NEO:2.0.1/"
+    ua = "/NEO:2.4.1/"
 
     payload = None
 
