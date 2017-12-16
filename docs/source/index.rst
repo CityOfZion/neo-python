@@ -39,6 +39,7 @@ neo-python - Python Node and SDK for the NEO blockchain
     smartcontracts
     contribute
     license
+    changelog
     tests
 
 .. _issue: https://github.com/CityOfZion/neo-python/issues/new
