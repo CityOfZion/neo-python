@@ -132,11 +132,12 @@ class PromptInterface(object):
     def get_completer(self):
 
         standard_completions = ['block', 'tx', 'header', 'mem', 'neo', 'gas',
-                                'help', 'state', 'node', 'exit', 'quit',
+                                'help', 'state', 'nodes', 'exit', 'quit',
                                 'config', 'import', 'export', 'open',
                                 'wallet', 'contract', 'asset', 'wif',
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
-                                'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance', ]
+                                'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance', 
+                                'build', ]
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
