@@ -23,6 +23,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
@@ -98,6 +99,7 @@ class PromptInterface(object):
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount)',
+                'debugstorage {on/off/reset}'
                 ]
 
     history = FileHistory(FILENAME_PROMPT_HISTORY)
@@ -678,6 +680,21 @@ class PromptInterface(object):
         out += "total buffers %s\n" % StreamManager.TotalBuffers()
         print_tokens([(Token.Number, out)], self.token_style)
 
+    def handle_debug_storage(self, args):
+        what = get_arg(args)
+
+        if what == 'on':
+            settings.USE_DEBUG_STORAGE = True
+            print("Debug Storage On")
+        elif what == 'off':
+            settings.USE_DEBUG_STORAGE = False
+            print("Debug Storage Off")
+        elif what == 'reset':
+            DebugStorage.instance().reset()
+            print("Reset Debug Storage")
+        else:
+            print("Please specify on/off/reset")
+
     def configure(self, args):
         what = get_arg(args)
 
@@ -795,6 +812,8 @@ class PromptInterface(object):
                         self.show_nodes()
                     elif command == 'state':
                         self.show_state()
+                    elif command == 'debugstorage':
+                        self.handle_debug_storage(arguments)
                     elif command == 'config':
                         self.configure(arguments)
                     elif command is None:

@@ -53,6 +53,8 @@ class SettingsHolder:
 
     ALL_FEES = None
 
+    USE_DEBUG_STORAGE = False
+
     # Logging settings
     log_smart_contract_events = True
 
@@ -104,6 +106,9 @@ class SettingsHolder:
         self.URI_PREFIX = config['UriPrefix']
         self.VERSION_NAME = config['VersionName']
         self.BOOTSTRAP_FILE = config['BootstrapFile']
+
+        if 'DebugStorage' in config:
+            self.USE_DEBUG_STORAGE = config['DebugStorage']
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
