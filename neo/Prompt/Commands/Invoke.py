@@ -8,6 +8,8 @@ from neo.Prompt.Utils import parse_param, get_asset_attachments
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
+
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
@@ -25,6 +27,7 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.SmartContract.Contract import Contract
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
+from neo.Settings import settings
 
 from neo.Core.Blockchain import Blockchain
 
@@ -52,16 +55,13 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
 #            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
 
-            # check if we can save the tx first
-            save_tx = wallet.SaveTransaction(wallet_tx)
-
-            if save_tx:
-                relayed = NodeLeader.Instance().Relay(wallet_tx)
-            else:
-                print("Could not save tx to wallet, will not send tx")
+            relayed = NodeLeader.Instance().Relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
+
+                wallet.SaveTransaction(wallet_tx)
+
                 return wallet_tx
             else:
                 print("Could not relay tx %s " % wallet_tx.Hash.ToString())
@@ -321,6 +321,12 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
     validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
     contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
     storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
+
+    if settings.USE_DEBUG_STORAGE:
+        debug_storage = DebugStorage.instance()
+        debug_sn = debug_storage.db.snapshot()
+        storages = DBCollection(debug_storage.db, debug_sn, DBPrefix.ST_Storage, StorageItem)
+        storages.DebugStorage = True
 
     dtx = InvocationTransaction()
     dtx.Version = 1

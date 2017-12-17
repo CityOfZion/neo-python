@@ -45,6 +45,7 @@
     "SslCert": "",
     "SslCertPassword": "",
     "VersionName":"/NEO-PYTHON:2.3.4/",
-    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Chain1550000.tar.gz"
+    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Chain1550000.tar.gz",
+    "DebugStorage":1
   }
 }

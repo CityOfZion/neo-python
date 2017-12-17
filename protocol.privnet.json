@@ -33,6 +33,7 @@
     "SslCert": "",
     "SslCertPassword": "",
     "VersionName":"/NEO-PYTHON:2.3.4/",
-    "BootstrapFile":""
+    "BootstrapFile":"",
+    "DebugStorage":1
   }
 }

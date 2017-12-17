@@ -18,18 +18,17 @@ class DBCollection():
     Changed = []
     Deleted = []
 
-    Debug = False
-
     _built_keys = False
 
-    def __init__(self, db, sn, prefix, class_ref, debug=False):
+    DebugStorage = False
+
+    def __init__(self, db, sn, prefix, class_ref):
 
         self.DB = db
 
         self.Prefix = prefix
 
         self.ClassRef = class_ref
-        self.Debug = debug
 
         self.Collection = {}
         self.Changed = []
