@@ -437,6 +437,8 @@ class PromptInterface(object):
                 AddAlias(self.Wallet, arguments[1], arguments[2])
             else:
                 print("Please supply an address and title")
+        else:
+            print("wallet: '{}' is an invalid parameter".format(item))
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
