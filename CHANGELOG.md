@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project following the `0.4.0` release will be documented in this file.
 
+## [0.4.2] 2017-12-18
+- updated `neo-boa` to `0.2.0`
+- added support for [debug storage](https://github.com/CityOfZion/neo-python/pull/120)
 
 ## [0.4.1] 2017-12-15
 - added support for runtime notifications from verification contracts
