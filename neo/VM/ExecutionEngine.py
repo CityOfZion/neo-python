@@ -747,6 +747,30 @@ class ExecutionEngine():
 
                 estack.PushT(Struct(items))
 
+            elif opcode == APPEND:
+                newItem = estack.Pop()
+
+                if type(newItem) is Struct:
+                    newItem = newItem.Clone()
+
+                arrItem = estack.Pop()
+
+                if not arrItem.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                arr = arrItem.GetArray()
+
+                arr.append(newItem)
+
+            elif opcode == REVERSE:
+
+                arrItem = estack.Pop()
+                if not arrItem.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+                arrItem.GetArray().reverse()
+
             elif opcode == THROW:
                 self._VMState |= VMState.FAULT
                 return
