@@ -750,7 +750,6 @@ class ExecutionEngine():
             elif opcode == APPEND:
                 newItem = estack.Pop()
 
-
                 if type(newItem) is Struct:
                     newItem = newItem.Clone()
 
@@ -763,7 +762,6 @@ class ExecutionEngine():
                 arr = arrItem.GetArray()
 
                 arr.append(newItem)
-
 
             elif opcode == REVERSE:
 
