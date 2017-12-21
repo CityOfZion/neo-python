@@ -1,9 +1,4 @@
-import sys
-import json
 import binascii
-
-from logzero import logger
-
 from neo.IO.Mixins import SerializableMixin
 
 
@@ -12,14 +7,24 @@ class Witness(SerializableMixin):
     InvocationScript = None
     VerificationScript = None
 
-    def __init__(self, invocation_script=None, verification_script=None):
+    def __init__(self, invocation_script=bytearray(), verification_script=bytearray()):
+        """
+        Create an instance.
+
+        Args:
+            invocation_script (bytearray): the invocation script
+            verification_script (bytearray): the verification script
+
+        Throws:
+            Exception: if verification_script is a string
+        """
         try:
             self.InvocationScript = binascii.unhexlify(invocation_script)
         except Exception as e:
             self.InvocationScript = invocation_script
 
         if type(verification_script) is str:
-            raise Exception("CAnnot be string")
+            raise Exception("Cannot be string")
 
         try:
             self.VerificationScript = binascii.unhexlify(verification_script)
@@ -27,22 +32,42 @@ class Witness(SerializableMixin):
             self.VerificationScript = verification_script
 
     def Size(self):
-        return sys.getsizeof(self.InvocationScript) + sys.getsizeof(self.VerificationScript)
+        """
+        Get the total size in bytes of the object.
+
+        Returns:
+            int: size.
+        """
+        from neo.IO.Helper import Helper as IOHelper
+        return IOHelper.GetVarSize(self.InvocationScript) + IOHelper.GetVarSize(self.VerificationScript)
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader(neo.IO.BinaryReader):
+        """
         self.InvocationScript = reader.ReadVarBytes()
         self.VerificationScript = reader.ReadVarBytes()
 
     def Serialize(self, writer):
-        #        logger.info("Serializing Witnes.....")
-        #        logger.info("INVOCATION %s " % self.InvocationScript)
+        """
+        Serialize full object.
+
+        Args:
+            reader(neo.IO.BinaryReader):
+        """
         writer.WriteVarBytes(self.InvocationScript)
-#        logger.info("writer after invocation %s " % writer.stream.ToArray())
-#        logger.info("Now wringi verificiation script %s " % self.VerificationScript)
         writer.WriteVarBytes(self.VerificationScript)
-#        logger.info("Wrote verification script %s " % writer.stream.ToArray())
 
     def ToJson(self):
+        """
+        Convert object members to dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         #        logger.info("invocation %s " % self.InvocationScript)
         data = {
             'invocation': self.InvocationScript.hex(),
