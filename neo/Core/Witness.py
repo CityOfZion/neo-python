@@ -1,7 +1,6 @@
 import binascii
 from neo.IO.Mixins import SerializableMixin
 
-
 class Witness(SerializableMixin):
 
     InvocationScript = None
@@ -12,24 +11,51 @@ class Witness(SerializableMixin):
         Create an instance.
 
         Args:
-            invocation_script (bytearray): the invocation script
-            verification_script (bytearray): the verification script
+            invocation_script (bytearray): the invocation script.
+            verification_script (bytearray): the verification script.
 
         Throws:
-            Exception: if verification_script is a string
+            ValueError: if parameter types are incorrect.
+            Exception: if verification_script is a string.
         """
+
+        # def __init__(self, invocation_script=bytearray(), verification_script=bytearray()):
+        if not isinstance(invocation_script, (bytearray, bytes)):
+            raise ValueError(
+                'Invalid invocation_script parameter type: {} is not of type bytearray or bytes'.format(
+                    type(invocation_script)))
+
+        if not isinstance(verification_script, (bytearray, bytes)):
+            raise ValueError(
+                'Invalid verification_script parameter type: {} is not of type bytearray or bytes '.format(
+                    type(verification_script)))
+
         try:
             self.InvocationScript = binascii.unhexlify(invocation_script)
-        except Exception as e:
+        except binascii.Error:
             self.InvocationScript = invocation_script
 
-        if type(verification_script) is str:
-            raise Exception("Cannot be string")
-
         try:
-            self.VerificationScript = binascii.unhexlify(verification_script)
-        except Exception as e:
+            self.VerificationScript= binascii.unhexlify(verification_script)
+        except binascii.Error:
             self.VerificationScript = verification_script
+
+
+        # if not isinstance(invocation_script, (bytearray, bytes)):
+        #     raise ValueError('Invalid invocation_script parameter type: {} is not of type bytearray, bytes or str'.format(type(invocation_script)))
+        #
+        # try:
+        #     self.InvocationScript = binascii.unhexlify(invocation_script)
+        # except Exception as e:
+        #     self.InvocationScript = invocation_script
+        #
+        # if type(verification_script) is str:
+        #     raise Exception("Cannot be string")
+        #
+        # try:
+        #     self.VerificationScript = binascii.unhexlify(verification_script)
+        # except Exception as e:
+        #     self.VerificationScript = verification_script
 
     def Size(self):
         """

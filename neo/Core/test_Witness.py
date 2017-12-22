@@ -78,19 +78,21 @@ class WitnessTest(NeoTestCase):
 
         self.assertEqual(w.Size(), self.expected_size)
 
+    def test_invalid_invocation_script(self):
+        invalid_script = 'aabb'
+        with self.assertRaises(ValueError) as context:
+            Witness(invocation_script=invalid_script, verification_script=bytearray(0))
+        self.assertTrue("Invalid invocation_script parameter " in str(context.exception))
+
     def test_invalid_verification_script(self):
         invalid_script = 'aabb'
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValueError) as context:
             Witness(invocation_script=bytearray(0), verification_script=invalid_script)
-        self.assertTrue("Cannot be string" in str(context.exception))
+        self.assertTrue("Invalid verification_script parameter " in str(context.exception))
 
-    def test_invalid_invocation_script(self):
-        # it's not clear what exception catching is supposed to catch
-        # e.g. passing a list like below will be caught, but creates an unserializeable object
-        # w = Witness(invocation_script=[0x11, 0x22], verification_script=bytearray(0x51))
-        # writestream = BytesIO()
-        # writer = BinaryWriter(writestream)
-        #
-        # w.Serialize(writer)
-        pass
-
+    def test_parameters_already_raw_bytes(self):
+        """Test proper assignment when the value in invocation_script is already in raw bytes """
+        raw_bytes = b'\x51\xAA'
+        w = Witness(verification_script=raw_bytes, invocation_script=raw_bytes)
+        self.assertEqual(w.VerificationScript, raw_bytes)
+        self.assertEqual(w.InvocationScript, raw_bytes)
