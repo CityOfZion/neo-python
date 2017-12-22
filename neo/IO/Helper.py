@@ -1,6 +1,5 @@
 import importlib
 from logzero import logger
-
 from .MemoryStream import MemoryStream, StreamManager
 from .BinaryReader import BinaryReader
 from neo.Core.TX.Transaction import Transaction
@@ -10,7 +9,6 @@ class Helper(object):
 
     @staticmethod
     def AsSerializableWithType(buffer, class_name):
-
         module = '.'.join(class_name.split('.')[:-1])
         klassname = class_name.split('.')[-1]
         klass = getattr(importlib.import_module(module), klassname)

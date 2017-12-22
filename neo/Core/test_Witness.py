@@ -81,14 +81,18 @@ class WitnessTest(NeoTestCase):
     def test_invalid_invocation_script(self):
         invalid_script = 'aabb'
         with self.assertRaises(ValueError) as context:
-            Witness(invocation_script=invalid_script, verification_script=bytearray(0))
-        self.assertTrue("Invalid invocation_script parameter " in str(context.exception))
+            Witness(invocation_script=invalid_script,
+                    verification_script=bytearray(0))
+        self.assertTrue(
+            "Invalid invocation_script parameter " in str(context.exception))
 
     def test_invalid_verification_script(self):
         invalid_script = 'aabb'
         with self.assertRaises(ValueError) as context:
-            Witness(invocation_script=bytearray(0), verification_script=invalid_script)
-        self.assertTrue("Invalid verification_script parameter " in str(context.exception))
+            Witness(invocation_script=bytearray(0),
+                    verification_script=invalid_script)
+        self.assertTrue(
+            "Invalid verification_script parameter " in str(context.exception))
 
     def test_parameters_already_raw_bytes(self):
         """Test proper assignment when the value in invocation_script is already in raw bytes """

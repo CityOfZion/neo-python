@@ -1,6 +1,7 @@
 import binascii
 from neo.IO.Mixins import SerializableMixin
 
+
 class Witness(SerializableMixin):
 
     InvocationScript = None
@@ -18,8 +19,6 @@ class Witness(SerializableMixin):
             ValueError: if parameter types are incorrect.
             Exception: if verification_script is a string.
         """
-
-        # def __init__(self, invocation_script=bytearray(), verification_script=bytearray()):
         if not isinstance(invocation_script, (bytearray, bytes)):
             raise ValueError(
                 'Invalid invocation_script parameter type: {} is not of type bytearray or bytes'.format(
@@ -36,26 +35,9 @@ class Witness(SerializableMixin):
             self.InvocationScript = invocation_script
 
         try:
-            self.VerificationScript= binascii.unhexlify(verification_script)
+            self.VerificationScript = binascii.unhexlify(verification_script)
         except binascii.Error:
             self.VerificationScript = verification_script
-
-
-        # if not isinstance(invocation_script, (bytearray, bytes)):
-        #     raise ValueError('Invalid invocation_script parameter type: {} is not of type bytearray, bytes or str'.format(type(invocation_script)))
-        #
-        # try:
-        #     self.InvocationScript = binascii.unhexlify(invocation_script)
-        # except Exception as e:
-        #     self.InvocationScript = invocation_script
-        #
-        # if type(verification_script) is str:
-        #     raise Exception("Cannot be string")
-        #
-        # try:
-        #     self.VerificationScript = binascii.unhexlify(verification_script)
-        # except Exception as e:
-        #     self.VerificationScript = verification_script
 
     def Size(self):
         """
