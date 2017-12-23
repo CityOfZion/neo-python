@@ -37,7 +37,6 @@ from neo.BigInteger import BigInteger
 
 
 class LevelDBBlockchain(Blockchain):
-
     _path = None
     _db = None
 
@@ -106,7 +105,7 @@ class LevelDBBlockchain(Blockchain):
 
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)
-#            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
+        #            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
         except Exception as e:
             logger.info("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
@@ -122,8 +121,8 @@ class LevelDBBlockchain(Blockchain):
             current_header_height = int.from_bytes(ba[-4:], 'little')
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
-#            logger.info("current header hash!! %s " % current_header_hash)
-#            logger.info("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
+            #            logger.info("current header hash!! %s " % current_header_hash)
+            #            logger.info("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
 
             hashes = []
             try:
@@ -134,7 +133,7 @@ class LevelDBBlockchain(Blockchain):
                     key = int.from_bytes(key[-4:], 'little')
                     hashes.append({'k': key, 'v': hlist})
                     StreamManager.ReleaseStream(ms)
-    #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
+            #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
 
             except Exception as e:
                 logger.info("Couldnt get stored header hash list: %s " % e)
@@ -464,11 +463,19 @@ class LevelDBBlockchain(Blockchain):
         return None
 
     def GetBlockHash(self, height):
+        """
+        Get the block hash by its block height
+        Args:
+            height(int): height of the block to retrieve hash from.
+
+        Returns:
+            bytes: a non-raw block hash (i.e. b'6dd83ed8a3fc02e322f91f30431bf3662a8c8e8ebe976c3565f0d21c70620991', but not b'\x6d\xd8...etc'
+        """
         if self._current_block_height < height:
-            return False
+            return
 
         if len(self._header_index) <= height:
-            return False
+            return
 
         return self._header_index[height]
 
@@ -486,6 +493,14 @@ class LevelDBBlockchain(Blockchain):
         return 0
 
     def GetBlockByHeight(self, height):
+        """
+        Get a block by its height.
+        Args:
+            height(int): the height of the block to retrieve.
+
+        Returns:
+            neo.Core.Block: block instance.
+        """
         hash = self.GetBlockHash(height)
         if hash is not None:
             return self.GetBlockByHash(hash)
@@ -533,7 +548,8 @@ class LevelDBBlockchain(Blockchain):
         for header in headers:
 
             if header.Index - 1 >= len(self._header_index) + count:
-                logger.info("header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
+                logger.info(
+                    "header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
                 break
 
             if header.Index < count + len(self._header_index):
@@ -569,7 +585,6 @@ class LevelDBBlockchain(Blockchain):
         hHash = header.Hash.ToBytes()
 
         if hHash not in self._header_index:
-
             self._header_index.append(hHash)
 
         while header.Index - 2000 >= self._stored_header_count:
@@ -640,18 +655,21 @@ class LevelDBBlockchain(Blockchain):
 
                 for txhash in unique_tx_input_hashes:
                     prevTx, height = self.GetTransaction(txhash.ToBytes())
-                    coin_refs_by_hash = [coinref for coinref in tx.inputs if coinref.PrevHash.ToBytes() == txhash.ToBytes()]
+                    coin_refs_by_hash = [coinref for coinref in tx.inputs if
+                                         coinref.PrevHash.ToBytes() == txhash.ToBytes()]
                     for input in coin_refs_by_hash:
 
                         uns = unspentcoins.GetAndChange(input.PrevHash.ToBytes())
                         uns.OrEqValueForItemAt(input.PrevIndex, CoinState.Spent)
 
                         if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                            sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(), SpentCoinState(input.PrevHash, height, []))
+                            sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(),
+                                                         SpentCoinState(input.PrevHash, height, []))
                             sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
 
                         output = prevTx.outputs[input.PrevIndex]
-                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes, AccountState(output.ScriptHash))
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes,
+                                                     AccountState(output.ScriptHash))
                         assetid = prevTx.outputs[input.PrevIndex].AssetId
                         acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
