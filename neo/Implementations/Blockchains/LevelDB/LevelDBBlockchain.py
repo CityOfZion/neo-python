@@ -549,7 +549,7 @@ class LevelDBBlockchain(Blockchain):
 
             if header.Index - 1 >= len(self._header_index) + count:
                 logger.info(
-                    "header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
+                    "header is greater than header index length: %s %s " % (header.Index, len(self._header_index)))
                 break
 
             if header.Index < count + len(self._header_index):
