@@ -108,9 +108,11 @@ class StateMachine(StateReader):
 
         if account:
             engine.EvaluationStack.PushT(StackItem.FromInterface(account))
-            return True
+        else:
+            print("no account")
+            engine.EvaluationStack.PushT(False)
 
-        return False
+        return True
 
     def Blockchain_GetAsset(self, engine):
 
@@ -119,8 +121,9 @@ class StateMachine(StateReader):
         asset = self._assets.TryGet(hash.ToBytes())
         if asset:
             engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
-            return True
-        return False
+        else:
+            engine.EvaluationStack.PushT(False)
+        return True
 
     def Blockchain_GetContract(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
@@ -129,8 +132,9 @@ class StateMachine(StateReader):
 
         if contract:
             engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
-            return True
-        return False
+        else:
+            engine.EvaluationStack.PushT(False)
+        return True
 
     def Account_SetVotes(self, engine):
 
@@ -410,17 +414,16 @@ class StateMachine(StateReader):
 
         contract = engine.EvaluationStack.Pop().GetInterface()
 
-        logger.info("CONTRACT Get storage context %s " % contract)
         if contract.ScriptHash.ToBytes() in self._contracts_created:
+
             created = self._contracts_created[contract.ScriptHash.ToBytes()]
 
             if created == UInt160(data=engine.CurrentContext.ScriptHash()):
 
                 context = StorageContext(script_hash=contract.ScriptHash)
                 engine.EvaluationStack.PushT(StackItem.FromInterface(context))
-                return True
 
-        return False
+        return True
 
     def Contract_Destroy(self, engine):
         hash = UInt160(data=engine.CurrentContext.ScriptHash())

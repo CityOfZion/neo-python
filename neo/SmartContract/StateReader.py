@@ -393,7 +393,6 @@ class StateReader(InteropService):
         address = Crypto.ToAddress(hash).encode('utf-8')
 
         account = Blockchain.Default().GetAccountState(address)
-
         if account:
             engine.EvaluationStack.PushT(StackItem.FromInterface(account))
         else:
