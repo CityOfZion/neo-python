@@ -3,6 +3,13 @@ Changelog
 
 All notable changes to this project following the ``0.4.0`` release will be documented in this file.
 
+[0.4.3] 2017-12-21
+------------------
+
+- updated ``neo-boa`` to ``0.2.1``
+- added support for array ``REVERSE`` and ``APPEND`` VM opcodes
+
+
 [0.4.2] 2017-12-18
 ------------------
 
