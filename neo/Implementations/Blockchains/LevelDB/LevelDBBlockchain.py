@@ -292,10 +292,6 @@ class LevelDBBlockchain(Blockchain):
 
         return result
 
-    def GetUnspent(self, hash, index):
-        # abstract
-        pass
-
     def GetAllUnspent(self, hash):
 
         unspents = []

@@ -84,7 +84,6 @@ class Array(StackItem):
             return False
         if other is self:
             return True
-
         if type(other) is not Array:
             return False
 

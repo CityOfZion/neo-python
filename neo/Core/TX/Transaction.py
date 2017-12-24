@@ -21,13 +21,14 @@ from neo.Cryptography.Crypto import *
 from neo.IO.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
 from neo.IO.BinaryReader import BinaryReader
+from neo.Core.Mixins import EquatableMixin
 from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neo.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
 
 
-class TransactionResult():
+class TransactionResult(EquatableMixin):
     AssetId = None
     Amount = Fixed8(0)
 
@@ -52,7 +53,7 @@ class TransactionType(object):
     InvocationTransaction = b'\xd1'
 
 
-class TransactionOutput(SerializableMixin):
+class TransactionOutput(SerializableMixin, EquatableMixin):
 
     Value = None  # should be fixed 8
     ScriptHash = None
@@ -97,7 +98,7 @@ class TransactionOutput(SerializableMixin):
         }
 
 
-class TransactionInput(SerializableMixin):
+class TransactionInput(SerializableMixin, EquatableMixin):
     """docstring for TransactionInput"""
 
     PrevHash = None

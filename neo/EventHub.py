@@ -19,6 +19,7 @@ from logzero import logger
 
 # pymitter manages the event dispatching (https://github.com/riga/pymitter#examples)
 from pymitter import EventEmitter
+import json
 
 # `events` is can be imported and used from all parts of the code to dispatch or receive events
 events = EventEmitter(wildcard=True)
@@ -99,7 +100,15 @@ def on_sc_event(sc_event):
         return
 
     if sc_event.test_mode:
-        logger.info("[test_mode][%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, sc_event.event_payload))
+        payload = sc_event.event_payload
+        if isinstance(sc_event.event_payload, list):
+            payload = []
+            for item in sc_event.event_payload:
+                try:
+                    payload.append(item.ToJson())
+                except Exception as e:
+                    payload.append(item)
+        logger.info("[test_mode][%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, payload))
     else:
         logger.info("[%s][%s] [%s] [tx %s] %s" % (sc_event.event_type, sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), sc_event.event_payload))
 

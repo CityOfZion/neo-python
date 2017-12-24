@@ -154,3 +154,20 @@ def ClaimGas(wallet, require_password=True):
         print("could not sign tx")
 
     return None, False
+
+
+def ShowUnspentCoins(wallet, address=None):
+
+    addr = None
+    try:
+        if len(address) > 0:
+            addr_str = address[0]
+            addr = wallet.ToScriptHash(addr_str)
+    except Exception as e:
+        print("Invalid address specified")
+
+    unspents = wallet.FindUnspentCoins(from_addr=addr)
+
+    jsn = [unspent.ToJson() for unspent in unspents]
+
+    print(json.dumps(jsn, indent=4))

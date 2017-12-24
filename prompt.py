@@ -32,7 +32,7 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
     ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, ShowUnspentCoins
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -95,6 +95,7 @@ class PromptInterface(object):
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
                 'wallet tkn_mint {token symbol} {mint_to_addr} {amount_attach_neo} {amount_attach_gas}',
+                'wallet unspent',
                 'wallet close',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
@@ -432,6 +433,8 @@ class PromptInterface(object):
             token_mint(self.Wallet, arguments[1:])
         elif item == 'tkn_register':
             token_crowdsale_register(self.Wallet, arguments[1:])
+        elif item == 'unspent':
+            ShowUnspentCoins(self.Wallet, arguments[1:])
         elif item == 'alias':
             if len(arguments) == 3:
                 AddAlias(self.Wallet, arguments[1], arguments[2])

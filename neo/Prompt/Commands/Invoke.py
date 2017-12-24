@@ -28,7 +28,7 @@ from neo.SmartContract.Contract import Contract
 from neo.Cryptography.Crypto import Crypto
 from neo.Fixed8 import Fixed8
 from neo.Settings import settings
-
+from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 
 from neo.VM.OpCode import *
@@ -110,6 +110,8 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
             relayed = False
 
 #            print("full wallet tx: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
+#            toarray = Helper.ToArray(wallet_tx)
+#            print("to arary %s " % toarray)
 
             # check if we can save the tx first
             save_tx = wallet.SaveTransaction(wallet_tx)
