@@ -29,7 +29,7 @@ def LoadAndRun(arguments, wallet):
             DoRun(script, arguments, wallet, path)
 
     except Exception as e:
-        print("couldnt load script %s " % e)
+        print("Could not load script %s " % e)
 
 
 def BuildAndRun(arguments, wallet):
@@ -44,7 +44,7 @@ def BuildAndRun(arguments, wallet):
         DoRun(contract_script, arguments, wallet, path)
 
     except Exception as e:
-        print("couldn compile %s " % e)
+        print("Could not compile %s " % e)
 
 
 def DoRun(contract_script, arguments, wallet, path):

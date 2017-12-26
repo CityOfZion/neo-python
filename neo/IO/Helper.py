@@ -22,7 +22,7 @@ class Helper(object):
             serializable.Deserialize(reader)
             return serializable
         except Exception as e:
-            logger.error("couldnt deserialize: %s " % e)
+            logger.error("Could not deserialize: %s " % e)
         finally:
             StreamManager.ReleaseStream(mstream)
 

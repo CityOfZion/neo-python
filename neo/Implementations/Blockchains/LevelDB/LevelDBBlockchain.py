@@ -61,7 +61,7 @@ class LevelDBBlockchain(Blockchain):
         try:
             return self._header_index[self._current_block_height]
         except Exception as e:
-            logger.info("Couldnt get current block hash, returning none: %s ", )
+            logger.info("Could not get current block hash, returning none: %s ", )
 
         return None
 
@@ -136,7 +136,7 @@ class LevelDBBlockchain(Blockchain):
             #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
 
             except Exception as e:
-                logger.info("Couldnt get stored header hash list: %s " % e)
+                logger.info("Could not get stored header hash list: %s " % e)
 
             if len(hashes):
                 hashes.sort(key=lambda x: x['k'])
@@ -484,7 +484,7 @@ class LevelDBBlockchain(Blockchain):
             amount = int.from_bytes(value, 'little', signed=False)
             return amount
         except Exception as e:
-            logger.info("couldnt get sys fee: %s " % e)
+            logger.info("Could not get sys fee: %s " % e)
 
         return 0
 
@@ -531,7 +531,7 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Block.FromTrimmedData(outhex, 0)
         except Exception as e:
-            logger.info("couldnt get block %s " % e)
+            logger.info("Could not get block %s " % e)
         return None
 
     def AddHeader(self, header):

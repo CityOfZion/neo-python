@@ -107,7 +107,7 @@ class ExecutionEngine():
             elif return_type == ContractParameterType.Array:
                 return item.GetArray()
             else:
-                logger.error("couldnt format results for return type %s " % return_type)
+                logger.error("Could not format results for return type %s " % return_type)
             return item
         except Exception as e:
             pass
