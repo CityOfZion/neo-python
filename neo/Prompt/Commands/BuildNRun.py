@@ -76,7 +76,7 @@ def DoRun(contract_script, arguments, wallet, path):
 
                     return
                 else:
-                    print("test ivoke failed")
+                    print("Test invoke failed")
                     print("tx is, results are %s %s " % (tx, result))
                     return
 
