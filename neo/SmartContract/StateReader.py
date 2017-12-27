@@ -808,7 +808,7 @@ class StateReader(InteropService):
             try:
                 valStr = int.from_bytes(valStr, 'little')
             except Exception as e:
-                logger.error("couldnt convert %s to number: %s " % (valStr, e))
+                logger.error("Could not convert %s to number: %s " % (valStr, e))
 
         if item is not None:
             engine.EvaluationStack.PushT(bytearray(item.Value))

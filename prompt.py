@@ -674,7 +674,7 @@ class PromptInterface(object):
 
                     return
                 else:
-                    print("test ivoke failed")
+                    print("Test invoke failed")
                     print("tx is, results are %s %s " % (tx, results))
                     return
 
