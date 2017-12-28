@@ -73,14 +73,14 @@ class NEP5Token(VerificationCode):
 
     def GetBalance(self, wallet, address, as_string=False):
 
-        if type(address) is UInt160:
-            address = Crypto.ToAddress(address)
+        addr = parse_param(address, wallet)
+        sb = ScriptBuilder()
+        sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'balanceOf', [addr])
 
-        invoke_args = [self.ScriptHash.ToString(), parse_param('balanceOf'), [parse_param(address, wallet)]]
-        tx, fee, balanceResults, num_ops = TestInvokeContract(wallet, invoke_args, None, False)
+        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [])
 
         try:
-            val = balanceResults[0].GetBigInteger()
+            val = results[0].GetBigInteger()
             precision_divisor = pow(10, self.decimals)
             balance = Decimal(val) / Decimal(precision_divisor)
             if as_string:
@@ -96,10 +96,12 @@ class NEP5Token(VerificationCode):
 
     def Transfer(self, wallet, from_addr, to_addr, amount):
 
-        invoke_args = [self.ScriptHash.ToString(), 'transfer',
-                       [parse_param(from_addr, wallet), parse_param(to_addr, wallet), parse_param(amount)]]
+        sb = ScriptBuilder()
+        sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'transfer',
+                                           [parse_param(from_addr, wallet), parse_param(to_addr, wallet),
+                                            parse_param(amount)])
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
+        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [], from_addr=from_addr)
 
         return tx, fee, results
 

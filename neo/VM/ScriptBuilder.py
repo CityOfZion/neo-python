@@ -177,13 +177,13 @@ class ScriptBuilder(object):
             self.push(i)
         self.push(len(args))
         self.Emit(PACK)
-        self.EmitAppCallWithOperation(script_hash, operation)
+        self.push(operation.encode('utf-8').hex())
+        self.Emit(APPCALL, script_hash.Data)
 
     def EmitAppCallWithOperation(self, script_hash, operation):
         self.push(False)
         self.push(operation.encode('utf-8').hex())
         self.Emit(APPCALL, script_hash.Data)
-#        self.push(script_hash.ToArray())
 
     def EmitSysCall(self, api):
         if api is None:
