@@ -47,7 +47,7 @@ class UserWallet(Wallet):
             db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token,
                               Transaction, TransactionInfo, NamedAddress], safe=True)
         except Exception as e:
-            logger.error("couldnt build database %s " % e)
+            logger.error("Could not build database %s " % e)
 
     def Migrate(self):
         db = PWDatabase.ContextDB()
@@ -227,7 +227,7 @@ class UserWallet(Wallet):
             return items
 
         except Exception as e:
-            logger.error("couldnt load watch only: %s. You may need to migrate your wallet. Run 'wallet migrate'." % e)
+            logger.error("Could not load watch only: %s. You may need to migrate your wallet. Run 'wallet migrate'." % e)
 
         return []
 

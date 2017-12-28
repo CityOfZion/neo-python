@@ -92,7 +92,7 @@ class NeoNode(Protocol):
             try:
                 bcr.remove(req)
             except Exception as e:
-                self.Log("Couldnt remove request %s " % e)
+                self.Log("Could not remove request %s " % e)
         self.Log("Release block requests after %s " % len(bcr))
 
         self.myblockrequests = set()

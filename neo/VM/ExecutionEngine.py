@@ -107,7 +107,7 @@ class ExecutionEngine():
             elif return_type == ContractParameterType.Array:
                 return item.GetArray()
             else:
-                logger.error("couldnt format results for return type %s " % return_type)
+                logger.error("Could not format results for return type %s " % return_type)
             return item
         except Exception as e:
             pass
@@ -746,30 +746,6 @@ class ExecutionEngine():
                 items = [None for i in range(0, count)]
 
                 estack.PushT(Struct(items))
-
-            elif opcode == APPEND:
-                newItem = estack.Pop()
-
-                if type(newItem) is Struct:
-                    newItem = newItem.Clone()
-
-                arrItem = estack.Pop()
-
-                if not arrItem.IsArray:
-                    self._VMState |= VMState.FAULT
-                    return
-
-                arr = arrItem.GetArray()
-
-                arr.append(newItem)
-
-            elif opcode == REVERSE:
-
-                arrItem = estack.Pop()
-                if not arrItem.IsArray:
-                    self._VMState |= VMState.FAULT
-                    return
-                arrItem.GetArray().reverse()
 
             elif opcode == THROW:
                 self._VMState |= VMState.FAULT
