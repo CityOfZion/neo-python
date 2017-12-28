@@ -119,7 +119,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
             return parsed
 
     except Exception as e:
-        #        print("couldnt eval items as array %s " % e)
+        #        print("Could not eval items as array %s " % e)
         pass
 
     if not ignore_int:

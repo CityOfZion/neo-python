@@ -126,7 +126,7 @@ class Wallet(object):
                 h = int(self.LoadStoredData('Height'))
                 self._current_height = h
             except Exception as e:
-                logger.error("couldnt load height data %s " % e)
+                logger.error("Could not load height data %s " % e)
                 self._current_height = 0
 
             del passwordKey
