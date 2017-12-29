@@ -5,10 +5,7 @@ Description:
 Usage:
     from neo.Wallets.Wallet import Wallet
 """
-import hashlib
 import traceback
-import pdb
-
 from itertools import groupby
 from base58 import b58decode
 from decimal import Decimal
@@ -36,7 +33,6 @@ from neo.Core.Helper import Helper
 
 
 class Wallet(object):
-
     AddressVersion = None
 
     _path = ''
@@ -184,7 +180,15 @@ class Wallet(object):
         self._tokens[token.ScriptHash.ToBytes()] = token
 
     def DeleteNEP5Token(self, token):
+        """
+        Delete a NEP5 token from the wallet.
 
+        Args:
+            token (NEP5Token): an instance of type neo.Wallets.NEP5Token.
+
+        Returns:
+            bool: success status.
+        """
         return self._tokens.pop(token.ScriptHash.ToBytes())
 
     def ChangePassword(self, password_old, password_new):
@@ -356,7 +360,6 @@ class Wallet(object):
             for vin in vins:
                 if coinref.PrevIndex == vin.PrevIndex and \
                         coinref.PrevHash == vin.PrevHash:
-
                     ret.append(coin)
         return ret
 
@@ -473,7 +476,6 @@ class Wallet(object):
                     coin.State & CoinState.Claimed == 0 and \
                     coin.State & CoinState.Frozen == 0 and \
                     coin.State & CoinState.WatchOnly == 0:
-
                 unclaimed.append(coin)
 
         return unclaimed
@@ -588,7 +590,6 @@ class Wallet(object):
                         coin.State & CoinState.Locked == 0 and \
                         coin.State & CoinState.Frozen == 0 and \
                         coin.State & CoinState.WatchOnly == watch_only:
-
                     total = total + coin.Output.Value
 
         return total
@@ -681,7 +682,6 @@ class Wallet(object):
                             added.add(newcoin)
 
                         if state & AddressState.WatchOnly > 0:
-
                             self._coins[key].State |= CoinState.WatchOnly
                             changed.add(self._coins[key])
 
@@ -998,7 +998,7 @@ class Wallet(object):
 
         fee = fee + (tx.SystemFee() * Fixed8.FD())
 
-#        pdb.set_trace()
+        #        pdb.set_trace()
 
         paytotal = {}
         if tx.Type != int.from_bytes(TransactionType.IssueTransaction, 'little'):
