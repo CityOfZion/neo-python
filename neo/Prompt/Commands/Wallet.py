@@ -4,7 +4,7 @@ from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import string_from_fixed8
+from neo.Prompt.Utils import string_from_fixed8,get_asset_id
 from neo.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 import binascii
@@ -156,18 +156,27 @@ def ClaimGas(wallet, require_password=True):
     return None, False
 
 
-def ShowUnspentCoins(wallet, address=None):
+def ShowUnspentCoins(wallet, args):
 
     addr = None
+    asset_type = None
     try:
-        if len(address) > 0:
-            addr_str = address[0]
-            addr = wallet.ToScriptHash(addr_str)
+        for item in args:
+            if len(item) == 34:
+                addr = wallet.ToScriptHash(item)
+            elif len(item) > 1:
+                asset_type = get_asset_id(wallet,item)
+
     except Exception as e:
-        print("Invalid address specified")
+        print("Invalid arguments specified")
 
-    unspents = wallet.FindUnspentCoins(from_addr=addr)
+    if asset_type:
+        unspents = wallet.FindUnspentCoinsByAsset(asset_type, from_addr=addr)
+    else:
+        unspents = wallet.FindUnspentCoins(from_addr=addr)
 
-    jsn = [unspent.ToJson() for unspent in unspents]
+    for unspent in unspents:
+        print('\n-----------------------------------------------')
+        print(json.dumps(unspent.ToJson(), indent=4))
+        print(unspent.RefToBytes())
 
-    print(json.dumps(jsn, indent=4))

@@ -56,8 +56,15 @@ class Coin(TrackableMixin):
             return False
         return True
 
+    def RefToBytes(self):
+        vin_index = bytearray(self.Reference.PrevIndex.to_bytes(2,'little'))
+        vin_tx = self.Reference.PrevHash.Data
+        vindata = vin_index + vin_tx
+        return vindata
+
     def ToJson(self):
+
         return {
             'Reference': self.Reference.ToJson(),
-            'Output': self.Output.ToJson()
+            'Output': self.Output.ToJson(),
         }
