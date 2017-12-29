@@ -12,7 +12,7 @@ class Helper(object):
         """
 
         Args:
-            buffer (BytesIO/MemoryStream): stream to deserialize `class_name` to.
+            buffer (BytesIO/bytes): stream to deserialize `class_name` to.
             class_name (str): a full path to the class to be deserialized into. e.g. 'neo.Core.Block.Block'
 
         Returns:
@@ -42,7 +42,7 @@ class Helper(object):
         Deserialize the stream into a Transaction object.
 
         Args:
-            buffer (BytesIO/MemoryStream): stream to deserialize the Transaction from.
+            buffer (BytesIO): stream to deserialize the Transaction from.
 
         Returns:
             neo.Core.TX.Transaction:
