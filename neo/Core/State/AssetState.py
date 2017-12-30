@@ -75,12 +75,12 @@ class AssetState(StateBase):
         position = reader.stream.tell()
 
         try:
-            self.Amount = reader.ReadFixed8(unsigned=True)
+            self.Amount = reader.ReadFixed8()
         except Exception as e:
             reader.stream.seek(position)
             self.Amount = reader.ReadFixed8()
 
-        self.Available = reader.ReadFixed8(unsigned=True)
+        self.Available = reader.ReadFixed8()
         self.Precision = reader.ReadByte()
 
         # fee mode
