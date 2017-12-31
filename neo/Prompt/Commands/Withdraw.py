@@ -1,12 +1,12 @@
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
-from neo.Core.TX.Transaction import TransactionOutput,ContractTransaction,Transaction
+from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction, Transaction
 from neo.Network.NodeLeader import NodeLeader
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.SmartContract.Contract import Contract
-from neo.Prompt.Utils import string_from_fixed8,get_asset_id,get_asset_amount,parse_param,get_withdraw_from_watch_only,get_arg
-from neo.Prompt.Commands.Invoke import test_invoke,InvokeContract
+from neo.Prompt.Utils import string_from_fixed8, get_asset_id, get_asset_amount, parse_param, get_withdraw_from_watch_only, get_arg
+from neo.Prompt.Commands.Invoke import test_invoke, InvokeContract
 from neo.Fixed8 import Fixed8
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Cryptography.Crypto import Crypto
@@ -27,14 +27,16 @@ def PrintHolds(wallet):
     for h in holds:
         print(json.dumps(h.ToJson(), indent=4))
 
+
 def DeleteHolds(wallet):
     for h in wallet._holds:
         h.delete_instance()
     print("deleted holds")
 
+
 def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, require_password=True):
     asset_type = asset_id.lower()
-    if asset_type not in ['neo','gas']:
+    if asset_type not in ['neo', 'gas']:
         raise Exception('please specify neo or gas to withdraw')
 
     readable_addr = to_addr
@@ -49,7 +51,7 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
     to_addr = parse_param(to_addr, wallet)
     amount = get_asset_amount(amount, asset_id)
 
-    if not shash in wallet._watch_only:
+    if shash not in wallet._watch_only:
         print("Add withdrawal contract address to your watch only: import watch_addr %s " % contract_addr)
         return
     if amount < Fixed8.Zero():
@@ -57,7 +59,7 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
         return
 
     unspents = wallet.FindUnspentCoinsByAssetAndTotal(
-        asset_id=asset_id, amount=amount, from_addr=shash,use_standard=False,watch_only_val=64
+        asset_id=asset_id, amount=amount, from_addr=shash, use_standard=False, watch_only_val=64
     )
 
     if len(unspents) == 0:
@@ -67,11 +69,11 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
         print("Only one VIN at a time for now")
         return
 
-    balance = GetWithdrawalBalance(wallet,shash,to_addr,asset_type)
+    balance = GetWithdrawalBalance(wallet, shash, to_addr, asset_type)
 
     balance_fixed8 = Fixed8(balance)
     if amount <= balance_fixed8:
-        amount_bytes = bytearray(amount.value.to_bytes(8,'little'))
+        amount_bytes = bytearray(amount.value.to_bytes(8, 'little'))
         data = to_addr + amount_bytes
         data = data + unspents[0].RefToBytes()
 
@@ -80,13 +82,12 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
 
         tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [])
 
-        if len(results) and results[0].GetBoolean() == True:
+        if len(results) and results[0].GetBoolean():
             print("OK, ask for password?")
-
 
             if require_password:
                 print("\n---------------------------------------------------------------")
-                print("Will make withdrawal request for %s %s from %s to %s " % (amount.ToString(), asset_type,contract_addr,readable_addr))
+                print("Will make withdrawal request for %s %s from %s to %s " % (amount.ToString(), asset_type, contract_addr, readable_addr))
                 print("------------------------------------------------------------------\n")
 
                 print("Enter your password to complete this request")
@@ -98,7 +99,7 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
                     return
                 print("submit tx")
 
-            result = InvokeContract(wallet,tx,fee)
+            result = InvokeContract(wallet, tx, fee)
             return result
     else:
         print("insufficient balance")
@@ -159,7 +160,6 @@ def PerformWithdrawTx(wallet, tx, contract_hash):
 
         print("withdraw tx %s " % json.dumps(tx.ToJson(), indent=4))
 
-
         relayed = NodeLeader.Instance().Relay(tx)
 
         if relayed:
@@ -173,10 +173,9 @@ def PerformWithdrawTx(wallet, tx, contract_hash):
         print("Incomplete signature")
 
 
-
 def construct_withdrawal_tx(wallet, require_password=True):
 
-    hold = wallet._holds[0] # type: VINHold
+    hold = wallet._holds[0]  # type: VINHold
 
     scripthash_to = hold.OutputHash
     scripthash_from = hold.InputHash
@@ -192,9 +191,8 @@ def construct_withdrawal_tx(wallet, require_password=True):
 
     requested_vins = [coinRef]
 
-
-    tx,height = Blockchain.Default().GetTransaction(hold.TXHash)
-    output = tx.outputs[hold.Index] # type: TransactionOutput
+    tx, height = Blockchain.Default().GetTransaction(hold.TXHash)
+    output = tx.outputs[hold.Index]  # type: TransactionOutput
     assetId = output.AssetId
 
     asset_name = 'NEO'
@@ -220,7 +218,7 @@ def construct_withdrawal_tx(wallet, require_password=True):
         if require_password:
             print("\n---------------------------------------------------------------")
             print("Will make withdrawal request for %s %s from %s to %s " % (
-            f8amount.ToString(), asset_name, hold.InputAddr, hold.OutputAddr))
+                f8amount.ToString(), asset_name, hold.InputAddr, hold.OutputAddr))
             print("------------------------------------------------------------------\n")
 
             print("Enter your password to complete this request")
@@ -232,5 +230,4 @@ def construct_withdrawal_tx(wallet, require_password=True):
                 return
             print("submit tx")
 
-        result = PerformWithdrawTx(wallet,withdraw_constructed_tx, hold.InputHash.ToString())
-
+        result = PerformWithdrawTx(wallet, withdraw_constructed_tx, hold.InputHash.ToString())

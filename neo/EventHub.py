@@ -112,7 +112,7 @@ def on_sc_event(sc_event):
                             payload.append(listitem)
                 else:
                     try:
-                        payload.append(json.dumps(item.ToJson(),indent=4))
+                        payload.append(json.dumps(item.ToJson(), indent=4))
                     except Exception as e:
                         payload.append(item)
         logger.info("[test_mode][%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, payload))
@@ -129,10 +129,9 @@ def on_sc_event(sc_event):
                             payload.append(listitem)
                 else:
                     try:
-                        payload.append(json.dumps(item.ToJson(),indent=4))
+                        payload.append(json.dumps(item.ToJson(), indent=4))
                     except Exception as e:
                         payload.append(item)
-
 
         logger.info("[%s][%s] [%s] [tx %s] %s" % (sc_event.event_type, sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), payload))
 

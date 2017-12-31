@@ -176,7 +176,6 @@ class ScriptBuilder(object):
         self.push(operation.encode('utf-8').hex())
         self.Emit(APPCALL, script_hash.Data)
 
-
     def EmitAppCallWithOperationAndArgs(self, script_hash, operation, args):
         args.reverse()
         for i in args:

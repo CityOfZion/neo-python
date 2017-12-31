@@ -7,6 +7,7 @@ from neo.UInt256 import UInt256
 import pdb
 import binascii
 
+
 class ModelBase(Model):
     class Meta:
         database = PWDatabase.DBProxy()
@@ -87,6 +88,7 @@ class TransactionInfo(ModelBase):
     Height = IntegerField()
     DateTime = DateTimeField()
 
+
 class VINHold(ModelBase):
     Id = PrimaryKeyField()
     Index = IntegerField()
@@ -94,7 +96,6 @@ class VINHold(ModelBase):
     FromAddress = CharField()
     ToAddress = CharField()
     Amount = IntegerField()
-
 
     @property
     def TXHash(self):
@@ -104,7 +105,7 @@ class VINHold(ModelBase):
 
     @property
     def Vin(self):
-        index = bytearray(self.Index.to_bytes(2,'little'))
+        index = bytearray(self.Index.to_bytes(2, 'little'))
         return index + self.TXHash.Data
 
     @property
@@ -129,11 +130,11 @@ class VINHold(ModelBase):
 
     def ToJson(self):
         jsn = {
-            'To':self.OutputAddr,
-            'From':self.InputHash.ToString(),
-            'Amount':self.Amount,
-            'Index':self.Index,
-            'TxId':self.Hash
+            'To': self.OutputAddr,
+            'From': self.InputHash.ToString(),
+            'Amount': self.Amount,
+            'Index': self.Index,
+            'TxId': self.Hash
         }
 
 #        pdb.set_trace()

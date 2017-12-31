@@ -12,6 +12,7 @@ import binascii
 import json
 import pdb
 
+
 def DeleteAddress(prompter, wallet, addr):
 
     scripthash = wallet.ToScriptHash(addr)
@@ -73,6 +74,7 @@ def ImportWatchAddr(wallet, addr):
         print("added watch address")
     else:
         print("incorrect format for watch address")
+
 
 def ImportToken(wallet, contract_hash):
 
@@ -174,13 +176,13 @@ def ShowUnspentCoins(wallet, args):
 
     addr = None
     asset_type = None
-    watch_only=0
+    watch_only = 0
     try:
         for item in args:
             if len(item) == 34:
                 addr = wallet.ToScriptHash(item)
             elif len(item) > 1:
-                asset_type = get_asset_id(wallet,item)
+                asset_type = get_asset_id(wallet, item)
             if item == '--watch':
                 watch_only = 64
 
@@ -196,4 +198,3 @@ def ShowUnspentCoins(wallet, args):
         print('\n-----------------------------------------------')
         print(json.dumps(unspent.ToJson(), indent=4))
         print(unspent.RefToBytes())
-

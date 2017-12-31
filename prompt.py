@@ -33,7 +33,7 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, ShowUnspentCoins
-from neo.Prompt.Commands.Withdraw import PerformWithdrawTx,RequestWithdrawFrom,PrintHolds,DeleteHolds,construct_withdrawal_tx
+from neo.Prompt.Commands.Withdraw import PerformWithdrawTx, RequestWithdrawFrom, PrintHolds, DeleteHolds, construct_withdrawal_tx
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -390,7 +390,7 @@ class PromptInterface(object):
             print("please open a wallet")
             return
         if len(arguments) == 4:
-            RequestWithdrawFrom(self.Wallet,arguments[0],arguments[1],arguments[2],arguments[3])
+            RequestWithdrawFrom(self.Wallet, arguments[0], arguments[1], arguments[2], arguments[3])
         else:
             print("incorrect arg length. use 'withdraw_request {asset_id} {contract_hash} {to_addr} {amount}")
 
@@ -399,7 +399,7 @@ class PromptInterface(object):
             print("please open a wallet")
             return
 
-        item = get_arg(arguments,0)
+        item = get_arg(arguments, 0)
 
         if item:
 
@@ -413,6 +413,7 @@ class PromptInterface(object):
                 construct_withdrawal_tx(self.Wallet)
             else:
                 print("no withdraws in holding")
+
     def show_wallet(self, arguments):
 
         if not self.Wallet:
