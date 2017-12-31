@@ -33,6 +33,7 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, ShowUnspentCoins
+from neo.Prompt.Commands.Withdraw import PerformWithdrawTx,RequestWithdrawFrom,PrintHolds,DeleteHolds,construct_withdrawal_tx
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -384,6 +385,34 @@ class PromptInterface(object):
 
         print("Command export %s not found" % item)
 
+    def make_withdraw_request(self, arguments):
+        if not self.Wallet:
+            print("please open a wallet")
+            return
+        if len(arguments) == 4:
+            RequestWithdrawFrom(self.Wallet,arguments[0],arguments[1],arguments[2],arguments[3])
+        else:
+            print("incorrect arg length. use 'withdraw_request {asset_id} {contract_hash} {to_addr} {amount}")
+
+    def do_withdraw(self, arguments):
+        if not self.Wallet:
+            print("please open a wallet")
+            return
+
+        item = get_arg(arguments,0)
+
+        if item:
+
+            if item == 'holds':
+                PrintHolds(self.Wallet)
+            elif item == 'delete_holds':
+                DeleteHolds(self.Wallet)
+        else:
+            num_holds = len(self.Wallet._holds)
+            if num_holds > 0:
+                construct_withdrawal_tx(self.Wallet)
+            else:
+                print("no withdraws in holding")
     def show_wallet(self, arguments):
 
         if not self.Wallet:
@@ -811,6 +840,10 @@ class PromptInterface(object):
                         self.show_contract_state(arguments)
                     elif command == 'testinvoke':
                         self.test_invoke_contract(arguments)
+                    elif command == 'withdraw_request':
+                        self.make_withdraw_request(arguments)
+                    elif command == 'withdraw':
+                        self.do_withdraw(arguments)
                     elif command == 'mem':
                         self.show_mem()
                     elif command == 'nodes' or command == 'node':

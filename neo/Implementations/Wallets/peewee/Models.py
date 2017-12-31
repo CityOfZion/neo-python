@@ -3,7 +3,9 @@ from peewee import *
 from .PWDatabase import PWDatabase
 from neo.Cryptography.Crypto import Crypto
 from neo.UInt160 import UInt160
-
+from neo.UInt256 import UInt256
+import pdb
+import binascii
 
 class ModelBase(Model):
     class Meta:
@@ -84,3 +86,55 @@ class TransactionInfo(ModelBase):
     CoreTransaction = ForeignKeyField(Transaction)
     Height = IntegerField()
     DateTime = DateTimeField()
+
+class VINHold(ModelBase):
+    Id = PrimaryKeyField()
+    Index = IntegerField()
+    Hash = CharField()
+    FromAddress = CharField()
+    ToAddress = CharField()
+    Amount = IntegerField()
+
+
+    @property
+    def TXHash(self):
+        data = bytearray(binascii.unhexlify(self.Hash.encode('utf-8')))
+        data.reverse()
+        return UInt256(data=data)
+
+    @property
+    def Vin(self):
+        index = bytearray(self.Index.to_bytes(2,'little'))
+        return index + self.TXHash.Data
+
+    @property
+    def OutputHash(self):
+        data = bytearray(binascii.unhexlify(self.ToAddress.encode('utf-8')))
+        data.reverse()
+        return UInt160(data=data)
+
+    @property
+    def OutputAddr(self):
+        return Crypto.ToAddress(self.OutputHash)
+
+    @property
+    def InputHash(self):
+        data = bytearray(binascii.unhexlify(self.FromAddress.encode('utf-8')))
+        data.reverse()
+        return UInt160(data=data)
+
+    @property
+    def InputAddr(self):
+        return Crypto.ToAddress(self.InputHash)
+
+    def ToJson(self):
+        jsn = {
+            'To':self.OutputAddr,
+            'From':self.InputHash.ToString(),
+            'Amount':self.Amount,
+            'Index':self.Index,
+            'TxId':self.Hash
+        }
+
+#        pdb.set_trace()
+        return jsn

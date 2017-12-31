@@ -216,6 +216,8 @@ class StateReader(InteropService):
                 dispatch_smart_contract_event(SmartContractEvent.VERIFICATION_FAIL, [payload, error, engine._VMState],
                                               entry_script, height, tx_hash, success, engine.testMode)
 
+        self.notifications = []
+
     def Runtime_GetTrigger(self, engine):
 
         engine.EvaluationStack.PushT(engine.Trigger)

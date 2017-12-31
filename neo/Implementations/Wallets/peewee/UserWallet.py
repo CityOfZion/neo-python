@@ -20,10 +20,11 @@ from neo.UInt160 import UInt160
 from neo.Fixed8 import Fixed8
 from neo.UInt256 import UInt256
 from neo.Wallets.Coin import CoinState
+from neo.EventHub import SmartContractEvent,events
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
-    TransactionInfo, NEP5Token, NamedAddress
-
+    TransactionInfo, NEP5Token, NamedAddress, VINHold
+import pdb
 
 class UserWallet(Wallet):
 
@@ -33,18 +34,55 @@ class UserWallet(Wallet):
 
     _aliases = None
 
+    _holds = None
+
     def __init__(self, path, passwordKey, create):
 
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)
         logger.debug("initialized user wallet %s " % self)
         self.LoadNamedAddresses()
+        self.LoadHolds()
+
+        # Handle EventHub events for SmartContract decorators
+        @events.on(SmartContractEvent.RUNTIME_NOTIFY)
+        def call_on_event(sc_event):
+            # Make sure this event is for this specific smart contract
+            self.on_notify_sc_event(sc_event)
+
+    def on_notify_sc_event(self, sc_event):
+        if not sc_event.test_mode:
+            try:
+                notify_type = sc_event.event_payload[0]
+                if notify_type == b'hold_created':
+                    self.process_hold_event(sc_event.event_payload[1:])
+            except Exception as e:
+                pass
+
+    def process_hold_event(self, payload):
+        if len(payload) == 4:
+            vin = payload[0]
+            from_addr = UInt160(data=payload[1])
+            to_addr = UInt160(data=payload[2])
+            amount = int.from_bytes(payload[3], 'little')
+            v_index = int.from_bytes(vin[0:2],'little')
+            v_txid = UInt256(data=vin[2:])
+            if to_addr.ToBytes() in self._contracts.keys():
+                if from_addr in self._watch_only:
+                    print("in watch only!")
+
+                hold, created = VINHold.get_or_create(
+                    Index=v_index, Hash=v_txid.ToBytes(),FromAddress=from_addr.ToBytes(),ToAddress=to_addr.ToBytes(),Amount=amount
+                )
+                if created:
+                    self._holds.append(hold)
+
 
     def BuildDatabase(self):
         PWDatabase.Destroy()
         PWDatabase.Initialize(self._path)
         db = PWDatabase.ContextDB()
         try:
-            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token,
+            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, VINHold,
                               Transaction, TransactionInfo, NamedAddress], safe=True)
         except Exception as e:
             logger.error("Could not build database %s " % e)
@@ -293,6 +331,9 @@ class UserWallet(Wallet):
     def LoadNamedAddresses(self):
         self._aliases = NamedAddress.select()
 
+    def LoadHolds(self):
+        self._holds = VINHold.select()
+
     @property
     def NamedAddr(self):
         return self._aliases
@@ -528,3 +569,4 @@ class UserWallet(Wallet):
             jsn['coins'] = [coin.ToJson() for coin in self.FindUnspentCoins()]
             jsn['transactions'] = [tx.ToJson() for tx in self.GetTransactions()]
         return jsn
+

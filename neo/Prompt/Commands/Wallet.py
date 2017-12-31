@@ -4,12 +4,13 @@ from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import string_from_fixed8,get_asset_id
+from neo.Prompt.Utils import get_asset_id
 from neo.Fixed8 import Fixed8
+from neo.UInt160 import UInt160
 from prompt_toolkit import prompt
 import binascii
 import json
-
+import pdb
 
 def DeleteAddress(prompter, wallet, addr):
 
@@ -53,12 +54,25 @@ def ImportWatchAddr(wallet, addr):
         print("Please open a wallet")
         return False
 
-    script_hash = wallet.ToScriptHash(addr)
+    script_hash = None
+    try:
+        script_hash = wallet.ToScriptHash(addr)
+    except Exception as e:
+        pass
 
-    result = wallet.AddWatchOnly(script_hash)
+    if not script_hash:
+        try:
+            data = bytearray(binascii.unhexlify(addr.encode('utf-8')))
+            data.reverse()
+            script_hash = UInt160(data=data)
+        except Exception as e:
+            pass
 
-    return result
-
+    if script_hash:
+        wallet.AddWatchOnly(script_hash)
+        print("added watch address")
+    else:
+        print("incorrect format for watch address")
 
 def ImportToken(wallet, contract_hash):
 
@@ -160,20 +174,23 @@ def ShowUnspentCoins(wallet, args):
 
     addr = None
     asset_type = None
+    watch_only=0
     try:
         for item in args:
             if len(item) == 34:
                 addr = wallet.ToScriptHash(item)
             elif len(item) > 1:
                 asset_type = get_asset_id(wallet,item)
+            if item == '--watch':
+                watch_only = 64
 
     except Exception as e:
         print("Invalid arguments specified")
 
     if asset_type:
-        unspents = wallet.FindUnspentCoinsByAsset(asset_type, from_addr=addr)
+        unspents = wallet.FindUnspentCoinsByAsset(asset_type, from_addr=addr, watch_only_val=watch_only)
     else:
-        unspents = wallet.FindUnspentCoins(from_addr=addr)
+        unspents = wallet.FindUnspentCoins(from_addr=addr, watch_only_val=watch_only)
 
     for unspent in unspents:
         print('\n-----------------------------------------------')

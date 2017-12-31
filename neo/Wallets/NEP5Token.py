@@ -74,6 +74,8 @@ class NEP5Token(VerificationCode):
     def GetBalance(self, wallet, address, as_string=False):
 
         addr = parse_param(address, wallet)
+        if isinstance(addr, UInt160):
+            addr = addr.Data
         sb = ScriptBuilder()
         sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'balanceOf', [addr])
 
