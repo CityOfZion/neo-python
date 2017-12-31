@@ -52,10 +52,6 @@ def double_sha256(ba):
     return d2.hexdigest()
 
 
-# def random_to_priv(key):
-#     return binascii.hexlify(key)
-
-
 def pubkey_to_redeem(pubkey):
     """
     Convert the public key to the redeemscript format.
