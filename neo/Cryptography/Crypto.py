@@ -99,14 +99,14 @@ class Crypto(object):
         return hash_to_wallet_address(script_hash.Data)
 
     @staticmethod
-    def Sign(message, private_key):
+    def Sign(message, private_key, public_key):
         """
         Sign the message with the given private key.
 
         Args:
             message (str): message to be signed
             private_key (str): 32 byte key as a double digit hex string (e.g. having a length of 64)
-
+            public_key: UNUSED.
         Returns:
             bytearray: the signature of the message.
         """
@@ -189,18 +189,19 @@ class CryptoInstance():
         """
         return Crypto.Hash256(message)
 
-    def Sign(self, message, prikey):
+    def Sign(self, message, prikey, public_key):
         """
         Sign the message with the given private key.
 
         Args:
             message (str): message to be signed
             prikey (str): 32 byte key as a double digit hex string (e.g. having a length of 64)
+            public_key: UNUSED.
 
         Returns:
             bytearray: the signature of the message.
         """
-        return Crypto.Sign(message, prikey)
+        return Crypto.Sign(message, prikey, public_key)
 
     def VerifySignature(self, message, signature, pubkey):
         """
