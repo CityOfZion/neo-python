@@ -1,11 +1,9 @@
 import hashlib
-import binascii
 import unicodedata
 import base58
 import scrypt
 import bitcoin
 
-from Crypto import Random
 from Crypto.Cipher import AES
 
 from neo.Cryptography.ECCurve import ECDSA
@@ -25,7 +23,6 @@ NEP_FLAG = bytearray([0xe0])
 
 
 class KeyPair(object):
-
     PublicKeyHash = None
 
     PublicKey = None
@@ -33,7 +30,9 @@ class KeyPair(object):
     PrivateKey = None
 
     def setup_curve(self):
-
+        """
+        Setup the Elliptic curve parameters.
+        """
         bitcoin.change_curve(
             115792089210356248762697446949407573530086143415290314195533631308867097853951,
             115792089210356248762697446949407573529996955224135760342422259061068512044369,
@@ -44,7 +43,12 @@ class KeyPair(object):
         )
 
     def __init__(self, priv_key):
+        """
+        Create an instance.
 
+        Args:
+            priv_key (bytes): a private key.
+        """
         self.setup_curve()
 
         length = len(priv_key)

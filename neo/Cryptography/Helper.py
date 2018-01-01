@@ -6,8 +6,6 @@ Usage:
     from neo.Cryptography.Helper import *
 """
 
-
-import binascii
 from bitcoin import *
 import os
 import time
@@ -18,6 +16,16 @@ import base58
 
 
 def hash_to_wallet_address(ba, address_version=23):
+    """
+    Translate script hash into the public address.
+
+    Args:
+        ba (bytes): script hash.
+        address_version: fixed to 23. Defined in https://github.com/neo-project/neo/blob/master/neo/protocol.json
+
+    Returns:
+        str: base58 encoded string representing the wallet address.
+    """
     sb = bytearray([23]) + ba
     c256 = bin_dbl_sha256(sb)[0:4]
     outb = sb + bytearray(c256)
@@ -28,6 +36,15 @@ long = int
 
 
 def double_sha256(ba):
+    """
+    Perform two SHA256 operations on the input.
+
+    Args:
+        ba (bytes): data to hash.
+
+    Returns:
+        str: hash as a double digit hex string.
+    """
     d1 = hashlib.sha256(ba)
     d2 = hashlib.sha256()
     d1.hexdigest()
@@ -35,23 +52,55 @@ def double_sha256(ba):
     return d2.hexdigest()
 
 
-def random_to_priv(key):
-    return binascii.hexlify(key)
-
-
 def pubkey_to_redeem(pubkey):
+    """
+    Convert the public key to the redeemscript format.
+
+    Args:
+        pubkey (bytes): public key.
+
+    Returns:
+        bytes: redeemscript.
+    """
     return binascii.unhexlify(b'21' + pubkey) + from_int_to_byte(int(b'ac', 16))
 
 
 def redeem_to_scripthash(redeem):
+    """
+    Convert a redeem script to a script hash.
+
+    Args:
+        redeem (bytes):
+
+    Returns:
+        bytes: script hash.
+    """
     return binascii.hexlify(bin_hash160(redeem))
 
 
 def scripthash_to_address(scripthash):
+    """
+    Convert a script hash to a public address.
+
+    Args:
+        scripthash (bytes):
+
+    Returns:
+        str: base58 encoded string representing the wallet address.
+    """
     return bin_to_b58check(binascii.unhexlify(scripthash), 23)
 
 
 def pubkey_to_pubhash(pubkey):
+    """
+    Convert a public key to a script hash.
+
+    Args:
+        pubkey (bytes):
+
+    Returns:
+        bytes: script hash.
+    """
     return redeem_to_scripthash(pubkey_to_redeem(pubkey))
 
 
@@ -70,7 +119,7 @@ def inv(a, n):
 
 def from_jacobian(p):
     z = inv(p[2], P)
-    return ((p[0] * z**2) % P, (p[1] * z**3) % P)
+    return ((p[0] * z ** 2) % P, (p[1] * z ** 3) % P)
 
 
 def jacobian_double(p):
@@ -79,7 +128,7 @@ def jacobian_double(p):
     ysq = (p[1] ** 2) % P
     S = (4 * p[0] * ysq) % P
     M = (3 * p[0] ** 2 + A * p[2] ** 4) % P
-    nx = (M**2 - 2 * S) % P
+    nx = (M ** 2 - 2 * S) % P
     ny = (M * (S - nx) - 8 * ysq ** 2) % P
     nz = (2 * p[1] * p[2]) % P
     return (nx, ny, nz)
@@ -143,6 +192,18 @@ code_strings = {
 
 
 def get_code_string(base):
+    """
+    Get code string for specific base encoding.
+
+    Args:
+        base (int): which base to get code string of. Valid options: 2,10,16,32,58, 256.
+
+    Raises:
+         ValueError: if an invalid base is provided.
+
+    Returns:
+        str: code string.
+    """
     if base in code_strings:
         return code_strings[base]
     else:
@@ -150,6 +211,16 @@ def get_code_string(base):
 
 
 def decode(string, base):
+    """
+    Decode input according to specified base.
+
+    Args:
+        string (str): input message
+        base (int): base number
+
+    Returns:
+        str: decoded message.
+    """
     base = int(base)
     code_string = get_code_string(base)
     result = 0
@@ -163,6 +234,16 @@ def decode(string, base):
 
 
 def decode_privkey(priv, formt=None):
+    """
+    Decode an encoded private key.
+
+    Args:
+        priv (str): private key.
+        formt (str): (Optional) format identifier.
+
+    Returns:
+        str: the decoded private key.
+    """
     if not formt:
         formt = get_privkey_format(priv)
     if formt == 'decimal':
@@ -184,6 +265,18 @@ def decode_privkey(priv, formt=None):
 
 
 def get_privkey_format(priv):
+    """
+    Get the private key format identifier.
+
+    Args:
+        priv (str): private key.
+
+    Raises:
+        Exception: if input does not match a known format identifier.
+
+    Returns:
+        str: format identifier.
+    """
     if isinstance(priv, long):
         return 'decimal'
     elif len(priv) == 32:
@@ -205,6 +298,20 @@ def get_privkey_format(priv):
 
 
 def encode_privkey(priv, formt, vbyte=0):
+    """
+    Encode a private key.
+
+    Args:
+        priv (str): private key.
+        formt (str): format identifier.
+        vbyte:
+
+    Raises:
+        Exception: if an invalid format identifier is specified.
+
+    Returns:
+        str: key encoded according to the format identifier.
+    """
     if not isinstance(priv, long):
         return encode_privkey(decode_privkey(priv), formt, vbyte)
     if formt == 'decimal':
@@ -226,6 +333,17 @@ def encode_privkey(priv, formt, vbyte=0):
 
 
 def encode(val, base, minlen=0):
+    """
+    Encode the value into the specified base.
+
+    Args:
+        val (string): input value.
+        base (int): base encoding number.
+        minlen (int): minimum return value length.
+
+    Returns:
+        str: the encoded result with the minimum specific length if specified.
+    """
     base, minlen = int(base), int(minlen)
     code_string = get_code_string(base)
     result = ""
@@ -236,6 +354,16 @@ def encode(val, base, minlen=0):
 
 
 def encode_pubkey(pub, formt):
+    """
+    Encode a public key according to the format.
+
+    Args:
+        pub (tuple/list): result of self.from_jacobian()  (2 ints).
+        formt (str): the format identifier.
+
+    Returns:
+        str: the encoded result with the minimum specific length if specified.
+    """
     if not isinstance(pub, (tuple, list)):
         pub = decode_pubkey(pub)
     if formt == 'decimal':
@@ -257,6 +385,15 @@ def encode_pubkey(pub, formt):
 
 
 def privkey_to_pubkey(privkey):
+    """
+    Get the public key associated with a private key.
+
+    Args:
+        privkey (str): private key.
+
+    Returns:
+        str:
+    """
     f = get_privkey_format(privkey)
     privkey = decode_privkey(privkey, f)
     if privkey >= N:
@@ -269,63 +406,162 @@ def from_int_to_byte(a):
 
 
 def bin_to_b58check(inp, magicbyte=0):
+    """
+    Base58check encode the input.
+
+    Args:
+        inp (bytes): data to encode.
+        magicbyte: Fixed to 0x17
+
+    Returns:
+        str: b58check encoded string.
+    """
     mb = b'\x17'
     inp_fmtd = mb + inp
-#    inp_fmtd = chr(magicbyte) + inp
+    #    inp_fmtd = chr(magicbyte) + inp
     checksum = bin_dbl_sha256(inp_fmtd)[:4]
     return changebase(inp_fmtd + checksum, 256, 58)
 
 
 def changebase(string, frm, to, minlen=0):
+    """
+    Change base encodings of the input string.
+
+    Args:
+        string (str): input
+        frm (int): base to change from.
+        to (int): base to change to.
+        minlen (int): minimum return value length.
+
+    Returns:
+        str:
+    """
     if frm == to:
         return lpad(string, get_code_string(frm)[0], minlen)
     return encode(decode(string, frm), to, minlen)
 
 
-def from_string_to_bytes(a):
-    return a
-
-
 def bin_dbl_sha256(s):
-    #    bytes_to_hash = from_string_to_bytes(s)
+    """
+    Perform a double SHA256 operation on the input.
+
+    Args:
+        s(str): message to hash.
+
+    Returns:
+        bytes: hash.
+    """
     return hashlib.sha256(hashlib.sha256(s).digest()).digest()
 
 
 def random_string(x):
+    """
+    Generate a random string.
+
+    Args:
+        x(int): expected length of returned string.
+
+    Returns:
+        str:
+    """
     return str(os.urandom(x))
 
 
 def bytes_to_hex_string(b):
+    """
+    Convert bytes to hex string.
+
+    Args:
+        b (bytes): input data.
+
+    Returns:
+        str: hex string.
+    """
     if isinstance(b, str):
         return b
     return ''.join('{:02x}'.format(y) for y in b)
 
 
 def bin_hash160Bytes(bts):
+    """
+    Get a hash of the provided message using the ripemd160 algorithm.
+
+    Args:
+        bts (str): message to hash.
+
+    Returns:
+        bytes: hash.
+    """
     intermed = hashlib.sha256(bts).digest()
     return hashlib.new('ripemd160', intermed).digest()
 
 
 def bin_hash160(string):
+    """
+    Get a hash of the provided message using the ripemd160 algorithm.
+
+    Args:
+        string (str): message to hash.
+
+    Returns:
+        str: hash as a double digit hex string.
+    """
     intermed = hashlib.sha256(string).digest()
     return hashlib.new('ripemd160', intermed).hexdigest()
 
 
 def bin_sha256(string):
+    """
+    Hash the input data with the SHA256 algorithm.
+
+    Args:
+        string (bytes/str): input data.
+
+    Returns:
+        bytes: hash.
+    """
     binary_data = string if type(string) is bytes else string.encode('utf-8')
     return hashlib.sha256(binary_data).digest()
 
 
 def sha256(string):
+    """
+    Hash the input data with the SHA256 algorithm.
+
+    Args:
+        string (bytes/str): input data.
+
+    Returns:
+        str: hex string.
+    """
     return bytes_to_hex_string(bin_sha256(string))
 
 
 def random_key():
-    entropy = random_string(32) + str(random.randrange(2**256)) + str(int(time.time() * 1000000))
+    """
+    Generate a random 32 byte key.
+
+    Returns:
+        str: the key.
+    """
+    entropy = random_string(32) + str(random.randrange(2 ** 256)) + str(int(time.time() * 1000000))
     return sha256(entropy)
 
 
 def base256_encode(n, minwidth=0):  # int/long to byte array
+    """
+    Encode the input with base256.
+
+    Args:
+        n (int): input value.
+        minwidth: minimum return value length.
+
+    Raises:
+        ValueError: if a negative number is provided.
+
+    Returns:
+        bytearray:
+    """
     if n > 0:
         arr = []
         while n:
