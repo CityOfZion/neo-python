@@ -55,27 +55,33 @@ class UserWallet(Wallet):
             try:
                 notify_type = sc_event.event_payload[0]
                 if notify_type == b'hold_created':
-                    self.process_hold_event(sc_event.event_payload[1:])
+                    self.process_hold_created_event(sc_event.event_payload[1:])
+                elif notify_type == b'hold_cancelled':
+                    self.process_hold_cancelled_event(sc_event.event_payload[1])
             except Exception as e:
-                pass
+                print("Coludnt process hold: %s " % e)
 
-    def process_hold_event(self, payload):
+    def process_hold_created_event(self, payload):
         if len(payload) == 4:
             vin = payload[0]
             from_addr = UInt160(data=payload[1])
             to_addr = UInt160(data=payload[2])
             amount = int.from_bytes(payload[3], 'little')
-            v_index = int.from_bytes(vin[0:2], 'little')
-            v_txid = UInt256(data=vin[2:])
-            if to_addr.ToBytes() in self._contracts.keys():
-                if from_addr in self._watch_only:
-                    print("in watch only!")
-
+            v_index = int.from_bytes(vin[32:], 'little')
+            v_txid = UInt256(data=vin[0:32])
+            if to_addr.ToBytes() in self._contracts.keys() and from_addr in self._watch_only:
                 hold, created = VINHold.get_or_create(
                     Index=v_index, Hash=v_txid.ToBytes(), FromAddress=from_addr.ToBytes(), ToAddress=to_addr.ToBytes(), Amount=amount
                 )
                 if created:
-                    self._holds.append(hold)
+                    self.LoadHolds()
+
+    def process_hold_cancelled_event(self, vin_to_cancel):
+        self.LoadHolds()
+        for hold in self._holds:
+            if hold.Vin == vin_to_cancel:
+                hold.delete_instance()
+        self.LoadHolds()
 
     def BuildDatabase(self):
         PWDatabase.Destroy()
@@ -384,6 +390,7 @@ class UserWallet(Wallet):
         self.OnCoinsChanged(added, changed, deleted)
 
     def OnCoinsChanged(self, added, changed, deleted):
+        holds_to_delete = set()
         for coin in added:
             addr_hash = bytes(coin.Output.ScriptHash.Data)
 
@@ -405,6 +412,10 @@ class UserWallet(Wallet):
                 logger.error("COULDN'T SAVE!!!! %s " % e)
 
         for coin in changed:
+            for hold in self._holds:
+                if hold.Reference == coin.Reference and coin.State & CoinState.Spent > 0:
+                    holds_to_delete.add(hold)
+
             try:
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.State = coin.State
@@ -413,12 +424,20 @@ class UserWallet(Wallet):
                 logger.error("Coulndn't change coin %s %s (coin to change not found)" % (coin, e))
 
         for coin in deleted:
+            for hold in self._holds:
+                if hold.Reference == coin.Reference:
+                    holds_to_delete.add(hold)
             try:
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.delete_instance()
 
             except Exception as e:
                 logger.error("could not delete coin %s %s " % (coin, e))
+
+        if len(holds_to_delete):
+            for h in holds_to_delete:
+                h.delete_instance()
+            self.LoadHolds()
 
     @property
     def Addresses(self):

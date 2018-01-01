@@ -289,6 +289,7 @@ class InteropService():
     _dictionary = {}
 
     def __init__(self):
+        self._dictionary = {}
         self.Register("System.ExecutionEngine.GetScriptContainer", self.GetScriptContainer)
         self.Register("System.ExecutionEngine.GetExecutingScriptHash", self.GetExecutingScriptHash)
         self.Register("System.ExecutionEngine.GetCallingScriptHash", self.GetCallingScriptHash)

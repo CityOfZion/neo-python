@@ -6,9 +6,8 @@ Usage:
     from neo.Wallets.Coin import Coin
 """
 
-from neo.Core.TX.Transaction import TransactionOutput
+from neo.Core.Mixins import EquatableMixin
 from neo.Core.CoinReference import CoinReference
-from neo.Wallets import Wallet
 from neo.Core.State.CoinState import CoinState
 from neo.IO.Mixins import TrackableMixin
 from neo.Cryptography.Crypto import Crypto
@@ -57,9 +56,9 @@ class Coin(TrackableMixin):
         return True
 
     def RefToBytes(self):
-        vin_index = bytearray(self.Reference.PrevIndex.to_bytes(2, 'little'))
+        vin_index = bytearray(self.Reference.PrevIndex.to_bytes(1, 'little'))
         vin_tx = self.Reference.PrevHash.Data
-        vindata = vin_index + vin_tx
+        vindata = vin_tx + vin_index
         return vindata
 
     def ToJson(self):

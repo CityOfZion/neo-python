@@ -33,7 +33,7 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, ShowUnspentCoins
-from neo.Prompt.Commands.Withdraw import PerformWithdrawTx, RequestWithdrawFrom, PrintHolds, DeleteHolds, construct_withdrawal_tx
+from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, construct_withdrawal_tx, CancelWithdrawalHolds
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -407,6 +407,11 @@ class PromptInterface(object):
                 PrintHolds(self.Wallet)
             elif item == 'delete_holds':
                 DeleteHolds(self.Wallet)
+            elif item == 'cancel_holds':
+                if len(arguments) > 1:
+                    CancelWithdrawalHolds(self.Wallet, get_arg(arguments, 1))
+                else:
+                    print("Please specify contract hash to cancel holds for")
         else:
             num_holds = len(self.Wallet._holds)
             if num_holds > 0:

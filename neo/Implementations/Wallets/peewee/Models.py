@@ -6,6 +6,9 @@ from neo.UInt160 import UInt160
 from neo.UInt256 import UInt256
 import pdb
 import binascii
+from neo.Blockchain import GetBlockchain
+from neo.Wallets.Coin import Coin, CoinReference
+from neo.Core.TX.Transaction import TransactionOutput
 
 
 class ModelBase(Model):
@@ -98,6 +101,11 @@ class VINHold(ModelBase):
     Amount = IntegerField()
 
     @property
+    def Reference(self):
+        reference = CoinReference(prev_hash=self.TXHash, prev_index=self.Index)
+        return reference
+
+    @property
     def TXHash(self):
         data = bytearray(binascii.unhexlify(self.Hash.encode('utf-8')))
         data.reverse()
@@ -105,8 +113,8 @@ class VINHold(ModelBase):
 
     @property
     def Vin(self):
-        index = bytearray(self.Index.to_bytes(2, 'little'))
-        return index + self.TXHash.Data
+        index = bytearray(self.Index.to_bytes(1, 'little'))
+        return self.TXHash.Data + index
 
     @property
     def OutputHash(self):

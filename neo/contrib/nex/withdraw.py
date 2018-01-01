@@ -32,6 +32,7 @@ def DeleteHolds(wallet):
     for h in wallet._holds:
         h.delete_instance()
     print("deleted holds")
+    wallet.LoadHolds()
 
 
 def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, require_password=True):
@@ -59,48 +60,63 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
         return
 
     unspents = wallet.FindUnspentCoinsByAssetAndTotal(
-        asset_id=asset_id, amount=amount, from_addr=shash, use_standard=False, watch_only_val=64
+        asset_id=asset_id, amount=amount, from_addr=shash, use_standard=False, watch_only_val=64, reverse=True
     )
 
-    if len(unspents) == 0:
+    if not unspents or len(unspents) == 0:
         print("no eligible withdrawal vins")
         return
-    elif len(unspents) > 1:
-        print("Only one VIN at a time for now")
-        return
+#    elif len(unspents) > 1:
+#        print("Only one VIN at a time for now")
+#        return
 
     balance = GetWithdrawalBalance(wallet, shash, to_addr, asset_type)
 
     balance_fixed8 = Fixed8(balance)
+    orig_amount = amount
     if amount <= balance_fixed8:
-        amount_bytes = bytearray(amount.value.to_bytes(8, 'little'))
-        data = to_addr + amount_bytes
-        data = data + unspents[0].RefToBytes()
-
         sb = ScriptBuilder()
-        sb.EmitAppCallWithOperationAndData(shash, 'withdraw_%s' % asset_type, data)
+
+        for uns in unspents:
+            if amount > Fixed8.Zero():
+                print("amount is %s " % amount.ToString())
+                to_spend = amount
+                if to_spend > uns.Output.Value:
+                    to_spend = uns.Output.Value
+                amount_bytes = bytearray(to_spend.value.to_bytes(8, 'little'))
+                data = to_addr + amount_bytes
+                data = data + uns.RefToBytes()
+                sb.EmitAppCallWithOperationAndData(shash, 'withdraw_%s' % asset_type, data)
+                amount -= uns.Output.Value
+                print("amount now %s " % amount.ToString())
 
         tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [])
 
-        if len(results) and results[0].GetBoolean():
-            print("OK, ask for password?")
+        for item in results:
+            if not item.GetBoolean():
+                print("Error performitng withdrawals")
+                return
 
-            if require_password:
-                print("\n---------------------------------------------------------------")
-                print("Will make withdrawal request for %s %s from %s to %s " % (amount.ToString(), asset_type, contract_addr, readable_addr))
-                print("------------------------------------------------------------------\n")
+        print("OK, ask for password?")
 
-                print("Enter your password to complete this request")
+        if require_password:
+            print("\n---------------------------------------------------------------")
+            print("Will make withdrawal request for %s %s from %s to %s " % (orig_amount.ToString(), asset_type, contract_addr, readable_addr))
+            print("FEE IS %s " % fee.ToString())
+            print("GAS IS %s " % tx.Gas.ToString())
+            print("------------------------------------------------------------------\n")
 
-                passwd = prompt("[Password]> ", is_password=True)
+            print("Enter your password to complete this request")
 
-                if not wallet.ValidatePassword(passwd):
-                    print("incorrect password")
-                    return
-                print("submit tx")
+            passwd = prompt("[Password]> ", is_password=True)
 
-            result = InvokeContract(wallet, tx, fee)
-            return result
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return
+            print("submit tx")
+
+        result = InvokeContract(wallet, tx, fee)
+        return result
     else:
         print("insufficient balance")
 
@@ -117,14 +133,59 @@ def GetWithdrawalBalance(wallet, contract_hash, from_addr, asset_type):
         print("could not get balance: %s " % e)
 
 
+def CancelWithdrawalHolds(wallet, contract_hash, require_password=True):
+    wallet.LoadHolds()
+    to_cancel = []
+    for hold in wallet._holds:
+        if hold.FromAddress == contract_hash:
+            to_cancel.append(hold)
+    if len(to_cancel) < 1:
+        print("No holds to cancel")
+        return
+
+    sb = ScriptBuilder()
+    for hold in to_cancel:
+        sb.EmitAppCallWithOperationAndData(hold.InputHash, 'cancel_hold', hold.Vin)
+
+    try:
+        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [])
+
+        for i in results:
+            if not i.GetBoolean():
+                print("Error executing hold cleanup")
+                return
+
+        if require_password:
+            print("\n---------------------------------------------------------------")
+            print("Will cancel %s holds" % len(to_cancel))
+            print("FEE IS %s " % fee.ToString())
+            print("GAS IS %s " % tx.Gas.ToString())
+            print("------------------------------------------------------------------\n")
+
+            print("Enter your password to complete this request")
+
+            passwd = prompt("[Password]> ", is_password=True)
+
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return
+            print("submit tx")
+
+        result = InvokeContract(wallet, tx, fee)
+        return result
+
+    except Exception as e:
+        print("could not cancel hold(s): %s " % e)
+
+
 def PerformWithdrawTx(wallet, tx, contract_hash):
 
     #    print("withdraw tx 1 %s " % json.dumps(tx.ToJson(), indent=4))
 
     requestor_contract = wallet.GetDefaultContract()
-    tx.Attributes = [
-        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)
-    ]
+#    tx.Attributes = [
+#        TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(requestor_contract.Script).Data)
+#    ]
 
     withdraw_contract_state = Blockchain.Default().GetContract(contract_hash.encode('utf-8'))
 
@@ -150,9 +211,8 @@ def PerformWithdrawTx(wallet, tx, contract_hash):
         withdraw_verification = verification_contract
 
     context = ContractParametersContext(tx)
-    wallet.Sign(context)
-
-    context.Add(withdraw_verification, 0, 0)
+#    wallet.Sign(context)
+    context.Add(withdraw_verification, 0, bytearray(0))
 
     if context.Completed:
 
