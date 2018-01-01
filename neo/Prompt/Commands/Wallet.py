@@ -4,7 +4,7 @@ from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import string_from_fixed8,get_asset_id
+from neo.Prompt.Utils import string_from_fixed8, get_asset_id
 from neo.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 import binascii
@@ -165,7 +165,7 @@ def ShowUnspentCoins(wallet, args):
             if len(item) == 34:
                 addr = wallet.ToScriptHash(item)
             elif len(item) > 1:
-                asset_type = get_asset_id(wallet,item)
+                asset_type = get_asset_id(wallet, item)
 
     except Exception as e:
         print("Invalid arguments specified")
@@ -179,4 +179,3 @@ def ShowUnspentCoins(wallet, args):
         print('\n-----------------------------------------------')
         print(json.dumps(unspent.ToJson(), indent=4))
         print(unspent.RefToBytes())
-
