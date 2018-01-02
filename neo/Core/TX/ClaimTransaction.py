@@ -143,9 +143,7 @@ class ClaimTransaction(Transaction):
         otherclaimTxs = [tx for tx in mempool if tx is ClaimTransaction and tx is not self]
         for other in otherclaimTxs:
             # check to see if the length of the intersection between this objects claim's and the other txs claims is > 0
-            if len(
-                    [list(filter(lambda x: x in self.Claims, otherClaims)) for otherClaims in
-                     other.Claims]): return False
+            if len([list(filter(lambda x: x in self.Claims, otherClaims)) for otherClaims in other.Claims]): return False
 
         txResult = None
         for tx in self.GetTransactionResults():

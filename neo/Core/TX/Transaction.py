@@ -340,9 +340,11 @@ class Transaction(Inventory, InventoryMixin):
         Returns:
             int: size.
         """
-        return sys.getsizeof(self.Type) + sys.getsizeof(0) \
-               + sys.getsizeof(self.Attributes) + sys.getsizeof(self.inputs) + \
-               sys.getsizeof(self.outputs) + sys.getsizeof(self.scripts)
+        len_attributes = sys.getsizeof(self.Attributes)
+        len_inputs = sys.getsizeof(self.inputs)
+        len_ouputs = sys.getsizeof(self.outputs)
+        len_scripts = sys.getsizeof(self.scripts)
+        return sys.getsizeof(self.Type) + sys.getsizeof(0) + len_attributes + len_inputs + len_outputs + len_scripts
 
     def Height(self):
         return self.__height
