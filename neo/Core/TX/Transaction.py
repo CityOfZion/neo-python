@@ -5,14 +5,9 @@ Description:
 Usage:
     from neo.Core.Transaction import Transaction
 """
-import sys
-import json
 from itertools import groupby
-from logzero import logger
-
 from neo.Blockchain import *
 from neo.Core.TX.TransactionAttribute import *
-from neo.Core.CoinReference import CoinReference
 from neocore.Fixed8 import Fixed8
 from neo.Network.Inventory import Inventory
 from neo.Network.InventoryType import InventoryType
@@ -33,10 +28,23 @@ class TransactionResult(EquatableMixin):
     Amount = Fixed8(0)
 
     def __init__(self, asset_id, amount):
+        """
+        Create an instance.
+
+        Args:
+            asset_id (UInt256):
+            amount (Fixed8):
+        """
         self.AssetId = asset_id
         self.Amount = amount
 
     def ToString(self):
+        """
+        Get a string representation of the object.
+
+        Returns:
+            str:
+        """
         return "%s -> %s " % (self.AssetId.ToString(), self.Amount.value)
 
 
@@ -54,7 +62,6 @@ class TransactionType(object):
 
 
 class TransactionOutput(SerializableMixin, EquatableMixin):
-
     Value = None  # should be fixed 8
     ScriptHash = None
     AssetId = None
@@ -62,28 +69,60 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
     """docstring for TransactionOutput"""
 
     def __init__(self, AssetId=None, Value=None, script_hash=None):
+        """
+        Create an instance.
+
+        Args:
+            AssetId (UInt256):
+            Value (Fixed8):
+            script_hash (UInt160):
+        """
         super(TransactionOutput, self).__init__()
         self.AssetId = AssetId
         self.Value = Value
         self.ScriptHash = script_hash
 
-#        if self.ScriptHash is None:
-#            raise Exception("Script hash is required!!!!!!!!")
+    #        if self.ScriptHash is None:
+    #            raise Exception("Script hash is required!!!!!!!!")
 
     @property
     def Address(self):
+        """
+        Get the public address of the transaction.
+
+        Returns:
+            str: base58 encoded string representing the address.
+        """
         return Crypto.ToAddress(self.ScriptHash)
 
     @property
     def AddressBytes(self):
+        """
+        Get the public address of the transaction.
+
+        Returns:
+            bytes: base58 encoded address.
+        """
         return bytes(self.Address, encoding='utf-8')
 
     def Serialize(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         writer.WriteUInt256(self.AssetId)
         writer.WriteFixed8(self.Value)
         writer.WriteUInt160(self.ScriptHash)
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         self.AssetId = reader.ReadUInt256()
         self.Value = reader.ReadFixed8()
         self.ScriptHash = reader.ReadUInt160()
@@ -91,6 +130,12 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
             raise Exception("Script hash is required from deserialize!!!!!!!!")
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         return {
             'AssetId': self.AssetId.ToString(),
             'Value': self.Value.value,
@@ -105,23 +150,52 @@ class TransactionInput(SerializableMixin, EquatableMixin):
     PrevIndex = None
 
     def __init__(self, prevHash=None, prevIndex=None):
+        """
+        Create an instance.
+        Args:
+            prevHash (UInt256):
+            prevIndex (int):
+        """
         super(TransactionInput, self).__init__()
         self.PrevHash = prevHash
         self.PrevIndex = prevIndex
 
     def Serialize(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt16(self.PrevIndex)
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         self.PrevHash = reader.ReadUInt256()
         self.PrevIndex = reader.ReadUInt16()
 
     def ToString(self):
-        # to string
+        """
+        Get the string representation of the object.
+
+        Returns:
+            str: PrevHash:PrevIndex
+        """
         return self.PrevHash + ":" + self.PrevIndex
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         return {
             'PrevHash': self.PrevHash.ToString(),
             'PrevIndex': self.PrevIndex
@@ -129,7 +203,6 @@ class TransactionInput(SerializableMixin, EquatableMixin):
 
 
 class Transaction(Inventory, InventoryMixin):
-
     Type = None
 
     Version = 0
@@ -159,6 +232,14 @@ class Transaction(Inventory, InventoryMixin):
     """docstring for Transaction"""
 
     def __init__(self, inputs=[], outputs=[], attributes=[], scripts=[]):
+        """
+        Create an instance.
+        Args:
+            inputs (list): of neo.Core.CoinReference.CoinReference.
+            outputs (list): of neo.Core.TX.Transaction.TransactionOutput items.
+            attributes (list): of neo.Core.TX.TransactionAttribute.
+            scripts:
+        """
         super(Transaction, self).__init__()
         self.inputs = inputs
         self.outputs = outputs
@@ -169,6 +250,12 @@ class Transaction(Inventory, InventoryMixin):
 
     @property
     def Hash(self):
+        """
+        Get the hash of the transaction.
+
+        Returns:
+            UInt256:
+        """
         if not self.__hash:
             ba = bytearray(binascii.unhexlify(self.GetHashData()))
             hash = Crypto.Hash256(ba)
@@ -176,27 +263,60 @@ class Transaction(Inventory, InventoryMixin):
         return self.__hash
 
     def GetHashData(self):
+        """
+        Get the data used for hashing.
+
+        Returns:
+            bytes:
+        """
         return Helper.GetHashData(self)
 
     def GetMessage(self):
+        """
+        Get the data used for hashing.
+
+        Returns:
+            bytes:
+        """
         return self.GetHashData()
 
     def getAllInputs(self):
+        """
+        Get the inputs.
+
+        Returns:
+            list:
+        """
         return self.inputs
 
     def ResetReferences(self):
+        """Reset local stored references."""
         self.__references = None
 
     def ResetHashData(self):
+        """Reset local stored hash data."""
         self.__hash = None
 
     @property
     def Scripts(self):
+        """
+        Get the scripts
+
+        Returns:
+            list:
+        """
         return self.scripts
 
     @property
     def References(self):
+        """
+        Get all references.
 
+        Returns:
+            dict:
+                Key (UInt256): input PrevHash
+                Value (TransactionOutput): object.
+        """
         if self.__references is None:
 
             refs = {}
@@ -214,18 +334,37 @@ class Transaction(Inventory, InventoryMixin):
         return self.__references
 
     def Size(self):
-        return sys.getsizeof(self.Type) + sys.getsizeof(0) \
-            + sys.getsizeof(self.Attributes) + sys.getsizeof(self.inputs) + \
-            sys.getsizeof(self.outputs) + sys.getsizeof(self.scripts)
+        """
+        Get the total size in bytes of the object.
+
+        Returns:
+            int: size.
+        """
+        len_attributes = sys.getsizeof(self.Attributes)
+        len_inputs = sys.getsizeof(self.inputs)
+        len_outputs = sys.getsizeof(self.outputs)
+        len_scripts = sys.getsizeof(self.scripts)
+        return sys.getsizeof(self.Type) + sys.getsizeof(0) + len_attributes + len_inputs + len_outputs + len_scripts
 
     def Height(self):
         return self.__height
 
     def SystemFee(self):
+        """
+        Get the system fee.
+
+        Returns:
+            Fixed8: currently fixed to 0.
+        """
         return Fixed8(0)
 
     def NetworkFee(self):
+        """
+        Get the network fee.
 
+        Returns:
+            Fixed8:
+        """
         if self.__network_fee is None:
 
             input = Fixed8(0)
@@ -242,20 +381,25 @@ class Transaction(Inventory, InventoryMixin):
 
             self.__network_fee = input - output - self.SystemFee()
 
-#            logger.info("Determined network fee to be %s " % (self.__network_fee.value))
+        #            logger.info("Determined network fee to be %s " % (self.__network_fee.value))
 
         return self.__network_fee
 
-#        if self.__network_fee == Fixed8.Satoshi():
-#            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
-#            Fixed8 output = Outputs.Where(p= > p.AssetId.Equals(Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
-#            _network_fee = input - output - SystemFee;
-#            pass
+    #        if self.__network_fee == Fixed8.Satoshi():
+    #            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
+    #            Fixed8 output = Outputs.Where(p= > p.AssetId.Equals(Blockchain.SystemCoin.Hash)).Sum(p= > p.Value);
+    #            _network_fee = input - output - SystemFee;
+    #            pass
 
-#        return self.__network_fee
+    #        return self.__network_fee
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
 
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         self.DeserializeUnsigned(reader)
 
         self.scripts = reader.ReadSerializableArray()
@@ -266,6 +410,16 @@ class Transaction(Inventory, InventoryMixin):
 
     @staticmethod
     def DeserializeFromBufer(buffer, offset=0):
+        """
+        Deserialize object instance from the specified buffer.
+
+        Args:
+            buffer (bytes, bytearray, BytesIO): (Optional) data to create the stream from.
+            offset: UNUSED
+
+        Returns:
+            Transaction:
+        """
         mstream = StreamManager.GetStream(buffer)
         reader = BinaryReader(mstream)
         tx = Transaction.DeserializeFrom(reader)
@@ -275,6 +429,15 @@ class Transaction(Inventory, InventoryMixin):
 
     @staticmethod
     def DeserializeFrom(reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+
+        Returns:
+            Transaction:
+        """
         ttype = reader.ReadByte()
         tx = None
 
@@ -321,15 +484,31 @@ class Transaction(Inventory, InventoryMixin):
         return tx
 
     def DeserializeUnsigned(self, reader):
+        """
+        Deserialize object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+
+        Raises:
+            Exception: if transaction type is incorrect.
+        """
         txtype = reader.ReadByte()
         if txtype != int.from_bytes(self.Type, 'little'):
             raise Exception('incorrect type {}, wanted {}'.format(txtype, int.from_bytes(self.Type, 'little')))
         self.DeserializeUnsignedWithoutType(reader)
 
     def DeserializeUnsignedWithoutType(self, reader):
+        """
+        Deserialize object without reading transaction type data.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         self.Version = reader.ReadByte()
         self.DeserializeExclusiveData(reader)
-        self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute', max=self.MAX_TX_ATTRIBUTES)
+        self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute',
+                                                       max=self.MAX_TX_ATTRIBUTES)
         self.inputs = reader.ReadSerializableArray('neo.Core.CoinReference.CoinReference')
         self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
 
@@ -339,19 +518,36 @@ class Transaction(Inventory, InventoryMixin):
         return self.Hash == other.Hash
 
     def ToArray(self):
+        """
+        Get the byte data of self.
+
+        Returns:
+            bytes:
+        """
         return Helper.ToArray(self)
 
     def Serialize(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         self.SerializeUnsigned(writer)
         writer.WriteSerializableArray(self.scripts)
 
     def SerializeUnsigned(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         writer.WriteByte(self.Type)
         writer.WriteByte(self.Version)
         self.SerializeExclusiveData(writer)
 
         if len(self.Attributes) > self.MAX_TX_ATTRIBUTES:
-
             raise Exception("Cannot have more than %s transaction attributes" % self.MAX_TX_ATTRIBUTES)
 
         writer.WriteSerializableArray(self.Attributes)
@@ -365,6 +561,12 @@ class Transaction(Inventory, InventoryMixin):
         pass
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         jsn = {}
         jsn["txid"] = self.Hash.ToString()
         jsn["type"] = self.Type if type(self.Type) is int else int.from_bytes(self.Type, 'little')
@@ -378,85 +580,102 @@ class Transaction(Inventory, InventoryMixin):
         return jsn
 
     def Verify(self, mempool):
+        """
+        Verify the transaction.
+
+        Args:
+            mempool:
+
+        Returns:
+            bool: True if verified. False otherwise.
+        """
         logger.info("Verifying transaction: %s " % self.Hash.ToBytes())
 
         return Helper.VerifyScripts(self)
 
-#        logger.info("return true for now ...")
-#        return True
+    #        logger.info("return true for now ...")
+    #        return True
 
-#        for i in range(1, len(self.inputs)):
-#            j=0
-#            while j < i:
-#                j = j+1
-#                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
-#                    return False
-#        logger.info("Verified inputs 1")
-#       for tx in mempool:
-#           if tx is not self:
-#               for ip in self.inputs:
-#                   if ip in tx.inputs:
-#                       return False
-#
-#        logger.info("Verified inputs 2, checking double spend")
-#
-#        if GetBlockchain().IsDoubleSpend(self):
-#            return False
-#
-#        logger.info("verifying outputs ...")
-#        for txOutput in self.outputs:
-#            asset = GetBlockchain().GetAssetState(txOutput.AssetId)
-#
-#            if asset is None: return False
-#
-#            if txOutput.Value % pow(10, 8 - asset.Precision) != 0:
-#                return False
-#
-#        logger.info("unimplemented after here ...")
-#        return True
-#        txResults = self.GetTransactionResults()
-#
-#        if txResults is None: return False
-#
-#        destroyedResults = []
-#        [destroyedResults.append(tx) for tx in txResults if tx.Amount==Fixed8(0)]
-#        numDestroyed = len(destroyedResults)
-#        if numDestroyed > 1:
-#            return False
-#        if numDestroyed == 1 and destroyedResults[0].AssetId != GetSystemCoin().Hash:
-#            return False
-#        if self.SystemFee() > Fixed8(0) and ( numDestroyed == 0 or destroyedResults[0].Amount < self.SystemFee()):
-#            return False
-#
-#        issuedResults = []
-#
-#        [issuedResults.append(tx) for tx in txResults if tx.Amount() < Fixed8(0)]
-#
-#        if self.Type == TransactionType.MinerTransaction or self.Type == TransactionType.ClaimTransaction:
-#            for tx in issuedResults:
-#                if tx.AssetId != GetSystemCoin().Hash:
-#                    return False
-#
-#        elif self.Type == TransactionType.IssueTransaction:
-#            for tx in issuedResults:
-#                if tx.AssetId != GetSystemCoin().Hash:
-#                    return False
-#
-#        else:
-#            if len(issuedResults) > 0:
-#                return False
-#
-#        usageECDH=0
-#
-#        for attr in self.Attributes:
-#            if attr.Usage == TransactionAttributeUsage.ECDH02 or attr.Usage == TransactionAttributeUsage.ECDH03:
-#                usageECDH = usageECDH+1
-#                if usageECDH > 1:
-#                    return False
-#
+    #        for i in range(1, len(self.inputs)):
+    #            j=0
+    #            while j < i:
+    #                j = j+1
+    #                if self.inputs[i].PrevHash == self.inputs[j].PrevHash and self.inputs[i].PrevIndex() == self.inputs[j].PrevIndex():
+    #                    return False
+    #        logger.info("Verified inputs 1")
+    #       for tx in mempool:
+    #           if tx is not self:
+    #               for ip in self.inputs:
+    #                   if ip in tx.inputs:
+    #                       return False
+    #
+    #        logger.info("Verified inputs 2, checking double spend")
+    #
+    #        if GetBlockchain().IsDoubleSpend(self):
+    #            return False
+    #
+    #        logger.info("verifying outputs ...")
+    #        for txOutput in self.outputs:
+    #            asset = GetBlockchain().GetAssetState(txOutput.AssetId)
+    #
+    #            if asset is None: return False
+    #
+    #            if txOutput.Value % pow(10, 8 - asset.Precision) != 0:
+    #                return False
+    #
+    #        logger.info("unimplemented after here ...")
+    #        return True
+    #        txResults = self.GetTransactionResults()
+    #
+    #        if txResults is None: return False
+    #
+    #        destroyedResults = []
+    #        [destroyedResults.append(tx) for tx in txResults if tx.Amount==Fixed8(0)]
+    #        numDestroyed = len(destroyedResults)
+    #        if numDestroyed > 1:
+    #            return False
+    #        if numDestroyed == 1 and destroyedResults[0].AssetId != GetSystemCoin().Hash:
+    #            return False
+    #        if self.SystemFee() > Fixed8(0) and ( numDestroyed == 0 or destroyedResults[0].Amount < self.SystemFee()):
+    #            return False
+    #
+    #        issuedResults = []
+    #
+    #        [issuedResults.append(tx) for tx in txResults if tx.Amount() < Fixed8(0)]
+    #
+    #        if self.Type == TransactionType.MinerTransaction or self.Type == TransactionType.ClaimTransaction:
+    #            for tx in issuedResults:
+    #                if tx.AssetId != GetSystemCoin().Hash:
+    #                    return False
+    #
+    #        elif self.Type == TransactionType.IssueTransaction:
+    #            for tx in issuedResults:
+    #                if tx.AssetId != GetSystemCoin().Hash:
+    #                    return False
+    #
+    #        else:
+    #            if len(issuedResults) > 0:
+    #                return False
+    #
+    #        usageECDH=0
+    #
+    #        for attr in self.Attributes:
+    #            if attr.Usage == TransactionAttributeUsage.ECDH02 or attr.Usage == TransactionAttributeUsage.ECDH03:
+    #                usageECDH = usageECDH+1
+    #                if usageECDH > 1:
+    #                    return False
+    #
 
     def GetScriptHashesForVerifying(self):
+        """
+        Get a list of script hashes for verifying transactions.
 
+        Raises:
+            Exception: if there are no valid assets in the transaction.
+
+        Returns:
+            list: of UInt160 type script hashes.
+        """
         if not self.References and len(self.Attributes) < 1:
             return []
 
@@ -485,6 +704,13 @@ class Transaction(Inventory, InventoryMixin):
         return hashlist
 
     def GetTransactionResults(self):
+        """
+        Get the execution results of the transaction.
+
+        Returns:
+            None: if the transaction has no references.
+            list: of TransactionResult objects.
+        """
         if self.References is None:
             return None
 
@@ -502,7 +728,6 @@ class Transaction(Inventory, InventoryMixin):
                 sum = sum + item.Amount
 
             if sum != Fixed8.Zero():
-
                 realresults.append(TransactionResult(key, sum))
 
         return realresults
@@ -510,5 +735,12 @@ class Transaction(Inventory, InventoryMixin):
 
 class ContractTransaction(Transaction):
     def __init__(self, *args, **kwargs):
+        """
+        Create an instance.
+
+        Args:
+            *args:
+            **kwargs:
+        """
         super(ContractTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.ContractTransaction
