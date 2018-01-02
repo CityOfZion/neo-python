@@ -342,7 +342,7 @@ class Transaction(Inventory, InventoryMixin):
         """
         len_attributes = sys.getsizeof(self.Attributes)
         len_inputs = sys.getsizeof(self.inputs)
-        len_ouputs = sys.getsizeof(self.outputs)
+        len_outputs = sys.getsizeof(self.outputs)
         len_scripts = sys.getsizeof(self.scripts)
         return sys.getsizeof(self.Type) + sys.getsizeof(0) + len_attributes + len_inputs + len_outputs + len_scripts
 
