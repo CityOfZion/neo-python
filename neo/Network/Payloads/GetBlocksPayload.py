@@ -2,8 +2,8 @@ import sys
 
 from logzero import logger
 
-from neo.IO.Mixins import SerializableMixin
-from neo.UInt256 import UInt256
+from neocore.IO.Mixins import SerializableMixin
+from neocore.UInt256 import UInt256
 
 
 class GetBlocksPayload(SerializableMixin):

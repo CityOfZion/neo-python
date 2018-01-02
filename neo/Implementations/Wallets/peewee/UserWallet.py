@@ -16,9 +16,9 @@ from neo.Core.TX.Transaction import Transaction as CoreTransaction
 from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
 from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
 from neo.Cryptography.Crypto import Crypto
-from neo.UInt160 import UInt160
-from neo.Fixed8 import Fixed8
-from neo.UInt256 import UInt256
+from neocore.UInt160 import UInt160
+from neocore.Fixed8 import Fixed8
+from neocore.UInt256 import UInt256
 from neo.Wallets.Coin import CoinState
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \

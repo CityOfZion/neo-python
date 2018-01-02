@@ -12,7 +12,7 @@ from twisted.internet import reactor, task
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Network.Message import Message, ChecksumException
-from neo.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.IO.Helper import Helper as IOHelper
 from neo.Core.Helper import Helper

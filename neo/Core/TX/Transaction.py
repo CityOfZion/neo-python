@@ -13,18 +13,18 @@ from logzero import logger
 from neo.Blockchain import *
 from neo.Core.TX.TransactionAttribute import *
 from neo.Core.CoinReference import CoinReference
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.Network.Inventory import Inventory
 from neo.Network.InventoryType import InventoryType
 from neo.Network.Mixins import InventoryMixin
 from neo.Cryptography.Crypto import *
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
-from neo.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryReader import BinaryReader
 from neo.Core.Mixins import EquatableMixin
 from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
-from neo.UInt256 import UInt256
+from neocore.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
 
 

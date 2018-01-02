@@ -2,7 +2,7 @@
 from peewee import *
 from .PWDatabase import PWDatabase
 from neo.Cryptography.Crypto import Crypto
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 
 
 class ModelBase(Model):

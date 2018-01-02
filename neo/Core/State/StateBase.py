@@ -1,5 +1,5 @@
-from neo.IO.Mixins import SerializableMixin
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.Mixins import SerializableMixin
+from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
 import ctypes
 
@@ -31,7 +31,7 @@ class StateBase(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
 
         Raises:
             Exception: if the state version is incorrect.

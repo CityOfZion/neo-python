@@ -3,7 +3,7 @@ from itertools import groupby
 from logzero import logger
 
 from neo.Core.TX.Transaction import *
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.Core.Blockchain import Blockchain
 
 

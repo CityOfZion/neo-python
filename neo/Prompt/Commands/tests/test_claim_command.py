@@ -1,9 +1,9 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 import shutil
 import pdb
 

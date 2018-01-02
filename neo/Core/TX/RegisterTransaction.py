@@ -7,7 +7,7 @@ Usage:
 """
 import binascii
 
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.Core.TX.Transaction import Transaction, TransactionType
 
 from neo.Core.AssetType import AssetType
@@ -17,7 +17,7 @@ from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
 
 from neo.Settings import settings
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 
 
 class RegisterTransaction(Transaction):

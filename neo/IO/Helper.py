@@ -1,7 +1,7 @@
 import importlib
 from logzero import logger
 from .MemoryStream import MemoryStream, StreamManager
-from .BinaryReader import BinaryReader
+from neocore.IO.BinaryReader import BinaryReader
 from neo.Core.TX.Transaction import Transaction
 
 

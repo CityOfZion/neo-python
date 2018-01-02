@@ -5,7 +5,7 @@ import sys
 import binascii
 from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
 from neo.Settings import settings
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 
 
 class EnrollmentTransaction(Transaction):

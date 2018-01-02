@@ -2,7 +2,7 @@ import sys
 
 from logzero import logger
 
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 
 
 class InvPayload(SerializableMixin):

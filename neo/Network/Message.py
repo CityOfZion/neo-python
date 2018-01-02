@@ -5,9 +5,9 @@ import pympler
 
 from logzero import logger
 
-from neo.IO.Mixins import SerializableMixin
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.Mixins import SerializableMixin
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.Settings import settings
 from neo.Core.Helper import Helper

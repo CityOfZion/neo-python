@@ -5,7 +5,7 @@ from logzero import logger
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.FunctionCode import FunctionCode
 from neo.Settings import settings
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 
 
 class PublishTransaction(Transaction):

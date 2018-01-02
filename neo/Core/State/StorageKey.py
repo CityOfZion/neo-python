@@ -1,6 +1,6 @@
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 import mmh3
-from neo.BigInteger import BigInteger
+from neocore.BigInteger import BigInteger
 
 
 class StorageKey(SerializableMixin):
@@ -51,7 +51,7 @@ class StorageKey(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.ScriptHash = reader.ReadUInt160()
         self.Key = reader.ReadBytes()

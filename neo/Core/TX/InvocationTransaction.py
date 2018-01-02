@@ -2,7 +2,7 @@
 
 from neo.Core.TX.Transaction import Transaction, TransactionType
 import sys
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 
 
 class InvocationTransaction(Transaction):
