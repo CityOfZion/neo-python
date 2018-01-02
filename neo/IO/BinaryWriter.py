@@ -121,7 +121,7 @@ class BinaryWriter(object):
             return self.WriteUInt16(value, endian)
 
         elif value <= 0xFFFFFFFF:
-            self.WriteByte(0xfd)
+            self.WriteByte(0xfe)
             return self.WriteUInt32(value, endian)
 
         else:
