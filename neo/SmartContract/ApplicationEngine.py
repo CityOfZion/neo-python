@@ -48,7 +48,7 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = self.CurrentContext.NextInstruction
 
-        if opcode == PACK or opcode == NEWARRAY:
+        if opcode in [PACK, NEWARRAY, NEWSTRUCT]:
 
             size = self.EvaluationStack.Peek().GetBigInteger()
 
@@ -62,7 +62,7 @@ class ApplicationEngine(ExecutionEngine):
 
     def CheckInvocationStack(self):
 
-        maxStackSize = 1024
+        maxInvocationStackSize = 1024
 
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             return True
@@ -70,7 +70,7 @@ class ApplicationEngine(ExecutionEngine):
         opcode = self.CurrentContext.NextInstruction
 
         if opcode == CALL or opcode == APPCALL:
-            if self.InvocationStack.Count >= maxStackSize:
+            if self.InvocationStack.Count >= maxInvocationStackSize:
                 logger.error("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
 
@@ -206,8 +206,8 @@ class ApplicationEngine(ExecutionEngine):
 
             try:
 
-                self.gas_consumed = self.gas_consumed + self.GetPrice() * self.ratio
-
+                self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
+#                print("gas consumeb: %s " % self.gas_consumed)
             except Exception as e:
                 logger.error("Exception calculating gas consumed %s " % e)
                 return False
@@ -356,7 +356,7 @@ class ApplicationEngine(ExecutionEngine):
             l1 = len(self.EvaluationStack.Peek(1).GetByteArray())
             l2 = len(self.EvaluationStack.Peek(2).GetByteArray())
 
-            return int(((l1 + l2 - 1) / 1024 + 1) * 1000)
+            return ((l1 + l2 - 1) / (1024 + 1)) * 1000
 
         elif api == "Neo.Storage.Delete":
             return 100

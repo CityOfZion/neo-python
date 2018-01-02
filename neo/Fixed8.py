@@ -5,6 +5,7 @@ Description:
 Usage:
     from neo.Fixed8 import Fixed8
 """
+import math
 
 
 class Fixed8:
@@ -123,6 +124,9 @@ class Fixed8:
 
     def ToInt(self):
         return int(self.value / Fixed8.D)
+
+    def Ceil(self):
+        return Fixed8(math.ceil(self.value / Fixed8.D) * Fixed8.D)
 
     def ToString(self):
         return self.value / Fixed8.D
