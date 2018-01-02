@@ -139,7 +139,7 @@ class BinaryReader(object):
         items = []
         for i in range(0, 2000):
             data = self.ReadBytes(64)
-            ba = bytearray(binascii.unhexlify(data))
+            ba = bytearray(data)
             ba.reverse()
             items.append(ba.hex().encode('utf-8'))
         return items
