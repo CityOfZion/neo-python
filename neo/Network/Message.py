@@ -1,5 +1,5 @@
 import ctypes
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neo.Cryptography.Helper import *

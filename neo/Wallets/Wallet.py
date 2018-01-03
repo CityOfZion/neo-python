@@ -26,9 +26,9 @@ from neo.Wallets.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
+from neocore.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
 
 

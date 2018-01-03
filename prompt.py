@@ -20,7 +20,7 @@ from twisted.internet import reactor, task
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
@@ -139,7 +139,7 @@ class PromptInterface(object):
                                 'config', 'import', 'export', 'open',
                                 'wallet', 'contract', 'asset', 'wif',
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
-                                'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance', 
+                                'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance',
                                 'build', ]
 
         if self.Wallet:

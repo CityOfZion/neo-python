@@ -1,5 +1,6 @@
 import sys
-from neo.IO.Mixins import SerializableMixin
+
+from neocore.IO.Mixins import SerializableMixin
 
 
 class GetBlocksPayload(SerializableMixin):

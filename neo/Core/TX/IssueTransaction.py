@@ -7,7 +7,7 @@ Usage:
 """
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Settings import settings
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.Blockchain import GetSystemCoin, GetSystemShare
 
 

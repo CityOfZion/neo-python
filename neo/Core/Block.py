@@ -4,13 +4,13 @@ from neo.Network.Mixins import InventoryMixin
 from neo.Network.InventoryType import InventoryType
 from neo.Core.BlockBase import BlockBase
 from neo.Core.TX.Transaction import Transaction, TransactionType
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
 from neo.Cryptography.MerkleTree import MerkleTree
 from neo.Core.Header import Header
 from neo.Core.Witness import Witness
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.Blockchain import GetBlockchain
 
 

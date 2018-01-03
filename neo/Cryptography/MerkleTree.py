@@ -1,5 +1,5 @@
 from neo.Cryptography.Crypto import *
-from neo.UInt256 import UInt256
+from neocore.UInt256 import UInt256
 
 
 class MerkleTreeNode(object):

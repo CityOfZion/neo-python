@@ -7,7 +7,7 @@ Usage:
 """
 from logzero import logger
 from neo.Network.Inventory import Inventory
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 
 
 class TransactionAttributeUsage(object):

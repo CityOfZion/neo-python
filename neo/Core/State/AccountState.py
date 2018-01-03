@@ -1,10 +1,10 @@
 import sys
 from .StateBase import StateBase
-from neo.Fixed8 import Fixed8
-from neo.IO.BinaryReader import BinaryReader
+from neocore.Fixed8 import Fixed8
+from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Cryptography.Crypto import Crypto
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryWriter import BinaryWriter
 
 
 class AccountState(StateBase):
@@ -111,7 +111,7 @@ class AccountState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         super(AccountState, self).Deserialize(reader)
         self.ScriptHash = reader.ReadUInt160()

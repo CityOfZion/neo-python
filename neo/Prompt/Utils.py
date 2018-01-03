@@ -1,11 +1,11 @@
 import binascii
-from neo.BigInteger import BigInteger
-from neo.Fixed8 import Fixed8
+from neocore.BigInteger import BigInteger
+from neocore.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Wallets.Coin import CoinState
 from neo.Core.TX.Transaction import TransactionInput
-from neo.UInt256 import UInt256
+from neocore.UInt256 import UInt256
 from decimal import Decimal
 import json
 

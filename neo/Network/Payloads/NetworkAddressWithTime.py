@@ -1,6 +1,6 @@
 import ctypes
 from datetime import datetime
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 
 
 class NetworkAddressWithTime(SerializableMixin):

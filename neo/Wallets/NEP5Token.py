@@ -8,7 +8,7 @@ from neo.Core.VerificationCode import VerificationCode
 from neo.Cryptography.Crypto import Crypto
 from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
 from neo.Prompt.Utils import parse_param
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
 
 

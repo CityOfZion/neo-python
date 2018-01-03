@@ -7,8 +7,8 @@ from neo.Network.Payloads.VersionPayload import VersionPayload
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Network.Message import Message
 from neo.IO.Helper import Helper as IOHelper
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 from neo.Settings import settings
 from neo.Core.Helper import Helper

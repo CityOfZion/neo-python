@@ -1,9 +1,9 @@
 from .StateBase import StateBase
-from neo.Fixed8 import Fixed8
-from neo.IO.BinaryReader import BinaryReader
+from neocore.Fixed8 import Fixed8
+from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.AssetType import AssetType
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
 
@@ -94,7 +94,7 @@ class AssetState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         super(AssetState, self).Deserialize(reader)
         self.AssetId = reader.ReadUInt256()

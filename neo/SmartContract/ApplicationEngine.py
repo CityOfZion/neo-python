@@ -4,7 +4,7 @@ from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.OpCode import *
 from neo.VM import VMState
 from neo.Cryptography.Crypto import Crypto
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 
 # used for ApplicationEngine.Run
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -15,7 +15,7 @@ from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
 
 import pdb
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 
 
 class ApplicationEngine(ExecutionEngine):

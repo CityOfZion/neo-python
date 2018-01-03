@@ -10,7 +10,7 @@ from io import BytesIO, BufferedReader, BufferedWriter
 from neo.VM.OpCode import *
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Cryptography.Crypto import *
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper

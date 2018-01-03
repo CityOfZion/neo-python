@@ -1,7 +1,7 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
 import sys
 import binascii
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 
 
 class MinerTransaction(Transaction):

@@ -14,9 +14,9 @@ from neo.Settings import settings
 from neo.Cryptography.Crypto import *
 from neo.Cryptography.Helper import *
 from collections import Counter
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.Cryptography.ECCurve import ECDSA
-from neo.UInt256 import UInt256
+from neocore.UInt256 import UInt256
 
 
 class Blockchain(object):

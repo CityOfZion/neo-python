@@ -1,12 +1,12 @@
 from base58 import b58decode
 from neo.Blockchain import GetBlockchain, GetStateReader
 from neo.Cryptography.Crypto import *
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryWriter import BinaryWriter
+from neocore.UInt160 import UInt160
 from neo.IO.MemoryStream import StreamManager
-from neo.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo.Settings import settings
 
