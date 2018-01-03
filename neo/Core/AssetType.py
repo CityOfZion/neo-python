@@ -21,6 +21,12 @@ class AssetType(object):
 
     @staticmethod
     def AllTypes():
+        """
+        Get a list of all available asset types.
+
+        Returns:
+            list: of AssetType items.
+        """
         return [AssetType.CreditFlag, AssetType.DutyFlag, AssetType.GoverningToken,
                 AssetType.UtilityToken, AssetType.Currency, AssetType.Share,
                 AssetType.Invoice, AssetType.Token]
