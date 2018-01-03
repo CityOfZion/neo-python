@@ -356,7 +356,7 @@ class ApplicationEngine(ExecutionEngine):
             l1 = len(self.EvaluationStack.Peek(1).GetByteArray())
             l2 = len(self.EvaluationStack.Peek(2).GetByteArray())
 
-            return int(((l1 + l2 - 1) / 1024 + 1) * 1000)
+            return int(((l1 + l2 - 1) * 1000) / 1024)
 
         elif api == "Neo.Storage.Delete":
             return 100
