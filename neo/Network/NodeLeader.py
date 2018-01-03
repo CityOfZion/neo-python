@@ -1,7 +1,5 @@
 import random
-
 from logzero import logger
-
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
@@ -9,7 +7,6 @@ from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
-
 from twisted.internet.protocol import Factory
 from twisted.application.internet import ClientService
 from twisted.internet import reactor, task
@@ -42,14 +39,30 @@ class NodeLeader():
 
     @staticmethod
     def Instance():
+        """
+        Get the local node instance.
+
+        Returns:
+            NodeLeader: instance.
+        """
         if NodeLeader.__LEAD is None:
             NodeLeader.__LEAD = NodeLeader()
         return NodeLeader.__LEAD
 
     def __init__(self):
+        """
+        Create an instance.
+        This is the equivalent to C#'s LocalNode.cs
+        """
         self.Setup()
 
     def Setup(self):
+        """
+        Initialize the local node.
+
+        Returns:
+
+        """
         self.Peers = []
         self.UnconnectedPeers = []
         self.ADDRS = []
@@ -60,6 +73,7 @@ class NodeLeader():
             self.Start()
 
     def Start(self):
+        """Start connecting to the node list."""
         # start up endpoints
         start_delay = 0
         for bootstrap in settings.SEED_LIST:
@@ -89,14 +103,27 @@ class NodeLeader():
         connectingService.startService()
 
     def Shutdown(self):
+        """Disconnect all connected peers."""
         for p in self.Peers:
             p.Disconnect()
 
     def AddConnectedPeer(self, peer):
+        """
+        Add a new connect peer to the known peers list.
+
+        Args:
+            peer (NeoNode): instance.
+        """
         if peer not in self.Peers:
             self.Peers.append(peer)
 
     def RemoveConnectedPeer(self, peer):
+        """
+        Remove a connected peer from the known peers list.
+
+        Args:
+            peer (NeoNode): instance.
+        """
         if peer in self.Peers:
             self.Peers.remove(peer)
 
@@ -104,6 +131,7 @@ class NodeLeader():
             reactor.callLater(10, self.Restart)
 
     def ResetBlockRequestsAndCache(self):
+        """Reset the block request counter and its cache."""
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
             p.myblockrequests = set()
@@ -112,7 +140,15 @@ class NodeLeader():
 
     #    @profile()
     def InventoryReceived(self, inventory):
+        """
+        Process a received inventory.
 
+        Args:
+            inventory (neo.Network.Inventory): expect a Block type.
+
+        Returns:
+            bool: True if processed and verified. False otherwise.
+        """
         if inventory.Hash.ToBytes() in self._MissedBlocks:
             self._MissedBlocks.remove(inventory.Hash.ToBytes())
 
@@ -134,7 +170,15 @@ class NodeLeader():
                 return False
 
     def RelayDirectly(self, inventory):
+        """
+        Relay the inventory to the remote client.
 
+        Args:
+            inventory (neo.Network.Inventory):
+
+        Returns:
+            bool: True if relayed successfully. False otherwise.
+        """
         relayed = False
 
         self.RelayCache[inventory.Hash.ToBytes()] = inventory
@@ -143,7 +187,6 @@ class NodeLeader():
             relayed |= peer.Relay(inventory)
 
         if len(self.Peers) == 0:
-
             if type(BC.Default()) is TestLevelDBBlockchain:
                 # mock a true result for tests
                 return True
@@ -153,7 +196,15 @@ class NodeLeader():
         return relayed
 
     def Relay(self, inventory):
+        """
+        Relay the inventory to the remote client.
 
+        Args:
+            inventory (neo.Network.Inventory):
+
+        Returns:
+            bool: True if relayed successfully. False otherwise.
+        """
         if type(inventory) is MinerTransaction:
             return False
 
@@ -177,7 +228,15 @@ class NodeLeader():
         return relayed
 
     def AddTransaction(self, tx):
+        """
+        Add a transaction to the memory pool.
 
+        Args:
+            tx (neo.Core.TX.Transaction): instance.
+
+        Returns:
+            bool: True if successfully added. False otherwise.
+        """
         if BC.Default() is None:
             return False
 
