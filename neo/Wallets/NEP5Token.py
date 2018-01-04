@@ -8,7 +8,7 @@ from neo.Core.VerificationCode import VerificationCode
 from neo.Cryptography.Crypto import Crypto
 from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
 from neo.Prompt.Utils import parse_param
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
 
 
@@ -238,7 +238,7 @@ class NEP5Token(VerificationCode):
         Args:
             wallet (neo.Wallets.Wallet): a wallet instance.
             mint_to_addr (str): public address of the account to mint the tokens to.
-            attachment_args: ???
+            attachment_args: (list): a list of arguments used to attach neo and/or gas to an invoke, eg ['--attach-gas=10.0','--attach-neo=3']
 
         Returns:
             tuple:

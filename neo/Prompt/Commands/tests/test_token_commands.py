@@ -1,7 +1,7 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ImportToken
 from neo.Prompt.Commands.Tokens import token_get_allowance, token_approve_allowance, token_send, token_send_from
 import shutil

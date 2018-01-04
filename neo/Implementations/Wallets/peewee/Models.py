@@ -2,13 +2,10 @@
 from peewee import *
 from .PWDatabase import PWDatabase
 from neo.Cryptography.Crypto import Crypto
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
-import pdb
+from neocore.UInt256 import UInt256
+from neocore.UInt160 import UInt160
 import binascii
-from neo.Blockchain import GetBlockchain
-from neo.Wallets.Coin import Coin, CoinReference
-from neo.Core.TX.Transaction import TransactionOutput
+from neo.Wallets.Coin import CoinReference
 
 
 class ModelBase(Model):

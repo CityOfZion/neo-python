@@ -5,7 +5,7 @@ import pdb
 from logzero import logger
 
 from neo.VM.Mixins import EquatableMixin
-from neo.BigInteger import BigInteger
+from neocore.BigInteger import BigInteger
 
 
 class StackItem(EquatableMixin):

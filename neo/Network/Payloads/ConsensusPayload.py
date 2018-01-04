@@ -1,5 +1,5 @@
 
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 import sys
 from neo.Cryptography.Helper import *
 from neo.Core.Helper import Helper

@@ -11,9 +11,9 @@ from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.OpCode import *
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neo.BigInteger import BigInteger
+from neocore.BigInteger import BigInteger
 from neo.VM.InteropService import Array, Struct, StackItem
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 
 
 class ExecutionEngine():

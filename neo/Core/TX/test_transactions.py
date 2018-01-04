@@ -1,8 +1,8 @@
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
 import json

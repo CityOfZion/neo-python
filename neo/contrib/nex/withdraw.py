@@ -7,7 +7,7 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.SmartContract.Contract import Contract
 from neo.Prompt.Utils import string_from_fixed8, get_asset_id, get_asset_amount, parse_param, get_withdraw_from_watch_only, get_arg
 from neo.Prompt.Commands.Invoke import test_invoke, InvokeContract
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Cryptography.Crypto import Crypto
 from neo.Implementations.Wallets.peewee.Models import VINHold

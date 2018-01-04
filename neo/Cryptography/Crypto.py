@@ -2,7 +2,7 @@ import bitcoin
 from ecdsa import NIST256p, VerifyingKey
 from logzero import logger
 from .Helper import *
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 from neo.Cryptography.ECCurve import EllipticCurve
 
 

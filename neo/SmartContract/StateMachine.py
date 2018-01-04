@@ -12,9 +12,9 @@ from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.AssetType import AssetType
 from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography.ECCurve import ECDSA
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
-from neo.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
+from neocore.Fixed8 import Fixed8
 from neo.VM.InteropService import StackItem, stack_item_to_py
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader

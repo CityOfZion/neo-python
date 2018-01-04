@@ -1,8 +1,7 @@
 from .StateBase import StateBase
-from neo.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.FunctionCode import FunctionCode
-
 from enum import IntEnum
 
 
@@ -13,7 +12,6 @@ class ContractPropertyState(IntEnum):
 
 
 class ContractState(StateBase):
-
     Code = None
     ContractProperties = None
     Name = None
@@ -24,13 +22,38 @@ class ContractState(StateBase):
 
     @property
     def HasStorage(self):
+        """
+        Flag indicating if the contract has storage.
+
+        Returns:
+            bool: True if available. False otherwise.
+        """
         return self.ContractProperties & ContractPropertyState.HasStorage > 0
 
     @property
     def HasDynamicInvoke(self):
+        """
+        Flag indicating if the contract supports dynamic invocation.
+
+        Returns:
+            bool: True if supported. False otherwise.
+        """
         return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
 
-    def __init__(self, code=None, contract_properties=0, name=None, version=None, author=None, email=None, description=None):
+    def __init__(self, code=None, contract_properties=0, name=None, version=None, author=None, email=None,
+                 description=None):
+        """
+        Create an instance.
+
+        Args:
+            code (neo.Core.FunctionCode):
+            contract_properties (neo.SmartContract.ContractParameterType): contract type.
+            name (bytes):
+            version (bytes):
+            author (bytes):
+            email (bytes):
+            description (bytes):
+        """
         self.Code = code
         self.ContractProperties = contract_properties
         self.Name = name
@@ -40,9 +63,21 @@ class ContractState(StateBase):
         self.Description = description
 
     def Size(self):
+        """
+        Get the total size in bytes of the object.
+
+        Returns:
+            int: size.
+        """
         return super(ContractState, self).Size()
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neocore.IO.BinaryReader):
+        """
         super(ContractState, self).Deserialize(reader)
 
         code = FunctionCode()
@@ -58,6 +93,15 @@ class ContractState(StateBase):
 
     @staticmethod
     def DeserializeFromDB(buffer):
+        """
+        Deserialize full object.
+
+        Args:
+            buffer (bytes, bytearray, BytesIO): (Optional) data to create the stream from.
+
+        Returns:
+            ContractState:
+        """
         m = StreamManager.GetStream(buffer)
         reader = BinaryReader(m)
         c = ContractState()
@@ -68,6 +112,12 @@ class ContractState(StateBase):
         return c
 
     def Serialize(self, writer):
+        """
+        Serialize full object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         super(ContractState, self).Serialize(writer)
 
         self.Code.Serialize(writer)
@@ -79,7 +129,12 @@ class ContractState(StateBase):
         writer.WriteVarString(self.Description)
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
 
+        Returns:
+             dict:
+        """
         codejson = self.Code.ToJson()
 
         name = 'Contract'
