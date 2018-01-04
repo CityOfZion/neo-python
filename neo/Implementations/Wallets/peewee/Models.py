@@ -6,6 +6,7 @@ from neocore.UInt256 import UInt256
 from neocore.UInt160 import UInt160
 import binascii
 from neo.Wallets.Coin import CoinReference
+from neo.Blockchain import GetBlockchain
 
 
 class ModelBase(Model):
@@ -123,6 +124,24 @@ class VINHold(ModelBase):
     @property
     def OutputAddr(self):
         return Crypto.ToAddress(self.OutputHash)
+
+    @property
+    def AssetId(self):
+        return self.Output.AssetId
+
+    @property
+    def AssetName(self):
+        if self.AssetId == GetBlockchain().SystemShare().Hash:
+            return 'NEO'
+        elif self.AssetId == GetBlockchain().SystemCoin().Hash:
+            return 'Gas'
+        return 'Unknown'
+
+    @property
+    def Output(self):
+        tx, height = GetBlockchain().GetTransaction(self.TXHash)
+        output = tx.outputs[self.Index]
+        return output
 
     @property
     def InputHash(self):

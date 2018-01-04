@@ -13,7 +13,7 @@ from neo.Cryptography.Crypto import Crypto
 from neo.Implementations.Wallets.peewee.Models import VINHold
 from neo.Wallets.Coin import CoinReference
 from prompt_toolkit import prompt
-
+from twisted.internet import reactor
 
 import json
 import pdb
@@ -267,47 +267,61 @@ def PerformWithdrawTx(wallet, tx, contract_hash):
         print("Incomplete signature")
 
 
-def construct_withdrawal_tx(wallet, require_password=True):
+def WithdrawAll(wallet, require_password=True):
 
-    holds = wallet.LoadHolds()
+    num_gas = 0
+    num_neo = 0
+    total_gas = Fixed8.Zero()
+    total_neo = Fixed8.Zero()
+    all_tx = []
+    for hold in wallet._holds:
+        f8 = Fixed8(hold.Amount)
 
-    hold = wallet._holds[0]  # type: VINHold
+        if hold.AssetName == 'NEO':
+            num_neo += 1
+            total_neo += f8
+        elif hold.AssetName == 'Gas':
+            num_gas += 1
+            total_gas += f8
 
-    scripthash_to = hold.OutputHash
-    scripthash_from = hold.InputHash
-    f8amount = Fixed8(hold.Amount)
+        all_tx.append(create_withdraw_tx(wallet, hold))
 
-    coinRef = CoinReference(prev_hash=hold.TXHash, prev_index=hold.Index)
+    if require_password:
+        print("\n---------------------------------------------------------------")
+        if num_gas:
+            print("Will make %s request(s) for %s Gas" % (num_gas, total_gas.ToString()))
+        if num_neo:
+            print("Will make %s request(s) for %s NEO" % (num_neo, total_neo.ToString()))
+        print("------------------------------------------------------------------\n")
 
-    requested_vins = [coinRef]
+        print("Enter your password to complete this request")
 
-    tx, height = Blockchain.Default().GetTransaction(hold.TXHash)
-    output = tx.outputs[hold.Index]  # type: TransactionOutput
-    assetId = output.AssetId
+        passwd = prompt("[Password]> ", is_password=True)
 
-    asset_name = 'NEO'
-    if assetId == Blockchain.SystemCoin().Hash:
-        asset_name = 'Gas'
+        if not wallet.ValidatePassword(passwd):
+            print("incorrect password")
+            return
 
-    use_vins_for_asset = [requested_vins, assetId]
+    later = 0
+    for tx in all_tx:
+        hold = tx.withdraw_hold
+#        PerformWithdrawTx(wallet, tx, hold.InputHash)
+        reactor.callLater(later, PerformWithdrawTx, wallet, tx, hold.InputHash.ToString())
+        later += 2
 
-    output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
-    withdraw_tx = ContractTransaction(outputs=[output])
 
-    withdraw_constructed_tx = wallet.MakeTransaction(tx=withdraw_tx,
-                                                     change_address=scripthash_from,
-                                                     fee=Fixed8.Zero(),
-                                                     from_addr=scripthash_from,
-                                                     use_standard=False,
-                                                     watch_only_val=64,
-                                                     use_vins_for_asset=use_vins_for_asset)
+def WithdrawOne(wallet, require_password=True):
 
-    if withdraw_constructed_tx is not None:
+    hold = wallet._holds[0]
+
+    withdraw_tx = create_withdraw_tx(wallet, hold)
+
+    if withdraw_tx is not None:
 
         if require_password:
             print("\n---------------------------------------------------------------")
             print("Will make withdrawal request for %s %s from %s to %s " % (
-                f8amount.ToString(), asset_name, hold.InputAddr, hold.OutputAddr))
+                Fixed8(hold.Amount).ToString(), hold.AssetName, hold.InputAddr, hold.OutputAddr))
             print("------------------------------------------------------------------\n")
 
             print("Enter your password to complete this request")
@@ -318,4 +332,27 @@ def construct_withdrawal_tx(wallet, require_password=True):
                 print("incorrect password")
                 return
 
-        PerformWithdrawTx(wallet, withdraw_constructed_tx, hold.InputHash.ToString())
+        PerformWithdrawTx(wallet, withdraw_tx, hold.InputHash.ToString())
+
+
+def create_withdraw_tx(wallet, hold):
+
+    f8amount = Fixed8(hold.Amount)
+
+    coinRef = CoinReference(prev_hash=hold.TXHash, prev_index=hold.Index)
+
+    requested_vins = [coinRef]
+
+    use_vins_for_asset = [requested_vins, hold.AssetId]
+
+    output = TransactionOutput(AssetId=hold.AssetId, Value=f8amount, script_hash=hold.OutputHash)
+    withdraw_tx = ContractTransaction(outputs=[output])
+    withdraw_tx.withdraw_hold = hold
+
+    return wallet.MakeTransaction(tx=withdraw_tx,
+                                  change_address=hold.InputHash,
+                                  fee=Fixed8.Zero(),
+                                  from_addr=hold.InputHash,
+                                  use_standard=False,
+                                  watch_only_val=64,
+                                  use_vins_for_asset=use_vins_for_asset)

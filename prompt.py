@@ -33,7 +33,8 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, ShowUnspentCoins
-from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, construct_withdrawal_tx, CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
+from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
+    CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -419,12 +420,10 @@ class PromptInterface(object):
                 ShowCompletedHolds(self.Wallet)
             elif item == 'cleanup':
                 CleanupCompletedHolds(self.Wallet)
+            elif item == 'all':
+                WithdrawAll(self.Wallet)
         else:
-            num_holds = len(self.Wallet._holds)
-            if num_holds > 0:
-                construct_withdrawal_tx(self.Wallet)
-            else:
-                print("no withdraws in holding")
+            WithdrawOne(self.Wallet)
 
     def show_wallet(self, arguments):
 
