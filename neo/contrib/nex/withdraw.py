@@ -26,13 +26,28 @@ def PrintHolds(wallet):
 
     for h in holds:
         print(json.dumps(h.ToJson(), indent=4))
+    if len(holds) == 0:
+        print("No Holds to show")
 
 
-def DeleteHolds(wallet):
-    for h in wallet._holds:
-        h.delete_instance()
-    print("deleted holds")
+def DeleteHolds(wallet, index_to_delete):
     wallet.LoadHolds()
+    for index, h in enumerate(wallet._holds):
+        if index_to_delete > -1:
+            if index == index_to_delete:
+                h.delete_instance()
+        else:
+            h.delete_instance()
+    print("deleted hold(s)")
+    wallet.LoadHolds()
+
+
+def ShowCompletedHolds(wallet):
+    completed = wallet.LoadCompletedHolds()
+    for h in completed:
+        print(json.dumps(h.ToJson(), indent=4))
+    if len(completed) == 0:
+        print("No Completed Holds to show")
 
 
 def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, require_password=True):
@@ -125,6 +140,48 @@ def GetWithdrawalBalance(wallet, contract_hash, from_addr, asset_type):
         print("could not get balance: %s " % e)
 
 
+def CleanupCompletedHolds(wallet, require_password=True):
+
+    completed = wallet.LoadCompletedHolds()
+
+    if len(completed) < 1:
+        print("No holds to cleanup")
+        return
+
+    sb = ScriptBuilder()
+    for hold in completed:
+        sb.EmitAppCallWithOperationAndData(hold.InputHash, 'cleanup_hold', hold.Vin)
+
+    try:
+        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [])
+
+        for i in results:
+            if not i.GetBoolean():
+                print("Error executing hold cleanup")
+                return
+
+        if require_password:
+            print("\n---------------------------------------------------------------")
+            print("Will cleanup %s holds" % len(completed))
+            print("FEE IS %s " % fee.ToString())
+            print("GAS IS %s " % tx.Gas.ToString())
+            print("------------------------------------------------------------------\n")
+
+            print("Enter your password to complete this request")
+
+            passwd = prompt("[Password]> ", is_password=True)
+
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return
+
+        result = InvokeContract(wallet, tx, fee)
+        return result
+
+    except Exception as e:
+        print("could not cancel hold(s): %s " % e)
+
+
 def CancelWithdrawalHolds(wallet, contract_hash, require_password=True):
     wallet.LoadHolds()
     to_cancel = []
@@ -161,7 +218,6 @@ def CancelWithdrawalHolds(wallet, contract_hash, require_password=True):
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
                 return
-            print("submit tx")
 
         result = InvokeContract(wallet, tx, fee)
         return result
@@ -173,31 +229,24 @@ def CancelWithdrawalHolds(wallet, contract_hash, require_password=True):
 def PerformWithdrawTx(wallet, tx, contract_hash):
 
     requestor_contract = wallet.GetDefaultContract()
-
     withdraw_contract_state = Blockchain.Default().GetContract(contract_hash.encode('utf-8'))
 
-    withdraw_verification = None
+    reedeem_script = withdraw_contract_state.Code.Script.hex()
 
-    if withdraw_contract_state is not None:
+    # there has to be at least 1 param, and the first
+    # one needs to be a signature param
+    param_list = bytearray(b'\x00')
 
-        reedeem_script = withdraw_contract_state.Code.Script.hex()
+    # if there's more than one param
+    # we set the first parameter to be the signature param
+    if len(withdraw_contract_state.Code.ParameterList) > 1:
+        param_list = bytearray(withdraw_contract_state.Code.ParameterList)
+        param_list[0] = 0
 
-        # there has to be at least 1 param, and the first
-        # one needs to be a signature param
-        param_list = bytearray(b'\x00')
-
-        # if there's more than one param
-        # we set the first parameter to be the signature param
-        if len(withdraw_contract_state.Code.ParameterList) > 1:
-            param_list = bytearray(withdraw_contract_state.Code.ParameterList)
-            param_list[0] = 0
-
-        verification_contract = Contract.Create(reedeem_script, param_list, requestor_contract.PublicKeyHash)
-
-        withdraw_verification = verification_contract
+    verification_contract = Contract.Create(reedeem_script, param_list, requestor_contract.PublicKeyHash)
 
     context = ContractParametersContext(tx)
-    context.Add(withdraw_verification, 0, bytearray(0))
+    context.Add(verification_contract, 0, bytearray(0))
 
     if context.Completed:
 
@@ -208,7 +257,7 @@ def PerformWithdrawTx(wallet, tx, contract_hash):
         relayed = NodeLeader.Instance().Relay(tx)
 
         if relayed:
-            wallet.SaveTransaction(tx)
+            # wallet.SaveTransaction(tx) # dont save this tx
             print("Relayed Withdrawal Tx: %s " % tx.Hash.ToString())
             return True
         else:
@@ -219,17 +268,14 @@ def PerformWithdrawTx(wallet, tx, contract_hash):
 
 
 def construct_withdrawal_tx(wallet, require_password=True):
+
+    holds = wallet.LoadHolds()
+
     hold = wallet._holds[0]  # type: VINHold
 
     scripthash_to = hold.OutputHash
     scripthash_from = hold.InputHash
     f8amount = Fixed8(hold.Amount)
-
-    withdraw_from_watch_only = get_withdraw_from_watch_only(wallet, scripthash_from)
-
-    if f8amount is None or scripthash_to is None or withdraw_from_watch_only is None:
-        print("Could not process to or from addr or amount")
-        return False
 
     coinRef = CoinReference(prev_hash=hold.TXHash, prev_index=hold.Index)
 
@@ -253,10 +299,9 @@ def construct_withdrawal_tx(wallet, require_password=True):
                                                      fee=Fixed8.Zero(),
                                                      from_addr=scripthash_from,
                                                      use_standard=False,
-                                                     watch_only_val=withdraw_from_watch_only,
+                                                     watch_only_val=64,
                                                      use_vins_for_asset=use_vins_for_asset)
 
-    #    print("withdraw contsruct %s " % withdraw_constructed_tx)
     if withdraw_constructed_tx is not None:
 
         if require_password:

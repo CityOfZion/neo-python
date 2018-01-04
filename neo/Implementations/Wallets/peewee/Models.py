@@ -99,6 +99,7 @@ class VINHold(ModelBase):
     FromAddress = CharField()
     ToAddress = CharField()
     Amount = IntegerField()
+    IsComplete = BooleanField(default=False)
 
     @property
     def Reference(self):
@@ -142,8 +143,8 @@ class VINHold(ModelBase):
             'From': self.InputHash.ToString(),
             'Amount': self.Amount,
             'Index': self.Index,
-            'TxId': self.Hash
+            'TxId': self.Hash,
+            'Complete': self.IsComplete
         }
 
-#        pdb.set_trace()
         return jsn

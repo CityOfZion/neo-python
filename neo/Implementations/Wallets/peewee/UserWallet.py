@@ -24,6 +24,7 @@ from neo.EventHub import SmartContractEvent, events
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
     TransactionInfo, NEP5Token, NamedAddress, VINHold
+import json
 import pdb
 
 
@@ -42,6 +43,9 @@ class UserWallet(Wallet):
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)
         logger.debug("initialized user wallet %s " % self)
         self.LoadNamedAddresses()
+        self.initialize_holds()
+
+    def initialize_holds(self):
         self.LoadHolds()
 
         # Handle EventHub events for SmartContract decorators
@@ -52,14 +56,12 @@ class UserWallet(Wallet):
 
     def on_notify_sc_event(self, sc_event):
         if not sc_event.test_mode:
-            try:
-                notify_type = sc_event.event_payload[0]
+            notify_type = sc_event.event_payload[0]
+            if type(notify_type) is bytes:
                 if notify_type == b'hold_created':
                     self.process_hold_created_event(sc_event.event_payload[1:])
-                elif notify_type == b'hold_cancelled':
-                    self.process_hold_cancelled_event(sc_event.event_payload[1])
-            except Exception as e:
-                print("Coludnt process hold: %s " % e)
+                elif notify_type in [b'hold_cancelled', b'hold_cleaned_up']:
+                    self.process_destroy_hold(notify_type, sc_event.event_payload[1])
 
     def process_hold_created_event(self, payload):
         if len(payload) == 4:
@@ -71,17 +73,17 @@ class UserWallet(Wallet):
             v_txid = UInt256(data=vin[0:32])
             if to_addr.ToBytes() in self._contracts.keys() and from_addr in self._watch_only:
                 hold, created = VINHold.get_or_create(
-                    Index=v_index, Hash=v_txid.ToBytes(), FromAddress=from_addr.ToBytes(), ToAddress=to_addr.ToBytes(), Amount=amount
+                    Index=v_index, Hash=v_txid.ToBytes(), FromAddress=from_addr.ToBytes(), ToAddress=to_addr.ToBytes(), Amount=amount, IsComplete=False
                 )
                 if created:
                     self.LoadHolds()
 
-    def process_hold_cancelled_event(self, vin_to_cancel):
-        self.LoadHolds()
-        for hold in self._holds:
+    def process_destroy_hold(self, destroy_type, vin_to_cancel):
+        completed = self.LoadCompletedHolds()
+        for hold in completed:
             if hold.Vin == vin_to_cancel:
+                logger.info('[%s] Deleting hold %s' % (destroy_type, json.dumps(hold.ToJson(), indent=4)))
                 hold.delete_instance()
-        self.LoadHolds()
 
     def BuildDatabase(self):
         PWDatabase.Destroy()
@@ -181,13 +183,11 @@ class UserWallet(Wallet):
         """
         super(UserWallet, self).AddContract(contract)
 
-        db_contract = None
         try:
             db_contract = Contract.get(ScriptHash=contract.ScriptHash.ToBytes())
             db_contract.delete_instance()
-            db_contract = None
         except Exception as e:
-            logger.error("contract does not exist yet")
+            logger.info("contract does not exist yet")
 
         sh = bytes(contract.ScriptHash.ToArray())
         address, created = Address.get_or_create(ScriptHash=sh)
@@ -338,7 +338,11 @@ class UserWallet(Wallet):
         self._aliases = NamedAddress.select()
 
     def LoadHolds(self):
-        self._holds = VINHold.select()
+        self._holds = VINHold.filter(IsComplete=False)
+        return self._holds
+
+    def LoadCompletedHolds(self):
+        return VINHold.filter(IsComplete=True)
 
     @property
     def NamedAddr(self):
@@ -414,8 +418,8 @@ class UserWallet(Wallet):
         for coin in changed:
             for hold in self._holds:
                 if hold.Reference == coin.Reference and coin.State & CoinState.Spent > 0:
-                    holds_to_delete.add(hold)
-
+                    hold.IsComplete = True
+                    hold.save()
             try:
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.State = coin.State
@@ -426,18 +430,14 @@ class UserWallet(Wallet):
         for coin in deleted:
             for hold in self._holds:
                 if hold.Reference == coin.Reference:
-                    holds_to_delete.add(hold)
+                    hold.IsComplete = True
+                    hold.save()
             try:
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.delete_instance()
 
             except Exception as e:
                 logger.error("could not delete coin %s %s " % (coin, e))
-
-        if len(holds_to_delete):
-            for h in holds_to_delete:
-                h.delete_instance()
-            self.LoadHolds()
 
     @property
     def Addresses(self):
