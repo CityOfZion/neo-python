@@ -735,7 +735,8 @@ class PromptInterface(object):
                 print("cannot configure log.  Please specify on or off")
 
         else:
-            print("Invalid config target: %s", what)
+            print("cannot configure %s", what)
+            print("Try 'config sc-events on|off' or 'config debug on|off'")
 
     def parse_result(self, result):
         if len(result):
