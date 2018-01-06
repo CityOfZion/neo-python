@@ -1,5 +1,5 @@
 import time
-#import plyvel
+# import plyvel
 import rocksdb
 import itertools
 import binascii
@@ -37,6 +37,7 @@ from neo.SmartContract import TriggerType
 from neo.Cryptography.Crypto import Crypto
 from neo.BigInteger import BigInteger
 
+
 class StaticPrefix(rocksdb.interfaces.SliceTransform):
     def name(self):
         return b'static'
@@ -49,6 +50,7 @@ class StaticPrefix(rocksdb.interfaces.SliceTransform):
 
     def in_range(self, dst):
         return len(dst) == 2
+
 
 class RocksDBBlockchain(Blockchain):
 
@@ -118,35 +120,35 @@ class RocksDBBlockchain(Blockchain):
         self._header_index = []
         self._header_index.append(Blockchain.GenesisBlock().Header.Hash.ToBytes())
 
-        print ("start to create database")
-        print ("db path is: ", self._path)
+        logger.info("start to create database")
+        logger.info("db path is: ", self._path)
         try:
-             opts = rocksdb.Options()
-             opts.create_if_missing=True
-             opts.prefix_extractor = StaticPrefix()
-#            self._db = plyvel.DB(self._path, create_if_missing=True)
-             self._db = rocksdb.DB(self._path, opts)
-#            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
-             print ("rocksdb is created successfully")
+            opts = rocksdb.Options()
+            opts.create_if_missing = True
+            opts.prefix_extractor = StaticPrefix()
+#           self._db = plyvel.DB(self._path, create_if_missing=True)
+            self._db = rocksdb.DB(self._path, opts)
+#           self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
+            logger.info("rocksdb is created successfully")
         except Exception as e:
             logger.info("RocksDB unavailable, you may already be running this process: %s " % e)
             raise Exception('RocksDB Unavailable')
 
         version = self._db.get(DBPrefix.SYS_Version)
 
-        print ("database is created successfully, version is: ", version)
-        print ("database is created successfully, self_sysversion is: ", self._sysversion)
+        logger.info("database is created successfully, version is: ", version)
+        logger.info("database is created successfully, self_sysversion is: ", self._sysversion)
 
         if version == self._sysversion:  # or in the future, if version doesn't equal the current version...
 
             ba = bytearray(self._db.get(DBPrefix.SYS_CurrentBlock, 0))
-            print ("current block", ba)
-            print ("current block", ba[-4:])
+            logger.debug("current block", ba)
+            logger.debug("current block", ba[-4:])
             self._current_block_height = int.from_bytes(ba[-4:], 'little')
-            print ("current block height: ", self._current_block_height)
+            logger.debug("current block height: ", self._current_block_height)
 
             ba = bytearray(self._db.get(DBPrefix.SYS_CurrentHeader, 0))
-            print ("current header", ba)
+            logger.debug("current header", ba)
             current_header_height = int.from_bytes(ba[-4:], 'little')
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
@@ -159,7 +161,7 @@ class RocksDBBlockchain(Blockchain):
                 it.seek(DBPrefix.IX_HeaderHashList)
 #                print ( dict(itertools.takewhile(lambda item: item[0].startswith(DBPrefix.IX_HeaderHashList), it)))
 #                for key in self._db.iterkeys().seek(prefix=DBPrefix.IX_HeaderHashList):
-                for key,value in dict(itertools.takewhile(lambda item: item[0].startswith(DBPrefix.IX_HeaderHashList), it)).items():
+                for key, value in dict(itertools.takewhile(lambda item: item[0].startswith(DBPrefix.IX_HeaderHashList), it)).items():
                     ms = StreamManager.GetStream(value)
                     reader = BinaryReader(ms)
                     hlist = reader.Read2000256List()
@@ -183,21 +185,21 @@ class RocksDBBlockchain(Blockchain):
 
             if self._stored_header_count == 0:
                 headers = []
-                #for key, value in self._db.iterator(prefix=DBPrefix.DATA_Block):
+                # for key, value in self._db.iterator(prefix=DBPrefix.DATA_Block):
                 it = self._db.iteritems()
-                #print ("it before seek ", it)
-                print ("seek key prefix: ", DBPrefix.DATA_Block)
+                # print ("it before seek ", it)
+                logger.debug("seek key prefix: ", DBPrefix.DATA_Block)
                 it.seek(DBPrefix.DATA_Block)
-                #print ("it after seek ", it)
-                #print ( dict(itertools.takewhile(lambda item: item[0].startswith(DBPrefix.DATA_Block), it)))
-                for key,value in dict(itertools.takewhile(lambda item: item[0].startswith(DBPrefix.DATA_Block), it)).items():
-                   # print("key is ", key)
-                   # print("value is ", value)
+                # print ("it after seek ", it)
+                # print ( dict(itertools.takewhile(lambda item: item[0].startswith(DBPrefix.DATA_Block), it)))
+                for key, value in dict(itertools.takewhile(lambda item: item[0].startswith(DBPrefix.DATA_Block), it)).items():
+                    # print("key is ", key)
+                    # print("value is ", value)
                     dbhash = bytearray(value)[8:]
-                   # print (bytearray(value))
-                   # print ("dbhash is ", dbhash)
+                    # print (bytearray(value))
+                    # print ("dbhash is ", dbhash)
                     headers.append(Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
-                   # print ("header is ", headers)
+                    # print ("header is ", headers)
 
                 headers.sort(key=lambda h: h.Index)
                 for h in headers:
@@ -220,10 +222,10 @@ class RocksDBBlockchain(Blockchain):
                 except Exception as e:
                     pass
         else:
-          #  with self._db.write_batch() as wb:
+            #  with self._db.write_batch() as wb:
             wb = rocksdb.WriteBatch()
             for key in self._db.iterkeys():
-               wb.delete(key)
+                wb.delete(key)
             self._db.write(wb)
 
             self.Persist(Blockchain.GenesisBlock())
@@ -519,21 +521,21 @@ class RocksDBBlockchain(Blockchain):
         return self._header_index[height]
 
     def GetSysFeeAmount(self, hash):
-        #print("getsysfee", hash)
+        # print("getsysfee", hash)
         if type(hash) is UInt256:
-         #   print("type: ", type(hash), UInt256)
+            # print("type: ", type(hash), UInt256)
             hash = hash.ToBytes()
-        #print("getsysfee", hash)
+            # print("getsysfee", hash)
         try:
-        #    print (DBPrefix.DATA_Block + hash)
-        #    print (self._db.get(DBPrefix.DATA_Block + hash))
+            #    print (DBPrefix.DATA_Block + hash)
+            #    print (self._db.get(DBPrefix.DATA_Block + hash))
             value = self._db.get(DBPrefix.DATA_Block + hash)[0:8]
-        #    print (value)
+            #    print (value)
             amount = int.from_bytes(value, 'little', signed=False)
             return amount
         except Exception as e:
             logger.info("couldnt get sys fee: %s " % e)
-            #raise Exception (e)
+            # raise Exception (e)
 
         return 0
 
@@ -631,7 +633,7 @@ class RocksDBBlockchain(Blockchain):
             w.Write2000256List(headers_to_write)
             out = ms.ToArray()
             StreamManager.ReleaseStream(ms)
-            #with self._db.write_batch() as wb:
+            # with self._db.write_batch() as wb:
             wb = rocksdb.WriteBatch()
             wb.put(DBPrefix.IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), out)
             self._db.write(wb)
@@ -640,7 +642,7 @@ class RocksDBBlockchain(Blockchain):
 
             logger.debug("Trimming stored header index %s" % self._stored_header_count)
 
-        #with self._db.write_batch() as wb:
+        # with self._db.write_batch() as wb:
         wb = rocksdb.WriteBatch()
         wb.put(DBPrefix.DATA_Block + hHash, bytes(8) + header.ToArray())
         wb.put(DBPrefix.SYS_CurrentHeader, hHash + header.Index.to_bytes(4, 'little'))
@@ -781,31 +783,31 @@ class RocksDBBlockchain(Blockchain):
 
         accounts.Commit(wb)
 
-            # filte out unspent coins to delete then commit
+        # filte out unspent coins to delete then commit
         for key, unspent in unspentcoins.Current.items():
                 if unspent.IsAllSpent:
                     unspentcoins.Remove(key)
         unspentcoins.Commit(wb)
 
-            # filter out spent coins to delete then commit to db
+        # filter out spent coins to delete then commit to db
         for key, spent in spentcoins.Current.items():
                 if len(spent.Items) == 0:
                     spentcoins.Remove(key)
         spentcoins.Commit(wb)
 
-            # commit validators
+        # commit validators
         validators.Commit(wb)
 
-            # commit assets
+        # commit assets
         assets.Commit(wb)
 
-            # commit contracts
+        # commit contracts
         contracts.Commit(wb)
 
-            # commit storages ( not implemented )
+        # commit storages ( not implemented )
         storages.Commit(wb)
 
-        #sn.close()
+        # sn.close()
 
         wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
         self._db.write(wb)
@@ -838,5 +840,5 @@ class RocksDBBlockchain(Blockchain):
                 raise e
 
     def Dispose(self):
-        #self._db.close()
+        # self._db.close()
         self._disposed = True

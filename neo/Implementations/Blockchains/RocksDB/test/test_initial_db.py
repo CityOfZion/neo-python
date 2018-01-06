@@ -9,7 +9,7 @@ from neo.Settings import settings
 
 class RocksDBTest(NeoTestCase):
 
-    print ("rocksdbtest")
+    print("rocksdbtest")
     ROCKSDB_TESTPATH = './UnitTestChain'
 
     _blockchain = None
@@ -21,14 +21,14 @@ class RocksDBTest(NeoTestCase):
 
     @classmethod
     def setUpClass(self):
-        print ("setup")
+        print("setup")
         self._blockchain = RocksDBBlockchain(path=self.ROCKSDB_TESTPATH)
         Blockchain.RegisterBlockchain(self._blockchain)
         self._genesis = Blockchain.GenesisBlock()
 
     @classmethod
     def tearDownClass(self):
-        print ("teardown")
+        print("teardown")
         self._blockchain.Dispose()
         shutil.rmtree(self.ROCKSDB_TESTPATH)
 
@@ -45,7 +45,7 @@ class RocksDBTest(NeoTestCase):
         self.assertEqual(self._blockchain.Height, 0)
 
     def test_add_header(self):
-        print ("add header")
+        print("add header")
         hexdata = binascii.unhexlify(self.block_one_raw)
 
         block_one = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
@@ -58,6 +58,6 @@ class RocksDBTest(NeoTestCase):
         self.assertEqual(self._blockchain.HeaderHeight, 0)
 
     def test_sys_block_fees(self):
-        print ("sys block fees")
+        print("sys block fees")
         block_num = 14103
         fee_should_be = 435
