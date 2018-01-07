@@ -7,6 +7,7 @@ import time
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
+import logzero
 
 
 class BlockchainFixtureTestCase(NeoTestCase):
@@ -27,8 +28,8 @@ class BlockchainFixtureTestCase(NeoTestCase):
         super(BlockchainFixtureTestCase, cls).setUpClass()
 
         if not os.path.exists(cls.FIXTURE_FILENAME):
-
-            print("downloading fixture block database. this may take a while")
+            logzero.logger.info(
+                "downloading fixture block database from %s. this may take a while" % cls.FIXTURE_REMOTE_LOC)
 
             response = requests.get(cls.FIXTURE_REMOTE_LOC, stream=True)
 

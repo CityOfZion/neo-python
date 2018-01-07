@@ -159,7 +159,6 @@ class Helper(object):
             verification = verifiable.Scripts[i].VerificationScript
 
             if len(verification) == 0:
-                #                logger.info("VERIFICATION IS 0, EMITTING APP CALL")
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
                 verification = sb.ToArray()
@@ -181,7 +180,6 @@ class Helper(object):
             except Exception as e:
                 state_reader.ExecutionCompleted(engine, False, e)
 
-            #            pdb.set_trace()
             if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
                 return False
 

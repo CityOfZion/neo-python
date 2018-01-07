@@ -100,13 +100,13 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
 
             tx.scripts = context.GetScripts()
 
-            wallet.SaveTransaction(tx)
-
 #            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
 
             relayed = NodeLeader.Instance().Relay(tx)
 
             if relayed:
+                wallet.SaveTransaction(tx)
+
                 print("Relayed Tx: %s " % tx.Hash.ToString())
                 return tx
             else:

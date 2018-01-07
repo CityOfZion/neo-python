@@ -229,6 +229,8 @@ class Transaction(Inventory, InventoryMixin):
 
     MAX_TX_ATTRIBUTES = 16
 
+    withdraw_hold = None
+
     """docstring for Transaction"""
 
     def __init__(self, inputs=[], outputs=[], attributes=[], scripts=[]):

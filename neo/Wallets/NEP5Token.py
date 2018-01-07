@@ -115,6 +115,8 @@ class NEP5Token(VerificationCode):
             int/str: token balance value as int (default), token balanace as string if `as_string` is set to True. 0 if balance retrieval failed.
         """
         addr = parse_param(address, wallet)
+        if isinstance(addr, UInt160):
+            addr = addr.Data
         sb = ScriptBuilder()
         sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'balanceOf', [addr])
 

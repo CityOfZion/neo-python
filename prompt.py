@@ -31,6 +31,8 @@ from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
     ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
+from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
+    CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
@@ -98,6 +100,13 @@ class PromptInterface(object):
                 'wallet tkn_mint {token symbol} {mint_to_addr} {amount_attach_neo} {amount_attach_gas}',
                 'wallet unspent',
                 'wallet close',
+                'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
+                'withdraw holds # lists all current holds',
+                'withdraw completed # lists completed holds eligible for cleanup',
+                'withdraw cancel # cancels current holds',
+                'witdraw cleanup # cleans up completed holds',
+                'withdraw # withdraws the first hold availabe',
+                'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount)',
@@ -384,6 +393,45 @@ class PromptInterface(object):
             return
 
         print("Command export %s not found" % item)
+
+    def make_withdraw_request(self, arguments):
+        if not self.Wallet:
+            print("please open a wallet")
+            return
+        if len(arguments) == 4:
+            RequestWithdrawFrom(self.Wallet, arguments[0], arguments[1], arguments[2], arguments[3])
+        else:
+            print("incorrect arg length. use 'withdraw_request {asset_id} {contract_hash} {to_addr} {amount}")
+
+    def do_withdraw(self, arguments):
+        if not self.Wallet:
+            print("please open a wallet")
+            return
+
+        item = get_arg(arguments, 0)
+
+        if item:
+
+            if item == 'holds':
+                PrintHolds(self.Wallet)
+            elif item == 'delete_holds':
+                index_to_delete = -1
+                if get_arg(arguments, 1) and int(get_arg(arguments, 1)) > -1:
+                    index_to_delete = int(get_arg(arguments, 1))
+                DeleteHolds(self.Wallet, index_to_delete)
+            elif item == 'cancel_holds':
+                if len(arguments) > 1:
+                    CancelWithdrawalHolds(self.Wallet, get_arg(arguments, 1))
+                else:
+                    print("Please specify contract hash to cancel holds for")
+            elif item == 'completed':
+                ShowCompletedHolds(self.Wallet)
+            elif item == 'cleanup':
+                CleanupCompletedHolds(self.Wallet)
+            elif item == 'all':
+                WithdrawAll(self.Wallet)
+        else:
+            WithdrawOne(self.Wallet)
 
     def show_wallet(self, arguments):
 
@@ -816,6 +864,10 @@ class PromptInterface(object):
                         self.show_contract_state(arguments)
                     elif command == 'testinvoke':
                         self.test_invoke_contract(arguments)
+                    elif command == 'withdraw_request':
+                        self.make_withdraw_request(arguments)
+                    elif command == 'withdraw':
+                        self.do_withdraw(arguments)
                     elif command == 'mem':
                         self.show_mem()
                     elif command == 'nodes' or command == 'node':

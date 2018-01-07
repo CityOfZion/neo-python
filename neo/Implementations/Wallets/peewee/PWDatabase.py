@@ -23,7 +23,7 @@ class PWDatabase(object):
 
     def __init__(self):
         try:
-            self._db = SqliteDatabase(PWDatabase.__dbpath__)
+            self._db = SqliteDatabase(PWDatabase.__dbpath__, check_same_thread=False)
             PWDatabase.DBProxy().initialize(self._db)
             self.startup()
         except Exception as e:

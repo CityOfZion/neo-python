@@ -424,7 +424,7 @@ class Wallet(object):
 
         return [coin for coin in coins if coin.Output.AssetId == asset_id]
 
-    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0):
+    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0, reverse=False):
         """
         Finds unspent coin objects totalling a requested value in the wallet limited to those of a certain asset type.
 
@@ -449,14 +449,26 @@ class Wallet(object):
         if sum < amount:
             return None
 
-        sorted(coins, key=lambda coin: coin.Output.Value.value)
+        coins = sorted(coins, key=lambda coin: coin.Output.Value.value)
+
+        if reverse:
+            coins.reverse()
 
         total = Fixed8(0)
 
-        for index, coin in enumerate(coins):
+        # go through all coins, see if one is an exact match. then we'll use that
+        for coin in coins:
+            if coin.Output.Value == amount:
+                return [coin]
+
+        to_ret = []
+        for coin in coins:
             total = total + coin.Output.Value
+            to_ret.append(coin)
             if total >= amount:
-                return coins[0:index + 1]
+                break
+
+        return to_ret
 
     def GetUnclaimedCoins(self):
         """

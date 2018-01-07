@@ -284,13 +284,15 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
                 for n in service.notifications:
                     Blockchain.Default().OnNotify(n)
 
+            print("Used %s Gas " % engine.GasConsumed().ToString())
+
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
-            consumed.value = int(consumed.value)
+            consumed = consumed.Ceil()
 
             net_fee = None
             tx_gas = None
 
-            if consumed < Fixed8.FromDecimal(10.0):
+            if consumed < Fixed8.Zero():
                 net_fee = Fixed8.FromDecimal(.001)
                 tx_gas = Fixed8.Zero()
             else:
@@ -466,6 +468,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 if len(service.notifications) > 0:
                     for n in service.notifications:
                         Blockchain.Default().OnNotify(n)
+
+                print("Used %s Gas " % engine.GasConsumed().ToString())
 
                 consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
                 consumed.value = int(consumed.value)

@@ -171,6 +171,11 @@ class ScriptBuilder(object):
             return self.Emit(TAILCALL, scriptHash)
         return self.Emit(APPCALL, scriptHash)
 
+    def EmitAppCallWithOperationAndData(self, script_hash, operation, data):
+        self.push(data)
+        self.push(operation.encode('utf-8').hex())
+        self.Emit(APPCALL, script_hash.Data)
+
     def EmitAppCallWithOperationAndArgs(self, script_hash, operation, args):
         args.reverse()
         for i in args:
