@@ -69,10 +69,10 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
 
     if shash not in wallet._watch_only:
         print("Add withdrawal contract address to your watch only: import watch_addr %s " % contract_addr)
-        return
+        return False
     if amount < Fixed8.Zero():
         print("Cannot withdraw negative amount")
-        return
+        return False
 
     unspents = wallet.FindUnspentCoinsByAssetAndTotal(
         asset_id=asset_id, amount=amount, from_addr=shash, use_standard=False, watch_only_val=64, reverse=True
@@ -80,7 +80,7 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
 
     if not unspents or len(unspents) == 0:
         print("no eligible withdrawal vins")
-        return
+        return False
 
     balance = GetWithdrawalBalance(wallet, shash, to_addr, asset_type)
 
@@ -105,7 +105,7 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
         for item in results:
             if not item.GetBoolean():
                 print("Error performitng withdrawals")
-                return
+                return False
 
         if require_password:
             print("\n---------------------------------------------------------------")
@@ -126,6 +126,7 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
         return result
     else:
         print("insufficient balance")
+        return False
 
 
 def GetWithdrawalBalance(wallet, contract_hash, from_addr, asset_type):
@@ -146,7 +147,7 @@ def CleanupCompletedHolds(wallet, require_password=True):
 
     if len(completed) < 1:
         print("No holds to cleanup")
-        return
+        return False
 
     sb = ScriptBuilder()
     for hold in completed:
@@ -158,7 +159,7 @@ def CleanupCompletedHolds(wallet, require_password=True):
         for i in results:
             if not i.GetBoolean():
                 print("Error executing hold cleanup")
-                return
+                return False
 
         if require_password:
             print("\n---------------------------------------------------------------")
@@ -180,6 +181,7 @@ def CleanupCompletedHolds(wallet, require_password=True):
 
     except Exception as e:
         print("could not cancel hold(s): %s " % e)
+    return False
 
 
 def CancelWithdrawalHolds(wallet, contract_hash, require_password=True):
@@ -259,12 +261,13 @@ def PerformWithdrawTx(wallet, tx, contract_hash):
         if relayed:
             # wallet.SaveTransaction(tx) # dont save this tx
             print("Relayed Withdrawal Tx: %s " % tx.Hash.ToString())
-            return True
+            return tx
         else:
             print("Could not relay witdrawal tx %s " % tx.Hash.ToString())
     else:
 
         print("Incomplete signature")
+    return False
 
 
 def WithdrawAll(wallet, require_password=True):
@@ -300,7 +303,7 @@ def WithdrawAll(wallet, require_password=True):
 
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
-            return
+            return False
 
     later = 0
     for tx in all_tx:
@@ -308,6 +311,8 @@ def WithdrawAll(wallet, require_password=True):
 #        PerformWithdrawTx(wallet, tx, hold.InputHash)
         reactor.callLater(later, PerformWithdrawTx, wallet, tx, hold.InputHash.ToString())
         later += 2
+
+    return True
 
 
 def WithdrawOne(wallet, require_password=True):
@@ -332,7 +337,9 @@ def WithdrawOne(wallet, require_password=True):
                 print("incorrect password")
                 return
 
-        PerformWithdrawTx(wallet, withdraw_tx, hold.InputHash.ToString())
+        return PerformWithdrawTx(wallet, withdraw_tx, hold.InputHash.ToString())
+
+    return False
 
 
 def create_withdraw_tx(wallet, hold):

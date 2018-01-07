@@ -469,6 +469,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                     for n in service.notifications:
                         Blockchain.Default().OnNotify(n)
 
+                print("Used %s Gas " % engine.GasConsumed().ToString())
+
                 consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
                 consumed.value = int(consumed.value)
 

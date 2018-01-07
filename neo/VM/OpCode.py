@@ -202,6 +202,8 @@ NEWSTRUCT = b'\xC6'  # 用作值類型
 APPEND = b'\xC8'
 REVERSE = b'\xC9'
 
+DEBUG = b'\xCA'
+
 import sys
 import importlib
 import binascii

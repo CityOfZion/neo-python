@@ -779,6 +779,10 @@ class ExecutionEngine():
                     self._VMState |= VMState.FAULT
                     return
 
+            elif opcode == DEBUG:
+                pdb.set_trace()
+                return
+
             else:
 
                 self._VMState |= VMState.FAULT
