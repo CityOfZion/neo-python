@@ -31,10 +31,12 @@ from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
     ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, token_mint, token_crowdsale_register
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, ShowUnspentCoins
 from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
     CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
+from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
+    token_mint, token_crowdsale_register
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
+    ShowUnspentCoins
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -42,7 +44,7 @@ from neo.Wallets.KeyPair import KeyPair
 
 # Logfile settings & setup
 LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'prompt.log')
-LOGFILE_MAX_BYTES = 5e7   # 50 MB
+LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
@@ -51,7 +53,6 @@ FILENAME_PROMPT_HISTORY = os.path.join(DIR_PROJECT_ROOT, '.prompt.py.history')
 
 
 class PromptInterface(object):
-
     go_on = True
 
     _walletdb_loop = None
@@ -99,6 +100,13 @@ class PromptInterface(object):
                 'wallet tkn_mint {token symbol} {mint_to_addr} {amount_attach_neo} {amount_attach_gas}',
                 'wallet unspent',
                 'wallet close',
+                'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
+                'withdraw holds # lists all current holds',
+                'withdraw completed # lists completed holds eligible for cleanup',
+                'withdraw cancel # cancels current holds',
+                'witdraw cleanup # cleans up completed holds',
+                'withdraw # withdraws the first hold availabe',
+                'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount)',
@@ -561,14 +569,14 @@ class PromptInterface(object):
             try:
                 tx, height = Blockchain.Default().GetTransaction(item)
                 if height > -1:
-
                     bjson = json.dumps(tx.ToJson(), indent=4)
                     tokens = [(Token.Command, bjson)]
                     print_tokens(tokens, self.token_style)
                     print('\n')
             except Exception as e:
                 print("Could not find transaction with id %s " % item)
-                print("Please specify a tx hash like 'db55b4d97cf99db6826967ef4318c2993852dff3e79ec446103f141c716227f6'")
+                print(
+                    "Please specify a tx hash like 'db55b4d97cf99db6826967ef4318c2993852dff3e79ec446103f141c716227f6'")
         else:
             print("please specify a tx hash")
 
@@ -659,13 +667,15 @@ class PromptInterface(object):
             tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args)
 
             if tx is not None and results is not None:
-                print("\n-------------------------------------------------------------------------------------------------------------------------------------")
+                print(
+                    "\n-------------------------------------------------------------------------------------------------------------------------------------")
                 print("Test invoke successful")
                 print("Total operations: %s " % num_ops)
                 print("Results %s " % [str(item) for item in results])
                 print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                 print("Invoke TX Fee: %s " % (fee.value / Fixed8.D))
-                print("-------------------------------------------------------------------------------------------------------------------------------------\n")
+                print(
+                    "-------------------------------------------------------------------------------------------------------------------------------------\n")
                 print("Enter your password to continue and invoke on the network\n")
 
                 passwd = prompt("[password]> ", is_password=True)
@@ -698,13 +708,15 @@ class PromptInterface(object):
                 tx, fee, results, num_ops = test_invoke(contract_script, self.Wallet, [])
 
                 if tx is not None and results is not None:
-                    print("\n-------------------------------------------------------------------------------------------------------------------------------------")
+                    print(
+                        "\n-------------------------------------------------------------------------------------------------------------------------------------")
                     print("Test deploy invoke successful")
                     print("Total operations executed: %s " % num_ops)
                     print("Results %s " % [str(item) for item in results])
                     print("Deploy Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("Deploy Invoke TX Fee: %s " % (fee.value / Fixed8.D))
-                    print("-------------------------------------------------------------------------------------------------------------------------------------\n")
+                    print(
+                        "-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("Enter your password to continue and deploy this contract")
 
                     passwd = prompt("[password]> ", is_password=True)
@@ -771,8 +783,8 @@ class PromptInterface(object):
                 print("cannot configure log.  Please specify on or off")
 
         else:
-            print("cannot configure %s " % what)
-            print("Try 'config log on/off'")
+            print("cannot configure %s", what)
+            print("Try 'config sc-events on|off' or 'config debug on|off'")
 
     def parse_result(self, result):
         if len(result):
@@ -886,7 +898,8 @@ def main():
                         help="Use PrivNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
     parser.add_argument("-t", "--set-default-theme", dest="theme",
-                        choices=["dark", "light"], help="Set the default theme to be loaded from the config file. Default: 'dark'")
+                        choices=["dark", "light"],
+                        help="Set the default theme to be loaded from the config file. Default: 'dark'")
     parser.add_argument('--version', action='version',
                         version='neo-python v{version}'.format(version=__version__))
 
