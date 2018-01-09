@@ -1,5 +1,5 @@
 from neocore.IO.Mixins import SerializableMixin
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 
 
 class FunctionCode(SerializableMixin):

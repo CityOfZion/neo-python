@@ -1,6 +1,6 @@
 from base58 import b58decode
 from neo.Blockchain import GetBlockchain, GetStateReader
-from neo.Cryptography.Crypto import *
+from neocore.Cryptography.Crypto import *
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.UInt160 import UInt160
 from neo.IO.MemoryStream import StreamManager
@@ -47,14 +47,14 @@ class Helper(object):
 
         Args:
             verifiable:
-            keypair (neo.Wallets.KeyPair):
+            keypair (neocore.KeyPair):
 
         Returns:
             bool: True if successfully signed. False otherwise.
         """
         prikey = bytes(keypair.PrivateKey)
         hashdata = verifiable.GetHashData()
-        res = Crypto.Default().Sign(hashdata, prikey, keypair.PublicKey)
+        res = Crypto.Default().Sign(hashdata, prikey)
         return res
 
     @staticmethod

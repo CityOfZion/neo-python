@@ -11,7 +11,7 @@
 #       print("handler1 called with args", args)
 #
 from neocore.UInt160 import UInt160
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.Settings import settings
 
 # See https://logzero.readthedocs.io/en/latest/#example-usage

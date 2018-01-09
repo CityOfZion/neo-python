@@ -7,7 +7,7 @@ from neo.Core.TX.Transaction import Transaction, TransactionType
 from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
-from neo.Cryptography.MerkleTree import MerkleTree
+from neocore.Cryptography.MerkleTree import MerkleTree
 from neo.Core.Header import Header
 from neo.Core.Witness import Witness
 from neocore.Fixed8 import Fixed8

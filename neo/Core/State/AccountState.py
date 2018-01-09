@@ -3,7 +3,7 @@ from .StateBase import StateBase
 from neocore.Fixed8 import Fixed8
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 
 

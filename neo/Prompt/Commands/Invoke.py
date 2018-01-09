@@ -25,7 +25,7 @@ from neo.SmartContract import TriggerType
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.SmartContract.Contract import Contract
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Helper import Helper

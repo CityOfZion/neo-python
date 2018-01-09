@@ -6,7 +6,7 @@ from prompt_toolkit import prompt
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Prompt.Utils import get_arg
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
 

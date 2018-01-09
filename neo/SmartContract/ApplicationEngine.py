@@ -3,7 +3,7 @@ from logzero import logger
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.OpCode import *
 from neo.VM import VMState
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
 
 # used for ApplicationEngine.Run

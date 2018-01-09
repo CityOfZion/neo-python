@@ -9,7 +9,7 @@ from neo.Prompt.Utils import string_from_fixed8, get_asset_id, get_asset_amount,
 from neo.Prompt.Commands.Invoke import test_invoke, InvokeContract
 from neocore.Fixed8 import Fixed8
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.Implementations.Wallets.peewee.Models import VINHold
 from neo.Wallets.Coin import CoinReference
 from prompt_toolkit import prompt

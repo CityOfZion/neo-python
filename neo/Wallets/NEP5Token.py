@@ -5,7 +5,7 @@ from decimal import Decimal
 from logzero import logger
 
 from neo.Core.VerificationCode import VerificationCode
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
 from neo.Prompt.Utils import parse_param
 from neocore.UInt160 import UInt160

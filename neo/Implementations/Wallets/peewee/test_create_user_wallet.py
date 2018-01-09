@@ -3,7 +3,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
-from neo.Wallets.KeyPair import KeyPair
+from neocore.KeyPair import KeyPair
 import json
 from sqlite3 import OperationalError
 
