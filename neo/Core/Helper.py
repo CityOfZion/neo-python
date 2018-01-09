@@ -47,7 +47,7 @@ class Helper(object):
 
         Args:
             verifiable:
-            keypair (neo.Wallets.KeyPair):
+            keypair (neocore.KeyPair):
 
         Returns:
             bool: True if successfully signed. False otherwise.

@@ -1,5 +1,5 @@
 from neo.Utils.NeoTestCase import NeoTestCase
-from neo.Wallets.KeyPair import KeyPair
+from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
 from neo.SmartContract.Contract import Contract
 import binascii

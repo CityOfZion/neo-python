@@ -40,7 +40,7 @@ from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportTok
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
-from neo.Wallets.KeyPair import KeyPair
+from neocore.KeyPair import KeyPair
 
 # Logfile settings & setup
 LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'prompt.log')

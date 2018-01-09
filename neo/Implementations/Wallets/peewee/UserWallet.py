@@ -13,7 +13,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.Transaction import Transaction as CoreTransaction
-from neo.Wallets.KeyPair import KeyPair as WalletKeyPair
+from neocore.KeyPair import KeyPair as WalletKeyPair
 from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
 from neocore.Cryptography.Crypto import Crypto
 from neocore.UInt160 import UInt160
