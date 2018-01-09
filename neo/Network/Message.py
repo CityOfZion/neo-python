@@ -2,7 +2,7 @@ import ctypes
 from neocore.IO.Mixins import SerializableMixin
 from neo.Settings import settings
 from neo.Core.Helper import Helper
-from neo.Cryptography.Helper import *
+from neocore.Cryptography.Helper import *
 
 
 class ChecksumException(Exception):

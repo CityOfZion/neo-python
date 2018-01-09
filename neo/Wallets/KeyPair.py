@@ -6,9 +6,9 @@ import bitcoin
 
 from Crypto.Cipher import AES
 
-from neo.Cryptography.ECCurve import ECDSA
-from neo.Cryptography.Crypto import Crypto
-from neo.Cryptography.Helper import xor_bytes
+from neocore.Cryptography.ECCurve import ECDSA
+from neocore.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Helper import xor_bytes
 from neo.SmartContract.Contract import Contract
 
 # NEP-2 constants

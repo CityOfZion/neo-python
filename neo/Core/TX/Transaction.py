@@ -12,7 +12,7 @@ from neocore.Fixed8 import Fixed8
 from neo.Network.Inventory import Inventory
 from neo.Network.InventoryType import InventoryType
 from neo.Network.Mixins import InventoryMixin
-from neo.Cryptography.Crypto import *
+from neocore.Cryptography.Crypto import *
 from neocore.IO.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.BinaryReader import BinaryReader

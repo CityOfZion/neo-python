@@ -4,8 +4,8 @@ from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.AssetType import AssetType
 from neocore.UInt160 import UInt160
-from neo.Cryptography.Crypto import Crypto
-from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neocore.Cryptography.Crypto import Crypto
+from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
 
 
 class AssetState(StateBase):

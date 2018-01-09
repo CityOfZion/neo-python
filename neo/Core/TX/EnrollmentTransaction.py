@@ -1,6 +1,6 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
 import sys
-from neo.Cryptography.ECCurve import ECDSA
+from neocore.Cryptography.ECCurve import ECDSA
 from neo.Settings import settings
 from neocore.Fixed8 import Fixed8
 

@@ -8,7 +8,7 @@ Usage:
 from neo.Core.CoinReference import CoinReference
 from neo.Core.State.CoinState import CoinState
 from neocore.IO.Mixins import TrackableMixin
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 
 
 class Coin(TrackableMixin):

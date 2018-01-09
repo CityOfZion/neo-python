@@ -32,7 +32,7 @@ from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 
 

@@ -9,7 +9,7 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
 from neo.Settings import settings
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 import shutil
 

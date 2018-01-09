@@ -1,6 +1,6 @@
 from logzero import logger
 
-from neo.Cryptography.Helper import base256_encode
+from neocore.Cryptography.Helper import base256_encode
 
 
 class BigInteger(int):

@@ -6,8 +6,8 @@ import binascii
 from neo.IO.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Block import Block
-from neo.Cryptography.Crypto import Crypto
-from neo.Cryptography.MerkleTree import MerkleTree
+from neocore.Cryptography.Crypto import Crypto
+from neocore.Cryptography.MerkleTree import MerkleTree
 import json
 
 

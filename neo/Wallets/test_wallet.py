@@ -3,7 +3,7 @@ from neo.Wallets.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
 from neo.SmartContract.Contract import Contract
 import binascii
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 import hashlib
 
 from neo.Wallets.Wallet import Wallet
@@ -101,7 +101,7 @@ class WalletTestCase(NeoTestCase):
 
         self.assertEqual(hhex, self.hashhex)
 
-        sig = Crypto.Sign(self.nmsg, key.PrivateKey, key.PublicKey)
+        sig = Crypto.Sign(self.nmsg, key.PrivateKey)
 
         self.assertEqual(sig.hex(), self.neon_sig)
 

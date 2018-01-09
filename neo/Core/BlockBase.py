@@ -1,6 +1,6 @@
 import ctypes
 from .Mixins import VerifiableMixin
-from neo.Cryptography.Helper import *
+from neocore.Cryptography.Helper import *
 from neo.Core.Helper import Helper
 from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
