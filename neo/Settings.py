@@ -45,6 +45,7 @@ class SettingsHolder:
     REGISTER_TX_FEE = None
 
     LEVELDB_PATH = None
+    NOTIFICATION_DB_PATH = None
     NODE_PORT = None
     WS_PORT = None
     URI_PREFIX = None
@@ -109,6 +110,9 @@ class SettingsHolder:
 
         if 'DebugStorage' in config:
             self.USE_DEBUG_STORAGE = config['DebugStorage']
+
+        if 'NotificationDataPath' in config:
+            self.NOTIFICATION_DB_PATH = os.path.join(DIR_PROJECT_ROOT, config['NotificationDataPath'])
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """

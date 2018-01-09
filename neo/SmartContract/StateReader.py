@@ -16,7 +16,8 @@ from neocore.BigInteger import BigInteger
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Cryptography.ECCurve import ECDSA
-from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
+from neo.EventHub import dispatch_smart_contract_event, dispatch_smart_contract_notify
+from neo.SmartContract.SmartContractEvent import SmartContractEvent
 from neo.SmartContract.TriggerType import Application, Verification
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
@@ -196,9 +197,9 @@ class StateReader(InteropService):
 
             # dispatch all notify events, along with the success of the contract execution
             for notify_event_args in self.notifications:
-                dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
-                                              notify_event_args.ScriptHash, height, tx_hash,
-                                              success, engine.testMode)
+                dispatch_smart_contract_notify(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
+                                               notify_event_args.ScriptHash, height, tx_hash,
+                                               success, engine.testMode)
 
             if engine.Trigger == Application:
                 dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
