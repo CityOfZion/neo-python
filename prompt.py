@@ -265,6 +265,17 @@ class PromptInterface(object):
             self.Wallet = None
             print("closed wallet %s " % path)
 
+    def do_rebuild_wallet(self, arguments):
+        self.Wallet.Rebuild()
+        try:
+            item2 = int(get_arg(arguments, 1))
+            if item2 and item2 > 0:
+                print('Restarting at %s...' % item2)
+                self.Wallet._current_height = item2
+        except Exception as e:
+            pass
+        print('Wallet rebuild complete.')
+
     def do_import(self, arguments):
         item = get_arg(arguments)
 
@@ -462,14 +473,7 @@ class PromptInterface(object):
         elif item == 'claim':
             ClaimGas(self.Wallet)
         elif item == 'rebuild':
-            self.Wallet.Rebuild()
-            try:
-                item2 = int(get_arg(arguments, 1))
-                if item2 and item2 > 0:
-                    print('restarting at %s ' % item2)
-                    self.Wallet._current_height = item2
-            except Exception as e:
-                pass
+            self.do_rebuild_wallet(arguments)
         elif item == 'tkn_send':
             token_send(self.Wallet, arguments[1:])
         elif item == 'tkn_send_from':
