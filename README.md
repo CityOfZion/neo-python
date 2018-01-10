@@ -51,7 +51,7 @@
 ### Get Help or give help
 
 - Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
-- Or ping **@localhuman** on the [NEO Slack](https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA).
+- Or ping **@localhuman**  or **@metachris** on the [NEO Discord](https://discord.gg/R8v48YA).
 - Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome. All successful pull requests will be rewarded with one photo of a cat or kitten.
 
 
@@ -70,7 +70,7 @@ brew install leveldb
 ##### Ubuntu/Debian
 
 ```
-apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
+apt-get install libleveldb-dev python3.5-dev python3-pip python3-venv libssl-dev g++
 ```
 
 ##### Centos/Redhat/Fedora
@@ -78,10 +78,15 @@ apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
 This is a bit more tricky...
 
 ```
-yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel
-```
+# Install Python 3.5:
+yum install -y centos-release-scl
+yum install -y rh-python35
+scl enable rh-python35 bash
 
-You may need to enable the epel repo for the leveldb-devel package, which you can do by editing `/etc/yum.repos.d/epel.repo`.
+# Install dependencies:
+yum install -y epel-release
+yum install -y readline-devel leveldb-devel libffi-devel gcc-c++ redhat-rpm-config gcc python-devel openssl-devel
+```
 
 ### For all of these, make sure that the `Chains` directory in your project has the proper write permissions
 
@@ -97,28 +102,16 @@ Now navigate into the project, make a Python 3 virtual environment and activate
 it via
 
 ```
-python3 -m venv venv
+python3.5 -m venv venv
 source venv/bin/activate
 ```
 
-or to install Python 3.5 specifically
+Then install the requirements:
 
 ```
-virtualenv -p /usr/local/bin/python3.5 venv
-source venv/bin/activate
-```
-
-Then install requirements
-```
-pip install -r requirements.txt
-```
-
-Finally, install a reference to the `neo` working directory, which allows to `import neo` from
-anywhere in the project (eg. examples):
-```
+pip install -U setuptools pip wheel
 pip install -e .
 ```
-
 
 ### Installing on OSX
 
