@@ -45,6 +45,10 @@ class NotificationDB():
     def db(self):
         return self._db
 
+    @property
+    def current_events(self):
+        return self._events_to_write
+
     def __init__(self, path):
 
         try:
@@ -59,15 +63,20 @@ class NotificationDB():
 
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
         def call_on_event(sc_event: NotifyEvent):
-
-            if sc_event.notify_type == NotifyType.TRANSFER and not sc_event.test_mode:
-                self._events_to_write.append(sc_event)
+            self.on_smart_contract_event(sc_event)
 #            elif sc_event.notify_type == NotifyType.TRANSFER and sc_event.test_mode:
 #                data = sc_event.ToByteArray()
 #                event = SmartContractEvent.FromByteArray(data)
 #                print("event? %s " % event)
 
         Blockchain.Default().PersistCompleted.on_change += self.on_persist_completed
+
+    def on_smart_contract_event(self, sc_event: NotifyEvent):
+        if not isinstance(sc_event, NotifyEvent):
+            logger.info("Not Notify Event instance")
+            return
+        if sc_event.ShouldPersist and sc_event.notify_type == NotifyType.TRANSFER:
+            self._events_to_write.append(sc_event)
 
     def on_persist_completed(self, block):
 

@@ -9,6 +9,7 @@ from neo.IO.MemoryStream import StreamManager
 from neocore.IO.Mixins import SerializableMixin
 import json
 import pdb
+from logzero import logger
 
 
 class SmartContractEvent(SerializableMixin):
@@ -105,8 +106,6 @@ class SmartContractEvent(SerializableMixin):
         etype = reader.ReadVarString().decode('utf-8')
         reader.stream.seek(0)
 
-        event = None
-
         if etype == SmartContractEvent.RUNTIME_NOTIFY:
             event = NotifyEvent(None, None, None, None, None)
         else:
@@ -144,6 +143,12 @@ class NotifyEvent(SmartContractEvent):
     addr_from = None
     amount = 0
 
+    is_standard_notify = False
+
+    @property
+    def ShouldPersist(self):
+        return self.is_standard_notify and not self.test_mode
+
     @property
     def Type(self):
         return self.notify_type.decode('utf-8')
@@ -171,36 +176,48 @@ class NotifyEvent(SmartContractEvent):
     def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False, test_mode=False):
         super(NotifyEvent, self).__init__(event_type, event_payload, contract_hash, block_number, tx_hash, execution_success, test_mode)
 
+        self.is_standard_notify = False
+
         plen = len(self.event_payload)
         if plen > 0:
             self.notify_type = self.event_payload[0]
             empty = UInt160(data=bytearray(20))
-            if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE] and len(self.event_payload):
+            if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE]:
 
-                self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) else empty
-                self.addr_from = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) else empty
+                self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
+                self.addr_from = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty
                 self.amount = BigInteger.FromBytes(data=self.event_payload[3])
+                self.is_standard_notify = True
 
             elif plen == 3 and self.notify_type == NotifyType.REFUND:
-                self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) else empty
+                self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
                 self.amount = BigInteger.FromBytes(data=self.event_payload[2])
                 self.addr_from = self.contract_hash
+                self.is_standard_notify = True
 
     def SerializePayload(self, writer):
 
         writer.WriteVarString(self.notify_type)
 
-        if self.notify_type in [NotifyType.REFUND, NotifyType.APPROVE, NotifyType.TRANSFER]:
+        if self.is_standard_notify:
             writer.WriteUInt160(self.addr_to)
             writer.WriteUInt160(self.addr_from)
             writer.WriteVarInt(self.amount)
 
     def DeserializePayload(self, reader):
-        self.notify_type = reader.ReadVarString()
+        try:
+            self.notify_type = reader.ReadVarString()
+        except Exception as e:
+            logger.info("Could not read notify type")
+
         if self.notify_type in [NotifyType.REFUND, NotifyType.APPROVE, NotifyType.TRANSFER]:
-            self.addr_to = reader.ReadUInt160()
-            self.addr_from = reader.ReadUInt160()
-            self.amount = reader.ReadVarInt()
+            try:
+                self.addr_to = reader.ReadUInt160()
+                self.addr_from = reader.ReadUInt160()
+                self.amount = reader.ReadVarInt()
+                self.is_standard_notify = True
+            except Exception as e:
+                logger.info("Could not transfer notification data")
 
     def ToJson(self):
         jsn = super(NotifyEvent, self).ToJson()

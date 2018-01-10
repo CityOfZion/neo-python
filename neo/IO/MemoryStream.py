@@ -86,7 +86,7 @@ class MemoryStream(BytesIO):
         Returns:
             bool: True if the stream can be read from. False otherwise.
         """
-        return self.readable
+        return self.readable()
 
     def canSeek(self):
         """
@@ -104,7 +104,7 @@ class MemoryStream(BytesIO):
         Returns:
             bool: True if the stream is writeable. False otherwise.
         """
-        return self.writable
+        return self.writable()
 
     def ToArray(self):
         """
