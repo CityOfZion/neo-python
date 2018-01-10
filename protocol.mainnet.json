@@ -39,6 +39,7 @@
   },
   "ApplicationConfiguration": {
     "DataDirectoryPath": "Chains/Main",
+    "NotificationDataPath": "Chains/Main_Notif",
     "NodePort": 10333,
     "WsPort": 10334,
     "UriPrefix": [ "http://*:10332" ],

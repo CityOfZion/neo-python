@@ -444,7 +444,7 @@ class Blockchain(object):
         pass
 
     def OnPersistCompleted(self, block):
-        pass
+        self.PersistCompleted.on_change(block)
 
     def BlockCacheCount(self):
         pass

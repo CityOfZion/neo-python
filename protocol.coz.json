@@ -29,7 +29,8 @@
   },
 
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/coznet",
+    "DataDirectoryPath": "Chains/coznet",
+    "NotificationDataPath": "Chains/coz_notif",
     "NodePort": 20333,
     "WsPort": 20334,
     "UriPrefix": [ "http://*:20332"],

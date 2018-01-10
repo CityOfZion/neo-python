@@ -88,9 +88,9 @@ preferences.json
 protocol.nex.json
 prompt.log*
 test.log
-protocol.nex.json
 
 .pylint
 .vscode
 withdraw_wallet.db3
 withdraw_wallet2.db3
+notification_server.py
