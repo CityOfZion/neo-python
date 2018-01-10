@@ -80,7 +80,6 @@ class NotificationDB():
             self._events_to_write.append(sc_event)
 
     def on_persist_completed(self, block):
-#        logger.info('Processing Block: %s ' % (block.Index))
         if len(self._events_to_write):
 
             addr_db = self.db.prefixed_db(NotificationPrefix.PREFIX_ADDR)
