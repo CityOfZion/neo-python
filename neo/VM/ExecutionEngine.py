@@ -652,6 +652,10 @@ class ExecutionEngine():
 
                 item = estack.Pop()
 
+                if not item:
+                    self._VMState |= VMState.FAULT
+                    return
+
                 if not item.IsArray:
                     estack.PushT(len(item.GetByteArray()))
 

@@ -364,7 +364,7 @@ def stack_item_to_py(stack_item):
         return stack_item.GetInterface()
 
     elif isinstance(stack_item, Struct):
-        return stack_item.GetArray()
+        return [stack_item_to_py(item) for item in stack_item.GetArray()]
     elif stack_item is None:
         return None
     else:

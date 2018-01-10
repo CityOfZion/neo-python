@@ -7,6 +7,7 @@ from uuid import uuid1
 import shutil
 
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neocore.BigInteger import BigInteger
 
 
 class NotificationDBTestCase(TestCase):
@@ -47,7 +48,7 @@ class NotificationDBTestCase(TestCase):
         self.assertEqual(ndb.current_events, [])
 
     def test_3_should_persist(self):
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'transfer', self.addr_to, self.addr_from, b'x\xe0\x01'], self.contract_hash, 91349, self.event_tx, True, False)
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'transfer', self.addr_to, self.addr_from, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, False)
 
         ndb = NotificationDB.instance()
         ndb.on_smart_contract_event(sc)
@@ -60,7 +61,7 @@ class NotificationDBTestCase(TestCase):
         ndb = NotificationDB.instance()
 
         self.assertEqual(len(ndb.current_events), 0)
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'transfer', self.addr_to, self.addr_from, b'x\xe0\x01'], self.contract_hash, 91349, self.event_tx, True, True)
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'transfer', self.addr_to, self.addr_from, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, True)
 
         ndb.on_smart_contract_event(sc)
 

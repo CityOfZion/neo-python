@@ -16,7 +16,7 @@ from neocore.BigInteger import BigInteger
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.EventHub import dispatch_smart_contract_event, dispatch_smart_contract_notify
-from neo.SmartContract.SmartContractEvent import SmartContractEvent
+from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
 
@@ -26,6 +26,8 @@ from neo.VM.InteropService import StackItem, stack_item_to_py
 class StateReader(InteropService):
 
     notifications = None
+
+    events_to_dispatch = []
 
     __Instance = None
 
@@ -42,6 +44,7 @@ class StateReader(InteropService):
         super(StateReader, self).__init__()
 
         self.notifications = []
+        self.events_to_dispatch = []
 
         self.Register("Neo.Runtime.GetTrigger", self.Runtime_GetTrigger)
         self.Register("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness)
@@ -196,25 +199,26 @@ class StateReader(InteropService):
 
             # dispatch all notify events, along with the success of the contract execution
             for notify_event_args in self.notifications:
-                dispatch_smart_contract_notify(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
-                                               notify_event_args.ScriptHash, height, tx_hash,
-                                               success, engine.testMode)
+                self.events_to_dispatch.append(NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
+                                                           notify_event_args.ScriptHash, height, tx_hash,
+                                                           success, engine.testMode))
 
             if engine.Trigger == Application:
-                dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
-                                              height, tx_hash, success, engine.testMode)
+                self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
+                                                                  height, tx_hash, success, engine.testMode))
             else:
-                dispatch_smart_contract_event(SmartContractEvent.VERIFICATION_SUCCESS, payload, entry_script,
-                                              height, tx_hash, success, engine.testMode)
+                self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.VERIFICATION_SUCCESS, payload, entry_script,
+                                                                  height, tx_hash, success, engine.testMode))
 
         else:
             if engine.Trigger == Application:
-
-                dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error, engine._VMState],
-                                              entry_script, height, tx_hash, success, engine.testMode)
+                self.events_to_dispatch.append(
+                    SmartContractEvent(SmartContractEvent.EXECUTION_FAIL, [payload, error, engine._VMState],
+                                       entry_script, height, tx_hash, success, engine.testMode))
             else:
-                dispatch_smart_contract_event(SmartContractEvent.VERIFICATION_FAIL, [payload, error, engine._VMState],
-                                              entry_script, height, tx_hash, success, engine.testMode)
+                self.events_to_dispatch.append(
+                    SmartContractEvent(SmartContractEvent.VERIFICATION_FAIL, [payload, error, engine._VMState],
+                                       entry_script, height, tx_hash, success, engine.testMode))
 
         self.notifications = []
 
@@ -282,12 +286,12 @@ class StateReader(InteropService):
         hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
         # Build and emit smart contract event
-        dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG,
-                                      message,
-                                      hash,
-                                      Blockchain.Default().Height,
-                                      engine.ScriptContainer.Hash,
-                                      test_mode=engine.testMode)
+        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.RUNTIME_LOG,
+                                                          [message],
+                                                          hash,
+                                                          Blockchain.Default().Height,
+                                                          engine.ScriptContainer.Hash,
+                                                          test_mode=engine.testMode))
 
         return True
 
@@ -818,7 +822,7 @@ class StateReader(InteropService):
         else:
             engine.EvaluationStack.PushT(bytearray([0]))
 
-        dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
-                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash, test_mode=engine.testMode)
+        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_GET, ['%s -> %s' % (keystr, valStr)],
+                                                          context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash, test_mode=engine.testMode))
 
         return True

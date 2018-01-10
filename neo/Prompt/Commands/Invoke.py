@@ -30,6 +30,7 @@ from neocore.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
+from neo.EventHub import events
 
 from neo.VM.OpCode import *
 import json
@@ -277,6 +278,9 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
 
         service.ExecutionCompleted(engine, success)
 
+        for event in service.events_to_dispatch:
+            events.emit(event.event_type, event)
+
         if success:
 
             # this will be removed in favor of neo.EventHub
@@ -349,6 +353,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
     contract = wallet.GetDefaultContract()
     dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script))]
+
+    to_dispatch = []
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
@@ -461,6 +467,10 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             i_success = engine.Execute()
 
             service.ExecutionCompleted(engine, i_success)
+            to_dispatch = to_dispatch + service.events_to_dispatch
+
+            for event in to_dispatch:
+                events.emit(event.event_type, event)
 
             if i_success:
                 service.TestCommit()

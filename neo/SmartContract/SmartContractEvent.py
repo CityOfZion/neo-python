@@ -182,18 +182,23 @@ class NotifyEvent(SmartContractEvent):
         if plen > 0:
             self.notify_type = self.event_payload[0]
             empty = UInt160(data=bytearray(20))
-            if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE]:
+            try:
+                if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE]:
 
-                self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
-                self.addr_from = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty
-                self.amount = BigInteger.FromBytes(data=self.event_payload[3])
-                self.is_standard_notify = True
+                    self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
+                    self.addr_from = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty
+                    self.amount = int(event_payload[3])
+                    self.is_standard_notify = True
 
-            elif plen == 3 and self.notify_type == NotifyType.REFUND:
-                self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
-                self.amount = BigInteger.FromBytes(data=self.event_payload[2])
-                self.addr_from = self.contract_hash
-                self.is_standard_notify = True
+                elif plen == 3 and self.notify_type == NotifyType.REFUND:
+                    self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
+                    self.amount = int(event_payload[2])
+                    self.addr_from = self.contract_hash
+                    self.is_standard_notify = True
+            except Exception as e:
+                print("Could not determin notify event: %s %s" % (e, self.event_payload))
+                for item in self.event_payload:
+                    print("item: %s %s " % (item, type(item)))
 
     def SerializePayload(self, writer):
 
