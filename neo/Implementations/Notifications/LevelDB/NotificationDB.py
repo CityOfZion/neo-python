@@ -13,10 +13,10 @@ import pdb
 class NotificationPrefix():
 
     PREFIX_ADDR = b'\xCA'
-    PREFIX_CONTRACT = b'\xCB'
+#    PREFIX_CONTRACT = b'\xCB'
     PREFIX_BLOCK = b'\xCC'
 
-    PREFIX_COUNT = b'\CD'
+    PREFIX_COUNT = b'\xCD'
 
 
 class NotificationDB():
@@ -30,9 +30,9 @@ class NotificationDB():
         if not NotificationDB.__instance:
             if settings.NOTIFICATION_DB_PATH:
                 NotificationDB.__instance = NotificationDB(settings.NOTIFICATION_DB_PATH)
-                logger.debug("Created Notification DB At %s " % settings.NOTIFICATION_DB_PATH)
+#                logger.info("Created Notification DB At %s " % settings.NOTIFICATION_DB_PATH)
             else:
-                logger.debug("Notification DB Path not configured in settings")
+                logger.info("Notification DB Path not configured in settings")
         return NotificationDB.__instance
 
     @staticmethod
@@ -53,6 +53,7 @@ class NotificationDB():
 
         try:
             self._db = plyvel.DB(path, create_if_missing=True)
+            logger.info("Created Notification DB At %s " % path)
         except Exception as e:
             logger.info("Notification leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Notification Leveldb Unavailable %s ' % e)
@@ -79,7 +80,7 @@ class NotificationDB():
             self._events_to_write.append(sc_event)
 
     def on_persist_completed(self, block):
-
+#        logger.info('Processing Block: %s ' % (block.Index))
         if len(self._events_to_write):
 
             addr_db = self.db.prefixed_db(NotificationPrefix.PREFIX_ADDR)
