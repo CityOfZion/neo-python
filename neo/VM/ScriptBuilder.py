@@ -10,7 +10,7 @@ import binascii
 
 from neo.VM.OpCode import *
 from neo.IO.MemoryStream import MemoryStream
-from neo.Cryptography.Helper import base256_encode
+from neocore.Cryptography.Helper import base256_encode
 from neocore.BigInteger import BigInteger
 import struct
 

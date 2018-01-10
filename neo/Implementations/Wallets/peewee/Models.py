@@ -1,7 +1,7 @@
 
 from peewee import *
 from .PWDatabase import PWDatabase
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neocore.UInt256 import UInt256
 from neocore.UInt160 import UInt160
 import binascii

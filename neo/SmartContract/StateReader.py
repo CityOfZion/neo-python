@@ -11,17 +11,16 @@ from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.State.StorageItem import StorageItem
 from neo.Core.Blockchain import Blockchain
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
-from neo.Cryptography.ECCurve import ECDSA
 from neo.EventHub import dispatch_smart_contract_event, dispatch_smart_contract_notify
 from neo.SmartContract.SmartContractEvent import SmartContractEvent
+from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
-import json
 
 
 class StateReader(InteropService):

@@ -11,11 +11,11 @@ from neo.VM.OpCode import *
 from neo.Core.State.SpentCoinState import SpentCoin
 from neo.SmartContract.Contract import Contract
 from neo.Settings import settings
-from neo.Cryptography.Crypto import *
-from neo.Cryptography.Helper import *
+from neocore.Cryptography.Crypto import *
+from neocore.Cryptography.Helper import *
 from collections import Counter
 from neocore.Fixed8 import Fixed8
-from neo.Cryptography.ECCurve import ECDSA
+from neocore.Cryptography.ECCurve import ECDSA
 from neocore.UInt256 import UInt256
 
 

@@ -4,7 +4,7 @@ from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neocore.BigInteger import BigInteger
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.Mixins import SerializableMixin
 import json

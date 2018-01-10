@@ -1,7 +1,7 @@
 from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
-from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
 
 
 class ValidatorState(StateBase):

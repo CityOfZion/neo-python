@@ -18,11 +18,11 @@ from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
-from neo.Cryptography.Helper import *
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Helper import *
+from neocore.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
-from neo.Wallets.KeyPair import KeyPair
+from neocore.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
