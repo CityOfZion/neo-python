@@ -162,7 +162,7 @@ class EventTestCase(TestCase):
 
     def test_6_serialize_full_approve_payload(self):
 
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'approve', self.addr_to, self.addr_from, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, False)
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'approve', self.addr_to, self.addr_from, b'x\xe0\x01'], self.contract_hash, 91349, self.event_tx, True, False)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)

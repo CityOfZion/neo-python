@@ -187,12 +187,12 @@ class NotifyEvent(SmartContractEvent):
 
                     self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
                     self.addr_from = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty
-                    self.amount = int(event_payload[3])
+                    self.amount = int(BigInteger.FromBytes(event_payload[3])) if isinstance(event_payload[3], bytes) else int(event_payload[3])
                     self.is_standard_notify = True
 
                 elif plen == 3 and self.notify_type == NotifyType.REFUND:
                     self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
-                    self.amount = int(event_payload[2])
+                    self.amount = int(BigInteger.FromBytes(event_payload[2])) if isinstance(event_payload[2], bytes) else int(event_payload[2])
                     self.addr_from = self.contract_hash
                     self.is_standard_notify = True
             except Exception as e:
