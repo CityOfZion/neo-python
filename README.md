@@ -70,7 +70,7 @@ brew install leveldb
 ##### Ubuntu/Debian
 
 ```
-apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
+apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev g++
 ```
 
 ##### Centos/Redhat/Fedora
@@ -78,7 +78,7 @@ apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
 This is a bit more tricky...
 
 ```
-yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel
+yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel gcc-c++
 ```
 
 You may need to enable the epel repo for the leveldb-devel package, which you can do by editing `/etc/yum.repos.d/epel.repo`.
