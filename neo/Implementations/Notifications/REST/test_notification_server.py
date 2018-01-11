@@ -52,7 +52,7 @@ class NotificationDBTestCase(TestCase):
 
         mock_req = requestMock(path=b'/')
         res = self.app.home(mock_req)
-        self.assertIn('Endpoints', res)
+        self.assertIn('endpoints', res)
 
     def test_4_by_block(self):
         mock_req = requestMock(path=b'/block/206939')
