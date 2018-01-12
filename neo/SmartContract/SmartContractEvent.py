@@ -185,8 +185,8 @@ class NotifyEvent(SmartContractEvent):
             try:
                 if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE]:
 
-                    self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
-                    self.addr_from = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty
+                    self.addr_from = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
+                    self.addr_to = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty
                     self.amount = int(BigInteger.FromBytes(event_payload[3])) if isinstance(event_payload[3], bytes) else int(event_payload[3])
                     self.is_standard_notify = True
 
@@ -205,8 +205,8 @@ class NotifyEvent(SmartContractEvent):
         writer.WriteVarString(self.notify_type)
 
         if self.is_standard_notify:
-            writer.WriteUInt160(self.addr_to)
             writer.WriteUInt160(self.addr_from)
+            writer.WriteUInt160(self.addr_to)
             writer.WriteVarInt(self.amount)
 
     def DeserializePayload(self, reader):
@@ -217,8 +217,8 @@ class NotifyEvent(SmartContractEvent):
 
         if self.notify_type in [NotifyType.REFUND, NotifyType.APPROVE, NotifyType.TRANSFER]:
             try:
-                self.addr_to = reader.ReadUInt160()
                 self.addr_from = reader.ReadUInt160()
+                self.addr_to = reader.ReadUInt160()
                 self.amount = reader.ReadVarInt()
                 self.is_standard_notify = True
             except Exception as e:

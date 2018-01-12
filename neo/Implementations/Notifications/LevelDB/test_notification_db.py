@@ -84,7 +84,7 @@ class NotificationDBTestCase(TestCase):
 
         evt = events[0]  # type:NotifyEvent
 
-        self.assertEqual(evt.AddressFrom, 'ALb8FEhEmtSqv97fuNVuoLmcmrSKckffRf')
+        self.assertEqual(evt.AddressTo, 'ALb8FEhEmtSqv97fuNVuoLmcmrSKckffRf')
 
     def test_6_addr_to_lookup(self):
         ndb = NotificationDB.instance()
@@ -95,7 +95,7 @@ class NotificationDBTestCase(TestCase):
 
         evt = events[0]  # type:NotifyEvent
 
-        self.assertEqual(evt.AddressTo, 'AKZmSGPD7ytJBbxpRPmobYGLNxdWH3Jiqs')
+        self.assertEqual(evt.AddressFrom, 'AKZmSGPD7ytJBbxpRPmobYGLNxdWH3Jiqs')
 
     def test_7_lookup_addr_by_script_hash(self):
 

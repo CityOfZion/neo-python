@@ -130,8 +130,8 @@ class EventTestCase(TestCase):
         self.assertEqual(new_event.block_number, sc.block_number)
 
         self.assertEqual(new_event.notify_type, b'transfer')
-        self.assertEqual(new_event.AddressFrom, 'ALb8FEhEmtSqv97fuNVuoLmcmrSKckffRf')
-        self.assertEqual(new_event.AddressTo, 'AKZmSGPD7ytJBbxpRPmobYGLNxdWH3Jiqs')
+        self.assertEqual(new_event.AddressTo, 'ALb8FEhEmtSqv97fuNVuoLmcmrSKckffRf')
+        self.assertEqual(new_event.AddressFrom, 'AKZmSGPD7ytJBbxpRPmobYGLNxdWH3Jiqs')
         self.assertEqual(new_event.Amount, 123000)
         self.assertEqual(new_event.is_standard_notify, True)
 
@@ -180,8 +180,8 @@ class EventTestCase(TestCase):
         self.assertEqual(new_event.block_number, sc.block_number)
 
         self.assertEqual(new_event.notify_type, b'approve')
-        self.assertEqual(new_event.AddressTo, 'AKZmSGPD7ytJBbxpRPmobYGLNxdWH3Jiqs')
-        self.assertEqual(new_event.AddressFrom, 'ALb8FEhEmtSqv97fuNVuoLmcmrSKckffRf')
+        self.assertEqual(new_event.AddressFrom, 'AKZmSGPD7ytJBbxpRPmobYGLNxdWH3Jiqs')
+        self.assertEqual(new_event.AddressTo, 'ALb8FEhEmtSqv97fuNVuoLmcmrSKckffRf')
         self.assertEqual(new_event.Amount, 123000)
         self.assertEqual(new_event.is_standard_notify, True)
         self.assertEqual(new_event.ShouldPersist, True)

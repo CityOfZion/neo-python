@@ -169,7 +169,7 @@ class NotificationServer(object):
             'results': [n.ToJson() for n in notifications],
             'page': page,
             'page_len': page_len
-        }, indent=4)
+        }, indent=4, sort_keys=True)
 
     def format_message(self, message):
         return json.dumps({
@@ -179,4 +179,4 @@ class NotificationServer(object):
             'results': [],
             'page': 0,
             'page_len': 0
-        }, indent=4)
+        }, indent=4, sort_keys=True)
