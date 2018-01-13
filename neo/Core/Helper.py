@@ -9,6 +9,7 @@ from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neocore.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo.Settings import settings
+from neo.EventHub import events
 
 
 class Helper(object):
@@ -152,7 +153,6 @@ class Helper(object):
         if len(hashes) != len(verifiable.Scripts):
             return False
 
-        state_reader = GetStateReader()
         blockchain = GetBlockchain()
 
         for i in range(0, len(hashes)):
@@ -168,6 +168,7 @@ class Helper(object):
                 if hashes[i] != verification_hash:
                     return False
 
+            state_reader = GetStateReader()
             engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
             engine.LoadScript(verification, False)
             invoction = verifiable.Scripts[i].InvocationScript
@@ -176,15 +177,22 @@ class Helper(object):
             try:
                 success = engine.Execute()
                 state_reader.ExecutionCompleted(engine, success)
-
             except Exception as e:
                 state_reader.ExecutionCompleted(engine, False, e)
 
             if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
+                Helper.EmitServiceEvents(state_reader)
                 return False
+
+            Helper.EmitServiceEvents(state_reader)
 
         return True
 
     @staticmethod
     def IToBA(value):
         return [1 if digit == '1' else 0 for digit in bin(value)[2:]]
+
+    @staticmethod
+    def EmitServiceEvents(state_reader):
+        for event in state_reader.events_to_dispatch:
+            events.emit(event.event_type, event)
