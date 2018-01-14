@@ -1,6 +1,9 @@
 from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Cryptography.Crypto import Crypto
 from neo.Cryptography import Helper
+from neo.Settings import settings
 
+from neo.UInt160 import UInt160
 
 class HelperTestCase(NeoTestCase):
     def test_xor_bytes(self):
@@ -27,3 +30,16 @@ class HelperTestCase(NeoTestCase):
 
         b = Helper.random_key()
         self.assertNotEqual(a, b)
+
+    def test_to_address(self):
+        script_hash = UInt160(data=b'B\x11#x\xff\xa3,Le\xd5\x13\xaa5\x06\x89\xdf\xf68\x11T')
+        self.assertEqual(Crypto.ToAddress(script_hash), 'AMoCmy4xaaCnpejTAJkZYTsRz58BLopeeV')
+
+    def test_to_address_alt_version(self):
+        original_version = settings.ADDRESS_VERSION
+        settings.ADDRESS_VERSION = 42
+
+        script_hash = UInt160(data=b'B\x11#x\xff\xa3,Le\xd5\x13\xaa5\x06\x89\xdf\xf68\x11T')
+        self.assertEqual(Crypto.ToAddress(script_hash), 'J1DfV2jS511SMtP6dH5ckr3Nwf26kbFx7s')
+
+        settings.ADDRESS_VERSION = original_version
