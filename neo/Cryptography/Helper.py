@@ -18,7 +18,7 @@ import base58
 
 
 def hash_to_wallet_address(ba, address_version=23):
-    sb = bytearray([23]) + ba
+    sb = bytearray([address_version]) + ba
     c256 = bin_dbl_sha256(sb)[0:4]
     outb = sb + bytearray(c256)
     return base58.b58encode(bytes(outb))

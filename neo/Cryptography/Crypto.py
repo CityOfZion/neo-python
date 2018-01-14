@@ -10,7 +10,7 @@ from .Helper import *
 from neo.UInt256 import UInt256
 from neo.UInt160 import UInt160
 from neo.Cryptography.ECCurve import EllipticCurve
-
+from neo.Settings import settings
 
 class Crypto(object):
 
@@ -51,7 +51,7 @@ class Crypto(object):
 
     @staticmethod
     def ToAddress(uint160):
-        return hash_to_wallet_address(uint160.Data)
+        return hash_to_wallet_address(uint160.Data, settings.ADDRESS_VERSION)
 
     @staticmethod
     def Sign(message, private_key, public_key):
