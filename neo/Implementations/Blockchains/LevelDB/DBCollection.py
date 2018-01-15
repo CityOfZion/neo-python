@@ -160,8 +160,8 @@ class DBCollection():
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
         res = []
-        for key,val in self.DB.iterator(prefix=key_prefix):
-            res.append({key:val})
+        for key, val in self.DB.iterator(prefix=key_prefix):
+            res.append({key: val})
         return res
 
     def Destroy(self):
