@@ -10,6 +10,7 @@ import json
 import os
 import logging
 from json.decoder import JSONDecodeError
+from neocore.Cryptography import Helper
 
 import logzero
 
@@ -107,6 +108,8 @@ class SettingsHolder:
         self.URI_PREFIX = config['UriPrefix']
         self.VERSION_NAME = config['VersionName']
         self.BOOTSTRAP_FILE = config['BootstrapFile']
+
+        Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
         if 'DebugStorage' in config:
             self.USE_DEBUG_STORAGE = config['DebugStorage']

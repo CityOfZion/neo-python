@@ -491,7 +491,7 @@ class PromptInterface(object):
         elif item == 'close':
             self.do_close_wallet()
         elif item == 'claim':
-            ClaimGas(self.Wallet)
+            ClaimGas(self.Wallet, True, arguments[1:])
         elif item == 'rebuild':
             self.Wallet.Rebuild()
             try:
