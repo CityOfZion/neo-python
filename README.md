@@ -254,6 +254,13 @@ After that, you can generate a command line coverage report use the following:
 coverage report -m --omit=venv/*
 ```
 
+## Useful commands
+
+    make lint
+    make test
+    make coverage
+    make docs
+
 ## License
 
 - Open-source [MIT](https://github.com/CityOfZion/neo-python/blob/master/LICENSE.md).
