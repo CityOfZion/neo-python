@@ -50,14 +50,14 @@ lint: ## check style with flake8
 	pycodestyle neo
 
 test: ## run tests quickly with the default Python
-	python3 -m unittest -v
+	python3 -m unittest discover neo
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run -m unittest discover neo
-	coverage report -m
+	coverage report -m --omit=venv/*
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	$(MAKE) -C docs
+	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html

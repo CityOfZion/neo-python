@@ -38,7 +38,7 @@ numpy==1.14.0
 pbr==3.1.1
 peewee==2.10.2
 pluggy==0.6.0
-plyvel==0.9
+plyvel==1.0.4
 prompt-toolkit==1.0.15
 psutil==5.4.3
 py==1.5.2
