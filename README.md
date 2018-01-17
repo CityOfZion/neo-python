@@ -261,6 +261,31 @@ coverage report -m --omit=venv/*
     make coverage
     make docs
 
+## Updating the version number and releasing new versions of neo-python
+
+
+(Only for admins)
+
+This is a checklist for releasing a new version:
+
+.. code-block:: console
+
+    # In case you want to increase the version number again (eg. scope changed from patch to minor):
+    bumpversion --no-tag patch|minor|major
+
+    # Update ``CHANGELOG.md`` and ``docs/source/changelog.rst`` with the new version number and the changes and commit this
+    vi CHANGELOG.md docs/source/changelog.rst
+    git commit -m "Updated changelogs" CHANGELOG.md docs/source/changelog.rst
+
+    # Set the release version number and create the tag
+    bumpversion release
+
+    # Increase patch number and add `-dev`
+    bumpversion --no-tag patch
+
+    # Push to GitHub, which also updates the PyPI package
+    git push && git push --tags
+
 ## License
 
 - Open-source [MIT](https://github.com/CityOfZion/neo-python/blob/master/LICENSE.md).
