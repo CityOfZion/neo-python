@@ -129,7 +129,7 @@ You may need to uninstall plyvel (python libleveldb library), and reinstall with
 
 ```
 pip uninstall plyvel
-CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel --no-cache-dir --global-option=build_ext --global-option="-I/usr/local/Cellar/leveldb/1.20_2/include/" --global-option="-L/usr/local/lib"
+CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel==0.9 --no-cache-dir --global-option=build_ext --global-option="-I/usr/local/Cellar/leveldb/1.20_2/include/" --global-option="-L/usr/local/lib"
 ```
 
 You may also encounter issues when installing the pycrypto module on OSX:
