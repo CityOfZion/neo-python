@@ -113,42 +113,6 @@ pip install -U setuptools pip wheel
 pip install -e .
 ```
 
-### Installing on OSX
-
-If you're having an issue similar to this:
-
-```
-    from ._plyvel import (  # noqa
-    ImportError: dlopen(neo-python/venv/lib/python3.5/site-packages/plyvel/_plyvel.cpython-35m-darwin.so, 2): Symbol not found: __ZN7leveldb2DB4OpenERKNS_7Options
-    ERKSsPPS0_
-    Referenced from: neo-python/venv/lib/python3.5/site-packages/plyvel/_plyvel.cpython-35m-darwin.so
-    Expected in: flat namespace
-```
-
-You may need to uninstall plyvel (python libleveldb library), and reinstall with the following cflags
-
-```
-pip uninstall plyvel
-CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel==0.9 --no-cache-dir --global-option=build_ext --global-option="-I/usr/local/Cellar/leveldb/1.20_2/include/" --global-option="-L/usr/local/lib"
-```
-
-You may also encounter issues when installing the pycrypto module on OSX:
-
-```
-src/_fastmath.c:36:11: fatal error: 'gmp.h' file not found
-# include <gmp.h>
-          ^~~~~~~
-330 warnings and 1 error generated.
-error: command 'clang' failed with exit status 1
-```
-
-This may be fixed by installing the gmp library using homebrew and running pip install with the following commandline:
-
-```
-brew install gmp
-CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel pycrypto --no-cache-dir --global-option=build_ext --global-option="-I/usr/local/Cellar/gmp/6.1.2/include/" --global-option="-L/usr/local/lib"
-```
-
 ## Running
 After installing requirements and activating your environment, there is an easy
 to use `prompt.py` file for you to run the node as well as some basic interactivity
@@ -191,6 +155,8 @@ neo>
 #### Available Wallet commands
 
 ```
+help
+
 create wallet {wallet_path}
 open wallet {wallet_path}
 
@@ -199,7 +165,6 @@ export wif { ADDRESS }
 import wif { WIF }
 
 send { ASSET_ID } { ADDRESS } { AMOUNT }
-
 ```
 
 
@@ -209,13 +174,18 @@ To run the prompt on mainnet, you can use the cli argument `-m`:
 
 ```
 $ python prompt.py -h
-usage: prompt.py [-h] [-m] [-c CONFIG]
+usage: prompt.py [-h] [-m] [-p] [-c CONFIG] [-t {dark,light}] [--version]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -m, --mainnet         use MainNet instead of the default TestNet
+  -m, --mainnet         Use MainNet instead of the default TestNet
+  -p, --privnet         Use PrivNet instead of the default TestNet
   -c CONFIG, --config CONFIG
                         Use a specific config file
+  -t {dark,light}, --set-default-theme {dark,light}
+                        Set the default theme to be loaded from the config
+                        file. Default: 'dark'
+  --version             show program's version number and exit
 ```
 
 On OSX, if you would like to run the process in the background, even when your computer is sleeping, you can use the built in `caffeinate` command
@@ -230,29 +200,16 @@ Currently, `prompt.py` logs to `prompt.log`
 
 ## Tests
 
-Tests are important. Currently there are not enough, but we are working on that. You can start them by running this command.
+Tests are important. Currently there are not enough, but we are working on that. You can start them by running this commands:
+
+    make test
+    make coverage
 
 Note that some of the unit tests use a giant blockchain fixture database ( around 800mb ). This file is not kept in the repo.
 
 When running tests the first time, the test setup will try to download the file and extract it to the proper directory.
-
 **Long story short**: the first time you run your tests, it will take a while to download those fixtures. After that it should be pretty quick.
 
-```
-python -m unittest discover neo
-```
-
-To run tests with `coverage`, use the following
-
-```
-coverage run -m unittest discover neo
-```
-
-After that, you can generate a command line coverage report use the following:
-
-```
-coverage report -m --omit=venv/*
-```
 
 ## Useful commands
 
@@ -261,8 +218,8 @@ coverage report -m --omit=venv/*
     make coverage
     make docs
 
-## Updating the version number and releasing new versions of neo-python
 
+## Updating the version number and releasing new versions of neo-python
 
 (Only for admins)
 
@@ -285,6 +242,11 @@ This is a checklist for releasing a new version:
 
     # Push to GitHub, which also updates the PyPI package
     git push && git push --tags
+
+## Troubleshooting
+
+If you encounter any problems, please take a look at the [installation section](https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes) in the docs, and if that doesn't help open an issue. We'll try to help.
+
 
 ## License
 
