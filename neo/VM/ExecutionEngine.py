@@ -774,6 +774,19 @@ class ExecutionEngine():
                     return
                 arrItem.GetArray().reverse()
 
+            elif opcode == REMOVE:
+                index = estack.Pop().GetBigInteger()
+                arrItem = estack.Pop()
+                if not arrItem.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+                items = arrItem.GetArray()
+
+                if index < 0 or index >= len(items):
+                    self._VMState |= VMState.FAULT
+                    return
+                del items[index]
+
             elif opcode == THROW:
                 self._VMState |= VMState.FAULT
                 return
