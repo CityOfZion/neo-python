@@ -480,7 +480,7 @@ class StateMachine(StateReader):
             engine.EvaluationStack.PushT(bytearray(item.Value))
 
         else:
-            engine.EvaluationStack.PushT(bytearray([0]))
+            engine.EvaluationStack.PushT(bytearray(0))
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.STORAGE_GET, ['%s -> %s' % (keystr, valStr)],
