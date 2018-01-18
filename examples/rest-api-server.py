@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-
+"""
+This example provides a REST API to query blockchain data, implementing `neo.api.RESTAPI.RestApi`
+"""
 
 import argparse
 import os
