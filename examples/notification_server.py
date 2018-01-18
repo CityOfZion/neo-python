@@ -11,7 +11,7 @@ from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Implementations.Notifications.REST.NotificationServer import NotificationServer
+from neo.api.REST.RestApi import RestApi
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -68,7 +68,7 @@ def main():
     ndb = NotificationDB.instance()
     ndb.start()
 
-    notif_server = NotificationServer()
+    notif_server = RestApi()
 
     # Run
     reactor.suggestThreadPoolSize(15)
