@@ -13,7 +13,7 @@ from logzero import logger
 from neo.Core.Blockchain import Blockchain
 
 
-class RestApi(object):
+class NotificationRestApi(object):
     app = Klein()
 
     notif = None
