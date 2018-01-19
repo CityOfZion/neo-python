@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-
+"""
+This example provides a REST API to query notifications from the blockchain, implementing `neo.api.RESTAPI.NotificationRestApi`
+"""
 
 import argparse
 import os
@@ -11,7 +13,7 @@ from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Implementations.Notifications.REST.NotificationServer import NotificationServer
+from neo.api.REST.NotificationRestApi import NotificationRestApi
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -21,9 +23,6 @@ LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'notifications.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
-
-# Prompt history filename
-FILENAME_PROMPT_HISTORY = os.path.join(DIR_PROJECT_ROOT, '.prompt.py.history')
 
 
 def main():
@@ -68,7 +67,7 @@ def main():
     ndb = NotificationDB.instance()
     ndb.start()
 
-    notif_server = NotificationServer()
+    notif_server = NotificationRestApi()
 
     # Run
     reactor.suggestThreadPoolSize(15)
