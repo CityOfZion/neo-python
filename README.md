@@ -232,7 +232,7 @@ This is a checklist for releasing a new version:
 
     # Update ``CHANGELOG.md`` and ``docs/source/changelog.rst`` with the new version number and the changes and commit this
     vi CHANGELOG.md docs/source/changelog.rst
-    git commit -m "Updated changelogs" CHANGELOG.md docs/source/changelog.rst
+    git commit -m "Updated Changelogs" CHANGELOG.md docs/source/changelog.rst
 
     # Set the release version number and create the tag
     bumpversion release
