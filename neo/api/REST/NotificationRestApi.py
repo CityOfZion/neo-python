@@ -13,7 +13,7 @@ from logzero import logger
 from neo.Core.Blockchain import Blockchain
 
 
-class NotificationServer(object):
+class NotificationRestApi(object):
     app = Klein()
 
     notif = None
@@ -45,7 +45,7 @@ class NotificationServer(object):
                             <p>results are offered in page size of 1000</p>
                             <p>you may request a different page by specifying the <code>page</code> query string param, for example:</p>
                             <pre>/block/123456?page=3</pre>
-                            <hr/>                            
+                            <hr/>
                             <h3>sample output</h3>
                             <pre>
 {

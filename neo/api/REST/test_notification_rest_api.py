@@ -8,7 +8,7 @@ import tarfile
 import logzero
 import shutil
 
-from neo.Implementations.Notifications.REST.NotificationServer import NotificationServer
+from neo.api.REST.NotificationRestApi import NotificationRestApi
 
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from klein.test.test_resource import requestMock
@@ -26,7 +26,7 @@ class NotificationDBTestCase(TestCase):
     addr_to = 'AHbmRX5sL8oxp4dJZRNg5crCGUGxuMUyRB'
     addr_from = 'AcFnRrVC5emrTEkuFuRPufcuTb6KsAJ3vR'
 
-    app = None  # type:NotificationServer
+    app = None  # type:NotificationRestApi
 
     @classmethod
     def setUpClass(cls):
@@ -62,7 +62,7 @@ class NotificationDBTestCase(TestCase):
         shutil.rmtree(cls.NOTIFICATION_DB_NAME)
 
     def setUp(self):
-        self.app = NotificationServer()
+        self.app = NotificationRestApi()
 
     def test_1_ok(self):
 
