@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project following the `0.4.0` release will be documented in this file.
 
+## [0.4.6-dev] Unreleased
+- implement a more robust CLI command parser
+
 ## [0.4.5] 2018-01-18
 - updated `neo-boa` to `0.2.2`, added support for array `REMOVE` VM opcodes
 - moved core functions to [neocore](https://github.com/CityOfZion/neo-python-core)
