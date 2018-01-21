@@ -6,7 +6,7 @@ All notable changes to this project following the ``0.4.0`` release will be docu
 [0.4.7-dev] work in progress
 ----------------------------
 
-- ...
+- implement a more robust CLI command parser
 
 [0.4.6] 2018-01-24
 ------------------
