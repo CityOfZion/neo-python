@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import argparse
 import datetime
 import json
@@ -9,7 +8,6 @@ import resource
 import traceback
 import logging
 
-import logzero
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -186,7 +184,6 @@ class PromptInterface(object):
         print_tokens(tokens, self.token_style)
 
     def do_open(self, arguments):
-
         if self.Wallet:
             self.do_close_wallet()
 
@@ -437,7 +434,6 @@ class PromptInterface(object):
             WithdrawOne(self.Wallet)
 
     def do_notifications(self, arguments):
-
         if NotificationDB.instance() is None:
             print("No notification DB Configured")
             return
@@ -465,7 +461,6 @@ class PromptInterface(object):
             print("No events found for %s " % item)
 
     def show_wallet(self, arguments):
-
         if not self.Wallet:
             print("please open a wallet")
             return
@@ -689,7 +684,6 @@ class PromptInterface(object):
             print("please specify a contract")
 
     def test_invoke_contract(self, args):
-
         if not self.Wallet:
             print("please open a wallet")
             return
@@ -723,7 +717,6 @@ class PromptInterface(object):
         print("please specify a contract to invoke")
 
     def load_smart_contract(self, args):
-
         if not self.Wallet:
             print("please open wallet")
             return
@@ -819,12 +812,11 @@ class PromptInterface(object):
 
     def parse_result(self, result):
         if len(result):
-            commandParts = [s for s in result.split()]
-            return commandParts[0], commandParts[1:]
+            command_parts = [s for s in result.split()]
+            return command_parts[0], command_parts[1:]
         return None, None
 
     def run(self):
-
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
 
