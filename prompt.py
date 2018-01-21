@@ -822,7 +822,7 @@ class PromptInterface(object):
         Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
-                  (Token.Command, "\'help\' "), (Token.Default, "to get started")]
+                  (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
 
         print_tokens(tokens, self.token_style)
         print('\n')
