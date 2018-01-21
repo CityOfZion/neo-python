@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import argparse
 import datetime
 import json
@@ -9,7 +8,6 @@ import resource
 import traceback
 import logging
 
-import logzero
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -39,6 +37,7 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins
 from neo.Prompt.Utils import get_arg
+from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
@@ -122,6 +121,7 @@ class PromptInterface(object):
     start_dt = None
 
     def __init__(self):
+        self.input_parser = InputParser()
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
 
@@ -172,7 +172,7 @@ class PromptInterface(object):
         return completer
 
     def quit(self):
-        print('Shutting down.  This may take a bit...')
+        print('Shutting down. This may take a bit...')
         self.go_on = False
         NotificationDB.close()
         Blockchain.Default().Dispose()
@@ -182,11 +182,10 @@ class PromptInterface(object):
     def help(self):
         tokens = []
         for c in self.commands:
-            tokens.append((Token.Command, "%s\n" % c))
+            tokens.append((Token.Command, '%s\n' % c))
         print_tokens(tokens, self.token_style)
 
     def do_open(self, arguments):
-
         if self.Wallet:
             self.do_close_wallet()
 
@@ -199,24 +198,24 @@ class PromptInterface(object):
             if path:
 
                 if not os.path.exists(path):
-                    print("wallet file not found")
+                    print('Wallet file not found')
                     return
 
-                passwd = prompt("[Password]> ", is_password=True)
+                passwd = prompt('[password]> ', is_password=True)
 
                 try:
                     self.Wallet = UserWallet.Open(path, passwd)
 
                     self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                     self._walletdb_loop.start(1)
-                    print("Opened wallet at %s" % path)
+                    print('Opened wallet at %s' % path)
                 except Exception as e:
-                    print("could not open wallet: %s " % e)
+                    print('Could not open wallet: %s' % e)
 
             else:
-                print("Please specify a path")
+                print('Please specify a path')
         else:
-            print("please specify something to open")
+            print('Please specify something to open')
 
     def do_create(self, arguments):
         item = get_arg(arguments)
@@ -228,37 +227,37 @@ class PromptInterface(object):
             if path:
 
                 if os.path.exists(path):
-                    print("File already exists")
+                    print('File already exists')
                     return
 
-                passwd1 = prompt("[Password 1]> ", is_password=True)
-                passwd2 = prompt("[Password 2]> ", is_password=True)
+                passwd1 = prompt('[password]> ', is_password=True)
+                passwd2 = prompt('[password again]> ', is_password=True)
 
                 if passwd1 != passwd2 or len(passwd1) < 10:
-                    print("please provide matching passwords that are at least 10 characters long")
+                    print('Please provide matching passwords that are at least 10 characters long')
                     return
 
                 try:
                     self.Wallet = UserWallet.Create(path=path, password=passwd1)
                     contract = self.Wallet.GetDefaultContract()
                     key = self.Wallet.GetKey(contract.PublicKeyHash)
-                    print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
-                    print("pubkey %s " % key.PublicKey.encode_point(True))
+                    print('Wallet %s' % json.dumps(self.Wallet.ToJson(), indent=4))
+                    print('Pubkey %s' % key.PublicKey.encode_point(True))
                 except Exception as e:
-                    print("Exception creating wallet: %s " % e)
+                    print('Exception creating wallet: %s' % e)
                     self.Wallet = None
                     if os.path.isfile(path):
                         try:
                             os.remove(path)
                         except Exception as e:
-                            print("Could not remove {}: {}".format(path, e))
+                            print('Could not remove {}: {}'.format(path, e))
                     return
 
                 self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                 self._walletdb_loop.start(1)
 
             else:
-                print("Please specify a path")
+                print('Please specify a path')
 
     def do_close_wallet(self):
         if self.Wallet:
@@ -266,31 +265,31 @@ class PromptInterface(object):
             self._walletdb_loop.stop()
             self._walletdb_loop = None
             self.Wallet = None
-            print("closed wallet %s " % path)
+            print('Closed wallet %s' % path)
 
     def do_import(self, arguments):
         item = get_arg(arguments)
 
         if not item:
-            print("please specify something to import")
+            print('Please specify something to import')
             return
 
         if item == 'wif':
             if not self.Wallet:
-                print("Please open a wallet before importing WIF")
+                print('Please open a wallet before importing WIF')
                 return
 
             wif = get_arg(arguments, 1)
             if not wif:
-                print("Please supply a valid WIF key")
+                print('Please supply a valid WIF key')
                 return
 
             try:
                 prikey = KeyPair.PrivateKeyFromWIF(wif)
                 key = self.Wallet.CreateKey(prikey)
-                print("Imported key %s " % wif)
-                print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
-                print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+                print('Imported key: %s' % wif)
+                print('Pubkey: %s\n' % key.PublicKey.encode_point(True).hex())
+                print('Wallet: %s' % json.dumps(self.Wallet.ToJson(), indent=4))
             except ValueError as e:
                 print(str(e))
             except Exception as e:
@@ -300,22 +299,22 @@ class PromptInterface(object):
 
         elif item == 'nep2':
             if not self.Wallet:
-                print("Please open a wallet before importing a NEP2 key")
+                print('Please open a wallet before importing a NEP2 key')
                 return
 
             nep2_key = get_arg(arguments, 1)
             if not nep2_key:
-                print("Please supply a valid nep2 encrypted private key")
+                print('Please supply a valid NEP2 encrypted private key')
                 return
 
-            nep2_passwd = prompt("[Key Password]> ", is_password=True)
+            nep2_passwd = prompt('[key password]> ', is_password=True)
 
             try:
                 prikey = KeyPair.PrivateKeyFromNEP2(nep2_key, nep2_passwd)
                 key = self.Wallet.CreateKey(prikey)
-                print("Imported nep2 key: %s " % nep2_key)
-                print("Pubkey: %s \n" % key.PublicKey.encode_point(True).hex())
-                print("Wallet: %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+                print('Imported NEP2 key: %s' % nep2_key)
+                print('Pubkey: %s\n' % key.PublicKey.encode_point(True).hex())
+                print('Wallet: %s' % json.dumps(self.Wallet.ToJson(), indent=4))
             except ValueError as e:
                 print(str(e))
             except Exception as e:
@@ -339,7 +338,7 @@ class PromptInterface(object):
             return ImportToken(self.Wallet, get_arg(arguments, 1))
 
         else:
-            print("Import of '%s' not implemented" % item)
+            print('Import of \'%s\' not implemented' % item)
 
     def do_build(self, arguments):
         BuildAndRun(arguments, self.Wallet)
@@ -352,63 +351,63 @@ class PromptInterface(object):
 
         if item == 'wif':
             if not self.Wallet:
-                return print("please open a wallet")
+                return print('Please open a wallet')
 
             address = get_arg(arguments, 1)
             if not address:
-                return print("Please specify an address")
+                return print('Please specify an address')
 
-            passwd = prompt("[Wallet Password]> ", is_password=True)
+            passwd = prompt('[wallet password]> ', is_password=True)
             if not self.Wallet.ValidatePassword(passwd):
-                return print("Incorrect password")
+                return print('Incorrect password')
 
             keys = self.Wallet.GetKeys()
             for key in keys:
                 if key.GetAddress() == address:
                     export = key.Export()
-                    print("WIF key export: %s" % export)
+                    print('WIF key export: %s' % export)
             return
 
         elif item == 'nep2':
             if not self.Wallet:
-                return print("please open a wallet")
+                return print('Please open a wallet')
 
             address = get_arg(arguments, 1)
             if not address:
-                return print("Please specify an address")
+                return print('Please specify an address')
 
-            passwd = prompt("[Wallet Password]> ", is_password=True)
+            passwd = prompt('[wallet password]> ', is_password=True)
             if not self.Wallet.ValidatePassword(passwd):
-                return print("Incorrect password")
+                return print('Incorrect password')
 
-            nep2_passwd1 = prompt("[Key Password 1]> ", is_password=True)
+            nep2_passwd1 = prompt('[key password]> ', is_password=True)
             if len(nep2_passwd1) < 10:
-                return print("Please provide a password with at least 10 characters")
+                return print('Please provide a password with at least 10 characters')
 
-            nep2_passwd2 = prompt("[Key Password 2]> ", is_password=True)
+            nep2_passwd2 = prompt('[key password again]> ', is_password=True)
             if nep2_passwd1 != nep2_passwd2:
-                return print("Passwords don't match")
+                return print('Passwords do not match')
 
             keys = self.Wallet.GetKeys()
             for key in keys:
                 export = key.ExportNEP2(nep2_passwd1)
-                print("NEP2 key export: %s" % export)
+                print('NEP2 key export: %s' % export)
             return
 
-        print("Command export %s not found" % item)
+        print('Command export %s not found' % item)
 
     def make_withdraw_request(self, arguments):
         if not self.Wallet:
-            print("please open a wallet")
+            print('Please open a wallet')
             return
         if len(arguments) == 4:
             RequestWithdrawFrom(self.Wallet, arguments[0], arguments[1], arguments[2], arguments[3])
         else:
-            print("incorrect arg length. use 'withdraw_request {asset_id} {contract_hash} {to_addr} {amount}")
+            print('Incorrect arg length. Use \'withdraw_request {asset_id} {contract_hash} {to_addr} {amount}\'')
 
     def do_withdraw(self, arguments):
         if not self.Wallet:
-            print("please open a wallet")
+            print('Please open a wallet')
             return
 
         item = get_arg(arguments, 0)
@@ -426,7 +425,7 @@ class PromptInterface(object):
                 if len(arguments) > 1:
                     CancelWithdrawalHolds(self.Wallet, get_arg(arguments, 1))
                 else:
-                    print("Please specify contract hash to cancel holds for")
+                    print('Please specify contract hash to cancel holds for')
             elif item == 'completed':
                 ShowCompletedHolds(self.Wallet)
             elif item == 'cleanup':
@@ -437,9 +436,8 @@ class PromptInterface(object):
             WithdrawOne(self.Wallet)
 
     def do_notifications(self, arguments):
-
         if NotificationDB.instance() is None:
-            print("No notification DB Configured")
+            print('No notification DB Configured')
             return
 
         item = get_arg(arguments, 0)
@@ -453,35 +451,34 @@ class PromptInterface(object):
                 if block_height < Blockchain.Default().Height:
                     events = NotificationDB.instance().get_by_block(block_height)
                 else:
-                    print("block %s not found" % block_height)
+                    print('Block %s not found' % block_height)
                     return
             except Exception as e:
-                print("could not parse block height %s " % e)
+                print('Could not parse block height %s' % e)
                 return
 
         if len(events):
             [print(json.dumps(e.ToJson(), indent=4)) for e in events]
         else:
-            print("No events found for %s " % item)
+            print('No events found for %s' % item)
 
     def show_wallet(self, arguments):
-
         if not self.Wallet:
-            print("please open a wallet")
+            print('Please open a wallet')
             return
 
         item = get_arg(arguments)
 
         if not item:
-            print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
+            print('Wallet %s ' % json.dumps(self.Wallet.ToJson(), indent=4))
             return
 
         if item in ['v', '--v', 'verbose']:
-            print("Wallet %s " % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
+            print('Wallet %s ' % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
             return
         elif item == 'migrate' and self.Wallet is not None:
             self.Wallet.Migrate()
-            print("migrated wallet")
+            print('Migrated wallet')
         elif item == 'delete_addr':
             addr_to_delete = get_arg(arguments, 1)
             DeleteAddress(self, self.Wallet, addr_to_delete)
@@ -497,7 +494,7 @@ class PromptInterface(object):
             try:
                 item2 = int(get_arg(arguments, 1))
                 if item2 and item2 > 0:
-                    print('restarting at %s ' % item2)
+                    print('Restarting at %s' % item2)
                     self.Wallet._current_height = item2
             except Exception as e:
                 pass
@@ -519,9 +516,9 @@ class PromptInterface(object):
             if len(arguments) == 3:
                 AddAlias(self.Wallet, arguments[1], arguments[2])
             else:
-                print("Please supply an address and title")
+                print('Please supply an address and title')
         else:
-            print("wallet: '{}' is an invalid parameter".format(item))
+            print('Wallet: \'{}\' is an invalid parameter'.format(item))
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
@@ -545,10 +542,10 @@ class PromptInterface(object):
             bpm = diff / mins
 
         out = 'Progress: %s / %s\n' % (height, headers)
-        out += 'Block Cache length %s\n' % Blockchain.Default().BlockCacheCount
+        out += 'Block-cache length %s\n' % Blockchain.Default().BlockCacheCount
         out += 'Blocks since program start %s\n' % diff
         out += 'Time elapsed %s mins\n' % mins
-        out += 'blocks per min %s \n' % bpm
+        out += 'Blocks per min %s \n' % bpm
         tokens = [(Token.Number, out)]
         print_tokens(tokens, self.token_style)
 
@@ -579,9 +576,9 @@ class PromptInterface(object):
                         print(json.dumps(tx.ToJson(), indent=4))
 
             else:
-                print("could not locate block %s" % item)
+                print('Could not locate block %s' % item)
         else:
-            print("please specify a block")
+            print('please specify a block')
 
     def show_header(self, args):
         item = get_arg(args)
@@ -590,9 +587,9 @@ class PromptInterface(object):
             if header is not None:
                 print(json.dumps(header.ToJson(), indent=4))
             else:
-                print("could not locate Header %s \n" % item)
+                print('Could not locate header %s\n' % item)
         else:
-            print("please specify a header")
+            print('Please specify a header')
 
     def show_tx(self, args):
         item = get_arg(args)
@@ -605,11 +602,11 @@ class PromptInterface(object):
                     print_tokens(tokens, self.token_style)
                     print('\n')
             except Exception as e:
-                print("Could not find transaction with id %s " % item)
+                print('Could not find transaction with id %s' % item)
                 print(
-                    "Please specify a tx hash like 'db55b4d97cf99db6826967ef4318c2993852dff3e79ec446103f141c716227f6'")
+                    'Please specify a TX hash like \'db55b4d97cf99db6826967ef4318c2993852dff3e79ec446103f141c716227f6\'')
         else:
-            print("please specify a tx hash")
+            print('Please specify a TX hash')
 
     def show_account_state(self, args):
         item = get_arg(args)
@@ -623,9 +620,9 @@ class PromptInterface(object):
                 print_tokens(tokens, self.token_style)
                 print('\n')
             else:
-                print("account %s not found" % item)
+                print('Account %s not found' % item)
         else:
-            print("please specify an account address")
+            print('Please specify an account address')
 
     def show_asset_state(self, args):
         item = get_arg(args)
@@ -635,7 +632,7 @@ class PromptInterface(object):
             if item == 'search':
                 query = get_arg(args, 1)
                 results = Blockchain.Default().SearchAssetState(query)
-                print("Found %s results for %s " % (len(results), query))
+                print('Found %s results for %s' % (len(results), query))
                 for asset in results:
                     bjson = json.dumps(asset.ToJson(), indent=4)
                     tokens = [(Token.Number, bjson)]
@@ -652,9 +649,9 @@ class PromptInterface(object):
                 print_tokens(tokens, self.token_style)
                 print('\n')
             else:
-                print("asset %s not found" % item)
+                print('Asset %s not found' % item)
         else:
-            print("please specify an asset hash")
+            print('Please specify an asset hash')
 
     def show_contract_state(self, args):
         item = get_arg(args)
@@ -663,20 +660,20 @@ class PromptInterface(object):
 
             if item.lower() == 'all':
                 contracts = Blockchain.Default().ShowAllContracts()
-                print("contracts: %s " % contracts)
+                print('Contracts: %s' % contracts)
             elif item.lower() == 'search':
                 query = get_arg(args, 1)
                 if query:
 
                     contracts = Blockchain.Default().SearchContracts(query=query)
-                    print("Found %s results for %s " % (len(contracts), query))
+                    print('Found %s results for %s' % (len(contracts), query))
                     for contract in contracts:
                         bjson = json.dumps(contract.ToJson(), indent=4)
                         tokens = [(Token.Number, bjson)]
                         print_tokens(tokens, self.token_style)
                         print('\n')
                 else:
-                    print("Please specify a search query")
+                    print('Please specify a search query')
             else:
                 contract = Blockchain.Default().GetContract(item)
 
@@ -686,12 +683,11 @@ class PromptInterface(object):
                     print_tokens(tokens, self.token_style)
                     print('\n')
         else:
-            print("please specify a contract")
+            print('Please specify a contract')
 
     def test_invoke_contract(self, args):
-
         if not self.Wallet:
-            print("please open a wallet")
+            print('Please open a wallet')
             return
 
         if args and len(args) > 0:
@@ -699,33 +695,32 @@ class PromptInterface(object):
 
             if tx is not None and results is not None:
                 print(
-                    "\n-------------------------------------------------------------------------------------------------------------------------------------")
-                print("Test invoke successful")
-                print("Total operations: %s " % num_ops)
-                print("Results %s " % [str(item) for item in results])
-                print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
-                print("Invoke TX Fee: %s " % (fee.value / Fixed8.D))
+                    '\n-------------------------------------------------------------------------------------------------------------------------------------')
+                print('Test invoke successful')
+                print('Total operations: %s' % num_ops)
+                print('Results %s' % [str(item) for item in results])
+                print('Invoke TX GAS cost: %s' % (tx.Gas.value / Fixed8.D))
+                print('Invoke TX fee: %s' % (fee.value / Fixed8.D))
                 print(
-                    "-------------------------------------------------------------------------------------------------------------------------------------\n")
-                print("Enter your password to continue and invoke on the network\n")
+                    '-------------------------------------------------------------------------------------------------------------------------------------\n')
+                print('Enter your password to continue and invoke on the network\n')
 
-                passwd = prompt("[password]> ", is_password=True)
+                passwd = prompt('[password]> ', is_password=True)
                 if not self.Wallet.ValidatePassword(passwd):
-                    return print("Incorrect password")
+                    return print('Incorrect password')
 
                 result = InvokeContract(self.Wallet, tx, fee)
 
                 return
             else:
-                print("Error testing contract invoke")
+                print('Error testing contract invoke')
                 return
 
-        print("please specify a contract to invoke")
+        print('Please specify a contract to invoke')
 
     def load_smart_contract(self, args):
-
         if not self.Wallet:
-            print("please open wallet")
+            print('Please open a wallet')
             return
 
         function_code = LoadContract(args[1:])
@@ -740,33 +735,33 @@ class PromptInterface(object):
 
                 if tx is not None and results is not None:
                     print(
-                        "\n-------------------------------------------------------------------------------------------------------------------------------------")
-                    print("Test deploy invoke successful")
-                    print("Total operations executed: %s " % num_ops)
-                    print("Results %s " % [str(item) for item in results])
-                    print("Deploy Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
-                    print("Deploy Invoke TX Fee: %s " % (fee.value / Fixed8.D))
+                        '\n-------------------------------------------------------------------------------------------------------------------------------------')
+                    print('Test deploy invoke successful')
+                    print('Total operations executed: %s' % num_ops)
+                    print('Results %s ' % [str(item) for item in results])
+                    print('Deploy Invoke TX GAS cost: %s' % (tx.Gas.value / Fixed8.D))
+                    print('Deploy Invoke TX fee: %s' % (fee.value / Fixed8.D))
                     print(
-                        "-------------------------------------------------------------------------------------------------------------------------------------\n")
-                    print("Enter your password to continue and deploy this contract")
+                        '-------------------------------------------------------------------------------------------------------------------------------------\n')
+                    print('Enter your password to continue and deploy this contract')
 
-                    passwd = prompt("[password]> ", is_password=True)
+                    passwd = prompt('[password]> ', is_password=True)
                     if not self.Wallet.ValidatePassword(passwd):
-                        return print("Incorrect password")
+                        return print('Incorrect password')
 
                     result = InvokeContract(self.Wallet, tx, Fixed8.Zero())
 
                     return
                 else:
-                    print("Test invoke failed")
-                    print("tx is, results are %s %s " % (tx, results))
+                    print('Test invoke failed')
+                    print('TX is %s, results are %s' % (tx, results))
                     return
 
     def show_mem(self):
         total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         totalmb = total / 1000000
-        out = "Total: %s MB\n" % totalmb
-        out += "total buffers %s\n" % StreamManager.TotalBuffers()
+        out = 'Total: %sMB\n' % totalmb
+        out += 'Total buffers: %s\n' % StreamManager.TotalBuffers()
         print_tokens([(Token.Number, out)], self.token_style)
 
     def handle_debug_storage(self, args):
@@ -774,15 +769,15 @@ class PromptInterface(object):
 
         if what == 'on':
             settings.USE_DEBUG_STORAGE = True
-            print("Debug Storage On")
+            print('Debug storage on')
         elif what == 'off':
             settings.USE_DEBUG_STORAGE = False
-            print("Debug Storage Off")
+            print('Debug Storage off')
         elif what == 'reset':
             DebugStorage.instance().reset()
-            print("Reset Debug Storage")
+            print('Reset debug storage')
         else:
-            print("Please specify on/off/reset")
+            print('Please specify on|off|reset')
 
     def configure(self, args):
         what = get_arg(args)
@@ -791,55 +786,47 @@ class PromptInterface(object):
             c1 = get_arg(args, 1).lower()
             if c1 is not None:
                 if c1 == 'on' or c1 == '1':
-                    print("debug logging is now enabled")
+                    print('Debug logging is now enabled')
                     settings.set_loglevel(logging.DEBUG)
                 if c1 == 'off' or c1 == '0':
-                    print("debug logging is now disabled")
+                    print('Debug logging is now disabled')
                     settings.set_loglevel(logging.INFO)
 
             else:
-                print("cannot configure log.  Please specify on or off")
+                print('Cannot configure log. Please specify on|off')
 
         elif what == 'sc-events':
             c1 = get_arg(args, 1).lower()
             if c1 is not None:
                 if c1 == 'on' or c1 == '1':
-                    print("smart contract event logging is now enabled")
+                    print('Smart contract event logging is now enabled')
                     settings.set_log_smart_contract_events(True)
                 if c1 == 'off' or c1 == '0':
-                    print("smart contract event logging is now disabled")
+                    print('Smart contract event logging is now disabled')
                     settings.set_log_smart_contract_events(False)
 
             else:
-                print("cannot configure log.  Please specify on or off")
+                print('Cannot configure log. Please specify on|off')
 
         else:
-            print("cannot configure %s", what)
-            print("Try 'config sc-events on|off' or 'config debug on|off'")
-
-    def parse_result(self, result):
-        if len(result):
-            commandParts = [s for s in result.split()]
-            return commandParts[0], commandParts[1:]
-        return None, None
+            print('Cannot configure %s try \'config sc-events on|off\' or \'config debug on|off\'', what)
 
     def run(self):
-
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
 
         Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
-                  (Token.Command, "'help' "), (Token.Default, 'to get started')]
+                  (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
 
         print_tokens(tokens, self.token_style)
-        print("\n")
+        print('\n')
 
         while self.go_on:
 
             try:
-                result = prompt("neo> ",
+                result = prompt('neo> ',
                                 completer=self.get_completer(),
                                 history=self.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
@@ -854,7 +841,7 @@ class PromptInterface(object):
                 continue
 
             try:
-                command, arguments = self.parse_result(result)
+                command, arguments = self.input_parser.parse_input(result)
 
                 if command is not None and len(command) > 0:
                     command = command.lower()
@@ -912,37 +899,37 @@ class PromptInterface(object):
                     elif command == 'config':
                         self.configure(arguments)
                     elif command is None:
-                        print('please specify a command')
+                        print('Please specify a command')
                     else:
-                        print("command %s not found" % command)
+                        print('Command %s not found' % command)
 
             except Exception as e:
 
-                print("could not execute command: %s " % e)
+                print('Could not execute command: %s' % e)
                 traceback.print_stack()
                 traceback.print_exc()
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
-                        help="Use MainNet instead of the default TestNet")
-    parser.add_argument("-p", "--privnet", action="store_true", default=False,
-                        help="Use PrivNet instead of the default TestNet")
-    parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
-    parser.add_argument("-t", "--set-default-theme", dest="theme",
-                        choices=["dark", "light"],
-                        help="Set the default theme to be loaded from the config file. Default: 'dark'")
+    parser.add_argument('-m', '--mainnet', action='store_true', default=False,
+                        help='Use MainNet instead of the default TestNet')
+    parser.add_argument('-p', '--privnet', action='store_true', default=False,
+                        help='Use PrivNet instead of the default TestNet')
+    parser.add_argument('-c', '--config', action='store', help='Use a specific config file')
+    parser.add_argument('-t', '--set-default-theme', dest='theme',
+                        choices=['dark', 'light'],
+                        help='Set the default theme to be loaded from the config file. Default: \'dark\'')
     parser.add_argument('--version', action='version',
                         version='neo-python v{version}'.format(version=__version__))
 
     args = parser.parse_args()
 
     if args.config and (args.mainnet or args.privnet):
-        print("Cannot use both --config and --mainnet/--privnet arguments, please use only one.")
+        print('Cannot use --config and --mainnet/--privnet together, please use only one')
         exit(1)
     if args.mainnet and args.privnet:
-        print("Cannot use both --mainnet and --privnet arguments")
+        print('Cannot use --mainnet and --privnet together')
         exit(1)
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
@@ -974,5 +961,5 @@ def main():
     reactor.run()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
