@@ -25,8 +25,10 @@
 
 ## Overview
 
-neo-python is an alternative implementation of the original NEO VM and can be run un
-*nix and Windows environments.
+neo-python is an alternative implementation of the original NEO VM and is easy
+to install/run on *nix environments. For Windows, installing a dependency
+(LevelDB) is more involved, for serious activities, either use a Linux virtual
+machine or run the original NEO VM on Windows.
 
 It comes with batteries included, ie. it runs a full node (syncing and running contracts),
 plus, it comes with a CLI client (through the `prompt.py`) allowing you to develop/run/test
@@ -67,6 +69,11 @@ found at [Read The Docs](https://neo-python.readthedocs.io/en/latest/).
 
 ## Getting started
 
+We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get
+you started. There are monay more videos under the
+[CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
+channel, check them out.
+
 neo-python has two System dependencies (everything else is covered with `pip`):
 
 - LevelDB
@@ -74,12 +81,7 @@ neo-python has two System dependencies (everything else is covered with `pip`):
 
 ### LevelDB
 
-We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get
-you started with this library. There are other videos under the
-[CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
-channel.
-
-#### OSX:
+#### OSX
 
 ```
 brew install leveldb
@@ -115,24 +117,10 @@ support tied to Visual Studio and libraries.
 
 neo-python is currently only compatible with **Python 3.5** (due to its `byteplay3` dependency).
 
-On *nix systems, we can easily install more Python versions on one computer
-using [pyenv](https://github.com/pyenv/pyenv).
-
-After installing `pyenv` (with `brew`, `pip`, or any old package manager), add Python 3.5:
-
-```
-pyenv install 3.5.4
-```
-
-In our `neo-python` directory, make Python 3.5.4 our preferred version:
-
-```
-pyenv local 3.5.4
-```
-
-If we installed `pyenv` properly (especially the `eval "$(pyenv init -)"` part), it
-will automatically switch to Python 3.5.4 whenever we are in the
-neo-python directory.
+On *nix systems, install Python 3.5 via some package manager. It should not
+conflict with the existing System Python (though, if that concerns you, you can
+use third-party tools like [pyenv](https://github.com/pyenv/pyenv) to manage
+multiple versions of Python local to you user-account).
 
 #### Virtual Environment
 
@@ -147,6 +135,7 @@ source venv/bin/activate
 Now let's install neo-python's dependencies:
 
 ```
+pip install -U setuptools pip wheel
 pip install -e .
 ```
 
@@ -155,7 +144,6 @@ automatically is a nice little time-saver:
 
 Example `neo-project/.env`:
 ```
-eval "$(pyenv init -)"
 source venv/bin/activate
 ```
 
@@ -268,11 +256,23 @@ connection), but happens only once.
 
 This is a checklist for releasing a new version:
 
-- [ ] Increase the version number again (eg. scope changed from patch to minor): `bumpversion --no-tag patch|minor|major`
-- [ ] Update `CHANGELOG.md` and `docs/source/changelog.rst` with the new version number and the changes and commit this
-- [ ] Set the release version number and create the tag: `bumpversion release`
-- [ ] Increase patch number and add `-dev`: `bumpversion --no-tag patch`
-- [ ] Push to GitHub, which also updates the PyPI package: `git push && git push --tags`
+.. code-block:: console
+
+    # In case you want to increase the version number again (eg. scope changed from patch to minor):
+    bumpversion --no-tag patch|minor|major
+
+    # Update ``CHANGELOG.md`` and ``docs/source/changelog.rst`` with the new version number and the changes and commit this
+    vi CHANGELOG.md docs/source/changelog.rst
+    git commit -m "Updated Changelogs" CHANGELOG.md docs/source/changelog.rst
+
+    # Set the release version number and create the tag
+    bumpversion release
+
+    # Increase patch number and add `-dev`
+    bumpversion --no-tag patch
+
+    # Push to GitHub, which also updates the PyPI package
+    git push && git push --tags
 
 ## Troubleshooting
 
