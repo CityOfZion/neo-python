@@ -29,3 +29,18 @@ class TestInputParser(TestCase):
         command, arguments = self.input_parser.parse_input('this [is \'a simple\'] test')
         self.assertEqual(command, 'this')
         self.assertEqual(arguments, ['[is \'a simple\']', 'test'])
+
+    def test_unmatched_brackets(self):
+        command, arguments = self.input_parser.parse_input('this [is \'a simple\' test')
+        self.assertEqual(command, 'this')
+        self.assertEqual(arguments, ['[is', '\'a simple\'', 'test'])
+
+    def test_unmatched_single_quotes(self):
+        command, arguments = self.input_parser.parse_input('this is \'a simple test')
+        self.assertEqual(command, 'this')
+        self.assertEqual(arguments, ['is', '\'a', 'simple', 'test'])
+
+    def test_unmatched_double_quotes(self):
+        command, arguments = self.input_parser.parse_input('this is "a simple test')
+        self.assertEqual(command, 'this')
+        self.assertEqual(arguments, ['is', '"a', 'simple', 'test'])
