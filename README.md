@@ -25,17 +25,13 @@
 
 ## Overview
 
-neo-python is an alternative implementation of the original NEO environment. It
-comes with everything necessary to build, deploy and run Smart Contracts
-written in Python, but is also able to work with Smart Contracts written in
-other languages.
-
 ### What does it currently do
 
 - This project aims to be a full port of the original C#
   [NEO project](https://github.com/neo-project)
 - Run a Python based P2P node
 - Interactive CLI for configuring node and inspecting blockchain
+- Build, deploy, and run smart contracts
 - Runs smart contracts on the blockchain in a Python virtual machine
 - Very basic Wallet functionality (not fully tested, please do not use on mainnet)
 - [NEP2](https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>) and
@@ -117,7 +113,7 @@ neo-python is currently only compatible with **Python 3.5** (due to its `bytepla
 On *nix systems, install Python 3.5 via your package manager, or download an installation package
 from the [official homepage](https://www.python.org/downloads/release/python-354).
 
-##### Virtual Environment
+### Virtual Environment
 
 It is recommended to put all project dependencies into its own virtual environment,
 this way we don't pollute the global installation which could lead to version conflicts.
