@@ -1,7 +1,7 @@
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams
 from neo.Prompt.Commands.Invoke import test_deploy_and_invoke
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from boa.compiler import Compiler
 
 import binascii
@@ -29,7 +29,7 @@ def LoadAndRun(arguments, wallet):
             DoRun(script, arguments, wallet, path)
 
     except Exception as e:
-        print("couldnt load script %s " % e)
+        print("Could not load script %s " % e)
 
 
 def BuildAndRun(arguments, wallet):
@@ -44,7 +44,7 @@ def BuildAndRun(arguments, wallet):
         DoRun(contract_script, arguments, wallet, path)
 
     except Exception as e:
-        print("couldn compile %s " % e)
+        print("Could not compile %s " % e)
 
 
 def DoRun(contract_script, arguments, wallet, path):
@@ -76,7 +76,7 @@ def DoRun(contract_script, arguments, wallet, path):
 
                     return
                 else:
-                    print("test ivoke failed")
+                    print("Test invoke failed")
                     print("tx is, results are %s %s " % (tx, result))
                     return
 

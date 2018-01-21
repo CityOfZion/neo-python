@@ -1,22 +1,13 @@
 import ctypes
-import pprint
-
-from logzero import logger
-
 from .Mixins import VerifiableMixin
-from neo.Cryptography.Crypto import *
-from neo.Cryptography.Helper import *
+from neocore.Cryptography.Helper import *
 from neo.Core.Helper import Helper
 from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
+from neocore.UInt256 import UInt256
 
 
 class BlockBase(VerifiableMixin):
-
     #  <summary>
     #  区块版本
     #  </summary>
@@ -54,6 +45,12 @@ class BlockBase(VerifiableMixin):
 
     @property
     def Hash(self):
+        """
+        Get the hash value of the Blockbase.
+
+        Returns:
+            UInt256: containing the hash of the data.
+        """
         if not self.__hash:
             hashdata = self.RawData()
             ba = bytearray(binascii.unhexlify(hashdata))
@@ -63,17 +60,40 @@ class BlockBase(VerifiableMixin):
         return self.__hash
 
     def ToArray(self):
+        """
+        Get the byte data of self.
+
+        Returns:
+            bytes:
+        """
         return Helper.ToArray(self)
 
     def RawData(self):
+        """
+        Get the data used for hashing.
+
+        Returns:
+            bytes:
+        """
         return Helper.GetHashData(self)
 
     @property
     def Scripts(self):
+        """
+        Get the Scripts.
+
+        Returns:
+            list: with a single `neo.Core.Witness` object.
+        """
         return [self.Script]
 
     def Size(self):
+        """
+        Get the total size in bytes of the object.
 
+        Returns:
+            int: size.
+        """
         uintsize = ctypes.sizeof(ctypes.c_uint)
         ulongsize = ctypes.sizeof(ctypes.c_ulong)
         scriptsize = 0
@@ -82,9 +102,21 @@ class BlockBase(VerifiableMixin):
         return uintsize + 32 + 32 + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
 
     def IndexBytes(self):
+        """
+        Get the block height.
+
+        Returns:
+            bytes: array of bytes representing the block height.
+        """
         return self.Index.to_bytes(4, 'little')
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         self.DeserializeUnsigned(reader)
         byt = reader.ReadByte()
         if int(byt) != 1:
@@ -95,6 +127,12 @@ class BlockBase(VerifiableMixin):
         self.Script = witness
 
     def DeserializeUnsigned(self, reader):
+        """
+        Deserialize unsigned data only.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         self.Version = reader.ReadUInt32()
         self.PrevHash = reader.ReadUInt256()
         self.MerkleRoot = reader.ReadUInt256()
@@ -104,6 +142,12 @@ class BlockBase(VerifiableMixin):
         self.NextConsensus = reader.ReadUInt160()
 
     def SerializeUnsigned(self, writer):
+        """
+        Serialize unsigned data only.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         writer.WriteUInt32(self.Version)
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt256(self.MerkleRoot)
@@ -113,9 +157,24 @@ class BlockBase(VerifiableMixin):
         writer.WriteUInt160(self.NextConsensus)
 
     def GetMessage(self):
+        """
+        Get the data used for hashing.
+
+        Returns:
+            bytes:
+        """
         return Helper.GetHashData(self)
 
     def GetScriptHashesForVerifying(self):
+        """
+        Get the script hash used for verification.
+
+        Raises:
+            Exception: if the verification script is invalid, or no header could be retrieved from the Blockchain.
+
+        Returns:
+            list: with a single UInt160 representing the next consensus node.
+        """
         # if this is the genesis block, we dont have a prev hash!
         if self.PrevHash.Data == bytearray(32):
             #            logger.info("verificiation script %s"  %(self.Script.ToJson()))
@@ -132,15 +191,27 @@ class BlockBase(VerifiableMixin):
         return [prev_header.NextConsensus]
 
     def Serialize(self, writer):
+        """
+        Serialize full object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         json = {}
         json["hash"] = self.Hash.ToString()
 
-#        json["size"] = self.Size()
+        #        json["size"] = self.Size()
         json["version"] = self.Version
         json["previousblockhash"] = self.PrevHash.ToString()
         json["merkleroot"] = self.MerkleRoot.ToString()
@@ -152,6 +223,12 @@ class BlockBase(VerifiableMixin):
         return json
 
     def Verify(self):
+        """
+        Verify block using the verification script.
+
+        Returns:
+            bool: True if valid. False otherwise.
+        """
         if not self.Hash.ToBytes() == GetGenesis().Hash.ToBytes():
             return False
 

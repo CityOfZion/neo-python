@@ -3,8 +3,8 @@ from logzero import logger
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.OpCode import *
 from neo.VM import VMState
-from neo.Cryptography.Crypto import Crypto
-from neo.Fixed8 import Fixed8
+from neocore.Cryptography.Crypto import Crypto
+from neocore.Fixed8 import Fixed8
 
 # used for ApplicationEngine.Run
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -15,7 +15,7 @@ from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
 
 import pdb
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 
 
 class ApplicationEngine(ExecutionEngine):
@@ -48,7 +48,7 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = self.CurrentContext.NextInstruction
 
-        if opcode == PACK or opcode == NEWARRAY:
+        if opcode in [PACK, NEWARRAY, NEWSTRUCT]:
 
             size = self.EvaluationStack.Peek().GetBigInteger()
 
@@ -62,7 +62,7 @@ class ApplicationEngine(ExecutionEngine):
 
     def CheckInvocationStack(self):
 
-        maxStackSize = 1024
+        maxInvocationStackSize = 1024
 
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             return True
@@ -70,7 +70,7 @@ class ApplicationEngine(ExecutionEngine):
         opcode = self.CurrentContext.NextInstruction
 
         if opcode == CALL or opcode == APPCALL:
-            if self.InvocationStack.Count >= maxStackSize:
+            if self.InvocationStack.Count >= maxInvocationStackSize:
                 logger.error("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
 
@@ -206,8 +206,8 @@ class ApplicationEngine(ExecutionEngine):
 
             try:
 
-                self.gas_consumed = self.gas_consumed + self.GetPrice() * self.ratio
-
+                self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
+#                print("gas consumeb: %s " % self.gas_consumed)
             except Exception as e:
                 logger.error("Exception calculating gas consumed %s " % e)
                 return False
@@ -356,7 +356,7 @@ class ApplicationEngine(ExecutionEngine):
             l1 = len(self.EvaluationStack.Peek(1).GetByteArray())
             l2 = len(self.EvaluationStack.Peek(2).GetByteArray())
 
-            return int(((l1 + l2 - 1) / 1024 + 1) * 1000)
+            return ((l1 + l2 - 1) / (1024 + 1)) * 1000
 
         elif api == "Neo.Storage.Delete":
             return 100

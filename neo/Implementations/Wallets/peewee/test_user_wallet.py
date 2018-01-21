@@ -3,9 +3,9 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Prompt.Commands.Wallet import AddAlias
 from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
-from neo.UInt160 import UInt160
-from neo.Fixed8 import Fixed8
-from neo.Wallets.KeyPair import KeyPair
+from neocore.UInt160 import UInt160
+from neocore.Fixed8 import Fixed8
+from neocore.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 import json
 import binascii

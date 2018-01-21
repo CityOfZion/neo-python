@@ -1,7 +1,7 @@
 from neo.Utils.NeoTestCase import NeoTestCase
 import binascii
-from neo.Cryptography.Helper import *
-from neo.UInt256 import UInt256
+from neocore.Cryptography.Helper import *
+from neocore.UInt256 import UInt256
 
 
 class BlockHashTest(NeoTestCase):

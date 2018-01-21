@@ -10,8 +10,8 @@ import binascii
 
 from neo.VM.OpCode import *
 from neo.IO.MemoryStream import MemoryStream
-from neo.Cryptography.Helper import base256_encode
-from neo.BigInteger import BigInteger
+from neocore.Cryptography.Helper import base256_encode
+from neocore.BigInteger import BigInteger
 import struct
 
 
@@ -46,7 +46,7 @@ class ScriptBuilder(object):
             return self.WriteUInt16(value, endian)
 
         elif value <= 0xFFFFFFFF:
-            self.WriteByte(0xfd)
+            self.WriteByte(0xfe)
             return self.WriteUInt32(value, endian)
 
         else:
@@ -116,16 +116,16 @@ class ScriptBuilder(object):
             self.add(len(buf))
             self.add(buf)
         elif len(buf) < 0x100:
-            self.add(PUSH1)
+            self.add(PUSHDATA1)
             self.add(len(buf))
             self.add(buf)
         elif len(buf) < 0x10000:
-            self.add(PUSH2)
+            self.add(PUSHDATA2)
             self.add(len(buf) & 0xff)
             self.add(len(buf) >> 8)
             self.add(buf)
         elif len(buf) < 0x100000000:
-            self.add(PUSH4)
+            self.add(PUSHDATA4)
             self.add(len(buf) & 0xff)
             self.add((len(buf) >> 8) & 0xff)
             self.add((len(buf) >> 16) & 0xff)
@@ -170,6 +170,25 @@ class ScriptBuilder(object):
         if useTailCall:
             return self.Emit(TAILCALL, scriptHash)
         return self.Emit(APPCALL, scriptHash)
+
+    def EmitAppCallWithOperationAndData(self, script_hash, operation, data):
+        self.push(data)
+        self.push(operation.encode('utf-8').hex())
+        self.Emit(APPCALL, script_hash.Data)
+
+    def EmitAppCallWithOperationAndArgs(self, script_hash, operation, args):
+        args.reverse()
+        for i in args:
+            self.push(i)
+        self.push(len(args))
+        self.Emit(PACK)
+        self.push(operation.encode('utf-8').hex())
+        self.Emit(APPCALL, script_hash.Data)
+
+    def EmitAppCallWithOperation(self, script_hash, operation):
+        self.push(False)
+        self.push(operation.encode('utf-8').hex())
+        self.Emit(APPCALL, script_hash.Data)
 
     def EmitSysCall(self, api):
         if api is None:

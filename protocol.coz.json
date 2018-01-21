@@ -29,13 +29,15 @@
   },
 
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/coznet",
+    "DataDirectoryPath": "Chains/coznet",
+    "NotificationDataPath": "Chains/coz_notif",
     "NodePort": 20333,
     "WsPort": 20334,
     "UriPrefix": [ "http://*:20332"],
     "SslCert": "",
     "SslCertPassword": "",
     "VersionName":"/NEO-PYTHON:2.3.4/",
-    "BootstrapFile":""
+    "BootstrapFile":"",
+    "DebugStorage":1
   }
 }

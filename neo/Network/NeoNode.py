@@ -1,24 +1,14 @@
-import json
-import time
 import binascii
-import pprint
 import random
-
 from logzero import logger
-
 from twisted.internet.protocol import Protocol
-from twisted.internet import reactor, task
-
-from neo.Core.Block import Block
+from twisted.internet import reactor
 from neo.Core.Blockchain import Blockchain as BC
-from neo.Network.Message import Message, ChecksumException
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neocore.IO.BinaryReader import BinaryReader
+from neo.Network.Message import Message
+from neo.IO.MemoryStream import StreamManager
 from neo.IO.Helper import Helper as IOHelper
 from neo.Core.Helper import Helper
-from neo.Core.TX.Transaction import Transaction
-from neo.Core.TX.MinerTransaction import MinerTransaction
-
 from .Payloads.GetBlocksPayload import GetBlocksPayload
 from .Payloads.InvPayload import InvPayload
 from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
@@ -28,13 +18,15 @@ from neo.Settings import settings
 
 
 class NeoNode(Protocol):
-
     Version = None
 
     leader = None
 
     def __init__(self):
-
+        """
+        Create an instance.
+        The NeoNode class is the equivalent of the C# RemoteNode.cs class. It represents a single Node connected to the client.
+        """
         from neo.Network.NodeLeader import NodeLeader
 
         self.leader = NodeLeader.Instance()
@@ -52,33 +44,52 @@ class NeoNode(Protocol):
         self.Log("CREATED NEO NODE!!!!!!!!! %s " % self.remote_nodeid)
 
     def Disconnect(self):
+        """Close the connection with the remote node client."""
         self.transport.loseConnection()
 
     def Name(self):
+        """
+        Get the peer name.
+
+        Returns:
+            str:
+        """
         return self.transport.getPeer()
 
     def GetNetworkAddressWithTime(self):
+        """
+        Get a network address object.
+
+        Returns:
+            NetworkAddressWithTime: if we have a connection to a node.
+            None: otherwise.
+        """
         if self.port is not None and self.host is not None:
             return NetworkAddressWithTime(self.host, self.port, self.Version.Services)
         return None
 
     def IOStats(self):
+        """
+        Get the connection I/O stats.
+
+        Returns:
+            str:
+        """
         biM = self.bytes_in / 1000000  # megabyes
         boM = self.bytes_out / 1000000
 
         return "%s MB in / %s MB out" % (biM, boM)
 
     def connectionMade(self):
+        """Callback handler from twisted when establishing a new connection."""
         self.endpoint = self.transport.getPeer()
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
-
         self.leader.AddConnectedPeer(self)
-
         self.Log("Connection from %s" % self.endpoint)
 
     def connectionLost(self, reason=None):
-
+        """Callback handler from twisted when a connection was lost."""
         self.ReleaseBlockRequests()
         self.leader.RemoveConnectedPeer(self)
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
@@ -92,7 +103,7 @@ class NeoNode(Protocol):
             try:
                 bcr.remove(req)
             except Exception as e:
-                self.Log("Couldnt remove request %s " % e)
+                self.Log("Could not remove request %s " % e)
         self.Log("Release block requests after %s " % len(bcr))
 
         self.myblockrequests = set()
@@ -104,6 +115,7 @@ class NeoNode(Protocol):
         self.CheckDataReceived()
 
     def CheckDataReceived(self):
+        """Tries to extract a Message from the data buffer and process it."""
         currentLength = len(self.buffer_in)
         if currentLength < 24:
             return
@@ -167,7 +179,12 @@ class NeoNode(Protocol):
             self.CheckDataReceived()
 
     def MessageReceived(self, m):
+        """
+        Process a message.
 
+        Args:
+            m (neo.Network.Message):
+        """
         #        self.Log("Messagereceived and processed ...: %s " % m.Command)
 
         if m.Command == 'verack':
@@ -184,7 +201,7 @@ class NeoNode(Protocol):
             self.HandleBlockReceived(m.Payload)
         elif m.Command == 'headers':
             reactor.callFromThread(self.HandleBlockHeadersReceived, m.Payload)
-#            self.HandleBlockHeadersReceived(m.Payload)
+        #            self.HandleBlockHeadersReceived(m.Payload)
         elif m.Command == 'addr':
             self.HandlePeerInfoReceived(m.Payload)
         else:
@@ -193,7 +210,8 @@ class NeoNode(Protocol):
     def ProtocolReady(self):
         self.AskForMoreHeaders()
         self.AskForMoreBlocks()
-#        self.RequestPeerInfo()
+
+    #        self.RequestPeerInfo()
 
     def AskForMoreHeaders(self):
         # self.Log("asking for more headers...")
@@ -234,7 +252,8 @@ class NeoNode(Protocol):
 
             hashstart += 1
 
-        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
+        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (
+            first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
@@ -245,10 +264,11 @@ class NeoNode(Protocol):
             reactor.callLater(20, self.DoAskForMoreBlocks)
 
     def RequestPeerInfo(self):
+        """Request the peer address information from the remote client."""
         self.SendSerializedMessage(Message('getaddr'))
 
     def HandlePeerInfoReceived(self, payload):
-
+        """Process response of `self.RequestPeerInfo`."""
         addrs = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.AddrPayload.AddrPayload')
 
         for nawt in addrs.NetworkAddressesWithTime:
@@ -270,20 +290,24 @@ class NeoNode(Protocol):
         pass
 
     def RequestVersion(self):
+        """Request the remote client version."""
         m = Message("getversion")
         self.SendSerializedMessage(m)
 
     def SendVersion(self):
+        """Send our client version."""
         m = Message("version", VersionPayload(settings.NODE_PORT, self.remote_nodeid, settings.VERSION_NAME))
         self.SendSerializedMessage(m)
 
     def HandleVersion(self, payload):
+        """Process the response of `self.RequestVersion`."""
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
         self.nodeid = self.Version.Nonce
         self.Log("Remote version %s " % vars(self.Version))
         self.SendVersion()
 
     def HandleVerack(self):
+        """Handle the `verack` response."""
         m = Message('verack')
         self.SendSerializedMessage(m)
         self.ProtocolReady()
@@ -292,13 +316,24 @@ class NeoNode(Protocol):
         pass
 
     def SendSerializedMessage(self, message):
+        """
+        Send the `message` to the remote client.
+
+        Args:
+            message (neo.Network.Message):
+        """
         ba = Helper.ToArray(message)
         ba2 = binascii.unhexlify(ba)
         self.bytes_out += len(ba2)
         self.transport.write(ba2)
 
     def HandleBlockHeadersReceived(self, inventory):
+        """
+        Process a block header inventory payload.
 
+        Args:
+            inventory (neo.Network.Inventory):
+        """
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
         if inventory is not None:
@@ -308,7 +343,12 @@ class NeoNode(Protocol):
             self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):
+        """
+        Process a Block inventory payload.
 
+        Args:
+            inventory (neo.Network.Inventory):
+        """
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
 
         blockhash = block.Hash.ToBytes()
@@ -324,10 +364,16 @@ class NeoNode(Protocol):
             self.DoAskForMoreBlocks()
 
     def HandleBlockReset(self, hash):
+        """Process block reset request."""
         self.myblockrequests = []
 
     def HandleGetDataMessageReceived(self, payload):
+        """
+        Process a InvPayload payload.
 
+        Args:
+            payload (neo.Network.Inventory):
+        """
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
 
         for hash in inventory.Hashes:
@@ -351,7 +397,15 @@ class NeoNode(Protocol):
                     logger.info("handle consensus")
 
     def Relay(self, inventory):
+        """
+        Wrap the inventory in a InvPayload object and send it over the write to the remote node.
 
+        Args:
+            inventory:
+
+        Returns:
+            bool: True (fixed)
+        """
         inventory = InvPayload(type=inventory.InventoryType, hashes=[inventory.Hash.ToBytes()])
         m = Message("inv", inventory)
         self.SendSerializedMessage(m)

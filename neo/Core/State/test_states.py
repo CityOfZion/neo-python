@@ -6,11 +6,11 @@ from neo.Core.State.SpentCoinState import SpentCoinState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AccountState import AccountState
-from neo.UInt160 import UInt160
-from neo.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
+from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
 from neo.Core.Blockchain import Blockchain
 
 

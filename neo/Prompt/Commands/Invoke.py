@@ -8,6 +8,8 @@ from neo.Prompt.Utils import parse_param, get_asset_attachments
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
+
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
@@ -23,10 +25,12 @@ from neo.SmartContract import TriggerType
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.SmartContract.Contract import Contract
-from neo.Cryptography.Crypto import Crypto
-from neo.Fixed8 import Fixed8
-
+from neocore.Cryptography.Crypto import Crypto
+from neocore.Fixed8 import Fixed8
+from neo.Settings import settings
+from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
+from neo.EventHub import events
 
 from neo.VM.OpCode import *
 import json
@@ -52,16 +56,13 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
 
 #            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
 
-            # check if we can save the tx first
-            save_tx = wallet.SaveTransaction(wallet_tx)
-
-            if save_tx:
-                relayed = NodeLeader.Instance().Relay(wallet_tx)
-            else:
-                print("Could not save tx to wallet, will not send tx")
+            relayed = NodeLeader.Instance().Relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
+
+                wallet.SaveTransaction(wallet_tx)
+
                 return wallet_tx
             else:
                 print("Could not relay tx %s " % wallet_tx.Hash.ToString())
@@ -110,6 +111,8 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
             relayed = False
 
 #            print("full wallet tx: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
+#            toarray = Helper.ToArray(wallet_tx)
+#            print("to arary %s " % toarray)
 
             relayed = NodeLeader.Instance().Relay(wallet_tx)
 
@@ -273,6 +276,9 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
 
         service.ExecutionCompleted(engine, success)
 
+        for event in service.events_to_dispatch:
+            events.emit(event.event_type, event)
+
         if success:
 
             # this will be removed in favor of neo.EventHub
@@ -280,13 +286,15 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
                 for n in service.notifications:
                     Blockchain.Default().OnNotify(n)
 
+            print("Used %s Gas " % engine.GasConsumed().ToString())
+
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
-            consumed.value = int(consumed.value)
+            consumed = consumed.Ceil()
 
             net_fee = None
             tx_gas = None
 
-            if consumed < Fixed8.FromDecimal(10.0):
+            if consumed < Fixed8.Zero():
                 net_fee = Fixed8.FromDecimal(.001)
                 tx_gas = Fixed8.Zero()
             else:
@@ -320,6 +328,12 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
     contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
     storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
 
+    if settings.USE_DEBUG_STORAGE:
+        debug_storage = DebugStorage.instance()
+        debug_sn = debug_storage.db.snapshot()
+        storages = DBCollection(debug_storage.db, debug_sn, DBPrefix.ST_Storage, StorageItem)
+        storages.DebugStorage = True
+
     dtx = InvocationTransaction()
     dtx.Version = 1
     dtx.outputs = []
@@ -337,6 +351,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
     contract = wallet.GetDefaultContract()
     dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script))]
+
+    to_dispatch = []
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
@@ -449,6 +465,10 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             i_success = engine.Execute()
 
             service.ExecutionCompleted(engine, i_success)
+            to_dispatch = to_dispatch + service.events_to_dispatch
+
+            for event in to_dispatch:
+                events.emit(event.event_type, event)
 
             if i_success:
                 service.TestCommit()
@@ -456,6 +476,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 if len(service.notifications) > 0:
                     for n in service.notifications:
                         Blockchain.Default().OnNotify(n)
+
+                print("Used %s Gas " % engine.GasConsumed().ToString())
 
                 consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
                 consumed.value = int(consumed.value)

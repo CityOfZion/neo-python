@@ -2,7 +2,7 @@ import binascii
 import base58
 from mock import patch
 from neo.Utils.NeoTestCase import NeoTestCase
-from neo.Wallets.KeyPair import KeyPair
+from neocore.KeyPair import KeyPair
 
 
 class ConstructorTestCase(NeoTestCase):
@@ -12,7 +12,7 @@ class ConstructorTestCase(NeoTestCase):
             KeyPair(priv_key)
         self.assertEqual('Invalid private key', str(context.exception))
 
-    @patch('neo.Wallets.KeyPair.bitcoin.privkey_to_pubkey')
+    @patch('neocore.KeyPair.bitcoin.privkey_to_pubkey')
     def test_fail_to_determine_plublic_key(self, patched_priv_to_pubkey):
         # https://github.com/vbuterin/pybitcointools/blob/aeb0a2bbb8bbfe421432d776c649650eaeb882a5/bitcoin/main.py#L291
         patched_priv_to_pubkey.side_effect = Exception("Invalid privkey")

@@ -199,7 +199,11 @@ PICKITEM = b'\xC3'
 SETITEM = b'\xC4'
 NEWARRAY = b'\xC5'  # 用作引用類型
 NEWSTRUCT = b'\xC6'  # 用作值類型
+APPEND = b'\xC8'
+REVERSE = b'\xC9'
+REMOVE = b'\xCA'
 
+DEBUG = b'\xCD'
 
 import sys
 import importlib

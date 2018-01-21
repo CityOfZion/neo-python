@@ -1,19 +1,14 @@
-
 from .StateBase import StateBase
-import sys
-import binascii
-from neo.Fixed8 import Fixed8
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neocore.Fixed8 import Fixed8
+from neocore.IO.BinaryReader import BinaryReader
+from neo.IO.MemoryStream import StreamManager
 from neo.Core.AssetType import AssetType
-from neo.UInt160 import UInt160
-from neo.Cryptography.Crypto import Crypto
-from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neocore.UInt160 import UInt160
+from neocore.Cryptography.Crypto import Crypto
+from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
 
 
 class AssetState(StateBase):
-
     AssetId = None
     AssetType = None
     Name = None
@@ -32,6 +27,25 @@ class AssetState(StateBase):
     def __init__(self, asset_id=None, asset_type=None, name=None, amount=Fixed8(0), available=Fixed8(0),
                  precision=0, fee_mode=0, fee=Fixed8(0), fee_addr=UInt160(data=bytearray(20)), owner=None,
                  admin=None, issuer=None, expiration=None, is_frozen=False):
+        """
+        Create an instance.
+
+        Args:
+            asset_id (UInt256):
+            asset_type (neo.Core.AssetType):
+            name (str): the asset name.
+            amount (Fixed8):
+            available (Fixed8):
+            precision (int): number of decimals the asset has.
+            fee_mode (Fixed8):
+            fee (int):
+            fee_addr (UInt160): where the fee will be send to.
+            owner (EllipticCurve.ECPoint):
+            admin (UInt160): the administrator of the asset.
+            issuer (UInt160): the issuer of the asset.
+            expiration (UInt32): the block number on which the asset expires.
+            is_frozen (bool):
+        """
         self.AssetId = asset_id
         self.AssetType = asset_type
         self.Name = name
@@ -52,11 +66,20 @@ class AssetState(StateBase):
         self.Expiration = expiration
         self.IsFrozen = is_frozen
 
-#    def Size(self):
-#        return super(AssetState, self).Size()
+    #    def Size(self):
+    #        return super(AssetState, self).Size()
 
     @staticmethod
     def DeserializeFromDB(buffer):
+        """
+        Deserialize full object.
+
+        Args:
+            buffer (bytes, bytearray, BytesIO): (Optional) data to create the stream from.
+
+        Returns:
+            AssetState:
+        """
         m = StreamManager.GetStream(buffer)
         reader = BinaryReader(m)
         account = AssetState()
@@ -67,6 +90,12 @@ class AssetState(StateBase):
         return account
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neocore.IO.BinaryReader):
+        """
         super(AssetState, self).Deserialize(reader)
         self.AssetId = reader.ReadUInt256()
         self.AssetType = reader.ReadByte()
@@ -75,12 +104,12 @@ class AssetState(StateBase):
         position = reader.stream.tell()
 
         try:
-            self.Amount = reader.ReadFixed8(unsigned=True)
+            self.Amount = reader.ReadFixed8()
         except Exception as e:
             reader.stream.seek(position)
             self.Amount = reader.ReadFixed8()
 
-        self.Available = reader.ReadFixed8(unsigned=True)
+        self.Available = reader.ReadFixed8()
         self.Precision = reader.ReadByte()
 
         # fee mode
@@ -95,6 +124,12 @@ class AssetState(StateBase):
         self.IsFrozen = reader.ReadBool()
 
     def Serialize(self, writer):
+        """
+        Serialize full object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         super(AssetState, self).Serialize(writer)
         writer.WriteUInt256(self.AssetId)
         writer.WriteByte(self.AssetType)
@@ -119,6 +154,12 @@ class AssetState(StateBase):
         writer.WriteBool(self.IsFrozen)
 
     def GetName(self):
+        """
+        Get the asset name based on its type.
+
+        Returns:
+            str: 'NEO' or 'NEOGas'
+        """
         if self.AssetType == AssetType.GoverningToken:
             return "NEO"
         elif self.AssetType == AssetType.UtilityToken:
@@ -129,6 +170,12 @@ class AssetState(StateBase):
         return self.Name
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         return {
             'assetId': self.AssetId.ToString(),
             'assetType': self.AssetType,

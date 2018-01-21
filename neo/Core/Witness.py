@@ -4,7 +4,7 @@ import binascii
 
 from logzero import logger
 
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 
 
 class Witness(SerializableMixin):

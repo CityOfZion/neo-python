@@ -72,6 +72,8 @@ authenticated = gen_authenticated_decorator(API_AUTH_TOKEN)
 #
 # Smart contract event handler for Runtime.Notify events
 #
+
+
 @smart_contract.on_notify
 def sc_notify(event):
     logger.info("SmartContract Runtime.Notify event: %s", event)
@@ -118,6 +120,7 @@ def echo_msg(request, msg):
         "echo": msg
     }
 
+
 @app.route('/echo-post', methods=['POST'])
 @catch_exceptions
 @authenticated
@@ -134,6 +137,8 @@ def echo_post(request):
 #
 # Main method which starts everything up
 #
+
+
 def main():
     # Setup the blockchain
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)

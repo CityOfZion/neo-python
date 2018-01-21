@@ -1,5 +1,5 @@
 from neo.IO.MemoryStream import MemoryStream, StreamManager
-from neo.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryReader import BinaryReader
 
 
 class ExecutionContext():

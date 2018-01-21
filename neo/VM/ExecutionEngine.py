@@ -11,9 +11,9 @@ from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.OpCode import *
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neo.BigInteger import BigInteger
+from neocore.BigInteger import BigInteger
 from neo.VM.InteropService import Array, Struct, StackItem
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 
 
 class ExecutionEngine():
@@ -107,7 +107,7 @@ class ExecutionEngine():
             elif return_type == ContractParameterType.Array:
                 return item.GetArray()
             else:
-                logger.error("couldnt format results for return type %s " % return_type)
+                logger.error("Could not format results for return type %s " % return_type)
             return item
         except Exception as e:
             pass
@@ -652,6 +652,10 @@ class ExecutionEngine():
 
                 item = estack.Pop()
 
+                if not item:
+                    self._VMState |= VMState.FAULT
+                    return
+
                 if not item.IsArray:
                     estack.PushT(len(item.GetByteArray()))
 
@@ -747,6 +751,42 @@ class ExecutionEngine():
 
                 estack.PushT(Struct(items))
 
+            elif opcode == APPEND:
+                newItem = estack.Pop()
+
+                if type(newItem) is Struct:
+                    newItem = newItem.Clone()
+
+                arrItem = estack.Pop()
+
+                if not arrItem.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+
+                arr = arrItem.GetArray()
+                arr.append(newItem)
+
+            elif opcode == REVERSE:
+
+                arrItem = estack.Pop()
+                if not arrItem.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+                arrItem.GetArray().reverse()
+
+            elif opcode == REMOVE:
+                index = estack.Pop().GetBigInteger()
+                arrItem = estack.Pop()
+                if not arrItem.IsArray:
+                    self._VMState |= VMState.FAULT
+                    return
+                items = arrItem.GetArray()
+
+                if index < 0 or index >= len(items):
+                    self._VMState |= VMState.FAULT
+                    return
+                del items[index]
+
             elif opcode == THROW:
                 self._VMState |= VMState.FAULT
                 return
@@ -755,6 +795,10 @@ class ExecutionEngine():
                 if not estack.Pop().GetBoolean():
                     self._VMState |= VMState.FAULT
                     return
+
+            elif opcode == DEBUG:
+                pdb.set_trace()
+                return
 
             else:
 

@@ -9,13 +9,13 @@ Usage:
 from io import BytesIO, BufferedReader, BufferedWriter
 from neo.VM.OpCode import *
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.Cryptography.Crypto import *
-from neo.IO.Mixins import SerializableMixin
+from neocore.Cryptography.Crypto import *
+from neocore.IO.Mixins import SerializableMixin
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
-from neo.Cryptography.Helper import *
-from neo.Cryptography.ECCurve import ECDSA
+from neocore.Cryptography.Helper import *
+from neocore.Cryptography.ECCurve import ECDSA
 
 
 class ContractType():

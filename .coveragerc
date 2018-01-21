@@ -5,3 +5,4 @@ source = neo
 omit =
   venv*
   neo/Network/IPEndpoint.py
+  examples/*

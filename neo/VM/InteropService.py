@@ -5,7 +5,7 @@ import pdb
 from logzero import logger
 
 from neo.VM.Mixins import EquatableMixin
-from neo.BigInteger import BigInteger
+from neocore.BigInteger import BigInteger
 
 
 class StackItem(EquatableMixin):
@@ -84,7 +84,6 @@ class Array(StackItem):
             return False
         if other is self:
             return True
-
         if type(other) is not Array:
             return False
 
@@ -290,6 +289,7 @@ class InteropService():
     _dictionary = {}
 
     def __init__(self):
+        self._dictionary = {}
         self.Register("System.ExecutionEngine.GetScriptContainer", self.GetScriptContainer)
         self.Register("System.ExecutionEngine.GetExecutingScriptHash", self.GetExecutingScriptHash)
         self.Register("System.ExecutionEngine.GetCallingScriptHash", self.GetCallingScriptHash)
@@ -364,7 +364,7 @@ def stack_item_to_py(stack_item):
         return stack_item.GetInterface()
 
     elif isinstance(stack_item, Struct):
-        return stack_item.GetArray()
+        return [stack_item_to_py(item) for item in stack_item.GetArray()]
     elif stack_item is None:
         return None
     else:

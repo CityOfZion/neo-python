@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 
 
 class ClonableMixin(object):
@@ -39,3 +39,9 @@ class VerifiableMixin(SerializableMixin):
     # <param name="writer">存放序列化后的结果</param>
     def SerializeUnsigned(self, writer):
         pass
+
+
+class EquatableMixin():
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__

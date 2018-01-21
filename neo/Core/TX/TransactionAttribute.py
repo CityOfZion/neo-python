@@ -5,11 +5,9 @@ Description:
 Usage:
     from neo.Core.TX.TransactionAttribute import TransactionAttribute
 """
-import binascii
 from logzero import logger
-
 from neo.Network.Inventory import Inventory
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 
 
 class TransactionAttributeUsage(object):
@@ -61,17 +59,29 @@ class TransactionAttributeUsage(object):
 
 
 class TransactionAttribute(Inventory, SerializableMixin):
-
     MAX_ATTR_DATA_SIZE = 65535
 
     """docstring for TransactionAttribute"""
 
     def __init__(self, usage=None, data=None):
+        """
+        Create an instance.
+
+        Args:
+            usage (neo.Core.TX.TransactionAttribute.TransactionAttributeUsage):
+            data (bytes):
+        """
         super(TransactionAttribute, self).__init__()
         self.Usage = usage
         self.Data = data
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         usage = reader.ReadByte()
         self.Usage = usage
 
@@ -95,6 +105,15 @@ class TransactionAttribute(Inventory, SerializableMixin):
             logger.error("format error!!!")
 
     def Serialize(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+
+        Raises:
+            Exception: if the length exceeds the maximum allowed number of attributes in a transaction.
+        """
         writer.WriteByte(self.Usage)
 
         length = len(self.Data)
@@ -121,7 +140,12 @@ class TransactionAttribute(Inventory, SerializableMixin):
             logger.error("format error!!!")
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
 
+        Returns:
+             dict:
+        """
         obj = {
             'usage': self.Usage,
             'data': '' if not self.Data else self.Data.hex()

@@ -5,10 +5,7 @@ Description:
 Usage:
     from neo.Wallets.Wallet import Wallet
 """
-import hashlib
 import traceback
-import pdb
-
 from itertools import groupby
 from base58 import b58decode
 from decimal import Decimal
@@ -21,22 +18,21 @@ from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
-from neo.Cryptography.Helper import *
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Helper import *
+from neocore.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
-from neo.Wallets.KeyPair import KeyPair
+from neocore.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
+from neocore.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
 
 
 class Wallet(object):
-
     AddressVersion = None
 
     _path = ''
@@ -126,7 +122,7 @@ class Wallet(object):
                 h = int(self.LoadStoredData('Height'))
                 self._current_height = h
             except Exception as e:
-                logger.error("couldnt load height data %s " % e)
+                logger.error("Could not load height data %s " % e)
                 self._current_height = 0
 
             del passwordKey
@@ -184,7 +180,15 @@ class Wallet(object):
         self._tokens[token.ScriptHash.ToBytes()] = token
 
     def DeleteNEP5Token(self, token):
+        """
+        Delete a NEP5 token from the wallet.
 
+        Args:
+            token (NEP5Token): an instance of type neo.Wallets.NEP5Token.
+
+        Returns:
+            bool: success status.
+        """
         return self._tokens.pop(token.ScriptHash.ToBytes())
 
     def ChangePassword(self, password_old, password_new):
@@ -356,7 +360,6 @@ class Wallet(object):
             for vin in vins:
                 if coinref.PrevIndex == vin.PrevIndex and \
                         coinref.PrevHash == vin.PrevHash:
-
                     ret.append(coin)
         return ret
 
@@ -421,7 +424,7 @@ class Wallet(object):
 
         return [coin for coin in coins if coin.Output.AssetId == asset_id]
 
-    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0):
+    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0, reverse=False):
         """
         Finds unspent coin objects totalling a requested value in the wallet limited to those of a certain asset type.
 
@@ -446,14 +449,26 @@ class Wallet(object):
         if sum < amount:
             return None
 
-        sorted(coins, key=lambda coin: coin.Output.Value.value)
+        coins = sorted(coins, key=lambda coin: coin.Output.Value.value)
+
+        if reverse:
+            coins.reverse()
 
         total = Fixed8(0)
 
-        for index, coin in enumerate(coins):
+        # go through all coins, see if one is an exact match. then we'll use that
+        for coin in coins:
+            if coin.Output.Value == amount:
+                return [coin]
+
+        to_ret = []
+        for coin in coins:
             total = total + coin.Output.Value
+            to_ret.append(coin)
             if total >= amount:
-                return coins[0:index + 1]
+                break
+
+        return to_ret
 
     def GetUnclaimedCoins(self):
         """
@@ -473,7 +488,6 @@ class Wallet(object):
                     coin.State & CoinState.Claimed == 0 and \
                     coin.State & CoinState.Frozen == 0 and \
                     coin.State & CoinState.WatchOnly == 0:
-
                 unclaimed.append(coin)
 
         return unclaimed
@@ -588,7 +602,6 @@ class Wallet(object):
                         coin.State & CoinState.Locked == 0 and \
                         coin.State & CoinState.Frozen == 0 and \
                         coin.State & CoinState.WatchOnly == watch_only:
-
                     total = total + coin.Output.Value
 
         return total
@@ -681,7 +694,6 @@ class Wallet(object):
                             added.add(newcoin)
 
                         if state & AddressState.WatchOnly > 0:
-
                             self._coins[key].State |= CoinState.WatchOnly
                             changed.add(self._coins[key])
 
@@ -998,7 +1010,7 @@ class Wallet(object):
 
         fee = fee + (tx.SystemFee() * Fixed8.FD())
 
-#        pdb.set_trace()
+        #        pdb.set_trace()
 
         paytotal = {}
         if tx.Type != int.from_bytes(TransactionType.IssueTransaction, 'little'):

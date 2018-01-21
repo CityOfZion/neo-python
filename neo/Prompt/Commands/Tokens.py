@@ -1,6 +1,6 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
 from neo.Prompt.Utils import get_asset_id, get_asset_attachments
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
 

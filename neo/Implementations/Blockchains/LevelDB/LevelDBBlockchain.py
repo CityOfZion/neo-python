@@ -10,14 +10,14 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction, TransactionType
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
+from neocore.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
@@ -32,12 +32,12 @@ from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
-from neo.Cryptography.Crypto import Crypto
-from neo.BigInteger import BigInteger
+from neocore.Cryptography.Crypto import Crypto
+from neocore.BigInteger import BigInteger
+from neo.EventHub import events
 
 
 class LevelDBBlockchain(Blockchain):
-
     _path = None
     _db = None
 
@@ -62,7 +62,7 @@ class LevelDBBlockchain(Blockchain):
         try:
             return self._header_index[self._current_block_height]
         except Exception as e:
-            logger.info("Couldnt get current block hash, returning none: %s ", )
+            logger.info("Could not get current block hash, returning none: %s ", )
 
         return None
 
@@ -106,7 +106,7 @@ class LevelDBBlockchain(Blockchain):
 
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)
-#            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
+        #            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
         except Exception as e:
             logger.info("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
@@ -122,8 +122,8 @@ class LevelDBBlockchain(Blockchain):
             current_header_height = int.from_bytes(ba[-4:], 'little')
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
-#            logger.info("current header hash!! %s " % current_header_hash)
-#            logger.info("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
+            #            logger.info("current header hash!! %s " % current_header_hash)
+            #            logger.info("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
 
             hashes = []
             try:
@@ -134,10 +134,10 @@ class LevelDBBlockchain(Blockchain):
                     key = int.from_bytes(key[-4:], 'little')
                     hashes.append({'k': key, 'v': hlist})
                     StreamManager.ReleaseStream(ms)
-    #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
+            #                hashes.append({'index':int.from_bytes(key, 'little'), 'hash':value})
 
             except Exception as e:
-                logger.info("Couldnt get stored header hash list: %s " % e)
+                logger.info("Could not get stored header hash list: %s " % e)
 
             if len(hashes):
                 hashes.sort(key=lambda x: x['k'])
@@ -291,10 +291,6 @@ class LevelDBBlockchain(Blockchain):
         sn.close()
 
         return result
-
-    def GetUnspent(self, hash, index):
-        # abstract
-        pass
 
     def GetAllUnspent(self, hash):
 
@@ -464,11 +460,19 @@ class LevelDBBlockchain(Blockchain):
         return None
 
     def GetBlockHash(self, height):
+        """
+        Get the block hash by its block height
+        Args:
+            height(int): height of the block to retrieve hash from.
+
+        Returns:
+            bytes: a non-raw block hash (i.e. b'6dd83ed8a3fc02e322f91f30431bf3662a8c8e8ebe976c3565f0d21c70620991', but not b'\x6d\xd8...etc'
+        """
         if self._current_block_height < height:
-            return False
+            return
 
         if len(self._header_index) <= height:
-            return False
+            return
 
         return self._header_index[height]
 
@@ -481,11 +485,19 @@ class LevelDBBlockchain(Blockchain):
             amount = int.from_bytes(value, 'little', signed=False)
             return amount
         except Exception as e:
-            logger.info("couldnt get sys fee: %s " % e)
+            logger.info("Could not get sys fee: %s " % e)
 
         return 0
 
     def GetBlockByHeight(self, height):
+        """
+        Get a block by its height.
+        Args:
+            height(int): the height of the block to retrieve.
+
+        Returns:
+            neo.Core.Block: block instance.
+        """
         hash = self.GetBlockHash(height)
         if hash is not None:
             return self.GetBlockByHash(hash)
@@ -520,7 +532,7 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Block.FromTrimmedData(outhex, 0)
         except Exception as e:
-            logger.info("couldnt get block %s " % e)
+            logger.info("Could not get block %s " % e)
         return None
 
     def AddHeader(self, header):
@@ -533,7 +545,8 @@ class LevelDBBlockchain(Blockchain):
         for header in headers:
 
             if header.Index - 1 >= len(self._header_index) + count:
-                logger.info("header in greater than header index length: %s %s " % (header.Index, len(self._header_index)))
+                logger.info(
+                    "header is greater than header index length: %s %s " % (header.Index, len(self._header_index)))
                 break
 
             if header.Index < count + len(self._header_index):
@@ -569,7 +582,6 @@ class LevelDBBlockchain(Blockchain):
         hHash = header.Hash.ToBytes()
 
         if hHash not in self._header_index:
-
             self._header_index.append(hHash)
 
         while header.Index - 2000 >= self._stored_header_count:
@@ -610,6 +622,8 @@ class LevelDBBlockchain(Blockchain):
         amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
         amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
 
+        to_dispatch = []
+
         with self._db.write_batch() as wb:
 
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
@@ -640,18 +654,21 @@ class LevelDBBlockchain(Blockchain):
 
                 for txhash in unique_tx_input_hashes:
                     prevTx, height = self.GetTransaction(txhash.ToBytes())
-                    coin_refs_by_hash = [coinref for coinref in tx.inputs if coinref.PrevHash.ToBytes() == txhash.ToBytes()]
+                    coin_refs_by_hash = [coinref for coinref in tx.inputs if
+                                         coinref.PrevHash.ToBytes() == txhash.ToBytes()]
                     for input in coin_refs_by_hash:
 
                         uns = unspentcoins.GetAndChange(input.PrevHash.ToBytes())
                         uns.OrEqValueForItemAt(input.PrevIndex, CoinState.Spent)
 
                         if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                            sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(), SpentCoinState(input.PrevHash, height, []))
+                            sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(),
+                                                         SpentCoinState(input.PrevHash, height, []))
                             sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
 
                         output = prevTx.outputs[input.PrevIndex]
-                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes, AccountState(output.ScriptHash))
+                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes,
+                                                     AccountState(output.ScriptHash))
                         assetid = prevTx.outputs[input.PrevIndex].AssetId
                         acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
@@ -709,6 +726,7 @@ class LevelDBBlockchain(Blockchain):
                     except Exception as e:
                         service.ExecutionCompleted(engine, False, e)
 
+                    to_dispatch = to_dispatch + service.events_to_dispatch
                 else:
 
                     if tx.Type != b'\x00' and tx.Type != 128:
@@ -753,6 +771,9 @@ class LevelDBBlockchain(Blockchain):
             wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
             self._current_block_height = block.Index
             self._persisting_block = None
+
+            for event in to_dispatch:
+                events.emit(event.event_type, event)
 
     def PersistBlocks(self):
         #        logger.info("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))

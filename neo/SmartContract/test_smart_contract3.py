@@ -7,8 +7,8 @@ from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AssetState import AssetState
-from neo.UInt256 import UInt256
-from neo.Cryptography.Crypto import Crypto
+from neocore.UInt256 import UInt256
+from neocore.Cryptography.Crypto import Crypto
 
 
 class SmartContractTest3(BlockchainFixtureTestCase):
