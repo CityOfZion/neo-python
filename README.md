@@ -25,14 +25,10 @@
 
 ## Overview
 
-neo-python is an alternative implementation of the original NEO VM and is easy
-to install/run on *nix environments. For Windows, installing a dependency
-(LevelDB) is more involved, for serious activities, either use a Linux virtual
-machine or run the original NEO VM on Windows.
-
-It comes with batteries included, ie. it runs a full node (syncing and running contracts),
-plus, it comes with a CLI client (through the `prompt.py`) allowing you to develop/run/test
-and debug your Smart Contracts written in Python.
+neo-python is an alternative implementation of the original NEO environment. It
+comes with everything necessary to build, deploy and run Smart Contracts
+written in Python, but is also able to work with Smart Contracts written in
+other languages.
 
 ### What does it currently do
 
@@ -69,15 +65,16 @@ found at [Read The Docs](https://neo-python.readthedocs.io/en/latest/).
 
 ## Getting started
 
+neo-python has two System dependencies (everything else is covered with `pip`):
+
+- [LevelDB](https://github.com/google/leveldb)
+- [Python 3.5.4](https://www.python.org/downloads/release/python-354) (3.6 and up is currently not supported due to its `byteplay3` dependency)
+
 We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get
-you started. There are monay more videos under the
+you started. There are many more videos under the
 [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
 channel, check them out.
 
-neo-python has two System dependencies (everything else is covered with `pip`):
-
-- LevelDB
-- Python **3.5** (3.6 and up are currently not supported)
 
 ### LevelDB
 
@@ -117,10 +114,10 @@ support tied to Visual Studio and libraries.
 
 neo-python is currently only compatible with **Python 3.5** (due to its `byteplay3` dependency).
 
-On *nix systems, install Python 3.5 via some package manager, or download an installation package
+On *nix systems, install Python 3.5 via your package manager, or download an installation package
 from the [official homepage](https://www.python.org/downloads/release/python-354).
 
-#### Virtual Environment
+##### Virtual Environment
 
 It is recommended to put all project dependencies into its own virtual environment,
 this way we don't pollute the global installation which could lead to version conflicts.
@@ -135,14 +132,6 @@ Now let's install neo-python's dependencies:
 ```
 pip install -U setuptools pip wheel
 pip install -e .
-```
-
-Tip: using [autoenv](https://github.com/kennethreitz/autoenv) to load the configuration
-automatically is a nice little time-saver:
-
-Example `neo-project/.env`:
-```
-source venv/bin/activate
 ```
 
 -------------------
