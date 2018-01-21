@@ -276,12 +276,17 @@ This is a checklist for releasing a new version:
 
 ## Troubleshooting
 
-If you encounter any problems, please take a look at the [installation
-section](https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes)
-in the docs, and if that doesn't help open an issue. We'll try to help.
+If you run into problems, check these things before ripping out your hair:
 
-You can reach us on the [NEO Discord](https://discord.gg/R8v48YA), or simply file
-a [GitHub issue](https://github.com/CityOfZion/neo-python/issues/new).
+* Double-check that you are using Python 3.5.x
+* Update the project dependencies (`pip install -e .`)
+* Compiling contracts with `neo-boa` can cause issues with `pyenv`,
+  try using Python without changed runtime-paths
+* If you encounter any problems, please take a look at the [installation
+  section](https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes)
+  in the docs, and if that doesn't help open an issue. We'll try to help.
+* You can reach us on the [NEO Discord](https://discord.gg/R8v48YA), or simply file
+  a [GitHub issue](https://github.com/CityOfZion/neo-python/issues/new).
 
 ## License
 
