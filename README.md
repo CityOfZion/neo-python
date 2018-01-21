@@ -117,10 +117,8 @@ support tied to Visual Studio and libraries.
 
 neo-python is currently only compatible with **Python 3.5** (due to its `byteplay3` dependency).
 
-On *nix systems, install Python 3.5 via some package manager. It should not
-conflict with the existing System Python (though, if that concerns you, you can
-use third-party tools like [pyenv](https://github.com/pyenv/pyenv) to manage
-multiple versions of Python local to you user-account).
+On *nix systems, install Python 3.5 via some package manager, or download an installation package
+from the [official homepage](https://www.python.org/downloads/release/python-354).
 
 #### Virtual Environment
 
@@ -280,8 +278,6 @@ If you run into problems, check these things before ripping out your hair:
 
 * Double-check that you are using Python 3.5.x
 * Update the project dependencies (`pip install -e .`)
-* Compiling contracts with `neo-boa` can cause issues with `pyenv`,
-  try using Python without changed runtime-paths
 * If you encounter any problems, please take a look at the [installation
   section](https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes)
   in the docs, and if that doesn't help open an issue. We'll try to help.
