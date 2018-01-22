@@ -14,7 +14,6 @@ from neo.Implementations.Notifications.LevelDB.NotificationDB import Notificatio
 from logzero import logger
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response
-import ast
 
 
 class JsonRpcErrors:
@@ -66,7 +65,7 @@ class JsonRpcApi(object):
             if "method" not in body:
                 raise JsonRpcError("Field 'method' is missing", JsonRpcErrors.INVALID_REQUEST)
 
-            params = ast.literal_eval(body["params"]) if "params" in body else None
+            params = body["params"] if "params" in body else None
             result = self.json_rpc_method_handler(body["method"], params)
             return self.get_response(body["id"], result)
 

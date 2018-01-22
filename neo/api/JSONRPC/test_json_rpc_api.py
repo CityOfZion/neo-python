@@ -73,7 +73,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(756620, res["result"])
 
     def test_getblockhash(self):
-        req = self._gen_rpc_req("getblockhash", params='[2]')
+        req = self._gen_rpc_req("getblockhash", params=[2])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
