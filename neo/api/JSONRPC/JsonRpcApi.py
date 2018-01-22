@@ -14,6 +14,7 @@ from neo.Implementations.Notifications.LevelDB.NotificationDB import Notificatio
 from logzero import logger
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response
+import ast
 
 
 class JsonRpcErrors:
@@ -65,7 +66,7 @@ class JsonRpcApi(object):
             if "method" not in body:
                 raise JsonRpcError("Field 'method' is missing", JsonRpcErrors.INVALID_REQUEST)
 
-            params = body["params"] if "params" in body else None
+            params = ast.literal_eval(body["params"]) if "params" in body else None
             result = self.json_rpc_method_handler(body["method"], params)
             return self.get_response(body["id"], result)
 
@@ -106,5 +107,10 @@ class JsonRpcApi(object):
     def json_rpc_method_handler(self, method, params):
         # print("method", method, params)
         if method == "getblockcount":
-            return str(Blockchain.Default().HeaderHeight)
+            return Blockchain.Default().HeaderHeight
+        if method == "getblockhash":
+            height = params[0]
+            if height >= 0 and height <= Blockchain.Default().Height:
+                return Blockchain.Default().GetBlockHash(height).decode('utf-8')
+
         raise JsonRpcError("Method '%s' not found" % method, JsonRpcErrors.METHOD_NOT_FOUND)
