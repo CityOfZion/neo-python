@@ -107,9 +107,11 @@ class JsonRpcApi(object):
         # print("method", method, params)
         if method == "getblockcount":
             return Blockchain.Default().HeaderHeight
-        if method == "getblockhash":
+        elif method == "getblockhash":
             height = params[0]
             if height >= 0 and height <= Blockchain.Default().Height:
                 return Blockchain.Default().GetBlockHash(height).decode('utf-8')
+            else:
+                raise JsonRpcError("Invalid Height", JsonRpcErrors.INVALID_PARAMS, -100)
 
         raise JsonRpcError("Method '%s' not found" % method, JsonRpcErrors.METHOD_NOT_FOUND)

@@ -80,3 +80,13 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # taken from neoscan
         expected_blockhash = '60ad7aebdae37f1cad7a15b841363b5a7da9fd36bf689cfde75c26c0fa085b64'
         self.assertEqual(expected_blockhash, res["result"])
+
+    def test_getblockhash_failure(self):
+        req = self._gen_rpc_req("getblockhash", params=[-1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(-100, res["error"]["code"])
+
+        # TODO: fix this later
+        # self.assertEqual("Invalid Height", res["error"]["message"])
