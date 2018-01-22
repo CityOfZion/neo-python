@@ -115,7 +115,6 @@ def get_tx_attr_from_args(params):
             to_remove.append(item)
             try:
                 attr_str = item.replace('--tx-attr=', '')
-                print("attr str: %s " % attr_str)
                 tx_attr_obj = eval(attr_str)
                 if type(tx_attr_obj) is dict:
                     if attr_obj_to_tx_attr(tx_attr_obj) is not None:
@@ -139,7 +138,8 @@ def attr_obj_to_tx_attr(obj):
         datum = obj['data']
         if type(datum) is str:
             datum = datum.encode('utf-8')
-        return TransactionAttribute(usage=obj['usage'], data=datum)
+        usage = obj['usage']
+        return TransactionAttribute(usage=usage, data=datum)
     except Exception as e:
         logger.error("could not convert object %s into TransactionAttribute: %s " % (obj, e))
     return None
