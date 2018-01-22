@@ -262,6 +262,7 @@ class PromptInterface(object):
             path = self.Wallet._path
             self._walletdb_loop.stop()
             self._walletdb_loop = None
+            self.Wallet.Close()
             self.Wallet = None
             print("Closed wallet %s" % path)
 
