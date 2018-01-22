@@ -65,6 +65,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["id"], "42")
         self.assertEqual(res["error"]["code"], -32601)
+        self.assertEqual(res["error"]["message"], "Method not found")
 
     def test_getblockcount(self):
         req = self._gen_rpc_req("getblockcount")
@@ -85,7 +86,6 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getblockhash", params=[-1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-
         self.assertEqual(-100, res["error"]["code"])
 
         # TODO: fix this later
