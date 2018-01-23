@@ -246,7 +246,7 @@ class Block(BlockBase, InventoryMixin):
         """
         json = super(Block, self).ToJson()
         if self.__is_trimmed:
-            json['tx'] = self.Transactions
+            json['tx'] = ['0x%s' % tx for tx in self.Transactions]
         else:
             json['tx'] = [tx.ToJson() for tx in self.Transactions]
 

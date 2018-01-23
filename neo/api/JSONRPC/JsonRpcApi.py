@@ -144,7 +144,7 @@ class JsonRpcApi(object):
             raise JsonRpcError(-100, "Unknown asset")
 
         elif method == "getbestblockhash":
-            return Blockchain.Default().CurrentHeaderHash.decode('utf-8')
+            return '0x%s' % Blockchain.Default().CurrentHeaderHash.decode('utf-8')
 
         elif method == "getblock":
             # this should work for either str or int
@@ -161,7 +161,7 @@ class JsonRpcApi(object):
                 jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
                 hash = Blockchain.Default().GetNextBlockHash(block.Hash)
                 if hash:
-                    jsn['nextblockhash'] = hash.decode('utf-8')
+                    jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
                 return jsn
 
             # full tx data is not included by default
@@ -175,7 +175,7 @@ class JsonRpcApi(object):
         elif method == "getblockhash":
             height = params[0]
             if height >= 0 and height <= Blockchain.Default().Height:
-                return Blockchain.Default().GetBlockHash(height).decode('utf-8')
+                return '0x%s' % Blockchain.Default().GetBlockHash(height).decode('utf-8')
             else:
                 raise JsonRpcError(-100, "Invalid Height")
 

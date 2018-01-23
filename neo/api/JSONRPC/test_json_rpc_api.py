@@ -85,7 +85,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
 
         # taken from neoscan
-        expected_blockhash = '60ad7aebdae37f1cad7a15b841363b5a7da9fd36bf689cfde75c26c0fa085b64'
+        expected_blockhash = '0x60ad7aebdae37f1cad7a15b841363b5a7da9fd36bf689cfde75c26c0fa085b64'
         self.assertEqual(expected_blockhash, res["result"])
 
     def test_getblockhash_failure(self):
@@ -100,7 +100,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getaccountstate", params=[addr_str])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['balances']['c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'], '4061.0')
+        self.assertEqual(res['result']['balances']['0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'], '4061.0')
         self.assertEqual(res['result']['script_hash'], addr_str)
 
     def test_account_state_not_existing_yet(self):
@@ -125,8 +125,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getassetstate", params=[asset_str])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-
-        self.assertEqual(res['result']['assetId'], asset_str)
+        self.assertEqual(res['result']['assetId'], '0x%s' % asset_str)
         self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
         self.assertEqual(res['result']['available'], 3825482025899)
 
@@ -143,7 +142,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getbestblockhash", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], '370007195c10a05e355b606f8f8867239f026a925f2ddc46940f62c9136d3ff5')
+        self.assertEqual(res['result'], '0x370007195c10a05e355b606f8f8867239f026a925f2ddc46940f62c9136d3ff5')
 
     def test_get_connectioncount(self):
         # @TODO
@@ -157,11 +156,10 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getblock", params=[10, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-
         self.assertEqual(res['result']['index'], 10)
-        self.assertEqual(res['result']['hash'], '9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
+        self.assertEqual(res['result']['hash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
         self.assertEqual(res['result']['confirmations'], 756610)
-        self.assertEqual(res['result']['nextblockhash'], 'a0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf')
+        self.assertEqual(res['result']['nextblockhash'], '0xa0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf')
 
     def test_get_block_hash(self):
         req = self._gen_rpc_req("getblock", params=['a0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf', 1])
@@ -170,7 +168,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
         self.assertEqual(res['result']['index'], 11)
         self.assertEqual(res['result']['confirmations'], 756609)
-        self.assertEqual(res['result']['previousblockhash'], '9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
+        self.assertEqual(res['result']['previousblockhash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
 
     def test_get_block_hash_failure(self):
         req = self._gen_rpc_req("getblock", params=['aad34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf', 1])

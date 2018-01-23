@@ -271,7 +271,7 @@ class AccountState(StateBase):
 
         balances = {}
         for key, value in self.Balances.items():
-            balances[key.ToString()] = str(value.value / Fixed8.D)
+            balances[key.To0xString()] = str(value.value / Fixed8.D)
 
         json['balances'] = balances
         return json
