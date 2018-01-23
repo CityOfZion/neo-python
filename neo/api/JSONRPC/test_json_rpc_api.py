@@ -198,7 +198,19 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], 230)
 
-        # TODO: test for error when requesting invalid block height
+        # test negative block
+        req = self._gen_rpc_req("getblocksysfee", params=[-1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Invalid Height')
+
+        # test block exceeding max block height
+        req = self._gen_rpc_req("getblocksysfee", params=[3000000000])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Invalid Height')
 
     def test_block_non_verbose(self):
         req = self._gen_rpc_req("getblock", params=[2003, 0])
