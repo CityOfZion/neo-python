@@ -14,6 +14,13 @@ from neo.Implementations.Notifications.LevelDB.NotificationDB import Notificatio
 from logzero import logger
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response
+from neo.Core.State.AccountState import AccountState
+from neo.Core.State.ContractState import ContractState
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
+from neo.Wallets import Wallet
+from neo.Core.Helper import Helper
+from neo.Network.NodeLeader import NodeLeader
 
 
 class JsonRpcError(Exception):
@@ -110,13 +117,99 @@ class JsonRpcApi(object):
 
     def json_rpc_method_handler(self, method, params):
         # print("method", method, params)
-        if method == "getblockcount":
-            return Blockchain.Default().HeaderHeight
+
+        if method == "getaccountstate":
+            acct = Blockchain.Default().GetAccountState(params[0])
+            if acct is None:
+                acct = AccountState(script_hash=Helper.AddrStrToScriptHash(params[0]))
+            return acct.ToJson()
+
+        elif method == "getassetstate":
+            asset_id = params[0].encode('utf-8')
+            asset = Blockchain.Default().GetAssetState(asset_id)
+            if asset:
+                return asset.ToJson()
+            raise JsonRpcError(-100, "Unknown asset")
+
+        elif method == "getbestblockhash":
+            return Blockchain.Default().CurrentHeaderHash.decode('utf-8')
+
+        elif method == "getblock":
+            # this should work for either str or int
+            block = Blockchain.Default().GetBlock(params[0])
+            if not block:
+                raise JsonRpcError(-100, "Unknown block")
+
+            verbose = False
+            if len(params) >= 2 and params[1]:
+                verbose = True
+
+            if verbose:
+                jsn = block.ToJson()
+                jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
+                hash = Blockchain.Default().GetNextBlockHash(block.Hash)
+                if hash:
+                    jsn['nextblockhash'] = hash.decode('utf-8')
+                return jsn
+
+            # full tx data is not included by default
+            # this will load them to be serialized
+            block.Transactions = block.FullTransactions
+            return Helper.ToArray(block).decode('utf-8')
+
+        elif method == "getblockcount":
+            return Blockchain.Default().Height + 1
+
         elif method == "getblockhash":
             height = params[0]
             if height >= 0 and height <= Blockchain.Default().Height:
                 return Blockchain.Default().GetBlockHash(height).decode('utf-8')
             else:
                 raise JsonRpcError(-100, "Invalid Height")
+
+        elif method == "getblocksysfee":
+            raise NotImplementedError()
+
+        elif method == "getconnectioncount":
+            return len(NodeLeader.Instance().Peers)
+
+        elif method == "getcontractstate":
+            raise NotImplementedError()
+
+        elif method == "getrawmempool":
+            raise NotImplementedError()
+
+        elif method == "getrawtransaction":
+            raise NotImplementedError()
+
+        elif method == "getstorage":
+            raise NotImplementedError()
+
+        elif method == "gettxout":
+            raise NotImplementedError()
+
+        elif method == "invoke":
+            raise NotImplementedError()
+
+        elif method == "invokefunction":
+            raise NotImplementedError()
+
+        elif method == "invokescript":
+            raise NotImplementedError()
+
+        elif method == "sendrawtransaction":
+            raise NotImplementedError()
+
+        elif method == "submitblock":
+            raise NotImplementedError()
+
+        elif method == "validateaddress":
+            raise NotImplementedError()
+
+        elif method == "getpeers":
+            raise NotImplementedError()
+
+        elif method == "getversion":
+            raise NotImplementedError()
 
         raise JsonRpcError.methodNotFound()

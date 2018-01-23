@@ -512,7 +512,7 @@ class LevelDBBlockchain(Blockchain):
         except Exception as e:
             pass
 
-        if len(height_or_hash) == 64:
+        if intval is None and len(height_or_hash) == 64:
             bhash = height_or_hash.encode('utf-8')
             if bhash in self._header_index:
                 hash = bhash
@@ -533,6 +533,14 @@ class LevelDBBlockchain(Blockchain):
             return Block.FromTrimmedData(outhex, 0)
         except Exception as e:
             logger.info("Could not get block %s " % e)
+        return None
+
+    def GetNextBlockHash(self, hash):
+        header = self.GetHeader(hash.ToBytes())
+        if header:
+            if header.Index + 1 >= len(self._header_index):
+                return None
+            return self._header_index[header.Index + 1]
         return None
 
     def AddHeader(self, header):
