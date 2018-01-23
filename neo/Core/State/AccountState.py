@@ -8,6 +8,7 @@ from neocore.IO.BinaryWriter import BinaryWriter
 
 
 class AccountState(StateBase):
+
     ScriptHash = None
     IsFrozen = False
     Votes = []
