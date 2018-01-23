@@ -204,7 +204,7 @@ class Block(BlockBase, InventoryMixin):
         reader.ReadByte()
         witness = Witness()
         witness.Deserialize(reader)
-        block.witness = witness
+        block.Script = witness
 
         block.Transactions = reader.ReadHashes()
 
@@ -234,7 +234,7 @@ class Block(BlockBase, InventoryMixin):
         Args:
             writer (neo.IO.BinaryWriter):
         """
-        super(BlockBase, self).Serialize(writer)
+        super(Block, self).Serialize(writer)
         writer.WriteSerializableArray(self.Transactions)
 
     def ToJson(self):
@@ -245,7 +245,7 @@ class Block(BlockBase, InventoryMixin):
              dict:
         """
         json = super(Block, self).ToJson()
-        if self.__is_trimmed:
+        if self.Transactions[0] and isinstance(self.Transactions[0],str):
             json['tx'] = ['0x%s' % tx for tx in self.Transactions]
         else:
             json['tx'] = [tx.ToJson() for tx in self.Transactions]

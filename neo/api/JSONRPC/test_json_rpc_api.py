@@ -10,7 +10,9 @@ from klein.test.test_resource import requestMock
 from neo import __version__
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
+from neo.IO.Helper import Helper
 from neocore.UInt160 import UInt160
+import binascii
 
 
 def mock_request(body):
@@ -191,9 +193,10 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertIsNotNone(res['result'])
 
-        # output = binascii.unhexlify( res['result'])
-        # @TODO
-        # The getblock non verbose method is not serializing the blocks correctly
+        output = binascii.unhexlify( res['result'])
+        block = Helper.AsSerializableWithType(output, 'neo.Core.Block.Block')
+        self.assertEqual(block.Index, 2003)
+        self.assertEqual(len(block.Transactions), 2)
 
     # def test_get_contract_state(self):
     #     contract_hash = UInt160(data=bytearray(b'\x11\xc4\xd1\xf4\xfb\xa6\x19\xf2b\x88p\xd3n:\x97s\xe8tp['))
