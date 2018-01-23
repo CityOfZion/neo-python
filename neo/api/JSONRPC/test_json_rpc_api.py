@@ -87,6 +87,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getblockhash", params=[-1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
+
         self.assertEqual(-100, res["error"]["code"])
         self.assertEqual("Invalid Height", res["error"]["message"])
 

@@ -143,6 +143,9 @@ class JsonRpcApi(object):
         elif method == "getbestblockhash":
             return Blockchain.Default().CurrentHeaderHash.decode('utf-8')
 
+        elif method == "getblockcount":
+            return Blockchain.Default().HeaderHeight
+
         elif method == "getblock":
             # this should work for either str or int
             block = Blockchain.Default().GetBlock(params[0])
