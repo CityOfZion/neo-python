@@ -126,7 +126,11 @@ class JsonRpcApi(object):
         if method == "getaccountstate":
             acct = Blockchain.Default().GetAccountState(params[0])
             if acct is None:
-                acct = AccountState(script_hash=Helper.AddrStrToScriptHash(params[0]))
+                try:
+                    acct = AccountState(script_hash=Helper.AddrStrToScriptHash(params[0]))
+                except Exception as e:
+                    raise JsonRpcError(-2146233033, "One of the identified items was in an invalid format.")
+
             return acct.ToJson()
 
         elif method == "getassetstate":
