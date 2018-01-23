@@ -131,6 +131,13 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
         self.assertEqual(res['result']['available'], 3825482025899)
 
+    def test_get_asset_state_0x(self):
+        asset_str = '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
+        req = self._gen_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['assetId'], asset_str)
+
     def test_bad_asset_state(self):
         asset_str = '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282dee'
         req = self._gen_rpc_req("getassetstate", params=[asset_str])
@@ -172,6 +179,12 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['confirmations'], 756609)
         self.assertEqual(res['result']['previousblockhash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
 
+    def test_get_block_hash_0x(self):
+        req = self._gen_rpc_req("getblock", params=['0xa0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf', 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['index'], 11)
+
     def test_get_block_hash_failure(self):
         req = self._gen_rpc_req("getblock", params=['aad34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf', 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
@@ -193,17 +206,29 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertIsNotNone(res['result'])
 
+        # we should be able to instantiate a matching block with the result
         output = binascii.unhexlify( res['result'])
         block = Helper.AsSerializableWithType(output, 'neo.Core.Block.Block')
         self.assertEqual(block.Index, 2003)
         self.assertEqual(len(block.Transactions), 2)
 
-    # def test_get_contract_state(self):
-    #     contract_hash = UInt160(data=bytearray(b'\x11\xc4\xd1\xf4\xfb\xa6\x19\xf2b\x88p\xd3n:\x97s\xe8tp['))
-    #     req = self._gen_rpc_req("getcontractstate", params=[13321])
-    #     mock_req = mock_request(json.dumps(req).encode("utf-8"))
-    #     res = json.loads(self.app.home(mock_req))
-    #     self.assertEqual(res['result'], 230)
+    def test_get_contract_state(self):
+        contract_hash = UInt160(data=bytearray(b'\x11\xc4\xd1\xf4\xfb\xa6\x19\xf2b\x88p\xd3n:\x97s\xe8tp[')).ToString()
+        req = self._gen_rpc_req("getcontractstate", params=[contract_hash])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['code_version'], '3')
+        self.assertEqual(res['result']['properties']['storage'],True)
+        self.assertEqual(res['result']['code']['hash'], '0x5b7074e873973a6ed3708862f219a6fbf4d1c411')
+        self.assertEqual(res['result']['code']['returntype'],5)
+        self.assertEqual(res['result']['code']['parameters'],'0710')
+
+    def test_get_contract_state_0x(self):
+        contract_hash = '0x%s' % UInt160(data=bytearray(b'\x11\xc4\xd1\xf4\xfb\xa6\x19\xf2b\x88p\xd3n:\x97s\xe8tp[')).ToString()
+        req = self._gen_rpc_req("getcontractstate", params=[contract_hash])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['code_version'], '3')
 
     def test_get_raw_mempool(self):
         # TODO: currently returns empty list. test with list would be great

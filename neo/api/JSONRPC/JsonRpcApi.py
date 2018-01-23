@@ -123,6 +123,11 @@ class JsonRpcApi(object):
             }
         }
 
+    def parse_uint_str(self, param):
+        if param[0:2] == '0x':
+            return param[2:]
+        return param
+
     def json_rpc_method_handler(self, method, params):
         # print("method", method, params)
 
@@ -137,7 +142,7 @@ class JsonRpcApi(object):
             return acct.ToJson()
 
         elif method == "getassetstate":
-            asset_id = params[0].encode('utf-8')
+            asset_id = self.parse_uint_str(params[0])
             asset = Blockchain.Default().GetAssetState(asset_id)
             if asset:
                 return asset.ToJson()
@@ -152,6 +157,10 @@ class JsonRpcApi(object):
             if not block:
                 raise JsonRpcError(-100, "Unknown block")
 
+            # full tx data is not included by default
+            # this will load them to be serialized
+            block.Transactions = block.FullTransactions
+
             verbose = False
             if len(params) >= 2 and params[1]:
                 verbose = True
@@ -164,9 +173,6 @@ class JsonRpcApi(object):
                     jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
                 return jsn
 
-            # full tx data is not included by default
-            # this will load them to be serialized
-            block.Transactions = block.FullTransactions
             return Helper.ToArray(block).decode('utf-8')
 
         elif method == "getblockcount":
@@ -190,14 +196,11 @@ class JsonRpcApi(object):
             return len(NodeLeader.Instance().Peers)
 
         elif method == "getcontractstate":
-            # TODO: cannot execute this query against the live nodes with a successful response
-            raise NotImplementedError()
-            # script_hash = params[0]
-            # contract = Blockchain.Default().GetContract(script_hash)
-            # if contract is None:
-            #     raise JsonRpcError(-100, "Unknown contract")
-            # else:
-            #     return contract.ToJson()
+            script_hash = self.parse_uint_str(params[0])
+            contract = Blockchain.Default().GetContract(script_hash)
+            if contract is None:
+               raise JsonRpcError(-100, "Unknown contract")
+            return contract.ToJson()
 
         elif method == "getrawmempool":
             return list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))

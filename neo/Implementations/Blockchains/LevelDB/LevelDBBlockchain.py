@@ -516,7 +516,10 @@ class LevelDBBlockchain(Blockchain):
             bhash = height_or_hash.encode('utf-8')
             if bhash in self._header_index:
                 hash = bhash
-
+        elif intval is None and len(height_or_hash) == 66:
+            bhash = height_or_hash[2:].encode('utf-8')
+            if bhash in self._header_index:
+                hash = bhash
         elif intval is not None and self.GetBlockHash(intval) is not None:
             hash = self.GetBlockHash(intval)
 

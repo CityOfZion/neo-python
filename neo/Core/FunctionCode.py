@@ -88,7 +88,7 @@ class FunctionCode(SerializableMixin):
              dict:
         """
         return {
-            'hash': self.ScriptHash().ToString(),
+            'hash': self.ScriptHash().To0xString(),
             'script': self.Script.hex(),
             'parameters': self.ParameterList.hex(),
             'returntype': self.ReturnType if type(self.ReturnType) is int else self.ReturnType.hex()
