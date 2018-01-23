@@ -1,5 +1,7 @@
 """
-python -m unittest neo.api.JSONRPC.test_json_rpc_api
+Run only thse tests:
+
+    $ python -m unittest neo.api.JSONRPC.test_json_rpc_api
 """
 import json
 from klein.test.test_resource import requestMock
