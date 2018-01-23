@@ -72,15 +72,16 @@ def main():
     ndb = NotificationDB.instance()
     ndb.start()
 
-    api_server = JsonRpcApi(settings.NODE_PORT)
-
     # Run
     reactor.suggestThreadPoolSize(15)
     NodeLeader.Instance().Start()
 
     host = "0.0.0.0"
-    print("Starting server on %s:%s" % (host, settings.NODE_PORT))
-    api_server.app.run(host, settings.NODE_PORT)
+    port = settings.RPC_PORT
+    print("Starting json-rpc api server on http://%s:%s" % (host, port))
+
+    api_server = JsonRpcApi(port)
+    api_server.app.run(host, port)
 
 
 if __name__ == "__main__":

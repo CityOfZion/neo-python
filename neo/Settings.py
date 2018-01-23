@@ -49,15 +49,17 @@ class SettingsHolder:
 
     LEVELDB_PATH = None
     NOTIFICATION_DB_PATH = None
+
+    RPC_PORT = None
     NODE_PORT = None
     WS_PORT = None
     URI_PREFIX = None
-    VERSION_NAME = None
     BOOTSTRAP_FILE = None
 
     ALL_FEES = None
-
     USE_DEBUG_STORAGE = False
+
+    VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
     # Logging settings
     log_smart_contract_events = True
@@ -83,9 +85,6 @@ class SettingsHolder:
             return 'TestNet'
         return 'PrivateNet'
 
-    def __init__(self):
-        self.VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
-
     # Setup methods
     def setup(self, config_file):
         """ Load settings from a JSON config file """
@@ -108,6 +107,7 @@ class SettingsHolder:
 
         config = data['ApplicationConfiguration']
         self.LEVELDB_PATH = os.path.join(DIR_PROJECT_ROOT, config['DataDirectoryPath'])
+        self.RPC_PORT = int(config['RPCPort'])
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
