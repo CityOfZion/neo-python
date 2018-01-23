@@ -177,7 +177,11 @@ class JsonRpcApi(object):
                 raise JsonRpcError(-100, "Invalid Height")
 
         elif method == "getblocksysfee":
-            raise NotImplementedError()
+            height = params[0]
+            if height >= 0 and height <= Blockchain.Default().Height:
+                return Blockchain.Default().GetSysFeeAmountByHeight(height)
+            else:
+                raise JsonRpcError(-100, "Invalid Height")
 
         elif method == "getconnectioncount":
             return len(NodeLeader.Instance().Peers)

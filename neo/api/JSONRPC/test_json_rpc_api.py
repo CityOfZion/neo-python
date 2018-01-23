@@ -176,6 +176,12 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown block')
 
+    def test_get_block_sysfee(self):
+        req = self._gen_rpc_req("getblocksysfee", params=[13321])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], 230)
+
     def test_block_non_verbose(self):
         req = self._gen_rpc_req("getblock", params=[2003, 0])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
