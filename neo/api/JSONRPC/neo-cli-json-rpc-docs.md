@@ -21,3 +21,7 @@ Documentation for the JSON-RPC implementation
     curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "getblocksysfee", "params": [13321] }'
     { "jsonrpc": "2.0", "id": 5, "result": "230" }
 
+## `getrawmempool`
+
+    curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "getrawmempool", "params": [] }'
+    { "jsonrpc": "2.0", "id": 5, "result": [] }

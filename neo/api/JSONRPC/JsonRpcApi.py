@@ -10,7 +10,6 @@ import json
 from json.decoder import JSONDecodeError
 
 from klein import Klein
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from logzero import logger
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response
@@ -63,10 +62,6 @@ class JsonRpcError(Exception):
 
 class JsonRpcApi(object):
     app = Klein()
-    notif = None
-
-    def __init__(self):
-        self.notif = NotificationDB.instance()
 
     #
     # JSON-RPC API Route
@@ -187,10 +182,17 @@ class JsonRpcApi(object):
             return len(NodeLeader.Instance().Peers)
 
         elif method == "getcontractstate":
+            # TODO: cannot execute this query against the live nodes with a successful response
             raise NotImplementedError()
+            # script_hash = params[0]
+            # contract = Blockchain.Default().GetContract(script_hash)
+            # if contract is None:
+            #     raise JsonRpcError(-100, "Unknown contract")
+            # else:
+            #     return contract.ToJson()
 
         elif method == "getrawmempool":
-            raise NotImplementedError()
+            return list(map(lambda hash: hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
 
         elif method == "getrawtransaction":
             raise NotImplementedError()
