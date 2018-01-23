@@ -25,7 +25,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         return './fixtures/test_chain'
 
     def setUp(self):
-        self.app = JsonRpcApi(20333)
+        self.app = JsonRpcApi(20332)
 
     def test_invalid_json_payload(self):
         mock_req = mock_request(b"{ invalid")
@@ -223,5 +223,5 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getversion", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res["result"]["port"], 20333)
-        self.assertEqual(res["result"]["useragent"], "/neo-python:%s/" % __version__)
+        self.assertEqual(res["result"]["port"], 20332)
+        self.assertEqual(res["result"]["useragent"], "/NEO-PYTHON:%s/" % __version__)

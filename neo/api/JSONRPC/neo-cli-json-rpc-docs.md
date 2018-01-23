@@ -26,6 +26,8 @@ Documentation for the JSON-RPC implementation
     curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "getrawmempool", "params": [] }'
     { "jsonrpc": "2.0", "id": 5, "result": [] }
 
+On MainNet there are actually entries, each of which has this format: `0xde3bc1dead8a89b06787db663b59c4f33efe0afe6b97b1c9c997f2695d7ae0da`
+
 ## `getversion`
 
     curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "getversion", "params": [] }'

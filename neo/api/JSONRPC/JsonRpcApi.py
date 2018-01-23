@@ -7,12 +7,14 @@ See also:
 * http://www.jsonrpc.org/specification
 """
 import json
+import random
 from json.decoder import JSONDecodeError
 
 from klein import Klein
 from logzero import logger
 
 from neo import __version__
+from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response
 from neo.Core.State.AccountState import AccountState
@@ -203,8 +205,8 @@ class JsonRpcApi(object):
         elif method == "getversion":
             return {
                 "port": self.port,
-                "nonce": 771199013,  # TODO: make this the real nonce, currently taken straight from testnet neo-cli
-                "useragent": "/neo-python:%s/" % __version__  # This ok, or should we mimic `/NEO:2.6.0/`?
+                "nonce": NodeLeader.Instance().NodeId,
+                "useragent": settings.VERSION_NAME
             }
 
         elif method == "getrawtransaction":
