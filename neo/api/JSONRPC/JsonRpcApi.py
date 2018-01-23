@@ -67,15 +67,9 @@ class JsonRpcError(Exception):
 class JsonRpcApi(object):
     app = Klein()
     port = None
-    nonce = None
 
     def __init__(self, port):
         self.port = port
-
-        # `nonce` in neo-cli this comes from https://github.com/neo-project/neo/blob/46c635adda6cf61090a67a3bef0f3bb1bc85dd81/neo/Network/LocalNode.cs#L68
-        # In neo-python the closest thing to it is https://github.com/CityOfZion/neo-python/blob/master/neo/Network/NeoNode.py#L34
-        # since we don't get direct access to this NeoNode, we generate a new nonce here
-        self.nonce = random.randint(1294967200, 4294967200)
 
     #
     # JSON-RPC API Route
@@ -211,7 +205,7 @@ class JsonRpcApi(object):
         elif method == "getversion":
             return {
                 "port": self.port,
-                "nonce": self.nonce,
+                "nonce": NodeLeader.Instance().NodeId,
                 "useragent": settings.VERSION_NAME
             }
 
