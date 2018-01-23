@@ -209,7 +209,14 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getrawmempool", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], [])
+        mempool = res['result']
+
+        # when running only these tests, mempool is empty. when running all tests, there are a
+        # number of entries
+        if len(mempool) > 0:
+            for entry in mempool:
+                self.assertEqual(entry[0:2], "0x")
+                self.assertEqual(len(entry), 66)
 
     def test_get_version(self):
         # TODO: what's the nonce? on testnet live server response it's always 771199013

@@ -198,7 +198,7 @@ class JsonRpcApi(object):
             #     return contract.ToJson()
 
         elif method == "getrawmempool":
-            return list(map(lambda hash: hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
+            return list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
 
         elif method == "getversion":
             return {
