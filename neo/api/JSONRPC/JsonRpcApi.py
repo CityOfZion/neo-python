@@ -11,6 +11,8 @@ from json.decoder import JSONDecodeError
 
 from klein import Klein
 from logzero import logger
+
+from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response
 from neo.Core.State.AccountState import AccountState
@@ -62,6 +64,10 @@ class JsonRpcError(Exception):
 
 class JsonRpcApi(object):
     app = Klein()
+    port = None
+
+    def __init__(self, port):
+        self.port = port
 
     #
     # JSON-RPC API Route
@@ -194,6 +200,13 @@ class JsonRpcApi(object):
         elif method == "getrawmempool":
             return list(map(lambda hash: hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
 
+        elif method == "getversion":
+            return {
+                "port": self.port,
+                "nonce": 771199013,  # TODO: make this the real nonce, currently taken straight from testnet neo-cli
+                "useragent": "/neo-python:%s/" % __version__  # This ok, or should we mimic `/NEO:2.6.0/`?
+            }
+
         elif method == "getrawtransaction":
             raise NotImplementedError()
 
@@ -222,9 +235,6 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         elif method == "getpeers":
-            raise NotImplementedError()
-
-        elif method == "getversion":
             raise NotImplementedError()
 
         raise JsonRpcError.methodNotFound()
