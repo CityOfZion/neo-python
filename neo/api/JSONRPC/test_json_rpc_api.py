@@ -102,6 +102,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_account_state_not_existing_yet(self):
         addr_str = 'AHozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2'
+        # addr_str = 'Axozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2' <-- this address breaks things
         req = self._gen_rpc_req("getaccountstate", params=[addr_str])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))

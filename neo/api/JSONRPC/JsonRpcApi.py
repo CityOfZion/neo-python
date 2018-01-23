@@ -56,6 +56,10 @@ class JsonRpcError(Exception):
     def invalidRequest(message=None):
         return JsonRpcError(-32600, message or "Invalid Request")
 
+    @staticmethod
+    def internalError(message=None):
+        return JsonRpcError(-32603, message or "Internal error")
+
 
 class JsonRpcApi(object):
     app = Klein()
@@ -103,7 +107,8 @@ class JsonRpcApi(object):
             return self.get_custom_error_payload(request_id, e.code, e.message)
 
         except Exception as e:
-            return self.get_custom_error_payload(request_id, JsonRpcError.INTERNAL_ERROR["code"], str(e))
+            error = JsonRpcError.internalError(str(e))
+            return self.get_custom_error_payload(request_id, error.code, error.message)
 
     def get_custom_error_payload(self, request_id, code, message):
         return {
