@@ -10,6 +10,8 @@ import json
 import os
 import logging
 from json.decoder import JSONDecodeError
+
+from neo import __version__
 from neocore.Cryptography import Helper
 
 import logzero
@@ -81,6 +83,9 @@ class SettingsHolder:
             return 'TestNet'
         return 'PrivateNet'
 
+    def __init__(self):
+        self.VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
+
     # Setup methods
     def setup(self, config_file):
         """ Load settings from a JSON config file """
@@ -106,7 +111,7 @@ class SettingsHolder:
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
-        self.VERSION_NAME = config['VersionName']
+
         self.BOOTSTRAP_FILE = config['BootstrapFile']
 
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION

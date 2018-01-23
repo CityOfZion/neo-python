@@ -33,7 +33,6 @@
     "UriPrefix": [ "http://*:20332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "VersionName":"/NEO-PYTHON:2.3.4/",
     "BootstrapFile":"",
     "DebugStorage":1
   }

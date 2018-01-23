@@ -35,7 +35,6 @@ def main():
     parser.add_argument("-p", "--privnet", action="store_true", default=False,
                         help="Use PrivNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
-    parser.add_argument("--port", action="store", help="Port to use", default=8000)
     parser.add_argument("-t", "--set-default-theme", dest="theme",
                         choices=["dark", "light"],
                         help="Set the default theme to be loaded from the config file. Default: 'dark'")
@@ -73,13 +72,15 @@ def main():
     ndb = NotificationDB.instance()
     ndb.start()
 
-    api_server = JsonRpcApi(args.port)
+    api_server = JsonRpcApi(settings.NODE_PORT)
 
     # Run
     reactor.suggestThreadPoolSize(15)
     NodeLeader.Instance().Start()
 
-    api_server.app.run('0.0.0.0', args.port)
+    host = "0.0.0.0"
+    print("Starting server on %s:%s" % (host, settings.NODE_PORT))
+    api_server.app.run(host, settings.NODE_PORT)
 
 
 if __name__ == "__main__":

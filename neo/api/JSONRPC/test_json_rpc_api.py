@@ -224,4 +224,4 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["result"]["port"], 20333)
-        self.assertEqual(res["result"]["useragent"], "/neo-python:%s/" % __version__)
+        self.assertEqual(res["result"]["useragent"], "/NEO-PYTHON:%s/" % __version__)
