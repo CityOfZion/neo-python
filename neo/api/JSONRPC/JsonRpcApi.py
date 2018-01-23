@@ -199,7 +199,7 @@ class JsonRpcApi(object):
             script_hash = self.parse_uint_str(params[0])
             contract = Blockchain.Default().GetContract(script_hash)
             if contract is None:
-               raise JsonRpcError(-100, "Unknown contract")
+                raise JsonRpcError(-100, "Unknown contract")
             return contract.ToJson()
 
         elif method == "getrawmempool":

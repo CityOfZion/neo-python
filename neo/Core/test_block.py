@@ -165,7 +165,7 @@ class BlocksTestCase(NeoTestCase):
 
         json = block.ToJson()
         self.assertEqual(json['index'], 2992)
-        self.assertEqual(json['hash'], '0x%' % self.t992h.decode('utf-8'))
+        self.assertEqual(json['hash'], '0x%s' % self.t992h.decode('utf-8'))
         self.assertEqual(json['merkleroot'], '0x%s' % self.t992m.decode('utf-8'))
         self.assertEqual(len(json['tx']), 1)
         self.assertEqual(json['tx'][0]['txid'], '4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9')

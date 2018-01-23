@@ -219,7 +219,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertIsNotNone(res['result'])
 
         # we should be able to instantiate a matching block with the result
-        output = binascii.unhexlify( res['result'])
+        output = binascii.unhexlify(res['result'])
         block = Helper.AsSerializableWithType(output, 'neo.Core.Block.Block')
         self.assertEqual(block.Index, 2003)
         self.assertEqual(len(block.Transactions), 2)
@@ -230,10 +230,10 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['code_version'], '3')
-        self.assertEqual(res['result']['properties']['storage'],True)
+        self.assertEqual(res['result']['properties']['storage'], True)
         self.assertEqual(res['result']['code']['hash'], '0x5b7074e873973a6ed3708862f219a6fbf4d1c411')
-        self.assertEqual(res['result']['code']['returntype'],5)
-        self.assertEqual(res['result']['code']['parameters'],'0710')
+        self.assertEqual(res['result']['code']['returntype'], 5)
+        self.assertEqual(res['result']['code']['parameters'], '0710')
 
     def test_get_contract_state_0x(self):
         contract_hash = '0x%s' % UInt160(data=bytearray(b'\x11\xc4\xd1\xf4\xfb\xa6\x19\xf2b\x88p\xd3n:\x97s\xe8tp[')).ToString()
