@@ -736,7 +736,6 @@ class PromptInterface(object):
                     print(
                         "\n-------------------------------------------------------------------------------------------------------------------------------------")
                     print("Test deploy invoke successful")
-<<<<<<< HEAD
                     print("Total operations executed: %s " % num_ops)
                     print("Results:")
                     print("\t(Raw) %s" % [str(item) for item in results])
@@ -745,12 +744,6 @@ class PromptInterface(object):
                     print("\t(Bool) %s" % [item.GetBoolean() for item in results])
                     print("Deploy Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("Deploy Invoke TX Fee: %s " % (fee.value / Fixed8.D))
-=======
-                    print("Total operations executed: %s" % num_ops)
-                    print("Results %s " % [str(item) for item in results])
-                    print("Deploy Invoke TX GAS cost: %s" % (tx.Gas.value / Fixed8.D))
-                    print("Deploy Invoke TX fee: %s" % (fee.value / Fixed8.D))
->>>>>>> 6dd4bf9b31fa79137ee358f569437133bb102526
                     print(
                         "-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("Enter your password to continue and deploy this contract")
