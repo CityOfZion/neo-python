@@ -3,6 +3,11 @@ Changelog
 
 All notable changes to this project following the ``0.4.0`` release will be documented in this file.
 
+[0.4.7-dev] work in progress
+----------------------------
+
+- ...
+
 [0.4.6] 2018-01-24
 ------------------
 
