@@ -21,10 +21,10 @@ for line in sys.stdin:
 		print("%-20s %s" % (target, help))
 endef
 export PRINT_HELP_PYSCRIPT
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+BROWSER := python3 -c "$$BROWSER_PYSCRIPT"
 
 help:
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+	@python3 -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
@@ -50,14 +50,14 @@ lint: ## check style with flake8
 	pycodestyle neo
 
 test: ## run tests quickly with the default Python
-	python -m unittest -v
+	python3 -m unittest discover neo
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run -m unittest discover neo
-	coverage report -m
+	coverage report -m --omit=venv/*
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	$(MAKE) -C docs
+	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html

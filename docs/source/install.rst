@@ -59,14 +59,14 @@ Platform Specific Instructions
 ==============================
 
 OSX
-^^^
+"""
 
 ::
 
     brew install leveldb
 
 Ubuntu/Debian
-^^^^^^^^^^^^^
+"""""""""""""
 
 ::
 
@@ -74,7 +74,7 @@ Ubuntu/Debian
 
 
 Centos/Redhat/Fedora
-^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""
 
 This is a bit more tricky. You may need to enable the epel repo for the leveldb-devel package, which you can do by editing ``/etc/yum.repos.d/epel.repo``.
 
@@ -84,7 +84,7 @@ This is a bit more tricky. You may need to enable the epel repo for the leveldb-
 
 
 Windows
-^^^^^^^
+"""""""
 This has not been tested at this time. Installing the Python package plyvel seems to require C++ compiler support tied to Visual Studio and libraries.
 
 
@@ -93,9 +93,8 @@ Further Install Notes
 
 For all of these, make sure that the ``Chains`` directory in your project has the proper write permissions
 
-
 Common issues on OSX
-^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""
 
 If you're having an issue similar to this:
 
@@ -107,14 +106,9 @@ If you're having an issue similar to this:
     Referenced from: neo-python/venv/lib/python3.5/site-packages/plyvel/_plyvel.cpython-35m-darwin.so
     Expected in: flat namespace
 
+**Solution**: Update to plyvel 1.0.4: `pip install -r requirements.txt`
 
-You may need to uninstall plyvel (python libleveldb library), and reinstall with the following cflags
-
-.. code-block:: sh
-
-    pip uninstall plyvel
-    CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel plyvel --no-cache-dir --global-option=build_ext --global-option="-I/usr/local/Cellar/leveldb/1.20_2/include/" --global-option="-L/usr/local/lib"
-
+---
 
 You may also encounter issues when installing the pycrypto module on OSX:
 

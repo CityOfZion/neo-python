@@ -35,7 +35,7 @@ class MinerTransaction(Transaction):
         Returns:
             int: size.
         """
-        return self.Size() + sys.getsizeof(int)
+        return super(MinerTransaction, self).Size() + sys.getsizeof(int)
 
     def DeserializeExclusiveData(self, reader):
         """

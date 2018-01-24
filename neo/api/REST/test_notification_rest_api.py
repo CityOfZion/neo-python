@@ -1,12 +1,14 @@
 from unittest import TestCase
 from neo.Settings import settings
-from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
-from uuid import uuid1
-import shutil
 import json
-from neo.Implementations.Notifications.REST.NotificationServer import NotificationServer
+import os
+import requests
+import tarfile
+import logzero
+import shutil
+
+from neo.api.REST.NotificationRestApi import NotificationRestApi
 
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from klein.test.test_resource import requestMock
@@ -14,27 +16,53 @@ from klein.test.test_resource import requestMock
 
 class NotificationDBTestCase(TestCase):
 
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixture.tar.gz'
+    FIXTURE_FILENAME = './Chains/notif_fixture.tar.gz'
+    NOTIFICATION_DB_NAME = 'fixtures/test_notifications'
+
     contract_hash = UInt160(data=bytearray(b'\x11\xc4\xd1\xf4\xfb\xa6\x19\xf2b\x88p\xd3n:\x97s\xe8tp['))
     event_tx = '042e4168cb2d563714d3f35ff76b7efc6c7d428360c97b6b45a18b5b1a4faa40'
 
     addr_to = 'AHbmRX5sL8oxp4dJZRNg5crCGUGxuMUyRB'
     addr_from = 'AcFnRrVC5emrTEkuFuRPufcuTb6KsAJ3vR'
 
-    app = None  # type:NotificationServer
+    app = None  # type:NotificationRestApi
 
     @classmethod
     def setUpClass(cls):
 
-        settings.NOTIFICATION_DB_PATH = 'fixtures/test_notifications'
+        if not os.path.exists(cls.FIXTURE_FILENAME):
+            logzero.logger.info(
+                "downloading fixture notification database from %s. this may take a while" % cls.FIXTURE_REMOTE_LOC)
+
+            response = requests.get(cls.FIXTURE_REMOTE_LOC, stream=True)
+
+            response.raise_for_status()
+            with open(cls.FIXTURE_FILENAME, 'wb+') as handle:
+                for block in response.iter_content(1024):
+                    handle.write(block)
+
+        try:
+            tar = tarfile.open(cls.FIXTURE_FILENAME)
+            tar.extractall()
+            tar.close()
+        except Exception as e:
+            raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.FIXTURE_FILENAME))
+
+        if not os.path.exists(cls.NOTIFICATION_DB_NAME):
+            raise Exception("Error downloading fixtures")
+
+        settings.NOTIFICATION_DB_PATH = cls.NOTIFICATION_DB_NAME
         ndb = NotificationDB.instance()
         ndb.start()
 
     @classmethod
     def tearDownClass(cls):
         NotificationDB.instance().close()
+        shutil.rmtree(cls.NOTIFICATION_DB_NAME)
 
     def setUp(self):
-        self.app = NotificationServer()
+        self.app = NotificationRestApi()
 
     def test_1_ok(self):
 

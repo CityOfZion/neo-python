@@ -184,8 +184,10 @@ class NotifyEvent(SmartContractEvent):
             empty = UInt160(data=bytearray(20))
             try:
                 if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE]:
-
-                    self.addr_from = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
+                    if self.event_payload[1] is None:
+                        self.addr_from = empty
+                    else:
+                        self.addr_from = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
                     self.addr_to = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty
                     self.amount = int(BigInteger.FromBytes(event_payload[3])) if isinstance(event_payload[3], bytes) else int(event_payload[3])
                     self.is_standard_notify = True
