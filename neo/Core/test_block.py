@@ -165,8 +165,8 @@ class BlocksTestCase(NeoTestCase):
 
         json = block.ToJson()
         self.assertEqual(json['index'], 2992)
-        self.assertEqual(json['hash'], self.t992h.decode('utf-8'))
-        self.assertEqual(json['merkleroot'], self.t992m.decode('utf-8'))
+        self.assertEqual(json['hash'], '0x%s' % self.t992h.decode('utf-8'))
+        self.assertEqual(json['merkleroot'], '0x%s' % self.t992m.decode('utf-8'))
         self.assertEqual(len(json['tx']), 1)
         self.assertEqual(json['tx'][0]['txid'], '4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9')
 
@@ -189,7 +189,7 @@ class BlocksTestCase(NeoTestCase):
         json = block.ToJson()
 
         self.assertEqual(json['index'], 1050514)
-        self.assertEqual(json['hash'], self.big_tx_hash.decode('utf-8'))
+        self.assertEqual(json['hash'], '0x%s' % self.big_tx_hash.decode('utf-8'))
         self.assertEqual(len(json['tx']), 65)
 
         for tx in json['tx']:

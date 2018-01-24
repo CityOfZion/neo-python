@@ -144,8 +144,6 @@ class ContractState(StateBase):
         except Exception as e:
             pass
 
-        print("self contract properties: %s " % self.ContractProperties)
-
         return {
 
             'version': self.StateVersion,
