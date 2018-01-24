@@ -157,7 +157,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getblock", params=[10, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-
+        pprint.pprint(res)
         self.assertEqual(res['result']['index'], 10)
         self.assertEqual(res['result']['hash'], '9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
         self.assertEqual(res['result']['confirmations'], 756610)
@@ -225,3 +225,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["result"]["port"], 20332)
         self.assertEqual(res["result"]["useragent"], "/NEO-PYTHON:%s/" % __version__)
+
+    def test_getstorage(self):
+        req = self._gen_rpc_req("getstorage", params=["b565401a63bf4c0d5eb8f7b1f433bcd2a4e404bc", "746f74616c537570706c79"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        pprint.pprint(res)

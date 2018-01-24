@@ -24,6 +24,9 @@ from neocore.UInt256 import UInt256
 from neo.Wallets import Wallet
 from neo.Core.Helper import Helper
 from neo.Network.NodeLeader import NodeLeader
+from neo.Core.State.StorageKey import StorageKey
+from neo.Core.State.StorageItem import StorageItem
+import binascii
 
 
 class JsonRpcError(Exception):
@@ -213,7 +216,24 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         elif method == "getstorage":
-            raise NotImplementedError()
+            script_hash = UInt160(data=binascii.unhexlify(params[0]))
+
+            if len(params) < 2:  # note this is not in the original RPC server,I assume they forgot this as it throws an exception
+                raise JsonRpcError(-100, "Invalid key")
+            # key = bytearray(params[1], encoding='utf-8')
+            key = bytearray.fromhex(params[1])
+
+            storage_key = StorageKey(script_hash, key)
+            item = Blockchain.Default().GetStorageItem(storage_key)
+            if item == None:
+                # instead of doing:
+                # item = StorageItem()
+                # just return None, because C# gives back null (and None gets converted to null by json.dumps)
+                return None
+
+            # return item.Value?.ToHexString();
+            # TODO: likely fix
+            return binascii.hexlify(item.Value)
 
         elif method == "gettxout":
             raise NotImplementedError()
