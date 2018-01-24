@@ -30,6 +30,9 @@ class Helper(object):
             serializable.Deserialize(reader)
             return serializable
         except Exception as e:
+            import traceback
+            traceback.print_stack()
+            traceback.print_exc()
             logger.error("Could not deserialize: %s " % e)
         finally:
             StreamManager.ReleaseStream(mstream)

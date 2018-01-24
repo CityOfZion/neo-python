@@ -698,6 +698,10 @@ class LevelDBBlockchain(Blockchain):
                 elif tx.Type == TransactionType.EnrollmentTransaction:
                     newvalidator = ValidatorState(pub_key=tx.PublicKey)
                     validators.GetAndChange(tx.PublicKey.ToBytes(), newvalidator)
+                elif tx.Type == TransactionType.StateTransaction:
+                    # @TODO Implement persistence for State Descriptors
+                    pass
+
                 elif tx.Type == TransactionType.PublishTransaction:
                     contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
                                              tx.Author, tx.Email, tx.Description)
