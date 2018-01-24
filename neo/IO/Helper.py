@@ -31,7 +31,10 @@ class Helper(object):
             serializable.Deserialize(reader)
             return serializable
         except Exception as e:
-            logger.error("Could not deserialize object: %s %s %s " % (GetBlockchain().Height, class_name, e))
+            import traceback
+            traceback.print_stack()
+            traceback.print_exc()
+            logger.error("Could not deserialize: %s " % e)
         finally:
             StreamManager.ReleaseStream(mstream)
 
