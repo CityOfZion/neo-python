@@ -82,7 +82,7 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(contract['author'], 'Erik Zhang')
         self.assertEqual(contract['description'], 'Lock your assets until a timestamp.')
 
-        self.assertEqual(contract['code']['hash'], 'ffbd1a7ad1e2348b6b3822426f364bfb4bcce3b9')
+        self.assertEqual(contract['code']['hash'], '0xffbd1a7ad1e2348b6b3822426f364bfb4bcce3b9')
         self.assertEqual(contract['code']['returntype'], 1)
         self.assertEqual(contract['code']['parameters'], '020500')
 
