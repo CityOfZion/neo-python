@@ -27,7 +27,7 @@ class EnrollmentTransaction(Transaction):
         Returns:
             int: size.
         """
-        return self.Size() + sys.getsizeof(int)
+        return super(EnrollmentTransaction, self).Size() + sys.getsizeof(int)
 
     def SystemFee(self):
         """

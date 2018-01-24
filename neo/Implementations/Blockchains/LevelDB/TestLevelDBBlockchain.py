@@ -111,6 +111,10 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                     validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
                     #                        logger.info("VALIDATOR %s " % validator.ToJson())
 
+                elif tx.Type == TransactionType.StateTransaction:
+                    # @TODO Implement persistence for State Descriptors
+                    pass
+
                 elif tx.Type == TransactionType.PublishTransaction:
 
                     contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
