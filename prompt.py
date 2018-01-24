@@ -742,7 +742,7 @@ class PromptInterface(object):
                     print("\t(Int) %s" % [item.GetBigInteger() for item in results])
                     print("\t(Str) %s" % [item.GetString() for item in results])
                     print("\t(Bool) %s" % [item.GetBoolean() for item in results])
-                    print("Deploy Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
+                    print("Deploy Invoke TX GAS cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("Deploy Invoke TX Fee: %s " % (fee.value / Fixed8.D))
                     print(
                         "-------------------------------------------------------------------------------------------------------------------------------------\n")
