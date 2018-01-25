@@ -136,6 +136,22 @@ class JsonRpcApi(object):
         shash_reversed.reverse()
         return UInt160(data=shash_reversed)
 
+    def getstorage(self, params):
+        reverse_hash = bytearray.fromhex(params[0])
+        reverse_hash.reverse()
+        script_hash = UInt160(data=reverse_hash)
+
+        if len(params) < 2:  # note this is not in the original RPC server,I assume they forgot this as it throws an exception
+            raise JsonRpcError(-100, "Invalid key")
+        key = bytearray.fromhex(params[1])
+
+        storage_key = StorageKey(script_hash, key)
+        item = Blockchain.Default().GetStorageItem(storage_key)
+        if item is None:
+            return None
+
+        return item.Value.hex()
+
     def json_rpc_method_handler(self, method, params):
         # print("method", method, params)
 
@@ -224,20 +240,7 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         elif method == "getstorage":
-            reverse_hash = bytearray.fromhex(params[0])
-            reverse_hash.reverse()
-            script_hash = UInt160(data=reverse_hash)
-
-            if len(params) < 2:  # note this is not in the original RPC server,I assume they forgot this as it throws an exception
-                raise JsonRpcError(-100, "Invalid key")
-            key = bytearray.fromhex(params[1])
-
-            storage_key = StorageKey(script_hash, key)
-            item = Blockchain.Default().GetStorageItem(storage_key)
-            if item is None:
-                return None
-
-            return item.Value.hex()
+            return self.getstorage(params)
 
         elif method == "gettxout":
             raise NotImplementedError()
