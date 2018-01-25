@@ -234,7 +234,7 @@ class JsonRpcApi(object):
 
             storage_key = StorageKey(script_hash, key)
             item = Blockchain.Default().GetStorageItem(storage_key)
-            if item == None:
+            if item is None:
                 return None
 
             return item.Value.hex()
