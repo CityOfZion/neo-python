@@ -131,6 +131,11 @@ class JsonRpcApi(object):
             return param[2:]
         return param
 
+    def param_to_uint160(self, param):
+        shash_reversed = bytearray(binascii.unhexlify(self.parse_uint_str(param)))
+        shash_reversed.reverse()
+        return UInt160(data=shash_reversed)
+
     def json_rpc_method_handler(self, method, params):
         # print("method", method, params)
 
@@ -219,24 +224,20 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         elif method == "getstorage":
-            script_hash = UInt160(data=binascii.unhexlify(params[0]))
+            reverse_hash = bytearray.fromhex(params[0])
+            reverse_hash.reverse()
+            script_hash = UInt160(data=reverse_hash)
 
             if len(params) < 2:  # note this is not in the original RPC server,I assume they forgot this as it throws an exception
                 raise JsonRpcError(-100, "Invalid key")
-            # key = bytearray(params[1], encoding='utf-8')
             key = bytearray.fromhex(params[1])
 
             storage_key = StorageKey(script_hash, key)
             item = Blockchain.Default().GetStorageItem(storage_key)
             if item == None:
-                # instead of doing:
-                # item = StorageItem()
-                # just return None, because C# gives back null (and None gets converted to null by json.dumps)
                 return None
 
-            # return item.Value?.ToHexString();
-            # TODO: likely fix
-            return binascii.hexlify(item.Value)
+            return item.Value.hex()
 
         elif method == "gettxout":
             raise NotImplementedError()
