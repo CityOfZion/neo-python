@@ -24,6 +24,9 @@ from neocore.UInt256 import UInt256
 from neo.Wallets import Wallet
 from neo.Core.Helper import Helper
 from neo.Network.NodeLeader import NodeLeader
+from neo.Core.State.StorageKey import StorageKey
+from neo.Core.State.StorageItem import StorageItem
+import binascii
 
 
 class JsonRpcError(Exception):
@@ -128,6 +131,27 @@ class JsonRpcApi(object):
             return param[2:]
         return param
 
+    def param_to_uint160(self, param):
+        shash_reversed = bytearray(binascii.unhexlify(self.parse_uint_str(param)))
+        shash_reversed.reverse()
+        return UInt160(data=shash_reversed)
+
+    def getstorage(self, params):
+        reverse_hash = bytearray.fromhex(params[0])
+        reverse_hash.reverse()
+        script_hash = UInt160(data=reverse_hash)
+
+        if len(params) < 2:  # note this is not in the original RPC server,I assume they forgot this as it throws an exception
+            raise JsonRpcError(-100, "Invalid key")
+        key = bytearray.fromhex(params[1])
+
+        storage_key = StorageKey(script_hash, key)
+        item = Blockchain.Default().GetStorageItem(storage_key)
+        if item is None:
+            return None
+
+        return item.Value.hex()
+
     def json_rpc_method_handler(self, method, params):
         # print("method", method, params)
 
@@ -216,7 +240,7 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         elif method == "getstorage":
-            raise NotImplementedError()
+            return self.getstorage(params)
 
         elif method == "gettxout":
             raise NotImplementedError()

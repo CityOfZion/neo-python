@@ -263,3 +263,21 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["result"]["port"], 20332)
         self.assertEqual(res["result"]["useragent"], "/NEO-PYTHON:%s/" % __version__)
+
+    def test_getstorage(self):
+        req = self._gen_rpc_req("getstorage", params=["03febccf81ac85e3d795bc5cbd4e84e907812aa3", "5065746572"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        # from neo.docs.org exampole
+        self.assertEqual("4c696e", res["result"])
+
+        # test insufficient parameters, note this is not in the C# client (yet)
+        # but I think it should be PR'ed because it now throws a list index out of range error
+        # and it does have such a parameter check in other calls.
+        req = self._gen_rpc_req("getstorage", params=["03febccf81ac85e3d795bc5cbd4e84e907812aa3"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Invalid key')
