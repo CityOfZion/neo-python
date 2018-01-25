@@ -21,7 +21,7 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neocore.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
-
+import inspect
 
 class TransactionResult(EquatableMixin):
     AssetId = None
@@ -60,6 +60,15 @@ class TransactionType(object):
     AgencyTransaction = b'\xb0'
     PublishTransaction = b'\xd0'
     InvocationTransaction = b'\xd1'
+
+    @staticmethod
+    def ToName(value):
+        if isinstance(value,int):
+            value = value.to_bytes(1,'little')
+        for key,item in TransactionType.__dict__.items():
+            if value == item:
+                return key
+        return None
 
 
 class TransactionOutput(SerializableMixin, EquatableMixin):
@@ -138,8 +147,8 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
              dict:
         """
         return {
-            'AssetId': self.AssetId.ToString(),
-            'Value': self.Value.value,
+            'AssetId': self.AssetId.To0xString(),
+            'Value': self.Value.ToString(),
             'ScriptHash': self.Address
         }
 
@@ -198,7 +207,7 @@ class TransactionInput(SerializableMixin, EquatableMixin):
              dict:
         """
         return {
-            'PrevHash': self.PrevHash.ToString(),
+            'PrevHash': self.PrevHash.To0xString(),
             'PrevIndex': self.PrevIndex
         }
 
@@ -574,14 +583,14 @@ class Transaction(Inventory, InventoryMixin):
              dict:
         """
         jsn = {}
-        jsn["txid"] = self.Hash.ToString()
-        jsn["type"] = self.Type if type(self.Type) is int else int.from_bytes(self.Type, 'little')
+        jsn["txid"] = self.Hash.To0xString()
+        jsn["type"] = TransactionType.ToName(self.Type)
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
         jsn["vout"] = [out.ToJson() for out in self.outputs]
         jsn["vin"] = [input.ToJson() for input in self.inputs]
-        jsn["sys_fee"] = self.SystemFee().value
-        jsn["net_fee"] = self.NetworkFee().value
+        jsn["sys_fee"] = self.SystemFee().ToString()
+        jsn["net_fee"] = self.NetworkFee().ToString()
         jsn["scripts"] = [script.ToJson() for script in self.scripts]
         return jsn
 

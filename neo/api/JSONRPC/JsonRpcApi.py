@@ -213,7 +213,25 @@ class JsonRpcApi(object):
             }
 
         elif method == "getrawtransaction":
-            raise NotImplementedError()
+            tx_id = self.parse_uint_str(params[0])
+            verbose = False
+            if len(params) >= 2 and params[1]:
+                verbose = True
+            tx, height = Blockchain.Default().GetTransaction(tx_id)
+            if not tx:
+                raise JsonRpcError(-100, "Unknown Transaction")
+
+            if verbose:
+                jsn = tx.ToJson()
+                if height >= 0:
+                    header = Blockchain.Default().GetHeaderByHeight(height)
+                    jsn['blockhash'] = header.Hash.To0xString()
+                    jsn['confirmations'] = Blockchain.Default().Height - header.Index + 1
+                    jsn['blocktime'] = header.Timestamp
+                return jsn
+
+            return Helper.ToArray(tx).decode('utf-8')
+
 
         elif method == "getstorage":
             raise NotImplementedError()
