@@ -221,6 +221,8 @@ optional arguments:
 
 Currently, `prompt.py` logs to `prompt.log`
 
+-------------------
+
 ## Tests
 
 Note that some of the unit tests use a giant blockchain fixture database
@@ -228,7 +230,7 @@ Note that some of the unit tests use a giant blockchain fixture database
 time the tests are run, this can take some time (depending on the internet
 connection), but happens only once.
 
-### Useful commands
+## Useful commands
 
     make lint
     make test
@@ -237,19 +239,30 @@ connection), but happens only once.
 
 ## Updating the version number and releasing new versions of neo-python
 
-This is a checklist for releasing a new version:
+This is a checklist for releasing a new version, which for now means:
 
-.. code-block:: console
+1. Merging the changes from development into master
+2. Setting the version from eg. `0.4.6-dev` to `0.4.6` (which automatically created a tag/release)
+3. On the dev branch, setting the version to the next patch, eg. `0.4.7-dev`
+4. Pushing master, development and the tags to GitHub
 
-    # In case you want to increase the version number again (eg. scope changed from patch to minor):
-    bumpversion --no-tag patch|minor|major
+Make sure you are on the development branch and have all changes merged that you want to publish. Then follow these steps:
 
-    # Update ``CHANGELOG.md`` and ``docs/source/changelog.rst`` with the new version number and the changes and commit this
-    vi CHANGELOG.md docs/source/changelog.rst
-    git commit -m "Updated Changelogs" CHANGELOG.md docs/source/changelog.rst
+    # Only in case you want to increase the version number again (eg. scope changed from patch to minor):
+    bumpversion --no-tag minor|major
+
+    # Update CHANGELOG.rst: make sure all changes are there and remove `-dev` from the version number
+    vi CHANGELOG.rst
+    git commit -m "Updated changelog for release" CHANGELOG.rst
+
+    # Merge development branch into master
+    git checkout master && git merge development
 
     # Set the release version number and create the tag
     bumpversion release
+
+    # Switch back into the development branch
+    git checkout development
 
     # Increase patch number and add `-dev`
     bumpversion --no-tag patch
