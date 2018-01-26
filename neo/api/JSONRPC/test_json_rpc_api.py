@@ -264,20 +264,19 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res["result"]["port"], 20332)
         self.assertEqual(res["result"]["useragent"], "/NEO-PYTHON:%s/" % __version__)
 
-
     def test_getrawtx_1(self):
         txid = 'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
-        req = self._gen_rpc_req("getrawtransaction", params=[txid,1])
+        req = self._gen_rpc_req("getrawtransaction", params=[txid, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))['result']
         self.assertEqual(res['blockhash'], '0x41720c35f5f15e5dc343d67fb54ab1e3825de47b476b5ae56cede2bf30657fde')
         self.assertEqual(res['txid'], "0x%s" % txid)
-        self.assertEqual(res['blocktime'],1499393065)
+        self.assertEqual(res['blocktime'], 1499393065)
         self.assertEqual(res['type'], 'ContractTransaction')
 
     def test_getrawtx_2(self):
         txid = 'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
-        req = self._gen_rpc_req("getrawtransaction", params=[txid,0])
+        req = self._gen_rpc_req("getrawtransaction", params=[txid, 0])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))['result']
         expected = '800001f00431313131010206cc6f919695fb55c9605c55127128c29697d791af884c2636416c69a944880100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000e58e5999bcbf5d78f52ead40654131abb9ee27099b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5009a04f516000000e53a27d37d7f5a3187003c21efe3725304a7410601414058b4a41beabdcf62381f7feea02767a714eb8ea49212fdb47a6f0bed2d0ae87d27377d9c2b4412ebf816042f2144e6e08939c7d83638b61208d3a7f5ea47c3ba232102ca81fa6c7ef20219c417d876c2743ea87728d416632d09c18004652aed09e000ac'
@@ -285,8 +284,51 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_getrawtx_3(self):
         txid = 'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b3'
-        req = self._gen_rpc_req("getrawtransaction", params=[txid,0])
+        req = self._gen_rpc_req("getrawtransaction", params=[txid, 0])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown Transaction')
+
+    def test_get_storage_item(self):
+        contract_hash = '16f1559c3c27d66d087bef936804105457617c8a'
+        storage_key = binascii.hexlify(b'totalSupply').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], '001843d5ba05')
+        actual_val = int.from_bytes(binascii.unhexlify(res['result'].encode('utf-8')), 'little')
+        self.assertEqual(actual_val, 6300000000000)
+
+    def test_get_storage_item2(self):
+        contract_hash = '0xd7678dd97c000be3f33e9362e673101bac4ca654'
+        storage_key = binascii.hexlify(b'totalSupply').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], '0070723d14b200')
+
+    def test_get_storage_item_key_not_found(self):
+        contract_hash = '0xd7678dd97c000be3f33e9362e673101bac4ca654'
+        storage_key = binascii.hexlify(b'blah').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], None)
+
+    def test_get_storage_item_contract_not_found(self):
+        contract_hash = '0xd7678dd97c100be3f33e9362e673101bac4ca654'
+        storage_key = binascii.hexlify(b'blah').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], None)
+
+    def test_get_storage_item_bad_contract_hash(self):
+        contract_hash = '0xd7678dd97c000b3e9362e673101bac4ca654'
+        storage_key = binascii.hexlify(b'blah').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertIn('Invalid UInt: data length', res['error']['message'])

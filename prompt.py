@@ -243,6 +243,8 @@ class PromptInterface(object):
                     print("Pubkey %s" % key.PublicKey.encode_point(True))
                 except Exception as e:
                     print("Exception creating wallet: %s" % e)
+                    import traceback
+                    traceback.print_exc()
                     self.Wallet = None
                     if os.path.isfile(path):
                         try:

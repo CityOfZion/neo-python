@@ -1,6 +1,6 @@
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.TX.MinerTransaction import MinerTransaction
-from neo.Core.TX.Transaction import Transaction,TransactionType
+from neo.Core.TX.Transaction import Transaction, TransactionType
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager

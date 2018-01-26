@@ -23,6 +23,7 @@ from neocore.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
 import inspect
 
+
 class TransactionResult(EquatableMixin):
     AssetId = None
     Amount = Fixed8(0)
@@ -63,9 +64,9 @@ class TransactionType(object):
 
     @staticmethod
     def ToName(value):
-        if isinstance(value,int):
-            value = value.to_bytes(1,'little')
-        for key,item in TransactionType.__dict__.items():
+        if isinstance(value, int):
+            value = value.to_bytes(1, 'little')
+        for key, item in TransactionType.__dict__.items():
             if value == item:
                 return key
         return None

@@ -24,7 +24,10 @@ from neocore.UInt256 import UInt256
 from neo.Wallets import Wallet
 from neo.Core.Helper import Helper
 from neo.Network.NodeLeader import NodeLeader
-
+import binascii
+from neo.Core.State.StorageKey import StorageKey
+from neo.SmartContract.ApplicationEngine import ApplicationEngine
+from neo.SmartContract.ContractParameter import ContractParameter
 
 class JsonRpcError(Exception):
     """
@@ -127,6 +130,25 @@ class JsonRpcApi(object):
         if param[0:2] == '0x':
             return param[2:]
         return param
+
+    def param_to_uint160(self, param):
+        shash_reversed = bytearray(binascii.unhexlify(self.parse_uint_str(param)))
+        shash_reversed.reverse()
+        return UInt160(data=shash_reversed)
+
+    def param_to_uint256(self, param):
+        shash_reversed = bytearray(binascii.unhexlify(self.parse_uint_str(param)))
+        shash_reversed.reverse()
+        return UInt256(data=shash_reversed)
+
+    def get_invoke_result(self, script):
+        appengine = ApplicationEngine.Run(script=script)
+        return {
+            "script": "0x%s" % script.hex(),
+            "state": appengine.State,
+            "gas_consumed": appengine.GasConsumed().ToString(),
+            "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack]
+        }
 
     def json_rpc_method_handler(self, method, params):
         # print("method", method, params)
@@ -232,9 +254,14 @@ class JsonRpcApi(object):
 
             return Helper.ToArray(tx).decode('utf-8')
 
-
         elif method == "getstorage":
-            raise NotImplementedError()
+            script_hash = self.param_to_uint160(params[0])
+            key = binascii.unhexlify(params[1].encode('utf-8'))
+            storage_key = StorageKey(script_hash=script_hash, key=key)
+            storage_item = Blockchain.Default().GetStorageItem(storage_key)
+            if storage_item:
+                return storage_item.Value.hex()
+            return None
 
         elif method == "gettxout":
             raise NotImplementedError()

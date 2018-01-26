@@ -58,7 +58,6 @@ class StateTransaction(Transaction):
 
         self.Descriptors = reader.ReadSerializableArray('neo.Core.State.StateDescriptor.StateDescriptor')
 
-
     def GetScriptHashesForVerifying(self):
         """
         Get a list of script hashes for verifying transactions.

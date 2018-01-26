@@ -16,6 +16,7 @@ from neo.SmartContract import TriggerType
 
 import pdb
 from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
 
 
 class ApplicationEngine(ExecutionEngine):
@@ -370,7 +371,6 @@ class ApplicationEngine(ExecutionEngine):
         from neo.SmartContract.StateMachine import StateMachine
 
         bc = Blockchain.Default()
-
         sn = bc._db.snapshot()
 
         accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)

@@ -180,8 +180,7 @@ class ContractParametersContext():
             index = -1
             length = len(contract.ParameterList)
             for i in range(0, length):
-
-                if contract.ParameterList[i] == ContractParameterType.Signature:
+                if ContractParameterType(contract.ParameterList[i]) == ContractParameterType.Signature:
                     if index >= 0:
                         raise Exception("Signature must be first")
                     else:
