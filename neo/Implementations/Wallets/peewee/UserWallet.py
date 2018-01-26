@@ -36,6 +36,8 @@ class UserWallet(Wallet):
 
     _holds = None
 
+    _db = None
+
     def __init__(self, path, passwordKey, create):
 
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)
@@ -84,26 +86,22 @@ class UserWallet(Wallet):
                 hold.delete_instance()
 
     def BuildDatabase(self):
-        PWDatabase.Destroy()
-        PWDatabase.Initialize(self._path)
-        db = PWDatabase.ContextDB()
+        self._db = PWDatabase(self._path).DB
         try:
-            db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, VINHold,
-                              Transaction, TransactionInfo, NamedAddress], safe=True)
+            self._db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, VINHold,
+                                    Transaction, TransactionInfo, NamedAddress], safe=True)
         except Exception as e:
             logger.error("Could not build database %s " % e)
 
     def Migrate(self):
-        db = PWDatabase.ContextDB()
-        migrator = SqliteMigrator(db)
-
+        migrator = SqliteMigrator(self._db)
         migrate(
             migrator.drop_not_null('Contract', 'Account_id'),
             migrator.add_column('Address', 'IsWatchOnly', BooleanField(default=False)),
         )
 
     def DB(self):
-        return PWDatabase.Context()
+        return self._db
 
     def Rebuild(self):
         super(UserWallet, self).Rebuild()
@@ -115,6 +113,11 @@ class UserWallet(Wallet):
 
         logger.debug("wallet rebuild: deleted coins and transactions %s %s " %
                      (Coin.select().count(), Transaction.select().count()))
+
+    def Close(self):
+        if self._db:
+            self._db.close()
+            self._db = None
 
     @staticmethod
     def Open(path, password):

@@ -56,6 +56,7 @@ class TransactionType(object):
     VotingTransaction = b'\x24'
     RegisterTransaction = b'\x40'
     ContractTransaction = b'\x80'
+    StateTransaction = b'\x90'
     AgencyTransaction = b'\xb0'
     PublishTransaction = b'\xd0'
     InvocationTransaction = b'\xd1'
@@ -450,6 +451,7 @@ class Transaction(Inventory, InventoryMixin):
         from neo.Core.TX.PublishTransaction import PublishTransaction
         from neo.Core.TX.InvocationTransaction import InvocationTransaction
         from neo.Core.TX.EnrollmentTransaction import EnrollmentTransaction
+        from neo.Core.TX.StateTransaction import StateTransaction
 
         if ttype == int.from_bytes(TransactionType.RegisterTransaction, 'little'):
             tx = RegisterTransaction()
@@ -465,6 +467,8 @@ class Transaction(Inventory, InventoryMixin):
             tx = InvocationTransaction()
         elif ttype == int.from_bytes(TransactionType.EnrollmentTransaction, 'little'):
             tx = EnrollmentTransaction()
+        elif ttype == int.from_bytes(TransactionType.StateTransaction, 'little'):
+            tx = StateTransaction()
         else:
             tx = Transaction()
             tx.Type = ttype

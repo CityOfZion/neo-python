@@ -4,6 +4,7 @@ from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Send import construct_and_send
 from neo.Prompt.Commands.Wallet import ImportToken
+from neo.Prompt.Utils import get_tx_attr_from_args
 import shutil
 
 
@@ -119,3 +120,59 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = construct_and_send(None, wallet, args, prompt_password=False)
 
         self.assertTrue(res)
+
+    def test_9_attributes(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        args = ['gas', self.watch_addr_str, '2', "--tx-attr={'usage':241,'data':'This is a remark'}"]
+
+        res = construct_and_send(None, wallet, args, prompt_password=False)
+
+        self.assertTrue(res)
+
+        self.assertEqual(2, len(res.Attributes))
+
+    def test_10_attributes(self):
+        wallet = self.GetWallet1(recreate=True)
+
+        args = ['gas', self.watch_addr_str, '2', "--tx-attr=[{'usage':241,'data':'This is a remark'},{'usage':242,'data':'This is a remark 2'}]"]
+
+        res = construct_and_send(None, wallet, args, prompt_password=False)
+
+        self.assertTrue(res)
+
+        self.assertEqual(3, len(res.Attributes))
+
+    def test_11_bad_attributes(self):
+        wallet = self.GetWallet1(recreate=True)
+
+        args = ['gas', self.watch_addr_str, '2', "--tx-attr=[{'usa:241'data':his is a remark'}]"]
+
+        res = construct_and_send(None, wallet, args, prompt_password=False)
+
+        self.assertTrue(res)
+
+        self.assertEqual(1, len(res.Attributes))
+
+    def test_12_utils_attr_str(self):
+
+        args = ["--tx-attr=[{'usa:241'data':his is a remark'}]"]
+
+        with self.assertRaises(Exception) as context:
+            args, txattrs = get_tx_attr_from_args(args)
+
+            self.assertTrue('could not convert object' in context.exception)
+            self.assertEqual(len(args), 0)
+            self.assertEqual(len(txattrs), 0)
+
+    def test_13_utilst_bad_type(self):
+
+        args = ["--tx-attr=bytearray(b'\x00\x00')"]
+
+        with self.assertRaises(Exception) as context:
+
+            args, txattr = get_tx_attr_from_args(args)
+            self.assertTrue('could not convert object' in context.exception)
+            self.assertEqual(len(args), 0)
+            self.assertEqual(len(txattr), 0)

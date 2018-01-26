@@ -7,7 +7,6 @@ from neo.Core.CoinReference import CoinReference
 class ClaimTransaction(Transaction):
     Claims = set()
 
-    @property
     def Size(self):
         """
         Get the total size in bytes of the object.

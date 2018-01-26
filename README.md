@@ -28,15 +28,17 @@
 ### What does it currently do
 
 - This project aims to be a full port of the original C#
-[NEO project](https://github.com/neo-project)
+  [NEO project](https://github.com/neo-project)
 - Run a Python based P2P node
 - Interactive CLI for configuring node and inspecting blockchain
+- Build, deploy, and run smart contracts
 - Runs smart contracts on the blockchain in a Python virtual machine
 - Very basic Wallet functionality (not fully tested, please do not use on mainnet)
-- [NEP2](https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>) and [NEP5](https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki) compliant wallet functionality
+- [NEP2](https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>) and
+  [NEP5](https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki)
+  compliant wallet functionality
 - RPC Client
-- ``Runtime.Log`` and ``Runtime.Notify`` event monitoring
-
+- `Runtime.Log` and `Runtime.Notify` event monitoring
 
 ### What will it do
 
@@ -46,34 +48,45 @@
 
 ### Documentation
 
-- Installation, Configuration, and usage documentation available at [Read The Docs](https://neo-python.readthedocs.io/en/latest/)
+The full documentation on how to install, configure and use neo-python can be
+found at [Read The Docs](https://neo-python.readthedocs.io/en/latest/).
 
-### Get Help or give help
+### Get help or give help
 
 - Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
 - Or ping **@localhuman**  or **@metachris** on the [NEO Discord](https://discord.gg/R8v48YA).
-- Pull requests welcome. You can help with wallet functionality, writing tests or documentation, or on any other feature you deem awesome. All successful pull requests will be rewarded with one photo of a cat or kitten.
-
+- Pull requests welcome. You can help with wallet functionality, writing tests
+  or documentation, or on any other feature you deem awesome. All successful
+  pull requests will be rewarded with one photo of a cat or kitten.
 
 ## Getting started
 
-You will need to install the libleveldb library. Install [Python 3.5](https://www.python.org/downloads/release/python-354/) to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.6 is not currently supported due to incompatibilities with the byteplay module.
+neo-python has two System dependencies (everything else is covered with `pip`):
 
-We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get you started with this library. There are other videos under the [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube channel.
+- [LevelDB](https://github.com/google/leveldb)
+- [Python 3.5.4](https://www.python.org/downloads/release/python-354) (3.6 and up is currently not supported due to its `byteplay3` dependency)
 
-##### OSX:
+We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get
+you started. There are many more videos under the
+[CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
+channel, check them out.
+
+
+### LevelDB
+
+#### OSX
 
 ```
 brew install leveldb
 ```
 
-##### Ubuntu/Debian
+#### Ubuntu/Debian
 
 ```
 apt-get install libleveldb-dev python3.5-dev python3-pip python3-venv libssl-dev g++
 ```
 
-##### Centos/Redhat/Fedora
+#### Centos/Redhat/Fedora
 
 This is a bit more tricky...
 
@@ -88,34 +101,44 @@ yum install -y epel-release
 yum install -y readline-devel leveldb-devel libffi-devel gcc-c++ redhat-rpm-config gcc python-devel openssl-devel
 ```
 
-### For all of these, make sure that the `Chains` directory in your project has the proper write permissions
+#### Windows
 
-##### Windows
+Help needed. Installing the Python package plyvel seems to require C++ compiler
+support tied to Visual Studio and libraries.
 
-Not sure. Installing the Python package plyvel seems to require C++ compiler support tied to Visual Studio and libraries.
+### Python 3.5
 
--------------------
+neo-python is currently only compatible with **Python 3.5** (due to its `byteplay3` dependency).
+
+On *nix systems, install Python 3.5 via your package manager, or download an installation package
+from the [official homepage](https://www.python.org/downloads/release/python-354).
 
 ### Virtual Environment
 
-Now navigate into the project, make a Python 3 virtual environment and activate
-it via
+It is recommended to put all project dependencies into its own virtual environment,
+this way we don't pollute the global installation which could lead to version conflicts.
 
 ```
 python3.5 -m venv venv
 source venv/bin/activate
 ```
 
-Then install the requirements:
+Now let's install neo-python's dependencies:
 
 ```
 pip install -U setuptools pip wheel
 pip install -e .
 ```
 
+-------------------
+
 ## Running
-After installing requirements and activating your environment, there is an easy
-to use `prompt.py` file for you to run the node as well as some basic interactivity
+
+Before running the neo-python CLI, make sure that the `Chains` directory in the
+project has the proper write permissions.
+
+After installing requirements and activating the environment, there is an easy
+to use CLI (`prompt.py`) that starts the node and allows some basic interactivity.
 
 ```
 python prompt.py
@@ -127,7 +150,10 @@ Progress: 1054913 / 1237188
 neo>
 ```
 
-You can query for a block in the current server by hash or by block index:
+By default, the CLI connects to the **TestNet** (see below how to switch to
+MainNet or PrivNet).
+
+Let's query for a block in the current server by hash or by block index:
 
 ```
 python prompt.py
@@ -151,11 +177,13 @@ neo> block 122235
 neo>
 ```
 
-
-#### Available Wallet commands
+### Available Wallet commands
 
 ```
-help
+python prompt.py
+NEO cli. Type 'help' to get started
+
+neo> help
 
 create wallet {wallet_path}
 open wallet {wallet_path}
@@ -167,10 +195,11 @@ import wif { WIF }
 send { ASSET_ID } { ADDRESS } { AMOUNT }
 ```
 
+### Running on MainNet
 
-#### Extra notes
-
-To run the prompt on mainnet, you can use the cli argument `-m`:
+To run the prompt on MainNet, you can use the CLI argument `-m` (eg. `python
+prompt.py -m`), for running on PrivNet you can use `-p`. Be sure to check out
+the details of the parameters:
 
 ```
 $ python prompt.py -h
@@ -188,28 +217,18 @@ optional arguments:
   --version             show program's version number and exit
 ```
 
-On OSX, if you would like to run the process in the background, even when your computer is sleeping, you can use the built in `caffeinate` command
-
-```
-caffeinate python prompt.py
-```
-
 ### Logging
 
 Currently, `prompt.py` logs to `prompt.log`
 
+-------------------
+
 ## Tests
 
-Tests are important. Currently there are not enough, but we are working on that. You can start them by running this commands:
-
-    make test
-    make coverage
-
-Note that some of the unit tests use a giant blockchain fixture database ( around 800mb ). This file is not kept in the repo.
-
-When running tests the first time, the test setup will try to download the file and extract it to the proper directory.
-**Long story short**: the first time you run your tests, it will take a while to download those fixtures. After that it should be pretty quick.
-
+Note that some of the unit tests use a giant blockchain fixture database
+(~800MB). This file is not kept in the repo, but are downloaded the first
+time the tests are run, this can take some time (depending on the internet
+connection), but happens only once.
 
 ## Useful commands
 
@@ -218,24 +237,32 @@ When running tests the first time, the test setup will try to download the file 
     make coverage
     make docs
 
-
 ## Updating the version number and releasing new versions of neo-python
 
-(Only for admins)
+This is a checklist for releasing a new version, which for now means:
 
-This is a checklist for releasing a new version:
+1. Merging the changes from development into master
+2. Setting the version from eg. `0.4.6-dev` to `0.4.6` (which automatically created a tag/release)
+3. On the dev branch, setting the version to the next patch, eg. `0.4.7-dev`
+4. Pushing master, development and the tags to GitHub
 
-.. code-block:: console
+Make sure you are on the development branch and have all changes merged that you want to publish. Then follow these steps:
 
-    # In case you want to increase the version number again (eg. scope changed from patch to minor):
-    bumpversion --no-tag patch|minor|major
+    # Only in case you want to increase the version number again (eg. scope changed from patch to minor):
+    bumpversion --no-tag minor|major
 
-    # Update ``CHANGELOG.md`` and ``docs/source/changelog.rst`` with the new version number and the changes and commit this
-    vi CHANGELOG.md docs/source/changelog.rst
-    git commit -m "Updated Changelogs" CHANGELOG.md docs/source/changelog.rst
+    # Update CHANGELOG.rst: make sure all changes are there and remove `-dev` from the version number
+    vi CHANGELOG.rst
+    git commit -m "Updated changelog for release" CHANGELOG.rst
+
+    # Merge development branch into master
+    git checkout master && git merge development
 
     # Set the release version number and create the tag
     bumpversion release
+
+    # Switch back into the development branch
+    git checkout development
 
     # Increase patch number and add `-dev`
     bumpversion --no-tag patch
@@ -245,14 +272,20 @@ This is a checklist for releasing a new version:
 
 ## Troubleshooting
 
-If you encounter any problems, please take a look at the [installation section](https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes) in the docs, and if that doesn't help open an issue. We'll try to help.
+If you run into problems, check these things before ripping out your hair:
 
+* Double-check that you are using Python 3.5.x
+* Update the project dependencies (`pip install -e .`)
+* If you encounter any problems, please take a look at the [installation
+  section](https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes)
+  in the docs, and if that doesn't help open an issue. We'll try to help.
+* You can reach us on the [NEO Discord](https://discord.gg/R8v48YA), or simply file
+  a [GitHub issue](https://github.com/CityOfZion/neo-python/issues/new).
 
 ## License
 
 - Open-source [MIT](https://github.com/CityOfZion/neo-python/blob/master/LICENSE.md).
 - Main author is [@localhuman](https://github.com/localhuman).
-
 
 ## Donations
 
