@@ -131,7 +131,7 @@ class JsonRpcApi(object):
 
     def validateaddress(self, params):
         # check for [] parameter or [""]
-        if params is None or params[0] == '':
+        if not params or params[0] == '':
             raise JsonRpcError(-100, "Missing argument")
 
         isValid = False
@@ -254,6 +254,7 @@ class JsonRpcApi(object):
 
         elif method == "validateaddress":
             return self.validateaddress(params)
+
         elif method == "getpeers":
             raise NotImplementedError()
 
