@@ -28,6 +28,8 @@ import binascii
 from neo.Core.State.StorageKey import StorageKey
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
+from neo.VM.ScriptBuilder import ScriptBuilder
+
 
 class JsonRpcError(Exception):
     """
@@ -147,7 +149,7 @@ class JsonRpcApi(object):
             "script": "0x%s" % script.hex(),
             "state": appengine.State,
             "gas_consumed": appengine.GasConsumed().ToString(),
-            "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack]
+            "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]
         }
 
     def json_rpc_method_handler(self, method, params):
@@ -267,13 +269,27 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         elif method == "invoke":
-            raise NotImplementedError()
+            shash = self.param_to_uint160(params[0])
+            contract_parameters = [ContractParameter.FromJson(p) for p in params[1]]
+            sb = ScriptBuilder()
+            sb.EmitAppCallWithJsonArgs(shash, contract_parameters)
+            output = sb.ToArray()
+            return self.get_invoke_result(output)
 
         elif method == "invokefunction":
-            raise NotImplementedError()
+            shash = self.param_to_uint160(params[0])
+            fname = params[1]
+            contract_parameters = []
+            if len(params) > 2:
+                contract_parameters = [ContractParameter.FromJson(p).ToVM() for p in params[2]]
+            sb = ScriptBuilder()
+            sb.EmitAppCallWithOperationAndArgs(shash, fname, contract_parameters)
+            output = sb.ToArray()
+            return self.get_invoke_result(output)
 
         elif method == "invokescript":
-            raise NotImplementedError()
+            script = self.parse_uint_str(params[0]).encode('utf-8')
+            return self.get_invoke_result(script)
 
         elif method == "sendrawtransaction":
             raise NotImplementedError()

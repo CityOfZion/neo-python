@@ -8,6 +8,7 @@ Usage:
 from enum import Enum
 import binascii
 
+
 class ContractParameterType(Enum):
     Signature = 0x00        # 签名
     Boolean = 0x01
@@ -21,13 +22,13 @@ class ContractParameterType(Enum):
     InteropInterface = 0xf0
     Void = 0xff
 
-
     def __str__(self):
-        return str(self.value.to_bytes(1,'little').hex())
+        return str(self.value.to_bytes(1, 'little').hex())
 
     @staticmethod
     def FromString(val):
-        return ContractParameterType(int.from_bytes( binascii.unhexlify(val), 'little'))
+        return ContractParameterType(int.from_bytes(binascii.unhexlify(val), 'little'))
+
 
 import inspect
 

@@ -11,6 +11,8 @@ from neo import __version__
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.IO.Helper import Helper
+from neo.SmartContract.ContractParameter import ContractParameter
+from neo.SmartContract.ContractParameterType import ContractParameterType
 from neocore.UInt160 import UInt160
 import binascii
 

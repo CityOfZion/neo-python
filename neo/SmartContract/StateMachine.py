@@ -448,7 +448,6 @@ class StateMachine(StateReader):
         try:
             item = engine.EvaluationStack.Pop()
             context = item.GetInterface()
-            shash = context.ScriptHash
         except Exception as e:
             logger.error("could not get storage context %s " % e)
             return False
@@ -458,7 +457,6 @@ class StateMachine(StateReader):
 
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        print("STORAGE KEY %s " % key)
         item = self._storages.TryGet(storage_key.GetHashCodeBytes())
 
         keystr = key
@@ -483,10 +481,14 @@ class StateMachine(StateReader):
         else:
             engine.EvaluationStack.PushT(bytearray(0))
 
+        hash = None
+        if engine.ScriptContainer:
+            hash = engine.ScriptContainer.Hash
+
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.STORAGE_GET, ['%s -> %s' % (keystr, valStr)],
                                context.ScriptHash, Blockchain.Default().Height,
-                               engine.ScriptContainer.Hash, test_mode=engine.testMode))
+                               hash, test_mode=engine.testMode))
 
         return True
 
@@ -524,10 +526,14 @@ class StateMachine(StateReader):
             except Exception as e:
                 pass
 
+        hash = None
+        if engine.ScriptContainer:
+            hash = engine.ScriptContainer.Hash
+
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.STORAGE_PUT, ['%s -> %s' % (keystr, valStr)],
                                context.ScriptHash, Blockchain.Default().Height,
-                               engine.ScriptContainer.Hash, test_mode=engine.testMode))
+                               hash, test_mode=engine.testMode))
 
         return True
 
@@ -542,14 +548,16 @@ class StateMachine(StateReader):
 
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 
-        keystr = key
+        hash = None
+        if engine.ScriptContainer:
+            hash = engine.ScriptContainer.Hash
 
         if len(key) == 20:
             keystr = Crypto.ToAddress(UInt160(data=key))
 
             self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_DELETE, [keystr],
                                                               context.ScriptHash, Blockchain.Default().Height,
-                                                              engine.ScriptContainer.Hash, test_mode=engine.testMode))
+                                                              hash, test_mode=engine.testMode))
 
         self._storages.Remove(storage_key.GetHashCodeBytes())
 

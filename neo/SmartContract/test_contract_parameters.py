@@ -4,25 +4,26 @@ from neo.SmartContract.ContractParameterType import ContractParameterType
 from neocore.UInt256 import UInt256
 from neocore.UInt160 import UInt160
 from neocore.Cryptography.ECCurve import EllipticCurve
+
+
 class EventTestCase(TestCase):
 
     def test_from_json(self):
 
         jsn = {
-            'type':str(ContractParameterType.String),
-            'value':'hello'
+            'type': str(ContractParameterType.String),
+            'value': 'hello'
         }
         cp = ContractParameter.FromJson(jsn)
         cpj = cp.ToJson()
         self.assertEqual(cpj, jsn)
 
-
         self.assertEqual(cp.Type, ContractParameterType.String)
         self.assertEqual(cp.Value, 'hello')
 
         jsn = {
-            'type':str(ContractParameterType.Integer),
-            'value':2003
+            'type': str(ContractParameterType.Integer),
+            'value': 2003
         }
 
         cp = ContractParameter.FromJson(jsn)
@@ -31,8 +32,8 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.ToJson(), jsn)
 
         jsn = {
-            'type':str(ContractParameterType.Hash160),
-            'value':'d7678dd97c000be3f33e9362e673101bac4ca654'
+            'type': str(ContractParameterType.Hash160),
+            'value': 'd7678dd97c000be3f33e9362e673101bac4ca654'
         }
 
         cp = ContractParameter.FromJson(jsn)
@@ -42,8 +43,8 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.ToJson(), jsn)
 
         jsn = {
-            'type':str(ContractParameterType.Hash256),
-            'value':'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
+            'type': str(ContractParameterType.Hash256),
+            'value': 'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
         }
 
         cp = ContractParameter.FromJson(jsn)
@@ -53,8 +54,8 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.ToJson(), jsn)
 
         jsn = {
-            'type':str(ContractParameterType.PublicKey),
-            'value':'0327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee8'
+            'type': str(ContractParameterType.PublicKey),
+            'value': '0327da12b5c40200e9f65569476bbff2218da4f32548ff43b6387ec1416a231ee8'
         }
 
         cp = ContractParameter.FromJson(jsn)
@@ -62,7 +63,7 @@ class EventTestCase(TestCase):
         self.assertIsInstance(cp.Value, EllipticCurve.ECPoint)
 
         jsn = {
-            'type':str(ContractParameterType.ByteArray),
+            'type': str(ContractParameterType.ByteArray),
             'value': bytearray(b'\x00\x01\x02').hex()
         }
 
@@ -73,25 +74,24 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.ToJson(), jsn)
 
         jsn = {
-            'type':str(ContractParameterType.Boolean),
-            'value':0
+            'type': str(ContractParameterType.Boolean),
+            'value': 0
         }
         cp = ContractParameter.FromJson(jsn)
         self.assertEqual(cp.Type, ContractParameterType.Boolean)
         self.assertEqual(cp.Value, False)
 
-
         jsn = {
-            'type':str(ContractParameterType.Boolean),
-            'value':1
+            'type': str(ContractParameterType.Boolean),
+            'value': 1
         }
         cp = ContractParameter.FromJson(jsn)
         self.assertEqual(cp.Type, ContractParameterType.Boolean)
         self.assertEqual(cp.Value, True)
 
         jsn = {
-            'type':str(ContractParameterType.Boolean),
-            'value':True
+            'type': str(ContractParameterType.Boolean),
+            'value': True
         }
         cp = ContractParameter.FromJson(jsn)
         self.assertEqual(cp.Type, ContractParameterType.Boolean)
@@ -99,8 +99,8 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.ToJson(), jsn)
 
         jsn = {
-            'type':str(ContractParameterType.Boolean),
-            'value':False
+            'type': str(ContractParameterType.Boolean),
+            'value': False
         }
         cp = ContractParameter.FromJson(jsn)
         self.assertEqual(cp.Type, ContractParameterType.Boolean)
@@ -108,21 +108,20 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.ToJson(), jsn)
 
         jsn = {
-            'type':str(ContractParameterType.Array),
-            'value':[
-                        {
-                            'type':str(ContractParameterType.Boolean),
-                            'value':0
-                        },{
-                            'type':str(ContractParameterType.ByteArray),
-                            'value': bytearray(b'\x00\x01\x02').hex()
-                        },{
-                            'type':str(ContractParameterType.Hash256),
-                            'value':'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
-                        }
-                    ]
+            'type': str(ContractParameterType.Array),
+            'value': [
+                {
+                    'type': str(ContractParameterType.Boolean),
+                    'value': 0
+                }, {
+                    'type': str(ContractParameterType.ByteArray),
+                    'value': bytearray(b'\x00\x01\x02').hex()
+                }, {
+                    'type': str(ContractParameterType.Hash256),
+                    'value': 'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
+                }
+            ]
         }
-
 
         cp = ContractParameter.FromJson(jsn)
         self.assertEqual(cp.Type, ContractParameterType.Array)

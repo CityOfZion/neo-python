@@ -1,9 +1,11 @@
-from neo.SmartContract.ContractParameterType import ContractParameterType,ToName
-from neo.VM.InteropService import StackItem,Array,ByteArray,Struct,Boolean,Integer,InteropInterface
+from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
+from neo.VM.InteropService import StackItem, Array, ByteArray, Struct, Boolean, Integer, InteropInterface
 import binascii
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
+from neocore.BigInteger import BigInteger
 from neocore.Cryptography.ECCurve import ECDSA
+
 
 class ContractParameter():
 
@@ -13,7 +15,6 @@ class ContractParameter():
     def __init__(self, type, value):
         self.Type = type
         self.Value = value
-
 
     @staticmethod
     def Parse0x(param):
@@ -34,7 +35,7 @@ class ContractParameter():
         return UInt256(data=shash_reversed)
 
     @staticmethod
-    def ToParameter(item:StackItem):
+    def ToParameter(item: StackItem):
 
         if isinstance(item, Array) or isinstance(item, Struct):
             items = item.GetArray()
@@ -52,7 +53,6 @@ class ContractParameter():
 
         elif isinstance(item, InteropInterface):
             return ContractParameter(type=ContractParameterType.InteropInterface, value=item.GetInterface())
-
 
     def ToJson(self):
         jsn = {}
@@ -86,6 +86,13 @@ class ContractParameter():
             jsn['value'] = res
 
         return jsn
+
+    def ToVM(self):
+        if self.Type == ContractParameterType.String:
+            return str(self.Value).encode('utf-8').hex()
+        elif self.Type == ContractParameterType.Integer and isinstance(self.Value, int):
+            return BigInteger(self.Value)
+        return self.Value
 
     @staticmethod
     def FromJson(json):
