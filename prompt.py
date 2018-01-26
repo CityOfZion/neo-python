@@ -243,8 +243,6 @@ class PromptInterface(object):
                     print("Pubkey %s" % key.PublicKey.encode_point(True))
                 except Exception as e:
                     print("Exception creating wallet: %s" % e)
-                    import traceback
-                    traceback.print_exc()
                     self.Wallet = None
                     if os.path.isfile(path):
                         try:
@@ -253,8 +251,9 @@ class PromptInterface(object):
                             print("Could not remove {}: {}".format(path, e))
                     return
 
-                self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-                self._walletdb_loop.start(1)
+                if self.Wallet:
+                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+                    self._walletdb_loop.start(1)
 
             else:
                 print("Please specify a path")

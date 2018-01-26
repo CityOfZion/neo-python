@@ -1,8 +1,6 @@
 import time
 import plyvel
 import binascii
-import traceback
-import pdb
 
 from logzero import logger
 
