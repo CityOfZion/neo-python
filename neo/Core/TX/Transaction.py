@@ -149,7 +149,7 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
         """
         return {
             'AssetId': self.AssetId.To0xString(),
-            'Value': self.Value.ToString(),
+            'Value': self.Value.ToNeoJsonString(),
             'ScriptHash': self.Address
         }
 
@@ -590,8 +590,8 @@ class Transaction(Inventory, InventoryMixin):
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
         jsn["vout"] = [out.ToJson() for out in self.outputs]
         jsn["vin"] = [input.ToJson() for input in self.inputs]
-        jsn["sys_fee"] = self.SystemFee().ToString()
-        jsn["net_fee"] = self.NetworkFee().ToString()
+        jsn["sys_fee"] = self.SystemFee().ToNeoJsonString()
+        jsn["net_fee"] = self.NetworkFee().ToNeoJsonString()
         jsn["scripts"] = [script.ToJson() for script in self.scripts]
         return jsn
 
