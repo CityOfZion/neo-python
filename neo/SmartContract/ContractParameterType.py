@@ -34,7 +34,7 @@ class ContractParameterType(Enum):
         Create a ContractParameterType object from a str
 
         Args:
-            val (str) the value to be converted to a ContractParameterType
+            val (str): the value to be converted to a ContractParameterType
 
         Returns:
             ContractParameterType
@@ -49,7 +49,7 @@ def ToName(param_type):
     """
     Gets the name of a ContractParameterType based on its value
     Args:
-        param_type (ContractParameterType) type to get the name of
+        param_type (ContractParameterType): type to get the name of
 
     Returns:
         str

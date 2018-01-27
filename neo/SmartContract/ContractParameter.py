@@ -17,8 +17,8 @@ class ContractParameter():
         """
 
         Args:
-            type:
-            value:
+            type (neo.SmartContract.ContractParameterType): The type of the parameter
+            value (*): The value of the parameter
         """
         self.Type = type
         self.Value = value
@@ -57,7 +57,7 @@ class ContractParameter():
         Converts a ContractParameter instance to a json representation
 
         Returns:
-            json object
+            dict: a dictionary representation of the contract parameter
         """
         jsn = {}
         jsn['type'] = str(ContractParameterType(self.Type))
@@ -110,7 +110,7 @@ class ContractParameter():
         Convert a json object to a ContractParameter object
 
         Args:
-            item (dict) The item to convert to a ContractParameter object
+            item (dict): The item to convert to a ContractParameter object
 
         Returns:
             ContractParameter

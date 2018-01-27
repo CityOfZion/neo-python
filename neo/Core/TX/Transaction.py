@@ -143,6 +143,8 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
     def ToJson(self, index):
         """
         Convert object members to a dictionary that can be parsed as JSON.
+        Args:
+            index (int): The index of the output in a transaction
 
         Returns:
              dict:
