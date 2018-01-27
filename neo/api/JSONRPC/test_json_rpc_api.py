@@ -374,3 +374,42 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         u = UInt256.ParseString('0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb')
         unspents = GetBlockchain().GetAllUnspent(u)
         self.assertEqual(len(unspents), 1)
+
+    def test_gettxout(self):
+        # block 730901 - 2 transactions
+        # output with index 0 is spent, so should return an error
+
+        txid = '0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb'
+        output_index = 0
+        req = self._gen_rpc_req("gettxout", params=[txid, output_index])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        # will return `null` if not found
+        self.assertEqual(None, res["result"])
+
+        # output with index 1 is unspent, so should return valid values
+        txid = '0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb'
+        output_index = 1
+        req = self._gen_rpc_req("gettxout", params=[txid, output_index])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        expected_asset = '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
+        expected_value = "25"
+        expected_address = 'AHYb3ySrHbhzouZ81ZMnCf8c7zYaoDg64x'
+
+        self.assertEqual(output_index, res["result"]["n"])
+        self.assertEqual(expected_address, res["result"]["address"])
+        self.assertEqual(expected_asset, res["result"]["asset"])
+        self.assertEqual(expected_value, res["result"]["value"])
+
+        # now test for a different block (730848) with a floating value
+        txid = '9c9f2c430c3cfb805e8c22d0a7778a60ce7792fad52ffe9b34f56de8e2c1d2e6'
+        output_index = 1  # index 0 is spent, 0 is unspent
+        req = self._gen_rpc_req("gettxout", params=[txid, output_index])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        expected_value = "2609.997813"
+        self.assertEqual(output_index, res["result"]["n"])
+        self.assertEqual(expected_value, res["result"]["value"])
