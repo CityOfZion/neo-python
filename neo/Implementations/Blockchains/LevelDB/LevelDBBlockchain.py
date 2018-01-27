@@ -1,8 +1,6 @@
 import time
 import plyvel
 import binascii
-import traceback
-import pdb
 
 from logzero import logger
 
@@ -307,7 +305,8 @@ class LevelDBBlockchain(Blockchain):
             for index, item in enumerate(state.Items):
                 if item & CoinState.Spent == 0:
                     unspents.append(tx.outputs[index])
-
+        else:
+            print("no state?")
         return unspents
 
     def GetUnclaimed(self, hash):

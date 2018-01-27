@@ -12,6 +12,8 @@ from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.IO.Helper import Helper
 from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
+from neo.Blockchain import GetBlockchain
 import binascii
 
 
@@ -79,7 +81,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getblockcount")
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(756620, res["result"])
+        self.assertEqual(758716, res["result"])
 
     def test_getblockhash(self):
         req = self._gen_rpc_req("getblockhash", params=[2])
@@ -151,7 +153,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getbestblockhash", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], '0x370007195c10a05e355b606f8f8867239f026a925f2ddc46940f62c9136d3ff5')
+        self.assertEqual(res['result'], '0x748de6a3bcb6f3dc70c72a625f8057f83e876a1168c373423f524dec78706d25')
 
     def test_get_connectioncount(self):
         # @TODO
@@ -167,7 +169,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['index'], 10)
         self.assertEqual(res['result']['hash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
-        self.assertEqual(res['result']['confirmations'], 756610)
+        self.assertEqual(res['result']['confirmations'], 758706)
         self.assertEqual(res['result']['nextblockhash'], '0xa0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf')
 
     def test_get_block_hash(self):
@@ -176,7 +178,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res['result']['index'], 11)
-        self.assertEqual(res['result']['confirmations'], 756609)
+        self.assertEqual(res['result']['confirmations'], 758705)
         self.assertEqual(res['result']['previousblockhash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
 
     def test_get_block_hash_0x(self):
@@ -242,6 +244,14 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['code_version'], '3')
 
+    def test_get_contract_state_not_found(self):
+        contract_hash = '0xf4e65b0e1ba449d8d0f3baae1690b455b0e6e75c'
+        req = self._gen_rpc_req("getcontractstate", params=[contract_hash])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown contract')
+
     def test_get_raw_mempool(self):
         # TODO: currently returns empty list. test with list would be great
         req = self._gen_rpc_req("getrawmempool", params=[])
@@ -290,3 +300,78 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual('Missing argument', res['error']['message'])
+
+    def test_getrawtx_1(self):
+        txid = 'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
+        req = self._gen_rpc_req("getrawtransaction", params=[txid, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))['result']
+        self.assertEqual(res['blockhash'], '0x41720c35f5f15e5dc343d67fb54ab1e3825de47b476b5ae56cede2bf30657fde')
+        self.assertEqual(res['txid'], "0x%s" % txid)
+        self.assertEqual(res['blocktime'], 1499393065)
+        self.assertEqual(res['type'], 'ContractTransaction')
+
+    def test_getrawtx_2(self):
+        txid = 'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
+        req = self._gen_rpc_req("getrawtransaction", params=[txid, 0])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))['result']
+        expected = '800001f00431313131010206cc6f919695fb55c9605c55127128c29697d791af884c2636416c69a944880100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000e58e5999bcbf5d78f52ead40654131abb9ee27099b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5009a04f516000000e53a27d37d7f5a3187003c21efe3725304a7410601414058b4a41beabdcf62381f7feea02767a714eb8ea49212fdb47a6f0bed2d0ae87d27377d9c2b4412ebf816042f2144e6e08939c7d83638b61208d3a7f5ea47c3ba232102ca81fa6c7ef20219c417d876c2743ea87728d416632d09c18004652aed09e000ac'
+        self.assertEqual(res, expected)
+
+    def test_getrawtx_3(self):
+        txid = 'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b3'
+        req = self._gen_rpc_req("getrawtransaction", params=[txid, 0])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown Transaction')
+
+    def test_get_storage_item(self):
+        contract_hash = '16f1559c3c27d66d087bef936804105457617c8a'
+        storage_key = binascii.hexlify(b'totalSupply').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], '001843d5ba05')
+        actual_val = int.from_bytes(binascii.unhexlify(res['result'].encode('utf-8')), 'little')
+        self.assertEqual(actual_val, 6300000000000)
+
+    def test_get_storage_item2(self):
+        contract_hash = '0xd7678dd97c000be3f33e9362e673101bac4ca654'
+        storage_key = binascii.hexlify(b'totalSupply').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], '0070723d14b200')
+
+    def test_get_storage_item_key_not_found(self):
+        contract_hash = '0xd7678dd97c000be3f33e9362e673101bac4ca654'
+        storage_key = binascii.hexlify(b'blah').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], None)
+
+    def test_get_storage_item_contract_not_found(self):
+        contract_hash = '0xd7678dd97c100be3f33e9362e673101bac4ca654'
+        storage_key = binascii.hexlify(b'blah').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'], None)
+
+    def test_get_storage_item_bad_contract_hash(self):
+        contract_hash = '0xd7678dd97c000b3e9362e673101bac4ca654'
+        storage_key = binascii.hexlify(b'blah').decode('utf-8')
+        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertIn('Invalid UInt', res['error']['message'])
+
+    def test_get_unspents(self):
+        u = UInt256.ParseString('0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb')
+        unspents = GetBlockchain().GetAllUnspent(u)
+        self.assertEqual(len(unspents), 1)
+

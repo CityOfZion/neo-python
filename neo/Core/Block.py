@@ -143,6 +143,15 @@ class Block(BlockBase, InventoryMixin):
             amount += tx.SystemFee()
         return amount
 
+    def LoadTransactions(self):
+        """
+        Loads transaction data for a block
+        Returns:
+            list: A list of transaction objects in the block
+        """
+        transactions = self.FullTransactions
+        return transactions
+
     def Deserialize(self, reader):
         """
         Deserialize full object.

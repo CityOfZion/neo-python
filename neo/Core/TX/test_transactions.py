@@ -1,6 +1,6 @@
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.TX.MinerTransaction import MinerTransaction
-from neo.Core.TX.Transaction import Transaction
+from neo.Core.TX.Transaction import Transaction, TransactionType
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
@@ -10,6 +10,12 @@ import os
 
 
 class TransactionTestCase(NeoTestCase):
+
+    def test_tx_types(self):
+        self.assertEqual('ContractTransaction', TransactionType.ToName(TransactionType.ContractTransaction))
+        self.assertEqual('MinerTransaction', TransactionType.ToName(0))
+        self.assertEqual('StateTransaction', TransactionType.ToName(b'\x90'))
+        self.assertEqual(None, TransactionType.ToName(123))
 
     tx_raw = b'0000d11f7a2800000000'
     tx_raw_hex = binascii.unhexlify(tx_raw)

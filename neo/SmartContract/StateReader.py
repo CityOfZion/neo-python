@@ -176,7 +176,13 @@ class StateReader(InteropService):
     def ExecutionCompleted(self, engine, success, error=None):
 
         height = Blockchain.Default().Height
-        tx_hash = engine.ScriptContainer.Hash
+        tx_hash = None
+
+        if engine.ScriptContainer:
+            tx_hash = engine.ScriptContainer.Hash
+
+        if not tx_hash:
+            tx_hash = UInt256(data=bytearray(32))
 
         entry_script = None
         try:
@@ -285,12 +291,17 @@ class StateReader(InteropService):
 
         hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
+        tx_hash = None
+
+        if engine.ScriptContainer:
+            tx_hash = engine.ScriptContainer.Hash
+
         # Build and emit smart contract event
         self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.RUNTIME_LOG,
                                                           [message],
                                                           hash,
                                                           Blockchain.Default().Height,
-                                                          engine.ScriptContainer.Hash,
+                                                          tx_hash,
                                                           test_mode=engine.testMode))
 
         return True
