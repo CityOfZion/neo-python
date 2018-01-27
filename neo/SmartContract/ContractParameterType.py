@@ -10,6 +10,9 @@ import binascii
 
 
 class ContractParameterType(Enum):
+    """
+    Contract Parameter Types are used to denote different types of objects used in the VM
+    """
     Signature = 0x00        # 签名
     Boolean = 0x01
     Integer = 0x02          # 整数
@@ -27,6 +30,15 @@ class ContractParameterType(Enum):
 
     @staticmethod
     def FromString(val):
+        """
+        Create a ContractParameterType object from a str
+
+        Args:
+            val (str) the value to be converted to a ContractParameterType
+
+        Returns:
+            ContractParameterType
+        """
         return ContractParameterType(int.from_bytes(binascii.unhexlify(val), 'little'))
 
 
@@ -34,7 +46,14 @@ import inspect
 
 
 def ToName(param_type):
+    """
+    Gets the name of a ContractParameterType based on its value
+    Args:
+        param_type (ContractParameterType) type to get the name of
 
+    Returns:
+        str
+    """
     items = inspect.getmembers(ContractParameterType)
 
     if type(param_type) is bytes:

@@ -11,9 +11,9 @@ from neo import __version__
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.IO.Helper import Helper
-from neo.SmartContract.ContractParameter import ContractParameter
-from neo.SmartContract.ContractParameterType import ContractParameterType
 from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
+from neo.Blockchain import GetBlockchain
 import binascii
 
 
@@ -81,7 +81,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getblockcount")
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(756620, res["result"])
+        self.assertEqual(758716, res["result"])
 
     def test_getblockhash(self):
         req = self._gen_rpc_req("getblockhash", params=[2])
@@ -153,7 +153,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getbestblockhash", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], '0x370007195c10a05e355b606f8f8867239f026a925f2ddc46940f62c9136d3ff5')
+        self.assertEqual(res['result'], '0x748de6a3bcb6f3dc70c72a625f8057f83e876a1168c373423f524dec78706d25')
 
     def test_get_connectioncount(self):
         # @TODO
@@ -169,7 +169,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['index'], 10)
         self.assertEqual(res['result']['hash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
-        self.assertEqual(res['result']['confirmations'], 756610)
+        self.assertEqual(res['result']['confirmations'], 758706)
         self.assertEqual(res['result']['nextblockhash'], '0xa0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf')
 
     def test_get_block_hash(self):
@@ -178,7 +178,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res['result']['index'], 11)
-        self.assertEqual(res['result']['confirmations'], 756609)
+        self.assertEqual(res['result']['confirmations'], 758705)
         self.assertEqual(res['result']['previousblockhash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
 
     def test_get_block_hash_0x(self):
@@ -333,4 +333,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
-        self.assertIn('Invalid UInt: data length', res['error']['message'])
+        self.assertIn('Invalid UInt', res['error']['message'])
+
+    def test_get_unspents(self):
+        u = UInt256.ParseString('0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb')
+        unspents = GetBlockchain().GetAllUnspent(u)
+        self.assertEqual(len(unspents), 1)

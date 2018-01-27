@@ -371,7 +371,16 @@ class ApplicationEngine(ExecutionEngine):
 
     @staticmethod
     def Run(script, container=None):
+        """
+        Runs a script in a test invoke environment
 
+        Args:
+            script (bytes): The script to run
+            container (neo.Core.TX.Transaction): [optional] the transaction to use as the script container
+
+        Returns:
+            ApplicationEngine
+        """
         from neo.Core.Blockchain import Blockchain
         from neo.SmartContract.StateMachine import StateMachine
         from neo.EventHub import events

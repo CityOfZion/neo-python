@@ -8,35 +8,33 @@ from neocore.Cryptography.ECCurve import ECDSA
 
 
 class ContractParameter():
+    """Contract Parameter used for parsing parameters sent to and from smart contract invocations"""
 
     Type = None
     Value = None
 
     def __init__(self, type, value):
+        """
+
+        Args:
+            type:
+            value:
+        """
         self.Type = type
         self.Value = value
 
     @staticmethod
-    def Parse0x(param):
-        if param[0:2] == '0x':
-            return param[2:]
-        return param
-
-    @staticmethod
-    def ParamToUInt160(param):
-        shash_reversed = bytearray(binascii.unhexlify(ContractParameter.Parse0x(param)))
-        shash_reversed.reverse()
-        return UInt160(data=shash_reversed)
-
-    @staticmethod
-    def ParamToUInt256(param):
-        shash_reversed = bytearray(binascii.unhexlify(ContractParameter.Parse0x(param)))
-        shash_reversed.reverse()
-        return UInt256(data=shash_reversed)
-
-    @staticmethod
     def ToParameter(item: StackItem):
+        """
+        Convert a StackItem to a ContractParameter object
 
+        Args:
+            item (neo.VM.InteropService.StackItem) The item to convert to a ContractParameter object
+
+        Returns:
+            ContractParameter
+
+        """
         if isinstance(item, Array) or isinstance(item, Struct):
             items = item.GetArray()
             output = [ContractParameter.ToParameter(subitem) for subitem in items]
@@ -55,6 +53,12 @@ class ContractParameter():
             return ContractParameter(type=ContractParameterType.InteropInterface, value=item.GetInterface())
 
     def ToJson(self):
+        """
+        Converts a ContractParameter instance to a json representation
+
+        Returns:
+            json object
+        """
         jsn = {}
         jsn['type'] = str(ContractParameterType(self.Type))
 
@@ -88,6 +92,12 @@ class ContractParameter():
         return jsn
 
     def ToVM(self):
+        """
+        Used for turning a ContractParameter item into somethnig consumable by the VM
+
+        Returns:
+
+        """
         if self.Type == ContractParameterType.String:
             return str(self.Value).encode('utf-8').hex()
         elif self.Type == ContractParameterType.Integer and isinstance(self.Value, int):
@@ -96,6 +106,16 @@ class ContractParameter():
 
     @staticmethod
     def FromJson(json):
+        """
+        Convert a json object to a ContractParameter object
+
+        Args:
+            item (dict) The item to convert to a ContractParameter object
+
+        Returns:
+            ContractParameter
+
+        """
         type = ContractParameterType.FromString(json['type'])
 
         value = json['value']
@@ -111,10 +131,10 @@ class ContractParameter():
             param.Value = int(value)
 
         elif type == ContractParameterType.Hash160:
-            param.Value = ContractParameter.ParamToUInt160(value)
+            param.Value = UInt160.ParseString(value)
 
         elif type == ContractParameterType.Hash256:
-            param.Value = ContractParameter.ParamToUInt256(value)
+            param.Value = UInt256.ParseString(value)
 
         # @TODO Not sure if this is working...
         elif type == ContractParameterType.PublicKey:

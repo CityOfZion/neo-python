@@ -140,7 +140,7 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
         if self.ScriptHash is None:
             raise Exception("Script hash is required from deserialize!!!!!!!!")
 
-    def ToJson(self):
+    def ToJson(self, index):
         """
         Convert object members to a dictionary that can be parsed as JSON.
 
@@ -148,9 +148,10 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
              dict:
         """
         return {
-            'AssetId': self.AssetId.To0xString(),
-            'Value': self.Value.ToNeoJsonString(),
-            'ScriptHash': self.Address
+            'n': index,
+            'asset': self.AssetId.To0xString(),
+            'value': self.Value.ToNeoJsonString(),
+            'address': self.Address
         }
 
 
@@ -588,7 +589,7 @@ class Transaction(Inventory, InventoryMixin):
         jsn["type"] = TransactionType.ToName(self.Type)
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
-        jsn["vout"] = [out.ToJson() for out in self.outputs]
+        jsn["vout"] = [out.ToJson(i) for i, out in enumerate(self.outputs)]
         jsn["vin"] = [input.ToJson() for input in self.inputs]
         jsn["sys_fee"] = self.SystemFee().ToNeoJsonString()
         jsn["net_fee"] = self.NetworkFee().ToNeoJsonString()

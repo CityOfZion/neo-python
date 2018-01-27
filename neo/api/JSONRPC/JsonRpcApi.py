@@ -118,42 +118,7 @@ class JsonRpcApi(object):
             error = JsonRpcError.internalError(str(e))
             return self.get_custom_error_payload(request_id, error.code, error.message)
 
-    def get_custom_error_payload(self, request_id, code, message):
-        return {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "error": {
-                "code": code,
-                "message": message
-            }
-        }
-
-    def parse_uint_str(self, param):
-        if param[0:2] == '0x':
-            return param[2:]
-        return param
-
-    def param_to_uint160(self, param):
-        shash_reversed = bytearray(binascii.unhexlify(self.parse_uint_str(param)))
-        shash_reversed.reverse()
-        return UInt160(data=shash_reversed)
-
-    def param_to_uint256(self, param):
-        shash_reversed = bytearray(binascii.unhexlify(self.parse_uint_str(param)))
-        shash_reversed.reverse()
-        return UInt256(data=shash_reversed)
-
-    def get_invoke_result(self, script):
-        appengine = ApplicationEngine.Run(script=script)
-        return {
-            "script": "0x%s" % script.hex(),
-            "state": appengine.State,
-            "gas_consumed": appengine.GasConsumed().ToString(),
-            "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]
-        }
-
     def json_rpc_method_handler(self, method, params):
-        # print("method", method, params)
 
         if method == "getaccountstate":
             acct = Blockchain.Default().GetAccountState(params[0])
@@ -166,8 +131,8 @@ class JsonRpcApi(object):
             return acct.ToJson()
 
         elif method == "getassetstate":
-            asset_id = self.parse_uint_str(params[0])
-            asset = Blockchain.Default().GetAssetState(asset_id)
+            asset_id = UInt256.ParseString(params[0])
+            asset = Blockchain.Default().GetAssetState(asset_id.ToBytes())
             if asset:
                 return asset.ToJson()
             raise JsonRpcError(-100, "Unknown asset")
@@ -180,24 +145,7 @@ class JsonRpcApi(object):
             block = Blockchain.Default().GetBlock(params[0])
             if not block:
                 raise JsonRpcError(-100, "Unknown block")
-
-            # full tx data is not included by default
-            # this will load them to be serialized
-            block.Transactions = block.FullTransactions
-
-            verbose = False
-            if len(params) >= 2 and params[1]:
-                verbose = True
-
-            if verbose:
-                jsn = block.ToJson()
-                jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
-                hash = Blockchain.Default().GetNextBlockHash(block.Hash)
-                if hash:
-                    jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
-                return jsn
-
-            return Helper.ToArray(block).decode('utf-8')
+            return self.get_block_output(block, params)
 
         elif method == "getblockcount":
             return Blockchain.Default().Height + 1
@@ -220,8 +168,8 @@ class JsonRpcApi(object):
             return len(NodeLeader.Instance().Peers)
 
         elif method == "getcontractstate":
-            script_hash = self.parse_uint_str(params[0])
-            contract = Blockchain.Default().GetContract(script_hash)
+            script_hash = UInt160.ParseString(params[0])
+            contract = Blockchain.Default().GetContract(script_hash.ToBytes())
             if contract is None:
                 raise JsonRpcError(-100, "Unknown contract")
             return contract.ToJson()
@@ -237,27 +185,14 @@ class JsonRpcApi(object):
             }
 
         elif method == "getrawtransaction":
-            tx_id = self.parse_uint_str(params[0])
-            verbose = False
-            if len(params) >= 2 and params[1]:
-                verbose = True
+            tx_id = UInt256.ParseString(params[0])
             tx, height = Blockchain.Default().GetTransaction(tx_id)
             if not tx:
                 raise JsonRpcError(-100, "Unknown Transaction")
-
-            if verbose:
-                jsn = tx.ToJson()
-                if height >= 0:
-                    header = Blockchain.Default().GetHeaderByHeight(height)
-                    jsn['blockhash'] = header.Hash.To0xString()
-                    jsn['confirmations'] = Blockchain.Default().Height - header.Index + 1
-                    jsn['blocktime'] = header.Timestamp
-                return jsn
-
-            return Helper.ToArray(tx).decode('utf-8')
+            return self.get_tx_output(tx, height, params)
 
         elif method == "getstorage":
-            script_hash = self.param_to_uint160(params[0])
+            script_hash = UInt160.ParseString(params[0])
             key = binascii.unhexlify(params[1].encode('utf-8'))
             storage_key = StorageKey(script_hash=script_hash, key=key)
             storage_item = Blockchain.Default().GetStorageItem(storage_key)
@@ -269,26 +204,22 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         elif method == "invoke":
-            shash = self.param_to_uint160(params[0])
+            shash = UInt160.ParseString(params[0])
             contract_parameters = [ContractParameter.FromJson(p) for p in params[1]]
             sb = ScriptBuilder()
             sb.EmitAppCallWithJsonArgs(shash, contract_parameters)
-            output = sb.ToArray()
-            return self.get_invoke_result(output)
+            return self.get_invoke_result(sb.ToArray())
 
         elif method == "invokefunction":
-            shash = self.param_to_uint160(params[0])
-            fname = params[1]
             contract_parameters = []
             if len(params) > 2:
                 contract_parameters = [ContractParameter.FromJson(p).ToVM() for p in params[2]]
             sb = ScriptBuilder()
-            sb.EmitAppCallWithOperationAndArgs(shash, fname, contract_parameters)
-            output = sb.ToArray()
-            return self.get_invoke_result(output)
+            sb.EmitAppCallWithOperationAndArgs(UInt160.ParseString(params[0]), params[1], contract_parameters)
+            return self.get_invoke_result(sb.ToArray())
 
         elif method == "invokescript":
-            script = self.parse_uint_str(params[0]).encode('utf-8')
+            script = params[0].encode('utf-8')
             return self.get_invoke_result(script)
 
         elif method == "sendrawtransaction":
@@ -304,3 +235,50 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         raise JsonRpcError.methodNotFound()
+
+    def get_custom_error_payload(self, request_id, code, message):
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "error": {
+                "code": code,
+                "message": message
+            }
+        }
+
+    def get_tx_output(self, tx, height, params):
+
+        if len(params) >= 2 and params[1]:
+            jsn = tx.ToJson()
+            if height >= 0:
+                header = Blockchain.Default().GetHeaderByHeight(height)
+                jsn['blockhash'] = header.Hash.To0xString()
+                jsn['confirmations'] = Blockchain.Default().Height - header.Index + 1
+                jsn['blocktime'] = header.Timestamp
+            return jsn
+
+        return Helper.ToArray(tx).decode('utf-8')
+
+    def get_block_output(self, block, params):
+
+        block.LoadTransactions()
+
+        if len(params) >= 2 and params[1]:
+            jsn = block.ToJson()
+            jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
+            hash = Blockchain.Default().GetNextBlockHash(block.Hash)
+            if hash:
+                jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
+            return jsn
+
+        return Helper.ToArray(block).decode('utf-8')
+
+    def get_invoke_result(self, script):
+
+        appengine = ApplicationEngine.Run(script=script)
+        return {
+            "script": script.hex(),
+            "state": appengine.State,
+            "gas_consumed": appengine.GasConsumed().ToString(),
+            "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]
+        }
