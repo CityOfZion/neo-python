@@ -201,7 +201,13 @@ class JsonRpcApi(object):
             return None
 
         elif method == "gettxout":
-            raise NotImplementedError()
+            hash = params[0].encode('utf-8')
+            index = params[1]
+            utxo = Blockchain.Default().GetUnspent(hash, index)
+            if utxo:
+                return utxo.ToJson(index)
+            else:
+                return None
 
         elif method == "invoke":
             shash = UInt160.ParseString(params[0])

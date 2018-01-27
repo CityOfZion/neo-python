@@ -262,7 +262,7 @@ class LevelDBBlockchain(Blockchain):
     def GetUnspent(self, hash, index):
 
         sn = self._db.snapshot()
-        coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, UnspentCoinState)
+        coins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
 
         state = coins.TryGet(hash)
 
