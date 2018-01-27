@@ -244,6 +244,14 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['code_version'], '3')
 
+    def test_get_contract_state_not_found(self):
+        contract_hash = '0xf4e65b0e1ba449d8d0f3baae1690b455b0e6e75c'
+        req = self._gen_rpc_req("getcontractstate", params=[contract_hash])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown contract')
+
     def test_get_raw_mempool(self):
         # TODO: currently returns empty list. test with list would be great
         req = self._gen_rpc_req("getrawmempool", params=[])
