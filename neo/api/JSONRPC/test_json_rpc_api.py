@@ -374,4 +374,3 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         u = UInt256.ParseString('0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb')
         unspents = GetBlockchain().GetAllUnspent(u)
         self.assertEqual(len(unspents), 1)
-
