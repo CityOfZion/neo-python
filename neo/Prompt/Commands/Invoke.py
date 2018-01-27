@@ -214,7 +214,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
 
 def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
 
-    #    print("invoke script %s " % script)
+    # print("invoke script %s " % script)
 
     bc = GetBlockchain()
 

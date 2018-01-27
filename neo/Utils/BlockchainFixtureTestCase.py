@@ -12,8 +12,8 @@ import logzero
 
 class BlockchainFixtureTestCase(NeoTestCase):
 
-    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v4.tar.gz'
-    FIXTURE_FILENAME = './Chains/fixtures_v4.tar.gz'
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v5.tar.gz'
+    FIXTURE_FILENAME = './Chains/fixtures_v5.tar.gz'
     _blockchain = None
 
     @classmethod

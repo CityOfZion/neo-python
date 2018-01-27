@@ -40,6 +40,7 @@ from neo.Prompt.Utils import get_arg
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
+from neocore.UInt256 import UInt256
 
 # Logfile settings & setup
 LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'prompt.log')
@@ -251,8 +252,9 @@ class PromptInterface(object):
                             print("Could not remove {}: {}".format(path, e))
                     return
 
-                self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-                self._walletdb_loop.start(1)
+                if self.Wallet:
+                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+                    self._walletdb_loop.start(1)
 
             else:
                 print("Please specify a path")
@@ -591,19 +593,19 @@ class PromptInterface(object):
             print("Please specify a header")
 
     def show_tx(self, args):
-        item = get_arg(args)
-        if item is not None:
+        if len(args):
             try:
-                tx, height = Blockchain.Default().GetTransaction(item)
+                txid = UInt256.ParseString(get_arg(args))
+                tx, height = Blockchain.Default().GetTransaction(txid)
                 if height > -1:
-                    bjson = json.dumps(tx.ToJson(), indent=4)
-                    tokens = [(Token.Command, bjson)]
+                    jsn = tx.ToJson()
+                    jsn['height'] = height
+                    jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in Blockchain.Default().GetAllUnspent(txid)]
+                    tokens = [(Token.Command, json.dumps(jsn, indent=4))]
                     print_tokens(tokens, self.token_style)
                     print('\n')
             except Exception as e:
-                print("Could not find transaction with id %s" % item)
-                print(
-                    "Please specify a TX hash like 'db55b4d97cf99db6826967ef4318c2993852dff3e79ec446103f141c716227f6'")
+                print("Could not find transaction from args: %s (%s)" % (e, args))
         else:
             print("Please specify a TX hash")
 

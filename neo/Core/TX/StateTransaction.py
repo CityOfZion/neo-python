@@ -54,18 +54,9 @@ class StateTransaction(Transaction):
         Raises:
             Exception: If the transaction type is incorrect or if there are no claims.
         """
-        self.Descriptors = []
         self.Type = TransactionType.StateTransaction
 
         self.Descriptors = reader.ReadSerializableArray('neo.Core.State.StateDescriptor.StateDescriptor')
-
-#        num_descriptors = reader.ReadByte()
-#        if num_descriptors > 16:
-#            raise Exception("Invalid number of descriptors")
-#        for i in range(0, num_descriptors):
-#            descriptor = StateDescriptor()
-#            descriptor.Deserialize(reader)
-#            self.Descriptors.append(descriptor)
 
     def GetScriptHashesForVerifying(self):
         """

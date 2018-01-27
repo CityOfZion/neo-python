@@ -117,8 +117,6 @@ class ContractParametersContext():
         item = self.CreateItem(contract)
         item.ContractParameters[index].Value = parameter
 
-#        pdb.set_trace()
-
         return True
 
     def CreateItem(self, contract):
@@ -176,17 +174,16 @@ class ContractParametersContext():
             return True
 
         else:
-
             index = -1
+            if contract.ParameterList == '00':
+                contract.ParameterList = b'\x00'
             length = len(contract.ParameterList)
             for i in range(0, length):
-
-                if contract.ParameterList[i] == ContractParameterType.Signature:
+                if ContractParameterType(contract.ParameterList[i]) == ContractParameterType.Signature:
                     if index >= 0:
                         raise Exception("Signature must be first")
                     else:
                         index = i
-
             return self.Add(contract, index, signature)
 
     def GetIndex(self, script_hash):
