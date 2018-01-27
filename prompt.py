@@ -677,7 +677,9 @@ class PromptInterface(object):
                 contract = Blockchain.Default().GetContract(item)
 
                 if contract is not None:
-                    bjson = json.dumps(contract.ToJson(), indent=4)
+                    jsn = contract.ToJson()
+                    jsn['is_nep5'] = contract.IsNEP5Contract
+                    bjson = json.dumps(jsn, indent=4)
                     tokens = [(Token.Number, bjson)]
                     print_tokens(tokens, self.token_style)
                     print('\n')

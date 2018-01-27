@@ -10,7 +10,7 @@ from neocore.IO.Mixins import SerializableMixin
 import json
 import pdb
 from logzero import logger
-
+from neo.Core.State.ContractState import ContractState
 
 class SmartContractEvent(SerializableMixin):
     """
@@ -46,6 +46,11 @@ class SmartContractEvent(SerializableMixin):
     STORAGE_PUT = "SmartContract.Storage.Put"
     STORAGE_DELETE = "SmartContract.Storage.Delete"
 
+    CONTRACT = "SmartContract.Contract.*"
+    CONTRACT_CREATED = "SmartContract.Contract.Create"
+    CONTRACT_MIGRATED = "SmartContract.Contract.Migrate"
+    CONTRACT_DESTROY = "SmartContract.Contract.Destroy"
+
     event_type = None
     event_payload = None
     contract_hash = None
@@ -53,6 +58,8 @@ class SmartContractEvent(SerializableMixin):
     tx_hash = None
     execution_success = None
     test_mode = None
+
+    contract = None
 
     def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False, test_mode=False):
         self.event_type = event_type
@@ -74,7 +81,11 @@ class SmartContractEvent(SerializableMixin):
         self.SerializePayload(writer)
 
     def SerializePayload(self, writer):
-        pass
+
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED,SmartContractEvent.CONTRACT_MIGRATED]:
+            if len(self.event_payload) and isinstance(self.event_payload[0], ContractState):
+                contract = self.event_payload[0]
+                contract.Serialize(writer)
 
     def Deserialize(self, reader):
         self.event_type = reader.ReadVarString().decode('utf-8')
@@ -84,7 +95,10 @@ class SmartContractEvent(SerializableMixin):
         self.DeserializePayload(reader)
 
     def DeserializePayload(self, reader):
-        pass
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED,SmartContractEvent.CONTRACT_MIGRATED]:
+            self.contract = ContractState()
+            self.contract.Deserialize(reader)
+            print("CONTRACT: %s " % self.contract.ToJson())
 
     def __str__(self):
         return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s, execution_success=%s, test_mode=%s)" \

@@ -337,9 +337,11 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-        # logger.info("*****************************************************")
-        # logger.info("CREATED CONTRACT %s " % hash.ToBytes())
-        # logger.info("*****************************************************")
+        self.events_to_dispatch.append(
+            SmartContractEvent(SmartContractEvent.CONTRACT_CREATED, [contract],
+                               hash, Blockchain.Default().Height,
+                               engine.ScriptContainer.Hash if engine.ScriptContainer else None,
+                               test_mode=engine.testMode))
         return True
 
     def Contract_Migrate(self, engine):
@@ -404,11 +406,14 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-        # print("*****************************************************")
-        # print("MIGRATED CONTRACT %s " % hash.ToBytes())
-        # print("*****************************************************")
 
-        return True
+        self.events_to_dispatch.append(
+            SmartContractEvent(SmartContractEvent.CONTRACT_MIGRATED, [contract],
+                               hash, Blockchain.Default().Height,
+                               engine.ScriptContainer.Hash if engine.ScriptContainer else None,
+                               test_mode=engine.testMode))
+
+        return self.Contract_Destroy(engine)
 
     def Contract_GetStorageContext(self, engine):
 
@@ -440,6 +445,11 @@ class StateMachine(StateReader):
 
                     self._storages.Remove(pair.Key)
 
+        self.events_to_dispatch.append(
+            SmartContractEvent(SmartContractEvent.CONTRACT_DESTROY, [contract],
+                               hash, Blockchain.Default().Height,
+                               engine.ScriptContainer.Hash if engine.ScriptContainer else None,
+                               test_mode=engine.testMode))
         return True
 
     def Storage_Get(self, engine):
@@ -485,7 +495,8 @@ class StateMachine(StateReader):
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.STORAGE_GET, ['%s -> %s' % (keystr, valStr)],
                                context.ScriptHash, Blockchain.Default().Height,
-                               engine.ScriptContainer.Hash, test_mode=engine.testMode))
+                               engine.ScriptContainer.Hash if engine.ScriptContainer else None,
+                               test_mode=engine.testMode))
 
         return True
 
@@ -526,7 +537,8 @@ class StateMachine(StateReader):
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.STORAGE_PUT, ['%s -> %s' % (keystr, valStr)],
                                context.ScriptHash, Blockchain.Default().Height,
-                               engine.ScriptContainer.Hash, test_mode=engine.testMode))
+                               engine.ScriptContainer.Hash if engine.ScriptContainer else None,
+                               test_mode=engine.testMode))
 
         return True
 
@@ -541,15 +553,17 @@ class StateMachine(StateReader):
 
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 
-        keystr = key
-
         if len(key) == 20:
             keystr = Crypto.ToAddress(UInt160(data=key))
 
             self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_DELETE, [keystr],
                                                               context.ScriptHash, Blockchain.Default().Height,
-                                                              engine.ScriptContainer.Hash, test_mode=engine.testMode))
+                                                              engine.ScriptContainer.Hash if engine.ScriptContainer else None,
+                                                              test_mode=engine.testMode))
 
         self._storages.Remove(storage_key.GetHashCodeBytes())
 
         return True
+
+
+

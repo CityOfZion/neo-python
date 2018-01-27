@@ -3,7 +3,8 @@ from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.FunctionCode import FunctionCode
 from enum import IntEnum
-
+from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.VM import VMState
 
 class ContractPropertyState(IntEnum):
     NoProperty = 0
@@ -19,6 +20,8 @@ class ContractState(StateBase):
     Author = None
     Email = None
     Description = None
+
+    _is_nep5 = None
 
     @property
     def HasStorage(self):
@@ -39,6 +42,18 @@ class ContractState(StateBase):
             bool: True if supported. False otherwise.
         """
         return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
+
+    @property
+    def IsNEP5Contract(self):
+        """
+        Property to indicate whether this is an NEP5 Contract
+        Returns:
+            bool
+        """
+        if self._is_nep5 is None:
+            self.DetermineIsNEP5()
+        return self._is_nep5
+
 
     def __init__(self, code=None, contract_properties=0, name=None, version=None, author=None, email=None,
                  description=None):
@@ -127,6 +142,25 @@ class ContractState(StateBase):
         writer.WriteVarString(self.Author)
         writer.WriteVarString(self.Email)
         writer.WriteVarString(self.Description)
+
+
+    def DetermineIsNEP5(self):
+
+        from neo.SmartContract.ApplicationEngine import ApplicationEngine
+
+        self._is_nep5 = False
+        sb = ScriptBuilder()
+        sb.EmitAppCallWithOperation(self.Code.ScriptHash(), 'name')
+        sb.EmitAppCallWithOperation(self.Code.ScriptHash(), 'symbol')
+        sb.EmitAppCallWithOperation(self.Code.ScriptHash(), 'decimals')
+
+        engine= ApplicationEngine.Run(sb.ToArray())
+        results = engine.EvaluationStack.Items
+        if engine.State == VMState.BREAK + VMState.HALT and len(results) == 3:
+            if results[0].GetByteArray() and results[1].GetByteArray() and results[2].GetBigInteger():
+                self._is_nep5 = True
+                print("IS NEP5")
+
 
     def ToJson(self):
         """

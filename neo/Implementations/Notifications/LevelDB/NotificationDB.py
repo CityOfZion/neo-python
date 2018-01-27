@@ -2,9 +2,11 @@ import plyvel
 from logzero import logger
 from neo.EventHub import events
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent, NotifyType
+from neo.Core.State.ContractState import ContractState
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
+from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neocore.UInt160 import UInt160
 import json
 import pdb
@@ -62,15 +64,22 @@ class NotificationDB():
         # Handle EventHub events for SmartContract decorators
         self._events_to_write = []
 
+        @events.on(SmartContractEvent.CONTRACT_CREATED)
+        @events.on(SmartContractEvent.CONTRACT_MIGRATED)
+        def call_on_success_event(sc_event:SmartContractEvent):
+            self.on_smart_contract_created(sc_event)
+
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
         def call_on_event(sc_event: NotifyEvent):
             self.on_smart_contract_event(sc_event)
-#            elif sc_event.notify_type == NotifyType.TRANSFER and sc_event.test_mode:
-#                data = sc_event.ToByteArray()
-#                event = SmartContractEvent.FromByteArray(data)
-#                print("event? %s " % event)
 
         Blockchain.Default().PersistCompleted.on_change += self.on_persist_completed
+
+    def on_smart_contract_created(self, sc_event:SmartContractEvent):
+        print("on smart contract created!")
+        if isinstance(sc_event.contract, ContractState):
+            print("lets lookup a contract state!")
+
 
     def on_smart_contract_event(self, sc_event: NotifyEvent):
         if not isinstance(sc_event, NotifyEvent):

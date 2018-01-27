@@ -176,6 +176,7 @@ class StateReader(InteropService):
     def ExecutionCompleted(self, engine, success, error=None):
 
         height = Blockchain.Default().Height
+
         tx_hash = engine.ScriptContainer.Hash
 
         entry_script = None
