@@ -7,6 +7,7 @@ See also:
 * http://www.jsonrpc.org/specification
 """
 import json
+import base58
 import random
 from json.decoder import JSONDecodeError
 
@@ -117,6 +118,26 @@ class JsonRpcApi(object):
         except Exception as e:
             error = JsonRpcError.internalError(str(e))
             return self.get_custom_error_payload(request_id, error.code, error.message)
+
+    def parse_uint_str(self, param):
+        if param[0:2] == '0x':
+            return param[2:]
+        return param
+
+    def validateaddress(self, params):
+        # check for [] parameter or [""]
+        if not params or params[0] == '':
+            raise JsonRpcError(-100, "Missing argument")
+
+        isValid = False
+        try:
+            data = base58.b58decode_check(params[0])
+            if len(data) == 21 and data[0] == settings.ADDRESS_VERSION:
+                isValid = True
+        except Exception as e:
+            pass
+
+        return {"address": params[0], "isvalid": isValid}
 
     def json_rpc_method_handler(self, method, params):
 
@@ -235,7 +256,7 @@ class JsonRpcApi(object):
             raise NotImplementedError()
 
         elif method == "validateaddress":
-            raise NotImplementedError()
+            return self.validateaddress(params)
 
         elif method == "getpeers":
             raise NotImplementedError()

@@ -51,3 +51,15 @@ On MainNet there are actually entries, each of which has this format: `0xde3bc1d
 ### when querying an already spent output
     curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "gettxout", "params": ["0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb", 0] }'
     {"jsonrpc":"2.0","id":5,"result":null}
+
+## `validateaddress`
+    curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "validateaddress", "params": ["AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i"] }'
+    {"jsonrpc":"2.0","id":5,"result":{"address":"AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i","isvalid":true}}
+    
+### with invalid address
+    curl -X POST http://seed2.neo.org:20332 -H 'Cication/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "validateaddress", "params": ["152f1muMCNa7goXYhYAQC61hxEgGacmncB"] }'
+    {"jsonrpc":"2.0","id":5,"result":{"address":"152f1muMCNa7goXYhYAQC61hxEgGacmncB","isvalid":false}}
+    
+### with completely invalid argument
+    curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "validateaddress", "params": [] }'
+    {"jsonrpc":"2.0","id":5,"error":{"code":-2146233086,"message":"Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"}}
