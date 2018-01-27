@@ -38,3 +38,16 @@ On MainNet there are actually entries, each of which has this format: `0xde3bc1d
 
     curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "getversion", "params": [] }'
     { "jsonrpc": "2.0", "id": 5, "result": { "port": 20333, "nonce": 771199013, "useragent": "/NEO:2.6.0/" } }
+
+## `gettxout`
+
+    curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "gettxout", "params": ["0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb", 1] }'
+    {"jsonrpc":"2.0","id":5,"result":{"n":1,"asset":"0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7","value":"25","address":"AHYb3ySrHbhzouZ81ZMnCf8c7zYaoDg64x"}
+    
+### secondary unspent showing float "value" vs the above int value
+    curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "gettxout", "params": ["9c9f2c430c3cfb805e8c22d0a7778a60ce7792fad52ffe9b34f56de8e2c1d2e6", 1] }'
+    {"jsonrpc":"2.0","id":5,"result":{"n":1,"asset":"0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7","value":"2609.997813","address":"ASs7BiaRa9Z2NnJfvf7a4SZ7ciPLiPWefJ"}}
+   
+### when querying an already spent output
+    curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "gettxout", "params": ["0ff23561c611ccda65470c9a4a5f1be31f2f4f61b98c75d051e1a72e85a302eb", 0] }'
+    {"jsonrpc":"2.0","id":5,"result":null}
