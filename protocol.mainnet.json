@@ -17,18 +17,18 @@
       "seed3.neo.org:10333",
       "seed4.neo.org:10333",
       "seed5.neo.org:10333",
-      "18.217.24.130:10333",
-      "18.220.214.143:10333",
-      "13.58.198.112:10333",
-      "13.59.14.206:10333",
-      "18.216.9.7:10333"
+      "seed1.cityofzion.io:10333",
+      "seed2.cityofzion.io:10333",
+      "seed3.cityofzion.io:10333",
+      "seed4.cityofzion.io:10333",
+      "seed5.cityofzion.io:10333"
     ],
-    "RPCList":[
-      "http://18.217.24.130:8080",
-      "http://18.220.214.143:8080",
-      "http://13.58.198.112:8080",
-      "http://13.59.14.206:8080",
-      "http://18.216.9.7:8080"
+    "RPCList": [
+      "seed1.cityofzion.io:8080",
+      "seed2.cityofzion.io:8080",
+      "seed3.cityofzion.io:8080",
+      "seed4.cityofzion.io:8080",
+      "seed5.cityofzion.io:8080"
     ],
     "SystemFee": {
       "EnrollmentTransaction": 1000,
@@ -42,11 +42,13 @@
     "NotificationDataPath": "Chains/Main_Notif",
     "NodePort": 10333,
     "WsPort": 10334,
-    "UriPrefix": [ "http://*:10332" ],
+    "UriPrefix": [
+      "http://*:10332"
+    ],
     "SslCert": "",
     "SslCertPassword": "",
-    "VersionName":"/NEO-PYTHON:2.3.4/",
-    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Chain1550000.tar.gz",
-    "DebugStorage":1
+    "VersionName": "/NEO-PYTHON:2.3.4/",
+    "BootstrapFile": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Chain1550000.tar.gz",
+    "DebugStorage": 1
   }
 }
