@@ -213,17 +213,19 @@ class LevelDBBlockchain(Blockchain):
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
         keys = contracts.Keys
 
+        query = query.casefold()
+
         for item in keys:
 
             contract = contracts.TryGet(keyval=item)
             try:
-                if query in contract.Name.decode('utf-8'):
+                if query in contract.Name.decode('utf-8').casefold():
                     res.append(contract)
-                elif query in contract.Author.decode('utf-8'):
+                elif query in contract.Author.decode('utf-8').casefold():
                     res.append(contract)
-                elif query in contract.Description.decode('utf-8'):
+                elif query in contract.Description.decode('utf-8').casefold():
                     res.append(contract)
-                elif query in contract.Email.decode('utf-8'):
+                elif query in contract.Email.decode('utf-8').casefold():
                     res.append(contract)
             except Exception as e:
                 logger.info("Could not query contract: %s " % e)
