@@ -28,12 +28,12 @@
   "ApplicationConfiguration": {
     "DataDirectoryPath": "./Chains/privnet",
     "NotificationDataPath": "Chains/Priv_Notif",
+    "RPCPort": 20332,
     "NodePort": 20333,
     "WsPort": 20334,
     "UriPrefix": [ "http://*:20332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "VersionName":"/NEO-PYTHON:2.3.4/",
     "BootstrapFile":"",
     "DebugStorage":1
   }

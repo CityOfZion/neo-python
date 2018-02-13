@@ -73,6 +73,10 @@ class SmartContractEvent(SerializableMixin):
         if not self.event_payload:
             self.event_payload = []
 
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED,SmartContractEvent.CONTRACT_MIGRATED]:
+            if len(self.event_payload) and isinstance(self.event_payload[0], ContractState):
+                self.contract = self.event_payload[0]
+
     def Serialize(self, writer):
         writer.WriteVarString(self.event_type.encode('utf-8'))
         writer.WriteUInt160(self.contract_hash)
@@ -82,10 +86,8 @@ class SmartContractEvent(SerializableMixin):
 
     def SerializePayload(self, writer):
 
-        if self.event_type in [SmartContractEvent.CONTRACT_CREATED,SmartContractEvent.CONTRACT_MIGRATED]:
-            if len(self.event_payload) and isinstance(self.event_payload[0], ContractState):
-                contract = self.event_payload[0]
-                contract.Serialize(writer)
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED,SmartContractEvent.CONTRACT_MIGRATED] and self.contract:
+            self.contract.Serialize(writer)
 
     def Deserialize(self, reader):
         self.event_type = reader.ReadVarString().decode('utf-8')
@@ -98,7 +100,6 @@ class SmartContractEvent(SerializableMixin):
         if self.event_type in [SmartContractEvent.CONTRACT_CREATED,SmartContractEvent.CONTRACT_MIGRATED]:
             self.contract = ContractState()
             self.contract.Deserialize(reader)
-            print("CONTRACT: %s " % self.contract.ToJson())
 
     def __str__(self):
         return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s, execution_success=%s, test_mode=%s)" \
@@ -130,12 +131,17 @@ class SmartContractEvent(SerializableMixin):
         return event
 
     def ToJson(self):
+
         jsn = {
             'type': self.event_type,
             'contract': self.contract_hash.ToString(),
             'block': self.block_number,
             'tx': self.tx_hash.ToString()
         }
+
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED,SmartContractEvent.CONTRACT_MIGRATED]:
+            self.contract.DetermineIsNEP5()
+            jsn['token'] = self.contract.ToJson()
 
         return jsn
 

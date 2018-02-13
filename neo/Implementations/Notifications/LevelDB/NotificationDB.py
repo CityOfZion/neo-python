@@ -20,12 +20,15 @@ class NotificationPrefix():
 
     PREFIX_COUNT = b'\xCD'
 
+    PREFIX_TOKEN = b'\xCE'
+
 
 class NotificationDB():
 
     __instance = None
 
     _events_to_write = None
+    _new_contracts_to_write = None
 
     @staticmethod
     def instance():
@@ -49,7 +52,7 @@ class NotificationDB():
 
     @property
     def current_events(self):
-        return self._events_to_write
+        return self._events_to_write + self._new_contracts_to_write
 
     def __init__(self, path):
 
@@ -63,6 +66,7 @@ class NotificationDB():
     def start(self):
         # Handle EventHub events for SmartContract decorators
         self._events_to_write = []
+        self._new_contracts_to_write = []
 
         @events.on(SmartContractEvent.CONTRACT_CREATED)
         @events.on(SmartContractEvent.CONTRACT_MIGRATED)
@@ -76,10 +80,9 @@ class NotificationDB():
         Blockchain.Default().PersistCompleted.on_change += self.on_persist_completed
 
     def on_smart_contract_created(self, sc_event:SmartContractEvent):
-        print("on smart contract created!")
         if isinstance(sc_event.contract, ContractState):
-            print("lets lookup a contract state!")
-
+            if sc_event.contract.IsNEP5Contract:
+                self._new_contracts_to_write.append(sc_event)
 
     def on_smart_contract_event(self, sc_event: NotifyEvent):
         if not isinstance(sc_event, NotifyEvent):
@@ -87,6 +90,7 @@ class NotificationDB():
             return
         if sc_event.ShouldPersist and sc_event.notify_type == NotifyType.TRANSFER:
             self._events_to_write.append(sc_event)
+
 
     def on_persist_completed(self, block):
         if len(self._events_to_write):
@@ -145,6 +149,24 @@ class NotificationDB():
 
         self._events_to_write = []
 
+
+        if len(self._new_contracts_to_write):
+
+            token_db = self.db.prefixed_db(NotificationPrefix.PREFIX_TOKEN)
+
+            token_write_batch = token_db.write_batch()
+
+            for token_event in self._new_contracts_to_write:
+
+                hash_data = token_event.ToByteArray()
+                hash_key = token_event.contract.Code.ScriptHash().ToBytes()
+                logger.info("persist new NEP5 contract: %s " % (hash_key))
+                token_write_batch.put(hash_key, hash_data)
+
+            token_write_batch.write()
+
+        self._new_contracts_to_write = []
+
     def get_by_block(self, block_number):
 
         blocklist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_BLOCK).snapshot()
@@ -175,3 +197,37 @@ class NotificationDB():
                 except Exception as e:
                     logger.info("could not parse event: %s " % val)
         return results
+
+
+    def get_tokens(self):
+        """
+        Looks up all tokens
+        Returns:
+            list: A list of smart contract events with contracts that are NEP5 Tokens
+        """
+        tokens_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_TOKEN).snapshot()
+        results = []
+        for val in tokens_snapshot.iterator(include_key=False):
+            event = SmartContractEvent.FromByteArray(val)
+            results.append(event)
+        return results
+
+    def get_token(self, hash):
+        """
+        Looks up a token by hash
+        Args:
+            hash (UInt160): The token to look up
+
+        Returns:
+            SmartContractEvent: A smart contract event with a contract that is an NEP5 Token
+        """
+        tokens_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_TOKEN).snapshot()
+
+        try:
+            val = tokens_snapshot.get(hash.ToBytes())
+            if val:
+                event = SmartContractEvent.FromByteArray(val)
+                return event
+        except Exception as e:
+            logger.info("Smart contract event with contract hash %s not found: %s " % (hash.ToString(), e))
+        return None

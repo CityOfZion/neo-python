@@ -458,7 +458,6 @@ class StateMachine(StateReader):
         try:
             item = engine.EvaluationStack.Pop()
             context = item.GetInterface()
-            shash = context.ScriptHash
         except Exception as e:
             logger.error("could not get storage context %s " % e)
             return False

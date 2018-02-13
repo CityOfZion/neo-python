@@ -177,7 +177,7 @@ class AssetState(StateBase):
              dict:
         """
         return {
-            'assetId': self.AssetId.ToString(),
+            'assetId': self.AssetId.To0xString(),
             'assetType': self.AssetType,
             'name': self.GetName(),
             'amount': self.Amount.value,

@@ -89,7 +89,7 @@ def ImportToken(wallet, contract_hash):
         hex_script = binascii.hexlify(contract.Code.Script)
         token = NEP5Token(script=hex_script)
 
-        result = token.Query(wallet)
+        result = token.Query()
 
         if result:
 

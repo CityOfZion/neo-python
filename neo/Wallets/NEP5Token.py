@@ -10,7 +10,7 @@ from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
 from neo.Prompt.Utils import parse_param
 from neocore.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
-
+from neo.SmartContract.ApplicationEngine import ApplicationEngine
 
 class NEP5Token(VerificationCode):
     name = None
@@ -70,7 +70,7 @@ class NEP5Token(VerificationCode):
             self._address = Crypto.ToAddress(self.ScriptHash)
         return self._address
 
-    def Query(self, wallet):
+    def Query(self):
         """
         Query the smart contract for its token information (name, symbol, decimals).
 
@@ -91,13 +91,15 @@ class NEP5Token(VerificationCode):
         sb.EmitAppCallWithOperation(self.ScriptHash, 'symbol')
         sb.EmitAppCallWithOperation(self.ScriptHash, 'decimals')
 
-        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [])
+        engine = ApplicationEngine.Run(sb.ToArray())
+        results = engine.EvaluationStack.Items
 
         try:
             self.name = results[0].GetString()
             self.symbol = results[1].GetString()
             self.decimals = results[2].GetBigInteger()
-            return True
+            if len(self.name) > 1 and len(self.symbol) > 1 and self.decimals < 10:
+                return True
         except Exception as e:
             logger.error("could not query token %s " % e)
         return False
@@ -274,6 +276,7 @@ class NEP5Token(VerificationCode):
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
         return tx, fee, results
+
 
     def ToJson(self):
         """

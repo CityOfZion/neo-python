@@ -3,8 +3,7 @@ from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.FunctionCode import FunctionCode
 from enum import IntEnum
-from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.VM import VMState
+import binascii
 
 class ContractPropertyState(IntEnum):
     NoProperty = 0
@@ -22,6 +21,7 @@ class ContractState(StateBase):
     Description = None
 
     _is_nep5 = None
+    _nep_token = None
 
     @property
     def HasStorage(self):
@@ -144,23 +144,21 @@ class ContractState(StateBase):
         writer.WriteVarString(self.Description)
 
 
-    def DetermineIsNEP5(self):
 
-        from neo.SmartContract.ApplicationEngine import ApplicationEngine
+    def DetermineIsNEP5(self):
+        """
+        Determines if this Smart contract is an NEP5 Token or not.
+        Returns:
+            bool
+        """
+        from neo.Wallets.NEP5Token import NEP5Token
 
         self._is_nep5 = False
-        sb = ScriptBuilder()
-        sb.EmitAppCallWithOperation(self.Code.ScriptHash(), 'name')
-        sb.EmitAppCallWithOperation(self.Code.ScriptHash(), 'symbol')
-        sb.EmitAppCallWithOperation(self.Code.ScriptHash(), 'decimals')
-
-        engine= ApplicationEngine.Run(sb.ToArray())
-        results = engine.EvaluationStack.Items
-        if engine.State == VMState.BREAK + VMState.HALT and len(results) == 3:
-            if results[0].GetByteArray() and results[1].GetByteArray() and results[2].GetBigInteger():
-                self._is_nep5 = True
-                print("IS NEP5")
-
+        token = NEP5Token(binascii.hexlify(self.Code.Script))
+        if token.Query():
+            self._nep_token = token
+            self._is_nep5 = True
+        return self._is_nep5
 
     def ToJson(self):
         """
@@ -178,9 +176,7 @@ class ContractState(StateBase):
         except Exception as e:
             pass
 
-        print("self contract properties: %s " % self.ContractProperties)
-
-        return {
+        jsn = {
 
             'version': self.StateVersion,
             'code': codejson,
@@ -194,3 +190,8 @@ class ContractState(StateBase):
                 'dynamic_invoke': self.HasDynamicInvoke
             }
         }
+
+        if self._nep_token:
+            jsn['token'] = self._nep_token.ToJson()
+
+        return jsn
