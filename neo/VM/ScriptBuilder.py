@@ -190,6 +190,19 @@ class ScriptBuilder(object):
         self.push(operation.encode('utf-8').hex())
         self.Emit(APPCALL, script_hash.Data)
 
+    def EmitAppCallWithJsonArgs(self, script_hash, args):
+        args.reverse()
+        for a in args:
+            if isinstance(a.Value, list):
+                a.Value.reverse()
+                for item in a.Value:
+                    self.push(item.ToVM())
+                self.push(len(a.Value))
+                self.Emit(PACK)
+            else:
+                self.push(a.ToVM())
+        self.Emit(APPCALL, script_hash.Data)
+
     def EmitSysCall(self, api):
         if api is None:
             raise Exception("Please specify an api")

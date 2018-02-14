@@ -209,15 +209,15 @@ class BlockBase(VerifiableMixin):
              dict:
         """
         json = {}
-        json["hash"] = self.Hash.ToString()
+        json["hash"] = self.Hash.To0xString()
 
         #        json["size"] = self.Size()
         json["version"] = self.Version
-        json["previousblockhash"] = self.PrevHash.ToString()
-        json["merkleroot"] = self.MerkleRoot.ToString()
+        json["previousblockhash"] = self.PrevHash.To0xString()
+        json["merkleroot"] = self.MerkleRoot.To0xString()
         json["time"] = self.Timestamp
         json["index"] = self.Index
-        json['next_consensus'] = self.NextConsensus.ToString()
+        json['next_consensus'] = self.NextConsensus.To0xString()
         json["consensus data"] = self.ConsensusData
         json["script"] = '' if not self.Script else self.Script.ToJson()
         return json

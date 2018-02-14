@@ -1,8 +1,6 @@
 import time
 import plyvel
 import binascii
-import traceback
-import pdb
 
 from logzero import logger
 
@@ -266,7 +264,7 @@ class LevelDBBlockchain(Blockchain):
     def GetUnspent(self, hash, index):
 
         sn = self._db.snapshot()
-        coins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, UnspentCoinState)
+        coins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
 
         state = coins.TryGet(hash)
 
@@ -309,7 +307,8 @@ class LevelDBBlockchain(Blockchain):
             for index, item in enumerate(state.Items):
                 if item & CoinState.Spent == 0:
                     unspents.append(tx.outputs[index])
-
+        else:
+            print("no state?")
         return unspents
 
     def GetUnclaimed(self, hash):
@@ -514,11 +513,14 @@ class LevelDBBlockchain(Blockchain):
         except Exception as e:
             pass
 
-        if len(height_or_hash) == 64:
+        if intval is None and len(height_or_hash) == 64:
             bhash = height_or_hash.encode('utf-8')
             if bhash in self._header_index:
                 hash = bhash
-
+        elif intval is None and len(height_or_hash) == 66:
+            bhash = height_or_hash[2:].encode('utf-8')
+            if bhash in self._header_index:
+                hash = bhash
         elif intval is not None and self.GetBlockHash(intval) is not None:
             hash = self.GetBlockHash(intval)
 
@@ -535,6 +537,14 @@ class LevelDBBlockchain(Blockchain):
             return Block.FromTrimmedData(outhex, 0)
         except Exception as e:
             logger.info("Could not get block %s " % e)
+        return None
+
+    def GetNextBlockHash(self, hash):
+        header = self.GetHeader(hash.ToBytes())
+        if header:
+            if header.Index + 1 >= len(self._header_index):
+                return None
+            return self._header_index[header.Index + 1]
         return None
 
     def AddHeader(self, header):

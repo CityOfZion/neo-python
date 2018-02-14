@@ -8,6 +8,7 @@ from neocore.IO.BinaryWriter import BinaryWriter
 
 
 class AccountState(StateBase):
+
     ScriptHash = None
     IsFrozen = False
     Votes = []
@@ -270,7 +271,7 @@ class AccountState(StateBase):
 
         balances = {}
         for key, value in self.Balances.items():
-            balances[key.ToString()] = str(value.value / Fixed8.D)
+            balances[key.To0xString()] = value.ToString()
 
         json['balances'] = balances
         return json
