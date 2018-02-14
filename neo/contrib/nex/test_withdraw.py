@@ -1,4 +1,5 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
+from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
@@ -69,13 +70,15 @@ class WithdrawWalletTestCase(WalletFixtureTestCase):
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
-            cls._wallet1 = UserWallet.Open(WithdrawWalletTestCase.wallet_1_dest(), WithdrawWalletTestCase.wallet_1_pass())
+            cls._wallet1 = UserWallet.Open(WithdrawWalletTestCase.wallet_1_dest(),
+                                           to_aes_key(WithdrawWalletTestCase.wallet_1_pass()))
         return cls._wallet1
 
     @classmethod
     def GetWallet2(cls, recreate=False):
         if cls._wallet2 is None or recreate:
-            cls._wallet2 = UserWallet.Open(WithdrawWalletTestCase.wallet_2_dest(), WithdrawWalletTestCase.wallet_2_pass())
+            cls._wallet2 = UserWallet.Open(WithdrawWalletTestCase.wallet_2_dest(),
+                                           to_aes_key(WithdrawWalletTestCase.wallet_2_pass()))
         return cls._wallet2
 
     def test_1_initial_setup(self):
