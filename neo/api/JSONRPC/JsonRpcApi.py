@@ -30,6 +30,7 @@ from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.VM.ScriptBuilder import ScriptBuilder
 
+
 class JsonRpcError(Exception):
     """
     Easy error handling throughout the handlers. Allows for easy code overrides
@@ -116,7 +117,6 @@ class JsonRpcApi(object):
         except Exception as e:
             error = JsonRpcError.internalError(str(e))
             return self.get_custom_error_payload(request_id, error.code, error.message)
-
 
     def json_rpc_method_handler(self, method, params):
 

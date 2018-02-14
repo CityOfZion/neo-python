@@ -8,7 +8,7 @@ from neocore.Fixed8 import Fixed8
 from neocore.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Core.TX.Transaction import ContractTransaction,TransactionOutput
+from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
 from neo.Network.NodeLeader import NodeLeader
 import json
 import binascii
@@ -191,22 +191,3 @@ class UserWalletTestCase(WalletFixtureTestCase):
         result = NodeLeader.Instance().Relay(tx)
         self.assertEqual(result, True)
 
-    def test_9_send_gas_tx(self):
-
-        wallet = self.GetWallet1()
-
-        tx = ContractTransaction()
-        tx.outputs = [TransactionOutput(Blockchain.SystemCoin().Hash, Fixed8.FromDecimal(3.24525), self.import_watch_addr)]
-
-        tx = wallet.MakeTransaction(tx) # type: ContractTransaction
-
-        cpc = ContractParametersContext(tx)
-        wallet.Sign(cpc)
-        tx.scripts = cpc.GetScripts()
-
-        out = tx.ToArray()
-        print("out %s " % out)
-
-
-        result = NodeLeader.Instance().Relay(tx)
-        self.assertEqual(result, True)
