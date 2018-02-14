@@ -41,7 +41,7 @@ def BuildAndRun(arguments, wallet):
         newpath = path.replace('.py', '.avm')
         print("Saved output to %s " % newpath)
 
-        DoRun(contract_script, arguments, wallet, path)
+        return DoRun(contract_script, arguments, wallet, path)
 
     except Exception as e:
         print("Could not compile %s " % e)
@@ -62,7 +62,7 @@ def DoRun(contract_script, arguments, wallet, path):
 
                 script = GatherLoadedContractParams(f_args, contract_script)
 
-                tx, result, total_ops = test_deploy_and_invoke(script, i_args, wallet)
+                tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet)
                 i_args.reverse()
 
                 if tx is not None and result is not None:
@@ -74,11 +74,10 @@ def DoRun(contract_script, arguments, wallet, path):
                     print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("-------------------------------------------------------------\n")
 
-                    return
+                    return tx, result, total_ops, engine
                 else:
                     print("Test invoke failed")
                     print("tx is, results are %s %s " % (tx, result))
-                    return
 
             else:
 
@@ -88,3 +87,6 @@ def DoRun(contract_script, arguments, wallet, path):
         print("could not bulid %s " % e)
         traceback.print_stack()
         traceback.print_exc()
+
+
+    return None, None, None, None

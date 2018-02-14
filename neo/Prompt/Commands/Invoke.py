@@ -491,7 +491,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 itx.Gas = consumed
                 itx.Attributes = []
                 result = engine.ResultsForCode(contract_state.Code)
-                return itx, result, total_ops
+                return itx, result, total_ops, engine
             else:
                 print("error executing invoke contract...")
 
@@ -501,7 +501,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
     except Exception as e:
         service.ExecutionCompleted(engine, False, e)
 
-    return None, [], 0
+    return None, [], 0, None
 
 
 def descripe_contract(contract):
