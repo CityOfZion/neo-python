@@ -413,3 +413,26 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         expected_value = "2609.997813"
         self.assertEqual(output_index, res["result"]["n"])
         self.assertEqual(expected_value, res["result"]["value"])
+
+
+    def test_send_raw_tx(self):
+        raw_tx = '80000001b10ad9ec660bf343c0eb411f9e05b4fa4ad8abed31d4e4dc5bb6ae416af0c4de000002e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60c8db571300000000af12a8687b14948bc4a008128a550a63695bc1a5e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c603808b44002000000eca8fcf94e7a2a7fc3fd54ae0ed3d34d52ec25900141404749ce868ed9588f604eeeb5c523db39fd57cd7f61d04393a1754c2d32f131d67e6b1ec561ac05012b7298eb5ff254487c76de0b2a0c4d097d17cec708c0a9802321025b5c8cdcb32f8e278e111a0bf58ebb463988024bb4e250aa4310b40252030b60ac'
+        req = self._gen_rpc_req("sendrawtransaction", params=[raw_tx])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'],True)
+
+    def test_send_raw_tx_bad(self):
+        raw_tx = '80000001b10ad9ec660bf343c0eb411f9e05b4fa4ad8abed31d4e4dc5bb6ae416af0c4de000002e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60c8db571300000000af12a8687b14948bc4a008128a550a63695bc1a5e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c603808b44002000000eca8fcf94e7a2a7fc3fd54ae0ed3d34d52ec25900141404749ce868ed9588f604eeeb5c523db39fd57cd7f61d04393a1754c2d32f131d67e6b1ec561ac05012b7298eb5ff254487c76de0b2a0c4d097d17cec708c0a9802321025b5c8cdcb32f8e278e111a0bf58ebb463988024bb4e250aa4310b40252030b60ac'
+        req = self._gen_rpc_req("sendrawtransaction", params=[raw_tx])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result'],False)
+
+    def test_send_raw_tx_bad_2(self):
+        raw_tx = '80000001b10ad9ec660bf343c0eb411f9e05b4fa4ad8abed31d4e4dc5bb6ae416af0c4de000002e72d286979ee6cbb7e65dfddfb2e384100b8d148e7758de42e4168b71792c60c8db571300000000af12a8687b14948bc4a008128a550a63695bc1a5e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c603808b44002000000eca8fcf94e7a2a7fc3fd54ae0ed3d34d52ec25900141404749ce868ed9588f604eeeb5c523db39fd57cd7f61d04393a1754c2d32f131d67e6b1ec561ac05012b7298eb5ff254487c76de0b2a0c4d097d17cec708c0a9802321025b5c8cdcb32f8e278e111a0bf58ebb463988024bb4e250aa4310b40252030b60ac'
+        req = self._gen_rpc_req("sendrawtransaction", params=[raw_tx])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['code'],-32603)
