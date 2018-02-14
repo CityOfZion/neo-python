@@ -9,7 +9,7 @@ All notable changes to this project following the ``0.4.0`` release will be docu
 - Clarify message for token mint command (`PR #212 <https://github.com/CityOfZion/neo-python/pull/212>`_)
 - Troubleshooting osx script (`PR #208 <https://github.com/CityOfZion/neo-python/pull/208>`_)
 - Make Contract Search case insensitive (`PR #207 <https://github.com/CityOfZion/neo-python/pull/207>`_)
-- Refactor typo for word cloning (`PR #206 <https://github.com/CityOfZion/neo-python/pull/206>`_)
+- implement a more robust CLI command parser
 
 [0.4.6] 2018-01-24
 ------------------
