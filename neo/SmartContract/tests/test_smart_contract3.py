@@ -46,6 +46,10 @@ class SmartContractTest3(BlockchainFixtureTestCase):
         self.assertEqual(contract_added.Name, b'test create')
         self.assertEqual(contract_added.Email, b'flow@neo.org')
 
+        self.assertEqual(len(Blockchain.Default().SearchContracts("test create")), 1)
+        self.assertEqual(len(Blockchain.Default().SearchContracts("TEST CREate")), 1)
+        self.assertEqual(len(Blockchain.Default().SearchContracts("TEST CREATE!")), 0)
+
         code = contract_added.Code
 
         self.assertIsNotNone(code)
