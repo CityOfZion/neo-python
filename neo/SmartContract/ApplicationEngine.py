@@ -361,8 +361,7 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Storage.Put":
             l1 = len(self.EvaluationStack.Peek(1).GetByteArray())
             l2 = len(self.EvaluationStack.Peek(2).GetByteArray())
-
-            return ((l1 + l2 - 1) / (1024 + 1)) * 1000
+            return (int((l1 + l2 - 1) / 1024) + 1) * 1000
 
         elif api == "Neo.Storage.Delete":
             return 100
@@ -381,6 +380,7 @@ class ApplicationEngine(ExecutionEngine):
         Returns:
             ApplicationEngine
         """
+
         from neo.Core.Blockchain import Blockchain
         from neo.SmartContract.StateMachine import StateMachine
         from neo.EventHub import events

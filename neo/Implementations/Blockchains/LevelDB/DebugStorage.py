@@ -18,7 +18,7 @@ class DebugStorage():
             self._db.delete(key)
 
     def clone_from_live(self):
-        print("cloining from live!")
+        print("cloning from live!")
         clone_db = GetBlockchain()._db.snapshot()
         for key, value in clone_db.iterator(prefix=DBPrefix.ST_Storage, include_value=True):
             self._db.put(key, value)

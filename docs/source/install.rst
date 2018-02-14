@@ -108,7 +108,7 @@ If you're having an issue similar to this:
 
 **Solution**: Update to plyvel 1.0.4: `pip install -r requirements.txt`
 
----
+-----
 
 You may also encounter issues when installing the pycrypto module on OSX:
 
@@ -126,3 +126,28 @@ This may be fixed by installing the gmp library using homebrew and running pip i
 
     brew install gmp
     CFLAGS='-mmacosx-version-min=10.7 -stdlib=libc++' pip install --no-use-wheel pycrypto --no-cache-dir --global-option=build_ext --global-option="-I/usr/local/Cellar/gmp/6.1.2/include/" --global-option="-L/usr/local/lib"
+
+-----
+
+``import scrypt`` / ``Reason: image not found``
+
+If you encounter an error like this:
+
+.. code-block:: sh
+
+    import scrypt
+    File "/project_dir/venv/lib/python3.5/site-packages/scrypt.py", line 11, in
+    _scrypt = cdll.LoadLibrary(imp.find_module('_scrypt')[1])
+    File "/project_dir/venv/lib/python3.5/ctypes/init.py", line 429, in LoadLibrary
+    return self._dlltype(name)
+    File "/project_dir/venv/lib/python3.5/ctypes/init.py", line 351, in init
+    self._handle = _dlopen(self._name, mode)
+    OSError: dlopen(/project_dir/venv/lib/python3.5/site-packages/_scrypt.cpython-35m-darwin.so, 6): Library not loaded: /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib
+    Referenced from: /project_dir/venv/lib/python3.5/site-packages/_scrypt.cpython-35m-darwin.so
+    Reason: image not found
+
+The solution probably is
+
+.. code-block:: sh
+
+    brew reinstall openssl

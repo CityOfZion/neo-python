@@ -131,7 +131,7 @@ def token_mint(wallet, args, prompt_passwd=True):
 
     tx, fee, results = token.Mint(wallet, mint_to_addr, asset_attachments)
 
-    if results[0].GetBigInteger() > 0:
+    if results[0] is not None:
         print("\n-----------------------------------------------------------")
         print("[%s] Will mint tokens to address: %s " % (token.symbol, mint_to_addr))
         print("Fee: %s " % (fee.value / Fixed8.D))

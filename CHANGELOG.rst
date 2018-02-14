@@ -3,10 +3,13 @@ Changelog
 
 All notable changes to this project following the ``0.4.0`` release will be documented in this file.
 
-[0.4.7-dev] work in progress
+[0.4.7] 2018-02-13
 ----------------------------
-
-- ...
+- Fix Gas Cost Calculation (`PR #220 <https://github.com/CityOfZion/neo-python/pull/220>`_)
+- Clarify message for token mint command (`PR #212 <https://github.com/CityOfZion/neo-python/pull/212>`_)
+- Troubleshooting osx script (`PR #208 <https://github.com/CityOfZion/neo-python/pull/208>`_)
+- Make Contract Search case insensitive (`PR #207 <https://github.com/CityOfZion/neo-python/pull/207>`_)
+- implement a more robust CLI command parser
 
 [0.4.6] 2018-01-24
 ------------------
