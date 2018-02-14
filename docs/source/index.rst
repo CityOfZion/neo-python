@@ -33,6 +33,7 @@ neo-python - Python Node and SDK for the NEO blockchain
 
     overview
     install
+    installwindows
     basicusage
     prompt
     settings-and-logging

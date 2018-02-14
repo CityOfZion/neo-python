@@ -104,7 +104,7 @@ yum install -y readline-devel leveldb-devel libffi-devel gcc-c++ redhat-rpm-conf
 #### Windows
 
 Help needed. Installing the Python package plyvel seems to require C++ compiler
-support tied to Visual Studio and libraries.
+support tied to Visual Studio and libraries. Refer to [documentation](https://neo-python.readthedocs.io/en/latest/installwindows.html).
 
 ### Python 3.5
 
