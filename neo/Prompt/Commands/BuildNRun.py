@@ -32,7 +32,7 @@ def LoadAndRun(arguments, wallet):
         print("Could not load script %s " % e)
 
 
-def BuildAndRun(arguments, wallet):
+def BuildAndRun(arguments, wallet, verbose=True):
     path = get_arg(arguments)
 
     try:
@@ -41,13 +41,13 @@ def BuildAndRun(arguments, wallet):
         newpath = path.replace('.py', '.avm')
         print("Saved output to %s " % newpath)
 
-        return DoRun(contract_script, arguments, wallet, path)
+        return DoRun(contract_script, arguments, wallet, path, verbose)
 
     except Exception as e:
         print("Could not compile %s " % e)
 
 
-def DoRun(contract_script, arguments, wallet, path):
+def DoRun(contract_script, arguments, wallet, path, verbose=True):
 
     try:
 
@@ -66,18 +66,20 @@ def DoRun(contract_script, arguments, wallet, path):
                 i_args.reverse()
 
                 if tx is not None and result is not None:
-                    print("\n-----------------------------------------------------------")
-                    print("Calling %s with arguments %s " % (path, i_args))
-                    print("Test deploy invoke successful")
-                    print("Used total of %s operations " % total_ops)
-                    print("Result %s " % result)
-                    print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
-                    print("-------------------------------------------------------------\n")
+                    if verbose:
+                        print("\n-----------------------------------------------------------")
+                        print("Calling %s with arguments %s " % (path, i_args))
+                        print("Test deploy invoke successful")
+                        print("Used total of %s operations " % total_ops)
+                        print("Result %s " % result)
+                        print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
+                        print("-------------------------------------------------------------\n")
 
                     return tx, result, total_ops, engine
                 else:
-                    print("Test invoke failed")
-                    print("tx is, results are %s %s " % (tx, result))
+                    if verbose:
+                        print("Test invoke failed")
+                        print("tx is, results are %s %s " % (tx, result))
 
             else:
 
