@@ -15,7 +15,7 @@ import pdb
 class NotificationPrefix():
 
     PREFIX_ADDR = b'\xCA'
-#    PREFIX_CONTRACT = b'\xCB'
+    PREFIX_CONTRACT = b'\xCB'
     PREFIX_BLOCK = b'\xCC'
 
     PREFIX_COUNT = b'\xCD'
@@ -97,8 +97,10 @@ class NotificationDB():
 
             addr_db = self.db.prefixed_db(NotificationPrefix.PREFIX_ADDR)
             block_db = self.db.prefixed_db(NotificationPrefix.PREFIX_BLOCK)
+            contract_db = self.db.prefixed_db(NotificationPrefix.PREFIX_CONTRACT)
 
             block_write_batch = block_db.write_batch()
+            contract_write_batch = contract_db.write_batch()
 
             block_count = 0
             block_bytes = self._events_to_write[0].block_number.to_bytes(4, 'little')
@@ -144,8 +146,20 @@ class NotificationDB():
                 block_write_batch.put(per_block_key, hash_data)
                 block_count += 1
 
+                # write the event to the per-contract database
+                contract_bytes = bytes(evt.contract_hash.Data)
+                count_for_contract = contract_db.get(contract_bytes + NotificationPrefix.PREFIX_COUNT)
+                if not count_for_contract:
+                    count_for_contract = b'\x00'
+                contract_event_key = contract_bytes + count_for_contract
+                contract_count_int = int.from_bytes(count_for_contract, 'little') + 1
+                new_contract_count = contract_count_int.to_bytes(4, 'little')
+                contract_write_batch.put(contract_bytes + NotificationPrefix.PREFIX_COUNT, new_contract_count)
+                contract_write_batch.put(contract_event_key, hash_data)
+
             # finish off the per-block write batch
             block_write_batch.write()
+            contract_write_batch.write()
 
         self._events_to_write = []
 
@@ -198,6 +212,25 @@ class NotificationDB():
                     logger.info("could not parse event: %s " % val)
         return results
 
+    def get_by_contract(self, contract_hash):
+        hash = contract_hash
+        if isinstance(contract_hash, str) and len(contract_hash) == 40:
+            hash = UInt160.ParseString(contract_hash)
+
+        if not isinstance(hash, UInt160):
+            raise Exception("Incorrect address format")
+
+        contractlist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_CONTRACT).snapshot()
+        results = []
+
+        for val in contractlist_snapshot.iterator(prefix=bytes(hash.Data), include_key=False):
+            if len(val) > 4:
+                try:
+                    event = SmartContractEvent.FromByteArray(val)
+                    results.append(event)
+                except Exception as e:
+                    logger.info("could not parse event: %s " % val)
+        return results
 
     def get_tokens(self):
         """

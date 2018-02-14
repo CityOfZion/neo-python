@@ -140,8 +140,8 @@ class SmartContractEvent(SerializableMixin):
         }
 
         if self.event_type in [SmartContractEvent.CONTRACT_CREATED,SmartContractEvent.CONTRACT_MIGRATED]:
-            self.contract.DetermineIsNEP5()
-            jsn['token'] = self.contract.ToJson()
+            if self.contract.IsNEP5Contract:
+                jsn['token'] = self.contract._nep_token.ToJson()
 
         return jsn
 

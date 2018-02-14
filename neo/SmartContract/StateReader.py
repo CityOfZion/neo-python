@@ -236,7 +236,7 @@ class StateReader(InteropService):
 
     def CheckWitnessHash(self, engine, hash):
 
-        if self._hashes_for_verifying is None:
+        if self._hashes_for_verifying is None and engine.ScriptContainer:
             container = engine.ScriptContainer
             self._hashes_for_verifying = container.GetScriptHashesForVerifying()
 

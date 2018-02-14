@@ -35,6 +35,7 @@ class NotificationRestApi(object):
                                 <li><pre>/block/{height}</pre></li>
                                 <li><pre>/addr/{addr}</pre></li>
                                 <li><pre>/tx/{hash}</pre></li>
+                                <li><pre>/tx/{hash}</pre></li>
                                 <li><pre>/tokens</pre></li>
                                 <li><pre>/token/{contract_hash}</pre></li>                                
                             </ul>
@@ -142,22 +143,26 @@ class NotificationRestApi(object):
 
         return self.format_notifications(request, notifications)
 
-    @app.route('/tokens', methods=['GET'])
-    def get_by_tx(self, request, tx_hash):
+
+    @app.route('/contract/<string:contract_hash>', methods=['GET'])
+    def get_by_tx(self, request, contract_hash):
         request.setHeader('Content-Type', 'application/json')
+        try:
+            notifications = self.notif.get_by_contract(contract_hash)
+        except Exception as e:
+            logger.info("Could not get notifications for contract %s " % contract_hash)
+            return self.format_message("Could not get notifications for contract hash %s because %s" % (contract_hash, e))
+        return self.format_notifications(request, notifications)
 
-        bc = Blockchain.Default()  # type: Blockchain
-
+    @app.route('/tokens', methods=['GET'])
+    def get_tokens(self, request):
+        request.setHeader('Content-Type', 'application/json')
         notifications = self.notif.get_tokens()
-
         return self.format_notifications(request, notifications)
 
     @app.route('/token/<string:contract_hash>', methods=['GET'])
-    def get_by_tx(self, request, contract_hash):
+    def get_token(self, request, contract_hash):
         request.setHeader('Content-Type', 'application/json')
-
-        bc = Blockchain.Default()  # type: Blockchain
-        notifications = []
         try:
             uint160 = UInt160.ParseString(contract_hash)
             contract_event = self.notif.get_token(uint160)
