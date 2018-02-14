@@ -19,10 +19,9 @@ from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response
 from neo.Core.State.AccountState import AccountState
-from neo.Core.State.ContractState import ContractState
+from neo.Core.TX.Transaction import Transaction
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
-from neo.Wallets import Wallet
 from neo.Core.Helper import Helper
 from neo.Network.NodeLeader import NodeLeader
 import binascii
@@ -30,7 +29,6 @@ from neo.Core.State.StorageKey import StorageKey
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.VM.ScriptBuilder import ScriptBuilder
-
 
 class JsonRpcError(Exception):
     """
@@ -119,25 +117,6 @@ class JsonRpcApi(object):
             error = JsonRpcError.internalError(str(e))
             return self.get_custom_error_payload(request_id, error.code, error.message)
 
-    def parse_uint_str(self, param):
-        if param[0:2] == '0x':
-            return param[2:]
-        return param
-
-    def validateaddress(self, params):
-        # check for [] parameter or [""]
-        if not params or params[0] == '':
-            raise JsonRpcError(-100, "Missing argument")
-
-        isValid = False
-        try:
-            data = base58.b58decode_check(params[0])
-            if len(data) == 21 and data[0] == settings.ADDRESS_VERSION:
-                isValid = True
-        except Exception as e:
-            pass
-
-        return {"address": params[0], "isvalid": isValid}
 
     def json_rpc_method_handler(self, method, params):
 
@@ -250,7 +229,10 @@ class JsonRpcApi(object):
             return self.get_invoke_result(script)
 
         elif method == "sendrawtransaction":
-            raise NotImplementedError()
+            tx_script = binascii.unhexlify(params[0].encode('utf-8'))
+            transaction = Transaction.DeserializeFromBufer(tx_script)
+            result = NodeLeader.Instance().Relay(transaction)
+            return result
 
         elif method == "submitblock":
             raise NotImplementedError()
@@ -309,3 +291,18 @@ class JsonRpcApi(object):
             "gas_consumed": appengine.GasConsumed().ToString(),
             "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]
         }
+
+    def validateaddress(self, params):
+        # check for [] parameter or [""]
+        if not params or params[0] == '':
+            raise JsonRpcError(-100, "Missing argument")
+
+        isValid = False
+        try:
+            data = base58.b58decode_check(params[0])
+            if len(data) == 21 and data[0] == settings.ADDRESS_VERSION:
+                isValid = True
+        except Exception as e:
+            pass
+
+        return {"address": params[0], "isvalid": isValid}
