@@ -4,7 +4,7 @@ import argparse
 import datetime
 import json
 import os
-import resource
+import psutil
 import traceback
 import logging
 
@@ -757,9 +757,10 @@ class PromptInterface(object):
                     return
 
     def show_mem(self):
-        total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        totalmb = total / 1000000
-        out = "Total: %sMB\n" % totalmb
+        process = psutil.Process(os.getpid())
+        total = process.memory_info().rss
+        totalmb = total / (1024 * 1024)
+        out = "Total: %s MB\n" % totalmb
         out += "Total buffers: %s\n" % StreamManager.TotalBuffers()
         print_tokens([(Token.Number, out)], self.token_style)
 
