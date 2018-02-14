@@ -32,9 +32,6 @@ def main():
     parser.add_argument("-p", "--privnet", action="store_true", default=False,
                         help="Use PrivNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
-    parser.add_argument("-t", "--set-default-theme", dest="theme",
-                        choices=["dark", "light"],
-                        help="Set the default theme to be loaded from the config file. Default: 'dark'")
     parser.add_argument('--version', action='version',
                         version='neo-python v{version}'.format(version=__version__))
 
