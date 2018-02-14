@@ -190,4 +190,3 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         result = NodeLeader.Instance().Relay(tx)
         self.assertEqual(result, True)
-
