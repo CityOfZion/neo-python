@@ -114,16 +114,14 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
 #            toarray = Helper.ToArray(wallet_tx)
 #            print("to arary %s " % toarray)
 
-            # check if we can save the tx first
-            save_tx = wallet.SaveTransaction(wallet_tx)
-
-            if save_tx:
-                relayed = NodeLeader.Instance().Relay(wallet_tx)
-            else:
-                print("Could not save tx to wallet, will not send tx")
+            relayed = NodeLeader.Instance().Relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
+
+                # if it was relayed, we save tx
+                wallet.SaveTransaction(wallet_tx)
+
                 return wallet_tx
             else:
                 print("Could not relay tx %s " % wallet_tx.Hash.ToString())
@@ -482,9 +480,9 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 print("Used %s Gas " % engine.GasConsumed().ToString())
 
                 consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
-                consumed.value = int(consumed.value)
+                consumed = consumed.Ceil()
 
-                if consumed < Fixed8.One():
+                if consumed < Fixed8.Zero():
                     consumed = Fixed8.FromDecimal(.001)
 
                 total_ops = engine.ops_processed
@@ -493,7 +491,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 itx.Gas = consumed
                 itx.Attributes = []
                 result = engine.ResultsForCode(contract_state.Code)
-                return itx, result, total_ops
+                return itx, result, total_ops, engine
             else:
                 print("error executing invoke contract...")
 
@@ -503,7 +501,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
     except Exception as e:
         service.ExecutionCompleted(engine, False, e)
 
-    return None, [], 0
+    return None, [], 0, None
 
 
 def descripe_contract(contract):

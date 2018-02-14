@@ -4,7 +4,7 @@ import argparse
 import datetime
 import json
 import os
-import resource
+import psutil
 import traceback
 import logging
 
@@ -37,6 +37,7 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins
 from neo.Prompt.Utils import get_arg
+from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
@@ -97,7 +98,7 @@ class PromptInterface(object):
                 'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
-                'wallet tkn_mint {token symbol} {mint_to_addr} {amount_attach_neo} {amount_attach_gas}',
+                'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
                 'wallet unspent',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
@@ -109,7 +110,7 @@ class PromptInterface(object):
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
-                'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount)',
+                'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount})',
                 'debugstorage {on/off/reset}'
                 ]
 
@@ -120,6 +121,7 @@ class PromptInterface(object):
     start_dt = None
 
     def __init__(self):
+        self.input_parser = InputParser()
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
 
@@ -757,9 +759,10 @@ class PromptInterface(object):
                     return
 
     def show_mem(self):
-        total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        totalmb = total / 1000000
-        out = "Total: %sMB\n" % totalmb
+        process = psutil.Process(os.getpid())
+        total = process.memory_info().rss
+        totalmb = total / (1024 * 1024)
+        out = "Total: %s MB\n" % totalmb
         out += "Total buffers: %s\n" % StreamManager.TotalBuffers()
         print_tokens([(Token.Number, out)], self.token_style)
 
@@ -810,12 +813,6 @@ class PromptInterface(object):
         else:
             print("Cannot configure %s try 'config sc-events on|off' or 'config debug on|off'", what)
 
-    def parse_result(self, result):
-        if len(result):
-            command_parts = [s for s in result.split()]
-            return command_parts[0], command_parts[1:]
-        return None, None
-
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
@@ -846,7 +843,7 @@ class PromptInterface(object):
                 continue
 
             try:
-                command, arguments = self.parse_result(result)
+                command, arguments = self.input_parser.parse_input(result)
 
                 if command is not None and len(command) > 0:
                     command = command.lower()
