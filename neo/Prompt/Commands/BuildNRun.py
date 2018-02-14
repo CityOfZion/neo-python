@@ -88,5 +88,4 @@ def DoRun(contract_script, arguments, wallet, path):
         traceback.print_stack()
         traceback.print_exc()
 
-
     return None, None, None, None
