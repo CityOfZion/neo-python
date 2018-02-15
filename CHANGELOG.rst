@@ -11,6 +11,8 @@ All notable changes to this project are documented in this file.
 - Troubleshooting osx script (`PR #208 <https://github.com/CityOfZion/neo-python/pull/208>`_)
 - Make Contract Search case insensitive (`PR #207 <https://github.com/CityOfZion/neo-python/pull/207>`_)
 - implement a more robust CLI command parser
+- added peristence to NotificationDB for NEP5 Tokens
+- upstream neocore update
 
 
 [0.4.6] 2018-01-24
