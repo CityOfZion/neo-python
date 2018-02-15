@@ -2,15 +2,15 @@
     "ApplicationConfiguration": {
         "DataDirectoryPath": "Chains/SC234",
         "NotificationDataPath": "Chains/Test_Notif",
+        "RPCPort": 20332,
         "NodePort": 20333,
         "SslCert": "",
         "SslCertPassword": "",
         "UriPrefix": [
             "http://*:20332"
         ],
-        "VersionName": "/NEO-PYTHON:2.3.4/",
         "WsPort": 20334,
-        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/Chain780000.tar.gz",
+        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/ChainTestnet1060000.tar.gz",
         "DebugStorage":1
     },
     "ProtocolConfiguration": {

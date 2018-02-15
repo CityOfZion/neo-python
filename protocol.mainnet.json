@@ -34,12 +34,12 @@
   "ApplicationConfiguration": {
     "DataDirectoryPath": "Chains/Main",
     "NotificationDataPath": "Chains/Main_Notif",
+    "RPCPort": 10332,
     "NodePort": 10333,
     "WsPort": 10334,
     "UriPrefix": [ "http://*:10332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "VersionName":"/NEO-PYTHON:2.3.4/",
     "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Chain1550000.tar.gz",
     "DebugStorage":1
   }

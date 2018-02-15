@@ -7,9 +7,11 @@ from neocore.BigInteger import BigInteger
 from neocore.Cryptography.Crypto import Crypto
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.Mixins import SerializableMixin
+import binascii
 import json
 import pdb
 from logzero import logger
+from neo.Core.State.ContractState import ContractState
 
 
 class SmartContractEvent(SerializableMixin):
@@ -46,6 +48,11 @@ class SmartContractEvent(SerializableMixin):
     STORAGE_PUT = "SmartContract.Storage.Put"
     STORAGE_DELETE = "SmartContract.Storage.Delete"
 
+    CONTRACT = "SmartContract.Contract.*"
+    CONTRACT_CREATED = "SmartContract.Contract.Create"
+    CONTRACT_MIGRATED = "SmartContract.Contract.Migrate"
+    CONTRACT_DESTROY = "SmartContract.Contract.Destroy"
+
     event_type = None
     event_payload = None
     contract_hash = None
@@ -53,6 +60,9 @@ class SmartContractEvent(SerializableMixin):
     tx_hash = None
     execution_success = None
     test_mode = None
+
+    contract = None
+    token = None
 
     def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False, test_mode=False):
         self.event_type = event_type
@@ -62,9 +72,14 @@ class SmartContractEvent(SerializableMixin):
         self.tx_hash = tx_hash
         self.execution_success = execution_success
         self.test_mode = test_mode
+        self.token = None
 
         if not self.event_payload:
             self.event_payload = []
+
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
+            if len(self.event_payload) and isinstance(self.event_payload[0], ContractState):
+                self.contract = self.event_payload[0]
 
     def Serialize(self, writer):
         writer.WriteVarString(self.event_type.encode('utf-8'))
@@ -74,7 +89,11 @@ class SmartContractEvent(SerializableMixin):
         self.SerializePayload(writer)
 
     def SerializePayload(self, writer):
-        pass
+
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED] and self.contract:
+            self.contract.Serialize(writer)
+            if self.token:
+                self.token.Serialize(writer)
 
     def Deserialize(self, reader):
         self.event_type = reader.ReadVarString().decode('utf-8')
@@ -84,7 +103,16 @@ class SmartContractEvent(SerializableMixin):
         self.DeserializePayload(reader)
 
     def DeserializePayload(self, reader):
-        pass
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
+            self.contract = ContractState()
+            self.contract.Deserialize(reader)
+            try:
+                from neo.Wallets.NEP5Token import NEP5Token
+                token = NEP5Token(binascii.hexlify(self.contract.Code.Script))
+                token.Deserialize(reader)
+                self.token = token
+            except Exception as e:
+                logger.error("Couldnt deserialize token %s " % e)
 
     def __str__(self):
         return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s, execution_success=%s, test_mode=%s)" \
@@ -115,13 +143,24 @@ class SmartContractEvent(SerializableMixin):
         StreamManager.ReleaseStream(stream)
         return event
 
+    def CheckIsNEP5(self):
+        if self.contract and self.contract.IsNEP5Contract:
+            self.token = self.contract._nep_token
+
     def ToJson(self):
+
         jsn = {
             'type': self.event_type,
-            'contract': self.contract_hash.ToString(),
+            'contract': self.contract_hash.To0xString(),
             'block': self.block_number,
-            'tx': self.tx_hash.ToString()
+            'tx': self.tx_hash.To0xString()
         }
+
+        if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
+            jsn['contract'] = self.contract.ToJson()
+
+        if self.token:
+            jsn['token'] = self.token.ToJson()
 
         return jsn
 

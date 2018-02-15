@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-This example provides a REST API to query notifications from the blockchain, implementing `neo.api.RESTAPI.NotificationRestApi`
-
-See it live here: http://notifications.neeeo.org/
+This example provides a JSON-RPC API to query blockchain data, implementing `neo.api.JSONRPC.JsonRpcApi`
 """
 
 import argparse
@@ -15,13 +13,13 @@ from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.api.REST.NotificationRestApi import NotificationRestApi
+from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 
 # Logfile settings & setup
-LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'notifications.log')
+LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'json-rpc.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
@@ -60,18 +58,21 @@ def main():
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)
 
+    settings.set_log_smart_contract_events(False)
+
     ndb = NotificationDB.instance()
     ndb.start()
-
-    notif_server = NotificationRestApi()
 
     # Run
     reactor.suggestThreadPoolSize(15)
     NodeLeader.Instance().Start()
 
-    port = 8000
-    logger.info("Starting notification-api server on port %s" % (port))
-    notif_server.app.run('0.0.0.0', port)
+    host = "0.0.0.0"
+    port = settings.RPC_PORT
+    logger.info("Starting json-rpc api server on http://%s:%s" % (host, port))
+
+    api_server = JsonRpcApi(port)
+    api_server.app.run(host, port)
 
 
 if __name__ == "__main__":

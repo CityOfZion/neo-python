@@ -3,6 +3,7 @@ from logzero import logger
 from .MemoryStream import MemoryStream, StreamManager
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Core.TX.Transaction import Transaction
+from neo.Blockchain import GetBlockchain
 
 
 class Helper(object):
@@ -30,10 +31,7 @@ class Helper(object):
             serializable.Deserialize(reader)
             return serializable
         except Exception as e:
-            import traceback
-            traceback.print_stack()
-            traceback.print_exc()
-            logger.error("Could not deserialize: %s " % e)
+            logger.error("Could not deserialize: %s %s" % (e, class_name))
         finally:
             StreamManager.ReleaseStream(mstream)
 
