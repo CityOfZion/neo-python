@@ -380,6 +380,7 @@ class ApplicationEngine(ExecutionEngine):
         Returns:
             ApplicationEngine
         """
+
         from neo.Core.Blockchain import Blockchain
         from neo.SmartContract.StateMachine import StateMachine
         from neo.EventHub import events

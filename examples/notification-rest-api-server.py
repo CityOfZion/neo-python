@@ -1,12 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This example provides a REST API to query notifications from the blockchain, implementing `neo.api.RESTAPI.NotificationRestApi`
+
+See it live here: http://notifications.neeeo.org/
 """
 
 import argparse
 import os
 
-import logzero
+from logzero import logger
 from twisted.internet import reactor, task
 
 from neo import __version__
@@ -32,9 +34,6 @@ def main():
     parser.add_argument("-p", "--privnet", action="store_true", default=False,
                         help="Use PrivNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
-    parser.add_argument("-t", "--set-default-theme", dest="theme",
-                        choices=["dark", "light"],
-                        help="Set the default theme to be loaded from the config file. Default: 'dark'")
     parser.add_argument('--version', action='version',
                         version='neo-python v{version}'.format(version=__version__))
 
@@ -55,9 +54,6 @@ def main():
     elif args.privnet:
         settings.setup_privnet()
 
-    if args.theme:
-        preferences.set_theme(args.theme)
-
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
     Blockchain.RegisterBlockchain(blockchain)
@@ -73,7 +69,9 @@ def main():
     reactor.suggestThreadPoolSize(15)
     NodeLeader.Instance().Start()
 
-    notif_server.app.run('0.0.0.0', 8000)
+    port = 8000
+    logger.info("Starting notification-api server on port %s" % (port))
+    notif_server.app.run('0.0.0.0', port)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This example provides a JSON-RPC API to query blockchain data, implementing `neo.api.JSONRPC.JsonRpcApi`
 """
@@ -6,7 +6,7 @@ This example provides a JSON-RPC API to query blockchain data, implementing `neo
 import argparse
 import os
 
-import logzero
+from logzero import logger
 from twisted.internet import reactor, task
 
 from neo import __version__
@@ -19,13 +19,10 @@ from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 
 # Logfile settings & setup
-LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'notifications.log')
+LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'json-rpc.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
-
-# Prompt history filename
-FILENAME_PROMPT_HISTORY = os.path.join(DIR_PROJECT_ROOT, '.prompt.py.history')
 
 
 def main():
@@ -35,9 +32,6 @@ def main():
     parser.add_argument("-p", "--privnet", action="store_true", default=False,
                         help="Use PrivNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
-    parser.add_argument("-t", "--set-default-theme", dest="theme",
-                        choices=["dark", "light"],
-                        help="Set the default theme to be loaded from the config file. Default: 'dark'")
     parser.add_argument('--version', action='version',
                         version='neo-python v{version}'.format(version=__version__))
 
@@ -58,9 +52,6 @@ def main():
     elif args.privnet:
         settings.setup_privnet()
 
-    if args.theme:
-        preferences.set_theme(args.theme)
-
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
     Blockchain.RegisterBlockchain(blockchain)
@@ -78,7 +69,7 @@ def main():
 
     host = "0.0.0.0"
     port = settings.RPC_PORT
-    print("Starting json-rpc api server on http://%s:%s" % (host, port))
+    logger.info("Starting json-rpc api server on http://%s:%s" % (host, port))
 
     api_server = JsonRpcApi(port)
     api_server.app.run(host, port)

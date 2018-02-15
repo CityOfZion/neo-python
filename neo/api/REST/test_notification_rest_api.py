@@ -17,7 +17,7 @@ from klein.test.test_resource import requestMock
 
 class NotificationDBTestCase(BlockchainFixtureTestCase):
 
-    N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixture.tar.gz'
+    N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixture_v3.tar.gz'
     N_FIXTURE_FILENAME = './Chains/notif_fixture_v3.tar.gz'
     N_NOTIFICATION_DB_NAME = 'fixtures/test_notifications'
 
@@ -134,8 +134,6 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         results = jsn['results']
         self.assertIsInstance(results, list)
         self.assertIn('Could not get notifications', jsn['message'])
-
-    # this following test doesn't work because we'd have to load in the blockchain that matches these notifications
 
     def test_9_by_tx(self):
         mock_req = requestMock(path=b'/tx/0x4c927a7f365cb842ea3576eae474a89183c9e43970a8509b23570a86cb4f5121')
