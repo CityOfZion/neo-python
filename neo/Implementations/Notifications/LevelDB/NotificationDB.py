@@ -13,7 +13,9 @@ import pdb
 
 
 class NotificationPrefix():
-
+    """
+    Byte Prefixes to use for writing event data to disk
+    """
     PREFIX_ADDR = b'\xCA'
     PREFIX_CONTRACT = b'\xCB'
     PREFIX_BLOCK = b'\xCC'
@@ -32,6 +34,11 @@ class NotificationDB():
 
     @staticmethod
     def instance():
+        """
+        Singleton accessor for NotificationDB
+        Returns:
+            NotificationDB: The current instance of the NotificationDB
+        """
         if not NotificationDB.__instance:
             if settings.NOTIFICATION_DB_PATH:
                 NotificationDB.__instance = NotificationDB(settings.NOTIFICATION_DB_PATH)
@@ -42,6 +49,9 @@ class NotificationDB():
 
     @staticmethod
     def close():
+        """
+        Closes the database if it is open
+        """
         if NotificationDB.__instance:
             NotificationDB.__instance.db.close()
             NotificationDB.__instance = None
@@ -52,6 +62,11 @@ class NotificationDB():
 
     @property
     def current_events(self):
+        """
+        A list of events to be persisted in the next 'on_persist_complete' routine
+        Returns:
+            list: a list of events to write
+        """
         return self._events_to_write + self._new_contracts_to_write
 
     def __init__(self, path):
@@ -64,7 +79,9 @@ class NotificationDB():
             raise Exception('Notification Leveldb Unavailable %s ' % e)
 
     def start(self):
-        # Handle EventHub events for SmartContract decorators
+        """
+        Handle EventHub events for SmartContract decorators
+        """
         self._events_to_write = []
         self._new_contracts_to_write = []
 
@@ -80,12 +97,22 @@ class NotificationDB():
         Blockchain.Default().PersistCompleted.on_change += self.on_persist_completed
 
     def on_smart_contract_created(self, sc_event: SmartContractEvent):
+        """
+        Listener for SmartContractEvent
+        Args:
+            sc_event (SmartContractEvent): event to check and see if it contains NEP5Token created
+        """
         if isinstance(sc_event.contract, ContractState):
             sc_event.CheckIsNEP5()
             if sc_event.token:
                 self._new_contracts_to_write.append(sc_event)
 
     def on_smart_contract_event(self, sc_event: NotifyEvent):
+        """
+        Listener for NotifyEvent
+        Args:
+            sc_event (NotifyEvent): event to check whether it should be persisted
+        """
         if not isinstance(sc_event, NotifyEvent):
             logger.info("Not Notify Event instance")
             return
@@ -93,6 +120,11 @@ class NotificationDB():
             self._events_to_write.append(sc_event)
 
     def on_persist_completed(self, block):
+        """
+        Called when a block has been persisted to disk.  Used as a hook to persist notification data.
+        Args:
+            block (neo.Core.Block): the currently persisting block
+        """
         if len(self._events_to_write):
 
             addr_db = self.db.prefixed_db(NotificationPrefix.PREFIX_ADDR)
@@ -181,7 +213,14 @@ class NotificationDB():
         self._new_contracts_to_write = []
 
     def get_by_block(self, block_number):
+        """
+        Look up notifications for a block
+        Args:
+            block_number (int): height of block to search for notifications
 
+        Returns:
+            list: a list of notifications
+        """
         blocklist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_BLOCK).snapshot()
         block_bytes = block_number.to_bytes(4, 'little')
         results = []
@@ -192,6 +231,14 @@ class NotificationDB():
         return results
 
     def get_by_addr(self, address):
+        """
+        Lookup a set of notifications by address
+        Args:
+            address (UInt160 or str): hash of address for notifications
+
+        Returns:
+            list: a list of notifications
+        """
         addr = address
         if isinstance(address, str) and len(address) == 34:
             addr = Helper.AddrStrToScriptHash(address)
@@ -208,10 +255,18 @@ class NotificationDB():
                     event = SmartContractEvent.FromByteArray(val)
                     results.append(event)
                 except Exception as e:
-                    logger.info("could not parse event: %s " % val)
+                    logger.error("could not parse event: %s %s" % (e, val))
         return results
 
     def get_by_contract(self, contract_hash):
+        """
+        Look up a set of notifications by the contract they are associated with
+        Args:
+            contract_hash (UInt160 or str): hash of contract for notifications to be retreived
+
+        Returns:
+            list: a list of notifications
+        """
         hash = contract_hash
         if isinstance(contract_hash, str) and len(contract_hash) == 40:
             hash = UInt160.ParseString(contract_hash)
@@ -228,7 +283,7 @@ class NotificationDB():
                     event = SmartContractEvent.FromByteArray(val)
                     results.append(event)
                 except Exception as e:
-                    logger.info("could not parse event: %s " % val)
+                    logger.error("could not parse event: %s %s" % (e, val))
         return results
 
     def get_tokens(self):
@@ -261,5 +316,5 @@ class NotificationDB():
                 event = SmartContractEvent.FromByteArray(val)
                 return event
         except Exception as e:
-            logger.info("Smart contract event with contract hash %s not found: %s " % (hash.ToString(), e))
+            logger.error("Smart contract event with contract hash %s not found: %s " % (hash.ToString(), e))
         return None

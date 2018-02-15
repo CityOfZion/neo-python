@@ -107,7 +107,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
                     and self.decimals < 10:
                 return True
         except Exception as e:
-            logger.debug("could not query token %s " % e)
+            logger.info("could not query token %s " % e)
         return False
 
     def GetBalance(self, wallet, address, as_string=False):
@@ -284,11 +284,22 @@ class NEP5Token(VerificationCode, SerializableMixin):
         return tx, fee, results
 
     def Serialize(self, writer):
+        """
+        Serialize this token data to bytes
+        Args:
+            writer (neocore.IO.BinaryWriter): binary writer to write serialization data to
+
+        """
         writer.WriteVarString(self.name)
         writer.WriteVarString(self.symbol)
         writer.WriteUInt8(self.decimals)
 
     def Deserialize(self, reader):
+        """
+        Read serialized data from byte stream
+        Args:
+            reader (neocore.IO.BinaryReader): reader to read byte data from
+        """
         self.name = reader.ReadVarString().decode('utf-8')
         self.symbol = reader.ReadVarString().decode('utf-8')
         self.decimals = reader.ReadUInt8()

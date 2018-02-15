@@ -106,14 +106,13 @@ class SmartContractEvent(SerializableMixin):
         if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
             self.contract = ContractState()
             self.contract.Deserialize(reader)
-
             try:
                 from neo.Wallets.NEP5Token import NEP5Token
                 token = NEP5Token(binascii.hexlify(self.contract.Code.Script))
                 token.Deserialize(reader)
                 self.token = token
             except Exception as e:
-                print("Couldnt deserialize token %s " % e)
+                logger.error("Couldnt deserialize token %s " % e)
 
     def __str__(self):
         return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s, execution_success=%s, test_mode=%s)" \
