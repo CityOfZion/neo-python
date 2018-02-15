@@ -6,7 +6,7 @@ This example provides a JSON-RPC API to query blockchain data, implementing `neo
 import argparse
 import os
 
-import logzero
+from logzero import logger
 from twisted.internet import reactor, task
 
 from neo import __version__
@@ -52,9 +52,6 @@ def main():
     elif args.privnet:
         settings.setup_privnet()
 
-    if args.theme:
-        preferences.set_theme(args.theme)
-
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
     Blockchain.RegisterBlockchain(blockchain)
@@ -72,7 +69,7 @@ def main():
 
     host = "0.0.0.0"
     port = settings.RPC_PORT
-    print("Starting json-rpc api server on http://%s:%s" % (host, port))
+    logger.info("Starting json-rpc api server on http://%s:%s" % (host, port))
 
     api_server = JsonRpcApi(port)
     api_server.app.run(host, port)
