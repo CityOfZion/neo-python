@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This example provides a JSON-RPC API to query blockchain data, implementing `neo.api.JSONRPC.JsonRpcApi`
 """

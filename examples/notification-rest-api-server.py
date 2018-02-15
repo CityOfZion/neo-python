@@ -1,6 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This example provides a REST API to query notifications from the blockchain, implementing `neo.api.RESTAPI.NotificationRestApi`
+
+See it live here: http://notifications.neeeo.org/
 """
 
 import argparse
