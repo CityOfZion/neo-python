@@ -141,7 +141,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         contract = Blockchain.Default().GetContract(token_hash)
 
         token = NEP5Token(binascii.hexlify(contract.Code.Script))
-        token.Query(wallet)
+        token.Query()
 
         self.assertEqual(token.name, 'NEP5 Standard')
         self.assertEqual(token.decimals, 8)

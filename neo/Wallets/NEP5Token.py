@@ -10,9 +10,13 @@ from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
 from neo.Prompt.Utils import parse_param
 from neocore.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.SmartContract.ApplicationEngine import ApplicationEngine
+from neocore.IO.BinaryReader import BinaryReader
+from neo.IO.MemoryStream import StreamManager
+from neo.Core.Mixins import SerializableMixin
 
 
-class NEP5Token(VerificationCode):
+class NEP5Token(VerificationCode, SerializableMixin):
     name = None
     symbol = None
     decimals = None
@@ -70,7 +74,7 @@ class NEP5Token(VerificationCode):
             self._address = Crypto.ToAddress(self.ScriptHash)
         return self._address
 
-    def Query(self, wallet):
+    def Query(self):
         """
         Query the smart contract for its token information (name, symbol, decimals).
 
@@ -91,15 +95,19 @@ class NEP5Token(VerificationCode):
         sb.EmitAppCallWithOperation(self.ScriptHash, 'symbol')
         sb.EmitAppCallWithOperation(self.ScriptHash, 'decimals')
 
-        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [])
+        engine = ApplicationEngine.Run(sb.ToArray())
+        results = engine.EvaluationStack.Items
 
         try:
             self.name = results[0].GetString()
             self.symbol = results[1].GetString()
             self.decimals = results[2].GetBigInteger()
-            return True
+            if len(self.name) > 1 and self.name != 'Stack Item' \
+                    and len(self.symbol) > 1 and self.symbol != 'Stack Item'\
+                    and self.decimals < 10:
+                return True
         except Exception as e:
-            logger.error("could not query token %s " % e)
+            logger.info("could not query token %s " % e)
         return False
 
     def GetBalance(self, wallet, address, as_string=False):
@@ -275,6 +283,27 @@ class NEP5Token(VerificationCode):
 
         return tx, fee, results
 
+    def Serialize(self, writer):
+        """
+        Serialize this token data to bytes
+        Args:
+            writer (neocore.IO.BinaryWriter): binary writer to write serialization data to
+
+        """
+        writer.WriteVarString(self.name)
+        writer.WriteVarString(self.symbol)
+        writer.WriteUInt8(self.decimals)
+
+    def Deserialize(self, reader):
+        """
+        Read serialized data from byte stream
+        Args:
+            reader (neocore.IO.BinaryReader): reader to read byte data from
+        """
+        self.name = reader.ReadVarString().decode('utf-8')
+        self.symbol = reader.ReadVarString().decode('utf-8')
+        self.decimals = reader.ReadUInt8()
+
     def ToJson(self):
         """
         Convert object members to a dictionary that can be parsed as JSON.
@@ -286,7 +315,7 @@ class NEP5Token(VerificationCode):
             'name': self.name,
             'symbol': self.symbol,
             'decimals': self.decimals,
-            'script_hash': self.ScriptHash.ToString(),
-            'contract address': self.Address
+            'script_hash': self.ScriptHash.To0xString(),
+            'contract_address': self.Address
         }
         return jsn
