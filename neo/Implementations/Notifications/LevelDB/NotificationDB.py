@@ -70,7 +70,7 @@ class NotificationDB():
 
         @events.on(SmartContractEvent.CONTRACT_CREATED)
         @events.on(SmartContractEvent.CONTRACT_MIGRATED)
-        def call_on_success_event(sc_event:SmartContractEvent):
+        def call_on_success_event(sc_event: SmartContractEvent):
             self.on_smart_contract_created(sc_event)
 
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
@@ -79,9 +79,10 @@ class NotificationDB():
 
         Blockchain.Default().PersistCompleted.on_change += self.on_persist_completed
 
-    def on_smart_contract_created(self, sc_event:SmartContractEvent):
+    def on_smart_contract_created(self, sc_event: SmartContractEvent):
         if isinstance(sc_event.contract, ContractState):
-            if sc_event.contract.IsNEP5Contract:
+            sc_event.CheckIsNEP5()
+            if sc_event.token:
                 self._new_contracts_to_write.append(sc_event)
 
     def on_smart_contract_event(self, sc_event: NotifyEvent):
@@ -90,7 +91,6 @@ class NotificationDB():
             return
         if sc_event.ShouldPersist and sc_event.notify_type == NotifyType.TRANSFER:
             self._events_to_write.append(sc_event)
-
 
     def on_persist_completed(self, block):
         if len(self._events_to_write):
@@ -157,12 +157,11 @@ class NotificationDB():
                 contract_write_batch.put(contract_bytes + NotificationPrefix.PREFIX_COUNT, new_contract_count)
                 contract_write_batch.put(contract_event_key, hash_data)
 
-            # finish off the per-block write batch
+            # finish off the per-block write batch and contract write batch
             block_write_batch.write()
             contract_write_batch.write()
 
         self._events_to_write = []
-
 
         if len(self._new_contracts_to_write):
 

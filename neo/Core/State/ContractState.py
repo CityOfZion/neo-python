@@ -5,6 +5,7 @@ from neo.Core.FunctionCode import FunctionCode
 from enum import IntEnum
 import binascii
 
+
 class ContractPropertyState(IntEnum):
     NoProperty = 0
     HasStorage = 1 << 0
@@ -53,7 +54,6 @@ class ContractState(StateBase):
         if self._is_nep5 is None:
             self.DetermineIsNEP5()
         return self._is_nep5
-
 
     def __init__(self, code=None, contract_properties=0, name=None, version=None, author=None, email=None,
                  description=None):
@@ -142,8 +142,6 @@ class ContractState(StateBase):
         writer.WriteVarString(self.Author)
         writer.WriteVarString(self.Email)
         writer.WriteVarString(self.Description)
-
-
 
     def DetermineIsNEP5(self):
         """

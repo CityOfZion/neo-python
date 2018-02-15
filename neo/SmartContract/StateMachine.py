@@ -406,7 +406,6 @@ class StateMachine(StateReader):
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
-
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_MIGRATED, [contract],
                                hash, Blockchain.Default().Height,
@@ -563,6 +562,3 @@ class StateMachine(StateReader):
         self._storages.Remove(storage_key.GetHashCodeBytes())
 
         return True
-
-
-

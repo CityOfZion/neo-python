@@ -11,8 +11,12 @@ from neo.Prompt.Utils import parse_param
 from neocore.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
+from neocore.IO.BinaryReader import BinaryReader
+from neo.IO.MemoryStream import StreamManager
+from neo.Core.Mixins import SerializableMixin
 
-class NEP5Token(VerificationCode):
+
+class NEP5Token(VerificationCode, SerializableMixin):
     name = None
     symbol = None
     decimals = None
@@ -98,10 +102,12 @@ class NEP5Token(VerificationCode):
             self.name = results[0].GetString()
             self.symbol = results[1].GetString()
             self.decimals = results[2].GetBigInteger()
-            if len(self.name) > 1 and len(self.symbol) > 1 and self.decimals < 10:
+            if len(self.name) > 1 and self.name != 'Stack Item' \
+                    and len(self.symbol) > 1 and self.symbol != 'Stack Item'\
+                    and self.decimals < 10:
                 return True
         except Exception as e:
-            logger.error("could not query token %s " % e)
+            logger.debug("could not query token %s " % e)
         return False
 
     def GetBalance(self, wallet, address, as_string=False):
@@ -277,6 +283,15 @@ class NEP5Token(VerificationCode):
 
         return tx, fee, results
 
+    def Serialize(self, writer):
+        writer.WriteVarString(self.name)
+        writer.WriteVarString(self.symbol)
+        writer.WriteUInt8(self.decimals)
+
+    def Deserialize(self, reader):
+        self.name = reader.ReadVarString().decode('utf-8')
+        self.symbol = reader.ReadVarString().decode('utf-8')
+        self.decimals = reader.ReadUInt8()
 
     def ToJson(self):
         """
@@ -289,7 +304,7 @@ class NEP5Token(VerificationCode):
             'name': self.name,
             'symbol': self.symbol,
             'decimals': self.decimals,
-            'script_hash': self.ScriptHash.ToString(),
-            'contract address': self.Address
+            'script_hash': self.ScriptHash.To0xString(),
+            'contract_address': self.Address
         }
         return jsn

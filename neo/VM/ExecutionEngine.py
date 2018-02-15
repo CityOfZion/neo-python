@@ -624,7 +624,7 @@ class ExecutionEngine():
                 for i in range(0, m):
                     sigs.append(estack.Pop().GetByteArray())
 
-                message = self.ScriptContainer.GetMessage()
+                message = self.ScriptContainer.GetMessage() if self.ScriptContainer else ''
 
                 fSuccess = True
 
