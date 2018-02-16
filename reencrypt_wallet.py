@@ -45,6 +45,12 @@ def SaveStoredData(key, value):
 def reset_password(new_path, new_password):
     db = PWDatabase(new_path).DB
 
+    if LoadStoredData('MigrationState') == '1':
+        print("This wallet was already secured")
+        return False
+    else:
+        print("The wallet is vulnerable, will proceed with the operation.")
+
     # Decrypt Master Key - Without using a password
     master_enc = LoadStoredData('MasterKey')
     passwordHash = LoadStoredData('PasswordHash')
@@ -61,7 +67,9 @@ def reset_password(new_path, new_password):
     mk = aes_enc.encrypt(master_key)
     SaveStoredData('PasswordHash', new_hash)
     SaveStoredData('MasterKey', mk)
+    SaveStoredData('MigrationState', '1')
     db.close()
+    return True
 
 
 def main(path):
@@ -77,10 +85,12 @@ def main(path):
         return False
 
     new_path = copy_wallet(path)
-    reset_password(new_path, password)
-    print("A new wallet was created with your master key encrypted with "
-          "the new password. You can now open this new wallet with the "
-          "new version of neo-python")
+    if reset_password(new_path, password):
+        print("A new wallet was created with your master key encrypted with "
+              "the new password. You can now open this new wallet with the "
+              "new version of neo-python")
+    else:
+        print("Please remove the newly created file: '{}'".format(new_path))
 
     return 0
 
