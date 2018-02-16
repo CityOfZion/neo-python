@@ -175,6 +175,7 @@ class PromptInterface(object):
     def quit(self):
         print('Shutting down. This may take a bit...')
         self.go_on = False
+        self.do_close_wallet()
         NotificationDB.close()
         Blockchain.Default().Dispose()
         reactor.stop()
