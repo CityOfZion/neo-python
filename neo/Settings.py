@@ -55,6 +55,7 @@ class SettingsHolder:
     WS_PORT = None
     URI_PREFIX = None
     BOOTSTRAP_FILE = None
+    NOTIF_BOOTSTRAP_FILE = None
 
     ALL_FEES = None
     USE_DEBUG_STORAGE = False
@@ -62,7 +63,7 @@ class SettingsHolder:
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
     # Logging settings
-    log_smart_contract_events = True
+    log_smart_contract_events = False
 
     # Helpers
     @property
@@ -113,6 +114,7 @@ class SettingsHolder:
         self.URI_PREFIX = config['UriPrefix']
 
         self.BOOTSTRAP_FILE = config['BootstrapFile']
+        self.NOTIF_BOOTSTRAP_FILE = config['NotificationBootstrapFile']
 
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 

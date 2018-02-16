@@ -40,7 +40,8 @@
     "UriPrefix": [ "http://*:10332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Chain1550000.tar.gz",
+    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/ChainMain1920000.tar.gz",
+    "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/MainNotifications1920000.tar.gz",
     "DebugStorage":1
   }
 }

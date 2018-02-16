@@ -80,7 +80,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         expected_fee = Fixed8.FromDecimal(.001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
-        self.assertEqual(result.GetByteArray(), bytearray(b'\xab\xab\xab\xab\xab\xab'))
+        self.assertEqual(result, bytearray(b'\xab\xab\xab\xab\xab\xab'))
 
     def test_build_contract_4(self):
         """

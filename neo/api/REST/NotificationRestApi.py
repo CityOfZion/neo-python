@@ -34,20 +34,21 @@ class NotificationRestApi(object):
                         <h2>endpoints:</h2>
                         <p>
                             <ul>
-                                <li><pre>/block/{height}</pre></li>
-                                <li><pre>/addr/{addr}</pre></li>
-                                <li><pre>/tx/{hash}</pre></li>
-                                <li><pre>/tx/{hash}</pre></li>
-                                <li><pre>/tokens</pre></li>
-                                <li><pre>/token/{contract_hash}</pre></li>                                
+                                <li><pre>/block/{height}</pre> <em>notifications by block</em></li>
+                                <li><pre>/addr/{addr}</pre><em>notifications by address</em></li>
+                                <li><pre>/tx/{hash}</pre><em>notifications by tx</em></li>
+                                <li><pre>/contract/{hash}</pre><em>notifications by contract</em></li>
+                                <li><pre>/tokens</pre><em>lists all NEP5 Tokens</em></li>
+                                <li><pre>/token/{contract_hash}</pre><em>list an NEP5 Token</em></li>                                
                             </ul>
                         </p>
                         <div>
                             <hr/>
                             <h3>pagination</h3>
-                            <p>results are offered in page size of 1000</p>
+                            <p>results are offered in page size of 500</p>
                             <p>you may request a different page by specifying the <code>page</code> query string param, for example:</p>
                             <pre>/block/123456?page=3</pre>
+                            <p>page index starts at 0, so the 2nd page would be <code>?page=1</code></p>
                             <hr/>
                             <h3>sample output</h3>
                             <pre>
@@ -176,7 +177,7 @@ class NotificationRestApi(object):
     def format_notifications(self, request, notifications):
 
         notif_len = len(notifications)
-        page_len = 1000
+        page_len = 500
         page = 0
         message = ''
         if b'page' in request.args:
