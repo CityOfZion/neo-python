@@ -191,7 +191,6 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         results = jsn['results']
         self.assertEqual(len(results), 500)
 
-
         mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?page=2')
         res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
         jsn = json.loads(res)
