@@ -3,8 +3,14 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.4.7-dev] work in progress
+[0.4.9-dev] work in progress
 ----------------------------
+
+- ...
+
+
+[0.4.8] 2018-02-15
+------------------
 
 - Fix Gas Cost Calculation (`PR #220 <https://github.com/CityOfZion/neo-python/pull/220>`_)
 - Clarify message for token mint command (`PR #212 <https://github.com/CityOfZion/neo-python/pull/212>`_)
@@ -24,6 +30,7 @@ All notable changes to this project are documented in this file.
 - Notification REST API (`PR #177 <https://github.com/CityOfZion/neo-python/pull/177>`_, `examples/notification-rest-api-server.py <https://github.com/CityOfZion/neo-python/blob/development/examples/notification-rest-api-server.py>`_)
 - Minor cleanups and documentation updates
 
+
 [0.4.5] 2018-01-18
 ------------------
 
@@ -36,11 +43,13 @@ All notable changes to this project are documented in this file.
 - lots of documentation
 - various small bugfixes
 
+
 [0.4.3] 2017-12-21
 ------------------
 
 - updated ``neo-boa`` to ``0.2.1``
 - added support for array ``REVERSE`` and ``APPEND`` VM opcodes
+
 
 [0.4.3] 2017-12-21
 ------------------
