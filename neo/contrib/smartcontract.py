@@ -58,7 +58,7 @@ class SmartContract:
                 return
 
             # call event handlers
-            handlers = set(self.event_handlers["*"] + self.event_handlers[sc_event.event_type])  # set(..) removes duplicates
+            handlers = set(self.event_handlers["*"] + self.event_handlers[sc_event.event_type.rpartition('.')[0] + ".*"] + self.event_handlers[sc_event.event_type])  # set(..) removes duplicates
             [event_handler(sc_event) for event_handler in handlers]
 
     def on_any(self, func):
