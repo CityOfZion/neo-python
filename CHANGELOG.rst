@@ -6,7 +6,8 @@ All notable changes to this project are documented in this file.
 [0.4.9-dev] work in progress
 ----------------------------
 
-- ...
+- Close wallet on quit (`PR #226 <https://github.com/CityOfZion/neo-python/pull/226>`_)
+- Bugfix for smart contract storage events (`PR #228 <https://github.com/CityOfZion/neo-python/pull/228>`_)
 
 
 [0.4.8] 2018-02-15
