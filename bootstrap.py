@@ -1,5 +1,5 @@
 from neo.Settings import settings
-from neo.Prompt.Commands.Bootstrap import BootstrapBlockchain
+from neo.Prompt.Commands.Bootstrap import BootstrapBlockchainFile
 import argparse
 
 
@@ -8,6 +8,8 @@ def main():
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
                         help="use MainNet instead of the default TestNet")
     parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
+
+    parser.add_argument("-n", "--notifications", action="store_true", default=False, help="Bootstrap notification dataase")
 
     args = parser.parse_args()
 
@@ -21,7 +23,10 @@ def main():
     elif args.mainnet:
         settings.setup_mainnet()
 
-    BootstrapBlockchain()
+    if args.notifications:
+        BootstrapBlockchainFile(settings.NOTIFICATION_DB_PATH, settings.NOTIF_BOOTSTRAP_FILE)
+    else:
+        BootstrapBlockchainFile(settings.LEVELDB_PATH, settings.BOOTSTRAP_FILE)
 
 
 if __name__ == "__main__":
