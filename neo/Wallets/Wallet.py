@@ -91,10 +91,12 @@ class Wallet(object):
             master = AES.new(passwordKey, AES.MODE_CBC, self._iv)
             mk = master.encrypt(self._master_key)
             self.SaveStoredData('PasswordHash', passwordHash)
-            self.SaveStoredData('IV', self._iv),
+            self.SaveStoredData('IV', self._iv)
             self.SaveStoredData('MasterKey', mk)
+            self.SaveStoredData('MigrationState', '1')
 
-            self.SaveStoredData('Height', self._current_height.to_bytes(4, 'little'))
+            self.SaveStoredData('Height',
+                                self._current_height.to_bytes(4, 'little'))
 
         else:
             self.BuildDatabase()
@@ -104,6 +106,11 @@ class Wallet(object):
                 raise Exception("Password hash not found in database")
 
             hkey = hashlib.sha256(passwordKey).digest()
+
+            if self.LoadStoredData('MigrationState') != '1':
+                raise Exception("This wallet is currently vulnerable. Please "
+                                "execute the \"reencrypt_wallet.py\" script "
+                                "on this wallet before continuing")
 
             if passwordHash is not None and passwordHash != hkey:
                 raise Exception("Incorrect Password")
