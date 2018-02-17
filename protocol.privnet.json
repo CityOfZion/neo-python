@@ -35,6 +35,7 @@
     "SslCert": "",
     "SslCertPassword": "",
     "BootstrapFile":"",
+    "NotificationBootstrapFile":"",
     "DebugStorage":1
   }
 }
