@@ -116,5 +116,5 @@ class Coin(TrackableMixin):
         """
         return {
             'Reference': self.Reference.ToJson(),
-            'Output': self.Output.ToJson(),
+            'Output': self.Output.ToJson(index=0),
         }
