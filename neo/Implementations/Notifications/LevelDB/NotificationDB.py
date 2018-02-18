@@ -103,9 +103,10 @@ class NotificationDB():
             sc_event (SmartContractEvent): event to check and see if it contains NEP5Token created
         """
         if isinstance(sc_event.contract, ContractState):
-            sc_event.CheckIsNEP5()
-            if sc_event.token:
-                self._new_contracts_to_write.append(sc_event)
+            if not sc_event.test_mode:
+                sc_event.CheckIsNEP5()
+                if sc_event.token:
+                    self._new_contracts_to_write.append(sc_event)
 
     def on_smart_contract_event(self, sc_event: NotifyEvent):
         """

@@ -156,6 +156,8 @@ class Contract(SerializableMixin, VerificationCode):
     def Serialize(self, writer):
         writer.WriteUInt160(self.PublicKeyHash)
         writer.WriteVarBytes(self.ParameterList)
+        if isinstance(self.Script, str):
+            self.Script.encode('utf-8')
         writer.WriteVarBytes(self.Script)
 
     @staticmethod

@@ -244,7 +244,7 @@ class LevelDBBlockchain(Blockchain):
 
         if type(hash) is str:
             try:
-                hash = hash.encode('utf-8')
+                hash = UInt160.ParseString(hash).ToBytes()
             except Exception as e:
                 logger.info("could not convert argument to bytes :%s " % e)
                 return None
