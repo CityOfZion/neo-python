@@ -922,11 +922,11 @@ def main():
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-m", "--mainnet", action="store_true", default=False,
-                        help="Use MainNet instead of the default TestNet")
+                       help="Use MainNet instead of the default TestNet")
     group.add_argument("-p", "--privnet", action="store_true", default=False,
-                        help="Use PrivNet instead of the default TestNet")
+                       help="Use PrivNet instead of the default TestNet")
     group.add_argument("--coznet", action="store_true", default=False,
-                        help="Use the CoZ network instead of the default TestNet")
+                       help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
     parser.add_argument("-t", "--set-default-theme", dest="theme",
