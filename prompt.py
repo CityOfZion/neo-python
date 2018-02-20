@@ -716,10 +716,10 @@ class PromptInterface(object):
 
                 result = InvokeContract(self.Wallet, tx, fee)
 
-                return
+                return tx
             else:
                 print("Error testing contract invoke")
-                return
+                return false
 
         print("Please specify a contract to invoke")
 
@@ -756,11 +756,11 @@ class PromptInterface(object):
 
                     result = InvokeContract(self.Wallet, tx, Fixed8.Zero())
 
-                    return
+                    return tx
                 else:
                     print("Test invoke failed")
                     print("TX is %s, results are %s" % (tx, results))
-                    return
+                    return false
 
     def show_mem(self):
         process = psutil.Process(os.getpid())
