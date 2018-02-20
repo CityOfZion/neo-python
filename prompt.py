@@ -919,11 +919,16 @@ class PromptInterface(object):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
-                        help="Use MainNet instead of the default TestNet")
-    parser.add_argument("-p", "--privnet", action="store_true", default=False,
-                        help="Use PrivNet instead of the default TestNet")
-    parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-m", "--mainnet", action="store_true", default=False,
+                       help="Use MainNet instead of the default TestNet")
+    group.add_argument("-p", "--privnet", action="store_true", default=False,
+                       help="Use PrivNet instead of the default TestNet")
+    group.add_argument("--coznet", action="store_true", default=False,
+                       help="Use the CoZ network instead of the default TestNet")
+    group.add_argument("-c", "--config", action="store", help="Use a specific config file")
+
     parser.add_argument("-t", "--set-default-theme", dest="theme",
                         choices=["dark", "light"],
                         help="Set the default theme to be loaded from the config file. Default: 'dark'")
@@ -932,13 +937,6 @@ def main():
 
     args = parser.parse_args()
 
-    if args.config and (args.mainnet or args.privnet):
-        print("Cannot use --config and --mainnet/--privnet together, please use only one")
-        exit(1)
-    if args.mainnet and args.privnet:
-        print("Cannot use --mainnet and --privnet together")
-        exit(1)
-
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
         settings.setup(args.config)
@@ -946,6 +944,8 @@ def main():
         settings.setup_mainnet()
     elif args.privnet:
         settings.setup_privnet()
+    elif args.coznet:
+        settings.setup_coznet()
 
     if args.theme:
         preferences.set_theme(args.theme)
