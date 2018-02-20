@@ -22,11 +22,16 @@ class ContractParamater():
     Value = None
 
     def __init__(self, type):
-        self.Type = type
+        if isinstance(type, ContractParameterType):
+            self.Type = type
+        elif isinstance(type, int):
+            self.Type = ContractParameterType(type)
+        else:
+            raise Exception("Invalid Contract Parameter Type %s. Must be ContractParameterType or int" % type)
 
     def ToJson(self):
         jsn = {}
-        jsn['type'] = ToName(self.Type)
+        jsn['type'] = self.Type.name
         return jsn
 
 
