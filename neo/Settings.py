@@ -59,6 +59,7 @@ class SettingsHolder:
 
     ALL_FEES = None
     USE_DEBUG_STORAGE = False
+    DEBUG_STORAGE_PATH = './Chains/debugstorage'
 
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
@@ -120,6 +121,9 @@ class SettingsHolder:
 
         if 'DebugStorage' in config:
             self.USE_DEBUG_STORAGE = config['DebugStorage']
+
+        if 'DebugStoragePath' in config:
+            self.DEBUG_STORAGE_PATH = config['DebugStoragePath']
 
         if 'NotificationDataPath' in config:
             self.NOTIFICATION_DB_PATH = os.path.join(DIR_PROJECT_ROOT, config['NotificationDataPath'])

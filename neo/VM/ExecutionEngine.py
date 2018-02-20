@@ -91,29 +91,6 @@ class ExecutionEngine():
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
 
-    def ResultsForCode(self, contract):
-        try:
-            return_type = ContractParameterType(contract.ReturnType)
-
-            item = self.EvaluationStack.Items[0]
-            if return_type == ContractParameterType.Integer:
-                return item.GetBigInteger()
-            elif return_type == ContractParameterType.Boolean:
-                return item.GetBoolean()
-            elif return_type == ContractParameterType.ByteArray:
-                return item.GetByteArray()
-            elif return_type == ContractParameterType.String:
-                return item.GetString()
-            elif return_type == ContractParameterType.Array:
-                return item.GetArray()
-            else:
-                logger.error("Could not format results for return type %s " % return_type)
-            return item
-        except Exception as e:
-            pass
-
-        return self.EvaluationStack.Items
-
     def Dispose(self):
         while self._InvocationStack.Count > 0:
             self._InvocationStack.Pop().Dispose()
@@ -446,7 +423,7 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
+                print("X1, X2: %s %s " % (x1,x2))
                 estack.PushT(x1 + x2)
 
             elif opcode == SUB:
@@ -694,7 +671,6 @@ class ExecutionEngine():
             elif opcode == PICKITEM:
 
                 index = estack.Pop().GetBigInteger()
-
                 if index < 0:
                     self._VMState |= VMState.FAULT
                     return
@@ -712,6 +688,8 @@ class ExecutionEngine():
                     return
 
                 to_pick = items[index]
+                #print("PICKING ITEM AT INDEX %s %s " % (index, item))
+
                 estack.PushT(to_pick)
 
             elif opcode == SETITEM:
