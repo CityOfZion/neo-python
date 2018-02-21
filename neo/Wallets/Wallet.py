@@ -30,6 +30,7 @@ from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
+from neo.Wallets.utils import to_aes_key
 
 
 class Wallet(object):
@@ -87,14 +88,16 @@ class Wallet(object):
 
             self.BuildDatabase()
 
-            passwordHash = hashlib.sha256(passwordKey.encode('utf-8')).digest()
-            master = AES.new(passwordHash, AES.MODE_CBC, self._iv)
+            passwordHash = hashlib.sha256(passwordKey).digest()
+            master = AES.new(passwordKey, AES.MODE_CBC, self._iv)
             mk = master.encrypt(self._master_key)
             self.SaveStoredData('PasswordHash', passwordHash)
-            self.SaveStoredData('IV', self._iv),
+            self.SaveStoredData('IV', self._iv)
             self.SaveStoredData('MasterKey', mk)
+            self.SaveStoredData('MigrationState', '1')
 
-            self.SaveStoredData('Height', self._current_height.to_bytes(4, 'little'))
+            self.SaveStoredData('Height',
+                                self._current_height.to_bytes(4, 'little'))
 
         else:
             self.BuildDatabase()
@@ -103,14 +106,19 @@ class Wallet(object):
             if passwordHash is None:
                 raise Exception("Password hash not found in database")
 
-            hkey = hashlib.sha256(passwordKey.encode('utf-8'))
+            hkey = hashlib.sha256(passwordKey).digest()
 
-            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
+            if self.LoadStoredData('MigrationState') != '1':
+                raise Exception("This wallet is currently vulnerable. Please "
+                                "execute the \"reencrypt_wallet.py\" script "
+                                "on this wallet before continuing")
+
+            if passwordHash is not None and passwordHash != hkey:
                 raise Exception("Incorrect Password")
 
             self._iv = self.LoadStoredData('IV')
             master_stored = self.LoadStoredData('MasterKey')
-            aes = AES.new(hkey.digest(), AES.MODE_CBC, self._iv)
+            aes = AES.new(passwordKey, AES.MODE_CBC, self._iv)
             self._master_key = aes.decrypt(master_stored)
 
             self._keys = self.LoadKeyPairs()
@@ -644,7 +652,7 @@ class Wallet(object):
         blocks at a time.
         """
         blockcount = 0
-        while self._current_height <= Blockchain.Default().Height and blockcount < 500:
+        while self._current_height <= Blockchain.Default().Height and blockcount < 1000:
 
             block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
@@ -856,7 +864,8 @@ class Wallet(object):
         Returns:
             bool: the provided password matches with the stored password.
         """
-        return hashlib.sha256(password.encode('utf-8')).digest() == self.LoadStoredData('PasswordHash')
+        password = to_aes_key(password)
+        return hashlib.sha256(password).digest() == self.LoadStoredData('PasswordHash')
 
     def GetStandardAddress(self):
         """
@@ -897,7 +906,8 @@ class Wallet(object):
                 return contract.ScriptHash
 
         if len(self._contracts.values()):
-            return self._contracts.values()[0]
+            for k, v in self._contracts.items():
+                return v
 
         raise Exception("Could not find change address")
 

@@ -17,8 +17,10 @@ class VerificationCode():
     def ScriptHash(self):
 
         if self._scriptHash is None:
-
-            self._scriptHash = Crypto.ToScriptHash(self.Script)
+            unhex = True
+            if len(self.Script) == 35:
+                unhex = False
+            self._scriptHash = Crypto.ToScriptHash(self.Script, unhex=unhex)
 
         return self._scriptHash
 

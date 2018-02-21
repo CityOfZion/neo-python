@@ -3,6 +3,7 @@ from neo.Prompt.Utils import get_asset_id, get_asset_attachments
 from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
+from neo.Wallets.utils import to_aes_key
 
 
 def token_send(wallet, args, prompt_passwd=True):

@@ -20,6 +20,7 @@ from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
+from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
@@ -204,9 +205,10 @@ class PromptInterface(object):
                     return
 
                 passwd = prompt("[password]> ", is_password=True)
+                password_key = to_aes_key(passwd)
 
                 try:
-                    self.Wallet = UserWallet.Open(path, passwd)
+                    self.Wallet = UserWallet.Open(path, password_key)
 
                     self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                     self._walletdb_loop.start(1)
@@ -239,8 +241,11 @@ class PromptInterface(object):
                     print("Please provide matching passwords that are at least 10 characters long")
                     return
 
+                password_key = to_aes_key(passwd1)
+
                 try:
-                    self.Wallet = UserWallet.Create(path=path, password=passwd1)
+                    self.Wallet = UserWallet.Create(path=path,
+                                                    password=password_key)
                     contract = self.Wallet.GetDefaultContract()
                     key = self.Wallet.GetKey(contract.PublicKeyHash)
                     print("Wallet %s" % json.dumps(self.Wallet.ToJson(), indent=4))
@@ -362,7 +367,7 @@ class PromptInterface(object):
                 return print("Please specify an address")
 
             passwd = prompt("[wallet password]> ", is_password=True)
-            if not self.Wallet.ValidatePassword(passwd):
+            if not self.wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
             keys = self.Wallet.GetKeys()
@@ -381,7 +386,7 @@ class PromptInterface(object):
                 return print("Please specify an address")
 
             passwd = prompt("[wallet password]> ", is_password=True)
-            if not self.Wallet.ValidatePassword(passwd):
+            if not self.wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
             nep2_passwd1 = prompt("[key password]> ", is_password=True)
@@ -919,11 +924,16 @@ class PromptInterface(object):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
-                        help="Use MainNet instead of the default TestNet")
-    parser.add_argument("-p", "--privnet", action="store_true", default=False,
-                        help="Use PrivNet instead of the default TestNet")
-    parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-m", "--mainnet", action="store_true", default=False,
+                       help="Use MainNet instead of the default TestNet")
+    group.add_argument("-p", "--privnet", action="store_true", default=False,
+                       help="Use PrivNet instead of the default TestNet")
+    group.add_argument("--coznet", action="store_true", default=False,
+                       help="Use the CoZ network instead of the default TestNet")
+    group.add_argument("-c", "--config", action="store", help="Use a specific config file")
+
     parser.add_argument("-t", "--set-default-theme", dest="theme",
                         choices=["dark", "light"],
                         help="Set the default theme to be loaded from the config file. Default: 'dark'")
@@ -932,13 +942,6 @@ def main():
 
     args = parser.parse_args()
 
-    if args.config and (args.mainnet or args.privnet):
-        print("Cannot use --config and --mainnet/--privnet together, please use only one")
-        exit(1)
-    if args.mainnet and args.privnet:
-        print("Cannot use --mainnet and --privnet together")
-        exit(1)
-
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
         settings.setup(args.config)
@@ -946,6 +949,8 @@ def main():
         settings.setup_mainnet()
     elif args.privnet:
         settings.setup_privnet()
+    elif args.coznet:
+        settings.setup_coznet()
 
     if args.theme:
         preferences.set_theme(args.theme)

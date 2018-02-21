@@ -1,5 +1,6 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Wallets.utils import to_aes_key
 from neo.Prompt.Commands.Wallet import AddAlias
 from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
@@ -35,12 +36,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
-            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), UserWalletTestCase.wallet_1_pass())
+            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), to_aes_key(UserWalletTestCase.wallet_1_pass()))
         return cls._wallet1
 
     def test_0_bad_password(self):
 
-        self.assertRaises(Exception, UserWallet.Open, UserWalletTestCase.wallet_1_dest(), 'blah')
+        self.assertRaises(Exception, UserWallet.Open, UserWalletTestCase.wallet_1_dest(), to_aes_key('blah'))
 
     def test_1_initial_setup(self):
 

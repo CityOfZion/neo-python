@@ -4,6 +4,7 @@ import plyvel
 from logzero import logger
 from neo.Settings import settings
 
+
 class DebugStorage():
 
     __instance = None

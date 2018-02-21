@@ -12,6 +12,7 @@ import pdb
 import json
 from prompt_toolkit import prompt
 import traceback
+from neo.Wallets.utils import to_aes_key
 
 
 def construct_and_send(prompter, wallet, arguments, prompt_password=True):

@@ -1,4 +1,5 @@
 from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Wallets.utils import to_aes_key
 from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
 from neo.SmartContract.Contract import Contract
@@ -106,13 +107,13 @@ class WalletTestCase(NeoTestCase):
         self.assertEqual(sig.hex(), self.neon_sig)
 
     def test_get_contains_key_should_be_found(self):
-        wallet = Wallet("fakepath", "123", True)
+        wallet = Wallet("fakepath", to_aes_key("123"), True)
         wallet.CreateKey()
         keypair = wallet.GetKeys()[0]
         self.assertTrue(wallet.ContainsKey(keypair.PublicKey))
 
     def test_get_contains_key_should_not_be_found(self):
-        wallet = Wallet("fakepath", "123", True)
+        wallet = Wallet("fakepath", to_aes_key("123"), True)
         wallet.CreateKey()
         keypair = KeyPair(priv_key=self.pk)
         self.assertFalse(wallet.ContainsKey(keypair.PublicKey))
