@@ -30,7 +30,7 @@ from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
-
+from neo.Wallets.utils import to_aes_key
 
 class Wallet(object):
     AddressVersion = None
@@ -651,7 +651,7 @@ class Wallet(object):
         blocks at a time.
         """
         blockcount = 0
-        while self._current_height <= Blockchain.Default().Height and blockcount < 500:
+        while self._current_height <= Blockchain.Default().Height and blockcount < 1000:
 
             block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
@@ -863,8 +863,7 @@ class Wallet(object):
         Returns:
             bool: the provided password matches with the stored password.
         """
-        if isinstance(password, str):
-            password = password.encode('utf-8')
+        password = to_aes_key(password)
         return hashlib.sha256(password).digest() == self.LoadStoredData('PasswordHash')
 
     def GetStandardAddress(self):
@@ -906,9 +905,8 @@ class Wallet(object):
                 return contract.ScriptHash
 
         if len(self._contracts.values()):
-            for k,v in self._contracts.items():
+            for k, v in self._contracts.items():
                 return v
-#            return self._contracts.values()[0]
 
         raise Exception("Could not find change address")
 
