@@ -359,7 +359,7 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
+                print("DOING BINARY AND %s %s" % (x2, x1))
                 estack.PushT(x1 & x2)
 
             elif opcode == OR:
@@ -423,7 +423,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-                print("X1, X2: %s %s " % (x1,x2))
                 estack.PushT(x1 + x2)
 
             elif opcode == SUB:
@@ -528,7 +527,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
                 estack.PushT(min(x1, x2))
 
             elif opcode == MAX:

@@ -31,6 +31,7 @@ from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
+from logzero import logger
 
 from neo.VM.OpCode import *
 import json
@@ -392,8 +393,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
             invoke_args.reverse()
 
-            sb = ScriptBuilder()
-
             # print("neo, gas %s %s " % (neo_to_attach,gas_to_attach.ToString()))
 
             sb = ScriptBuilder()
@@ -407,7 +406,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                     listlength = len(item)
                     for listitem in item:
                         subitem = parse_param(listitem, wallet)
-                        print("Subitem: %s %s " % (subitem, type(subitem)))
                         sb.push(subitem)
                     sb.push(listlength)
                     sb.Emit(PACK)
@@ -474,7 +472,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             to_dispatch = to_dispatch + service.events_to_dispatch
 
             for event in to_dispatch:
-                print("EVENT: %s " % event)
+                print(event)
                 events.emit(event.event_type, event)
 
             if i_success:
@@ -482,10 +480,9 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 if len(service.notifications) > 0:
 
                     for n in service.notifications:
-#                        print("NOTIFICATION : %s " % n)
                         Blockchain.Default().OnNotify(n)
 
-                print("Used %s Gas " % engine.GasConsumed().ToString())
+                logger.info("Used %s Gas " % engine.GasConsumed().ToString())
 
                 consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
                 consumed = consumed.Ceil()
