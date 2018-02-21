@@ -142,7 +142,7 @@ class ExecutionEngine():
                        PUSH9, PUSH10, PUSH11, PUSH12, PUSH13, PUSH14, PUSH15, PUSH16]
 
             if opcode == PUSH0:
-                estack.PushT(bytearray([0]))
+                estack.PushT(bytearray(0))
 
             elif opcode == PUSHDATA1:
                 lenngth = context.OpReader.ReadByte()
