@@ -367,7 +367,7 @@ class PromptInterface(object):
                 return print("Please specify an address")
 
             passwd = prompt("[wallet password]> ", is_password=True)
-            if not self.Wallet.ValidatePassword(to_aes_key(passwd)):
+            if not self.wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
             keys = self.Wallet.GetKeys()
@@ -386,7 +386,7 @@ class PromptInterface(object):
                 return print("Please specify an address")
 
             passwd = prompt("[wallet password]> ", is_password=True)
-            if not self.Wallet.ValidatePassword(to_aes_key(passwd)):
+            if not self.wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
             nep2_passwd1 = prompt("[key password]> ", is_password=True)
