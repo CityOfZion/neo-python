@@ -40,7 +40,7 @@ class Contract(SerializableMixin, VerificationCode):
     @property
     def IsStandard(self):
         if len(self.Script) == 70:
-           self.Script = binascii.unhexlify(self.Script)
+            self.Script = binascii.unhexlify(self.Script)
 
         if len(self.Script) != 35:
             return False

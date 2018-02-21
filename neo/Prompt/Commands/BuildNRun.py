@@ -35,59 +35,48 @@ def LoadAndRun(arguments, wallet):
 def BuildAndRun(arguments, wallet, verbose=True):
     path = get_arg(arguments)
 
-    try:
-        contract_script = Compiler.instance().load_and_save(path)
+    contract_script = Compiler.instance().load_and_save(path)
 
-        newpath = path.replace('.py', '.avm')
-        print("Saved output to %s " % newpath)
+    newpath = path.replace('.py', '.avm')
+    print("Saved output to %s " % newpath)
 
-        return DoRun(contract_script, arguments, wallet, path, verbose)
-
-    except Exception as e:
-        print("Could not compile %s " % e)
+    return DoRun(contract_script, arguments, wallet, path, verbose)
 
 
 def DoRun(contract_script, arguments, wallet, path, verbose=True):
 
-    try:
+    test = get_arg(arguments, 1)
 
-        test = get_arg(arguments, 1)
+    if test is not None and test == 'test':
 
-        if test is not None and test == 'test':
+        if wallet is not None:
 
-            if wallet is not None:
+            f_args = arguments[2:]
+            i_args = arguments[6:]
 
-                f_args = arguments[2:]
-                i_args = arguments[6:]
+            script = GatherLoadedContractParams(f_args, contract_script)
 
-                script = GatherLoadedContractParams(f_args, contract_script)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet)
+            i_args.reverse()
 
-                tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet)
-                i_args.reverse()
+            if tx is not None and result is not None:
+                if verbose:
+                    print("\n-----------------------------------------------------------")
+                    print("Calling %s with arguments %s " % (path, i_args))
+                    print("Test deploy invoke successful")
+                    print("Used total of %s operations " % total_ops)
+                    print("Result %s " % result)
+                    print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
+                    print("-------------------------------------------------------------\n")
 
-                if tx is not None and result is not None:
-                    if verbose:
-                        print("\n-----------------------------------------------------------")
-                        print("Calling %s with arguments %s " % (path, i_args))
-                        print("Test deploy invoke successful")
-                        print("Used total of %s operations " % total_ops)
-                        print("Result %s " % result)
-                        print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
-                        print("-------------------------------------------------------------\n")
-
-                    return tx, result, total_ops, engine
-                else:
-                    if verbose:
-                        print("Test invoke failed")
-                        print("tx is, results are %s %s " % (tx, result))
-
+                return tx, result, total_ops, engine
             else:
+                if verbose:
+                    print("Test invoke failed")
+                    print("tx is, results are %s %s " % (tx, result))
 
-                print("please open a wallet to test built contract")
+        else:
 
-    except Exception as e:
-        print("could not bulid %s " % e)
-        traceback.print_stack()
-        traceback.print_exc()
+            print("please open a wallet to test built contract")
 
     return None, None, None, None

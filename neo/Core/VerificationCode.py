@@ -20,7 +20,7 @@ class VerificationCode():
             unhex = True
             if len(self.Script) == 35:
                 unhex = False
-            self._scriptHash = Crypto.ToScriptHash(self.Script,unhex=unhex)
+            self._scriptHash = Crypto.ToScriptHash(self.Script, unhex=unhex)
 
         return self._scriptHash
 

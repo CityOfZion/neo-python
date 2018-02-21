@@ -5,6 +5,7 @@ from prompt_toolkit import prompt
 from decimal import Decimal
 from neo.Wallets.utils import to_aes_key
 
+
 def token_send(wallet, args, prompt_passwd=True):
 
     if len(args) != 4:
