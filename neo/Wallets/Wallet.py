@@ -863,7 +863,9 @@ class Wallet(object):
         Returns:
             bool: the provided password matches with the stored password.
         """
-        return hashlib.sha256(password.encode('utf-8')).digest() == self.LoadStoredData('PasswordHash')
+        if isinstance(password, str):
+            password = password.encode('utf-8')
+        return hashlib.sha256(password).digest() == self.LoadStoredData('PasswordHash')
 
     def GetStandardAddress(self):
         """
@@ -904,7 +906,9 @@ class Wallet(object):
                 return contract.ScriptHash
 
         if len(self._contracts.values()):
-            return self._contracts.values()[0]
+            for k,v in self._contracts.items():
+                return v
+#            return self._contracts.values()[0]
 
         raise Exception("Could not find change address")
 

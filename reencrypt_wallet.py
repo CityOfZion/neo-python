@@ -86,9 +86,7 @@ def main(path):
 
     new_path = copy_wallet(path)
     if reset_password(new_path, password):
-        print("A new wallet was created with your master key encrypted with "
-              "the new password. You can now open this new wallet with the "
-              "new version of neo-python")
+        print("A new wallet was created with your master key encrypted with the new password, with the name %s. You can now open this new wallet with the new version of neo-python" % new_path)
     else:
         print("Please remove the newly created file: '{}'".format(new_path))
 
