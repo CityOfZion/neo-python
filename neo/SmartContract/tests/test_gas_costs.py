@@ -3,6 +3,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neo.Prompt.Commands.BuildNRun import BuildAndRun
+from neo.Wallets.utils import to_aes_key
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -20,7 +21,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
-            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), UserWalletTestCase.wallet_1_pass())
+            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), to_aes_key(UserWalletTestCase.wallet_1_pass()))
         return cls._wallet1
 
     def test_build_contract(self):

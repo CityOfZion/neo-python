@@ -1,4 +1,5 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
+from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
@@ -33,7 +34,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         if cls._wallet1 is None or recreate:
             shutil.copyfile(cls.wallet_1_path(), cls.wallet_1_dest())
-            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), UserWalletTestCase.wallet_1_pass())
+            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_1_pass()))
 
         return cls._wallet1
 
