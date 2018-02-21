@@ -212,7 +212,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
 
 def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
 
-    #    print("invoke script %s " % script)
+    # print("invoke script %s " % script)
 
     bc = GetBlockchain()
 
@@ -480,9 +480,9 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 print("Used %s Gas " % engine.GasConsumed().ToString())
 
                 consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
-                consumed.value = int(consumed.value)
+                consumed = consumed.Ceil()
 
-                if consumed < Fixed8.One():
+                if consumed < Fixed8.Zero():
                     consumed = Fixed8.FromDecimal(.001)
 
                 total_ops = engine.ops_processed
@@ -491,7 +491,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 itx.Gas = consumed
                 itx.Attributes = []
                 result = engine.ResultsForCode(contract_state.Code)
-                return itx, result, total_ops
+                return itx, result, total_ops, engine
             else:
                 print("error executing invoke contract...")
 
@@ -501,7 +501,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
     except Exception as e:
         service.ExecutionCompleted(engine, False, e)
 
-    return None, [], 0
+    return None, [], 0, None
 
 
 def descripe_contract(contract):

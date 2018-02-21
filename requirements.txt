@@ -6,6 +6,7 @@ base58==0.2.5
 bitcoin==1.1.42
 blessings==1.6.1
 bpython==0.17
+bumpversion==0.5.3
 byteplay3==3.5.0
 certifi==2017.11.5
 cffi==1.11.4
@@ -33,7 +34,7 @@ mock==2.0.0
 mpmath==1.0.0
 neo-boa==0.2.2
 neo-python-rpc==0.1.8
-neocore==0.3.1
+neocore==0.3.5
 numpy==1.14.0
 pbr==3.1.1
 peewee==2.10.2

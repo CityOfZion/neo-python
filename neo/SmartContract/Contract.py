@@ -108,7 +108,7 @@ class Contract(SerializableMixin, VerificationCode):
 
         pk = [ECDSA.decode_secp256r1(p).G for p in publicKeys]
         return Contract(Contract.CreateMultiSigRedeemScript(m, pk),
-                        bytearray([ContractParameterType.Signature] * 3),
+                        bytearray(b'\x00\x00\x00'),
                         publicKeyHash)
 
     @staticmethod
@@ -123,7 +123,7 @@ class Contract(SerializableMixin, VerificationCode):
             neo.SmartContract.Contract: a Contract instance.
         """
         script = Contract.CreateSignatureRedeemScript(publicKey)
-        params = bytearray([ContractParameterType.Signature])
+        params = b'\x00'
         encoded = publicKey.encode_point(True)
         pubkey_hash = Crypto.ToScriptHash(encoded, unhex=True)
 
@@ -156,6 +156,8 @@ class Contract(SerializableMixin, VerificationCode):
     def Serialize(self, writer):
         writer.WriteUInt160(self.PublicKeyHash)
         writer.WriteVarBytes(self.ParameterList)
+        if isinstance(self.Script, str):
+            self.Script.encode('utf-8')
         writer.WriteVarBytes(self.Script)
 
     @staticmethod

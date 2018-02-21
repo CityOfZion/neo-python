@@ -143,6 +143,15 @@ class Block(BlockBase, InventoryMixin):
             amount += tx.SystemFee()
         return amount
 
+    def LoadTransactions(self):
+        """
+        Loads transaction data for a block
+        Returns:
+            list: A list of transaction objects in the block
+        """
+        transactions = self.FullTransactions
+        return transactions
+
     def Deserialize(self, reader):
         """
         Deserialize full object.
@@ -204,7 +213,7 @@ class Block(BlockBase, InventoryMixin):
         reader.ReadByte()
         witness = Witness()
         witness.Deserialize(reader)
-        block.witness = witness
+        block.Script = witness
 
         block.Transactions = reader.ReadHashes()
 
@@ -234,7 +243,7 @@ class Block(BlockBase, InventoryMixin):
         Args:
             writer (neo.IO.BinaryWriter):
         """
-        super(BlockBase, self).Serialize(writer)
+        super(Block, self).Serialize(writer)
         writer.WriteSerializableArray(self.Transactions)
 
     def ToJson(self):
@@ -245,8 +254,8 @@ class Block(BlockBase, InventoryMixin):
              dict:
         """
         json = super(Block, self).ToJson()
-        if self.__is_trimmed:
-            json['tx'] = self.Transactions
+        if self.Transactions[0] and isinstance(self.Transactions[0], str):
+            json['tx'] = ['0x%s' % tx for tx in self.Transactions]
         else:
             json['tx'] = [tx.ToJson() for tx in self.Transactions]
 

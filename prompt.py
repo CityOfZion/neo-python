@@ -4,7 +4,7 @@ import argparse
 import datetime
 import json
 import os
-import resource
+import psutil
 import traceback
 import logging
 
@@ -38,9 +38,11 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins
 from neo.Prompt.Utils import get_arg
+from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
+from neocore.UInt256 import UInt256
 
 # Logfile settings & setup
 LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'prompt.log')
@@ -98,7 +100,7 @@ class PromptInterface(object):
                 'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
-                'wallet tkn_mint {token symbol} {mint_to_addr} {amount_attach_neo} {amount_attach_gas}',
+                'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
                 'wallet unspent',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
@@ -110,7 +112,7 @@ class PromptInterface(object):
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
-                'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount)',
+                'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount})',
                 'debugstorage {on/off/reset}'
                 ]
 
@@ -121,6 +123,7 @@ class PromptInterface(object):
     start_dt = None
 
     def __init__(self):
+        self.input_parser = InputParser()
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
 
@@ -173,6 +176,7 @@ class PromptInterface(object):
     def quit(self):
         print('Shutting down. This may take a bit...')
         self.go_on = False
+        self.do_close_wallet()
         NotificationDB.close()
         Blockchain.Default().Dispose()
         reactor.stop()
@@ -256,8 +260,9 @@ class PromptInterface(object):
                             print("Could not remove {}: {}".format(path, e))
                     return
 
-                self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-                self._walletdb_loop.start(1)
+                if self.Wallet:
+                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+                    self._walletdb_loop.start(1)
 
             else:
                 print("Please specify a path")
@@ -596,19 +601,19 @@ class PromptInterface(object):
             print("Please specify a header")
 
     def show_tx(self, args):
-        item = get_arg(args)
-        if item is not None:
+        if len(args):
             try:
-                tx, height = Blockchain.Default().GetTransaction(item)
+                txid = UInt256.ParseString(get_arg(args))
+                tx, height = Blockchain.Default().GetTransaction(txid)
                 if height > -1:
-                    bjson = json.dumps(tx.ToJson(), indent=4)
-                    tokens = [(Token.Command, bjson)]
+                    jsn = tx.ToJson()
+                    jsn['height'] = height
+                    jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in Blockchain.Default().GetAllUnspent(txid)]
+                    tokens = [(Token.Command, json.dumps(jsn, indent=4))]
                     print_tokens(tokens, self.token_style)
                     print('\n')
             except Exception as e:
-                print("Could not find transaction with id %s" % item)
-                print(
-                    "Please specify a TX hash like 'db55b4d97cf99db6826967ef4318c2993852dff3e79ec446103f141c716227f6'")
+                print("Could not find transaction from args: %s (%s)" % (e, args))
         else:
             print("Please specify a TX hash")
 
@@ -682,7 +687,9 @@ class PromptInterface(object):
                 contract = Blockchain.Default().GetContract(item)
 
                 if contract is not None:
-                    bjson = json.dumps(contract.ToJson(), indent=4)
+                    contract.DetermineIsNEP5()
+                    jsn = contract.ToJson()
+                    bjson = json.dumps(jsn, indent=4)
                     tokens = [(Token.Number, bjson)]
                     print_tokens(tokens, self.token_style)
                     print('\n')
@@ -762,9 +769,10 @@ class PromptInterface(object):
                     return
 
     def show_mem(self):
-        total = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        totalmb = total / 1000000
-        out = "Total: %sMB\n" % totalmb
+        process = psutil.Process(os.getpid())
+        total = process.memory_info().rss
+        totalmb = total / (1024 * 1024)
+        out = "Total: %s MB\n" % totalmb
         out += "Total buffers: %s\n" % StreamManager.TotalBuffers()
         print_tokens([(Token.Number, out)], self.token_style)
 
@@ -815,12 +823,6 @@ class PromptInterface(object):
         else:
             print("Cannot configure %s try 'config sc-events on|off' or 'config debug on|off'", what)
 
-    def parse_result(self, result):
-        if len(result):
-            command_parts = [s for s in result.split()]
-            return command_parts[0], command_parts[1:]
-        return None, None
-
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
@@ -851,7 +853,7 @@ class PromptInterface(object):
                 continue
 
             try:
-                command, arguments = self.parse_result(result)
+                command, arguments = self.input_parser.parse_input(result)
 
                 if command is not None and len(command) > 0:
                     command = command.lower()
@@ -922,11 +924,16 @@ class PromptInterface(object):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
-                        help="Use MainNet instead of the default TestNet")
-    parser.add_argument("-p", "--privnet", action="store_true", default=False,
-                        help="Use PrivNet instead of the default TestNet")
-    parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-m", "--mainnet", action="store_true", default=False,
+                       help="Use MainNet instead of the default TestNet")
+    group.add_argument("-p", "--privnet", action="store_true", default=False,
+                       help="Use PrivNet instead of the default TestNet")
+    group.add_argument("--coznet", action="store_true", default=False,
+                       help="Use the CoZ network instead of the default TestNet")
+    group.add_argument("-c", "--config", action="store", help="Use a specific config file")
+
     parser.add_argument("-t", "--set-default-theme", dest="theme",
                         choices=["dark", "light"],
                         help="Set the default theme to be loaded from the config file. Default: 'dark'")
@@ -935,13 +942,6 @@ def main():
 
     args = parser.parse_args()
 
-    if args.config and (args.mainnet or args.privnet):
-        print("Cannot use --config and --mainnet/--privnet together, please use only one")
-        exit(1)
-    if args.mainnet and args.privnet:
-        print("Cannot use --mainnet and --privnet together")
-        exit(1)
-
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
         settings.setup(args.config)
@@ -949,6 +949,8 @@ def main():
         settings.setup_mainnet()
     elif args.privnet:
         settings.setup_privnet()
+    elif args.coznet:
+        settings.setup_coznet()
 
     if args.theme:
         preferences.set_theme(args.theme)

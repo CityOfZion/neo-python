@@ -442,9 +442,11 @@ class UserWallet(Wallet):
     @property
     def Addresses(self):
         result = []
-        for addr in Address.select():
-            #            addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
-            result.append(addr.ToString())
+        try:
+            for addr in Address.select():
+                result.append(addr.ToString())
+        except Exception as e:
+            pass
 
         return result
 

@@ -8,38 +8,31 @@ import shutil
 import os
 
 
-def BootstrapBlockchain():
+def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
 
-    current_chain_dir = settings.LEVELDB_PATH
-
-    bootstrap_file = settings.BOOTSTRAP_FILE
-
-    if bootstrap_file is None:
+    if download_file is None:
         print("no bootstrap file specified.  Please update your configuration file.")
         sys.exit(0)
 
-    print("This will overwrite any data currently in %s.\nType 'confirm' to continue" % current_chain_dir)
+    print("This will overwrite any data currently in %s.\nType 'confirm' to continue" % target_dir)
 
-    confirm = prompt("[confirm]> ", is_password=False)
-
-    if confirm == 'confirm':
-        return do_bootstrap()
+    if require_confirm:
+        confirm = prompt("[confirm]> ", is_password=False)
+        if confirm == 'confirm':
+            return do_bootstrap(download_file, target_dir)
+    else:
+        return do_bootstrap(download_file, target_dir, tmp_file_name='./fixtures/btest.tar.gz', tmp_chain_name='btestchain')
 
     print("bootstrap cancelled")
     sys.exit(0)
 
 
-def do_bootstrap():
-
-    bootstrap_file = settings.BOOTSTRAP_FILE
-    destination_dir = settings.LEVELDB_PATH
+def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name='./Chains/bootstrap.tar.gz', tmp_chain_name='tmpchain'):
 
     success = False
 
     print('will download file %s ' % bootstrap_file)
     print('')
-    tmp_file_name = './Chains/bootstrap.tar.gz'
-    tmp_chain_name = 'tmpchain'
 
     try:
         response = requests.get(bootstrap_file, stream=True)
@@ -97,9 +90,9 @@ def do_bootstrap():
     finally:
 
         print("cleaning up %s " % tmp_file_name)
-#        os.remove(tmp_file_name)
         print("cleaning up %s " % tmp_chain_name)
-        shutil.rmtree(tmp_chain_name)
+        if os.path.exists(tmp_chain_name):
+            shutil.rmtree(tmp_chain_name)
 
     if success:
         print("Successfully downloaded bootstrap chain!")

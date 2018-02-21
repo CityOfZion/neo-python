@@ -10,12 +10,18 @@ from neocore.Fixed8 import Fixed8
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Core.State import ContractState, AssetState, AccountState, ValidatorState, StorageItem
+from neo.Core.State.ContractState import ContractState
+from neo.Core.State.AssetState import AssetState
+from neo.Core.State.AccountState import AccountState
+from neo.Core.State.ValidatorState import ValidatorState
+from neo.Core.State.StorageItem import StorageItem
+
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
 
 import pdb
 from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
 
 
 class ApplicationEngine(ExecutionEngine):
@@ -355,8 +361,7 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Storage.Put":
             l1 = len(self.EvaluationStack.Peek(1).GetByteArray())
             l2 = len(self.EvaluationStack.Peek(2).GetByteArray())
-
-            return ((l1 + l2 - 1) / (1024 + 1)) * 1000
+            return (int((l1 + l2 - 1) / 1024) + 1) * 1000
 
         elif api == "Neo.Storage.Delete":
             return 100
@@ -365,12 +370,22 @@ class ApplicationEngine(ExecutionEngine):
 
     @staticmethod
     def Run(script, container=None):
+        """
+        Runs a script in a test invoke environment
+
+        Args:
+            script (bytes): The script to run
+            container (neo.Core.TX.Transaction): [optional] the transaction to use as the script container
+
+        Returns:
+            ApplicationEngine
+        """
 
         from neo.Core.Blockchain import Blockchain
         from neo.SmartContract.StateMachine import StateMachine
+        from neo.EventHub import events
 
         bc = Blockchain.Default()
-
         sn = bc._db.snapshot()
 
         accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
@@ -391,6 +406,8 @@ class ApplicationEngine(ExecutionEngine):
             testMode=True
         )
 
+        script = binascii.unhexlify(script)
+
         engine.LoadScript(script, False)
 
         try:
@@ -398,5 +415,8 @@ class ApplicationEngine(ExecutionEngine):
             service.ExecutionCompleted(engine, success)
         except Exception as e:
             service.ExecutionCompleted(engine, False, e)
+
+        for event in service.events_to_dispatch:
+            events.emit(event.event_type, event)
 
         return engine

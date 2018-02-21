@@ -12,7 +12,6 @@
       "02486fd15702c4490a26703112a5cc1d0923fd697a33406bd5a1c00e0013b09a70"
     ],
     "SeedList": [
-      "13.58.252.110:10333",
       "18.216.146.68:10333",
       "18.217.91.255:10333",
       "18.218.62.119:10333",
@@ -35,13 +34,14 @@
   "ApplicationConfiguration": {
     "DataDirectoryPath": "Chains/Main",
     "NotificationDataPath": "Chains/Main_Notif",
+    "RPCPort": 10332,
     "NodePort": 10333,
     "WsPort": 10334,
     "UriPrefix": [ "http://*:10332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "VersionName":"/NEO-PYTHON:2.3.4/",
-    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Chain1550000.tar.gz",
+    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/ChainMain1920000.tar.gz",
+    "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/MainNotifications1920000.tar.gz",
     "DebugStorage":1
   }
 }

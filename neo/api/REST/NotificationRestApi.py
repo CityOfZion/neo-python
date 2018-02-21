@@ -1,6 +1,4 @@
 """
-
-
 The REST API is using the Python package 'klein', which makes it possible to
 create HTTP routes and handlers with Twisted in a similar style to Flask:
 https://github.com/twisted/klein
@@ -11,6 +9,8 @@ from klein import Klein
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from logzero import logger
 from neo.Core.Blockchain import Blockchain
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
 
 
 class NotificationRestApi(object):
@@ -34,17 +34,21 @@ class NotificationRestApi(object):
                         <h2>endpoints:</h2>
                         <p>
                             <ul>
-                                <li><pre>/block/{height}</pre></li>
-                                <li><pre>/addr/{addr}</pre></li>
-                                <li><pre>/tx/{hash}</pre></li>
+                                <li><pre>/block/{height}</pre> <em>notifications by block</em></li>
+                                <li><pre>/addr/{addr}</pre><em>notifications by address</em></li>
+                                <li><pre>/tx/{hash}</pre><em>notifications by tx</em></li>
+                                <li><pre>/contract/{hash}</pre><em>notifications by contract</em></li>
+                                <li><pre>/tokens</pre><em>lists all NEP5 Tokens</em></li>
+                                <li><pre>/token/{contract_hash}</pre><em>list an NEP5 Token</em></li>                                
                             </ul>
                         </p>
                         <div>
                             <hr/>
                             <h3>pagination</h3>
-                            <p>results are offered in page size of 1000</p>
+                            <p>results are offered in page size of 500</p>
                             <p>you may request a different page by specifying the <code>page</code> query string param, for example:</p>
                             <pre>/block/123456?page=3</pre>
+                            <p>page index starts at 0, so the 2nd page would be <code>?page=1</code></p>
                             <hr/>
                             <h3>sample output</h3>
                             <pre>
@@ -127,12 +131,10 @@ class NotificationRestApi(object):
 
         bc = Blockchain.Default()  # type: Blockchain
         notifications = []
-
         try:
-            tx, height = bc.GetTransaction(tx_hash)
-
+            hash = UInt256.ParseString(tx_hash)
+            tx, height = bc.GetTransaction(hash)
             block_notifications = self.notif.get_by_block(height - 1)
-
             for n in block_notifications:
                 if n.tx_hash == tx.Hash:
                     notifications.append(n)
@@ -142,10 +144,40 @@ class NotificationRestApi(object):
 
         return self.format_notifications(request, notifications)
 
+    @app.route('/contract/<string:contract_hash>', methods=['GET'])
+    def get_by_contract(self, request, contract_hash):
+        request.setHeader('Content-Type', 'application/json')
+        try:
+            hash = UInt160.ParseString(contract_hash)
+            notifications = self.notif.get_by_contract(hash)
+        except Exception as e:
+            logger.info("Could not get notifications for contract %s " % contract_hash)
+            return self.format_message("Could not get notifications for contract hash %s because %s" % (contract_hash, e))
+        return self.format_notifications(request, notifications)
+
+    @app.route('/tokens', methods=['GET'])
+    def get_tokens(self, request):
+        request.setHeader('Content-Type', 'application/json')
+        notifications = self.notif.get_tokens()
+        return self.format_notifications(request, notifications)
+
+    @app.route('/token/<string:contract_hash>', methods=['GET'])
+    def get_token(self, request, contract_hash):
+        request.setHeader('Content-Type', 'application/json')
+        try:
+            uint160 = UInt160.ParseString(contract_hash)
+            contract_event = self.notif.get_token(uint160)
+            notifications = [contract_event]
+        except Exception as e:
+            logger.info("Could not get contract with hash %s because %s " % (contract_hash, e))
+            return self.format_message("Could not get contract with hash %s because %s " % (contract_hash, e))
+
+        return self.format_notifications(request, notifications)
+
     def format_notifications(self, request, notifications):
 
         notif_len = len(notifications)
-        page_len = 1000
+        page_len = 500
         page = 0
         message = ''
         if b'page' in request.args:

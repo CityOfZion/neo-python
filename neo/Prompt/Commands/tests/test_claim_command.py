@@ -57,7 +57,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.124316), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.142559), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -77,7 +77,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.00036456), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.11912649), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 

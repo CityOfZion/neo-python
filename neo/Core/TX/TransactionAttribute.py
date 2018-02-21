@@ -8,6 +8,7 @@ Usage:
 from logzero import logger
 from neo.Network.Inventory import Inventory
 from neocore.IO.Mixins import SerializableMixin
+from neocore.UIntBase import UIntBase
 
 
 class TransactionAttributeUsage(object):
@@ -115,6 +116,9 @@ class TransactionAttribute(Inventory, SerializableMixin):
             Exception: if the length exceeds the maximum allowed number of attributes in a transaction.
         """
         writer.WriteByte(self.Usage)
+
+        if isinstance(self.Data, UIntBase):
+            self.Data = self.Data.Data
 
         length = len(self.Data)
 

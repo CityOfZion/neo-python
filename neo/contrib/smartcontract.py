@@ -40,11 +40,12 @@ class SmartContract:
     sent in the smart contract.
     """
     contract_hash = None
-    event_handlers = defaultdict(list)
+    event_handlers = None
 
     def __init__(self, contract_hash):
         assert contract_hash
         self.contract_hash = str(contract_hash)
+        self.event_handlers = defaultdict(list)
 
         # Handle EventHub events for SmartContract decorators
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
@@ -58,7 +59,7 @@ class SmartContract:
                 return
 
             # call event handlers
-            handlers = set(self.event_handlers["*"] + self.event_handlers[sc_event.event_type])  # set(..) removes duplicates
+            handlers = set(self.event_handlers["*"] + self.event_handlers[sc_event.event_type.rpartition('.')[0] + ".*"] + self.event_handlers[sc_event.event_type])  # set(..) removes duplicates
             [event_handler(sc_event) for event_handler in handlers]
 
     def on_any(self, func):

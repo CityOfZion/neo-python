@@ -8,7 +8,6 @@ addons:
     - libleveldb-dev
     - libsqlite3-dev
 
-
 # command to install dependencies
 install:
   - pip install -r requirements.txt
@@ -19,8 +18,8 @@ script:
   - coverage run -m unittest discover neo
   - pycodestyle prompt.py
   - pycodestyle neo
+  - pycodestyle examples
   - python prompt.py --version
-
 
 after_success:
     coveralls
