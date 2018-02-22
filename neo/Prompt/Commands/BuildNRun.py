@@ -86,7 +86,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True):
                 print("please open a wallet to test built contract")
 
     except Exception as e:
-        print("could not bulid %s " % e)
+        print("could not build %s " % e)
         traceback.print_stack()
         traceback.print_exc()
 
