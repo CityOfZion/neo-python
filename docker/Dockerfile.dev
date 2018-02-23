@@ -1,7 +1,7 @@
 # Dockerfile to setup neo-python on the development branch.
 # https://github.com/CityOfZion/neo-python/tree/master/docker
 #
-# Building (these commands create a Docker image called neopython):
+# Building (these commands create a Docker image called neopython-dev):
 #
 #    $ docker build -f Dockerfile.dev -t neopython-dev .
 #
