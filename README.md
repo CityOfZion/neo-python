@@ -106,6 +106,9 @@ yum install -y readline-devel leveldb-devel libffi-devel gcc-c++ redhat-rpm-conf
 Help needed. Installing the Python package plyvel seems to require C++ compiler
 support tied to Visual Studio and libraries. Refer to [documentation](https://neo-python.readthedocs.io/en/latest/installwindows.html).
 
+Currently you probably should use the Linux subsystem with Ubuntu, or a Virtual Machine with Linux. You can find more information
+and a guide for setting up the Linux subsystem [here](https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213).
+
 ### Python 3.5
 
 neo-python is currently only compatible with **Python 3.5** (due to its `byteplay3` dependency).
