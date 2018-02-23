@@ -963,11 +963,15 @@ def main():
     # Start the prompt interface
     cli = PromptInterface()
 
-    # Run
+    # Run things
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
+
+    # reactor.run() is blocking, until `quit()` is called which stops the reactor.
     reactor.run()
+
+    # After the reactor is stopped, gracefully shutdown the database.
     NotificationDB.close()
     Blockchain.Default().Dispose()
     NodeLeader.Instance().Shutdown()
