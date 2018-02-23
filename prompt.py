@@ -177,10 +177,7 @@ class PromptInterface(object):
         print('Shutting down. This may take a bit...')
         self.go_on = False
         self.do_close_wallet()
-        NotificationDB.close()
-        Blockchain.Default().Dispose()
         reactor.stop()
-        NodeLeader.Instance().Shutdown()
 
     def help(self):
         tokens = []
@@ -971,6 +968,9 @@ def main():
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
     reactor.run()
+    NotificationDB.close()
+    Blockchain.Default().Dispose()
+    NodeLeader.Instance().Shutdown()
 
 
 if __name__ == "__main__":
