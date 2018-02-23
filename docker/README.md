@@ -16,7 +16,7 @@ Let's use the development branch Dockerfile as example. To build it, use this co
 
 Build without caching:
 
-    $ docker build --no-cache -f Dockerfile -t neopython-dev .
+    $ docker build --no-cache -f Dockerfile.dev -t neopython-dev .
 
 At this point there is a Docker image called 'neopython-dev'. If you want to run it connecting
 to a private network, make sure the privatenet container is already running.

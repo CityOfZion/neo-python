@@ -7,7 +7,7 @@
 #
 # Build without caching:
 #
-#    $ docker build --no-cache -f Dockerfile -t neopython-dev .
+#    $ docker build --no-cache -f Dockerfile.dev -t neopython-dev .
 #
 # At this point there is a Docker image called 'neopython-dev'. If you want to run it connecting
 # to a private network, make sure the privatenet container is already running.
@@ -37,10 +37,10 @@ RUN rm -rf /var/lib/apt/lists/*
 
 # Clone and setup
 RUN git clone https://github.com/CityOfZion/neo-python.git
+WORKDIR neo-python
+
 RUN git checkout origin/development -b development
 RUN git branch -u origin/development
-
-WORKDIR neo-python
 RUN pip3 install -e .
 
 CMD python3 prompt.py
