@@ -14,9 +14,8 @@ def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
         print("no bootstrap file specified.  Please update your configuration file.")
         sys.exit(0)
 
-    print("This will overwrite any data currently in %s.\nType 'confirm' to continue" % target_dir)
-
     if require_confirm:
+        print("This will overwrite any data currently in %s.\nType 'confirm' to continue" % target_dir)
         confirm = prompt("[confirm]> ", is_password=False)
         if confirm == 'confirm':
             return do_bootstrap(download_file, target_dir)
