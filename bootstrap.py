@@ -13,7 +13,7 @@ def main():
                         help="Bootstrap notification database")
 
     parser.add_argument("-s", "--skipconfirm", action="store_true", default=False,
-                        help=("Bypass warning about overwritting data in {}".format(settings.LEVELDB_PATH))
+                        help="Bypass warning about overwritting data in {}".format(settings.LEVELDB_PATH))
 
     args = parser.parse_args()
 
