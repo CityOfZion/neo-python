@@ -558,10 +558,10 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        if isinstance(tx.Type,bytes):
+        if isinstance(tx.Type, bytes):
             engine.EvaluationStack.PushT(tx.Type)
         else:
-            engine.EvaluationStack.PushT(tx.Type.to_bytes(1,'little'))
+            engine.EvaluationStack.PushT(tx.Type.to_bytes(1, 'little'))
         return True
 
     def Transaction_GetAttributes(self, engine):

@@ -245,7 +245,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
 
     if len(outputs) < 1:
         contract = wallet.GetDefaultContract()
-        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script,unhex=False).Data)]
+        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script, unhex=False).Data)]
 
     # same as above. we don't want to re-make the transaction if it is a withdrawal tx
     if withdrawal_tx is not None:
