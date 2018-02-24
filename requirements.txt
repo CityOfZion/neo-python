@@ -35,7 +35,7 @@ mock==2.0.0
 mpmath==1.0.0
 neo-boa==0.2.2
 neo-python-rpc==0.1.8
--e git+https://github.com/CityOfZion/neo-python-core.git@7623f96f9fc11e9fe9d4d38918dd15353811dcfb#egg=neocore
+-e git+https://github.com/CityOfZion/neo-python-core.git@feature-36#egg=neocore
 numpy==1.14.0
 pbr==3.1.1
 peewee==2.10.2
