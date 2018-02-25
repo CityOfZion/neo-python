@@ -4,6 +4,7 @@ from neocore.Cryptography.Crypto import Crypto
 import binascii
 from logzero import logger
 
+
 class VerificationCode():
 
     Script = None
