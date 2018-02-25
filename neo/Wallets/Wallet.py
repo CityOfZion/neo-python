@@ -655,7 +655,7 @@ class Wallet(object):
             block_limit (int): the number of blocks to process synchronously. defaults to 1000. set to 0 to block until the wallet is fully rebuilt.
         """
         blockcount = 0
-        while self._current_height <= Blockchain.Default().Height and (block_limit==0 or blockcount < block_limit):
+        while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
 
             block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
