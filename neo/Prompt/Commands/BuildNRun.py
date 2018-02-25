@@ -6,7 +6,7 @@ from boa.compiler import Compiler
 
 import binascii
 import traceback
-
+from neo.Core.State.ContractState import ContractPropertyState
 
 def LoadAndRun(arguments, wallet):
 
@@ -82,8 +82,13 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True):
     return None, None, None, None
 
 
-def TestBuild(script, invoke_args, wallet, plist='05', ret='05'):
+def TestBuild(script, invoke_args, wallet, plist='05', ret='05', dynamic=False):
 
-    script = generate_deploy_script(script, contract_properties=1, parameter_list=plist, return_type=ret)
+    properties = ContractPropertyState.HasStorage
+
+    if dynamic:
+        properties += ContractPropertyState.HasDynamicInvoke
+
+    script = generate_deploy_script(script, contract_properties=int(properties), parameter_list=plist, return_type=ret)
 
     return test_deploy_and_invoke(script, invoke_args, wallet)

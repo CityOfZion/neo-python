@@ -359,7 +359,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-                print("DOING BINARY AND %s %s" % (x2, x1))
                 estack.PushT(x1 & x2)
 
             elif opcode == OR:
