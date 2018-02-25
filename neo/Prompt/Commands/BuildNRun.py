@@ -8,6 +8,7 @@ import binascii
 import traceback
 from neo.Core.State.ContractState import ContractPropertyState
 
+
 def LoadAndRun(arguments, wallet):
 
     path = get_arg(arguments)
