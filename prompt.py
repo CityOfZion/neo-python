@@ -107,7 +107,7 @@ class PromptInterface(object):
                 'withdraw holds # lists all current holds',
                 'withdraw completed # lists completed holds eligible for cleanup',
                 'withdraw cancel # cancels current holds',
-                'witdraw cleanup # cleans up completed holds',
+                'withdraw cleanup # cleans up completed holds',
                 'withdraw # withdraws the first hold availabe',
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
