@@ -479,7 +479,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed = consumed.Ceil()
 
-            if consumed < Fixed8.Zero():
+            if consumed <= Fixed8.Zero():
                 consumed = Fixed8.FromDecimal(.001)
 
             total_ops = engine.ops_processed
