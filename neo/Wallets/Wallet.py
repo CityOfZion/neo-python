@@ -1057,7 +1057,7 @@ class Wallet(object):
         for key, unspents in paycoins.items():
             if unspents is None:
                 logger.error("insufficient funds for asset id: %s. \
-                Is your wallet synced? Please enter 'wallet' and check \
+                Is your wallet fully synced? Please enter 'wallet' and check \
                 'percent_synced', it should be 100" % key)
                 return None
 
