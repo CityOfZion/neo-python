@@ -135,7 +135,7 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None):
+def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None, default_net_fee=.001):
 
     BC = GetBlockchain()
 
@@ -201,7 +201,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
 
             outputs.append(output)
 
-        return test_invoke(out, wallet, outputs, withdrawal_tx)
+        return test_invoke(out, wallet, outputs, withdrawal_tx, default_net_fee=default_net_fee)
 
     else:
 
@@ -210,7 +210,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
     return None, None, None, None
 
 
-def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
+def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, default_net_fee=.001):
 
     # print("invoke script %s " % script)
 
@@ -295,7 +295,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
             tx_gas = None
 
             if consumed < Fixed8.Zero():
-                net_fee = Fixed8.FromDecimal(.001)
+                net_fee = Fixed8.FromDecimal(default_net_fee)
                 tx_gas = Fixed8.Zero()
             else:
                 tx_gas = consumed
