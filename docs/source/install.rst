@@ -68,11 +68,36 @@ OSX
 Ubuntu/Debian
 """""""""""""
 
+Ubuntu 16.x or earlier
 ::
 
     apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
 
+Ubuntu 17.x or later
 
+Python 3.5 is not available in Ubuntu 17.x repositories but you can proceed to install it by using  ``Anaconda``  instead of virtualenv:
+
+1) Download and install anaconda <https://www.anaconda.com/download>
+
+2) Run the following command:
+::
+    conda create -n neo-python-env python=3.5
+    conda activate neo-python-env
+
+3) Install the available packages:
+::
+
+    sudo apt-get install libleveldb-dev libssl-dev
+
+4) Install requirements:
+::
+    cd neo-python
+    pip install -r requirements.txt
+    
+5) Check the installation is working:
+::
+    python prompt.py
+    
 Centos/Redhat/Fedora
 """"""""""""""""""""
 
