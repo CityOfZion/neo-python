@@ -1054,11 +1054,17 @@ class Wallet(object):
 
         self._vin_exclude = None
 
+        synced_state = self.GetSyncedState()
+
+        if not synced_state:
+            logger.warn("Wait for your wallet to be synced before doing \
+transactions. To check enter 'wallet' and look at 'percent_synced', it should \
+be 100. Issuing 'wallet rebuild' restarts the syncing process.")
+            return None
+
         for key, unspents in paycoins.items():
             if unspents is None:
-                logger.error("insufficient funds for asset id: %s. \
-Is your wallet fully synced? Please enter 'wallet' and check 'percent_synced', \
-it should be 100. Issuing 'wallet rebuild' restarts the syncing process" % key)
+                logger.error("insufficient funds for asset id: %s " % key)
                 return None
 
         input_sums = {}
@@ -1206,6 +1212,19 @@ it should be 100. Issuing 'wallet rebuild' restarts the syncing process" % key)
             elif type(asset) is NEP5Token:
                 balances.append((asset.symbol, self.GetBalance(asset)))
         return balances
+
+    def GetSyncedState(self):
+        """
+        Get synchronisation status of the wallet.
+
+        Returns:
+            bool: True if wallet is synced.
+        """
+        percent_synced = int(100 * self.WalletHeight / Blockchain.Default().Height)
+        if percent_synced < 100:
+            return None
+        else:
+            return True
 
     def ToJson(self, verbose=False):
         # abstract
