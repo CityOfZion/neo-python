@@ -1220,8 +1220,8 @@ be 100. Issuing 'wallet rebuild' restarts the syncing process.")
         Returns:
             bool: True if wallet is synced.
         """
-        percent_synced = int(100 * self._current_height / Blockchain.Default().Height)
-        if percent_synced < 100:
+        self._percent_synced = int(100 * self._current_height / Blockchain.Default().Height)
+        if self._percent_synced < 100:
             return None
         else:
             return True
