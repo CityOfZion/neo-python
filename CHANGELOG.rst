@@ -3,6 +3,11 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.4.11-dev] work in progress
+-----------------------------
+- Updating of almost all dependencies (`PR #261 <https://github.com/CityOfZion/neo-python/pull/261>`_)
+
+
 [0.4.9] 2018-02-21
 ----------------------------
 - wallet sync error and password fixes related to encryption changes (`PR #245 <https://github.com/CityOfZion/neo-python/pull/245>`_)
