@@ -294,7 +294,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
             net_fee = None
             tx_gas = None
 
-            if consumed < Fixed8.Zero():
+            if consumed <= Fixed8.Zero():
                 net_fee = Fixed8.FromDecimal(.001)
                 tx_gas = Fixed8.Zero()
             else:
