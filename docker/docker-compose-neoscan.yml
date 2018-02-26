@@ -1,0 +1,39 @@
+version: "3"
+services:
+  neo-scan:
+    image: slipoh/neo-scan
+    container_name: "neo-scan"
+    ports:
+      - 4000:4000
+    links:
+      - postgresql:postgres
+      - neo-privnet:20333
+      - neo-privnet:20334
+      - neo-privnet:20335
+      - neo-privnet:20336
+      - neo-privnet:30333
+      - neo-privnet:30334
+      - neo-privnet:30335
+      - neo-privnet:30336
+    depends_on:
+      - postgresql
+      - neo-privnet
+  postgresql:
+    image: postgres:10.1
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+  neo-privnet:
+    image: cityofzion/neo-privatenet
+    container_name: "neo-privnet"
+    ports:
+      - 20333:20333
+      - 20334:20334
+      - 20335:20335
+      - 20336:20336
+      - 30333:30333
+      - 30334:30334
+      - 30335:30335
+      - 30336:30336
