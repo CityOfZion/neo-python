@@ -1056,17 +1056,18 @@ class Wallet(object):
 
         is_synced = self.IsSynced()
 
-        if not is_synced:
-            logger.warn("Wait for your wallet to be synced before doing "
-                        "transactions. To check enter 'wallet' and look at "
-                        "'percent_synced', it should be 100. Issuing "
-                        "'wallet rebuild' restarts the syncing process.")
-            return None
-
         for key, unspents in paycoins.items():
             if unspents is None:
-                logger.error("insufficient funds for asset id: %s " % key)
-                return None
+                if not is_synced:
+                    logger.warn("Wait for your wallet to be synced before doing "
+                                "transactions. To check enter 'wallet' and look at "
+                                "'percent_synced', it should be 100. Issuing "
+                                "'wallet rebuild' restarts the syncing process.")
+                    return None
+
+                else:
+                    logger.error("insufficient funds for asset id: %s " % key)
+                    return None
 
         input_sums = {}
 
