@@ -3,6 +3,10 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.4.10] 2018-XX-XX
+-------------------
+- Added support for additional JSON-RPC "type" parameters (`PR #267 <https://github.com/CityOfZion/neo-python/pull/267>`_)
+
 [0.4.9] 2018-02-21
 ----------------------------
 - wallet sync error and password fixes related to encryption changes (`PR #245 <https://github.com/CityOfZion/neo-python/pull/245>`_)
