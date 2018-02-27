@@ -71,6 +71,14 @@ you started. There are many more videos under the
 [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
 channel, check them out.
 
+#### Docker
+
+Using Docker is another option to run neo-python. There are example Dockerfiles provided in the [`/docker folder`](https://github.com/CityOfZion/neo-python/tree/development/docker), and we have an image on Docker hub, tagged after
+the neo-python releases: https://hub.docker.com/r/cityofzion/neo-python/
+
+## Native installation
+
+Instructions on the system setup for neo-python:
 
 ### LevelDB
 
@@ -106,6 +114,9 @@ yum install -y readline-devel leveldb-devel libffi-devel gcc-c++ redhat-rpm-conf
 Help needed. Installing the Python package plyvel seems to require C++ compiler
 support tied to Visual Studio and libraries. Refer to [documentation](https://neo-python.readthedocs.io/en/latest/installwindows.html).
 
+Currently you probably should use the Linux subsystem with Ubuntu, or a Virtual Machine with Linux. You can find more information
+and a guide for setting up the Linux subsystem [here](https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213).
+
 ### Python 3.5
 
 neo-python is currently only compatible with **Python 3.5** (due to its `byteplay3` dependency).
@@ -133,9 +144,6 @@ pip install -e .
 -------------------
 
 ## Running
-
-Before running the neo-python CLI, make sure that the `Chains` directory in the
-project has the proper write permissions.
 
 After installing requirements and activating the environment, there is an easy
 to use CLI (`prompt.py`) that starts the node and allows some basic interactivity.
@@ -176,6 +184,12 @@ neo> block 122235
 }
 neo>
 ```
+
+## Bootstrapping the Blockchain
+
+If you use neo-python for the first time, you need to synchronize the blockchain, which may take a long time. Included in this project is `bootstrap.py` to automatically download a chain directory for you. To bootstrap for testnet, run `python bootstrap.py`, get a cup of coffee and wait. To bootstrap for mainnet, use `python bootstrap.py -m` and get 8 cups of coffee (3.3 GB file).
+
+Important: do not use the chain files from https://github.com/CityOfZion/awesome-neo.git, they will not work with neo-python.
 
 ### Available Wallet commands
 

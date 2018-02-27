@@ -162,7 +162,7 @@ class Contract(SerializableMixin, VerificationCode):
         writer.WriteUInt160(self.PublicKeyHash)
         writer.WriteVarBytes(self.ParameterList)
         if isinstance(self.Script, str):
-            self.Script.encode('utf-8')
+            self.Script = self.Script.encode('utf-8')
         writer.WriteVarBytes(self.Script)
 
     @staticmethod

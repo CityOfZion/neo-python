@@ -107,7 +107,7 @@ class PromptInterface(object):
                 'withdraw holds # lists all current holds',
                 'withdraw completed # lists completed holds eligible for cleanup',
                 'withdraw cancel # cancels current holds',
-                'witdraw cleanup # cleans up completed holds',
+                'withdraw cleanup # cleans up completed holds',
                 'withdraw # withdraws the first hold availabe',
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
@@ -177,10 +177,7 @@ class PromptInterface(object):
         print('Shutting down. This may take a bit...')
         self.go_on = False
         self.do_close_wallet()
-        NotificationDB.close()
-        Blockchain.Default().Dispose()
         reactor.stop()
-        NodeLeader.Instance().Shutdown()
 
     def help(self):
         tokens = []
@@ -367,7 +364,7 @@ class PromptInterface(object):
                 return print("Please specify an address")
 
             passwd = prompt("[wallet password]> ", is_password=True)
-            if not self.wallet.ValidatePassword(passwd):
+            if not self.Wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
             keys = self.Wallet.GetKeys()
@@ -386,7 +383,7 @@ class PromptInterface(object):
                 return print("Please specify an address")
 
             passwd = prompt("[wallet password]> ", is_password=True)
-            if not self.wallet.ValidatePassword(passwd):
+            if not self.Wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
             nep2_passwd1 = prompt("[key password]> ", is_password=True)
@@ -748,10 +745,14 @@ class PromptInterface(object):
                     print(
                         "\n-------------------------------------------------------------------------------------------------------------------------------------")
                     print("Test deploy invoke successful")
-                    print("Total operations executed: %s" % num_ops)
-                    print("Results %s " % [str(item) for item in results])
-                    print("Deploy Invoke TX GAS cost: %s" % (tx.Gas.value / Fixed8.D))
-                    print("Deploy Invoke TX fee: %s" % (fee.value / Fixed8.D))
+                    print("Total operations executed: %s " % num_ops)
+                    print("Results:")
+                    print("\t(Raw) %s" % [str(item) for item in results])
+                    print("\t(Int) %s" % [item.GetBigInteger() for item in results])
+                    print("\t(Str) %s" % [item.GetString() for item in results])
+                    print("\t(Bool) %s" % [item.GetBoolean() for item in results])
+                    print("Deploy Invoke TX GAS cost: %s " % (tx.Gas.value / Fixed8.D))
+                    print("Deploy Invoke TX Fee: %s " % (fee.value / Fixed8.D))
                     print(
                         "-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("Enter your password to continue and deploy this contract")
@@ -966,11 +967,18 @@ def main():
     # Start the prompt interface
     cli = PromptInterface()
 
-    # Run
+    # Run things
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
+
+    # reactor.run() is blocking, until `quit()` is called which stops the reactor.
     reactor.run()
+
+    # After the reactor is stopped, gracefully shutdown the database.
+    NotificationDB.close()
+    Blockchain.Default().Dispose()
+    NodeLeader.Instance().Shutdown()
 
 
 if __name__ == "__main__":

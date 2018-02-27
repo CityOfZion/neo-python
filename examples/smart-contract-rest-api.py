@@ -155,8 +155,13 @@ def main():
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
 
-    # Hook up Klein API to Twisted reactor
+    # Hook up Klein API to Twisted reactor.
     endpoint_description = "tcp:port=%s:interface=localhost" % API_PORT
+
+    # If you want to make this service externally available (not only at localhost),
+    # then remove the `interface=localhost` part:
+    # endpoint_description = "tcp:port=%s" % API_PORT
+
     endpoint = endpoints.serverFromString(reactor, endpoint_description)
     endpoint.listen(Site(app.resource()))
 
