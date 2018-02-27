@@ -63,14 +63,10 @@ def main():
                        help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
-    parser.add_argument("--port", type=int, help="port to use for the server")
+    parser.add_argument("--port", type=int, help="port to use for the server", required=True)
     parser.add_argument('mode', choices=["jsonrpc", "notifiationapi"])
 
     args = parser.parse_args()
-    if not args.port:
-        print("Error: please specify a port with '--port <port>'")
-        parser.print_help()
-        return
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
