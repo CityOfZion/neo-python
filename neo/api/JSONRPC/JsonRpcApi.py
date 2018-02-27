@@ -286,7 +286,7 @@ class JsonRpcApi(object):
 
         appengine = ApplicationEngine.Run(script=script)
         return {
-            "script": script.hex(),
+            "script": script.decode('utf-8'),
             "state": appengine.State,
             "gas_consumed": appengine.GasConsumed().ToString(),
             "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]
