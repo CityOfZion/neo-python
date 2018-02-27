@@ -37,7 +37,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(1.056)
+        expected_cost = Fixed8(103900000)
         expected_fee = Fixed8.FromDecimal(.001)
 
         self.assertEqual(expected_cost, engine.GasConsumed())
@@ -57,7 +57,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(6.151)
+        expected_cost = Fixed8.FromDecimal(5.466)
         expected_fee = Fixed8.FromDecimal(.001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
@@ -77,7 +77,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(1.18)
+        expected_cost = Fixed8.FromDecimal(1.153)
         expected_fee = Fixed8.FromDecimal(.001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
@@ -97,7 +97,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(2.18)
+        expected_cost = Fixed8.FromDecimal(2.153)
         expected_fee = Fixed8.FromDecimal(.001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
@@ -125,8 +125,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(11.151)
-        expected_gas = Fixed8.FromDecimal(2.0)
+        expected_cost = Fixed8(1046600000)
+        expected_gas = Fixed8.FromDecimal(1.0)
+
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
 
@@ -138,11 +139,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
         """
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", True, False, "put_8", "key1", "b'ababababab'"]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", True, False, "put_9", "key1", "b'ababababab'"]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(9.715)
+        expected_cost = Fixed8.FromDecimal(9.762)
         expected_gas = Fixed8.FromDecimal(.001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
