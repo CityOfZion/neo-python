@@ -12,7 +12,6 @@ from time import sleep
 
 from logzero import logger
 from twisted.internet import reactor, task
-from klein import Klein
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
