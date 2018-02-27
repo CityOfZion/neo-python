@@ -387,9 +387,9 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                     break
 
         shash = contract_state.Code.ScriptHash()
-        print("GETTING INVOKE ARGS: %s " % invoke_args)
+
         invoke_args, neo_to_attach, gas_to_attach = get_asset_attachments(invoke_args)
-        print("INVOKE ARGS NOW %s %s " % ( invoke_args, neo_to_attach))
+
         invoke_args.reverse()
 
         # print("neo, gas %s %s " % (neo_to_attach,gas_to_attach.ToString()))
