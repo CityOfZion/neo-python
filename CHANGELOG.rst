@@ -6,10 +6,11 @@ All notable changes to this project are documented in this file.
 [0.4.11-dev] work in progress
 -----------------------------
 - Updating of almost all dependencies (`PR #261 <https://github.com/CityOfZion/neo-python/pull/261>`_)
+- Fixed bug with transactions consuming between 9 and 10 GAS (`PR #260 <https://github.com/CityOfZion/neo-python/pull/260>`_)
 
 
 [0.4.9] 2018-02-21
-----------------------------
+------------------
 - wallet sync error and password fixes related to encryption changes (`PR #245 <https://github.com/CityOfZion/neo-python/pull/245>`_)
 - import contract_addr and build ... test fixes (`PR #237 <https://github.com/CityOfZion/neo-python/pull/237>`_)
 - Easy Coznet support(`PR #239 <https://github.com/CityOfZion/neo-python/pull/239>`_)
