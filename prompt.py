@@ -107,7 +107,7 @@ class PromptInterface(object):
                 'withdraw holds # lists all current holds',
                 'withdraw completed # lists completed holds eligible for cleanup',
                 'withdraw cancel # cancels current holds',
-                'witdraw cleanup # cleans up completed holds',
+                'withdraw cleanup # cleans up completed holds',
                 'withdraw # withdraws the first hold availabe',
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
@@ -745,10 +745,14 @@ class PromptInterface(object):
                     print(
                         "\n-------------------------------------------------------------------------------------------------------------------------------------")
                     print("Test deploy invoke successful")
-                    print("Total operations executed: %s" % num_ops)
-                    print("Results %s " % [str(item) for item in results])
-                    print("Deploy Invoke TX GAS cost: %s" % (tx.Gas.value / Fixed8.D))
-                    print("Deploy Invoke TX fee: %s" % (fee.value / Fixed8.D))
+                    print("Total operations executed: %s " % num_ops)
+                    print("Results:")
+                    print("\t(Raw) %s" % [str(item) for item in results])
+                    print("\t(Int) %s" % [item.GetBigInteger() for item in results])
+                    print("\t(Str) %s" % [item.GetString() for item in results])
+                    print("\t(Bool) %s" % [item.GetBoolean() for item in results])
+                    print("Deploy Invoke TX GAS cost: %s " % (tx.Gas.value / Fixed8.D))
+                    print("Deploy Invoke TX Fee: %s " % (fee.value / Fixed8.D))
                     print(
                         "-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("Enter your password to continue and deploy this contract")

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
 This example provides a JSON-RPC API to query blockchain data, implementing `neo.api.JSONRPC.JsonRpcApi`
+Example systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
 """
-
-import argparse
 import os
+import argparse
+import threading
+from time import sleep
 
 from logzero import logger
 from twisted.internet import reactor, task
@@ -25,24 +27,38 @@ LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
 
+def write_pid_file():
+    """ Write a pid file, to easily kill the service """
+    f = open('/tmp/json-rpc-api-server.pid', 'w')
+    f.write(str(os.getpid()))
+    f.close()
+
+
+def custom_background_code():
+    """ Custom code run in a background thread.
+
+    This function is run in a daemonized thread, which means it can be instantly killed at any
+    moment, whenever the main thread quits. If you need more safety, don't use a  daemonized
+    thread and handle exiting this thread in another way (eg. with signals and events).
+    """
+    while True:
+        logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
+        sleep(15)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
-                        help="Use MainNet instead of the default TestNet")
-    parser.add_argument("-p", "--privnet", action="store_true", default=False,
-                        help="Use PrivNet instead of the default TestNet")
-    parser.add_argument("-c", "--config", action="store", help="Use a specific config file")
-    parser.add_argument('--version', action='version',
-                        version='neo-python v{version}'.format(version=__version__))
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-m", "--mainnet", action="store_true", default=False,
+                       help="Use MainNet instead of the default TestNet")
+    group.add_argument("-p", "--privnet", action="store_true", default=False,
+                       help="Use PrivNet instead of the default TestNet")
+    group.add_argument("--coznet", action="store_true", default=False,
+                       help="Use the CoZ network instead of the default TestNet")
+    group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
     args = parser.parse_args()
-
-    if args.config and (args.mainnet or args.privnet):
-        print("Cannot use both --config and --mainnet/--privnet arguments, please use only one.")
-        exit(1)
-    if args.mainnet and args.privnet:
-        print("Cannot use both --mainnet and --privnet arguments")
-        exit(1)
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
@@ -51,6 +67,11 @@ def main():
         settings.setup_mainnet()
     elif args.privnet:
         settings.setup_privnet()
+    elif args.coznet:
+        settings.setup_coznet()
+
+    # Write a PID file to easily quit the service
+    write_pid_file()
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
@@ -62,6 +83,11 @@ def main():
 
     ndb = NotificationDB.instance()
     ndb.start()
+
+    # Start a thread with custom code
+    d = threading.Thread(target=custom_background_code)
+    d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
+    d.start()
 
     # Run
     reactor.suggestThreadPoolSize(15)
