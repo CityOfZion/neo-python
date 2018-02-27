@@ -35,10 +35,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", True, False, "put", "key1", "b'ab'"]
 
-        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
+        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, net_fee_override=.0004)
 
         expected_cost = Fixed8.FromDecimal(1.056)
-        expected_fee = Fixed8.FromDecimal(.001)
+        expected_fee = Fixed8.FromDecimal(.0004)
 
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)

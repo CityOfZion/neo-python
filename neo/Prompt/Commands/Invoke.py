@@ -135,7 +135,7 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None, default_net_fee=.001):
+def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None, net_fee_override=None):
 
     BC = GetBlockchain()
 
@@ -201,7 +201,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
 
             outputs.append(output)
 
-        return test_invoke(out, wallet, outputs, withdrawal_tx, default_net_fee=default_net_fee)
+        return test_invoke(out, wallet, outputs, withdrawal_tx, net_fee_override=net_fee_override)
 
     else:
 
@@ -210,7 +210,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
     return None, None, None, None
 
 
-def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, default_net_fee=.001):
+def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, net_fee_override=None):
 
     # print("invoke script %s " % script)
 
@@ -295,7 +295,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, def
             tx_gas = None
 
             if consumed < Fixed8.Zero():
-                net_fee = Fixed8.FromDecimal(default_net_fee)
+                net_fee = Fixed8.FromDecimal(net_fee_override if net_fee_override is not None else .001)
                 tx_gas = Fixed8.Zero()
             else:
                 tx_gas = consumed
@@ -316,7 +316,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, def
     return None, None, None, None
 
 
-def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet, net_fee_override=None):
 
     bc = GetBlockchain()
 
@@ -480,7 +480,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
             consumed = consumed.Ceil()
 
             if consumed < Fixed8.Zero():
-                consumed = Fixed8.FromDecimal(.001)
+                consumed = Fixed8.FromDecimal(net_fee_override if net_fee_override is not None else .001)
 
             total_ops = engine.ops_processed
 

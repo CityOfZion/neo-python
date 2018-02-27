@@ -56,7 +56,7 @@ def token_send_from(wallet, args, prompt_passwd=True):
 
                 return InvokeContract(wallet, tx, fee)
 
-    print("Requestest transfer from is greater than allowance")
+    print("Requested transfer from is greater than allowance")
 
     return False
 

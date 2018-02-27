@@ -32,7 +32,7 @@ def LoadAndRun(arguments, wallet):
         print("Could not load script %s " % e)
 
 
-def BuildAndRun(arguments, wallet, verbose=True):
+def BuildAndRun(arguments, wallet, verbose=True, net_fee_override=None):
     path = get_arg(arguments)
 
     contract_script = Compiler.instance().load_and_save(path)
@@ -40,10 +40,10 @@ def BuildAndRun(arguments, wallet, verbose=True):
     newpath = path.replace('.py', '.avm')
     print("Saved output to %s " % newpath)
 
-    return DoRun(contract_script, arguments, wallet, path, verbose)
+    return DoRun(contract_script, arguments, wallet, path, verbose, net_fee_override)
 
 
-def DoRun(contract_script, arguments, wallet, path, verbose=True):
+def DoRun(contract_script, arguments, wallet, path, verbose=True, net_fee_override=None):
 
     test = get_arg(arguments, 1)
 
@@ -56,7 +56,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True):
 
             script = GatherLoadedContractParams(f_args, contract_script)
 
-            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, net_fee_override)
             i_args.reverse()
 
             if tx is not None and result is not None:
