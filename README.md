@@ -189,6 +189,8 @@ neo>
 
 If you use neo-python for the first time, you need to synchronize the blockchain, which may take a long time. Included in this project is `bootstrap.py` to automatically download a chain directory for you. To bootstrap for testnet, run `python bootstrap.py`, get a cup of coffee and wait. To bootstrap for mainnet, use `python bootstrap.py -m` and get 8 cups of coffee (3.3 GB file).
 
+Important: do not use the chain files from https://github.com/CityOfZion/awesome-neo.git, they will not work with neo-python.
+
 ### Available Wallet commands
 
 ```
