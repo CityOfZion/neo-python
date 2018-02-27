@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-This example provides a JSON-RPC API to query blockchain data, implementing `neo.api.JSONRPC.JsonRpcApi`
-Example systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
+This api server runs both a json-rpc api and a notification rest api.
+(neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi)
+
+Example systemd service config: TODO
 """
 import os
 import argparse
@@ -10,18 +12,22 @@ from time import sleep
 
 from logzero import logger
 from twisted.internet import reactor, task
+from klein import Klein
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
+from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.api.REST.NotificationRestApi import NotificationRestApi
+
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 
 # Logfile settings & setup
-LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'json-rpc.log')
+LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'api-server.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
@@ -58,7 +64,14 @@ def main():
                        help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
+    parser.add_argument("--port", type=int, help="port to use for the server")
+    parser.add_argument('mode', choices=["jsonrpc", "notifiationapi"])
+
     args = parser.parse_args()
+    if not args.port:
+        print("Error: please specify a port with '--port <port>'")
+        parser.print_help()
+        return
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
@@ -94,10 +107,16 @@ def main():
     NodeLeader.Instance().Start()
 
     host = "0.0.0.0"
-    port = settings.RPC_PORT
-    logger.info("Starting json-rpc api server on http://%s:%s" % (host, port))
+    port = args.port
 
-    api_server = JsonRpcApi(port)
+    if args.mode == "jsonrpc":
+        logger.info("Starting json-rpc api server on http://%s:%s" % (host, port))
+        api_server = JsonRpcApi(port)
+
+    elif args.mode == "notifiationapi":
+        logger.info("Starting notification api server on http://%s:%s" % (host, port))
+        api_server = NotificationRestApi()
+
     api_server.app.run(host, port)
 
 
