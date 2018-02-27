@@ -28,4 +28,12 @@ def Main(operation, key, value):
 
         return True
 
+    if operation == 'put_8':
+
+        for i in range(0, 8):
+            new_key = concat(key, i)
+            Put(context, new_key, value)
+
+        return True
+
     return False

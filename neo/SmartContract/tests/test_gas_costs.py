@@ -129,3 +129,20 @@ class UserWalletTestCase(WalletFixtureTestCase):
         expected_gas = Fixed8.FromDecimal(2.0)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
+
+    def test_build_contract_6(self):
+        """
+        return from JSON-RPC is:
+        {"state":"HALT, BREAK", "result":{"script":"05ababababab046b657931057075745f3867e2cea0ae062d6f13ce53b799e0d4fa6eaa147c38",
+        "gas_consumed":"9.715","stack":[{"type":"Integer","value":"1"}]}}
+        """
+        wallet = self.GetWallet1()
+
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", True, False, "put_8", "key1", "b'ababababab'"]
+
+        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
+
+        expected_cost = Fixed8.FromDecimal(9.715)
+        expected_gas = Fixed8.FromDecimal(.001)
+        self.assertEqual(expected_cost, engine.GasConsumed())
+        self.assertEqual(tx.Gas, expected_gas)
