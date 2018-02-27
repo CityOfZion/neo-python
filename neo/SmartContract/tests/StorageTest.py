@@ -1,5 +1,5 @@
-from boa.code.builtins import range, concat
-from boa.blockchain.vm.Neo.Storage import GetContext, Get, Put, Delete
+from boa.builtins import range, concat
+from boa.interop.Neo.Storage import GetContext, Get, Put
 
 
 def Main(operation, key, value):
