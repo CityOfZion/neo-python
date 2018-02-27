@@ -1062,7 +1062,7 @@ class Wallet(object):
                     logger.warn("Wait for your wallet to be synced before doing "
                                 "transactions. To check enter 'wallet' and look at "
                                 "'percent_synced', it should be 100. Also the blockchain "
-                                "should be up to the latest blocks (see left bottom). Issuing "
+                                "should be up to the latest blocks (see Progress). Issuing "
                                 "'wallet rebuild' restarts the syncing process.")
                     return None
 
