@@ -11,7 +11,8 @@ import threading
 from time import sleep
 
 from logzero import logger
-from twisted.internet import reactor, task
+from twisted.internet import reactor, task, endpoints
+from twisted.web.server import Site
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
@@ -63,8 +64,8 @@ def main():
                        help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
-    parser.add_argument("--port", type=int, help="port to use for the server", required=True)
-    parser.add_argument('mode', choices=["jsonrpc", "notifiationapi"])
+    parser.add_argument("--port-rpc", type=int, help="port to use for the server", required=True)
+    parser.add_argument("--port-rest", type=int, help="port to use for the server", required=True)
 
     args = parser.parse_args()
 
@@ -87,8 +88,10 @@ def main():
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)
 
+    # Disable logging smart contract events
     settings.set_log_smart_contract_events(False)
 
+    # Start the notification db instance
     ndb = NotificationDB.instance()
     ndb.start()
 
@@ -102,19 +105,20 @@ def main():
     NodeLeader.Instance().Start()
 
     host = "0.0.0.0"
-    port = args.port
 
-    if args.mode == "jsonrpc":
-        logger.info("Starting json-rpc api server on http://%s:%s" % (host, port))
-        api_server = JsonRpcApi(port)
+    logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
+    api_server_rpc = JsonRpcApi(args.port_rpc)
 
-    elif args.mode == "notifiationapi":
-        logger.info("Starting notification api server on http://%s:%s" % (host, port))
-        api_server = NotificationRestApi()
-        ndb = NotificationDB.instance()
-        ndb.start()
+    logger.info("Starting notification api server on http://%s:%s" % (host, args.port_rest))
+    api_server_rest = NotificationRestApi()
 
-    api_server.app.run(host, port)
+    endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, '0.0.0.0')
+    endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, '0.0.0.0')
+
+    endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+    endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
+
+    api_server_rest.app.run(host, 9999)
 
 
 if __name__ == "__main__":

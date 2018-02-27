@@ -70,54 +70,61 @@ class JsonRpcError(Exception):
 
 
 class JsonRpcApi(object):
-    app = Klein()
+    app = None
     port = None
 
-    def __init__(self, port):
+    def __init__(self, port, app=None):
         self.port = port
 
-    #
-    # JSON-RPC API Route
-    #
-    @app.route('/')
-    @json_response
-    @cors_header
-    def home(self, request):
-        # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
-        body = None
-        request_id = None
+        if not app:
+            self.app = Klein()
 
-        try:
-            body = json.loads(request.content.read().decode("utf-8"))
-            request_id = body["id"] if body and "id" in body else None
+        def setup_endpoints(app):
+            #
+            # JSON-RPC API Route
+            #
+            @self.app.route('/')
+            @json_response
+            def home(request):
+                # CORS header
+                request.setHeader('Access-Control-Allow-Origin', '*')
 
-            if "jsonrpc" not in body or body["jsonrpc"] != "2.0":
-                raise JsonRpcError.invalidRequest("Invalid value for 'jsonrpc'")
+                body = None
+                request_id = None
 
-            if "id" not in body:
-                raise JsonRpcError.invalidRequest("Field 'id' is missing")
+                try:
+                    body = json.loads(request.content.read().decode("utf-8"))
+                    request_id = body["id"] if body and "id" in body else None
 
-            if "method" not in body:
-                raise JsonRpcError.invalidRequest("Field 'method' is missing")
+                    if "jsonrpc" not in body or body["jsonrpc"] != "2.0":
+                        raise JsonRpcError.invalidRequest("Invalid value for 'jsonrpc'")
 
-            params = body["params"] if "params" in body else None
-            result = self.json_rpc_method_handler(body["method"], params)
-            return {
-                "jsonrpc": "2.0",
-                "id": request_id,
-                "result": result
-            }
+                    if "id" not in body:
+                        raise JsonRpcError.invalidRequest("Field 'id' is missing")
 
-        except JSONDecodeError as e:
-            error = JsonRpcError.parseError()
-            return self.get_custom_error_payload(request_id, error.code, error.message)
+                    if "method" not in body:
+                        raise JsonRpcError.invalidRequest("Field 'method' is missing")
 
-        except JsonRpcError as e:
-            return self.get_custom_error_payload(request_id, e.code, e.message)
+                    params = body["params"] if "params" in body else None
+                    result = self.json_rpc_method_handler(body["method"], params)
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "result": result
+                    }
 
-        except Exception as e:
-            error = JsonRpcError.internalError(str(e))
-            return self.get_custom_error_payload(request_id, error.code, error.message)
+                except JSONDecodeError as e:
+                    error = JsonRpcError.parseError()
+                    return self.get_custom_error_payload(request_id, error.code, error.message)
+
+                except JsonRpcError as e:
+                    return self.get_custom_error_payload(request_id, e.code, e.message)
+
+                except Exception as e:
+                    error = JsonRpcError.internalError(str(e))
+                    return self.get_custom_error_payload(request_id, error.code, error.message)
+
+        setup_endpoints(app)
 
     def json_rpc_method_handler(self, method, params):
 
