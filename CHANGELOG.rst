@@ -3,8 +3,9 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.4.10] 2018-XX-XX
--------------------
+[0.4.11-dev] work in progress
+-----------------------------
+- Updating of almost all dependencies (`PR #261 <https://github.com/CityOfZion/neo-python/pull/261>`_)
 - Fixed bug with transactions consuming between 9 and 10 GAS (`PR #260 <https://github.com/CityOfZion/neo-python/pull/260>`_)
 
 
