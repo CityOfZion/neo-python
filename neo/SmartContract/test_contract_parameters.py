@@ -21,6 +21,36 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.Type, ContractParameterType.String)
         self.assertEqual(cp.Value, 'hello')
 
+        # the following test ensures the type can be an int
+        jsn = {
+            'type': 7,
+            'value': 'hi'
+        }
+        cp = ContractParameter.FromJson(jsn)
+
+        self.assertEqual(cp.Type, ContractParameterType.String)
+        self.assertEqual(cp.Value, 'hi')
+
+        # the following test ensures the type can be a string containing an int
+        jsn = {
+            'type': '7',
+            'value': 'goodbye'
+        }
+        cp = ContractParameter.FromJson(jsn)
+
+        self.assertEqual(cp.Type, ContractParameterType.String)
+        self.assertEqual(cp.Value, 'goodbye')
+
+        # the following test ensures the type can be a string of the type literal
+        jsn = {
+            'type': 'String',
+            'value': 'bye'
+        }
+        cp = ContractParameter.FromJson(jsn)
+
+        self.assertEqual(cp.Type, ContractParameterType.String)
+        self.assertEqual(cp.Value, 'bye')
+
         jsn = {
             'type': str(ContractParameterType.Integer),
             'value': 2003
