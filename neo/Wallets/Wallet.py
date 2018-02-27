@@ -1054,12 +1054,13 @@ class Wallet(object):
 
         self._vin_exclude = None
 
-        synced_state = self.GetSyncedState()
+        is_synced = self.IsSynced()
 
-        if not synced_state:
-            logger.warn("Wait for your wallet to be synced before doing \
-transactions. To check enter 'wallet' and look at 'percent_synced', it should \
-be 100. Issuing 'wallet rebuild' restarts the syncing process.")
+        if not is_synced:
+            logger.warn("Wait for your wallet to be synced before doing "
+                        "transactions. To check enter 'wallet' and look at "
+                        "'percent_synced', it should be 100. Issuing "
+                        "'wallet rebuild' restarts the syncing process.")
             return None
 
         for key, unspents in paycoins.items():
@@ -1213,15 +1214,19 @@ be 100. Issuing 'wallet rebuild' restarts the syncing process.")
                 balances.append((asset.symbol, self.GetBalance(asset)))
         return balances
 
-    def GetSyncedState(self):
+    def IsSynced(self):
         """
-        Get synchronisation status of the wallet.
+        Checks if wallet is synced.
 
         Returns:
             bool: True if wallet is synced.
+
         """
+        if Blockchain.Default().Height == 0:
+            return False
+
         if (int(100 * self._current_height / Blockchain.Default().Height)) < 100:
-            return None
+            return False
         else:
             return True
 
