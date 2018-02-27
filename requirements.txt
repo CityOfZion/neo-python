@@ -32,7 +32,7 @@ memory-profiler==0.52.0
 mmh3==2.5.1
 mock==2.0.0
 mpmath==1.0.0
-neo-boa==0.2.2
+-e git+https://github.com/CityOfZion/neo-boa.git@wordcode#egg=neo_boa
 neo-python-rpc==0.1.8
 neocore==0.3.6
 numpy==1.14.1
