@@ -115,6 +115,8 @@ def main():
     elif args.mode == "notifiationapi":
         logger.info("Starting notification api server on http://%s:%s" % (host, port))
         api_server = NotificationRestApi()
+        ndb = NotificationDB.instance()
+        ndb.start()
 
     api_server.app.run(host, port)
 
