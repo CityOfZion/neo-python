@@ -685,7 +685,6 @@ class ExecutionEngine():
                     return
 
                 to_pick = items[index]
-                # print("PICKING ITEM AT INDEX %s %s " % (index, item))
 
                 estack.PushT(to_pick)
 

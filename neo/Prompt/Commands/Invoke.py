@@ -461,10 +461,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
         engine.LoadScript(itx.Script, False)
 
-#            print("&**&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-#            print("RUNNNNNNING")
-#            print("&**&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-
         i_success = engine.Execute()
 
         service.ExecutionCompleted(engine, i_success)
