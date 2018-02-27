@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.4.10] 2018-02-26
 ----------------------------
-- Added waring about wallet syncing prior to logging insufficient funds error, added GetSyncedState method to check this
+- Added waring about wallet syncing prior to logging insufficient funds error, added IsSynced method Wallet class to check this
 
 [0.4.9] 2018-02-21
 ----------------------------
