@@ -2,6 +2,7 @@ Installation (Windows)
 ----------------------
 
 The instructions are written for Windows 7 x64 with MSYS2 environment and Visual Studio 2017. It should probably work for other Windows distributions.
+Another option is to setup a Linux Subsystem with Ubuntu (see also [here](https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213) for more infos and a guide).
 
 
 Building LevelDB
