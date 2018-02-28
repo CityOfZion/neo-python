@@ -1,5 +1,5 @@
-from boa.code.builtins import range, concat
-from boa.blockchain.vm.Neo.Storage import GetContext, Get, Put, Delete
+from boa.builtins import range, concat
+from boa.interop.Neo.Storage import GetContext, Get, Put
 
 
 def Main(operation, key, value):
@@ -28,9 +28,9 @@ def Main(operation, key, value):
 
         return True
 
-    if operation == 'put_8':
+    if operation == 'put_9':
 
-        for i in range(0, 8):
+        for i in range(0, 9):
             new_key = concat(key, i)
             Put(context, new_key, value)
 

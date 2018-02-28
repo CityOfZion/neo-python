@@ -302,6 +302,7 @@ class StateMachine(StateReader):
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
+
         name = engine.EvaluationStack.Pop().GetByteArray()
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
@@ -362,6 +363,7 @@ class StateMachine(StateReader):
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
+
         name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
@@ -418,16 +420,20 @@ class StateMachine(StateReader):
 
         contract = engine.EvaluationStack.Pop().GetInterface()
 
-        if contract.ScriptHash.ToBytes() in self._contracts_created:
+        shash = contract.Code.ScriptHash()
 
-            created = self._contracts_created[contract.ScriptHash.ToBytes()]
+        if shash.ToBytes() in self._contracts_created:
+
+            created = self._contracts_created[shash.ToBytes()]
 
             if created == UInt160(data=engine.CurrentContext.ScriptHash()):
 
-                context = StorageContext(script_hash=contract.ScriptHash)
+                context = StorageContext(script_hash=shash)
                 engine.EvaluationStack.PushT(StackItem.FromInterface(context))
 
-        return True
+                return True
+
+        return False
 
     def Contract_Destroy(self, engine):
         hash = UInt160(data=engine.CurrentContext.ScriptHash())

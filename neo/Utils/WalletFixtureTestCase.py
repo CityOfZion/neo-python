@@ -64,6 +64,8 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
 
             shutil.copyfile(cls.wallet_2_path(), cls.wallet_2_dest())
 
+            shutil.copyfile(cls.wallet_3_path(), cls.wallet_3_dest())
+
         except Exception as e:
             print("Could not setup WalletFixtureTestCase: %s " % e)
 
