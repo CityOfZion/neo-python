@@ -8,6 +8,7 @@ from neo.Settings import settings
 
 settings.log_smart_contract_events = True
 
+
 class UserWalletTestCase(WalletFixtureTestCase):
 
     wallet_1_script_hash = UInt160(data=b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)')
