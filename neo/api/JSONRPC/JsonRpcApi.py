@@ -17,7 +17,7 @@ from logzero import logger
 from neo import __version__
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
-from neo.api.utils import json_response
+from neo.api.utils import json_response, cors_header
 from neo.Core.State.AccountState import AccountState
 from neo.Core.TX.Transaction import Transaction
 from neocore.UInt160 import UInt160
@@ -81,6 +81,7 @@ class JsonRpcApi(object):
     #
     @app.route('/')
     @json_response
+    @cors_header
     def home(self, request):
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         body = None
@@ -286,7 +287,7 @@ class JsonRpcApi(object):
 
         appengine = ApplicationEngine.Run(script=script)
         return {
-            "script": script.hex(),
+            "script": script.decode('utf-8'),
             "state": appengine.State,
             "gas_consumed": appengine.GasConsumed().ToString(),
             "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]

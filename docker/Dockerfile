@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     libleveldb-dev \
     libssl-dev \
+    vim \
     man
 
 # APT cleanup to reduce image size
@@ -37,6 +38,12 @@ RUN rm -rf /var/lib/apt/lists/*
 # Clone and setup
 RUN git clone https://github.com/CityOfZion/neo-python.git
 WORKDIR neo-python
+
+# Install the dependencies
 RUN pip3 install -e .
 
+# Download the privnet wallet, to have it handy for easy experimenting
+RUN wget https://s3.amazonaws.com/neo-experiments/neo-privnet.wallet
+
+# Example run command
 CMD python3 prompt.py

@@ -71,6 +71,14 @@ you started. There are many more videos under the
 [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
 channel, check them out.
 
+#### Docker
+
+Using Docker is another option to run neo-python. There are example Dockerfiles provided in the [`/docker folder`](https://github.com/CityOfZion/neo-python/tree/development/docker), and we have an image on Docker hub, tagged after
+the neo-python releases: https://hub.docker.com/r/cityofzion/neo-python/
+
+## Native installation
+
+Instructions on the system setup for neo-python:
 
 ### LevelDB
 
@@ -137,9 +145,6 @@ pip install -e .
 
 ## Running
 
-Before running the neo-python CLI, make sure that the `Chains` directory in the
-project has the proper write permissions.
-
 After installing requirements and activating the environment, there is an easy
 to use CLI (`prompt.py`) that starts the node and allows some basic interactivity.
 
@@ -179,6 +184,12 @@ neo> block 122235
 }
 neo>
 ```
+
+## Bootstrapping the Blockchain
+
+If you use neo-python for the first time, you need to synchronize the blockchain, which may take a long time. Included in this project is `bootstrap.py` to automatically download a chain directory for you. To bootstrap for testnet, run `python bootstrap.py`, get a cup of coffee and wait. To bootstrap for mainnet, use `python bootstrap.py -m` and get 8 cups of coffee (3.3 GB file).
+
+Important: do not use the chain files from https://github.com/CityOfZion/awesome-neo.git, they will not work with neo-python.
 
 ### Available Wallet commands
 

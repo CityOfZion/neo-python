@@ -296,7 +296,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
             net_fee = None
             tx_gas = None
 
-            if consumed < Fixed8.Zero():
+            if consumed <= Fixed8.Zero():
                 net_fee = min_fee
                 tx_gas = Fixed8.Zero()
             else:
@@ -481,7 +481,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, min_fee=DEFAULT_M
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed = consumed.Ceil()
 
-            if consumed < Fixed8.Zero():
+            if consumed <= Fixed8.Zero():
                 consumed = min_fee
 
             total_ops = engine.ops_processed
