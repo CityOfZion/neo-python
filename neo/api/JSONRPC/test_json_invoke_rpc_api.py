@@ -16,6 +16,7 @@ from neo.SmartContract.ContractParameterType import ContractParameterType
 from neocore.UInt160 import UInt160
 import binascii
 from neo.VM import VMState
+from neo.VM.VMState import VMStateStr
 
 
 def mock_request(body):
@@ -66,7 +67,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("invoke", params=[contract_hash, jsn])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMState.HALT + VMState.BREAK)
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
         self.assertEqual(res['result']['gas_consumed'], '0.205')
         results = []
         for p in res['result']['stack']:
@@ -95,7 +96,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("invoke", params=[contract_hash, jsn])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMState.HALT + VMState.BREAK)
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
         results = []
         for p in res['result']['stack']:
             results.append(ContractParameter.FromJson(p))
@@ -108,7 +109,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("invokefunction", params=[contract_hash, 'symbol'])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMState.HALT + VMState.BREAK)
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
         results = []
         for p in res['result']['stack']:
             results.append(ContractParameter.FromJson(p))
@@ -124,7 +125,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("invokefunction", params=[contract_hash, 'balanceOf', params])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMState.HALT + VMState.BREAK)
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
         results = []
         for p in res['result']['stack']:
             results.append(ContractParameter.FromJson(p))
@@ -137,7 +138,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("invokescript", params=[test_script])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMState.HALT + VMState.BREAK)
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
 
         results = []
         for p in res['result']['stack']:
