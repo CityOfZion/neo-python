@@ -35,7 +35,7 @@ from neo.EventHub import events
 from neo.VM.OpCode import *
 import json
 
-DEFAULT_MIN_FEE = Fixed8.FromDecimal(.001)
+DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
 def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
