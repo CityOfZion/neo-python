@@ -64,6 +64,8 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-m", "--mainnet", action="store_true", default=False,
                        help="Use MainNet instead of the default TestNet")
+    group.add_argument("-t", "--testnet", action="store_true", default=False,
+                       help="Use TestNett instead of the default TestNet")
     group.add_argument("-p", "--privnet", action="store_true", default=False,
                        help="Use PrivNet instead of the default TestNet")
     group.add_argument("--coznet", action="store_true", default=False,
@@ -90,6 +92,8 @@ def main():
         settings.setup(args.config)
     elif args.mainnet:
         settings.setup_mainnet()
+    elif args.testnet:
+        settings.setup_testnet()
     elif args.privnet:
         settings.setup_privnet()
     elif args.coznet:

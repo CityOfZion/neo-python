@@ -11,6 +11,7 @@ from logzero import logger
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
+from neo.Settings import settings
 
 
 API_URL_PREFIX = "/v1"
@@ -33,7 +34,7 @@ class NotificationRestApi(object):
             <li><pre>{apiPrefix}/notifications/addr/<addr></pre><em>notifications by address</em></li>
             <li><pre>{apiPrefix}/notifications/tx/<hash></pre><em>notifications by tx</em></li>
             <li><pre>{apiPrefix}/notifications/contract/<hash></pre><em>notifications by contract</em></li>
-            <li><pre>{apiPrefix}v1/tokens</pre><em>lists all NEP5 Tokens</em></li>
+            <li><pre>{apiPrefix}/tokens</pre><em>lists all NEP5 Tokens</em></li>
             <li><pre>{apiPrefix}/token/<contract_hash></pre><em>list an NEP5 Token</em></li>
         </ul>
         """.format(apiPrefix=API_URL_PREFIX)
@@ -41,6 +42,13 @@ class NotificationRestApi(object):
         return """<html>
                     <style>body {padding:20px;max-width:800px;pre { background-color:#eee; }</style>
                     <body>
+                        <p>
+                            <h2>REST API for NEO %s</h2>
+                            (see also <a href="https://github.com/CityOfZion/neo-python">neo-python</a>, <a href="https://github.com/CityOfZion/neo-python/blob/development/api-server.py">api-server.py</a>)
+                        </p>
+
+                        <hr/>
+
                         <h2>endpoints:</h2>
                         <p>%s</p>
                         <div>
@@ -104,7 +112,7 @@ class NotificationRestApi(object):
 }</pre>
                         </div>
                     </body>
-                </html>""" % endpoints_html
+                </html>""" % (settings.net_name, endpoints_html)
 
     @app.route('%s/notifications/block/<int:block>' % API_URL_PREFIX, methods=['GET'])
     def get_by_block(self, request, block):
