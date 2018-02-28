@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-This api server runs one or both of the json-rpc and rest api.
-(neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi)
+This api server runs one or both of the json-rpc and rest api. Uses
+neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi
 
-Example systemd service config: TODO
+See also:
+
+* Example systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
+* JSON-RPC api issues: https://github.com/CityOfZion/neo-python/issues/273
 """
 import os
 import argparse
