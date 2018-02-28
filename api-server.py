@@ -32,10 +32,12 @@ LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
+# Set the PID file
+PID_FILE = "/tmp/neopython-api-server.pid"
 
 def write_pid_file():
     """ Write a pid file, to easily kill the service """
-    f = open('/tmp/json-rpc-api-server.pid', 'w')
+    f = open(PID_FILE, "w")
     f.write(str(os.getpid()))
     f.close()
 
