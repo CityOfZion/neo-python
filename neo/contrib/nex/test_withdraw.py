@@ -133,7 +133,7 @@ class WithdrawWalletTestCase(WalletFixtureTestCase):
 
         self.assertIsInstance(res2, InvocationTransaction)
 
-        self.assertEqual(res2.Hash.ToString(), '828a161d718890c7de29527f5c8c705cba1abb17bc627f76681800e78a49e200')
+        self.assertEqual(res2.Hash.ToString(), '5f3e82e6472f4897071cec91f50cd71a5e006a1221385763d4bfbdf7d7d16be2')
 
     def test_4_withdraw_one(self):
 
@@ -161,7 +161,7 @@ class WithdrawWalletTestCase(WalletFixtureTestCase):
 
         self.assertIsInstance(res, InvocationTransaction)
 
-        self.assertEqual(res.Hash.ToString(), 'aa27a2331631e7594517fed5f6388e6f3e2567a7854b4d98901c818d9f20d03e')
+        self.assertEqual(res.Hash.ToString(), '24708397bf6a54df7f2161348a399dca24082fd00d564bf21fa2cb18ff1efbe5')
 
     def test_7_delete_holds(self):
 

@@ -4,7 +4,9 @@ from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neo.Prompt.Commands.BuildNRun import BuildAndRun
 from neo.Wallets.utils import to_aes_key
+from neo.Settings import settings
 
+settings.log_smart_contract_events = True
 
 class UserWalletTestCase(WalletFixtureTestCase):
 
