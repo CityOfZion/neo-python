@@ -116,7 +116,6 @@ class NotificationRestApi(object):
             return self.format_message("Could not get notifications for block %s because %s " % (block, e))
         return self.format_notifications(request, notifications)
 
-    @app.route('/notifications/addr/<string:address>', methods=['GET'])
     @app.route('%s/addr/<string:address>' % API_URL_PREFIX, methods=['GET'])
     def get_by_addr(self, request, address):
         request.setHeader('Content-Type', 'application/json')
@@ -127,7 +126,6 @@ class NotificationRestApi(object):
             return self.format_message("Could not get notifications for address %s because %s" % (address, e))
         return self.format_notifications(request, notifications)
 
-    @app.route('/notifications/tx/<string:tx_hash>', methods=['GET'])
     @app.route('%s/tx/<string:tx_hash>' % API_URL_PREFIX, methods=['GET'])
     def get_by_tx(self, request, tx_hash):
         request.setHeader('Content-Type', 'application/json')
@@ -147,7 +145,6 @@ class NotificationRestApi(object):
 
         return self.format_notifications(request, notifications)
 
-    @app.route('/notifications/contract/<string:contract_hash>', methods=['GET'])
     @app.route('%s/contract/<string:contract_hash>' % API_URL_PREFIX, methods=['GET'])
     def get_by_contract(self, request, contract_hash):
         request.setHeader('Content-Type', 'application/json')
@@ -159,14 +156,12 @@ class NotificationRestApi(object):
             return self.format_message("Could not get notifications for contract hash %s because %s" % (contract_hash, e))
         return self.format_notifications(request, notifications)
 
-    @app.route('/tokens', methods=['GET'])
     @app.route('%s/tokens' % API_URL_PREFIX, methods=['GET'])
     def get_tokens(self, request):
         request.setHeader('Content-Type', 'application/json')
         notifications = self.notif.get_tokens()
         return self.format_notifications(request, notifications)
 
-    @app.route('/token/<string:contract_hash>', methods=['GET'])
     @app.route('%s/token/<string:contract_hash>' % API_URL_PREFIX, methods=['GET'])
     def get_token(self, request, contract_hash):
         request.setHeader('Content-Type', 'application/json')
