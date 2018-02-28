@@ -67,8 +67,8 @@ def main():
                        help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
-    parser.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api")
-    parser.add_argument("--port-rest", type=int, help="port to use for the rest api")
+    parser.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api (eg. 10332)")
+    parser.add_argument("--port-rest", type=int, help="port to use for the rest api (eg. 80)")
 
     args = parser.parse_args()
 
