@@ -114,8 +114,8 @@ def main():
     api_server_rest = NotificationRestApi()
 
     # Setup endpoints. One port per api
-    endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, '0.0.0.0')
-    endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, '0.0.0.0')
+    endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, host)
+    endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
     endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
     endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 
