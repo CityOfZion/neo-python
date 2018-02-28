@@ -4,6 +4,9 @@ from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neo.Prompt.Commands.BuildNRun import BuildAndRun
 from neo.Wallets.utils import to_aes_key
+from neo.Settings import settings
+
+settings.log_smart_contract_events = True
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -35,10 +38,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", True, False, "put", "key1", "b'ab'"]
 
-        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
+        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, min_fee=Fixed8.FromDecimal(.0004))
 
         expected_cost = Fixed8.FromDecimal(1.056)
-        expected_fee = Fixed8.FromDecimal(.001)
+        expected_fee = Fixed8.FromDecimal(.0004)
 
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
@@ -58,7 +61,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(6.151)
-        expected_fee = Fixed8.FromDecimal(.001)
+        expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
         self.assertEqual(bool(result), True)
@@ -78,7 +81,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(1.18)
-        expected_fee = Fixed8.FromDecimal(.001)
+        expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
         self.assertEqual(result, bytearray(b'\xab\xab\xab\xab\xab\xab'))
@@ -98,7 +101,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(2.18)
-        expected_fee = Fixed8.FromDecimal(.001)
+        expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
 
@@ -143,6 +146,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(9.715)
-        expected_gas = Fixed8.FromDecimal(.001)
+        expected_gas = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
