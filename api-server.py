@@ -13,6 +13,7 @@ from time import sleep
 from logzero import logger
 from twisted.internet import reactor, task, endpoints
 from twisted.web.server import Site
+from klein import Klein
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
@@ -66,10 +67,20 @@ def main():
                        help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
-    parser.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api", required=True)
-    parser.add_argument("--port-rest", type=int, help="port to use for the rest api", required=True)
+    parser.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api")
+    parser.add_argument("--port-rest", type=int, help="port to use for the rest api")
 
     args = parser.parse_args()
+
+    if not args.port_rpc and not args.port_rest:
+        print("Error: specify at least one of --port-rpc / --port-rest")
+        parser.print_help()
+        return
+
+    if args.port_rpc == args.port_rest:
+        print("Error: --port-rpc and --port-rest cannot be the same")
+        parser.print_help()
+        return
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
@@ -108,21 +119,20 @@ def main():
 
     host = "0.0.0.0"
 
-    logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
-    logger.info("Starting notification api server on http://%s:%s" % (host, args.port_rest))
+    if args.port_rpc:
+        logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
+        api_server_rpc = JsonRpcApi(args.port_rpc)
+        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, host)
+        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
-    # Setup Klein apps
-    api_server_rpc = JsonRpcApi(args.port_rpc)
-    api_server_rest = NotificationRestApi()
+    if args.port_rest:
+        logger.info("Starting notification api server on http://%s:%s" % (host, args.port_rest))
+        api_server_rest = NotificationRestApi()
+        endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
+        endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 
-    # Setup endpoints. One port per api
-    endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, host)
-    endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
-    endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
-    endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
-
-    # Run the server, needs a dummy port
-    api_server_rest.app.run(host, 9999)
+    app = Klein()
+    app.run(host, 9999)
 
 
 if __name__ == "__main__":
