@@ -81,10 +81,9 @@ class JsonRpcApi(object):
     #
     @app.route('/')
     @json_response
+    @cors_header
     def home(self, request):
-        # CORS headers first
-        request.setHeader('Access-Control-Allow-Origin', '*')
-
+        # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         body = None
         request_id = None
 
