@@ -47,7 +47,7 @@ class ContractParameter():
             return ContractParameter(type=ContractParameterType.ByteArray, value=item.GetByteArray())
 
         elif isinstance(item, Integer):
-            return ContractParameter(type=ContractParameterType.Integer, value=item.GetBigInteger())
+            return ContractParameter(type=ContractParameterType.Integer, value=str(item.GetBigInteger()))
 
         elif isinstance(item, InteropInterface):
             return ContractParameter(type=ContractParameterType.InteropInterface, value=item.GetInterface())

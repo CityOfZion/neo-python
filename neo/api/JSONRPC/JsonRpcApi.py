@@ -29,6 +29,7 @@ from neo.Core.State.StorageKey import StorageKey
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.VM.VMState import VMStateStr
 
 
 class JsonRpcError(Exception):
@@ -288,7 +289,7 @@ class JsonRpcApi(object):
         appengine = ApplicationEngine.Run(script=script)
         return {
             "script": script.decode('utf-8'),
-            "state": appengine.State,
+            "state": VMStateStr(appengine.State),
             "gas_consumed": appengine.GasConsumed().ToString(),
             "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]
         }

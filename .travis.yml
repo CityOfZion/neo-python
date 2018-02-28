@@ -1,6 +1,6 @@
 language: python
 python:
-  - "3.5"
+  - "3.6"
 
 addons:
   apt:
@@ -16,6 +16,7 @@ install:
 # command to run tests
 script:
   - coverage run -m unittest discover neo
+  - coverage run -m -a unittest discover boa_test
   - pycodestyle prompt.py
   - pycodestyle neo
   - pycodestyle examples

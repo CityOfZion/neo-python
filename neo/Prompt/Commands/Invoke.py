@@ -31,9 +31,12 @@ from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
+from logzero import logger
 
 from neo.VM.OpCode import *
 import json
+
+DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
 def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
@@ -135,7 +138,7 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None):
+def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None, min_fee=DEFAULT_MIN_FEE):
 
     BC = GetBlockchain()
 
@@ -201,7 +204,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
 
             outputs.append(output)
 
-        return test_invoke(out, wallet, outputs, withdrawal_tx)
+        return test_invoke(out, wallet, outputs, withdrawal_tx, min_fee=min_fee)
 
     else:
 
@@ -210,7 +213,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
     return None, None, None, None
 
 
-def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
+def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min_fee=DEFAULT_MIN_FEE):
 
     # print("invoke script %s " % script)
 
@@ -295,7 +298,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
             tx_gas = None
 
             if consumed <= Fixed8.Zero():
-                net_fee = Fixed8.FromDecimal(.001)
+                net_fee = min_fee
                 tx_gas = Fixed8.Zero()
             else:
                 tx_gas = consumed
@@ -316,7 +319,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None):
     return None, None, None, None
 
 
-def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet, min_fee=DEFAULT_MIN_FEE):
 
     bc = GetBlockchain()
 
@@ -403,7 +406,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
                 item.reverse()
                 listlength = len(item)
                 for listitem in item:
-                    sb.push(listitem)
+                    subitem = parse_param(listitem, wallet)
+                    sb.push(subitem)
                 sb.push(listlength)
                 sb.Emit(PACK)
             else:
@@ -469,25 +473,26 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet):
 
         if i_success:
             service.TestCommit()
-
             if len(service.notifications) > 0:
+
                 for n in service.notifications:
+                    #                        print("NOTIFICATION : %s " % n)
                     Blockchain.Default().OnNotify(n)
 
-            print("Used %s Gas " % engine.GasConsumed().ToString())
+            logger.info("Used %s Gas " % engine.GasConsumed().ToString())
 
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed = consumed.Ceil()
 
             if consumed <= Fixed8.Zero():
-                consumed = Fixed8.FromDecimal(.001)
+                consumed = min_fee
 
             total_ops = engine.ops_processed
 
             # set the amount of gas the tx will need
             itx.Gas = consumed
             itx.Attributes = []
-            result = engine.ResultsForCode(contract_state.Code)
+            result = engine.EvaluationStack.Items
             return itx, result, total_ops, engine
         else:
             print("error executing invoke contract...")
