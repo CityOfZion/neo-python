@@ -107,17 +107,19 @@ def main():
     host = "0.0.0.0"
 
     logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
-    api_server_rpc = JsonRpcApi(args.port_rpc)
-
     logger.info("Starting notification api server on http://%s:%s" % (host, args.port_rest))
+
+    # Setup Klein apps
+    api_server_rpc = JsonRpcApi(args.port_rpc)
     api_server_rest = NotificationRestApi()
 
+    # Setup endpoints. One port per api
     endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, '0.0.0.0')
     endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, '0.0.0.0')
-
     endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
     endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 
+    # Run the server, needs a dummy port
     api_server_rest.app.run(host, 9999)
 
 
