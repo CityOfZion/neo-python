@@ -30,12 +30,12 @@ class NotificationRestApi(object):
     @app.route('/')
     def home(self, request):
         endpoints_html = """<ul>
-            <li><pre>{apiPrefix}/notifications/block/<height></pre> <em>notifications by block</em></li>
-            <li><pre>{apiPrefix}/notifications/addr/<addr></pre><em>notifications by address</em></li>
-            <li><pre>{apiPrefix}/notifications/tx/<hash></pre><em>notifications by tx</em></li>
-            <li><pre>{apiPrefix}/notifications/contract/<hash></pre><em>notifications by contract</em></li>
+            <li><pre>{apiPrefix}/notifications/block/&lt;height&gt;</pre> <em>notifications by block</em></li>
+            <li><pre>{apiPrefix}/notifications/addr/&lt;addr&gt;</pre><em>notifications by address</em></li>
+            <li><pre>{apiPrefix}/notifications/tx/&lt;hash&gt;</pre><em>notifications by tx</em></li>
+            <li><pre>{apiPrefix}/notifications/contract/&lt;hash&gt;</pre><em>notifications by contract</em></li>
             <li><pre>{apiPrefix}/tokens</pre><em>lists all NEP5 Tokens</em></li>
-            <li><pre>{apiPrefix}/token/<contract_hash></pre><em>list an NEP5 Token</em></li>
+            <li><pre>{apiPrefix}/token/&lt;contract_hash&gt;</pre><em>list an NEP5 Token</em></li>
         </ul>
         """.format(apiPrefix=API_URL_PREFIX)
 
