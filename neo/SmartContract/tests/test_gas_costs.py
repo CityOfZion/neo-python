@@ -58,7 +58,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(6.151)
-        expected_fee = Fixed8.FromDecimal(.001)
+        expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
         self.assertEqual(bool(result), True)
@@ -78,7 +78,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(1.18)
-        expected_fee = Fixed8.FromDecimal(.001)
+        expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
         self.assertEqual(result, bytearray(b'\xab\xab\xab\xab\xab\xab'))
@@ -98,7 +98,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(2.18)
-        expected_fee = Fixed8.FromDecimal(.001)
+        expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
 
@@ -143,6 +143,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(9.715)
-        expected_gas = Fixed8.FromDecimal(.001)
+        expected_gas = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
