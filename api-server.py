@@ -58,7 +58,7 @@ def custom_background_code():
 def main():
     parser = argparse.ArgumentParser()
 
-    group = parser.add_mutually_exclusive_group()
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-m", "--mainnet", action="store_true", default=False,
                        help="Use MainNet instead of the default TestNet")
     group.add_argument("-p", "--privnet", action="store_true", default=False,
