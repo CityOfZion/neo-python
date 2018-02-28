@@ -1054,11 +1054,9 @@ class Wallet(object):
 
         self._vin_exclude = None
 
-        is_synced = self.IsSynced()
-
         for key, unspents in paycoins.items():
             if unspents is None:
-                if not is_synced:
+                if not self.IsSynced:
                     logger.warn("Wait for your wallet to be synced before doing "
                                 "transactions. To check enter 'wallet' and look at "
                                 "'percent_synced', it should be 100. Also the blockchain "
@@ -1216,9 +1214,10 @@ class Wallet(object):
                 balances.append((asset.symbol, self.GetBalance(asset)))
         return balances
 
+    @property
     def IsSynced(self):
         """
-        Checks if wallet is synced.
+        Check if wallet is synced.
 
         Returns:
             bool: True if wallet is synced.
