@@ -1,6 +1,6 @@
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, generate_deploy_script
-from neo.Prompt.Commands.Invoke import test_deploy_and_invoke
+from neo.Prompt.Commands.Invoke import test_deploy_and_invoke, DEFAULT_MIN_FEE
 from neocore.Fixed8 import Fixed8
 from boa.compiler import Compiler
 
@@ -33,7 +33,7 @@ def LoadAndRun(arguments, wallet):
         print("Could not load script %s " % e)
 
 
-def BuildAndRun(arguments, wallet, verbose=True):
+def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE):
     path = get_arg(arguments)
 
     contract_script = Compiler.instance().load_and_save(path)
@@ -41,10 +41,10 @@ def BuildAndRun(arguments, wallet, verbose=True):
     newpath = path.replace('.py', '.avm')
     print("Saved output to %s " % newpath)
 
-    return DoRun(contract_script, arguments, wallet, path, verbose)
+    return DoRun(contract_script, arguments, wallet, path, verbose, min_fee=min_fee)
 
 
-def DoRun(contract_script, arguments, wallet, path, verbose=True):
+def DoRun(contract_script, arguments, wallet, path, verbose=True, min_fee=DEFAULT_MIN_FEE):
 
     test = get_arg(arguments, 1)
 
@@ -57,7 +57,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True):
 
             script = GatherLoadedContractParams(f_args, contract_script)
 
-            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, min_fee)
             i_args.reverse()
 
             if tx is not None and result is not None:
