@@ -186,6 +186,8 @@ class NotificationRestApi(object):
         try:
             uint160 = UInt160.ParseString(contract_hash)
             contract_event = self.notif.get_token(uint160)
+            if not contract_event:
+                return self.format_message("Could not find contract with hash %s" % contract_hash)
             notifications = [contract_event]
         except Exception as e:
             logger.info("Could not get contract with hash %s because %s " % (contract_hash, e))
