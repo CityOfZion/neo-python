@@ -39,6 +39,7 @@ settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 # Set the PID file
 PID_FILE = "/tmp/neopython-api-server.pid"
 
+
 def write_pid_file():
     """ Write a pid file, to easily kill the service """
     f = open(PID_FILE, "w")
