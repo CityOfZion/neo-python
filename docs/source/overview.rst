@@ -11,12 +11,13 @@ What does it currently do
 - Compile, test, deploy and run Smart Contracts written in python or any Smart Contract in the ``.avm format``
 - `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>`_ and `NEP5 <https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki>`_ compliant wallet functionality
 - RPC Client
+- RPC server
+- Notification Server ( for viewing transfers of NEP5 tokens )
 - ``Runtime.Log`` and ``Runtime.Notify`` event monitoring
 
 What will it do
 ^^^^^^^^^^^^^^^
 
-- RPC server
 - Consensus nodes
 - Full smart contract debugging and inspection
 

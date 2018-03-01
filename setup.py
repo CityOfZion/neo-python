@@ -17,8 +17,8 @@ reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
     name='neo-python',
-    python_requires='>=3.4, <3.6',
-    version='0.4.10',
+    python_requires='>=3.6',
+    version='0.5.0',
     description="Python Node and SDK for the NEO blockchain",
     long_description=readme,
     author="Thomas Saunders",
@@ -36,8 +36,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5'
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ]
 )

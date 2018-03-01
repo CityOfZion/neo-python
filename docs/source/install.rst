@@ -2,7 +2,7 @@
 Installation
 ------------
 
-You will need to install the libleveldb library. Install `Python 3.5 <https://www.python.org/downloads/release/python-354/>`_ to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.6 is not currently supported due to incompatibilities with the byteplay module.
+You will need to install the libleveldb library. Install `Python 3.6 <https://www.python.org/downloads/release/python-364/>`_ to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.5 and below are not supported.
 
 Installation via ``pip`` is not currently available at this time
 
@@ -21,11 +21,11 @@ Make a Python 3 virtual environment and activate it via
     python3 -m venv venv
     source venv/bin/activate
 
-or to explicitly install Python 3.5,
+or to explicitly install Python 3.6,
 
 ::
 
-    virtualenv -p /usr/local/bin/python3.5 venv
+    virtualenv -p /usr/local/bin/python3.6 venv
     source venv/bin/activate
 
 Then install the requirements via
@@ -70,9 +70,10 @@ Ubuntu/Debian
 
 ::
 
-    apt-get install libleveldb-dev python3.5-dev python3-pip libssl-dev
+    apt-get install libleveldb-dev python3.6-dev python3-pip libssl-dev
 
 
+    
 Centos/Redhat/Fedora
 """"""""""""""""""""
 
@@ -80,7 +81,7 @@ This is a bit more tricky. You may need to enable the epel repo for the leveldb-
 
 ::
 
-    yum -y install development tools python35 python35-devel python35-pip readline-devel leveldb-devel libffi-devel
+    yum -y install development tools python36 python36-devel python36-pip readline-devel leveldb-devel libffi-devel
 
 
 Windows
@@ -101,9 +102,9 @@ If you're having an issue similar to this:
 .. code-block:: sh
 
     from ._plyvel import (  # noqa
-    ImportError: dlopen(neo-python/venv/lib/python3.5/site-packages/plyvel/_plyvel.cpython-35m-darwin.so, 2): Symbol not found: __ZN7leveldb2DB4OpenERKNS_7Options
+    ImportError: dlopen(neo-python/venv/lib/python3.6/site-packages/plyvel/_plyvel.cpython-35m-darwin.so, 2): Symbol not found: __ZN7leveldb2DB4OpenERKNS_7Options
     ERKSsPPS0_
-    Referenced from: neo-python/venv/lib/python3.5/site-packages/plyvel/_plyvel.cpython-35m-darwin.so
+    Referenced from: neo-python/venv/lib/python3.6/site-packages/plyvel/_plyvel.cpython-35m-darwin.so
     Expected in: flat namespace
 
 **Solution**: Update to plyvel 1.0.4: `pip install -r requirements.txt`
@@ -136,14 +137,14 @@ If you encounter an error like this:
 .. code-block:: sh
 
     import scrypt
-    File "/project_dir/venv/lib/python3.5/site-packages/scrypt.py", line 11, in
+    File "/project_dir/venv/lib/python3.6/site-packages/scrypt.py", line 11, in
     _scrypt = cdll.LoadLibrary(imp.find_module('_scrypt')[1])
-    File "/project_dir/venv/lib/python3.5/ctypes/init.py", line 429, in LoadLibrary
+    File "/project_dir/venv/lib/python3.6/ctypes/init.py", line 429, in LoadLibrary
     return self._dlltype(name)
-    File "/project_dir/venv/lib/python3.5/ctypes/init.py", line 351, in init
+    File "/project_dir/venv/lib/python3.6/ctypes/init.py", line 351, in init
     self._handle = _dlopen(self._name, mode)
-    OSError: dlopen(/project_dir/venv/lib/python3.5/site-packages/_scrypt.cpython-35m-darwin.so, 6): Library not loaded: /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib
-    Referenced from: /project_dir/venv/lib/python3.5/site-packages/_scrypt.cpython-35m-darwin.so
+    OSError: dlopen(/project_dir/venv/lib/python3.6/site-packages/_scrypt.cpython-36m-darwin.so, 6): Library not loaded: /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib
+    Referenced from: /project_dir/venv/lib/python3.6/site-packages/_scrypt.cpython-36m-darwin.so
     Reason: image not found
 
 The solution probably is

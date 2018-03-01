@@ -2,6 +2,7 @@ Installation (Windows)
 ----------------------
 
 The instructions are written for Windows 7 x64 with MSYS2 environment and Visual Studio 2017. It should probably work for other Windows distributions.
+Another option is to setup a Linux Subsystem with Ubuntu (see also [here](https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213) for more infos and a guide).
 
 
 Building LevelDB
@@ -32,7 +33,7 @@ Activate python virtual environment. One of possible ways is using Anaconda.
 
 ::
 
-    conda create -n neo python=3.5.4
+    conda create -n neo python=3.6.4
     activate neo
 
 Build python wheel for plyvel

@@ -26,7 +26,7 @@ class ContractParameterType(Enum):
     Void = 0xff
 
     def __str__(self):
-        return str(self.value.to_bytes(1, 'little').hex())
+        return self.name
 
     @staticmethod
     def FromString(val):
@@ -34,12 +34,27 @@ class ContractParameterType(Enum):
         Create a ContractParameterType object from a str
 
         Args:
-            val (str): the value to be converted to a ContractParameterType
+            val (str): the value to be converted to a ContractParameterType.
+            val can be hex encoded (b'07'), int (7), string int ("7"), or string literal ("String")
 
         Returns:
             ContractParameterType
         """
-        return ContractParameterType(int.from_bytes(binascii.unhexlify(val), 'little'))
+        # first, check if the value supplied is the string literal of the enum (e.g. "String")
+        try:
+            return ContractParameterType[val]
+        except KeyError as e:
+            # ignore a KeyError if the val isn't found in the Enum
+            pass
+
+        # second, check if the value supplied is hex-encoded (e.g. b'07')
+        try:
+            int_val = int.from_bytes(binascii.unhexlify(val), 'little')
+        except (binascii.Error, TypeError) as e:
+            # if it's not hex-encoded, then convert as int (e.g. "7" or 7)
+            int_val = int(val)
+
+        return ContractParameterType(int_val)
 
 
 import inspect

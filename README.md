@@ -38,11 +38,12 @@
   [NEP5](https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki)
   compliant wallet functionality
 - RPC Client
+- RPC server
+- Notification Server ( for viewing transfers of NEP5 tokens )
 - `Runtime.Log` and `Runtime.Notify` event monitoring
 
 ### What will it do
 
-- RPC server
 - Consensus nodes
 - More robust smart contract debugging and inspection
 
@@ -56,21 +57,28 @@ found at [Read The Docs](https://neo-python.readthedocs.io/en/latest/).
 - Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
 - Or ping **@localhuman**  or **@metachris** on the [NEO Discord](https://discord.gg/R8v48YA).
 - Pull requests welcome. You can help with wallet functionality, writing tests
-  or documentation, or on any other feature you deem awesome. All successful
-  pull requests will be rewarded with one photo of a cat or kitten.
-
+  or documentation, or on any other feature you deem awesome. 
+  
 ## Getting started
 
 neo-python has two System dependencies (everything else is covered with `pip`):
 
 - [LevelDB](https://github.com/google/leveldb)
-- [Python 3.5.4](https://www.python.org/downloads/release/python-354) (3.6 and up is currently not supported due to its `byteplay3` dependency)
+- [Python 3.6+](https://www.python.org/downloads/release/python-364/) (3.5 and below is not supported)
 
 We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get
 you started. There are many more videos under the
 [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
 channel, check them out.
 
+#### Docker
+
+Using Docker is another option to run neo-python. There are example Dockerfiles provided in the [`/docker folder`](https://github.com/CityOfZion/neo-python/tree/development/docker), and we have an image on Docker hub, tagged after
+the neo-python releases: https://hub.docker.com/r/cityofzion/neo-python/
+
+## Native installation
+
+Instructions on the system setup for neo-python:
 
 ### LevelDB
 
@@ -83,7 +91,7 @@ brew install leveldb
 #### Ubuntu/Debian
 
 ```
-apt-get install libleveldb-dev python3.5-dev python3-pip python3-venv libssl-dev g++
+apt-get install libleveldb-dev python3.6-dev python3-pip python3-venv libssl-dev g++
 ```
 
 #### Centos/Redhat/Fedora
@@ -91,10 +99,10 @@ apt-get install libleveldb-dev python3.5-dev python3-pip python3-venv libssl-dev
 This is a bit more tricky...
 
 ```
-# Install Python 3.5:
+# Install Python 3.6:
 yum install -y centos-release-scl
-yum install -y rh-python35
-scl enable rh-python35 bash
+yum install -y rh-python36
+scl enable rh-python36 bash
 
 # Install dependencies:
 yum install -y epel-release
@@ -106,12 +114,15 @@ yum install -y readline-devel leveldb-devel libffi-devel gcc-c++ redhat-rpm-conf
 Help needed. Installing the Python package plyvel seems to require C++ compiler
 support tied to Visual Studio and libraries. Refer to [documentation](https://neo-python.readthedocs.io/en/latest/installwindows.html).
 
-### Python 3.5
+Currently you probably should use the Linux subsystem with Ubuntu, or a Virtual Machine with Linux. You can find more information
+and a guide for setting up the Linux subsystem [here](https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213).
 
-neo-python is currently only compatible with **Python 3.5** (due to its `byteplay3` dependency).
+### Python 3.6
 
-On *nix systems, install Python 3.5 via your package manager, or download an installation package
-from the [official homepage](https://www.python.org/downloads/release/python-354).
+neo-python is compatible with **Python 3.6 and later**.
+
+On *nix systems, install Python 3.6 via your package manager, or download an installation package
+from the [official homepage](https://www.python.org/downloads/release/python-364/).
 
 ### Virtual Environment
 
@@ -119,7 +130,7 @@ It is recommended to put all project dependencies into its own virtual environme
 this way we don't pollute the global installation which could lead to version conflicts.
 
 ```
-python3.5 -m venv venv
+python3.6 -m venv venv
 source venv/bin/activate
 ```
 
@@ -133,9 +144,6 @@ pip install -e .
 -------------------
 
 ## Running
-
-Before running the neo-python CLI, make sure that the `Chains` directory in the
-project has the proper write permissions.
 
 After installing requirements and activating the environment, there is an easy
 to use CLI (`prompt.py`) that starts the node and allows some basic interactivity.
@@ -176,6 +184,12 @@ neo> block 122235
 }
 neo>
 ```
+
+## Bootstrapping the Blockchain
+
+If you use neo-python for the first time, you need to synchronize the blockchain, which may take a long time. Included in this project is `bootstrap.py` to automatically download a chain directory for you. To bootstrap for testnet, run `python bootstrap.py`, get a cup of coffee and wait. To bootstrap for mainnet, use `python bootstrap.py -m` and get 8 cups of coffee (3.3 GB file).
+
+Important: do not use the chain files from https://github.com/CityOfZion/awesome-neo.git, they will not work with neo-python.
 
 ### Available Wallet commands
 
@@ -274,7 +288,7 @@ Make sure you are on the development branch and have all changes merged that you
 
 If you run into problems, check these things before ripping out your hair:
 
-* Double-check that you are using Python 3.5.x
+* Double-check that you are using Python 3.6.x
 * Update the project dependencies (`pip install -e .`)
 * If you encounter any problems, please take a look at the [installation
   section](https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes)

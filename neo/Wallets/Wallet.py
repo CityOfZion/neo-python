@@ -187,17 +187,17 @@ class Wallet(object):
             return
         self._tokens[token.ScriptHash.ToBytes()] = token
 
-    def DeleteNEP5Token(self, token):
+    def DeleteNEP5Token(self, script_hash):
         """
         Delete a NEP5 token from the wallet.
 
         Args:
-            token (NEP5Token): an instance of type neo.Wallets.NEP5Token.
+            token (UInt160): Token Contract script hash
 
         Returns:
             bool: success status.
         """
-        return self._tokens.pop(token.ScriptHash.ToBytes())
+        return self._tokens.pop(script_hash.ToBytes())
 
     def ChangePassword(self, password_old, password_new):
         """
@@ -642,17 +642,20 @@ class Wallet(object):
         # abstract
         pass
 
-    def ProcessBlocks(self):
+    def ProcessBlocks(self, block_limit=1000):
         """
         Method called on a loop to check the current height of the blockchain.  If the height of the blockchain
         is more than the current stored height in the wallet, we get the next block in line and
         processes it.
 
-        In the case that the wallet height is far behind the height of the blockchain, we do this 500
+        In the case that the wallet height is far behind the height of the blockchain, we do this 1000
         blocks at a time.
+
+        Args:
+            block_limit (int): the number of blocks to process synchronously. defaults to 1000. set to 0 to block until the wallet is fully rebuilt.
         """
         blockcount = 0
-        while self._current_height <= Blockchain.Default().Height and blockcount < 1000:
+        while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
 
             block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
