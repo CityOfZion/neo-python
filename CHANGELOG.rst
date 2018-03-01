@@ -3,8 +3,15 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.4.11-dev] work in progress
+[0.5.0] 2018-03-01
 -----------------------------
+- Move to Python 3.6 (`PR #270 <https://github.com/CityOfZion/neo-python/pull/270>`_)
+    - move to only python 3.6+ support
+    - use new version of compiler ( neo-boa==0.3.3 ) based on python 3.6 wordcode
+    - full testing of VM and all compiled smart contracts
+    - adds new command `TestBuild` for running tests of compiled contracts
+- Add Notification REST URL prefix (`PR #274 <https://github.com/CityOfZion/neo-python/pull/274>`_)
+- Add ``api-server.py`` (`PR #271 <https://github.com/CityOfZion/neo-python/pull/271>`_)
 - Fixed script value returned by JSON-RPC invokes (`PR #268 <https://github.com/CityOfZion/neo-python/pull/268>`_)
 - Added support for additional JSON-RPC "type" parameters (`PR #267 <https://github.com/CityOfZion/neo-python/pull/267>`_)
 - Updating of almost all dependencies (`PR #261 <https://github.com/CityOfZion/neo-python/pull/261>`_)

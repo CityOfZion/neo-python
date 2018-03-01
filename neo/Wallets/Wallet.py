@@ -187,17 +187,17 @@ class Wallet(object):
             return
         self._tokens[token.ScriptHash.ToBytes()] = token
 
-    def DeleteNEP5Token(self, token):
+    def DeleteNEP5Token(self, script_hash):
         """
         Delete a NEP5 token from the wallet.
 
         Args:
-            token (NEP5Token): an instance of type neo.Wallets.NEP5Token.
+            token (UInt160): Token Contract script hash
 
         Returns:
             bool: success status.
         """
-        return self._tokens.pop(token.ScriptHash.ToBytes())
+        return self._tokens.pop(script_hash.ToBytes())
 
     def ChangePassword(self, password_old, password_new):
         """
