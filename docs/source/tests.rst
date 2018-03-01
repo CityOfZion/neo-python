@@ -5,4 +5,11 @@ Run tests with the following command
 
 .. code-block:: sh
 
-    python -m unittest discover neo
+    make test
+
+
+Run style checks with this command
+
+.. code-block:: sh
+
+    make lint

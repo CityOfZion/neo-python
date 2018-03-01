@@ -38,11 +38,12 @@
   [NEP5](https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki)
   compliant wallet functionality
 - RPC Client
+- RPC server
+- Notification Server ( for viewing transfers of NEP5 tokens )
 - `Runtime.Log` and `Runtime.Notify` event monitoring
 
 ### What will it do
 
-- RPC server
 - Consensus nodes
 - More robust smart contract debugging and inspection
 
@@ -56,15 +57,14 @@ found at [Read The Docs](https://neo-python.readthedocs.io/en/latest/).
 - Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
 - Or ping **@localhuman**  or **@metachris** on the [NEO Discord](https://discord.gg/R8v48YA).
 - Pull requests welcome. You can help with wallet functionality, writing tests
-  or documentation, or on any other feature you deem awesome. All successful
-  pull requests will be rewarded with one photo of a cat or kitten.
-
+  or documentation, or on any other feature you deem awesome. 
+  
 ## Getting started
 
 neo-python has two System dependencies (everything else is covered with `pip`):
 
 - [LevelDB](https://github.com/google/leveldb)
-- [Python 3.5.4](https://www.python.org/downloads/release/python-354) (3.6 and up is currently not supported due to its `byteplay3` dependency)
+- [Python 3.6+](https://www.python.org/downloads/release/python-364/) (3.5 and below is not supported)
 
 We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get
 you started. There are many more videos under the
@@ -91,7 +91,7 @@ brew install leveldb
 #### Ubuntu/Debian
 
 ```
-apt-get install libleveldb-dev python3.5-dev python3-pip python3-venv libssl-dev g++
+apt-get install libleveldb-dev python3.6-dev python3-pip python3-venv libssl-dev g++
 ```
 
 #### Centos/Redhat/Fedora
@@ -99,10 +99,10 @@ apt-get install libleveldb-dev python3.5-dev python3-pip python3-venv libssl-dev
 This is a bit more tricky...
 
 ```
-# Install Python 3.5:
+# Install Python 3.6:
 yum install -y centos-release-scl
-yum install -y rh-python35
-scl enable rh-python35 bash
+yum install -y rh-python36
+scl enable rh-python36 bash
 
 # Install dependencies:
 yum install -y epel-release
@@ -117,12 +117,12 @@ support tied to Visual Studio and libraries. Refer to [documentation](https://ne
 Currently you probably should use the Linux subsystem with Ubuntu, or a Virtual Machine with Linux. You can find more information
 and a guide for setting up the Linux subsystem [here](https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213).
 
-### Python 3.5
+### Python 3.6
 
-neo-python is currently only compatible with **Python 3.5** (due to its `byteplay3` dependency).
+neo-python is compatible with **Python 3.6 and later**.
 
-On *nix systems, install Python 3.5 via your package manager, or download an installation package
-from the [official homepage](https://www.python.org/downloads/release/python-354).
+On *nix systems, install Python 3.6 via your package manager, or download an installation package
+from the [official homepage](https://www.python.org/downloads/release/python-364/).
 
 ### Virtual Environment
 
@@ -130,7 +130,7 @@ It is recommended to put all project dependencies into its own virtual environme
 this way we don't pollute the global installation which could lead to version conflicts.
 
 ```
-python3.5 -m venv venv
+python3.6 -m venv venv
 source venv/bin/activate
 ```
 
@@ -288,7 +288,7 @@ Make sure you are on the development branch and have all changes merged that you
 
 If you run into problems, check these things before ripping out your hair:
 
-* Double-check that you are using Python 3.5.x
+* Double-check that you are using Python 3.6.x
 * Update the project dependencies (`pip install -e .`)
 * If you encounter any problems, please take a look at the [installation
   section](https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes)
