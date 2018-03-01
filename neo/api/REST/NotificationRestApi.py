@@ -6,12 +6,14 @@ https://github.com/twisted/klein
 """
 import json
 from klein import Klein
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from logzero import logger
+
+from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Settings import settings
+from neo.api.utils import cors_header
 
 
 API_URL_PREFIX = "/v1"
@@ -30,12 +32,13 @@ class NotificationRestApi(object):
     @app.route('/')
     def home(self, request):
         endpoints_html = """<ul>
-            <li><pre>{apiPrefix}/notifications/block/<height></pre> <em>notifications by block</em></li>
-            <li><pre>{apiPrefix}/notifications/addr/<addr></pre><em>notifications by address</em></li>
-            <li><pre>{apiPrefix}/notifications/tx/<hash></pre><em>notifications by tx</em></li>
-            <li><pre>{apiPrefix}/notifications/contract/<hash></pre><em>notifications by contract</em></li>
+            <li><pre>{apiPrefix}/notifications/block/&lt;height&gt;</pre> <em>notifications by block</em></li>
+            <li><pre>{apiPrefix}/notifications/addr/&lt;addr&gt;</pre><em>notifications by address</em></li>
+            <li><pre>{apiPrefix}/notifications/tx/&lt;hash&gt;</pre><em>notifications by tx</em></li>
+            <li><pre>{apiPrefix}/notifications/contract/&lt;hash&gt;</pre><em>notifications by contract</em></li>
             <li><pre>{apiPrefix}/tokens</pre><em>lists all NEP5 Tokens</em></li>
-            <li><pre>{apiPrefix}/token/<contract_hash></pre><em>list an NEP5 Token</em></li>
+            <li><pre>{apiPrefix}/token/&lt;contract_hash&gt;</pre><em>list an NEP5 Token</em></li>
+            <li><pre>{apiPrefix}/status</pre> <em>current block height and version</em></li>
         </ul>
         """.format(apiPrefix=API_URL_PREFIX)
 
@@ -115,6 +118,7 @@ class NotificationRestApi(object):
                 </html>""" % (settings.net_name, endpoints_html)
 
     @app.route('%s/notifications/block/<int:block>' % API_URL_PREFIX, methods=['GET'])
+    @cors_header
     def get_by_block(self, request, block):
         request.setHeader('Content-Type', 'application/json')
         try:
@@ -125,6 +129,7 @@ class NotificationRestApi(object):
         return self.format_notifications(request, notifications)
 
     @app.route('%s/addr/<string:address>' % API_URL_PREFIX, methods=['GET'])
+    @cors_header
     def get_by_addr(self, request, address):
         request.setHeader('Content-Type', 'application/json')
         try:
@@ -135,6 +140,7 @@ class NotificationRestApi(object):
         return self.format_notifications(request, notifications)
 
     @app.route('%s/tx/<string:tx_hash>' % API_URL_PREFIX, methods=['GET'])
+    @cors_header
     def get_by_tx(self, request, tx_hash):
         request.setHeader('Content-Type', 'application/json')
 
@@ -154,6 +160,7 @@ class NotificationRestApi(object):
         return self.format_notifications(request, notifications)
 
     @app.route('%s/contract/<string:contract_hash>' % API_URL_PREFIX, methods=['GET'])
+    @cors_header
     def get_by_contract(self, request, contract_hash):
         request.setHeader('Content-Type', 'application/json')
         try:
@@ -165,12 +172,14 @@ class NotificationRestApi(object):
         return self.format_notifications(request, notifications)
 
     @app.route('%s/tokens' % API_URL_PREFIX, methods=['GET'])
+    @cors_header
     def get_tokens(self, request):
         request.setHeader('Content-Type', 'application/json')
         notifications = self.notif.get_tokens()
         return self.format_notifications(request, notifications)
 
     @app.route('%s/token/<string:contract_hash>' % API_URL_PREFIX, methods=['GET'])
+    @cors_header
     def get_token(self, request, contract_hash):
         request.setHeader('Content-Type', 'application/json')
         try:
@@ -183,8 +192,16 @@ class NotificationRestApi(object):
 
         return self.format_notifications(request, notifications)
 
-    def format_notifications(self, request, notifications):
+    @app.route('%s/status' % API_URL_PREFIX, methods=['GET'])
+    @cors_header
+    def get_status(self, request):
+        request.setHeader('Content-Type', 'application/json')
+        return json.dumps({
+            'current_height': Blockchain.Default().Height,
+            'version': settings.VERSION_NAME,
+        }, indent=4, sort_keys=True)
 
+    def format_notifications(self, request, notifications):
         notif_len = len(notifications)
         page_len = 500
         page = 0
