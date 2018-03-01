@@ -15,7 +15,6 @@ from json.decoder import JSONDecodeError
 from klein import Klein
 from logzero import logger
 
-from neo import __version__
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response, cors_header

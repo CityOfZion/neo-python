@@ -38,6 +38,7 @@ class NotificationRestApi(object):
             <li><pre>{apiPrefix}/notifications/contract/&lt;hash&gt;</pre><em>notifications by contract</em></li>
             <li><pre>{apiPrefix}/tokens</pre><em>lists all NEP5 Tokens</em></li>
             <li><pre>{apiPrefix}/token/&lt;contract_hash&gt;</pre><em>list an NEP5 Token</em></li>
+            <li><pre>{apiPrefix}/status</pre> <em>current block height and version</em></li>
         </ul>
         """.format(apiPrefix=API_URL_PREFIX)
 
@@ -190,6 +191,15 @@ class NotificationRestApi(object):
             return self.format_message("Could not get contract with hash %s because %s " % (contract_hash, e))
 
         return self.format_notifications(request, notifications)
+
+    @app.route('%s/status' % API_URL_PREFIX, methods=['GET'])
+    @cors_header
+    def get_status(self, request):
+        request.setHeader('Content-Type', 'application/json')
+        return json.dumps({
+            'current_height': Blockchain.Default().Height,
+            'version': settings.VERSION_NAME,
+        }, indent=4, sort_keys=True)
 
     def format_notifications(self, request, notifications):
         notif_len = len(notifications)
