@@ -8,6 +8,7 @@ import json
 from klein import Klein
 from logzero import logger
 
+from neo.Network.NodeLeader import NodeLeader
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
@@ -199,6 +200,7 @@ class NotificationRestApi(object):
         return json.dumps({
             'current_height': Blockchain.Default().Height,
             'version': settings.VERSION_NAME,
+            'num_peers': len(NodeLeader.Instance().Peers)
         }, indent=4, sort_keys=True)
 
     def format_notifications(self, request, notifications):
