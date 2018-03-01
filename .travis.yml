@@ -35,4 +35,3 @@ deploy:
     tags: true
     all_branches: true
     repo: CityOfZion/neo-python
-python: 3.5
