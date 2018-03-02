@@ -57,8 +57,8 @@ found at [Read The Docs](https://neo-python.readthedocs.io/en/latest/).
 - Open a new [issue](https://github.com/CityOfZion/neo-python/issues/new) if you encounter a problem.
 - Or ping **@localhuman**  or **@metachris** on the [NEO Discord](https://discord.gg/R8v48YA).
 - Pull requests welcome. You can help with wallet functionality, writing tests
-  or documentation, or on any other feature you deem awesome. 
-  
+  or documentation, or on any other feature you deem awesome.
+
 ## Getting started
 
 neo-python has two System dependencies (everything else is covered with `pip`):
@@ -88,15 +88,26 @@ Instructions on the system setup for neo-python:
 brew install leveldb
 ```
 
-#### Ubuntu/Debian
+#### Ubuntu/Debian 16.10+
+
+Ubuntu starting at 16.10 supports Python 3.6 in the official repositories, and you can just install Python 3.6 and all the system dependencies like this:
 
 ```
-apt-get install libleveldb-dev python3.6-dev python3-pip python3-venv libssl-dev g++
+apt-get install python3.6 python3.6-dev python3-pip python3-venv libleveldb-dev libssl-dev g++
+```
+
+#### Older Ubuntu versions (eg. 16.04)
+
+For older Ubuntu versions you'll need to use an external repository like Felix Krull's deadsnakes PPA at https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa (read more [here](https://askubuntu.com/questions/865554/how-do-i-install-python-3-6-using-apt-get)):
+
+```
+apt-get install software-properties-common python-software-properties
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
+apt-get install python3.6 python3.6-dev python3-pip python3-venv libleveldb-dev libssl-dev g++
 ```
 
 #### Centos/Redhat/Fedora
-
-This is a bit more tricky...
 
 ```
 # Install Python 3.6:
