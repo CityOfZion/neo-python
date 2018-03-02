@@ -93,7 +93,7 @@ brew install leveldb
 Ubuntu starting at 16.10 supports Python 3.6 in the official repositories, and you can just install Python 3.6 and all the system dependencies like this:
 
 ```
-apt-get install python3.6 python3.6-dev python3-pip python3-venv libleveldb-dev libssl-dev g++
+apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
 ```
 
 #### Older Ubuntu versions (eg. 16.04)
