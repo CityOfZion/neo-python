@@ -1,11 +1,12 @@
 from neo.Prompt.Utils import get_arg
-from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams
+from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, generate_deploy_script
 from neo.Prompt.Commands.Invoke import test_deploy_and_invoke, DEFAULT_MIN_FEE
 from neocore.Fixed8 import Fixed8
 from boa.compiler import Compiler
 
 import binascii
 import traceback
+from neo.Core.State.ContractState import ContractPropertyState
 
 
 def LoadAndRun(arguments, wallet):
@@ -80,3 +81,15 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True, min_fee=DEFAUL
             print("please open a wallet to test built contract")
 
     return None, None, None, None
+
+
+def TestBuild(script, invoke_args, wallet, plist='05', ret='05', dynamic=False):
+
+    properties = ContractPropertyState.HasStorage
+
+    if dynamic:
+        properties += ContractPropertyState.HasDynamicInvoke
+
+    script = generate_deploy_script(script, contract_properties=int(properties), parameter_list=plist, return_type=ret)
+
+    return test_deploy_and_invoke(script, invoke_args, wallet)

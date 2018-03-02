@@ -31,6 +31,7 @@ from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
+from logzero import logger
 
 from neo.VM.OpCode import *
 import json
@@ -405,7 +406,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, min_fee=DEFAULT_M
                 item.reverse()
                 listlength = len(item)
                 for listitem in item:
-                    sb.push(listitem)
+                    subitem = parse_param(listitem, wallet)
+                    sb.push(subitem)
                 sb.push(listlength)
                 sb.Emit(PACK)
             else:
@@ -471,12 +473,13 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, min_fee=DEFAULT_M
 
         if i_success:
             service.TestCommit()
-
             if len(service.notifications) > 0:
+
                 for n in service.notifications:
+                    #                        print("NOTIFICATION : %s " % n)
                     Blockchain.Default().OnNotify(n)
 
-            print("Used %s Gas " % engine.GasConsumed().ToString())
+            logger.info("Used %s Gas " % engine.GasConsumed().ToString())
 
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed = consumed.Ceil()
@@ -489,7 +492,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, min_fee=DEFAULT_M
             # set the amount of gas the tx will need
             itx.Gas = consumed
             itx.Attributes = []
-            result = engine.ResultsForCode(contract_state.Code)
+            result = engine.EvaluationStack.Items
             return itx, result, total_ops, engine
         else:
             print("error executing invoke contract...")

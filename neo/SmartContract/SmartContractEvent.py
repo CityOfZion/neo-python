@@ -237,9 +237,7 @@ class NotifyEvent(SmartContractEvent):
                     self.addr_from = self.contract_hash
                     self.is_standard_notify = True
             except Exception as e:
-                print("Could not determin notify event: %s %s" % (e, self.event_payload))
-                for item in self.event_payload:
-                    print("item: %s %s " % (item, type(item)))
+                logger.info("Could not determine notify event: %s %s" % (e, self.event_payload))
 
     def SerializePayload(self, writer):
 

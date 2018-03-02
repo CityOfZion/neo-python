@@ -19,7 +19,6 @@ def get_asset_attachments(params):
     gas_to_attach = None
 
     for item in params:
-
         if type(item) is str:
             if '--attach-neo=' in item:
                 to_remove.append(item)

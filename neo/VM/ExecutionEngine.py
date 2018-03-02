@@ -91,29 +91,6 @@ class ExecutionEngine():
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
 
-    def ResultsForCode(self, contract):
-        try:
-            return_type = ContractParameterType(contract.ReturnType)
-
-            item = self.EvaluationStack.Items[0]
-            if return_type == ContractParameterType.Integer:
-                return item.GetBigInteger()
-            elif return_type == ContractParameterType.Boolean:
-                return item.GetBoolean()
-            elif return_type == ContractParameterType.ByteArray:
-                return item.GetByteArray()
-            elif return_type == ContractParameterType.String:
-                return item.GetString()
-            elif return_type == ContractParameterType.Array:
-                return item.GetArray()
-            else:
-                logger.error("Could not format results for return type %s " % return_type)
-            return item
-        except Exception as e:
-            pass
-
-        return self.EvaluationStack.Items
-
     def Dispose(self):
         while self._InvocationStack.Count > 0:
             self._InvocationStack.Pop().Dispose()
@@ -382,7 +359,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
                 estack.PushT(x1 & x2)
 
             elif opcode == OR:
@@ -446,7 +422,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
                 estack.PushT(x1 + x2)
 
             elif opcode == SUB:
@@ -551,7 +526,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
                 estack.PushT(min(x1, x2))
 
             elif opcode == MAX:
@@ -694,7 +668,6 @@ class ExecutionEngine():
             elif opcode == PICKITEM:
 
                 index = estack.Pop().GetBigInteger()
-
                 if index < 0:
                     self._VMState |= VMState.FAULT
                     return
@@ -712,6 +685,7 @@ class ExecutionEngine():
                     return
 
                 to_pick = items[index]
+
                 estack.PushT(to_pick)
 
             elif opcode == SETITEM:
@@ -840,7 +814,7 @@ class ExecutionEngine():
 
 #        opname = ToName(op)
 #        logger.info("____________________________________________________")
-#        logger.info("[%s] %02x -> %s" % (self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
+#        logger.info("[%s] [%s] %02x -> %s" % (self.CurrentContext.InstructionPointer,self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
 #        logger.info("-----------------------------------")
 
         self.ops_processed += 1

@@ -33,7 +33,7 @@ Activate python virtual environment. One of possible ways is using Anaconda.
 
 ::
 
-    conda create -n neo python=3.5.4
+    conda create -n neo python=3.6.4
     activate neo
 
 Build python wheel for plyvel

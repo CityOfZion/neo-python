@@ -6,8 +6,6 @@ from neo.Prompt.Commands.BuildNRun import BuildAndRun
 from neo.Wallets.utils import to_aes_key
 from neo.Settings import settings
 
-settings.log_smart_contract_events = True
-
 
 class UserWalletTestCase(WalletFixtureTestCase):
 
@@ -20,6 +18,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
     _wallet1 = None
 
     big_str = "b'abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab'"
+
+    @classmethod
+    def setUpClass(cls):
+        super(UserWalletTestCase, cls).setUpClass()
+        settings.log_smart_contract_events = True
+
+    @classmethod
+    def tearDownClass(cls):
+        super(UserWalletTestCase, cls).tearDownClass()
+        settings.log_smart_contract_events = False
 
     @classmethod
     def GetWallet1(cls, recreate=False):
@@ -40,7 +48,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, min_fee=Fixed8.FromDecimal(.0004))
 
-        expected_cost = Fixed8.FromDecimal(1.056)
+        expected_cost = Fixed8(103900000)
         expected_fee = Fixed8.FromDecimal(.0004)
 
         self.assertEqual(expected_cost, engine.GasConsumed())
@@ -60,7 +68,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(6.151)
+        expected_cost = Fixed8.FromDecimal(5.466)
         expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
@@ -80,11 +88,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(1.18)
+        expected_cost = Fixed8.FromDecimal(1.153)
         expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
-        self.assertEqual(result, bytearray(b'\xab\xab\xab\xab\xab\xab'))
+        self.assertEqual(result[0].GetByteArray(), bytearray(b'\xab\xab\xab\xab\xab\xab'))
 
     def test_build_contract_4(self):
         """
@@ -100,7 +108,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(2.18)
+        expected_cost = Fixed8.FromDecimal(2.153)
         expected_fee = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_fee)
@@ -128,8 +136,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(11.151)
-        expected_gas = Fixed8.FromDecimal(2.0)
+        expected_cost = Fixed8(1046600000)
+        expected_gas = Fixed8.FromDecimal(1.0)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
 
@@ -141,11 +149,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
         """
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", True, False, "put_8", "key1", "b'ababababab'"]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", True, False, "put_9", "key1", "b'ababababab'"]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
-        expected_cost = Fixed8.FromDecimal(9.715)
+        expected_cost = Fixed8.FromDecimal(9.762)
         expected_gas = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
