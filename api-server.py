@@ -66,7 +66,7 @@ def main():
     group.add_argument("-m", "--mainnet", action="store_true", default=False,
                        help="Use MainNet instead of the default TestNet")
     group.add_argument("-t", "--testnet", action="store_true", default=False,
-                       help="Use TestNett instead of the default TestNet")
+                       help="Use TestNet instead of the default TestNet")
     group.add_argument("-p", "--privnet", action="store_true", default=False,
                        help="Use PrivNet instead of the default TestNet")
     group.add_argument("--coznet", action="store_true", default=False,

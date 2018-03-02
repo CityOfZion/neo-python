@@ -8,6 +8,7 @@ import json
 from klein import Klein
 from logzero import logger
 
+from neo.Network.NodeLeader import NodeLeader
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
@@ -185,6 +186,8 @@ class NotificationRestApi(object):
         try:
             uint160 = UInt160.ParseString(contract_hash)
             contract_event = self.notif.get_token(uint160)
+            if not contract_event:
+                return self.format_message("Could not find contract with hash %s" % contract_hash)
             notifications = [contract_event]
         except Exception as e:
             logger.info("Could not get contract with hash %s because %s " % (contract_hash, e))
@@ -199,6 +202,7 @@ class NotificationRestApi(object):
         return json.dumps({
             'current_height': Blockchain.Default().Height,
             'version': settings.VERSION_NAME,
+            'num_peers': len(NodeLeader.Instance().Peers)
         }, indent=4, sort_keys=True)
 
     def format_notifications(self, request, notifications):
