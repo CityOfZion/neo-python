@@ -14,10 +14,12 @@ import argparse
 import threading
 from time import sleep
 
+import logzero
 from logzero import logger
 from twisted.internet import reactor, task, endpoints
 from twisted.web.server import Site
 from klein import Klein
+from logging.handlers import SysLogHandler
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
@@ -35,7 +37,6 @@ from neo.UserPreferences import preferences
 LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'api-server.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
-settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
 # Set the PID file
 PID_FILE = "/tmp/neopython-api-server.pid"
@@ -74,6 +75,9 @@ def main():
                        help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
+    parser.add_argument("-q", "--quiet", action="store_true", help="Quiet mode. Disable stderr logger.")
+    parser.add_argument("-s", "--syslog", action="store_true", help="Syslog mode. Log to syslog instead of to log file.")
+
     parser.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api (eg. 10332)")
     parser.add_argument("--port-rest", type=int, help="port to use for the rest api (eg. 80)")
 
@@ -100,6 +104,13 @@ def main():
         settings.setup_privnet()
     elif args.coznet:
         settings.setup_coznet()
+
+    if args.syslog:
+        logzero.logfile("", disableStderrLogger=args.quiet)
+        syslog_handler = SysLogHandler()
+        logger.addHandler(syslog_handler)
+    else:
+        logzero.logfile(LOGFILE_FN, maxBytes=LOGFILE_MAX_BYTES, backupCount=LOGFILE_BACKUP_COUNT, disableStderrLogger=args.quiet)
 
     # Write a PID file to easily quit the service
     write_pid_file()
