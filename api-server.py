@@ -107,7 +107,7 @@ def main():
 
     if args.syslog:
         logzero.logfile("", disableStderrLogger=args.quiet)
-        syslog_handler = SysLogHandler()
+        syslog_handler = SysLogHandler(facility='local0')
         logger.addHandler(syslog_handler)
     else:
         logzero.logfile(LOGFILE_FN, maxBytes=LOGFILE_MAX_BYTES, backupCount=LOGFILE_BACKUP_COUNT, disableStderrLogger=args.quiet)
