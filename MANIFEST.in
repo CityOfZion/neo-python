@@ -1,0 +1,14 @@
+include README.md
+include prompt.py
+include bootstrap.py
+include protocol.*.json
+include reencrypt_wallet.py
+
+recursive-include neo *
+recursive-include tests *
+recursive-include examples *
+recursive-include fixtures *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+
+recursive-include docs *
