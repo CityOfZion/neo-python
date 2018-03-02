@@ -5,6 +5,7 @@ neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi
 
 See also:
 
+* Tutorial on setting up an api server: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
 * Example systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
 * JSON-RPC api issues: https://github.com/CityOfZion/neo-python/issues/273
 """
