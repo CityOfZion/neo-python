@@ -28,7 +28,7 @@ after_success:
 deploy:
   true:
     tags: true
-    python: 3.5
+    python: 3.6
     repo: CityOfZion/neo-python
   distributions: sdist bdist_wheel
   password:
