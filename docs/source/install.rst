@@ -74,7 +74,7 @@ For older Ubuntu versions you'll need to use an external repository like Felix K
     apt-get install software-properties-common python-software-properties
     add-apt-repository ppa:deadsnakes/ppa
     apt-get update
-    apt-get install python3.6 python3.6-dev python3-pip python3-venv libleveldb-dev libssl-dev g++
+    apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
 
 
 Centos/Redhat/Fedora
