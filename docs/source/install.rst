@@ -67,6 +67,8 @@ Older Ubuntu versions (eg. 16.04)
 
 For older Ubuntu versions you'll need to use an external repository like Felix Krull's deadsnakes PPA at https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa (read more `here <https://askubuntu.com/questions/865554/how-do-i-install-python-3-6-using-apt-get>`_):
 
+(The use of the third-party software links in this documentation is done at your own discretion and risk and with agreement that you will be solely responsible for any damage to your computer system or loss of data that results from such activities.)
+
 ::
 
     apt-get install software-properties-common python-software-properties
