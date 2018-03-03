@@ -18,17 +18,14 @@ class DebugStorage():
             self._db.delete(key)
 
     def clone_from_live(self):
-        print("cloning from live!")
         clone_db = GetBlockchain()._db.snapshot()
         for key, value in clone_db.iterator(prefix=DBPrefix.ST_Storage, include_value=True):
             self._db.put(key, value)
-        print("cloned db")
 
     def __init__(self):
 
         try:
             self._db = plyvel.DB(settings.DEBUG_STORAGE_PATH, create_if_missing=True)
-            print("created begustorage")
         except Exception as e:
             logger.info("DEBUG leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('DEBUG Leveldb Unavailable %s ' % e)
@@ -36,7 +33,6 @@ class DebugStorage():
     @staticmethod
     def instance():
         if not DebugStorage.__instance:
-            print("creating instance!")
             DebugStorage.__instance = DebugStorage()
             DebugStorage.__instance.clone_from_live()
         return DebugStorage.__instance

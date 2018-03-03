@@ -49,6 +49,7 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
 ]
 
 autodoc_default_flags = ['members']
@@ -189,5 +190,3 @@ latex_elements = {
 #     author, 'neo-boa', 'One line description of project.',
 #     'Miscellaneous'),
 #]
-
-

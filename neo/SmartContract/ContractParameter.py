@@ -52,6 +52,22 @@ class ContractParameter():
         elif isinstance(item, InteropInterface):
             return ContractParameter(type=ContractParameterType.InteropInterface, value=item.GetInterface())
 
+    @staticmethod
+    def AsParameterType(type: ContractParameterType, item: StackItem):
+        if type == ContractParameterType.Integer:
+            return ContractParameter(type, value=item.GetBigInteger())
+        elif type == ContractParameterType.Boolean:
+            return ContractParameter(type, value=item.GetBoolean())
+        elif type == ContractParameterType.Array:
+            return ContractParameter(type, value=item.GetArray())
+        elif type == ContractParameterType.String:
+            return ContractParameter(type, value=item.GetString())
+        elif type == ContractParameterType.InteropInterface:
+            return ContractParameter(type, value=item.GetInterface())
+        # all other types return a byte array
+        else:
+            return ContractParameter(type, value=item.GetByteArray())
+
     def ToJson(self):
         """
         Converts a ContractParameter instance to a json representation
