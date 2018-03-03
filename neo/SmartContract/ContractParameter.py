@@ -54,6 +54,15 @@ class ContractParameter():
 
     @staticmethod
     def AsParameterType(type: ContractParameterType, item: StackItem):
+        """
+        Convert a StackItem to a ContractParameter object of a specified ContractParameterType
+        Args:
+            type (neo.SmartContract.ContractParameterType): The ContractParameterType to convert to
+            item (neo.VM.InteropService.StackItem): The item to convert to a ContractParameter object
+
+        Returns:
+
+        """
         if type == ContractParameterType.Integer:
             return ContractParameter(type, value=item.GetBigInteger())
         elif type == ContractParameterType.Boolean:

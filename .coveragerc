@@ -6,4 +6,5 @@ omit =
   venv*
   neo/Network/IPEndpoint.py
   examples/*
+  docs/*
   neo/SmartContract/tests/StorageTest.py
