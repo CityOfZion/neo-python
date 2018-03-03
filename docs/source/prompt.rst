@@ -711,3 +711,65 @@ Test Invoke Your Contracts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once the contract is deployed, you can no longer interact and change and build it like you can with the ``build .. test`` command, but it is best to do ``testinvoke`` in order to determine how things work on the chain.
+
+Now that we have deployed the *Calculator Contract* we can interact with it with the ``testinvoke`` command, as long as we know its script hash.  The syntax is ``testinvoke {contract_hash} param1 param2 .. etc``
+
+.. code-block:: sh
+
+  neo> testinvoke 0x86d58778c8d29e03182f38369f0d97782d303cc0 add 1 2
+  Used 0.033 Gas
+
+  -------------------------------------------------------------------------------------------------------------------------------------
+  Test invoke successful
+  Total operations: 39
+  Results ['Integer: 3 ']
+  Invoke TX GAS cost: 0.0
+  Invoke TX fee: 0.0001
+  -------------------------------------------------------------------------------------------------------------------------------------
+
+  Enter your password to continue and invoke on the network
+
+  [password]>
+
+
+Once again, this invoke is only done locally.  It will not be run on the network until you input your password.   If you do not want to invoke on the network, you can simply input an incorrect password and it will cancel. Lets cancel the invoke, and then set ``config sc-events on`` to see exactly what is happening when you test invoke and then send it to the network:
+
+.. code-block:: sh
+
+  Enter your password to continue and invoke on the network
+
+  [password]> **
+  Incorrect password
+  neo>
+  neo> config sc-events on
+  Smart contract event logging is now enabled
+  neo>
+  neo> testinvoke 0x86d58778c8d29e03182f38369f0d97782d303cc0 add 1 2
+  [I 180303 07:38:58 EventHub:71] [test_mode][SmartContract.Execution.Success] [86d58778c8d29e03182f38369f0d97782d303cc0] [3]
+  Used 0.033 Gas
+
+  -------------------------------------------------------------------------------------------------------------------------------------
+  Test invoke successful
+  Total operations: 39
+  Results ['Integer: 3 ']
+  Invoke TX GAS cost: 0.0
+  Invoke TX fee: 0.0001
+  -------------------------------------------------------------------------------------------------------------------------------------
+
+  Enter your password to continue and invoke on the network
+
+  [password]> ***********
+  [I 180303 07:39:04 Transaction:611] Verifying transaction: b'e0f4251a83f7081fb6fd94ce884d12b0bb597c1c1b3f1a89f07db68e114f4fa2'
+  [I 180303 07:39:04 EventHub:89] [SmartContract.Verification.Success][433121] [4c896601a99d58e22c32dcadd24974ca24c10587] [tx e0f4251a83f7081fb6fd94ce884d12b0bb597c1c1b3f1a89f07db68e114f4fa2] [True]
+  Relayed Tx: e0f4251a83f7081fb6fd94ce884d12b0bb597c1c1b3f1a89f07db68e114f4fa2
+  neo>
+  neo> [I 180303 07:39:31 EventHub:89] [SmartContract.Execution.Success][433122] [86d58778c8d29e03182f38369f0d97782d303cc0] [tx e0f4251a83f7081fb6fd94ce884d12b0bb597c1c1b3f1a89f07db68e114f4fa2] [3]
+  neo>
+
+
+You'll notice a few things here:
+
+1. First is that when test invoking with ``sc-events on`` you'll see the *SmartContract.Execution.Success* event, and you'll also see that the event indicates the Execution was done in ``test_mode``.
+2. Now you will see a *SmartContract.Verification.Success* event.  This tells you that the TX was signed correctly and will pass *Verification* as it is relayed to other nodes and ultimately in Consensus.
+3. After sending the InvocationTransaction to the network, you'll get a TX id which you can use to look up the invocation.
+4. You finally, after the TX has been processed by the network, the local VM runs your invocation, this time not in ``test_mode`` and you see the *SmartContract.Execution.Success* Event again.
