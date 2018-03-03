@@ -225,5 +225,6 @@ def translate_syslog_facility(syslog_facility):
     elif syslog_facility == SysLogHandler.LOG_LOCAL7:
         return syslog.LOG_LOCAL7
 
+
 if __name__ == "__main__":
     main()
