@@ -1059,8 +1059,17 @@ class Wallet(object):
 
         for key, unspents in paycoins.items():
             if unspents is None:
-                logger.error("insufficient funds for asset id: %s " % key)
-                return None
+                if not self.IsSynced:
+                    logger.warn("Wait for your wallet to be synced before doing "
+                                "transactions. To check enter 'wallet' and look at "
+                                "'percent_synced', it should be 100. Also the blockchain "
+                                "should be up to the latest blocks (see Progress). Issuing "
+                                "'wallet rebuild' restarts the syncing process.")
+                    return None
+
+                else:
+                    logger.error("insufficient funds for asset id: %s " % key)
+                    return None
 
         input_sums = {}
 
@@ -1207,6 +1216,23 @@ class Wallet(object):
             elif type(asset) is NEP5Token:
                 balances.append((asset.symbol, self.GetBalance(asset)))
         return balances
+
+    @property
+    def IsSynced(self):
+        """
+        Check if wallet is synced.
+
+        Returns:
+            bool: True if wallet is synced.
+
+        """
+        if Blockchain.Default().Height == 0:
+            return False
+
+        if (int(100 * self._current_height / Blockchain.Default().Height)) < 100:
+            return False
+        else:
+            return True
 
     def ToJson(self, verbose=False):
         # abstract
