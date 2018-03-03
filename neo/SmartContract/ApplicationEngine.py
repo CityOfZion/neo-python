@@ -37,9 +37,9 @@ class ApplicationEngine(ExecutionEngine):
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
 
-    def __init__(self, trigger_type, container, table, service, gas, testMode=False):
+    def __init__(self, trigger_type, container, table, service, gas, testMode=False, exit_on_error=False):
 
-        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=table, service=service)
+        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=table, service=service, exit_on_error=exit_on_error)
 
         self.Trigger = trigger_type
         self.gas_amount = self.gas_free + gas.value
@@ -369,7 +369,7 @@ class ApplicationEngine(ExecutionEngine):
         return 1
 
     @staticmethod
-    def Run(script, container=None):
+    def Run(script, container=None, exit_on_error=False):
         """
         Runs a script in a test invoke environment
 
@@ -403,7 +403,8 @@ class ApplicationEngine(ExecutionEngine):
             table=script_table,
             service=service,
             gas=Fixed8.Zero(),
-            testMode=True
+            testMode=True,
+            exit_on_error=exit_on_error
         )
 
         script = binascii.unhexlify(script)

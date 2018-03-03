@@ -34,6 +34,8 @@ class ExecutionEngine():
 
     ops_processed = 0
 
+    _exit_on_error = False
+
     @property
     def ScriptContainer(self):
         return self._ScriptContainer
@@ -69,6 +71,10 @@ class ExecutionEngine():
         return None
 
     @property
+    def ExitOnError(self):
+        return self._exit_on_error
+
+    @property
     def EntryContext(self):
         return self.InvocationStack.Peek(self.InvocationStack.Count - 1)
 
@@ -76,12 +82,12 @@ class ExecutionEngine():
     def ExecutedScriptHashes(self):
         return self._ExecutedScriptHashes
 
-    def __init__(self, container=None, crypto=None, table=None, service=None):
+    def __init__(self, container=None, crypto=None, table=None, service=None, exit_on_error=False):
         self._ScriptContainer = container
         self._Crypto = crypto
         self._Table = table
         self._Service = service
-
+        self._exit_on_error = exit_on_error
         self._InvocationStack = RandomAccessStack(name='Invocation')
         self._EvaluationStack = RandomAccessStack(name='Evaluation')
         self._AltStack = RandomAccessStack(name='Alt')
@@ -822,8 +828,12 @@ class ExecutionEngine():
         try:
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
-            logger.error("COULD NOT EXECUTE OP: %s %s %s" % (e, op, ToName(op)))
-            logger.exception(e)
+
+            if self._exit_on_error:
+                self._VMState |= VMState.FAULT
+            else:
+                logger.error("COULD NOT EXECUTE OP: %s %s %s" % (e, op, ToName(op)))
+                logger.exception(e)
 
     def StepOut(self):
         self._VMState &= ~VMState.BREAK

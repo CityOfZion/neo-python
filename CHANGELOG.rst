@@ -3,6 +3,13 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.5.2] Work in progress
+-------------------------
+- add intructions on ``build``, ``build .. test``, ``import contract``, and ``testinvoke`` to docs
+- ``BuildNRun`` results now converted to ``ContractParameter`` before printed
+- ``contract {hash}`` no longer throws errors when it is not an ``NEP5`` contract
+- Added method ``AsParameterType`` to ``ContractParameter`` for casting results
+
 [0.5.1] 2018-03-02
 ------------------
 - Documentation and Dockerfile updates for Python 3.6

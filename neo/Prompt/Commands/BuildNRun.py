@@ -1,9 +1,11 @@
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, generate_deploy_script
+from neo.SmartContract.ContractParameterType import ContractParameterType
+from neo.SmartContract.ContractParameter import ContractParameter
 from neo.Prompt.Commands.Invoke import test_deploy_and_invoke, DEFAULT_MIN_FEE
 from neocore.Fixed8 import Fixed8
 from boa.compiler import Compiler
-
+from logzero import logger
 import binascii
 import traceback
 from neo.Core.State.ContractState import ContractPropertyState
@@ -60,13 +62,23 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True, min_fee=DEFAUL
             tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, min_fee)
             i_args.reverse()
 
+            return_type_results = []
+
+            try:
+                rtype = ContractParameterType.FromString(f_args[1])
+                for r in result:
+                    cp = ContractParameter.AsParameterType(rtype, r)
+                    return_type_results.append(cp.ToJson())
+            except Exception as e:
+                logger.error('Could not convert result to ContractParameter: %s ' % e)
+
             if tx is not None and result is not None:
                 if verbose:
                     print("\n-----------------------------------------------------------")
                     print("Calling %s with arguments %s " % (path, i_args))
                     print("Test deploy invoke successful")
                     print("Used total of %s operations " % total_ops)
-                    print("Result %s " % result)
+                    print("Result %s " % return_type_results)
                     print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("-------------------------------------------------------------\n")
 

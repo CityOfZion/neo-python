@@ -83,8 +83,6 @@ def LoadContract(args):
     if needs_dynamic_invoke:
         contract_properties += ContractPropertyState.HasDynamicInvoke
 
-    print("contract properties: %s " % contract_properties)
-
     script = None
 
     if '.py' in path:
