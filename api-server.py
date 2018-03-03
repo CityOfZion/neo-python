@@ -10,9 +10,10 @@ See also:
 * JSON-RPC api issues: https://github.com/CityOfZion/neo-python/issues/273
 """
 import os
+import sys
+import syslog
 import argparse
 import threading
-import syslog
 from time import sleep
 from twisted.python import log
 from twisted.python.syslog import startLogging
@@ -121,9 +122,9 @@ def main():
                 parser.print_help()
                 return
 
-            syslog_facility = syslog.LOG_LOCAL0 + local_val
+            syslog_facility = SysLogHandler.LOG_LOCAL0 + local_val
         else:
-            syslog_facility = syslog.LOG_USER
+            syslog_facility = SysLogHandler.LOG_USER
 
         logzero.logfile("", disableStderrLogger=args.quiet)
         syslog_handler = SysLogHandler(facility=syslog_facility)
@@ -182,9 +183,12 @@ class ApiKlein(Klein):
 
     def run(self, host=None, port=None, logFile=None, endpoint_description=None, syslog_facility=None):
         if syslog_facility is not None:
-            startLogging(facility=syslog_facility)
+            facility = translate_syslog_facility(syslog_facility)
+            if not facility:
+                raise ValueError("Unsupported value for syslog_facility %s" % syslog_facility)
+            startLogging(prefix="pyapi", facility=facility)
         else:
-            log.startLogging(syslog.stdout)
+            log.startLogging(sys.stdout)
 
         if not endpoint_description:
             endpoint_description = "tcp:port={0}:interface={1}".format(port,
@@ -194,6 +198,32 @@ class ApiKlein(Klein):
         endpoint.listen(Site(self.resource()))
         reactor.run()
 
+
+def translate_syslog_facility(syslog_facility):
+    """
+    SysLogHandler's facility is on a completely different scale than syslog, so
+    this method translates between the two
+    :param syslog_facility: the syslog facility value used by SysLogHandler
+    :return: the syslog facility value used by syslog (and thus Klein's logger)
+    """
+    if syslog_facility == SysLogHandler.LOG_USER:
+        return syslog.LOG_USER
+    elif syslog_facility == SysLogHandler.LOG_LOCAL0:
+        return syslog.LOG_LOCAL0
+    elif syslog_facility == SysLogHandler.LOG_LOCAL1:
+        return syslog.LOG_LOCAL1
+    elif syslog_facility == SysLogHandler.LOG_LOCAL2:
+        return syslog.LOG_LOCAL2
+    elif syslog_facility == SysLogHandler.LOG_LOCAL3:
+        return syslog.LOG_LOCAL3
+    elif syslog_facility == SysLogHandler.LOG_LOCAL4:
+        return syslog.LOG_LOCAL4
+    elif syslog_facility == SysLogHandler.LOG_LOCAL5:
+        return syslog.LOG_LOCAL5
+    elif syslog_facility == SysLogHandler.LOG_LOCAL6:
+        return syslog.LOG_LOCAL6
+    elif syslog_facility == SysLogHandler.LOG_LOCAL7:
+        return syslog.LOG_LOCAL7
 
 if __name__ == "__main__":
     main()
