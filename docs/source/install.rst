@@ -18,28 +18,14 @@ Make a Python 3 virtual environment and activate it via
 
 ::
 
-    python3 -m venv venv
-    source venv/bin/activate
-
-or to explicitly install Python 3.6,
-
-::
-
-    virtualenv -p /usr/local/bin/python3.6 venv
+    python3.6 -m venv venv
     source venv/bin/activate
 
 Then install the requirements via
 
 ::
 
-    pip install -r requirements.txt
-
-
-Finally, install a reference to the `neo` working directory, in order to be able to `import neo` from
-anywhere in the project (eg. examples):
-
-::
-
+    pip install -U setuptools pip wheel
     pip install -e .
 
 
@@ -65,27 +51,50 @@ OSX
 
     brew install leveldb
 
-Ubuntu/Debian
-"""""""""""""
+
+Ubuntu/Debian 16.10+
+""""""""""""""""""""
+
+Ubuntu starting at 16.10 supports Python 3.6 in the official repositories, and you can just install Python 3.6 and all the system dependencies like this:
 
 ::
 
-    apt-get install libleveldb-dev python3.6-dev python3-pip libssl-dev
+    apt-get install python3.6 python3.6-dev python3-pip python3-venv libleveldb-dev libssl-dev g++
 
 
-    
+Older Ubuntu versions (eg. 16.04)
+"""""""""""""""""""""""""""""""""
+
+For older Ubuntu versions you'll need to use an external repository like Felix Krull's deadsnakes PPA at https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa (read more `here <https://askubuntu.com/questions/865554/how-do-i-install-python-3-6-using-apt-get>`_):
+
+(The use of the third-party software links in this documentation is done at your own discretion and risk and with agreement that you will be solely responsible for any damage to your computer system or loss of data that results from such activities.)
+
+::
+
+    apt-get install software-properties-common python-software-properties
+    add-apt-repository ppa:deadsnakes/ppa
+    apt-get update
+    apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
+
+
 Centos/Redhat/Fedora
 """"""""""""""""""""
 
-This is a bit more tricky. You may need to enable the epel repo for the leveldb-devel package, which you can do by editing ``/etc/yum.repos.d/epel.repo``.
-
 ::
 
-    yum -y install development tools python36 python36-devel python36-pip readline-devel leveldb-devel libffi-devel
+    # Install Python 3.6:
+    yum install -y centos-release-scl
+    yum install -y rh-python36
+    scl enable rh-python36 bash
+
+    # Install dependencies:
+    yum install -y epel-release
+    yum install -y readline-devel leveldb-devel libffi-devel gcc-c++ redhat-rpm-config gcc python-devel openssl-devel
 
 
 Windows
 """""""
+
 This has not been tested at this time. Installing the Python package plyvel seems to require C++ compiler support tied to Visual Studio and libraries.
 
 

@@ -3,12 +3,19 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.5.1] Work in progress
+[0.5.2] Work in progress
 -------------------------
 - add intructions on ``build``, ``build .. test``, ``import contract``, and ``testinvoke`` to docs
 - ``BuildNRun`` results now converted to ``ContractParameter`` before printed
 - ``contract {hash}`` no longer throws errors when it is not an ``NEP5`` contract
 - Added method ``AsParameterType`` to ``ContractParameter`` for casting results
+
+[0.5.1] 2018-03-02
+------------------
+- Documentation and Dockerfile updates for Python 3.6
+- Notification API: include peer count in status
+- Fix token error handling (`cedde9ec <https://github.com/CityOfZion/neo-python/commit/cedde9ec131f738e0f6d97710f76b7cc019e0aa3>`_)
+
 
 [0.5.0] 2018-03-01
 -----------------------------
