@@ -185,6 +185,12 @@ def main():
     app = ApiKlein()
     app.run(host, 9999, syslog_facility=syslog_facility)
 
+    # After the reactor is stopped, gracefully shutdown the database.
+    logger.info("Shutting down - closing databases...")
+    NotificationDB.close()
+    Blockchain.Default().Dispose()
+    NodeLeader.Instance().Shutdown()
+
 
 class ApiKlein(Klein):
     """
