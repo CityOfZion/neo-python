@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.5.2] Work in progress
 -------------------------
+- add documentation for data types in ``neo-python``
 - add intructions on ``build``, ``build .. test``, ``import contract``, and ``testinvoke`` to docs
 - ``BuildNRun`` results now converted to ``ContractParameter`` before printed
 - ``contract {hash}`` no longer throws errors when it is not an ``NEP5`` contract

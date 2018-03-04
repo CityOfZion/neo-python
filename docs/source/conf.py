@@ -50,6 +50,7 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
+    'sphinx.ext.autosectionlabel',
 ]
 
 autodoc_default_flags = ['members']

@@ -9,6 +9,7 @@ Help
 -  Or ping **@localhuman** or **@metachris** on the `NEO Discord`_.
 -  Pull requests are welcome. New features, writing tests and
    documentation are all needed.
+   
 
 Donations
 ---------
