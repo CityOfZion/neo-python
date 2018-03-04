@@ -3,8 +3,8 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.5.2] Work in progress
--------------------------
+[0.5.2] 2018-03-04
+------------------
 - add documentation for data types in ``neo-python``
 - add intructions on ``build``, ``build .. test``, ``import contract``, and ``testinvoke`` to docs
 - ``BuildNRun`` results now converted to ``ContractParameter`` before printed
@@ -20,7 +20,7 @@ All notable changes to this project are documented in this file.
 
 
 [0.5.0] 2018-03-01
------------------------------
+------------------
 - Move to Python 3.6 (`PR #270 <https://github.com/CityOfZion/neo-python/pull/270>`_)
     - move to only python 3.6+ support
     - use new version of compiler ( neo-boa==0.3.3 ) based on python 3.6 wordcode
