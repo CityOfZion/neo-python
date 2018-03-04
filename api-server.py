@@ -37,13 +37,12 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 
-# Logfile settings
-LOGFILE_DEFAULT = os.path.join(DIR_PROJECT_ROOT, 'api-server.log')
+# Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 
-# Set the PID file
-PID_FILE = "/tmp/neopython-api-server.pid"
+# Set the PID file, possible to override with env var PID_FILE
+PID_FILE = os.getenv("PID_FILE", "/tmp/neopython-api-server.pid")
 
 
 def write_pid_file():
