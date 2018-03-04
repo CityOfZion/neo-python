@@ -37,8 +37,8 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
 
-# Logfile settings & setup
-LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'api-server.log')
+# Logfile settings
+LOGFILE_DEFAULT = os.path.join(DIR_PROJECT_ROOT, 'api-server.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 
@@ -68,25 +68,30 @@ def custom_background_code():
 def main():
     parser = argparse.ArgumentParser()
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-m", "--mainnet", action="store_true", default=False,
-                       help="Use MainNet instead of the default TestNet")
-    group.add_argument("-t", "--testnet", action="store_true", default=False,
-                       help="Use TestNet instead of the default TestNet")
-    group.add_argument("-p", "--privnet", action="store_true", default=False,
-                       help="Use PrivNet instead of the default TestNet")
-    group.add_argument("--coznet", action="store_true", default=False,
-                       help="Use the CoZ network instead of the default TestNet")
-    group.add_argument("-c", "--config", action="store", help="Use a specific config file")
+    # Network options
+    group_network_container = parser.add_argument_group(title="Network options")
+    group_network = group_network_container.add_mutually_exclusive_group(required=True)
+    group_network.add_argument("--mainnet", action="store_true", default=False, help="Use MainNet")
+    group_network.add_argument("--testnet", action="store_true", default=False, help="Use TestNet")
+    group_network.add_argument("--privnet", action="store_true", default=False, help="Use PrivNet")
+    group_network.add_argument("--coznet", action="store_true", default=False, help="Use CozNet")
+    group_network.add_argument("--config", action="store", help="Use a specific config file")
 
-    parser.add_argument("-q", "--quiet", action="store_true", help="Quiet mode. Disable stderr logger.")
-    parser.add_argument("-s", "--syslog", action="store_true", help="Log to syslog instead of to log file. 'user' is the default facility.")
-    parser.add_argument("--syslog-local", action="store", help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
+    # Ports for RPC and REST api
+    group_modes = parser.add_argument_group(title="Mode(s)")
+    group_modes.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api (eg. 10332)")
+    group_modes.add_argument("--port-rest", type=int, help="port to use for the rest api (eg. 80)")
 
-    parser.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api (eg. 10332)")
-    parser.add_argument("--port-rest", type=int, help="port to use for the rest api (eg. 80)")
+    # Advanced logging setup
+    group_logging = parser.add_argument_group(title="Logging options")
+    group_logging.add_argument("--logfile", action="store", type=str, help="Logfile")
+    group_logging.add_argument("--syslog", action="store_true", help="Log to syslog instead of to log file ('user' is the default facility)")
+    group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7), metavar="[0-7]", help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
+    group_logging.add_argument("--disable-stderr", action="store_true", help="Disable stderr logger")
 
+    # Now parse
     args = parser.parse_args()
+    # print(args)
 
     if not args.port_rpc and not args.port_rest:
         print("Error: specify at least one of --port-rpc / --port-rest")
@@ -95,6 +100,11 @@ def main():
 
     if args.port_rpc == args.port_rest:
         print("Error: --port-rpc and --port-rest cannot be the same")
+        parser.print_help()
+        return
+
+    if args.logfile and (args.syslog or args.syslog_local):
+        print("Error: Cannot only use logfile or syslog at once")
         parser.print_help()
         return
 
@@ -110,27 +120,31 @@ def main():
     elif args.coznet:
         settings.setup_coznet()
 
+    logfile = None
     syslog_facility = None
-    if args.syslog:
+    if args.syslog or args.syslog_local:
+        # Setup the syslog facility
         if args.syslog_local:
-            try:
-                local_val = int(args.syslog_local)
-                if local_val < 0 or local_val > 7:
-                    raise ValueError()
-            except ValueError:
-                print("Error: invalid value for --syslog-local. Must be int value between 0 and 7.")
-                parser.print_help()
-                return
-
-            syslog_facility = SysLogHandler.LOG_LOCAL0 + local_val
+            print("Logging to syslog local facility %s", args.syslog_local)
+            syslog_facility = SysLogHandler.LOG_LOCAL0 + args.syslog_local
         else:
+            print("Logging to syslog user facility")
             syslog_facility = SysLogHandler.LOG_USER
 
-        logzero.logfile("", disableStderrLogger=args.quiet)
+        # Setup logzero to only use the syslog handler
+        logzero.logfile(None, disableStderrLogger=args.disable_stderr)
         syslog_handler = SysLogHandler(facility=syslog_facility)
         logger.addHandler(syslog_handler)
     else:
-        logzero.logfile(LOGFILE_FN, maxBytes=LOGFILE_MAX_BYTES, backupCount=LOGFILE_BACKUP_COUNT, disableStderrLogger=args.quiet)
+        # Setup logzero logfile
+        if args.logfile:
+            log_fn = os.path.abspath(args.logfile)
+            print("Logging to logfile: %s", log_fn)
+            logfile = open(log_fn, "a")
+            logzero.logfile(log_fn, maxBytes=LOGFILE_MAX_BYTES, backupCount=LOGFILE_BACKUP_COUNT, disableStderrLogger=args.disable_stderr)
+
+        else:
+            print("Logging to stdout and stderr")
 
     # Write a PID file to easily quit the service
     write_pid_file()
@@ -172,27 +186,27 @@ def main():
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 
     app = ApiKlein()
-    app.run(host, 9999, syslog_facility=syslog_facility)
+    app.run(host, 9999, logFile=logfile, syslog_facility=syslog_facility)
 
 
 class ApiKlein(Klein):
     """
     ApiKlein extends Klein so that the logging behavior can be customized. Aside from logging,
-    the implementation is identical to Klein.run()
+    the implementation is identical to Klein.run(): https://github.com/twisted/klein/blob/master/src/klein/_app.py#L376
     """
-
     def run(self, host=None, port=None, logFile=None, endpoint_description=None, syslog_facility=None):
         if syslog_facility is not None:
             facility = translate_syslog_facility(syslog_facility)
-            if not facility:
-                raise ValueError("Unsupported value for syslog_facility %s" % syslog_facility)
             startLogging(prefix="pyapi", facility=facility)
+
+        elif logFile is not None:
+            log.startLogging(logFile)
+
         else:
             log.startLogging(sys.stdout)
 
         if not endpoint_description:
-            endpoint_description = "tcp:port={0}:interface={1}".format(port,
-                                                                       host)
+            endpoint_description = "tcp:port={0}:interface={1}".format(port, host)
 
         endpoint = endpoints.serverFromString(reactor, endpoint_description)
         endpoint.listen(Site(self.resource()))
@@ -206,24 +220,22 @@ def translate_syslog_facility(syslog_facility):
     :param syslog_facility: the syslog facility value used by SysLogHandler
     :return: the syslog facility value used by syslog (and thus Klein's logger)
     """
-    if syslog_facility == SysLogHandler.LOG_USER:
-        return syslog.LOG_USER
-    elif syslog_facility == SysLogHandler.LOG_LOCAL0:
-        return syslog.LOG_LOCAL0
-    elif syslog_facility == SysLogHandler.LOG_LOCAL1:
-        return syslog.LOG_LOCAL1
-    elif syslog_facility == SysLogHandler.LOG_LOCAL2:
-        return syslog.LOG_LOCAL2
-    elif syslog_facility == SysLogHandler.LOG_LOCAL3:
-        return syslog.LOG_LOCAL3
-    elif syslog_facility == SysLogHandler.LOG_LOCAL4:
-        return syslog.LOG_LOCAL4
-    elif syslog_facility == SysLogHandler.LOG_LOCAL5:
-        return syslog.LOG_LOCAL5
-    elif syslog_facility == SysLogHandler.LOG_LOCAL6:
-        return syslog.LOG_LOCAL6
-    elif syslog_facility == SysLogHandler.LOG_LOCAL7:
-        return syslog.LOG_LOCAL7
+    mapping = {
+        SysLogHandler.LOG_USER: syslog.LOG_USER,
+        SysLogHandler.LOG_LOCAL0: syslog.LOG_LOCAL0,
+        SysLogHandler.LOG_LOCAL1: syslog.LOG_LOCAL1,
+        SysLogHandler.LOG_LOCAL2: syslog.LOG_LOCAL2,
+        SysLogHandler.LOG_LOCAL3: syslog.LOG_LOCAL3,
+        SysLogHandler.LOG_LOCAL4: syslog.LOG_LOCAL4,
+        SysLogHandler.LOG_LOCAL5: syslog.LOG_LOCAL5,
+        SysLogHandler.LOG_LOCAL6: syslog.LOG_LOCAL6,
+        SysLogHandler.LOG_LOCAL7: syslog.LOG_LOCAL7
+    }
+
+    if syslog_facility not in mapping:
+        raise ValueError("Unsupported value for syslog_facility %s" % syslog_facility)
+
+    return mapping[syslog_facility]
 
 
 if __name__ == "__main__":
