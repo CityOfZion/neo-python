@@ -119,12 +119,11 @@ def main():
     elif args.coznet:
         settings.setup_coznet()
 
-    logfile = None
     syslog_facility = None
     if args.syslog or args.syslog_local:
         # Setup the syslog facility
         if args.syslog_local:
-            print("Logging to syslog local facility %s", args.syslog_local)
+            print("Logging to syslog local facility %s" % args.syslog_local)
             syslog_facility = SysLogHandler.LOG_LOCAL0 + args.syslog_local
         else:
             print("Logging to syslog user facility")
@@ -135,12 +134,11 @@ def main():
         syslog_handler = SysLogHandler(facility=syslog_facility)
         logger.addHandler(syslog_handler)
     else:
-        # Setup logzero logfile
+        # Setup file logging
         if args.logfile:
-            log_fn = os.path.abspath(args.logfile)
-            print("Logging to logfile: %s", log_fn)
-            logfile = open(log_fn, "a")
-            logzero.logfile(log_fn, maxBytes=LOGFILE_MAX_BYTES, backupCount=LOGFILE_BACKUP_COUNT, disableStderrLogger=args.disable_stderr)
+            logfile = os.path.abspath(args.logfile)
+            print("Logging to logfile and stdout: %s" % logfile)
+            logzero.logfile(logfile, maxBytes=LOGFILE_MAX_BYTES, backupCount=LOGFILE_BACKUP_COUNT, disableStderrLogger=args.disable_stderr)
 
         else:
             print("Logging to stdout and stderr")
@@ -185,7 +183,7 @@ def main():
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 
     app = ApiKlein()
-    app.run(host, 9999, logFile=logfile, syslog_facility=syslog_facility)
+    app.run(host, 9999, syslog_facility=syslog_facility)
 
 
 class ApiKlein(Klein):
@@ -193,16 +191,14 @@ class ApiKlein(Klein):
     ApiKlein extends Klein so that the logging behavior can be customized. Aside from logging,
     the implementation is identical to Klein.run(): https://github.com/twisted/klein/blob/master/src/klein/_app.py#L376
     """
-    def run(self, host=None, port=None, logFile=None, endpoint_description=None, syslog_facility=None):
+    def run(self, host=None, port=None, endpoint_description=None, syslog_facility=None):
         if syslog_facility is not None:
             facility = translate_syslog_facility(syslog_facility)
             startLogging(prefix="pyapi", facility=facility)
 
-        elif logFile is not None:
-            log.startLogging(logFile)
-
-        else:
-            log.startLogging(sys.stdout)
+        # Always reuse the api-server logzero setup, whether stdout or file
+        observer = log.PythonLoggingObserver(loggerName=logzero.LOGZERO_DEFAULT_LOGGER)
+        observer.start()
 
         if not endpoint_description:
             endpoint_description = "tcp:port={0}:interface={1}".format(port, host)
