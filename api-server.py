@@ -10,7 +10,6 @@ See also:
 * JSON-RPC api issues: https://github.com/CityOfZion/neo-python/issues/273
 """
 import os
-import sys
 import syslog
 import argparse
 import threading
@@ -146,6 +145,10 @@ def main():
     # Write a PID file to easily quit the service
     write_pid_file()
 
+    # Setup twisted / klein to reuse the logzero setup
+    observer = log.PythonLoggingObserver(loggerName=logzero.LOGZERO_DEFAULT_LOGGER)
+    observer.start()
+
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
     Blockchain.RegisterBlockchain(blockchain)
@@ -201,10 +204,6 @@ class ApiKlein(Klein):
         if syslog_facility is not None:
             facility = translate_syslog_facility(syslog_facility)
             startLogging(prefix="pyapi", facility=facility)
-
-        # Always reuse the api-server logzero setup, whether stdout or file
-        observer = log.PythonLoggingObserver(loggerName=logzero.LOGZERO_DEFAULT_LOGGER)
-        observer.start()
 
         if not endpoint_description:
             endpoint_description = "tcp:port={0}:interface={1}".format(port, host)
