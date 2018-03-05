@@ -1,17 +1,22 @@
-# Dockerfile to setup neo-python on the master branch.
+# Dockerfile to create images running neo-python
 # https://github.com/CityOfZion/neo-python/tree/master/docker
 #
-# Building (these commands create a Docker image called neopython):
+# Building an image of the current master branch (creates a Docker image called neopython):
 #
 #    $ docker build -f Dockerfile -t neopython .
+#
+# Building an image of the current development branch (creates a Docker image called neopython-dev):
+#
+#    $ docker build -f Dockerfile -t neopython-dev . --build-arg branch=development
 #
 # Build without caching:
 #
 #    $ docker build --no-cache -f Dockerfile -t neopython .
 #
-# At this point there is a Docker image called 'neopython'. If you want to run it connecting
-# to a private network, make sure the privatenet container is already running.
-# https://hub.docker.com/r/cityofzion/neo-privatenet
+# Using with a private network
+# -----------------------------
+# If you want to run it connecting to a private network, make sure the privatenet container is already running.
+# See also https://hub.docker.com/r/cityofzion/neo-privatenet
 #
 # Start a container interactively, opening a bash in `/neo-python`, and mounting the current directory as `/neo-python/sc`:
 #
@@ -20,6 +25,9 @@
 # Once you are inside the container, you can start neo-python with `python3 prompt.py -p` (using -p to connect to a private net).
 # To update neo-python, just run `git pull` and `pip install -e .`
 FROM ubuntu:17.10
+
+# Branch can be overwritten with --build-arg, eg: `--build-arg branch=development`
+ARG branch=master
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -40,6 +48,7 @@ RUN rm -rf /var/lib/apt/lists/*
 # Clone and setup
 RUN git clone https://github.com/CityOfZion/neo-python.git
 WORKDIR neo-python
+RUN git checkout $branch
 
 # Install the dependencies
 RUN pip3 install -e .
@@ -48,4 +57,4 @@ RUN pip3 install -e .
 RUN wget https://s3.amazonaws.com/neo-experiments/neo-privnet.wallet
 
 # Example run command
-CMD python3 prompt.py
+CMD /bin/bash
