@@ -22,7 +22,6 @@ to reuse our logzero logging setup. See also:
 * https://twistedmatrix.com/documents/17.9.0/api/twisted.logger.STDLibLogObserver.html
 """
 import os
-import syslog
 import argparse
 import threading
 from time import sleep
@@ -33,24 +32,20 @@ from logzero import logger
 
 # Twisted logging
 from twisted.logger import STDLibLogObserver, globalLogPublisher
-from twisted.python.syslog import startLogging
 
 # Twisted and Klein methods and modules
 from twisted.internet import reactor, task, endpoints
 from twisted.web.server import Site
 
 # neo methods and modules
-from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.api.REST.NotificationRestApi import NotificationRestApi
 
 from neo.Network.NodeLeader import NodeLeader
-from neo.Settings import settings, DIR_PROJECT_ROOT
-from neo.UserPreferences import preferences
+from neo.Settings import settings
 
 # Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
@@ -134,24 +129,19 @@ def main():
     elif args.coznet:
         settings.setup_coznet()
 
-    syslog_facility = None
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
-        if args.syslog_local:
-            print("Logging to syslog local%s facility and stdout" % args.syslog_local)
+        if args.syslog_local is not None:
+            print("Logging to syslog local%s facility" % args.syslog_local)
             syslog_facility = SysLogHandler.LOG_LOCAL0 + args.syslog_local
         else:
-            print("Logging to syslog user facility and stdout")
+            print("Logging to syslog user facility")
             syslog_facility = SysLogHandler.LOG_USER
 
         # Setup logzero to only use the syslog handler
         logzero.logfile(None, disableStderrLogger=args.disable_stderr)
         syslog_handler = SysLogHandler(facility=syslog_facility)
         logger.addHandler(syslog_handler)
-
-        # Setup the twisted syslog facility (TODO: refactor to have logzero use syslog?)
-        facility = translate_syslog_facility(syslog_facility)
-        startLogging(prefix="pyapi", facility=facility)
     else:
         # Setup file logging
         if args.logfile:
@@ -213,31 +203,6 @@ def main():
     NotificationDB.close()
     Blockchain.Default().Dispose()
     NodeLeader.Instance().Shutdown()
-
-
-def translate_syslog_facility(syslog_facility):
-    """
-    SysLogHandler's facility is on a completely different scale than syslog, so
-    this method translates between the two
-    :param syslog_facility: the syslog facility value used by SysLogHandler
-    :return: the syslog facility value used by syslog (and thus Klein's logger)
-    """
-    mapping = {
-        SysLogHandler.LOG_USER: syslog.LOG_USER,
-        SysLogHandler.LOG_LOCAL0: syslog.LOG_LOCAL0,
-        SysLogHandler.LOG_LOCAL1: syslog.LOG_LOCAL1,
-        SysLogHandler.LOG_LOCAL2: syslog.LOG_LOCAL2,
-        SysLogHandler.LOG_LOCAL3: syslog.LOG_LOCAL3,
-        SysLogHandler.LOG_LOCAL4: syslog.LOG_LOCAL4,
-        SysLogHandler.LOG_LOCAL5: syslog.LOG_LOCAL5,
-        SysLogHandler.LOG_LOCAL6: syslog.LOG_LOCAL6,
-        SysLogHandler.LOG_LOCAL7: syslog.LOG_LOCAL7
-    }
-
-    if syslog_facility not in mapping:
-        raise ValueError("Unsupported value for syslog_facility %s" % syslog_facility)
-
-    return mapping[syslog_facility]
 
 
 if __name__ == "__main__":
