@@ -3,27 +3,43 @@
 This api server runs one or both of the json-rpc and rest api. Uses
 neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi
 
-See also:
+See also
 
 * Tutorial on setting up an api server: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
 * Example systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
 * JSON-RPC api issues: https://github.com/CityOfZion/neo-python/issues/273
+
+Logging
+-------
+
+This api-server can log to stdout/stderr, logfile and syslog.
+Check `api-server.py -h` for more details.
+
+Twisted uses a quite custom logging setup. Here we simply setup the Twisted logger
+to reuse our logzero logging setup. See also:
+
+* http://twisted.readthedocs.io/en/twisted-17.9.0/core/howto/logger.html
+* https://twistedmatrix.com/documents/17.9.0/api/twisted.logger.STDLibLogObserver.html
 """
 import os
 import syslog
 import argparse
 import threading
 from time import sleep
-from twisted.python import log
-from twisted.python.syslog import startLogging
+from logging.handlers import SysLogHandler
 
 import logzero
 from logzero import logger
+
+# Twisted logging
+from twisted.logger import STDLibLogObserver, globalLogPublisher
+from twisted.python.syslog import startLogging
+
+# Twisted and Klein methods and modules
 from twisted.internet import reactor, task, endpoints
 from twisted.web.server import Site
-from klein import Klein
-from logging.handlers import SysLogHandler
 
+# neo methods and modules
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
@@ -119,35 +135,45 @@ def main():
         settings.setup_coznet()
 
     syslog_facility = None
-    if args.syslog or args.syslog_local:
+    if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
         if args.syslog_local:
-            print("Logging to syslog local facility %s" % args.syslog_local)
+            print("Logging to syslog local%s facility and stdout" % args.syslog_local)
             syslog_facility = SysLogHandler.LOG_LOCAL0 + args.syslog_local
         else:
-            print("Logging to syslog user facility")
+            print("Logging to syslog user facility and stdout")
             syslog_facility = SysLogHandler.LOG_USER
 
         # Setup logzero to only use the syslog handler
         logzero.logfile(None, disableStderrLogger=args.disable_stderr)
         syslog_handler = SysLogHandler(facility=syslog_facility)
         logger.addHandler(syslog_handler)
+
+        # Setup the twisted syslog facility (TODO: refactor to have logzero use syslog?)
+        facility = translate_syslog_facility(syslog_facility)
+        startLogging(prefix="pyapi", facility=facility)
     else:
         # Setup file logging
         if args.logfile:
             logfile = os.path.abspath(args.logfile)
-            print("Logging to logfile and stdout: %s" % logfile)
+            if args.disable_stderr:
+                print("Logging to logfile: %s" % logfile)
+            else:
+                print("Logging to stderr and logfile: %s" % logfile)
             logzero.logfile(logfile, maxBytes=LOGFILE_MAX_BYTES, backupCount=LOGFILE_BACKUP_COUNT, disableStderrLogger=args.disable_stderr)
 
         else:
             print("Logging to stdout and stderr")
 
+    # Disable logging smart contract events
+    settings.set_log_smart_contract_events(False)
+
     # Write a PID file to easily quit the service
     write_pid_file()
 
-    # Setup twisted / klein to reuse the logzero setup
-    observer = log.PythonLoggingObserver(loggerName=logzero.LOGZERO_DEFAULT_LOGGER)
-    observer.start()
+    # Setup Twisted and Klein logging to use the logzero setup
+    observer = STDLibLogObserver(name=logzero.LOGZERO_DEFAULT_LOGGER)
+    globalLogPublisher.addObserver(observer)
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
@@ -155,22 +181,17 @@ def main():
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)
 
-    # Disable logging smart contract events
-    settings.set_log_smart_contract_events(False)
-
-    # Start the notification db instance
-    ndb = NotificationDB.instance()
-    ndb.start()
+    # Setup twisted reactor, NodeLeader and start the NotificationDB
+    reactor.suggestThreadPoolSize(15)
+    NodeLeader.Instance().Start()
+    NotificationDB.instance().start()
 
     # Start a thread with custom code
     d = threading.Thread(target=custom_background_code)
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
 
-    # Run
-    reactor.suggestThreadPoolSize(15)
-    NodeLeader.Instance().Start()
-
+    # Default host is open for all
     host = "0.0.0.0"
 
     if args.port_rpc:
@@ -180,37 +201,18 @@ def main():
         endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
     if args.port_rest:
-        logger.info("Starting notification api server on http://%s:%s" % (host, args.port_rest))
+        logger.info("Starting REST api server on http://%s:%s" % (host, args.port_rest))
         api_server_rest = NotificationRestApi()
         endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 
-    app = ApiKlein()
-    app.run(host, 9999, syslog_facility=syslog_facility)
+    reactor.run()
 
     # After the reactor is stopped, gracefully shutdown the database.
-    logger.info("Shutting down - closing databases...")
+    logger.info("Closing databases...")
     NotificationDB.close()
     Blockchain.Default().Dispose()
     NodeLeader.Instance().Shutdown()
-
-
-class ApiKlein(Klein):
-    """
-    ApiKlein extends Klein so that the logging behavior can be customized. Aside from logging,
-    the implementation is identical to Klein.run(): https://github.com/twisted/klein/blob/master/src/klein/_app.py#L376
-    """
-    def run(self, host=None, port=None, endpoint_description=None, syslog_facility=None):
-        if syslog_facility is not None:
-            facility = translate_syslog_facility(syslog_facility)
-            startLogging(prefix="pyapi", facility=facility)
-
-        if not endpoint_description:
-            endpoint_description = "tcp:port={0}:interface={1}".format(port, host)
-
-        endpoint = endpoints.serverFromString(reactor, endpoint_description)
-        endpoint.listen(Site(self.resource()))
-        reactor.run()
 
 
 def translate_syslog_facility(syslog_facility):
