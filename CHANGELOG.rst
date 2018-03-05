@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.5.4-dev] Work in progress
 ----------------------------
-- *add here*
+- `api-server.py <https://github.com/CityOfZion/neo-python/blob/development/api-server.py>`_: Improved logging setup. See the options with ``./api-server.py -h``
 
 
 [0.5.3] 2018-03-04

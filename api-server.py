@@ -3,9 +3,17 @@
 This api server runs one or both of the json-rpc and rest api. Uses
 neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi
 
+Run and print the help:
+
+    ./api-server.py -h
+
+Run using TestNet with rpc api at port 10332 and rest api at port 8080:
+
+    ./api-server.py --testnet --port-rpc 10332 --port-rest 8080
+
 See also
 
-* Tutorial on setting up an api server: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
+* Guide: Setup an api server on Ubuntu: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
 * Example systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
 * JSON-RPC api issues: https://github.com/CityOfZion/neo-python/issues/273
 
