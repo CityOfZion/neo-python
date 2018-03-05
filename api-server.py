@@ -134,14 +134,13 @@ def main():
     elif args.coznet:
         settings.setup_coznet()
 
-    syslog_facility = None
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
-        if args.syslog_local:
-            print("Logging to syslog local%s facility and stdout" % args.syslog_local)
+        if args.syslog_local is not None:
+            print("Logging to syslog local%s facility" % args.syslog_local)
             syslog_facility = SysLogHandler.LOG_LOCAL0 + args.syslog_local
         else:
-            print("Logging to syslog user facility and stdout")
+            print("Logging to syslog user facility")
             syslog_facility = SysLogHandler.LOG_USER
 
         # Setup logzero to only use the syslog handler
