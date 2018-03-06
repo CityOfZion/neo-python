@@ -65,4 +65,4 @@ if [ ! -d "/neo-python/Chains/SC234" ] && [ ! -z "$BOOTSTRAP" ]; then
   python3 /neo-python/bootstrap.py --skipconfirm "${BOOTSTRAP_OPTS[@]}"
 fi
 
-screen python3 /neo-python/prompt.py "${PROMPT_OPTS[@]}"
+python3 /neo-python/prompt.py "${PROMPT_OPTS[@]}"
