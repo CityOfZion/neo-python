@@ -9,7 +9,7 @@ import tarfile
 import logzero
 import shutil
 
-from neo.api.REST.NotificationRestApi import NotificationRestApi
+from neo.api.REST.RestApi import RestApi
 
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from klein.test.test_resource import requestMock
@@ -27,7 +27,7 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
     addr_to = 'AHbmRX5sL8oxp4dJZRNg5crCGUGxuMUyRB'
     addr_from = 'AcFnRrVC5emrTEkuFuRPufcuTb6KsAJ3vR'
 
-    app = None  # type:NotificationRestApi
+    app = None  # type:RestApi
 
     @classmethod
     def leveldb_testpath(self):
@@ -72,7 +72,7 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         shutil.rmtree(cls.N_NOTIFICATION_DB_NAME)
 
     def setUp(self):
-        self.app = NotificationRestApi()
+        self.app = RestApi()
 
     def test_1_ok(self):
 

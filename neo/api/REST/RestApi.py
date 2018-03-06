@@ -20,7 +20,7 @@ from neo.api.utils import cors_header
 API_URL_PREFIX = "/v1"
 
 
-class NotificationRestApi(object):
+class RestApi(object):
     app = Klein()
     notif = None
 
