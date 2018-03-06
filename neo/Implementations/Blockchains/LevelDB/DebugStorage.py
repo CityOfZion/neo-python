@@ -2,11 +2,11 @@ from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Blockchain import GetBlockchain
 import plyvel
 from logzero import logger
+from neo.Settings import settings
 
 
 class DebugStorage():
 
-    __debug_storage_path = './Chains/debugstorage'
     __instance = None
 
     @property
@@ -27,7 +27,7 @@ class DebugStorage():
     def __init__(self):
 
         try:
-            self._db = plyvel.DB(self.__debug_storage_path, create_if_missing=True)
+            self._db = plyvel.DB(settings.DEBUG_STORAGE_PATH, create_if_missing=True)
             print("created begustorage")
         except Exception as e:
             logger.info("DEBUG leveldb unavailable, you may already be running this process: %s " % e)

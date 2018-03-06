@@ -31,21 +31,15 @@ def DeleteAddress(prompter, wallet, addr):
 
 def DeleteToken(wallet, contract_hash):
 
-    contract = Blockchain.Default().GetContract(contract_hash)
+    hash = UInt160.ParseString(contract_hash)
 
-    if contract:
-        hex_script = binascii.hexlify(contract.Code.Script)
-        token = NEP5Token(script=hex_script)
+    success = wallet.DeleteNEP5Token(hash)
 
-        success = wallet.DeleteNEP5Token(token)
+    if success:
+        print("Deleted token %s " % contract_hash)
 
-        if success:
-            print("Deleted token %s " % contract_hash)
-
-        else:
-            print("error deleting token %s " % contract_hash)
     else:
-        print("Contract %s not found " % contract_hash)
+        print("error deleting token %s " % contract_hash)
 
     return False
 

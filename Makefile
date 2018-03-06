@@ -47,13 +47,15 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 lint: ## check style with flake8
-	pycodestyle neo examples prompt.py
+	pycodestyle neo examples prompt.py api-server.py
 
 test: ## run tests quickly with the default Python
 	python3 -m unittest discover neo
+	python3 -m unittest discover boa_test
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run -m unittest discover neo
+	coverage run -m -a unittest discover boa_test
 	coverage report -m --omit=venv/*
 	coverage html
 	$(BROWSER) htmlcov/index.html

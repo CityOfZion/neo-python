@@ -26,7 +26,7 @@ class ContractParameterType(Enum):
     Void = 0xff
 
     def __str__(self):
-        return str(self.value.to_bytes(1, 'little').hex())
+        return self.name
 
     @staticmethod
     def FromString(val):

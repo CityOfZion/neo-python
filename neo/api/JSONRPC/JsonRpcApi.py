@@ -9,12 +9,12 @@ See also:
 import json
 import base58
 import random
+import binascii
 from json.decoder import JSONDecodeError
 
 from klein import Klein
 from logzero import logger
 
-from neo import __version__
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response, cors_header
@@ -24,11 +24,11 @@ from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
 from neo.Network.NodeLeader import NodeLeader
-import binascii
 from neo.Core.State.StorageKey import StorageKey
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.VM.VMState import VMStateStr
 
 
 class JsonRpcError(Exception):
@@ -288,7 +288,7 @@ class JsonRpcApi(object):
         appengine = ApplicationEngine.Run(script=script)
         return {
             "script": script.decode('utf-8'),
-            "state": appengine.State,
+            "state": VMStateStr(appengine.State),
             "gas_consumed": appengine.GasConsumed().ToString(),
             "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]
         }
