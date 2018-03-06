@@ -432,7 +432,7 @@ You can also pass in a ByteArray object for the address, and test that the ``is_
 
   neo>
 
-Note that sending in the readable format of the address ( *AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy* ) is the same as sending in the script hash of the address.  We will try it out by getting the balance.  Note that I add an extra 0 at the end as the last paramater, since the SC is expecting a 3rd paramater:
+Note that sending in the readable format of the address ( *AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy* ) is the same as sending in the script hash of the address.  We will try it out by getting the balance.  Note that I add an extra 0 at the end as the last parameter, since the SC is expecting a 3rd parameter:
 
 .. code-block:: sh
 
@@ -456,7 +456,7 @@ Hopefully this is enough to get you started with building and testing your Smart
 Importing a Smart Contract
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Smart Contract importing is somewhat similar to the ``build .. test`` notation, though you do not need to send any parameters along with.  The format is ``import contract path/to/sample2.avm {input_params} {return_type} {needs_storage} {needs_dynamic_invoke}``.  After running this command, if everything goes ok you will be prompted to add some metadata about the contract.  Once that is complete, you will then have the choice to actually deploy this Smart Contract on the network.  Beware that doing so will cost you some Gas!
+Smart Contract importing is somewhat similar to the ``build .. test`` notation, though you do not need to send any parameters along with it.  The format is ``import contract path/to/sample2.avm {input_params} {return_type} {needs_storage} {needs_dynamic_invoke}``.  After running this command, if everything goes ok you will be prompted to add some metadata about the contract.  Once that is complete, you will then have the choice to actually deploy this Smart Contract on the network.  Beware that doing so will cost you some Gas!
 
 .. code-block:: sh
 
@@ -506,7 +506,7 @@ Here is where, if you really really want to spend the Gas to deploy your contrac
   Relayed Tx: f8ad261d28bf4bc5544e47f9bc3fff85f85ee674f14162dac81dd56bf73cf0a3
   neo>
 
-Now you have deployed your contract to the network.  If all goes well, you it will soon be deployed.  To determine when it has been deployed, you can either search for the ``txid`` on the blockchain, or search for the contract hash
+Now you have deployed your contract to the network. If all goes well, it will soon be deployed. To determine when it has been deployed, you can either search for the ``txid`` on the blockchain, or search for the contract hash
 
 .. code-block:: sh
 
@@ -608,4 +608,4 @@ You'll notice a few things here:
 1. First is that when test invoking with ``sc-events on`` you'll see the *SmartContract.Execution.Success* event, and you'll also see that the event indicates the Execution was done in ``test_mode``.
 2. Now you will see a *SmartContract.Verification.Success* event.  This tells you that the TX was signed correctly and will pass *Verification* as it is relayed to other nodes and ultimately in Consensus.
 3. After sending the InvocationTransaction to the network, you'll get a TX id which you can use to look up the invocation.
-4. You finally, after the TX has been processed by the network, the local VM runs your invocation, this time not in ``test_mode`` and you see the *SmartContract.Execution.Success* Event again.
+4. Finally, after the TX has been processed by the network, the local VM runs your invocation, this time not in ``test_mode`` and you see the *SmartContract.Execution.Success* Event again.
