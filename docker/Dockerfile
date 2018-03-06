@@ -20,7 +20,7 @@
 #
 # Start a container interactively, opening a bash in `/neo-python`, and mounting the current directory as `/neo-python/sc`:
 #
-#    $ docker run --rm -it -v $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython /bin/bash
+#    $ docker run --rm -it --entrypoint "/bin/bash" -v $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython
 #
 # Start a container, bootstrap the test net and start prompt.
 #

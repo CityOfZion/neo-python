@@ -29,7 +29,7 @@ See also https://hub.docker.com/r/cityofzion/neo-privatenet
 
 Start a container interactively, opening a bash in `/neo-python`, and mounting the current directory as `/neo-python/sc`:
 
-    $ docker run --rm -it -v $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython /bin/bash
+    $ docker run --rm -it -v --entrypoint "/bin/bash" $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython
 
 To update neo-python, just run `git pull` and `pip install -e .`
 
