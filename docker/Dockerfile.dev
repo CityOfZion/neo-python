@@ -50,5 +50,15 @@ RUN pip3 install -e .
 # Download the privnet wallet, to have it handy for easy experimenting
 RUN wget https://s3.amazonaws.com/neo-experiments/neo-privnet.wallet
 
-# Example run command
-CMD python3 prompt.py
+# Remove /neo-python/Chains/SC234 directory at build time
+RUN rm -rf /neo-python/Chains/SC234/
+
+# Copy entrypoint.sh script to image and make it executable
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Define the entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Empty command (defaults to running prompt.py without parameters)
+CMD []

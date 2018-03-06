@@ -26,9 +26,34 @@ Start a container interactively, opening a bash in `/neo-python`, and mounting t
 
     $ docker run --rm -it -v $(pwd):/neo-python/sc --net=host -h neopython-dev --name neopython-dev neopython-dev /bin/bash
 
-Once you are inside the container, you can start neo-python with `python3 prompt.py -p` (using -p to connect to a private net).
 To update neo-python, just run `git pull` and `pip install -e .`
 
+The default entrypoint automatically starts the neo-python prompt. It also supports the command line parameters of prompt.py and bootstrap.py. An additional
+parameter '--bootstrap' is added to bootstrap prior to entering the prompt.
+
+To persist the bootstrapped chain you need to use a volume to store /neo-python/Chains. The best way to do this is using a named volume.
+
+    $ docker run -it -v /host/path/to/where/you/want/to/store/the/chain:/neo-python/Chains neopython -m --bootstrap
+
+Supported options:
+-m / --mainnet
+(use NEO main net)  
+-p / --privnet
+(use private net)  
+--coznet
+(use City of Zion net)  
+-c=/path/to/config/file / --config=/path/to/config/file
+(Config file should be mounted in the Docker container on this path)  
+-t=<theme> / --set-default-theme=<theme>
+(neo-python prompt theme, can be dark or light)  
+--version=neo-python-version
+(set the neo-python version to be used)  
+--bootstrap
+(bootstrap the blockchain, can be used with main or testnet)  
+-n / --notifications
+(bootstrap notifcation database, only to be used in combination with --bootstrap)  
+
+Note that bootstrapping does not work with --privnet or --coznet and -c doesn't work with --mainnet.
 
 ## NeoScan and the private network
 
