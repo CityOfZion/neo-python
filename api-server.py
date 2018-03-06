@@ -3,42 +3,64 @@
 This api server runs one or both of the json-rpc and rest api. Uses
 neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi
 
-See also:
+Run and print the help:
 
-* Tutorial on setting up an api server: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
+    ./api-server.py -h
+
+Run using TestNet with rpc api at port 10332 and rest api at port 8080:
+
+    ./api-server.py --testnet --port-rpc 10332 --port-rest 8080
+
+See also
+
+* Guide: Setup an api server on Ubuntu: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
 * Example systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
 * JSON-RPC api issues: https://github.com/CityOfZion/neo-python/issues/273
+
+Logging
+-------
+
+This api-server can log to stdout/stderr, logfile and syslog.
+Check `api-server.py -h` for more details.
+
+Twisted uses a quite custom logging setup. Here we simply setup the Twisted logger
+to reuse our logzero logging setup. See also:
+
+* http://twisted.readthedocs.io/en/twisted-17.9.0/core/howto/logger.html
+* https://twistedmatrix.com/documents/17.9.0/api/twisted.logger.STDLibLogObserver.html
 """
 import os
 import argparse
 import threading
 from time import sleep
+from logging.handlers import SysLogHandler
 
+import logzero
 from logzero import logger
+
+# Twisted logging
+from twisted.logger import STDLibLogObserver, globalLogPublisher
+
+# Twisted and Klein methods and modules
 from twisted.internet import reactor, task, endpoints
 from twisted.web.server import Site
-from klein import Klein
 
-from neo import __version__
+# neo methods and modules
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.api.REST.NotificationRestApi import NotificationRestApi
 
 from neo.Network.NodeLeader import NodeLeader
-from neo.Settings import settings, DIR_PROJECT_ROOT
-from neo.UserPreferences import preferences
+from neo.Settings import settings
 
-# Logfile settings & setup
-LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'api-server.log')
+# Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
-settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
-# Set the PID file
-PID_FILE = "/tmp/neopython-api-server.pid"
+# Set the PID file, possible to override with env var PID_FILE
+PID_FILE = os.getenv("PID_FILE", "/tmp/neopython-api-server.pid")
 
 
 def write_pid_file():
@@ -63,21 +85,30 @@ def custom_background_code():
 def main():
     parser = argparse.ArgumentParser()
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-m", "--mainnet", action="store_true", default=False,
-                       help="Use MainNet instead of the default TestNet")
-    group.add_argument("-t", "--testnet", action="store_true", default=False,
-                       help="Use TestNet instead of the default TestNet")
-    group.add_argument("-p", "--privnet", action="store_true", default=False,
-                       help="Use PrivNet instead of the default TestNet")
-    group.add_argument("--coznet", action="store_true", default=False,
-                       help="Use the CoZ network instead of the default TestNet")
-    group.add_argument("-c", "--config", action="store", help="Use a specific config file")
+    # Network options
+    group_network_container = parser.add_argument_group(title="Network options")
+    group_network = group_network_container.add_mutually_exclusive_group(required=True)
+    group_network.add_argument("--mainnet", action="store_true", default=False, help="Use MainNet")
+    group_network.add_argument("--testnet", action="store_true", default=False, help="Use TestNet")
+    group_network.add_argument("--privnet", action="store_true", default=False, help="Use PrivNet")
+    group_network.add_argument("--coznet", action="store_true", default=False, help="Use CozNet")
+    group_network.add_argument("--config", action="store", help="Use a specific config file")
 
-    parser.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api (eg. 10332)")
-    parser.add_argument("--port-rest", type=int, help="port to use for the rest api (eg. 80)")
+    # Ports for RPC and REST api
+    group_modes = parser.add_argument_group(title="Mode(s)")
+    group_modes.add_argument("--port-rpc", type=int, help="port to use for the json-rpc api (eg. 10332)")
+    group_modes.add_argument("--port-rest", type=int, help="port to use for the rest api (eg. 80)")
 
+    # Advanced logging setup
+    group_logging = parser.add_argument_group(title="Logging options")
+    group_logging.add_argument("--logfile", action="store", type=str, help="Logfile")
+    group_logging.add_argument("--syslog", action="store_true", help="Log to syslog instead of to log file ('user' is the default facility)")
+    group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7), metavar="[0-7]", help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
+    group_logging.add_argument("--disable-stderr", action="store_true", help="Disable stderr logger")
+
+    # Now parse
     args = parser.parse_args()
+    # print(args)
 
     if not args.port_rpc and not args.port_rest:
         print("Error: specify at least one of --port-rpc / --port-rest")
@@ -86,6 +117,11 @@ def main():
 
     if args.port_rpc == args.port_rest:
         print("Error: --port-rpc and --port-rest cannot be the same")
+        parser.print_help()
+        return
+
+    if args.logfile and (args.syslog or args.syslog_local):
+        print("Error: Cannot only use logfile or syslog at once")
         parser.print_help()
         return
 
@@ -101,8 +137,41 @@ def main():
     elif args.coznet:
         settings.setup_coznet()
 
+    if args.syslog or args.syslog_local is not None:
+        # Setup the syslog facility
+        if args.syslog_local is not None:
+            print("Logging to syslog local%s facility" % args.syslog_local)
+            syslog_facility = SysLogHandler.LOG_LOCAL0 + args.syslog_local
+        else:
+            print("Logging to syslog user facility")
+            syslog_facility = SysLogHandler.LOG_USER
+
+        # Setup logzero to only use the syslog handler
+        logzero.logfile(None, disableStderrLogger=args.disable_stderr)
+        syslog_handler = SysLogHandler(facility=syslog_facility)
+        logger.addHandler(syslog_handler)
+    else:
+        # Setup file logging
+        if args.logfile:
+            logfile = os.path.abspath(args.logfile)
+            if args.disable_stderr:
+                print("Logging to logfile: %s" % logfile)
+            else:
+                print("Logging to stderr and logfile: %s" % logfile)
+            logzero.logfile(logfile, maxBytes=LOGFILE_MAX_BYTES, backupCount=LOGFILE_BACKUP_COUNT, disableStderrLogger=args.disable_stderr)
+
+        else:
+            print("Logging to stdout and stderr")
+
+    # Disable logging smart contract events
+    settings.set_log_smart_contract_events(False)
+
     # Write a PID file to easily quit the service
     write_pid_file()
+
+    # Setup Twisted and Klein logging to use the logzero setup
+    observer = STDLibLogObserver(name=logzero.LOGZERO_DEFAULT_LOGGER)
+    globalLogPublisher.addObserver(observer)
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
@@ -110,22 +179,17 @@ def main():
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)
 
-    # Disable logging smart contract events
-    settings.set_log_smart_contract_events(False)
-
-    # Start the notification db instance
-    ndb = NotificationDB.instance()
-    ndb.start()
+    # Setup twisted reactor, NodeLeader and start the NotificationDB
+    reactor.suggestThreadPoolSize(15)
+    NodeLeader.Instance().Start()
+    NotificationDB.instance().start()
 
     # Start a thread with custom code
     d = threading.Thread(target=custom_background_code)
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
 
-    # Run
-    reactor.suggestThreadPoolSize(15)
-    NodeLeader.Instance().Start()
-
+    # Default host is open for all
     host = "0.0.0.0"
 
     if args.port_rpc:
@@ -135,13 +199,18 @@ def main():
         endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
     if args.port_rest:
-        logger.info("Starting notification api server on http://%s:%s" % (host, args.port_rest))
+        logger.info("Starting REST api server on http://%s:%s" % (host, args.port_rest))
         api_server_rest = NotificationRestApi()
         endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 
-    app = Klein()
-    app.run(host, 9999)
+    reactor.run()
+
+    # After the reactor is stopped, gracefully shutdown the database.
+    logger.info("Closing databases...")
+    NotificationDB.close()
+    Blockchain.Default().Dispose()
+    NodeLeader.Instance().Shutdown()
 
 
 if __name__ == "__main__":

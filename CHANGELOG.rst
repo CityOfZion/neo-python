@@ -3,13 +3,20 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.5.2] 2018-03-04
+[0.5.4-dev] Work in progress
+----------------------------
+- update to neo-boa==0.3.4
+- `api-server.py <https://github.com/CityOfZion/neo-python/blob/development/api-server.py>`_: Improved logging setup. See the options with ``./api-server.py -h``
+
+
+[0.5.3] 2018-03-04
 ------------------
 - add documentation for data types in ``neo-python``
 - add intructions on ``build``, ``build .. test``, ``import contract``, and ``testinvoke`` to docs
 - ``BuildNRun`` results now converted to ``ContractParameter`` before printed
 - ``contract {hash}`` no longer throws errors when it is not an ``NEP5`` contract
 - Added method ``AsParameterType`` to ``ContractParameter`` for casting results
+
 
 [0.5.1] 2018-03-02
 ------------------
