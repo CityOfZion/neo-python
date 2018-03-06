@@ -36,7 +36,7 @@ To update neo-python, just run `git pull` and `pip install -e .`
 The default entrypoint automatically starts the neo-python prompt. It also supports the command line parameters of prompt.py and bootstrap.py. An additional
 parameter '--bootstrap' is added to bootstrap prior to entering the prompt.
 
-To persist the bootstrapped chain you need to use a volume to store /neo-python/Chains. This can be a host directory or a named volume, in which the latter is preferable. But for clarity an example of both.
+To persist the bootstrapped chain you need to use a volume to store /neo-python/Chains. This can be a host directory or a named volume (the latter is preferable). For completeness we give an example of both, starting with a host directory volume.
 
     $ docker run -it -v /host/path/to/where/you/want/to/store/the/chain:/neo-python/Chains neopython -m --bootstrap
 
