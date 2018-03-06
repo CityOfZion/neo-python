@@ -5,9 +5,11 @@ neo-python has a settings module which you can use to configure several things:
 
 * The network: MainNet, TestNet, private networks or custom configs
 * Logging:
- * Smart contract event logging
- * Logfile (optionally rotating)
- * Loglevel
+
+  * Smart contract event logging
+  * Logfile (optionally rotating)
+  * Loglevel
+
 
 To change settings, you have to import the settings instance like this:
 
@@ -65,6 +67,17 @@ To change the loglevel (eg. to also show DEBUG logs, or to only show ERRORS):
 
     # Only show errors:
     settings.set_loglevel(logging.ERROR)
+
+
+Changing in the prompt
+----------------------
+
+To change the loglevel in the ``prompt`` interface, use the following command
+
+.. code-block:: sh
+
+  neo> config sc-events on
+  neo> config sc-events off
 
 
 Configuring a logfile

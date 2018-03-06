@@ -35,10 +35,10 @@ class StackItem(EquatableMixin):
         return None
 
     def GetString(self):
-        return 'Stack Item'
+        return str(self)
 
     def __str__(self):
-        return 'Stack Item'
+        return 'StackItem'
 
     @staticmethod
     def FromInterface(value):
@@ -136,7 +136,7 @@ class Boolean(StackItem):
         return self.TRUE if self._value else self.FALSE
 
     def __str__(self):
-        return "Boolean: %s" % self._value
+        return str(self._value)
 
 
 class ByteArray(StackItem):
@@ -173,7 +173,7 @@ class ByteArray(StackItem):
         return str(self)
 
     def __str__(self):
-        return "ByteArray: %s" % self._value
+        return self._value.hex()
 
 
 class Integer(StackItem):
@@ -206,7 +206,7 @@ class Integer(StackItem):
         return self._value.ToByteArray()
 
     def __str__(self):
-        return "Integer: %s " % self._value
+        return str(self._value)
 
 
 class InteropInterface(StackItem):

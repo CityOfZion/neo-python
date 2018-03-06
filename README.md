@@ -66,7 +66,7 @@ neo-python has two System dependencies (everything else is covered with `pip`):
 - [LevelDB](https://github.com/google/leveldb)
 - [Python 3.6+](https://www.python.org/downloads/release/python-364/) (3.5 and below is not supported)
 
-We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get
+We have published a Youtube [video](https://www.youtube.com/watch?v=ZZXz261AXrM) to help get
 you started. There are many more videos under the
 [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
 channel, check them out.
@@ -274,17 +274,19 @@ This is a checklist for releasing a new version, which for now means:
 3. On the dev branch, setting the version to the next patch, eg. `0.4.7-dev`
 4. Pushing master, development and the tags to GitHub
 
-Make sure you are on the development branch and have all changes merged that you want to publish. Then follow these steps:
+Make sure you are on the development branch and have all changes merged that you want to publish.
+Then follow these steps:
 
     # Only in case you want to increase the version number again (eg. scope changed from patch to minor):
-    bumpversion --no-tag minor|major
+    # bumpversion --no-tag minor|major
 
     # Update CHANGELOG.rst: make sure all changes are there and remove `-dev` from the version number
     vi CHANGELOG.rst
     git commit -m "Updated changelog for release" CHANGELOG.rst
 
     # Merge development branch into master
-    git checkout master && git merge development
+    git checkout master
+    git merge development
 
     # Set the release version number and create the tag
     bumpversion release
@@ -295,8 +297,8 @@ Make sure you are on the development branch and have all changes merged that you
     # Increase patch number and add `-dev`
     bumpversion --no-tag patch
 
-    # Push to GitHub, which also updates the PyPI package
-    git push && git push --tags
+    # Push to GitHub, which also updates the PyPI package and Docker Hub image
+    git push origin master development --tags
 
 ## Troubleshooting
 

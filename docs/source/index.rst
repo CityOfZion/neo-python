@@ -37,7 +37,8 @@ neo-python - Python Node and SDK for the NEO blockchain
     basicusage
     prompt
     settings-and-logging
-    smartcontracts
+    neo/SmartContract/smartcontracts
+    data-types
     contribute
     license
     changelog

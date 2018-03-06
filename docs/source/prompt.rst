@@ -106,6 +106,22 @@ If there have been changes to the wallet data model, you may need to migrate you
     neo>
 
 
+Reencrypt your wallet
+^^^^^^^^^^^^^^^^^^^^^
+If you get a message like this when opening your wallet, you must reencrypt in order to secure against previous wallet vulnerabilities.
+
+.. code-block:: sh
+
+  Could not open wallet: This wallet is currently vulnerable. Please execute the "reencrypt_wallet.py" script on this wallet before continuing
+
+You can fix this by ``exit`` the neo prompt, and run the re-encryption script:
+
+.. code-block:: sh
+
+  python reencrypt_wallet.py path/to/mywallet.db3
+
+This will ask you for a password and re-save the reencrypted wallet with a new name of ``path/to/new_mywallet.db3``.
+
 Import WIF
 ^^^^^^^^^^
 You may want to import a `WIF <https://en.bitcoin.it/wiki/Wallet_import_format>`_ key to add an address to your wallet
@@ -270,3 +286,8 @@ You may want to observe or interact with ``NEP5`` Tokens with your wallet.  To d
 
 
 
+-----------------------------
+Smart Contracts in the prompt
+-----------------------------
+
+View a full description of interactinng with smart contracts in the prompt:  :ref:`Smart Contracts within the Prompt`

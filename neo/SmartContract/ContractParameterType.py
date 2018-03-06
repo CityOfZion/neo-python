@@ -12,13 +12,27 @@ import binascii
 class ContractParameterType(Enum):
     """
     Contract Parameter Types are used to denote different types of objects used in the VM
+
+    Attributes:
+        Signature: 00
+        Boolean: 01
+        Integer: 02
+        Hash160: 03
+        Hash256: 04
+        ByteArray: 05
+        PublicKey: 06
+        String: 07
+        Array: 10
+        InteropInterface: f0
+        Void: ff
     """
-    Signature = 0x00        # 签名
+
+    Signature = 0x00
     Boolean = 0x01
-    Integer = 0x02          # 整数
-    Hash160 = 0x03          # 160位散列值
-    Hash256 = 0x04          # 256位散列值
-    ByteArray = 0x05        # 字节数组
+    Integer = 0x02
+    Hash160 = 0x03
+    Hash256 = 0x04
+    ByteArray = 0x05
     PublicKey = 0x06
     String = 0x07
     Array = 0x10

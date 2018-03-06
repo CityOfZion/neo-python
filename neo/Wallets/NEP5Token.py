@@ -95,19 +95,25 @@ class NEP5Token(VerificationCode, SerializableMixin):
         sb.EmitAppCallWithOperation(self.ScriptHash, 'symbol')
         sb.EmitAppCallWithOperation(self.ScriptHash, 'decimals')
 
-        engine = ApplicationEngine.Run(sb.ToArray())
-        results = engine.EvaluationStack.Items
-
+        engine = None
         try:
-            self.name = results[0].GetString()
-            self.symbol = results[1].GetString()
-            self.decimals = results[2].GetBigInteger()
-            if len(self.name) > 1 and self.name != 'Stack Item' \
-                    and len(self.symbol) > 1 and self.symbol != 'Stack Item'\
-                    and self.decimals < 10:
-                return True
+            engine = ApplicationEngine.Run(sb.ToArray(), exit_on_error=True)
         except Exception as e:
-            logger.info("could not query token %s " % e)
+            pass
+
+        if engine and len(engine.EvaluationStack.Items) == 3:
+            results = engine.EvaluationStack.Items
+
+            try:
+                self.name = results[0].GetString()
+                self.symbol = results[1].GetString()
+                self.decimals = results[2].GetBigInteger()
+                if len(self.name) > 1 and self.name != 'Stack Item' \
+                        and len(self.symbol) > 1 and self.symbol != 'Stack Item'\
+                        and self.decimals < 10:
+                    return True
+            except Exception as e:
+                pass
         return False
 
     def GetBalance(self, wallet, address, as_string=False):

@@ -8,23 +8,28 @@ This directory contains various Docker related utilities.
 
 ## Simple Docker container for neo-python master and dev branches
 
-Take a look at the Dockerfiles, they have some documentation and example usage inside.
+Take a look at the Dockerfile, it has some documentation and example usage inside.
 
-Let's use the development branch Dockerfile as example. To build it, use this command:
+Building an image of the current master branch (creates a Docker image called neopython):
 
-    $ docker build -f Dockerfile.dev -t neopython-dev .
+    $ docker build -f Dockerfile -t neopython .
+
+Building an image of the current development branch (creates a Docker image called neopython-dev):
+
+    $ docker build -f Dockerfile -t neopython-dev . --build-arg branch=development
 
 Build without caching:
 
-    $ docker build --no-cache -f Dockerfile.dev -t neopython-dev .
+    $ docker build --no-cache -f Dockerfile -t neopython .
 
-At this point there is a Docker image called 'neopython-dev'. If you want to run it connecting
-to a private network, make sure the privatenet container is already running.
-https://hub.docker.com/r/cityofzion/neo-privatenet
+### Using with a private network
+
+If you want to run it connecting to a private network, make sure the privatenet container is already running.
+See also https://hub.docker.com/r/cityofzion/neo-privatenet
 
 Start a container interactively, opening a bash in `/neo-python`, and mounting the current directory as `/neo-python/sc`:
 
-    $ docker run --rm -it -v $(pwd):/neo-python/sc --net=host -h neopython-dev --name neopython-dev neopython-dev /bin/bash
+    $ docker run --rm -it -v $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython /bin/bash
 
 To update neo-python, just run `git pull` and `pip install -e .`
 
