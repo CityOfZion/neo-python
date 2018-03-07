@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import datetime
@@ -935,6 +935,9 @@ def main():
     parser.add_argument("-t", "--set-default-theme", dest="theme",
                         choices=["dark", "light"],
                         help="Set the default theme to be loaded from the config file. Default: 'dark'")
+
+    parser.add_argument("-v", "--verbose", action="store_true", default=False,
+                       help="Show smart-contract events by default")
     parser.add_argument("--version", action="version",
                         version="neo-python v{version}".format(version=__version__))
 
@@ -952,6 +955,9 @@ def main():
 
     if args.theme:
         preferences.set_theme(args.theme)
+
+    if args.verbose:
+        settings.set_log_smart_contract_events(True)
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
