@@ -29,7 +29,7 @@ See also https://hub.docker.com/r/cityofzion/neo-privatenet
 
 Start a container interactively, opening a bash in `/neo-python`, and mounting the current directory as `/neo-python/sc`:
 
-    $ docker run --rm -it -v --entrypoint "/bin/bash" $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython
+    $ docker run --rm -it -v $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython /bin/bash
 
 To update neo-python, just run `git pull` and `pip install -e .`
 
@@ -38,14 +38,14 @@ parameter '--bootstrap' is added to bootstrap prior to entering the prompt.
 
 To persist the bootstrapped chain you need to use a volume to store /neo-python/Chains. This can be a host directory or a named volume (the latter is preferable). For completeness we give an example of both, starting with a host directory volume.
 
-    $ docker run -it -v /host/path/to/where/you/want/to/store/the/chain:/neo-python/Chains neopython -m --bootstrap
+    $ docker run -it -v /host/path/to/where/you/want/to/store/the/chain:/neo-python/Chains neopython /entrypoint.sh -m --bootstrap
 
 To start with a clean slate, the files in /host/path/to/where/you/want/to/store/the/chain need to be removed after closing the container.
 
 An even better way to deal with storage in Docker is using named volumes, because Docker can manage the storage platform independent. They can be created and used like so.
 
     $ docker volume create my-chains-vol
-    $ docker run -it -v my-chains-vol:/neo-python/Chains neopython -m --bootstrap
+    $ docker run -it -v my-chains-vol:/neo-python/Chains neopython /entrypoint.sh -m --bootstrap
 
 To list and remove volumes
     $ docker volume ls
