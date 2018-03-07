@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-This example provides a REST API to query notifications from the blockchain, implementing `neo.api.RESTAPI.NotificationRestApi`
-
+This example provides a REST API to query notifications from the blockchain, implementing `neo.api.RESTAPI.RestApi`
 See it live here: http://notifications.neeeo.org/
+
+See also api-server.py for a more complete API implementation
 """
 
 import argparse
@@ -15,7 +16,7 @@ from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.api.REST.NotificationRestApi import NotificationRestApi
+from neo.api.REST.RestApi import RestApi
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings, DIR_PROJECT_ROOT
 from neo.UserPreferences import preferences
@@ -63,15 +64,15 @@ def main():
     ndb = NotificationDB.instance()
     ndb.start()
 
-    notif_server = NotificationRestApi()
+    api_server = RestApi()
 
     # Run
     reactor.suggestThreadPoolSize(15)
     NodeLeader.Instance().Start()
 
     port = 8000
-    logger.info("Starting notification-api server on port %s" % (port))
-    notif_server.app.run('0.0.0.0', port)
+    logger.info("Starting rest-api server on port %s" % (port))
+    api_server.app.run('0.0.0.0', port)
 
 
 if __name__ == "__main__":

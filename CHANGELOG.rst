@@ -7,7 +7,7 @@ All notable changes to this project are documented in this file.
 ----------------------------
 - update to neo-boa==0.3.4
 - `api-server.py <https://github.com/CityOfZion/neo-python/blob/development/api-server.py>`_: Improved logging setup. See the options with ``./api-server.py -h``
-
+- Renamed ``neo.api.REST.NotificationRestApi`` to ``neo.api.REST.RestApi``
 
 [0.5.3] 2018-03-04
 ------------------
