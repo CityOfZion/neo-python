@@ -818,8 +818,21 @@ class PromptInterface(object):
             else:
                 print("Cannot configure log. Please specify on|off")
 
+        elif what == 'sc-debug-notify':
+            c1 = get_arg(args, 1).lower()
+            if c1 is not None:
+                if c1 == 'on' or c1 == '1':
+                    print("Smart contract emit Notify events on execution failure is now enabled")
+                    settings.set_emit_notify_events_on_sc_execution_error(True)
+                if c1 == 'off' or c1 == '0':
+                    print("Smart contract emit Notify events on execution failure is now disabled")
+                    settings.set_emit_notify_events_on_sc_execution_error(False)
+
+            else:
+                print("Cannot configure log. Please specify on|off")
+
         else:
-            print("Cannot configure %s try 'config sc-events on|off' or 'config debug on|off'", what)
+            print("Cannot configure %s try 'config sc-events on|off', 'config debug on|off' or 'sc-debug-notify on|off'" % what)
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
