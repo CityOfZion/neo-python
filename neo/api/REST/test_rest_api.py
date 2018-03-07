@@ -198,7 +198,6 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         results = jsn['results']
         self.assertEqual(len(results), 27)
 
-
     def test_block_heigher_than_current(self):
         mock_req = requestMock(path=b'/block/8000000')
         res = self.app.get_by_block(mock_req, 800000)
