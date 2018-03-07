@@ -5,7 +5,8 @@ All notable changes to this project are documented in this file.
 
 [0.5.4-dev] Work in progress
 ----------------------------
-- update to neo-boa==0.3.4
+- All requests to the API that are invalid will now receive a ``None`` for results rather than an empty list ``[]``
+- update to neo-boa==0.3.7
 - `api-server.py <https://github.com/CityOfZion/neo-python/blob/development/api-server.py>`_: Improved logging setup. See the options with ``./api-server.py -h``
 - Renamed ``neo.api.REST.NotificationRestApi`` to ``neo.api.REST.RestApi``
 

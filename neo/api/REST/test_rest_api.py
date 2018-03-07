@@ -115,8 +115,8 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         jsn = json.loads(res)
         self.assertEqual(jsn['total'], 0)
         results = jsn['results']
-        self.assertIsInstance(results, list)
-        self.assertIn('Could not get notifications', jsn['message'])
+        self.assertIsInstance(results, type(None))
+        self.assertIn('Higher than current block', jsn['message'])
 
     def test_7_by_addr(self):
         mock_req = requestMock(path=b'/addr/AL5e5ZcqtBTKjcQ8reiePrUBMYSD88v59a')
@@ -132,7 +132,7 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         jsn = json.loads(res)
         self.assertEqual(jsn['total'], 0)
         results = jsn['results']
-        self.assertIsInstance(results, list)
+        self.assertIsInstance(results, type(None))
         self.assertIn('Could not get notifications', jsn['message'])
 
     def test_9_by_tx(self):
@@ -149,7 +149,7 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         jsn = json.loads(res)
         self.assertEqual(jsn['total'], 0)
         results = jsn['results']
-        self.assertIsInstance(results, list)
+        self.assertIsInstance(results, type(None))
         self.assertIn('Could not get tx with hash', jsn['message'])
 
     def test_get_by_contract(self):
@@ -197,3 +197,12 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         self.assertEqual(jsn['total'], 1027)
         results = jsn['results']
         self.assertEqual(len(results), 27)
+
+    def test_block_heigher_than_current(self):
+        mock_req = requestMock(path=b'/block/8000000')
+        res = self.app.get_by_block(mock_req, 800000)
+        jsn = json.loads(res)
+        self.assertEqual(jsn['total'], 0)
+        results = jsn['results']
+        self.assertIsInstance(results, type(None))
+        self.assertIn('Higher than current block', jsn['message'])
