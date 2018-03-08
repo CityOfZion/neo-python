@@ -21,6 +21,8 @@ import os
 import sys
 
 sys.path.append('/Users/thomassaunders/Workshop/neo-python/')
+# resolve module import errors for :automodule: and :autoclass:
+sys.path.append(os.path.abspath('../..'))
 
 
 # need to mock plyvel so it will compile on rtd.org

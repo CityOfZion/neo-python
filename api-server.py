@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 """
-This api server runs one or both of the json-rpc and rest api. Uses
-neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi
+API server to run the JSON-RPC and REST API.
 
-Run and print the help:
+Uses neo.api.JSONRPC.JsonRpcApi and neo.api.REST.RestApi
+
+Print the help and all possible arguments:
 
     ./api-server.py -h
 
-Run using TestNet with rpc api at port 10332 and rest api at port 8080:
+Run using TestNet with JSON-RPC API at port 10332 and REST API at port 8080:
 
     ./api-server.py --testnet --port-rpc 10332 --port-rest 8080
 
-See also
+See also:
 
-* Guide: Setup an api server on Ubuntu: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
-* Example systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
-* JSON-RPC api issues: https://github.com/CityOfZion/neo-python/issues/273
+* If you encounter any issues, please report them here: https://github.com/CityOfZion/neo-python/issues/273
+* Server setup
+  * Guide for Ubuntu server setup: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
+  * Systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
+  * Ansible playbook to update nodes: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
 
 Logging
 -------
@@ -50,7 +53,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.api.REST.NotificationRestApi import NotificationRestApi
+from neo.api.REST.RestApi import RestApi
 
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings
@@ -147,9 +150,7 @@ def main():
             syslog_facility = SysLogHandler.LOG_USER
 
         # Setup logzero to only use the syslog handler
-        logzero.logfile(None, disableStderrLogger=args.disable_stderr)
-        syslog_handler = SysLogHandler(facility=syslog_facility)
-        logger.addHandler(syslog_handler)
+        logzero.syslog(facility=syslog_facility)
     else:
         # Setup file logging
         if args.logfile:
@@ -200,7 +201,7 @@ def main():
 
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (host, args.port_rest))
-        api_server_rest = NotificationRestApi()
+        api_server_rest = RestApi()
         endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 

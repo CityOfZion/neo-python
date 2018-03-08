@@ -42,6 +42,7 @@
 - Notification Server ( for viewing transfers of NEP5 tokens )
 - `Runtime.Log` and `Runtime.Notify` event monitoring
 
+
 ### What will it do
 
 - Consensus nodes
@@ -66,7 +67,7 @@ neo-python has two System dependencies (everything else is covered with `pip`):
 - [LevelDB](https://github.com/google/leveldb)
 - [Python 3.6+](https://www.python.org/downloads/release/python-364/) (3.5 and below is not supported)
 
-We have published a Youtube [video](https://youtu.be/oy6Z_zd42-4) to help get
+We have published a Youtube [video](https://www.youtube.com/watch?v=ZZXz261AXrM) to help get
 you started. There are many more videos under the
 [CityOfZion](https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg) Youtube
 channel, check them out.

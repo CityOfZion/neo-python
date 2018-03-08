@@ -20,7 +20,7 @@ from neo.api.utils import cors_header
 API_URL_PREFIX = "/v1"
 
 
-class NotificationRestApi(object):
+class RestApi(object):
     app = Klein()
     notif = None
 
@@ -123,7 +123,10 @@ class NotificationRestApi(object):
     def get_by_block(self, request, block):
         request.setHeader('Content-Type', 'application/json')
         try:
-            notifications = self.notif.get_by_block(block)
+            if int(block) > Blockchain.Default().Height:
+                return self.format_message("Higher than current block")
+            else:
+                notifications = self.notif.get_by_block(block)
         except Exception as e:
             logger.info("Could not get notifications for block %s %s" % (block, e))
             return self.format_message("Could not get notifications for block %s because %s " % (block, e))
@@ -205,7 +208,7 @@ class NotificationRestApi(object):
             'num_peers': len(NodeLeader.Instance().Peers)
         }, indent=4, sort_keys=True)
 
-    def format_notifications(self, request, notifications):
+    def format_notifications(self, request, notifications, show_none=False):
         notif_len = len(notifications)
         page_len = 500
         page = 0
@@ -228,7 +231,7 @@ class NotificationRestApi(object):
             'current_height': Blockchain.Default().Height,
             'message': message,
             'total': notif_len,
-            'results': [n.ToJson() for n in notifications],
+            'results': None if show_none else [n.ToJson() for n in notifications],
             'page': page,
             'page_len': page_len
         }, indent=4, sort_keys=True)
@@ -238,7 +241,7 @@ class NotificationRestApi(object):
             'current_height': Blockchain.Default().Height,
             'message': message,
             'total': 0,
-            'results': [],
+            'results': None,
             'page': 0,
             'page_len': 0
         }, indent=4, sort_keys=True)
