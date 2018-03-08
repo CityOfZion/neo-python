@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 [0.5.4-dev] Work in progress
 ----------------------------
 - `api-server.py <https://github.com/CityOfZion/neo-python/blob/development/api-server.py>`_: Improved logging setup. See the options with ``./api-server.py -h``
-- Added `sc-debug-notify` option to the `config` command. This preserves smart contract `Notify()` events when SC execution fails and is intended for SC debug purposes only.
+- Added ``sc-debug-notify`` option to the ``config`` console command. This preserves smart contract ``Notify()`` events when SC execution fails and is intended for SC debugging purposes only.
 - Added VM instruction counter to ``ExecutionEngine.py`` error messages to indicate the final instruction that failed. Allows for setting conditional breakpoints to support SC debugging.
 
 [0.5.3] 2018-03-04
