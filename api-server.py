@@ -150,9 +150,7 @@ def main():
             syslog_facility = SysLogHandler.LOG_USER
 
         # Setup logzero to only use the syslog handler
-        logzero.logfile(None, disableStderrLogger=args.disable_stderr)
-        syslog_handler = SysLogHandler(facility=syslog_facility)
-        logger.addHandler(syslog_handler)
+        logzero.syslog(facility=syslog_facility)
     else:
         # Setup file logging
         if args.logfile:
