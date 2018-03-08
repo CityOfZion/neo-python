@@ -1,4 +1,4 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help test
+.PHONY: clean clean-test clean-pyc clean-build docs help test lint coverage
 .DEFAULT_GOAL := help
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
