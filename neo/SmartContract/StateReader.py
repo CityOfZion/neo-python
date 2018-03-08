@@ -21,10 +21,10 @@ from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
 
 from neo.VM.InteropService import StackItem, stack_item_to_py
+from neo.Settings import settings
 
 
 class StateReader(InteropService):
-
     notifications = None
 
     events_to_dispatch = []
@@ -285,6 +285,15 @@ class StateReader(InteropService):
         )
 
         self.notifications.append(args)
+
+        if settings.emit_notify_events_on_sc_execution_error:
+            # emit Notify events even if the SC execution might fail.
+            tx_hash = engine.ScriptContainer.Hash
+            height = Blockchain.Default().Height
+            success = None
+            self.events_to_dispatch.append(NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, args.State,
+                                                       args.ScriptHash, height, tx_hash,
+                                                       success, engine.testMode))
 
         return True
 

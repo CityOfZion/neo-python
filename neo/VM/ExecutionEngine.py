@@ -17,7 +17,6 @@ from neocore.UInt160 import UInt160
 
 
 class ExecutionEngine():
-
     _Table = None
     _Service = None
 
@@ -227,7 +226,6 @@ class ExecutionEngine():
 
                 # if n == 0 break, same as do x if n > 0
                 if n > 0:
-
                     item = estack.Peek(n)
                     estack.Set(n, estack.Peek())
                     estack.Set(0, item)
@@ -818,10 +816,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-#        opname = ToName(op)
-#        logger.info("____________________________________________________")
-#        logger.info("[%s] [%s] %02x -> %s" % (self.CurrentContext.InstructionPointer,self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
-#        logger.info("-----------------------------------")
+        #        opname = ToName(op)
+        #        logger.info("____________________________________________________")
+        #        logger.info("[%s] [%s] %02x -> %s" % (self.CurrentContext.InstructionPointer,self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
+        #        logger.info("-----------------------------------")
 
         self.ops_processed += 1
 
@@ -832,7 +830,7 @@ class ExecutionEngine():
             if self._exit_on_error:
                 self._VMState |= VMState.FAULT
             else:
-                logger.error("COULD NOT EXECUTE OP: %s %s %s" % (e, op, ToName(op)))
+                logger.error("COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op)))
                 logger.exception(e)
 
     def StepOut(self):
@@ -843,7 +841,6 @@ class ExecutionEngine():
                 self._VMState & VMState.FAULT == 0 and \
                 self._VMState & VMState.BREAK == 0 and \
                 self._InvocationStack.Count > count:
-
             self.StepInto()
 
     def StepOver(self):
@@ -857,5 +854,4 @@ class ExecutionEngine():
                 self._VMState & VMState.FAULT == 0 and \
                 self._VMState & VMState.BREAK == 0 and \
                 self._InvocationStack.Count > count:
-
             self.StepInto()
