@@ -8,6 +8,8 @@ All notable changes to this project are documented in this file.
 - All requests to the API that are invalid will now receive a ``None`` for results rather than an empty list ``[]``
 - update to neo-boa==0.3.7
 - `api-server.py <https://github.com/CityOfZion/neo-python/blob/development/api-server.py>`_: Improved logging setup. See the options with ``./api-server.py -h``
+- Added ``sc-debug-notify`` option to the ``config`` console command. This preserves smart contract ``Notify()`` events when SC execution fails and is intended for SC debugging purposes only.
+- Added VM instruction counter to ``ExecutionEngine.py`` error messages to indicate the final instruction that failed. Allows for setting conditional breakpoints to support SC debugging.
 - Renamed ``neo.api.REST.NotificationRestApi`` to ``neo.api.REST.RestApi``
 - Added ``-v/--verbose`` argument to prompt.py, which makes prompt.py show smart contract events by default
 
