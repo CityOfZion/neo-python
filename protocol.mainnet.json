@@ -12,10 +12,11 @@
       "02486fd15702c4490a26703112a5cc1d0923fd697a33406bd5a1c00e0013b09a70"
     ],
     "SeedList": [
-      "18.216.146.68:10333",
-      "18.217.91.255:10333",
-      "18.218.62.119:10333",
-      "52.14.228.80:10333"
+      "seed1.neo.org:10333",
+      "seed2.neo.org:10333",
+      "seed3.neo.org:10333",
+      "seed4.neo.org:10333",
+      "seed5.neo.org:10333"
     ],
     "RPCList":[
       "http://18.217.24.130:8080",
@@ -40,8 +41,8 @@
     "UriPrefix": [ "http://*:10332" ],
     "SslCert": "",
     "SslCertPassword": "",
-    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/ChainMain1920000.tar.gz",
-    "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/MainNotifications1920000.tar.gz",
+    "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Main2003100.tar.gz",
+    "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Main2003100_Notifications.tar.gz",
     "DebugStorage":1
   }
 }
