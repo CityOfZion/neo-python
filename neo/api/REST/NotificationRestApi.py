@@ -129,7 +129,7 @@ class NotificationRestApi(object):
             return self.format_message("Could not get notifications for block %s because %s " % (block, e))
         return self.format_notifications(request, notifications)
 
-    @app.route('%s/addr/<string:address>' % API_URL_PREFIX, methods=['GET'])
+    @app.route('%s/notifications/addr/<string:address>' % API_URL_PREFIX, methods=['GET'])
     @cors_header
     def get_by_addr(self, request, address):
         request.setHeader('Content-Type', 'application/json')
