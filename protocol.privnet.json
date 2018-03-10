@@ -15,7 +15,7 @@
         "127.0.0.1:20336"
     ],
     "RPCList":[
-      "127.0.0.1:20332"
+      "http://127.0.0.1:30333"
     ],
     "SystemFee": {
         "EnrollmentTransaction": 1000,

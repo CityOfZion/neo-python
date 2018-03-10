@@ -943,11 +943,10 @@ class PromptInterface(object):
 
 def check_privatenet():
     """ Check if privatenet is running, and if container is same as the chain file """
-    host = "http://127.0.0.1:30333"
-    rpc_settings.setup([host])
+    rpc_settings.setup(settings.RPC_LIST)
     client = RPCClient()
     version = client.get_version()
-    # print("version", version)
+    print("Privatenet useragent '%s', nonce: %s" % (version["useragent"], version["nonce"]))
     if not version:
         logger.error("Error: private network doesn't seem to be running")
         return
@@ -959,7 +958,7 @@ def check_privatenet():
         nonce_chain = open(neopy_chain_meta_filename, "r").read()
         if nonce_chain != nonce_container:
             raise PrivnetWrongChainDatabaseError(
-                "Chain database in Chains/privnet is for a different private network than the current container. "
+                "Chain database in Chains/privnet is for a different private network than the current container (or RPC is not enabled). "
                 "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
             )
     else:
