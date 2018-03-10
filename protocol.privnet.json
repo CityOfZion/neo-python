@@ -27,7 +27,7 @@
 
   "ApplicationConfiguration": {
     "DataDirectoryPath": "./Chains/privnet",
-    "NotificationDataPath": "Chains/Priv_Notif",
+    "NotificationDataPath": "Chains/privnet_notif",
     "RPCPort": 20332,
     "NodePort": 20333,
     "WsPort": 20334,

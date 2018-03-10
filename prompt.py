@@ -8,6 +8,7 @@ import psutil
 import traceback
 import logging
 
+from logzero import logger
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -44,6 +45,9 @@ from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
 
+from neorpc.Client import RPCClient
+from neorpc.Settings import settings as rpc_settings
+
 # Logfile settings & setup
 LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'prompt.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
@@ -52,6 +56,10 @@ settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
 # Prompt history filename
 FILENAME_PROMPT_HISTORY = os.path.join(DIR_PROJECT_ROOT, '.prompt.py.history')
+
+
+class PrivnetWrongChainDatabaseError(Exception):
+    pass
 
 
 class PromptInterface(object):
@@ -933,6 +941,32 @@ class PromptInterface(object):
                 traceback.print_exc()
 
 
+def check_privatenet():
+    """ Check if privatenet is running, and if container is same as the chain file """
+    host = "http://127.0.0.1:30333"
+    rpc_settings.setup([host])
+    client = RPCClient()
+    version = client.get_version()
+    # print("version", version)
+    if not version:
+        logger.error("Error: private network doesn't seem to be running")
+        return
+
+    # Now check if nonce is the same as in the chain path
+    nonce_container = str(version["nonce"])
+    neopy_chain_meta_filename = os.path.join(settings.LEVELDB_PATH, ".privnet-nonce")
+    if os.path.isfile(neopy_chain_meta_filename):
+        nonce_chain = open(neopy_chain_meta_filename, "r").read()
+        if nonce_chain != nonce_container:
+            raise PrivnetWrongChainDatabaseError(
+                "Chain database in Chains/privnet is for a different private network than the current container. "
+                "Consider deleting the Chain directory with 'rm -rf Chains/privnet."
+            )
+    else:
+        with open(neopy_chain_meta_filename, "w") as f:
+            f.write(nonce_container)
+
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -976,6 +1010,14 @@ def main():
 
     if args.verbose:
         settings.set_log_smart_contract_events(True)
+
+    # If privnet, check if correct chain
+    if args.privnet:
+        try:
+            check_privatenet()
+        except PrivnetWrongChainDatabaseError as e:
+            logger.error(str(e))
+            return
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
