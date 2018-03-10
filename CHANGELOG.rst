@@ -12,7 +12,7 @@ All notable changes to this project are documented in this file.
 - Added VM instruction counter to ``ExecutionEngine.py`` error messages to indicate the final instruction that failed. Allows for setting conditional breakpoints to support SC debugging.
 - Renamed ``neo.api.REST.NotificationRestApi`` to ``neo.api.REST.RestApi``
 - Added ``-v/--verbose`` argument to prompt.py, which makes prompt.py show smart contract events by default
-- prompt.py: When using a privnet with ``-p``, check if chain database is correct.
+- prompt.py: When using a privnet with ``-p``, check if chain database is correct. Renamed ``Chains/Priv_Notif`` to ``Chains/privnet_notif`` (if you need your old privnet notification db, you need to rename it manually).
 
 
 [0.5.3] 2018-03-04
