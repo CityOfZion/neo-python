@@ -12,6 +12,9 @@ All notable changes to this project are documented in this file.
 - Added VM instruction counter to ``ExecutionEngine.py`` error messages to indicate the final instruction that failed. Allows for setting conditional breakpoints to support SC debugging.
 - Renamed ``neo.api.REST.NotificationRestApi`` to ``neo.api.REST.RestApi``
 - Added ``-v/--verbose`` argument to prompt.py, which makes prompt.py show smart contract events by default
+- Fix multi-signature contract import to allow using a single signature
+- Fix fund sending from multi-signature contract
+- Added instructions on retrieving NEO TestNet funds
 
 
 [0.5.3] 2018-03-04

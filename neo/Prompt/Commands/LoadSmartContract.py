@@ -12,7 +12,6 @@ from neo.SmartContract.Contract import Contract
 
 
 def ImportContractAddr(wallet, args):
-
     if wallet is None:
         print("please open a wallet")
         return
@@ -56,7 +55,6 @@ def ImportContractAddr(wallet, args):
 
 
 def LoadContract(args):
-
     if len(args) < 5:
         print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage} {needs_dynamic_invoke}'")
         return
@@ -117,7 +115,6 @@ def LoadContract(args):
 
 
 def GatherLoadedContractParams(args, script):
-
     if len(args) < 4:
         raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke}")
     params = parse_param(args[0], ignore_int=True, prefer_hex=False)
@@ -147,7 +144,6 @@ def GatherLoadedContractParams(args, script):
 
 
 def GatherContractDetails(function_code, prompter):
-
     name = None
     version = None
     author = None
@@ -226,9 +222,8 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
 
 
 def ImportMultiSigContractAddr(wallet, args):
-
     if len(args) < 4:
-        print("please specify multisig contract like such: 'import multisig {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
+        print("please specify multisig contract like such: 'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
         return
 
     if wallet is None:
@@ -240,7 +235,6 @@ def ImportMultiSigContractAddr(wallet, args):
     publicKeys = args[2:]
 
     if publicKeys[1]:
-
         pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
 
         verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)
