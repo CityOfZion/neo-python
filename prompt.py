@@ -960,7 +960,7 @@ def check_privatenet():
         if nonce_chain != nonce_container:
             raise PrivnetWrongChainDatabaseError(
                 "Chain database in Chains/privnet is for a different private network than the current container. "
-                "Consider deleting the Chain directory with 'rm -rf Chains/privnet."
+                "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
             )
     else:
         with open(neopy_chain_meta_filename, "w") as f:
