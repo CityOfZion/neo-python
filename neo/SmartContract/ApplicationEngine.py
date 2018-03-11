@@ -22,10 +22,11 @@ from neo.SmartContract import TriggerType
 import pdb
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
+import datetime
+from neo.Settings import settings
 
 
 class ApplicationEngine(ExecutionEngine):
-
     ratio = 100000
     gas_free = 10 * 100000000
     gas_amount = 0
@@ -208,41 +209,50 @@ class ApplicationEngine(ExecutionEngine):
 
     def Execute(self):
 
-        while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
+        def loop_validation_and_stepinto():
+            while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
 
-            try:
+                try:
 
-                self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
-#                print("gas consumeb: %s " % self.gas_consumed)
-            except Exception as e:
-                logger.error("Exception calculating gas consumed %s " % e)
-                return False
+                    self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
+                #                print("gas consumeb: %s " % self.gas_consumed)
+                except Exception as e:
+                    logger.error("Exception calculating gas consumed %s " % e)
+                    return False
 
-            if not self.testMode and self.gas_consumed > self.gas_amount:
-                logger.error("NOT ENOUGH GAS")
-                return False
+                if not self.testMode and self.gas_consumed > self.gas_amount:
+                    logger.error("NOT ENOUGH GAS")
+                    return False
 
-            if not self.CheckItemSize():
-                logger.error("ITEM SIZE TOO BIG")
-                return False
+                if not self.CheckItemSize():
+                    logger.error("ITEM SIZE TOO BIG")
+                    return False
 
-            if not self.CheckStackSize():
-                logger.error("STACK SIZE TOO BIG")
-                return False
+                if not self.CheckStackSize():
+                    logger.error("STACK SIZE TOO BIG")
+                    return False
 
-            if not self.CheckArraySize():
-                logger.error("ARRAY SIZE TOO BIG")
-                return False
+                if not self.CheckArraySize():
+                    logger.error("ARRAY SIZE TOO BIG")
+                    return False
 
-            if not self.CheckInvocationStack():
-                logger.error("INVOCATION SIZE TO BIIG")
-                return False
+                if not self.CheckInvocationStack():
+                    logger.error("INVOCATION SIZE TO BIIG")
+                    return False
 
-            if not self.CheckDynamicInvoke():
-                logger.error("Dynamic invoke without proper contract")
-                return False
+                if not self.CheckDynamicInvoke():
+                    logger.error("Dynamic invoke without proper contract")
+                    return False
 
-            self.StepInto()
+                self.StepInto()
+
+        if settings.log_vm_instructions:
+            with open(self.log_file_name, 'w') as self.log_file:
+                self.write_log(str(datetime.datetime.now()))
+                # self.log_file.write(str(datetime.datetime.now()) + '\n')
+                loop_validation_and_stepinto()
+        else:
+            loop_validation_and_stepinto()
 
         return not self._VMState & VMState.FAULT > 0
 

@@ -831,8 +831,21 @@ class PromptInterface(object):
             else:
                 print("Cannot configure log. Please specify on|off")
 
+        elif what == 'vm-log':
+            c1 = get_arg(args, 1).lower()
+            if c1 is not None:
+                if c1 == 'on' or c1 == '1':
+                    print("VM instruction execution logging is now enabled")
+                    settings.set_log_vm_instruction(True)
+                if c1 == 'off' or c1 == '0':
+                    print("VM instruction execution logging is now disabled")
+                    settings.set_log_vm_instruction(False)
+
+            else:
+                print("Cannot configure VM instruction logging. Please specify on|off")
+
         else:
-            print("Cannot configure %s try 'config sc-events on|off', 'config debug on|off' or 'sc-debug-notify on|off'" % what)
+            print("Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)

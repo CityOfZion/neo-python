@@ -14,6 +14,8 @@ from neo.SmartContract.ContractParameterType import ContractParameterType
 from neocore.BigInteger import BigInteger
 from neo.VM.InteropService import Array, Struct, StackItem
 from neocore.UInt160 import UInt160
+import datetime
+from neo.Settings import settings
 
 
 class ExecutionEngine():
@@ -34,6 +36,20 @@ class ExecutionEngine():
     ops_processed = 0
 
     _exit_on_error = False
+
+    log_file_name = 'vm_instructions.log'
+    # file descriptor
+    log_file = None
+
+    def write_log(self, message):
+        """
+        Write a line to the VM instruction log file.
+
+        Args:
+            message (str): string message to write to file.
+        """
+        if settings.log_vm_instructions and self.log_file and not self.log_file.closed:
+            self.log_file.write(message + '\n')
 
     @property
     def ScriptContainer(self):
@@ -103,8 +119,16 @@ class ExecutionEngine():
     def Execute(self):
         self._VMState &= ~VMState.BREAK
 
-        while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0 and self._VMState & VMState.BREAK == 0:
-            self.StepInto()
+        def loop_stepinto():
+            while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0 and self._VMState & VMState.BREAK == 0:
+                self.StepInto()
+
+        if settings.log_vm_instructions:
+            with open(self.log_file_name, 'w') as self.log_file:
+                self.write_log(str(datetime.datetime.now()))
+                loop_stepinto()
+        else:
+            loop_stepinto()
 
     def ExecuteOp(self, opcode, context):
         estack = self._EvaluationStack
@@ -197,6 +221,7 @@ class ExecutionEngine():
 
             elif opcode == SYSCALL:
                 call = context.OpReader.ReadVarBytes(252).decode('ascii')
+                self.write_log(call)
                 if not self._Service.Invoke(call, self):
                     self._VMState |= VMState.FAULT
 
@@ -824,13 +849,16 @@ class ExecutionEngine():
         self.ops_processed += 1
 
         try:
+            self.write_log("{} {}".format(self.ops_processed, ToName(op)))
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
+            error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))
+            self.write_log(error_msg)
 
             if self._exit_on_error:
                 self._VMState |= VMState.FAULT
             else:
-                logger.error("COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op)))
+                logger.error(error_msg)
                 logger.exception(e)
 
     def StepOut(self):
