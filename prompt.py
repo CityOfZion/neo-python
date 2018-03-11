@@ -58,7 +58,7 @@ settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 FILENAME_PROMPT_HISTORY = os.path.join(DIR_PROJECT_ROOT, '.prompt.py.history')
 
 
-class PrivnetWrongChainDatabaseError(Exception):
+class PrivnetConnectionError(Exception):
     pass
 
 
@@ -946,10 +946,10 @@ def check_privatenet():
     rpc_settings.setup(settings.RPC_LIST)
     client = RPCClient()
     version = client.get_version()
-    print("Privatenet useragent '%s', nonce: %s" % (version["useragent"], version["nonce"]))
     if not version:
-        logger.error("Error: private network doesn't seem to be running")
-        return
+        raise PrivnetConnectionError("Error: private network container doesn't seem to be running, or RPC is not enabled.")
+
+    print("Privatenet useragent '%s', nonce: %s" % (version["useragent"], version["nonce"]))
 
     # Now check if nonce is the same as in the chain path
     nonce_container = str(version["nonce"])
@@ -957,8 +957,8 @@ def check_privatenet():
     if os.path.isfile(neopy_chain_meta_filename):
         nonce_chain = open(neopy_chain_meta_filename, "r").read()
         if nonce_chain != nonce_container:
-            raise PrivnetWrongChainDatabaseError(
-                "Chain database in Chains/privnet is for a different private network than the current container (or RPC is not enabled). "
+            raise PrivnetConnectionError(
+                "Chain database in Chains/privnet is for a different private network than the current container. "
                 "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
             )
     else:
@@ -1014,7 +1014,7 @@ def main():
     if args.privnet:
         try:
             check_privatenet()
-        except PrivnetWrongChainDatabaseError as e:
+        except PrivnetConnectionError as e:
             logger.error(str(e))
             return
 
