@@ -249,7 +249,6 @@ class ApplicationEngine(ExecutionEngine):
         if settings.log_vm_instructions:
             with open(self.log_file_name, 'w') as self.log_file:
                 self.write_log(str(datetime.datetime.now()))
-                # self.log_file.write(str(datetime.datetime.now()) + '\n')
                 loop_validation_and_stepinto()
         else:
             loop_validation_and_stepinto()
