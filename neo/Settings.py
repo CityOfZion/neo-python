@@ -153,7 +153,7 @@ class SettingsHolder:
 
         Args:
             host (string, optional): if supplied, uses this IP or domain as neo nodes. The host must
-                                     use the standard ports (P2P 20333-20336, RPC 30333).
+                                     use these standard ports: P2P 20333, RPC 30333.
         """
         self.setup(FILENAME_SETTINGS_PRIVNET)
         if isinstance(host, str):
