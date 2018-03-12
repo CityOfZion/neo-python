@@ -290,4 +290,109 @@ You may want to observe or interact with ``NEP5`` Tokens with your wallet.  To d
 Smart Contracts in the prompt
 -----------------------------
 
-View a full description of interactinng with smart contracts in the prompt:  :ref:`Smart Contracts within the Prompt`
+View a full description of interacting with smart contracts in the prompt:  :ref:`Smart Contracts within the Prompt`
+
+----------------------------
+Retrieving NEO TestNet funds
+----------------------------
+
+This section explains how to obtain the TesNet funds requested via the official NEO `request form <https://neo.org/testnet>`_.
+
+Obtaining the funds requires 2 steps
+
+1. Adding a multi signature address to your wallet.
+2. Transfering the funds to your own address.
+
+Adding a multi signature address
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+For this we'll need 2 pieces of information
+
+1. The public key sent in the email you received from NEO.
+2. A public key from our own wallet. Have your wallet open and type ``wallet`` in the prompt to obtain the needed information.
+
+.. code-block:: sh
+
+    neo> wallet
+    Wallet {
+        ...
+        "public_keys": [
+            {
+                "Address": "ANFLgwKG8Eni9gJmKfM7yFXEaWwoGkSUid",
+                "Public Key": "037b8992e8384212f82e05c8836816c0f14dff9528397138731638b17d6357021e" <--- take this
+            }
+        ],
+        ...
+    }
+
+
+Next we create the multi signature address as follows.
+
+.. code-block:: sh
+
+    neo> import multisig_addr
+    please specify multisig contract like such: 'import multisig {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'
+
+    neo> import multisig_addr 037b8992e8384212f82e05c8836816c0f14dff9528397138731638b17d6357021e 1 037b8992e8384212f82e05c8836816c0f14dff9528397138731638b17d6357021e 02883118351f8f47107c83ab634dc7e4
+    ffe29d274e7d3dcf70159c8935ff769beb
+    [I 180310 16:49:19 UserWallet:191] contract does not exist yet
+    Added multi-sig contract address ALXEKioZntX73QawcnfcHUDvTVm8qXjAxf to wallet
+
+
+Inspect your wallet again and you should see your balance (specifically look at the ``synced_balances`` key). If you don't see the added balance then run ``wallet rebuild`` and wait until it's fully synced and try again.
+
+.. code-block:: sh
+
+    neo> wallet
+    Wallet {
+        "path": "test",
+        "addresses": [
+            {
+                "address": "ANFLgwKG8Eni9gJmKfM7yFXEaWwoGkSUid",
+                "script_hash": "47028f2a3d33466f29fba10e65c90fd8f3d01e1f",
+                "tokens": null
+            },
+            {
+                "version": 0,
+                "script_hash": "ALXEKioZntX73QawcnfcHUDvTVm8qXjAxf",
+                "frozen": false,
+                "votes": [],
+                "balances": {
+                    "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b": "50.0",
+                    "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7": "50.0"
+                },
+                "is_watch_only": false
+            }
+        ],
+        ...
+        "synced_balances": [
+            "[NEO]: 50.0 ",
+            "[NEOGas]: 50.0 "
+        ],
+        "public_keys": [
+            {
+                "Address": "ANFLgwKG8Eni9gJmKfM7yFXEaWwoGkSUid",
+                "Public Key": "037b8992e8384212f82e05c8836816c0f14dff9528397138731638b17d6357021e"
+            },
+            {
+                "Address": "ALXEKioZntX73QawcnfcHUDvTVm8qXjAxf",
+                "Public Key": "037b8992e8384212f82e05c8836816c0f14dff9528397138731638b17d6357021e"
+            }
+        ],
+        ...
+    }
+
+
+Transfering the funds to your own address.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now that we can access the funds we can send them to our own address as follows
+
+.. code-block:: sh
+
+    neo> send NEO ANFLgwKG8Eni9gJmKfM7yFXEaWwoGkSUid 5 --from-addr=ALXEKioZntX73QawcnfcHUDvTVm8qXjAxf
+    [Password]> **********
+    [I 180310 17:02:42 Transaction:611] Verifying transaction: b'c32b0e3d9adbef6720abfad5106dcd2dacb17b31d4f9d32cbcf8ed6e7f566ef3'
+    Relayed Tx: c32b0e3d9adbef6720abfad5106dcd2dacb17b31d4f9d32cbcf8ed6e7f566ef3
+
+
+Note that the ``--from-addr`` parameter specifies our multi signature contract address to take the funds from.
