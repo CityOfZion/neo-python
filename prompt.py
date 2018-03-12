@@ -40,7 +40,7 @@ from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportTok
     ShowUnspentCoins
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.InputParser import InputParser
-from neo.Settings import settings, DIR_PROJECT_ROOT, PrivnetConnectionError, DependencyError
+from neo.Settings import settings, DIR_PROJECT_ROOT, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
