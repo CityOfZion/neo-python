@@ -975,7 +975,7 @@ def main():
     group.add_argument("-m", "--mainnet", action="store_true", default=False,
                        help="Use MainNet instead of the default TestNet")
     group.add_argument("-p", "--privnet", nargs="?", metavar="host", const=True, default=False,
-                       help="Use a private net instead of the default TestNet, optionally using a custom host (default: localhost)")
+                       help="Use a private net instead of the default TestNet, optionally using a custom host (default: 127.0.0.1)")
     group.add_argument("--coznet", action="store_true", default=False,
                        help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
