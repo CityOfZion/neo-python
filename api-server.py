@@ -2,7 +2,7 @@
 """
 API server to run the JSON-RPC and REST API.
 
-Uses neo.api.JSONRPC.JsonRpcApi and neo.api.REST.NotificationRestApi
+Uses neo.api.JSONRPC.JsonRpcApi and neo.api.REST.RestApi
 
 Print the help and all possible arguments:
 
@@ -53,7 +53,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.api.REST.NotificationRestApi import NotificationRestApi
+from neo.api.REST.RestApi import RestApi
 
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings
@@ -68,9 +68,8 @@ PID_FILE = os.getenv("PID_FILE", "/tmp/neopython-api-server.pid")
 
 def write_pid_file():
     """ Write a pid file, to easily kill the service """
-    f = open(PID_FILE, "w")
-    f.write(str(os.getpid()))
-    f.close()
+    with open(PID_FILE, "w") as f:
+        f.write(str(os.getpid()))
 
 
 def custom_background_code():
@@ -150,9 +149,7 @@ def main():
             syslog_facility = SysLogHandler.LOG_USER
 
         # Setup logzero to only use the syslog handler
-        logzero.logfile(None, disableStderrLogger=args.disable_stderr)
-        syslog_handler = SysLogHandler(facility=syslog_facility)
-        logger.addHandler(syslog_handler)
+        logzero.syslog(facility=syslog_facility)
     else:
         # Setup file logging
         if args.logfile:
@@ -203,7 +200,7 @@ def main():
 
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (host, args.port_rest))
-        api_server_rest = NotificationRestApi()
+        api_server_rest = RestApi()
         endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 

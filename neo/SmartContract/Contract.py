@@ -91,8 +91,14 @@ class Contract(SerializableMixin, VerificationCode):
     @staticmethod
     def CreateMultiSigRedeemScript(m, publicKeys):
 
-        if m < 2 or m > len(publicKeys) or len(publicKeys) > 1024:
-            raise Exception('Invalid keys')
+        if m < 1:
+            raise Exception("Minimum required signature count is 1, specified {}.".format(m))
+
+        if m > len(publicKeys):
+            raise Exception("Invalid public key count. Minimum required signatures is bigger than supplied public keys count.")
+
+        if len(publicKeys) > 1024:
+            raise Exception("Supplied public key count ({}) exceeds maximum of 1024.".format(len(publicKeys)))
 
         sb = ScriptBuilder()
         sb.push(m)
@@ -114,7 +120,7 @@ class Contract(SerializableMixin, VerificationCode):
 
         pk = [ECDSA.decode_secp256r1(p).G for p in publicKeys]
         return Contract(Contract.CreateMultiSigRedeemScript(m, pk),
-                        bytearray(b'\x00\x00\x00'),
+                        bytearray(m),
                         publicKeyHash)
 
     @staticmethod
