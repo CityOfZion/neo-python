@@ -45,31 +45,6 @@ class DependencyError(Exception):
     pass
 
 
-def check_privatenet():
-    """ Check if privatenet is running, and if container is same as the chain file """
-    rpc_settings.setup(settings.RPC_LIST)
-    client = RPCClient()
-    version = client.get_version()
-    if not version:
-        raise PrivnetConnectionError("Error: private network container doesn't seem to be running, or RPC is not enabled.")
-
-    print("Privatenet useragent '%s', nonce: %s" % (version["useragent"], version["nonce"]))
-
-    # Now check if nonce is the same as in the chain path
-    nonce_container = str(version["nonce"])
-    neopy_chain_meta_filename = os.path.join(settings.LEVELDB_PATH, ".privnet-nonce")
-    if os.path.isfile(neopy_chain_meta_filename):
-        nonce_chain = open(neopy_chain_meta_filename, "r").read()
-        if nonce_chain != nonce_container:
-            raise PrivnetConnectionError(
-                "Chain database in Chains/privnet is for a different private network than the current container. "
-                "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
-            )
-    else:
-        with open(neopy_chain_meta_filename, "w") as f:
-            f.write(nonce_container)
-
-
 def check_depdendencies():
     # Get installed packages
     installed_packages = pip.get_installed_distributions()
@@ -201,7 +176,7 @@ class SettingsHolder:
     def setup_privnet(self):
         """ Load settings from the privnet JSON config file """
         self.setup(FILENAME_SETTINGS_PRIVNET)
-        check_privatenet()
+        self.check_privatenet()
 
     def setup_coznet(self):
         """ Load settings from the coznet JSON config file """
@@ -233,6 +208,35 @@ class SettingsHolder:
             level (int): eg. logging.DEBUG or logging.ERROR. See also https://docs.python.org/2/library/logging.html#logging-levels
         """
         logzero.loglevel(level)
+
+    def check_privatenet(self):
+        """
+        Check if privatenet is running, and if container is same as the current Chains/privnet database.
+
+        Raises:
+            PrivnetConnectionError: if the private net couldn't be reached or the nonce does not match
+        """
+        rpc_settings.setup(self.RPC_LIST)
+        client = RPCClient()
+        version = client.get_version()
+        if not version:
+            raise PrivnetConnectionError("Error: private network container doesn't seem to be running, or RPC is not enabled.")
+
+        print("Privatenet useragent '%s', nonce: %s" % (version["useragent"], version["nonce"]))
+
+        # Now check if nonce is the same as in the chain path
+        nonce_container = str(version["nonce"])
+        neopy_chain_meta_filename = os.path.join(self.LEVELDB_PATH, ".privnet-nonce")
+        if os.path.isfile(neopy_chain_meta_filename):
+            nonce_chain = open(neopy_chain_meta_filename, "r").read()
+            if nonce_chain != nonce_container:
+                raise PrivnetConnectionError(
+                    "Chain database in Chains/privnet is for a different private network than the current container. "
+                    "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
+                )
+        else:
+            with open(neopy_chain_meta_filename, "w") as f:
+                f.write(nonce_container)
 
 
 # Settings instance used by external modules
