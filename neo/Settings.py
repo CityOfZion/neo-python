@@ -160,9 +160,9 @@ class SettingsHolder:
             if ":" in host:
                 raise Exception("No protocol prefix or port allowed in host, use just the IP or domain.")
             print("Using custom privatenet host:", host)
-            self.SEED_LIST = [entry.replace("127.0.0.1", host) for entry in self.SEED_LIST]
-            self.RPC_LIST = [entry.replace("127.0.0.1", host) for entry in self.RPC_LIST]
-            print("- Seeds:", ", ".join(self.SEED_LIST))
+            self.SEED_LIST = ["%s:20333" % host]
+            self.RPC_LIST = ["http://%s:30333" % host]
+            print("- P2P:", ", ".join(self.SEED_LIST))
             print("- RPC:", ", ".join(self.RPC_LIST))
 
     def setup_coznet(self):
