@@ -152,8 +152,8 @@ class SettingsHolder:
         Load settings from the privnet JSON config file
 
         Args:
-            host (string): can be either an IP which will be used for seeds with standard ports and RPC
-                           or in the format of `IP:port`, which will be used as the only seed
+            host (string, optional): if supplied, uses this IP or domain as neo nodes. The host must
+                                     use the standard ports (P2P 20333-20336, RPC 30333).
         """
         self.setup(FILENAME_SETTINGS_PRIVNET)
         if isinstance(host, str):
