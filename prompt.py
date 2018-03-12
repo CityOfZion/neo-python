@@ -92,6 +92,7 @@ class PromptInterface(object):
                 'import nep2 {nep2_encrypted_key}',
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke}',
                 'import contract_addr {contract_hash} {pubkey}',
+                'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...',
                 'import watch_addr {address}',
                 'import token {token_contract_hash}',
                 'export wif {address}',
