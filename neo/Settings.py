@@ -71,10 +71,11 @@ def check_privatenet():
 
 
 def check_depdendencies():
+    # Get installed packages
     installed_packages = pip.get_installed_distributions()
     installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
 
-    # Now check if each required package is actually available
+    # Now check if each package specified in requirements.txt is actually installed
     deps_filename = os.path.join(DIR_PROJECT_ROOT, "requirements.txt")
     deps_list = open(deps_filename, "r").read().split()
     for dep in deps_list:
@@ -244,4 +245,6 @@ settings.setup_testnet()
 settings.set_loglevel(logging.INFO)
 
 # Check if currently installed dependencies match the requirements
-check_depdendencies()
+# Can be bypassed with `SKIP_DEPS_CHECK=1 python prompt.py`
+if not os.getenv("SKIP_DEPS_CHECK"):
+    check_depdendencies()
