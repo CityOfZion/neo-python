@@ -147,9 +147,23 @@ class SettingsHolder:
         """ Load settings from the testnet JSON config file """
         self.setup(FILENAME_SETTINGS_TESTNET)
 
-    def setup_privnet(self):
-        """ Load settings from the privnet JSON config file """
+    def setup_privnet(self, host=None):
+        """
+        Load settings from the privnet JSON config file
+
+        Args:
+            host (string): can be either an IP which will be used for seeds with standard ports and RPC
+                           or in the format of `IP:port`, which will be used as the only seed
+        """
         self.setup(FILENAME_SETTINGS_PRIVNET)
+        if isinstance(host, str):
+            if ":" in host:
+                raise Exception("No protocol prefix or port allowed in host, use just the IP or domain.")
+            print("Using custom privatenet host:", host)
+            self.SEED_LIST = [entry.replace("127.0.0.1", host) for entry in self.SEED_LIST]
+            self.RPC_LIST = [entry.replace("127.0.0.1", host) for entry in self.RPC_LIST]
+            print("- Seeds:", ", ".join(self.SEED_LIST))
+            print("- RPC:", ", ".join(self.RPC_LIST))
 
     def setup_coznet(self):
         """ Load settings from the coznet JSON config file """
