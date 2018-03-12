@@ -17,6 +17,7 @@ All notable changes to this project are documented in this file.
 - Added instructions on retrieving NEO TestNet funds
 - prompt.py: When using a privnet with ``-p``, check if chain database is correct. Renamed ``Chains/Priv_Notif`` to ``Chains/privnet_notif`` (if you need your old privnet notification db, you need to rename it manually).
 - Fixed issue with missing ``addr`` location in ``neo/api/REST/RestApi.py``
+- Added ``neo-privnet.wallet`` to the project root. This is the standard wallet for `private networks <https://hub.docker.com/r/cityofzion/neo-privatenet/>`_.
 
 
 [0.5.3] 2018-03-04
