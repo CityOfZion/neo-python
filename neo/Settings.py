@@ -77,10 +77,10 @@ def check_depdendencies():
 
     # Now check if each package specified in requirements.txt is actually installed
     deps_filename = os.path.join(DIR_PROJECT_ROOT, "requirements.txt")
-    deps_list = open(deps_filename, "r").read().split()
-    for dep in deps_list:
-        if not dep.lower() in installed_packages_list:
-            raise DependencyError("Required dependency %s is not installed. Please run 'pip install -e .'." % dep)
+    with open(deps_filename, "r") as f:
+        for dep in f.read().split():
+            if not dep.lower() in installed_packages_list:
+                raise DependencyError("Required dependency %s is not installed. Please run 'pip install -e .'." % dep)
 
 
 class SettingsHolder:
