@@ -52,22 +52,16 @@ To list and remove volumes
     $ docker volume rm my-vol
 
 The Docker image supports the following command line parameters:
--m / --mainnet
-(use NEO main net)  
--p / --privnet
-(use private net)  
---coznet
-(use City of Zion net)  
+-m / --mainnet (use NEO main net)
+-p / --privnet (use private net)
+--coznet (use City of Zion net)
 -c=/path/to/config/file / --config=/path/to/config/file
-(Config file should be mounted in the Docker container on this path)  
+(Config file should be mounted in the Docker container on this path)
 -t=<theme> / --set-default-theme=<theme>
-(neo-python prompt theme, can be dark or light)  
---version=neo-python-version
-(set the neo-python version to be used)  
---bootstrap
-(bootstrap the blockchain, can be used with main or testnet)  
--n / --notifications
-(bootstrap notifcation database, only to be used in combination with --bootstrap)  
+(neo-python prompt theme, can be dark or light)
+--version=neo-python-version (set the neo-python version to be used)
+--bootstrap (bootstrap the blockchain, can be used with main or testnet)
+-n / --notifications (bootstrap notifcation database, only to be used in combination with --bootstrap)  
 
 Note that bootstrapping does not work with --privnet or --coznet and -c doesn't work with --mainnet.
 
