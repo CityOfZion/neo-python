@@ -1,13 +1,16 @@
+import os
+import hashlib
+import binascii
+
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Wallets.utils import to_aes_key
 from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
 from neo.SmartContract.Contract import Contract
-import binascii
 from neocore.Cryptography.Crypto import Crypto
-import hashlib
-
 from neo.Wallets.Wallet import Wallet
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Settings import DIR_PROJECT_ROOT
 
 
 class WalletTestCase(NeoTestCase):
@@ -117,3 +120,7 @@ class WalletTestCase(NeoTestCase):
         wallet.CreateKey()
         keypair = KeyPair(priv_key=self.pk)
         self.assertFalse(wallet.ContainsKey(keypair.PublicKey))
+
+    def test_privnet_wallet(self):
+        """ Simple test if we can open the privnet wallet """
+        wallet = UserWallet.Open(os.path.join(DIR_PROJECT_ROOT, "neo-privnet.wallet"), to_aes_key("coz"))
