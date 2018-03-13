@@ -249,6 +249,11 @@ class SettingsHolder:
                     "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
                 )
         else:
+            # When the Chains/privnet folder is removed, we need to create the directory
+            if not os.path.isdir(self.LEVELDB_PATH):
+                os.mkdir(self.LEVELDB_PATH)
+
+            # Write the nonce to the meta file
             with open(neopy_chain_meta_filename, "w") as f:
                 f.write(nonce_container)
 
