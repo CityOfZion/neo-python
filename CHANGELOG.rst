@@ -17,6 +17,7 @@ All notable changes to this project are documented in this file.
 - Added instructions on retrieving NEO TestNet funds
 - prompt.py: When using a privnet with ``-p``, check if chain database is correct. Renamed ``Chains/Priv_Notif`` to ``Chains/privnet_notif`` (if you need your old privnet notification db, you need to rename it manually).
 - Fixed issue with missing ``addr`` location in ``neo/api/REST/RestApi.py``
+- Added a dependency check to ``Settings.py``, which verifies that the installed dependencies match those in requirements.txt
 
 
 [0.5.3] 2018-03-04
