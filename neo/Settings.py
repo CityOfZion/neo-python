@@ -9,12 +9,17 @@ reconfigure them by calling the `setup(..)` methods.
 import json
 import os
 import logging
+import pip
+
 from json.decoder import JSONDecodeError
+import logzero
 
 from neo import __version__
 from neocore.Cryptography import Helper
 
-import logzero
+from neorpc.Client import RPCClient
+from neorpc.Settings import settings as rpc_settings
+
 
 # Create am absolute references to the project root folder. Used for
 # specifying the various filenames.
@@ -30,6 +35,27 @@ FILENAME_SETTINGS_MAINNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.mainnet.jso
 FILENAME_SETTINGS_TESTNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.testnet.json')
 FILENAME_SETTINGS_PRIVNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.privnet.json')
 FILENAME_SETTINGS_COZNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.coz.json')
+
+
+class PrivnetConnectionError(Exception):
+    pass
+
+
+class DependencyError(Exception):
+    pass
+
+
+def check_depdendencies():
+    # Get installed packages
+    installed_packages = pip.get_installed_distributions()
+    installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
+
+    # Now check if each package specified in requirements.txt is actually installed
+    deps_filename = os.path.join(DIR_PROJECT_ROOT, "requirements.txt")
+    with open(deps_filename, "r") as f:
+        for dep in f.read().split():
+            if not dep.lower() in installed_packages_list:
+                raise DependencyError("Required dependency %s is not installed. Please run 'pip install -e .'." % dep)
 
 
 class SettingsHolder:
@@ -148,9 +174,24 @@ class SettingsHolder:
         """ Load settings from the testnet JSON config file """
         self.setup(FILENAME_SETTINGS_TESTNET)
 
-    def setup_privnet(self):
-        """ Load settings from the privnet JSON config file """
+    def setup_privnet(self, host=None):
+        """
+        Load settings from the privnet JSON config file
+
+        Args:
+            host (string, optional): if supplied, uses this IP or domain as neo nodes. The host must
+                                     use these standard ports: P2P 20333, RPC 30333.
+        """
         self.setup(FILENAME_SETTINGS_PRIVNET)
+        if isinstance(host, str):
+            if ":" in host:
+                raise Exception("No protocol prefix or port allowed in host, use just the IP or domain.")
+            print("Using custom privatenet host:", host)
+            self.SEED_LIST = ["%s:20333" % host]
+            self.RPC_LIST = ["http://%s:30333" % host]
+            print("- P2P:", ", ".join(self.SEED_LIST))
+            print("- RPC:", ", ".join(self.RPC_LIST))
+        self.check_privatenet()
 
     def setup_coznet(self):
         """ Load settings from the coznet JSON config file """
@@ -186,6 +227,40 @@ class SettingsHolder:
         """
         logzero.loglevel(level)
 
+    def check_privatenet(self):
+        """
+        Check if privatenet is running, and if container is same as the current Chains/privnet database.
+
+        Raises:
+            PrivnetConnectionError: if the private net couldn't be reached or the nonce does not match
+        """
+        rpc_settings.setup(self.RPC_LIST)
+        client = RPCClient()
+        version = client.get_version()
+        if not version:
+            raise PrivnetConnectionError("Error: private network container doesn't seem to be running, or RPC is not enabled.")
+
+        print("Privatenet useragent '%s', nonce: %s" % (version["useragent"], version["nonce"]))
+
+        # Now check if nonce is the same as in the chain path
+        nonce_container = str(version["nonce"])
+        neopy_chain_meta_filename = os.path.join(self.LEVELDB_PATH, ".privnet-nonce")
+        if os.path.isfile(neopy_chain_meta_filename):
+            nonce_chain = open(neopy_chain_meta_filename, "r").read()
+            if nonce_chain != nonce_container:
+                raise PrivnetConnectionError(
+                    "Chain database in Chains/privnet is for a different private network than the current container. "
+                    "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
+                )
+        else:
+            # When the Chains/privnet folder is removed, we need to create the directory
+            if not os.path.isdir(self.LEVELDB_PATH):
+                os.mkdir(self.LEVELDB_PATH)
+
+            # Write the nonce to the meta file
+            with open(neopy_chain_meta_filename, "w") as f:
+                f.write(nonce_container)
+
 
 # Settings instance used by external modules
 settings = SettingsHolder()
@@ -195,3 +270,8 @@ settings.setup_testnet()
 
 # By default, set loglevel to INFO. DEBUG just print a lot of internal debug statements
 settings.set_loglevel(logging.INFO)
+
+# Check if currently installed dependencies match the requirements
+# Can be bypassed with `SKIP_DEPS_CHECK=1 python prompt.py`
+if not os.getenv("SKIP_DEPS_CHECK"):
+    check_depdendencies()

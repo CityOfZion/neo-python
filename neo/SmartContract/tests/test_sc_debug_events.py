@@ -6,6 +6,8 @@ from neo.Prompt.Commands.BuildNRun import TestBuild
 from neo.EventHub import events, SmartContractEvent
 from neo.Settings import settings
 
+from neo.Utils.timeit_decorator import timeit
+
 
 class TestNotifyDebugEvents(BoaTest):
     dispatched_events = []
@@ -76,3 +78,11 @@ class TestNotifyDebugEvents(BoaTest):
         self.assertEqual(SmartContractEvent.RUNTIME_NOTIFY, self.dispatched_events[0].event_type)
         self.assertEqual('Start main', self.dispatched_events[0].event_payload[0].decode())
         self.assertEqual(1, len(self.dispatched_events))
+
+    def time_debug(self):
+        @timeit
+        def bla():
+            for x in range(0, 100):
+                tx, results, total_ops, engine = TestBuild(self.script, [['my_arg0']], self.GetWallet1(), '10', '07')
+
+        bla()

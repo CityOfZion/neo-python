@@ -68,9 +68,8 @@ PID_FILE = os.getenv("PID_FILE", "/tmp/neopython-api-server.pid")
 
 def write_pid_file():
     """ Write a pid file, to easily kill the service """
-    f = open(PID_FILE, "w")
-    f.write(str(os.getpid()))
-    f.close()
+    with open(PID_FILE, "w") as f:
+        f.write(str(os.getpid()))
 
 
 def custom_background_code():

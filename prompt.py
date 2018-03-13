@@ -8,6 +8,7 @@ import psutil
 import traceback
 import logging
 
+from logzero import logger
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -39,7 +40,7 @@ from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportTok
     ShowUnspentCoins
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.InputParser import InputParser
-from neo.Settings import settings, DIR_PROJECT_ROOT
+from neo.Settings import settings, DIR_PROJECT_ROOT, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
@@ -84,6 +85,7 @@ class PromptInterface(object):
                 'import nep2 {nep2_encrypted_key}',
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke}',
                 'import contract_addr {contract_hash} {pubkey}',
+                'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...',
                 'import watch_addr {address}',
                 'import token {token_contract_hash}',
                 'export wif {address}',
@@ -953,8 +955,8 @@ def main():
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-m", "--mainnet", action="store_true", default=False,
                        help="Use MainNet instead of the default TestNet")
-    group.add_argument("-p", "--privnet", action="store_true", default=False,
-                       help="Use PrivNet instead of the default TestNet")
+    group.add_argument("-p", "--privnet", nargs="?", metavar="host", const=True, default=False,
+                       help="Use a private net instead of the default TestNet, optionally using a custom host (default: 127.0.0.1)")
     group.add_argument("--coznet", action="store_true", default=False,
                        help="Use the CoZ network instead of the default TestNet")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
@@ -980,7 +982,11 @@ def main():
     elif args.mainnet:
         settings.setup_mainnet()
     elif args.privnet:
-        settings.setup_privnet()
+        try:
+            settings.setup_privnet(args.privnet)
+        except PrivnetConnectionError as e:
+            logger.error(str(e))
+            return
     elif args.coznet:
         settings.setup_coznet()
 

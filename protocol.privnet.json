@@ -15,7 +15,7 @@
         "127.0.0.1:20336"
     ],
     "RPCList":[
-      "127.0.0.1:20332"
+      "http://127.0.0.1:30333"
     ],
     "SystemFee": {
         "EnrollmentTransaction": 1000,
@@ -27,7 +27,7 @@
 
   "ApplicationConfiguration": {
     "DataDirectoryPath": "./Chains/privnet",
-    "NotificationDataPath": "Chains/Priv_Notif",
+    "NotificationDataPath": "Chains/privnet_notif",
     "RPCPort": 20332,
     "NodePort": 20333,
     "WsPort": 20334,
