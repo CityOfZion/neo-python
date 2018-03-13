@@ -49,11 +49,12 @@ class ApplicationEngine(ExecutionEngine):
     def CheckArraySize(self):
 
         maxArraySize = 1024
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode in [PACK, NEWARRAY, NEWSTRUCT]:
 
@@ -70,11 +71,12 @@ class ApplicationEngine(ExecutionEngine):
     def CheckInvocationStack(self):
 
         maxInvocationStackSize = 1024
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode == CALL or opcode == APPCALL:
             if self.InvocationStack.Count >= maxInvocationStackSize:
@@ -88,21 +90,22 @@ class ApplicationEngine(ExecutionEngine):
     def CheckItemSize(self):
 
         maxItemSize = 1024 * 1024
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode == PUSHDATA4:
 
-            if self.CurrentContext.InstructionPointer + 4 >= len(self.CurrentContext.Script):
+            if cx.InstructionPointer + 4 >= len(cx.Script):
                 return False
 
             # TODO this should be double checked.  it has been
             # double checked and seems to work, but could possibly not work
-            position = self.CurrentContext.InstructionPointer + 1
-            lengthpointer = self.CurrentContext.Script[position:position + 4]
+            position = cx.InstructionPointer + 1
+            lengthpointer = cx.Script[position:position + 4]
             length = int.from_bytes(lengthpointer, 'little')
 
             if length > maxItemSize:
@@ -136,13 +139,14 @@ class ApplicationEngine(ExecutionEngine):
     def CheckStackSize(self):
 
         maxStackSize = 2 * 1024
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
         size = 0
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode < PUSH16:
             size = 1
@@ -174,23 +178,24 @@ class ApplicationEngine(ExecutionEngine):
         return True
 
     def CheckDynamicInvoke(self):
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode == APPCALL:
-
+            opreader = cx.OpReader
             # read the current position of the stream
-            start_pos = self.CurrentContext.OpReader.stream.tell()
+            start_pos = opreader.stream.tell()
 
             # normal app calls are stored in the op reader
             # we read ahead past the next instruction 1 the next 20 bytes
-            script_hash = self.CurrentContext.OpReader.ReadBytes(21)[1:]
+            script_hash = opreader.ReadBytes(21)[1:]
 
             # then reset the position
-            self.CurrentContext.OpReader.stream.seek(start_pos)
+            opreader.stream.seek(start_pos)
 
             for b in script_hash:
                 # if any of the bytes are greater than 0, this is a normal app call
@@ -199,7 +204,7 @@ class ApplicationEngine(ExecutionEngine):
 
             # if this is a dynamic app call, we will arrive here
             # get the current executing script hash
-            current = UInt160(data=self.CurrentContext.ScriptHash())
+            current = UInt160(data=cx.ScriptHash())
             current_contract_state = self._Table.GetContractState(current.ToBytes())
 
             # if current contract state cant do dynamic calls, return False
@@ -207,8 +212,8 @@ class ApplicationEngine(ExecutionEngine):
 
         return True
 
+    # @profile_it
     def Execute(self):
-
         def loop_validation_and_stepinto():
             while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
 
