@@ -15,8 +15,9 @@ All notable changes to this project are documented in this file.
 - Fix multi-signature contract import to allow using a single signature
 - Fix fund sending from multi-signature contract
 - Added instructions on retrieving NEO TestNet funds
+- Fixed issue with missing ``notifications/`` prefix for ``addr`` call in ``neo/api/REST/RestApi.py``
 - prompt.py: When using a privnet with ``-p``, check if chain database is correct. Renamed ``Chains/Priv_Notif`` to ``Chains/privnet_notif`` (if you need your old privnet notification db, you need to rename it manually).
-- Fixed issue with missing ``addr`` location in ``neo/api/REST/RestApi.py``
+- Optionally allow to use custom privnet hosts with ``-p`` (`PR #312 <https://github.com/CityOfZion/neo-python/pull/312>`_)
 - Added a dependency check to ``Settings.py``, which verifies that the installed dependencies match those in requirements.txt
 
 

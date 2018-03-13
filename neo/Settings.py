@@ -173,9 +173,23 @@ class SettingsHolder:
         """ Load settings from the testnet JSON config file """
         self.setup(FILENAME_SETTINGS_TESTNET)
 
-    def setup_privnet(self):
-        """ Load settings from the privnet JSON config file """
+    def setup_privnet(self, host=None):
+        """
+        Load settings from the privnet JSON config file
+
+        Args:
+            host (string, optional): if supplied, uses this IP or domain as neo nodes. The host must
+                                     use these standard ports: P2P 20333, RPC 30333.
+        """
         self.setup(FILENAME_SETTINGS_PRIVNET)
+        if isinstance(host, str):
+            if ":" in host:
+                raise Exception("No protocol prefix or port allowed in host, use just the IP or domain.")
+            print("Using custom privatenet host:", host)
+            self.SEED_LIST = ["%s:20333" % host]
+            self.RPC_LIST = ["http://%s:30333" % host]
+            print("- P2P:", ", ".join(self.SEED_LIST))
+            print("- RPC:", ", ".join(self.RPC_LIST))
         self.check_privatenet()
 
     def setup_coznet(self):
