@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from neo.Settings import settings
 from neo.Prompt.Commands.Bootstrap import BootstrapBlockchainFile
 import argparse
@@ -14,6 +16,10 @@ def main():
 
     parser.add_argument("-s", "--skipconfirm", action="store_true", default=False,
                         help="Bypass warning about overwritting data in {}".format(settings.LEVELDB_PATH))
+
+    # Where to store stuff
+    parser.add_argument("--datadir", action="store",
+                        help="Absolute path to use for database directories")
 
     args = parser.parse_args()
 
@@ -32,10 +38,13 @@ def main():
     elif args.mainnet:
         settings.setup_mainnet()
 
+    if args.datadir:
+        settings.DATA_DIR_PATH = args.datadir
+
     if args.notifications:
-        BootstrapBlockchainFile(settings.NOTIFICATION_DB_PATH, settings.NOTIF_BOOTSTRAP_FILE, require_confirm)
+        BootstrapBlockchainFile(settings.notification_leveldb_path, settings.NOTIF_BOOTSTRAP_FILE, require_confirm)
     else:
-        BootstrapBlockchainFile(settings.LEVELDB_PATH, settings.BOOTSTRAP_FILE, require_confirm)
+        BootstrapBlockchainFile(settings.chain_leveldb_path, settings.BOOTSTRAP_FILE, require_confirm)
 
 
 if __name__ == "__main__":

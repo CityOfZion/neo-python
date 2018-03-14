@@ -108,6 +108,10 @@ def main():
     group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7), metavar="[0-7]", help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
     group_logging.add_argument("--disable-stderr", action="store_true", help="Disable stderr logger")
 
+    # Where to store stuff
+    parser.add_argument("--datadir", action="store",
+                        help="Absolute path to use for database directories")
+
     # Now parse
     args = parser.parse_args()
     # print(args)
@@ -138,6 +142,9 @@ def main():
         settings.setup_privnet()
     elif args.coznet:
         settings.setup_coznet()
+
+    if args.datadir:
+        settings.DATA_DIR_PATH = args.datadir
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -174,7 +181,7 @@ def main():
     globalLogPublisher.addObserver(observer)
 
     # Instantiate the blockchain and subscribe to notifications
-    blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
+    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)

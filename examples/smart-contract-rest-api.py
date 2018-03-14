@@ -141,7 +141,7 @@ def echo_post(request):
 
 def main():
     # Setup the blockchain
-    blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
+    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)

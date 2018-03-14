@@ -74,6 +74,7 @@ class SettingsHolder:
     PUBLISH_TX_FEE = None
     REGISTER_TX_FEE = None
 
+    DATA_DIR_PATH = None
     LEVELDB_PATH = None
     NOTIFICATION_DB_PATH = None
 
@@ -96,6 +97,24 @@ class SettingsHolder:
 
     # Emit Notify events when smart contract execution failed. Use for debugging purposes only.
     emit_notify_events_on_sc_execution_error = False
+
+    @property
+    def chain_leveldb_path(self):
+        if self.DATA_DIR_PATH:
+            return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
+        return os.path.join(DIR_PROJECT_ROOT, self.LEVELDB_PATH)
+
+    @property
+    def notification_leveldb_path(self):
+        if self.DATA_DIR_PATH:
+            return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
+        return os.path.join(DIR_PROJECT_ROOT, self.NOTIFICATION_DB_PATH)
+
+    @property
+    def debug_storage_leveldb_path(self):
+        if self.DATA_DIR_PATH:
+            return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
+        return os.path.join(DIR_PROJECT_ROOT, self.DEBUG_STORAGE_PATH)
 
     # Helpers
     @property
@@ -146,7 +165,7 @@ class SettingsHolder:
         self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
         config = data['ApplicationConfiguration']
-        self.LEVELDB_PATH = os.path.join(DIR_PROJECT_ROOT, config['DataDirectoryPath'])
+        self.LEVELDB_PATH = config['DataDirectoryPath']
         self.RPC_PORT = int(config['RPCPort'])
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
@@ -164,7 +183,7 @@ class SettingsHolder:
             self.DEBUG_STORAGE_PATH = config['DebugStoragePath']
 
         if 'NotificationDataPath' in config:
-            self.NOTIFICATION_DB_PATH = os.path.join(DIR_PROJECT_ROOT, config['NotificationDataPath'])
+            self.NOTIFICATION_DB_PATH = config['NotificationDataPath']
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
