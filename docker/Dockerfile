@@ -7,7 +7,7 @@
 #
 # Building an image of the current development branch (creates a Docker image called neopython-dev):
 #
-#    $ docker build -f Dockerfile -t neopython-dev . --build-arg branch=development
+#    $ docker build -t neopython-dev . --build-arg branch=development
 #
 # Build without caching:
 #
