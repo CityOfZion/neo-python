@@ -27,7 +27,7 @@ setup(
     maintainer_email='chris@cityofzion.io',
     url='https://github.com/CityOfZion/neo-python',
     packages=find_packages(include=['neo']),
-#    scripts=['prompt.py','api_server.py','bootstrap.py','reencrypt_wallet.py'],
+    scripts=['prompt.py','api_server.py','bootstrap.py','reencrypt_wallet.py'],
     entry_points = {
         'console_scripts': [
             'np_prompt=prompt:main',
