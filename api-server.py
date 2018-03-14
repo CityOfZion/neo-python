@@ -109,7 +109,8 @@ def main():
     group_logging.add_argument("--disable-stderr", action="store_true", help="Disable stderr logger")
 
     # Where to store stuff
-    parser.add_argument("--datadir", action="store", help="Absolute path to prepend to paths for database directories")
+    parser.add_argument("--datadir", action="store",
+                        help="Absolute path to use for database directories")
 
     # Now parse
     args = parser.parse_args()

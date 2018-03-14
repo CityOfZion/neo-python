@@ -971,7 +971,8 @@ def main():
                         help="Show smart-contract events by default")
 
     # Where to store stuff
-    parser.add_argument("--datadir", action="store", help="Absolute path to prepend to paths for database directories")
+    parser.add_argument("--datadir", action="store",
+                        help="Absolute path to use for database directories")
 
     # Show the neo-python version
     parser.add_argument("--version", action="version",
