@@ -8,7 +8,7 @@ from pip.req import parse_requirements
 from pip.download import PipSession
 
 
-with open('README.md') as readme_file:
+with open('README.rst') as readme_file:
     readme = readme_file.read()
 
 # get the requirements from requirements.txt
