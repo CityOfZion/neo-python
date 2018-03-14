@@ -79,7 +79,7 @@ class Wallet(object):
             self._coins = {}
 
             if Blockchain.Default() is None:
-                self._indexedDB = LevelDBBlockchain(settings.LEVELDB_PATH)
+                self._indexedDB = LevelDBBlockchain(settings.chain_leveldb_path)
                 Blockchain.RegisterBlockchain(self._indexedDB)
             else:
                 self._indexedDB = Blockchain.Default()

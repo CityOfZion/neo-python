@@ -25,7 +25,7 @@ class DebugStorage():
     def __init__(self):
 
         try:
-            self._db = plyvel.DB(settings.DEBUG_STORAGE_PATH, create_if_missing=True)
+            self._db = plyvel.DB(settings.debug_storage_leveldb_path, create_if_missing=True)
         except Exception as e:
             logger.info("DEBUG leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('DEBUG Leveldb Unavailable %s ' % e)

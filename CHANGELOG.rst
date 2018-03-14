@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.5.5-dev] Work in progress
 ----------------------------
-- ...
+- Add ability to specify ``--datadir`` path for where leveldb directories are stored
 
 
 [0.5.4] 2018-03-14

@@ -57,7 +57,7 @@ def custom_background_code():
 
 def main():
     # Setup the blockchain
-    blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
+    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)
