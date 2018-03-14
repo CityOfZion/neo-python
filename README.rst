@@ -83,7 +83,7 @@ started. There are many more videos under the
 Youtube channel, check them out.
 
 Docker
-^^^^^^
+~~~~~~
 
 Using Docker is another option to run neo-python. There are example
 Dockerfiles provided in the
