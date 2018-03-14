@@ -4,7 +4,7 @@
 neo-python
 ----------
 
-Python Node and SDK for the <b>NEO</b> blockchain.
+Python Node and SDK for the NEO blockchain.
 
 .. image:: https://travis-ci.org/CityOfZion/neo-python.svg?branch=master
     :target: https://travis-ci.org/CityOfZion/neo-python
