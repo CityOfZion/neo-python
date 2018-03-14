@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.5.7-dev] in progress
 ----------------------------
+- Fixed README reference in ``MANIFEST.in``
 
 
 [0.5.6] 2018-03-14
