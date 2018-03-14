@@ -92,6 +92,7 @@ class SettingsHolder:
 
     # Logging settings
     log_smart_contract_events = False
+    log_vm_instructions = False
 
     # Emit Notify events when smart contract execution failed. Use for debugging purposes only.
     emit_notify_events_on_sc_execution_error = False
@@ -198,6 +199,9 @@ class SettingsHolder:
 
     def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled
+
+    def set_log_vm_instruction(self, is_enabled=True):
+        self.log_vm_instructions = is_enabled
 
     def set_emit_notify_events_on_sc_execution_error(self, is_enabled=False):
         self.emit_notify_events_on_sc_execution_error = is_enabled

@@ -22,10 +22,11 @@ from neo.SmartContract import TriggerType
 import pdb
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
+import datetime
+from neo.Settings import settings
 
 
 class ApplicationEngine(ExecutionEngine):
-
     ratio = 100000
     gas_free = 10 * 100000000
     gas_amount = 0
@@ -48,11 +49,12 @@ class ApplicationEngine(ExecutionEngine):
     def CheckArraySize(self):
 
         maxArraySize = 1024
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode in [PACK, NEWARRAY, NEWSTRUCT]:
 
@@ -69,11 +71,12 @@ class ApplicationEngine(ExecutionEngine):
     def CheckInvocationStack(self):
 
         maxInvocationStackSize = 1024
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode == CALL or opcode == APPCALL:
             if self.InvocationStack.Count >= maxInvocationStackSize:
@@ -87,21 +90,22 @@ class ApplicationEngine(ExecutionEngine):
     def CheckItemSize(self):
 
         maxItemSize = 1024 * 1024
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode == PUSHDATA4:
 
-            if self.CurrentContext.InstructionPointer + 4 >= len(self.CurrentContext.Script):
+            if cx.InstructionPointer + 4 >= len(cx.Script):
                 return False
 
             # TODO this should be double checked.  it has been
             # double checked and seems to work, but could possibly not work
-            position = self.CurrentContext.InstructionPointer + 1
-            lengthpointer = self.CurrentContext.Script[position:position + 4]
+            position = cx.InstructionPointer + 1
+            lengthpointer = cx.Script[position:position + 4]
             length = int.from_bytes(lengthpointer, 'little')
 
             if length > maxItemSize:
@@ -135,13 +139,14 @@ class ApplicationEngine(ExecutionEngine):
     def CheckStackSize(self):
 
         maxStackSize = 2 * 1024
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
         size = 0
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode < PUSH16:
             size = 1
@@ -173,23 +178,24 @@ class ApplicationEngine(ExecutionEngine):
         return True
 
     def CheckDynamicInvoke(self):
+        cx = self.CurrentContext
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+        if cx.InstructionPointer >= len(cx.Script):
             return True
 
-        opcode = self.CurrentContext.NextInstruction
+        opcode = cx.NextInstruction
 
         if opcode == APPCALL:
-
+            opreader = cx.OpReader
             # read the current position of the stream
-            start_pos = self.CurrentContext.OpReader.stream.tell()
+            start_pos = opreader.stream.tell()
 
             # normal app calls are stored in the op reader
             # we read ahead past the next instruction 1 the next 20 bytes
-            script_hash = self.CurrentContext.OpReader.ReadBytes(21)[1:]
+            script_hash = opreader.ReadBytes(21)[1:]
 
             # then reset the position
-            self.CurrentContext.OpReader.stream.seek(start_pos)
+            opreader.stream.seek(start_pos)
 
             for b in script_hash:
                 # if any of the bytes are greater than 0, this is a normal app call
@@ -198,7 +204,7 @@ class ApplicationEngine(ExecutionEngine):
 
             # if this is a dynamic app call, we will arrive here
             # get the current executing script hash
-            current = UInt160(data=self.CurrentContext.ScriptHash())
+            current = UInt160(data=cx.ScriptHash())
             current_contract_state = self._Table.GetContractState(current.ToBytes())
 
             # if current contract state cant do dynamic calls, return False
@@ -206,43 +212,51 @@ class ApplicationEngine(ExecutionEngine):
 
         return True
 
+    # @profile_it
     def Execute(self):
+        def loop_validation_and_stepinto():
+            while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
 
-        while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
+                try:
 
-            try:
+                    self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
+                #                print("gas consumeb: %s " % self.gas_consumed)
+                except Exception as e:
+                    logger.error("Exception calculating gas consumed %s " % e)
+                    return False
 
-                self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
-#                print("gas consumeb: %s " % self.gas_consumed)
-            except Exception as e:
-                logger.error("Exception calculating gas consumed %s " % e)
-                return False
+                if not self.testMode and self.gas_consumed > self.gas_amount:
+                    logger.error("NOT ENOUGH GAS")
+                    return False
 
-            if not self.testMode and self.gas_consumed > self.gas_amount:
-                logger.error("NOT ENOUGH GAS")
-                return False
+                if not self.CheckItemSize():
+                    logger.error("ITEM SIZE TOO BIG")
+                    return False
 
-            if not self.CheckItemSize():
-                logger.error("ITEM SIZE TOO BIG")
-                return False
+                if not self.CheckStackSize():
+                    logger.error("STACK SIZE TOO BIG")
+                    return False
 
-            if not self.CheckStackSize():
-                logger.error("STACK SIZE TOO BIG")
-                return False
+                if not self.CheckArraySize():
+                    logger.error("ARRAY SIZE TOO BIG")
+                    return False
 
-            if not self.CheckArraySize():
-                logger.error("ARRAY SIZE TOO BIG")
-                return False
+                if not self.CheckInvocationStack():
+                    logger.error("INVOCATION SIZE TO BIIG")
+                    return False
 
-            if not self.CheckInvocationStack():
-                logger.error("INVOCATION SIZE TO BIIG")
-                return False
+                if not self.CheckDynamicInvoke():
+                    logger.error("Dynamic invoke without proper contract")
+                    return False
 
-            if not self.CheckDynamicInvoke():
-                logger.error("Dynamic invoke without proper contract")
-                return False
+                self.StepInto()
 
-            self.StepInto()
+        if settings.log_vm_instructions:
+            with open(self.log_file_name, 'w') as self.log_file:
+                self.write_log(str(datetime.datetime.now()))
+                loop_validation_and_stepinto()
+        else:
+            loop_validation_and_stepinto()
 
         return not self._VMState & VMState.FAULT > 0
 

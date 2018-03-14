@@ -284,6 +284,9 @@ class StateReader(InteropService):
             payload
         )
 
+        message = payload[0] if len(payload) > 0 else payload
+        engine.write_log(str(message))
+
         self.notifications.append(args)
 
         if settings.emit_notify_events_on_sc_execution_error:
@@ -306,6 +309,7 @@ class StateReader(InteropService):
 
         if engine.ScriptContainer:
             tx_hash = engine.ScriptContainer.Hash
+        engine.write_log(str(message))
 
         # Build and emit smart contract event
         self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.RUNTIME_LOG,
