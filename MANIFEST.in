@@ -1,4 +1,4 @@
-include README.md
+include README.rst
 include prompt.py
 include bootstrap.py
 include protocol.*.json
