@@ -37,10 +37,11 @@ deploy:
   - provider: pypi
     user: CityOfZion
     password:
-      secure: QZ3rkZQ6GAGAb52cyU5yG10ILSUwDEIrpCMkj16OaMQ1Gkl2AMWf2SAlLT29j8irVWkPx2Adj49g096wBdbi1SMlFdLHZxorGQYFnV30DrbLNW2Fv1wegzHRq8nMj1drSc19/t9yhb1TcUYsI/eaSZ9JpBf3fjsrBEnS32P2Q5I5OSh35VEA0emo46KyOIhY0+Ajy5OLAN632IQOy6LmkAeIjDfivdEwtfPCEKhqSbh9LbHm5sgh0XzDwqte+2mMrBPVMwuV0PuTFkTzlioXfVsKvVLjD0e1dFiZZUI4ABdKEW0jrhijCP+REOc2O6Wsi0eilVnWYI74AWlX7M2jdm1B43Mu6ZT3VQVMzQ/3zLytp6jiffiFiirMoSNosrjJvl/YZDVqBBETi8jOfZKL2iIqwVt5JGcNHNQMTVSIxEFWJWhAnq/5VdJMSB6w6fXlZFnRlpEAJk0AYhQUYPyyqbU7XPrrAFRevMOEc6q9TRkjZLdzrD2Tt0kIpV8H2IOudWNxc3rpkVYSJ8sLPFwLOtzkwtffUSagFj3gjp7XInt9k09UhFRkU4xAsLb9fV+PBKx+rsRtYF4GiZHXEB3f/BuM+rden2Lrb7uqoTKSyF0Wy1kLLEsevvllTuQvV/EIF1cTzrGLIFAFtWCERStlvIDMHHwGlJW/+oJ8KXX2Pto=
+      secure: NVvbRCt5JwHE6MhQjj0O0Lui/USEr/fnTHdYRKfPi75p+7rqVPJ47uE0fx/3GCZf1cp+fHQB0oTm+NU+asqAlIJ6HOq3HwwbDFtwvzBiIPc9eq14jqAhplRF4rV8nYHm1HcvJuJyfre+3qqFlu86x9/j5RdWC6RrNpbFnqyrYkpK1vWZwZFeMgdxJ4yCd8u8Cuh+uFjF80BWKSOLXrPLcJHKkrprN8GJRxt+dh6LAfdsQ1mHnn2JqT4FDiR6cLHZKLC+b5F61rjk1OYdw9hnA/XZtCz2qEQn4Sct+jSLxNmcX+hGqvTH86N2gEjRasU11Slu/bDgyUQkELyWjnHpRsNYTvZyT3ilG7mrmN2JIxUcPaVQ3SgTqsPBeE058OCTHA0zvkNkR5838wfIfeSv5Q+Obn3wsceK4m2LOrlRElxRckjIcQtDzoOihEV5yU3Kqym6yX67AsB1m2JsBRZMCztsf29RgtsLLXzID76rAuc1KmLq6jL5Uo7RieoeSKY2Gy/TLwh6+g/hC8P6L8Sq7NJCvd1+keRiWYQw7bq3MKVBBnI59riZaz82s+a/qYo72UMTfb+VLZ1Dv+V1Bllj2chILWGuCd/tylF+tIGaA4Z70govsJ4Arsz0u37fL+4Qx98sWWAtS9JRv+X8XhR4xtAKzKBGihJ5Tc42y+6z5yM=
     distributions: sdist bdist_wheel
     on:
-      tags: true
+      branch: master
+      #tags: true
       repo: CityOfZion/neo-python
 
   # Deploy to Docker Hub
