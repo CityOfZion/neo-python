@@ -261,7 +261,7 @@ class SettingsHolder:
                     os.makedirs(chain_path)
                     logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
                 except Exception as e:
-                    logzero.logger.error("Could not create 'Chains' directory at %s %s" %( chain_path, e) )
+                    logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
 
     def check_privatenet(self):
         """
