@@ -47,7 +47,7 @@ class DependencyError(Exception):
 
 def check_depdendencies():
     # Get installed packages
-    installed_packages = pip.get_installed_distributions()
+    installed_packages = pip.get_installed_distributions(local_only=False)
     installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
 
     # Now check if each package specified in requirements.txt is actually installed
