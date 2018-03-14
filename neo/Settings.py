@@ -101,18 +101,21 @@ class SettingsHolder:
     @property
     def chain_leveldb_path(self):
         if self.DATA_DIR_PATH:
+            self.check_chain_dir_exists()
             return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
         return os.path.join(DIR_PROJECT_ROOT, self.LEVELDB_PATH)
 
     @property
     def notification_leveldb_path(self):
         if self.DATA_DIR_PATH:
+            self.check_chain_dir_exists()
             return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
         return os.path.join(DIR_PROJECT_ROOT, self.NOTIFICATION_DB_PATH)
 
     @property
     def debug_storage_leveldb_path(self):
         if self.DATA_DIR_PATH:
+            self.check_chain_dir_exists()
             return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
         return os.path.join(DIR_PROJECT_ROOT, self.DEBUG_STORAGE_PATH)
 
@@ -245,6 +248,20 @@ class SettingsHolder:
             level (int): eg. logging.DEBUG or logging.ERROR. See also https://docs.python.org/2/library/logging.html#logging-levels
         """
         logzero.loglevel(level)
+
+    def check_chain_dir_exists(self):
+        """
+        Checks to make sure there is a directory called ``Chains`` at the root of DATA_DIR_PATH
+        and creates it if it doesn't exist yet
+        """
+        if self.DATA_DIR_PATH is not None:
+            chain_path = os.path.join(self.DATA_DIR_PATH, 'Chains')
+            if not os.path.exists(chain_path):
+                try:
+                    os.makedirs(chain_path)
+                    logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
+                except Exception as e:
+                    logzero.logger.error("Could not create 'Chains' directory at %s %s" %( chain_path, e) )
 
     def check_privatenet(self):
         """

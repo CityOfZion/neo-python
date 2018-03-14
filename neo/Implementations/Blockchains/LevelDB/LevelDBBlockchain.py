@@ -486,7 +486,7 @@ class LevelDBBlockchain(Blockchain):
             amount = int.from_bytes(value, 'little', signed=False)
             return amount
         except Exception as e:
-            logger.info("Could not get sys fee: %s " % e)
+            logger.debug("Could not get sys fee: %s " % e)
 
         return 0
 
