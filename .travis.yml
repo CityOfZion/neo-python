@@ -29,7 +29,7 @@ script:
   - coverage run -m -a unittest discover boa_test
   - pycodestyle neo
   - pycodestyle examples
-  - python prompt.py --version
+  - python neo/bin/prompt.py --version
 
 after_success:
     coveralls
