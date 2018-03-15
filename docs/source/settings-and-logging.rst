@@ -33,6 +33,19 @@ You can use the following settings methods to configure the network:
 By default, ``neo-python`` uses the TestNet.
 
 
+Where to save data:
+"""""""""""""""""""
+
+By default, ``neo-python`` saves chain data at ``~/.neopython/Chains``.  If you would like to change this, you can pass the ``--datadir`` flag to any of the commands (``np-prompt``, ``np-api-server``,``np-bootstrap``) to specify where the ``Chains`` directory should be placed.
+You can also set this manually via the ``settings`` module like so:
+
+.. code-block:: sh
+
+  settings.set_data_dir('your/path')
+
+
+
+
 Logging
 """""""
 
