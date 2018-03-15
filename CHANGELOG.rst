@@ -3,21 +3,21 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.5.7-dev] in progress
+[0.5.8-dev] in progress
 ----------------------------
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
 
 
-[0.5.6] 2018-03-14
+[0.5.7] 2018-03-14
 ----------------------------
-- Fix deploy error
-
-
-[0.5.5] 2018-03-14
-----------------------------
+- update to ``neocore==0.3.8``
+- Fixed README reference in ``MANIFEST.in``, add pypi badge to readme
 - Add ability to specify ``--datadir`` path for where leveldb directories are stored
-- Add scripts to be exported for package install
+- Tries to auto-create ``Chains`` directory in ``--datadir`` if it doesnt exist
+- Add scripts to be exported for package install.  ``np_prompt``, ``np_api_server``, ``np_bootstrap``, and ``np_reencrypt_wallet`` available as commands after ``pip`` install
+- add protocol.*.json into data package
+- move ``neo-privnet.wallet`` to ``neo-privnet.sample.wallet`` and .gitignore ``neo-privnet.wallet``
 - Change ``README.md`` to `README.rst``
 
 

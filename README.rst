@@ -6,6 +6,9 @@ neo-python
 
 Python Node and SDK for the NEO blockchain.
 
+.. image:: https://img.shields.io/pypi/v/neo-python.svg
+    :target: https://pypi.python.org/pypi/neo-python
+    :alt: Pypi
 .. image:: https://travis-ci.org/CityOfZion/neo-python.svg?branch=master
     :target: https://travis-ci.org/CityOfZion/neo-python
     :alt: Travis CI
@@ -184,7 +187,8 @@ could lead to version conflicts.
     python3.6 -m venv venv
     source venv/bin/activate
 
-Now let's install neo-python's dependencies:
+
+Now let's install neo-python:
 
 ::
 

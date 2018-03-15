@@ -123,4 +123,4 @@ class WalletTestCase(NeoTestCase):
 
     def test_privnet_wallet(self):
         """ Simple test if we can open the privnet wallet """
-        wallet = UserWallet.Open(os.path.join(DIR_PROJECT_ROOT, "neo-privnet.wallet"), to_aes_key("coz"))
+        wallet = UserWallet.Open(os.path.join(DIR_PROJECT_ROOT, "neo-privnet.sample.wallet"), to_aes_key("coz"))
