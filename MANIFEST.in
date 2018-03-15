@@ -1,8 +1,5 @@
 include README.rst
-include prompt.py
-include bootstrap.py
-include protocol.*.json
-include reencrypt_wallet.py
+include requirements.txt
 
 recursive-include neo *
 recursive-include tests *

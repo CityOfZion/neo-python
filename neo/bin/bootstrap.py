@@ -26,7 +26,7 @@ def main():
     if args.mainnet and args.config:
         print("Cannot use both --config and --mainnet parameters, please use only one.")
         exit(1)
- 
+
     if args.skipconfirm:
         require_confirm = False
     else:

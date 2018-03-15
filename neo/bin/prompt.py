@@ -7,7 +7,7 @@ import os
 import psutil
 import traceback
 import logging
-
+import sys
 from logzero import logger
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -16,6 +16,10 @@ from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 from twisted.internet import reactor, task
+
+
+if os.path.exists(os.path.join(os.getcwd(), 'neo')):
+    sys.path.insert(0, os.getcwd())
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain

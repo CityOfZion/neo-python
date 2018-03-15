@@ -19,22 +19,35 @@ from neocore.Cryptography import Helper
 
 from neorpc.Client import RPCClient
 from neorpc.Settings import settings as rpc_settings
-
+import sys
 
 # Create am absolute references to the project root folder. Used for
 # specifying the various filenames.
 dir_current = os.path.dirname(os.path.abspath(__file__))
-DIR_PROJECT_ROOT = os.path.abspath(os.path.join(dir_current, ".."))
+DIR_PROJECT_ROOT = os.getcwd()
+DIR_PROJECT_INSTALL = os.path.abspath(os.path.join(dir_current, ".."))
+
+IS_PACKAGE_INSTALL = False
+ROOT_INSTALL_PATH = None
+
+# This detects if we are running from
+# an 'editable' version ( like ``python neo/bin/prompt.py`` )
+# or from a packaged install version from pip
+if os.path.exists(os.path.join(os.getcwd(), 'neo')):
+    ROOT_INSTALL_PATH = DIR_PROJECT_ROOT
+else:
+    ROOT_INSTALL_PATH = DIR_PROJECT_INSTALL
+    IS_PACKAGE_INSTALL = True
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
-FILENAME_PREFERENCES = os.path.join(DIR_PROJECT_ROOT, 'preferences.json')
+FILENAME_PREFERENCES = os.path.join(ROOT_INSTALL_PATH, 'neo/data/preferences.json')
 
 # The protocol json files are always in the project root
-FILENAME_SETTINGS_MAINNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.mainnet.json')
-FILENAME_SETTINGS_TESTNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.testnet.json')
-FILENAME_SETTINGS_PRIVNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.privnet.json')
-FILENAME_SETTINGS_COZNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.coz.json')
+FILENAME_SETTINGS_MAINNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.mainnet.json')
+FILENAME_SETTINGS_TESTNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.testnet.json')
+FILENAME_SETTINGS_PRIVNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.privnet.json')
+FILENAME_SETTINGS_COZNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.coz.json')
 
 
 class PrivnetConnectionError(Exception):
@@ -46,12 +59,13 @@ class DependencyError(Exception):
 
 
 def check_depdendencies():
+
     # Get installed packages
     installed_packages = pip.get_installed_distributions(local_only=False)
     installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
 
     # Now check if each package specified in requirements.txt is actually installed
-    deps_filename = os.path.join(DIR_PROJECT_ROOT, "requirements.txt")
+    deps_filename = os.path.join(ROOT_INSTALL_PATH, "requirements.txt")
     with open(deps_filename, "r") as f:
         for dep in f.read().split():
             if not dep.lower() in installed_packages_list:
@@ -100,22 +114,22 @@ class SettingsHolder:
 
     @property
     def chain_leveldb_path(self):
+        self.check_chain_dir_exists()
         if self.DATA_DIR_PATH:
-            self.check_chain_dir_exists()
             return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
         return os.path.join(DIR_PROJECT_ROOT, self.LEVELDB_PATH)
 
     @property
     def notification_leveldb_path(self):
+        self.check_chain_dir_exists()
         if self.DATA_DIR_PATH:
-            self.check_chain_dir_exists()
             return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
         return os.path.join(DIR_PROJECT_ROOT, self.NOTIFICATION_DB_PATH)
 
     @property
     def debug_storage_leveldb_path(self):
+        self.check_chain_dir_exists()
         if self.DATA_DIR_PATH:
-            self.check_chain_dir_exists()
             return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
         return os.path.join(DIR_PROJECT_ROOT, self.DEBUG_STORAGE_PATH)
 
@@ -256,12 +270,15 @@ class SettingsHolder:
         """
         if self.DATA_DIR_PATH is not None:
             chain_path = os.path.join(self.DATA_DIR_PATH, 'Chains')
-            if not os.path.exists(chain_path):
-                try:
-                    os.makedirs(chain_path)
-                    logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
-                except Exception as e:
-                    logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
+        else:
+            chain_path = os.path.join(DIR_PROJECT_ROOT, 'Chains')
+
+        if not os.path.exists(chain_path):
+            try:
+                os.makedirs(chain_path)
+                logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
+            except Exception as e:
+                logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
 
     def check_privatenet(self):
         """
@@ -309,5 +326,5 @@ settings.set_loglevel(logging.INFO)
 
 # Check if currently installed dependencies match the requirements
 # Can be bypassed with `SKIP_DEPS_CHECK=1 python prompt.py`
-if not os.getenv("SKIP_DEPS_CHECK"):
+if not os.getenv("SKIP_DEPS_CHECK") and not IS_PACKAGE_INSTALL:
     check_depdendencies()

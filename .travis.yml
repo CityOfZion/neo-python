@@ -27,8 +27,6 @@ install:
 script:
   - coverage run -m unittest discover neo
   - coverage run -m -a unittest discover boa_test
-  - pycodestyle prompt.py
-  - pycodestyle api_server.py
   - pycodestyle neo
   - pycodestyle examples
   - python prompt.py --version

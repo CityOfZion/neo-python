@@ -58,6 +58,7 @@ from neo.api.REST.RestApi import RestApi
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings
 
+
 # Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
