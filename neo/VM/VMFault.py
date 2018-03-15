@@ -19,6 +19,8 @@ class VMFault(Enum):
     RIGHT_UNKNOWN = auto()
     CHECKMULTISIG_INVALID_PUBLICKEY_COUNT = auto()
     CHECKMULTISIG_SIGNATURE_ERROR = auto()
+    UNKNOWN7 = auto()
+    UNKNOWN8 = auto()
     UNPACK_INVALID_TYPE = auto()
     PICKITEM_NEGATIVE_INDEX = auto()
     PICKITEM_INVALID_TYPE = auto()

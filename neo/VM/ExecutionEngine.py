@@ -637,7 +637,7 @@ class ExecutionEngine():
                 item = estack.Pop()
 
                 if not item:
-                    return self.VM_FAULT_and_report(17)
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN7)
 
                 if not item.IsArray:
                     estack.PushT(len(item.GetByteArray()))
@@ -650,7 +650,7 @@ class ExecutionEngine():
                 size = estack.Pop().GetBigInteger()
 
                 if size < 0 or size > estack.Count:
-                    return self.VM_FAULT_and_report(18)
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN8)
 
                 items = []
 
