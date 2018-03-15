@@ -1,21 +1,16 @@
 import hashlib
-import sys
-import os
-import traceback
 import pdb
+import datetime
 
 from logzero import logger
-
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.OpCode import *
-from neo.SmartContract.ContractParameterType import ContractParameterType
-from neocore.BigInteger import BigInteger
 from neo.VM.InteropService import Array, Struct, StackItem
 from neocore.UInt160 import UInt160
-import datetime
 from neo.Settings import settings
+from neo.VM.VMFault import VMFault
 
 
 class ExecutionEngine():
@@ -136,7 +131,7 @@ class ExecutionEngine():
         astack = self._AltStack
 
         if opcode > PUSH16 and opcode != RET and context.PushOnly:
-            self.VM_FAULT_and_report(1)
+            self.VM_FAULT_and_report(VMFault.UNKNOWN1)
 
         if opcode >= PUSHBYTES1 and opcode <= PUSHBYTES75:
             bytestoread = context.OpReader.ReadBytes(int.from_bytes(opcode, 'little'))
@@ -170,7 +165,7 @@ class ExecutionEngine():
                 offset = context.InstructionPointer + offset_b - 3
 
                 if offset < 0 or offset > len(context.Script):
-                    self.VM_FAULT_and_report(2)
+                    self.VM_FAULT_and_report(VMFault.INVALID_JUMP)
 
                 fValue = True
                 if opcode > JMP:
@@ -193,7 +188,7 @@ class ExecutionEngine():
 
             elif opcode == APPCALL or opcode == TAILCALL:
                 if self._Table is None:
-                    self.VM_FAULT_and_report(3)
+                    self.VM_FAULT_and_report(VMFault.UNKNOWN2)
 
                 script_hash = context.OpReader.ReadBytes(20)
 
@@ -209,7 +204,7 @@ class ExecutionEngine():
 
                 if script is None:
                     logger.error("Could not find script from script table: %s " % script_hash)
-                    self.VM_FAULT_and_report(4, script_hash)
+                    self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
                 if opcode == TAILCALL:
                     istack.Pop().Dispose()
@@ -220,7 +215,7 @@ class ExecutionEngine():
                 call = context.OpReader.ReadVarBytes(252).decode('ascii')
                 self.write_log(call)
                 if not self._Service.Invoke(call, self):
-                    self.VM_FAULT_and_report(5, call)
+                    self.VM_FAULT_and_report(VMFault.SYSCALL_ERROR, call)
 
             # stack operations
             elif opcode == DUPFROMALTSTACK:
@@ -243,7 +238,7 @@ class ExecutionEngine():
                 n = estack.Pop().GetBigInteger()
 
                 if n < 0:
-                    self.VM_FAULT_and_report(6)
+                    self.VM_FAULT_and_report(VMFault.UNKNOWN3)
 
                 # if n == 0 break, same as do x if n > 0
                 if n > 0:
@@ -255,7 +250,7 @@ class ExecutionEngine():
                 n = estack.Pop().GetBigInteger()
 
                 if n <= 0:
-                    self.VM_FAULT_and_report(7)
+                    self.VM_FAULT_and_report(VMFault.UNKNOWN4)
 
                 estack.Insert(n, estack.Peek())
 
@@ -284,7 +279,7 @@ class ExecutionEngine():
 
                 n = estack.Pop().GetBigInteger()
                 if n < 0:
-                    self.VM_FAULT_and_report(8)
+                    self.VM_FAULT_and_report(VMFault.UNKNOWN5)
 
                 estack.PushT(estack.Peek(n))
 
@@ -292,7 +287,7 @@ class ExecutionEngine():
 
                 n = estack.Pop().GetBigInteger()
                 if n < 0:
-                    self.VM_FAULT_and_report(9)
+                    self.VM_FAULT_and_report(VMFault.UNKNOWN6)
 
                 if n > 0:
                     estack.PushT(estack.Remove(n))
@@ -331,11 +326,11 @@ class ExecutionEngine():
 
                 count = estack.Pop().GetBigInteger()
                 if count < 0:
-                    self.VM_FAULT_and_report(10)
+                    self.VM_FAULT_and_report(VMFault.SUBSTR_INVALID_LENGTH)
 
                 index = estack.Pop().GetBigInteger()
                 if index < 0:
-                    self.VM_FAULT_and_report(11)
+                    self.VM_FAULT_and_report(VMFault.SUBSTR_INVALID_INDEX)
 
                 x = estack.Pop().GetByteArray()
 
@@ -345,7 +340,7 @@ class ExecutionEngine():
 
                 count = estack.Pop().GetBigInteger()
                 if count < 0:
-                    self.VM_FAULT_and_report(12)
+                    self.VM_FAULT_and_report(VMFault.LEFT_INVALID_COUNT)
 
                 x = estack.Pop().GetByteArray()
                 estack.PushT(x[:count])
@@ -354,11 +349,11 @@ class ExecutionEngine():
 
                 count = estack.Pop().GetBigInteger()
                 if count < 0:
-                    self.VM_FAULT_and_report(13)
+                    self.VM_FAULT_and_report(VMFault.RIGHT_INVALID_COUNT)
 
                 x = estack.Pop().GetByteArray()
                 if len(x) < count:
-                    self.VM_FAULT_and_report(14)
+                    self.VM_FAULT_and_report(VMFault.RIGHT_UNKNOWN)
 
                 estack.PushT(x[-count:])
 
@@ -597,7 +592,7 @@ class ExecutionEngine():
                 n = estack.Pop().GetBigInteger()
 
                 if n < 1:
-                    self.VM_FAULT_and_report(15)
+                    self.VM_FAULT_and_report(VMFault.CHECKMULTISIG_INVALID_PUBLICKEY_COUNT)
 
                 pubkeys = []
                 for i in range(0, n):
@@ -606,7 +601,7 @@ class ExecutionEngine():
                 m = estack.Pop().GetBigInteger()
 
                 if m < 1 or m > n:
-                    self.VM_FAULT_and_report(16, m, n)
+                    self.VM_FAULT_and_report(VMFault.CHECKMULTISIG_SIGNATURE_ERROR, m, n)
 
                 sigs = []
 
@@ -669,7 +664,7 @@ class ExecutionEngine():
                 item = estack.Pop()
 
                 if not item.IsArray:
-                    self.VM_FAULT_and_report(19, item)
+                    self.VM_FAULT_and_report(VMFault.UNPACK_INVALID_TYPE, item)
 
                 items = item.GetArray()
                 items.reverse()
@@ -682,17 +677,17 @@ class ExecutionEngine():
 
                 index = estack.Pop().GetBigInteger()
                 if index < 0:
-                    self.VM_FAULT_and_report(20)
+                    self.VM_FAULT_and_report(VMFault.UNKNOWN7)
 
                 item = estack.Pop()
 
                 if not item.IsArray:
-                    self.VM_FAULT_and_report(21, index, item)
+                    self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_TYPE, index, item)
 
                 items = item.GetArray()
 
                 if index >= len(items):
-                    self.VM_FAULT_and_report(22, index, len(items))
+                    self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_INDEX, index, len(items))
 
                 to_pick = items[index]
 
@@ -709,12 +704,12 @@ class ExecutionEngine():
                 arrItem = estack.Pop()
 
                 if not issubclass(type(arrItem), StackItem) or not arrItem.IsArray:
-                    self.VM_FAULT_and_report(23)
+                    self.VM_FAULT_and_report(VMFault.SETITEM_INVALID_TYPE)
 
                 items = arrItem.GetArray()
 
                 if index < 0 or index >= len(items):
-                    self.VM_FAULT_and_report(24)
+                    self.VM_FAULT_and_report(VMFault.SETITEM_INVALID_INDEX)
 
                 items[index] = newItem
 
@@ -741,7 +736,7 @@ class ExecutionEngine():
                 arrItem = estack.Pop()
 
                 if not arrItem.IsArray:
-                    self.VM_FAULT_and_report(25, arrItem)
+                    self.VM_FAULT_and_report(VMFault.APPEND_INVALID_TYPE, arrItem)
 
                 arr = arrItem.GetArray()
                 arr.append(newItem)
@@ -750,7 +745,7 @@ class ExecutionEngine():
 
                 arrItem = estack.Pop()
                 if not arrItem.IsArray:
-                    self.VM_FAULT_and_report(26, arrItem)
+                    self.VM_FAULT_and_report(VMFault.REVERSE_INVALID_TYPE, arrItem)
 
                 arrItem.GetArray().reverse()
 
@@ -758,27 +753,27 @@ class ExecutionEngine():
                 index = estack.Pop().GetBigInteger()
                 arrItem = estack.Pop()
                 if not arrItem.IsArray:
-                    self.VM_FAULT_and_report(27, arrItem, index)
+                    self.VM_FAULT_and_report(VMFault.REMOVE_INVALID_TYPE, arrItem, index)
                 items = arrItem.GetArray()
 
                 if index < 0 or index >= len(items):
-                    self.VM_FAULT_and_report(28, index, len(items))
+                    self.VM_FAULT_and_report(VMFault.REMOVE_INVALID_INDEX, index, len(items))
 
                 del items[index]
 
             elif opcode == THROW:
-                self.VM_FAULT_and_report(29)
+                self.VM_FAULT_and_report(VMFault.THROW)
 
             elif opcode == THROWIFNOT:
                 if not estack.Pop().GetBoolean():
-                    self.VM_FAULT_and_report(30)
+                    self.VM_FAULT_and_report(VMFault.THROWIFNOT)
 
             elif opcode == DEBUG:
                 pdb.set_trace()
                 return
 
             else:
-                self.VM_FAULT_and_report(31, opcode)
+                self.VM_FAULT_and_report(VMFault.UNKNOWN_OPCODE, opcode)
 
         if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
 
@@ -860,17 +855,17 @@ class ExecutionEngine():
     def VM_FAULT_and_report(self, id, *args):
         self._VMState |= VMState.FAULT
 
-        if id == 2:
+        if id == VMFault.INVALID_JUMP:
             logger.error("Attemping to JMP/JMPIF/JMPIFNOT to an invalid location.")
 
-        elif id == 4:
+        elif id == VMFault.INVALID_CONTRACT:
             script_hash = args[0]
             logger.error("Trying to call an unknown contract with script_hash {}\nMake sure the contract exists on the blockchain".format(script_hash))
 
-        elif id == 15:
+        elif id == VMFault.CHECKMULTISIG_INVALID_PUBLICKEY_COUNT:
             logger.error("CHECKMULTISIG - provided public key count is less than 1.")
 
-        elif id == 16:
+        elif id == VMFault.CHECKMULTISIG_SIGNATURE_ERROR:
             if args[0] < 1:
                 logger.error("CHECKMULTISIG - Minimum required signature count cannot be less than 1.")
             else:  # m > n
@@ -878,34 +873,34 @@ class ExecutionEngine():
                 n = args[1]
                 logger.error("CHECKMULTISIG - Insufficient signatures provided ({}). Minimum required is {}".format(m, n))
 
-        elif id == 19:
+        elif id == VMFault.UNPACK_INVALID_TYPE:
             item = args[0]
             logger.error("Failed to UNPACK item. Item is not an array but of type: {}".format(type(item)))
 
-        elif id == 21:
+        elif id == VMFault.PICKITEM_INVALID_TYPE:
             index = args[0]
             item = args[1]
             logger.error("Cannot access item at index {}. Item is not an array but of type: {}".format(index, item))
 
-        elif id == 22:
+        elif id == VMFault.PICKITEM_INVALID_INDEX:
             index = args[0]
             length = args[1]
             logger.error("Array index {} exceeds list length {}".format(index, length))
 
-        elif id == 25:
+        elif id == VMFault.APPEND_INVALID_TYPE:
             item = args[0]
             logger.error("Cannot append to item. Item is not an array but of type: {}".format(type(item)))
 
-        elif id == 26:
+        elif id == VMFault.REVERSE_INVALID_TYPE:
             item = args[0]
             logger.error("Cannot REVERSE item. Item is not an array but of type: {}".format(type(item)))
 
-        elif id == 27:
+        elif id == VMFault.REMOVE_INVALID_TYPE:
             item = args[0]
             index = args[1]
             logger.error("Cannot REMOVE item at index {}. Item is not an array but of type: {}".format(index, type(item)))
 
-        elif id == 28:
+        elif id == VMFault.REMOVE_INVALID_INDEX:
             index = args[0]
             length = args[1]
 
@@ -915,7 +910,7 @@ class ExecutionEngine():
             else:  # index >= len(items):
                 logger.error("Cannot REMOVE item at index {}. Index exceeds array length {}".format(index, length))
 
-        elif id == 31:
+        elif id == VMFault.UNKNOWN_OPCODE:
             opcode = args[0]
             logger.error("Unknown opcode found: {}".format(opcode))
 
