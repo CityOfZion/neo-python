@@ -18,9 +18,6 @@ from prompt_toolkit.token import Token
 from twisted.internet import reactor, task
 
 
-if os.path.exists(os.path.join(os.getcwd(), 'neo')):
-    sys.path.insert(0, os.getcwd())
-
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neocore.Fixed8 import Fixed8
@@ -1005,7 +1002,7 @@ def main():
         settings.set_log_smart_contract_events(True)
 
     if args.datadir:
-        settings.DATA_DIR_PATH = args.datadir
+        settings.set_data_dir(args.datadir)
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)

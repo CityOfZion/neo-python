@@ -5,7 +5,7 @@ source = neo
 omit =
   venv*
   neo/Network/IPEndpoint.py
-  neo/bin
+  neo/bin/*
   examples/*
   docs/*
   neo/SmartContract/tests/StorageTest.py

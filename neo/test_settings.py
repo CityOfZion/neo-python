@@ -40,6 +40,8 @@ class SettingsTestCase(NeoTestCase):
         # Validate correct mainnet state
         _settings.setup_mainnet()
 
+        _settings.set_data_dir('.')
+
         self.assertEqual(_settings.chain_leveldb_path, os.path.join(DIR_PROJECT_ROOT, _settings.LEVELDB_PATH))
         self.assertEqual(_settings.notification_leveldb_path, os.path.join(DIR_PROJECT_ROOT, _settings.NOTIFICATION_DB_PATH))
         self.assertEqual(_settings.debug_storage_leveldb_path, os.path.join(DIR_PROJECT_ROOT, _settings.DEBUG_STORAGE_PATH))

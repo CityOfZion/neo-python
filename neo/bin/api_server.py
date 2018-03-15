@@ -145,7 +145,7 @@ def main():
         settings.setup_coznet()
 
     if args.datadir:
-        settings.DATA_DIR_PATH = args.datadir
+        settings.set_data_dir(args.datadir)
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility

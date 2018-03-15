@@ -39,7 +39,7 @@ def main():
         settings.setup_mainnet()
 
     if args.datadir:
-        settings.DATA_DIR_PATH = args.datadir
+        settings.set_data_dir(args.datadir)
 
     if args.notifications:
         BootstrapBlockchainFile(settings.notification_leveldb_path, settings.NOTIF_BOOTSTRAP_FILE, require_confirm)

@@ -27,13 +27,12 @@ setup(
     maintainer_email='chris@cityofzion.io',
     url='https://github.com/CityOfZion/neo-python',
     packages=find_packages(include=['neo']),
-#    scripts=['bin/prompt','bin/api_server','bin/bootstrap','bin/reencrypt_wallet'],
     entry_points = {
         'console_scripts': [
-            'np_prompt=neo.bin.prompt:main',
-            'np_api_server=neo.bin.api_server:main',
-            'np_bootstrap=neo.bin.bootstrap:main',
-            'np_reencrypt_wallet=neo.bin.reencrypt_wallet:main',
+            'np-prompt=neo.bin.prompt:main',
+            'np-api-server=neo.bin.api_server:main',
+            'np-bootstrap=neo.bin.bootstrap:main',
+            'np-reencrypt-wallet=neo.bin.reencrypt_wallet:main',
         ],
     },
     include_package_data=True,

@@ -33,11 +33,11 @@ ROOT_INSTALL_PATH = None
 # This detects if we are running from
 # an 'editable' version ( like ``python neo/bin/prompt.py`` )
 # or from a packaged install version from pip
-if os.path.exists(os.path.join(os.getcwd(), 'neo')):
-    ROOT_INSTALL_PATH = DIR_PROJECT_ROOT
-else:
+if 'site-packages/neo' in dir_current:
     ROOT_INSTALL_PATH = DIR_PROJECT_INSTALL
     IS_PACKAGE_INSTALL = True
+else:
+    ROOT_INSTALL_PATH = DIR_PROJECT_ROOT
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
@@ -88,7 +88,7 @@ class SettingsHolder:
     PUBLISH_TX_FEE = None
     REGISTER_TX_FEE = None
 
-    DATA_DIR_PATH = None
+    DATA_DIR_PATH = '%s/.neopython' % os.path.expanduser('~')
     LEVELDB_PATH = None
     NOTIFICATION_DB_PATH = None
 
@@ -115,23 +115,17 @@ class SettingsHolder:
     @property
     def chain_leveldb_path(self):
         self.check_chain_dir_exists()
-        if self.DATA_DIR_PATH:
-            return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
-        return os.path.join(DIR_PROJECT_ROOT, self.LEVELDB_PATH)
+        return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
 
     @property
     def notification_leveldb_path(self):
         self.check_chain_dir_exists()
-        if self.DATA_DIR_PATH:
-            return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
-        return os.path.join(DIR_PROJECT_ROOT, self.NOTIFICATION_DB_PATH)
+        return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
 
     @property
     def debug_storage_leveldb_path(self):
         self.check_chain_dir_exists()
-        if self.DATA_DIR_PATH:
-            return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
-        return os.path.join(DIR_PROJECT_ROOT, self.DEBUG_STORAGE_PATH)
+        return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
 
     # Helpers
     @property
@@ -233,6 +227,12 @@ class SettingsHolder:
         """ Load settings from the coznet JSON config file """
         self.setup(FILENAME_SETTINGS_COZNET)
 
+    def set_data_dir(self, path):
+        if path == '.':
+            self.DATA_DIR_PATH = DIR_PROJECT_ROOT
+        else:
+            self.DATA_DIR_PATH = path
+
     def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled
 
@@ -268,10 +268,7 @@ class SettingsHolder:
         Checks to make sure there is a directory called ``Chains`` at the root of DATA_DIR_PATH
         and creates it if it doesn't exist yet
         """
-        if self.DATA_DIR_PATH is not None:
-            chain_path = os.path.join(self.DATA_DIR_PATH, 'Chains')
-        else:
-            chain_path = os.path.join(DIR_PROJECT_ROOT, 'Chains')
+        chain_path = os.path.join(self.DATA_DIR_PATH, 'Chains')
 
         if not os.path.exists(chain_path):
             try:
