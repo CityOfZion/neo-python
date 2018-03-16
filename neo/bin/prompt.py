@@ -104,7 +104,7 @@ class PromptInterface(object):
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
                 'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
-                'wallet tkn_register {addr} ({addr}...)',
+                'wallet tkn_register {addr} ({addr}...) (--from-addr={addr})',
                 'wallet unspent',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
@@ -116,7 +116,7 @@ class PromptInterface(object):
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
-                'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount})',
+                'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr})',
                 'debugstorage {on/off/reset}'
                 ]
 
