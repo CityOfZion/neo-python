@@ -21,11 +21,8 @@ from neorpc.Client import RPCClient
 from neorpc.Settings import settings as rpc_settings
 import sys
 
-# Create am absolute references to the project root folder. Used for
-# specifying the various filenames.
+
 dir_current = os.path.dirname(os.path.abspath(__file__))
-DIR_PROJECT_ROOT = os.getcwd()
-DIR_PROJECT_INSTALL = os.path.abspath(os.path.join(dir_current, ".."))
 
 IS_PACKAGE_INSTALL = False
 ROOT_INSTALL_PATH = None
@@ -34,10 +31,10 @@ ROOT_INSTALL_PATH = None
 # an 'editable' version ( like ``python neo/bin/prompt.py`` )
 # or from a packaged install version from pip
 if 'site-packages/neo' in dir_current:
-    ROOT_INSTALL_PATH = DIR_PROJECT_INSTALL
+    ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
     IS_PACKAGE_INSTALL = True
 else:
-    ROOT_INSTALL_PATH = DIR_PROJECT_ROOT
+    ROOT_INSTALL_PATH = os.getcwd()
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
@@ -229,7 +226,7 @@ class SettingsHolder:
 
     def set_data_dir(self, path):
         if path == '.':
-            self.DATA_DIR_PATH = DIR_PROJECT_ROOT
+            self.DATA_DIR_PATH = os.getcwd()
         else:
             self.DATA_DIR_PATH = path
 

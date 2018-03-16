@@ -18,11 +18,11 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.api.REST.RestApi import RestApi
 from neo.Network.NodeLeader import NodeLeader
-from neo.Settings import settings, DIR_PROJECT_ROOT
+from neo.Settings import settings
 from neo.UserPreferences import preferences
 
 # Logfile settings & setup
-LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'notifications.log')
+LOGFILE_FN = os.path.join(os.getcwd(), 'notifications.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
