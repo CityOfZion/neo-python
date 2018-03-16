@@ -39,7 +39,6 @@ deploy:
     distributions: sdist bdist_wheel
     on:
       tags: true
-      repo: CityOfZion/neo-python
 
   # Deploy to Docker Hub
   - provider: script
