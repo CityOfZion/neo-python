@@ -7,6 +7,8 @@ REPO=cityofzion/neo-python
 
 # Change into current script directory
 cd "$(dirname "$0")"
+ls -alh ../
+source ../env.sh
 
 # Docker: login, build, tag and push
 docker login -u $DOCKER_USER -p $DOCKER_PASS
