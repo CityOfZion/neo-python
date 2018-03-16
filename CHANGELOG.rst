@@ -3,12 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.0-dev] in progress
+[0.6.2-dev] in progress
 -----------------------
 - ...
 
 
-[0.5.9] 2018-03-16
+[0.6.1] 2018-03-16
 ----------------------------
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
