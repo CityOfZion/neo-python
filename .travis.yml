@@ -33,8 +33,6 @@ after_success:
     coveralls
 
 deploy:
-  skip_cleanup: true
-
   # Deploy to PyPI
   - provider: pypi
     user: CityOfZion
@@ -46,6 +44,7 @@ deploy:
 
   # Deploy to Docker Hub
   - provider: script
+    skip_cleanup: true
     script: bash docker/travis-deploy-to-docker-hub.sh
     on:
       branch: docker-deploy
