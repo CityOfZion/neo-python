@@ -43,5 +43,6 @@ deploy:
   # Deploy to Docker Hub
   - provider: script
     script: bash docker/travis-deploy-to-docker-hub.sh
-    # on:
+    on:
+      branch: docker-deploy
     #   tags: true
