@@ -24,17 +24,19 @@ import sys
 
 dir_current = os.path.dirname(os.path.abspath(__file__))
 
-IS_PACKAGE_INSTALL = False
-ROOT_INSTALL_PATH = None
+# ROOT_INSTALL_PATH is the root path of neo-python, whether installed as package or from git.
+ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
 
-# This detects if we are running from
-# an 'editable' version ( like ``python neo/bin/prompt.py`` )
+# PATH_USER_DATA_ROOT is the root path where to store data (Chain databases, history, etc.)
+PATH_USER_DATA_ROOT = os.path.join(os.path.expanduser('~'), ".neopython")
+if os.name == 'nt':
+    from win32com.shell import shellcon, shell
+    path_appdata = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0)
+    PATH_USER_DATA_ROOT = os.path.join(path_appdata, ".neopython")
+
+# This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
 # or from a packaged install version from pip
-if 'site-packages/neo' in dir_current:
-    ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
-    IS_PACKAGE_INSTALL = True
-else:
-    ROOT_INSTALL_PATH = os.getcwd()
+IS_PACKAGE_INSTALL = 'site-packages/neo' in dir_current
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
@@ -85,7 +87,7 @@ class SettingsHolder:
     PUBLISH_TX_FEE = None
     REGISTER_TX_FEE = None
 
-    DATA_DIR_PATH = '%s/.neopython' % os.path.expanduser('~')
+    DATA_DIR_PATH = PATH_USER_DATA_ROOT
     LEVELDB_PATH = None
     NOTIFICATION_DB_PATH = None
 
