@@ -30,6 +30,10 @@ ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
 # PATH_USER_DATA is the root path where to store data (Chain databases, history, etc.)
 PATH_USER_DATA = os.path.join(os.path.expanduser('~'), ".neopython")  # Works for both Windows and *nix
 
+# Make sure the data path exists
+if not os.path.isdir(PATH_USER_DATA):
+    os.mkdir(PATH_USER_DATA)
+
 # This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
 # or from a packaged install version from pip
 IS_PACKAGE_INSTALL = 'site-packages/neo' in dir_current
