@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from neo.Implementations.Wallets.peewee.PWDatabase import PWDatabase
 from neo.Implementations.Wallets.peewee.Models import Key
 from neo.Wallets.utils import to_aes_key
@@ -72,7 +74,14 @@ def reset_password(new_path, new_password):
     return True
 
 
-def main(path):
+def main():
+    parser = argparse.ArgumentParser(
+        description='Re-encrypts the wallet master-key in a secure way.')
+    parser.add_argument('path', help='path to your wallet file')
+    args = parser.parse_args()
+
+    path = args.path
+
     if not os.path.exists(path):
         print('Wallet file not found')
         return
@@ -94,8 +103,4 @@ def main(path):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Re-encrypts the wallet master-key in a secure way.')
-    parser.add_argument('path', help='path to your wallet file')
-    args = parser.parse_args()
-    main(args.path)
+    main()

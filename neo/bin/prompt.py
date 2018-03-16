@@ -7,7 +7,7 @@ import os
 import psutil
 import traceback
 import logging
-
+import sys
 from logzero import logger
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -40,19 +40,19 @@ from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportTok
     ShowUnspentCoins
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.InputParser import InputParser
-from neo.Settings import settings, DIR_PROJECT_ROOT, PrivnetConnectionError
+from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
 
 # Logfile settings & setup
-LOGFILE_FN = os.path.join(DIR_PROJECT_ROOT, 'prompt.log')
+LOGFILE_FN = os.path.join(PATH_USER_DATA, 'prompt.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
 # Prompt history filename
-FILENAME_PROMPT_HISTORY = os.path.join(DIR_PROJECT_ROOT, '.prompt.py.history')
+FILENAME_PROMPT_HISTORY = os.path.join(PATH_USER_DATA, '.prompt.py.history')
 
 
 class PromptInterface(object):
@@ -1001,7 +1001,7 @@ def main():
         settings.set_log_smart_contract_events(True)
 
     if args.datadir:
-        settings.DATA_DIR_PATH = args.datadir
+        settings.set_data_dir(args.datadir)
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)

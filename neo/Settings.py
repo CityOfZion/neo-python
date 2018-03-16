@@ -19,22 +19,34 @@ from neocore.Cryptography import Helper
 
 from neorpc.Client import RPCClient
 from neorpc.Settings import settings as rpc_settings
+import sys
 
 
-# Create am absolute references to the project root folder. Used for
-# specifying the various filenames.
 dir_current = os.path.dirname(os.path.abspath(__file__))
-DIR_PROJECT_ROOT = os.path.abspath(os.path.join(dir_current, ".."))
+
+# ROOT_INSTALL_PATH is the root path of neo-python, whether installed as package or from git.
+ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
+
+# PATH_USER_DATA is the root path where to store data (Chain databases, history, etc.)
+PATH_USER_DATA = os.path.join(os.path.expanduser('~'), ".neopython")  # Works for both Windows and *nix
+
+# Make sure the data path exists
+if not os.path.isdir(PATH_USER_DATA):
+    os.mkdir(PATH_USER_DATA)
+
+# This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
+# or from a packaged install version from pip
+IS_PACKAGE_INSTALL = 'site-packages/neo' in dir_current
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
-FILENAME_PREFERENCES = os.path.join(DIR_PROJECT_ROOT, 'preferences.json')
+FILENAME_PREFERENCES = os.path.join(ROOT_INSTALL_PATH, 'neo/data/preferences.json')
 
 # The protocol json files are always in the project root
-FILENAME_SETTINGS_MAINNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.mainnet.json')
-FILENAME_SETTINGS_TESTNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.testnet.json')
-FILENAME_SETTINGS_PRIVNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.privnet.json')
-FILENAME_SETTINGS_COZNET = os.path.join(DIR_PROJECT_ROOT, 'protocol.coz.json')
+FILENAME_SETTINGS_MAINNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.mainnet.json')
+FILENAME_SETTINGS_TESTNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.testnet.json')
+FILENAME_SETTINGS_PRIVNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.privnet.json')
+FILENAME_SETTINGS_COZNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.coz.json')
 
 
 class PrivnetConnectionError(Exception):
@@ -46,12 +58,13 @@ class DependencyError(Exception):
 
 
 def check_depdendencies():
+
     # Get installed packages
     installed_packages = pip.get_installed_distributions(local_only=False)
     installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
 
     # Now check if each package specified in requirements.txt is actually installed
-    deps_filename = os.path.join(DIR_PROJECT_ROOT, "requirements.txt")
+    deps_filename = os.path.join(ROOT_INSTALL_PATH, "requirements.txt")
     with open(deps_filename, "r") as f:
         for dep in f.read().split():
             if not dep.lower() in installed_packages_list:
@@ -74,7 +87,7 @@ class SettingsHolder:
     PUBLISH_TX_FEE = None
     REGISTER_TX_FEE = None
 
-    DATA_DIR_PATH = None
+    DATA_DIR_PATH = PATH_USER_DATA
     LEVELDB_PATH = None
     NOTIFICATION_DB_PATH = None
 
@@ -100,24 +113,18 @@ class SettingsHolder:
 
     @property
     def chain_leveldb_path(self):
-        if self.DATA_DIR_PATH:
-            self.check_chain_dir_exists()
-            return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
-        return os.path.join(DIR_PROJECT_ROOT, self.LEVELDB_PATH)
+        self.check_chain_dir_exists(warn_migration=True)
+        return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
 
     @property
     def notification_leveldb_path(self):
-        if self.DATA_DIR_PATH:
-            self.check_chain_dir_exists()
-            return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
-        return os.path.join(DIR_PROJECT_ROOT, self.NOTIFICATION_DB_PATH)
+        self.check_chain_dir_exists()
+        return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
 
     @property
     def debug_storage_leveldb_path(self):
-        if self.DATA_DIR_PATH:
-            self.check_chain_dir_exists()
-            return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
-        return os.path.join(DIR_PROJECT_ROOT, self.DEBUG_STORAGE_PATH)
+        self.check_chain_dir_exists()
+        return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
 
     # Helpers
     @property
@@ -219,6 +226,12 @@ class SettingsHolder:
         """ Load settings from the coznet JSON config file """
         self.setup(FILENAME_SETTINGS_COZNET)
 
+    def set_data_dir(self, path):
+        if path == '.':
+            self.DATA_DIR_PATH = os.getcwd()
+        else:
+            self.DATA_DIR_PATH = path
+
     def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled
 
@@ -249,19 +262,26 @@ class SettingsHolder:
         """
         logzero.loglevel(level)
 
-    def check_chain_dir_exists(self):
+    def check_chain_dir_exists(self, warn_migration=False):
         """
         Checks to make sure there is a directory called ``Chains`` at the root of DATA_DIR_PATH
         and creates it if it doesn't exist yet
         """
-        if self.DATA_DIR_PATH is not None:
-            chain_path = os.path.join(self.DATA_DIR_PATH, 'Chains')
-            if not os.path.exists(chain_path):
-                try:
-                    os.makedirs(chain_path)
-                    logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
-                except Exception as e:
-                    logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
+        chain_path = os.path.join(self.DATA_DIR_PATH, 'Chains')
+
+        if not os.path.exists(chain_path):
+            try:
+                os.makedirs(chain_path)
+                logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
+            except Exception as e:
+                logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
+
+        # Add a warning for migration purposes if we created a chain dir
+        if warn_migration and ROOT_INSTALL_PATH != self.DATA_DIR_PATH:
+            if os.path.exists(os.path.join(ROOT_INSTALL_PATH, 'Chains')):
+                logzero.logger.warn("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
+                logzero.logger.warn("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
+                logzero.logger.warn("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
 
     def check_privatenet(self):
         """
@@ -309,5 +329,5 @@ settings.set_loglevel(logging.INFO)
 
 # Check if currently installed dependencies match the requirements
 # Can be bypassed with `SKIP_DEPS_CHECK=1 python prompt.py`
-if not os.getenv("SKIP_DEPS_CHECK"):
+if not os.getenv("SKIP_DEPS_CHECK") and not IS_PACKAGE_INSTALL:
     check_depdendencies()

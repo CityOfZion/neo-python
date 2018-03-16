@@ -26,7 +26,7 @@ def main():
     if args.mainnet and args.config:
         print("Cannot use both --config and --mainnet parameters, please use only one.")
         exit(1)
- 
+
     if args.skipconfirm:
         require_confirm = False
     else:
@@ -39,7 +39,7 @@ def main():
         settings.setup_mainnet()
 
     if args.datadir:
-        settings.DATA_DIR_PATH = args.datadir
+        settings.set_data_dir(args.datadir)
 
     if args.notifications:
         BootstrapBlockchainFile(settings.notification_leveldb_path, settings.NOTIF_BOOTSTRAP_FILE, require_confirm)

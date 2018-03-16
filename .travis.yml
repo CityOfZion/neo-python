@@ -20,18 +20,16 @@ addons:
 
 # command to install dependencies
 install:
-  - pip install -r requirements.txt
+  - pip install -e .
   - pip install coveralls
 
 # command to run tests
 script:
   - coverage run -m unittest discover neo
   - coverage run -m -a unittest discover boa_test
-  - pycodestyle prompt.py
-  - pycodestyle api_server.py
   - pycodestyle neo
   - pycodestyle examples
-  - python prompt.py --version
+  - python neo/bin/prompt.py --version
 
 after_success:
     coveralls

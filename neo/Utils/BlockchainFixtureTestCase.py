@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 
+from neo.Settings import settings
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
@@ -22,6 +23,8 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
     @classmethod
     def setUpClass(cls):
+
+        settings.set_data_dir('.')
 
         Blockchain.DeregisterBlockchain()
 

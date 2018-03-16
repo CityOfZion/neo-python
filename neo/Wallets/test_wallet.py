@@ -10,7 +10,7 @@ from neo.SmartContract.Contract import Contract
 from neocore.Cryptography.Crypto import Crypto
 from neo.Wallets.Wallet import Wallet
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Settings import DIR_PROJECT_ROOT
+from neo.Settings import ROOT_INSTALL_PATH
 
 
 class WalletTestCase(NeoTestCase):
@@ -123,4 +123,4 @@ class WalletTestCase(NeoTestCase):
 
     def test_privnet_wallet(self):
         """ Simple test if we can open the privnet wallet """
-        wallet = UserWallet.Open(os.path.join(DIR_PROJECT_ROOT, "neo-privnet.sample.wallet"), to_aes_key("coz"))
+        wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "neo/data/neo-privnet.sample.wallet"), to_aes_key("coz"))

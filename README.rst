@@ -1,23 +1,31 @@
-.. image:: http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png
-   :alt: CoZ logo
+.. raw:: html
+    <p align="center">
+      <img
+        src="http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png"
+        width="125px;">
+    </p>
 
-neo-python
-----------
+    <h1 align="center">neo-python</h1>
 
-Python Node and SDK for the NEO blockchain.
+    <p align="center">
+      Python Node and SDK for the <b>NEO</b> blockchain.
+    </p>
 
-.. image:: https://img.shields.io/pypi/v/neo-python.svg
-    :target: https://pypi.python.org/pypi/neo-python
-    :alt: Pypi
-.. image:: https://travis-ci.org/CityOfZion/neo-python.svg?branch=master
-    :target: https://travis-ci.org/CityOfZion/neo-python
-    :alt: Travis CI
-.. image:: https://readthedocs.org/projects/neo-python/badge/?version=latest
-    :target: https://neo-python.readthedocs.io/en/latest/?badge=latest
-    :alt: ReadTheDocs
-.. image:: https://coveralls.io/repos/github/CityOfZion/neo-python/badge.svg?branch=master
-    :target: https://coveralls.io/github/CityOfZion/neo-python?branch=master
-    :alt: ReadTheDocs
+    <p align="center">
+      <a href="https://pypi.python.org/pypi/neo-python">
+        <img src="https://img.shields.io/pypi/v/neo-python.svg">
+      </a>
+      <a href="https://travis-ci.org/CityOfZion/neo-python">
+        <img src="https://travis-ci.org/CityOfZion/neo-python.svg?branch=master">
+      </a>
+      <a href="https://neo-python.readthedocs.io/en/latest/?badge=latest" rel="nofollow">
+        <img src="https://readthedocs.org/projects/neo-python/badge/?version=latest">
+      </a>
+      <a href='https://coveralls.io/github/CityOfZion/neo-python?branch=master'>
+        <img src='https://coveralls.io/repos/github/CityOfZion/neo-python/badge.svg?branch=master' alt='Coverage Status' />
+      </a>
+    </p>
+
 
 
 Overview
@@ -86,11 +94,11 @@ started. There are many more videos under the
 Youtube channel, check them out.
 
 Docker
-~~~~~~
+------
 
 Using Docker is another option to run neo-python. There are example
 Dockerfiles provided in the
-```/docker folder`` <https://github.com/CityOfZion/neo-python/tree/development/docker>`__,
+`/docker folder <https://github.com/CityOfZion/neo-python/tree/development/docker>`__,
 and we have an image on Docker hub, tagged after the neo-python
 releases: https://hub.docker.com/r/cityofzion/neo-python/
 
@@ -175,38 +183,58 @@ On \*nix systems, install Python 3.6 via your package manager, or
 download an installation package from the `official
 homepage <https://www.python.org/downloads/release/python-364/>`__.
 
-Virtual Environment
-~~~~~~~~~~~~~~~~~~~
+
+Install
+~~~~~~~
 
 It is recommended to put all project dependencies into its own virtual
 environment, this way we don't pollute the global installation which
 could lead to version conflicts.
 
-::
 
-    python3.6 -m venv venv
+1. Install from Github:
+
+  ::
+
+    git clone https://github.com/CityOfZion/neo-python.git
+    cd neo-python
+
+    # create virtual environment and activate
+
+    python3.6 -m venv venv # this can also be python3 -m venv venv depending on your environment
     source venv/bin/activate
 
+    # install the package in an editable form
+    (venv) pip install -e .
 
-Now let's install neo-python:
+2. Install from PyPi
 
-::
+  ::
 
-    pip install -U setuptools pip wheel
-    pip install -e .
+    # create project dir
+    mkdir myproject
+    cd myproject
 
---------------
+    # create virtual environment and activate
+
+    python3.6 -m venv venv # this can also be python3 -m venv venv depending on your environment
+    source venv/bin/activate
+
+    (venv) pip install neo-python
+
+
+
 
 Running
 -------
 
 After installing requirements and activating the environment, there is
-an easy to use CLI (``prompt.py``) that starts the node and allows some
+an easy to use CLI (``np-prompt``) that starts the node and allows some
 basic interactivity.
 
 ::
 
-    python prompt.py
+    np-prompt
     NEO cli. Type 'help' to get started
 
     neo> state
@@ -221,7 +249,7 @@ Let's query for a block in the current server by hash or by block index:
 
 ::
 
-    python prompt.py
+    np-prompt
     NEO cli. Type 'help' to get started
 
     neo> block 122235
@@ -245,10 +273,10 @@ Bootstrapping the Blockchain
 ----------------------------
 
 If you use neo-python for the first time, you need to synchronize the
-blockchain, which may take a long time. Included in this project is
-``bootstrap.py`` to automatically download a chain directory for you. To
-bootstrap for testnet, run ``python bootstrap.py``, get a cup of coffee
-and wait. To bootstrap for mainnet, use ``python bootstrap.py -m`` and
+blockchain, which may take a long time. Included in this project is the script
+``np-bootstrap`` to automatically download a chain directory for you. To
+bootstrap for testnet, run ``np-bootstrap``, get a cup of coffee
+and wait. To bootstrap for mainnet, use ``np-bootstrap -m`` and
 get 8 cups of coffee (3.3 GB file).
 
 Important: do not use the chain files from
@@ -260,7 +288,7 @@ Available Wallet commands
 
 ::
 
-    python prompt.py
+    np-prompt
     NEO cli. Type 'help' to get started
 
     neo> help
@@ -278,29 +306,35 @@ Running on MainNet
 ~~~~~~~~~~~~~~~~~~
 
 To run the prompt on MainNet, you can use the CLI argument ``-m`` (eg.
-``python prompt.py -m``), for running on PrivNet you can use ``-p``. Be
+``np-prompt -m``), for running on PrivNet you can use ``-p``. Be
 sure to check out the details of the parameters:
 
 ::
 
-    $ python prompt.py -h
-    usage: prompt.py [-h] [-m] [-p] [-c CONFIG] [-t {dark,light}] [--version]
+    $ np-prompt -h
+    usage: np-prompt [-h] [-m | -p [host] | --coznet | -c CONFIG]
+                     [-t {dark,light}] [-v] [--datadir DATADIR] [--version]
 
     optional arguments:
       -h, --help            show this help message and exit
       -m, --mainnet         Use MainNet instead of the default TestNet
-      -p, --privnet         Use PrivNet instead of the default TestNet
+      -p [host], --privnet [host]
+                            Use a private net instead of the default TestNet,
+                            optionally using a custom host (default: 127.0.0.1)
+      --coznet              Use the CoZ network instead of the default TestNet
       -c CONFIG, --config CONFIG
                             Use a specific config file
       -t {dark,light}, --set-default-theme {dark,light}
                             Set the default theme to be loaded from the config
                             file. Default: 'dark'
+      -v, --verbose         Show smart-contract events by default
+      --datadir DATADIR     Absolute path to use for database directories
       --version             show program's version number and exit
 
 Logging
 ~~~~~~~
 
-Currently, ``prompt.py`` logs to ``prompt.log``
+Currently, ``np-prompt`` logs to ``prompt.log``
 
 --------------
 
@@ -321,6 +355,13 @@ Useful commands
     make test
     make coverage
     make docs
+
+
+    # run only neo-python tests
+    python -m unittest discover neo
+
+    # run only neo-boa tests
+    python -m unittest discover boa_test
 
 Updating the version number and releasing new versions of neo-python
 --------------------------------------------------------------------

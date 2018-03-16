@@ -1,6 +1,5 @@
 from neo.Utils.NeoTestCase import NeoTestCase
-from neo.Settings import SettingsHolder
-from neo.Settings import DIR_PROJECT_ROOT
+from neo.Settings import SettingsHolder, ROOT_INSTALL_PATH
 import os
 
 
@@ -40,9 +39,11 @@ class SettingsTestCase(NeoTestCase):
         # Validate correct mainnet state
         _settings.setup_mainnet()
 
-        self.assertEqual(_settings.chain_leveldb_path, os.path.join(DIR_PROJECT_ROOT, _settings.LEVELDB_PATH))
-        self.assertEqual(_settings.notification_leveldb_path, os.path.join(DIR_PROJECT_ROOT, _settings.NOTIFICATION_DB_PATH))
-        self.assertEqual(_settings.debug_storage_leveldb_path, os.path.join(DIR_PROJECT_ROOT, _settings.DEBUG_STORAGE_PATH))
+        _settings.set_data_dir('.')
+
+        self.assertEqual(_settings.chain_leveldb_path, os.path.join(ROOT_INSTALL_PATH, _settings.LEVELDB_PATH))
+        self.assertEqual(_settings.notification_leveldb_path, os.path.join(ROOT_INSTALL_PATH, _settings.NOTIFICATION_DB_PATH))
+        self.assertEqual(_settings.debug_storage_leveldb_path, os.path.join(ROOT_INSTALL_PATH, _settings.DEBUG_STORAGE_PATH))
 
         _settings.DATA_DIR_PATH = '/whatever'
 
