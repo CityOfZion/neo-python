@@ -3,12 +3,27 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.5.8-dev] in progress
+[0.6.2-dev] in progress
+-----------------------
+- ...
+
+
+[0.6.1] 2018-03-16
 ----------------------------
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
+- Changes for Pypi compatibility:
+  - move protocol.*.json to ``neo/data/``
+  - move ``prompt.py`` and other scripts to ``neo/bin``
+  - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
+  - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
+    - ``np-prompt``
+    - ``np-api-server``
+    - ``np-bootstrap``
+    - ``np-reencrypt-wallet``
+  - updated docs for Pypi changes
 
-
+      
 [0.5.7] 2018-03-14
 ----------------------------
 - update to ``neocore==0.3.8``

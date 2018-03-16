@@ -21,27 +21,22 @@ from neorpc.Client import RPCClient
 from neorpc.Settings import settings as rpc_settings
 import sys
 
-# Create am absolute references to the project root folder. Used for
-# specifying the various filenames.
+
 dir_current = os.path.dirname(os.path.abspath(__file__))
-DIR_PROJECT_ROOT = os.getcwd()
-DIR_PROJECT_INSTALL = os.path.abspath(os.path.join(dir_current, ".."))
 
-IS_PACKAGE_INSTALL = False
-ROOT_INSTALL_PATH = None
+# ROOT_INSTALL_PATH is the root path of neo-python, whether installed as package or from git.
+ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
 
+# PATH_USER_DATA is the root path where to store data (Chain databases, history, etc.)
+PATH_USER_DATA = os.path.join(os.path.expanduser('~'), ".neopython")  # Works for both Windows and *nix
 
-# This detects if we are running from
-# an 'editable' version ( like ``python neo/bin/prompt.py`` )
+# Make sure the data path exists
+if not os.path.isdir(PATH_USER_DATA):
+    os.mkdir(PATH_USER_DATA)
+
+# This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
 # or from a packaged install version from pip
-if os.environ['ROOT_INSTALL_PATH']:
-    ROOT_INSTALL_PATH = os.environ['ROOT_INSTALL_PATH']
-    IS_PACKAGE_INSTALL = True
-elif 'site-packages/neo' in dir_current:
-    ROOT_INSTALL_PATH = DIR_PROJECT_INSTALL
-    IS_PACKAGE_INSTALL = True
-else:
-    ROOT_INSTALL_PATH = DIR_PROJECT_ROOT
+IS_PACKAGE_INSTALL = 'site-packages/neo' in dir_current
 
 
 # The filenames for various files. Might be improved by using system
@@ -93,7 +88,7 @@ class SettingsHolder:
     PUBLISH_TX_FEE = None
     REGISTER_TX_FEE = None
 
-    DATA_DIR_PATH = '%s/.neopython' % os.path.expanduser('~')
+    DATA_DIR_PATH = PATH_USER_DATA
     LEVELDB_PATH = None
     NOTIFICATION_DB_PATH = None
 
@@ -119,7 +114,7 @@ class SettingsHolder:
 
     @property
     def chain_leveldb_path(self):
-        self.check_chain_dir_exists()
+        self.check_chain_dir_exists(warn_migration=True)
         return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
 
     @property
@@ -234,7 +229,7 @@ class SettingsHolder:
 
     def set_data_dir(self, path):
         if path == '.':
-            self.DATA_DIR_PATH = DIR_PROJECT_ROOT
+            self.DATA_DIR_PATH = os.getcwd()
         else:
             self.DATA_DIR_PATH = path
 
@@ -268,7 +263,7 @@ class SettingsHolder:
         """
         logzero.loglevel(level)
 
-    def check_chain_dir_exists(self):
+    def check_chain_dir_exists(self, warn_migration=False):
         """
         Checks to make sure there is a directory called ``Chains`` at the root of DATA_DIR_PATH
         and creates it if it doesn't exist yet
@@ -281,6 +276,13 @@ class SettingsHolder:
                 logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
             except Exception as e:
                 logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
+
+        # Add a warning for migration purposes if we created a chain dir
+        if warn_migration and ROOT_INSTALL_PATH != self.DATA_DIR_PATH:
+            if os.path.exists(os.path.join(ROOT_INSTALL_PATH, 'Chains')):
+                logzero.logger.warn("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
+                logzero.logger.warn("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
+                logzero.logger.warn("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
 
     def check_privatenet(self):
         """
