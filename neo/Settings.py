@@ -113,7 +113,7 @@ class SettingsHolder:
 
     @property
     def chain_leveldb_path(self):
-        self.check_chain_dir_exists()
+        self.check_chain_dir_exists(warn_migration=True)
         return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
 
     @property
@@ -262,7 +262,7 @@ class SettingsHolder:
         """
         logzero.loglevel(level)
 
-    def check_chain_dir_exists(self):
+    def check_chain_dir_exists(self, warn_migration=False):
         """
         Checks to make sure there is a directory called ``Chains`` at the root of DATA_DIR_PATH
         and creates it if it doesn't exist yet
@@ -275,6 +275,13 @@ class SettingsHolder:
                 logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
             except Exception as e:
                 logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
+
+        # Add a warning for migration purposes if we created a chain dir
+        if warn_migration and ROOT_INSTALL_PATH != self.DATA_DIR_PATH:
+            if os.path.exists(os.path.join(ROOT_INSTALL_PATH, 'Chains')):
+                logzero.logger.info("[MIGRATION Warning] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
+                logzero.logger.info("[MIGRATION Warning] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
+                logzero.logger.info("[Migration Warning] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
 
     def check_privatenet(self):
         """

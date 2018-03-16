@@ -105,6 +105,7 @@ class LevelDBBlockchain(Blockchain):
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)
         #            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
+            logger.info("Created Blockchain DB at %s " % self._path)
         except Exception as e:
             logger.info("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
