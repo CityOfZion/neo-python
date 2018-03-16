@@ -13,19 +13,21 @@ addons:
     - libsqlite3-dev
 
 # command to install dependencies
-# install:
-#   - pip install -r requirements.txt
-#   - pip install coveralls
+install:
+  - pip install -r requirements.txt
+  - pip install coveralls
 
 # command to run tests
 script:
-  # - coverage run -m unittest discover neo
-  # - coverage run -m -a unittest discover boa_test
-  # - pycodestyle prompt.py
-  # - pycodestyle api_server.py
-  # - pycodestyle neo
-  # - pycodestyle examples
-  # - python prompt.py --version
+  - coverage run -m unittest discover neo
+  - coverage run -m -a unittest discover boa_test
+  - pycodestyle prompt.py
+  - pycodestyle api_server.py
+  - pycodestyle neo
+  - pycodestyle examples
+  - python prompt.py --version
+
+  # Workaround to user env vars in the deploy script
   - echo "export DOCKER_USER=$DOCKER_USER" > env.sh
   - echo "export DOCKER_PASS=$DOCKER_PASS" >> env.sh
 
@@ -47,5 +49,4 @@ deploy:
     skip_cleanup: true
     script: bash docker/travis-deploy-to-docker-hub.sh
     on:
-      branch: docker-deploy
-    #   tags: true
+      tags: true
