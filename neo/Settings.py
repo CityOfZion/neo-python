@@ -30,14 +30,19 @@ DIR_PROJECT_INSTALL = os.path.abspath(os.path.join(dir_current, ".."))
 IS_PACKAGE_INSTALL = False
 ROOT_INSTALL_PATH = None
 
+
 # This detects if we are running from
 # an 'editable' version ( like ``python neo/bin/prompt.py`` )
 # or from a packaged install version from pip
-if 'site-packages/neo' in dir_current:
+if os.environ['ROOT_INSTALL_PATH']:
+    ROOT_INSTALL_PATH = os.environ['ROOT_INSTALL_PATH']
+    IS_PACKAGE_INSTALL = True
+elif 'site-packages/neo' in dir_current:
     ROOT_INSTALL_PATH = DIR_PROJECT_INSTALL
     IS_PACKAGE_INSTALL = True
 else:
     ROOT_INSTALL_PATH = DIR_PROJECT_ROOT
+
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs

@@ -727,6 +727,16 @@ class ExecutionEngine():
 
                 estack.PushT(Struct(items))
 
+            elif opcode == NEWDICT:
+
+                keysItem = estack.Pop()
+                valuesItem = estack.Pop()
+
+                if not keysItem.IsArray or not valuesItem.IsArray:
+                    return self.VM_FAULT_and_report(VMFault.POP_ITEM_NOT_ARRAY, keysItem, valuesItem)
+
+                estack.PushT(Struct([keysItem, valuesItem]))
+
             elif opcode == APPEND:
                 newItem = estack.Pop()
 
@@ -912,6 +922,9 @@ class ExecutionEngine():
 
             else:  # index >= len(items):
                 error_msg = "Cannot REMOVE item at index {}. Index exceeds array length {}".format(index, length)
+
+        elif id == VMFault.POP_ITEM_NOT_ARRAY:
+            error_msg = "Items(s) not array: %s" % [item for item in args]
 
         elif id == VMFault.UNKNOWN_OPCODE:
             opcode = args[0]

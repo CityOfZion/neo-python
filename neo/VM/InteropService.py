@@ -280,6 +280,26 @@ class Struct(Array):
     def __str__(self):
         return "Struct: %s " % self._array
 
+class Dict(StackItem):
+
+    _keys = None
+    _values = None
+
+    def __init__(self, keys, values):
+        self._keys = keys
+        self._values = values
+
+    def GetValueForKey(self, key):
+        for index, item in self._keys:
+            if key == item:
+                return self._values[index]
+
+    def SetValueForKey(self, key, value):
+        if key in self._keys:
+            self._values[self._keys.index(key)] = value
+        else:
+            self._keys.append(key)
+            self._values.append(value)
 
 class InteropService():
 
