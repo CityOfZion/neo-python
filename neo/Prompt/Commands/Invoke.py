@@ -2,7 +2,7 @@ from neo.Blockchain import GetBlockchain
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import parse_param, get_asset_attachments
+from neo.Prompt.Utils import parse_param, get_asset_attachments, lookup_addr_str
 
 
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
@@ -40,6 +40,9 @@ DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
 def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None):
+
+    if from_addr is not None:
+        from_addr = lookup_addr_str(wallet, from_addr)
 
     wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True, from_addr=from_addr)
 
@@ -217,6 +220,9 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
 
     # print("invoke script %s " % script)
 
+    if from_addr is not None:
+        from_addr = lookup_addr_str(wallet, from_addr)
+
     bc = GetBlockchain()
 
     sn = bc._db.snapshot()
@@ -343,6 +349,9 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
     dtx.inputs = []
     dtx.scripts = []
     dtx.Script = binascii.unhexlify(deploy_script)
+
+    if from_addr is not None:
+        from_addr = lookup_addr_str(wallet, from_addr)
 
     dtx = wallet.MakeTransaction(tx=dtx, from_addr=from_addr)
     context = ContractParametersContext(dtx)
