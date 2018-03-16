@@ -39,9 +39,9 @@ import json
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
-def InvokeContract(wallet, tx, fee=Fixed8.Zero()):
+def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None):
 
-    wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
+    wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True, from_addr=from_addr)
 
 #    pdb.set_trace()
 
@@ -204,7 +204,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
 
             outputs.append(output)
 
-        return test_invoke(out, wallet, outputs, withdrawal_tx, min_fee=min_fee)
+        return test_invoke(out, wallet, outputs, withdrawal_tx, from_addr, min_fee)
 
     else:
 
@@ -319,7 +319,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
     return None, None, None, None
 
 
-def test_deploy_and_invoke(deploy_script, invoke_args, wallet, min_fee=DEFAULT_MIN_FEE):
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, min_fee=DEFAULT_MIN_FEE):
 
     bc = GetBlockchain()
 
@@ -344,7 +344,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, min_fee=DEFAULT_M
     dtx.scripts = []
     dtx.Script = binascii.unhexlify(deploy_script)
 
-    dtx = wallet.MakeTransaction(tx=dtx)
+    dtx = wallet.MakeTransaction(tx=dtx, from_addr=from_addr)
     context = ContractParametersContext(dtx)
     wallet.Sign(context)
     dtx.scripts = context.GetScripts()
@@ -445,7 +445,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, min_fee=DEFAULT_M
             itx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                                    data=Crypto.ToScriptHash(contract.Script, unhex=False).Data)]
 
-        itx = wallet.MakeTransaction(tx=itx)
+        itx = wallet.MakeTransaction(tx=itx, from_addr=from_addr)
         context = ContractParametersContext(itx)
         wallet.Sign(context)
         itx.scripts = context.GetScripts()

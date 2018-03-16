@@ -38,7 +38,7 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
     token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins
-from neo.Prompt.Utils import get_arg
+from neo.Prompt.Utils import get_arg, get_from_addr
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
 from neo.UserPreferences import preferences
@@ -97,12 +97,14 @@ class PromptInterface(object):
                 'wallet migrate',
                 'wallet rebuild {start block}',
                 'wallet delete_addr {addr}',
+                'wallet delete_token {token_contract_hash}',
                 'wallet alias {addr} {title}',
                 'wallet tkn_send {token symbol} {address_from} {address to} {amount} ',
                 'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
                 'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
+                'wallet tkn_register {addr} ({addr}...)',
                 'wallet unspent',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
@@ -156,7 +158,7 @@ class PromptInterface(object):
                                 'wallet', 'contract', 'asset', 'wif',
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
                                 'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance',
-                                'build', 'notifications', ]
+                                'tkn_register', 'build', 'notifications', ]
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
@@ -700,8 +702,10 @@ class PromptInterface(object):
             print("Please open a wallet")
             return
 
+        args, from_addr = get_from_addr(args)
+
         if args and len(args) > 0:
-            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args)
+            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr)
 
             if tx is not None and results is not None:
                 print(
@@ -719,7 +723,7 @@ class PromptInterface(object):
                 if not self.Wallet.ValidatePassword(passwd):
                     return print("Incorrect password")
 
-                result = InvokeContract(self.Wallet, tx, fee)
+                result = InvokeContract(self.Wallet, tx, fee, from_addr=from_addr)
 
                 return
             else:
@@ -733,6 +737,8 @@ class PromptInterface(object):
             print("Please open a wallet")
             return
 
+        args, from_addr = get_from_addr(args)
+
         function_code = LoadContract(args[1:])
 
         if function_code:
@@ -741,7 +747,7 @@ class PromptInterface(object):
 
             if contract_script is not None:
 
-                tx, fee, results, num_ops = test_invoke(contract_script, self.Wallet, [])
+                tx, fee, results, num_ops = test_invoke(contract_script, self.Wallet, [], from_addr=from_addr)
 
                 if tx is not None and results is not None:
                     print(
@@ -760,7 +766,7 @@ class PromptInterface(object):
                     if not self.Wallet.ValidatePassword(passwd):
                         return print("Incorrect password")
 
-                    result = InvokeContract(self.Wallet, tx, Fixed8.Zero())
+                    result = InvokeContract(self.Wallet, tx, Fixed8.Zero(), from_addr=from_addr)
 
                     return
                 else:

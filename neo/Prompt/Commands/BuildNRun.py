@@ -1,4 +1,4 @@
-from neo.Prompt.Utils import get_arg
+from neo.Prompt.Utils import get_arg, get_from_addr
 from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, generate_deploy_script
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.SmartContract.ContractParameter import ContractParameter
@@ -12,6 +12,8 @@ from neo.Core.State.ContractState import ContractPropertyState
 
 
 def LoadAndRun(arguments, wallet):
+
+    arguments, from_addr = get_from_addr(arguments)
 
     path = get_arg(arguments)
 
@@ -29,13 +31,14 @@ def LoadAndRun(arguments, wallet):
             script = content
 
             print("arguments.... %s " % arguments)
-            DoRun(script, arguments, wallet, path)
+            DoRun(script, arguments, wallet, path, from_addr=from_addr)
 
     except Exception as e:
         print("Could not load script %s " % e)
 
 
 def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE):
+    arguments, from_addr = get_from_addr(arguments)
     path = get_arg(arguments)
 
     contract_script = Compiler.instance().load_and_save(path)
@@ -43,10 +46,10 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE):
     newpath = path.replace('.py', '.avm')
     print("Saved output to %s " % newpath)
 
-    return DoRun(contract_script, arguments, wallet, path, verbose, min_fee=min_fee)
+    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee)
 
 
-def DoRun(contract_script, arguments, wallet, path, verbose=True, min_fee=DEFAULT_MIN_FEE):
+def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE):
 
     test = get_arg(arguments, 1)
 
@@ -59,7 +62,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True, min_fee=DEFAUL
 
             script = GatherLoadedContractParams(f_args, contract_script)
 
-            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, min_fee)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee)
             i_args.reverse()
 
             return_type_results = []
