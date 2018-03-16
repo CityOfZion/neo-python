@@ -2,12 +2,6 @@ language: python
 python:
   - "3.6"
 
-env:
-  global:
-    # Docker username and password
-    - secure: "k+IwHSSBwJlgH1BwJtL+lzm8ZftZIewOOgnPor+ydXTfwnK6a9D04C+FifrQWApOqB7nYSdYTarKz/1rh/dNy8OIW62AOG3G4wfdCVORB+G3PENxlXaqoEpm1Qap8KRHL3tSLZmlzoE1VnLe6r4sYNkn0JcQdDKeyI1hJWQd4x4RqaiGZXjP+RpCoLGfiQVJNY9HqvSPhBMMNt/NOss2+Rk/QgPMcMv4dCBWppZUk5SRC2GVDyqCA4HqdRv1D8FBVXem2PepSJ2hX0P4gJjqtiCBHwGB8opSIaAkTqH0vayxxfz6r+KHw8NLz2BaKyW4EcSjDsOWUlZBpHysMvRT2/Vf0KzYSoQoJjQIbHxX1hQQ39gIoB2ngaFpWi07WcCLLRrWiQA/0qopiM2iDAYq2Bw8pzVENahZl7ewW1woZeBuO/O/wkHkvEAqO+1QKZ0BILGQS/mN/QZclXlDK6BpUGpTujrNta4+O2ZOBm3AdGycgx8Hqjj82CaquLNgGeOM6GjZN3p2kZ2MB0KDYVv1FcvGTpCvfHsHvWPblVrUG3P3MjlEM4TUVH9G8foV9v3Ek1QXJTNbePcJyK1fodnjpp5c9uwN2zMylDMgoIzlnyoyvV8PdERjpE2oTuebuHh0eX0NyXBTx9UyYf43ON29kmYj/G60HNbvaLUpKhjlWnQ="
-    - secure: "MzH58n1jDaCvA24jJ6zm1KJZfNNB5LwvZj1G/oPlpyj7OrC2eq02QEkf+nd0fk0cdhnR21fwjgKwbJZq9TPpZed7PQpuxxzu0tGVr6dEQmxk90lRr7ZYSfNqit7pmj+HgUy3ECzt1oLVsce7iWlJKPhdRSzcFggUoeHWcSarXni7OW9TIS/exFtpZ+f5/yAIx/quCnl7UTolODnR7VxSpr+UsBDWUCSQpLWxufWPvfSfCu9POx2HWOoIsoF9ovwsCK4zxdR21kvTPgBjfKnDnNoO7LudmGynlgq4sX5UDeIpJbX+FMCfTo3DprXt5tXWslWFuxgNFsEvydaribf4O/i+V21DODg3vTv4EtCRm+3yeSUoCNz2CPn4JxudJGDBX3E7fyeau9sU8CINqCEWC83oYgXgNUEjZj9Q1747bvji1iD/sRUwRSZDPAr7wY6QwrckXPnrnDIr3sQyylwk73W3zmuQC6xyWU2P3UO0MOQp3QRl+ft3MDTZ842CFkbKrg5UKHE1RiS8vu+rtpNR4Xv7p4hLN1dtvY/S8H8q727lCHYv3RL25OU0arLJ/hhV6DP6klBnpMJQCLXqXoxP2ngZWw6Am9sgJlQG1NNrLv9Mbk6SldYvpK/DEZjH1MgMhF5Cmgjzej49r7neVpUrFmarWmRkImSxhXqEMU+vCjQ="
-
 sudo: required
 services:
   - docker
@@ -33,6 +27,10 @@ script:
   - pycodestyle examples
   - python prompt.py --version
 
+  # Workaround to user env vars in the deploy script
+  - echo "export DOCKER_USER=$DOCKER_USER" > env.sh
+  - echo "export DOCKER_PASS=$DOCKER_PASS" >> env.sh
+
 after_success:
     coveralls
 
@@ -45,10 +43,10 @@ deploy:
     distributions: sdist bdist_wheel
     on:
       tags: true
-      repo: CityOfZion/neo-python
 
   # Deploy to Docker Hub
-  #- provider: script
-  #  script: bash docker/travis-deploy-to-docker-hub.sh
-  #  on:
-  #    tags: true
+  - provider: script
+    skip_cleanup: true
+    script: bash docker/travis-deploy-to-docker-hub.sh
+    on:
+      tags: true
