@@ -19,18 +19,22 @@ install:
 
 # command to run tests
 script:
-  - coverage run -m unittest discover neo
-  - coverage run -m -a unittest discover boa_test
-  - pycodestyle prompt.py
-  - pycodestyle api_server.py
-  - pycodestyle neo
-  - pycodestyle examples
-  - python prompt.py --version
+  # - coverage run -m unittest discover neo
+  # - coverage run -m -a unittest discover boa_test
+  # - pycodestyle prompt.py
+  # - pycodestyle api_server.py
+  # - pycodestyle neo
+  # - pycodestyle examples
+  # - python prompt.py --version
+  - echo "export DOCKER_USER=$DOCKER_USER" > env.sh
+  - echo "export DOCKER_PASS=$DOCKER_PASS" >> env.sh
 
 after_success:
     coveralls
 
 deploy:
+  skip_cleanup: true
+
   # Deploy to PyPI
   - provider: pypi
     user: CityOfZion
