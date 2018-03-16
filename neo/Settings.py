@@ -27,12 +27,8 @@ dir_current = os.path.dirname(os.path.abspath(__file__))
 # ROOT_INSTALL_PATH is the root path of neo-python, whether installed as package or from git.
 ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
 
-# PATH_USER_DATA_ROOT is the root path where to store data (Chain databases, history, etc.)
-PATH_USER_DATA_ROOT = os.path.join(os.path.expanduser('~'), ".neopython")
-if os.name == 'nt':
-    from win32com.shell import shellcon, shell
-    path_appdata = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0)
-    PATH_USER_DATA_ROOT = os.path.join(path_appdata, ".neopython")
+# PATH_USER_DATA is the root path where to store data (Chain databases, history, etc.)
+PATH_USER_DATA = os.path.join(os.path.expanduser('~'), ".neopython")  # Works for both Windows and *nix
 
 # This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
 # or from a packaged install version from pip
@@ -87,7 +83,7 @@ class SettingsHolder:
     PUBLISH_TX_FEE = None
     REGISTER_TX_FEE = None
 
-    DATA_DIR_PATH = PATH_USER_DATA_ROOT
+    DATA_DIR_PATH = PATH_USER_DATA
     LEVELDB_PATH = None
     NOTIFICATION_DB_PATH = None
 
