@@ -92,13 +92,13 @@ class NeoNode(Protocol):
         ip = None
         for line in f:
             attributes = line.split(",")
-            if(attributes[0] == "\n") continue
+            if(attributes[0] == "\n"): continue
             if(attributes[0] == self.host):
                 self.rating = int(attributes[1])
                 if self.rating > 90:
-                    Disconnect()
+                    self.Disconnect()
                 f.close()
-                break
+                return
 
         f.close()
 
@@ -145,10 +145,10 @@ class NeoNode(Protocol):
         f = open(filename, 'r+')
         for line in f:
             attributes = line.split(",")
-            if(attributes[0] == "\n") continue
+            if(attributes[0] == "\n"): continue
             attributes = line.split(",")
-            if(attributes[0] == str(self.host):
-                attributes[0] = str(currRating)
+            if attributes[0] == str(self.host):
+                attributes[0] = str(newRating)
 
         self.rating = newRating
 
@@ -156,10 +156,11 @@ class NeoNode(Protocol):
             self.Disconnect()
 
         f.close()
+        
 
 
 
-    def getRating(self, rating):
+    def getRating(self):
         """Searches through misbehaving.txt if rating is not already loaded."""
         if(self.rating != None):
             rating = self.rating
@@ -169,12 +170,13 @@ class NeoNode(Protocol):
         f = open(filename, 'r+')
         for line in f:
             attributes = line.split(",")
-            if(attributes[0] == "\n") continue
+            if(attributes[0] == "\n"): continue
             attributes = line.split(",")
             if(attributes[0] == str(self.host)):
                 rating = int(attributes[1])
 
         f.close()
+        return rating
 
 
 
@@ -343,7 +345,7 @@ class NeoNode(Protocol):
 
         peerlist = []
         for peer in self.leader.Peers:
-            make sure peers rating is <= 90 by checking the banlist
+            #make sure peers rating is <= 90 by checking the banlist
             if(peer.getRating <= 90):
                 peerlist.append( peer.GetNetworkAddressWithTime())
         self.Log("Peer list %s " % peerlist)
@@ -404,14 +406,13 @@ class NeoNode(Protocol):
 
             if error == "FALSE_HEADER":
                 rating = self.getRating()
-                if(rating <= 80) {
+                if(rating <= 80):
                     rating += 20
-                }
-                elif rating < 100 {
+                elif rating < 100:
                     rating = 100
-                }
-                changeRating(rating)
-                break
+              
+                self.changeRating(rating)
+                
 
         if BC.Default().HeaderHeight < self.Version.StartHeight:
             self.AskForMoreHeaders()
@@ -435,14 +436,13 @@ class NeoNode(Protocol):
             error = self.leader.InventoryReceived(block)
             if error == "FALSE_BLOCK":
                 rating = self.getRating()
-                if(rating <= 80) {
+                if(rating <= 80):
                     rating += 20
-                }
-                elif rating < 100 {
+                elif rating < 100:
                     rating = 100
-                }
-                changeRating(rating)
-                break
+               
+                self.changeRating(rating)
+                
 
         if len(self.myblockrequests) < self.leader.NREQMAX:
             self.DoAskForMoreBlocks()
