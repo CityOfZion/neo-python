@@ -19,7 +19,6 @@ from neo.EventHub import dispatch_smart_contract_event, dispatch_smart_contract_
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
-
 from neo.VM.InteropService import StackItem, stack_item_to_py
 from neo.Settings import settings
 
@@ -81,6 +80,7 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetOutputs", self.Transaction_GetOutputs)
         self.Register("Neo.Transaction.GetReferences", self.Transaction_GetReferences)
         self.Register("Neo.Transaction.GetUnspentCoins", self.Transaction_GetUnspentCoins)
+        self.Register("Neo.InvocationTransaction.GetScript", self.InvocationTransaction_GetScript)
 
         self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
         self.Register("Neo.Attribute.GetUsage", self.Attribute_GetUsage)
@@ -632,6 +632,14 @@ class StateReader(InteropService):
 
         refs = [StackItem.FromInterface(unspent) for unspent in Blockchain.Default().GetAllUnspent(tx.Hash)]
         engine.EvaluationStack.PushT(refs)
+        return True
+
+    def InvocationTransaction_GetScript(self, engine):
+
+        tx = engine.EvaluationStack.Pop().GetInterface()
+        if tx is None:
+            return False
+        engine.EvaluationStack.PushT(tx.Script)
         return True
 
     def Attribute_GetUsage(self, engine):
