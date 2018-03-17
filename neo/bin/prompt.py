@@ -283,6 +283,7 @@ class PromptInterface(object):
             return
 
         if item == 'wif':
+            self.redact_commands('import wif')
             if not self.Wallet:
                 print("Please open a wallet before importing WIF")
                 return
@@ -306,6 +307,9 @@ class PromptInterface(object):
             return
 
         elif item == 'nep2':
+
+            self.redact_commands('import nep2')
+
             if not self.Wallet:
                 print("Please open a wallet before importing a NEP2 key")
                 return
@@ -358,6 +362,9 @@ class PromptInterface(object):
         item = get_arg(arguments)
 
         if item == 'wif':
+
+            self.redact_commands('export wif')
+
             if not self.Wallet:
                 return print("Please open a wallet")
 
@@ -377,6 +384,9 @@ class PromptInterface(object):
             return
 
         elif item == 'nep2':
+
+            self.redact_commands('export nep2')
+
             if not self.Wallet:
                 return print("Please open a wallet")
 
@@ -756,6 +766,8 @@ class PromptInterface(object):
                         "-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("Enter your password to continue and deploy this contract")
 
+                    self.redact_commands('contract')
+
                     passwd = prompt("[password]> ", is_password=True)
                     if not self.Wallet.ValidatePassword(passwd):
                         return print("Incorrect password")
@@ -848,6 +860,39 @@ class PromptInterface(object):
 
         else:
             print("Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
+
+    def redact_commands(self, command):
+
+        if command in ['import wif', 'export wif', 'export wif', 'export nep2']:
+            history_file = open(FILENAME_PROMPT_HISTORY)
+            history_lines = history_file.readlines()
+            history_file.close()
+
+            w = open(FILENAME_PROMPT_HISTORY, "w")
+
+            for line in history_lines:
+                if ("+" + command) in line and len("+" + command + " ") < len(line):
+                    w.writelines("+" + command + " <" + command.split(" ")[1] + ">\n")
+                else:
+                    w.writelines(line)
+            w.close()
+
+        elif command == 'contract':
+            history_file = open(FILENAME_PROMPT_HISTORY)
+            history_lines = history_file.readlines()
+            history_file.close()
+
+            w = open(FILENAME_PROMPT_HISTORY, "w")
+            index = -1
+            for i in range(len(history_lines) - 1, 0, -1):
+                if 'contract' in history_lines[i]:
+                    index = i
+                    break
+
+            for i in range(index + 1):
+                w.writelines(history_lines[i])
+
+            w.close()
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)

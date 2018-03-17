@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.6.2-dev] in progress
 -----------------------
-- ...
+- Fixed ``prompt.py`` to redact WIF keys, nep2 keys and contract metadata from ``.prompt.py.history``
 
 
 [0.6.1] 2018-03-16
