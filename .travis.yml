@@ -37,11 +37,9 @@ deploy:
     distributions: sdist bdist_wheel
     on:
       tags: true
-      repo: CityOfZion/neo-python
 
   # Deploy to Docker Hub
   - provider: script
     script: bash docker/travis-deploy-to-docker-hub.sh
     on:
-      branch: dockerfix
-  #    tags: true
+      tags: true
