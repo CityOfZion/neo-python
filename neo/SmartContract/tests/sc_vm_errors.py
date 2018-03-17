@@ -5,8 +5,6 @@
 from boa.interop.Neo.App import DynamicAppCall
 
 
-# unfortunately neo-boa doesn't support importing VMFault
-
 def Main(test, args):
     if test == 1:
         # test_invalid_array_index"

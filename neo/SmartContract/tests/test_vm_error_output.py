@@ -29,12 +29,12 @@ class TestVMErrors(BoaTest):
     @patch('logzero.logger.error')
     def test_negative_array_indexing(self, mocked_logger):
         tx, results, total_ops, engine = TestBuild(self.script, [2, ['my_arg0']], self.GetWallet1(), '0210', '07')
-        mocked_logger.assert_called_with(StringIn("Attempting to access an array using a negative index"))
+        mocked_logger.assert_called_with(StringIn("Array index is less than zero"))
 
     @patch('logzero.logger.error')
     def test_invalid_type_indexing(self, mocked_logger):
         tx, results, total_ops, engine = TestBuild(self.script, [3, ['my_arg0']], self.GetWallet1(), '0210', '07')
-        mocked_logger.assert_called_with(StringIn("Cannot access item at index") and StringIn("Item is not an array but of type"))
+        mocked_logger.assert_called_with(StringIn("Cannot access item at index") and StringIn("Item is not an array or dict but of type"))
 
     @patch('logzero.logger.error')
     def test_invalid_appcall(self, mocked_logger):
