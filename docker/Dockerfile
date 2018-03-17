@@ -3,7 +3,7 @@
 #
 # Building an image of the current master branch (creates a Docker image called neopython):
 #
-#    $ docker build -f Dockerfile -t neopython .
+#    $ docker build -t neopython .
 #
 # Building an image of the current development branch (creates a Docker image called neopython-dev):
 #
@@ -11,7 +11,7 @@
 #
 # Build without caching:
 #
-#    $ docker build --no-cache -f Dockerfile -t neopython .
+#    $ docker build --no-cache -t neopython .
 #
 # Using with a private network
 # -----------------------------
