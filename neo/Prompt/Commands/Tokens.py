@@ -1,5 +1,5 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
-from neo.Prompt.Utils import get_asset_id, get_asset_attachments
+from neo.Prompt.Utils import get_asset_id, get_from_addr
 from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
@@ -156,6 +156,8 @@ def token_mint(wallet, args, prompt_passwd=True):
 def token_crowdsale_register(wallet, args, prompt_passwd=True):
     token = get_asset_id(wallet, args[0])
 
+    args, from_addr = get_from_addr(args)
+
     if len(args) < 2:
         raise Exception("Specify addr to register for crowdsale")
     register_addr = args[1:]
@@ -175,7 +177,7 @@ def token_crowdsale_register(wallet, args, prompt_passwd=True):
                 print("incorrect password")
                 return
 
-        return InvokeContract(wallet, tx, fee)
+        return InvokeContract(wallet, tx, fee, from_addr)
 
     else:
         print("Could not register addresses: %s " % str(results[0]))

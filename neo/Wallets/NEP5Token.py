@@ -268,7 +268,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         return tx, fee, results
 
-    def CrowdsaleRegister(self, wallet, register_addresses):
+    def CrowdsaleRegister(self, wallet, register_addresses, from_addr=None):
         """
         Register for a crowd sale.
 
@@ -285,7 +285,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'crowdsale_register',
                        [parse_param(p, wallet) for p in register_addresses]]
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
+        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True, from_addr)
 
         return tx, fee, results
 
