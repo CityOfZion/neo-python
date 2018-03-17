@@ -165,7 +165,7 @@ class NodeLeader():
             error = BC.Default().AddBlock(inventory)
             if error == False:
                 return False
-            elif error == "FALSE_BLOCK"
+            elif error == "FALSE_BLOCK":
                 return error
 
         else:
