@@ -679,7 +679,7 @@ class ExecutionEngine():
 
                 if isinstance(key, CollectionMixin):
                     # key must be an array index or dictionary key, but not a collection
-                    return self.VM_FAULT_and_report(VMFault.UNKNOWN1, key)
+                    return self.VM_FAULT_and_report(VMFault.KEY_IS_COLLECTION, key)
 
                 collection = estack.Pop()
 
@@ -693,7 +693,6 @@ class ExecutionEngine():
                     estack.PushT(to_pick)
 
                 elif isinstance(collection, Map):
-
                     success, value = collection.TryGetValue(key)
 
                     if success:
@@ -713,7 +712,7 @@ class ExecutionEngine():
                 key = estack.Pop()
 
                 if isinstance(key, CollectionMixin):
-                    return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
+                    return self.VM_FAULT_and_report(VMFault.KEY_IS_COLLECTION)
 
                 collection = estack.Pop()
 
@@ -751,12 +750,6 @@ class ExecutionEngine():
 
             elif opcode == NEWMAP:
                 estack.PushT(Map())
-
-#                keysItem = estack.Pop()
-#                valuesItem = estack.Pop()
-#                if not keysItem.IsArray or not valuesItem.IsArray:
-#                    return self.VM_FAULT_and_report(VMFault.POP_ITEM_NOT_ARRAY, keysItem, valuesItem)
-#                estack.PushT(Struct([keysItem, valuesItem]))
 
             elif opcode == APPEND:
                 newItem = estack.Pop()

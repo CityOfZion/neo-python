@@ -37,6 +37,8 @@ class VMFault(Enum):
 
     DICT_KEY_ERROR = auto()
 
+    KEY_IS_COLLECTION = auto()
+
     THROW = auto()
     THROWIFNOT = auto()
     UNKNOWN_OPCODE = auto()
