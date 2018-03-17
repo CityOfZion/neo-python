@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 [0.6.2-dev] in progress
 -----------------------
 - Added support for using ``--from-addr=`` to specify the address to use for ``testinvoke`` in ``prompt.py``. (`PR #329 <https://github.com/CityOfZion/neo-python/pull/329>`_)
-
+- Fixed ``neo/bin/prompt.py`` to redact WIF keys, nep2 keys and contract metadata from the command history file ``.prompt.py.history``.
 
 [0.6.1] 2018-03-16
 ----------------------------
