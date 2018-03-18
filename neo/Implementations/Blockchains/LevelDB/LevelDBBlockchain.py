@@ -202,7 +202,7 @@ class LevelDBBlockchain(Blockchain):
     def GetStorageItem(self, storage_key):
         sn = self._db.snapshot()
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
-        item = storages.TryGet(storage_key.GetHashCodeBytes())
+        item = storages.TryGet(storage_key.ToArray())
         sn.close()
         return item
 

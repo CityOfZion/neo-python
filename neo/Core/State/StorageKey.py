@@ -73,3 +73,12 @@ class StorageKey(SerializableMixin):
             return True
 
         return self.ScriptHash == other.ScriptHash and self.Key == other.Key
+
+    def ToArray(self):
+        """
+        Convert object members to bytes and a concatenate them.
+
+        Returns:
+            bytes:
+        """
+        return bytes(self.ScriptHash.ToArray()) + bytes(self.Key)

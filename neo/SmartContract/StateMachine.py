@@ -24,13 +24,7 @@ import pdb
 
 
 class StateMachine(StateReader):
-
-    _accounts = None
     _validators = None
-    _assets = None
-    _contracts = None
-    _storages = None
-
     _wb = None
 
     _contracts_created = {}
@@ -67,18 +61,6 @@ class StateMachine(StateReader):
         self.Register("AntShares.Contract.Destroy", self.Contract_Destroy)
         self.Register("AntShares.Storage.Put", self.Storage_Put)
         self.Register("AntShares.Storage.Delete", self.Storage_Delete)
-
-    def CheckStorageContext(self, context):
-        if context is None:
-            return False
-
-        contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
-
-        if contract is not None:
-            if contract.HasStorage:
-                return True
-
-        return False
 
     def ExecutionCompleted(self, engine, success, error=None):
 
@@ -194,7 +176,6 @@ class StateMachine(StateReader):
                 asset_type == AssetType.DutyFlag or \
                 asset_type == AssetType.GoverningToken or \
                 asset_type == AssetType.UtilityToken:
-
             return False
 
         if len(engine.EvaluationStack.Peek().GetByteArray()) > 1024:
@@ -327,7 +308,6 @@ class StateMachine(StateReader):
         contract = self._contracts.TryGet(hash.ToBytes())
 
         if contract is None:
-
             code = FunctionCode(script=script, param_list=param_list, return_type=return_type, contract_properties=contract_properties)
 
             contract = ContractState(code, contract_properties, name, code_version, author, email, description)
@@ -401,7 +381,6 @@ class StateMachine(StateReader):
             if contract.HasStorage:
 
                 for pair in self._storages.Find(engine.CurrentContext.ScriptHash()):
-
                     key = StorageKey(script_hash=hash, key=pair.Key.Key)
                     item = StorageItem(pair.Value.Value)
                     self._storages.Add(key, item)
@@ -427,7 +406,6 @@ class StateMachine(StateReader):
             created = self._contracts_created[shash.ToBytes()]
 
             if created == UInt160(data=engine.CurrentContext.ScriptHash()):
-
                 context = StorageContext(script_hash=shash)
                 engine.EvaluationStack.PushT(StackItem.FromInterface(context))
 
@@ -447,7 +425,6 @@ class StateMachine(StateReader):
             if contract.HasStorage:
 
                 for pair in self._storages.Find(hash.ToBytes()):
-
                     self._storages.Remove(pair.Key)
 
         self.events_to_dispatch.append(
@@ -472,7 +449,7 @@ class StateMachine(StateReader):
 
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
+        item = self._storages.TryGet(storage_key.ToArray())
 
         keystr = key
 
@@ -525,7 +502,7 @@ class StateMachine(StateReader):
 
         new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        item = self._storages.GetOrAdd(storage_key.GetHashCodeBytes(), new_item)
+        item = self._storages.GetOrAdd(storage_key.ToArray(), new_item)
 
         keystr = key
         valStr = bytearray(item.Value)
@@ -565,6 +542,6 @@ class StateMachine(StateReader):
                                                               engine.ScriptContainer.Hash if engine.ScriptContainer else None,
                                                               test_mode=engine.testMode))
 
-        self._storages.Remove(storage_key.GetHashCodeBytes())
+        self._storages.Remove(storage_key.ToArray())
 
         return True

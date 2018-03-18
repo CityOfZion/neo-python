@@ -21,6 +21,8 @@ from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
 from neo.VM.InteropService import StackItem, stack_item_to_py
 from neo.Settings import settings
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 
 
 class StateReader(InteropService):
@@ -31,6 +33,11 @@ class StateReader(InteropService):
     __Instance = None
 
     _hashes_for_verifying = None
+
+    _accounts = None
+    _assets = None
+    _contracts = None
+    _storages = None
 
     @staticmethod
     def Instance():
@@ -109,6 +116,10 @@ class StateReader(InteropService):
 
         self.Register("Neo.Storage.GetContext", self.Storage_GetContext)
         self.Register("Neo.Storage.Get", self.Storage_Get)
+        self.Register("Neo.Storage.Find", self.Storage_Find)
+        self.Register("Neo.Iterator.Next", self.Iterator_Next)
+        self.Register("Neo.Iterator.Key", self.Iterator_Key)
+        self.Register("Neo.Iterator.Value", self.Iterator_Value)
 
         # OLD API
 
@@ -172,6 +183,18 @@ class StateReader(InteropService):
 
         self.Register("AntShares.Storage.GetContext", self.Storage_GetContext)
         self.Register("AntShares.Storage.Get", self.Storage_Get)
+
+    def CheckStorageContext(self, context):
+        if context is None:
+            return False
+
+        contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
+
+        if contract is not None:
+            if contract.HasStorage:
+                return True
+
+        return False
 
     def ExecutionCompleted(self, engine, success, error=None):
 
@@ -861,4 +884,44 @@ class StateReader(InteropService):
         self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_GET, ['%s -> %s' % (keystr, valStr)],
                                                           context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash, test_mode=engine.testMode))
 
+        return True
+
+    def Storage_Find(self, engine):
+        context = engine.EvaluationStack.Pop().GetInterface()
+        if context is None:
+            return False
+
+        if not self.CheckStorageContext(context):
+            return False
+
+        prefix = engine.EvaluationStack.Pop().GetByteArray()
+        prefix = context.ScriptHash.ToArray() + prefix
+
+        iterator = self._storages.TryFind(prefix)
+
+        engine.EvaluationStack.PushT(StackItem.FromInterface(iterator))
+        return True
+
+    def Iterator_Next(self, engine):
+        iterator = engine.EvaluationStack.Pop().GetInterface()
+        if iterator is None:
+            return False
+
+        engine.EvaluationStack.PushT(iterator.Next())
+        return True
+
+    def Iterator_Key(self, engine):
+        iterator = engine.EvaluationStack.Pop().GetInterface()
+        if iterator is None:
+            return False
+
+        engine.EvaluationStack.PushT(iterator.Key())
+        return True
+
+    def Iterator_Value(self, engine):
+        iterator = engine.EvaluationStack.Pop().GetInterface()
+        if iterator is None:
+            return False
+
+        engine.EvaluationStack.PushT(iterator.Value())
         return True
