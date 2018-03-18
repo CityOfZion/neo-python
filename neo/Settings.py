@@ -115,17 +115,17 @@ class SettingsHolder:
     @property
     def chain_leveldb_path(self):
         self.check_chain_dir_exists(warn_migration=True)
-        return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
+        return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH))
 
     @property
     def notification_leveldb_path(self):
         self.check_chain_dir_exists()
-        return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
+        return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH))
 
     @property
     def debug_storage_leveldb_path(self):
         self.check_chain_dir_exists()
-        return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
+        return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH))
 
     # Helpers
     @property
@@ -301,18 +301,18 @@ class SettingsHolder:
 
         # Now check if nonce is the same as in the chain path
         nonce_container = str(version["nonce"])
-        neopy_chain_meta_filename = os.path.join(self.LEVELDB_PATH, ".privnet-nonce")
+        neopy_chain_meta_filename = os.path.join(self.chain_leveldb_path, ".privnet-nonce")
         if os.path.isfile(neopy_chain_meta_filename):
             nonce_chain = open(neopy_chain_meta_filename, "r").read()
             if nonce_chain != nonce_container:
                 raise PrivnetConnectionError(
                     "Chain database in Chains/privnet is for a different private network than the current container. "
-                    "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
+                    "Consider deleting the Chain directory with 'rm -rf %s/privnet*'." % self.chain_leveldb_path
                 )
         else:
             # When the Chains/privnet folder is removed, we need to create the directory
-            if not os.path.isdir(self.LEVELDB_PATH):
-                os.mkdir(self.LEVELDB_PATH)
+            if not os.path.isdir(self.chain_leveldb_path):
+                os.mkdir(self.chain_leveldb_path)
 
             # Write the nonce to the meta file
             with open(neopy_chain_meta_filename, "w") as f:
