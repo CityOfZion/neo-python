@@ -18,3 +18,4 @@ Let us know in what environment you're running into the issue
 OS: (windows version/linux distro/OSX version) 
 neo-python version: (hint: use `--version`)
 neo-boa version:
+python version:
