@@ -38,6 +38,7 @@ if not os.path.isdir(PATH_USER_DATA):
 # or from a packaged install version from pip
 IS_PACKAGE_INSTALL = 'site-packages/neo' in dir_current
 
+
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
 FILENAME_PREFERENCES = os.path.join(ROOT_INSTALL_PATH, 'neo/data/preferences.json')

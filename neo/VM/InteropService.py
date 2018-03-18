@@ -5,11 +5,26 @@ from neo.VM.Mixins import EquatableMixin
 from neocore.BigInteger import BigInteger
 
 
-class StackItem(EquatableMixin):
+class CollectionMixin():
+
+    IsSynchronized = False
+    SyncRoot = None
 
     @property
-    def IsArray(self):
-        return False
+    def Count(self):
+        return 0
+
+    def Contains(self, item):
+        pass
+
+    def Clear(self):
+        pass
+
+    def CopyTo(self, array, index):
+        pass
+
+
+class StackItem(EquatableMixin):
 
     @property
     def IsStruct(self):
@@ -31,14 +46,27 @@ class StackItem(EquatableMixin):
         logger.info("trying to get array:: %s " % self)
         raise Exception('Not supported')
 
+    def GetMap(self):
+        return None
+
     def GetInterface(self):
         return None
 
     def GetString(self):
         return str(self)
 
+    def __hash__(self):
+        hash = 17
+        for b in self.GetByteArray():
+            hash = hash * 31 + b
+#        print("hash code %s " % hash)
+        return hash
+
     def __str__(self):
         return 'StackItem'
+
+    def __eq__(self, other):
+        return self.__hash__() == other.__hash__()
 
     @staticmethod
     def FromInterface(value):
@@ -65,16 +93,43 @@ class StackItem(EquatableMixin):
         return value
 
 
-class Array(StackItem):
+class Array(StackItem, CollectionMixin):
 
-    _array = []  # a list of stack items
+    _array = None  # a list of stack items
 
     @property
-    def IsArray(self):
-        return True
+    def Count(self):
+        return len(self._array)
 
-    def __init__(self, value):
-        self._array = value
+    def __init__(self, value=None):
+        if value:
+            self._array = value
+        else:
+            self._array = []
+
+    def Clear(self):
+        self._array = []
+
+    def Contains(self, item):
+        return item in self._array
+
+    def Add(self, item):
+        self._array.append(item)
+
+    def Insert(self, index, item):
+        self._array[index] = item
+
+    def IndexOf(self, item):
+        return self._array.index(item)
+
+    def Remove(self, item):
+        return self._array.remove(item)
+
+    def RemoveAt(self, index):
+        return self._array.pop(index)
+
+    def Reverse(self):
+        self._array.reverse()
 
     def Equals(self, other):
         if other is None:
@@ -100,6 +155,11 @@ class Array(StackItem):
         logger.info("Trying to get bytearray integer %s " % self)
 
         raise Exception("Not supported")
+
+    def CopyTo(self, array, index):
+        for item in self._array:
+            array[index] = item
+            index += 1
 
     def __str__(self):
         return "Array: %s" % [str(item) for item in self._array]
@@ -174,6 +234,8 @@ class ByteArray(StackItem):
 
     def __str__(self):
         return self._value.hex()
+
+#
 
 
 class Integer(StackItem):
@@ -281,6 +343,82 @@ class Struct(Array):
         return "Struct: %s " % self._array
 
 
+class Map(StackItem, CollectionMixin):
+
+    _dict = None
+
+    def __init__(self, dict=None):
+        if dict:
+            self._dict = dict
+        else:
+            self._dict = {}
+
+    @property
+    def Keys(self):
+        return list(self._dict.keys())
+
+    @property
+    def Values(self):
+        return list(self._dict.values())
+
+    @property
+    def Count(self):
+        return len(self._dict.keys())
+
+    def GetItem(self, key):
+        return self._dict[key]
+
+    def SetItem(self, key, value):
+        self._dict[key] = value
+
+    def Add(self, key, value):
+        self._dict[key] = value
+
+    def Remove(self, key):
+        del self._dict[key]
+        return True
+
+    def Clear(self):
+        self._dict = {}
+
+    def ContainsKey(self, key):
+        return key in self._dict
+
+    def Contains(self, item):
+        return item in self._dict.values()
+
+    def CopyTo(self, array, index):
+        for key, value in self._dict.items():
+            array[index] = (key, value)
+            index += 1
+
+    def TryGetValue(self, key):
+        if key in self._dict.keys():
+            return True, self._dict[key]
+        return False, None
+
+    def Equals(self, other):
+        if other is None:
+            return False
+        if other is self:
+            return True
+        if type(other) is not Map:
+            return False
+        return self._dict == other._dict
+
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def GetBoolean(self):
+        return True
+
+    def GetMap(self):
+        return self._dict
+
+    def GetByteArray(self):
+        raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))
+
+
 class InteropService():
 
     _dictionary = {}
@@ -362,7 +500,11 @@ def stack_item_to_py(stack_item):
 
     elif isinstance(stack_item, Struct):
         return [stack_item_to_py(item) for item in stack_item.GetArray()]
+
+    elif isinstance(stack_item, Map):
+        return stack_item._dict
+
     elif stack_item is None:
         return None
     else:
-        raise ValueError('Not supported')
+        raise ValueError('Not supported %s %s' % (stack_item, type(stack_item)))

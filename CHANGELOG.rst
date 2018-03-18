@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.6.2-dev] in progress
 -----------------------
+- Implementing interop type ``MAP`` along with new opcodes ``NEWMAP HASKEY KEYS VALUES`` and modify ``ARRAYSIZE PICKITEM SETITEM REMOVE`` to support ``MAP`` as `per PR here <https://github.com/neo-project/neo-vm/pull/28>__`
 - Added support for using ``--from-addr=`` to specify the address to use for ``testinvoke`` in ``prompt.py``. (`PR #329 <https://github.com/CityOfZion/neo-python/pull/329>`_)
 - Added TransactionInvocation.GetScript to ``StateReader.py``
 

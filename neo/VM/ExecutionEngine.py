@@ -7,7 +7,7 @@ from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.OpCode import *
-from neo.VM.InteropService import Array, Struct, StackItem
+from neo.VM.InteropService import Array, Struct, StackItem, CollectionMixin, Map, Boolean
 from neocore.UInt160 import UInt160
 from neo.Settings import settings
 from neo.VM.VMFault import VMFault
@@ -639,11 +639,11 @@ class ExecutionEngine():
                 if not item:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN7)
 
-                if not item.IsArray:
-                    estack.PushT(len(item.GetByteArray()))
+                if isinstance(item, CollectionMixin):
+                    estack.PushT(item.Count)
 
                 else:
-                    estack.PushT(len(item.GetArray()))
+                    estack.PushT(len(item.GetByteArray()))
 
             elif opcode == PACK:
 
@@ -663,7 +663,7 @@ class ExecutionEngine():
             elif opcode == UNPACK:
                 item = estack.Pop()
 
-                if not item.IsArray:
+                if not isinstance(item, Array):
                     return self.VM_FAULT_and_report(VMFault.UNPACK_INVALID_TYPE, item)
 
                 items = item.GetArray()
@@ -675,67 +675,91 @@ class ExecutionEngine():
 
             elif opcode == PICKITEM:
 
-                index = estack.Pop().GetBigInteger()
-                if index < 0:
-                    return self.VM_FAULT_and_report(VMFault.PICKITEM_NEGATIVE_INDEX)
+                key = estack.Pop()
 
-                item = estack.Pop()
+                if isinstance(key, CollectionMixin):
+                    # key must be an array index or dictionary key, but not a collection
+                    return self.VM_FAULT_and_report(VMFault.KEY_IS_COLLECTION, key)
 
-                if not item.IsArray:
-                    return self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_TYPE, index, item)
+                collection = estack.Pop()
 
-                items = item.GetArray()
+                if isinstance(collection, Array):
+                    index = key.GetBigInteger()
+                    if index < 0 or index >= collection.Count:
+                        return self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_INDEX, index, collection.Count)
 
-                if index >= len(items):
-                    return self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_INDEX, index, len(items))
+                    items = collection.GetArray()
+                    to_pick = items[index]
+                    estack.PushT(to_pick)
 
-                to_pick = items[index]
+                elif isinstance(collection, Map):
+                    success, value = collection.TryGetValue(key)
 
-                estack.PushT(to_pick)
+                    if success:
+                        estack.PushT(value)
+                    else:
+                        return self.VM_FAULT_and_report(VMFault.DICT_KEY_NOT_FOUND, key, collection.Keys)
+
+                else:
+                    return self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_TYPE, key, collection)
 
             elif opcode == SETITEM:
-                newItem = estack.Pop()
+                value = estack.Pop()
 
-                if issubclass(type(newItem), StackItem) and newItem.IsStruct:
-                    newItem = newItem.Clone()
+                if isinstance(value, Struct):
+                    value = value.Clone()
 
-                index = estack.Pop().GetBigInteger()
+                key = estack.Pop()
 
-                arrItem = estack.Pop()
+                if isinstance(key, CollectionMixin):
+                    return self.VM_FAULT_and_report(VMFault.KEY_IS_COLLECTION)
 
-                if not issubclass(type(arrItem), StackItem) or not arrItem.IsArray:
-                    return self.VM_FAULT_and_report(VMFault.SETITEM_INVALID_TYPE)
+                collection = estack.Pop()
 
-                items = arrItem.GetArray()
+                if isinstance(collection, Array):
 
-                if index < 0 or index >= len(items):
-                    return self.VM_FAULT_and_report(VMFault.SETITEM_INVALID_INDEX)
+                    index = key.GetBigInteger()
 
-                items[index] = newItem
+                    if index < 0 or index >= collection.Count:
+                        return self.VM_FAULT_and_report(VMFault.SETITEM_INVALID_INDEX)
+
+                    items = collection.GetArray()
+                    items[index] = value
+
+                elif isinstance(collection, Map):
+
+                    collection.SetItem(key, value)
+
+                else:
+
+                    return self.VM_FAULT_and_report(VMFault.SETITEM_INVALID_TYPE, key, collection)
 
             elif opcode == NEWARRAY:
 
                 count = estack.Pop().GetBigInteger()
-                items = [None for i in range(0, count)]
+                items = [Boolean(False) for i in range(0, count)]
                 estack.PushT(Array(items))
 
             elif opcode == NEWSTRUCT:
 
                 count = estack.Pop().GetBigInteger()
 
-                items = [None for i in range(0, count)]
+                items = [Boolean(False) for i in range(0, count)]
 
                 estack.PushT(Struct(items))
+
+            elif opcode == NEWMAP:
+                estack.PushT(Map())
 
             elif opcode == APPEND:
                 newItem = estack.Pop()
 
-                if type(newItem) is Struct:
+                if isinstance(newItem, Struct):
                     newItem = newItem.Clone()
 
                 arrItem = estack.Pop()
 
-                if not arrItem.IsArray:
+                if not isinstance(arrItem, Array):
                     return self.VM_FAULT_and_report(VMFault.APPEND_INVALID_TYPE, arrItem)
 
                 arr = arrItem.GetArray()
@@ -744,22 +768,95 @@ class ExecutionEngine():
             elif opcode == REVERSE:
 
                 arrItem = estack.Pop()
-                if not arrItem.IsArray:
+                if not isinstance(arrItem, Array):
                     return self.VM_FAULT_and_report(VMFault.REVERSE_INVALID_TYPE, arrItem)
 
-                arrItem.GetArray().reverse()
+                arrItem.Reverse()
 
             elif opcode == REMOVE:
-                index = estack.Pop().GetBigInteger()
-                arrItem = estack.Pop()
-                if not arrItem.IsArray:
-                    return self.VM_FAULT_and_report(VMFault.REMOVE_INVALID_TYPE, arrItem, index)
-                items = arrItem.GetArray()
 
-                if index < 0 or index >= len(items):
-                    return self.VM_FAULT_and_report(VMFault.REMOVE_INVALID_INDEX, index, len(items))
+                key = estack.Pop()
 
-                del items[index]
+                if isinstance(key, CollectionMixin):
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
+
+                collection = estack.Pop()
+
+                if isinstance(collection, Array):
+
+                    index = key.GetBigInteger()
+
+                    if index < 0 or index >= collection.Count:
+                        return self.VM_FAULT_and_report(VMFault.REMOVE_INVALID_INDEX, index, collection.Count)
+
+                    collection.RemoveAt(index)
+
+                elif isinstance(collection, Map):
+
+                    collection.Remove(key)
+
+                else:
+
+                    return self.VM_FAULT_and_report(VMFault.REMOVE_INVALID_TYPE, key, collection)
+
+            elif opcode == HASKEY:
+
+                key = estack.Pop()
+
+                if isinstance(key, CollectionMixin):
+                    return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+                collection = estack.Pop()
+
+                if isinstance(collection, Array):
+
+                    index = key.GetBigInteger()
+
+                    if index < 0:
+                        return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+                    estack.PushT(index < collection.Count)
+
+                elif isinstance(collection, Map):
+
+                    estack.PushT(collection.ContainsKey(key))
+
+                else:
+
+                    return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+            elif opcode == KEYS:
+
+                collection = estack.Pop()
+
+                if isinstance(collection, Map):
+
+                    estack.PushT(Array(collection.Keys))
+                else:
+                    return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+            elif opcode == VALUES:
+
+                collection = estack.Pop()
+                values = []
+
+                if isinstance(collection, Map):
+                    values = collection.Values
+
+                elif isinstance(collection, Array):
+                    values = collection
+
+                else:
+                    return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+                newArray = Array()
+                for item in values:
+                    if isinstance(item, Struct):
+                        newArray.Add(item.Clone())
+                    else:
+                        newArray.Add(item)
+
+                estack.PushT(newArray)
 
             elif opcode == THROW:
                 return self.VM_FAULT_and_report(VMFault.THROW)
@@ -767,10 +864,6 @@ class ExecutionEngine():
             elif opcode == THROWIFNOT:
                 if not estack.Pop().GetBoolean():
                     return self.VM_FAULT_and_report(VMFault.THROWIFNOT)
-
-            elif opcode == DEBUG:
-                pdb.set_trace()
-                return
 
             else:
                 return self.VM_FAULT_and_report(VMFault.UNKNOWN_OPCODE, opcode)
@@ -809,10 +902,10 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-        #        opname = ToName(op)
-        #        logger.info("____________________________________________________")
-        #        logger.info("[%s] [%s] %02x -> %s" % (self.CurrentContext.InstructionPointer,self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
-        #        logger.info("-----------------------------------")
+#        opname = ToName(op)
+#        logger.info("____________________________________________________")
+#        logger.info("[%s] [%s] %02x -> %s" % (self.CurrentContext.InstructionPointer,self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
+#        logger.info("-----------------------------------")
 
         self.ops_processed += 1
 
@@ -880,7 +973,7 @@ class ExecutionEngine():
         elif id == VMFault.PICKITEM_INVALID_TYPE:
             index = args[0]
             item = args[1]
-            error_msg = "Cannot access item at index {}. Item is not an array but of type: {}".format(index, type(item))
+            error_msg = "Cannot access item at index {}. Item is not an array or dict but of type: {}".format(index, type(item))
 
         elif id == VMFault.PICKITEM_NEGATIVE_INDEX:
             error_msg = "Attempting to access an array using a negative index"
@@ -888,7 +981,7 @@ class ExecutionEngine():
         elif id == VMFault.PICKITEM_INVALID_INDEX:
             index = args[0]
             length = args[1]
-            error_msg = "Array index {} exceeds list length {}".format(index, length)
+            error_msg = "Array index is less than zero or {} exceeds list length {}".format(index, length)
 
         elif id == VMFault.APPEND_INVALID_TYPE:
             item = args[0]
@@ -913,13 +1006,15 @@ class ExecutionEngine():
             else:  # index >= len(items):
                 error_msg = "Cannot REMOVE item at index {}. Index exceeds array length {}".format(index, length)
 
+        elif id == VMFault.POP_ITEM_NOT_ARRAY:
+            error_msg = "Items(s) not array: %s" % [item for item in args]
+
         elif id == VMFault.UNKNOWN_OPCODE:
             opcode = args[0]
             error_msg = "Unknown opcode found: {}".format(opcode)
 
         else:
             error_msg = id
-            pass
 
         logger.error("({}) {}".format(self.ops_processed, error_msg))
         return

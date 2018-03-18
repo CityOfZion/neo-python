@@ -31,6 +31,14 @@ class VMFault(Enum):
     REVERSE_INVALID_TYPE = auto()
     REMOVE_INVALID_TYPE = auto()
     REMOVE_INVALID_INDEX = auto()
+    POP_ITEM_NOT_ARRAY = auto()
+
+    DICT_KEY_NOT_FOUND = auto()
+
+    DICT_KEY_ERROR = auto()
+
+    KEY_IS_COLLECTION = auto()
+
     THROW = auto()
     THROWIFNOT = auto()
     UNKNOWN_OPCODE = auto()
