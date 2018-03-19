@@ -41,12 +41,12 @@ class SettingsTestCase(NeoTestCase):
 
         _settings.set_data_dir('.')
 
-        self.assertEqual(_settings.chain_leveldb_path, os.path.join(ROOT_INSTALL_PATH, _settings.LEVELDB_PATH))
-        self.assertEqual(_settings.notification_leveldb_path, os.path.join(ROOT_INSTALL_PATH, _settings.NOTIFICATION_DB_PATH))
-        self.assertEqual(_settings.debug_storage_leveldb_path, os.path.join(ROOT_INSTALL_PATH, _settings.DEBUG_STORAGE_PATH))
+        self.assertEqual(_settings.chain_leveldb_path, os.path.abspath(os.path.join(ROOT_INSTALL_PATH, _settings.LEVELDB_PATH)))
+        self.assertEqual(_settings.notification_leveldb_path, os.path.abspath(os.path.join(ROOT_INSTALL_PATH, _settings.NOTIFICATION_DB_PATH)))
+        self.assertEqual(_settings.debug_storage_leveldb_path, os.path.abspath(os.path.join(ROOT_INSTALL_PATH, _settings.DEBUG_STORAGE_PATH)))
 
-        _settings.DATA_DIR_PATH = '/whatever'
+        _settings.DATA_DIR_PATH = '/tmp/whatever'
 
-        self.assertEqual(_settings.chain_leveldb_path, os.path.join('/whatever', _settings.LEVELDB_PATH))
-        self.assertEqual(_settings.notification_leveldb_path, os.path.join('/whatever', _settings.NOTIFICATION_DB_PATH))
-        self.assertEqual(_settings.debug_storage_leveldb_path, os.path.join('/whatever', _settings.DEBUG_STORAGE_PATH))
+        self.assertEqual(_settings.chain_leveldb_path, os.path.abspath(os.path.join('/tmp/whatever', _settings.LEVELDB_PATH)))
+        self.assertEqual(_settings.notification_leveldb_path, os.path.abspath(os.path.join('/tmp/whatever', _settings.NOTIFICATION_DB_PATH)))
+        self.assertEqual(_settings.debug_storage_leveldb_path, os.path.abspath(os.path.join('/tmp/whatever', _settings.DEBUG_STORAGE_PATH)))

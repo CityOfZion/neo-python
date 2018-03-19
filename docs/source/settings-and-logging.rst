@@ -120,7 +120,7 @@ logger with the existing neo logging configuration, you can just import the logg
     # These log messages are sent to the console
     logger.debug("hello")
     logger.info("info")
-    logger.warn("warn")
+    logger.warning("warn")
     logger.error("error")
 
     # This is how you'd log an exception
