@@ -143,7 +143,7 @@ class RestApi(object):
             return self.format_message("Could not get notifications for address %s because %s" % (address, e))
         return self.format_notifications(request, notifications)
 
-    @app.route('%s/tx/<string:tx_hash>' % API_URL_PREFIX, methods=['GET'])
+    @app.route('%s/notifications/tx/<string:tx_hash>' % API_URL_PREFIX, methods=['GET'])
     @cors_header
     def get_by_tx(self, request, tx_hash):
         request.setHeader('Content-Type', 'application/json')
@@ -163,7 +163,7 @@ class RestApi(object):
 
         return self.format_notifications(request, notifications)
 
-    @app.route('%s/contract/<string:contract_hash>' % API_URL_PREFIX, methods=['GET'])
+    @app.route('%s/notifications/contract/<string:contract_hash>' % API_URL_PREFIX, methods=['GET'])
     @cors_header
     def get_by_contract(self, request, contract_hash):
         request.setHeader('Content-Type', 'application/json')
