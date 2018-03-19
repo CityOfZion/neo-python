@@ -7,6 +7,9 @@ import tarfile
 import shutil
 import os
 
+DEFAULT_TMP_BOOTSTRAP_FILE = os.path.join(settings.DATA_DIR_PATH,
+                                          'bootstrap.tar.gz')
+
 
 def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
 
@@ -20,13 +23,17 @@ def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
         if confirm == 'confirm':
             return do_bootstrap(download_file, target_dir)
     else:
-        return do_bootstrap(download_file, target_dir, tmp_file_name='./fixtures/btest.tar.gz', tmp_chain_name='btestchain')
+
+        return do_bootstrap(download_file,
+                            target_dir,
+                            tmp_file_name=os.path.join(settings.DATA_DIR_PATH, 'btest.tar.gz'),
+                            tmp_chain_name='btestchain')
 
     print("bootstrap cancelled")
     sys.exit(0)
 
 
-def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name='./Chains/bootstrap.tar.gz', tmp_chain_name='tmpchain'):
+def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=DEFAULT_TMP_BOOTSTRAP_FILE, tmp_chain_name='tmpchain'):
 
     success = False
 
@@ -92,6 +99,7 @@ def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name='./Chains/bootst
         print("cleaning up %s " % tmp_chain_name)
         if os.path.exists(tmp_chain_name):
             shutil.rmtree(tmp_chain_name)
+            os.remove(tmp_file_name)
 
     if success:
         print("Successfully downloaded bootstrap chain!")
