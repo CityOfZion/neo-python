@@ -1060,11 +1060,11 @@ class Wallet(object):
         for key, unspents in paycoins.items():
             if unspents is None:
                 if not self.IsSynced:
-                    logger.warn("Wait for your wallet to be synced before doing "
-                                "transactions. To check enter 'wallet' and look at "
-                                "'percent_synced', it should be 100. Also the blockchain "
-                                "should be up to the latest blocks (see Progress). Issuing "
-                                "'wallet rebuild' restarts the syncing process.")
+                    logger.warning("Wait for your wallet to be synced before doing "
+                                   "transactions. To check enter 'wallet' and look at "
+                                   "'percent_synced', it should be 100. Also the blockchain "
+                                   "should be up to the latest blocks (see Progress). Issuing "
+                                   "'wallet rebuild' restarts the syncing process.")
                     return None
 
                 else:
