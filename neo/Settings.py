@@ -280,9 +280,9 @@ class SettingsHolder:
         # Add a warning for migration purposes if we created a chain dir
         if warn_migration and ROOT_INSTALL_PATH != self.DATA_DIR_PATH:
             if os.path.exists(os.path.join(ROOT_INSTALL_PATH, 'Chains')):
-                logzero.logger.warn("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
-                logzero.logger.warn("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
-                logzero.logger.warn("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
+                logzero.logger.warning("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
+                logzero.logger.warning("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
+                logzero.logger.warning("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
 
     def check_privatenet(self):
         """
