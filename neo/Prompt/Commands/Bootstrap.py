@@ -7,9 +7,6 @@ import tarfile
 import shutil
 import os
 
-DEFAULT_TMP_BOOTSTRAP_FILE = os.path.join(settings.DATA_DIR_PATH,
-                                          'bootstrap.tar.gz')
-
 
 def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
 
@@ -33,7 +30,10 @@ def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
     sys.exit(0)
 
 
-def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=DEFAULT_TMP_BOOTSTRAP_FILE, tmp_chain_name='tmpchain'):
+def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=None, tmp_chain_name='tmpchain'):
+
+    if tmp_file_name is None:
+        tmp_file_name = os.path.join(settings.DATA_DIR_PATH, 'bootstrap.tar.gz')
 
     success = False
 
