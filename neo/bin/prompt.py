@@ -55,9 +55,7 @@ settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 FILENAME_PROMPT_HISTORY = os.path.join(PATH_USER_DATA, '.prompt.py.history')
 
 
-class NeoHistory(FileHistory):
-    contract_meta_count = 0
-
+class PromptFileHistory(FileHistory):
     def append(self, string):
         string = self.redact_command(string)
         if len(string) == 0:
@@ -79,19 +77,12 @@ class NeoHistory(FileHistory):
         command = [comm for comm in ['import wif', 'export wif', 'import nep2', 'export nep2'] if comm in string]
         if len(command) > 0:
             command = command[0]
+            # only redacts command if wif/nep2 keys are in the command, not if the argument is left empty.
             if command in string and len(command + " ") < len(string):
+                # example: import wif 5HueCGU8  -->  import wif <wif>
                 return command + " <" + command.split(" ")[1] + ">"
             else:
                 return string
-        elif "import contract" in string:
-            self.contract_meta_count += 1
-            return string
-        elif self.contract_meta_count != 0 and self.contract_meta_count != 5:
-            self.contract_meta_count += 1
-            return ""
-        elif self.contract_meta_count != 0 and self.contract_meta_count == 5:
-            self.contract_meta_count = 0
-            return ""
 
         return string
 
@@ -161,7 +152,7 @@ class PromptInterface(object):
                 'debugstorage {on/off/reset}'
                 ]
 
-    history = NeoHistory(FILENAME_PROMPT_HISTORY)
+    history = PromptFileHistory(FILENAME_PROMPT_HISTORY)
 
     token_style = None
     start_height = None
