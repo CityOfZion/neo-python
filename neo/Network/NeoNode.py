@@ -225,7 +225,7 @@ class NeoNode(Protocol):
 
         hashes = []
         hashstart = BC.Default().Height + 1
-        current_header_height = BC.Default().HeaderHeight
+        current_header_height = BC.Default().HeaderHeight + 1
 
         do_go_ahead = False
         if BC.Default().BlockSearchTries > 400 and len(BC.Default().BlockRequests) > 0:
@@ -262,6 +262,11 @@ class NeoNode(Protocol):
             # self.Log("all caught up!!!!!! hashes is zero")
             self.AskForMoreHeaders()
             reactor.callLater(20, self.DoAskForMoreBlocks)
+
+    def DoAskForSingleBlock(self, block_hash):
+        #        print("DO ASK FOR SINGLE BLOCK! %s " % block_hash)
+        message = Message("getdata", InvPayload(InventoryType.Block, [block_hash]))
+        self.SendSerializedMessage(message)
 
     def RequestPeerInfo(self):
         """Request the peer address information from the remote client."""
@@ -339,8 +344,11 @@ class NeoNode(Protocol):
         if inventory is not None:
             BC.Default().AddHeaders(inventory.Headers)
 
-        if BC.Default().HeaderHeight < self.Version.StartHeight:
-            self.AskForMoreHeaders()
+        if len(inventory.Headers) == 1:
+            self.DoAskForSingleBlock(inventory.Headers[0].Hash.ToBytes())
+
+#        elif BC.Default().HeaderHeight < self.Version.StartHeight:
+        self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):
         """
