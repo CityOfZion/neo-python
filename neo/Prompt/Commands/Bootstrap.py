@@ -42,7 +42,6 @@ def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=None, tmp_chain_
 
     try:
         response = requests.get(bootstrap_file, stream=True)
-
         response.raise_for_status()
 
         # Total size in bytes.
@@ -59,11 +58,9 @@ def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=None, tmp_chain_
         print("download complete")
 
         if os.path.exists(destination_dir):
-
             try:
                 shutil.rmtree(destination_dir)
             except Exception as e:
-
                 print("coludnt remove existing dir: %s %s" % (e, destination_dir))
                 sys.exit(0)
 
@@ -94,12 +91,9 @@ def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=None, tmp_chain_
         print("Could not download: %s " % e)
 
     finally:
-
-        print("cleaning up %s " % tmp_file_name)
         print("cleaning up %s " % tmp_chain_name)
         if os.path.exists(tmp_chain_name):
             shutil.rmtree(tmp_chain_name)
-            os.remove(tmp_file_name)
 
     if success:
         print("Successfully downloaded bootstrap chain!")
