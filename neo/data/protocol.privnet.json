@@ -26,7 +26,7 @@
   },
 
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "./Chains/privnet",
+    "DataDirectoryPath": "Chains/privnet",
     "NotificationDataPath": "Chains/privnet_notif",
     "RPCPort": 20332,
     "NodePort": 20333,

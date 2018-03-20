@@ -5,6 +5,7 @@ from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from uuid import uuid1
 import shutil
+import os
 
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neocore.BigInteger import BigInteger
@@ -21,7 +22,8 @@ class NotificationDBTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
 
-        settings.NOTIFICATION_DB_PATH = 'fixtures/' + str(uuid1())
+        settings.NOTIFICATION_DB_PATH = os.path.join(settings.DATA_DIR_PATH,
+                                                     f"fixtures/{str(uuid1())}")
         ndb = NotificationDB.instance()
         ndb.start()
 

@@ -3,11 +3,13 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 import shutil
 import time
 from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Settings import settings
+import os
 
 
 class VerifiableTestCase(NeoTestCase):
 
-    LEVELDB_TESTPATH = './fixtures/test_chain'
+    LEVELDB_TESTPATH = os.path.join(settings.DATA_DIR_PATH, 'Chains/test_chain')
 
     _blockchain = None
 
