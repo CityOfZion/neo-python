@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file.
 - Fixed missing uri locations in ``neo/api/REST/RestApi.py`` (`PR #342 <https://github.com/CityOfZion/neo-python/pull/342>`_)
 - Fixed privatenet check by fixing the chain path for checks in Settings (`PR #341 <https://github.com/CityOfZion/neo-python/pull/341>`_)
 - Fixed ``neo-privnet.sample.wallet``
+- Fixed block synchronization behind behind with one block (`PR #345 <https://github.com/CityOfZion/neo-python/pull/345>`_)
 
 
 [0.6.1] 2018-03-16
