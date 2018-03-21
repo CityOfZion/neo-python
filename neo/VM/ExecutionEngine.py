@@ -1016,5 +1016,10 @@ class ExecutionEngine():
         else:
             error_msg = id
 
-        logger.error("({}) {}".format(self.ops_processed, error_msg))
+        # these get used a lot actually now, so we dont want them printed to the console
+        if id in [VMFault.THROW, VMFault.THROWIFNOT]:
+            logger.debug("({}) {}".format(self.ops_processed, id))
+        else:
+            logger.error("({}) {}".format(self.ops_processed, error_msg))
+
         return

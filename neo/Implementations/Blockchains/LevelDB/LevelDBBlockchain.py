@@ -74,7 +74,7 @@ class LevelDBBlockchain(Blockchain):
 
     @property
     def CurrentHeaderHash(self):
-        return self._header_index[len(self._header_index) - 1]
+        return self._header_index[-1]
 
     @property
     def HeaderHeight(self):
