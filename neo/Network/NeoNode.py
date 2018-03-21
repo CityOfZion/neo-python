@@ -264,7 +264,7 @@ class NeoNode(Protocol):
             reactor.callLater(20, self.DoAskForMoreBlocks)
 
     def DoAskForSingleBlock(self, block_hash):
-        if not block_hash in self.myblockrequests:
+        if block_hash not in self.myblockrequests:
             message = Message("getdata", InvPayload(InventoryType.Block, [block_hash]))
             self.myblockrequests.add(block_hash)
             self.SendSerializedMessage(message)
