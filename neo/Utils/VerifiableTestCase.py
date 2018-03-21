@@ -9,7 +9,7 @@ import os
 
 class VerifiableTestCase(NeoTestCase):
 
-    LEVELDB_TESTPATH = os.path.join(settings.DATA_DIR_PATH, 'Chains/test_chain')
+    LEVELDB_TESTPATH = os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     _blockchain = None
 

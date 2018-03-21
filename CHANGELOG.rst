@@ -12,6 +12,7 @@ All notable changes to this project are documented in this file.
 - Fixed privatenet check by fixing the chain path for checks in Settings (`PR #341 <https://github.com/CityOfZion/neo-python/pull/341>`_)
 - Fixed ``neo-privnet.sample.wallet``
 - Fixed ``bootstrap.py`` to use the specified data directory, instead of hard-coded relative paths.
+- Test chains moved to the user data directory, instead of the projects code path.
 
 
 [0.6.1] 2018-03-16

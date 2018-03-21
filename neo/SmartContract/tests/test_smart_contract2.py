@@ -4,6 +4,7 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Settings import settings
 import os
 
+
 class SmartContractTest2(BlockchainFixtureTestCase):
 
     @classmethod
