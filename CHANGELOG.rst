@@ -3,7 +3,11 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.2-dev] in progress
+[0.6.3-dev] in progress
+-----------------------
+- ...
+
+[0.6.2] 2018-03-21
 -----------------------
 - Implementing interop type ``MAP`` along with new opcodes ``NEWMAP HASKEY KEYS VALUES`` and modify ``ARRAYSIZE PICKITEM SETITEM REMOVE`` to support ``MAP`` as `per PR here <https://github.com/neo-project/neo-vm/pull/28>__`
 - Added support for using ``--from-addr=`` to specify the address to use for ``testinvoke`` in ``prompt.py``. (`PR #329 <https://github.com/CityOfZion/neo-python/pull/329>`_)
@@ -16,8 +20,6 @@ All notable changes to this project are documented in this file.
 - Fixed ``bootstrap.py`` to use the specified data directory, instead of hard-coded relative paths.
 - Test chains moved to the user data directory, instead of the projects code path.
 
-
->>>>>>> 6f4b5d4feb45aa1d11ebde380e761e213b17765f
 
 [0.6.1] 2018-03-16
 ----------------------------
