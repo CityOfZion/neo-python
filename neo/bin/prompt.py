@@ -55,6 +55,38 @@ settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 FILENAME_PROMPT_HISTORY = os.path.join(PATH_USER_DATA, '.prompt.py.history')
 
 
+class PromptFileHistory(FileHistory):
+    def append(self, string):
+        string = self.redact_command(string)
+        if len(string) == 0:
+            return
+        self.strings.append(string)
+
+        # Save to file.
+        with open(self.filename, 'ab') as f:
+            def write(t):
+                f.write(t.encode('utf-8'))
+
+            write('\n# %s\n' % datetime.datetime.now())
+            for line in string.split('\n'):
+                write('+%s\n' % line)
+
+    def redact_command(self, string):
+        if len(string) == 0:
+            return string
+        command = [comm for comm in ['import wif', 'export wif', 'import nep2', 'export nep2'] if comm in string]
+        if len(command) > 0:
+            command = command[0]
+            # only redacts command if wif/nep2 keys are in the command, not if the argument is left empty.
+            if command in string and len(command + " ") < len(string):
+                # example: import wif 5HueCGU8  -->  import wif <wif>
+                return command + " <" + command.split(" ")[1] + ">"
+            else:
+                return string
+
+        return string
+
+
 class PromptInterface(object):
     go_on = True
 
@@ -120,7 +152,7 @@ class PromptInterface(object):
                 'debugstorage {on/off/reset}'
                 ]
 
-    history = FileHistory(FILENAME_PROMPT_HISTORY)
+    history = PromptFileHistory(FILENAME_PROMPT_HISTORY)
 
     token_style = None
     start_height = None
@@ -609,7 +641,8 @@ class PromptInterface(object):
                 if height > -1:
                     jsn = tx.ToJson()
                     jsn['height'] = height
-                    jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in Blockchain.Default().GetAllUnspent(txid)]
+                    jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
+                                       Blockchain.Default().GetAllUnspent(txid)]
                     tokens = [(Token.Command, json.dumps(jsn, indent=4))]
                     print_tokens(tokens, self.token_style)
                     print('\n')
@@ -853,7 +886,8 @@ class PromptInterface(object):
                 print("Cannot configure VM instruction logging. Please specify on|off")
 
         else:
-            print("Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
+            print(
+                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
