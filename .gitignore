@@ -5,6 +5,7 @@ __pycache__/
 
 #chain
 UnitTestChain
+Chains
 
 # C extensions
 *.so

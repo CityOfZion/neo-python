@@ -8,6 +8,7 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import string_from_fixed8, get_asset_id, get_from_addr
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
+from neocore.Cryptography.Crypto import Crypto
 from prompt_toolkit import prompt
 import binascii
 import json
@@ -207,3 +208,44 @@ def ShowUnspentCoins(wallet, args):
         print('\n-----------------------------------------------')
         print(json.dumps(unspent.ToJson(), indent=4))
         print(unspent.RefToBytes())
+
+
+def SignMessage(wallet, args):
+
+    if len(args) == 2:
+        scripthash = wallet.ToScriptHash(args[0])
+
+        message = args[1]
+
+        if isinstance(message, str):
+            message = bytearray(message.encode('utf-8')).hex()
+
+        signature, pubkey = wallet.SignMessage(message, scripthash)
+        pubkey_str = binascii.unhexlify(pubkey.ToString())
+#        import pdb
+#        pdb.set_trace()
+        print("Signature: %s %s" % (signature.hex(), pubkey_str))
+        return
+
+    print("Insufficient num args")
+
+def VerifySignature(wallet, args):
+
+    if len(args) == 3:
+        scripthash = wallet.ToScriptHash(args[0])
+        message = args[1]
+        signature = args[2]
+
+        if isinstance(message, str):
+            message = bytearray(message.encode('utf-8')).hex()
+
+        try:
+            sig = bytearray(binascii.unhexlify(signature))
+            pubkey = wallet.GetKeyByScriptHash(scripthash).PublicKey
+            result = Crypto.VerifySignature(message,sig, pubkey)
+            print("Result %s " % result)
+        except Exception as e:
+            print("Could not verify signature %s " % e)
+        return
+
+    print("Insufficient num args")
