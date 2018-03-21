@@ -142,9 +142,9 @@ class PromptInterface(object):
         out = []
         try:
             out = [(Token.Command, '[%s] Progress: ' % settings.net_name),
-                   (Token.Number, str(Blockchain.Default().Height)),
+                   (Token.Number, str(Blockchain.Default().Height + 1)),
                    (Token.Neo, '/'),
-                   (Token.Number, str(Blockchain.Default().HeaderHeight))]
+                   (Token.Number, str(Blockchain.Default().HeaderHeight + 1))]
         except Exception as e:
             pass
 

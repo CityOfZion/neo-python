@@ -264,9 +264,10 @@ class NeoNode(Protocol):
             reactor.callLater(20, self.DoAskForMoreBlocks)
 
     def DoAskForSingleBlock(self, block_hash):
-        #        print("DO ASK FOR SINGLE BLOCK! %s " % block_hash)
-        message = Message("getdata", InvPayload(InventoryType.Block, [block_hash]))
-        self.SendSerializedMessage(message)
+        if not block_hash in self.myblockrequests:
+            message = Message("getdata", InvPayload(InventoryType.Block, [block_hash]))
+            self.myblockrequests.add(block_hash)
+            self.SendSerializedMessage(message)
 
     def RequestPeerInfo(self):
         """Request the peer address information from the remote client."""
@@ -344,7 +345,7 @@ class NeoNode(Protocol):
         if inventory is not None:
             BC.Default().AddHeaders(inventory.Headers)
 
-        if len(inventory.Headers) == 1:
+        if len(inventory.Headers) == 1 and BC.Default().HeaderHeight - BC.Default().Height < 5:
             self.DoAskForSingleBlock(inventory.Headers[0].Hash.ToBytes())
 
 #        elif BC.Default().HeaderHeight < self.Version.StartHeight:
