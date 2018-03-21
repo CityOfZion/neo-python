@@ -36,6 +36,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
             response = requests.get(cls.FIXTURE_REMOTE_LOC, stream=True)
 
             response.raise_for_status()
+            os.makedirs(os.path.dirname(cls.FIXTURE_FILENAME), exist_ok=True)
             with open(cls.FIXTURE_FILENAME, 'wb+') as handle:
                 for block in response.iter_content(1024):
                     handle.write(block)
