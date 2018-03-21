@@ -27,11 +27,12 @@ dir_current = os.path.dirname(os.path.abspath(__file__))
 # ROOT_INSTALL_PATH is the root path of neo-python, whether installed as package or from git.
 ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
 
+USER_HOME_DIR = os.path.expanduser('~')
 # PATH_USER_DATA is the root path where to store data (Chain databases, history, etc.)
-PATH_USER_DATA = os.path.join(os.path.expanduser('~'), ".neopython")  # Works for both Windows and *nix
+PATH_USER_DATA = os.path.join(USER_HOME_DIR, ".neopython")  # Works for both Windows and *nix
 
-# Make sure the data path exists
-if not os.path.isdir(PATH_USER_DATA):
+# Make sure the data path exists (only if the home directory also exists)
+if os.path.isdir(USER_HOME_DIR) and not os.path.isdir(PATH_USER_DATA):
     os.mkdir(PATH_USER_DATA)
 
 # This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
