@@ -14,6 +14,7 @@ All notable changes to this project are documented in this file.
 - Fixed ``neo-privnet.sample.wallet``
 - Fix for current block height lag behind other RPC implementations by 1-3 blocks
 - Fixed ``bootstrap.py`` to use the specified data directory, instead of hard-coded relative paths.
+- Test chains moved to the user data directory, instead of the projects code path.
 
 
 >>>>>>> 6f4b5d4feb45aa1d11ebde380e761e213b17765f

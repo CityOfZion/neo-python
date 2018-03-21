@@ -5,6 +5,8 @@ Run only thse tests:
 """
 import json
 import pprint
+import binascii
+import os
 from klein.test.test_resource import requestMock
 
 from neo import __version__
@@ -14,7 +16,7 @@ from neo.IO.Helper import Helper
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Blockchain import GetBlockchain
-import binascii
+from neo.Settings import settings
 
 
 def mock_request(body):
@@ -26,7 +28,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     @classmethod
     def leveldb_testpath(self):
-        return './fixtures/test_chain'
+        return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     def setUp(self):
         self.app = JsonRpcApi(20332)

@@ -9,12 +9,13 @@ from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
 import logzero
+import os
 
 
 class BlockchainFixtureTestCase(NeoTestCase):
 
     FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v5.tar.gz'
-    FIXTURE_FILENAME = './Chains/fixtures_v5.tar.gz'
+    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v5.tar.gz')
     _blockchain = None
 
     @classmethod
@@ -23,8 +24,6 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
     @classmethod
     def setUpClass(cls):
-
-        settings.set_data_dir('.')
 
         Blockchain.DeregisterBlockchain()
 
@@ -37,19 +36,20 @@ class BlockchainFixtureTestCase(NeoTestCase):
             response = requests.get(cls.FIXTURE_REMOTE_LOC, stream=True)
 
             response.raise_for_status()
+            os.makedirs(os.path.dirname(cls.FIXTURE_FILENAME), exist_ok=True)
             with open(cls.FIXTURE_FILENAME, 'wb+') as handle:
                 for block in response.iter_content(1024):
                     handle.write(block)
 
         try:
             tar = tarfile.open(cls.FIXTURE_FILENAME)
-            tar.extractall()
+            tar.extractall(path=settings.DATA_DIR_PATH)
             tar.close()
         except Exception as e:
             raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.FIXTURE_FILENAME))
 
         if not os.path.exists(cls.leveldb_testpath()):
-            raise Exception("Error downloading fixtures at %s %s" % (os.getcwd(), cls.leveldb_testpath()))
+            raise Exception("Error downloading fixtures at %s" % cls.leveldb_testpath())
 
         cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath())
         Blockchain.RegisterBlockchain(cls._blockchain)

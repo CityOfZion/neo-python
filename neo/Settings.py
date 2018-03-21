@@ -101,7 +101,7 @@ class SettingsHolder:
 
     ALL_FEES = None
     USE_DEBUG_STORAGE = False
-    DEBUG_STORAGE_PATH = './Chains/debugstorage'
+    DEBUG_STORAGE_PATH = 'Chains/debugstorage'
 
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
