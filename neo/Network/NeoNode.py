@@ -348,8 +348,8 @@ class NeoNode(Protocol):
         if len(inventory.Headers) == 1 and BC.Default().HeaderHeight - BC.Default().Height < 5:
             self.DoAskForSingleBlock(inventory.Headers[0].Hash.ToBytes())
 
-#        elif BC.Default().HeaderHeight < self.Version.StartHeight:
-        self.AskForMoreHeaders()
+        elif BC.Default().HeaderHeight < self.Version.StartHeight:
+            self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):
         """
