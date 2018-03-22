@@ -37,6 +37,9 @@ class ExecutionEngine():
     # file descriptor
     log_file = None
 
+    def is_write_log(self):
+        return settings.log_vm_instructions and self.log_file and not self.log_file.closed
+
     def write_log(self, message):
         """
         Write a line to the VM instruction log file.
@@ -44,7 +47,7 @@ class ExecutionEngine():
         Args:
             message (str): string message to write to file.
         """
-        if settings.log_vm_instructions and self.log_file and not self.log_file.closed:
+        if self.is_write_log():
             self.log_file.write(message + '\n')
 
     @property
@@ -906,7 +909,8 @@ class ExecutionEngine():
         self.ops_processed += 1
 
         try:
-            self.write_log("{} {}".format(self.ops_processed, ToName(op)))
+            if self.is_write_log():
+                self.write_log("{} {}".format(self.ops_processed, ToName(op)))
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
             error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))
