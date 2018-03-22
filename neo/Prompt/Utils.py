@@ -114,7 +114,7 @@ def get_tx_attr_from_args(params):
             to_remove.append(item)
             try:
                 attr_str = item.replace('--tx-attr=', '')
-                tx_attr_obj = eval(attr_str)
+                tx_attr_obj = json.loads(attr_str)
                 if type(tx_attr_obj) is dict:
                     if attr_obj_to_tx_attr(tx_attr_obj) is not None:
                         tx_attr_dict.append(attr_obj_to_tx_attr(tx_attr_obj))
@@ -147,9 +147,8 @@ def attr_obj_to_tx_attr(obj):
 def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     # first, we'll try to parse an array
-
     try:
-        items = eval(p)
+        items = eval(p, {"__builtins__": {}}, {})
         if len(items) > 0 and type(items) is list:
 
             parsed = []
@@ -170,7 +169,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
             pass
 
     try:
-        val = eval(p)
+        val = eval(p, {"__builtins__": {}}, {})
 
         if type(val) is bytearray:
             return val.hex()

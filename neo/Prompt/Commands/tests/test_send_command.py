@@ -127,7 +127,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1(recreate=True)
 
-        args = ['gas', self.watch_addr_str, '2', "--tx-attr={'usage':241,'data':'This is a remark'}"]
+        args = ['gas', self.watch_addr_str, '2', '--tx-attr={"usage":241,"data":"This is a remark"}']
 
         res = construct_and_send(None, wallet, args, prompt_password=False)
 
@@ -138,7 +138,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_10_attributes(self):
         wallet = self.GetWallet1(recreate=True)
 
-        args = ['gas', self.watch_addr_str, '2', "--tx-attr=[{'usage':241,'data':'This is a remark'},{'usage':242,'data':'This is a remark 2'}]"]
+        args = ['gas', self.watch_addr_str, '2', '--tx-attr=[{"usage":241,"data":"This is a remark"},{"usage":242,"data":"This is a remark 2"}]']
 
         res = construct_and_send(None, wallet, args, prompt_password=False)
 
@@ -149,7 +149,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_11_bad_attributes(self):
         wallet = self.GetWallet1(recreate=True)
 
-        args = ['gas', self.watch_addr_str, '2', "--tx-attr=[{'usa:241'data':his is a remark'}]"]
+        args = ['gas', self.watch_addr_str, '2', '--tx-attr=[{"usa:241"data":his is a remark"}]']
 
         res = construct_and_send(None, wallet, args, prompt_password=False)
 
