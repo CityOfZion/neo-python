@@ -443,7 +443,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         body = json.dumps(req).encode("utf-8")
 
         # first validate that we get a gzip response if we accept gzip encoding
-        mock_req = requestMock(path=b'/', method="POST", body=body, headers={'Accept-Encoding': ['gzip']})
+        mock_req = requestMock(path=b'/', method="POST", body=body, headers={'Accept-Encoding': ['deflate', 'gzip;q=1.0', '*;q=0.5']})
         res = self.app.home(mock_req)
 
         GZIP_MAGIC = b'\x1f\x8b'

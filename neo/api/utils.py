@@ -15,15 +15,15 @@ def json_response(func):
     @wraps(func)
     def wrapper(self, request, *args, **kwargs):
         res = func(self, request, *args, **kwargs)
-        response_data = json.dumps(res) if isinstance(res, dict) else res
+        response_data = json.dumps(res) if isinstance(res, (dict, list)) else res
         request.setHeader('Content-Type', 'application/json')
 
         if len(response_data) > COMPRESS_THRESHOLD:
-            accept_encoding = request.getHeader('Accept-Encoding')
-            if accept_encoding:
-                encodings = accept_encoding.split(',')
+            accepted_encodings = request.requestHeaders.getRawHeaders('Accept-Encoding')
+            if accepted_encodings:
+                use_gzip = any("gzip" in encoding for encoding in accepted_encodings)
 
-                if 'gzip' in encodings:
+                if use_gzip:
                     response_data = gzip.compress(bytes(response_data, 'utf-8'), compresslevel=COMPRESS_FASTEST)
                     request.setHeader('Content-Encoding', 'gzip')
                     request.setHeader('Content-Length', len(response_data))
