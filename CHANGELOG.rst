@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.6.4-dev] in progress
 -----------------------
-
+- Changed the ``eval()`` call when parsing the `--tx-attr` param to parse only json. Reduced the surface and options available on the other 2 eval calls to improve security.
 
 [0.6.3] 2018-03-21
 -----------------------
