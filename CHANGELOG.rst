@@ -3,9 +3,16 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.3-dev] in progress
+[0.6.4-dev] in progress
 -----------------------
-- ...
+
+
+[0.6.3] 2018-03-21
+-----------------------
+- update to ``neocore==0.3.10`` to fix ``ToNeoJsonString()`` issue `identified here <https://github.com/CityOfZion/neo-python/issues/349>`_
+- make home dir optional for ``.neopython``
+- performance fix for block update speed
+
 
 [0.6.2] 2018-03-21
 -----------------------
