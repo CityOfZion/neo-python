@@ -223,30 +223,37 @@ class ApplicationEngine(ExecutionEngine):
                 #                print("gas consumeb: %s " % self.gas_consumed)
                 except Exception as e:
                     logger.error("Exception calculating gas consumed %s " % e)
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.testMode and self.gas_consumed > self.gas_amount:
                     logger.error("NOT ENOUGH GAS")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckItemSize():
                     logger.error("ITEM SIZE TOO BIG")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckStackSize():
                     logger.error("STACK SIZE TOO BIG")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckArraySize():
                     logger.error("ARRAY SIZE TOO BIG")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckInvocationStack():
                     logger.error("INVOCATION SIZE TO BIIG")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckDynamicInvoke():
                     logger.error("Dynamic invoke without proper contract")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 self.StepInto()
