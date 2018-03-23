@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.6.4-dev] in progress
 -----------------------
-
+- Change VM fault reporting to only happen when debug logging is enabled
 
 [0.6.3] 2018-03-21
 -----------------------
