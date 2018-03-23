@@ -37,7 +37,7 @@ def LoadAndRun(arguments, wallet):
         print("Could not load script %s " % e)
 
 
-def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE):
+def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True):
     arguments, from_addr = get_from_addr(arguments)
     path = get_arg(arguments)
 
@@ -46,10 +46,10 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE):
     newpath = path.replace('.py', '.avm')
     print("Saved output to %s " % newpath)
 
-    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee)
+    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee, invocation_test_mode)
 
 
-def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE):
+def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True):
 
     test = get_arg(arguments, 1)
 
@@ -62,7 +62,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None
 
             script = GatherLoadedContractParams(f_args, contract_script)
 
-            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee, invocation_test_mode)
             i_args.reverse()
 
             return_type_results = []

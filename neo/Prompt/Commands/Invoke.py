@@ -325,7 +325,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
     return None, None, None, None
 
 
-def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, min_fee=DEFAULT_MIN_FEE):
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True):
 
     bc = GetBlockchain()
 
@@ -467,7 +467,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
             table=script_table,
             service=service,
             gas=itx.Gas,
-            testMode=True
+            testMode=invocation_test_mode
         )
 
         engine.LoadScript(itx.Script, False)
