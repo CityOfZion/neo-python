@@ -179,7 +179,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", "True", "False", "put_5", "key1", self.big_str]
 
-        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False,invocation_test_mode=False)
+        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, invocation_test_mode=False)
 
 #       expected_cost = Fixed8(1046600000)
 #        expected_gas = Fixed8.FromDecimal(1.0)

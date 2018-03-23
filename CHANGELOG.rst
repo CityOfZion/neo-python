@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.6.4-dev] in progress
 -----------------------
-
+- fix engine error states
 
 [0.6.3] 2018-03-21
 -----------------------
