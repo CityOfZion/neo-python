@@ -437,3 +437,28 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['code'], -32603)
+
+    def test_gzip_compression(self):
+        req = self._gen_rpc_req("getblock", params=['a0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf', 1])
+        body = json.dumps(req).encode("utf-8")
+
+        # first validate that we get a gzip response if we accept gzip encoding
+        mock_req = requestMock(path=b'/', method="POST", body=body, headers={'Accept-Encoding': ['deflate', 'gzip;q=1.0', '*;q=0.5']})
+        res = self.app.home(mock_req)
+
+        GZIP_MAGIC = b'\x1f\x8b'
+        self.assertIsInstance(res, bytes)
+        self.assertTrue(res.startswith(GZIP_MAGIC))
+
+        # then validate that we don't get a gzip response if we don't accept gzip encoding
+        mock_req = requestMock(path=b'/', method="POST", body=body, headers={})
+        res = self.app.home(mock_req)
+
+        self.assertIsInstance(res, str)
+
+        try:
+            json.loads(res)
+            valid_json = True
+        except ValueError:
+            valid_json = False
+        self.assertTrue(valid_json)

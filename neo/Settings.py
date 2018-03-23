@@ -21,7 +21,6 @@ from neorpc.Client import RPCClient
 from neorpc.Settings import settings as rpc_settings
 import sys
 
-
 dir_current = os.path.dirname(os.path.abspath(__file__))
 
 # ROOT_INSTALL_PATH is the root path of neo-python, whether installed as package or from git.
@@ -38,7 +37,6 @@ if os.path.isdir(USER_HOME_DIR) and not os.path.isdir(PATH_USER_DATA):
 # This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
 # or from a packaged install version from pip
 IS_PACKAGE_INSTALL = 'site-packages/neo' in dir_current
-
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
@@ -60,7 +58,6 @@ class DependencyError(Exception):
 
 
 def check_depdendencies():
-
     # Get installed packages
     installed_packages = pip.get_installed_distributions(local_only=False)
     installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
@@ -107,6 +104,7 @@ class SettingsHolder:
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
     # Logging settings
+    log_level = None
     log_smart_contract_events = False
     log_vm_instructions = False
 
@@ -262,6 +260,7 @@ class SettingsHolder:
         Args:
             level (int): eg. logging.DEBUG or logging.ERROR. See also https://docs.python.org/2/library/logging.html#logging-levels
         """
+        self.log_level = level
         logzero.loglevel(level)
 
     def check_chain_dir_exists(self, warn_migration=False):
