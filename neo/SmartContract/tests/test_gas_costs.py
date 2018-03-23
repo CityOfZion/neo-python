@@ -157,3 +157,30 @@ class UserWalletTestCase(WalletFixtureTestCase):
         expected_gas = Fixed8.FromDecimal(.0001)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
+
+    def test_build_contract_7(self):
+        """
+        return from JSON-RPC is:
+        {'state': 'HALT, BREAK', 'script': '4d0004ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababa
+        bababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab
+        abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababa
+        bababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab
+        abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababa
+        bababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab
+        abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababa
+        bababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab
+        abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababa
+        bababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab
+        abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababa
+        babababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab046b657931057075745f356780a1a5b87921dda4603b502ada749890cb
+        ca3434', 'stack': [{'type': 'Integer', 'value': '1'}], 'gas_consumed': '11.151'}
+        """
+        wallet = self.GetWallet1()
+
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "test", "070705", "05", "True", "False", "put_5", "key1", self.big_str]
+
+        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, invocation_test_mode=False)
+
+#       expected_cost = Fixed8(1046600000)
+#        expected_gas = Fixed8.FromDecimal(1.0)
+        self.assertEqual(engine, None)
