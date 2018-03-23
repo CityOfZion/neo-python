@@ -11,6 +11,7 @@ from neo.VM.InteropService import Array, Struct, StackItem, CollectionMixin, Map
 from neocore.UInt160 import UInt160
 from neo.Settings import settings
 from neo.VM.VMFault import VMFault
+from logging import DEBUG as LOGGING_LEVEL_DEBUG
 
 
 class ExecutionEngine():
@@ -902,11 +903,6 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-#        opname = ToName(op)
-#        logger.info("____________________________________________________")
-#        logger.info("[%s] [%s] %02x -> %s" % (self.CurrentContext.InstructionPointer,self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
-#        logger.info("-----------------------------------")
-
         self.ops_processed += 1
 
         try:
@@ -947,6 +943,9 @@ class ExecutionEngine():
 
     def VM_FAULT_and_report(self, id, *args):
         self._VMState |= VMState.FAULT
+
+        if settings.log_level != LOGGING_LEVEL_DEBUG:
+            return
 
         if id == VMFault.INVALID_JUMP:
             error_msg = "Attemping to JMP/JMPIF/JMPIFNOT to an invalid location."
@@ -1016,7 +1015,6 @@ class ExecutionEngine():
         else:
             error_msg = id
 
-        # these get used a lot actually now, so we dont want them printed to the console
         if id in [VMFault.THROW, VMFault.THROWIFNOT]:
             logger.debug("({}) {}".format(self.ops_processed, id))
         else:

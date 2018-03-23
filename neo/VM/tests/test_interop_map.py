@@ -5,6 +5,8 @@ from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import OpCode
 from neo.VM import VMState
 from mock import patch
+from neo.Settings import settings
+from logging import DEBUG
 
 
 class StringIn(str):
@@ -13,17 +15,19 @@ class StringIn(str):
 
 
 class InteropTest(TestCase):
-
     engine = None
     econtext = None
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        super(InteropTest, cls).setUpClass()
+        settings.set_loglevel(DEBUG)
 
+    def setUp(self):
         self.engine = ExecutionEngine()
         self.econtext = ExecutionContext()
 
     def test_interop_map1(self):
-
         map = Map()
 
         self.assertEqual(map.Keys, [])
@@ -35,7 +39,6 @@ class InteropTest(TestCase):
         self.assertEqual(map.Values, [ByteArray(b'abc')])
 
     def test_interop_map2(self):
-
         map = Map({'a': 1, 'b': 2, 'c': 3})
 
         self.assertEqual(map.Count, 3)
@@ -47,7 +50,6 @@ class InteropTest(TestCase):
         self.assertEqual(map.GetMap(), {})
 
     def test_interop_map3(self):
-
         map = Map({'a': 1, 'b': 2, 'c': 3})
 
         self.assertEqual(map.GetBoolean(), True)
@@ -73,7 +75,6 @@ class InteropTest(TestCase):
         self.assertEqual(map.GetMap(), {'b': 2, 'c': 3, 'h': 9})
 
     def test_op_map1(self):
-
         self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
 
         self.assertEqual(len(self.engine.EvaluationStack.Items), 1)
@@ -81,7 +82,6 @@ class InteropTest(TestCase):
         self.assertEqual(self.engine.EvaluationStack.Items[0].GetMap(), {})
 
     def test_op_map2(self):
-
         self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
         self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
         self.engine.EvaluationStack.PushT(StackItem.New('myVal'))
@@ -90,7 +90,6 @@ class InteropTest(TestCase):
         self.assertEqual(len(self.engine.EvaluationStack.Items), 0)
 
     def test_op_map3(self):
-
         # set item should fail if not enough things on estack
 
         self.engine.EvaluationStack.PushT(StackItem.New('myvalue'))
@@ -104,7 +103,6 @@ class InteropTest(TestCase):
 
     @patch('logzero.logger.error')
     def test_op_map4(self, mocked_logger):
-
         # set item should fail if these are out of order
         self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
         self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
@@ -117,7 +115,6 @@ class InteropTest(TestCase):
 
     @patch('logzero.logger.error')
     def test_op_map5(self, mocked_logger):
-
         # set item should fail if these are out of order
         self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
         self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
