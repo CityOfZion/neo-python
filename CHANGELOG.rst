@@ -9,6 +9,8 @@ All notable changes to this project are documented in this file.
 - Change VM fault reporting to only happen when debug logging is enabled
 - fix engine error states
 - update mainnet bootstrap files
+- performance fix for VM engine execution logging (`PR #354 <https://github.com/CityOfZion/neo-python/pull/354>`_)
+
 
 [0.6.3] 2018-03-21
 -----------------------

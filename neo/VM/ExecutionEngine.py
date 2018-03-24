@@ -36,6 +36,7 @@ class ExecutionEngine():
     log_file_name = 'vm_instructions.log'
     # file descriptor
     log_file = None
+    _is_write_log = False
 
     def write_log(self, message):
         """
@@ -44,7 +45,7 @@ class ExecutionEngine():
         Args:
             message (str): string message to write to file.
         """
-        if settings.log_vm_instructions and self.log_file and not self.log_file.closed:
+        if self._is_write_log and self.log_file and not self.log_file.closed:
             self.log_file.write(message + '\n')
 
     @property
@@ -104,6 +105,7 @@ class ExecutionEngine():
         self._AltStack = RandomAccessStack(name='Alt')
         self._ExecutedScriptHashes = []
         self.ops_processed = 0
+        self._is_write_log = settings.log_vm_instructions
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
@@ -906,7 +908,8 @@ class ExecutionEngine():
         self.ops_processed += 1
 
         try:
-            self.write_log("{} {}".format(self.ops_processed, ToName(op)))
+            if self._is_write_log:
+                self.write_log("{} {}".format(self.ops_processed, ToName(op)))
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
             error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))
