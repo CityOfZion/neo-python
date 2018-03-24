@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file.
 - update mainnet bootstrap files
 - performance fix for VM engine execution logging (`PR #354 <https://github.com/CityOfZion/neo-python/pull/354>`_)
 
+
 [0.6.3] 2018-03-21
 -----------------------
 - update to ``neocore==0.3.10`` to fix ``ToNeoJsonString()`` issue `identified here <https://github.com/CityOfZion/neo-python/issues/349>`_
