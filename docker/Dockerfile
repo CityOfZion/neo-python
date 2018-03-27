@@ -22,6 +22,10 @@
 #
 #    $ docker run --rm -it -v $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython /bin/bash
 #
+# Start a container, bootstrap the test net and start prompt.
+#
+#    $ docker run -it -v /host/path/to/where/you/want/to/store/the/chain:/neo-python/Chains neopython /entrypoint.sh --bootstrap
+#
 # Once you are inside the container, you can start neo-python with `python3 prompt.py -p` (using -p to connect to a private net).
 # To update neo-python, just run `git pull` and `pip install -e .`
 FROM ubuntu:17.10
@@ -55,6 +59,10 @@ RUN pip3 install -e .
 
 # Download the privnet wallet, to have it handy for easy experimenting
 RUN wget https://s3.amazonaws.com/neo-experiments/neo-privnet.wallet
+
+# Copy entrypoint.sh script to image and make it executable
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Example run command
 CMD /bin/bash
