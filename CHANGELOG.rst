@@ -10,7 +10,7 @@ All notable changes to this project are documented in this file.
 - fix engine error states
 - update mainnet bootstrap files
 - performance fix for VM engine execution logging (`PR #354 <https://github.com/CityOfZion/neo-python/pull/354>`_)
-
+- Fixed `synced_watch_only_balances` being always zero issue (`#209  <https://github.com/CityOfZion/neo-python/issues/209>`_)
 
 [0.6.3] 2018-03-21
 -----------------------
