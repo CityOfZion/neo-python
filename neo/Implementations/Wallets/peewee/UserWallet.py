@@ -552,7 +552,7 @@ class UserWallet(Wallet):
             if type(asset) is UInt256:
                 bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
                 total = self.GetBalance(asset).value / Fixed8.D
-                watch_total = self.GetBalance(asset, bool(CoinState.WatchOnly)).value / Fixed8.D
+                watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
                 balances.append("[%s]: %s " % (bc_asset.GetName(), total))
                 watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
             elif type(asset) is WalletNEP5Token:
