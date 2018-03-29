@@ -479,9 +479,6 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
-        print("===========")
-        print(res)
-
         self.assertEqual(len(node.Peers), len(res['result']['connected']))
         self.assertEqual(len(res['result']['unconnected']),
                          len(node.ADDRS) - len(node.Peers))
