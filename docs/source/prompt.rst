@@ -7,7 +7,7 @@ This is the default interface for running and interacting with the NEO blockchai
 
 Usage::
 
-    $ python prompt.py
+    $ np-prompt
     NEO cli. Type 'help' to get started
 
     neo>

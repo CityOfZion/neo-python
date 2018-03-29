@@ -26,7 +26,7 @@ Getting started
 ^^^^^^^^^^^^^^^
 Please follow directions in `the install section <install.html>`_
 
-The main functionality for this project is contained within the cli application ``prompt.py``.  You can `view usage details here <prompt.html>`_
+The main functionality for this project is contained within the cli application ``np-prompt``.  You can `view usage details here <prompt.html>`_
 
 We have published a Youtube `video <https://youtu.be/oy6Z_zd42-4>`_ to help get you started with this library. There are other videos under the `CityOfZion <(https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg>`_ Youtube channel.
 
