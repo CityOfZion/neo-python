@@ -10,7 +10,6 @@ All notable changes to this project are documented in this file.
 
 [0.6.4] 2018-03-24
 -----------------------
-<<<<<<< HEAD
 - Add GZIP compression to RPC server responses if the caller supports it.
 - Change VM fault reporting to only happen when debug logging is enabled
 - fix engine error states
