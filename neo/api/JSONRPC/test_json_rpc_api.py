@@ -17,6 +17,8 @@ from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Blockchain import GetBlockchain
 from neo.Settings import settings
+from neo.Network.NodeLeader import NodeLeader
+from neo.Network.NeoNode import NeoNode
 
 
 def mock_request(body):
@@ -462,3 +464,24 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         except ValueError:
             valid_json = False
         self.assertTrue(valid_json)
+
+    def test_getpeers(self):
+        # Given this is an isolated environment and there is no peers
+        # lets simulate that at least some addresses are known
+        node = NodeLeader.Instance()
+        node.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
+        test_node = NeoNode()
+        test_node.host = "127.0.0.1"
+        test_node.port = 20333
+        node.Peers.append(test_node)
+
+        req = self._gen_rpc_req("getpeers", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(len(node.Peers), len(res['result']['connected']))
+        self.assertEqual(len(res['result']['unconnected']),
+                         len(node.ADDRS) - len(node.Peers))
+        # To avoid messing up the next tests
+        node.Peers = []
+        node.ADDRS = []
