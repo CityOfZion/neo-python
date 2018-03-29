@@ -8,6 +8,7 @@ import psutil
 import traceback
 import logging
 import sys
+from time import sleep
 from logzero import logger
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -243,8 +244,7 @@ class PromptInterface(object):
                 try:
                     self.Wallet = UserWallet.Open(path, password_key)
 
-                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-                    self._walletdb_loop.start(1)
+                    self.start_wallet_loop()
                     print("Opened wallet at %s" % path)
                 except Exception as e:
                     print("Could not open wallet: %s" % e)
@@ -294,17 +294,23 @@ class PromptInterface(object):
                     return
 
                 if self.Wallet:
-                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-                    self._walletdb_loop.start(1)
+                    self.start_wallet_loop()
 
             else:
                 print("Please specify a path")
 
+    def start_wallet_loop(self):
+        self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+        self._walletdb_loop.start(1)
+
+    def stop_wallet_loop(self):
+        self._walletdb_loop.stop()
+        self._walletdb_loop = None
+
     def do_close_wallet(self):
         if self.Wallet:
             path = self.Wallet._path
-            self._walletdb_loop.stop()
-            self._walletdb_loop = None
+            self.stop_wallet_loop()
             self.Wallet.Close()
             self.Wallet = None
             print("Closed wallet %s" % path)
@@ -532,7 +538,11 @@ class PromptInterface(object):
         elif item == 'claim':
             ClaimGas(self.Wallet, True, arguments[1:])
         elif item == 'rebuild':
-            self.Wallet.Rebuild()
+            self.stop_wallet_loop()
+            try:
+                self.Wallet.Rebuild()
+            finally:
+                self.start_wallet_loop()
             try:
                 item2 = int(get_arg(arguments, 1))
                 if item2 and item2 > 0:

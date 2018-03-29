@@ -12,6 +12,7 @@ from decimal import Decimal
 from Crypto import Random
 from Crypto.Cipher import AES
 from logzero import logger
+from threading import RLock
 
 from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
@@ -53,6 +54,8 @@ class Wallet(object):
 
     _vin_exclude = None
 
+    _lock = None  # allows locking for threads that may need to access the DB concurrently (e.g. ProcessBlocks and Rebuild)
+
     @property
     def WalletHeight(self):
         return self._current_height
@@ -70,6 +73,7 @@ class Wallet(object):
 
         self.AddressVersion = settings.ADDRESS_VERSION
         self._path = path
+        self._lock = RLock()
 
         if create:
             self._iv = bytes(Random.get_random_bytes(16))
@@ -654,17 +658,21 @@ class Wallet(object):
         Args:
             block_limit (int): the number of blocks to process synchronously. defaults to 1000. set to 0 to block until the wallet is fully rebuilt.
         """
-        blockcount = 0
-        while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
+        self._lock.acquire()
+        try:
+            blockcount = 0
+            while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
 
-            block = Blockchain.Default().GetBlockByHeight(self._current_height)
+                block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
-            if block is not None:
-                self.ProcessNewBlock(block)
+                if block is not None:
+                    self.ProcessNewBlock(block)
 
-            blockcount += 1
+                blockcount += 1
 
-        self.SaveStoredData("Height", self._current_height)
+            self.SaveStoredData("Height", self._current_height)
+        finally:
+            self._lock.release()
 
     def ProcessNewBlock(self, block):
         """
