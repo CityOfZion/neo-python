@@ -659,18 +659,20 @@ class Wallet(object):
             block_limit (int): the number of blocks to process synchronously. defaults to 1000. set to 0 to block until the wallet is fully rebuilt.
         """
         self._lock.acquire()
-        blockcount = 0
-        while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
+        try:
+            blockcount = 0
+            while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
 
-            block = Blockchain.Default().GetBlockByHeight(self._current_height)
+                block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
-            if block is not None:
-                self.ProcessNewBlock(block)
+                if block is not None:
+                    self.ProcessNewBlock(block)
 
-            blockcount += 1
+                blockcount += 1
 
-        self.SaveStoredData("Height", self._current_height)
-        self._lock.release()
+            self.SaveStoredData("Height", self._current_height)
+        finally:
+            self._lock.release()
 
     def ProcessNewBlock(self, block):
         """
