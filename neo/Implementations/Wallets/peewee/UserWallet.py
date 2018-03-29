@@ -104,6 +104,7 @@ class UserWallet(Wallet):
         return self._db
 
     def Rebuild(self):
+        self._lock.acquire()
         super(UserWallet, self).Rebuild()
 
         logger.debug("wallet rebuild: deleting %s coins and %s transactions" %
@@ -114,6 +115,7 @@ class UserWallet(Wallet):
         for tx in Transaction.select():
             tx.delete_instance()
 
+        self._lock.release()
         logger.debug("wallet rebuild complete")
 
     def Close(self):

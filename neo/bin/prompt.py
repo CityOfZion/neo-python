@@ -539,9 +539,6 @@ class PromptInterface(object):
             ClaimGas(self.Wallet, True, arguments[1:])
         elif item == 'rebuild':
             self.stop_wallet_loop()
-            # in order to ensure sufficient time for the wallet db loop to stop, wait 5 seconds to ensure
-            # the latest chunk of 1k blocks has been processed
-            sleep(5)
             try:
                 self.Wallet.Rebuild()
             finally:
