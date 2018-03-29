@@ -106,13 +106,15 @@ class UserWallet(Wallet):
     def Rebuild(self):
         super(UserWallet, self).Rebuild()
 
+        logger.debug("wallet rebuild: deleting %s coins and %s transactions" %
+                     (Coin.select().count(), Transaction.select().count()))
+
         for c in Coin.select():
             c.delete_instance()
         for tx in Transaction.select():
             tx.delete_instance()
 
-        logger.debug("wallet rebuild: deleted coins and transactions %s %s " %
-                     (Coin.select().count(), Transaction.select().count()))
+        logger.debug("wallet rebuild complete")
 
     def Close(self):
         if self._db:
@@ -541,7 +543,6 @@ class UserWallet(Wallet):
                 if addr.IsWatchOnly:
                     has_watch_addr = True
             else:
-                token_balances = self.TokenBalancesForAddress(addr_str)
                 script_hash = binascii.hexlify(addr.ScriptHash)
                 json = {'address': addr_str, 'script_hash': script_hash.decode('utf8'), 'tokens': token_balances}
                 addresses.append(json)
