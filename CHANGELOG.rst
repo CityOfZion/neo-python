@@ -3,8 +3,13 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.4] 2018-03-24
+[0.6.5-dev] in progress
 -----------------------
+- fix wallet rebuild database lock errors (`PR #365 <https://github.com/CityOfZion/neo-python/pull/365>`_)
+
+
+[0.6.4] 2018-03-24
+------------------
 - Add GZIP compression to RPC server responses if the caller supports it.
 - Change VM fault reporting to only happen when debug logging is enabled
 - fix engine error states
@@ -13,14 +18,14 @@ All notable changes to this project are documented in this file.
 
 
 [0.6.3] 2018-03-21
------------------------
+------------------
 - update to ``neocore==0.3.10`` to fix ``ToNeoJsonString()`` issue `identified here <https://github.com/CityOfZion/neo-python/issues/349>`_
 - make home dir optional for ``.neopython``
 - performance fix for block update speed
 
 
 [0.6.2] 2018-03-21
------------------------
+------------------
 - Implementing interop type ``MAP`` along with new opcodes ``NEWMAP HASKEY KEYS VALUES`` and modify ``ARRAYSIZE PICKITEM SETITEM REMOVE`` to support ``MAP`` as `per PR here <https://github.com/neo-project/neo-vm/pull/28>__`
 - Added support for using ``--from-addr=`` to specify the address to use for ``testinvoke`` in ``prompt.py``. (`PR #329 <https://github.com/CityOfZion/neo-python/pull/329>`_)
 - Fixed ``neo/bin/prompt.py`` to redact WIF keys, nep2 keys and contract metadata from the command history file ``.prompt.py.history``.
@@ -34,7 +39,7 @@ All notable changes to this project are documented in this file.
 
 
 [0.6.1] 2018-03-16
-----------------------------
+------------------
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
 - Changes for Pypi compatibility:
@@ -50,7 +55,7 @@ All notable changes to this project are documented in this file.
 
 
 [0.5.7] 2018-03-14
-----------------------------
+------------------
 - update to ``neocore==0.3.8``
 - Fixed README reference in ``MANIFEST.in``, add pypi badge to readme
 - Add ability to specify ``--datadir`` path for where leveldb directories are stored
