@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file.
 - Changed the ``eval()`` call when parsing the `--tx-attr` param to parse only json. Reduced the surface and options available on the other 2 eval calls to improve security.
 - fix wallet rebuild database lock errors (`PR #365 <https://github.com/CityOfZion/neo-python/pull/365>`_)
 - Fixed `synced_watch_only_balances` being always zero issue (`#209  <https://github.com/CityOfZion/neo-python/issues/209>`_)
+- Added 'getpeers' to the JSON RPC API (only containing the available functionality)
 
 
 [0.6.4] 2018-03-24
@@ -17,7 +18,6 @@ All notable changes to this project are documented in this file.
 - fix engine error states
 - update mainnet bootstrap files
 - performance fix for VM engine execution logging (`PR #354 <https://github.com/CityOfZion/neo-python/pull/354>`_)
-- Added 'getpeers' to the JSON RPC API (only containing the available functionality)
 
 [0.6.3] 2018-03-21
 ------------------

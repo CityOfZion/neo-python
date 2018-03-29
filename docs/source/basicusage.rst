@@ -17,7 +17,7 @@ Show help with all available arguments:
 
 ::
 
-    $ python np-prompt -h
+    $ np-prompt -h
     usage: np-prompt [-h] [-m | -p [host] | --coznet | -c CONFIG]
                      [-t {dark,light}] [-v] [--datadir DATADIR] [--version]
 
