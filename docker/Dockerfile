@@ -22,7 +22,7 @@
 #
 #    $ docker run --rm -it -v $(pwd):/neo-python/sc --net=host -h neopython --name neopython neopython /bin/bash
 #
-# Once you are inside the container, you can start neo-python with `python3 prompt.py -p` (using -p to connect to a private net).
+# Once you are inside the container, you can start neo-python with `np-prompt` (using -p to connect to a private net).
 # To update neo-python, just run `git pull` and `pip install -e .`
 FROM ubuntu:17.10
 
