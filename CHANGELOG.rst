@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - fix engine error states
 - update mainnet bootstrap files
 - performance fix for VM engine execution logging (`PR #354 <https://github.com/CityOfZion/neo-python/pull/354>`_)
+- Added 'getpeers' to the JSON RPC API (only containing the available functionality)
 
 
 [0.6.3] 2018-03-21
