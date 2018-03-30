@@ -9,7 +9,7 @@ base58==0.2.5
 bitcoin==1.1.42
 blessings==1.6.1
 bpython==0.17
-bytecode==0.5
+coz-bytecode==0.5.1
 byteplay3==3.5.0
 certifi==2018.1.18
 cffi==1.11.4

@@ -9,6 +9,8 @@ from logzero import logger
 import binascii
 import traceback
 from neo.Core.State.ContractState import ContractPropertyState
+import os
+import json
 
 
 def LoadAndRun(arguments, wallet):
@@ -44,12 +46,18 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invoca
     contract_script = Compiler.instance().load_and_save(path)
 
     newpath = path.replace('.py', '.avm')
-    print("Saved output to %s " % newpath)
+    logger.info("Saved output to %s " % newpath)
 
-    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee, invocation_test_mode)
+    debug_map_path = path.replace('.py', '.debug.json')
+    debug_map = None
+    if os.path.exists(debug_map_path):
+        with open(debug_map_path, 'r') as dbg:
+            debug_map = json.load(dbg)
+
+    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee, invocation_test_mode, debug_map=debug_map)
 
 
-def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True):
+def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None):
 
     test = get_arg(arguments, 1)
 
@@ -62,7 +70,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None
 
             script = GatherLoadedContractParams(f_args, contract_script)
 
-            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee, invocation_test_mode)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee, invocation_test_mode, debug_map=debug_map)
             i_args.reverse()
 
             return_type_results = []
