@@ -9,6 +9,9 @@ All notable changes to this project are documented in this file.
 - fix wallet rebuild database lock errors (`PR #365 <https://github.com/CityOfZion/neo-python/pull/365>`_)
 - Fixed `synced_watch_only_balances` being always zero issue (`#209  <https://github.com/CityOfZion/neo-python/issues/209>`_)
 - Added 'getpeers' to the JSON RPC API (only containing the available functionality)
+- Updated to neo-boa==0.4.0, which has support for using dictionaries and interactive debugging
+- Added interactive VM Debugger `#367 <https://github.com/CityOfZion/neo-python/pull/367>`_
+- Added ``Pause`` and ``Resume`` methods to ``neo.Core.Blockchain`` in order to allow for processing to occur without new incoming blocks
 
 
 [0.6.4] 2018-03-24
@@ -18,6 +21,7 @@ All notable changes to this project are documented in this file.
 - fix engine error states
 - update mainnet bootstrap files
 - performance fix for VM engine execution logging (`PR #354 <https://github.com/CityOfZion/neo-python/pull/354>`_)
+
 
 [0.6.3] 2018-03-21
 ------------------

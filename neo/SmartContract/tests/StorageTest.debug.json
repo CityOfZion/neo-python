@@ -5,7 +5,7 @@
     },
     "compiler": {
         "name": "neo-boa",
-        "version": "0.3.7"
+        "version": "0.4.0"
     },
     "files": [
         {
@@ -14,7 +14,7 @@
         },
         {
             "id": 2,
-            "url": "/Users/thomassaunders/Workshop/neo-boa/boa/builtins.py"
+            "url": "/Users/thomassaunders/Workshop/neo-python/venv/lib/python3.6/site-packages/boa/builtins.py"
         }
     ],
     "map": [

@@ -1,10 +1,13 @@
 from prompt_toolkit import prompt
 from neo.Prompt.InputParser import InputParser
 from neo.SmartContract.ContractParameter import ContractParameter
+from neo.SmartContract.ContractParameterType import ContractParameterType
+from neo.VM.InteropService import InteropInterface
 from boa.compiler import Compiler
 import pprint
 import pdb
 import dis
+import json
 
 
 class DebugContext():
@@ -159,7 +162,7 @@ class VMDebugger():
                         value = self.engine.AltStack.Items[-1].GetArray()[idx]
                         param = ContractParameter.ToParameter(value)
                         print("\n")
-                        print('%s = %s [%s]' % (command, param.Value, param.Type))
+                        print('%s = %s [%s]' % (command, json.dumps(param.Value.ToJson(), indent=4) if param.Type == ContractParameterType.InteropInterface else param.Value, param.Type))
                         print("\n")
                     except Exception as e:
                         print("Could not lookup item %s: %s " % (command, e))

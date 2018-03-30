@@ -7,7 +7,7 @@ bitcoin==1.1.42
 blessings==1.6.1
 bpython==0.17.1
 bumpversion==0.5.3
-bytecode==0.5
+coz-bytecode==0.5.1
 certifi==2018.1.18
 cffi==1.11.4
 chardet==3.0.4
@@ -32,7 +32,7 @@ memory-profiler==0.52.0
 mmh3==2.5.1
 mock==2.0.0
 mpmath==1.0.0
-neo-boa==0.3.7
+neo-boa==0.4.0
 neo-python-rpc==0.2.0
 neocore==0.3.10
 numpy==1.14.1
