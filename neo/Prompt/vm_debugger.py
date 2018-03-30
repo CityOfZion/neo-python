@@ -8,6 +8,7 @@ import pprint
 import pdb
 import dis
 import json
+from logzero import logger
 
 
 class DebugContext():
@@ -38,17 +39,16 @@ class DebugContext():
 
         try:
             default_module = Compiler.load(self.file_url).default
-            print("default module %s " % default_module)
             self.method = default_module.method_by_name(self.method_name)
         except Exception as e:
-            print('Could not load module %s %s ' % (self.file_url, e))
+            logger.error('Could not load module %s %s ' % (self.file_url, e))
 
         try:
             with open(self.file_url, 'r') as dbg_file:
                 for ln in dbg_file:
                     self.file_lines.append(ln.replace('\n', ''))
         except Exception as e:
-            print("Could not open file %s : %s " % (self.file_url, e))
+            logger.error("Could not open file %s : %s " % (self.file_url, e))
 
     def print_context(self):
 
@@ -87,31 +87,38 @@ class VMDebugger():
     debug_context = None
     index = None
 
+    continue_debug = False
+
     def __init__(self, engine):
         self.engine = engine
         self.parser = InputParser()
         self.debug_map = engine._debug_map
         self.index = engine.CurrentContext.InstructionPointer
 
+    def end(self):
+        self.continue_debug = False
+
     def start(self):
 
-        continue_debug = True
+        self.continue_debug = True
 #        pprint.pprint(self.debug_map)
 
         dbg_title = self.debug_map['avm']['name']
+        print("\n")
+        print("======= debug engine enter =======")
 
         ctx = self.get_context()
         ctx.print()
 
-        while continue_debug:
+        while self.continue_debug:
             try:
                 result = prompt("[%s debug]> " % dbg_title)
             except EOFError:
                 # Control-D pressed: quit
-                continue_debug = False
+                self.continue_debug = False
             except KeyboardInterrupt:
                 # Control-C pressed: do nothing
-                continue_debug = False
+                self.continue_debug = False
 
             command, arguments = self.parser.parse_input(result)
 
@@ -119,7 +126,7 @@ class VMDebugger():
                 command = command.lower()
 
                 if command in ['quit', 'exit', 'cont']:
-                    continue_debug = False
+                    self.continue_debug = False
 
                 elif command == 'estack':
                     if len(self.engine.EvaluationStack.Items):
@@ -165,15 +172,14 @@ class VMDebugger():
                         print('%s = %s [%s]' % (command, json.dumps(param.Value.ToJson(), indent=4) if param.Type == ContractParameterType.InteropInterface else param.Value, param.Type))
                         print("\n")
                     except Exception as e:
-                        print("Could not lookup item %s: %s " % (command, e))
+                        logger.error("Could not lookup item %s: %s " % (command, e))
                 else:
                     print("unknown command: %s " % command)
 
-        print("debug engine exit!")
-    #    pdb.set_trace()
+        print("======= debug engine exit =======")
+        print("\n")
 
     def get_context(self):
-        ctx = None
         files = self.debug_map['files']
         for item in self.debug_map['map']:
             if item['start'] == self.index:

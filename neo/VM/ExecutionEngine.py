@@ -22,7 +22,7 @@ class ExecutionEngine():
     _ScriptContainer = None
     _Crypto = None
 
-    _VMState = VMState.BREAK
+    _VMState = None
 
     _InvocationStack = None
     _EvaluationStack = None
@@ -40,6 +40,7 @@ class ExecutionEngine():
     _is_write_log = False
 
     _debug_map = None
+    _vm_debugger = None
 
     def write_log(self, message):
         """
@@ -98,6 +99,7 @@ class ExecutionEngine():
         return self._ExecutedScriptHashes
 
     def __init__(self, container=None, crypto=None, table=None, service=None, exit_on_error=False):
+        self._VMState = VMState.BREAK
         self._ScriptContainer = container
         self._Crypto = crypto
         self._Table = table
@@ -142,6 +144,7 @@ class ExecutionEngine():
         estack = self._EvaluationStack
         istack = self._InvocationStack
         astack = self._AltStack
+#        print("VM STATE %s " % self._VMState)
 
         if opcode > PUSH16 and opcode != RET and context.PushOnly:
             return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
@@ -884,7 +887,8 @@ class ExecutionEngine():
         if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
             if len(self.CurrentContext.Breakpoints):
                 if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
-                    VMDebugger(self).start()
+                    self._vm_debugger = VMDebugger(self)
+                    self._vm_debugger.start()
 
     def LoadScript(self, script, push_only=False):
 
