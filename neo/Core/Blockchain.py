@@ -36,6 +36,8 @@ class Blockchain(object):
 
     __blockrequests = set()
 
+    _paused = False
+
     BlockSearchTries = 0
 
     CACHELIM = 4000
@@ -448,6 +450,12 @@ class Blockchain(object):
 
     def BlockCacheCount(self):
         pass
+
+    def Pause(self):
+        self._paused = True
+
+    def Resume(self):
+        self._paused = False
 
     @staticmethod
     def RegisterBlockchain(blockchain):

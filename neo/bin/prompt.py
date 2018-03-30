@@ -389,7 +389,9 @@ class PromptInterface(object):
             print("Import of '%s' not implemented" % item)
 
     def do_build(self, arguments):
+        Blockchain.Default().Pause()
         BuildAndRun(arguments, self.Wallet)
+        Blockchain.Default().Resume()
 
     def do_load_n_run(self, arguments):
         LoadAndRun(arguments, self.Wallet)
@@ -903,7 +905,7 @@ class PromptInterface(object):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
 
-        Blockchain.Default().PersistBlocks()
+#        Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]

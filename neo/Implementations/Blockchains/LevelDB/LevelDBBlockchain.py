@@ -793,29 +793,34 @@ class LevelDBBlockchain(Blockchain):
                 events.emit(event.event_type, event)
 
     def PersistBlocks(self):
-        #        logger.info("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
+        if not self._paused:
+            #            logger.info("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
-        while not self._disposed:
+            while not self._disposed:
 
-            if len(self._header_index) <= self._current_block_height + 1:
-                break
+                if len(self._header_index) <= self._current_block_height + 1:
+                    break
 
-            hash = self._header_index[self._current_block_height + 1]
+                hash = self._header_index[self._current_block_height + 1]
 
-            if hash not in self._block_cache:
-                self.BlockSearchTries += 1
-                break
+                if hash not in self._block_cache:
+                    self.BlockSearchTries += 1
+                    break
 
-            self.BlockSearchTries = 0
-            block = self._block_cache[hash]
+                self.BlockSearchTries = 0
+                block = self._block_cache[hash]
 
-            try:
-                self.Persist(block)
-                self.OnPersistCompleted(block)
-                del self._block_cache[hash]
-            except Exception as e:
-                logger.info("Could not persist block %s " % e)
-                raise e
+                try:
+                    self.Persist(block)
+                    self.OnPersistCompleted(block)
+                    del self._block_cache[hash]
+                except Exception as e:
+                    logger.info("Could not persist block %s " % e)
+                    raise e
+
+    def Resume(self):
+        super(LevelDBBlockchain, self).Resume()
+        self.PersistBlocks()
 
     def Dispose(self):
         self._db.close()

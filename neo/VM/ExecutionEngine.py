@@ -11,6 +11,7 @@ from neo.VM.InteropService import Array, Struct, StackItem, CollectionMixin, Map
 from neocore.UInt160 import UInt160
 from neo.Settings import settings
 from neo.VM.VMFault import VMFault
+from neo.Prompt.vm_debugger import VMDebugger
 from logging import DEBUG as LOGGING_LEVEL_DEBUG
 
 
@@ -37,6 +38,8 @@ class ExecutionEngine():
     # file descriptor
     log_file = None
     _is_write_log = False
+
+    _debug_map = None
 
     def write_log(self, message):
         """
@@ -109,6 +112,13 @@ class ExecutionEngine():
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
+
+    def LoadDebugInfo(self, debug_map=None):
+        if debug_map:
+            self._debug_map = debug_map
+            for b in self._debug_map['breakpoints']:
+                self.AddBreakPoint(b)
+#                print("breakpoint %s " % b)
 
     def Dispose(self):
         while self._InvocationStack.Count > 0:
@@ -872,9 +882,9 @@ class ExecutionEngine():
                 return self.VM_FAULT_and_report(VMFault.UNKNOWN_OPCODE, opcode)
 
         if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
-
-            if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
-                self._VMState |= VMState.BREAK
+            if len(self.CurrentContext.Breakpoints):
+                if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
+                    VMDebugger(self).start()
 
     def LoadScript(self, script, push_only=False):
 
@@ -891,7 +901,6 @@ class ExecutionEngine():
 
     def StepInto(self):
         if self._InvocationStack.Count == 0:
-            logger.info("INVOCATION COUNT IS 0, HALT")
             self._VMState |= VMState.HALT
 
         if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
