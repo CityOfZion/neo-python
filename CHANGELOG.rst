@@ -3,7 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.5-dev] in progress
+[0.6.6-dev] in progress
+-----------------------
+- ...
+
+
+[0.6.5] 2018-03-31
 -----------------------
 - Changed the ``eval()`` call when parsing the `--tx-attr` param to parse only json. Reduced the surface and options available on the other 2 eval calls to improve security.
 - fix wallet rebuild database lock errors (`PR #365 <https://github.com/CityOfZion/neo-python/pull/365>`_)
@@ -12,7 +17,9 @@ All notable changes to this project are documented in this file.
 - Updated to neo-boa==0.4.0, which has support for using dictionaries and interactive debugging
 - Added interactive VM Debugger `#367 <https://github.com/CityOfZion/neo-python/pull/367>`_
 - Added ``Pause`` and ``Resume`` methods to ``neo.Core.Blockchain`` in order to allow for processing to occur without new incoming blocks
-
+- Fix bug with checking if contract is an NEP5 Token
+- Update testnet bootstrap files
+- lowered amount of blocks requested by each thread to prevent hanging connections
 
 [0.6.4] 2018-03-24
 ------------------
