@@ -19,8 +19,11 @@ from neo.EventHub import dispatch_smart_contract_event, dispatch_smart_contract_
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
-from neo.VM.InteropService import StackItem, stack_item_to_py
+from neo.VM.InteropService import StackItem, stack_item_to_py, ByteArray
 from neo.Settings import settings
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import StreamManager
 
 
 class StateReader(InteropService):
@@ -50,6 +53,8 @@ class StateReader(InteropService):
         self.Register("Neo.Runtime.Notify", self.Runtime_Notify)
         self.Register("Neo.Runtime.Log", self.Runtime_Log)
         self.Register("Neo.Runtime.GetTime", self.Runtime_GetCurrentTime)
+        self.Register("Neo.Runtime.Serialize", self.Runtime_Serialize)
+        self.Register("Neo.Runtime.Deserialize", self.Runtime_Deserialize)
 
         self.Register("Neo.Blockchain.GetHeight", self.Blockchain_GetHeight)
         self.Register("Neo.Blockchain.GetHeader", self.Blockchain_GetHeader)
@@ -330,6 +335,38 @@ class StateReader(InteropService):
                 current_time += Blockchain.SECONDS_PER_BLOCK
             engine.EvaluationStack.PushT(current_time)
 
+        return True
+
+    def Runtime_Serialize(self, engine):
+        stack_item = engine.EvaluationStack.Pop()
+
+        ms = StreamManager.GetStream()
+        writer = BinaryWriter(ms)
+        try:
+            stack_item.Serialize(writer)
+        except Exception as e:
+            logger.error("Cannot serialize item %s: %s " % (stack_item, e))
+            return False
+
+        ms.flush()
+        retVal = ByteArray(ms.getvalue())
+        StreamManager.ReleaseStream(ms)
+        engine.EvaluationStack.PushT(retVal)
+
+        return True
+
+    def Runtime_Deserialize(self, engine):
+
+        data = engine.EvaluationStack.Pop().GetByteArray()
+
+        ms = StreamManager.GetStream(data=data)
+        reader = BinaryReader(ms)
+        try:
+            stack_item = StackItem.DeserializeStackItem(reader)
+            engine.EvaluationStack.PushT(stack_item)
+        except Exception as e:
+            logger.error("Colud not Deserialize stack item: %s " % e)
+            return False
         return True
 
     def Blockchain_GetHeight(self, engine):

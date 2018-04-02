@@ -5,7 +5,8 @@ All notable changes to this project are documented in this file.
 
 [0.6.6-dev] in progress
 -----------------------
-- ...
+- add ``Neo.Runtime.Serialize`` and ``Neo.Runtime.Deserialize`` for compliance with this (`#163 <https://github.com/neo-project/neo/pull/163>`_)
+- Fixed IsWalletTransaction to make it compare scripts in transactions to scripts (instead of scripthashes) in wallet contracts and scripthashes of transactions (instead of scripts) to scripthashes of watch-only addresses
 
 
 [0.6.5] 2018-03-31

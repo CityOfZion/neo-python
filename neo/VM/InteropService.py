@@ -3,6 +3,7 @@ from logzero import logger
 
 from neo.VM.Mixins import EquatableMixin
 from neocore.BigInteger import BigInteger
+from neo.SmartContract import StackItemType
 
 
 class CollectionMixin():
@@ -55,6 +56,12 @@ class StackItem(EquatableMixin):
     def GetString(self):
         return str(self)
 
+    def Serialize(self, writer):
+        pass
+
+#    def Deserialize(self, reader):
+#        pass
+
     def __hash__(self):
         hash = 17
         for b in self.GetByteArray():
@@ -67,6 +74,36 @@ class StackItem(EquatableMixin):
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
+
+    @staticmethod
+    def DeserializeStackItem(reader):
+        stype = reader.ReadUInt8()
+        if stype == StackItemType.ByteArray:
+            return ByteArray(reader.ReadVarBytes())
+        elif stype == StackItemType.Boolean:
+            return Boolean(reader.ReadByte())
+        elif stype == StackItemType.Integer:
+            return Integer(BigInteger.FromBytes(reader.ReadVarBytes(), signed=True))
+        elif stype == StackItemType.Array:
+            stack_item = Array()
+            count = reader.ReadVarInt()
+            while count > 0:
+                count -= 1
+                stack_item.Add(StackItem.DeserializeStackItem(reader))
+            return stack_item
+        elif stype == StackItemType.Struct:
+            stack_item = Struct(value=None)
+            count = reader.ReadVarInt()
+            while count > 0:
+                count -= 1
+                stack_item.Add(StackItem.DeserializeStackItem(reader))
+            return stack_item
+        elif stype == StackItemType.Map:
+            logger.warn("Map deserialize not implemented in c# core")
+            return None
+        else:
+            logger.error("Could not deserialize stack item with type: %s " % stype)
+        return None
 
     @staticmethod
     def FromInterface(value):
@@ -161,6 +198,12 @@ class Array(StackItem, CollectionMixin):
             array[index] = item
             index += 1
 
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.Array)
+        writer.WriteVarInt(self.Count)
+        for item in self._array:
+            item.Serialize(writer)
+
     def __str__(self):
         return "Array: %s" % [str(item) for item in self._array]
 
@@ -194,6 +237,10 @@ class Boolean(StackItem):
 
     def GetByteArray(self):
         return self.TRUE if self._value else self.FALSE
+
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.Boolean)
+        writer.WriteByte(self.GetBigInteger())
 
     def __str__(self):
         return str(self._value)
@@ -232,6 +279,10 @@ class ByteArray(StackItem):
             pass
         return str(self)
 
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.ByteArray)
+        writer.WriteVarBytes(self._value)
+
     def __str__(self):
         return self._value.hex()
 
@@ -267,6 +318,10 @@ class Integer(StackItem):
     def GetByteArray(self):
         return self._value.ToByteArray()
 
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.Integer)
+        writer.WriteVarBytes(self.GetByteArray())
+
     def __str__(self):
         return str(self._value)
 
@@ -297,6 +352,9 @@ class InteropInterface(StackItem):
 
     def GetInterface(self):
         return self._object
+
+    def Serialize(self, writer):
+        raise Exception('Not supported- Cannot serialize Interop Interface %s %s ' % (type(self), self._object))
 
     def __str__(self):
         try:
@@ -338,6 +396,12 @@ class Struct(Array):
         if type(other) is not Struct:
             return False
         return self._array == other._array
+
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.Struct)
+        writer.WriteVarInt(self.Count)
+        for item in self._array:
+            item.Serialize(writer)
 
     def __str__(self):
         return "Struct: %s " % self._array
@@ -414,6 +478,9 @@ class Map(StackItem, CollectionMixin):
 
     def GetMap(self):
         return self._dict
+
+    def Serialize(self, writer):
+        raise Exception("Not Supported to Serialize Map: %s " % self)
 
     def GetByteArray(self):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))

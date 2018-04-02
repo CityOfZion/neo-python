@@ -796,7 +796,7 @@ class Wallet(object):
             for script in tx.scripts:
 
                 if script.VerificationScript:
-                    if bytes(contract.ScriptHash.Data) == script.VerificationScript:
+                    if bytes(contract.Script) == script.VerificationScript:
                         return True
 
         for watch_script_hash in self._watch_only:
@@ -804,7 +804,7 @@ class Wallet(object):
                 if output.ScriptHash == watch_script_hash:
                     return True
             for script in tx.scripts:
-                if script.VerificationScript == watch_script_hash.ToBytes():
+                if Crypto.ToScriptHash(script.VerificationScript, unhex=False) == watch_script_hash:
                     return True
 
         return False

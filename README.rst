@@ -1,30 +1,23 @@
-.. raw:: html
-    <p align="center">
-      <img
-        src="http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png"
-        width="125px;">
-    </p>
+.. image:: http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png
+   :alt: CoZ logo
 
-    <h1 align="center">neo-python</h1>
+neo-python
+----------
 
-    <p align="center">
-      Python Node and SDK for the <b>NEO</b> blockchain.
-    </p>
+Python Node and SDK for the NEO blockchain.
 
-    <p align="center">
-      <a href="https://pypi.python.org/pypi/neo-python">
-        <img src="https://img.shields.io/pypi/v/neo-python.svg">
-      </a>
-      <a href="https://travis-ci.org/CityOfZion/neo-python">
-        <img src="https://travis-ci.org/CityOfZion/neo-python.svg?branch=master">
-      </a>
-      <a href="https://neo-python.readthedocs.io/en/latest/?badge=latest" rel="nofollow">
-        <img src="https://readthedocs.org/projects/neo-python/badge/?version=latest">
-      </a>
-      <a href='https://coveralls.io/github/CityOfZion/neo-python?branch=master'>
-        <img src='https://coveralls.io/repos/github/CityOfZion/neo-python/badge.svg?branch=master' alt='Coverage Status' />
-      </a>
-    </p>
+.. image:: https://img.shields.io/pypi/v/neo-python.svg
+    :target: https://pypi.python.org/pypi/neo-python
+    :alt: Pypi
+.. image:: https://travis-ci.org/CityOfZion/neo-python.svg?branch=master
+    :target: https://travis-ci.org/CityOfZion/neo-python
+    :alt: Travis CI
+.. image:: https://readthedocs.org/projects/neo-python/badge/?version=latest
+    :target: https://neo-python.readthedocs.io/en/latest/?badge=latest
+    :alt: ReadTheDocs
+.. image:: https://coveralls.io/repos/github/CityOfZion/neo-python/badge.svg?branch=master
+    :target: https://coveralls.io/github/CityOfZion/neo-python?branch=master
+    :alt: Coveralls
 
 
 
