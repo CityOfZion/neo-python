@@ -95,18 +95,7 @@ class NodeLeader():
 
     def SetupConnection(self, host, port, timeout=10):
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
-            #            factory = Factory.forProtocol(NeoNode)
-            #            factory = ReconnectingClientFactory.forProtocol(NeoNode)
-            #            factory.ma
-            factory = NeoClientFactory()
-            endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=%s" % (host, port, timeout))
-
-            connectingService = ClientService(
-                endpoint,
-                factory,
-                retryPolicy=backoffPolicy(.5, factor=3.0)
-            )
-            connectingService.startService()
+            reactor.connectTCP(host, int(port), NeoClientFactory())
 
     def OnUpdatedMaxPeers(self, old_value, new_value):
         if new_value < old_value:
