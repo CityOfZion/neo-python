@@ -96,7 +96,7 @@ class NodeLeader():
             connectingService = ClientService(
                 endpoint,
                 factory,
-                retryPolicy=backoffPolicy(2, 10, factor=3.0)
+                retryPolicy=backoffPolicy(.5,factor=3.0)
             )
             connectingService.startService()
 
