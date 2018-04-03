@@ -212,14 +212,15 @@ class NeoNode(Protocol):
         self.AskForMoreBlocks()
 
     #        self.RequestPeerInfo()
+        pass
 
     def AskForMoreHeaders(self):
-        # self.Log("asking for more headers...")
+        self.Log("asking for more headers...")
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
     def AskForMoreBlocks(self):
-        reactor.callInThread(self.DoAskForMoreBlocks)
+        self.DoAskForMoreBlocks()
 
     def DoAskForMoreBlocks(self):
 
@@ -260,8 +261,10 @@ class NeoNode(Protocol):
             self.SendSerializedMessage(message)
         else:
             # self.Log("all caught up!!!!!! hashes is zero")
-            self.AskForMoreHeaders()
-            reactor.callLater(20, self.DoAskForMoreBlocks)
+            #            self.RequestVersion()
+            #            self.AskForMoreHeaders()
+            #            reactor.callLater(15, self.AskForMoreHeaders)
+            reactor.callLater(7, self.DoAskForMoreBlocks)
 
     def DoAskForSingleBlock(self, block_hash):
         if block_hash not in self.myblockrequests:
@@ -297,6 +300,7 @@ class NeoNode(Protocol):
 
     def RequestVersion(self):
         """Request the remote client version."""
+        self.Log("All caught up, requesting version")
         m = Message("getversion")
         self.SendSerializedMessage(m)
 
@@ -311,6 +315,7 @@ class NeoNode(Protocol):
         self.nodeid = self.Version.Nonce
         self.Log("Remote version %s " % vars(self.Version))
         self.SendVersion()
+#        self.AskForMoreHeaders()
 
     def HandleVerack(self):
         """Handle the `verack` response."""
@@ -341,15 +346,23 @@ class NeoNode(Protocol):
             inventory (neo.Network.Inventory):
         """
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
-
+        self.Log("Received headers %s " % (len(inventory.Headers)))
         if inventory is not None:
+            #            self.Log("Headers %s " % inventory.Headers)
             BC.Default().AddHeaders(inventory.Headers)
 
         if len(inventory.Headers) == 1 and BC.Default().HeaderHeight - BC.Default().Height < 5:
             self.DoAskForSingleBlock(inventory.Headers[0].Hash.ToBytes())
 
-        elif BC.Default().HeaderHeight < self.Version.StartHeight:
+        if BC.Default().HeaderHeight < self.Version.StartHeight:
             self.AskForMoreHeaders()
+        else:
+            reactor.callLater(5, self.AskForMoreHeaders)
+#        else:
+#            self.AskForMoreBlocks()
+#        elif BC.Default().Height == BC.Default().HeaderHeight:
+#            print("Will ask for more headerS!")
+#            self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):
         """
