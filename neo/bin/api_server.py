@@ -112,6 +112,9 @@ def main():
     # Where to store stuff
     parser.add_argument("--datadir", action="store",
                         help="Absolute path to use for database directories")
+    # peers
+    parser.add_argument("--maxpeers", action="store", default=5,
+                        help="Max peers to use for P2P Joining")
 
     # Now parse
     args = parser.parse_args()
@@ -146,6 +149,8 @@ def main():
 
     if args.datadir:
         settings.set_data_dir(args.datadir)
+    if args.maxpeers:
+        settings.set_max_peers(args.maxpeers)
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility

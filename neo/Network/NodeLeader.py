@@ -19,8 +19,6 @@ class NodeLeader():
 
     Peers = []
 
-    ConnectedPeersMax = 30
-
     UnconnectedPeers = []
 
     ADDRS = []
@@ -36,6 +34,8 @@ class NodeLeader():
     KnownHashes = []
     MemPool = {}
     RelayCache = {}
+
+    NodeCount = 0
 
     @staticmethod
     def Instance():
@@ -80,27 +80,35 @@ class NodeLeader():
             host, port = bootstrap.split(":")
             self.ADDRS.append('%s:%s' % (host, port))
             reactor.callLater(start_delay, self.SetupConnection, host, port)
-            start_delay += 10
+            start_delay += 1
 
-    def RemoteNodePeerReceived(self, host, port):
+    def RemoteNodePeerReceived(self, host, port, index):
         addr = '%s:%s' % (host, port)
-        if addr not in self.ADDRS:
-            if len(self.Peers) < self.ConnectedPeersMax:
-                self.ADDRS.append(addr)
-                self.SetupConnection(host, port)
+        if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX:
+            self.ADDRS.append(addr)
+            reactor.callLater(index * 10, self.SetupConnection, host, port, 5)
 
     def SetupConnection(self, host, port, timeout=10):
-        logger.debug("Setting up connection! %s %s " % (host, port))
+        if len(self.Peers) < settings.CONNECTED_PEER_MAX:
+            factory = Factory.forProtocol(NeoNode)
+            endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=%s" % (host, port, timeout))
 
-        factory = Factory.forProtocol(NeoNode)
-        endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=%s" % (host, port, timeout))
+            connectingService = ClientService(
+                endpoint,
+                factory,
+                retryPolicy=backoffPolicy(2, 10, factor=3.0)
+            )
+            connectingService.startService()
 
-        connectingService = ClientService(
-            endpoint,
-            factory,
-            retryPolicy=backoffPolicy(2, 10, factor=3.0)
-        )
-        connectingService.startService()
+    def OnUpdatedMaxPeers(self, old_value, new_value):
+        if new_value < old_value:
+            num_to_disconnect = old_value - new_value
+            logger.warn("DISCONNECTING %s Peers, this may show unhandled error in defer " % num_to_disconnect)
+            for p in self.Peers[-num_to_disconnect:]:
+                p.Disconnect()
+        elif new_value > old_value:
+            for p in self.Peers:
+                p.RequestPeerInfo()
 
     def Shutdown(self):
         """Disconnect all connected peers."""
@@ -114,8 +122,15 @@ class NodeLeader():
         Args:
             peer (NeoNode): instance.
         """
+
         if peer not in self.Peers:
-            self.Peers.append(peer)
+
+            if len(self.Peers) < settings.CONNECTED_PEER_MAX:
+                self.Peers.append(peer)
+            else:
+                if peer.Address in self.ADDRS:
+                    self.ADDRS.remove(peer.Address)
+                peer.Disconnect()
 
     def RemoveConnectedPeer(self, peer):
         """
@@ -126,7 +141,8 @@ class NodeLeader():
         """
         if peer in self.Peers:
             self.Peers.remove(peer)
-
+        if peer.Address in self.ADDRS:
+            self.ADDRS.remove(peer.Address)
         if len(self.Peers) == 0:
             reactor.callLater(10, self.Restart)
 

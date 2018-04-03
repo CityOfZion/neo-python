@@ -101,6 +101,8 @@ class SettingsHolder:
     USE_DEBUG_STORAGE = False
     DEBUG_STORAGE_PATH = 'Chains/debugstorage'
 
+    CONNECTED_PEER_MAX = 5
+
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
     # Logging settings
@@ -231,6 +233,12 @@ class SettingsHolder:
             self.DATA_DIR_PATH = os.getcwd()
         else:
             self.DATA_DIR_PATH = path
+
+    def set_max_peers(self, num_peers):
+        try:
+            self.CONNECTED_PEER_MAX = int(num_peers)
+        except Exception as e:
+            logzero.logger.error("Please supply an integer number for max peers")
 
     def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled

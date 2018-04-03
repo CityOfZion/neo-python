@@ -112,6 +112,7 @@ class PromptInterface(object):
                 'state',
                 'config debug {on/off}',
                 'config sc-events {on/off}',
+                'config maxpeers {num_peers}',
                 'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
                 'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
                 'import wif {wif}',
@@ -605,7 +606,7 @@ class PromptInterface(object):
 
     def show_nodes(self):
         if len(NodeLeader.Instance().Peers) > 0:
-            out = ""
+            out = "Total Connected: %s " % len(NodeLeader.Instance().Peers)
             for peer in NodeLeader.Instance().Peers:
                 out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
             print_tokens([(Token.Number, out)], self.token_style)
@@ -897,6 +898,20 @@ class PromptInterface(object):
             else:
                 print("Cannot configure VM instruction logging. Please specify on|off")
 
+        elif what == 'maxpeers':
+            try:
+                c1 = int(get_arg(args, 1).lower())
+                num_peers = int(c1)
+                if num_peers > 0:
+                    old_max_peers = settings.CONNECTED_PEER_MAX
+                    settings.set_max_peers(num_peers)
+                    NodeLeader.Instance().OnUpdatedMaxPeers(old_max_peers, num_peers)
+                    print("set max peers to %s " % num_peers)
+                else:
+                    print("Please specify integer greater than zero")
+            except Exception as e:
+                print("Cannot configure max peers. Please specify an integer greater than 0")
+
         else:
             print(
                 "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
@@ -1026,6 +1041,10 @@ def main():
     parser.add_argument("--datadir", action="store",
                         help="Absolute path to use for database directories")
 
+    # peers
+    parser.add_argument("--maxpeers", action="store", default=5,
+                        help="Max peers to use for P2P Joining")
+
     # Show the neo-python version
     parser.add_argument("--version", action="version",
                         version="neo-python v{version}".format(version=__version__))
@@ -1055,6 +1074,9 @@ def main():
     if args.datadir:
         settings.set_data_dir(args.datadir)
 
+    if args.maxpeers:
+        settings.set_max_peers(args.maxpeers)
+
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
@@ -1067,7 +1089,7 @@ def main():
     cli = PromptInterface()
 
     # Run things
-    reactor.suggestThreadPoolSize(15)
+#    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
 
