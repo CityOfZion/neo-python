@@ -397,7 +397,8 @@ class LevelDBBlockchain(Blockchain):
         if block.Index == header_len:
 
             if self._verify_blocks and not block.Verify():
-                return False
+                error = "FALSE_BLOCK"
+                return error
 
             self.AddHeader(block.Header)
 
@@ -565,7 +566,8 @@ class LevelDBBlockchain(Blockchain):
             if header.Index < count + len(self._header_index):
                 continue
             if self._verify_blocks and not header.Verify():
-                break
+                error = "FALSE_HEADER"
+                return error
 
             count = count + 1
 

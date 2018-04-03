@@ -162,8 +162,11 @@ class NodeLeader():
             if BC.Default().ContainsBlock(inventory.Index):
                 return False
 
-            if not BC.Default().AddBlock(inventory):
+            error = BC.Default().AddBlock(inventory)
+            if error == False:
                 return False
+            elif error == "FALSE_BLOCK":
+                return error
 
         else:
             if not inventory.Verify():

@@ -37,7 +37,7 @@ class NeoNode(Protocol):
         self.myblockrequests = set()
         self.bytes_in = 0
         self.bytes_out = 0
-
+        self.rating = None
         self.host = None
         self.port = None
 
@@ -86,6 +86,28 @@ class NeoNode(Protocol):
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
         self.leader.AddConnectedPeer(self)
+        # write new entry into Banlist (and make sure that node was not already banned)
+        filename = "misbehaving.txt"
+        f = open(filename, 'r+')
+        ip = None
+        for line in f:
+            attributes = line.split(",")
+            if(attributes[0] == "\n"): continue
+            if(attributes[0] == self.host):
+                self.rating = int(attributes[1])
+                if self.rating > 90:
+                    self.Disconnect()
+                f.close()
+                return
+
+        f.close()
+
+        f = open(filename, 'a')
+        f.write(str(self.host) + "," + "0" + "\n")
+
+        f.close()
+
+
         self.Log("Connection from %s" % self.endpoint)
 
     def connectionLost(self, reason=None):
@@ -113,6 +135,50 @@ class NeoNode(Protocol):
         self.bytes_in += (len(data))
         self.buffer_in = self.buffer_in + data
         self.CheckDataReceived()
+
+    def changeRating(self, newRating):
+        """changes misbehaving.txt and object rating feild and disconnectes if too high.
+        Misbehaving file format:     IP,rating 0-100              (from least infractions to most and/or worst infractions)
+        """
+
+        filename = "misbehaving.txt"
+        f = open(filename, 'r+')
+        for line in f:
+            attributes = line.split(",")
+            if(attributes[0] == "\n"): continue
+            attributes = line.split(",")
+            if attributes[0] == str(self.host):
+                attributes[0] = str(newRating)
+
+        self.rating = newRating
+
+        if(newRating >= 100):
+            self.Disconnect()
+
+        f.close()
+        
+
+
+
+    def getRating(self):
+        """Searches through misbehaving.txt if rating is not already loaded."""
+        if(self.rating != None):
+            rating = self.rating
+            return rating
+
+        filename = "misbehaving.txt"
+        f = open(filename, 'r+')
+        for line in f:
+            attributes = line.split(",")
+            if(attributes[0] == "\n"): continue
+            attributes = line.split(",")
+            if(attributes[0] == str(self.host)):
+                rating = int(attributes[1])
+
+        f.close()
+        return rating
+
+
 
     def CheckDataReceived(self):
         """Tries to extract a Message from the data buffer and process it."""
@@ -210,8 +276,7 @@ class NeoNode(Protocol):
     def ProtocolReady(self):
         self.AskForMoreHeaders()
         self.AskForMoreBlocks()
-
-    #        self.RequestPeerInfo()
+        self.RequestPeerInfo() #this used to be commented. It can be uncommented because of new banlist.
 
     def AskForMoreHeaders(self):
         # self.Log("asking for more headers...")
@@ -282,18 +347,18 @@ class NeoNode(Protocol):
 
     def SendPeerInfo(self):
 
-        #        self.Log("SENDING PEER INFO %s " % self)
+        self.Log("SENDING PEER INFO %s " % self)
 
-        #        peerlist = []
-        #        for peer in self.leader.Peers:
-        #            peerlist.append( peer.GetNetworkAddressWithTime())
-        #        self.Log("Peer list %s " % peerlist)
+        peerlist = []
+        for peer in self.leader.Peers:
+            #make sure peers rating is <= 90 by checking the banlist
+            if(peer.getRating <= 90):
+                peerlist.append( peer.GetNetworkAddressWithTime())
+        self.Log("Peer list %s " % peerlist)
 
-        #        addrpayload = AddrPayload(addresses=peerlist)
-        #        message = Message('addr',addrpayload)
-        #        self.SendSerializedMessage(message)
-        #       dont send peer info now
-        pass
+        addrpayload = AddrPayload(addresses=peerlist)
+        message = Message('addr',addrpayload)
+        self.SendSerializedMessage(message)
 
     def RequestVersion(self):
         """Request the remote client version."""
@@ -343,7 +408,17 @@ class NeoNode(Protocol):
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
 
         if inventory is not None:
-            BC.Default().AddHeaders(inventory.Headers)
+            error = BC.Default().AddHeaders(inventory.Headers)
+
+            if error == "FALSE_HEADER":
+                rating = self.getRating()
+                if(rating <= 80):
+                    rating += 20
+                elif rating < 100:
+                    rating = 100
+              
+                self.changeRating(rating)
+                
 
         if len(inventory.Headers) == 1 and BC.Default().HeaderHeight - BC.Default().Height < 5:
             self.DoAskForSingleBlock(inventory.Headers[0].Hash.ToBytes())
@@ -367,7 +442,16 @@ class NeoNode(Protocol):
         if blockhash in self.myblockrequests:
             self.myblockrequests.remove(blockhash)
 
-        self.leader.InventoryReceived(block)
+            error = self.leader.InventoryReceived(block)
+            if error == "FALSE_BLOCK":
+                rating = self.getRating()
+                if(rating <= 80):
+                    rating += 20
+                elif rating < 100:
+                    rating = 100
+               
+                self.changeRating(rating)
+                
 
         if len(self.myblockrequests) < self.leader.NREQMAX:
             self.DoAskForMoreBlocks()
