@@ -7,11 +7,16 @@ from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
-from twisted.internet.protocol import Factory
+from twisted.internet.protocol import Factory, ReconnectingClientFactory
 from twisted.application.internet import ClientService
 from twisted.internet import reactor, task
 from twisted.internet.endpoints import clientFromString
 from twisted.application.internet import backoffPolicy
+
+
+class NeoClientFactory(ReconnectingClientFactory):
+    protocol = NeoNode
+    maxRetries = 2
 
 
 class NodeLeader():
@@ -90,13 +95,16 @@ class NodeLeader():
 
     def SetupConnection(self, host, port, timeout=10):
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
-            factory = Factory.forProtocol(NeoNode)
+            #            factory = Factory.forProtocol(NeoNode)
+            #            factory = ReconnectingClientFactory.forProtocol(NeoNode)
+            #            factory.ma
+            factory = NeoClientFactory()
             endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=%s" % (host, port, timeout))
 
             connectingService = ClientService(
                 endpoint,
                 factory,
-                retryPolicy=backoffPolicy(.5,factor=3.0)
+                retryPolicy=backoffPolicy(.5, factor=3.0)
             )
             connectingService.startService()
 
