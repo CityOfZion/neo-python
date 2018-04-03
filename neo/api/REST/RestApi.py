@@ -228,7 +228,7 @@ class RestApi(object):
         notifications = notifications[start:end]
 
         return json.dumps({
-            'current_height': Blockchain.Default().Height,
+            'current_height': Blockchain.Default().Height + 1,
             'message': message,
             'total': notif_len,
             'results': None if show_none else [n.ToJson() for n in notifications],
@@ -238,7 +238,7 @@ class RestApi(object):
 
     def format_message(self, message):
         return json.dumps({
-            'current_height': Blockchain.Default().Height,
+            'current_height': Blockchain.Default().Height + 1,
             'message': message,
             'total': 0,
             'results': None,
