@@ -2,7 +2,7 @@ import binascii
 import random
 from logzero import logger
 from twisted.internet.protocol import Protocol
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from neo.Core.Blockchain import Blockchain as BC
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Network.Message import Message
@@ -21,6 +21,8 @@ class NeoNode(Protocol):
     Version = None
 
     leader = None
+
+    pending_ask_for_blocks = False
 
     def __init__(self):
         """
@@ -209,7 +211,11 @@ class NeoNode(Protocol):
 
     def ProtocolReady(self):
         self.AskForMoreHeaders()
-        self.AskForMoreBlocks()
+
+        blockLoop = task.LoopingCall(self.DoAskForMoreBlocks)
+        blockLoop.start(7)
+
+#        self.AskForMoreBlocks()
 
     #        self.RequestPeerInfo()
         pass
@@ -219,11 +225,10 @@ class NeoNode(Protocol):
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
-    def AskForMoreBlocks(self):
-        self.DoAskForMoreBlocks()
+#    def AskForMoreBlocks(self):
+#        self.DoAskForMoreBlocks()
 
     def DoAskForMoreBlocks(self):
-
         hashes = []
         hashstart = BC.Default().Height + 1
         current_header_height = BC.Default().HeaderHeight + 1
@@ -259,12 +264,6 @@ class NeoNode(Protocol):
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             self.SendSerializedMessage(message)
-        else:
-            # self.Log("all caught up!!!!!! hashes is zero")
-            #            self.RequestVersion()
-            #            self.AskForMoreHeaders()
-            #            reactor.callLater(15, self.AskForMoreHeaders)
-            reactor.callLater(7, self.DoAskForMoreBlocks)
 
     def DoAskForSingleBlock(self, block_hash):
         if block_hash not in self.myblockrequests:
@@ -382,8 +381,8 @@ class NeoNode(Protocol):
 
         self.leader.InventoryReceived(block)
 
-        if len(self.myblockrequests) < self.leader.NREQMAX:
-            self.DoAskForMoreBlocks()
+#        if len(self.myblockrequests) < self.leader.NREQMAX:
+#            self.AskForMoreBlocks()
 
     def HandleBlockReset(self, hash):
         """Process block reset request."""
@@ -435,4 +434,4 @@ class NeoNode(Protocol):
         return True
 
     def Log(self, msg):
-        logger.debug("%s - %s" % (self.endpoint, msg))
+        logger.info("%s - %s" % (self.endpoint, msg))
