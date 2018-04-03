@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 [0.6.7-dev] in progress
 -----------------------
 - Update all the requirements
-
+- Networking changes
 
 [0.6.6] 2018-04-02
 ------------------
