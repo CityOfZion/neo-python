@@ -434,4 +434,4 @@ class NeoNode(Protocol):
         return True
 
     def Log(self, msg):
-        logger.info("%s - %s" % (self.endpoint, msg))
+        logger.debug("%s - %s" % (self.endpoint, msg))
