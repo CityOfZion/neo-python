@@ -93,7 +93,7 @@ class NodeLeader():
         logger.debug("Setting up connection! %s %s " % (host, port))
 
         factory = Factory.forProtocol(NeoNode)
-        endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=%s" % (host, port,timeout))
+        endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=%s" % (host, port, timeout))
 
         connectingService = ClientService(
             endpoint,
