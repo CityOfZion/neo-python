@@ -33,6 +33,7 @@ class RandomAccessStack():
 
         self._list.insert(index, item)
 
+    # @TODO can be optimized
     def Peek(self, index=0):
         index = int(index)
         if index >= self.Count:
@@ -50,6 +51,7 @@ class RandomAccessStack():
 
         self._list.append(item)
 
+    # @TODO can be optimized
     def Remove(self, index):
         index = int(index)
 

@@ -17,12 +17,18 @@ from .InventoryType import InventoryType
 from neo.Settings import settings
 
 
+MODE_MAINTAIN = 7
+MODE_CATCHUP = 1
+
+
 class NeoNode(Protocol):
     Version = None
 
     leader = None
 
-    pending_ask_for_blocks = False
+    block_loop = None
+
+    sync_mode = MODE_CATCHUP
 
     def __init__(self):
         """
@@ -92,6 +98,10 @@ class NeoNode(Protocol):
 
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
+        if self.block_loop:
+            self.block_loop.stop()
+            self.block_loop = None
+
         self.ReleaseBlockRequests()
         self.leader.RemoveConnectedPeer(self)
         self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
@@ -212,21 +222,32 @@ class NeoNode(Protocol):
     def ProtocolReady(self):
         self.AskForMoreHeaders()
 
-        blockLoop = task.LoopingCall(self.DoAskForMoreBlocks)
-        blockLoop.start(7)
-
-#        self.AskForMoreBlocks()
-
-    #        self.RequestPeerInfo()
-        pass
+        self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
+        self.block_loop.start(self.sync_mode)
 
     def AskForMoreHeaders(self):
         self.Log("asking for more headers...")
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
-#    def AskForMoreBlocks(self):
-#        self.DoAskForMoreBlocks()
+    def AskForMoreBlocks(self):
+
+        distance = BC.Default().HeaderHeight - BC.Default().Height
+
+        current_mode = self.sync_mode
+
+        if distance > 2000:
+            self.sync_mode = MODE_CATCHUP
+        else:
+            self.sync_mode = MODE_MAINTAIN
+
+        if self.sync_mode != current_mode:
+            self.block_loop.stop()
+            self.Log("Changing sync mode from %s to %s" % (current_mode, self.sync_mode))
+            self.block_loop.start(self.sync_mode)
+        else:
+            if len(BC.Default().BlockRequests) < self.leader.BREQMAX:
+                self.DoAskForMoreBlocks()
 
     def DoAskForMoreBlocks(self):
         hashes = []
@@ -263,7 +284,7 @@ class NeoNode(Protocol):
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
-            self.SendSerializedMessage(message)
+            reactor.callInThread(self.SendSerializedMessage, message)
 
     def DoAskForSingleBlock(self, block_hash):
         if block_hash not in self.myblockrequests:
@@ -314,7 +335,6 @@ class NeoNode(Protocol):
         self.nodeid = self.Version.Nonce
         self.Log("Remote version %s " % vars(self.Version))
         self.SendVersion()
-#        self.AskForMoreHeaders()
 
     def HandleVerack(self):
         """Handle the `verack` response."""
@@ -347,7 +367,6 @@ class NeoNode(Protocol):
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
         self.Log("Received headers %s " % (len(inventory.Headers)))
         if inventory is not None:
-            #            self.Log("Headers %s " % inventory.Headers)
             BC.Default().AddHeaders(inventory.Headers)
 
         if len(inventory.Headers) == 1 and BC.Default().HeaderHeight - BC.Default().Height < 5:
@@ -357,11 +376,6 @@ class NeoNode(Protocol):
             self.AskForMoreHeaders()
         else:
             reactor.callLater(5, self.AskForMoreHeaders)
-#        else:
-#            self.AskForMoreBlocks()
-#        elif BC.Default().Height == BC.Default().HeaderHeight:
-#            print("Will ask for more headerS!")
-#            self.AskForMoreHeaders()
 
     def HandleBlockReceived(self, inventory):
         """
@@ -380,9 +394,6 @@ class NeoNode(Protocol):
             self.myblockrequests.remove(blockhash)
 
         self.leader.InventoryReceived(block)
-
-#        if len(self.myblockrequests) < self.leader.NREQMAX:
-#            self.AskForMoreBlocks()
 
     def HandleBlockReset(self, hash):
         """Process block reset request."""
@@ -434,4 +445,5 @@ class NeoNode(Protocol):
         return True
 
     def Log(self, msg):
-        logger.debug("%s - %s" % (self.endpoint, msg))
+        #        logger.debug("[%s] %s - %s" % (self.sync_mode,self.endpoint, msg))
+        pass
