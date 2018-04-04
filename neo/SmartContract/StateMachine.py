@@ -396,7 +396,7 @@ class StateMachine(StateReader):
 
             self._contracts.Add(hash.ToBytes(), contract)
 
-            self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash)
+            self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
 
             if contract.HasStorage:
 
