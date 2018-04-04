@@ -47,6 +47,7 @@ from twisted.logger import STDLibLogObserver, globalLogPublisher
 # Twisted and Klein methods and modules
 from twisted.internet import reactor, task, endpoints
 from twisted.web.server import Site
+from twisted.web import server
 
 # neo methods and modules
 from neo.Core.Blockchain import Blockchain
@@ -212,14 +213,17 @@ def main():
     if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
         api_server_rpc = JsonRpcApi(args.port_rpc)
-        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, host)
-        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+#        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, host)
+#        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+#        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
+        api_server_rpc.app.run(host,args.port_rpc)
 
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (host, args.port_rest))
         api_server_rest = RestApi()
-        endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
-        endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
+#        endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
+#        endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
+        api_server_rest.app.run(host, args.port_rest)
 
     reactor.run()
 
