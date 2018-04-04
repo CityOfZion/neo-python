@@ -41,7 +41,7 @@ class NodeLeader():
 
     BREQPART = 40
     NREQMAX = 500
-    BREQMAX = 25000
+    BREQMAX = 20000
 
     KnownHashes = []
     MemPool = {}
@@ -154,10 +154,11 @@ class NodeLeader():
 
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""
+        logger.info("Resseting Block requests")
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
             p.myblockrequests = set()
-        BC.Default().__blockrequests = set()
+        BC.Default().ResetBlockRequests()
         BC.Default()._block_cache = {}
 
     def InventoryReceived(self, inventory):

@@ -127,7 +127,8 @@ class NeoNode(Protocol):
 
         for req in requests:
             try:
-                bcr.remove(req)
+                if req in bcr:
+                    bcr.remove(req)
             except Exception as e:
                 self.Log("Could not remove request %s " % e)
 
