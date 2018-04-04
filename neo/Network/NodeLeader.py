@@ -20,12 +20,9 @@ class NeoClientFactory(ReconnectingClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         address = "%s:%s" % (connector.host, connector.port)
-#        NodeLeader.Instance().ADDRS.remove(address)
         logger.info("Dropped connection from %s " % address)
-
         for peer in NodeLeader.Instance().Peers:
             if peer.Address == address:
-                print("disconnected::: %s " % peer)
                 peer.connectionLost()
 
 
@@ -42,7 +39,7 @@ class NodeLeader():
 
     _MissedBlocks = []
 
-    BREQPART = 20
+    BREQPART = 40
     NREQMAX = 500
     BREQMAX = 25000
 
@@ -112,7 +109,7 @@ class NodeLeader():
 
         if new_value < old_value:
             num_to_disconnect = old_value - new_value
-            logger.warn("DISCONNECTING %s Peers, this may show unhandled error in defer " % num_to_disconnect)
+            logger.warning("DISCONNECTING %s Peers, this may show unhandled error in defer " % num_to_disconnect)
             for p in self.Peers[-num_to_disconnect:]:
                 p.Disconnect()
         elif new_value > old_value:
@@ -190,7 +187,7 @@ class NodeLeader():
                 return False
 
         else:
-            if not inventory.Verify():
+            if not inventory.Verify(self.MemPool.values()):
                 return False
 
     def RelayDirectly(self, inventory):

@@ -49,14 +49,9 @@ class LeaderTestCase(WalletFixtureTestCase):
         self.assertEqual(leader.ADDRS, [])
         self.assertEqual(leader.UnconnectedPeers, [])
 
-    def test_reset(self):
-        leader = NodeLeader.Instance()
-        Blockchain.Default()._block_cache = {'hello': 1}
-        leader.ResetBlockRequestsAndCache()
-        self.assertEqual(Blockchain.Default()._block_cache, {})
-
     def test_peer_adding(self):
         leader = NodeLeader.Instance()
+        Blockchain.Default()._block_cache = {'hello': 1}
 
         def mock_call_later(delay, method, *args):
             method(*args)
@@ -67,37 +62,64 @@ class LeaderTestCase(WalletFixtureTestCase):
             leader.AddConnectedPeer(node)
             return node
 
+        def mock_disconnect(peer):
+            return True
+
+        def mock_send_msg(node, message):
+            return True
+
+        settings.set_max_peers(len(settings.SEED_LIST))
+
         with patch('twisted.internet.reactor.connectTCP', mock_connect_tcp):
             with patch('twisted.internet.reactor.callLater', mock_call_later):
-                leader.Start()
-                self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
+                with patch('neo.Network.NeoNode.NeoNode.Disconnect', mock_disconnect):
+                    with patch('neo.Network.NeoNode.NeoNode.SendSerializedMessage', mock_send_msg):
 
-                # now test adding another
-                leader.RemoteNodePeerReceived('hello.com', 1234, 6)
+                        leader.Start()
+                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
-                # it shouldnt add anything so it doesnt go over max connected peers
-                self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
+                        # now test adding another
+                        leader.RemoteNodePeerReceived('hello.com', 1234, 6)
 
-                # now get a peer
-                peer = leader.Peers[0]
+                        # it shouldnt add anything so it doesnt go over max connected peers
+                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
-                leader.RemoveConnectedPeer(peer)
+                        # test adding peer
+                        peer = NeoNode()
+                        peer.endpoint = Endpoint('hellloo.com', 12344)
+                        leader.ADDRS.append('hellloo.com:12344')
+                        leader.AddConnectedPeer(peer)
+                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
-                self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
-                self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST) - 1)
+                        # now get a peer
+                        peer = leader.Peers[0]
 
-                # now test adding another
-                leader.RemoteNodePeerReceived('hello.com', 1234, 6)
+                        leader.RemoveConnectedPeer(peer)
 
-                self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
+                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
+                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST) - 1)
 
-                # now if we remove all peers, it should restart
-                peers = leader.Peers[:]
-                for peer in peers:
-                    leader.RemoveConnectedPeer(peer)
+                        # now test adding another
+                        leader.RemoteNodePeerReceived('hello.com', 1234, 6)
 
-                # and peers should be equal to the seed list
-                self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
+                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
+
+                        # now on updated max peers test
+                        leader.OnUpdatedMaxPeers(settings.CONNECTED_PEER_MAX, settings.CONNECTED_PEER_MAX - 1)
+
+                        leader.OnUpdatedMaxPeers(settings.CONNECTED_PEER_MAX - 1, 10)
+
+                        # now if we remove all peers, it should restart
+                        peers = leader.Peers[:]
+                        for peer in peers:
+                            leader.RemoveConnectedPeer(peer)
+
+                        # and peers should be equal to the seed list
+                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
+
+                        # test reset
+                        leader.ResetBlockRequestsAndCache()
+                        self.assertEqual(Blockchain.Default()._block_cache, {})
 
     def _generate_tx(self):
         wallet = self.GetWallet1()
@@ -144,3 +166,25 @@ class LeaderTestCase(WalletFixtureTestCase):
                     self.assertTrue(tx.Hash.ToBytes() in leader.MemPool.keys())
                     res2 = leader.Relay(tx)
                     self.assertFalse(res2)
+
+    def test_inventory_received(self):
+
+        leader = NodeLeader.Instance()
+
+        miner = MinerTransaction()
+        miner.Nonce = 1234
+        res = leader.InventoryReceived(miner)
+
+        self.assertFalse(res)
+
+        block = Blockchain.Default().GenesisBlock()
+
+        res2 = leader.InventoryReceived(block)
+
+        self.assertFalse(res2)
+
+        tx = self._generate_tx()
+
+        res = leader.InventoryReceived(tx)
+
+        self.assertIsNone(res)

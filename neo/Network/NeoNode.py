@@ -162,8 +162,6 @@ class NeoNode(Protocol):
 
             # Return if not enough buffer to fully deserialize object.
             messageExpectedLength = 24 + m.Length
-            # percentcomplete = int(100 * (currentLength / messageExpectedLength))
-            # self.Log("Receiving %s data: %s percent complete" % (m.Command, percentcomplete))
             if currentLength < messageExpectedLength:
                 return
 
@@ -210,7 +208,6 @@ class NeoNode(Protocol):
         Args:
             m (neo.Network.Message):
         """
-        #        self.Log("Messagereceived and processed ...: %s " % m.Command)
 
         if m.Command == 'verack':
             self.HandleVerack()
@@ -263,8 +260,10 @@ class NeoNode(Protocol):
             # self.Log("Changing sync mode from %s to %s" % (current_mode, self.sync_mode))
             self.block_loop.start(self.sync_mode)
         else:
-            if len(BC.Default().BlockRequests) < self.leader.BREQMAX:
-                self.DoAskForMoreBlocks()
+            if len(BC.Default().BlockRequests) > self.leader.BREQMAX:
+                self.leader.ResetBlockRequestsAndCache()
+
+            self.DoAskForMoreBlocks()
 
     def DoAskForMoreBlocks(self):
         hashes = []
@@ -272,7 +271,7 @@ class NeoNode(Protocol):
         current_header_height = BC.Default().HeaderHeight + 1
 
         do_go_ahead = False
-        if BC.Default().BlockSearchTries > 400 and len(BC.Default().BlockRequests) > 0:
+        if BC.Default().BlockSearchTries > 100 and len(BC.Default().BlockRequests) > 0:
             do_go_ahead = True
 
         first = None
@@ -296,8 +295,7 @@ class NeoNode(Protocol):
 
             hashstart += 1
 
-        # self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (
-            # first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
+        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
@@ -462,4 +460,4 @@ class NeoNode(Protocol):
         return True
 
     def Log(self, msg):
-        logger.debug("[%s][mode %s] %s - %s" % (self.identifier, self.sync_mode, self.endpoint, msg))
+        logger.info("[%s][mode %s] %s - %s" % (self.identifier, self.sync_mode, self.endpoint, msg))
