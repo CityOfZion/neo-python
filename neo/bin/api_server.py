@@ -216,7 +216,7 @@ def main():
 #        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, host)
 #        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 #        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
-        api_server_rpc.app.run(host,args.port_rpc)
+        api_server_rpc.app.run(host, args.port_rpc)
 
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (host, args.port_rest))
