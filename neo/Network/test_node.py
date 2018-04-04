@@ -22,7 +22,7 @@ class Endpoint():
 class NodeTestCase(TestCase):
 
     @patch.object(NeoNode, 'MessageReceived')
-    def test_initialize(self, mock):
+    def test_handle_message(self, mock):
 
         node = NeoNode()
         node.endpoint = Endpoint('hello.com', 1234)
@@ -65,7 +65,7 @@ class NodeTestCase(TestCase):
         mock.assert_called_once()
 
     @patch.object(NeoNode, 'SendVersion')
-    def test_initialize(self, mock):
+    def test_data_received(self, mock):
 
         node = NeoNode()
         node.endpoint = Endpoint('hello.com', 1234)
