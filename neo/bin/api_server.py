@@ -82,7 +82,7 @@ def custom_background_code():
     thread and handle exiting this thread in another way (eg. with signals and events).
     """
     while True:
-        logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
+        logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height + 1), str(Blockchain.Default().HeaderHeight + 1))
         sleep(15)
 
 

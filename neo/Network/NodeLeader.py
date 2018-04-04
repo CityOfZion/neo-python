@@ -16,7 +16,17 @@ from twisted.application.internet import backoffPolicy
 
 class NeoClientFactory(ReconnectingClientFactory):
     protocol = NeoNode
-    maxRetries = 0
+    maxRetries = 1
+
+    def clientConnectionFailed(self, connector, reason):
+        address = "%s:%s" % (connector.host, connector.port)
+#        NodeLeader.Instance().ADDRS.remove(address)
+        logger.info("Dropped connection from %s " % address)
+
+        for peer in NodeLeader.Instance().Peers:
+            if peer.Address == address:
+                print("disconnected::: %s " % peer)
+                peer.connectionLost()
 
 
 class NodeLeader():
@@ -32,9 +42,9 @@ class NodeLeader():
 
     _MissedBlocks = []
 
-    BREQPART = 50
+    BREQPART = 20
     NREQMAX = 500
-    BREQMAX = 5000
+    BREQMAX = 25000
 
     KnownHashes = []
     MemPool = {}
@@ -75,6 +85,7 @@ class NodeLeader():
 
     def Restart(self):
         if len(self.Peers) == 0:
+            self.ADDRS = []
             self.Start()
 
     def Start(self):
@@ -91,13 +102,14 @@ class NodeLeader():
         addr = '%s:%s' % (host, port)
         if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX:
             self.ADDRS.append(addr)
-            reactor.callLater(index * 10, self.SetupConnection, host, port, 5)
+            reactor.callLater(index * 10, self.SetupConnection, host, port)
 
-    def SetupConnection(self, host, port, timeout=10):
+    def SetupConnection(self, host, port):
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
             reactor.connectTCP(host, int(port), NeoClientFactory())
 
     def OnUpdatedMaxPeers(self, old_value, new_value):
+
         if new_value < old_value:
             num_to_disconnect = old_value - new_value
             logger.warn("DISCONNECTING %s Peers, this may show unhandled error in defer " % num_to_disconnect)
@@ -151,7 +163,6 @@ class NodeLeader():
         BC.Default().__blockrequests = set()
         BC.Default()._block_cache = {}
 
-    #    @profile()
     def InventoryReceived(self, inventory):
         """
         Process a received inventory.
