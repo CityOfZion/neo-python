@@ -16,7 +16,7 @@ from twisted.application.internet import backoffPolicy
 
 class NeoClientFactory(ReconnectingClientFactory):
     protocol = NeoNode
-    maxRetries = 2
+    maxRetries = 0
 
 
 class NodeLeader():
@@ -32,9 +32,9 @@ class NodeLeader():
 
     _MissedBlocks = []
 
-    BREQPART = 100
+    BREQPART = 50
     NREQMAX = 500
-    BREQMAX = 2500
+    BREQMAX = 5000
 
     KnownHashes = []
     MemPool = {}

@@ -116,6 +116,11 @@ def main():
     parser.add_argument("--maxpeers", action="store", default=5,
                         help="Max peers to use for P2P Joining")
 
+    # host
+    parser.add_argument("--host", action="store", type=str, help="Hostname ( for example 127.0.0.1)", default="0.0.0.0")
+
+    host = "0.0.0.0"
+
     # Now parse
     args = parser.parse_args()
     # print(args)
@@ -151,6 +156,8 @@ def main():
         settings.set_data_dir(args.datadir)
     if args.maxpeers:
         settings.set_max_peers(args.maxpeers)
+    if args.host:
+        host = args.host
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -201,9 +208,6 @@ def main():
     d = threading.Thread(target=custom_background_code)
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
-
-    # Default host is open for all
-    host = "0.0.0.0"
 
     if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
