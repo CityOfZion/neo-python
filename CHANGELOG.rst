@@ -6,7 +6,12 @@ All notable changes to this project are documented in this file.
 [0.6.7-dev] in progress
 -----------------------
 - Update all the requirements
-- Networking changes
+- added ``--maxpeers`` option for ``np-prompt`` and ``np-api-server``.  This allows p2p discovery of new nodes up to the value specified
+- added ``--host`` option for ``np-api-server`` in order to specify a hostname for the server
+- added more testing for ``neo.Network`` module
+- various networking improvements
+- fix in ``neo.SmartContract.StateReader`` ``ContractMigrate`` functionality
+- added check for Python 3.6 on startup
 
 [0.6.6] 2018-04-02
 ------------------
