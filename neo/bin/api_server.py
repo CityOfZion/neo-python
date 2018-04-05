@@ -120,8 +120,6 @@ def main():
     # host
     parser.add_argument("--host", action="store", type=str, help="Hostname ( for example 127.0.0.1)", default="0.0.0.0")
 
-    host = "0.0.0.0"
-
     # Now parse
     args = parser.parse_args()
     # print(args)
@@ -157,8 +155,6 @@ def main():
         settings.set_data_dir(args.datadir)
     if args.maxpeers:
         settings.set_max_peers(args.maxpeers)
-    if args.host:
-        host = args.host
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -211,19 +207,19 @@ def main():
     d.start()
 
     if args.port_rpc:
-        logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
+        logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
         api_server_rpc = JsonRpcApi(args.port_rpc)
-#        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, host)
+#        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
 #        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 #        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
-        api_server_rpc.app.run(host, args.port_rpc)
+        api_server_rpc.app.run(args.host, args.port_rpc)
 
     if args.port_rest:
-        logger.info("Starting REST api server on http://%s:%s" % (host, args.port_rest))
+        logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
         api_server_rest = RestApi()
-#        endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
+#        endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
 #        endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
-        api_server_rest.app.run(host, args.port_rest)
+        api_server_rest.app.run(args.host, args.port_rest)
 
     reactor.run()
 
