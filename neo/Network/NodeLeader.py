@@ -20,7 +20,7 @@ class NeoClientFactory(ReconnectingClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         address = "%s:%s" % (connector.host, connector.port)
-        logger.info("Dropped connection from %s " % address)
+        logger.debug("Dropped connection from %s " % address)
         for peer in NodeLeader.Instance().Peers:
             if peer.Address == address:
                 peer.connectionLost()
