@@ -180,6 +180,9 @@ class Blockchain(object):
         """
         return self.__blockrequests
 
+    def ResetBlockRequests(self):
+        self.__blockrequests = set()
+
     @staticmethod
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
         unclaimed = []
