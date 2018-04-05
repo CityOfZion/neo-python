@@ -7,37 +7,34 @@ on CLI arguments. By default these are the testnet settings, but you can
 reconfigure them by calling the `setup(..)` methods.
 """
 import json
-import os
 import logging
-import pip
-
-from json.decoder import JSONDecodeError
-import logzero
-
-from neo import __version__
-from neocore.Cryptography import Helper
-
-from neorpc.Client import RPCClient
-from neorpc.Settings import settings as rpc_settings
+import os
 import sys
 
+import logzero
+import pip
+from neocore.Cryptography import Helper
+from neorpc.Client import RPCClient
+from neorpc.Settings import settings as rpc_settings
+
+from neo import __version__
 
 dir_current = os.path.dirname(os.path.abspath(__file__))
 
 # ROOT_INSTALL_PATH is the root path of neo-python, whether installed as package or from git.
 ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
 
+USER_HOME_DIR = os.path.expanduser('~')
 # PATH_USER_DATA is the root path where to store data (Chain databases, history, etc.)
-PATH_USER_DATA = os.path.join(os.path.expanduser('~'), ".neopython")  # Works for both Windows and *nix
+PATH_USER_DATA = os.path.join(USER_HOME_DIR, ".neopython")  # Works for both Windows and *nix
 
-# Make sure the data path exists
-if not os.path.isdir(PATH_USER_DATA):
+# Make sure the data path exists (only if the home directory also exists)
+if os.path.isdir(USER_HOME_DIR) and not os.path.isdir(PATH_USER_DATA):
     os.mkdir(PATH_USER_DATA)
 
 # This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
 # or from a packaged install version from pip
 IS_PACKAGE_INSTALL = 'site-packages/neo' in dir_current
-
 
 # The filenames for various files. Might be improved by using system
 # user directories: https://github.com/ActiveState/appdirs
@@ -54,12 +51,15 @@ class PrivnetConnectionError(Exception):
     pass
 
 
-class DependencyError(Exception):
+class SystemCheckError(Exception):
     pass
 
 
 def check_depdendencies():
-
+    """
+    Makes sure that all required dependencies are installed in the exact version
+    (as specified in requirements.txt)
+    """
     # Get installed packages
     installed_packages = pip.get_installed_distributions(local_only=False)
     installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
@@ -69,7 +69,7 @@ def check_depdendencies():
     with open(deps_filename, "r") as f:
         for dep in f.read().split():
             if not dep.lower() in installed_packages_list:
-                raise DependencyError("Required dependency %s is not installed. Please run 'pip install -e .'." % dep)
+                raise SystemCheckError("Required dependency %s is not installed. Please run 'pip install -e .'" % dep)
 
 
 class SettingsHolder:
@@ -101,11 +101,12 @@ class SettingsHolder:
 
     ALL_FEES = None
     USE_DEBUG_STORAGE = False
-    DEBUG_STORAGE_PATH = './Chains/debugstorage'
+    DEBUG_STORAGE_PATH = 'Chains/debugstorage'
 
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
     # Logging settings
+    log_level = None
     log_smart_contract_events = False
     log_vm_instructions = False
 
@@ -115,17 +116,17 @@ class SettingsHolder:
     @property
     def chain_leveldb_path(self):
         self.check_chain_dir_exists(warn_migration=True)
-        return os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH)
+        return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.LEVELDB_PATH))
 
     @property
     def notification_leveldb_path(self):
         self.check_chain_dir_exists()
-        return os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH)
+        return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.NOTIFICATION_DB_PATH))
 
     @property
     def debug_storage_leveldb_path(self):
         self.check_chain_dir_exists()
-        return os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH)
+        return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH))
 
     # Helpers
     @property
@@ -261,6 +262,7 @@ class SettingsHolder:
         Args:
             level (int): eg. logging.DEBUG or logging.ERROR. See also https://docs.python.org/2/library/logging.html#logging-levels
         """
+        self.log_level = level
         logzero.loglevel(level)
 
     def check_chain_dir_exists(self, warn_migration=False):
@@ -280,9 +282,9 @@ class SettingsHolder:
         # Add a warning for migration purposes if we created a chain dir
         if warn_migration and ROOT_INSTALL_PATH != self.DATA_DIR_PATH:
             if os.path.exists(os.path.join(ROOT_INSTALL_PATH, 'Chains')):
-                logzero.logger.warn("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
-                logzero.logger.warn("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
-                logzero.logger.warn("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
+                logzero.logger.warning("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
+                logzero.logger.warning("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
+                logzero.logger.warning("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
 
     def check_privatenet(self):
         """
@@ -301,18 +303,18 @@ class SettingsHolder:
 
         # Now check if nonce is the same as in the chain path
         nonce_container = str(version["nonce"])
-        neopy_chain_meta_filename = os.path.join(self.LEVELDB_PATH, ".privnet-nonce")
+        neopy_chain_meta_filename = os.path.join(self.chain_leveldb_path, ".privnet-nonce")
         if os.path.isfile(neopy_chain_meta_filename):
             nonce_chain = open(neopy_chain_meta_filename, "r").read()
             if nonce_chain != nonce_container:
                 raise PrivnetConnectionError(
                     "Chain database in Chains/privnet is for a different private network than the current container. "
-                    "Consider deleting the Chain directory with 'rm -rf Chains/privnet*'."
+                    "Consider deleting the Chain directory with 'rm -rf %s/privnet*'." % self.chain_leveldb_path
                 )
         else:
             # When the Chains/privnet folder is removed, we need to create the directory
-            if not os.path.isdir(self.LEVELDB_PATH):
-                os.mkdir(self.LEVELDB_PATH)
+            if not os.path.isdir(self.chain_leveldb_path):
+                os.mkdir(self.chain_leveldb_path)
 
             # Write the nonce to the meta file
             with open(neopy_chain_meta_filename, "w") as f:
@@ -328,7 +330,12 @@ settings.setup_testnet()
 # By default, set loglevel to INFO. DEBUG just print a lot of internal debug statements
 settings.set_loglevel(logging.INFO)
 
-# Check if currently installed dependencies match the requirements
+# System check: Are dependencies must be installed in the correct version
 # Can be bypassed with `SKIP_DEPS_CHECK=1 python prompt.py`
 if not os.getenv("SKIP_DEPS_CHECK") and not IS_PACKAGE_INSTALL:
     check_depdendencies()
+
+# System check: Python 3.6+
+if not os.getenv("SKIP_PY_CHECK"):
+    if sys.version_info < (3, 6):
+        raise SystemCheckError("Needs Python 3.6+. Currently used: %s" % sys.version)

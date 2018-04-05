@@ -104,15 +104,21 @@ class UserWallet(Wallet):
         return self._db
 
     def Rebuild(self):
-        super(UserWallet, self).Rebuild()
+        self._lock.acquire()
+        try:
+            super(UserWallet, self).Rebuild()
 
-        for c in Coin.select():
-            c.delete_instance()
-        for tx in Transaction.select():
-            tx.delete_instance()
+            logger.debug("wallet rebuild: deleting %s coins and %s transactions" %
+                         (Coin.select().count(), Transaction.select().count()))
 
-        logger.debug("wallet rebuild: deleted coins and transactions %s %s " %
-                     (Coin.select().count(), Transaction.select().count()))
+            for c in Coin.select():
+                c.delete_instance()
+            for tx in Transaction.select():
+                tx.delete_instance()
+        finally:
+            self._lock.release()
+
+        logger.debug("wallet rebuild complete")
 
     def Close(self):
         if self._db:
@@ -541,7 +547,6 @@ class UserWallet(Wallet):
                 if addr.IsWatchOnly:
                     has_watch_addr = True
             else:
-                token_balances = self.TokenBalancesForAddress(addr_str)
                 script_hash = binascii.hexlify(addr.ScriptHash)
                 json = {'address': addr_str, 'script_hash': script_hash.decode('utf8'), 'tokens': token_balances}
                 addresses.append(json)
@@ -552,7 +557,7 @@ class UserWallet(Wallet):
             if type(asset) is UInt256:
                 bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
                 total = self.GetBalance(asset).value / Fixed8.D
-                watch_total = self.GetBalance(asset, bool(CoinState.WatchOnly)).value / Fixed8.D
+                watch_total = self.GetBalance(asset, CoinState.WatchOnly).value / Fixed8.D
                 balances.append("[%s]: %s " % (bc_asset.GetName(), total))
                 watch_balances.append("[%s]: %s " % (bc_asset.GetName(), watch_total))
             elif type(asset) is WalletNEP5Token:

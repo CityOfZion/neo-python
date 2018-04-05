@@ -6,13 +6,12 @@ from logzero import logger
 
 from neo.Core.VerificationCode import VerificationCode
 from neocore.Cryptography.Crypto import Crypto
+from neocore.Fixed8 import Fixed8
 from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
 from neo.Prompt.Utils import parse_param
 from neocore.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
-from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
 from neo.Core.Mixins import SerializableMixin
 
 
@@ -97,7 +96,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         engine = None
         try:
-            engine = ApplicationEngine.Run(sb.ToArray(), exit_on_error=True)
+            engine = ApplicationEngine.Run(sb.ToArray(), exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
         except Exception as e:
             pass
 

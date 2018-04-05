@@ -35,7 +35,7 @@ from logzero import logger
 
 from neo.VM.OpCode import *
 import json
-
+from twisted.internet import reactor
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
@@ -325,7 +325,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
     return None, None, None, None
 
 
-def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, min_fee=DEFAULT_MIN_FEE):
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None):
 
     bc = GetBlockchain()
 
@@ -467,10 +467,15 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
             table=script_table,
             service=service,
             gas=itx.Gas,
-            testMode=True
+            testMode=invocation_test_mode
         )
 
         engine.LoadScript(itx.Script, False)
+        engine.LoadDebugInfo(debug_map)
+
+        # call execute in its own blocking thread
+
+#        reactor.stop()
 
         i_success = engine.Execute()
 

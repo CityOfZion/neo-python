@@ -242,7 +242,7 @@ class JsonRpcApi(object):
             return self.validateaddress(params)
 
         elif method == "getpeers":
-            raise NotImplementedError()
+            return self.get_peers()
 
         raise JsonRpcError.methodNotFound()
 
@@ -307,3 +307,28 @@ class JsonRpcApi(object):
             pass
 
         return {"address": params[0], "isvalid": isValid}
+
+    def get_peers(self):
+        """Get all known nodes and their "state"
+
+        In the current implementation of NodeLeader there is no way
+        to know which nodes are bad.
+        """
+        node = NodeLeader.Instance()
+        result = {"connected": [], "unconnected": [], "bad": []}
+        connected_peers = []
+
+        for peer in node.Peers:
+            result['connected'].append({"address": peer.host,
+                                        "port": peer.port})
+            connected_peers.append("{}:{}".format(peer.host, peer.port))
+
+        # "UnconnectedPeers" is never used. So a check is needed to
+        # verify that a given address:port does not belong to a connected peer
+        for peer in node.ADDRS:
+            addr, port = peer.split(':')
+            if peer not in connected_peers:
+                result['unconnected'].append({"address": addr,
+                                              "port": int(port)})
+
+        return result

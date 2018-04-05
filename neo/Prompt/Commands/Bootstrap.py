@@ -20,13 +20,20 @@ def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
         if confirm == 'confirm':
             return do_bootstrap(download_file, target_dir)
     else:
-        return do_bootstrap(download_file, target_dir, tmp_file_name='./fixtures/btest.tar.gz', tmp_chain_name='btestchain')
+
+        return do_bootstrap(download_file,
+                            target_dir,
+                            tmp_file_name=os.path.join(settings.DATA_DIR_PATH, 'btest.tar.gz'),
+                            tmp_chain_name='btestchain')
 
     print("bootstrap cancelled")
     sys.exit(0)
 
 
-def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name='./Chains/bootstrap.tar.gz', tmp_chain_name='tmpchain'):
+def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=None, tmp_chain_name='tmpchain'):
+
+    if tmp_file_name is None:
+        tmp_file_name = os.path.join(settings.DATA_DIR_PATH, 'bootstrap.tar.gz')
 
     success = False
 
@@ -35,7 +42,6 @@ def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name='./Chains/bootst
 
     try:
         response = requests.get(bootstrap_file, stream=True)
-
         response.raise_for_status()
 
         # Total size in bytes.
@@ -52,11 +58,9 @@ def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name='./Chains/bootst
         print("download complete")
 
         if os.path.exists(destination_dir):
-
             try:
                 shutil.rmtree(destination_dir)
             except Exception as e:
-
                 print("coludnt remove existing dir: %s %s" % (e, destination_dir))
                 sys.exit(0)
 
@@ -87,8 +91,6 @@ def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name='./Chains/bootst
         print("Could not download: %s " % e)
 
     finally:
-
-        print("cleaning up %s " % tmp_file_name)
         print("cleaning up %s " % tmp_chain_name)
         if os.path.exists(tmp_chain_name):
             shutil.rmtree(tmp_chain_name)

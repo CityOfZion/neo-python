@@ -223,30 +223,37 @@ class ApplicationEngine(ExecutionEngine):
                 #                print("gas consumeb: %s " % self.gas_consumed)
                 except Exception as e:
                     logger.error("Exception calculating gas consumed %s " % e)
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.testMode and self.gas_consumed > self.gas_amount:
                     logger.error("NOT ENOUGH GAS")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckItemSize():
                     logger.error("ITEM SIZE TOO BIG")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckStackSize():
                     logger.error("STACK SIZE TOO BIG")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckArraySize():
                     logger.error("ARRAY SIZE TOO BIG")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckInvocationStack():
                     logger.error("INVOCATION SIZE TO BIIG")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckDynamicInvoke():
                     logger.error("Dynamic invoke without proper contract")
+                    self._VMState |= VMState.FAULT
                     return False
 
                 self.StepInto()
@@ -383,7 +390,7 @@ class ApplicationEngine(ExecutionEngine):
         return 1
 
     @staticmethod
-    def Run(script, container=None, exit_on_error=False):
+    def Run(script, container=None, exit_on_error=False, gas=Fixed8.Zero(), test_mode=True):
         """
         Runs a script in a test invoke environment
 
@@ -416,8 +423,8 @@ class ApplicationEngine(ExecutionEngine):
             container=container,
             table=script_table,
             service=service,
-            gas=Fixed8.Zero(),
-            testMode=True,
+            gas=gas,
+            testMode=test_mode,
             exit_on_error=exit_on_error
         )
 
@@ -427,8 +434,10 @@ class ApplicationEngine(ExecutionEngine):
 
         try:
             success = engine.Execute()
+            engine.testMode = True
             service.ExecutionCompleted(engine, success)
         except Exception as e:
+            engine.testMode = True
             service.ExecutionCompleted(engine, False, e)
 
         for event in service.events_to_dispatch:

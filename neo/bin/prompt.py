@@ -8,6 +8,7 @@ import psutil
 import traceback
 import logging
 import sys
+from time import sleep
 from logzero import logger
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -53,6 +54,38 @@ settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
 # Prompt history filename
 FILENAME_PROMPT_HISTORY = os.path.join(PATH_USER_DATA, '.prompt.py.history')
+
+
+class PromptFileHistory(FileHistory):
+    def append(self, string):
+        string = self.redact_command(string)
+        if len(string) == 0:
+            return
+        self.strings.append(string)
+
+        # Save to file.
+        with open(self.filename, 'ab') as f:
+            def write(t):
+                f.write(t.encode('utf-8'))
+
+            write('\n# %s\n' % datetime.datetime.now())
+            for line in string.split('\n'):
+                write('+%s\n' % line)
+
+    def redact_command(self, string):
+        if len(string) == 0:
+            return string
+        command = [comm for comm in ['import wif', 'export wif', 'import nep2', 'export nep2'] if comm in string]
+        if len(command) > 0:
+            command = command[0]
+            # only redacts command if wif/nep2 keys are in the command, not if the argument is left empty.
+            if command in string and len(command + " ") < len(string):
+                # example: import wif 5HueCGU8  -->  import wif <wif>
+                return command + " <" + command.split(" ")[1] + ">"
+            else:
+                return string
+
+        return string
 
 
 class PromptInterface(object):
@@ -120,7 +153,7 @@ class PromptInterface(object):
                 'debugstorage {on/off/reset}'
                 ]
 
-    history = FileHistory(FILENAME_PROMPT_HISTORY)
+    history = PromptFileHistory(FILENAME_PROMPT_HISTORY)
 
     token_style = None
     start_height = None
@@ -142,9 +175,9 @@ class PromptInterface(object):
         out = []
         try:
             out = [(Token.Command, '[%s] Progress: ' % settings.net_name),
-                   (Token.Number, str(Blockchain.Default().Height)),
+                   (Token.Number, str(Blockchain.Default().Height + 1)),
                    (Token.Neo, '/'),
-                   (Token.Number, str(Blockchain.Default().HeaderHeight))]
+                   (Token.Number, str(Blockchain.Default().HeaderHeight + 1))]
         except Exception as e:
             pass
 
@@ -211,8 +244,7 @@ class PromptInterface(object):
                 try:
                     self.Wallet = UserWallet.Open(path, password_key)
 
-                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-                    self._walletdb_loop.start(1)
+                    self.start_wallet_loop()
                     print("Opened wallet at %s" % path)
                 except Exception as e:
                     print("Could not open wallet: %s" % e)
@@ -262,17 +294,23 @@ class PromptInterface(object):
                     return
 
                 if self.Wallet:
-                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-                    self._walletdb_loop.start(1)
+                    self.start_wallet_loop()
 
             else:
                 print("Please specify a path")
 
+    def start_wallet_loop(self):
+        self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+        self._walletdb_loop.start(1)
+
+    def stop_wallet_loop(self):
+        self._walletdb_loop.stop()
+        self._walletdb_loop = None
+
     def do_close_wallet(self):
         if self.Wallet:
             path = self.Wallet._path
-            self._walletdb_loop.stop()
-            self._walletdb_loop = None
+            self.stop_wallet_loop()
             self.Wallet.Close()
             self.Wallet = None
             print("Closed wallet %s" % path)
@@ -351,7 +389,9 @@ class PromptInterface(object):
             print("Import of '%s' not implemented" % item)
 
     def do_build(self, arguments):
+        Blockchain.Default().Pause()
         BuildAndRun(arguments, self.Wallet)
+        Blockchain.Default().Resume()
 
     def do_load_n_run(self, arguments):
         LoadAndRun(arguments, self.Wallet)
@@ -500,7 +540,11 @@ class PromptInterface(object):
         elif item == 'claim':
             ClaimGas(self.Wallet, True, arguments[1:])
         elif item == 'rebuild':
-            self.Wallet.Rebuild()
+            self.stop_wallet_loop()
+            try:
+                self.Wallet.Rebuild()
+            finally:
+                self.start_wallet_loop()
             try:
                 item2 = int(get_arg(arguments, 1))
                 if item2 and item2 > 0:
@@ -609,7 +653,8 @@ class PromptInterface(object):
                 if height > -1:
                     jsn = tx.ToJson()
                     jsn['height'] = height
-                    jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in Blockchain.Default().GetAllUnspent(txid)]
+                    jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
+                                       Blockchain.Default().GetAllUnspent(txid)]
                     tokens = [(Token.Command, json.dumps(jsn, indent=4))]
                     print_tokens(tokens, self.token_style)
                     print('\n')
@@ -853,13 +898,14 @@ class PromptInterface(object):
                 print("Cannot configure VM instruction logging. Please specify on|off")
 
         else:
-            print("Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
+            print(
+                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
 
-        Blockchain.Default().PersistBlocks()
+#        Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]

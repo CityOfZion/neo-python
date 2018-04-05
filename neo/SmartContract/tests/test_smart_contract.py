@@ -1,7 +1,8 @@
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.IO.Helper import Helper
 from neo.Core.TX.Transaction import TransactionType
-
+from neo.Settings import settings
+import os
 import binascii
 
 
@@ -9,7 +10,7 @@ class SmartContractTest(BlockchainFixtureTestCase):
 
     @classmethod
     def leveldb_testpath(self):
-        return './fixtures/test_chain'
+        return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     def test_a_initial_setup(self):
 

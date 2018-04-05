@@ -18,8 +18,8 @@ from klein.test.test_resource import requestMock
 class NotificationDBTestCase(BlockchainFixtureTestCase):
 
     N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixture_v3.tar.gz'
-    N_FIXTURE_FILENAME = './Chains/notif_fixture_v3.tar.gz'
-    N_NOTIFICATION_DB_NAME = 'fixtures/test_notifications'
+    N_FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/notif_fixture_v3.tar.gz')
+    N_NOTIFICATION_DB_NAME = os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_notifications')
 
     contract_hash = UInt160(data=bytearray(b'\x11\xc4\xd1\xf4\xfb\xa6\x19\xf2b\x88p\xd3n:\x97s\xe8tp['))
     event_tx = '042e4168cb2d563714d3f35ff76b7efc6c7d428360c97b6b45a18b5b1a4faa40'
@@ -31,7 +31,7 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
 
     @classmethod
     def leveldb_testpath(self):
-        return './fixtures/test_chain'
+        return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     @classmethod
     def setUpClass(cls):
@@ -51,8 +51,9 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
 
         try:
             tar = tarfile.open(cls.N_FIXTURE_FILENAME)
-            tar.extractall()
+            tar.extractall(path=settings.DATA_DIR_PATH)
             tar.close()
+
         except Exception as e:
             raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.N_FIXTURE_FILENAME))
 

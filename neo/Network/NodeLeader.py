@@ -29,9 +29,9 @@ class NodeLeader():
 
     _MissedBlocks = []
 
-    BREQPART = 150
-    NREQMAX = 150
-    BREQMAX = 4000
+    BREQPART = 100
+    NREQMAX = 500
+    BREQMAX = 2500
 
     KnownHashes = []
     MemPool = {}
@@ -89,16 +89,16 @@ class NodeLeader():
                 self.ADDRS.append(addr)
                 self.SetupConnection(host, port)
 
-    def SetupConnection(self, host, port):
+    def SetupConnection(self, host, port, timeout=10):
         logger.debug("Setting up connection! %s %s " % (host, port))
 
         factory = Factory.forProtocol(NeoNode)
-        endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=5" % (host, port))
+        endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=%s" % (host, port, timeout))
 
         connectingService = ClientService(
             endpoint,
             factory,
-            retryPolicy=backoffPolicy(.5, factor=3.0)
+            retryPolicy=backoffPolicy(2, 10, factor=3.0)
         )
         connectingService.startService()
 

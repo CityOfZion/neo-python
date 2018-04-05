@@ -3,16 +3,64 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.2-dev] in progress
+[0.6.7-dev] in progress
 -----------------------
+- Update all the requirements
+- Networking changes
+- Add smart contract storage searching using a prefix.
+
+[0.6.6] 2018-04-02
+------------------
+- add ``Neo.Runtime.Serialize`` and ``Neo.Runtime.Deserialize`` for compliance with this (`#163 <https://github.com/neo-project/neo/pull/163>`_)
+- Fixed IsWalletTransaction to make it compare scripts in transactions to scripts (instead of scripthashes) in wallet contracts and scripthashes of transactions (instead of scripts) to scripthashes of watch-only addresses
+- Python version check in ``Settings.py``: fail if not Python 3.6+ (can be disabled with env var ``SKIP_PY_CHECK``)
+
+[0.6.5] 2018-03-31
+-----------------------
+- Changed the ``eval()`` call when parsing the `--tx-attr` param to parse only json. Reduced the surface and options available on the other 2 eval calls to improve security.
+- fix wallet rebuild database lock errors (`PR #365 <https://github.com/CityOfZion/neo-python/pull/365>`_)
+- Fixed `synced_watch_only_balances` being always zero issue (`#209  <https://github.com/CityOfZion/neo-python/issues/209>`_)
+- Added 'getpeers' to the JSON RPC API (only containing the available functionality)
+- Updated to neo-boa==0.4.0, which has support for using dictionaries and interactive debugging
+- Added interactive VM Debugger `#367 <https://github.com/CityOfZion/neo-python/pull/367>`_
+- Added ``Pause`` and ``Resume`` methods to ``neo.Core.Blockchain`` in order to allow for processing to occur without new incoming blocks
+- Fix bug with checking if contract is an NEP5 Token
+- Update testnet bootstrap files
+- lowered amount of blocks requested by each thread to prevent hanging connections
+
+
+[0.6.4] 2018-03-24
+------------------
+- Add GZIP compression to RPC server responses if the caller supports it.
+- Change VM fault reporting to only happen when debug logging is enabled
+- fix engine error states
+- update mainnet bootstrap files
+- performance fix for VM engine execution logging (`PR #354 <https://github.com/CityOfZion/neo-python/pull/354>`_)
+
+
+[0.6.3] 2018-03-21
+------------------
+- update to ``neocore==0.3.10`` to fix ``ToNeoJsonString()`` issue `identified here <https://github.com/CityOfZion/neo-python/issues/349>`_
+- make home dir optional for ``.neopython``
+- performance fix for block update speed
+
+
+[0.6.2] 2018-03-21
+------------------
 - Implementing interop type ``MAP`` along with new opcodes ``NEWMAP HASKEY KEYS VALUES`` and modify ``ARRAYSIZE PICKITEM SETITEM REMOVE`` to support ``MAP`` as `per PR here <https://github.com/neo-project/neo-vm/pull/28>__`
 - Added support for using ``--from-addr=`` to specify the address to use for ``testinvoke`` in ``prompt.py``. (`PR #329 <https://github.com/CityOfZion/neo-python/pull/329>`_)
+- Fixed ``neo/bin/prompt.py`` to redact WIF keys, nep2 keys and contract metadata from the command history file ``.prompt.py.history``.
 - Added TransactionInvocation.GetScript to ``StateReader.py``
-- Add smart contract storage searching using a prefix.
+- Fixed missing uri locations in ``neo/api/REST/RestApi.py`` (`PR #342 <https://github.com/CityOfZion/neo-python/pull/342>`_)
+- Fixed privatenet check by fixing the chain path for checks in Settings (`PR #341 <https://github.com/CityOfZion/neo-python/pull/341>`_)
+- Fixed ``neo-privnet.sample.wallet``
+- Fix for current block height lag behind other RPC implementations by 1-3 blocks
+- Fixed ``bootstrap.py`` to use the specified data directory, instead of hard-coded relative paths.
+- Test chains moved to the user data directory, instead of the projects code path.
 
 
 [0.6.1] 2018-03-16
-----------------------------
+------------------
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
 - Changes for Pypi compatibility:
@@ -26,9 +74,9 @@ All notable changes to this project are documented in this file.
     - ``np-reencrypt-wallet``
   - updated docs for Pypi changes
 
-      
+
 [0.5.7] 2018-03-14
-----------------------------
+------------------
 - update to ``neocore==0.3.8``
 - Fixed README reference in ``MANIFEST.in``, add pypi badge to readme
 - Add ability to specify ``--datadir`` path for where leveldb directories are stored

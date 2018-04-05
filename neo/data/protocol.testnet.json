@@ -10,8 +10,8 @@
             "http://*:20332"
         ],
         "WsPort": 20334,
-        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/ChainTestnet1140000.tar.gz",
-        "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/TestnetNotifications1140000.tar.gz",
+        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/Testnet131xxxx.tar.gz",
+        "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/TestnetNotif131xxxx.tar.gz",
         "DebugStorage":1
     },
     "ProtocolConfiguration": {

@@ -11,6 +11,8 @@ from neo.VM.InteropService import Array, Struct, StackItem, CollectionMixin, Map
 from neocore.UInt160 import UInt160
 from neo.Settings import settings
 from neo.VM.VMFault import VMFault
+from neo.Prompt.vm_debugger import VMDebugger
+from logging import DEBUG as LOGGING_LEVEL_DEBUG
 
 
 class ExecutionEngine():
@@ -20,7 +22,7 @@ class ExecutionEngine():
     _ScriptContainer = None
     _Crypto = None
 
-    _VMState = VMState.BREAK
+    _VMState = None
 
     _InvocationStack = None
     _EvaluationStack = None
@@ -35,6 +37,10 @@ class ExecutionEngine():
     log_file_name = 'vm_instructions.log'
     # file descriptor
     log_file = None
+    _is_write_log = False
+
+    _debug_map = None
+    _vm_debugger = None
 
     def write_log(self, message):
         """
@@ -43,7 +49,7 @@ class ExecutionEngine():
         Args:
             message (str): string message to write to file.
         """
-        if settings.log_vm_instructions and self.log_file and not self.log_file.closed:
+        if self._is_write_log and self.log_file and not self.log_file.closed:
             self.log_file.write(message + '\n')
 
     @property
@@ -93,6 +99,7 @@ class ExecutionEngine():
         return self._ExecutedScriptHashes
 
     def __init__(self, container=None, crypto=None, table=None, service=None, exit_on_error=False):
+        self._VMState = VMState.BREAK
         self._ScriptContainer = container
         self._Crypto = crypto
         self._Table = table
@@ -103,9 +110,17 @@ class ExecutionEngine():
         self._AltStack = RandomAccessStack(name='Alt')
         self._ExecutedScriptHashes = []
         self.ops_processed = 0
+        self._is_write_log = settings.log_vm_instructions
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
+
+    def LoadDebugInfo(self, debug_map=None):
+        if debug_map:
+            self._debug_map = debug_map
+            for b in self._debug_map['breakpoints']:
+                self.AddBreakPoint(b)
+#                print("breakpoint %s " % b)
 
     def Dispose(self):
         while self._InvocationStack.Count > 0:
@@ -129,6 +144,7 @@ class ExecutionEngine():
         estack = self._EvaluationStack
         istack = self._InvocationStack
         astack = self._AltStack
+#        print("VM STATE %s " % self._VMState)
 
         if opcode > PUSH16 and opcode != RET and context.PushOnly:
             return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
@@ -869,9 +885,10 @@ class ExecutionEngine():
                 return self.VM_FAULT_and_report(VMFault.UNKNOWN_OPCODE, opcode)
 
         if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
-
-            if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
-                self._VMState |= VMState.BREAK
+            if len(self.CurrentContext.Breakpoints):
+                if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
+                    self._vm_debugger = VMDebugger(self)
+                    self._vm_debugger.start()
 
     def LoadScript(self, script, push_only=False):
 
@@ -888,7 +905,6 @@ class ExecutionEngine():
 
     def StepInto(self):
         if self._InvocationStack.Count == 0:
-            logger.info("INVOCATION COUNT IS 0, HALT")
             self._VMState |= VMState.HALT
 
         if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
@@ -902,15 +918,11 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-#        opname = ToName(op)
-#        logger.info("____________________________________________________")
-#        logger.info("[%s] [%s] %02x -> %s" % (self.CurrentContext.InstructionPointer,self.ops_processed,int.from_bytes(op,byteorder='little'), opname))
-#        logger.info("-----------------------------------")
-
         self.ops_processed += 1
 
         try:
-            self.write_log("{} {}".format(self.ops_processed, ToName(op)))
+            if self._is_write_log:
+                self.write_log("{} {}".format(self.ops_processed, ToName(op)))
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
             error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))
@@ -947,6 +959,9 @@ class ExecutionEngine():
 
     def VM_FAULT_and_report(self, id, *args):
         self._VMState |= VMState.FAULT
+
+        if settings.log_level != LOGGING_LEVEL_DEBUG:
+            return
 
         if id == VMFault.INVALID_JUMP:
             error_msg = "Attemping to JMP/JMPIF/JMPIFNOT to an invalid location."
@@ -1016,5 +1031,9 @@ class ExecutionEngine():
         else:
             error_msg = id
 
-        logger.error("({}) {}".format(self.ops_processed, error_msg))
+        if id in [VMFault.THROW, VMFault.THROWIFNOT]:
+            logger.debug("({}) {}".format(self.ops_processed, id))
+        else:
+            logger.error("({}) {}".format(self.ops_processed, error_msg))
+
         return

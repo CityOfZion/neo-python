@@ -153,31 +153,26 @@ def GatherContractDetails(function_code, prompter):
     print("Please fill out the following contract details:")
     name = prompt("[Contract Name] > ",
                   completer=prompter.get_completer(),
-                  history=prompter.history,
                   get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                   style=prompter.token_style)
 
     version = prompt("[Contract Version] > ",
                      completer=prompter.get_completer(),
-                     history=prompter.history,
                      get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                      style=prompter.token_style)
 
     author = prompt("[Contract Author] > ",
                     completer=prompter.get_completer(),
-                    history=prompter.history,
                     get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                     style=prompter.token_style)
 
     email = prompt("[Contract Email] > ",
                    completer=prompter.get_completer(),
-                   history=prompter.history,
                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                    style=prompter.token_style)
 
     description = prompt("[Contract Description] > ",
                          completer=prompter.get_completer(),
-                         history=prompter.history,
                          get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                          style=prompter.token_style)
 

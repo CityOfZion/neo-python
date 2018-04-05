@@ -1,4 +1,5 @@
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
+from neo.Settings import settings
 import os
 import shutil
 
@@ -7,7 +8,7 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
 
     @classmethod
     def leveldb_testpath(self):
-        return './fixtures/test_chain'
+        return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     @classmethod
     def wallet_1_path(cls):

@@ -1,13 +1,13 @@
 Basic Usage
 -----------
 
-There are two main ways to use neo-python: ``prompt.py`` and running just the node with custom
+There are two main ways to use neo-python: ``np-prompt`` and running just the node with custom
 code.
 
-prompt.py
+np-prompt
 """""""""
 
-Start prompt.py on TestNet:
+Start np-prompt on TestNet:
 
 ::
 
@@ -17,7 +17,7 @@ Show help with all available arguments:
 
 ::
 
-    $ python prompt.py -h
+    $ np-prompt -h
     usage: np-prompt [-h] [-m | -p [host] | --coznet | -c CONFIG]
                      [-t {dark,light}] [-v] [--datadir DATADIR] [--version]
 
