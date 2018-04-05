@@ -154,7 +154,7 @@ class NodeLeader():
 
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""
-        logger.info("Resseting Block requests")
+        logger.debug("Resseting Block requests")
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
             p.myblockrequests = set()

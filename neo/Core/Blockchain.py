@@ -182,7 +182,6 @@ class Blockchain(object):
 
     def ResetBlockRequests(self):
         self.__blockrequests = set()
-        print("Requests now %s " % len(self.BlockRequests))
 
     @staticmethod
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
