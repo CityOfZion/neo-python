@@ -3,7 +3,7 @@ import mmh3
 from neocore.BigInteger import BigInteger
 
 
-class StorageKey(SerializableMixin):
+class StorageKey():
     ScriptHash = None
     Key = None
 
@@ -45,26 +45,6 @@ class StorageKey(SerializableMixin):
         """
         bigint = BigInteger(self.GetHashCode())
         return bigint.ToByteArray()
-
-    def Deserialize(self, reader):
-        """
-        Deserialize full object.
-
-        Args:
-            reader (neocore.IO.BinaryReader):
-        """
-        self.ScriptHash = reader.ReadUInt160()
-        self.Key = reader.ReadBytes()
-
-    def Serialize(self, writer):
-        """
-        Serialize full object.
-
-        Args:
-            writer (neo.IO.BinaryWriter):
-        """
-        writer.WriteUInt160(self.ScriptHash)
-        writer.WriteVarBytes(self.Key)
 
     def __eq__(self, other):
         if other is None:
