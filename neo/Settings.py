@@ -7,19 +7,17 @@ on CLI arguments. By default these are the testnet settings, but you can
 reconfigure them by calling the `setup(..)` methods.
 """
 import json
-import os
 import logging
-import pip
+import os
+import sys
 
-from json.decoder import JSONDecodeError
 import logzero
-
-from neo import __version__
+import pip
 from neocore.Cryptography import Helper
-
 from neorpc.Client import RPCClient
 from neorpc.Settings import settings as rpc_settings
-import sys
+
+from neo import __version__
 
 dir_current = os.path.dirname(os.path.abspath(__file__))
 
@@ -53,11 +51,15 @@ class PrivnetConnectionError(Exception):
     pass
 
 
-class DependencyError(Exception):
+class SystemCheckError(Exception):
     pass
 
 
 def check_depdendencies():
+    """
+    Makes sure that all required dependencies are installed in the exact version
+    (as specified in requirements.txt)
+    """
     # Get installed packages
     installed_packages = pip.get_installed_distributions(local_only=False)
     installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
@@ -67,7 +69,7 @@ def check_depdendencies():
     with open(deps_filename, "r") as f:
         for dep in f.read().split():
             if not dep.lower() in installed_packages_list:
-                raise DependencyError("Required dependency %s is not installed. Please run 'pip install -e .'." % dep)
+                raise SystemCheckError("Required dependency %s is not installed. Please run 'pip install -e .'" % dep)
 
 
 class SettingsHolder:
@@ -100,6 +102,8 @@ class SettingsHolder:
     ALL_FEES = None
     USE_DEBUG_STORAGE = False
     DEBUG_STORAGE_PATH = 'Chains/debugstorage'
+
+    CONNECTED_PEER_MAX = 5
 
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
@@ -232,6 +236,12 @@ class SettingsHolder:
         else:
             self.DATA_DIR_PATH = path
 
+    def set_max_peers(self, num_peers):
+        try:
+            self.CONNECTED_PEER_MAX = int(num_peers)
+        except Exception as e:
+            logzero.logger.error("Please supply an integer number for max peers")
+
     def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled
 
@@ -328,7 +338,12 @@ settings.setup_testnet()
 # By default, set loglevel to INFO. DEBUG just print a lot of internal debug statements
 settings.set_loglevel(logging.INFO)
 
-# Check if currently installed dependencies match the requirements
+# System check: Are dependencies must be installed in the correct version
 # Can be bypassed with `SKIP_DEPS_CHECK=1 python prompt.py`
 if not os.getenv("SKIP_DEPS_CHECK") and not IS_PACKAGE_INSTALL:
     check_depdendencies()
+
+# System check: Python 3.6+
+if not os.getenv("SKIP_PY_CHECK"):
+    if sys.version_info < (3, 6):
+        raise SystemCheckError("Needs Python 3.6+. Currently used: %s" % sys.version)
