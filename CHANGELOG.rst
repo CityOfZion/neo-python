@@ -12,12 +12,15 @@ All notable changes to this project are documented in this file.
 - various networking improvements
 - fix in ``neo.SmartContract.StateReader`` ``ContractMigrate`` functionality
 - added check for Python 3.6 on startup
+- API: Added CORS header ``Access-Control-Allow-Headers: 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With'`` (fixes ``Request header field Content-Type is not allowed by Access-Control-Allow-Headers in preflight response``)
+
 
 [0.6.6] 2018-04-02
 ------------------
 - add ``Neo.Runtime.Serialize`` and ``Neo.Runtime.Deserialize`` for compliance with this (`#163 <https://github.com/neo-project/neo/pull/163>`_)
 - Fixed IsWalletTransaction to make it compare scripts in transactions to scripts (instead of scripthashes) in wallet contracts and scripthashes of transactions (instead of scripts) to scripthashes of watch-only addresses
 - Python version check in ``Settings.py``: fail if not Python 3.6+ (can be disabled with env var ``SKIP_PY_CHECK``)
+
 
 [0.6.5] 2018-03-31
 -----------------------
