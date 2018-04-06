@@ -3,7 +3,11 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.7-dev] in progress
+[0.6.8-dev] in progress
+-----------------------
+
+
+[0.6.7] 2018-04-06
 -----------------------
 - Update all the requirements
 - added ``--maxpeers`` option for ``np-prompt`` and ``np-api-server``.  This allows p2p discovery of new nodes up to the value specified
