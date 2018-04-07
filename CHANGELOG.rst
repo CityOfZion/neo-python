@@ -7,6 +7,8 @@ All notable changes to this project are documented in this file.
 -----------------------
 - add ``ServiceEnabled`` boolean to settings to determine whether nodes should send other nodes blocks
 - updated new block retrieval mechanism
+- fixed sc-events and notification DB showing previous block height instead of final block height of event
+- persist refund() notify events in notification DB
 
 
 [0.6.7] 2018-04-06
