@@ -5,6 +5,8 @@ All notable changes to this project are documented in this file.
 
 [0.6.8-dev] in progress
 -----------------------
+- fixed sc-events and notification DB showing previous block height instead of final block height of event
+- persist refund() notify events in notification DB
 
 
 [0.6.7] 2018-04-06
