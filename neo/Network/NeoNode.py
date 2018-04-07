@@ -218,6 +218,8 @@ class NeoNode(Protocol):
             self.SendPeerInfo()
         elif m.Command == 'getdata':
             self.HandleGetDataMessageReceived(m.Payload)
+        elif m.Command == 'getblocks':
+            self.HandleGetBlocksMessageReceived(m.Payload)
         elif m.Command == 'inv':
             self.HandleInvMessage(m.Payload)
         elif m.Command == 'block':
@@ -227,8 +229,8 @@ class NeoNode(Protocol):
         #            self.HandleBlockHeadersReceived(m.Payload)
         elif m.Command == 'addr':
             self.HandlePeerInfoReceived(m.Payload)
-#        else:
-#            self.Log("Command %s not implemented " % m.Command)
+        else:
+            self.Log("Command %s not implemented " % m.Command)
 
     def ProtocolReady(self):
         self.AskForMoreHeaders()
@@ -302,12 +304,6 @@ class NeoNode(Protocol):
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             reactor.callInThread(self.SendSerializedMessage, message)
 
-    def DoAskForSingleBlock(self, block_hash):
-        if block_hash not in self.myblockrequests:
-            message = Message("getdata", InvPayload(InventoryType.Block, [block_hash]))
-            self.myblockrequests.add(block_hash)
-            self.SendSerializedMessage(message)
-
     def RequestPeerInfo(self):
         """Request the peer address information from the remote client."""
         self.SendSerializedMessage(Message('getaddr'))
@@ -359,7 +355,40 @@ class NeoNode(Protocol):
         self.ProtocolReady()
 
     def HandleInvMessage(self, payload):
-        pass
+        """
+        Process a block header inventory payload.
+
+        Args:
+            inventory (neo.Network.Payloads.InvPayload):
+        """
+
+        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
+
+#        self.Log("INVENTORy %s " % inventory.Type)
+
+        if inventory.Type == InventoryType.BlockInt and self.sync_mode == MODE_MAINTAIN:
+
+            ok_hashes = []
+            for hash in inventory.Hashes:
+                hash = hash.encode('utf-8')
+                if hash not in self.myblockrequests and hash not in BC.Default().BlockRequests:
+                    ok_hashes.append(hash)
+                    BC.Default().BlockRequests.add(hash)
+                    self.myblockrequests.add(hash)
+            if len(ok_hashes):
+                #                logger.info("OK HASHES, get data %s " % ok_hashes)
+                message = Message("getdata", InvPayload(InventoryType.Block, ok_hashes))
+                self.SendSerializedMessage(message)
+
+        elif inventory.Type == InventoryType.TXInt:
+            pass
+        elif inventory.Type == InventoryType.ConsensusInt:
+            pass
+
+#        for hash in inventory.Hashes:
+#            if not hash in self.leader.KnownHashes:
+#                if not hash in self.leader.MissionsGlobal:
+#                    self.leader.MissionsGlobal.append(hash)
 
     def SendSerializedMessage(self, message):
         """
@@ -381,12 +410,9 @@ class NeoNode(Protocol):
             inventory (neo.Network.Inventory):
         """
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
-        # self.Log("Received headers %s " % (len(inventory.Headers)))
+#        self.Log("Received headers %s " % ([h.Hash.ToBytes() for h in inventory.Headers]))
         if inventory is not None:
             BC.Default().AddHeaders(inventory.Headers)
-
-        if len(inventory.Headers) == 1 and BC.Default().HeaderHeight - BC.Default().Height < 5:
-            self.DoAskForSingleBlock(inventory.Headers[0].Hash.ToBytes())
 
         if BC.Default().HeaderHeight < self.Version.StartHeight:
             self.AskForMoreHeaders()
@@ -403,7 +429,6 @@ class NeoNode(Protocol):
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
 
         blockhash = block.Hash.ToBytes()
-
         if blockhash in BC.Default().BlockRequests:
             BC.Default().BlockRequests.remove(blockhash)
         if blockhash in self.myblockrequests:
@@ -433,16 +458,58 @@ class NeoNode(Protocol):
             if hash in self.leader.RelayCache.keys():
                 item = self.leader.RelayCache[hash]
 
-            if item:
-                if inventory.Type == int.from_bytes(InventoryType.TX, 'little'):
-                    message = Message(command='tx', payload=item, print_payload=True)
+            if inventory.Type == InventoryType.TXInt:
+                if not item:
+                    item, index = BC.Default().GetTransaction(hash)
+                if not item:
+                    item = self.leader.GetTransaction(hash)
+                if item:
+                    message = Message(command='tx', payload=item, print_payload=False)
                     self.SendSerializedMessage(message)
 
-                elif inventory.Type == int.from_bytes(InventoryType.Block, 'little'):
-                    logger.info("handle block!")
+            elif inventory.Type == InventoryType.BlockInt:
+                logger.info("handle block!")
+                if not item:
+                    item = BC.Default().GetBlock(hash)
+                if item:
+                    message = Message(command='block', payload=item, print_payload=True)
+                    self.SendSerializedMessage(message)
 
-                elif inventory.Type == int.from_bytes(InventoryType.Consensus, 'little'):
-                    logger.info("handle consensus")
+            elif inventory.Type == InventoryType.ConsensusInt:
+                logger.info("handle consensus")
+                if item:
+                    self.SendSerializedMessage(Message(command='consensus', payload=item, print_payload=True))
+
+    def HandleGetBlocksMessageReceived(self, payload):
+        """
+        Process a GetBlocksPayload payload.
+
+        Args:
+            payload (neo.Network.Payloads.GetBlocksPayload):
+        """
+        if not self.leader.ServiceEnabled:
+            return
+
+        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload')
+
+#        print("inventory %s " % inventory)
+#        print("hash start, hash end %s %s " % (inventory.HashStart, inventory.HashStop))
+
+        if not BC.Default().GetHeader(inventory.HashStart):
+            self.Log("Hash %s not found %s " % inventory.HashStart)
+            return
+        hashes = []
+        hcount = 0
+        hash = inventory.HashStart
+        while hash != inventory.HashStop and hcount < 500:
+            hash = BC.Default().GetNextBlockHash(hash)
+            if hash is None:
+                break
+            hashes.append(hash)
+            hcount += 1
+        if hcount > 0:
+            logger.info("sending inv hashes! %s " % hashes)
+            self.SendSerializedMessage(Message('inv', InvPayload(type=InventoryType.Block, hashes=hashes)))
 
     def Relay(self, inventory):
         """

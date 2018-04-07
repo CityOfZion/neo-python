@@ -39,15 +39,18 @@ class NodeLeader():
 
     _MissedBlocks = []
 
-    BREQPART = 20
-    NREQMAX = 100
+    BREQPART = 100
+    NREQMAX = 500
     BREQMAX = 10000
 
     KnownHashes = []
+    MissionsGlobal = []
     MemPool = {}
     RelayCache = {}
 
     NodeCount = 0
+
+    ServiceEnabled = False
 
     @staticmethod
     def Instance():
@@ -67,6 +70,7 @@ class NodeLeader():
         This is the equivalent to C#'s LocalNode.cs
         """
         self.Setup()
+        self.ServiceEnabled = settings.SERVICE_ENABLED
 
     def Setup(self):
         """
@@ -78,6 +82,7 @@ class NodeLeader():
         self.Peers = []
         self.UnconnectedPeers = []
         self.ADDRS = []
+        self.MissionsGlobal = []
         self.NodeId = random.randint(1294967200, 4294967200)
 
     def Restart(self):
@@ -155,6 +160,7 @@ class NodeLeader():
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""
         logger.debug("Resseting Block requests")
+        self.MissionsGlobal = []
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
             p.myblockrequests = set()
@@ -248,6 +254,11 @@ class NodeLeader():
         relayed = self.RelayDirectly(inventory)
         # self.
         return relayed
+
+    def GetTransaction(self, hash):
+        if hash in self.MemPool.keys():
+            return self.MemPool[hash]
+        return None
 
     def AddTransaction(self, tx):
         """

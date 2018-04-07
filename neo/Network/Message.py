@@ -3,6 +3,7 @@ from neocore.IO.Mixins import SerializableMixin
 from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neocore.Cryptography.Helper import *
+from logzero import logger
 
 
 class ChecksumException(Exception):
@@ -43,8 +44,8 @@ class Message(SerializableMixin):
         self.Checksum = Message.GetChecksum(payload)
         self.Payload = payload
 
-    #        if print_payload:
-    #            logger.info("PAYLOAD: %s " % self.Payload)
+        if print_payload:
+            logger.info("PAYLOAD: %s " % self.Payload)
 
     def Size(self):
         """
