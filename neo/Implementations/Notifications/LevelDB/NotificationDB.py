@@ -117,8 +117,9 @@ class NotificationDB():
         if not isinstance(sc_event, NotifyEvent):
             logger.info("Not Notify Event instance")
             return
-        if sc_event.ShouldPersist and sc_event.notify_type == NotifyType.TRANSFER:
-            self._events_to_write.append(sc_event)
+        if sc_event.ShouldPersist:
+            if sc_event.notify_type == NotifyType.TRANSFER or sc_event.notify_type == NotifyType.REFUND:
+                self._events_to_write.append(sc_event)
 
     def on_persist_completed(self, block):
         """
