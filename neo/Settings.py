@@ -105,6 +105,8 @@ class SettingsHolder:
 
     CONNECTED_PEER_MAX = 5
 
+    SERVICE_ENABLED = True
+
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
     # Logging settings
@@ -198,6 +200,9 @@ class SettingsHolder:
 
         if 'NotificationDataPath' in config:
             self.NOTIFICATION_DB_PATH = config['NotificationDataPath']
+
+        if 'ServiceEnabled' in config:
+            self.SERVICE_ENABLED = bool(config['ServiceEnabled'])
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
