@@ -5,6 +5,8 @@ All notable changes to this project are documented in this file.
 
 [0.6.8-dev] in progress
 -----------------------
+- add ``ServiceEnabled`` boolean to settings to determine whether nodes should send other nodes blocks
+- updated new block retrieval mechanism
 
 
 [0.6.7] 2018-04-06
