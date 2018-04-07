@@ -120,7 +120,7 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteUInt256(self.AssetId)
         writer.WriteFixed8(self.Value)
@@ -131,7 +131,7 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.AssetId = reader.ReadUInt256()
         self.Value = reader.ReadFixed8()
@@ -178,7 +178,7 @@ class TransactionInput(SerializableMixin, EquatableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt16(self.PrevIndex)
@@ -188,7 +188,7 @@ class TransactionInput(SerializableMixin, EquatableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.PrevHash = reader.ReadUInt256()
         self.PrevIndex = reader.ReadUInt16()
@@ -413,7 +413,7 @@ class Transaction(InventoryMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.DeserializeUnsigned(reader)
 
@@ -448,7 +448,7 @@ class Transaction(InventoryMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
 
         Returns:
             Transaction:
@@ -506,7 +506,7 @@ class Transaction(InventoryMixin):
         Deserialize object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
 
         Raises:
             Exception: if transaction type is incorrect.
@@ -521,7 +521,7 @@ class Transaction(InventoryMixin):
         Deserialize object without reading transaction type data.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Version = reader.ReadByte()
         self.DeserializeExclusiveData(reader)
@@ -549,7 +549,7 @@ class Transaction(InventoryMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         self.SerializeUnsigned(writer)
         writer.WriteSerializableArray(self.scripts)
@@ -559,7 +559,7 @@ class Transaction(InventoryMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteByte(self.Type)
         writer.WriteByte(self.Version)

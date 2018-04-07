@@ -61,7 +61,7 @@ class StorageKey(SerializableMixin):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteUInt160(self.ScriptHash)
         writer.WriteVarBytes(self.Key)

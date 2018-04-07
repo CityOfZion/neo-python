@@ -42,7 +42,7 @@ class InvocationTransaction(Transaction):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
 
         Raises:
             Exception: If the version read is incorrect.
@@ -67,7 +67,7 @@ class InvocationTransaction(Transaction):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteVarBytes(self.Script)
         if self.Version >= 1:

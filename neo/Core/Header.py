@@ -29,7 +29,7 @@ class Header(BlockBase):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         super(Header, self).Deserialize(reader)
         if reader.ReadByte() != 0:
@@ -93,7 +93,7 @@ class Header(BlockBase):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         super(Header, self).Serialize(writer)
         writer.WriteByte(0)

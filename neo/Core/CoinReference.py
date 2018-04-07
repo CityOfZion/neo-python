@@ -33,7 +33,7 @@ class CoinReference(object):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.PrevHash = reader.ReadUInt256()
         self.PrevIndex = reader.ReadUInt16()
@@ -43,7 +43,7 @@ class CoinReference(object):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteUInt256(self.PrevHash)
         writer.WriteUInt16(self.PrevIndex)

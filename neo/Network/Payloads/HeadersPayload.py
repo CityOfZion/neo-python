@@ -28,7 +28,7 @@ class HeadersPayload(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Headers = reader.ReadSerializableArray('neo.Core.Header.Header')
 
@@ -37,6 +37,6 @@ class HeadersPayload(SerializableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.Write(self.Headers)

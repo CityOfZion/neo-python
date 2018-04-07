@@ -55,7 +55,7 @@ class IssueTransaction(Transaction):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
 
         self.Type = TransactionType.IssueTransaction

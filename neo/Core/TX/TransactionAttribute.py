@@ -80,7 +80,7 @@ class TransactionAttribute(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         usage = reader.ReadByte()
         self.Usage = usage
@@ -109,7 +109,7 @@ class TransactionAttribute(SerializableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
 
         Raises:
             Exception: if the length exceeds the maximum allowed number of attributes in a transaction.

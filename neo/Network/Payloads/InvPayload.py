@@ -38,7 +38,7 @@ class InvPayload(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Type = reader.ReadByte()
         self.Hashes = reader.ReadHashes()
@@ -51,7 +51,7 @@ class InvPayload(SerializableMixin):
             Exception: if hash writing fails.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         try:
             writer.WriteByte(self.Type)

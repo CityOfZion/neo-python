@@ -63,7 +63,7 @@ class FunctionCode(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Script = reader.ReadVarBytes()
         self.ParameterList = reader.ReadVarBytes()
@@ -74,7 +74,7 @@ class FunctionCode(SerializableMixin):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteVarBytes(self.Script)
         writer.WriteVarBytes(self.ParameterList)

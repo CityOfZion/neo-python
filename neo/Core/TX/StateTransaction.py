@@ -49,7 +49,7 @@ class StateTransaction(Transaction):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
 
         Raises:
             Exception: If the transaction type is incorrect or if there are no claims.
@@ -82,7 +82,7 @@ class StateTransaction(Transaction):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteSerializableArray(self.Descriptors)
 

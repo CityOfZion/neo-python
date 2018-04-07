@@ -13,6 +13,7 @@ from mock import patch
 from neo.Settings import settings
 import os
 
+
 def build_validator_list():
     # fix the consensus validators to the privnet nodes
     wif_wallet1 = 'KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY'

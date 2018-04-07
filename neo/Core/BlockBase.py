@@ -115,7 +115,7 @@ class BlockBase(VerifiableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.DeserializeUnsigned(reader)
         byt = reader.ReadByte()
@@ -131,7 +131,7 @@ class BlockBase(VerifiableMixin):
         Deserialize unsigned data only.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Version = reader.ReadUInt32()
         self.PrevHash = reader.ReadUInt256()
@@ -146,7 +146,7 @@ class BlockBase(VerifiableMixin):
         Serialize unsigned data only.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteUInt32(self.Version)
         writer.WriteUInt256(self.PrevHash)
@@ -195,7 +195,7 @@ class BlockBase(VerifiableMixin):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)

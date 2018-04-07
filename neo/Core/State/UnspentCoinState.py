@@ -106,7 +106,7 @@ class UnspentCoinState(StateBase):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         super(UnspentCoinState, self).Serialize(writer)
 

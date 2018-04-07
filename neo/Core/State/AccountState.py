@@ -133,7 +133,7 @@ class AccountState(StateBase):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         super(AccountState, self).Serialize(writer)
         writer.WriteUInt160(self.ScriptHash)

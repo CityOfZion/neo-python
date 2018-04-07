@@ -40,7 +40,7 @@ class NetworkAddressWithTime(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Timestamp = reader.ReadUInt32()
         self.Services = reader.ReadUInt64()
@@ -60,7 +60,7 @@ class NetworkAddressWithTime(SerializableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteUInt32(self.Timestamp)
         writer.WriteUInt64(self.Services)

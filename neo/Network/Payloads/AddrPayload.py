@@ -28,7 +28,7 @@ class AddrPayload(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.NetworkAddressesWithTime = reader.ReadSerializableArray(
             'neo.Network.Payloads.NetworkAddressWithTime.NetworkAddressWithTime')
@@ -38,7 +38,7 @@ class AddrPayload(SerializableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteVarInt(len(self.NetworkAddressesWithTime))
         for address in self.NetworkAddressesWithTime:

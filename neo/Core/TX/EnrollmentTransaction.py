@@ -43,7 +43,7 @@ class EnrollmentTransaction(Transaction):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
 
         Raises:
             Exception: If the version read is incorrect.
@@ -58,7 +58,7 @@ class EnrollmentTransaction(Transaction):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         self.PublicKey.Serialize(writer, True)
 

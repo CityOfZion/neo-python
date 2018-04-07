@@ -58,7 +58,7 @@ class VersionPayload(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Version = reader.ReadUInt32()
         self.Services = reader.ReadUInt64()
@@ -75,7 +75,7 @@ class VersionPayload(SerializableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteUInt32(self.Version)
         writer.WriteUInt64(self.Services)

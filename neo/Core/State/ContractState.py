@@ -131,7 +131,7 @@ class ContractState(StateBase):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         super(ContractState, self).Serialize(writer)
 

@@ -32,7 +32,7 @@ class GetBlocksPayload(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.HashStart = reader.ReadHashes()
         self.HashStop = reader.ReadUInt256()
@@ -42,7 +42,7 @@ class GetBlocksPayload(SerializableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteHashes(self.HashStart)
         if self.HashStop is not None:

@@ -66,7 +66,7 @@ class ValidatorState(StateBase):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         super(ValidatorState, self).Serialize(writer)
         self.PublicKey.Serialize(writer)

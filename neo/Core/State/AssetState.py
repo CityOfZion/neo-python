@@ -128,7 +128,7 @@ class AssetState(StateBase):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         super(AssetState, self).Serialize(writer)
         writer.WriteUInt256(self.AssetId)

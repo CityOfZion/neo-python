@@ -42,7 +42,7 @@ class MinerTransaction(Transaction):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Nonce = reader.ReadUInt32()
         self.Type = TransactionType.MinerTransaction
@@ -61,7 +61,7 @@ class MinerTransaction(Transaction):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         self.SerializeExclusiveDataAlternative(writer)
 

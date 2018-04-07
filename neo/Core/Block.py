@@ -157,7 +157,7 @@ class Block(BlockBase, InventoryMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         super(Block, self).Deserialize(reader)
 
@@ -241,7 +241,7 @@ class Block(BlockBase, InventoryMixin):
         Serialize full object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         super(Block, self).Serialize(writer)
         writer.WriteSerializableArray(self.Transactions)

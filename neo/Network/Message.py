@@ -62,7 +62,7 @@ class Message(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neo.IO.BinaryReader):
+            reader (neocore.IO.BinaryReader):
         """
         self.Magic = reader.ReadUInt32()
         self.Command = reader.ReadFixedString(12).decode('utf-8')
@@ -99,7 +99,7 @@ class Message(SerializableMixin):
         Serialize object.
 
         Args:
-            writer (neo.IO.BinaryWriter):
+            writer (neocore.IO.BinaryWriter):
         """
         writer.WriteUInt32(self.Magic)
         writer.WriteFixedString(self.Command, 12)
