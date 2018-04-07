@@ -39,8 +39,8 @@ class NodeLeader():
 
     _MissedBlocks = []
 
-    BREQPART = 100
-    NREQMAX = 500
+    BREQPART = 20
+    NREQMAX = 100
     BREQMAX = 10000
 
     KnownHashes = []

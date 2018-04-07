@@ -468,7 +468,6 @@ class NeoNode(Protocol):
                     self.SendSerializedMessage(message)
 
             elif inventory.Type == InventoryType.BlockInt:
-                logger.info("handle block!")
                 if not item:
                     item = BC.Default().GetBlock(hash)
                 if item:
@@ -476,7 +475,6 @@ class NeoNode(Protocol):
                     self.SendSerializedMessage(message)
 
             elif inventory.Type == InventoryType.ConsensusInt:
-                logger.info("handle consensus")
                 if item:
                     self.SendSerializedMessage(Message(command='consensus', payload=item, print_payload=True))
 
@@ -492,12 +490,10 @@ class NeoNode(Protocol):
 
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload')
 
-#        print("inventory %s " % inventory)
-#        print("hash start, hash end %s %s " % (inventory.HashStart, inventory.HashStop))
-
         if not BC.Default().GetHeader(inventory.HashStart):
             self.Log("Hash %s not found %s " % inventory.HashStart)
             return
+
         hashes = []
         hcount = 0
         hash = inventory.HashStart
@@ -508,7 +504,7 @@ class NeoNode(Protocol):
             hashes.append(hash)
             hcount += 1
         if hcount > 0:
-            logger.info("sending inv hashes! %s " % hashes)
+            self.Log("sending inv hashes! %s " % hashes)
             self.SendSerializedMessage(Message('inv', InvPayload(type=InventoryType.Block, hashes=hashes)))
 
     def Relay(self, inventory):
