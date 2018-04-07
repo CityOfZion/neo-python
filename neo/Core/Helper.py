@@ -10,7 +10,8 @@ from neocore.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo.Settings import settings
 from neo.EventHub import events
-
+from logzero import logger
+import binascii
 
 class Helper(object):
 
@@ -144,11 +145,11 @@ class Helper(object):
         Returns:
             bool: True if verification is successful. False otherwise.
         """
-        try:
-            hashes = verifiable.GetScriptHashesForVerifying()
-        except Exception as e:
-            logger.error("couldn't get script hashes %s " % e)
-            return False
+#        try:
+        hashes = verifiable.GetScriptHashesForVerifying()
+#        except Exception as e:
+#            logger.error("couldn't get script hashes %s " % e)
+#            return False
 
         if len(hashes) != len(verifiable.Scripts):
             return False
