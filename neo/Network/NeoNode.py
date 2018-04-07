@@ -301,7 +301,6 @@ class NeoNode(Protocol):
         self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
 
         if len(hashes) > 0:
-            print("Asking for hashes %s " % [hash for hash in hashes])
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             reactor.callInThread(self.SendSerializedMessage, message)
 
