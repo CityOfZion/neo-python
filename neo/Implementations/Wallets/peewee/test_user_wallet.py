@@ -150,13 +150,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet.AddNEP5Token(token)
 
-        wallet = self.GetWallet1(recreate=True) # re-open wallet
+        wallet = self.GetWallet1(recreate=True)  # re-open wallet
 
         self.assertEqual(len(wallet.GetTokens()), 1)
 
         wallet.DeleteNEP5Token(token.ScriptHash)
 
-        wallet = self.GetWallet1(recreate=True) # re-open wallet
+        wallet = self.GetWallet1(recreate=True)  # re-open wallet
 
         self.assertEqual(len(wallet.GetTokens()), 0)
 
