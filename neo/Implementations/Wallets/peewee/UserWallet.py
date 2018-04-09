@@ -480,16 +480,17 @@ class UserWallet(Wallet):
 
         return jsn
 
-    def DeleteNEP5Token(self, token):
+    def DeleteNEP5Token(self, script_hash):
 
-        success = super(UserWallet, self).DeleteNEP5Token(token)
+        token = super(UserWallet, self).DeleteNEP5Token(script_hash)
 
         try:
             db_token = NEP5Token.get(ContractHash=token.ScriptHash.ToBytes())
             db_token.delete_instance()
         except Exception as e:
-            pass
-        return success
+            return False
+
+        return True
 
     def DeleteAddress(self, script_hash):
         success, coins_toremove = super(UserWallet, self).DeleteAddress(script_hash)

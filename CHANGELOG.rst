@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.6.8-dev] in progress
 -----------------------
+- fix for token_delete command not removing tokens from wallet file
 - fixed sc-events and notification DB showing previous block height instead of final block height of event
 - persist refund() notify events in notification DB
 
