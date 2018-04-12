@@ -30,7 +30,7 @@ In English:
         # In the use of the process, according to the different types of assets, can use the total amount of different models, the specific rules are as follows:
         # 1. For equity, use only limited models;        
         # 2. For currencies, use only unlimited models;  
-        # 3. For point coupons, you can use any pattern;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+        # 3. For point coupons, you can use any pattern;
 """
 
     def __init__(self, inputs=None,
