@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Asset Type in neo
