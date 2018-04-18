@@ -322,7 +322,7 @@ class SettingsHolder:
             if nonce_chain != nonce_container:
                 raise PrivnetConnectionError(
                     "Chain database in Chains/privnet is for a different private network than the current container. "
-                    "Consider deleting the Chain directory with 'rm -rf %s/privnet*'." % self.chain_leveldb_path
+                    "Consider deleting the Chain directory with 'rm -rf %s*'." % self.chain_leveldb_path
                 )
         else:
             # When the Chains/privnet folder is removed, we need to create the directory
