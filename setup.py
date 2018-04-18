@@ -2,8 +2,12 @@
 """The setup script."""
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
-from pip.download import PipSession
+try:  # pip version >= 10.0
+    from pip._internal.req import parse_requirements
+    from pip._internal.download import PipSession
+except ImportError:  # pip version < 10.0
+    from pip.req import parse_requirements
+    from pip.download import PipSession
 
 
 with open('README.rst') as readme_file:
