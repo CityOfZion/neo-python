@@ -236,3 +236,4 @@ All notable changes to this project are documented in this file.
 - added additional SC Api ( ``Neo.Runtime.GetTime``, ``Neo.Transaction.GetUnspentCoins``, ``Neo.Header.GetIndex``)
 - added support for dynamically defined smart contract execution
 - added ability to alias an address in the wallet
+- added support for pip versions >= 10.0
