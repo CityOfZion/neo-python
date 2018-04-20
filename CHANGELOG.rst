@@ -3,17 +3,34 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.7-dev] in progress
+[0.6.8-dev] in progress
+-----------------------
+- add ``ServiceEnabled`` boolean to settings to determine whether nodes should send other nodes blocks
+- updated new block retrieval mechanism
+- fix for token_delete command not removing tokens from wallet file
+- fixed sc-events and notification DB showing previous block height instead of final block height of event
+- persist refund() notify events in notification DB
+- Add smart contract storage searching using a prefix.
+
+[0.6.7] 2018-04-06
 -----------------------
 - Update all the requirements
 - Networking changes
-- Add smart contract storage searching using a prefix.
+- added ``--maxpeers`` option for ``np-prompt`` and ``np-api-server``.  This allows p2p discovery of new nodes up to the value specified
+- added ``--host`` option for ``np-api-server`` in order to specify a hostname for the server
+- added more testing for ``neo.Network`` module
+- various networking improvements
+- fix in ``neo.SmartContract.StateReader`` ``ContractMigrate`` functionality
+- added check for Python 3.6 on startup
+- API: Added CORS header ``Access-Control-Allow-Headers: 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With'`` (fixes ``Request header field Content-Type is not allowed by Access-Control-Allow-Headers in preflight response``)
+
 
 [0.6.6] 2018-04-02
 ------------------
 - add ``Neo.Runtime.Serialize`` and ``Neo.Runtime.Deserialize`` for compliance with this (`#163 <https://github.com/neo-project/neo/pull/163>`_)
 - Fixed IsWalletTransaction to make it compare scripts in transactions to scripts (instead of scripthashes) in wallet contracts and scripthashes of transactions (instead of scripts) to scripthashes of watch-only addresses
 - Python version check in ``Settings.py``: fail if not Python 3.6+ (can be disabled with env var ``SKIP_PY_CHECK``)
+
 
 [0.6.5] 2018-03-31
 -----------------------
@@ -220,3 +237,4 @@ All notable changes to this project are documented in this file.
 - added additional SC Api ( ``Neo.Runtime.GetTime``, ``Neo.Transaction.GetUnspentCoins``, ``Neo.Header.GetIndex``)
 - added support for dynamically defined smart contract execution
 - added ability to alias an address in the wallet
+- added support for pip versions >= 10.0

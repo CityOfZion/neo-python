@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Transaction Attribute
@@ -6,7 +5,6 @@ Usage:
     from neo.Core.TX.TransactionAttribute import TransactionAttribute
 """
 from logzero import logger
-from neo.Network.Inventory import Inventory
 from neocore.IO.Mixins import SerializableMixin
 from neocore.UIntBase import UIntBase
 
@@ -59,7 +57,7 @@ class TransactionAttributeUsage(object):
     Remark15 = int.from_bytes(b'\xff', 'little')
 
 
-class TransactionAttribute(Inventory, SerializableMixin):
+class TransactionAttribute(SerializableMixin):
     MAX_ATTR_DATA_SIZE = 65535
 
     """docstring for TransactionAttribute"""

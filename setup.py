@@ -1,11 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
+#!/usr/bin/env python3
 """The setup script."""
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
-from pip.download import PipSession
+try:  # pip version >= 10.0
+    from pip._internal.req import parse_requirements
+    from pip._internal.download import PipSession
+except ImportError:  # pip version < 10.0
+    from pip.req import parse_requirements
+    from pip.download import PipSession
 
 
 with open('README.rst') as readme_file:
@@ -18,7 +20,7 @@ reqs = [str(ir.req) for ir in install_reqs]
 setup(
     name='neo-python',
     python_requires='>=3.6',
-    version='0.6.7-dev',
+    version='0.6.8-dev',
     description="Python Node and SDK for the NEO blockchain",
     long_description=readme,
     author="Thomas Saunders",
