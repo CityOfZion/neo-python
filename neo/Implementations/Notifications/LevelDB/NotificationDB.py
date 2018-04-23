@@ -6,10 +6,8 @@ from neo.Core.State.ContractState import ContractState
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
-from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neocore.UInt160 import UInt160
-import json
-import pdb
+
 
 
 class NotificationPrefix():
