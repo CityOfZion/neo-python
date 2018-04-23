@@ -1,6 +1,4 @@
-
 from neocore.IO.Mixins import SerializableMixin
-import sys
 from neocore.Cryptography.Helper import *
 from neo.Core.Helper import Helper
 from neo.Network.InventoryType import InventoryType
