@@ -2,7 +2,6 @@ from prompt_toolkit import prompt
 from neo.Prompt.InputParser import InputParser
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neo.VM.InteropService import InteropInterface
 from boa.compiler import Compiler
 import pprint
 import pdb

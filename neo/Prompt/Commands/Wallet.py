@@ -5,13 +5,12 @@ from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import string_from_fixed8, get_asset_id, get_from_addr
+from neo.Prompt.Utils import get_asset_id, get_from_addr
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
 import binascii
 import json
-import pdb
 
 
 def DeleteAddress(prompter, wallet, addr):

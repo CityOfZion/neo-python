@@ -7,7 +7,6 @@ from neocore.Fixed8 import Fixed8
 from boa.compiler import Compiler
 from logzero import logger
 import binascii
-import traceback
 from neo.Core.State.ContractState import ContractPropertyState
 import os
 import json

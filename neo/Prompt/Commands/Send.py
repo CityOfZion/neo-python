@@ -8,11 +8,9 @@ from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Wallets.NEP5Token import NEP5Token
 from neocore.UInt256 import UInt256
 from neocore.Fixed8 import Fixed8
-import pdb
 import json
 from prompt_toolkit import prompt
 import traceback
-from neo.Wallets.utils import to_aes_key
 
 
 def construct_and_send(prompter, wallet, arguments, prompt_password=True):
