@@ -1,5 +1,5 @@
 import logging
-from peewee import *
+from peewee import Proxy, SqliteDatabase
 from logzero import logger
 
 logger = logging.getLogger('peewee')
