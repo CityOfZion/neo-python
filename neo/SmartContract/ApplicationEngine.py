@@ -19,9 +19,7 @@ from neo.Core.State.StorageItem import StorageItem
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
 
-import pdb
 from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
 import datetime
 from neo.Settings import settings
 

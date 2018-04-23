@@ -15,12 +15,11 @@ from neocore.Cryptography.ECCurve import ECDSA
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neocore.Fixed8 import Fixed8
-from neo.VM.InteropService import StackItem, stack_item_to_py
+from neo.VM.InteropService import StackItem
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
-from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
+from neo.EventHub import SmartContractEvent
 
-import pdb
 
 
 class StateMachine(StateReader):

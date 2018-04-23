@@ -5,10 +5,9 @@ from neocore.Fixed8 import Fixed8
 from neo.Prompt.Commands.BuildNRun import BuildAndRun
 from neo.Wallets.utils import to_aes_key
 from neo.Settings import settings
-from mock import patch
 from mock import MagicMock
 from neo.Prompt.vm_debugger import VMDebugger, DebugContext
-from io import StringIO
+
 
 
 class UserWalletTestCase(WalletFixtureTestCase):

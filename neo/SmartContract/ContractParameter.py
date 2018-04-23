@@ -1,6 +1,5 @@
-from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
+from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.VM.InteropService import StackItem, Array, ByteArray, Struct, Boolean, Integer, InteropInterface
-import binascii
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neocore.BigInteger import BigInteger
