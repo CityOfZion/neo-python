@@ -5,13 +5,10 @@ from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.TX.Transaction import *
 from neo.SmartContract.Contract import Contract
 from neo.Core.Blockchain import Blockchain
-from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neo.VM.OpCode import *
 from neo.Settings import settings
 from neocore.Cryptography.Crypto import Crypto
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-import shutil
 
 
 class GenesisBlockTestCase(VerifiableTestCase):

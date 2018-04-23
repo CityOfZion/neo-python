@@ -1,9 +1,5 @@
 import sys
-import json
 import binascii
-
-from logzero import logger
-
 from neocore.IO.Mixins import SerializableMixin
 
 

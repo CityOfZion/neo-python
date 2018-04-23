@@ -1,4 +1,3 @@
-import json
 import binascii
 
 from neo.Utils.NeoTestCase import NeoTestCase
@@ -9,7 +8,6 @@ from neo.Core.State.AccountState import AccountState
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
-from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.Core.Blockchain import Blockchain
 
