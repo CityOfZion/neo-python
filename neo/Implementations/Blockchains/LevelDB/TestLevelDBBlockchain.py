@@ -1,5 +1,3 @@
-from logzero import logger
-
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import TransactionType
