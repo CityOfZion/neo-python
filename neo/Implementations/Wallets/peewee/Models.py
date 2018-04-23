@@ -1,5 +1,5 @@
 
-from peewee import *
+from peewee import Model, PrimaryKeyField, CharField, BooleanField, ForeignKeyField, IntegerField, DateTimeField
 from .PWDatabase import PWDatabase
 from neocore.Cryptography.Crypto import Crypto
 from neocore.UInt256 import UInt256
