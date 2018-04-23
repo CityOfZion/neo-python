@@ -1,4 +1,4 @@
-from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neo.IO.MemoryStream import StreamManager
 from neocore.IO.BinaryReader import BinaryReader
 
 
