@@ -1,7 +1,6 @@
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 import shutil
-import time
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Settings import settings
 import os
