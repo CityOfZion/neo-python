@@ -1,6 +1,4 @@
-import events
 import binascii
-import pdb
 
 from logzero import logger
 
@@ -9,13 +7,11 @@ from neo.SmartContract.Contract import Contract
 from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
 from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
-from neo.Core.State.StorageItem import StorageItem
 from neo.Core.Blockchain import Blockchain
 from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
-from neo.EventHub import dispatch_smart_contract_event, dispatch_smart_contract_notify
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification

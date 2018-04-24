@@ -7,11 +7,8 @@ from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
-from twisted.internet.protocol import Factory, ReconnectingClientFactory
-from twisted.application.internet import ClientService
-from twisted.internet import reactor, task
-from twisted.internet.endpoints import clientFromString
-from twisted.application.internet import backoffPolicy
+from twisted.internet.protocol import ReconnectingClientFactory
+from twisted.internet import reactor
 
 
 class NeoClientFactory(ReconnectingClientFactory):

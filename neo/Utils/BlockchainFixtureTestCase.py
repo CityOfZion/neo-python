@@ -1,8 +1,6 @@
 import tarfile
 import requests
-import os
 import shutil
-import time
 
 from neo.Settings import settings
 from neo.Utils.NeoTestCase import NeoTestCase

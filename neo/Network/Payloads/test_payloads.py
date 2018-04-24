@@ -9,7 +9,7 @@ from neo.Network.Message import Message
 from neo.IO.Helper import Helper as IOHelper
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neo.IO.MemoryStream import StreamManager
 from neo.Settings import settings
 from neo.Core.Helper import Helper
 

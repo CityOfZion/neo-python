@@ -6,7 +6,6 @@ from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ImportToken
 from neo.Prompt.Commands.Tokens import token_get_allowance, token_approve_allowance, token_send, token_send_from
 import shutil
-import json
 
 
 class UserWalletTestCase(WalletFixtureTestCase):

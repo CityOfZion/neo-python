@@ -1,14 +1,8 @@
 from unittest import TestCase
-from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
-from mock import patch, Mock, MagicMock
-import mock
-from neocore.UInt160 import UInt160
-from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Wallets.utils import to_aes_key
+from mock import patch
 from neo.Network.Payloads.VersionPayload import VersionPayload
 from neo.Network.Message import Message
-from neo.Core.Helper import Helper
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.BinaryWriter import BinaryWriter
 
