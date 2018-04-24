@@ -5,6 +5,7 @@ from neo.VM.ExecutionEngine import ExecutionContext
 from neo.SmartContract.StateReader import StateReader
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
+from neo.Core.Blockchain import Blockchain
 from mock import patch
 
 from neo.SmartContract.tests.test_vm_error_output import StringIn
