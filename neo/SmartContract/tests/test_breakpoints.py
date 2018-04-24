@@ -9,7 +9,6 @@ from mock import MagicMock
 from neo.Prompt.vm_debugger import VMDebugger, DebugContext
 
 
-
 class UserWalletTestCase(WalletFixtureTestCase):
 
     wallet_1_script_hash = UInt160(data=b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)')

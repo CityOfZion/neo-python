@@ -21,7 +21,6 @@ from neo.SmartContract.StateReader import StateReader
 from neo.EventHub import SmartContractEvent
 
 
-
 class StateMachine(StateReader):
 
     _accounts = None

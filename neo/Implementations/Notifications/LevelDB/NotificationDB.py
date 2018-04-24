@@ -9,7 +9,6 @@ from neo.Core.Helper import Helper
 from neocore.UInt160 import UInt160
 
 
-
 class NotificationPrefix():
     """
     Byte Prefixes to use for writing event data to disk

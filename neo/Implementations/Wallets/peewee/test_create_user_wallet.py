@@ -6,7 +6,6 @@ from neocore.UInt160 import UInt160
 from neocore.KeyPair import KeyPair
 
 
-
 class UserWalletTestCase(WalletFixtureTestCase):
 
     wallet_1_script_hash = UInt160(data=b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)')
