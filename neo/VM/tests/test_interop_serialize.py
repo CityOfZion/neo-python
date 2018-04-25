@@ -170,6 +170,36 @@ class InteropSerializeDeserializeTestCase(TestCase):
         deserialized = self.engine.EvaluationStack.Pop()
         self.assertEqual(deserialized.GetBigInteger(), 0)
 
+    def test_serialize_map(self):
+        map2 = Map({
+            StackItem.New(b'a'): StackItem.New(1),
+            StackItem.New(b'b'): StackItem.New(2),
+            StackItem.New(b'c'): StackItem.New(3),
+        })
+
+        self.engine.EvaluationStack.PushT(map2)
+
+        self.state_reader.Runtime_Serialize(self.engine)
+        self.state_reader.Runtime_Deserialize(self.engine)
+
+        deserialized = self.engine.EvaluationStack.Pop()
+        self.assertEqual(deserialized, map2)
+
+        map3 = Map({
+            StackItem.New(b'j'): StackItem.New(8),
+            StackItem.New(b'k'): StackItem.New(2222),
+        })
+
+        map2.SetItem(StackItem.New(b'mymap'), map3)
+
+        self.engine.EvaluationStack.PushT(map2)
+
+        self.state_reader.Runtime_Serialize(self.engine)
+        self.state_reader.Runtime_Deserialize(self.engine)
+
+        deserialized = self.engine.EvaluationStack.Pop()
+        self.assertEqual(deserialized, map2)
+
     @patch('logzero.logger.error')
     def test_cant_serialize_iop_item(self, mocked_logger):
 
