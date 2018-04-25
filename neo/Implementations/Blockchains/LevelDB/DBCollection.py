@@ -144,6 +144,9 @@ class DBCollection():
 
         return None
 
+    def DeserializeFromDB(self, buffer):
+        return self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
+
     def Add(self, keyval, item):
         self.Collection[keyval] = item
         self.MarkChanged(keyval)
@@ -161,6 +164,7 @@ class DBCollection():
         key_prefix = self.Prefix + key_prefix
         res = []
         for key, val in self.DB.iterator(prefix=key_prefix):
+            val = self.DeserializeFromDB(val)
             res.append({key: val})
         return res
 
