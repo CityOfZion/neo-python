@@ -99,8 +99,15 @@ class StackItem(EquatableMixin):
                 stack_item.Add(StackItem.DeserializeStackItem(reader))
             return stack_item
         elif stype == StackItemType.Map:
-            logger.warn("Map deserialize not implemented in c# core")
-            return None
+            stack_item = Map()
+            count = reader.ReadVarInt()
+            while count > 0:
+                count -= 1
+                key = StackItem.DeserializeStackItem(reader)
+                val = StackItem.DeserializeStackItem(reader)
+                stack_item.SetItem(key, val)
+            return stack_item
+
         else:
             logger.error("Could not deserialize stack item with type: %s " % stype)
         return None
@@ -126,7 +133,7 @@ class StackItem(EquatableMixin):
         elif typ is list:
             return Array(value)
 
-#        logger.info("Could not create stack item for vaule %s %s " % (typ, value))
+        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 
 
@@ -480,7 +487,11 @@ class Map(StackItem, CollectionMixin):
         return self._dict
 
     def Serialize(self, writer):
-        raise Exception("Not Supported to Serialize Map: %s " % self)
+        writer.WriteByte(StackItemType.Map)
+        writer.WriteVarInt(self.Count)
+        for key, val in self._dict.items():
+            key.Serialize(writer)
+            val.Serialize(writer)
 
     def GetByteArray(self):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))
