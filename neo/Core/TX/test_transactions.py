@@ -5,7 +5,6 @@ from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
-import json
 import os
 
 

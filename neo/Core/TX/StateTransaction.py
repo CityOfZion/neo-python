@@ -1,6 +1,5 @@
 from neo.Core.TX.Transaction import *
 from neocore.Fixed8 import Fixed8
-from neo.Core.State.StateDescriptor import StateDescriptor
 
 
 class StateTransaction(Transaction):

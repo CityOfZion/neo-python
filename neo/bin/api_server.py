@@ -45,9 +45,7 @@ from logzero import logger
 from twisted.logger import STDLibLogObserver, globalLogPublisher
 
 # Twisted and Klein methods and modules
-from twisted.internet import reactor, task, endpoints
-from twisted.web.server import Site
-from twisted.web import server
+from twisted.internet import reactor, task
 
 # neo methods and modules
 from neo.Core.Blockchain import Blockchain

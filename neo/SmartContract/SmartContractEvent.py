@@ -1,15 +1,11 @@
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.IO.BinaryReader import BinaryReader
-from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
 from neocore.BigInteger import BigInteger
 from neocore.Cryptography.Crypto import Crypto
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.Mixins import SerializableMixin
 import binascii
-import json
-import pdb
 from logzero import logger
 from neo.Core.State.ContractState import ContractState
 

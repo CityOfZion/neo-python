@@ -8,8 +8,6 @@ look at `Settings.py`. Use it like this example:
 
 """
 import json
-import os
-import sys
 
 from json.decoder import JSONDecodeError
 from logzero import logger

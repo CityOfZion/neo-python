@@ -5,12 +5,10 @@ Description:
 Usage:
     from neo.SmartContract.Contract import Contract
 """
-from io import BytesIO, BufferedReader, BufferedWriter
 from neo.VM.OpCode import *
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neocore.Cryptography.Crypto import *
 from neocore.IO.Mixins import SerializableMixin
-from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
 from neocore.Cryptography.Helper import *

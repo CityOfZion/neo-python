@@ -1,6 +1,5 @@
 import json
 import binascii
-import pdb
 
 from logzero import logger
 
@@ -13,7 +12,6 @@ from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
-from neo.Core.FunctionCode import FunctionCode
 
 
 class ContractParamater():

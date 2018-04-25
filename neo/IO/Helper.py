@@ -3,7 +3,6 @@ from logzero import logger
 from .MemoryStream import MemoryStream, StreamManager
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Core.TX.Transaction import Transaction
-from neo.Blockchain import GetBlockchain
 
 
 class Helper(object):

@@ -6,7 +6,6 @@ from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
 from neocore.Fixed8 import Fixed8
 import shutil
-import pdb
 
 
 class UserWalletTestCase(WalletFixtureTestCase):

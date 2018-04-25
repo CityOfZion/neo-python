@@ -10,7 +10,10 @@ All notable changes to this project are documented in this file.
 - fix for token_delete command not removing tokens from wallet file
 - fixed sc-events and notification DB showing previous block height instead of final block height of event
 - persist refund() notify events in notification DB
-- Add smart contract storage searching using a prefix.
+- add smart contract storage searching using a prefix.
+- add Runtime.Serialize/Deserialize support for MAP
+- fix for debug breakpoints not being cleared.
+
 
 [0.6.7] 2018-04-06
 -----------------------

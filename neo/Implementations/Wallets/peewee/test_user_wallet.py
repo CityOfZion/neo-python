@@ -11,7 +11,6 @@ from neo.Wallets.NEP5Token import NEP5Token
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
 from neo.Network.NodeLeader import NodeLeader
-import json
 import binascii
 
 

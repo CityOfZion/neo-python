@@ -5,11 +5,8 @@ Usage:
     from neo.Core.Scripts.ScriptBuilder import ScriptBuilder
 """
 
-import binascii
-
 from neo.VM.OpCode import *
 from neo.IO.MemoryStream import MemoryStream
-from neocore.Cryptography.Helper import base256_encode
 from neocore.BigInteger import BigInteger
 import struct
 

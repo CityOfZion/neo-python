@@ -28,14 +28,12 @@ from neo.SmartContract.Contract import Contract
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
 from neo.Settings import settings
-from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
 from logzero import logger
 
 from neo.VM.OpCode import *
-import json
-from twisted.internet import reactor
+
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
@@ -471,7 +469,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
         )
 
         engine.LoadScript(itx.Script, False)
-        engine.LoadDebugInfo(debug_map)
+        engine.LoadDebugInfoForScriptHash(debug_map, shash.Data)
 
         # call execute in its own blocking thread
 
