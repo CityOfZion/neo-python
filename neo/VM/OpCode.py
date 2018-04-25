@@ -183,6 +183,7 @@ SHA256 = b'\xA8'  # The input is hashed using SHA-256.
 HASH160 = b'\xA9'
 HASH256 = b'\xAA'
 CHECKSIG = b'\xAC'
+VERIFY = b'\xAD'
 CHECKMULTISIG = b'\xAE'
 
 

@@ -12,6 +12,7 @@ All notable changes to this project are documented in this file.
 - persist refund() notify events in notification DB
 - add Runtime.Serialize/Deserialize support for MAP
 - fix for debug breakpoints not being cleared.
+- add VERIFY op to ExecutionEngine
 
 [0.6.7] 2018-04-06
 -----------------------
