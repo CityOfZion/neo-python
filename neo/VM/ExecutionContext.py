@@ -1,5 +1,6 @@
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.BinaryReader import BinaryReader
+from neocore.UInt160 import UInt160
 
 
 class ExecutionContext():
@@ -14,15 +15,11 @@ class ExecutionContext():
 
     __mstream = None
 
-    __Breakpoints = None
+    Breakpoints = None
 
     @property
     def OpReader(self):
         return self.__OpReader
-
-    @property
-    def Breakpoints(self):
-        return self.__Breakpoints
 
     @property
     def InstructionPointer(self):
@@ -46,13 +43,13 @@ class ExecutionContext():
         self._Engine = engine
         self.Script = script
         self.PushOnly = push_only
-        self.__Breakpoints = break_points
+        self.Breakpoints = break_points
         self.__mstream = StreamManager.GetStream(self.Script)
         self.__OpReader = BinaryReader(self.__mstream)
 
     def Clone(self):
 
-        context = ExecutionContext(self._Engine, self.Script, self.PushOnly, self.__Breakpoints)
+        context = ExecutionContext(self._Engine, self.Script, self.PushOnly, self.Breakpoints)
         context.SetInstructionPointer(self.InstructionPointer)
 
         return context
