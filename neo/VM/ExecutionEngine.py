@@ -109,17 +109,16 @@ class ExecutionEngine():
         self._AltStack = RandomAccessStack(name='Alt')
         self._ExecutedScriptHashes = []
         self.ops_processed = 0
+        self._debug_map = None
         self._is_write_log = settings.log_vm_instructions
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
 
-    def LoadDebugInfo(self, debug_map=None):
-        if debug_map:
+    def LoadDebugInfoForScriptHash(self, debug_map, script_hash):
+        if debug_map and script_hash:
             self._debug_map = debug_map
-            for b in self._debug_map['breakpoints']:
-                self.AddBreakPoint(b)
-#                print("breakpoint %s " % b)
+            self._debug_map['script_hash'] = script_hash
 
     def Dispose(self):
         while self._InvocationStack.Count > 0:
@@ -143,7 +142,6 @@ class ExecutionEngine():
         estack = self._EvaluationStack
         istack = self._InvocationStack
         astack = self._AltStack
-#        print("VM STATE %s " % self._VMState)
 
         if opcode > PUSH16 and opcode != RET and context.PushOnly:
             return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
@@ -892,6 +890,10 @@ class ExecutionEngine():
     def LoadScript(self, script, push_only=False):
 
         context = ExecutionContext(self, script, push_only)
+
+        if self._debug_map and context.ScriptHash() == self._debug_map['script_hash']:
+            context.Breakpoints = set(self._debug_map['breakpoints'])
+
         self._InvocationStack.PushT(context)
 
         self._ExecutedScriptHashes.append(context.ScriptHash())
