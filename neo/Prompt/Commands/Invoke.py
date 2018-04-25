@@ -469,7 +469,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
         )
 
         engine.LoadScript(itx.Script, False)
-        engine.LoadDebugInfo(debug_map)
+        engine.LoadDebugInfoForScriptHash(debug_map, shash.Data)
 
         # call execute in its own blocking thread
 
