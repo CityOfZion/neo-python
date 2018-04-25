@@ -589,16 +589,23 @@ class ExecutionEngine():
 
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
-
                 try:
-
                     res = self.Crypto.VerifySignature(self.ScriptContainer.GetMessage(), sig, pubkey)
                     estack.PushT(res)
-
                 except Exception as e:
                     estack.PushT(False)
                     logger.error("Could not checksig: %s " % e)
-                return
+
+            elif opcode == VERIFY:
+                pubkey = estack.Pop().GetByteArray()
+                sig = estack.Pop().GetByteArray()
+                message = estack.Pop().GetString()
+                try:
+                    res = self.Crypto.VerifySignature(message, sig, pubkey)
+                    estack.PushT(res)
+                except Exception as e:
+                    estack.PushT(False)
+                    logger.error("Could not checksig: %s " % e)
 
             elif opcode == CHECKMULTISIG:
 
