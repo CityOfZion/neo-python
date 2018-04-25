@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     ScriptBuilder in neo, to create scripts

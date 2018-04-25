@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Wallet
@@ -199,7 +198,7 @@ class Wallet(object):
             token (UInt160): Token Contract script hash
 
         Returns:
-            bool: success status.
+            NEP5Token: the token object removed from the wallet
         """
         return self._tokens.pop(script_hash.ToBytes())
 

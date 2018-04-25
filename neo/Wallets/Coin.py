@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     define the data struct of coin

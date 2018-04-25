@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Transaction Basic Class
@@ -9,7 +8,7 @@ from itertools import groupby
 from neo.Blockchain import *
 from neo.Core.TX.TransactionAttribute import *
 from neocore.Fixed8 import Fixed8
-from neo.Network.Inventory import Inventory
+
 from neo.Network.InventoryType import InventoryType
 from neo.Network.Mixins import InventoryMixin
 from neocore.Cryptography.Crypto import *
@@ -21,7 +20,6 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neocore.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
-import inspect
 
 
 class TransactionResult(EquatableMixin):
@@ -216,7 +214,7 @@ class TransactionInput(SerializableMixin, EquatableMixin):
         }
 
 
-class Transaction(Inventory, InventoryMixin):
+class Transaction(InventoryMixin):
     Type = None
 
     Version = 0

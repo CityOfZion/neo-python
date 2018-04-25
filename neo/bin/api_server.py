@@ -47,6 +47,7 @@ from twisted.logger import STDLibLogObserver, globalLogPublisher
 # Twisted and Klein methods and modules
 from twisted.internet import reactor, task, endpoints
 from twisted.web.server import Site
+from twisted.web import server
 
 # neo methods and modules
 from neo.Core.Blockchain import Blockchain
@@ -81,7 +82,7 @@ def custom_background_code():
     thread and handle exiting this thread in another way (eg. with signals and events).
     """
     while True:
-        logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
+        logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height + 1), str(Blockchain.Default().HeaderHeight + 1))
         sleep(15)
 
 
@@ -112,6 +113,12 @@ def main():
     # Where to store stuff
     parser.add_argument("--datadir", action="store",
                         help="Absolute path to use for database directories")
+    # peers
+    parser.add_argument("--maxpeers", action="store", default=5,
+                        help="Max peers to use for P2P Joining")
+
+    # host
+    parser.add_argument("--host", action="store", type=str, help="Hostname ( for example 127.0.0.1)", default="0.0.0.0")
 
     # Now parse
     args = parser.parse_args()
@@ -146,6 +153,8 @@ def main():
 
     if args.datadir:
         settings.set_data_dir(args.datadir)
+    if args.maxpeers:
+        settings.set_max_peers(args.maxpeers)
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -197,20 +206,20 @@ def main():
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
 
-    # Default host is open for all
-    host = "0.0.0.0"
-
     if args.port_rpc:
-        logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
+        logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
         api_server_rpc = JsonRpcApi(args.port_rpc)
-        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, host)
-        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+#        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
+#        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+#        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
+        api_server_rpc.app.run(args.host, args.port_rpc)
 
     if args.port_rest:
-        logger.info("Starting REST api server on http://%s:%s" % (host, args.port_rest))
+        logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
         api_server_rest = RestApi()
-        endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, host)
-        endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
+#        endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
+#        endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
+        api_server_rest.app.run(args.host, args.port_rest)
 
     reactor.run()
 

@@ -7,19 +7,29 @@ from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
-from twisted.internet.protocol import Factory
+from twisted.internet.protocol import Factory, ReconnectingClientFactory
 from twisted.application.internet import ClientService
 from twisted.internet import reactor, task
 from twisted.internet.endpoints import clientFromString
 from twisted.application.internet import backoffPolicy
 
 
+class NeoClientFactory(ReconnectingClientFactory):
+    protocol = NeoNode
+    maxRetries = 1
+
+    def clientConnectionFailed(self, connector, reason):
+        address = "%s:%s" % (connector.host, connector.port)
+        logger.debug("Dropped connection from %s " % address)
+        for peer in NodeLeader.Instance().Peers:
+            if peer.Address == address:
+                peer.connectionLost()
+
+
 class NodeLeader():
     __LEAD = None
 
     Peers = []
-
-    ConnectedPeersMax = 30
 
     UnconnectedPeers = []
 
@@ -29,13 +39,18 @@ class NodeLeader():
 
     _MissedBlocks = []
 
-    BREQPART = 100
-    NREQMAX = 500
-    BREQMAX = 2500
+    BREQPART = 20
+    NREQMAX = 100
+    BREQMAX = 10000
 
     KnownHashes = []
+    MissionsGlobal = []
     MemPool = {}
     RelayCache = {}
+
+    NodeCount = 0
+
+    ServiceEnabled = False
 
     @staticmethod
     def Instance():
@@ -55,6 +70,7 @@ class NodeLeader():
         This is the equivalent to C#'s LocalNode.cs
         """
         self.Setup()
+        self.ServiceEnabled = settings.SERVICE_ENABLED
 
     def Setup(self):
         """
@@ -66,10 +82,12 @@ class NodeLeader():
         self.Peers = []
         self.UnconnectedPeers = []
         self.ADDRS = []
+        self.MissionsGlobal = []
         self.NodeId = random.randint(1294967200, 4294967200)
 
     def Restart(self):
         if len(self.Peers) == 0:
+            self.ADDRS = []
             self.Start()
 
     def Start(self):
@@ -80,27 +98,28 @@ class NodeLeader():
             host, port = bootstrap.split(":")
             self.ADDRS.append('%s:%s' % (host, port))
             reactor.callLater(start_delay, self.SetupConnection, host, port)
-            start_delay += 10
+            start_delay += 1
 
-    def RemoteNodePeerReceived(self, host, port):
+    def RemoteNodePeerReceived(self, host, port, index):
         addr = '%s:%s' % (host, port)
-        if addr not in self.ADDRS:
-            if len(self.Peers) < self.ConnectedPeersMax:
-                self.ADDRS.append(addr)
-                self.SetupConnection(host, port)
+        if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX:
+            self.ADDRS.append(addr)
+            reactor.callLater(index * 10, self.SetupConnection, host, port)
 
-    def SetupConnection(self, host, port, timeout=10):
-        logger.debug("Setting up connection! %s %s " % (host, port))
+    def SetupConnection(self, host, port):
+        if len(self.Peers) < settings.CONNECTED_PEER_MAX:
+            reactor.connectTCP(host, int(port), NeoClientFactory())
 
-        factory = Factory.forProtocol(NeoNode)
-        endpoint = clientFromString(reactor, "tcp:host=%s:port=%s:timeout=%s" % (host, port, timeout))
+    def OnUpdatedMaxPeers(self, old_value, new_value):
 
-        connectingService = ClientService(
-            endpoint,
-            factory,
-            retryPolicy=backoffPolicy(2, 10, factor=3.0)
-        )
-        connectingService.startService()
+        if new_value < old_value:
+            num_to_disconnect = old_value - new_value
+            logger.warning("DISCONNECTING %s Peers, this may show unhandled error in defer " % num_to_disconnect)
+            for p in self.Peers[-num_to_disconnect:]:
+                p.Disconnect()
+        elif new_value > old_value:
+            for p in self.Peers:
+                p.RequestPeerInfo()
 
     def Shutdown(self):
         """Disconnect all connected peers."""
@@ -114,8 +133,15 @@ class NodeLeader():
         Args:
             peer (NeoNode): instance.
         """
+
         if peer not in self.Peers:
-            self.Peers.append(peer)
+
+            if len(self.Peers) < settings.CONNECTED_PEER_MAX:
+                self.Peers.append(peer)
+            else:
+                if peer.Address in self.ADDRS:
+                    self.ADDRS.remove(peer.Address)
+                peer.Disconnect()
 
     def RemoveConnectedPeer(self, peer):
         """
@@ -126,19 +152,21 @@ class NodeLeader():
         """
         if peer in self.Peers:
             self.Peers.remove(peer)
-
+        if peer.Address in self.ADDRS:
+            self.ADDRS.remove(peer.Address)
         if len(self.Peers) == 0:
             reactor.callLater(10, self.Restart)
 
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""
+        logger.debug("Resseting Block requests")
+        self.MissionsGlobal = []
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
             p.myblockrequests = set()
-        BC.Default().__blockrequests = set()
+        BC.Default().ResetBlockRequests()
         BC.Default()._block_cache = {}
 
-    #    @profile()
     def InventoryReceived(self, inventory):
         """
         Process a received inventory.
@@ -166,7 +194,7 @@ class NodeLeader():
                 return False
 
         else:
-            if not inventory.Verify():
+            if not inventory.Verify(self.MemPool.values()):
                 return False
 
     def RelayDirectly(self, inventory):
@@ -226,6 +254,11 @@ class NodeLeader():
         relayed = self.RelayDirectly(inventory)
         # self.
         return relayed
+
+    def GetTransaction(self, hash):
+        if hash in self.MemPool.keys():
+            return self.MemPool[hash]
+        return None
 
     def AddTransaction(self, tx):
         """
