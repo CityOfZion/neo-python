@@ -13,6 +13,7 @@ All notable changes to this project are documented in this file.
 - add Runtime.Serialize/Deserialize support for MAP
 - fix for debug breakpoints not being cleared.
 - add VERIFY op to ExecutionEngine
+- add caching to systemshare and systemcoin creation to help in block persistence.
 
 [0.6.7] 2018-04-06
 -----------------------
