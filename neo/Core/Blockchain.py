@@ -17,6 +17,7 @@ from collections import Counter
 from neocore.Fixed8 import Fixed8
 from neocore.Cryptography.ECCurve import ECDSA
 from neocore.UInt256 import UInt256
+from functools import lru_cache
 
 
 class Blockchain(object):
@@ -58,6 +59,7 @@ class Blockchain(object):
         return Blockchain.__validators
 
     @staticmethod
+    @lru_cache(maxsize=2)
     def SystemShare():
         """
         Register AntShare.
@@ -73,6 +75,7 @@ class Blockchain(object):
                                    amount, 0, owner, admin)
 
     @staticmethod
+    @lru_cache(maxsize=2)
     def SystemCoin():
         """
         Register AntCoin
