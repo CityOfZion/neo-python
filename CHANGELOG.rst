@@ -13,6 +13,7 @@ All notable changes to this project are documented in this file.
 - add Runtime.Serialize/Deserialize support for MAP
 - fix for debug breakpoints not being cleared.
 - add VERIFY op to ExecutionEngine
+- Update to neocore 0.4.2
 - add caching to systemshare and systemcoin creation to help in block persistence.
 - fix asset amount rounding for very small amounts
 - fix storage commit routine for failed contract executions
