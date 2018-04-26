@@ -777,10 +777,6 @@ class LevelDBBlockchain(Blockchain):
             # commit contracts
             contracts.Commit(wb)
 
-            # commit storages ( not implemented )
-            # this is done in service.ExecutionCompleted
-            # storages.Commit(wb)
-
             sn.close()
 
             wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
