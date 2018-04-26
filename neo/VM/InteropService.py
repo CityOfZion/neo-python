@@ -133,7 +133,7 @@ class StackItem(EquatableMixin):
         elif typ is list:
             return Array(value)
 
-        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
+#        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 
 
