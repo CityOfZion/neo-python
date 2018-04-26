@@ -6,7 +6,6 @@ from decimal import Decimal
 
 
 def token_send(wallet, args, prompt_passwd=True):
-
     if len(args) != 4:
         print("please provide a token symbol, from address, to address, and amount")
         return False
@@ -61,7 +60,6 @@ def token_send_from(wallet, args, prompt_passwd=True):
 
 
 def token_approve_allowance(wallet, args, prompt_passwd=True):
-
     if len(args) != 4:
         print("please provide a token symbol, from address, to address, and amount")
         return False
@@ -95,7 +93,6 @@ def token_approve_allowance(wallet, args, prompt_passwd=True):
 
 
 def token_get_allowance(wallet, args, verbose=False):
-
     if len(args) != 3:
         print("please provide a token symbol, from address, to address")
         return
@@ -120,7 +117,6 @@ def token_get_allowance(wallet, args, verbose=False):
 
 
 def token_mint(wallet, args, prompt_passwd=True):
-
     token = get_asset_id(wallet, args[0])
     mint_to_addr = args[1]
 
@@ -185,7 +181,6 @@ def token_crowdsale_register(wallet, args, prompt_passwd=True):
 
 
 def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True):
-
     if from_address is None:
         print("Please specify --from-addr={addr} to send NEP5 tokens")
         return False
@@ -214,15 +209,13 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
 
 
 def amount_from_string(token, amount_str):
-
     precision_mult = pow(10, token.decimals)
-    amount = float(amount_str) * precision_mult
+    amount = Decimal(amount_str) * precision_mult
 
     return int(amount)
 
 
 def string_from_amount(token, amount):
-
     precision_mult = pow(10, token.decimals)
     amount = Decimal(amount) / Decimal(precision_mult)
     formatter_str = '.%sf' % token.decimals
