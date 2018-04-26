@@ -316,6 +316,12 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
 
             return wallet_tx, net_fee, engine.EvaluationStack.Items, engine.ops_processed
 
+        # this allows you to to test invocations that fail
+        else:
+            wallet_tx.outputs = outputs
+            wallet_tx.Attributes = []
+            return wallet_tx, min_fee, [], engine.ops_processed
+
     except Exception as e:
         service.ExecutionCompleted(engine, False, e)
 #        print("COULD NOT EXECUTE %s " % e)
