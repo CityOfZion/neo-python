@@ -14,8 +14,9 @@ All notable changes to this project are documented in this file.
 - fix for debug breakpoints not being cleared.
 - add VERIFY op to ExecutionEngine
 - Update to neocore 0.4.2
+- add caching to systemshare and systemcoin creation to help in block persistence.
+- fix asset amount rounding for very small amounts
 - fix storage commit routine for failed contract executions
-
 
 [0.6.7] 2018-04-06
 -----------------------
