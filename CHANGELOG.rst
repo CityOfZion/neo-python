@@ -3,7 +3,7 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.8-dev] in progress
+[0.6.8] 2018-04-26
 -----------------------
 - add ``ServiceEnabled`` boolean to settings to determine whether nodes should send other nodes blocks
 - updated new block retrieval mechanism
