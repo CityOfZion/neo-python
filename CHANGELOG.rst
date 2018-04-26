@@ -13,7 +13,8 @@ All notable changes to this project are documented in this file.
 - add Runtime.Serialize/Deserialize support for MAP
 - fix for debug breakpoints not being cleared.
 - add VERIFY op to ExecutionEngine
-- Update to neocore 0.4.1
+- Update to neocore 0.4.2
+- fix storage commit routine for failed contract executions
 
 
 [0.6.7] 2018-04-06
