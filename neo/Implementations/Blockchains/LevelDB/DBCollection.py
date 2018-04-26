@@ -1,11 +1,11 @@
 import binascii
 from logzero import logger
+from neo.SmartContract.StorageIterator import StorageIterator
 
 
 class DBCollection():
-
     DB = None
-#    SN = None
+    #    SN = None
     Prefix = None
 
     ClassRef = None
@@ -119,7 +119,6 @@ class DBCollection():
 
         # if the key is there, get the item
         if key is not None:
-
             self.MarkChanged(keyval)
 
             item = self._GetItem(keyval)
@@ -156,17 +155,27 @@ class DBCollection():
         if keyval not in self.Changed:
             self.Changed.append(keyval)
 
-    # @TODO This has not been tested or verified to work.
+    def TryFind(self, key_prefix):
+        candidates = []
+        for keyval in self.Collection.keys():
+            # See if we find a partial match in the keys that not have been committed yet, excluding those that are to be deleted
+            if key_prefix in keyval and keyval not in self.Deleted:
+                candidates.append((keyval[20:], self.Collection[keyval]))
+
+        db_results = self.Find(key_prefix)
+        final_collection = db_results + candidates
+        return StorageIterator(iter(final_collection))
+
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
         res = []
         for key, val in self.DB.iterator(prefix=key_prefix):
-            res.append({key: val})
+            res.append((key[20:], val))
         return res
 
     def Destroy(self):
         self.DB = None
-#        self.SN = None
+        #        self.SN = None
         self.Collection = None
         self.ClassRef = None
         self.Prefix = None
