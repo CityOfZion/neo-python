@@ -778,7 +778,8 @@ class LevelDBBlockchain(Blockchain):
             contracts.Commit(wb)
 
             # commit storages ( not implemented )
-            storages.Commit(wb)
+            # this is done in service.ExecutionCompleted
+            # storages.Commit(wb)
 
             sn.close()
 
