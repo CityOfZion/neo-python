@@ -36,7 +36,7 @@ mock==2.0.0
 mpmath==1.0.0
 neo-boa==0.4.1
 neo-python-rpc==0.2.0
-neocore==0.4.1
+neocore==0.4.2
 numpy==1.14.2
 pbr==4.0.1
 peewee==2.10.2
