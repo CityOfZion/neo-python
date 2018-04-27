@@ -481,7 +481,8 @@ class StateReader(InteropService):
 
         if Blockchain.Default() is not None:
             asset = Blockchain.Default().GetAssetState(UInt256(data=data))
-
+        if asset is None:
+            return False
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
         return True
 
@@ -491,7 +492,8 @@ class StateReader(InteropService):
 
         if Blockchain.Default() is not None:
             contract = Blockchain.Default().GetContract(hash)
-
+        if contract is None:
+            return False
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
         return True
 
