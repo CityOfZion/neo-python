@@ -156,21 +156,29 @@ class DBCollection():
             self.Changed.append(keyval)
 
     def TryFind(self, key_prefix):
-        candidates = []
+        candidates = {}
         for keyval in self.Collection.keys():
             # See if we find a partial match in the keys that not have been committed yet, excluding those that are to be deleted
             if key_prefix in keyval and keyval not in self.Deleted:
-                candidates.append((keyval[20:], self.Collection[keyval]))
+                candidates[keyval[20:]] = self.Collection[keyval].Value
 
         db_results = self.Find(key_prefix)
-        final_collection = db_results + candidates
+
+        # {**x, **y} merges two dictionaries, with the values of y overwriting the vals of x
+        # withouth this merge, you sometimes get 2 results for each key
+        # then take the dict and make a list of tuples
+        final_collection = [(k, v) for k, v in {**db_results, **candidates}.items()]
+
         return StorageIterator(iter(final_collection))
 
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
-        res = []
+        res = {}
         for key, val in self.DB.iterator(prefix=key_prefix):
-            res.append((key[20:], val))
+            # we want the storage item, not the raw bytes
+            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
+            # also here we need to skip the 1 byte storage prefix
+            res[key[21:]] = item
         return res
 
     def Destroy(self):

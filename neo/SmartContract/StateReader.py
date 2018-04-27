@@ -931,8 +931,8 @@ class StateReader(InteropService):
         prefix = context.ScriptHash.ToArray() + prefix
 
         iterator = self._storages.TryFind(prefix)
-
         engine.EvaluationStack.PushT(StackItem.FromInterface(iterator))
+
         return True
 
     def Iterator_Next(self, engine):
