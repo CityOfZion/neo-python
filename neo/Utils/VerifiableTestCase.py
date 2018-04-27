@@ -15,7 +15,7 @@ class VerifiableTestCase(NeoTestCase):
     @classmethod
     def setUpClass(self):
         os.makedirs(self.LEVELDB_TESTPATH, exist_ok=True)
-        self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH)
+        self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH, skip_version_check=True)
         Blockchain.RegisterBlockchain(self._blockchain)
 
     @classmethod

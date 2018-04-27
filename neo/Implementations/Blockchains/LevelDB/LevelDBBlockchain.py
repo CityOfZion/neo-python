@@ -34,6 +34,8 @@ from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
+from prompt_toolkit import prompt
+
 
 class LevelDBBlockchain(Blockchain):
     _path = None
@@ -51,7 +53,7 @@ class LevelDBBlockchain(Blockchain):
 
     # this is the version of the database
     # should not be updated for network version changes
-    _sysversion = b'/NEO:2.0.1/'
+    _sysversion = b'schema v.0.6.9'
 
     _persisting_block = None
 
@@ -95,7 +97,7 @@ class LevelDBBlockchain(Blockchain):
     def Path(self):
         return self._path
 
-    def __init__(self, path):
+    def __init__(self, path, skip_version_check=False):
         super(LevelDBBlockchain, self).__init__()
         self._path = path
 
@@ -109,6 +111,9 @@ class LevelDBBlockchain(Blockchain):
         except Exception as e:
             logger.info("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
+
+        if skip_version_check:
+            self._db.put(DBPrefix.SYS_Version, self._sysversion)
 
         version = self._db.get(DBPrefix.SYS_Version)
 
@@ -175,12 +180,23 @@ class LevelDBBlockchain(Blockchain):
                 except Exception as e:
                     pass
         else:
-            with self._db.write_batch() as wb:
-                for key, value in self._db.iterator():
-                    wb.delete(key)
 
-            self.Persist(Blockchain.GenesisBlock())
-            self._db.put(DBPrefix.SYS_Version, self._sysversion)
+            logger.error("\n\n")
+            logger.warning("Database schema has changed from %s to %s.\n" % (version, self._sysversion))
+            logger.warning("You must either resync from scratch, or use the np-bootstrap command to bootstrap the chain.")
+
+            res = prompt("Type 'continue' to erase your current database and sync from new. Otherwise this program will exit:\n> ")
+            if res == 'continue':
+
+                with self._db.write_batch() as wb:
+                    for key, value in self._db.iterator():
+                        wb.delete(key)
+
+                self.Persist(Blockchain.GenesisBlock())
+                self._db.put(DBPrefix.SYS_Version, self._sysversion)
+
+            else:
+                raise Exception("Database schema changed")
 
     def GetAccountState(self, script_hash, print_all_accounts=False):
 
