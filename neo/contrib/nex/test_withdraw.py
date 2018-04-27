@@ -7,7 +7,7 @@ from neo.Core.TX.Transaction import ContractTransaction
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Implementations.Wallets.peewee.Models import VINHold
-from neo.contrib.nex.withdraw import WithdrawAll, WithdrawOne, PrintHolds,\
+from neo.contrib.nex.withdraw import WithdrawAll, WithdrawOne, PrintHolds, \
     CleanupCompletedHolds, ShowCompletedHolds, RequestWithdrawFrom, DeleteHolds
 from neo.Settings import settings
 import os
@@ -15,13 +15,14 @@ import json
 
 
 class WithdrawWalletTestCase(WalletFixtureTestCase):
-
-    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/withdraw_fixture.tar.gz'
-    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/withdraw_fixture.tar.gz')
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/withdraw_fixture042518.tar.gz'
+    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/withdraw_fixture042518.tar.gz')
 
     @classmethod
     def leveldb_testpath(self):
-        return os.path.join(settings.DATA_DIR_PATH, 'withdraw_fixtures')
+
+        path = os.path.join(settings.DATA_DIR_PATH, 'fixtures/withdraw_fixture042418')
+        return path
 
     @classmethod
     def wallet_1_path(cls):

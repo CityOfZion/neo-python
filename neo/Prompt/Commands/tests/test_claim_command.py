@@ -9,7 +9,6 @@ import shutil
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
-
     wallet_1_script_hash = UInt160(data=b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)')
 
     wallet_1_addr = 'APRgMZHZubii29UXF9uFa6sohrsYupNAvx'
@@ -56,7 +55,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.142559), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.144727), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -76,7 +75,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.11912649), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.13324017), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
