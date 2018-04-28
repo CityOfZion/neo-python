@@ -1,6 +1,7 @@
 import ctypes
 from .Mixins import VerifiableMixin
-from neocore.Cryptography.Helper import *
+from neocore.Cryptography.Helper import bin_dbl_sha256
+import binascii
 from neo.Core.Helper import Helper
 from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
