@@ -7,7 +7,7 @@ Usage:
 """
 from neo.VM.OpCode import *
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neocore.Cryptography.Crypto import *
+from neocore.Cryptography.Crypto import bin_hash160, from_int_to_byte, Crypto
 from neocore.IO.Mixins import SerializableMixin
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper

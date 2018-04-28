@@ -9,7 +9,7 @@ from itertools import groupby
 import binascii
 from logzero import logger
 from neocore.UInt160 import UInt160
-from neo.Blockchain import *
+from neo.Blockchain import GetBlockchain
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
 from neocore.Fixed8 import Fixed8
 
