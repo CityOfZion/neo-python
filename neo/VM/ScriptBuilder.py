@@ -11,7 +11,7 @@ from neocore.BigInteger import BigInteger
 import struct
 
 
-class ScriptBuilder(object):
+class ScriptBuilder:
     """docstring for ScriptBuilder"""
 
     def __init__(self):

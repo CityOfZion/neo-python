@@ -12,7 +12,7 @@ __mstreams__ = []
 __mstreams_available__ = []
 
 
-class StreamManager(object):
+class StreamManager:
 
     @staticmethod
     def TotalBuffers():

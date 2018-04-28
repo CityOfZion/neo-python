@@ -1,7 +1,7 @@
 import sys
 
 
-class CoinReference(object):
+class CoinReference:
     PrevHash = None
 
     PrevIndex = None

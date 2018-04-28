@@ -9,7 +9,7 @@ from neocore.IO.Mixins import SerializableMixin
 from neocore.UIntBase import UIntBase
 
 
-class TransactionAttributeUsage(object):
+class TransactionAttributeUsage:
     ContractHash = int.from_bytes(b'\x00', 'little')
 
     ECDH02 = int.from_bytes(b'\x02', 'little')

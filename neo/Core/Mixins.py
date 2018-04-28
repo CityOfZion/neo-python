@@ -1,12 +1,12 @@
 from neocore.IO.Mixins import SerializableMixin
 
 
-class ClonableMixin(object):
+class ClonableMixin:
     def clone(self):
         pass
 
 
-class CodeMixin(object):
+class CodeMixin:
     scripts = []
     parameter_list = []
     return_type = None

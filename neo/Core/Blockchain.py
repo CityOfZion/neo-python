@@ -20,7 +20,7 @@ from neocore.UInt256 import UInt256
 from functools import lru_cache
 
 
-class Blockchain(object):
+class Blockchain:
     SECONDS_PER_BLOCK = 15
 
     DECREMENT_INTERVAL = 2000000

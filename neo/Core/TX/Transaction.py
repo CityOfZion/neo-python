@@ -47,7 +47,7 @@ class TransactionResult(EquatableMixin):
         return "%s -> %s " % (self.AssetId.ToString(), self.Amount.value)
 
 
-class TransactionType(object):
+class TransactionType:
     MinerTransaction = b'\x00'
     IssueTransaction = b'\x01'
     ClaimTransaction = b'\x02'

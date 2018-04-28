@@ -69,7 +69,7 @@ class JsonRpcError(Exception):
         return JsonRpcError(-32603, message or "Internal error")
 
 
-class JsonRpcApi(object):
+class JsonRpcApi:
     app = Klein()
     port = None
 

@@ -33,7 +33,7 @@ from neo.Core.Helper import Helper
 from neo.Wallets.utils import to_aes_key
 
 
-class Wallet(object):
+class Wallet:
     AddressVersion = None
 
     _path = ''
