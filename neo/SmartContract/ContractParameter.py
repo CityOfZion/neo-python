@@ -6,7 +6,7 @@ from neocore.BigInteger import BigInteger
 from neocore.Cryptography.ECCurve import ECDSA
 
 
-class ContractParameter():
+class ContractParameter:
     """Contract Parameter used for parsing parameters sent to and from smart contract invocations"""
 
     Type = None

@@ -7,7 +7,7 @@ from neo.IO.MemoryStream import StreamManager
 from neocore.IO.BinaryWriter import BinaryWriter
 
 
-class Endpoint():
+class Endpoint:
     def __init__(self, host, port):
         self.host = host
         self.port = port

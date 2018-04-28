@@ -13,7 +13,7 @@ from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
 from neo.Core.TX.MinerTransaction import MinerTransaction
 
 
-class Endpoint():
+class Endpoint:
     def __init__(self, host, port):
         self.host = host
         self.port = port

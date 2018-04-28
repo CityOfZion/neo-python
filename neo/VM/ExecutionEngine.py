@@ -14,7 +14,7 @@ from neo.Prompt.vm_debugger import VMDebugger
 from logging import DEBUG as LOGGING_LEVEL_DEBUG
 
 
-class ExecutionEngine():
+class ExecutionEngine:
     _Table = None
     _Service = None
 
