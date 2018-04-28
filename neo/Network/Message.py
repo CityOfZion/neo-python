@@ -1,9 +1,10 @@
 import ctypes
+import binascii
+from logzero import logger
 from neocore.IO.Mixins import SerializableMixin
 from neo.Settings import settings
 from neo.Core.Helper import Helper
-from neocore.Cryptography.Helper import *
-from logzero import logger
+from neocore.Cryptography.Helper import bin_dbl_sha256
 
 
 class ChecksumException(Exception):

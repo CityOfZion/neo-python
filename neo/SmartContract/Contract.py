@@ -11,7 +11,6 @@ from neocore.Cryptography.Crypto import *
 from neocore.IO.Mixins import SerializableMixin
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
-from neocore.Cryptography.Helper import *
 from neocore.Cryptography.ECCurve import ECDSA
 
 
