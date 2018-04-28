@@ -4,14 +4,17 @@ Description:
 Usage:
     from neo.Core.Transaction import Transaction
 """
+import sys
 from itertools import groupby
+import binascii
+from neocore.UInt160 import UInt160
 from neo.Blockchain import *
 from neo.Core.TX.TransactionAttribute import *
 from neocore.Fixed8 import Fixed8
 
 from neo.Network.InventoryType import InventoryType
 from neo.Network.Mixins import InventoryMixin
-from neocore.Cryptography.Crypto import *
+from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.BinaryReader import BinaryReader
