@@ -7,7 +7,7 @@ from neo.Blockchain import GetSystemShare, GetGenesis, GetSystemCoin
 from neo.SmartContract.Contract import Contract
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Witness import Witness
-from neo.VM.OpCode import *
+from neo.VM.OpCode import PUSHT
 from neo.Settings import settings
 from neocore.Cryptography.Crypto import Crypto
 

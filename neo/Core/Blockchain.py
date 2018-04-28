@@ -10,7 +10,7 @@ from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
 from neo.Core.Witness import Witness
-from neo.VM.OpCode import *
+from neo.VM.OpCode import PUSHF, PUSHT
 from neo.Core.State.SpentCoinState import SpentCoin
 from neo.SmartContract.Contract import Contract
 from neo.Settings import settings
