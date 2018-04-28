@@ -57,6 +57,8 @@ class LevelDBBlockchain(Blockchain):
 
     _persisting_block = None
 
+    TXProcessed = 0
+
     @property
     def CurrentBlockHash(self):
         try:
@@ -104,6 +106,8 @@ class LevelDBBlockchain(Blockchain):
         self._header_index = []
         self._header_index.append(Blockchain.GenesisBlock().Header.Hash.ToBytes())
 
+        self.TXProcessed = 0
+
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)
         #            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
@@ -112,10 +116,11 @@ class LevelDBBlockchain(Blockchain):
             logger.info("leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Leveldb Unavailable')
 
+        version = self._db.get(DBPrefix.SYS_Version)
+
         if skip_version_check:
             self._db.put(DBPrefix.SYS_Version, self._sysversion)
-
-        version = self._db.get(DBPrefix.SYS_Version)
+            version = self._sysversion
 
         if version == self._sysversion:  # or in the future, if version doesn't equal the current version...
 
@@ -179,6 +184,10 @@ class LevelDBBlockchain(Blockchain):
                     self.AddHeaders(newhashes)
                 except Exception as e:
                     pass
+
+        elif version is None:
+            self.Persist(Blockchain.GenesisBlock())
+            self._db.put(DBPrefix.SYS_Version, self._sysversion)
         else:
 
             logger.error("\n\n")
@@ -799,10 +808,13 @@ class LevelDBBlockchain(Blockchain):
             self._current_block_height = block.Index
             self._persisting_block = None
 
+            self.TXProcessed += len(block.Transactions)
+
             for event in to_dispatch:
                 events.emit(event.event_type, event)
 
     def PersistBlocks(self):
+
         if not self._paused:
             #            logger.info("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
@@ -829,6 +841,7 @@ class LevelDBBlockchain(Blockchain):
                     raise e
 
     def Resume(self):
+        self._currently_persisting = False
         super(LevelDBBlockchain, self).Resume()
         self.PersistBlocks()
 

@@ -589,8 +589,13 @@ class ExecutionEngine():
 
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
+                container = self.ScriptContainer
+                if not container:
+                    logger.debug("Cannot check signature without container")
+                    estack.PushT(False)
+                    return
                 try:
-                    res = self.Crypto.VerifySignature(self.ScriptContainer.GetMessage(), sig, pubkey)
+                    res = self.Crypto.VerifySignature(container.GetMessage(), sig, pubkey)
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)

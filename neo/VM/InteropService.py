@@ -73,7 +73,7 @@ class StackItem(EquatableMixin):
         return 'StackItem'
 
     def __eq__(self, other):
-        return self.__hash__() == other.__hash__()
+        return other and self.__hash__() == other.__hash__()
 
     @staticmethod
     def DeserializeStackItem(reader):

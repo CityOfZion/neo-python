@@ -204,7 +204,7 @@ class NotificationDB():
 
                 hash_data = token_event.ToByteArray()
                 hash_key = token_event.contract.Code.ScriptHash().ToBytes()
-                logger.info("persist new NEP5 contract: %s " % (hash_key))
+#                logger.info("persist new NEP5 contract: %s " % (hash_key))
                 token_write_batch.put(hash_key, hash_data)
 
             token_write_batch.write()

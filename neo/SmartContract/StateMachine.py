@@ -89,7 +89,6 @@ class StateMachine(StateReader):
         if account:
             engine.EvaluationStack.PushT(StackItem.FromInterface(account))
         else:
-            print("no account")
             engine.EvaluationStack.PushT(False)
 
         return True

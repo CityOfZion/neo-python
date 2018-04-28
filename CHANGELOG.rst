@@ -5,7 +5,10 @@ All notable changes to this project are documented in this file.
 
 [0.6.9] in progress
 -----------------------
--
+- alter logging
+- fix issue with dispatching transfer events when ``from_addr`` is ``False``
+- add TPS monitor to ``prompt`` ``state`` command
+- add check for db schema changes
 
 
 [0.6.8] 2018-04-26
