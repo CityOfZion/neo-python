@@ -2,7 +2,7 @@ import binascii
 from logzero import logger
 
 
-class DBCollection():
+class DBCollection:
 
     DB = None
 #    SN = None

@@ -6,7 +6,7 @@ from neocore.BigInteger import BigInteger
 from neo.SmartContract import StackItemType
 
 
-class CollectionMixin():
+class CollectionMixin:
 
     IsSynchronized = False
     SyncRoot = None
@@ -497,7 +497,7 @@ class Map(StackItem, CollectionMixin):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))
 
 
-class InteropService():
+class InteropService:
 
     _dictionary = {}
 

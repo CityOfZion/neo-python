@@ -1,7 +1,7 @@
 from neo.VM.InteropService import StackItem
 
 
-class RandomAccessStack():
+class RandomAccessStack:
 
     _list = []
     _size = 0  # cache the size for performance

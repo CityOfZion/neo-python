@@ -15,7 +15,7 @@ from neocore.Cryptography.Helper import *
 from neocore.Cryptography.ECCurve import ECDSA
 
 
-class ContractType():
+class ContractType:
     SignatureContract = 0
     MultiSigContract = 1
     CustomContract = 2

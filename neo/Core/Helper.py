@@ -12,7 +12,7 @@ from neo.Settings import settings
 from neo.EventHub import events
 
 
-class Helper(object):
+class Helper:
 
     @staticmethod
     def WeightedFilter(list):

@@ -88,7 +88,7 @@ class PromptFileHistory(FileHistory):
         return string
 
 
-class PromptInterface(object):
+class PromptInterface:
     go_on = True
 
     _walletdb_loop = None

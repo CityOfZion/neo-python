@@ -3,7 +3,7 @@ from neocore.IO.BinaryReader import BinaryReader
 from neocore.UInt160 import UInt160
 
 
-class ExecutionContext():
+class ExecutionContext:
 
     _Engine = None
 

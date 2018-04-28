@@ -4,7 +4,7 @@ from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 
 
-class SpentCoinItem():
+class SpentCoinItem:
     index = None
     height = None
 
@@ -20,7 +20,7 @@ class SpentCoinItem():
         self.height = height
 
 
-class SpentCoin():
+class SpentCoin:
     Output = None
     StartHeight = None
     EndHeight = None
