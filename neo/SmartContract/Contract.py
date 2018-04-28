@@ -5,7 +5,8 @@ Description:
 Usage:
     from neo.SmartContract.Contract import Contract
 """
-from neo.VM.OpCode import *
+import binascii
+from neo.VM.OpCode import CHECKMULTISIG, CHECKSIG
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neocore.Cryptography.Crypto import bin_hash160, from_int_to_byte, Crypto
 from neocore.IO.Mixins import SerializableMixin

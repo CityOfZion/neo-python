@@ -1,11 +1,11 @@
 import hashlib
 import datetime
 
+from neo.VM.OpCode import *
 from logzero import logger
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
-from neo.VM.OpCode import *
 from neo.VM.InteropService import Array, Struct, CollectionMixin, Map, Boolean
 from neocore.UInt160 import UInt160
 from neo.Settings import settings
