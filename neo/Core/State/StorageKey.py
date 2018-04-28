@@ -46,6 +46,9 @@ class StorageKey(SerializableMixin):
         bigint = BigInteger(self.GetHashCode())
         return bigint.ToByteArray()
 
+    def GetPrefixedKey(self):
+        return self.ScriptHash.ToBytes() + self.Key
+
     def Deserialize(self, reader):
         """
         Deserialize full object.

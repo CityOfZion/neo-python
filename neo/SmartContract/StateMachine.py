@@ -398,11 +398,17 @@ class StateMachine(StateReader):
 
             if contract.HasStorage:
 
-                for pair in self._storages.Find(engine.CurrentContext.ScriptHash()):
+                current_script_hash = engine.CurrentContext.ScriptHash()
+                storage_key = StorageKey(script_hash=UInt160(current_script_hash), key=bytes(b''))
+                prefix_key = storage_key.GetPrefixedKey()
 
-                    key = StorageKey(script_hash=hash, key=pair.Key.Key)
-                    item = StorageItem(pair.Value.Value)
-                    self._storages.Add(key, item)
+                for dict_pair in self._storages.Find(prefix_key):
+                    dict_key = list(dict_pair.keys())[0]
+
+                    non_prefixed_key = dict_key.replace(self._storages.Prefix + prefix_key, b'')
+                    key = StorageKey(script_hash=hash, key=non_prefixed_key)
+
+                    self._storages.Add(key.GetPrefixedKey(), dict_pair[dict_key])
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
@@ -444,9 +450,11 @@ class StateMachine(StateReader):
 
             if contract.HasStorage:
 
-                for pair in self._storages.Find(hash.ToBytes()):
-
-                    self._storages.Remove(pair.Key)
+                storage_key = StorageKey(script_hash=hash, key=bytes(b''))
+                for dict_pair in self._storages.Find(storage_key.GetPrefixedKey()):
+                    dict_key = list(dict_pair.keys())[0]
+                    non_prefixed_key = dict_key.replace(self._storages.Prefix, b'')
+                    self._storages.Remove(non_prefixed_key)
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_DESTROY, [contract],
@@ -470,7 +478,7 @@ class StateMachine(StateReader):
 
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        item = self._storages.TryGet(storage_key.GetHashCodeBytes())
+        item = self._storages.TryGet(storage_key.GetPrefixedKey())
 
         keystr = key
 
@@ -523,7 +531,7 @@ class StateMachine(StateReader):
 
         new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        item = self._storages.GetOrAdd(storage_key.GetHashCodeBytes(), new_item)
+        item = self._storages.GetOrAdd(storage_key.GetPrefixedKey(), new_item)
 
         keystr = key
         valStr = bytearray(item.Value)
