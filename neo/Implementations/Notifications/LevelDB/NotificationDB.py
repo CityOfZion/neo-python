@@ -9,7 +9,7 @@ from neo.Core.Helper import Helper
 from neocore.UInt160 import UInt160
 
 
-class NotificationPrefix():
+class NotificationPrefix:
     """
     Byte Prefixes to use for writing event data to disk
     """
@@ -22,7 +22,7 @@ class NotificationPrefix():
     PREFIX_TOKEN = b'\xCE'
 
 
-class NotificationDB():
+class NotificationDB:
 
     __instance = None
 
@@ -204,7 +204,7 @@ class NotificationDB():
 
                 hash_data = token_event.ToByteArray()
                 hash_key = token_event.contract.Code.ScriptHash().ToBytes()
-                logger.info("persist new NEP5 contract: %s " % (hash_key))
+#                logger.info("persist new NEP5 contract: %s " % (hash_key))
                 token_write_batch.put(hash_key, hash_data)
 
             token_write_batch.write()

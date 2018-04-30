@@ -6,7 +6,7 @@ from neocore.BigInteger import BigInteger
 from neo.SmartContract import StackItemType
 
 
-class CollectionMixin():
+class CollectionMixin:
 
     IsSynchronized = False
     SyncRoot = None
@@ -73,7 +73,7 @@ class StackItem(EquatableMixin):
         return 'StackItem'
 
     def __eq__(self, other):
-        return self.__hash__() == other.__hash__()
+        return other and self.__hash__() == other.__hash__()
 
     @staticmethod
     def DeserializeStackItem(reader):
@@ -497,7 +497,7 @@ class Map(StackItem, CollectionMixin):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))
 
 
-class InteropService():
+class InteropService:
 
     _dictionary = {}
 

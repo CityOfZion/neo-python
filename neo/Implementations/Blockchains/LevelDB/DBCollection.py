@@ -1,11 +1,11 @@
 import binascii
 from logzero import logger
+from neo.SmartContract.StorageIterator import StorageIterator
 
 
-class DBCollection():
-
+class DBCollection:
     DB = None
-#    SN = None
+    #    SN = None
     Prefix = None
 
     ClassRef = None
@@ -119,7 +119,6 @@ class DBCollection():
 
         # if the key is there, get the item
         if key is not None:
-
             self.MarkChanged(keyval)
 
             item = self._GetItem(keyval)
@@ -156,17 +155,35 @@ class DBCollection():
         if keyval not in self.Changed:
             self.Changed.append(keyval)
 
-    # @TODO This has not been tested or verified to work.
+    def TryFind(self, key_prefix):
+        candidates = {}
+        for keyval in self.Collection.keys():
+            # See if we find a partial match in the keys that not have been committed yet, excluding those that are to be deleted
+            if key_prefix in keyval and keyval not in self.Deleted:
+                candidates[keyval[20:]] = self.Collection[keyval].Value
+
+        db_results = self.Find(key_prefix)
+
+        # {**x, **y} merges two dictionaries, with the values of y overwriting the vals of x
+        # withouth this merge, you sometimes get 2 results for each key
+        # then take the dict and make a list of tuples
+        final_collection = [(k, v) for k, v in {**db_results, **candidates}.items()]
+
+        return StorageIterator(iter(final_collection))
+
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
-        res = []
+        res = {}
         for key, val in self.DB.iterator(prefix=key_prefix):
-            res.append({key: val})
+            # we want the storage item, not the raw bytes
+            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
+            # also here we need to skip the 1 byte storage prefix
+            res[key[21:]] = item
         return res
 
     def Destroy(self):
         self.DB = None
-#        self.SN = None
+        #        self.SN = None
         self.Collection = None
         self.ClassRef = None
         self.Prefix = None

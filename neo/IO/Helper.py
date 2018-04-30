@@ -5,7 +5,7 @@ from neocore.IO.BinaryReader import BinaryReader
 from neo.Core.TX.Transaction import Transaction
 
 
-class Helper(object):
+class Helper:
 
     @staticmethod
     def AsSerializableWithType(buffer, class_name):

@@ -1,4 +1,7 @@
-from neo.Core.TX.Transaction import *
+import sys
+from itertools import groupby
+from logzero import logger
+from neo.Core.TX.Transaction import TransactionType, Transaction
 from neocore.Fixed8 import Fixed8
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference

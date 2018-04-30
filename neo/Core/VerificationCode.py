@@ -5,7 +5,7 @@ import binascii
 from logzero import logger
 
 
-class VerificationCode():
+class VerificationCode:
 
     Script = None
 

@@ -23,7 +23,7 @@ class NeoClientFactory(ReconnectingClientFactory):
                 peer.connectionLost()
 
 
-class NodeLeader():
+class NodeLeader:
     __LEAD = None
 
     Peers = []
@@ -36,8 +36,8 @@ class NodeLeader():
 
     _MissedBlocks = []
 
-    BREQPART = 20
-    NREQMAX = 100
+    BREQPART = 50
+    NREQMAX = 250
     BREQMAX = 10000
 
     KnownHashes = []

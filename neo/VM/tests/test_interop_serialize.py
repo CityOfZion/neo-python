@@ -1,5 +1,5 @@
 from unittest import TestCase
-from neo.VM.InteropService import *
+from neo.VM.InteropService import Struct, StackItem, Array, Boolean, Map
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
 from neo.SmartContract.StateReader import StateReader

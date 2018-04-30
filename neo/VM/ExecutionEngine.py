@@ -1,11 +1,11 @@
 import hashlib
 import datetime
 
+from neo.VM.OpCode import *
 from logzero import logger
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
-from neo.VM.OpCode import *
 from neo.VM.InteropService import Array, Struct, CollectionMixin, Map, Boolean
 from neocore.UInt160 import UInt160
 from neo.Settings import settings
@@ -14,7 +14,7 @@ from neo.Prompt.vm_debugger import VMDebugger
 from logging import DEBUG as LOGGING_LEVEL_DEBUG
 
 
-class ExecutionEngine():
+class ExecutionEngine:
     _Table = None
     _Service = None
 
@@ -589,8 +589,13 @@ class ExecutionEngine():
 
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
+                container = self.ScriptContainer
+                if not container:
+                    logger.debug("Cannot check signature without container")
+                    estack.PushT(False)
+                    return
                 try:
-                    res = self.Crypto.VerifySignature(self.ScriptContainer.GetMessage(), sig, pubkey)
+                    res = self.Crypto.VerifySignature(container.GetMessage(), sig, pubkey)
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)
@@ -599,9 +604,9 @@ class ExecutionEngine():
             elif opcode == VERIFY:
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
-                message = estack.Pop().GetString()
+                message = estack.Pop().GetByteArray()
                 try:
-                    res = self.Crypto.VerifySignature(message, sig, pubkey)
+                    res = self.Crypto.VerifySignature(message, sig, pubkey, unhex=False)
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)

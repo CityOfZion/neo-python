@@ -6,7 +6,7 @@ logger = logging.getLogger('peewee')
 logger.setLevel(logging.ERROR)
 
 
-class PWDatabase(object):
+class PWDatabase:
 
     __proxy = None
 

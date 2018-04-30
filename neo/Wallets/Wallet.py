@@ -5,6 +5,7 @@ Usage:
     from neo.Wallets.Wallet import Wallet
 """
 import traceback
+import hashlib
 from itertools import groupby
 from base58 import b58decode
 from decimal import Decimal
@@ -18,7 +19,7 @@ from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
-from neocore.Cryptography.Helper import *
+from neocore.Cryptography.Helper import scripthash_to_address
 from neocore.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
@@ -33,7 +34,7 @@ from neo.Core.Helper import Helper
 from neo.Wallets.utils import to_aes_key
 
 
-class Wallet(object):
+class Wallet:
     AddressVersion = None
 
     _path = ''

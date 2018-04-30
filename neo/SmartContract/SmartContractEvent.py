@@ -221,6 +221,10 @@ class NotifyEvent(SmartContractEvent):
                 if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE]:
                     if self.event_payload[1] is None:
                         self.addr_from = empty
+                        logger.info("Using contract addr from address %s " % self.event_payload)
+                    elif self.event_payload[1] is False:
+                        logger.info("Using contract addr from address %s " % self.event_payload)
+                        self.addr_from = empty
                     else:
                         self.addr_from = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
                     self.addr_to = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty

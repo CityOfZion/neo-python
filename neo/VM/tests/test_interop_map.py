@@ -1,5 +1,5 @@
 from unittest import TestCase
-from neo.VM.InteropService import *
+from neo.VM.InteropService import Integer, BigInteger, ByteArray, StackItem, Map, Array
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import OpCode

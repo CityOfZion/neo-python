@@ -11,9 +11,8 @@ import os
 
 
 class BlockchainFixtureTestCase(NeoTestCase):
-
-    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v5.tar.gz'
-    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v5.tar.gz')
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v7.tar.gz'
+    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v7.tar.gz')
     _blockchain = None
 
     @classmethod
@@ -49,7 +48,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
         if not os.path.exists(cls.leveldb_testpath()):
             raise Exception("Error downloading fixtures at %s" % cls.leveldb_testpath())
 
-        cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath())
+        cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath(), skip_version_check=True)
         Blockchain.RegisterBlockchain(cls._blockchain)
 
     @classmethod
