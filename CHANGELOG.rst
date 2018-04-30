@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file.
 - add check for db schema changes
 - add support for ``StorageIterator`` and ``Storage.Find`` from smart contracts
 - update to ``neocore==0.4.3``
+- add check for block tx length when adding to blockchain to address issues `#302 <https://github.com/CityOfZion/neo-python/issues/302>`_ and `#360 <https://github.com/CityOfZion/neo-python/issues/360>`_
 
 
 [0.6.8] 2018-04-26

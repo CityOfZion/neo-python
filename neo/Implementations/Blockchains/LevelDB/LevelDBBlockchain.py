@@ -421,6 +421,8 @@ class LevelDBBlockchain(Blockchain):
 
             if self._verify_blocks and not block.Verify():
                 return False
+            elif len(block.Transactions) < 1:
+                return False
             self.AddHeader(block.Header)
 
         return True
