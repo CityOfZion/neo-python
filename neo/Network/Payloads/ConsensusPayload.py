@@ -1,5 +1,5 @@
 from neocore.IO.Mixins import SerializableMixin
-from neocore.Cryptography.Helper import *
+from neocore.Cryptography.Helper import bin_dbl_sha256
 from neo.Core.Helper import Helper
 from neo.Network.InventoryType import InventoryType
 

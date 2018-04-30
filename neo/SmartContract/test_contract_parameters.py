@@ -1,5 +1,5 @@
 from unittest import TestCase
-from neo.VM.InteropService import *
+from neo.VM.InteropService import ByteArray, Integer, BigInteger, Boolean
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neocore.UInt256 import UInt256

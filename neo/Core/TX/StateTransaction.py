@@ -1,4 +1,4 @@
-from neo.Core.TX.Transaction import *
+from neo.Core.TX.Transaction import Transaction, TransactionType
 from neocore.Fixed8 import Fixed8
 
 

@@ -4,11 +4,12 @@ Description:
 Usage:
     from neo.Core.Scripts.ScriptBuilder import ScriptBuilder
 """
-
-from neo.VM.OpCode import *
+import struct
+import binascii
+from neo.VM.OpCode import PUSHDATA1, PUSHDATA2, PUSHDATA4, PUSHF, PUSHT, PACK, PUSH0, PUSH1, PUSHM1, PUSHBYTES75, \
+    APPCALL, TAILCALL, SYSCALL
 from neo.IO.MemoryStream import MemoryStream
 from neocore.BigInteger import BigInteger
-import struct
 
 
 class ScriptBuilder:
