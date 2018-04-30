@@ -405,17 +405,13 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
         shash = contract_state.Code.ScriptHash()
 
         invoke_args, neo_to_attach, gas_to_attach = get_asset_attachments(invoke_args)
-
         invoke_args.reverse()
-
-        # print("neo, gas %s %s " % (neo_to_attach,gas_to_attach.ToString()))
 
         sb = ScriptBuilder()
 
         for p in invoke_args:
 
             item = parse_param(p, wallet)
-
             if type(item) is list:
                 item.reverse()
                 listlength = len(item)

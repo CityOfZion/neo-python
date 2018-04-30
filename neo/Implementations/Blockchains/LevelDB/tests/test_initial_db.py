@@ -21,7 +21,7 @@ class LevelDBTest(NeoTestCase):
 
     @classmethod
     def setUpClass(self):
-        self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH)
+        self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH, skip_version_check=True)
         Blockchain.RegisterBlockchain(self._blockchain)
         self._genesis = Blockchain.GenesisBlock()
 

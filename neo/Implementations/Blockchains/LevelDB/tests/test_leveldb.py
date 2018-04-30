@@ -10,5 +10,4 @@ class LevelDBTest(BlockchainFixtureTestCase):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     def test_a_initial_setup(self):
-
-        self.assertEqual(self._blockchain.Height, 758715)
+        self.assertEqual(self._blockchain.Height, 758986)

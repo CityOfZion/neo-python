@@ -85,7 +85,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getblockcount")
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(758716, res["result"])
+        self.assertEqual(758987, res["result"])
 
     def test_getblockhash(self):
         req = self._gen_rpc_req("getblockhash", params=[2])
@@ -157,7 +157,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getbestblockhash", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], '0x748de6a3bcb6f3dc70c72a625f8057f83e876a1168c373423f524dec78706d25')
+        self.assertEqual(res['result'], '0x6e9d1698ba2cd43432b6df1fca4bfbc53b2492a29401d1411699ddbd56cf8559')
 
     def test_get_connectioncount(self):
         # @TODO
@@ -173,7 +173,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['index'], 10)
         self.assertEqual(res['result']['hash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
-        self.assertEqual(res['result']['confirmations'], 758706)
+        self.assertEqual(res['result']['confirmations'], 758977)
         self.assertEqual(res['result']['nextblockhash'], '0xa0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf')
 
     def test_get_block_hash(self):
@@ -182,7 +182,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res['result']['index'], 11)
-        self.assertEqual(res['result']['confirmations'], 758705)
+        self.assertEqual(res['result']['confirmations'], 758976)
         self.assertEqual(res['result']['previousblockhash'], '0x9410bd44beb7d6febc9278b028158af2781fcfb40cf2c6067b3525d24eff19f6')
 
     def test_get_block_hash_0x(self):
@@ -337,9 +337,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], '001843d5ba05')
+        self.assertEqual(res['result'], '00f938dbba05')
         actual_val = int.from_bytes(binascii.unhexlify(res['result'].encode('utf-8')), 'little')
-        self.assertEqual(actual_val, 6300000000000)
+        self.assertEqual(actual_val, 6300100000000)
 
     def test_get_storage_item2(self):
         contract_hash = '0xd7678dd97c000be3f33e9362e673101bac4ca654'
@@ -347,7 +347,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], '0070723d14b200')
+        self.assertEqual(res['result'], '003a0d7914b200')
 
     def test_get_storage_item_key_not_found(self):
         contract_hash = '0xd7678dd97c000be3f33e9362e673101bac4ca654'

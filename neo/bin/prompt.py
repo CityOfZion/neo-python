@@ -591,16 +591,20 @@ class PromptInterface:
         difftime = now - self.start_dt
 
         mins = difftime / datetime.timedelta(minutes=1)
+        secs = mins * 60
 
         bpm = 0
+        tps = 0
         if diff > 0 and mins > 0:
             bpm = diff / mins
+            tps = Blockchain.Default().TXProcessed / secs
 
         out = "Progress: %s / %s\n" % (height, headers)
         out += "Block-cache length %s\n" % Blockchain.Default().BlockCacheCount
         out += "Blocks since program start %s\n" % diff
         out += "Time elapsed %s mins\n" % mins
         out += "Blocks per min %s \n" % bpm
+        out += "TPS: %s \n" % tps
         tokens = [(Token.Number, out)]
         print_tokens(tokens, self.token_style)
 

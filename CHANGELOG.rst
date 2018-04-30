@@ -5,7 +5,12 @@ All notable changes to this project are documented in this file.
 
 [0.6.9] in progress
 -----------------------
--
+- alter logging
+- fix issue with dispatching transfer events when ``from_addr`` is ``False``
+- add TPS monitor to ``prompt`` ``state`` command
+- add check for db schema changes
+- add support for ``StorageIterator`` and ``Storage.Find`` from smart contracts
+- update to ``neocore==0.4.3``
 
 
 [0.6.8] 2018-04-26
@@ -15,6 +20,7 @@ All notable changes to this project are documented in this file.
 - fix for token_delete command not removing tokens from wallet file
 - fixed sc-events and notification DB showing previous block height instead of final block height of event
 - persist refund() notify events in notification DB
+- add smart contract storage searching using a prefix.
 - add Runtime.Serialize/Deserialize support for MAP
 - fix for debug breakpoints not being cleared.
 - add VERIFY op to ExecutionEngine
@@ -23,9 +29,11 @@ All notable changes to this project are documented in this file.
 - fix asset amount rounding for very small amounts
 - fix storage commit routine for failed contract executions
 
+
 [0.6.7] 2018-04-06
 -----------------------
 - Update all the requirements
+- Networking changes
 - added ``--maxpeers`` option for ``np-prompt`` and ``np-api-server``.  This allows p2p discovery of new nodes up to the value specified
 - added ``--host`` option for ``np-api-server`` in order to specify a hostname for the server
 - added more testing for ``neo.Network`` module

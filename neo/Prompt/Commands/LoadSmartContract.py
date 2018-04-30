@@ -65,10 +65,7 @@ def LoadContract(args):
     if type(params) is str:
         params = params.encode('utf-8')
 
-    return_type = parse_param(args[2], ignore_int=True, prefer_hex=False)
-
-    if type(return_type) is str:
-        return_type = return_type.encode('utf-8')
+    return_type = bytearray(binascii.unhexlify(str(args[2]).encode('utf-8')))
 
     needs_storage = bool(parse_param(args[3]))
     needs_dynamic_invoke = bool(parse_param(args[4]))
@@ -106,7 +103,7 @@ def LoadContract(args):
             plist = bytearray(binascii.unhexlify(params))
         except Exception as e:
             plist = bytearray(b'\x10')
-        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=binascii.unhexlify(return_type), contract_properties=contract_properties)
+        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=return_type, contract_properties=contract_properties)
 
         return function_code
 
@@ -122,10 +119,7 @@ def GatherLoadedContractParams(args, script):
     if type(params) is str:
         params = params.encode('utf-8')
 
-    return_type = parse_param(args[1], ignore_int=True, prefer_hex=False)
-
-    if type(return_type) is str:
-        return_type = return_type.encode('utf-8')
+    return_type = bytearray(binascii.unhexlify(str(args[1]).encode('utf-8')))
 
     needs_storage = bool(parse_param(args[2]))
     needs_dynamic_invoke = bool(parse_param(args[3]))
@@ -187,12 +181,12 @@ def GatherContractDetails(function_code, prompter):
     print(json.dumps(function_code.ToJson(), indent=4))
 
     return generate_deploy_script(function_code.Script, name, version, author, email, description,
-                                  function_code.ContractProperties, ord(function_code.ReturnType),
+                                  function_code.ContractProperties, function_code.ReturnType,
                                   function_code.ParameterList)
 
 
 def generate_deploy_script(script, name='test', version='test', author='test', email='test',
-                           description='test', contract_properties=0, return_type=b'\xff', parameter_list=[]):
+                           description='test', contract_properties=0, return_type=bytearray(b'\xff'), parameter_list=[]):
     sb = ScriptBuilder()
 
     plist = parameter_list

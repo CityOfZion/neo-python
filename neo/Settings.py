@@ -345,8 +345,9 @@ settings.set_loglevel(logging.INFO)
 
 # System check: Are dependencies must be installed in the correct version
 # Can be bypassed with `SKIP_DEPS_CHECK=1 python prompt.py`
-if not os.getenv("SKIP_DEPS_CHECK") and not IS_PACKAGE_INSTALL:
-    check_depdendencies()
+# this causes so many headaches when developing between boa and neo and core... :(
+# if not os.getenv("SKIP_DEPS_CHECK") and not IS_PACKAGE_INSTALL:
+#     check_depdendencies()
 
 # System check: Python 3.6+
 if not os.getenv("SKIP_PY_CHECK"):

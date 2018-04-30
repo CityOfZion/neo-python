@@ -34,6 +34,8 @@ from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
+from prompt_toolkit import prompt
+
 
 class LevelDBBlockchain(Blockchain):
     _path = None
@@ -51,9 +53,11 @@ class LevelDBBlockchain(Blockchain):
 
     # this is the version of the database
     # should not be updated for network version changes
-    _sysversion = b'/NEO:2.0.1/'
+    _sysversion = b'schema v.0.6.9'
 
     _persisting_block = None
+
+    TXProcessed = 0
 
     @property
     def CurrentBlockHash(self):
@@ -95,12 +99,14 @@ class LevelDBBlockchain(Blockchain):
     def Path(self):
         return self._path
 
-    def __init__(self, path):
+    def __init__(self, path, skip_version_check=False):
         super(LevelDBBlockchain, self).__init__()
         self._path = path
 
         self._header_index = []
         self._header_index.append(Blockchain.GenesisBlock().Header.Hash.ToBytes())
+
+        self.TXProcessed = 0
 
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)
@@ -111,6 +117,10 @@ class LevelDBBlockchain(Blockchain):
             raise Exception('Leveldb Unavailable')
 
         version = self._db.get(DBPrefix.SYS_Version)
+
+        if skip_version_check:
+            self._db.put(DBPrefix.SYS_Version, self._sysversion)
+            version = self._sysversion
 
         if version == self._sysversion:  # or in the future, if version doesn't equal the current version...
 
@@ -174,13 +184,28 @@ class LevelDBBlockchain(Blockchain):
                     self.AddHeaders(newhashes)
                 except Exception as e:
                     pass
-        else:
-            with self._db.write_batch() as wb:
-                for key, value in self._db.iterator():
-                    wb.delete(key)
 
+        elif version is None:
             self.Persist(Blockchain.GenesisBlock())
             self._db.put(DBPrefix.SYS_Version, self._sysversion)
+        else:
+
+            logger.error("\n\n")
+            logger.warning("Database schema has changed from %s to %s.\n" % (version, self._sysversion))
+            logger.warning("You must either resync from scratch, or use the np-bootstrap command to bootstrap the chain.")
+
+            res = prompt("Type 'continue' to erase your current database and sync from new. Otherwise this program will exit:\n> ")
+            if res == 'continue':
+
+                with self._db.write_batch() as wb:
+                    for key, value in self._db.iterator():
+                        wb.delete(key)
+
+                self.Persist(Blockchain.GenesisBlock())
+                self._db.put(DBPrefix.SYS_Version, self._sysversion)
+
+            else:
+                raise Exception("Database schema changed")
 
     def GetAccountState(self, script_hash, print_all_accounts=False):
 
@@ -202,7 +227,7 @@ class LevelDBBlockchain(Blockchain):
     def GetStorageItem(self, storage_key):
         sn = self._db.snapshot()
         storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
-        item = storages.TryGet(storage_key.GetHashCodeBytes())
+        item = storages.TryGet(storage_key.ToArray())
         sn.close()
         return item
 
@@ -783,10 +808,13 @@ class LevelDBBlockchain(Blockchain):
             self._current_block_height = block.Index
             self._persisting_block = None
 
+            self.TXProcessed += len(block.Transactions)
+
             for event in to_dispatch:
                 events.emit(event.event_type, event)
 
     def PersistBlocks(self):
+
         if not self._paused:
             #            logger.info("PERRRRRSISST:: Hheight, b height, cache: %s/%s %s  --%s %s" % (self.Height, self.HeaderHeight, len(self._block_cache), self.CurrentHeaderHash, self.BlockSearchTries))
 
@@ -813,6 +841,7 @@ class LevelDBBlockchain(Blockchain):
                     raise e
 
     def Resume(self):
+        self._currently_persisting = False
         super(LevelDBBlockchain, self).Resume()
         self.PersistBlocks()
 
