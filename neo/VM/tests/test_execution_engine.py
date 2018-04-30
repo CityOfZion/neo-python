@@ -1,5 +1,5 @@
 from unittest import TestCase
-from neo.VM.InteropService import StackItem
+from neo.VM.InteropService import StackItem,ByteArray
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
 from neo.VM import OpCode
@@ -43,8 +43,8 @@ class VMTestCase(TestCase):
 
     def test_verify_sig(self):
 
-        # push message ( should be hexlified )
-        self.engine.EvaluationStack.PushT(StackItem.New(b'616263646566'))
+        stackItemMessage = ByteArray('abcdef')
+        self.engine.EvaluationStack.PushT(stackItemMessage)
 
         # sig
         sig = binascii.unhexlify(b'cd0ca967d11cea78e25ad16f15dbe77672258bfec59ff3617c95e317acff063a48d35f71aa5ce7d735977412186e1572507d0f4d204c5bcb6c90e03b8b857fbd')
@@ -62,7 +62,8 @@ class VMTestCase(TestCase):
     def test_verify_sig_fail(self):
 
         # push message ( should be hexlified )
-        self.engine.EvaluationStack.PushT(StackItem.New(b'616263646566'))
+        stackItemMessage = ByteArray('abcdefg')
+        self.engine.EvaluationStack.PushT(stackItemMessage)
 
         # sig
         sig = binascii.unhexlify(b'cd0ca967d11cea78e25ad16f15dbe77672258bfec59ff3617c95e317acff063a48d35f71aa5ce7d735977412186e1572507d0f4d204c5bcb6c90e03b8b857fbd')

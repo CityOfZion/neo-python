@@ -604,9 +604,9 @@ class ExecutionEngine:
             elif opcode == VERIFY:
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
-                message = estack.Pop().GetString()
+                message = estack.Pop().GetByteArray()
                 try:
-                    res = self.Crypto.VerifySignature(message, sig, pubkey)
+                    res = self.Crypto.VerifySignature(message, sig, pubkey,unhex=False)
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)
