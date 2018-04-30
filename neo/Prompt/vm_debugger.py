@@ -10,7 +10,7 @@ import json
 from logzero import logger
 
 
-class DebugContext():
+class DebugContext:
 
     start = None
     end = None
@@ -77,7 +77,7 @@ class DebugContext():
         dis.dis(self.method.code_object)
 
 
-class VMDebugger():
+class VMDebugger:
 
     engine = None
     parser = None

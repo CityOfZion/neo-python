@@ -1,7 +1,7 @@
 from pyparsing import ZeroOrMore, Regex
 
 
-class InputParser(object):
+class InputParser:
     parser = ZeroOrMore(Regex(r'\[[^]]*\]') | Regex(r'"[^"]*"') | Regex(r'\'[^\']*\'') | Regex(r'[^ ]+'))
 
     def parse_input(self, user_input):

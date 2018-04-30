@@ -1,3 +1,4 @@
+import binascii
 from neo.Blockchain import GetBlockchain
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
@@ -32,7 +33,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
 from logzero import logger
 
-from neo.VM.OpCode import *
+from neo.VM.OpCode import PACK
 
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 

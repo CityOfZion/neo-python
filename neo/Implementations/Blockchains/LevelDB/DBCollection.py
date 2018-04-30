@@ -3,7 +3,7 @@ from logzero import logger
 from neo.SmartContract.StorageIterator import StorageIterator
 
 
-class DBCollection():
+class DBCollection:
     DB = None
     #    SN = None
     Prefix = None

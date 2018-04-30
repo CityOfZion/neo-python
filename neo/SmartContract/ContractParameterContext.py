@@ -14,7 +14,7 @@ from neo.VM import OpCode
 from neo.Core.Witness import Witness
 
 
-class ContractParamater():
+class ContractParamater:
 
     Type = None
     Value = None
@@ -33,7 +33,7 @@ class ContractParamater():
         return jsn
 
 
-class ContextItem():
+class ContextItem:
 
     Script = None
     ContractParameters = None
@@ -67,7 +67,7 @@ class ContextItem():
         return jsn
 
 
-class ContractParametersContext():
+class ContractParametersContext:
 
     Verifiable = None
 

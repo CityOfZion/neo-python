@@ -23,7 +23,7 @@ class NeoClientFactory(ReconnectingClientFactory):
                 peer.connectionLost()
 
 
-class NodeLeader():
+class NodeLeader:
     __LEAD = None
 
     Peers = []

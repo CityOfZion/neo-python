@@ -1,11 +1,11 @@
 import hashlib
 import datetime
 
+from neo.VM.OpCode import *
 from logzero import logger
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
-from neo.VM.OpCode import *
 from neo.VM.InteropService import Array, Struct, CollectionMixin, Map, Boolean
 from neocore.UInt160 import UInt160
 from neo.Settings import settings
@@ -14,7 +14,7 @@ from neo.Prompt.vm_debugger import VMDebugger
 from logging import DEBUG as LOGGING_LEVEL_DEBUG
 
 
-class ExecutionEngine():
+class ExecutionEngine:
     _Table = None
     _Service = None
 

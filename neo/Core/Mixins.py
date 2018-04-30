@@ -1,12 +1,12 @@
 from neocore.IO.Mixins import SerializableMixin
 
 
-class ClonableMixin(object):
+class ClonableMixin:
     def clone(self):
         pass
 
 
-class CodeMixin(object):
+class CodeMixin:
     scripts = []
     parameter_list = []
     return_type = None
@@ -39,7 +39,7 @@ class VerifiableMixin(SerializableMixin):
         pass
 
 
-class EquatableMixin():
+class EquatableMixin:
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

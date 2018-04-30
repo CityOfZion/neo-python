@@ -6,7 +6,7 @@ Usage:
 """
 
 
-class AssetType(object):
+class AssetType:
     CreditFlag = 0x40
     DutyFlag = 0x80
 

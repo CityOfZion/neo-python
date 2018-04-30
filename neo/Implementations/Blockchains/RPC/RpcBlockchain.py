@@ -10,7 +10,7 @@ from neo.Network.RPC.RpcClient import RpcClient
 from neo.Defaults import TEST_NODE
 
 
-class RpcBlockchain(object):
+class RpcBlockchain:
     """docstring for RpcBlockchain"""
 
     def __init__(self, url=TEST_NODE):

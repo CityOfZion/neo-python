@@ -1,7 +1,9 @@
+import binascii
 from logzero import logger
 
 from neo.VM.ExecutionEngine import ExecutionEngine
-from neo.VM.OpCode import *
+from neo.VM.OpCode import CALL, APPCALL, CHECKSIG, HASH160, HASH256, NOP, SHA1, SHA256, DEPTH, DUP, PACK, TUCK, OVER, \
+    SYSCALL, TAILCALL, NEWARRAY, NEWSTRUCT, PUSH16, UNPACK, CAT, CHECKMULTISIG, PUSHDATA4
 from neo.VM import VMState
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
