@@ -11,8 +11,6 @@ from decimal import Decimal
 from logzero import logger
 import json
 
-from neo.data.serialized_items import my_big_bytearray
-
 
 def get_asset_attachments(params):
 
@@ -150,9 +148,6 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     # first, we'll try to parse an array
 
-    if p == 'my_placeholder':
-        return my_big_bytearray.hex()
-
     try:
         items = eval(p, {"__builtins__": {}}, {})
         if len(items) > 0 and type(items) is list:
@@ -238,12 +233,11 @@ def lookup_addr_str(wallet, addr):
 
 
 def parse_hold_vins(results):
-    print("results!!! %s " % results)
 
     holds = results[0].GetByteArray()
     holdlen = len(holds)
     numholds = int(holdlen / 33)
-    print("holds, holdlen, numholds %s %s " % (holds, numholds))
+
     vins = []
     for i in range(0, numholds):
         hstart = i * 33
@@ -252,11 +246,8 @@ def parse_hold_vins(results):
 
         vin_index = item[0]
         vin_tx_id = UInt256(data=item[1:])
-        print("VIN INDEX, VIN TX ID: %s %s" % (vin_index, vin_tx_id))
 
         t_input = TransactionInput(prevHash=vin_tx_id, prevIndex=vin_index)
-
-        print("found tinput: %s " % json.dumps(t_input.ToJson(), indent=4))
 
         vins.append(t_input)
 
