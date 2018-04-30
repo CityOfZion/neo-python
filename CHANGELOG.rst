@@ -15,6 +15,7 @@ All notable changes to this project are documented in this file.
 - add check for block tx length when adding to blockchain to address issues `#302 <https://github.com/CityOfZion/neo-python/issues/302>`_ and `#360 <https://github.com/CityOfZion/neo-python/issues/360>`_
 - add smart contract storage searching using a prefix.
 - source code cleanup of imports and class declarations
+- update to ``neo-boa==0.4.2``
 
 
 [0.6.8] 2018-04-26
