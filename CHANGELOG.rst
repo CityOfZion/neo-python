@@ -9,6 +9,8 @@ All notable changes to this project are documented in this file.
 - fix issue with dispatching transfer events when ``from_addr`` is ``False``
 - add TPS monitor to ``prompt`` ``state`` command
 - add check for db schema changes
+- add support for ``StorageIterator`` and ``Storage.Find`` from smart contracts
+- update to ``neocore==0.4.3``
 
 
 [0.6.8] 2018-04-26
