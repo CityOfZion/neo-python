@@ -10,8 +10,11 @@ All notable changes to this project are documented in this file.
 - add TPS monitor to ``prompt`` ``state`` command
 - add check for db schema changes
 - add support for ``StorageIterator`` and ``Storage.Find`` from smart contracts
-- update to ``neocore==0.4.3``
+- update to ``neocore==0.4.6``
+- update ``VERIFY`` implementation to match C#
 - add check for block tx length when adding to blockchain to address issues `#302 <https://github.com/CityOfZion/neo-python/issues/302>`_ and `#360 <https://github.com/CityOfZion/neo-python/issues/360>`_
+- add smart contract storage searching using a prefix.
+- source code cleanup of imports and class declarations
 
 
 [0.6.8] 2018-04-26
@@ -21,7 +24,6 @@ All notable changes to this project are documented in this file.
 - fix for token_delete command not removing tokens from wallet file
 - fixed sc-events and notification DB showing previous block height instead of final block height of event
 - persist refund() notify events in notification DB
-- add smart contract storage searching using a prefix.
 - add Runtime.Serialize/Deserialize support for MAP
 - fix for debug breakpoints not being cleared.
 - add VERIFY op to ExecutionEngine

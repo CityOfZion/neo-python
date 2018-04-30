@@ -606,7 +606,7 @@ class ExecutionEngine:
                 sig = estack.Pop().GetByteArray()
                 message = estack.Pop().GetByteArray()
                 try:
-                    res = self.Crypto.VerifySignature(message, sig, pubkey,unhex=False)
+                    res = self.Crypto.VerifySignature(message, sig, pubkey, unhex=False)
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)
