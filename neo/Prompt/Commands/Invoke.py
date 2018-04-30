@@ -414,7 +414,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
         for p in invoke_args:
 
             item = parse_param(p, wallet)
-
+            print("ITEM INOW %s %s " % (item, type(item)))
             if type(item) is list:
                 item.reverse()
                 listlength = len(item)

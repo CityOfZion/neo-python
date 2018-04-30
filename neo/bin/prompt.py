@@ -922,7 +922,7 @@ class PromptInterface(object):
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(1)
+        dbloop.start(.1)
 
 #        Blockchain.Default().PersistBlocks()
 

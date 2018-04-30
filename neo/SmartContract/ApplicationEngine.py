@@ -59,7 +59,7 @@ class ApplicationEngine(ExecutionEngine):
             size = self.EvaluationStack.Peek().GetBigInteger()
 
             if size > maxArraySize:
-                logger.debug("ARRAY SIZE TOO BIG!!!")
+                logger.error("ARRAY SIZE TOO BIG!!!")
                 return False
 
             return True
@@ -107,7 +107,7 @@ class ApplicationEngine(ExecutionEngine):
             length = int.from_bytes(lengthpointer, 'little')
 
             if length > maxItemSize:
-                logger.debug("ITEM IS GREATER THAN MAX ITEM SIZE!")
+                logger.error("ITEM IS GREATER THAN MAX ITEM SIZE!")
                 return False
 
             return True
@@ -115,7 +115,7 @@ class ApplicationEngine(ExecutionEngine):
         elif opcode == CAT:
 
             if self.EvaluationStack.Count < 2:
-                logger.debug("NOT ENOUGH ITEMS TO CONCAT")
+                logger.error("NOT ENOUGH ITEMS TO CONCAT")
                 return False
 
             length = 0
@@ -123,11 +123,11 @@ class ApplicationEngine(ExecutionEngine):
             try:
                 length = len(self.EvaluationStack.Peek(0).GetByteArray()) + len(self.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
-                logger.debug("COULD NOT GET STR LENGTH!")
+                logger.error("COULD NOT GET STR LENGTH!")
                 raise e
 
             if length > maxItemSize:
-                logger.debug("ITEM IS GREATER THAN MAX SIZE!!!")
+                logger.error("ITEM IS GREATER THAN MAX SIZE!!!")
                 return False
 
             return True
@@ -159,7 +159,7 @@ class ApplicationEngine(ExecutionEngine):
                 item = self.EvaluationStack.Peek()
 
                 if not item.IsArray:
-                    logger.debug("ITEM NOT ARRAY:")
+                    logger.error("ITEM NOT ARRAY:")
                     return False
 
                 size = len(item.GetArray())
@@ -170,7 +170,7 @@ class ApplicationEngine(ExecutionEngine):
         size += self.EvaluationStack.Count + self.AltStack.Count
 
         if size > maxStackSize:
-            logger.debug("SIZE IS OVER MAX STACK SIZE!!!!")
+            logger.error("SIZE IS OVER MAX STACK SIZE!!!!")
             return False
 
         return True
@@ -225,32 +225,32 @@ class ApplicationEngine(ExecutionEngine):
                     return False
 
                 if not self.testMode and self.gas_consumed > self.gas_amount:
-                    logger.debug("NOT ENOUGH GAS")
+                    logger.error("NOT ENOUGH GAS")
                     self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckItemSize():
-                    logger.debug("ITEM SIZE TOO BIG")
+                    logger.error("ITEM SIZE TOO BIG")
                     self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckStackSize():
-                    logger.debug("STACK SIZE TOO BIG")
+                    logger.error("STACK SIZE TOO BIG")
                     self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckArraySize():
-                    logger.debug("ARRAY SIZE TOO BIG")
+                    logger.error("ARRAY SIZE TOO BIG")
                     self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckInvocationStack():
-                    logger.debug("INVOCATION SIZE TO BIIG")
+                    logger.error("INVOCATION SIZE TO BIIG")
                     self._VMState |= VMState.FAULT
                     return False
 
                 if not self.CheckDynamicInvoke():
-                    logger.debug("Dynamic invoke without proper contract")
+                    logger.error("Dynamic invoke without proper contract")
                     self._VMState |= VMState.FAULT
                     return False
 

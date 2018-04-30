@@ -11,6 +11,8 @@ from decimal import Decimal
 from logzero import logger
 import json
 
+from neo.data.serialized_items import my_big_bytearray
+
 
 def get_asset_attachments(params):
 
@@ -147,6 +149,10 @@ def attr_obj_to_tx_attr(obj):
 def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     # first, we'll try to parse an array
+
+    if p == 'my_placeholder':
+        return my_big_bytearray.hex()
+
     try:
         items = eval(p, {"__builtins__": {}}, {})
         if len(items) > 0 and type(items) is list:
@@ -169,10 +175,17 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
             pass
 
     try:
-        val = eval(p, {"__builtins__": {}}, {})
-
+        val = eval(p, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
         if type(val) is bytearray:
-            return val.hex()
+            return val
+        elif type(val) is bytes:
+            # try to unhex
+            try:
+                val = binascii.unhexlify(val)
+            except Exception as e:
+                pass
+            # now it should be unhexxed no matter what, and we can hex it
+            return val.hex().encode('utf-8')
 
         return val
     except Exception as e:
