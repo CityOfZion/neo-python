@@ -3,7 +3,7 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.6.9] in progress
+[0.6.9] 2018-04-30
 -----------------------
 - alter logging
 - fix issue with dispatching transfer events when ``from_addr`` is ``False``
