@@ -376,11 +376,10 @@ class StateMachine(StateReader):
             self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
 
             if contract.HasStorage:
-
-                for pair in self._storages.Find(engine.CurrentContext.ScriptHash()):
-                    key = StorageKey(script_hash=hash, key=pair.Key.Key)
-                    item = StorageItem(pair.Value.Value)
-                    self._storages.Add(key, item)
+                for key, val in self._storages.Find(engine.CurrentContext.ScriptHash()).items():
+                    key = StorageKey(script_hash=hash, key=key)
+                    item = StorageItem(val)
+                    self._storages.Add(key.ToArray(), item)
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
