@@ -4,7 +4,6 @@ from neo.SmartContract.SmartContractEvent import SmartContractEvent
 from neocore.UInt160 import UInt160
 from boa.compiler import Compiler
 from neo.Prompt.Commands.BuildNRun import TestBuild
-from neo.Prompt.Commands.Invoke import TestInvokeContract
 from neo.Wallets.utils import to_aes_key
 from neo.Settings import settings
 from neo.EventHub import events
@@ -28,6 +27,7 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
     def setUpClass(cls):
         super(ContractMigrateTestCase, cls).setUpClass()
         settings.log_smart_contract_events = True
+        settings.USE_DEBUG_STORAGE = True
 
     @classmethod
     def tearDownClass(cls):
