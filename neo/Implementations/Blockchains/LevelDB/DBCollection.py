@@ -178,7 +178,8 @@ class DBCollection:
             # we want the storage item, not the raw bytes
             item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
             # also here we need to skip the 1 byte storage prefix
-            res[key[21:]] = item
+            res_key = key[21:]
+            res[res_key] = item
         return res
 
     def Destroy(self):
