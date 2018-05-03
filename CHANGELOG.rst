@@ -3,6 +3,11 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.7.0] in progress
+-----------------------
+- fix ``StateMachine.Contract_Migrate`` and add tests
+
+
 [0.6.9] 2018-04-30
 -----------------------
 - alter logging
