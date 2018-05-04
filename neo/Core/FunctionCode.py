@@ -42,7 +42,7 @@ class FunctionCode(SerializableMixin):
         else:
             self.ParameterList = param_list
 
-        if len(return_type) > 1:
+        if return_type and not isinstance(return_type, int) and len(return_type) > 1:
             return_type = return_type[0:1]
 
         self.ReturnType = return_type
