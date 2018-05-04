@@ -37,16 +37,14 @@ def Main(operation, data):
 
         print("migrating")
 
-#        def Migrate(script, parameter_list, return_type, properties, name, version, author, email, description):
-
-        param_list = '07'
-        return_type = '05'
+        param_list = bytearray(b'\x07')
+        return_type = bytearray(b'\x05')
         properties = 1
-        name = 'migrated contract'
-        version = '0.1'
-        author = 'coz'
-        email = 'coz@email.com'
-        description = 'test migrate'
+        name = 'migrated contract 3'
+        version = '0.3'
+        author = 'localhuman3'
+        email = 'nex@email.com'
+        description = 'test migrate3'
 
         new_contract = Migrate(data, param_list, return_type, properties, name, version, author, email, description)
 
