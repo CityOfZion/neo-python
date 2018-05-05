@@ -38,7 +38,7 @@ from neo.VM.OpCode import PACK
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
-def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None):
+def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, invoke_attrs=None):
 
     if from_addr is not None:
         from_addr = lookup_addr_str(wallet, from_addr)
@@ -140,7 +140,7 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None, min_fee=DEFAULT_MIN_FEE):
+def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invoke_attrs=None):
 
     BC = GetBlockchain()
 
@@ -206,7 +206,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
 
             outputs.append(output)
 
-        return test_invoke(out, wallet, outputs, withdrawal_tx, from_addr, min_fee)
+        return test_invoke(out, wallet, outputs, withdrawal_tx, from_addr, min_fee, invoke_attrs=invoke_attrs)
 
     else:
 
@@ -215,7 +215,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
     return None, None, None, None
 
 
-def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min_fee=DEFAULT_MIN_FEE):
+def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min_fee=DEFAULT_MIN_FEE, invoke_attrs=None):
 
     # print("invoke script %s " % script)
 
@@ -246,13 +246,14 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
     tx.Version = 1
     tx.scripts = []
     tx.Script = binascii.unhexlify(script)
+    tx.Attributes = [] if invoke_attrs is None else invoke_attrs
 
     script_table = CachedScriptTable(contracts)
     service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
     if len(outputs) < 1:
         contract = wallet.GetDefaultContract()
-        tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script, unhex=False).Data)]
+        tx.Attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script, unhex=False).Data))
 
     # same as above. we don't want to re-make the transaction if it is a withdrawal tx
     if withdrawal_tx is not None:
@@ -330,7 +331,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
     return None, None, None, None
 
 
-def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None):
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None, invoke_attrs=None):
 
     bc = GetBlockchain()
 
@@ -447,13 +448,13 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
         itx.outputs = outputs
         itx.inputs = []
         itx.scripts = []
-        itx.Attributes = []
+        itx.Attributes = invoke_attrs if invoke_attrs else []
         itx.Script = binascii.unhexlify(out)
 
         if len(outputs) < 1:
             contract = wallet.GetDefaultContract()
-            itx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                                   data=Crypto.ToScriptHash(contract.Script, unhex=False).Data)]
+            itx.Attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                                       data=Crypto.ToScriptHash(contract.Script, unhex=False).Data))
 
         itx = wallet.MakeTransaction(tx=itx, from_addr=from_addr)
         context = ContractParametersContext(itx)
