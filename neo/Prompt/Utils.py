@@ -38,6 +38,29 @@ def get_asset_attachments(params):
     return params, neo_to_attach, gas_to_attach
 
 
+def get_owners_from_params(params):
+    to_remove = []
+    owners = None
+
+    for item in params:
+        if type(item) is str:
+            if '--owners=' in item:
+                owners =[]
+                to_remove.append(item)
+                try:
+                    owner_list = eval(item.replace('--owners=', ''))
+                    owners = set()
+                    for o in owner_list:
+                        shash = Helper.AddrStrToScriptHash(o)
+                        owners.add(shash)
+                except Exception as e:
+                    logger.info("Could not parse owner %s " % e)
+                    pass
+    for item in to_remove:
+        params.remove(item)
+
+    return params, owners
+
 def get_asset_id(wallet, asset_str):
     assetId = None
 

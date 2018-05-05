@@ -1,10 +1,10 @@
 import binascii
+import json
 from neo.Blockchain import GetBlockchain
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import parse_param, get_asset_attachments, lookup_addr_str
-
 
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -26,12 +26,16 @@ from neo.SmartContract import TriggerType
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.SmartContract.Contract import Contract
+from neocore.Cryptography.Helper import scripthash_to_address
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
 from logzero import logger
+from prompt_toolkit import prompt
+
+from neocore.Cryptography.ECCurve import ECDSA
 
 from neo.VM.OpCode import PACK
 
@@ -331,7 +335,9 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
     return None, None, None, None
 
 
-def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None, invoke_attrs=None):
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
+                           from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
+                           debug_map=None, invoke_attrs=None, owners=None):
 
     bc = GetBlockchain()
 
@@ -451,17 +457,69 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None, m
         itx.Attributes = invoke_attrs if invoke_attrs else []
         itx.Script = binascii.unhexlify(out)
 
-        if len(outputs) < 1:
+        if len(outputs) < 1 and not owners:
             contract = wallet.GetDefaultContract()
             itx.Attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                                        data=Crypto.ToScriptHash(contract.Script, unhex=False).Data))
 
         itx = wallet.MakeTransaction(tx=itx, from_addr=from_addr)
-        context = ContractParametersContext(itx)
-        wallet.Sign(context)
-        itx.scripts = context.GetScripts()
 
-#            print("tx: %s " % json.dumps(itx.ToJson(), indent=4))
+
+        if owners:
+            owners = list(owners)
+            for owner in owners:
+                itx.Attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script, data=owner))
+            context = ContractParametersContext(itx, isMultiSig=True)
+    #        wallet.Sign(context)
+
+
+        else:
+            context = ContractParametersContext(itx)
+            wallet.Sign(context)
+
+        if context.Completed:
+            itx.scripts = context.GetScripts()
+        else:
+            do_exit = False
+            print("\n\n*******************\n")
+            print("Gather Signatures for Transactino:\n%s " % json.dumps(itx.ToJson(), indent=4))
+            print("Please use a client to sign the following: %s " % itx.GetHashData())
+
+            owner_index = 0
+            while not context.Completed and not do_exit:
+
+                next_script = owners[owner_index]
+                next_addr = scripthash_to_address(next_script.Data)
+                try:
+                    print("\n*******************\n")
+                    owner_input = prompt('Public Key and Signature for %s> ' % next_addr)
+                    items = owner_input.split(' ')
+                    pubkey = ECDSA.decode_secp256r1(items[0]).G
+                    sig = items[1]
+                    contract = Contract.CreateSignatureContract(pubkey)
+
+                    if contract.Address == next_addr:
+                        context.Add(contract,0, sig)
+                        print("Adding signature %s " % sig)
+                        owner_index+=1
+                    else:
+                        print("Public Key does not match address %s " % next_addr)
+
+                except EOFError:
+                    # Control-D pressed: quit
+                    do_exit = True
+                except KeyboardInterrupt:
+                    # Control-C pressed: do nothing
+                    do_exit = True
+                except Exception as e:
+                    print("Could not parse input %s " % e)
+
+            if context.Completed:
+                print("Signatures complete")
+                itx.scripts = context.GetScripts()
+            else:
+                print("Could not finish signatures")
+                return None, [], 0, None
 
         engine = ApplicationEngine(
             trigger_type=TriggerType.Application,

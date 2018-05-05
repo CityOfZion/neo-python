@@ -1,4 +1,4 @@
-from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args
+from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args,get_owners_from_params
 from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, generate_deploy_script
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.SmartContract.ContractParameter import ContractParameter
@@ -43,8 +43,17 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invoca
 
     arguments, from_addr = get_from_addr(arguments)
     arguments, invoke_attrs = get_tx_attr_from_args(arguments)
+    arguments, owners = get_owners_from_params(arguments)
     path = get_arg(arguments)
     contract_script = Compiler.instance().load_and_save(path)
+
+    # owners = [
+    #     b'\x14\x06\xe5\x87\xf4\x93\xdb\x8b\t\xa2\x14\x98!\x9fvMpp\xdc\xbe',
+    #     b'\xe0\xa9\xce\x8c\xb0j\x8c\xb7-J,\x91+n0\\\xbb\x04\xe5\xb7',
+    #     b'?a\xf1\xfe\xa7\x8c@\x18z\xf3|\xbf+\x11\xe6\x97\xfb\xc9\xe7\xfe',
+    #     b'^\xc73\xe7\x12\x92\xa0\x17@\xe0\x18\x80+>\xc6\xca6\xdb\nA',
+    #     b"\x81'\xc1\xbfh\x97\xc5\x7f\xf6P^S\x8e8j\x0c\xa1_\x07\x82",
+    # ]
 
     newpath = path.replace('.py', '.avm')
     logger.info("Saved output to %s " % newpath)
@@ -55,10 +64,14 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invoca
         with open(debug_map_path, 'r') as dbg:
             debug_map = json.load(dbg)
 
-    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee, invocation_test_mode, debug_map=debug_map, invoke_attrs=invoke_attrs)
+    return DoRun(contract_script, arguments, wallet, path, verbose,
+                 from_addr, min_fee, invocation_test_mode,
+                 debug_map=debug_map, invoke_attrs=invoke_attrs, owners=owners)
 
 
-def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None, invoke_attrs=None):
+def DoRun(contract_script, arguments, wallet, path, verbose=True,
+          from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
+          debug_map=None, invoke_attrs=None, owners=None):
 
     test = get_arg(arguments, 1)
 
@@ -71,7 +84,9 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None
 
             script = GatherLoadedContractParams(f_args, contract_script)
 
-            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee, invocation_test_mode, debug_map=debug_map, invoke_attrs=invoke_attrs)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr,
+                                                                   min_fee, invocation_test_mode, debug_map=debug_map,
+                                                                   invoke_attrs=invoke_attrs, owners=owners)
             i_args.reverse()
 
             return_type_results = []

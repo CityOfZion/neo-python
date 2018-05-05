@@ -567,6 +567,8 @@ class PromptInterface:
             token_crowdsale_register(self.Wallet, arguments[1:])
         elif item == 'unspent':
             ShowUnspentCoins(self.Wallet, arguments[1:])
+        elif item == 'sign_message':
+            
         elif item == 'alias':
             if len(arguments) == 3:
                 AddAlias(self.Wallet, arguments[1], arguments[2])
