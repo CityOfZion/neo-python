@@ -4,7 +4,7 @@ from neo.Blockchain import GetBlockchain
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import parse_param, get_asset_attachments, lookup_addr_str
+from neo.Prompt.Utils import parse_param, get_asset_attachments, lookup_addr_str,get_owners_from_params
 
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -49,7 +49,6 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, invoke_attrs=N
 
     wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True, from_addr=from_addr)
 
-#    pdb.set_trace()
 
     if wallet_tx:
 
@@ -144,29 +143,19 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invoke_attrs=None):
+def TestInvokeContract(wallet, args, withdrawal_tx=None,
+                       parse_params=True, from_addr=None,
+                       min_fee=DEFAULT_MIN_FEE, invoke_attrs=None, owners=None):
 
     BC = GetBlockchain()
 
     contract = BC.GetContract(args[0])
 
     if contract:
-
-        verbose = False
-
-        if 'verbose' in args:
-            descripe_contract(contract)
-            verbose = True
-            args.remove('verbose')
-
 #
         params = args[1:] if len(args) > 1 else []
 
-        if len(params) > 0 and params[0] == 'describe':
-            return
-
         params, neo_to_attach, gas_to_attach = get_asset_attachments(params)
-
         params.reverse()
 
         sb = ScriptBuilder()
@@ -210,7 +199,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
 
             outputs.append(output)
 
-        return test_invoke(out, wallet, outputs, withdrawal_tx, from_addr, min_fee, invoke_attrs=invoke_attrs)
+        return test_invoke(out, wallet, outputs, withdrawal_tx, from_addr, min_fee, invoke_attrs=invoke_attrs, owners=owners)
 
     else:
 
@@ -219,7 +208,9 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, parse_params=True, from
     return None, None, None, None
 
 
-def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min_fee=DEFAULT_MIN_FEE, invoke_attrs=None):
+def test_invoke(script, wallet, outputs, withdrawal_tx=None,
+                from_addr=None, min_fee=DEFAULT_MIN_FEE,
+                invoke_attrs=None, owners=None):
 
     # print("invoke script %s " % script)
 
@@ -265,12 +256,30 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None, from_addr=None, min
     else:
         wallet_tx = wallet.MakeTransaction(tx=tx, from_addr=from_addr)
 
+
     if wallet_tx:
 
         context = ContractParametersContext(wallet_tx)
         wallet.Sign(context)
         if context.Completed:
             wallet_tx.scripts = context.GetScripts()
+
+#     context = ContractParametersContext(wallet_tx)
+#     wallet.Sign(context)
+#
+#     if owners:
+#         print("adding owners....")
+#         owners = list(owners)
+#         for owner in owners:
+#             wallet_tx.Attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script, data=owner))
+#         context = ContractParametersContext(wallet_tx, isMultiSig=True)
+#
+#     if context.Completed:
+#         wallet_tx.scripts = context.GetScripts()
+#     else:
+#         logger.warn("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
+# #        if not gather_signatures(context, wallet_tx, owners):
+# #            return None, [], 0, None
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
@@ -465,61 +474,24 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         itx = wallet.MakeTransaction(tx=itx, from_addr=from_addr)
 
 
+        context = ContractParametersContext(itx)
+        wallet.Sign(context)
+
         if owners:
             owners = list(owners)
             for owner in owners:
                 itx.Attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script, data=owner))
             context = ContractParametersContext(itx, isMultiSig=True)
-    #        wallet.Sign(context)
 
-
-        else:
-            context = ContractParametersContext(itx)
-            wallet.Sign(context)
 
         if context.Completed:
             itx.scripts = context.GetScripts()
         else:
-            do_exit = False
-            print("\n\n*******************\n")
-            print("Gather Signatures for Transactino:\n%s " % json.dumps(itx.ToJson(), indent=4))
-            print("Please use a client to sign the following: %s " % itx.GetHashData())
+            logger.warn("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
+#            if not gather_signatures(context, itx, owners):
+#                return None, [], 0, None
 
-            owner_index = 0
-            while not context.Completed and not do_exit:
-
-                next_script = owners[owner_index]
-                next_addr = scripthash_to_address(next_script.Data)
-                try:
-                    print("\n*******************\n")
-                    owner_input = prompt('Public Key and Signature for %s> ' % next_addr)
-                    items = owner_input.split(' ')
-                    pubkey = ECDSA.decode_secp256r1(items[0]).G
-                    sig = items[1]
-                    contract = Contract.CreateSignatureContract(pubkey)
-
-                    if contract.Address == next_addr:
-                        context.Add(contract,0, sig)
-                        print("Adding signature %s " % sig)
-                        owner_index+=1
-                    else:
-                        print("Public Key does not match address %s " % next_addr)
-
-                except EOFError:
-                    # Control-D pressed: quit
-                    do_exit = True
-                except KeyboardInterrupt:
-                    # Control-C pressed: do nothing
-                    do_exit = True
-                except Exception as e:
-                    print("Could not parse input %s " % e)
-
-            if context.Completed:
-                print("Signatures complete")
-                itx.scripts = context.GetScripts()
-            else:
-                print("Could not finish signatures")
-                return None, [], 0, None
+#        print("gathered signatures %s " % itx.scripts)
 
         engine = ApplicationEngine(
             trigger_type=TriggerType.Application,
@@ -579,5 +551,48 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
     return None, [], 0, None
 
 
-def descripe_contract(contract):
-    print("invoking contract - %s" % contract.Name.decode('utf-8'))
+
+
+def gather_signatures(context, itx, owners):
+    do_exit = False
+    print("owners %s " % owners)
+    print("\n\n*******************\n")
+    print("Gather Signatures for Transactino:\n%s " % json.dumps(itx.ToJson(), indent=4))
+    print("Please use a client to sign the following: %s " % itx.GetHashData())
+
+    owner_index = 0
+    while not context.Completed and not do_exit:
+
+        next_script = owners[owner_index]
+        next_addr = scripthash_to_address(next_script.Data)
+        try:
+            print("\n*******************\n")
+            owner_input = prompt('Public Key and Signature for %s> ' % next_addr)
+            items = owner_input.split(' ')
+            pubkey = ECDSA.decode_secp256r1(items[0]).G
+            sig = items[1]
+            contract = Contract.CreateSignatureContract(pubkey)
+
+            if contract.Address == next_addr:
+                context.Add(contract, 0, sig)
+                print("Adding signature %s " % sig)
+                owner_index += 1
+            else:
+                print("Public Key does not match address %s " % next_addr)
+
+        except EOFError:
+            # Control-D pressed: quit
+            do_exit = True
+        except KeyboardInterrupt:
+            # Control-C pressed: do nothing
+            do_exit = True
+        except Exception as e:
+            print("Could not parse input %s " % e)
+
+    if context.Completed:
+        print("Signatures complete")
+        itx.scripts = context.GetScripts()
+        return True
+    else:
+        print("Could not finish signatures")
+        return False

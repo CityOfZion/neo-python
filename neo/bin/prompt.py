@@ -40,7 +40,7 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins, SignMessage,VerifySignature
 
-from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args
+from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args,get_owners_from_params
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
 from neo.UserPreferences import preferences
@@ -760,8 +760,10 @@ class PromptInterface:
 
         args, from_addr = get_from_addr(args)
         args, invoke_attrs = get_tx_attr_from_args(args)
+        args, owners = get_owners_from_params(args)
+        print("TEST INVOKE OWNERS: %s " % owners)
         if args and len(args) > 0:
-            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs)
+            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
 
             if tx is not None and results is not None:
                 print(
