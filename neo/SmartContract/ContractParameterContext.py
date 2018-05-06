@@ -232,7 +232,6 @@ class ContractParametersContext:
                     sb.push(listlength)
                     sb.Emit(OpCode.PACK)
                 else:
-                    print("p value %s %s" % (p.Value, type(p.Value)))
                     sb.push(p.Value)
 
             vscript = bytearray(0)

@@ -1206,6 +1206,23 @@ class Wallet:
 
         return success
 
+    def SignMessage(self, message, script_hash):
+        """
+        Sign a message with a specified script_hash.
+
+        Args:
+            message (str): a hex encoded message to sign
+            script_hash (UInt160): a bytearray (len 20).
+
+        Returns:
+            str: the signed message
+        """
+
+        keypair = self.GetKeyByScriptHash(script_hash)
+        prikey = bytes(keypair.PrivateKey)
+        res = Crypto.Default().Sign(message, prikey)
+        return res, keypair.PublicKey
+
     def GetSyncedBalances(self):
         """
         Returns a list of synced balances. The list looks like this:
