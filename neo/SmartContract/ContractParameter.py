@@ -67,7 +67,8 @@ class ContractParameter:
         elif type == ContractParameterType.Boolean:
             return ContractParameter(type, value=item.GetBoolean())
         elif type == ContractParameterType.Array:
-            return ContractParameter(type, value=item.GetArray())
+            output = [ContractParameter.ToParameter(subitem) for subitem in item.GetArray()]
+            return ContractParameter(type, value=output)
         elif type == ContractParameterType.String:
             return ContractParameter(type, value=item.GetString())
         elif type == ContractParameterType.InteropInterface:

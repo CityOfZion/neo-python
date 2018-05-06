@@ -1,4 +1,4 @@
-from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args,get_owners_from_params
+from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, generate_deploy_script
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.SmartContract.ContractParameter import ContractParameter

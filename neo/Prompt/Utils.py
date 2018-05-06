@@ -45,7 +45,7 @@ def get_owners_from_params(params):
     for item in params:
         if type(item) is str:
             if '--owners=' in item:
-                owners =[]
+                owners = []
                 to_remove.append(item)
                 try:
                     owner_list = eval(item.replace('--owners=', ''))
@@ -60,6 +60,7 @@ def get_owners_from_params(params):
         params.remove(item)
 
     return params, owners
+
 
 def get_asset_id(wallet, asset_str):
     assetId = None

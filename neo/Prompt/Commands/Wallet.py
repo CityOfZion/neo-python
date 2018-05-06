@@ -225,6 +225,7 @@ def SignMessage(wallet, args):
 
     print("Insufficient num args")
 
+
 def VerifySignature(wallet, args):
 
     if len(args) == 3:
@@ -238,7 +239,7 @@ def VerifySignature(wallet, args):
         try:
             sig = bytearray(binascii.unhexlify(signature))
             pubkey = wallet.GetKeyByScriptHash(scripthash).PublicKey
-            result = Crypto.VerifySignature(message,sig, pubkey)
+            result = Crypto.VerifySignature(message, sig, pubkey)
             print("Result %s " % result)
         except Exception as e:
             print("Could not verify signature %s " % e)

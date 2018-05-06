@@ -38,9 +38,9 @@ from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHold
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
-    ShowUnspentCoins, SignMessage,VerifySignature
+    ShowUnspentCoins, SignMessage, VerifySignature
 
-from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args,get_owners_from_params
+from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
 from neo.UserPreferences import preferences
@@ -761,7 +761,6 @@ class PromptInterface:
         args, from_addr = get_from_addr(args)
         args, invoke_attrs = get_tx_attr_from_args(args)
         args, owners = get_owners_from_params(args)
-        print("TEST INVOKE OWNERS: %s " % owners)
         if args and len(args) > 0:
             tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
 
@@ -777,12 +776,13 @@ class PromptInterface:
                     "-------------------------------------------------------------------------------------------------------------------------------------\n")
                 print("Enter your password to continue and invoke on the network\n")
 
+                tx.Attributes = invoke_attrs
+
                 passwd = prompt("[password]> ", is_password=True)
                 if not self.Wallet.ValidatePassword(passwd):
                     return print("Incorrect password")
-                tx.Attributes = invoke_attrs
-                result = InvokeContract(self.Wallet, tx, fee, from_addr=from_addr)
 
+                InvokeContract(self.Wallet, tx, fee, from_addr=from_addr, owners=owners)
                 return
             else:
                 print("Error testing contract invoke")

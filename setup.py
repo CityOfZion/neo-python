@@ -35,6 +35,7 @@ setup(
             'np-api-server=neo.bin.api_server:main',
             'np-bootstrap=neo.bin.bootstrap:main',
             'np-reencrypt-wallet=neo.bin.reencrypt_wallet:main',
+            'np-sign=neo.bin.sign_message:main',
         ],
     },
     include_package_data=True,
