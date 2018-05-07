@@ -88,6 +88,7 @@ class ContractParametersContext:
     def Completed(self):
 
         if len(self.ContextItems) < len(self.ScriptHashes):
+            print("Context items less than script hashes %s %s " % (self.ContextItems, self.ScriptHashes))
             return False
 
         for item in self.ContextItems.values():

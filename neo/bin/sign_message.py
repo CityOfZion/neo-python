@@ -14,11 +14,11 @@ def main():
     parser.add_argument('-w', '--wallet_file', type=str, default=None, help='If using a wallet file, the path to the wallet file')
     parser.add_argument('-a', '--address', type=str, default=False, help='If using a wallet file with more than 1 address, the address you would like to use.  Otherwise the default address will be used')
     parser.add_argument('-n', '--nep2', action='store_true', help="Whether to use an NEP2 passhrase rather than a wallet")
-
+    parser.add_argument('--wif', type=str, default=None, help='If using a wif pass in the wif')
     args = parser.parse_args()
     try:
 
-        if not args.nep2:
+        if args.wallet_file:
 
             passwd = prompt('[Wallet password]> ', is_password=True)
             wallet = UserWallet.Open(args.wallet_file, to_aes_key(passwd))
@@ -39,12 +39,23 @@ def main():
             signature = signature.hex()
             print("pubkey, sig: %s %s " % (pubkey, signature))
 
-        else:
+        elif args.nep2:
 
             nep2_key = prompt('[nep2 key]> ', is_password=True)
             nep2_passwd = prompt("[nep2 key password]> ", is_password=True)
 
             prikey = KeyPair.PrivateKeyFromNEP2(nep2_key, nep2_passwd)
+            keypair = KeyPair(priv_key=prikey)
+            contract = Contract.CreateSignatureContract(keypair.PublicKey)
+            print("Signing With Address %s " % contract.Address)
+            signature = Crypto.Sign(args.message, prikey)
+
+            pubkey = keypair.PublicKey.encode_point().decode('utf-8')
+            signature = signature.hex()
+            print("pubkey, sig: %s %s " % (pubkey, signature))
+
+        elif args.wif:
+            prikey = KeyPair.PrivateKeyFromWIF(args.wif)
             keypair = KeyPair(priv_key=prikey)
             contract = Contract.CreateSignatureContract(keypair.PublicKey)
             print("Signing With Address %s " % contract.Address)

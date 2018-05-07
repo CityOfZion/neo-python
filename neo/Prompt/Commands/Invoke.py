@@ -55,10 +55,6 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
         wallet.Sign(context)
 
         if owners:
-            #            owners = list(owners)
-            #            for owner in owners:
-            #                wallet_tx.Attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script, data=owner))
-            #            context = ContractParametersContext(wallet_tx)
             gather_signatures(context, wallet_tx, list(owners))
 
         if context.Completed:
