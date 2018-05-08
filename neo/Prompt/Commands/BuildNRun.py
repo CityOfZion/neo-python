@@ -1,4 +1,4 @@
-from neo.Prompt.Utils import get_arg, get_from_addr
+from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args
 from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, generate_deploy_script
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.SmartContract.ContractParameter import ContractParameter
@@ -39,9 +39,11 @@ def LoadAndRun(arguments, wallet):
 
 
 def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True):
-    arguments, from_addr = get_from_addr(arguments)
-    path = get_arg(arguments)
+    print("arguments %s " % arguments)
 
+    arguments, from_addr = get_from_addr(arguments)
+    arguments, invoke_attrs = get_tx_attr_from_args(arguments)
+    path = get_arg(arguments)
     contract_script = Compiler.instance().load_and_save(path)
 
     newpath = path.replace('.py', '.avm')
@@ -53,10 +55,10 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invoca
         with open(debug_map_path, 'r') as dbg:
             debug_map = json.load(dbg)
 
-    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee, invocation_test_mode, debug_map=debug_map)
+    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee, invocation_test_mode, debug_map=debug_map, invoke_attrs=invoke_attrs)
 
 
-def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None):
+def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None, invoke_attrs=None):
 
     test = get_arg(arguments, 1)
 
@@ -69,7 +71,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None
 
             script = GatherLoadedContractParams(f_args, contract_script)
 
-            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee, invocation_test_mode, debug_map=debug_map)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee, invocation_test_mode, debug_map=debug_map, invoke_attrs=invoke_attrs)
             i_args.reverse()
 
             return_type_results = []

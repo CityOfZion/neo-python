@@ -39,7 +39,7 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
     token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins
-from neo.Prompt.Utils import get_arg, get_from_addr
+from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
 from neo.UserPreferences import preferences
@@ -753,9 +753,9 @@ class PromptInterface:
             return
 
         args, from_addr = get_from_addr(args)
-
+        args, invoke_attrs = get_tx_attr_from_args(args)
         if args and len(args) > 0:
-            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr)
+            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs)
 
             if tx is not None and results is not None:
                 print(
@@ -772,7 +772,7 @@ class PromptInterface:
                 passwd = prompt("[password]> ", is_password=True)
                 if not self.Wallet.ValidatePassword(passwd):
                     return print("Incorrect password")
-
+                tx.Attributes = invoke_attrs
                 result = InvokeContract(self.Wallet, tx, fee, from_addr=from_addr)
 
                 return
