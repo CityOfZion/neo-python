@@ -174,9 +174,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     try:
         val = eval(p, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
-        if type(val) is bytearray:
-            return val
-        elif type(val) is bytes:
+        if type(val) is bytes:
             # try to unhex
             try:
                 val = binascii.unhexlify(val)
@@ -184,8 +182,9 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
                 pass
             # now it should be unhexxed no matter what, and we can hex it
             return val.hex().encode('utf-8')
+        elif type(val) is not float:
+            return val
 
-        return val
     except Exception as e:
         pass
 
