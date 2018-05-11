@@ -610,7 +610,7 @@ class PromptInterface:
 
     def show_nodes(self):
         if len(NodeLeader.Instance().Peers) > 0:
-            out = "Total Connected: %s " % len(NodeLeader.Instance().Peers)
+            out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
             for peer in NodeLeader.Instance().Peers:
                 out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
             print_tokens([(Token.Number, out)], self.token_style)
