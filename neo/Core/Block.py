@@ -192,7 +192,7 @@ class Block(BlockBase, InventoryMixin):
         return self.Hash == other.Hash
 
     @staticmethod
-    def FromTrimmedData(byts, index=None, transaction_method=None):
+    def FromTrimmedData(byts):
         """
         Deserialize a block from raw bytes.
 

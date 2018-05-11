@@ -42,6 +42,7 @@ from neo.VM.OpCode import PACK
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
+
 def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
     if from_addr is not None:
@@ -85,7 +86,7 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
     return False
 
 
-def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
+def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invoke_attrs=None):
 
     wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
 
@@ -98,6 +99,9 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero()):
             TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                  data=token.ScriptHash.Data)
         ]
+
+        if invoke_attrs:
+            tx.Attributes += invoke_attrs
 
         reedeem_script = token_contract_state.Code.Script.hex()
 
@@ -167,12 +171,21 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
                 item = parse_param(p, wallet)
             else:
                 item = p
-
             if type(item) is list:
                 item.reverse()
                 listlength = len(item)
                 for listitem in item:
-                    sb.push(listitem)
+                    subitem = parse_param(listitem, wallet)
+                    if type(subitem) is list:
+                        subitem.reverse()
+                        for listitem2 in subitem:
+                            subsub = parse_param(listitem2, wallet)
+                            sb.push(subsub)
+                        sb.push(len(subitem))
+                        sb.Emit(PACK)
+                    else:
+                        sb.push(subitem)
+
                 sb.push(listlength)
                 sb.Emit(PACK)
             else:
@@ -419,14 +432,22 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         sb = ScriptBuilder()
 
         for p in invoke_args:
-
             item = parse_param(p, wallet)
             if type(item) is list:
                 item.reverse()
                 listlength = len(item)
                 for listitem in item:
                     subitem = parse_param(listitem, wallet)
-                    sb.push(subitem)
+                    if type(subitem) is list:
+                        subitem.reverse()
+                        for listitem2 in subitem:
+                            subsub = parse_param(listitem2, wallet)
+                            sb.push(subsub)
+                        sb.push(len(subitem))
+                        sb.Emit(PACK)
+                    else:
+                        sb.push(subitem)
+
                 sb.push(listlength)
                 sb.Emit(PACK)
             else:

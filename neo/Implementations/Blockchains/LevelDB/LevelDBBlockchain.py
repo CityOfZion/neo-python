@@ -34,6 +34,7 @@ from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
+
 from prompt_toolkit import prompt
 
 
@@ -559,7 +560,7 @@ class LevelDBBlockchain(Blockchain):
             out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
             out = out[8:]
             outhex = binascii.unhexlify(out)
-            return Block.FromTrimmedData(outhex, 0)
+            return Block.FromTrimmedData(outhex)
         except Exception as e:
             logger.info("Could not get block %s " % e)
         return None
@@ -644,6 +645,7 @@ class LevelDBBlockchain(Blockchain):
         return len(self._block_cache)
 
     def Persist(self, block):
+
 
         self._persisting_block = block
 
@@ -814,6 +816,7 @@ class LevelDBBlockchain(Blockchain):
 
             for event in to_dispatch:
                 events.emit(event.event_type, event)
+
 
     def PersistBlocks(self):
 

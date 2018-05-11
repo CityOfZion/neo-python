@@ -757,7 +757,6 @@ class PromptInterface:
         if not self.Wallet:
             print("Please open a wallet")
             return
-
         args, from_addr = get_from_addr(args)
         args, invoke_attrs = get_tx_attr_from_args(args)
         args, owners = get_owners_from_params(args)

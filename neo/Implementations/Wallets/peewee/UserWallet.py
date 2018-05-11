@@ -104,7 +104,6 @@ class UserWallet(Wallet):
         return self._db
 
     def Rebuild(self):
-        self._lock.acquire()
         try:
             super(UserWallet, self).Rebuild()
 
@@ -115,10 +114,8 @@ class UserWallet(Wallet):
                 c.delete_instance()
             for tx in Transaction.select():
                 tx.delete_instance()
-        finally:
-            self._lock.release()
-
-        logger.debug("wallet rebuild complete")
+        except Exception as e:
+            print("Could not rebuild %s " % e)
 
     def Close(self):
         if self._db:
@@ -401,7 +398,9 @@ class UserWallet(Wallet):
 
     def OnCoinsChanged(self, added, changed, deleted):
 
+        some = False
         for coin in added:
+            some = True
             addr_hash = bytes(coin.Output.ScriptHash.Data)
 
             try:
@@ -417,11 +416,13 @@ class UserWallet(Wallet):
                     Address=address
                 )
                 c.save()
-                logger.debug("saved coin %s " % c)
+                if coin.Output.AssetId == Blockchain.SystemShare().Hash:
+                    logger.debug("saved coin %s %s %s %s" % (coin.Output.Value, coin.State, coin.Transaction.Hash, coin.Reference.PrevHash))
             except Exception as e:
-                logger.error("COULDN'T SAVE!!!! %s " % e)
+                logger.error("[Path: %s ] COULDN'T SAVE!!!! %s " % (self._path,e))
 
         for coin in changed:
+            some = True
             for hold in self._holds:
                 if hold.Reference == coin.Reference and coin.State & CoinState.Spent > 0:
                     hold.IsComplete = True
@@ -430,10 +431,14 @@ class UserWallet(Wallet):
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.State = coin.State
                 c.save()
+                if coin.Output.AssetId == Blockchain.SystemShare().Hash:
+                    logger.debug("changed coin %s %s %s %s" % (coin.Output.Value, coin.State, coin.Transaction.Hash, coin.Reference.PrevHash))
+
             except Exception as e:
-                logger.error("Coulndn't change coin %s %s (coin to change not found)" % (coin, e))
+                logger.error("[Path: %s ] Coulndn't change coin %s %s (coin to change not found)" % (self._path,coin, e))
 
         for coin in deleted:
+            some = True
             for hold in self._holds:
                 if hold.Reference == coin.Reference:
                     hold.IsComplete = True
@@ -441,9 +446,16 @@ class UserWallet(Wallet):
             try:
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.delete_instance()
-
+#                logger.debug("deleted coin %s %s %s" % (coin.Output.ToJson(0), coin.State, coin.Transaction.Hash))
             except Exception as e:
-                logger.error("could not delete coin %s %s " % (coin, e))
+                logger.error("[Path: %s]could not delete coin %s %s " % (self._path,coin, e))
+
+
+        if some:
+            neo_balance = self.GetBalance(Blockchain.SystemShare().Hash).value / Fixed8.D
+            current_height = Blockchain.Default().Height
+
+            logger.warning("[%s] Neo: %s " % (self._current_height, neo_balance))
 
     @property
     def Addresses(self):

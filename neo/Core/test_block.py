@@ -255,7 +255,7 @@ class BlocksTestCase(NeoTestCase):
 
             trimmed_unhex = binascii.unhexlify(trimmed)
 
-            blockfrom_trimmed = Block.FromTrimmedData(trimmed_unhex, 0)
+            blockfrom_trimmed = Block.FromTrimmedData(trimmed_unhex)
 
             self.assertEqual(blockfrom_trimmed.Version, block.Version)
             self.assertEqual(blockfrom_trimmed.Index, block.Index)

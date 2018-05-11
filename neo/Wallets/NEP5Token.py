@@ -244,7 +244,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         return tx, fee, results
 
-    def Mint(self, wallet, mint_to_addr, attachment_args):
+    def Mint(self, wallet, mint_to_addr, attachment_args, invoke_attrs=None):
         """
         Call the "mintTokens" function of the smart contract.
 
@@ -263,7 +263,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         invoke_args = invoke_args + attachment_args
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True, from_addr=mint_to_addr)
+        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True, from_addr=mint_to_addr, invoke_attrs=invoke_attrs)
 
         return tx, fee, results
 
