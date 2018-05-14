@@ -175,12 +175,11 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     # first, we'll try to parse an array
     try:
-        items = eval(p, {"__builtins__": {'list':list}}, {})
+        items = eval(p, {"__builtins__": {'list': list}}, {})
         if len(items) > 0 and type(items) is list:
 
             parsed = []
             for item in items:
-                print("PARSING SUB LIST PARAM: %s %s " % (item, type(item)))
                 parsed.append(parse_param(item, wallet))
             return parsed
 
@@ -197,7 +196,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
             pass
 
     try:
-        val = eval(p, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes, 'list':list}}, {})
+        val = eval(p, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes, 'list': list}}, {})
         if type(val) is bytearray:
             return val
         elif type(val) is bytes:

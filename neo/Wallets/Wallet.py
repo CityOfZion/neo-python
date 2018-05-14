@@ -658,7 +658,7 @@ class Wallet:
         Args:
             block_limit (int): the number of blocks to process synchronously. defaults to 1000. set to 0 to block until the wallet is fully rebuilt.
         """
-#        self._lock.acquire()
+        self._lock.acquire()
         try:
             blockcount = 0
             while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
@@ -672,9 +672,9 @@ class Wallet:
 
             self.SaveStoredData("Height", self._current_height)
         except Exception as e:
-            print("Could not process ::: %s " % e)
-#        finally:
-#            self._lock.release()
+            logger.warn("Could not process ::: %s " % e)
+        finally:
+            self._lock.release()
 
     def ProcessNewBlock(self, block):
         """
@@ -691,31 +691,17 @@ class Wallet:
         try:
             # go through the list of transactions in the block and enumerate
             # over their outputs
-            if block.Index > 696331 and block.Index < 696340:
-                print("[BLOCK %s] %s " % (block.Index, block.Transactions))
-
             for tx in block.FullTransactions:
 
                 for index, output in enumerate(tx.outputs):
 
-                    if block.Index > 696331 and block.Index < 696340:
-                        print("[BLOCK %s] %s " % (block.Index, tx.Hash.ToString()))
-
                     # check to see if the outputs in the tx are in this wallet
                     state = self.CheckAddressState(output.ScriptHash)
 
-                    if block.Index > 696331 and block.Index < 696340:
-                        print("[BLOCK %s] %s " % (block.Index, tx.Hash.ToString()))
-
                     if state & AddressState.InWallet > 0:
 
-                        if block.Index > 696331 and block.Index < 696340:
-                            print("[IN WALLET BLOCK %s] FOUND %s " % (block.Index, tx.Hash.ToString()))
-
                         # if its in the wallet, check to see if the coin exists yet
-
                         key = CoinReference(tx.Hash, index)
-
 
                         # if it exists, update it, otherwise create a new one
                         if key in self._coins.keys():

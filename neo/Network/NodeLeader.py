@@ -101,7 +101,7 @@ class NodeLeader:
         addr = '%s:%s' % (host, port)
         if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX:
             self.ADDRS.append(addr)
-#            reactor.callLater(index * 10, self.SetupConnection, host, port)
+            reactor.callLater(index * 10, self.SetupConnection, host, port)
 
     def SetupConnection(self, host, port):
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:

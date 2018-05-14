@@ -19,7 +19,7 @@ class Coin(TrackableMixin):
     _transaction = None
 
     @staticmethod
-    def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed, transaction = None):
+    def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed, transaction=None):
         """
         Get a Coin object using a CoinReference.
 
@@ -55,7 +55,6 @@ class Coin(TrackableMixin):
             self.Reference = None
         self.Output = tx_output
         self._state = state
-
 
     @property
     def Transaction(self):
@@ -108,7 +107,7 @@ class Coin(TrackableMixin):
         return True
 
     def __hash__(self):
-        return int.from_bytes( self.Reference.PrevHash.Data + bytearray(self.Reference.PrevIndex), 'little')
+        return int.from_bytes(self.Reference.PrevHash.Data + bytearray(self.Reference.PrevIndex), 'little')
 
     def RefToBytes(self):
         vin_index = bytearray(self.Reference.PrevIndex.to_bytes(1, 'little'))

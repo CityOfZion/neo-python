@@ -42,7 +42,6 @@ from neo.VM.OpCode import PACK
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
-
 def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
     if from_addr is not None:
@@ -534,7 +533,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             if len(service.notifications) > 0:
 
                 for n in service.notifications:
-                    #                        print("NOTIFICATION : %s " % n)
                     Blockchain.Default().OnNotify(n)
 
             logger.info("Used %s Gas " % engine.GasConsumed().ToString())

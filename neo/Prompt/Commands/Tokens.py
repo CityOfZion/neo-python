@@ -1,5 +1,5 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
-from neo.Prompt.Utils import get_asset_id, get_from_addr,get_tx_attr_from_args
+from neo.Prompt.Utils import get_asset_id, get_from_addr, get_tx_attr_from_args
 from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal

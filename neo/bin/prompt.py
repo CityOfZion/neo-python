@@ -35,10 +35,12 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
     CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
+from neo.contrib.nex.setup_sale import setupSale
+
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
-    ShowUnspentCoins, SignMessage, VerifySignature
+    ShowUnspentCoins
 
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.InputParser import InputParser
@@ -141,7 +143,6 @@ class PromptInterface:
                 'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
                 'wallet tkn_register {addr} ({addr}...) (--from-addr={addr})',
                 'wallet unspent',
-                'wallet sign {addr} {message}',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
                 'withdraw holds # lists all current holds',
@@ -569,10 +570,6 @@ class PromptInterface:
             token_crowdsale_register(self.Wallet, arguments[1:])
         elif item == 'unspent':
             ShowUnspentCoins(self.Wallet, arguments[1:])
-        elif item == 'sign':
-            SignMessage(self.Wallet, arguments[1:])
-        elif item == 'verify':
-            VerifySignature(self.Wallet, arguments[1:])
         elif item == 'alias':
             if len(arguments) == 3:
                 AddAlias(self.Wallet, arguments[1], arguments[2])
@@ -854,6 +851,9 @@ class PromptInterface:
         else:
             print("Please specify on|off|reset")
 
+    def setup_sale(self, args):
+        setupSale(self.Wallet, args)
+
     def configure(self, args):
         what = get_arg(args)
 
@@ -1010,6 +1010,8 @@ class PromptInterface:
                         self.show_nodes()
                     elif command == 'state':
                         self.show_state()
+                    elif command == 'setup_sale':
+                        self.setup_sale(arguments)
                     elif command == 'debugstorage':
                         self.handle_debug_storage(arguments)
                     elif command == 'config':

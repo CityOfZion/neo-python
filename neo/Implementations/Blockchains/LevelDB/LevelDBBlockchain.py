@@ -646,7 +646,6 @@ class LevelDBBlockchain(Blockchain):
 
     def Persist(self, block):
 
-
         self._persisting_block = block
 
         sn = self._db.snapshot()
@@ -816,7 +815,6 @@ class LevelDBBlockchain(Blockchain):
 
             for event in to_dispatch:
                 events.emit(event.event_type, event)
-
 
     def PersistBlocks(self):
 
