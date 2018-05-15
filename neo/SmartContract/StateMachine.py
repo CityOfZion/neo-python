@@ -530,13 +530,14 @@ class StateMachine(StateReader):
 
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 
+        keystr = key
         if len(key) == 20:
             keystr = Crypto.ToAddress(UInt160(data=key))
 
-            self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_DELETE, [keystr],
-                                                              context.ScriptHash, Blockchain.Default().Height + 1,
-                                                              engine.ScriptContainer.Hash if engine.ScriptContainer else None,
-                                                              test_mode=engine.testMode))
+        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_DELETE, [keystr],
+                                                          context.ScriptHash, Blockchain.Default().Height + 1,
+                                                          engine.ScriptContainer.Hash if engine.ScriptContainer else None,
+                                                          test_mode=engine.testMode))
 
         self._storages.Remove(storage_key.ToArray())
 
