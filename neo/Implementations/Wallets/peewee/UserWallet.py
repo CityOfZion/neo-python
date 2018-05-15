@@ -91,7 +91,7 @@ class UserWallet(Wallet):
             self._db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, VINHold,
                                     Transaction, TransactionInfo, NamedAddress], safe=True)
         except Exception as e:
-            logger.error("Could not build database %s " % e)
+            logger.error("Could not build database %s %s " % (e, self._path))
 
     def Migrate(self):
         migrator = SqliteMigrator(self._db)

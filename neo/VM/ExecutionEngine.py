@@ -213,6 +213,7 @@ class ExecutionEngine:
                 if not is_normal_call:
                     script_hash = self.EvaluationStack.Pop().GetByteArray()
 
+                print("data %s " % script_hash)
                 script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
 
                 if script is None:
