@@ -4,53 +4,11 @@ Installation
 
 You will need to install the libleveldb library. Install `Python 3.6 <https://www.python.org/downloads/release/python-364/>`_ to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.5 and below are not supported.
 
-Installation via ``pip`` is not currently available at this time
-
-You should install platform specific items before installing from git.
-
-
-
-Install from Git
-================
-
-Clone the repository at `https://github.com/CityOfZion/neo-python/ <https://github.com/CityOfZion/neo-python/>`_ and navigate into the project directory.
-Make a Python 3 virtual environment and activate it via
-
-::
-
-    python3.6 -m venv venv
-    source venv/bin/activate
-
-Then install the requirements via
-
-::
-
-    pip install -U setuptools pip wheel
-    pip install -e .
-
-
-Updating neo-python from Git
-""""""""""""""""""""""""""""
-
-If you are updating neo-python with ``git pull``, make sure you also update the dependencies with ``pip install -r requirements.txt``.
-
-
-Bootstrapping the Blockchain
-""""""""""""""""""""""""""""
-
-If you use neo-python for the first time, you need to synchronize the blockchain, which may take a long time. Included in this project is ``bootstrap.py`` to automatically download a chain directory for you. To bootstrap for testnet, run ``python bootstrap.py``, get a cup of coffee and wait. To bootstrap for mainnet, use ``python bootstrap.py -m`` and get 8 cups of coffee (3.3 GB file).
+You should install platform specific items before installing ``neo-python``.
 
 
 Platform Specific Instructions
 ==============================
-
-OSX
-"""
-
-::
-
-    brew install leveldb
-
 
 Ubuntu/Debian 16.10+
 """"""""""""""""""""
@@ -95,16 +53,20 @@ Centos/Redhat/Fedora
 Windows
 """""""
 
-This has not been tested at this time. Installing the Python package plyvel seems to require C++ compiler support tied to Visual Studio and libraries.
+The installation on the Windows operating system needs a set of unique steps and several common issues that might require troubleshooting, for this reason we dedicated a whole separate page for installing ``neo-python`` on windows.
+
+If this is your operating system please check :doc:`installwindows`
 
 
-Further Install Notes
-=====================
+OSX
+"""
 
-For all of these, make sure that the ``Chains`` directory in your project has the proper write permissions
+::
+
+    brew install leveldb
 
 Common issues on OSX
-""""""""""""""""""""
+''''''''''''''''''''
 
 If you're having an issue similar to this:
 
@@ -161,3 +123,59 @@ The solution probably is
 .. code-block:: sh
 
     brew reinstall openssl
+
+
+Install from PyPi
+================
+
+The easiest way to install ``neo-python`` on your machine is to download it and install from PyPi using ``pip``. First, we recommend you to create a virtual environment in order to isolate this installation from your system directories and then install it as you normally would do:
+
+  ::
+
+    # create project dir
+    mkdir myproject
+    cd myproject
+
+    # create virtual environment and activate
+
+    python3.6 -m venv venv # this can also be python3 -m venv venv depending on your environment
+    source venv/bin/activate
+
+    (venv) pip install neo-python
+
+
+Install from Git
+================
+
+Clone the repository at `https://github.com/CityOfZion/neo-python/ <https://github.com/CityOfZion/neo-python/>`_ and navigate into the project directory.
+Make a Python 3 virtual environment and activate it via
+
+::
+
+    python3.6 -m venv venv
+    source venv/bin/activate
+
+Then install the requirements via
+
+::
+
+    pip install -U setuptools pip wheel
+    pip install -e .
+
+
+Updating neo-python from Git
+""""""""""""""""""""""""""""
+
+If you are updating neo-python with ``git pull``, make sure you also update the dependencies with ``pip install -r requirements.txt``.
+
+
+Bootstrapping the Blockchain
+============================
+
+If you use neo-python for the first time, you need to synchronize the blockchain, which may take a long time. Included in this project is ``bootstrap.py`` to automatically download a chain directory for you.
+
+To bootstrap for testnet, run ``np-bootstrap``, get a cup of coffee and wait.
+
+To bootstrap for mainnet, use ``np-bootstrap -m`` and get 8 cups of coffee (3.3 GB file).
+
+

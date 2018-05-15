@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file.
 - fix a bug with smart-contract parameter string parsing `#412 <https://github.com/CityOfZion/neo-python/issues/412>`_
 - fix ``StateMachine.Contract_Migrate`` and add tests
 - add ability to attach tx attrs to build command and testinvoke.  altered tx attr parsing
+- updated the install instructions present on ``docs``
 
 
 [0.6.9] 2018-04-30
