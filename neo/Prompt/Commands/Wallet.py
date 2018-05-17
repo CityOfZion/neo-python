@@ -11,6 +11,7 @@ from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
 import binascii
 import json
+import math
 
 
 def DeleteAddress(prompter, wallet, addr):
@@ -108,11 +109,17 @@ def AddAlias(wallet, addr, title):
 def ClaimGas(wallet, require_password=True, args=None):
 
     unclaimed_coins = wallet.GetUnclaimedCoins()
-    unclaimed_coin_refs = [coin.Reference for coin in unclaimed_coins]
 
-    if len(unclaimed_coin_refs) == 0:
+    unclaimed_count = len(unclaimed_coins)
+    if unclaimed_count == 0:
         print("no claims to process")
         return False
+
+    max_coins_per_claim = 200
+    if unclaimed_count > max_coins_per_claim:
+        unclaimed_coins = unclaimed_coins[:max_coins_per_claim]
+
+    unclaimed_coin_refs = [coin.Reference for coin in unclaimed_coins]
 
     available_bonus = Blockchain.Default().CalculateBonusIgnoreClaimed(unclaimed_coin_refs)
 
@@ -146,6 +153,8 @@ def ClaimGas(wallet, require_password=True, args=None):
 
     print("\n---------------------------------------------------------------")
     print("Will make claim for %s GAS" % available_bonus.ToString())
+    if unclaimed_count > max_coins_per_claim:
+        print("NOTE: There is a transaction limit on GAS claims. %s additional claim transactions will be required to claim all available GAS." % math.floor(unclaimed_count / max_coins_per_claim))
     print("------------------------------------------------------------------\n")
 
     if require_password:
