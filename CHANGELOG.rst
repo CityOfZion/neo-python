@@ -4,15 +4,16 @@ Changelog
 All notable changes to this project are documented in this file.
 
 [0.7.0] in progress
------------------------
+-------------------
 - fix a bug with smart-contract parameter string parsing `#412 <https://github.com/CityOfZion/neo-python/issues/412>`_
 - fix ``StateMachine.Contract_Migrate`` and add tests
 - add ability to attach tx attrs to build command and testinvoke.  altered tx attr parsing
 - updated the install instructions present on ``docs``
+- fix issues with some JSON-RPC properties `#418 <https://github.com/CityOfZion/neo-python/issues/418>`_
 
 
 [0.6.9] 2018-04-30
------------------------
+------------------
 - alter logging
 - fix issue with dispatching transfer events when ``from_addr`` is ``False``
 - add TPS monitor to ``prompt`` ``state`` command
@@ -27,7 +28,7 @@ All notable changes to this project are documented in this file.
 
 
 [0.6.8] 2018-04-26
------------------------
+------------------
 - add ``ServiceEnabled`` boolean to settings to determine whether nodes should send other nodes blocks
 - updated new block retrieval mechanism
 - fix for token_delete command not removing tokens from wallet file
@@ -43,7 +44,7 @@ All notable changes to this project are documented in this file.
 
 
 [0.6.7] 2018-04-06
------------------------
+------------------
 - Update all the requirements
 - Networking changes
 - added ``--maxpeers`` option for ``np-prompt`` and ``np-api-server``.  This allows p2p discovery of new nodes up to the value specified
