@@ -358,6 +358,7 @@ class Transaction(InventoryMixin):
         Returns:
             int: size.
         """
+        # todo: will sys.getsizeof work as expected for each of these? is __sizeof__ implemented for each? should use Size() instead?
         len_attributes = sys.getsizeof(self.Attributes)
         len_inputs = sys.getsizeof(self.inputs)
         len_outputs = sys.getsizeof(self.outputs)

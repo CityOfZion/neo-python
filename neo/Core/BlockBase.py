@@ -101,7 +101,7 @@ class BlockBase(VerifiableMixin):
         scriptsize = 0
         if self.Script is not None:
             scriptsize = self.Script.Size()
-        return uintsize + 32 + 32 + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
+        return uintsize + self.PrevHash.Size + self.MerkleRoot.Size + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
 
     def IndexBytes(self):
         """

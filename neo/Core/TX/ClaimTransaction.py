@@ -17,6 +17,7 @@ class ClaimTransaction(Transaction):
         Returns:
             int: size.
         """
+        # todo: will sys.getsizeof work as expected? __sizeof__ not implemented by CoinReference. should use Size() instead?
         return super(ClaimTransaction, self).Size() + sys.getsizeof(self.Claims)
 
     def __init__(self, *args, **kwargs):

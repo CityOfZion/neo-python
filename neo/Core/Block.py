@@ -119,6 +119,8 @@ class Block(BlockBase, InventoryMixin):
             int: size.
         """
         s = super(Block, self).Size()
+        # todo: is getsizeof the right thing to use? the calculation isn't consistent with C# nodes.
+        # due to __sizeof__ not being implemented by Transaction? need to use Transaction.Size() instead?
         s = s + sys.getsizeof(self.Transactions)
 
         return s
