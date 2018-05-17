@@ -259,7 +259,7 @@ class Block(BlockBase, InventoryMixin):
         else:
             json['tx'] = [tx.ToJson() for tx in self.Transactions]
 
-        json['sys_fee'] = GetBlockchain().GetSysFeeAmount(self.Hash)
+        # json['sys_fee'] = GetBlockchain().GetSysFeeAmount(self.Hash)
         return json
 
     def Trim(self):

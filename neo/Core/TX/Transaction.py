@@ -590,6 +590,8 @@ class Transaction(InventoryMixin):
         """
         jsn = {}
         jsn["txid"] = self.Hash.To0xString()
+        # todo: this size isn't calculating correctly currently, but it should be included in the JSON
+        # jsn["size"] = self.Size()
         jsn["type"] = TransactionType.ToName(self.Type)
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]
