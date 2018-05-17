@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - fix ``StateMachine.Contract_Migrate`` and add tests
 - add ability to attach tx attrs to build command and testinvoke.  altered tx attr parsing
 - updated the install instructions present on ``docs``
+- added support for chunking through GAS claims 200 UTXOs at a time `#419 <https://github.com/CityOfZion/neo-python/issues/419>`_
 
 
 [0.6.9] 2018-04-30
