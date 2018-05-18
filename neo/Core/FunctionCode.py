@@ -44,6 +44,8 @@ class FunctionCode(SerializableMixin):
 
         if return_type and not isinstance(return_type, int) and len(return_type) > 1:
             return_type = return_type[0:1]
+        elif isinstance(return_type, int) and not 0 < return_type <= 255:
+            return_type = 255
 
         self.ReturnType = return_type
 
