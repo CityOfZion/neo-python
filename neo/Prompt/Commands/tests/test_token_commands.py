@@ -158,6 +158,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertTrue(result)
 
+        db.close()
+
     def test_7_token_history_no_token(self):
 
         wallet = self.GetWallet1(recreate=True)
@@ -169,3 +171,5 @@ class UserWalletTestCase(WalletFixtureTestCase):
         result = token_history(wallet, db, ["BAD"])
 
         self.assertFalse(result)
+
+        db.close()
