@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - add ability to attach tx attrs to build command and testinvoke.  altered tx attr parsing
 - updated the install instructions present on ``docs``
 - support RPC and REST endpoints in parallel `#420 <https://github.com/CityOfZion/neo-python/issues/420>`_
+- Added new command ``tkn_history`` to the prompt. It shows the recorded history of transfers of a given NEP5 token, that are related to the open wallet.
 
 
 [0.6.9] 2018-04-30
