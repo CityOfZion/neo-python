@@ -127,7 +127,7 @@ class PromptInterface:
                 'open wallet {path}',
                 'create wallet {path}',
                 'wallet {verbose}',
-                'wallet claim',
+                'wallet claim (max_coins_to_claim)',
                 'wallet migrate',
                 'wallet rebuild {start block}',
                 'wallet delete_addr {addr}',

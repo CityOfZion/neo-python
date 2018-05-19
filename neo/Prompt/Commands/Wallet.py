@@ -5,7 +5,7 @@ from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import get_asset_id, get_from_addr
+from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
@@ -108,6 +108,12 @@ def AddAlias(wallet, addr, title):
 
 def ClaimGas(wallet, require_password=True, args=None):
 
+    if args:
+        params, from_addr_str = get_from_addr(args)
+    else:
+        params = None
+        from_addr_str = None
+
     unclaimed_coins = wallet.GetUnclaimedCoins()
 
     unclaimed_count = len(unclaimed_coins)
@@ -115,8 +121,16 @@ def ClaimGas(wallet, require_password=True, args=None):
         print("no claims to process")
         return False
 
-    max_coins_per_claim = 200
-    if unclaimed_count > max_coins_per_claim:
+    max_coins_per_claim = None
+    if params:
+        max_coins_per_claim = get_arg(params, 0, convert_to_int=True)
+        if not max_coins_per_claim:
+            print("max_coins_to_claim must be an integer")
+            return False
+        if max_coins_per_claim <= 0:
+            print("max_coins_to_claim must be greater than zero")
+            return False
+    if max_coins_per_claim and unclaimed_count > max_coins_per_claim:
         unclaimed_coins = unclaimed_coins[:max_coins_per_claim]
 
     unclaimed_coin_refs = [coin.Reference for coin in unclaimed_coins]
@@ -136,13 +150,11 @@ def ClaimGas(wallet, require_password=True, args=None):
 
     # the following can be used to claim gas that is in an imported contract_addr
     # example, wallet claim --from-addr={smart contract addr}
-    if args:
-        params, from_addr_str = get_from_addr(args)
-        if from_addr_str:
-            script_hash = wallet.ToScriptHash(from_addr_str)
-            standard_contract = wallet.GetStandardAddress()
-            claim_tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                                        data=standard_contract.Data)]
+    if from_addr_str:
+        script_hash = wallet.ToScriptHash(from_addr_str)
+        standard_contract = wallet.GetStandardAddress()
+        claim_tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                                    data=standard_contract.Data)]
 
     claim_tx.outputs = [
         TransactionOutput(AssetId=Blockchain.SystemCoin().Hash, Value=available_bonus, script_hash=script_hash)
@@ -153,8 +165,8 @@ def ClaimGas(wallet, require_password=True, args=None):
 
     print("\n---------------------------------------------------------------")
     print("Will make claim for %s GAS" % available_bonus.ToString())
-    if unclaimed_count > max_coins_per_claim:
-        print("NOTE: There is a transaction limit on GAS claims. %s additional claim transactions will be required to claim all available GAS." % math.floor(unclaimed_count / max_coins_per_claim))
+    if max_coins_per_claim and unclaimed_count > max_coins_per_claim:
+        print("NOTE: You are claiming GAS on %s unclaimed coins. %s additional claim transactions will be required to claim all available GAS." % (max_coins_per_claim, math.floor(unclaimed_count / max_coins_per_claim)))
     print("------------------------------------------------------------------\n")
 
     if require_password:
