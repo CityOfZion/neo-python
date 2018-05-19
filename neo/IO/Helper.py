@@ -53,3 +53,23 @@ class Helper:
         tx = Transaction.DeserializeFrom(reader)
 
         return tx
+
+    @staticmethod
+    def GetVarSize(iterator):
+        """
+        Get length of a variable sized input.
+        Args:
+            iterator(iterator)
+        Returns:
+            int: length
+        """
+        value_len = len(iterator)
+
+        result = value_len
+        if (value_len < 0xFD):
+            result += 1  # byte
+        elif (value_len <= 0xFFF):
+            result += 3  # byte + ushort
+        else:
+            result += 5  # byte + int
+        return result
