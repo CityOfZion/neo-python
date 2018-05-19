@@ -97,9 +97,18 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet3()
 
+        claim = ClaimGas(wallet, require_password=False, args=['1'])
+
+        self.assertTrue(claim)
+
+    def test_5_wallet_claim_ok(self):
+
+        wallet = self.GetWallet3()
+
         claim = ClaimGas(wallet, require_password=False)
 
         self.assertTrue(claim)
+
 
     def test_block_150000_sysfee(self):
 
