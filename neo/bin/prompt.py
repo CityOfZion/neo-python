@@ -1016,6 +1016,11 @@ class PromptInterface:
                         self.handle_debug_storage(arguments)
                     elif command == 'config':
                         self.configure(arguments)
+                    elif command == 'pause':
+                        Blockchain.Default().Pause()
+                    elif command == 'resume':
+                        Blockchain.Default().Resume()
+
                     elif command is None:
                         print("Please specify a command")
                     else:
