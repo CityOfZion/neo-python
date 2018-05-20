@@ -72,6 +72,12 @@ class DBCollection:
             self.Changed = []
             self.Deleted = []
 
+    def Reset(self):
+        for keyval in self.Changed:
+            self.Collection[keyval] = None
+        self.Changed = []
+        self.Deleted = []
+
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
         item = self.TryGet(keyval)
