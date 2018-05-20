@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - fix ``StateMachine.Contract_Migrate`` and add tests
 - add ability to attach tx attrs to build command and testinvoke.  altered tx attr parsing
 - updated the install instructions present on ``docs``
+- added support for optionally chunking through GAS claims in prompt `#419 <https://github.com/CityOfZion/neo-python/issues/419>`_
 - support RPC and REST endpoints in parallel `#420 <https://github.com/CityOfZion/neo-python/issues/420>`_
 - Added new command ``tkn_history`` to the prompt. It shows the recorded history of transfers of a given NEP5 token, that are related to the open wallet.
 - fix current block lookup during smart contract event processing `#426 <https://github.com/CityOfZion/neo-python/issues/426>`_
