@@ -36,7 +36,7 @@ from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
     CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
-    token_mint, token_crowdsale_register
+    token_mint, token_crowdsale_register, token_history
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args
@@ -139,6 +139,7 @@ class PromptInterface:
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
                 'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
                 'wallet tkn_register {addr} ({addr}...) (--from-addr={addr})',
+                'wallet tkn_history {token symbol}',
                 'wallet unspent',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
@@ -192,7 +193,7 @@ class PromptInterface:
                                 'wallet', 'contract', 'asset', 'wif',
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
                                 'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance',
-                                'tkn_register', 'build', 'notifications', ]
+                                'tkn_register', 'build', 'notifications', 'tkn_history']
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
@@ -565,6 +566,9 @@ class PromptInterface:
             token_mint(self.Wallet, arguments[1:])
         elif item == 'tkn_register':
             token_crowdsale_register(self.Wallet, arguments[1:])
+        elif item == 'tkn_history':
+            notification_db = NotificationDB.instance()
+            token_history(self.Wallet, notification_db, arguments[1:])
         elif item == 'unspent':
             ShowUnspentCoins(self.Wallet, arguments[1:])
         elif item == 'alias':

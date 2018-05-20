@@ -812,8 +812,8 @@ class LevelDBBlockchain(Blockchain):
 
             self.TXProcessed += len(block.Transactions)
 
-            for event in to_dispatch:
-                events.emit(event.event_type, event)
+        for event in to_dispatch:
+            events.emit(event.event_type, event)
 
     def PersistBlocks(self):
 

@@ -65,6 +65,8 @@ class StateMachine(StateReader):
         # commit storages right away
         if success:
             self.Commit()
+        else:
+            self.ResetState()
 
         super(StateMachine, self).ExecutionCompleted(engine, success, error)
 
@@ -75,6 +77,13 @@ class StateMachine(StateReader):
             self._assets.Commit(self._wb, False)
             self._contracts.Commit(self._wb, False)
             self._storages.Commit(self._wb, False)
+
+    def ResetState(self):
+        self._accounts.Reset()
+        self._validators.Reset()
+        self._assets.Reset()
+        self._contracts.Reset()
+        self._storages.Reset()
 
     def TestCommit(self):
         if self._storages.DebugStorage:
