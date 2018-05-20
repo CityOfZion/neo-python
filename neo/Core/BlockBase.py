@@ -1,6 +1,7 @@
 import ctypes
 from .Mixins import VerifiableMixin
 from neocore.Cryptography.Helper import bin_dbl_sha256
+from neocore.Cryptography.Crypto import Crypto
 import binascii
 from neo.Core.Helper import Helper
 from neo.Blockchain import GetBlockchain, GetGenesis
@@ -100,7 +101,7 @@ class BlockBase(VerifiableMixin):
         scriptsize = 0
         if self.Script is not None:
             scriptsize = self.Script.Size()
-        return uintsize + 32 + 32 + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
+        return uintsize + self.PrevHash.Size + self.MerkleRoot.Size + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
 
     def IndexBytes(self):
         """
@@ -212,14 +213,18 @@ class BlockBase(VerifiableMixin):
         json = {}
         json["hash"] = self.Hash.To0xString()
 
-        #        json["size"] = self.Size()
+        # todo: this size isn't calculating correctly currently, but it should be included in the JSON
+        # json["size"] = self.Size()
         json["version"] = self.Version
         json["previousblockhash"] = self.PrevHash.To0xString()
         json["merkleroot"] = self.MerkleRoot.To0xString()
         json["time"] = self.Timestamp
         json["index"] = self.Index
-        json['next_consensus'] = self.NextConsensus.To0xString()
-        json["consensus data"] = self.ConsensusData
+        nonce = bytearray(self.ConsensusData.to_bytes(8, 'little'))
+        nonce.reverse()
+        json["nonce"] = nonce.hex()
+        json['nextconsensus'] = Crypto.ToAddress(self.NextConsensus)
+        # json["consensus data"] = self.ConsensusData
         json["script"] = '' if not self.Script else self.Script.ToJson()
         return json
 
