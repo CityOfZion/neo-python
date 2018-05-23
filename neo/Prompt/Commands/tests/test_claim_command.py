@@ -109,7 +109,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertTrue(claim)
 
-
     def test_block_150000_sysfee(self):
 
         fee = Blockchain.Default().GetSysFeeAmountByHeight(150000)

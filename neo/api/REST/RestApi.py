@@ -153,6 +153,8 @@ class RestApi:
         try:
             hash = UInt256.ParseString(tx_hash)
             tx, height = bc.GetTransaction(hash)
+            if not tx:
+                return self.format_message("Could not find transaction for hash %s" % (tx_hash))
             block_notifications = self.notif.get_by_block(height - 1)
             for n in block_notifications:
                 if n.tx_hash == tx.Hash:
