@@ -6,7 +6,6 @@ from neocore.UInt256 import UInt256
 from uuid import uuid1
 import shutil
 import os
-import sys
 
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neocore.BigInteger import BigInteger
