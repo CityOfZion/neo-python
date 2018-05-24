@@ -6,6 +6,7 @@ from neocore.UInt256 import UInt256
 from uuid import uuid1
 import shutil
 import os
+import sys
 
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neocore.BigInteger import BigInteger
@@ -126,3 +127,12 @@ class NotificationDBTestCase(TestCase):
         events = ndb.get_by_addr(sh)
 
         self.assertEqual(len(events), 0)
+
+    def test_should_persist_mint_event(self):
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'mint', self.addr_to, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, False)
+
+        ndb = NotificationDB.instance()
+        ndb.on_smart_contract_event(sc)
+
+        self.assertEqual(len(ndb.current_events), 1)
+        ndb.on_persist_completed(None)
