@@ -140,6 +140,9 @@ def echo_post(request):
 
 
 def main():
+    # Use TestNet
+    settings.setup_testnet()
+
     # Setup the blockchain
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)

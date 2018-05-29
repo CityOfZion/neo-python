@@ -41,19 +41,10 @@ from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportTok
     ShowUnspentCoins
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args
 from neo.Prompt.InputParser import InputParser
-from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
+from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
-
-# Logfile settings & setup
-LOGFILE_FN = os.path.join(PATH_USER_DATA, 'prompt.log')
-LOGFILE_MAX_BYTES = 5e7  # 50 MB
-LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
-settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
-
-# Prompt history filename
-FILENAME_PROMPT_HISTORY = os.path.join(PATH_USER_DATA, '.prompt.py.history')
 
 
 class PromptFileHistory(FileHistory):
@@ -155,13 +146,16 @@ class PromptInterface:
                 'debugstorage {on/off/reset}'
                 ]
 
-    history = PromptFileHistory(FILENAME_PROMPT_HISTORY)
+    history = None
 
     token_style = None
     start_height = None
     start_dt = None
 
-    def __init__(self):
+    def __init__(self, history_filename=None):
+        if history_filename:
+            self.history = PromptFileHistory(history_filename)
+
         self.input_parser = InputParser()
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
@@ -1076,6 +1070,15 @@ def main():
             return
     elif args.coznet:
         settings.setup_coznet()
+    else:
+        # TestNet by default
+        settings.setup_testnet()
+
+    # Logfile settings & setup
+    logfile_fn = os.path.join(settings.DATA_DIR_PATH, 'prompt.log')
+    logfile_max_bytes = 5e7  # 50 MB
+    logfile_backup_count = 3  # 3 logfiles history
+    settings.set_logfile(logfile_fn, logfile_max_bytes, logfile_backup_count)
 
     if args.theme:
         preferences.set_theme(args.theme)
@@ -1095,7 +1098,8 @@ def main():
         NotificationDB.instance().start()
 
     # Start the prompt interface
-    cli = PromptInterface()
+    fn_prompt_history = os.path.join(settings.DATA_DIR_PATH, '.prompt.py.history')
+    cli = PromptInterface(fn_prompt_history)
 
     # Run things
 #    reactor.suggestThreadPoolSize(15)
