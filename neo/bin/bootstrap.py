@@ -41,6 +41,8 @@ def main():
         settings.setup(args.config)
     elif args.mainnet:
         settings.setup_mainnet()
+    else:
+        settings.setup_testnet()
 
     if args.notifications:
         BootstrapBlockchainFile(settings.notification_leveldb_path, settings.NOTIF_BOOTSTRAP_FILE, require_confirm)

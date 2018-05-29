@@ -156,9 +156,8 @@ class SettingsHolder:
     def setup(self, config_file):
         """ Setup settings from a JSON config file """
         if not self.DATA_DIR_PATH:
-            path_user_home = os.path.expanduser('~')
-            path_user_data = os.path.join(path_user_home, ".neopython")  # Works for both Windows and *nix
-            self.set_data_dir(path_user_data)
+            # Setup default data dir
+            self.set_data_dir(None)
 
         with open(config_file) as data_file:
             data = json.load(data_file)
@@ -233,7 +232,10 @@ class SettingsHolder:
         self.setup(FILENAME_SETTINGS_COZNET)
 
     def set_data_dir(self, path):
-        if path == '.':
+        if not path:
+            path_user_home = os.path.expanduser('~')
+            self.DATA_DIR_PATH = os.path.join(path_user_home, ".neopython")  # Works for both Windows and *nix
+        elif path == '.':
             self.DATA_DIR_PATH = os.getcwd()
         else:
             self.DATA_DIR_PATH = path
