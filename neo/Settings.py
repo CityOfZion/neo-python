@@ -241,6 +241,10 @@ class SettingsHolder:
         else:
             self.DATA_DIR_PATH = path
 
+        if not os.path.exists(self.DATA_DIR_PATH):
+            logzero.logger.info("Data directory %s does not yet exist. Creating...", self.DATA_DIR_PATH)
+            os.makedirs(self.DATA_DIR_PATH)
+
     def set_max_peers(self, num_peers):
         try:
             self.CONNECTED_PEER_MAX = int(num_peers)

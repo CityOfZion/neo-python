@@ -1059,6 +1059,10 @@ def main():
 
     args = parser.parse_args()
 
+    # Setting the datadir must come before setting the network, else the wrong path is checked at net setup.
+    if args.datadir:
+        settings.set_data_dir(args.datadir)
+
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
         settings.setup(args.config)
@@ -1078,9 +1082,6 @@ def main():
 
     if args.verbose:
         settings.set_log_smart_contract_events(True)
-
-    if args.datadir:
-        settings.set_data_dir(args.datadir)
 
     if args.maxpeers:
         settings.set_max_peers(args.maxpeers)

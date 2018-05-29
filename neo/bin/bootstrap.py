@@ -30,16 +30,17 @@ def main():
     if args.skipconfirm:
         require_confirm = False
     else:
-        require_confirm = True      
+        require_confirm = True
+
+    # Setting the datadir must come before setting the network, else the wrong path is checked at net setup.
+    if args.datadir:
+        settings.set_data_dir(args.datadir)
 
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
         settings.setup(args.config)
     elif args.mainnet:
         settings.setup_mainnet()
-
-    if args.datadir:
-        settings.set_data_dir(args.datadir)
 
     if args.notifications:
         BootstrapBlockchainFile(settings.notification_leveldb_path, settings.NOTIF_BOOTSTRAP_FILE, require_confirm)
