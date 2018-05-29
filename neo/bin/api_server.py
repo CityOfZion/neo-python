@@ -138,7 +138,11 @@ def main():
         parser.print_help()
         return
 
-    # Setup depending on command line arguments. By default, the testnet settings are already loaded.
+    # Setting the datadir must come before setting the network, else the wrong path is checked at net setup.
+    if args.datadir:
+        settings.set_data_dir(args.datadir)
+
+    # Network configuration depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
         settings.setup(args.config)
     elif args.mainnet:
@@ -150,8 +154,6 @@ def main():
     elif args.coznet:
         settings.setup_coznet()
 
-    if args.datadir:
-        settings.set_data_dir(args.datadir)
     if args.maxpeers:
         settings.set_max_peers(args.maxpeers)
 
