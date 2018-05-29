@@ -276,9 +276,6 @@ class StateReader(InteropService):
 
         hashOrPubkey = engine.EvaluationStack.Pop().GetByteArray()
 
-        if len(hashOrPubkey) == 66 or len(hashOrPubkey) == 40:
-            hashOrPubkey = binascii.unhexlify(hashOrPubkey)
-
         result = False
 
         if len(hashOrPubkey) == 20:
