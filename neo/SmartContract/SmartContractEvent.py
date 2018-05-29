@@ -162,12 +162,10 @@ class SmartContractEvent(SerializableMixin):
 
 
 class NotifyType:
-
     TRANSFER = b'transfer'  # OnTransfer = RegisterAction('transfer', 'to', 'from', 'amount')
-
     APPROVE = b'approve'  # OnApprove = RegisterAction('approve', 'addr_from', 'addr_to', 'amount')
-
     REFUND = b'refund'  # OnRefund = RegisterAction('refund', 'to', 'amount')
+    MINT = b'mint'  # OnMint = RegisterAction('mint', 'addr_to', 'amount')
 
 
 class NotifyEvent(SmartContractEvent):
@@ -231,11 +229,18 @@ class NotifyEvent(SmartContractEvent):
                     self.amount = int(BigInteger.FromBytes(event_payload[3])) if isinstance(event_payload[3], bytes) else int(event_payload[3])
                     self.is_standard_notify = True
 
-                elif plen == 3 and self.notify_type == NotifyType.REFUND:
+                elif self.notify_type == NotifyType.REFUND and plen >= 3:  # Might have more arguments
                     self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
                     self.amount = int(BigInteger.FromBytes(event_payload[2])) if isinstance(event_payload[2], bytes) else int(event_payload[2])
                     self.addr_from = self.contract_hash
                     self.is_standard_notify = True
+
+                elif self.notify_type == NotifyType.MINT and plen == 3:
+                    self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
+                    self.amount = int(BigInteger.FromBytes(event_payload[2])) if isinstance(event_payload[2], bytes) else int(event_payload[2])
+                    self.addr_from = self.contract_hash
+                    self.is_standard_notify = True
+
             except Exception as e:
                 logger.info("Could not determine notify event: %s %s" % (e, self.event_payload))
 

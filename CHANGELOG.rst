@@ -3,7 +3,7 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.0] in progress
+[0.7.0-dev] in progress
 -------------------
 - fix a bug with smart-contract parameter string parsing `#412 <https://github.com/CityOfZion/neo-python/issues/412>`_
 - fix ``StateMachine.Contract_Migrate`` and add tests
@@ -14,6 +14,7 @@ All notable changes to this project are documented in this file.
 - support RPC and REST endpoints in parallel `#420 <https://github.com/CityOfZion/neo-python/issues/420>`_
 - Added new command ``tkn_history`` to the prompt. It shows the recorded history of transfers of a given NEP5 token, that are related to the open wallet.
 - fix current block lookup during smart contract event processing `#426 <https://github.com/CityOfZion/neo-python/issues/426>`_
+- added ``mint`` smart-contract event to NotificationDB `#433 <https://github.com/CityOfZion/neo-python/pull/433>`_
 
 
 [0.6.9] 2018-04-30
