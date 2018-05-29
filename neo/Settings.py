@@ -24,14 +24,6 @@ dir_current = os.path.dirname(os.path.abspath(__file__))
 # ROOT_INSTALL_PATH is the root path of neo-python, whether installed as package or from git.
 ROOT_INSTALL_PATH = os.path.abspath(os.path.join(dir_current, ".."))
 
-USER_HOME_DIR = os.path.expanduser('~')
-# PATH_USER_DATA is the root path where to store data (Chain databases, history, etc.)
-PATH_USER_DATA = os.path.join(USER_HOME_DIR, ".neopython")  # Works for both Windows and *nix
-
-# Make sure the data path exists (only if the home directory also exists)
-if os.path.isdir(USER_HOME_DIR) and not os.path.isdir(PATH_USER_DATA):
-    os.mkdir(PATH_USER_DATA)
-
 # This detects if we are running from an 'editable' version (like ``python neo/bin/prompt.py``)
 # or from a packaged install version from pip
 IS_PACKAGE_INSTALL = 'site-packages/neo' in dir_current
@@ -88,7 +80,7 @@ class SettingsHolder:
     PUBLISH_TX_FEE = None
     REGISTER_TX_FEE = None
 
-    DATA_DIR_PATH = PATH_USER_DATA
+    DATA_DIR_PATH = None
     LEVELDB_PATH = None
     NOTIFICATION_DB_PATH = None
 
@@ -162,7 +154,12 @@ class SettingsHolder:
 
     # Setup methods
     def setup(self, config_file):
-        """ Load settings from a JSON config file """
+        """ Setup settings from a JSON config file """
+        if not self.DATA_DIR_PATH:
+            path_user_home = os.path.expanduser('~')
+            path_user_data = os.path.join(path_user_home, ".neopython")  # Works for both Windows and *nix
+            self.set_data_dir(path_user_data)
+
         with open(config_file) as data_file:
             data = json.load(data_file)
 
@@ -242,7 +239,6 @@ class SettingsHolder:
             self.DATA_DIR_PATH = path
 
         if not os.path.exists(self.DATA_DIR_PATH):
-            logzero.logger.info("Data directory %s does not yet exist. Creating...", self.DATA_DIR_PATH)
             os.makedirs(self.DATA_DIR_PATH)
 
     def set_max_peers(self, num_peers):
@@ -342,7 +338,7 @@ class SettingsHolder:
 settings = SettingsHolder()
 
 # Load testnet settings as default
-settings.setup_testnet()
+# settings.setup_testnet()
 
 # By default, set loglevel to INFO. DEBUG just print a lot of internal debug statements
 settings.set_loglevel(logging.INFO)
