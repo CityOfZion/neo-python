@@ -43,11 +43,18 @@ class SmartContract:
     event_handlers = None
 
     def __init__(self, contract_hash):
+        """
+        Instantiate a new SmartContract for a specific contract_hash
+        contract_hash can optionally be prefixed with '0x'
+        """
         assert contract_hash
         self.contract_hash = str(contract_hash)
-        self.event_handlers = defaultdict(list)
+
+        if self.contract_hash[:2] == "0x":
+            self.contract_hash = self.contract_hash[2:]
 
         # Handle EventHub events for SmartContract decorators
+        self.event_handlers = defaultdict(list)
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
         @events.on(SmartContractEvent.RUNTIME_LOG)
         @events.on(SmartContractEvent.EXECUTION_SUCCESS)
