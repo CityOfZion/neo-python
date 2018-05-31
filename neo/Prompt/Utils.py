@@ -114,7 +114,10 @@ def get_tx_attr_from_args(params):
             to_remove.append(item)
             try:
                 attr_str = item.replace('--tx-attr=', '')
-                tx_attr_obj = json.loads(attr_str)
+
+# this doesn't work for loading in bytearrays
+#                tx_attr_obj = json.loads(attr_str)
+                tx_attr_obj = eval(attr_str)
                 if type(tx_attr_obj) is dict:
                     if attr_obj_to_tx_attr(tx_attr_obj) is not None:
                         tx_attr_dict.append(attr_obj_to_tx_attr(tx_attr_obj))
@@ -171,9 +174,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     try:
         val = eval(p, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
-        if type(val) is bytearray:
-            return val
-        elif type(val) is bytes:
+        if type(val) is bytes:
             # try to unhex
             try:
                 val = binascii.unhexlify(val)
@@ -181,8 +182,9 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
                 pass
             # now it should be unhexxed no matter what, and we can hex it
             return val.hex().encode('utf-8')
+        elif type(val) is not float:
+            return val
 
-        return val
     except Exception as e:
         pass
 

@@ -36,10 +36,10 @@ from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
     CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
-    token_mint, token_crowdsale_register
+    token_mint, token_crowdsale_register, token_history
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins
-from neo.Prompt.Utils import get_arg, get_from_addr
+from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
 from neo.UserPreferences import preferences
@@ -127,7 +127,7 @@ class PromptInterface:
                 'open wallet {path}',
                 'create wallet {path}',
                 'wallet {verbose}',
-                'wallet claim',
+                'wallet claim (max_coins_to_claim)',
                 'wallet migrate',
                 'wallet rebuild {start block}',
                 'wallet delete_addr {addr}',
@@ -139,6 +139,7 @@ class PromptInterface:
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
                 'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
                 'wallet tkn_register {addr} ({addr}...) (--from-addr={addr})',
+                'wallet tkn_history {token symbol}',
                 'wallet unspent',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
@@ -192,7 +193,7 @@ class PromptInterface:
                                 'wallet', 'contract', 'asset', 'wif',
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
                                 'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance',
-                                'tkn_register', 'build', 'notifications', ]
+                                'tkn_register', 'build', 'notifications', 'tkn_history']
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
@@ -565,6 +566,9 @@ class PromptInterface:
             token_mint(self.Wallet, arguments[1:])
         elif item == 'tkn_register':
             token_crowdsale_register(self.Wallet, arguments[1:])
+        elif item == 'tkn_history':
+            notification_db = NotificationDB.instance()
+            token_history(self.Wallet, notification_db, arguments[1:])
         elif item == 'unspent':
             ShowUnspentCoins(self.Wallet, arguments[1:])
         elif item == 'alias':
@@ -610,7 +614,7 @@ class PromptInterface:
 
     def show_nodes(self):
         if len(NodeLeader.Instance().Peers) > 0:
-            out = "Total Connected: %s " % len(NodeLeader.Instance().Peers)
+            out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
             for peer in NodeLeader.Instance().Peers:
                 out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
             print_tokens([(Token.Number, out)], self.token_style)
@@ -753,9 +757,9 @@ class PromptInterface:
             return
 
         args, from_addr = get_from_addr(args)
-
+        args, invoke_attrs = get_tx_attr_from_args(args)
         if args and len(args) > 0:
-            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr)
+            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs)
 
             if tx is not None and results is not None:
                 print(
@@ -772,7 +776,7 @@ class PromptInterface:
                 passwd = prompt("[password]> ", is_password=True)
                 if not self.Wallet.ValidatePassword(passwd):
                     return print("Incorrect password")
-
+                tx.Attributes = invoke_attrs
                 result = InvokeContract(self.Wallet, tx, fee, from_addr=from_addr)
 
                 return
@@ -1055,6 +1059,10 @@ def main():
 
     args = parser.parse_args()
 
+    # Setting the datadir must come before setting the network, else the wrong path is checked at net setup.
+    if args.datadir:
+        settings.set_data_dir(args.datadir)
+
     # Setup depending on command line arguments. By default, the testnet settings are already loaded.
     if args.config:
         settings.setup(args.config)
@@ -1074,9 +1082,6 @@ def main():
 
     if args.verbose:
         settings.set_log_smart_contract_events(True)
-
-    if args.datadir:
-        settings.set_data_dir(args.datadir)
 
     if args.maxpeers:
         settings.set_max_peers(args.maxpeers)

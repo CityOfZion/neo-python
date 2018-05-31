@@ -1,10 +1,12 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ImportToken
-from neo.Prompt.Commands.Tokens import token_get_allowance, token_approve_allowance, token_send, token_send_from
+from neo.Prompt.Commands.Tokens import token_get_allowance, \
+    token_approve_allowance, token_send, token_send_from, token_history
 import shutil
 
 
@@ -141,3 +143,33 @@ class UserWalletTestCase(WalletFixtureTestCase):
         send = token_send_from(wallet, args, prompt_passwd=False)
 
         self.assertFalse(send)
+
+    def test_7_token_history_correct(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        ImportToken(wallet, self.token_hash_str)
+
+        db = NotificationDB.instance()
+
+        token = self.get_token(wallet)
+
+        result = token_history(wallet, db, [token.symbol])
+
+        self.assertTrue(result)
+
+        db.close()
+
+    def test_7_token_history_no_token(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        ImportToken(wallet, self.token_hash_str)
+
+        db = NotificationDB.instance()
+
+        result = token_history(wallet, db, ["BAD"])
+
+        self.assertFalse(result)
+
+        db.close()

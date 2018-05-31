@@ -65,6 +65,8 @@ class StateMachine(StateReader):
         # commit storages right away
         if success:
             self.Commit()
+        else:
+            self.ResetState()
 
         super(StateMachine, self).ExecutionCompleted(engine, success, error)
 
@@ -75,6 +77,13 @@ class StateMachine(StateReader):
             self._assets.Commit(self._wb, False)
             self._contracts.Commit(self._wb, False)
             self._storages.Commit(self._wb, False)
+
+    def ResetState(self):
+        self._accounts.Reset()
+        self._validators.Reset()
+        self._assets.Reset()
+        self._contracts.Reset()
+        self._storages.Reset()
 
     def TestCommit(self):
         if self._storages.DebugStorage:
@@ -376,11 +385,10 @@ class StateMachine(StateReader):
             self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
 
             if contract.HasStorage:
-
-                for pair in self._storages.Find(engine.CurrentContext.ScriptHash()):
-                    key = StorageKey(script_hash=hash, key=pair.Key.Key)
-                    item = StorageItem(pair.Value.Value)
-                    self._storages.Add(key, item)
+                for key, val in self._storages.Find(engine.CurrentContext.ScriptHash()).items():
+                    key = StorageKey(script_hash=hash, key=key)
+                    item = StorageItem(val)
+                    self._storages.Add(key.ToArray(), item)
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
@@ -531,13 +539,14 @@ class StateMachine(StateReader):
 
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 
+        keystr = key
         if len(key) == 20:
             keystr = Crypto.ToAddress(UInt160(data=key))
 
-            self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_DELETE, [keystr],
-                                                              context.ScriptHash, Blockchain.Default().Height + 1,
-                                                              engine.ScriptContainer.Hash if engine.ScriptContainer else None,
-                                                              test_mode=engine.testMode))
+        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_DELETE, [keystr],
+                                                          context.ScriptHash, Blockchain.Default().Height + 1,
+                                                          engine.ScriptContainer.Hash if engine.ScriptContainer else None,
+                                                          test_mode=engine.testMode))
 
         self._storages.Remove(storage_key.ToArray())
 

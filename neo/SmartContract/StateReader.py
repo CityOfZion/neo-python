@@ -285,7 +285,7 @@ class StateReader(InteropService):
             point = ECDSA.decode_secp256r1(hashOrPubkey, unhex=False).G
             result = self.CheckWitnessPubkey(engine, point)
         else:
-            result = False
+            return False
 
         engine.EvaluationStack.PushT(result)
 
