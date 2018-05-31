@@ -55,6 +55,7 @@ class SmartContract:
 
         # Handle EventHub events for SmartContract decorators
         self.event_handlers = defaultdict(list)
+
         @events.on(SmartContractEvent.RUNTIME_NOTIFY)
         @events.on(SmartContractEvent.RUNTIME_LOG)
         @events.on(SmartContractEvent.EXECUTION_SUCCESS)
