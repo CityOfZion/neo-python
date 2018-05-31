@@ -19,9 +19,9 @@ All notable changes to this project are documented in this file.
 - Allow ``SmartContract`` to use a hash with or without 0x prefix
 - update to neo-boa v0.4.4
 - Update to `neo-python-core <https://github.com/CityOfZion/neo-python-core/blob/master/HISTORY.rst>`_ v0.4.8:
-
-  - Create wallets with ``np-utils --create-wallet``
-  - ``BigInteger(0)`` now is ``b'\x00'``
+- Create wallets with ``np-utils --create-wallet``
+- ``BigInteger(0)`` now is ``b'\x00'``
+- CheckWitness now only accepts 20 or 33 byte addresses
 
 
 
