@@ -1,5 +1,6 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
 from neo.Prompt.Utils import get_asset_id, get_from_addr, get_tx_attr_from_args
+from neo.Wallets.NEP5Token import NEP5Token
 from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
@@ -206,6 +207,39 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
 
     print("could not transfer tokens")
     return False
+
+
+def token_history(wallet, db, args):
+    if len(args) < 1:
+        print("Please provide the token symbol of the token you wish consult")
+        return False
+
+    if not db:
+        print("Unable to fetch history, notification database not enabled")
+        return False
+
+    token = get_asset_id(wallet, args[0])
+
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
+    events = db.get_by_contract(token.ScriptHash)
+
+    addresses = wallet.Addresses
+    print("-----------------------------------------------------------")
+    print("Recent transaction history (last = more recent):")
+    for event in events:
+        if event.Type != 'transfer':
+            continue
+        if event.AddressFrom in addresses:
+            print(f"[{event.AddressFrom}]: Sent {string_from_amount(token, event.Amount)}"
+                  f" {args[0]} to {event.AddressTo}")
+        if event.AddressTo in addresses:
+            print(f"[{event.AddressTo}]: Received {string_from_amount(token, event.Amount)}"
+                  f" {args[0]} from {event.AddressFrom}")
+    print("-----------------------------------------------------------")
+    return True
 
 
 def amount_from_string(token, amount_str):

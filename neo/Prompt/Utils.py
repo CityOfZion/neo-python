@@ -209,7 +209,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
             return val.hex().encode('utf-8')
         elif type(val) is bool:
             return val
-#        return val
+
     except Exception as e:
         pass
 

@@ -189,6 +189,8 @@ class BlocksTestCase(NeoTestCase):
 
         self.assertEqual(json['index'], 1050514)
         self.assertEqual(json['hash'], '0x%s' % self.big_tx_hash.decode('utf-8'))
+        self.assertEqual(json['nonce'], 'a62f207d4f00af81')
+        self.assertEqual(json['nextconsensus'], 'APyEx5f4Zm4oCHwFWiSTaph1fPBxZacYVR')
         self.assertEqual(len(json['tx']), 65)
 
         for tx in json['tx']:

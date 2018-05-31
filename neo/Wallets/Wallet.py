@@ -67,7 +67,7 @@ class Wallet:
 
         Args:
             path (str): A path indicating where to create or open the wallet.
-            passwordKey (str): A password to use in creating or opening the wallet.
+            passwordKey (aes_key): A password that has been converted to aes key with neo.Wallets.utils.to_aes_key
             create (bool): Whether to create the wallet or simply open.
         """
 
