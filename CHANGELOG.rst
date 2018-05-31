@@ -16,7 +16,9 @@ All notable changes to this project are documented in this file.
 - fix current block lookup during smart contract event processing `#426 <https://github.com/CityOfZion/neo-python/issues/426>`_
 - fixed custom datadir setup for prompt and api-server
 - added ``mint`` smart-contract event to NotificationDB `#433 <https://github.com/CityOfZion/neo-python/pull/433>`_
+- Allow ``SmartContract`` to use a hash with or without 0x prefix
 - update to neo-boa v0.4.4
+
 
 [0.6.9] 2018-04-30
 ------------------
