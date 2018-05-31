@@ -4,7 +4,7 @@ Changelog
 All notable changes to this project are documented in this file.
 
 [0.7.0-dev] in progress
--------------------
+-----------------------
 - fix a bug with smart-contract parameter string parsing `#412 <https://github.com/CityOfZion/neo-python/issues/412>`_
 - fix ``StateMachine.Contract_Migrate`` and add tests
 - add ability to attach tx attrs to build command and testinvoke.  altered tx attr parsing
@@ -17,6 +17,11 @@ All notable changes to this project are documented in this file.
 - fixed custom datadir setup for prompt and api-server
 - added ``mint`` smart-contract event to NotificationDB `#433 <https://github.com/CityOfZion/neo-python/pull/433>`_
 - update to neo-boa v0.4.4
+- Update to `neo-python-core <https://github.com/CityOfZion/neo-python-core/blob/master/HISTORY.rst>`_ v0.4.8:
+
+  - Create wallets with ``np-utils --create-wallet``
+  - ``BigInteger(0)`` now is ``b'\x00'``
+
 
 [0.6.9] 2018-04-30
 ------------------
