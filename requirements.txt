@@ -34,7 +34,7 @@ memory-profiler==0.52.0
 mmh3==2.5.1
 mock==2.0.0
 mpmath==1.0.0
-neo-boa==0.4.2
+neo-boa==0.4.4
 neo-python-rpc==0.2.0
 neocore==0.4.6
 numpy==1.14.2
