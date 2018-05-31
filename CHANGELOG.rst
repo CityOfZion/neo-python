@@ -3,6 +3,10 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.6.9] 2018-05-31
+-----------------------
+- CheckWitness won't accept 40 or 66 byte addresses
+
 [0.6.9] 2018-04-30
 -----------------------
 - alter logging
