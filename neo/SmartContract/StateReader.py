@@ -11,21 +11,25 @@ from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.State.StorageItem import StorageItem
 from neo.Core.Blockchain import Blockchain
-from neo.Cryptography.Crypto import Crypto
-from neo.BigInteger import BigInteger
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
-from neo.Cryptography.ECCurve import ECDSA
-from neo.EventHub import dispatch_smart_contract_event, SmartContractEvent
+from neocore.Cryptography.Crypto import Crypto
+from neocore.BigInteger import BigInteger
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
+from neo.EventHub import dispatch_smart_contract_event, dispatch_smart_contract_notify
+from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
+from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
-
-from neo.VM.InteropService import StackItem, stack_item_to_py
-import json
+from neo.VM.InteropService import StackItem, stack_item_to_py, ByteArray
+from neo.Settings import settings
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import StreamManager
 
 
 class StateReader(InteropService):
-
     notifications = None
+
+    events_to_dispatch = []
 
     __Instance = None
 
@@ -42,12 +46,15 @@ class StateReader(InteropService):
         super(StateReader, self).__init__()
 
         self.notifications = []
+        self.events_to_dispatch = []
 
         self.Register("Neo.Runtime.GetTrigger", self.Runtime_GetTrigger)
         self.Register("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness)
         self.Register("Neo.Runtime.Notify", self.Runtime_Notify)
         self.Register("Neo.Runtime.Log", self.Runtime_Log)
         self.Register("Neo.Runtime.GetTime", self.Runtime_GetCurrentTime)
+        self.Register("Neo.Runtime.Serialize", self.Runtime_Serialize)
+        self.Register("Neo.Runtime.Deserialize", self.Runtime_Deserialize)
 
         self.Register("Neo.Blockchain.GetHeight", self.Blockchain_GetHeight)
         self.Register("Neo.Blockchain.GetHeader", self.Blockchain_GetHeader)
@@ -78,6 +85,7 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetOutputs", self.Transaction_GetOutputs)
         self.Register("Neo.Transaction.GetReferences", self.Transaction_GetReferences)
         self.Register("Neo.Transaction.GetUnspentCoins", self.Transaction_GetUnspentCoins)
+        self.Register("Neo.InvocationTransaction.GetScript", self.InvocationTransaction_GetScript)
 
         self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
         self.Register("Neo.Attribute.GetUsage", self.Attribute_GetUsage)
@@ -173,7 +181,13 @@ class StateReader(InteropService):
     def ExecutionCompleted(self, engine, success, error=None):
 
         height = Blockchain.Default().Height
-        tx_hash = engine.ScriptContainer.Hash
+        tx_hash = None
+
+        if engine.ScriptContainer:
+            tx_hash = engine.ScriptContainer.Hash
+
+        if not tx_hash:
+            tx_hash = UInt256(data=bytearray(32))
 
         entry_script = None
         try:
@@ -196,25 +210,28 @@ class StateReader(InteropService):
 
             # dispatch all notify events, along with the success of the contract execution
             for notify_event_args in self.notifications:
-                dispatch_smart_contract_event(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
-                                              notify_event_args.ScriptHash, height, tx_hash,
-                                              success, engine.testMode)
+                self.events_to_dispatch.append(NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, notify_event_args.State,
+                                                           notify_event_args.ScriptHash, height, tx_hash,
+                                                           success, engine.testMode))
 
             if engine.Trigger == Application:
-                dispatch_smart_contract_event(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
-                                              height, tx_hash, success, engine.testMode)
+                self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
+                                                                  height, tx_hash, success, engine.testMode))
             else:
-                dispatch_smart_contract_event(SmartContractEvent.VERIFICATION_SUCCESS, payload, entry_script,
-                                              height, tx_hash, success, engine.testMode)
+                self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.VERIFICATION_SUCCESS, payload, entry_script,
+                                                                  height, tx_hash, success, engine.testMode))
 
         else:
             if engine.Trigger == Application:
-
-                dispatch_smart_contract_event(SmartContractEvent.EXECUTION_FAIL, [payload, error, engine._VMState],
-                                              entry_script, height, tx_hash, success, engine.testMode)
+                self.events_to_dispatch.append(
+                    SmartContractEvent(SmartContractEvent.EXECUTION_FAIL, [payload, error, engine._VMState],
+                                       entry_script, height, tx_hash, success, engine.testMode))
             else:
-                dispatch_smart_contract_event(SmartContractEvent.VERIFICATION_FAIL, [payload, error, engine._VMState],
-                                              entry_script, height, tx_hash, success, engine.testMode)
+                self.events_to_dispatch.append(
+                    SmartContractEvent(SmartContractEvent.VERIFICATION_FAIL, [payload, error, engine._VMState],
+                                       entry_script, height, tx_hash, success, engine.testMode))
+
+        self.notifications = []
 
     def Runtime_GetTrigger(self, engine):
 
@@ -223,6 +240,8 @@ class StateReader(InteropService):
         return True
 
     def CheckWitnessHash(self, engine, hash):
+        if not engine.ScriptContainer:
+            return False
 
         if self._hashes_for_verifying is None:
             container = engine.ScriptContainer
@@ -270,7 +289,19 @@ class StateReader(InteropService):
             payload
         )
 
+        message = payload[0] if len(payload) > 0 else payload
+        engine.write_log(str(message))
+
         self.notifications.append(args)
+
+        if settings.emit_notify_events_on_sc_execution_error:
+            # emit Notify events even if the SC execution might fail.
+            tx_hash = engine.ScriptContainer.Hash
+            height = Blockchain.Default().Height
+            success = None
+            self.events_to_dispatch.append(NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, args.State,
+                                                       args.ScriptHash, height, tx_hash,
+                                                       success, engine.testMode))
 
         return True
 
@@ -279,13 +310,19 @@ class StateReader(InteropService):
 
         hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
+        tx_hash = None
+
+        if engine.ScriptContainer:
+            tx_hash = engine.ScriptContainer.Hash
+        engine.write_log(str(message))
+
         # Build and emit smart contract event
-        dispatch_smart_contract_event(SmartContractEvent.RUNTIME_LOG,
-                                      message,
-                                      hash,
-                                      Blockchain.Default().Height,
-                                      engine.ScriptContainer.Hash,
-                                      test_mode=engine.testMode)
+        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.RUNTIME_LOG,
+                                                          [message],
+                                                          hash,
+                                                          Blockchain.Default().Height,
+                                                          tx_hash,
+                                                          test_mode=engine.testMode))
 
         return True
 
@@ -298,6 +335,38 @@ class StateReader(InteropService):
                 current_time += Blockchain.SECONDS_PER_BLOCK
             engine.EvaluationStack.PushT(current_time)
 
+        return True
+
+    def Runtime_Serialize(self, engine):
+        stack_item = engine.EvaluationStack.Pop()
+
+        ms = StreamManager.GetStream()
+        writer = BinaryWriter(ms)
+        try:
+            stack_item.Serialize(writer)
+        except Exception as e:
+            logger.error("Cannot serialize item %s: %s " % (stack_item, e))
+            return False
+
+        ms.flush()
+        retVal = ByteArray(ms.getvalue())
+        StreamManager.ReleaseStream(ms)
+        engine.EvaluationStack.PushT(retVal)
+
+        return True
+
+    def Runtime_Deserialize(self, engine):
+
+        data = engine.EvaluationStack.Pop().GetByteArray()
+
+        ms = StreamManager.GetStream(data=data)
+        reader = BinaryReader(ms)
+        try:
+            stack_item = StackItem.DeserializeStackItem(reader)
+            engine.EvaluationStack.PushT(stack_item)
+        except Exception as e:
+            logger.error("Colud not Deserialize stack item: %s " % e)
+            return False
         return True
 
     def Blockchain_GetHeight(self, engine):
@@ -393,7 +462,6 @@ class StateReader(InteropService):
         address = Crypto.ToAddress(hash).encode('utf-8')
 
         account = Blockchain.Default().GetAccountState(address)
-
         if account:
             engine.EvaluationStack.PushT(StackItem.FromInterface(account))
         else:
@@ -540,8 +608,10 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        type = int.from_bytes(tx.Type, 'little')
-        engine.EvaluationStack.PushT(type)
+        if isinstance(tx.Type, bytes):
+            engine.EvaluationStack.PushT(tx.Type)
+        else:
+            engine.EvaluationStack.PushT(tx.Type.to_bytes(1, 'little'))
         return True
 
     def Transaction_GetAttributes(self, engine):
@@ -599,6 +669,14 @@ class StateReader(InteropService):
 
         refs = [StackItem.FromInterface(unspent) for unspent in Blockchain.Default().GetAllUnspent(tx.Hash)]
         engine.EvaluationStack.PushT(refs)
+        return True
+
+    def InvocationTransaction_GetScript(self, engine):
+
+        tx = engine.EvaluationStack.Pop().GetInterface()
+        if tx is None:
+            return False
+        engine.EvaluationStack.PushT(tx.Script)
         return True
 
     def Attribute_GetUsage(self, engine):
@@ -809,15 +887,15 @@ class StateReader(InteropService):
             try:
                 valStr = int.from_bytes(valStr, 'little')
             except Exception as e:
-                logger.error("couldnt convert %s to number: %s " % (valStr, e))
+                logger.error("Could not convert %s to number: %s " % (valStr, e))
 
         if item is not None:
             engine.EvaluationStack.PushT(bytearray(item.Value))
 
         else:
-            engine.EvaluationStack.PushT(bytearray([0]))
+            engine.EvaluationStack.PushT(bytearray(0))
 
-        dispatch_smart_contract_event(SmartContractEvent.STORAGE_GET, '%s -> %s' % (keystr, valStr),
-                                      context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash, test_mode=engine.testMode)
+        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_GET, ['%s -> %s' % (keystr, valStr)],
+                                                          context.ScriptHash, Blockchain.Default().Height, engine.ScriptContainer.Hash, test_mode=engine.testMode))
 
         return True

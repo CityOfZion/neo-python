@@ -1,12 +1,16 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Wallets.utils import to_aes_key
 from neo.Prompt.Commands.Wallet import AddAlias
 from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
-from neo.UInt160 import UInt160
-from neo.Fixed8 import Fixed8
-from neo.Wallets.KeyPair import KeyPair
+from neocore.UInt160 import UInt160
+from neocore.Fixed8 import Fixed8
+from neocore.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
+from neo.SmartContract.ContractParameterContext import ContractParametersContext
+from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
+from neo.Network.NodeLeader import NodeLeader
 import json
 import binascii
 
@@ -32,12 +36,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
-            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), UserWalletTestCase.wallet_1_pass())
+            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), to_aes_key(UserWalletTestCase.wallet_1_pass()))
         return cls._wallet1
 
     def test_0_bad_password(self):
 
-        self.assertRaises(Exception, UserWallet.Open, UserWalletTestCase.wallet_1_dest(), 'blah')
+        self.assertRaises(Exception, UserWallet.Open, UserWalletTestCase.wallet_1_dest(), to_aes_key('blah'))
 
     def test_1_initial_setup(self):
 
@@ -138,7 +142,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         contract = Blockchain.Default().GetContract(token_hash)
 
         token = NEP5Token(binascii.hexlify(contract.Code.Script))
-        token.Query(wallet)
+        token.Query()
 
         self.assertEqual(token.name, 'NEP5 Standard')
         self.assertEqual(token.decimals, 8)
@@ -171,3 +175,19 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertIsInstance(presult, bytearray)
 
         self.assertEqual(presult, self.wallet_1_script_hash.Data)
+
+    def test_9_send_neo_tx(self):
+
+        wallet = self.GetWallet1()
+
+        tx = ContractTransaction()
+        tx.outputs = [TransactionOutput(Blockchain.SystemShare().Hash, Fixed8.FromDecimal(10.0), self.import_watch_addr)]
+
+        tx = wallet.MakeTransaction(tx)
+
+        cpc = ContractParametersContext(tx)
+        wallet.Sign(cpc)
+        tx.scripts = cpc.GetScripts()
+
+        result = NodeLeader.Instance().Relay(tx)
+        self.assertEqual(result, True)

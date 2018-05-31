@@ -1,5 +1,5 @@
 from neo.SmartContract.Contract import Contract
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.VM.OpCode import CHECKSIG
 from neo.IO.Helper import Helper as IOHelper
@@ -80,7 +80,7 @@ class VerificationContract(Contract):
         """
         script = bytes.fromhex(
             Contract.CreateSignatureRedeemScript(publicKey).decode('utf8'))
-        params = bytearray([ContractParameterType.Signature])
+        params = bytearray([ContractParameterType.Signature.value])
         encoded = publicKey.encode_point(True)
         pubkey_hash = Crypto.ToScriptHash(encoded, unhex=True)
         return VerificationContract(script, params, pubkey_hash)
@@ -90,7 +90,7 @@ class VerificationContract(Contract):
          Deserialize full object.
 
          Args:
-             reader(neo.IO.BinaryReader):
+             reader(neocore.IO.BinaryReader):
         """
         self.PublicKeyHash = reader.ReadUInt160()
         self.ParameterList = [reader.ReadVarBytes()]
@@ -101,7 +101,7 @@ class VerificationContract(Contract):
          Serialize full object.
 
          Args:
-             reader(neo.IO.BinaryReader):
+             reader(neocore.IO.BinaryReader):
         """
         writer.WriteUInt160(self.PublicKeyHash)
 

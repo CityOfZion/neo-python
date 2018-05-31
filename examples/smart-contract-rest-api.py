@@ -72,6 +72,8 @@ authenticated = gen_authenticated_decorator(API_AUTH_TOKEN)
 #
 # Smart contract event handler for Runtime.Notify events
 #
+
+
 @smart_contract.on_notify
 def sc_notify(event):
     logger.info("SmartContract Runtime.Notify event: %s", event)
@@ -118,6 +120,7 @@ def echo_msg(request, msg):
         "echo": msg
     }
 
+
 @app.route('/echo-post', methods=['POST'])
 @catch_exceptions
 @authenticated
@@ -134,9 +137,11 @@ def echo_post(request):
 #
 # Main method which starts everything up
 #
+
+
 def main():
     # Setup the blockchain
-    blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
+    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)
@@ -150,8 +155,13 @@ def main():
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
 
-    # Hook up Klein API to Twisted reactor
+    # Hook up Klein API to Twisted reactor.
     endpoint_description = "tcp:port=%s:interface=localhost" % API_PORT
+
+    # If you want to make this service externally available (not only at localhost),
+    # then remove the `interface=localhost` part:
+    # endpoint_description = "tcp:port=%s" % API_PORT
+
     endpoint = endpoints.serverFromString(reactor, endpoint_description)
     endpoint.listen(Site(app.resource()))
 

@@ -5,38 +5,36 @@ Description:
 Usage:
     from neo.Wallets.Wallet import Wallet
 """
-import hashlib
 import traceback
-import pdb
-
 from itertools import groupby
 from base58 import b58decode
 from decimal import Decimal
 from Crypto import Random
 from Crypto.Cipher import AES
 from logzero import logger
+from threading import RLock
 
 from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
-from neo.Cryptography.Helper import *
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Helper import *
+from neocore.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
-from neo.Wallets.KeyPair import KeyPair
+from neocore.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Settings import settings
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
-from neo.UInt256 import UInt256
+from neocore.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
+from neo.Wallets.utils import to_aes_key
 
 
 class Wallet(object):
-
     AddressVersion = None
 
     _path = ''
@@ -56,6 +54,8 @@ class Wallet(object):
 
     _vin_exclude = None
 
+    _lock = None  # allows locking for threads that may need to access the DB concurrently (e.g. ProcessBlocks and Rebuild)
+
     @property
     def WalletHeight(self):
         return self._current_height
@@ -73,6 +73,7 @@ class Wallet(object):
 
         self.AddressVersion = settings.ADDRESS_VERSION
         self._path = path
+        self._lock = RLock()
 
         if create:
             self._iv = bytes(Random.get_random_bytes(16))
@@ -82,7 +83,7 @@ class Wallet(object):
             self._coins = {}
 
             if Blockchain.Default() is None:
-                self._indexedDB = LevelDBBlockchain(settings.LEVELDB_PATH)
+                self._indexedDB = LevelDBBlockchain(settings.chain_leveldb_path)
                 Blockchain.RegisterBlockchain(self._indexedDB)
             else:
                 self._indexedDB = Blockchain.Default()
@@ -91,14 +92,16 @@ class Wallet(object):
 
             self.BuildDatabase()
 
-            passwordHash = hashlib.sha256(passwordKey.encode('utf-8')).digest()
-            master = AES.new(passwordHash, AES.MODE_CBC, self._iv)
+            passwordHash = hashlib.sha256(passwordKey).digest()
+            master = AES.new(passwordKey, AES.MODE_CBC, self._iv)
             mk = master.encrypt(self._master_key)
             self.SaveStoredData('PasswordHash', passwordHash)
-            self.SaveStoredData('IV', self._iv),
+            self.SaveStoredData('IV', self._iv)
             self.SaveStoredData('MasterKey', mk)
+            self.SaveStoredData('MigrationState', '1')
 
-            self.SaveStoredData('Height', self._current_height.to_bytes(4, 'little'))
+            self.SaveStoredData('Height',
+                                self._current_height.to_bytes(4, 'little'))
 
         else:
             self.BuildDatabase()
@@ -107,14 +110,19 @@ class Wallet(object):
             if passwordHash is None:
                 raise Exception("Password hash not found in database")
 
-            hkey = hashlib.sha256(passwordKey.encode('utf-8'))
+            hkey = hashlib.sha256(passwordKey).digest()
 
-            if passwordHash is not None and passwordHash != hashlib.sha256(passwordKey.encode('utf-8')).digest():
+            if self.LoadStoredData('MigrationState') != '1':
+                raise Exception("This wallet is currently vulnerable. Please "
+                                "execute the \"reencrypt_wallet.py\" script "
+                                "on this wallet before continuing")
+
+            if passwordHash is not None and passwordHash != hkey:
                 raise Exception("Incorrect Password")
 
             self._iv = self.LoadStoredData('IV')
             master_stored = self.LoadStoredData('MasterKey')
-            aes = AES.new(hkey.digest(), AES.MODE_CBC, self._iv)
+            aes = AES.new(passwordKey, AES.MODE_CBC, self._iv)
             self._master_key = aes.decrypt(master_stored)
 
             self._keys = self.LoadKeyPairs()
@@ -126,7 +134,7 @@ class Wallet(object):
                 h = int(self.LoadStoredData('Height'))
                 self._current_height = h
             except Exception as e:
-                logger.error("couldnt load height data %s " % e)
+                logger.error("Could not load height data %s " % e)
                 self._current_height = 0
 
             del passwordKey
@@ -183,9 +191,17 @@ class Wallet(object):
             return
         self._tokens[token.ScriptHash.ToBytes()] = token
 
-    def DeleteNEP5Token(self, token):
+    def DeleteNEP5Token(self, script_hash):
+        """
+        Delete a NEP5 token from the wallet.
 
-        return self._tokens.pop(token.ScriptHash.ToBytes())
+        Args:
+            token (UInt160): Token Contract script hash
+
+        Returns:
+            bool: success status.
+        """
+        return self._tokens.pop(script_hash.ToBytes())
 
     def ChangePassword(self, password_old, password_new):
         """
@@ -356,7 +372,6 @@ class Wallet(object):
             for vin in vins:
                 if coinref.PrevIndex == vin.PrevIndex and \
                         coinref.PrevHash == vin.PrevHash:
-
                     ret.append(coin)
         return ret
 
@@ -421,7 +436,7 @@ class Wallet(object):
 
         return [coin for coin in coins if coin.Output.AssetId == asset_id]
 
-    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0):
+    def FindUnspentCoinsByAssetAndTotal(self, asset_id, amount, from_addr=None, use_standard=False, watch_only_val=0, reverse=False):
         """
         Finds unspent coin objects totalling a requested value in the wallet limited to those of a certain asset type.
 
@@ -446,14 +461,26 @@ class Wallet(object):
         if sum < amount:
             return None
 
-        sorted(coins, key=lambda coin: coin.Output.Value.value)
+        coins = sorted(coins, key=lambda coin: coin.Output.Value.value)
+
+        if reverse:
+            coins.reverse()
 
         total = Fixed8(0)
 
-        for index, coin in enumerate(coins):
+        # go through all coins, see if one is an exact match. then we'll use that
+        for coin in coins:
+            if coin.Output.Value == amount:
+                return [coin]
+
+        to_ret = []
+        for coin in coins:
             total = total + coin.Output.Value
+            to_ret.append(coin)
             if total >= amount:
-                return coins[0:index + 1]
+                break
+
+        return to_ret
 
     def GetUnclaimedCoins(self):
         """
@@ -473,7 +500,6 @@ class Wallet(object):
                     coin.State & CoinState.Claimed == 0 and \
                     coin.State & CoinState.Frozen == 0 and \
                     coin.State & CoinState.WatchOnly == 0:
-
                 unclaimed.append(coin)
 
         return unclaimed
@@ -588,7 +614,6 @@ class Wallet(object):
                         coin.State & CoinState.Locked == 0 and \
                         coin.State & CoinState.Frozen == 0 and \
                         coin.State & CoinState.WatchOnly == watch_only:
-
                     total = total + coin.Output.Value
 
         return total
@@ -621,26 +646,33 @@ class Wallet(object):
         # abstract
         pass
 
-    def ProcessBlocks(self):
+    def ProcessBlocks(self, block_limit=1000):
         """
         Method called on a loop to check the current height of the blockchain.  If the height of the blockchain
         is more than the current stored height in the wallet, we get the next block in line and
         processes it.
 
-        In the case that the wallet height is far behind the height of the blockchain, we do this 500
+        In the case that the wallet height is far behind the height of the blockchain, we do this 1000
         blocks at a time.
+
+        Args:
+            block_limit (int): the number of blocks to process synchronously. defaults to 1000. set to 0 to block until the wallet is fully rebuilt.
         """
-        blockcount = 0
-        while self._current_height <= Blockchain.Default().Height and blockcount < 500:
+        self._lock.acquire()
+        try:
+            blockcount = 0
+            while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
 
-            block = Blockchain.Default().GetBlockByHeight(self._current_height)
+                block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
-            if block is not None:
-                self.ProcessNewBlock(block)
+                if block is not None:
+                    self.ProcessNewBlock(block)
 
-            blockcount += 1
+                blockcount += 1
 
-        self.SaveStoredData("Height", self._current_height)
+            self.SaveStoredData("Height", self._current_height)
+        finally:
+            self._lock.release()
 
     def ProcessNewBlock(self, block):
         """
@@ -681,7 +713,6 @@ class Wallet(object):
                             added.add(newcoin)
 
                         if state & AddressState.WatchOnly > 0:
-
                             self._coins[key].State |= CoinState.WatchOnly
                             changed.add(self._coins[key])
 
@@ -765,7 +796,7 @@ class Wallet(object):
             for script in tx.scripts:
 
                 if script.VerificationScript:
-                    if bytes(contract.ScriptHash.Data) == script.VerificationScript:
+                    if bytes(contract.Script) == script.VerificationScript:
                         return True
 
         for watch_script_hash in self._watch_only:
@@ -773,7 +804,7 @@ class Wallet(object):
                 if output.ScriptHash == watch_script_hash:
                     return True
             for script in tx.scripts:
-                if script.VerificationScript == watch_script_hash.ToBytes():
+                if Crypto.ToScriptHash(script.VerificationScript, unhex=False) == watch_script_hash:
                     return True
 
         return False
@@ -844,7 +875,8 @@ class Wallet(object):
         Returns:
             bool: the provided password matches with the stored password.
         """
-        return hashlib.sha256(password.encode('utf-8')).digest() == self.LoadStoredData('PasswordHash')
+        password = to_aes_key(password)
+        return hashlib.sha256(password).digest() == self.LoadStoredData('PasswordHash')
 
     def GetStandardAddress(self):
         """
@@ -885,7 +917,8 @@ class Wallet(object):
                 return contract.ScriptHash
 
         if len(self._contracts.values()):
-            return self._contracts.values()[0]
+            for k, v in self._contracts.items():
+                return v
 
         raise Exception("Could not find change address")
 
@@ -998,7 +1031,7 @@ class Wallet(object):
 
         fee = fee + (tx.SystemFee() * Fixed8.FD())
 
-#        pdb.set_trace()
+        #        pdb.set_trace()
 
         paytotal = {}
         if tx.Type != int.from_bytes(TransactionType.IssueTransaction, 'little'):
@@ -1034,8 +1067,17 @@ class Wallet(object):
 
         for key, unspents in paycoins.items():
             if unspents is None:
-                logger.error("insufficient funds for asset id: %s " % key)
-                return None
+                if not self.IsSynced:
+                    logger.warning("Wait for your wallet to be synced before doing "
+                                   "transactions. To check enter 'wallet' and look at "
+                                   "'percent_synced', it should be 100. Also the blockchain "
+                                   "should be up to the latest blocks (see Progress). Issuing "
+                                   "'wallet rebuild' restarts the syncing process.")
+                    return None
+
+                else:
+                    logger.error("insufficient funds for asset id: %s " % key)
+                    return None
 
         input_sums = {}
 
@@ -1182,6 +1224,23 @@ class Wallet(object):
             elif type(asset) is NEP5Token:
                 balances.append((asset.symbol, self.GetBalance(asset)))
         return balances
+
+    @property
+    def IsSynced(self):
+        """
+        Check if wallet is synced.
+
+        Returns:
+            bool: True if wallet is synced.
+
+        """
+        if Blockchain.Default().Height == 0:
+            return False
+
+        if (int(100 * self._current_height / Blockchain.Default().Height)) < 100:
+            return False
+        else:
+            return True
 
     def ToJson(self, verbose=False):
         # abstract

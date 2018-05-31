@@ -1,12 +1,14 @@
 import binascii
-from neo.BigInteger import BigInteger
-from neo.Fixed8 import Fixed8
+from neocore.BigInteger import BigInteger
+from neocore.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Wallets.Coin import CoinState
 from neo.Core.TX.Transaction import TransactionInput
-from neo.UInt256 import UInt256
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
+from neocore.UInt256 import UInt256
 from decimal import Decimal
+from logzero import logger
 import json
 
 
@@ -17,7 +19,6 @@ def get_asset_attachments(params):
     gas_to_attach = None
 
     for item in params:
-
         if type(item) is str:
             if '--attach-neo=' in item:
                 to_remove.append(item)
@@ -105,12 +106,49 @@ def get_from_addr(params):
     return params, from_addr
 
 
+def get_tx_attr_from_args(params):
+    to_remove = []
+    tx_attr_dict = []
+    for item in params:
+        if '--tx-attr=' in item:
+            to_remove.append(item)
+            try:
+                attr_str = item.replace('--tx-attr=', '')
+                tx_attr_obj = json.loads(attr_str)
+                if type(tx_attr_obj) is dict:
+                    if attr_obj_to_tx_attr(tx_attr_obj) is not None:
+                        tx_attr_dict.append(attr_obj_to_tx_attr(tx_attr_obj))
+                elif type(tx_attr_obj) is list:
+                    for obj in tx_attr_obj:
+                        if attr_obj_to_tx_attr(obj) is not None:
+                            tx_attr_dict.append(attr_obj_to_tx_attr(obj))
+                else:
+                    logger.error("Invalid transaction attribute specification: %s " % type(tx_attr_obj))
+            except Exception as e:
+                logger.error("Could not parse json from tx attrs: %s " % e)
+    for item in to_remove:
+        params.remove(item)
+
+    return params, tx_attr_dict
+
+
+def attr_obj_to_tx_attr(obj):
+    try:
+        datum = obj['data']
+        if type(datum) is str:
+            datum = datum.encode('utf-8')
+        usage = obj['usage']
+        return TransactionAttribute(usage=usage, data=datum)
+    except Exception as e:
+        logger.error("could not convert object %s into TransactionAttribute: %s " % (obj, e))
+    return None
+
+
 def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     # first, we'll try to parse an array
-
     try:
-        items = eval(p)
+        items = eval(p, {"__builtins__": {}}, {})
         if len(items) > 0 and type(items) is list:
 
             parsed = []
@@ -119,7 +157,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
             return parsed
 
     except Exception as e:
-        #        print("couldnt eval items as array %s " % e)
+        #        print("Could not eval items as array %s " % e)
         pass
 
     if not ignore_int:
@@ -131,7 +169,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
             pass
 
     try:
-        val = eval(p)
+        val = eval(p, {"__builtins__": {}}, {})
 
         if type(val) is bytearray:
             return val.hex()

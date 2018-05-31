@@ -1,18 +1,31 @@
-import sys
-import traceback
-import pdb
 
 from logzero import logger
 
 from neo.VM.Mixins import EquatableMixin
-from neo.BigInteger import BigInteger
+from neocore.BigInteger import BigInteger
+from neo.SmartContract import StackItemType
+
+
+class CollectionMixin():
+
+    IsSynchronized = False
+    SyncRoot = None
+
+    @property
+    def Count(self):
+        return 0
+
+    def Contains(self, item):
+        pass
+
+    def Clear(self):
+        pass
+
+    def CopyTo(self, array, index):
+        pass
 
 
 class StackItem(EquatableMixin):
-
-    @property
-    def IsArray(self):
-        return False
 
     @property
     def IsStruct(self):
@@ -34,14 +47,63 @@ class StackItem(EquatableMixin):
         logger.info("trying to get array:: %s " % self)
         raise Exception('Not supported')
 
+    def GetMap(self):
+        return None
+
     def GetInterface(self):
         return None
 
     def GetString(self):
-        return 'Stack Item'
+        return str(self)
+
+    def Serialize(self, writer):
+        pass
+
+#    def Deserialize(self, reader):
+#        pass
+
+    def __hash__(self):
+        hash = 17
+        for b in self.GetByteArray():
+            hash = hash * 31 + b
+#        print("hash code %s " % hash)
+        return hash
 
     def __str__(self):
-        return 'Stack Item'
+        return 'StackItem'
+
+    def __eq__(self, other):
+        return self.__hash__() == other.__hash__()
+
+    @staticmethod
+    def DeserializeStackItem(reader):
+        stype = reader.ReadUInt8()
+        if stype == StackItemType.ByteArray:
+            return ByteArray(reader.ReadVarBytes())
+        elif stype == StackItemType.Boolean:
+            return Boolean(reader.ReadByte())
+        elif stype == StackItemType.Integer:
+            return Integer(BigInteger.FromBytes(reader.ReadVarBytes(), signed=True))
+        elif stype == StackItemType.Array:
+            stack_item = Array()
+            count = reader.ReadVarInt()
+            while count > 0:
+                count -= 1
+                stack_item.Add(StackItem.DeserializeStackItem(reader))
+            return stack_item
+        elif stype == StackItemType.Struct:
+            stack_item = Struct(value=None)
+            count = reader.ReadVarInt()
+            while count > 0:
+                count -= 1
+                stack_item.Add(StackItem.DeserializeStackItem(reader))
+            return stack_item
+        elif stype == StackItemType.Map:
+            logger.warn("Map deserialize not implemented in c# core")
+            return None
+        else:
+            logger.error("Could not deserialize stack item with type: %s " % stype)
+        return None
 
     @staticmethod
     def FromInterface(value):
@@ -68,23 +130,49 @@ class StackItem(EquatableMixin):
         return value
 
 
-class Array(StackItem):
+class Array(StackItem, CollectionMixin):
 
-    _array = []  # a list of stack items
+    _array = None  # a list of stack items
 
     @property
-    def IsArray(self):
-        return True
+    def Count(self):
+        return len(self._array)
 
-    def __init__(self, value):
-        self._array = value
+    def __init__(self, value=None):
+        if value:
+            self._array = value
+        else:
+            self._array = []
+
+    def Clear(self):
+        self._array = []
+
+    def Contains(self, item):
+        return item in self._array
+
+    def Add(self, item):
+        self._array.append(item)
+
+    def Insert(self, index, item):
+        self._array[index] = item
+
+    def IndexOf(self, item):
+        return self._array.index(item)
+
+    def Remove(self, item):
+        return self._array.remove(item)
+
+    def RemoveAt(self, index):
+        return self._array.pop(index)
+
+    def Reverse(self):
+        self._array.reverse()
 
     def Equals(self, other):
         if other is None:
             return False
         if other is self:
             return True
-
         if type(other) is not Array:
             return False
 
@@ -104,6 +192,17 @@ class Array(StackItem):
         logger.info("Trying to get bytearray integer %s " % self)
 
         raise Exception("Not supported")
+
+    def CopyTo(self, array, index):
+        for item in self._array:
+            array[index] = item
+            index += 1
+
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.Array)
+        writer.WriteVarInt(self.Count)
+        for item in self._array:
+            item.Serialize(writer)
 
     def __str__(self):
         return "Array: %s" % [str(item) for item in self._array]
@@ -139,8 +238,12 @@ class Boolean(StackItem):
     def GetByteArray(self):
         return self.TRUE if self._value else self.FALSE
 
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.Boolean)
+        writer.WriteByte(self.GetBigInteger())
+
     def __str__(self):
-        return "Boolean: %s" % self._value
+        return str(self._value)
 
 
 class ByteArray(StackItem):
@@ -176,8 +279,14 @@ class ByteArray(StackItem):
             pass
         return str(self)
 
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.ByteArray)
+        writer.WriteVarBytes(self._value)
+
     def __str__(self):
-        return "ByteArray: %s" % self._value
+        return self._value.hex()
+
+#
 
 
 class Integer(StackItem):
@@ -209,8 +318,12 @@ class Integer(StackItem):
     def GetByteArray(self):
         return self._value.ToByteArray()
 
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.Integer)
+        writer.WriteVarBytes(self.GetByteArray())
+
     def __str__(self):
-        return "Integer: %s " % self._value
+        return str(self._value)
 
 
 class InteropInterface(StackItem):
@@ -239,6 +352,9 @@ class InteropInterface(StackItem):
 
     def GetInterface(self):
         return self._object
+
+    def Serialize(self, writer):
+        raise Exception('Not supported- Cannot serialize Interop Interface %s %s ' % (type(self), self._object))
 
     def __str__(self):
         try:
@@ -281,8 +397,93 @@ class Struct(Array):
             return False
         return self._array == other._array
 
+    def Serialize(self, writer):
+        writer.WriteByte(StackItemType.Struct)
+        writer.WriteVarInt(self.Count)
+        for item in self._array:
+            item.Serialize(writer)
+
     def __str__(self):
         return "Struct: %s " % self._array
+
+
+class Map(StackItem, CollectionMixin):
+
+    _dict = None
+
+    def __init__(self, dict=None):
+        if dict:
+            self._dict = dict
+        else:
+            self._dict = {}
+
+    @property
+    def Keys(self):
+        return list(self._dict.keys())
+
+    @property
+    def Values(self):
+        return list(self._dict.values())
+
+    @property
+    def Count(self):
+        return len(self._dict.keys())
+
+    def GetItem(self, key):
+        return self._dict[key]
+
+    def SetItem(self, key, value):
+        self._dict[key] = value
+
+    def Add(self, key, value):
+        self._dict[key] = value
+
+    def Remove(self, key):
+        del self._dict[key]
+        return True
+
+    def Clear(self):
+        self._dict = {}
+
+    def ContainsKey(self, key):
+        return key in self._dict
+
+    def Contains(self, item):
+        return item in self._dict.values()
+
+    def CopyTo(self, array, index):
+        for key, value in self._dict.items():
+            array[index] = (key, value)
+            index += 1
+
+    def TryGetValue(self, key):
+        if key in self._dict.keys():
+            return True, self._dict[key]
+        return False, None
+
+    def Equals(self, other):
+        if other is None:
+            return False
+        if other is self:
+            return True
+        if type(other) is not Map:
+            return False
+        return self._dict == other._dict
+
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def GetBoolean(self):
+        return True
+
+    def GetMap(self):
+        return self._dict
+
+    def Serialize(self, writer):
+        raise Exception("Not Supported to Serialize Map: %s " % self)
+
+    def GetByteArray(self):
+        raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))
 
 
 class InteropService():
@@ -290,6 +491,7 @@ class InteropService():
     _dictionary = {}
 
     def __init__(self):
+        self._dictionary = {}
         self.Register("System.ExecutionEngine.GetScriptContainer", self.GetScriptContainer)
         self.Register("System.ExecutionEngine.GetExecutingScriptHash", self.GetExecutingScriptHash)
         self.Register("System.ExecutionEngine.GetCallingScriptHash", self.GetCallingScriptHash)
@@ -364,8 +566,12 @@ def stack_item_to_py(stack_item):
         return stack_item.GetInterface()
 
     elif isinstance(stack_item, Struct):
-        return stack_item.GetArray()
+        return [stack_item_to_py(item) for item in stack_item.GetArray()]
+
+    elif isinstance(stack_item, Map):
+        return stack_item._dict
+
     elif stack_item is None:
         return None
     else:
-        raise ValueError('Not supported')
+        raise ValueError('Not supported %s %s' % (stack_item, type(stack_item)))

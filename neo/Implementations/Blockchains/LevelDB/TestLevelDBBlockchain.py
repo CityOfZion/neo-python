@@ -5,8 +5,8 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import TransactionType
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
+from neocore.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
@@ -110,6 +110,10 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
 
                     validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
                     #                        logger.info("VALIDATOR %s " % validator.ToJson())
+
+                elif tx.Type == TransactionType.StateTransaction:
+                    # @TODO Implement persistence for State Descriptors
+                    pass
 
                 elif tx.Type == TransactionType.PublishTransaction:
 

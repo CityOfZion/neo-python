@@ -1,15 +1,17 @@
 import binascii
 from io import BytesIO
 from neo.IO.MemoryStream import StreamManager
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
 from neo.Network.Payloads.ConsensusPayload import ConsensusPayload
 from neo.Core.Witness import Witness
 from neo.Network.Payloads.ConsensusPayload import InvalidOperationException
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from threading import Lock
-from neo.Wallets.KeyPair import KeyPair
+from neocore.KeyPair import KeyPair
 from mock import patch
+from neo.Settings import settings
+import os
 
 
 def build_validator_list():
@@ -63,7 +65,7 @@ class ConsensusPayloadTest(BlockchainFixtureTestCase):
 
     @classmethod
     def leveldb_testpath(self):
-        return './fixtures/consensus1'
+        return os.path.join(settings.DATA_DIR_PATH, 'fixtures/consensus1')
 
     def setUp(self):
         self.stream = StreamManager.GetStream(self.consensus_payload_raw)

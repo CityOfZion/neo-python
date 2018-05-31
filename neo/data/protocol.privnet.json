@@ -1,0 +1,41 @@
+{
+  "ProtocolConfiguration": {
+    "Magic": 56753,
+    "AddressVersion": 23,
+    "StandbyValidators": [
+        "02b3622bf4017bdfe317c58aed5f4c753f206b7db896046fa7d774bbc4bf7f8dc2",
+        "02103a7f7dd016558597f7960d27c516a4394fd968b9e65155eb4b013e4040406e",
+        "03d90c07df63e690ce77912e10ab51acc944b66860237b608c4f8f8309e71ee699",
+        "02a7bc55fe8684e0119768d104ba30795bdcc86619e864add26156723ed185cd62"
+    ],
+    "SeedList": [
+        "127.0.0.1:20333",
+        "127.0.0.1:20334",
+        "127.0.0.1:20335",
+        "127.0.0.1:20336"
+    ],
+    "RPCList":[
+      "http://127.0.0.1:30333"
+    ],
+    "SystemFee": {
+        "EnrollmentTransaction": 1000,
+        "IssueTransaction": 500,
+        "PublishTransaction": 500,
+        "RegisterTransaction": 10000
+    }
+  },
+
+  "ApplicationConfiguration": {
+    "DataDirectoryPath": "Chains/privnet",
+    "NotificationDataPath": "Chains/privnet_notif",
+    "RPCPort": 20332,
+    "NodePort": 20333,
+    "WsPort": 20334,
+    "UriPrefix": [ "http://*:20332" ],
+    "SslCert": "",
+    "SslCertPassword": "",
+    "BootstrapFile":"",
+    "NotificationBootstrapFile":"",
+    "DebugStorage":1
+  }
+}

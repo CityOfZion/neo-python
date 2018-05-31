@@ -1,8 +1,5 @@
 import binascii
-import inspect
 from logzero import logger
-
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 
 
 class DBCollection():
@@ -158,6 +155,14 @@ class DBCollection():
     def MarkChanged(self, keyval):
         if keyval not in self.Changed:
             self.Changed.append(keyval)
+
+    # @TODO This has not been tested or verified to work.
+    def Find(self, key_prefix):
+        key_prefix = self.Prefix + key_prefix
+        res = []
+        for key, val in self.DB.iterator(prefix=key_prefix):
+            res.append({key: val})
+        return res
 
     def Destroy(self):
         self.DB = None

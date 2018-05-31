@@ -9,13 +9,13 @@ Usage:
 from io import BytesIO, BufferedReader, BufferedWriter
 from neo.VM.OpCode import *
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.Cryptography.Crypto import *
-from neo.IO.Mixins import SerializableMixin
+from neocore.Cryptography.Crypto import *
+from neocore.IO.Mixins import SerializableMixin
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
-from neo.Cryptography.Helper import *
-from neo.Cryptography.ECCurve import ECDSA
+from neocore.Cryptography.Helper import *
+from neocore.Cryptography.ECCurve import ECDSA
 
 
 class ContractType():
@@ -39,19 +39,25 @@ class Contract(SerializableMixin, VerificationCode):
 
     @property
     def IsStandard(self):
-        scp = binascii.unhexlify(self.Script)
+        if len(self.Script) == 70:
+            self.Script = binascii.unhexlify(self.Script)
 
-        if len(scp) != 35:
+        if len(self.Script) != 35:
             return False
 
-        if scp[0] != 33 or scp[34] != int.from_bytes(CHECKSIG, 'little'):
+        if self.Script[0] != 33 or self.Script[34] != int.from_bytes(CHECKSIG, 'little'):
             return False
 
         return True
 
     @property
     def IsMultiSigContract(self):
-        scp = binascii.unhexlify(self.Script)
+        scp = self.Script
+
+        try:
+            scp = binascii.unhexlify(self.Script)
+        except binascii.Error:
+            pass
 
         if len(scp) < 37:
             return False
@@ -85,8 +91,14 @@ class Contract(SerializableMixin, VerificationCode):
     @staticmethod
     def CreateMultiSigRedeemScript(m, publicKeys):
 
-        if m < 2 or m > len(publicKeys) or len(publicKeys) > 1024:
-            raise Exception('Invalid keys')
+        if m < 1:
+            raise Exception("Minimum required signature count is 1, specified {}.".format(m))
+
+        if m > len(publicKeys):
+            raise Exception("Invalid public key count. Minimum required signatures is bigger than supplied public keys count.")
+
+        if len(publicKeys) > 1024:
+            raise Exception("Supplied public key count ({}) exceeds maximum of 1024.".format(len(publicKeys)))
 
         sb = ScriptBuilder()
         sb.push(m)
@@ -108,7 +120,7 @@ class Contract(SerializableMixin, VerificationCode):
 
         pk = [ECDSA.decode_secp256r1(p).G for p in publicKeys]
         return Contract(Contract.CreateMultiSigRedeemScript(m, pk),
-                        bytearray([ContractParameterType.Signature] * 3),
+                        bytearray(m),
                         publicKeyHash)
 
     @staticmethod
@@ -123,7 +135,7 @@ class Contract(SerializableMixin, VerificationCode):
             neo.SmartContract.Contract: a Contract instance.
         """
         script = Contract.CreateSignatureRedeemScript(publicKey)
-        params = bytearray([ContractParameterType.Signature])
+        params = b'\x00'
         encoded = publicKey.encode_point(True)
         pubkey_hash = Crypto.ToScriptHash(encoded, unhex=True)
 
@@ -148,14 +160,15 @@ class Contract(SerializableMixin, VerificationCode):
 
     def Deserialize(self, reader):
         self.PublicKeyHash = reader.ReadUInt160()
-
         self.ParameterList = reader.ReadVarBytes()
-        script = bytearray(reader.ReadVarBytes()).hex()
-        self.Script = script.encode('utf-8')
+        script = bytearray(reader.ReadVarBytes())
+        self.Script = script
 
     def Serialize(self, writer):
         writer.WriteUInt160(self.PublicKeyHash)
         writer.WriteVarBytes(self.ParameterList)
+        if isinstance(self.Script, str):
+            self.Script = self.Script.encode('utf-8')
         writer.WriteVarBytes(self.Script)
 
     @staticmethod

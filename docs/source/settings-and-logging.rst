@@ -5,9 +5,11 @@ neo-python has a settings module which you can use to configure several things:
 
 * The network: MainNet, TestNet, private networks or custom configs
 * Logging:
- * Smart contract event logging
- * Logfile (optionally rotating)
- * Loglevel
+
+  * Smart contract event logging
+  * Logfile (optionally rotating)
+  * Loglevel
+
 
 To change settings, you have to import the settings instance like this:
 
@@ -29,6 +31,19 @@ You can use the following settings methods to configure the network:
     settings.setup(config_file)
 
 By default, ``neo-python`` uses the TestNet.
+
+
+Where to save data:
+"""""""""""""""""""
+
+By default, ``neo-python`` saves chain data at ``~/.neopython/Chains``.  If you would like to change this, you can pass the ``--datadir`` flag to any of the commands (``np-prompt``, ``np-api-server``,``np-bootstrap``) to specify where the ``Chains`` directory should be placed.
+You can also set this manually via the ``settings`` module like so:
+
+.. code-block:: sh
+
+  settings.set_data_dir('your/path')
+
+
 
 
 Logging
@@ -67,6 +82,17 @@ To change the loglevel (eg. to also show DEBUG logs, or to only show ERRORS):
     settings.set_loglevel(logging.ERROR)
 
 
+Changing in the prompt
+----------------------
+
+To change the loglevel in the ``prompt`` interface, use the following command
+
+.. code-block:: sh
+
+  neo> config sc-events on
+  neo> config sc-events off
+
+
 Configuring a logfile
 ---------------------
 
@@ -94,7 +120,7 @@ logger with the existing neo logging configuration, you can just import the logg
     # These log messages are sent to the console
     logger.debug("hello")
     logger.info("info")
-    logger.warn("warn")
+    logger.warning("warn")
     logger.error("error")
 
     # This is how you'd log an exception

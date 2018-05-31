@@ -1,11 +1,11 @@
-from neo.IO.Mixins import SerializableMixin
-from neo.Cryptography.Helper import *
+from neocore.IO.Mixins import SerializableMixin
+from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
 from neo.Network.InventoryType import InventoryType
 from neo.Core.Blockchain import Blockchain
 from neo.Wallets.VerificationContract import VerificationContract
 from neo.Core.Witness import Witness
-from neo.UInt256 import UInt256
+import hashlib
 
 
 class InvalidOperationException(Exception):
@@ -93,14 +93,9 @@ class ConsensusPayload(SerializableMixin):
             Returns:
                 list: containing one UInt160() ScriptHash .
         """
-        # Can never be True, because Blockchain.Default() in neo-python will either get or create an instance. Leaving it in for reference.
-        # if Blockchain.Default() is None:
-        #    raise InvalidOperationException('Default blockchain None')
 
         cbh = Blockchain.Default().CurrentBlockHash
-        corrected_hash = bytearray.fromhex(cbh.decode('utf8'))
-        corrected_hash.reverse()
-        uint256_cur_hash = UInt256(data=corrected_hash)
+        uint256_cur_hash = UInt256.ParseString(cbh.decode('utf-8'))
 
         if self.PrevHash != uint256_cur_hash:
             raise InvalidOperationException(
@@ -118,7 +113,7 @@ class ConsensusPayload(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader(neo.IO.BinaryReader):
+            reader(neocore.IO.BinaryReader):
         """
         self.DeserializeUnsigned(reader)
         if reader.ReadByte() != 1:
@@ -132,7 +127,7 @@ class ConsensusPayload(SerializableMixin):
         Deserialize unsigned data only.
 
         Args:
-            reader(neo.IO.BinaryReader):
+            reader(neocore.IO.BinaryReader.BinaryReader):
         """
         self.Version = reader.ReadUInt32()
         self.PrevHash = reader.ReadUInt256()
@@ -146,7 +141,7 @@ class ConsensusPayload(SerializableMixin):
         Serialize full object.
 
         Args:
-            reader(neo.IO.BinaryWriter):
+            reader(neocore.IO.BinaryWriter):
         """
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
@@ -157,7 +152,7 @@ class ConsensusPayload(SerializableMixin):
         Serialize unsigned data only.
 
         Args:
-            reader(neo.IO.BinaryWriter):
+            reader(neocore.IO.BinaryWriter):
         """
         writer.WriteUInt32(self.Version)
         writer.WriteUInt256(self.PrevHash)
@@ -176,9 +171,7 @@ class ConsensusPayload(SerializableMixin):
         # if Blockchain.Default() is None: # see comment at self.GetScriptHashesForVerifying
         #     return False
         cbh = Blockchain.Default().CurrentBlockHash
-        corrected_hash = bytearray.fromhex(cbh.decode('utf8'))
-        corrected_hash.reverse()
-        uint256_cur_hash = UInt256(data=corrected_hash)
+        uint256_cur_hash = UInt256.ParseString(cbh.decode('utf-8'))
 
         if self.PrevHash != uint256_cur_hash:
             return False

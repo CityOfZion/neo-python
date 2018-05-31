@@ -1,9 +1,10 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
+from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neo.UInt160 import UInt160
+from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 import shutil
 import pdb
 
@@ -34,14 +35,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
             shutil.copyfile(cls.wallet_1_path(), cls.wallet_1_dest())
-            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), UserWalletTestCase.wallet_1_pass())
+            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_1_pass()))
         return cls._wallet1
 
     @classmethod
     def GetWallet3(cls, recreate=False):
         if cls._wallet3 is None or recreate:
             shutil.copyfile(cls.wallet_3_path(), cls.wallet_3_dest())
-            cls._wallet3 = UserWallet.Open(UserWalletTestCase.wallet_3_dest(), UserWalletTestCase.wallet_3_pass())
+            cls._wallet3 = UserWallet.Open(UserWalletTestCase.wallet_3_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_3_pass()))
         return cls._wallet3
 
     def test_1_no_available_claim(self):
@@ -54,7 +57,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.124316), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.142559), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -74,7 +77,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.00036456), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.11912649), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 

@@ -2,8 +2,8 @@ import binascii
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.Witness import Witness
 from neo.IO.MemoryStream import StreamManager
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
 from io import BytesIO
 
 

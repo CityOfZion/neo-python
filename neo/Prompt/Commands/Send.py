@@ -3,15 +3,16 @@ from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str
+from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args
 from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Wallets.NEP5Token import NEP5Token
-from neo.UInt256 import UInt256
-from neo.Fixed8 import Fixed8
-
+from neocore.UInt256 import UInt256
+from neocore.Fixed8 import Fixed8
+import pdb
 import json
 from prompt_toolkit import prompt
 import traceback
+from neo.Wallets.utils import to_aes_key
 
 
 def construct_and_send(prompter, wallet, arguments, prompt_password=True):
@@ -24,6 +25,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
             return False
 
         arguments, from_address = get_from_addr(arguments)
+        arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
 
         to_send = get_arg(arguments)
         address_to = get_arg(arguments, 1)
@@ -93,6 +95,9 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
             tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                                   data=data)]
 
+        # insert any additional user specified tx attributes
+        tx.Attributes = tx.Attributes + user_tx_attributes
+
         context = ContractParametersContext(tx, isMultiSig=signer_contract.IsMultiSigContract)
         wallet.Sign(context)
 
@@ -100,13 +105,13 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
 
             tx.scripts = context.GetScripts()
 
-            wallet.SaveTransaction(tx)
-
 #            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
 
             relayed = NodeLeader.Instance().Relay(tx)
 
             if relayed:
+                wallet.SaveTransaction(tx)
+
                 print("Relayed Tx: %s " % tx.Hash.ToString())
                 return tx
             else:

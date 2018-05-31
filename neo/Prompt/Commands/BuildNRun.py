@@ -1,14 +1,21 @@
-from neo.Prompt.Utils import get_arg
-from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams
-from neo.Prompt.Commands.Invoke import test_deploy_and_invoke
-from neo.Fixed8 import Fixed8
+from neo.Prompt.Utils import get_arg, get_from_addr
+from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, generate_deploy_script
+from neo.SmartContract.ContractParameterType import ContractParameterType
+from neo.SmartContract.ContractParameter import ContractParameter
+from neo.Prompt.Commands.Invoke import test_deploy_and_invoke, DEFAULT_MIN_FEE
+from neocore.Fixed8 import Fixed8
 from boa.compiler import Compiler
-
+from logzero import logger
 import binascii
 import traceback
+from neo.Core.State.ContractState import ContractPropertyState
+import os
+import json
 
 
 def LoadAndRun(arguments, wallet):
+
+    arguments, from_addr = get_from_addr(arguments)
 
     path = get_arg(arguments)
 
@@ -26,65 +33,86 @@ def LoadAndRun(arguments, wallet):
             script = content
 
             print("arguments.... %s " % arguments)
-            DoRun(script, arguments, wallet, path)
+            DoRun(script, arguments, wallet, path, from_addr=from_addr)
 
     except Exception as e:
-        print("couldnt load script %s " % e)
+        print("Could not load script %s " % e)
 
 
-def BuildAndRun(arguments, wallet):
+def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True):
+    arguments, from_addr = get_from_addr(arguments)
     path = get_arg(arguments)
 
-    try:
-        contract_script = Compiler.instance().load_and_save(path)
+    contract_script = Compiler.instance().load_and_save(path)
 
-        newpath = path.replace('.py', '.avm')
-        print("Saved output to %s " % newpath)
+    newpath = path.replace('.py', '.avm')
+    logger.info("Saved output to %s " % newpath)
 
-        DoRun(contract_script, arguments, wallet, path)
+    debug_map_path = path.replace('.py', '.debug.json')
+    debug_map = None
+    if os.path.exists(debug_map_path):
+        with open(debug_map_path, 'r') as dbg:
+            debug_map = json.load(dbg)
 
-    except Exception as e:
-        print("couldn compile %s " % e)
+    return DoRun(contract_script, arguments, wallet, path, verbose, from_addr, min_fee, invocation_test_mode, debug_map=debug_map)
 
 
-def DoRun(contract_script, arguments, wallet, path):
+def DoRun(contract_script, arguments, wallet, path, verbose=True, from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, debug_map=None):
 
-    try:
+    test = get_arg(arguments, 1)
 
-        test = get_arg(arguments, 1)
+    if test is not None and test == 'test':
 
-        if test is not None and test == 'test':
+        if wallet is not None:
 
-            if wallet is not None:
+            f_args = arguments[2:]
+            i_args = arguments[6:]
 
-                f_args = arguments[2:]
-                i_args = arguments[6:]
+            script = GatherLoadedContractParams(f_args, contract_script)
 
-                script = GatherLoadedContractParams(f_args, contract_script)
+            tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee, invocation_test_mode, debug_map=debug_map)
+            i_args.reverse()
 
-                tx, result, total_ops = test_deploy_and_invoke(script, i_args, wallet)
-                i_args.reverse()
+            return_type_results = []
 
-                if tx is not None and result is not None:
+            try:
+                rtype = ContractParameterType.FromString(f_args[1])
+                for r in result:
+                    cp = ContractParameter.AsParameterType(rtype, r)
+                    return_type_results.append(cp.ToJson())
+            except Exception as e:
+                logger.error('Could not convert result to ContractParameter: %s ' % e)
+
+            if tx is not None and result is not None:
+                if verbose:
                     print("\n-----------------------------------------------------------")
                     print("Calling %s with arguments %s " % (path, i_args))
                     print("Test deploy invoke successful")
                     print("Used total of %s operations " % total_ops)
-                    print("Result %s " % result)
+                    print("Result %s " % return_type_results)
                     print("Invoke TX gas cost: %s " % (tx.Gas.value / Fixed8.D))
                     print("-------------------------------------------------------------\n")
 
-                    return
-                else:
-                    print("test ivoke failed")
-                    print("tx is, results are %s %s " % (tx, result))
-                    return
-
+                return tx, result, total_ops, engine
             else:
+                if verbose:
+                    print("Test invoke failed")
+                    print("tx is, results are %s %s " % (tx, result))
 
-                print("please open a wallet to test built contract")
+        else:
 
-    except Exception as e:
-        print("could not bulid %s " % e)
-        traceback.print_stack()
-        traceback.print_exc()
+            print("please open a wallet to test built contract")
+
+    return None, None, None, None
+
+
+def TestBuild(script, invoke_args, wallet, plist='05', ret='05', dynamic=False):
+
+    properties = ContractPropertyState.HasStorage
+
+    if dynamic:
+        properties += ContractPropertyState.HasDynamicInvoke
+
+    script = generate_deploy_script(script, contract_properties=int(properties), parameter_list=plist, return_type=ret)
+
+    return test_deploy_and_invoke(script, invoke_args, wallet)

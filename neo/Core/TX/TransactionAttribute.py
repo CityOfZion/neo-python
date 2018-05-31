@@ -5,11 +5,9 @@ Description:
 Usage:
     from neo.Core.TX.TransactionAttribute import TransactionAttribute
 """
-import binascii
 from logzero import logger
-
-from neo.Network.Inventory import Inventory
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
+from neocore.UIntBase import UIntBase
 
 
 class TransactionAttributeUsage(object):
@@ -60,18 +58,30 @@ class TransactionAttributeUsage(object):
     Remark15 = int.from_bytes(b'\xff', 'little')
 
 
-class TransactionAttribute(Inventory, SerializableMixin):
-
+class TransactionAttribute(SerializableMixin):
     MAX_ATTR_DATA_SIZE = 65535
 
     """docstring for TransactionAttribute"""
 
     def __init__(self, usage=None, data=None):
+        """
+        Create an instance.
+
+        Args:
+            usage (neo.Core.TX.TransactionAttribute.TransactionAttributeUsage):
+            data (bytes):
+        """
         super(TransactionAttribute, self).__init__()
         self.Usage = usage
         self.Data = data
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neocore.IO.BinaryReader):
+        """
         usage = reader.ReadByte()
         self.Usage = usage
 
@@ -95,7 +105,19 @@ class TransactionAttribute(Inventory, SerializableMixin):
             logger.error("format error!!!")
 
     def Serialize(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neocore.IO.BinaryWriter):
+
+        Raises:
+            Exception: if the length exceeds the maximum allowed number of attributes in a transaction.
+        """
         writer.WriteByte(self.Usage)
+
+        if isinstance(self.Data, UIntBase):
+            self.Data = self.Data.Data
 
         length = len(self.Data)
 
@@ -121,7 +143,12 @@ class TransactionAttribute(Inventory, SerializableMixin):
             logger.error("format error!!!")
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
 
+        Returns:
+             dict:
+        """
         obj = {
             'usage': self.Usage,
             'data': '' if not self.Data else self.Data.hex()

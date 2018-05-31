@@ -1,5 +1,6 @@
 from neo.Utils.NeoTestCase import NeoTestCase
-from neo.Settings import SettingsHolder
+from neo.Settings import SettingsHolder, ROOT_INSTALL_PATH
+import os
 
 
 class SettingsTestCase(NeoTestCase):
@@ -30,3 +31,22 @@ class SettingsTestCase(NeoTestCase):
 
         _settings.MAGIC = None
         self.assertEqual(_settings.net_name, 'None')
+
+    def test_data_dir_settings(self):
+
+        _settings = SettingsHolder()
+
+        # Validate correct mainnet state
+        _settings.setup_mainnet()
+
+        _settings.set_data_dir('.')
+
+        self.assertEqual(_settings.chain_leveldb_path, os.path.abspath(os.path.join(ROOT_INSTALL_PATH, _settings.LEVELDB_PATH)))
+        self.assertEqual(_settings.notification_leveldb_path, os.path.abspath(os.path.join(ROOT_INSTALL_PATH, _settings.NOTIFICATION_DB_PATH)))
+        self.assertEqual(_settings.debug_storage_leveldb_path, os.path.abspath(os.path.join(ROOT_INSTALL_PATH, _settings.DEBUG_STORAGE_PATH)))
+
+        _settings.DATA_DIR_PATH = '/tmp/whatever'
+
+        self.assertEqual(_settings.chain_leveldb_path, os.path.abspath(os.path.join('/tmp/whatever', _settings.LEVELDB_PATH)))
+        self.assertEqual(_settings.notification_leveldb_path, os.path.abspath(os.path.join('/tmp/whatever', _settings.NOTIFICATION_DB_PATH)))
+        self.assertEqual(_settings.debug_storage_leveldb_path, os.path.abspath(os.path.join('/tmp/whatever', _settings.DEBUG_STORAGE_PATH)))

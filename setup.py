@@ -8,7 +8,7 @@ from pip.req import parse_requirements
 from pip.download import PipSession
 
 
-with open('README.md') as readme_file:
+with open('README.rst') as readme_file:
     readme = readme_file.read()
 
 # get the requirements from requirements.txt
@@ -17,14 +17,24 @@ reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
     name='neo-python',
-    python_requires='>=3.4, <3.6',
-    version='0.4.3',
+    python_requires='>=3.6',
+    version='0.6.8-dev',
     description="Python Node and SDK for the NEO blockchain",
     long_description=readme,
     author="Thomas Saunders",
     author_email='tom@cityofzion.io',
+    maintainer="Chris Hager",
+    maintainer_email='chris@cityofzion.io',
     url='https://github.com/CityOfZion/neo-python',
     packages=find_packages(include=['neo']),
+    entry_points = {
+        'console_scripts': [
+            'np-prompt=neo.bin.prompt:main',
+            'np-api-server=neo.bin.api_server:main',
+            'np-bootstrap=neo.bin.bootstrap:main',
+            'np-reencrypt-wallet=neo.bin.reencrypt_wallet:main',
+        ],
+    },
     include_package_data=True,
     install_requires=reqs,
     license="MIT license",
@@ -36,8 +46,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5'
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ]
 )

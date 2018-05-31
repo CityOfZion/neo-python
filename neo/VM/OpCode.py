@@ -111,11 +111,6 @@ SYSCALL = b'\x68'
 TAILCALL = b'\x69'
 
 
-# Exceptions
-THROW = b'\xf0'
-THROWIFNOT = b'\xf1'
-
-
 #  Stack
 DUPFROMALTSTACK = b'\x6A'
 TOALTSTACK = b'\x6B'  # Puts the input onto the top of the alt stack. Removes it from the main stack.
@@ -199,8 +194,18 @@ PICKITEM = b'\xC3'
 SETITEM = b'\xC4'
 NEWARRAY = b'\xC5'  # 用作引用類型
 NEWSTRUCT = b'\xC6'  # 用作值類型
+NEWMAP = b'\xC7'
 APPEND = b'\xC8'
 REVERSE = b'\xC9'
+REMOVE = b'\xCA'
+
+HASKEY = b'\xCB'
+KEYS = b'\xCC'
+VALUES = b'\xCD'
+
+# Exceptions
+THROW = b'\xF0'
+THROWIFNOT = b'\xF1'
 
 import sys
 import importlib

@@ -1,5 +1,8 @@
 import binascii
-from neo.IO.Mixins import SerializableMixin
+
+from logzero import logger
+
+from neocore.IO.Mixins import SerializableMixin
 
 
 class Witness(SerializableMixin):
@@ -54,7 +57,7 @@ class Witness(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader(neo.IO.BinaryReader):
+            reader(neocore.IO.BinaryReader):
         """
         self.InvocationScript = reader.ReadVarBytes()
         self.VerificationScript = reader.ReadVarBytes()
@@ -64,7 +67,7 @@ class Witness(SerializableMixin):
         Serialize full object.
 
         Args:
-            reader(neo.IO.BinaryReader):
+            reader(neocore.IO.BinaryReader):
         """
         writer.WriteVarBytes(self.InvocationScript)
         writer.WriteVarBytes(self.VerificationScript)

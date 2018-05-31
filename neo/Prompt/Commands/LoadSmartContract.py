@@ -6,13 +6,12 @@ from prompt_toolkit import prompt
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Prompt.Utils import get_arg
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
 
 
 def ImportContractAddr(wallet, args):
-
     if wallet is None:
         print("please open a wallet")
         return
@@ -50,12 +49,12 @@ def ImportContractAddr(wallet, args):
             wallet.AddContract(verification_contract)
 
             print("Added contract addres %s to wallet" % address)
+            return
 
-    return 'Hello'
+    print("Could not add contract.  Invalid public key or contract address")
 
 
 def LoadContract(args):
-
     if len(args) < 5:
         print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage} {needs_dynamic_invoke}'")
         return
@@ -81,8 +80,6 @@ def LoadContract(args):
 
     if needs_dynamic_invoke:
         contract_properties += ContractPropertyState.HasDynamicInvoke
-
-    print("contract properties: %s " % contract_properties)
 
     script = None
 
@@ -118,7 +115,6 @@ def LoadContract(args):
 
 
 def GatherLoadedContractParams(args, script):
-
     if len(args) < 4:
         raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke}")
     params = parse_param(args[0], ignore_int=True, prefer_hex=False)
@@ -148,7 +144,6 @@ def GatherLoadedContractParams(args, script):
 
 
 def GatherContractDetails(function_code, prompter):
-
     name = None
     version = None
     author = None
@@ -158,31 +153,26 @@ def GatherContractDetails(function_code, prompter):
     print("Please fill out the following contract details:")
     name = prompt("[Contract Name] > ",
                   completer=prompter.get_completer(),
-                  history=prompter.history,
                   get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                   style=prompter.token_style)
 
     version = prompt("[Contract Version] > ",
                      completer=prompter.get_completer(),
-                     history=prompter.history,
                      get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                      style=prompter.token_style)
 
     author = prompt("[Contract Author] > ",
                     completer=prompter.get_completer(),
-                    history=prompter.history,
                     get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                     style=prompter.token_style)
 
     email = prompt("[Contract Email] > ",
                    completer=prompter.get_completer(),
-                   history=prompter.history,
                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                    style=prompter.token_style)
 
     description = prompt("[Contract Description] > ",
                          completer=prompter.get_completer(),
-                         history=prompter.history,
                          get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
                          style=prompter.token_style)
 
@@ -227,9 +217,8 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
 
 
 def ImportMultiSigContractAddr(wallet, args):
-
     if len(args) < 4:
-        print("please specify multisig contract like such: 'import multisig {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
+        print("please specify multisig contract like such: 'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
         return
 
     if wallet is None:
@@ -241,7 +230,6 @@ def ImportMultiSigContractAddr(wallet, args):
     publicKeys = args[2:]
 
     if publicKeys[1]:
-
         pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
 
         verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)

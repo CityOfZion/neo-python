@@ -33,15 +33,17 @@ neo-python - Python Node and SDK for the NEO blockchain
 
     overview
     install
+    installwindows
     basicusage
     prompt
     settings-and-logging
-    smartcontracts
+    neo/SmartContract/smartcontracts
+    data-types
     contribute
     license
     changelog
     tests
 
 .. _issue: https://github.com/CityOfZion/neo-python/issues/new
-.. _NEO Slack: https://join.slack.com/t/neoblockchainteam/shared_invite/MjE3ODMxNDUzMDE1LTE1MDA4OTY3NDQtNTMwM2MyMTc2NA
+.. _NEO Discord: https://discord.gg/R8v48YA
 .. _MIT: https://github.com/CityOfZion/neo-python/blob/master/LICENSE.md

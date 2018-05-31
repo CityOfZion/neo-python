@@ -1,12 +1,8 @@
-
-from neo.IO.Mixins import SerializableMixin
-import binascii
-from neo.Cryptography.Helper import hash_to_wallet_address
-from neo.Cryptography.Crypto import Crypto
+from neocore.IO.Mixins import SerializableMixin
+from neocore.Cryptography.Crypto import Crypto
 
 
 class FunctionCode(SerializableMixin):
-
     Script = bytearray()
 
     ParameterList = bytearray()
@@ -19,11 +15,23 @@ class FunctionCode(SerializableMixin):
 
     @property
     def HasStorage(self):
+        """
+        Flag indicating if storage is available.
+
+        Returns:
+            bool: True if available. False otherwise.
+        """
         from neo.Core.State.ContractState import ContractPropertyState
         return self.ContractProperties & ContractPropertyState.HasStorage > 0
 
     @property
     def HasDynamicInvoke(self):
+        """
+        Flag indicating if dynamic invocation is supported.
+
+        Returns:
+            bool: True if supported. False otherwise.
+        """
         from neo.Core.State.ContractState import ContractPropertyState
         return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
 
@@ -39,27 +47,48 @@ class FunctionCode(SerializableMixin):
         self.ContractProperties = contract_properties
 
     def ScriptHash(self):
+        """
+        Get the script hash.
+
+        Returns:
+            UInt160:
+        """
         if self._scriptHash is None:
             self._scriptHash = Crypto.ToScriptHash(self.Script, unhex=False)
 
         return self._scriptHash
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
 
+        Args:
+            reader (neocore.IO.BinaryReader):
+        """
         self.Script = reader.ReadVarBytes()
-
         self.ParameterList = reader.ReadVarBytes()
         self.ReturnType = reader.ReadByte()
 
     def Serialize(self, writer):
-        writer.WriteVarBytes(self.Script)
+        """
+        Serialize full object.
 
+        Args:
+            writer (neocore.IO.BinaryWriter):
+        """
+        writer.WriteVarBytes(self.Script)
         writer.WriteVarBytes(self.ParameterList)
         writer.WriteByte(self.ReturnType)
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         return {
-            'hash': self.ScriptHash().ToString(),
+            'hash': self.ScriptHash().To0xString(),
             'script': self.Script.hex(),
             'parameters': self.ParameterList.hex(),
             'returntype': self.ReturnType if type(self.ReturnType) is int else self.ReturnType.hex()

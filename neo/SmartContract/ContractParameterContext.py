@@ -9,8 +9,8 @@ from neo.SmartContract.Contract import Contract, ContractType
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.IO.MemoryStream import MemoryStream
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
 from neo.Core.FunctionCode import FunctionCode
@@ -22,11 +22,16 @@ class ContractParamater():
     Value = None
 
     def __init__(self, type):
-        self.Type = type
+        if isinstance(type, ContractParameterType):
+            self.Type = type
+        elif isinstance(type, int):
+            self.Type = ContractParameterType(type)
+        else:
+            raise Exception("Invalid Contract Parameter Type %s. Must be ContractParameterType or int" % type)
 
     def ToJson(self):
         jsn = {}
-        jsn['type'] = ToName(self.Type)
+        jsn['type'] = self.Type.name
         return jsn
 
 
@@ -117,8 +122,6 @@ class ContractParametersContext():
         item = self.CreateItem(contract)
         item.ContractParameters[index].Value = parameter
 
-#        pdb.set_trace()
-
         return True
 
     def CreateItem(self, contract):
@@ -176,17 +179,16 @@ class ContractParametersContext():
             return True
 
         else:
-
             index = -1
+            if contract.ParameterList == '00':
+                contract.ParameterList = b'\x00'
             length = len(contract.ParameterList)
             for i in range(0, length):
-
-                if contract.ParameterList[i] == ContractParameterType.Signature:
+                if ContractParameterType(contract.ParameterList[i]) == ContractParameterType.Signature:
                     if index >= 0:
                         raise Exception("Signature must be first")
                     else:
                         index = i
-
             return self.Add(contract, index, signature)
 
     def GetIndex(self, script_hash):
@@ -242,7 +244,6 @@ class ContractParametersContext():
 #                logger.info("SCRIPT IS %s " % item.Script)
 
             witness = Witness(
-                #                invocation_script='40fdb984faf0a400b6894c1ce5b317cf894ba3eb89b899cefda2ac307b278418b943534ad298884f9200dc4b7e1dc244db16c62a44a830a860060ec11d3e6e9717',
                 invocation_script=sb.ToArray(),
                 verification_script=vscript
             )
