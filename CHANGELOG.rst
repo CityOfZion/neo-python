@@ -3,8 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.0-dev] in progress
------------------------
+[0.7.1] in progress
+-------------------
+
+
+[0.7.0] 2018-05-01
+------------------
 - fix a bug with smart-contract parameter string parsing `#412 <https://github.com/CityOfZion/neo-python/issues/412>`_
 - fix ``StateMachine.Contract_Migrate`` and add tests
 - add ability to attach tx attrs to build command and testinvoke.  altered tx attr parsing
@@ -21,8 +25,10 @@ All notable changes to this project are documented in this file.
 - Update to `neo-python-core <https://github.com/CityOfZion/neo-python-core/blob/master/HISTORY.rst>`_ v0.4.8:
 - Create wallets with ``np-utils --create-wallet``
 - ``BigInteger(0)`` now is ``b'\x00'``
-- CheckWitness now only accepts 20 or 33 byte addresses
+- CheckWitness now only accepts 20 or 33 byte addresses,CheckWitness faults VM when input is bad rather than returning ``False``
 - When creating contracts, ReturnType is now written by ScriptBuilder as a BigInteger
+- Allow sending of transaction attributes with invocations
+- Added signing utility ``np-sign`` for using a wallet, WIF, or NEP2 to sign an arbitrary message.
 
 
 [0.6.9] 2018-04-30
