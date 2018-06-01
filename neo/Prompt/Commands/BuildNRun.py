@@ -10,6 +10,7 @@ import binascii
 from neo.Core.State.ContractState import ContractPropertyState
 import os
 import json
+from neocore.BigInteger import BigInteger
 
 
 def LoadAndRun(arguments, wallet):
@@ -117,6 +118,6 @@ def TestBuild(script, invoke_args, wallet, plist='05', ret='05', dynamic=False):
     if not isinstance(ret, bytearray):
         ret = bytearray(binascii.unhexlify(str(ret).encode('utf-8')))
 
-    script = generate_deploy_script(script, contract_properties=int(properties), parameter_list=plist, return_type=ret)
+    script = generate_deploy_script(script, contract_properties=int(properties), parameter_list=plist, return_type=BigInteger.FromBytes(ret))
 
     return test_deploy_and_invoke(script, invoke_args, wallet)
