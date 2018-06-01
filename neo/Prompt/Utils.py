@@ -38,6 +38,30 @@ def get_asset_attachments(params):
     return params, neo_to_attach, gas_to_attach
 
 
+def get_owners_from_params(params):
+    to_remove = []
+    owners = None
+
+    for item in params:
+        if type(item) is str:
+            if '--owners=' in item:
+                owners = []
+                to_remove.append(item)
+                try:
+                    owner_list = eval(item.replace('--owners=', ''))
+                    owners = set()
+                    for o in owner_list:
+                        shash = Helper.AddrStrToScriptHash(o)
+                        owners.add(shash)
+                except Exception as e:
+                    logger.info("Could not parse owner %s " % e)
+                    pass
+    for item in to_remove:
+        params.remove(item)
+
+    return params, owners
+
+
 def get_asset_id(wallet, asset_str):
     assetId = None
 
@@ -150,9 +174,8 @@ def attr_obj_to_tx_attr(obj):
 def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
     # first, we'll try to parse an array
-
     try:
-        items = eval(p, {"__builtins__": {}}, {})
+        items = eval(p, {"__builtins__": {'list': list}}, {})
         if len(items) > 0 and type(items) is list:
 
             parsed = []
@@ -173,8 +196,10 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
             pass
 
     try:
-        val = eval(p, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
-        if type(val) is bytes:
+        val = eval(p, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes, 'list': list}}, {})
+        if type(val) is bytearray:
+            return val
+        elif type(val) is bytes:
             # try to unhex
             try:
                 val = binascii.unhexlify(val)
@@ -182,7 +207,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
                 pass
             # now it should be unhexxed no matter what, and we can hex it
             return val.hex().encode('utf-8')
-        elif type(val) is not float:
+        elif type(val) is bool:
             return val
 
     except Exception as e:

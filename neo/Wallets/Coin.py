@@ -16,9 +16,10 @@ class Coin(TrackableMixin):
 
     _address = None
     _state = CoinState.Unconfirmed
+    _transaction = None
 
     @staticmethod
-    def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed):
+    def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed, transaction=None):
         """
         Get a Coin object using a CoinReference.
 
@@ -31,6 +32,7 @@ class Coin(TrackableMixin):
             Coin: self.
         """
         coin = Coin(coin_reference=coin_ref, tx_output=tx_output, state=state)
+        coin._transaction = transaction
         return coin
 
     def __init__(self, prev_hash=None, prev_index=None, tx_output=None, coin_reference=None,
@@ -55,6 +57,10 @@ class Coin(TrackableMixin):
         self._state = state
 
     @property
+    def Transaction(self):
+        return self._transaction
+
+    @property
     def Address(self):
         """
         Get the wallet address associated with the coin.
@@ -63,7 +69,7 @@ class Coin(TrackableMixin):
             str: base58 encoded string representing the wallet address.
         """
         if self._address is None:
-            self._address = Crypto.ToAddress(self.TXOutput.ScriptHash)
+            self._address = Crypto.ToAddress(self.Output.ScriptHash)
         return self._address
 
     @property
@@ -99,6 +105,9 @@ class Coin(TrackableMixin):
         if other is None or other is not self:
             return False
         return True
+
+    def __hash__(self):
+        return int.from_bytes(self.Reference.PrevHash.Data + bytearray(self.Reference.PrevIndex), 'little')
 
     def RefToBytes(self):
         vin_index = bytearray(self.Reference.PrevIndex.to_bytes(1, 'little'))

@@ -6,8 +6,10 @@ from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ImportToken
 from neo.Prompt.Commands.Tokens import token_get_allowance, \
-    token_approve_allowance, token_send, token_send_from, token_history
+    token_approve_allowance, token_send, token_send_from, token_history, token_mint
 import shutil
+from neocore.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import StreamManager
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -173,3 +175,54 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertFalse(result)
 
         db.close()
+
+    def test_7_token_history_no_args(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        ImportToken(wallet, self.token_hash_str)
+
+        result = token_history(wallet, None, [])
+
+        self.assertFalse(result)
+
+    def test_7_token_history_no_db(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        ImportToken(wallet, self.token_hash_str)
+
+        result = token_history(wallet, None, ['abc'])
+
+        self.assertFalse(result)
+
+    # this will fail since this token doesn't have a mint method
+    def test_8_mint(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        ImportToken(wallet, self.token_hash_str)
+
+        token = self.get_token(wallet)
+
+        addr_to = self.wallet_1_addr
+
+        args = [token.symbol, addr_to, '--attach-neo=10']
+
+        mint = token_mint(wallet, args, prompt_passwd=False)
+
+        self.assertFalse(mint)
+
+    def test_token_serialize(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        ImportToken(wallet, self.token_hash_str)
+
+        token = self.get_token(wallet)
+
+        stream = StreamManager.GetStream()
+        writer = BinaryWriter(stream)
+        token.Serialize(writer)
+
+        self.assertEqual(b'0d4e455035205374616e64617264044e45503508', stream.ToArray())

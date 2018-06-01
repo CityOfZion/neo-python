@@ -70,7 +70,7 @@ class CoinReference:
         return False
 
     def __hash__(self):
-        return int.from_bytes(self.PrevHash.ToBytes(), 'little') + self.PrevIndex
+        return int.from_bytes(self.PrevHash.Data + bytearray(self.PrevIndex), 'little')
 
     def ToJson(self):
         """

@@ -646,7 +646,7 @@ class Wallet:
         # abstract
         pass
 
-    def ProcessBlocks(self, block_limit=1000):
+    def ProcessBlocks(self, block_limit=10000):
         """
         Method called on a loop to check the current height of the blockchain.  If the height of the blockchain
         is more than the current stored height in the wallet, we get the next block in line and
@@ -671,6 +671,8 @@ class Wallet:
                 blockcount += 1
 
             self.SaveStoredData("Height", self._current_height)
+        except Exception as e:
+            logger.warn("Could not process ::: %s " % e)
         finally:
             self._lock.release()
 
@@ -699,7 +701,6 @@ class Wallet:
                     if state & AddressState.InWallet > 0:
 
                         # if its in the wallet, check to see if the coin exists yet
-
                         key = CoinReference(tx.Hash, index)
 
                         # if it exists, update it, otherwise create a new one
@@ -708,7 +709,7 @@ class Wallet:
                             coin.State |= CoinState.Confirmed
                             changed.add(coin)
                         else:
-                            newcoin = Coin.CoinFromRef(coin_ref=key, tx_output=output, state=CoinState.Confirmed)
+                            newcoin = Coin.CoinFromRef(coin_ref=key, tx_output=output, state=CoinState.Confirmed, transaction=tx)
                             self._coins[key] = newcoin
                             added.add(newcoin)
 

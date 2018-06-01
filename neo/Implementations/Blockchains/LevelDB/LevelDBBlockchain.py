@@ -34,6 +34,7 @@ from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
+
 from prompt_toolkit import prompt
 
 
@@ -559,7 +560,7 @@ class LevelDBBlockchain(Blockchain):
             out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
             out = out[8:]
             outhex = binascii.unhexlify(out)
-            return Block.FromTrimmedData(outhex, 0)
+            return Block.FromTrimmedData(outhex)
         except Exception as e:
             logger.info("Could not get block %s " % e)
         return None

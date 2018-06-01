@@ -3,8 +3,9 @@ from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args
+from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
+from neo.Prompt.Commands.Invoke import gather_signatures
 from neo.Wallets.NEP5Token import NEP5Token
 from neocore.UInt256 import UInt256
 from neocore.Fixed8 import Fixed8
@@ -24,6 +25,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
 
         arguments, from_address = get_from_addr(arguments)
         arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
+        arguments, owners = get_owners_from_params(arguments)
 
         to_send = get_arg(arguments)
         address_to = get_arg(arguments, 1)
@@ -96,8 +98,18 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         # insert any additional user specified tx attributes
         tx.Attributes = tx.Attributes + user_tx_attributes
 
+        if owners:
+            owners = list(owners)
+            for owner in owners:
+                tx.Attributes.append(
+                    TransactionAttribute(usage=TransactionAttributeUsage.Script, data=owner))
+
         context = ContractParametersContext(tx, isMultiSig=signer_contract.IsMultiSigContract)
         wallet.Sign(context)
+
+        if owners:
+            owners = list(owners)
+            gather_signatures(context, tx, owners)
 
         if context.Completed:
 

@@ -35,11 +35,13 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
     CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
+
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register, token_history
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins
-from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args
+
+from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
 from neo.UserPreferences import preferences
@@ -755,11 +757,11 @@ class PromptInterface:
         if not self.Wallet:
             print("Please open a wallet")
             return
-
         args, from_addr = get_from_addr(args)
         args, invoke_attrs = get_tx_attr_from_args(args)
+        args, owners = get_owners_from_params(args)
         if args and len(args) > 0:
-            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs)
+            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
 
             if tx is not None and results is not None:
                 print(
@@ -773,12 +775,13 @@ class PromptInterface:
                     "-------------------------------------------------------------------------------------------------------------------------------------\n")
                 print("Enter your password to continue and invoke on the network\n")
 
+                tx.Attributes = invoke_attrs
+
                 passwd = prompt("[password]> ", is_password=True)
                 if not self.Wallet.ValidatePassword(passwd):
                     return print("Incorrect password")
-                tx.Attributes = invoke_attrs
-                result = InvokeContract(self.Wallet, tx, fee, from_addr=from_addr)
 
+                InvokeContract(self.Wallet, tx, fee, from_addr=from_addr, owners=owners)
                 return
             else:
                 print("Error testing contract invoke")
@@ -1011,6 +1014,11 @@ class PromptInterface:
                         self.handle_debug_storage(arguments)
                     elif command == 'config':
                         self.configure(arguments)
+                    elif command == 'pause':
+                        Blockchain.Default().Pause()
+                    elif command == 'resume':
+                        Blockchain.Default().Resume()
+
                     elif command is None:
                         print("Please specify a command")
                     else:

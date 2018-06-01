@@ -6,7 +6,10 @@ from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Send import construct_and_send
 from neo.Prompt.Commands.Wallet import ImportToken
 from neo.Prompt.Utils import get_tx_attr_from_args
+from neo.Prompt.Commands import Send
 import shutil
+
+from mock import patch
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -178,3 +181,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertTrue('could not convert object' in context.exception)
             self.assertEqual(len(args), 0)
             self.assertEqual(len(txattr), 0)
+
+    @patch.object(Send, 'gather_signatures')
+    def test_14_owners(self, mock):
+        wallet = self.GetWallet1(recreate=True)
+
+        args = ['gas', self.wallet_1_addr, '2', "--owners=['AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK','APRgMZHZubii29UXF9uFa6sohrsYupNAvx']"]
+
+        construct_and_send(None, wallet, args, prompt_password=False)
+
+        self.assertTrue(mock.called)

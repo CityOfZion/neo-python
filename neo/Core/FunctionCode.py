@@ -40,7 +40,7 @@ class FunctionCode(SerializableMixin):
         from neo.Core.State.ContractState import ContractPropertyState
         return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
 
-    def __init__(self, script=None, param_list=None, return_type=None, contract_properties=0):
+    def __init__(self, script=None, param_list=None, return_type=255, contract_properties=0):
         self.Script = script
         if param_list is None:
             self.ParameterList = []
@@ -49,7 +49,7 @@ class FunctionCode(SerializableMixin):
 
         if return_type and not isinstance(return_type, int) and len(return_type) > 1:
             return_type = return_type[0:1]
-        elif isinstance(return_type, int) and not 0 < return_type <= 255:
+        elif isinstance(return_type, int) and return_type > 255:
             return_type = 255
 
         self.ReturnType = return_type

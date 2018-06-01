@@ -8,6 +8,7 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
+from neocore.Cryptography.Crypto import Crypto
 from prompt_toolkit import prompt
 import binascii
 import json

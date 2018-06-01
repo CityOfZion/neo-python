@@ -1,5 +1,5 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
-from neo.Prompt.Utils import get_asset_id, get_from_addr
+from neo.Prompt.Utils import get_asset_id, get_from_addr, get_tx_attr_from_args
 from neo.Wallets.NEP5Token import NEP5Token
 from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
@@ -120,13 +120,13 @@ def token_get_allowance(wallet, args, verbose=False):
 def token_mint(wallet, args, prompt_passwd=True):
     token = get_asset_id(wallet, args[0])
     mint_to_addr = args[1]
-
+    args, invoke_attrs = get_tx_attr_from_args(args)
     if len(args) < 3:
         raise Exception("please specify assets to attach")
 
     asset_attachments = args[2:]
 
-    tx, fee, results = token.Mint(wallet, mint_to_addr, asset_attachments)
+    tx, fee, results = token.Mint(wallet, mint_to_addr, asset_attachments, invoke_attrs=invoke_attrs)
 
     if results[0] is not None:
         print("\n-----------------------------------------------------------")
@@ -141,7 +141,7 @@ def token_mint(wallet, args, prompt_passwd=True):
                 print("incorrect password")
                 return
 
-        return InvokeWithTokenVerificationScript(wallet, tx, token, fee)
+        return InvokeWithTokenVerificationScript(wallet, tx, token, fee, invoke_attrs=invoke_attrs)
 
     else:
         print("Could not register addresses: %s " % str(results[0]))

@@ -118,9 +118,12 @@ class ContractParametersContext:
     def Add(self, contract, index, parameter):
 
         item = self.CreateItem(contract)
-        item.ContractParameters[index].Value = parameter
 
-        return True
+        if item:
+            item.ContractParameters[index].Value = parameter
+            return True
+
+        return False
 
     def CreateItem(self, contract):
 
@@ -131,9 +134,7 @@ class ContractParametersContext:
             return None
 
         item = ContextItem(contract)
-
         self.ContextItems[contract.ScriptHash.ToBytes()] = item
-
         return item
 
     def AddSignature(self, contract, pubkey, signature):

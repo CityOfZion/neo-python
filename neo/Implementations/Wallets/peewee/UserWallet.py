@@ -91,7 +91,7 @@ class UserWallet(Wallet):
             self._db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, VINHold,
                                     Transaction, TransactionInfo, NamedAddress], safe=True)
         except Exception as e:
-            logger.error("Could not build database %s " % e)
+            logger.error("Could not build database %s %s " % (e, self._path))
 
     def Migrate(self):
         migrator = SqliteMigrator(self._db)
@@ -104,7 +104,6 @@ class UserWallet(Wallet):
         return self._db
 
     def Rebuild(self):
-        self._lock.acquire()
         try:
             super(UserWallet, self).Rebuild()
 
@@ -115,10 +114,8 @@ class UserWallet(Wallet):
                 c.delete_instance()
             for tx in Transaction.select():
                 tx.delete_instance()
-        finally:
-            self._lock.release()
-
-        logger.debug("wallet rebuild complete")
+        except Exception as e:
+            print("Could not rebuild %s " % e)
 
     def Close(self):
         if self._db:
@@ -417,9 +414,8 @@ class UserWallet(Wallet):
                     Address=address
                 )
                 c.save()
-                logger.debug("saved coin %s " % c)
             except Exception as e:
-                logger.error("COULDN'T SAVE!!!! %s " % e)
+                logger.error("[Path: %s ] Could not create coin: %s " % (self._path, e))
 
         for coin in changed:
             for hold in self._holds:
@@ -431,7 +427,7 @@ class UserWallet(Wallet):
                 c.State = coin.State
                 c.save()
             except Exception as e:
-                logger.error("Coulndn't change coin %s %s (coin to change not found)" % (coin, e))
+                logger.error("[Path: %s ] could not change coin %s %s (coin to change not found)" % (self._path, coin, e))
 
         for coin in deleted:
             for hold in self._holds:
@@ -441,9 +437,8 @@ class UserWallet(Wallet):
             try:
                 c = Coin.get(TxId=bytes(coin.Reference.PrevHash.Data), Index=coin.Reference.PrevIndex)
                 c.delete_instance()
-
             except Exception as e:
-                logger.error("could not delete coin %s %s " % (coin, e))
+                logger.error("[Path: %s] could not delete coin %s %s " % (self._path, coin, e))
 
     @property
     def Addresses(self):
