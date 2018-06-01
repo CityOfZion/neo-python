@@ -200,8 +200,6 @@ class Block(BlockBase, InventoryMixin):
 
         Args:
             byts:
-            index: UNUSED
-            transaction_method: UNUSED
 
         Returns:
             Block:

@@ -252,7 +252,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
             wallet (neo.Wallets.Wallet): a wallet instance.
             mint_to_addr (str): public address of the account to mint the tokens to.
             attachment_args: (list): a list of arguments used to attach neo and/or gas to an invoke, eg ['--attach-gas=10.0','--attach-neo=3']
-
+            invoke_attrs: (list): a list of TransactionAttributes to be attached to the mint transaction
         Returns:
             tuple:
                 InvocationTransaction: the transaction.

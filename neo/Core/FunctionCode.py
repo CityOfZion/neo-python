@@ -40,7 +40,7 @@ class FunctionCode(SerializableMixin):
         from neo.Core.State.ContractState import ContractPropertyState
         return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
 
-    def __init__(self, script=None, param_list=None, return_type=None, contract_properties=0):
+    def __init__(self, script=None, param_list=None, return_type=255, contract_properties=0):
         self.Script = script
         if param_list is None:
             self.ParameterList = []

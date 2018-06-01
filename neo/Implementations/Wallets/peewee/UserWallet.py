@@ -398,7 +398,6 @@ class UserWallet(Wallet):
 
     def OnCoinsChanged(self, added, changed, deleted):
 
-        some = False
         for coin in added:
             addr_hash = bytes(coin.Output.ScriptHash.Data)
 
