@@ -35,7 +35,6 @@ from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDe
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
 from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
     CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
-from neo.contrib.nex.setup_sale import setupSale
 
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register, token_history
@@ -855,8 +854,6 @@ class PromptInterface:
         else:
             print("Please specify on|off|reset")
 
-    def setup_sale(self, args):
-        setupSale(self.Wallet, args)
 
     def configure(self, args):
         what = get_arg(args)
@@ -1014,8 +1011,6 @@ class PromptInterface:
                         self.show_nodes()
                     elif command == 'state':
                         self.show_state()
-                    elif command == 'setup_sale':
-                        self.setup_sale(arguments)
                     elif command == 'debugstorage':
                         self.handle_debug_storage(arguments)
                     elif command == 'config':
