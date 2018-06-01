@@ -854,7 +854,6 @@ class PromptInterface:
         else:
             print("Please specify on|off|reset")
 
-
     def configure(self, args):
         what = get_arg(args)
 
