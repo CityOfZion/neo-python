@@ -120,12 +120,6 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
 
             wallet_tx.scripts = context.GetScripts()
 
-            relayed = False
-
-#            print("full wallet tx: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
-#            toarray = Helper.ToArray(wallet_tx)
-#            print("to arary %s " % toarray)
-
             relayed = NodeLeader.Instance().Relay(wallet_tx)
 
             if relayed:

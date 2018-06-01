@@ -1207,7 +1207,6 @@ class Wallet:
 
         return success
 
-
     def GetSyncedBalances(self):
         """
         Returns a list of synced balances. The list looks like this:
