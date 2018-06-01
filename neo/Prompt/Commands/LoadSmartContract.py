@@ -9,6 +9,7 @@ from neo.Prompt.Utils import get_arg
 from neocore.Cryptography.Crypto import Crypto
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
+from neocore.BigInteger import BigInteger
 
 
 def ImportContractAddr(wallet, args):
@@ -119,7 +120,7 @@ def GatherLoadedContractParams(args, script):
     if type(params) is str:
         params = params.encode('utf-8')
 
-    return_type = bytearray(binascii.unhexlify(str(args[1]).encode('utf-8')))
+    return_type = BigInteger.FromBytes(bytearray(binascii.unhexlify(str(args[1]).encode('utf-8'))))
 
     needs_storage = bool(parse_param(args[2]))
     needs_dynamic_invoke = bool(parse_param(args[3]))
@@ -181,12 +182,12 @@ def GatherContractDetails(function_code, prompter):
     print(json.dumps(function_code.ToJson(), indent=4))
 
     return generate_deploy_script(function_code.Script, name, version, author, email, description,
-                                  function_code.ContractProperties, function_code.ReturnType,
+                                  function_code.ContractProperties, function_code.ReturnTypeBigInteger,
                                   function_code.ParameterList)
 
 
 def generate_deploy_script(script, name='test', version='test', author='test', email='test',
-                           description='test', contract_properties=0, return_type=bytearray(b'\xff'), parameter_list=[]):
+                           description='test', contract_properties=0, return_type=BigInteger(255), parameter_list=[]):
     sb = ScriptBuilder()
 
     plist = parameter_list

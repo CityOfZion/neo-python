@@ -1,5 +1,6 @@
 from neocore.IO.Mixins import SerializableMixin
 from neocore.Cryptography.Crypto import Crypto
+from neocore.BigInteger import BigInteger
 
 
 class FunctionCode(SerializableMixin):
@@ -12,6 +13,10 @@ class FunctionCode(SerializableMixin):
     _scriptHash = None
 
     ContractProperties = None
+
+    @property
+    def ReturnTypeBigInteger(self):
+        return BigInteger(self.ReturnType)
 
     @property
     def HasStorage(self):

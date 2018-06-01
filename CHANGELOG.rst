@@ -22,7 +22,7 @@ All notable changes to this project are documented in this file.
 - Create wallets with ``np-utils --create-wallet``
 - ``BigInteger(0)`` now is ``b'\x00'``
 - CheckWitness now only accepts 20 or 33 byte addresses
-
+- When creating contracts, ReturnType is now written by ScriptBuilder as a BigInteger
 
 
 [0.6.9] 2018-04-30
