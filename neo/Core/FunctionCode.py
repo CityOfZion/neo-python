@@ -1,6 +1,7 @@
 from neocore.IO.Mixins import SerializableMixin
 from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
+from binascii import hexlify
 
 
 class FunctionCode(SerializableMixin):
@@ -16,7 +17,7 @@ class FunctionCode(SerializableMixin):
 
     @property
     def ReturnTypeBigInteger(self):
-        return BigInteger(self.ReturnType)
+        return BigInteger(int(hexlify(self.ReturnType), 16))
 
     @property
     def HasStorage(self):
