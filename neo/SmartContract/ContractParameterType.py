@@ -54,15 +54,22 @@ class ContractParameterType(Enum):
             ContractParameterType
         """
         # first, check if the value supplied is the string literal of the enum (e.g. "String")
+
+        if isinstance(val, bytes):
+            val = val.decode('utf-8')
+
         try:
             return ContractParameterType[val]
-        except KeyError as e:
+        except Exception as e:
             # ignore a KeyError if the val isn't found in the Enum
             pass
 
-        # second, check if the value supplied is hex-encoded (e.g. b'07')
+        # second, check if the value supplied is bytes or hex-encoded (e.g. b'07')
         try:
-            int_val = int.from_bytes(binascii.unhexlify(val), 'little')
+            if isinstance(val, (bytearray, bytes)):
+                int_val = int.from_bytes(val, 'little')
+            else:
+                int_val = int.from_bytes(binascii.unhexlify(val), 'little')
         except (binascii.Error, TypeError) as e:
             # if it's not hex-encoded, then convert as int (e.g. "7" or 7)
             int_val = int(val)

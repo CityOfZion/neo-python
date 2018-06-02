@@ -3,11 +3,15 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.1] in progress
+[0.7.2] in progress
 -------------------
+-
 
+[0.7.1] 2018-06-02
+------------------
+- update FunctionCode Return type parsing
 
-[0.7.0] 2018-05-01
+[0.7.0] 2018-06-01
 ------------------
 - fix a bug with smart-contract parameter string parsing `#412 <https://github.com/CityOfZion/neo-python/issues/412>`_
 - fix ``StateMachine.Contract_Migrate`` and add tests

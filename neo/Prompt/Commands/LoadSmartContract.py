@@ -2,6 +2,7 @@ import binascii
 from neo.Prompt.Utils import parse_param
 from neo.Core.FunctionCode import FunctionCode
 from neo.Core.State.ContractState import ContractPropertyState
+from neo.SmartContract.ContractParameterType import ContractParameterType
 from prompt_toolkit import prompt
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
@@ -66,7 +67,7 @@ def LoadContract(args):
     if type(params) is str:
         params = params.encode('utf-8')
 
-    return_type = bytearray(binascii.unhexlify(str(args[2]).encode('utf-8')))
+    return_type = BigInteger(ContractParameterType.FromString(args[2]).value)
 
     needs_storage = bool(parse_param(args[3]))
     needs_dynamic_invoke = bool(parse_param(args[4]))
@@ -120,7 +121,7 @@ def GatherLoadedContractParams(args, script):
     if type(params) is str:
         params = params.encode('utf-8')
 
-    return_type = BigInteger.FromBytes(bytearray(binascii.unhexlify(str(args[1]).encode('utf-8'))))
+    return_type = BigInteger(ContractParameterType.FromString(args[1]).value)
 
     needs_storage = bool(parse_param(args[2]))
     needs_dynamic_invoke = bool(parse_param(args[3]))

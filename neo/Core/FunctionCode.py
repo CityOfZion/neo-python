@@ -1,6 +1,7 @@
 from neocore.IO.Mixins import SerializableMixin
 from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
+from neo.SmartContract.ContractParameterType import ContractParameterType
 
 
 class FunctionCode(SerializableMixin):
@@ -47,12 +48,7 @@ class FunctionCode(SerializableMixin):
         else:
             self.ParameterList = param_list
 
-        if return_type and not isinstance(return_type, int) and len(return_type) > 1:
-            return_type = return_type[0:1]
-        elif isinstance(return_type, int) and return_type > 255:
-            return_type = 255
-
-        self.ReturnType = return_type
+        self.ReturnType = ContractParameterType.FromString(return_type).value
 
         self.ContractProperties = contract_properties
 
