@@ -38,10 +38,9 @@ def main():
     elif args.mainnet:
         settings.setup_mainnet()
 
-    file_path = None
-
     if not args.output:
         raise Exception("Please specify an output path")
+
     file_path = args.output
 
     # Instantiate the blockchain and subscribe to notifications
@@ -50,33 +49,30 @@ def main():
 
     chain = Blockchain.Default()
 
-    file = open(file_path, 'wb')
+    with open(file_path, 'wb') as file:
 
-    total = Blockchain.Default().Height - 1
+        total = Blockchain.Default().Height - 1
 
-    if args.totalblocks:
-        total = args.totalblocks
+        if args.totalblocks:
+            total = args.totalblocks
 
-    total_block_output = total.to_bytes(4, 'little')
+        total_block_output = total.to_bytes(4, 'little')
 
-    print("Using network %s " % settings.net_name)
-    print("Will export %s blocks to %s " % (total, file_path))
+        print("Using network %s " % settings.net_name)
+        print("Will export %s blocks to %s " % (total, file_path))
 
-    file.write(total_block_output)
+        file.write(total_block_output)
 
-    for index in trange(total, desc='Exporting blocks:', unit=' Block'):
+        for index in trange(total, desc='Exporting blocks:', unit=' Block'):
 
-        block = chain.GetBlockByHeight(index)
-        block.LoadTransactions()
-        output = binascii.unhexlify(block.ToArray())
-        output_length = len(output).to_bytes(4, 'little')
-        file.write(output_length)
-        file.write(output)
+            block = chain.GetBlockByHeight(index)
+            block.LoadTransactions()
+            output = binascii.unhexlify(block.ToArray())
+            output_length = len(output).to_bytes(4, 'little')
+            file.write(output_length)
+            file.write(output)
 
-#        index+=1
-#        tq.update()
-
-    file.close()
+        file.close()
 
     print("Exported %s blocks to %s " % (total, file_path))
 

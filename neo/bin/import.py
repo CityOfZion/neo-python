@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 
+from neo.Core.Blockchain import Blockchain
+from neo.Core.Block import Block
+from neo.IO.MemoryStream import StreamManager
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Settings import settings
-from neo.Prompt.Commands.Bootstrap import BootstrapBlockchainFile
+from neocore.IO.BinaryReader import BinaryReader
 import argparse
 import os
 import shutil
+from tqdm import trange
 from prompt_toolkit import prompt
-from neo.Core.Blockchain import Blockchain
-from neo.Core.Block import Block
-from tqdm import tqdm, trange
-import binascii
-from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 
 
 def main():
@@ -47,8 +45,6 @@ def main():
     elif args.mainnet:
         settings.setup_mainnet()
 
-    file_path = None
-
     if args.logevents:
         settings.log_smart_contract_events = True
 
@@ -56,48 +52,50 @@ def main():
         raise Exception("Please specify an input path")
     file_path = args.input
 
-    file = open(file_path, 'rb')
+    with open(file_path, 'rb') as file:
 
-    total_blocks = int.from_bytes(file.read(4), 'little')
+        total_blocks = int.from_bytes(file.read(4), 'little')
 
-    target_dir = os.path.join(settings.DATA_DIR_PATH, settings.LEVELDB_PATH)
-    notif_target_dir = os.path.join(settings.DATA_DIR_PATH, settings.NOTIFICATION_DB_PATH)
+        target_dir = os.path.join(settings.DATA_DIR_PATH, settings.LEVELDB_PATH)
+        notif_target_dir = os.path.join(settings.DATA_DIR_PATH, settings.NOTIFICATION_DB_PATH)
 
-    print("Will import %s blocks to %s" % (total_blocks, target_dir))
-    print("This will overwrite any data currently in %s and %s.\nType 'confirm' to continue" % (target_dir, notif_target_dir))
+        print("Will import %s blocks to %s" % (total_blocks, target_dir))
+        print("This will overwrite any data currently in %s and %s.\nType 'confirm' to continue" % (target_dir, notif_target_dir))
 
-    confirm = prompt("[confirm]> ", is_password=False)
-    if not confirm == 'confirm':
-        print("Cancelled operation")
-        return False
+        confirm = prompt("[confirm]> ", is_password=False)
+        if not confirm == 'confirm':
+            print("Cancelled operation")
+            return False
 
-    try:
-        if os.path.exists(target_dir):
-            shutil.rmtree(target_dir)
-        if os.path.exists(notif_target_dir):
-            shutil.rmtree(notif_target_dir)
-    except Exception as e:
-        print("Could not remove existing data %s " % e)
-        return False
+        try:
+            if os.path.exists(target_dir):
+                shutil.rmtree(target_dir)
+            if os.path.exists(notif_target_dir):
+                shutil.rmtree(notif_target_dir)
+        except Exception as e:
+            print("Could not remove existing data %s " % e)
+            return False
 
-    # Instantiate the blockchain and subscribe to notifications
-    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
-    Blockchain.RegisterBlockchain(blockchain)
+        # Instantiate the blockchain and subscribe to notifications
+        blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+        Blockchain.RegisterBlockchain(blockchain)
 
-    chain = Blockchain.Default()
+        chain = Blockchain.Default()
 
-    for index in trange(total_blocks, desc='Importing Blocks', unit=' Block'):
+        for index in trange(total_blocks, desc='Importing Blocks', unit=' Block'):
 
-        block_len = int.from_bytes(file.read(4), 'little')
+            block_len = int.from_bytes(file.read(4), 'little')
 
-        stream = StreamManager.GetStream(file.read(block_len))
-        reader = BinaryReader(stream)
-        block = Block()
-        block.Deserialize(reader)
-        StreamManager.ReleaseStream(stream)
+            stream = StreamManager.GetStream(file.read(block_len))
+            reader = BinaryReader(stream)
+            block = Block()
+            block.Deserialize(reader)
+            StreamManager.ReleaseStream(stream)
 
-        if block.Index > 0:
-            chain.AddBlockDirectly(block)
+            if block.Index > 0:
+                chain.AddBlockDirectly(block)
+
+        file.close()
 
     print("Imported %s blocks to %s " % (total_blocks, target_dir))
 
