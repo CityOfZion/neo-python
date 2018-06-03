@@ -170,6 +170,9 @@ class Blockchain:
         # abstract
         pass
 
+    def AddBlockDirectly(self, block):
+        pass
+
     def AddHeaders(self, headers):
         # abstract
         pass

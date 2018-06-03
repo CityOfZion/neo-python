@@ -296,6 +296,7 @@ class SettingsHolder:
             except Exception as e:
                 logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
 
+        warn_migration = False
         # Add a warning for migration purposes if we created a chain dir
         if warn_migration and ROOT_INSTALL_PATH != self.DATA_DIR_PATH:
             if os.path.exists(os.path.join(ROOT_INSTALL_PATH, 'Chains')):
