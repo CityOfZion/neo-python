@@ -340,8 +340,9 @@ class SettingsHolder:
 # Settings instance used by external modules
 settings = SettingsHolder()
 
-# Load testnet settings as default
-# settings.setup_testnet()
+# Load testnet settings as default. This is useful to provide default data/db directories
+# to any code using "from neo.Settings import settings"
+settings.setup_testnet()
 
 # By default, set loglevel to INFO. DEBUG just print a lot of internal debug statements
 settings.set_loglevel(logging.INFO)
