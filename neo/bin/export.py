@@ -49,7 +49,7 @@ def main():
 
     chain = Blockchain.Default()
 
-    with open(file_path, 'wb') as file:
+    with open(file_path, 'wb') as file_out:
 
         total = Blockchain.Default().Height - 1
 
@@ -61,7 +61,7 @@ def main():
         print("Using network %s " % settings.net_name)
         print("Will export %s blocks to %s " % (total, file_path))
 
-        file.write(total_block_output)
+        file_out.write(total_block_output)
 
         for index in trange(total, desc='Exporting blocks:', unit=' Block'):
 
@@ -69,10 +69,8 @@ def main():
             block.LoadTransactions()
             output = binascii.unhexlify(block.ToArray())
             output_length = len(output).to_bytes(4, 'little')
-            file.write(output_length)
-            file.write(output)
-
-        file.close()
+            file_out.write(output_length)
+            file_out.write(output)
 
     print("Exported %s blocks to %s " % (total, file_path))
 
