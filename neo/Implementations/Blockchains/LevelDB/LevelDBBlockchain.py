@@ -408,6 +408,14 @@ class LevelDBBlockchain(Blockchain):
         logger.info("Could not find transaction for hash %s " % hash)
         return None, -1
 
+    def AddBlockDirectly(self, block):
+        if block.Index != self.Height + 1:
+            raise Exception("Invalid block")
+        if block.Index == len(self._header_index):
+            self.AddHeader(block.Header)
+        self.Persist(block)
+        self.OnPersistCompleted(block)
+
     def AddBlock(self, block):
 
         if not block.Hash.ToBytes() in self._block_cache:

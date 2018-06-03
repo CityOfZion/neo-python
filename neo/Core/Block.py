@@ -294,7 +294,6 @@ class Block(BlockBase, InventoryMixin):
         if not res:
             return False
 
-        logger.debug("Verifying BLOCK!!")
         from neo.Blockchain import GetBlockchain, GetConsensusAddress
 
         # first TX has to be a miner transaction. other tx after that cant be miner tx

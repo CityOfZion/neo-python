@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 [0.7.1] 2018-06-02
 ------------------
 - update FunctionCode Return type parsing
+- add ``np-export`` and ``np-import`` commands for importing and exporting of raw block data files
 
 [0.7.0] 2018-06-01
 ------------------

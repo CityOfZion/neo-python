@@ -36,6 +36,8 @@ setup(
             'np-bootstrap=neo.bin.bootstrap:main',
             'np-reencrypt-wallet=neo.bin.reencrypt_wallet:main',
             'np-sign=neo.bin.sign_message:main',
+            'np-export=neo.bin.export:main',
+            'np-import=neo.bin.import:main',
         ],
     },
     include_package_data=True,
