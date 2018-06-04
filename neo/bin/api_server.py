@@ -153,8 +153,6 @@ def main():
         settings.setup_privnet()
     elif args.coznet:
         settings.setup_coznet()
-    else:
-        raise Exception("Need to specify a network to use")
 
     if args.maxpeers:
         settings.set_max_peers(args.maxpeers)

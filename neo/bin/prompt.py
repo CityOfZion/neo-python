@@ -1078,9 +1078,6 @@ def main():
             return
     elif args.coznet:
         settings.setup_coznet()
-    else:
-        # TestNet by default
-        settings.setup_testnet()
 
     # Logfile settings & setup
     logfile_fn = os.path.join(settings.DATA_DIR_PATH, 'prompt.log')
