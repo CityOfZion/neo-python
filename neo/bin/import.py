@@ -52,9 +52,9 @@ def main():
         raise Exception("Please specify an input path")
     file_path = args.input
 
-    with open(file_path, 'rb') as file:
+    with open(file_path, 'rb') as file_input:
 
-        total_blocks = int.from_bytes(file.read(4), 'little')
+        total_blocks = int.from_bytes(file_input.read(4), 'little')
 
         target_dir = os.path.join(settings.DATA_DIR_PATH, settings.LEVELDB_PATH)
         notif_target_dir = os.path.join(settings.DATA_DIR_PATH, settings.NOTIFICATION_DB_PATH)
@@ -84,9 +84,9 @@ def main():
 
         for index in trange(total_blocks, desc='Importing Blocks', unit=' Block'):
 
-            block_len = int.from_bytes(file.read(4), 'little')
+            block_len = int.from_bytes(file_input.read(4), 'little')
 
-            stream = StreamManager.GetStream(file.read(block_len))
+            stream = StreamManager.GetStream(file_input.read(block_len))
             reader = BinaryReader(stream)
             block = Block()
             block.Deserialize(reader)
@@ -94,8 +94,6 @@ def main():
 
             if block.Index > 0:
                 chain.AddBlockDirectly(block)
-
-        file.close()
 
     print("Imported %s blocks to %s " % (total_blocks, target_dir))
 
