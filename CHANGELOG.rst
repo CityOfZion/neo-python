@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.2] in progress
 -------------------
--
+- Updated all dependencies
 
 [0.7.1] 2018-06-02
 ------------------
