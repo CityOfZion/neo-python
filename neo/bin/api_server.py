@@ -40,6 +40,7 @@ from logging.handlers import SysLogHandler
 
 import logzero
 from logzero import logger
+from prompt_toolkit import prompt
 
 # Twisted logging
 from twisted.logger import STDLibLogObserver, globalLogPublisher
@@ -54,6 +55,8 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.api.REST.RestApi import RestApi
+from neo.Wallets.utils import to_aes_key
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings
@@ -115,6 +118,11 @@ def main():
     # peers
     parser.add_argument("--maxpeers", action="store", default=5,
                         help="Max peers to use for P2P Joining")
+
+    # If a wallet should be opened
+    parser.add_argument("--wallet",
+                        action="store",
+                        help="Open wallet. Will allow you to use methods that require an open wallet")
 
     # host
     parser.add_argument("--host", action="store", type=str, help="Hostname ( for example 127.0.0.1)", default="0.0.0.0")
@@ -181,6 +189,20 @@ def main():
         else:
             print("Logging to stdout and stderr")
 
+    if args.wallet:
+        if not os.path.exists(args.wallet):
+            print("Wallet file not found")
+            return
+        passwd = prompt("[password]> ", is_password=True)
+        password_key = to_aes_key(passwd)
+        try:
+            wallet = UserWallet.Open(args.wallet, password_key)
+        except Exception as e:
+            print(f"Could not open wallet {e}")
+            return
+    else:
+        wallet = None
+
     # Disable logging smart contract events
     settings.set_log_smart_contract_events(False)
 
@@ -209,7 +231,7 @@ def main():
 
     if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
-        api_server_rpc = JsonRpcApi(args.port_rpc)
+        api_server_rpc = JsonRpcApi(args.port_rpc, wallet=wallet)
         endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
         endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 #        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
@@ -229,6 +251,8 @@ def main():
     NotificationDB.close()
     Blockchain.Default().Dispose()
     NodeLeader.Instance().Shutdown()
+    if wallet:
+        wallet.Close()
 
 
 if __name__ == "__main__":

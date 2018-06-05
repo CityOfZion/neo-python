@@ -73,8 +73,9 @@ class JsonRpcApi:
     app = Klein()
     port = None
 
-    def __init__(self, port):
+    def __init__(self, port, wallet=None):
         self.port = port
+        self.wallet = wallet
 
     #
     # JSON-RPC API Route
