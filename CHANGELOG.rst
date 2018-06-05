@@ -5,12 +5,16 @@ All notable changes to this project are documented in this file.
 
 [0.7.2] in progress
 -------------------
--
+- When using a custom datadir (with ``--datadir``), ``np-prompt`` will store log and history files there instead of
+  the default directory. Note: if you use a custom datadir that does not yet exist, ``np-prompt`` starts without
+  history or logs because those files are just created from scratch in the custom datadir.
+
 
 [0.7.1] 2018-06-02
 ------------------
 - update FunctionCode Return type parsing
 - add ``np-export`` and ``np-import`` commands for importing and exporting of raw block data files
+
 
 [0.7.0] 2018-06-01
 ------------------
