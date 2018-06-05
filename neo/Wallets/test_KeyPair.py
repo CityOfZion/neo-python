@@ -47,7 +47,7 @@ class PrivateKeyFromWIFTestCase(NeoTestCase):
         fakewif.append(0xBE)
         fakewif.append(0xEF)
 
-        encodedFakeWIF = base58.b58encode(bytes(fakewif)).decode("utf-8")
+        encodedFakeWIF = base58.b58encode(bytes(fakewif))
 
         with self.assertRaises(ValueError) as context:
             KeyPair.PrivateKeyFromWIF(encodedFakeWIF)

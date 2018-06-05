@@ -300,7 +300,7 @@ class JsonRpcApi:
 
         isValid = False
         try:
-            data = base58.b58decode_check(params[0]).decode("utf-8")
+            data = base58.b58decode_check(params[0])
             if len(data) == 21 and data[0] == settings.ADDRESS_VERSION:
                 isValid = True
         except Exception as e:
