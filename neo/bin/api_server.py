@@ -193,7 +193,11 @@ def main():
         if not os.path.exists(args.wallet):
             print("Wallet file not found")
             return
-        passwd = prompt("[password]> ", is_password=True)
+
+        passwd = os.environ.get('NEO_PYTHON_JSONRPC_WALLET_PASSWORD', None)
+        if not passwd:
+            passwd = prompt("[password]> ", is_password=True)
+
         password_key = to_aes_key(passwd)
         try:
             wallet = UserWallet.Open(args.wallet, password_key)
