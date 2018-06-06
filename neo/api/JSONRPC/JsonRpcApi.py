@@ -245,6 +245,12 @@ class JsonRpcApi:
         elif method == "getpeers":
             return self.get_peers()
 
+        elif method == "listaddress":
+            if self.wallet:
+                return self.list_address()
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
         raise JsonRpcError.methodNotFound()
 
     def get_custom_error_payload(self, request_id, code, message):
@@ -332,4 +338,22 @@ class JsonRpcApi:
                 result['unconnected'].append({"address": addr,
                                               "port": int(port)})
 
+        return result
+
+    def list_address(self):
+        """Get information about all the addresses present on the open wallet
+
+        The current implementation still does not fully comply with the spec,
+        since it seems there isn't a straight forward way of getting "haskey"
+        information.
+        """
+        result = []
+        for addrStr in self.wallet.Addresses:
+            addr = self.wallet.GetAddress(addrStr)
+            result.append({
+                "address": addrStr,
+                # "haskey": True,
+                "label": None,
+                "watchonly": addr.IsWatchOnly,
+            })
         return result
