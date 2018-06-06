@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
   the default directory. Note: if you use a custom datadir that does not yet exist, ``np-prompt`` starts without
   history or logs because those files are just created from scratch in the custom datadir.
 - Updated the dependencies
+- Updated MainNet bootstrap files
 
 
 [0.7.1] 2018-06-02
