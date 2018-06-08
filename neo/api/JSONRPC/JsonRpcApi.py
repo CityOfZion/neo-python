@@ -341,18 +341,13 @@ class JsonRpcApi:
         return result
 
     def list_address(self):
-        """Get information about all the addresses present on the open wallet
-
-        The current implementation still does not fully comply with the spec,
-        since it seems there isn't a straight forward way of getting "haskey"
-        information.
-        """
+        """Get information about all the addresses present on the open wallet"""
         result = []
         for addrStr in self.wallet.Addresses:
             addr = self.wallet.GetAddress(addrStr)
             result.append({
                 "address": addrStr,
-                # "haskey": True,
+                "haskey": not addr.IsWatchOnly,
                 "label": None,
                 "watchonly": addr.IsWatchOnly,
             })
