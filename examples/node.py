@@ -34,6 +34,9 @@ def custom_background_code():
 
 
 def main():
+    # Use TestNet
+    settings.setup_testnet()
+
     # Setup the blockchain
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
