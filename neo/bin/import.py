@@ -2,7 +2,7 @@
 
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Block import Block
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Settings import settings
 from neocore.IO.BinaryReader import BinaryReader
@@ -82,18 +82,25 @@ def main():
 
         chain = Blockchain.Default()
 
+        stream = MemoryStream()
+        reader = BinaryReader(stream)
+        block = Block()
+
         for index in trange(total_blocks, desc='Importing Blocks', unit=' Block'):
-
+            # set stream data
             block_len = int.from_bytes(file_input.read(4), 'little')
+            reader.stream.write(file_input.read(block_len))
+            reader.stream.seek(0)
 
-            stream = StreamManager.GetStream(file_input.read(block_len))
-            reader = BinaryReader(stream)
-            block = Block()
+            # get block
             block.Deserialize(reader)
-            StreamManager.ReleaseStream(stream)
 
+            # add
             if block.Index > 0:
                 chain.AddBlockDirectly(block)
+
+            # reset stream
+            reader.stream.Cleanup()
 
     print("Imported %s blocks to %s " % (total_blocks, target_dir))
 
