@@ -12,6 +12,9 @@ from klein.test.test_resource import requestMock
 from neo import __version__
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Wallets.utils import to_aes_key
 from neo.IO.Helper import Helper
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
@@ -485,3 +488,31 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # To avoid messing up the next tests
         node.Peers = []
         node.ADDRS = []
+
+    def test_listaddress_no_wallet(self):
+        req = self._gen_rpc_req("listaddress", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_listaddress_with_wallet(self):
+        test_wallet_path = "./listaddress.db3"
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+
+        req = self._gen_rpc_req("listaddress", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        results = res.get('result', [])
+        self.assertGreater(len(results), 0)
+        self.assertIn(results[0].get('address', None),
+                      self.app.wallet.Addresses)
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)

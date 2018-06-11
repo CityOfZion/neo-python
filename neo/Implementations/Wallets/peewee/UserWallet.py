@@ -9,6 +9,7 @@ from neo.Wallets.Wallet import Wallet
 from neo.Wallets.Coin import Coin as WalletCoin
 from neo.SmartContract.Contract import Contract as WalletContract
 from neo.IO.Helper import Helper
+from neo.Core.Helper import Helper as CoreHelper
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.Transaction import TransactionOutput
@@ -450,6 +451,14 @@ class UserWallet(Wallet):
             pass
 
         return result
+
+    def GetAddress(self, addrStr):
+        try:
+            script_hash = CoreHelper.AddrStrToScriptHash(addrStr).ToArray()
+            addr = Address.get(ScriptHash=bytes(script_hash))
+        except Exception as e:
+            raise Exception("Address not in wallet")
+        return addr
 
     def TokenBalancesForAddress(self, address):
         if len(self._tokens):
