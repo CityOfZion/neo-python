@@ -6,6 +6,7 @@ Run only thse tests:
 import json
 import binascii
 import os
+from tempfile import mkdtemp
 from klein.test.test_resource import requestMock
 
 from neo import __version__
@@ -498,7 +499,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(error.get('message', None), "Access denied.")
 
     def test_listaddress_with_wallet(self):
-        test_wallet_path = "./listaddress.db3"
+        test_wallet_path = os.path.join(mkdtemp(), "listaddress.db3")
         self.app.wallet = UserWallet.Create(
             test_wallet_path,
             to_aes_key('awesomepassword')
@@ -526,7 +527,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(error.get('message', None), "Access denied.")
 
     def test_getnewaddress_with_wallet(self):
-        test_wallet_path = "./listaddress.db3"
+        test_wallet_path = os.path.join(mkdtemp(), "getnewaddress.db3")
         self.app.wallet = UserWallet.Create(
             test_wallet_path,
             to_aes_key('awesomepassword')
