@@ -13,7 +13,7 @@ All notable changes to this project are documented in this file.
 - Added ``--wallet`` flag to the ``np-api-server`` command. The server can now open a wallet. `#459 <https://github.com/CityOfZion/neo-python/pull/459>`_
 - Added a partial implementation of the ``listaddress`` RPC method. `#459 <https://github.com/CityOfZion/neo-python/pull/459>`_
 - Added ``getnewaddress`` method to the JSON RPC API `#464 <https://github.com/CityOfZion/neo-python/pull/464>`_
-
+- Added an implementation of the ``getbalance`` RPC method. `#465 <https://github.com/CityOfZion/neo-python/pull/465>`_
 
 [0.7.1] 2018-06-02
 ------------------
