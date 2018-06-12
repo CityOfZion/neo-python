@@ -360,7 +360,7 @@ class JsonRpcApi:
 
     def get_balance(self, params):
         if len(params) != 1:
-            return JsonRpcError(-400, "Params should contain 1 id.")
+            raise JsonRpcError(-400, "Params should contain 1 id.")
 
         asset_id = get_asset_id(self.wallet, params[0])
         result = {}
