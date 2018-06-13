@@ -8,12 +8,10 @@ See also:
 """
 import json
 import base58
-import random
 import binascii
 from json.decoder import JSONDecodeError
 
 from klein import Klein
-from logzero import logger
 
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
@@ -29,6 +27,7 @@ from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
+from neo.Implementations.Wallets.peewee.Models import Account
 
 
 class JsonRpcError(Exception):
@@ -248,6 +247,16 @@ class JsonRpcApi:
         elif method == "listaddress":
             if self.wallet:
                 return self.list_address()
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
+        elif method == "getnewaddress":
+            if self.wallet:
+                keys = self.wallet.CreateKey()
+                account = Account.get(
+                    PublicKeyHash=keys.PublicKeyHash.ToBytes()
+                )
+                return account.contract_set[0].Address.ToString()
             else:
                 raise JsonRpcError(-400, "Access denied.")
 

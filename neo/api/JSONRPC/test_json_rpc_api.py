@@ -4,15 +4,14 @@ Run only thse tests:
     $ python -m unittest neo.api.JSONRPC.test_json_rpc_api
 """
 import json
-import pprint
 import binascii
 import os
+from tempfile import mkdtemp
 from klein.test.test_resource import requestMock
 
 from neo import __version__
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
-from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from neo.IO.Helper import Helper
@@ -500,7 +499,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(error.get('message', None), "Access denied.")
 
     def test_listaddress_with_wallet(self):
-        test_wallet_path = "./listaddress.db3"
+        test_wallet_path = os.path.join(mkdtemp(), "listaddress.db3")
         self.app.wallet = UserWallet.Create(
             test_wallet_path,
             to_aes_key('awesomepassword')
@@ -513,6 +512,37 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertGreater(len(results), 0)
         self.assertIn(results[0].get('address', None),
                       self.app.wallet.Addresses)
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_getnewaddress_no_wallet(self):
+        req = self._gen_rpc_req("getnewaddress", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_getnewaddress_with_wallet(self):
+        test_wallet_path = os.path.join(mkdtemp(), "getnewaddress.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+
+        old_addrs = self.app.wallet.Addresses
+
+        req = self._gen_rpc_req("getnewaddress", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        result = res.get('result')
+
+        self.assertNotIn(result, old_addrs)
+        self.assertIn(result, self.app.wallet.Addresses)
+
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(test_wallet_path)
