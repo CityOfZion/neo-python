@@ -488,6 +488,54 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         node.Peers = []
         node.ADDRS = []
 
+    def test_getbalance_no_wallet(self):
+        req = self._gen_rpc_req("getbalance", params=["some id here"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_getbalance_neo_with_wallet(self):
+        test_wallet_path = os.path.join(mkdtemp(), "getbalance.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+
+        neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
+        req = self._gen_rpc_req("getbalance", params=[neo_id])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertIn('Balance', res.get('result').keys())
+        self.assertIn('Confirmed', res.get('result').keys())
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_getbalance_token_with_wallet(self):
+        test_wallet_path = os.path.join(mkdtemp(), "getbalance.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+
+        fake_token_id = "fd941304d9cf36f31cd141c7c7029d81b1efa4f3"
+        req = self._gen_rpc_req("getbalance", params=[fake_token_id])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertIn('Balance', res.get('result').keys())
+        self.assertNotIn('Confirmed', res.get('result').keys())
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
     def test_listaddress_no_wallet(self):
         req = self._gen_rpc_req("listaddress", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
