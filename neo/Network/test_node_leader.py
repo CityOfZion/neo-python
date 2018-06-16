@@ -102,11 +102,6 @@ class LeaderTestCase(WalletFixtureTestCase):
 
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
-                        # now on updated max peers test
-                        leader.OnUpdatedMaxPeers(settings.CONNECTED_PEER_MAX, settings.CONNECTED_PEER_MAX - 1)
-
-                        leader.OnUpdatedMaxPeers(settings.CONNECTED_PEER_MAX - 1, 10)
-
                         # now if we remove all peers, it should restart
                         peers = leader.Peers[:]
                         for peer in peers:

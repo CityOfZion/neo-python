@@ -14,6 +14,7 @@ All notable changes to this project are documented in this file.
 - Added a partial implementation of the ``listaddress`` RPC method. `#459 <https://github.com/CityOfZion/neo-python/pull/459>`_
 - Added ``getnewaddress`` method to the JSON RPC API `#464 <https://github.com/CityOfZion/neo-python/pull/464>`_
 - Added an implementation of the ``getbalance`` RPC method. `#465 <https://github.com/CityOfZion/neo-python/pull/465>`_
+- updated seed list, change behavior of restarting NodeLeader when connected nodes falls below 2
 
 [0.7.1] 2018-06-02
 ------------------

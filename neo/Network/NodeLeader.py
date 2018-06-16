@@ -107,17 +107,6 @@ class NodeLeader:
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
             reactor.connectTCP(host, int(port), NeoClientFactory())
 
-    def OnUpdatedMaxPeers(self, old_value, new_value):
-
-        if new_value < old_value:
-            num_to_disconnect = old_value - new_value
-            logger.warning("DISCONNECTING %s Peers, this may show unhandled error in defer " % num_to_disconnect)
-            for p in self.Peers[-num_to_disconnect:]:
-                p.Disconnect()
-        elif new_value > old_value:
-            for p in self.Peers:
-                p.RequestPeerInfo()
-
     def Shutdown(self):
         """Disconnect all connected peers."""
         for p in self.Peers:
@@ -151,7 +140,9 @@ class NodeLeader:
             self.Peers.remove(peer)
         if peer.Address in self.ADDRS:
             self.ADDRS.remove(peer.Address)
-        if len(self.Peers) == 0:
+        if len(self.Peers) == 1:
+            self.Peers[0].Disconnect()
+        elif len(self.Peers) == 0:
             reactor.callLater(10, self.Restart)
 
     def ResetBlockRequestsAndCache(self):
