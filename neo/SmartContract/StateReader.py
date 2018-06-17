@@ -63,6 +63,7 @@ class StateReader(InteropService):
         self.Register("Neo.Blockchain.GetHeader", self.Blockchain_GetHeader)
         self.Register("Neo.Blockchain.GetBlock", self.Blockchain_GetBlock)
         self.Register("Neo.Blockchain.GetTransaction", self.Blockchain_GetTransaction)
+        self.Register("Neo.Blockchain.GetTransactionHeight", self.Blockchain_GetTransactionHeight)
         self.Register("Neo.Blockchain.GetAccount", self.Blockchain_GetAccount)
         self.Register("Neo.Blockchain.GetValidators", self.Blockchain_GetValidators)
         self.Register("Neo.Blockchain.GetAsset", self.Blockchain_GetAsset)
@@ -471,6 +472,17 @@ class StateReader(InteropService):
             tx, height = Blockchain.Default().GetTransaction(UInt256(data=data))
 
         engine.EvaluationStack.PushT(StackItem.FromInterface(tx))
+        return True
+
+    def Blockchain_GetTransactionHeight(self, engine):
+
+        data = engine.EvaluationStack.Pop().GetByteArray()
+        height = -1
+
+        if Blockchain.Default() is not None:
+            tx, height = Blockchain.Default().GetTransaction(UInt256(data=data))
+
+        engine.EvaluationStack.PushT(height)
         return True
 
     def Blockchain_GetAccount(self, engine):
