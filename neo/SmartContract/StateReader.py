@@ -15,13 +15,14 @@ from neocore.UInt256 import UInt256
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
-from neo.VM.InteropService import StackItem, stack_item_to_py, ByteArray
+from neo.VM.InteropService import StackItem, stack_item_to_py, ByteArray, Array
 from neo.Settings import settings
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
-from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
+from neo.SmartContract.Iterable.Wrapper import ArrayWrapper
+from neo.SmartContract.Iterable import Iterator, Enumerator, KeysWrapper, ValuesWrapper
+from neo.SmartContract.Iterable.ConcatenatedEnumerator import ConcatenatedEnumerator
 
 
 class StateReader(InteropService):
@@ -119,9 +120,16 @@ class StateReader(InteropService):
         self.Register("Neo.Storage.GetContext", self.Storage_GetContext)
         self.Register("Neo.Storage.Get", self.Storage_Get)
         self.Register("Neo.Storage.Find", self.Storage_Find)
-        self.Register("Neo.Iterator.Next", self.Iterator_Next)
+
+        self.Register("Neo.Enumerator.Create", self.Enumerator_Create)
+        self.Register("Neo.Enumerator.Next", self.Enumerator_Next)
+        self.Register("Neo.Enumerator.Value", self.Enumerator_Value)
         self.Register("Neo.Iterator.Key", self.Iterator_Key)
-        self.Register("Neo.Iterator.Value", self.Iterator_Value)
+        self.Register("Neo.Iterator.Keys", self.Iterator_Keys)
+
+# Old Iterator aliases
+        self.Register("Neo.Iterator.Value", self.Enumerator_Value)
+        self.Register("Neo.Iterator.Next", self.Enumerator_Next)
 
         # OLD API
 
@@ -946,12 +954,41 @@ class StateReader(InteropService):
 
         return True
 
-    def Iterator_Next(self, engine):
-        iterator = engine.EvaluationStack.Pop().GetInterface()
-        if iterator is None:
+    def Enumerator_Create(self, engine):
+        item = engine.EvaluationStack.Pop()
+        if isinstance(item, Array):
+            enumerator = ArrayWrapper(item)
+            engine.EvaluationStack.PushT(enumerator)
+            return True
+        return False
+
+    def Enumerator_Next(self, engine):
+        item = engine.EvaluationStack.Pop().GetInterface()
+        if item is None:
             return False
 
-        engine.EvaluationStack.PushT(iterator.Next())
+        engine.EvaluationStack.PushT(item.Next())
+        return True
+
+    def Enumerator_Value(self, engine):
+        item = engine.EvaluationStack.Pop().GetInterface()
+        if item is None:
+            return False
+
+        engine.EvaluationStack.PushT(item.Value())
+        return True
+
+    def Enumerator_Concat(self, engine):
+        item1 = engine.EvaluationStack.Pop().GetInterface()
+        if item1 is None:
+            return False
+
+        item2 = engine.EvaluationStack.Pop().GetInterface()
+        if item2 is None:
+            return False
+
+        result = ConcatenatedEnumerator(item1, item2)
+        engine.EvaluationStack.PushT(result)
         return True
 
     def Iterator_Key(self, engine):
@@ -962,10 +999,19 @@ class StateReader(InteropService):
         engine.EvaluationStack.PushT(iterator.Key())
         return True
 
-    def Iterator_Value(self, engine):
+    def Iterator_Keys(self, engine):
+        iterator = engine.EvaluationStack.Pop().GetInterface()
+        if iterator is None:
+            return False
+        wrapper = StackItem.FromInterface(KeysWrapper(iterator))
+        engine.EvaluationStack.PushT(wrapper)
+        return True
+
+    def Iterator_Values(self, engine):
         iterator = engine.EvaluationStack.Pop().GetInterface()
         if iterator is None:
             return False
 
-        engine.EvaluationStack.PushT(iterator.Value())
+        wrapper = StackItem.FromInterface(ValuesWrapper(iterator))
+        engine.EvaluationStack.PushT(wrapper)
         return True

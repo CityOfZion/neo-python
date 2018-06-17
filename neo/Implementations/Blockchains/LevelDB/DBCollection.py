@@ -1,6 +1,6 @@
 import binascii
 from logzero import logger
-from neo.SmartContract.StorageIterator import StorageIterator
+from neo.SmartContract.Iterable.StorageIterator import StorageIterator
 
 
 class DBCollection:

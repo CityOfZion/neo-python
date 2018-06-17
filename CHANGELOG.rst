@@ -16,6 +16,7 @@ All notable changes to this project are documented in this file.
 - Added an implementation of the ``getbalance`` RPC method. `#465 <https://github.com/CityOfZion/neo-python/pull/465>`_
 - updated seed list, change behavior of restarting NodeLeader when connected nodes falls below 2
 - Add Neo.Blockchain.GetTransactionHeight API
+- Updating Enumerator API for parity with `Neo PR #244 <https://github.com/neo-project/neo/pull/244>`_
 
 [0.7.1] 2018-06-02
 ------------------
