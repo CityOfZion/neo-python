@@ -540,7 +540,7 @@ class StateReader(InteropService):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
         address = Crypto.ToAddress(hash).encode('utf-8')
 
-        account = self.Accounts.GetOrAdd(address, new_instance=AccountState(script_hash=hash.Data))
+        account = self.Accounts.GetOrAdd(address, new_instance=AccountState(script_hash=hash))
         engine.EvaluationStack.PushT(StackItem.FromInterface(account))
         return True
 

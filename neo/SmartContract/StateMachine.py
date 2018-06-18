@@ -158,7 +158,7 @@ class StateMachine(StateReader):
             expiration=Blockchain.Default().Height + 1 + 2000000, is_frozen=False
         )
 
-        asset = self._assets.GetOrAdd(tx.Hash.ToBytes(), new_asset)
+        asset = self._assets.ReplaceOrAdd(tx.Hash.ToBytes(), new_asset)
 
         # print("*****************************************************")
         # print("CREATED ASSET %s " % tx.Hash.ToBytes())
@@ -388,7 +388,7 @@ class StateMachine(StateReader):
 
         new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        item = self._storages.GetOrAdd(storage_key.ToArray(), new_item)
+        item = self._storages.ReplaceOrAdd(storage_key.ToArray(), new_item)
 
         keystr = key
         valStr = bytearray(item.Value)
