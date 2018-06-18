@@ -1,26 +1,20 @@
-from neo.SmartContract.Iterator import Iterator
+from neo.SmartContract.Iterable import Enumerator
 from neo.VM.InteropService import StackItem
 
 
-class StorageIterator(Iterator):
+class ConcatenatedEnumerator(Enumerator):
 
-    def __init__(self, enumerator):
+    def __init__(self, first, second):
         # returns a (key,value) tuple per iteration
-        self.enumerator = enumerator
+        self.first = first.enumerator
+        self.second = second.enumerator
+        self.current = self.first
+
         self.key = None
         self.value = None
 
     def Dispose(self):
         pass
-
-    def Key(self):
-        """
-        Get the key from the storage tuple of the current iteration.
-
-        Returns:
-            StackItem: with the storage key.
-        """
-        return StackItem.New(self.key)
 
     def Next(self):
         """
@@ -30,8 +24,13 @@ class StorageIterator(Iterator):
               bool: True if another item exists in the iterator, False otherwise.
         """
         try:
-            self.key, self.value = next(self.enumerator)
+            self.key, self.value = next(self.current)
         except StopIteration:
+
+            if self.current != self.second:
+                self.current = self.second
+                return self.Next()
+
             return False
 
         return True
