@@ -1,6 +1,6 @@
 import binascii
 from logzero import logger
-from neo.SmartContract.Iterable.StorageIterator import StorageIterator
+from neo.SmartContract.Iterable import EnumeratorBase
 
 
 class DBCollection:
@@ -175,7 +175,7 @@ class DBCollection:
         # then take the dict and make a list of tuples
         final_collection = [(k, v) for k, v in {**db_results, **candidates}.items()]
 
-        return StorageIterator(iter(final_collection))
+        return EnumeratorBase(iter(final_collection))
 
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
