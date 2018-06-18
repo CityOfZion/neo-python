@@ -94,7 +94,23 @@ class DBCollection:
 
         return item
 
+    def ReplaceOrAdd(self, keyval, new_instance):
+
+        item = new_instance
+
+        if keyval in self.Deleted:
+            self.Deleted.remove(keyval)
+
+        self.Add(keyval, item)
+
+        return item
+
     def GetOrAdd(self, keyval, new_instance):
+
+        existing = self.TryGet(keyval)
+
+        if existing:
+            return existing
 
         item = new_instance
 

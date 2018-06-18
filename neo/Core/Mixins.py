@@ -1,7 +1,9 @@
 from neocore.IO.Mixins import SerializableMixin
+from abc import ABC, abstractmethod
 
 
-class ClonableMixin:
+class ClonableMixin(ABC):
+    @abstractmethod
     def clone(self):
         pass
 
@@ -13,7 +15,7 @@ class CodeMixin:
     script_hash = None
 
 
-class VerifiableMixin(SerializableMixin):
+class VerifiableMixin(ABC, SerializableMixin):
 
     scripts = []
 
@@ -21,6 +23,7 @@ class VerifiableMixin(SerializableMixin):
     # 反序列化未签名的数据
     # </summary>
     # <param name="reader">数据来源</param>
+    @abstractmethod
     def DeserializeUnsigned(self, reader):
         pass
 
@@ -28,6 +31,7 @@ class VerifiableMixin(SerializableMixin):
     # 获得需要校验的脚本Hash值
     # </summary>
     # <returns>返回需要校验的脚本Hash值</returns>
+    @abstractmethod
     def GetScriptHashesForVerifying(self):
         pass
 
@@ -35,6 +39,7 @@ class VerifiableMixin(SerializableMixin):
     # 序列化未签名的数据
     # </summary>
     # <param name="writer">存放序列化后的结果</param>
+    @abstractmethod
     def SerializeUnsigned(self, writer):
         pass
 

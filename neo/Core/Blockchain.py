@@ -143,38 +143,31 @@ class Blockchain:
 
     @property
     def CurrentBlockHash(self):
-        # abstract
         pass
 
     @property
     def CurrentHeaderHash(self):
-        # abstract
         pass
 
     @property
     def HeaderHeight(self):
-        # abstract
         pass
 
     @property
     def Height(self):
-        # abstract
         pass
 
     @property
     def CurrentBlock(self):
-        # abstract
         pass
 
     def AddBlock(self, block):
-        # abstract
         pass
 
     def AddBlockDirectly(self, block):
         pass
 
     def AddHeaders(self, headers):
-        # abstract
         pass
 
     @property
@@ -286,30 +279,27 @@ class Blockchain:
         return amount_claimed
 
     def OnNotify(self, notification):
-        #        logger.info("on notifiy %s " % notification)
         self.Notify.on_change(notification)
 
     def ContainsBlock(self, hash):
-        # abstract
         pass
 
     def ContainsTransaction(self, hash):
-        # abstract
         pass
 
     def ContainsUnspent(self, hash, index):
-        # abstract
         pass
 
     def Dispose(self):
-        # abstract
+        pass
+
+    def GetStates(self, prefix, classref):
         pass
 
     def GetAccountStateByIndex(self, index):
         pass
 
     def GetAccountState(self, script_hash):
-        # abstract
         pass
 
     def GetAssetState(self, assetId):

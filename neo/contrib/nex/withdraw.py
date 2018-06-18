@@ -254,7 +254,7 @@ def PerformWithdrawTx(wallet, tx, contract_hash):
 
         tx.scripts = context.GetScripts()
 
-#        print("withdraw tx %s " % json.dumps(tx.ToJson(), indent=4))
+        print("withdraw tx %s " % json.dumps(tx.ToJson(), indent=4))
 
         relayed = NodeLeader.Instance().Relay(tx)
 

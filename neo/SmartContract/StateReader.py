@@ -23,6 +23,11 @@ from neo.IO.MemoryStream import StreamManager
 from neo.SmartContract.Iterable.Wrapper import ArrayWrapper, MapWrapper
 from neo.SmartContract.Iterable import KeysWrapper, ValuesWrapper
 from neo.SmartContract.Iterable.ConcatenatedEnumerator import ConcatenatedEnumerator
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Core.State.ContractState import ContractState
+from neo.Core.State.AccountState import AccountState
+from neo.Core.State.AssetState import AssetState
+from neo.Core.State.StorageItem import StorageItem
 
 
 class StateReader(InteropService):
@@ -39,6 +44,30 @@ class StateReader(InteropService):
     _contracts = None
     _storages = None
 
+    @property
+    def Accounts(self):
+        if not self._accounts:
+            self._accounts = Blockchain.Default().GetStates(DBPrefix.ST_Account, AccountState)
+        return self._accounts
+
+    @property
+    def Assets(self):
+        if not self._assets:
+            self._assets = Blockchain.Default().GetStates(DBPrefix.ST_Asset, AssetState)
+        return self._assets
+
+    @property
+    def Contracts(self):
+        if not self._contracts:
+            self._contracts = Blockchain.Default().GetStates(DBPrefix.ST_Contract, ContractState)
+        return self._contracts
+
+    @property
+    def Storages(self):
+        if not self._storages:
+            self._storages = Blockchain.Default().GetStates(DBPrefix.ST_Storage, StorageItem)
+        return self._storages
+
     @staticmethod
     def Instance():
         if StateReader.__Instance is None:
@@ -52,38 +81,41 @@ class StateReader(InteropService):
         self.notifications = []
         self.events_to_dispatch = []
 
-        self.Register("Neo.Runtime.GetTrigger", self.Runtime_GetTrigger)
-        self.Register("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness)
-        self.Register("Neo.Runtime.Notify", self.Runtime_Notify)
-        self.Register("Neo.Runtime.Log", self.Runtime_Log)
-        self.Register("Neo.Runtime.GetTime", self.Runtime_GetCurrentTime)
-        self.Register("Neo.Runtime.Serialize", self.Runtime_Serialize)
-        self.Register("Neo.Runtime.Deserialize", self.Runtime_Deserialize)
+        # Standard Library
+        self.Register("System.Runtime.GetTrigger", self.Runtime_GetTrigger)
+        self.Register("System.Runtime.CheckWitness", self.Runtime_CheckWitness)
+        self.Register("System.Runtime.Notify", self.Runtime_Notify)
+        self.Register("System.Runtime.Log", self.Runtime_Log)
+        self.Register("System.Runtime.GetTime", self.Runtime_GetCurrentTime)
+        self.Register("System.Runtime.Serialize", self.Runtime_Serialize)
+        self.Register("System.Runtime.Deserialize", self.Runtime_Deserialize)
+        self.Register("System.Blockchain.GetHeight", self.Blockchain_GetHeight)
+        self.Register("System.Blockchain.GetHeader", self.Blockchain_GetHeader)
+        self.Register("System.Blockchain.GetBlock", self.Blockchain_GetBlock)
+        self.Register("System.Blockchain.GetTransaction", self.Blockchain_GetTransaction)
+        self.Register("System.Blockchain.GetTransactionHeight", self.Blockchain_GetTransactionHeight)
+        self.Register("System.Blockchain.GetContract", self.Blockchain_GetContract)
+        self.Register("System.Header.GetIndex", self.Header_GetIndex)
+        self.Register("System.Header.GetHash", self.Header_GetHash)
+        self.Register("System.Header.GetVersion", self.Header_GetVersion)
+        self.Register("System.Header.GetPrevHash", self.Header_GetPrevHash)
+        self.Register("System.Header.GetTimestamp", self.Header_GetTimestamp)
+        self.Register("System.Block.GetTransactionCount", self.Block_GetTransactionCount)
+        self.Register("System.Block.GetTransactions", self.Block_GetTransactions)
+        self.Register("System.Block.GetTransaction", self.Block_GetTransaction)
+        self.Register("System.Transaction.GetHash", self.Transaction_GetHash)
+        self.Register("System.Storage.GetContext", self.Storage_GetContext)
+        self.Register("System.Storage.GetReadOnlyContext", self.Storage_GetReadOnlyContext)
+        self.Register("System.Storage.Get", self.Storage_Get)
+        self.Register("System.StorageContext.AsReadOnly", self.StorageContext_AsReadOnly)
 
-        self.Register("Neo.Blockchain.GetHeight", self.Blockchain_GetHeight)
-        self.Register("Neo.Blockchain.GetHeader", self.Blockchain_GetHeader)
-        self.Register("Neo.Blockchain.GetBlock", self.Blockchain_GetBlock)
-        self.Register("Neo.Blockchain.GetTransaction", self.Blockchain_GetTransaction)
-        self.Register("Neo.Blockchain.GetTransactionHeight", self.Blockchain_GetTransactionHeight)
+        # Neo Specific
         self.Register("Neo.Blockchain.GetAccount", self.Blockchain_GetAccount)
         self.Register("Neo.Blockchain.GetValidators", self.Blockchain_GetValidators)
         self.Register("Neo.Blockchain.GetAsset", self.Blockchain_GetAsset)
-        self.Register("Neo.Blockchain.GetContract", self.Blockchain_GetContract)
-
-        self.Register("Neo.Header.GetIndex", self.Header_GetIndex)
-        self.Register("Neo.Header.GetHash", self.Header_GetHash)
-        self.Register("Neo.Header.GetVersion", self.Header_GetVersion)
-        self.Register("Neo.Header.GetPrevHash", self.Header_GetPrevHash)
         self.Register("Neo.Header.GetMerkleRoot", self.Header_GetMerkleRoot)
-        self.Register("Neo.Header.GetTimestamp", self.Header_GetTimestamp)
         self.Register("Neo.Header.GetConsensusData", self.Header_GetConsensusData)
         self.Register("Neo.Header.GetNextConsensus", self.Header_GetNextConsensus)
-
-        self.Register("Neo.Block.GetTransactionCount", self.Block_GetTransactionCount)
-        self.Register("Neo.Block.GetTransactions", self.Block_GetTransactions)
-        self.Register("Neo.Block.GetTransaction", self.Block_GetTransaction)
-
-        self.Register("Neo.Transaction.GetHash", self.Transaction_GetHash)
         self.Register("Neo.Transaction.GetType", self.Transaction_GetType)
         self.Register("Neo.Transaction.GetAttributes", self.Transaction_GetAttributes)
         self.Register("Neo.Transaction.GetInputs", self.Transaction_GetInputs)
@@ -91,21 +123,16 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetReferences", self.Transaction_GetReferences)
         self.Register("Neo.Transaction.GetUnspentCoins", self.Transaction_GetUnspentCoins)
         self.Register("Neo.InvocationTransaction.GetScript", self.InvocationTransaction_GetScript)
-
-        self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
         self.Register("Neo.Attribute.GetUsage", self.Attribute_GetUsage)
-
+        self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
         self.Register("Neo.Input.GetHash", self.Input_GetHash)
         self.Register("Neo.Input.GetIndex", self.Input_GetIndex)
-
         self.Register("Neo.Output.GetAssetId", self.Output_GetAssetId)
         self.Register("Neo.Output.GetValue", self.Output_GetValue)
         self.Register("Neo.Output.GetScriptHash", self.Output_GetScriptHash)
-
+        self.Register("Neo.Account.GetScriptHash", self.Account_GetScriptHash)
         self.Register("Neo.Account.GetVotes", self.Account_GetVotes)
         self.Register("Neo.Account.GetBalance", self.Account_GetBalance)
-        self.Register("Neo.Account.GetScriptHash", self.Account_GetScriptHash)
-
         self.Register("Neo.Asset.GetAssetId", self.Asset_GetAssetId)
         self.Register("Neo.Asset.GetAssetType", self.Asset_GetAssetType)
         self.Register("Neo.Asset.GetAmount", self.Asset_GetAmount)
@@ -114,13 +141,9 @@ class StateReader(InteropService):
         self.Register("Neo.Asset.GetOwner", self.Asset_GetOwner)
         self.Register("Neo.Asset.GetAdmin", self.Asset_GetAdmin)
         self.Register("Neo.Asset.GetIssuer", self.Asset_GetIssuer)
-
         self.Register("Neo.Contract.GetScript", self.Contract_GetScript)
-
-        self.Register("Neo.Storage.GetContext", self.Storage_GetContext)
-        self.Register("Neo.Storage.Get", self.Storage_Get)
+#        self.Register("Neo.Contract.IsPayable", self.Contract_IsPayable)
         self.Register("Neo.Storage.Find", self.Storage_Find)
-
         self.Register("Neo.Enumerator.Create", self.Enumerator_Create)
         self.Register("Neo.Enumerator.Next", self.Enumerator_Next)
         self.Register("Neo.Enumerator.Value", self.Enumerator_Value)
@@ -128,18 +151,46 @@ class StateReader(InteropService):
         self.Register("Neo.Iterator.Create", self.Iterator_Create)
         self.Register("Neo.Iterator.Key", self.Iterator_Key)
         self.Register("Neo.Iterator.Keys", self.Iterator_Keys)
+        self.Register("Neo.Iterator.Values", self.Iterator_Values)
 
 # Old Iterator aliases
-        self.Register("Neo.Iterator.Value", self.Enumerator_Value)
         self.Register("Neo.Iterator.Next", self.Enumerator_Next)
+        self.Register("Neo.Iterator.Value", self.Enumerator_Value)
 
-        # OLD API
+        # Old API
+        # Standard Library
+        self.Register("Neo.Runtime.GetTrigger", self.Runtime_GetTrigger)
+        self.Register("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness)
+        self.Register("Neo.Runtime.Notify", self.Runtime_Notify)
+        self.Register("Neo.Runtime.Log", self.Runtime_Log)
+        self.Register("Neo.Runtime.GetTime", self.Runtime_GetCurrentTime)
+        self.Register("Neo.Runtime.Serialize", self.Runtime_Serialize)
+        self.Register("Neo.Runtime.Deserialize", self.Runtime_Deserialize)
+        self.Register("Neo.Blockchain.GetHeight", self.Blockchain_GetHeight)
+        self.Register("Neo.Blockchain.GetHeader", self.Blockchain_GetHeader)
+        self.Register("Neo.Blockchain.GetBlock", self.Blockchain_GetBlock)
+        self.Register("Neo.Blockchain.GetTransaction", self.Blockchain_GetTransaction)
+        self.Register("Neo.Blockchain.GetTransactionHeight", self.Blockchain_GetTransactionHeight)
+        self.Register("Neo.Blockchain.GetContract", self.Blockchain_GetContract)
+        self.Register("Neo.Header.GetIndex", self.Header_GetIndex)
+        self.Register("Neo.Header.GetHash", self.Header_GetHash)
+        self.Register("Neo.Header.GetVersion", self.Header_GetVersion)
+        self.Register("Neo.Header.GetPrevHash", self.Header_GetPrevHash)
+        self.Register("Neo.Header.GetTimestamp", self.Header_GetTimestamp)
+        self.Register("Neo.Block.GetTransactionCount", self.Block_GetTransactionCount)
+        self.Register("Neo.Block.GetTransactions", self.Block_GetTransactions)
+        self.Register("Neo.Block.GetTransaction", self.Block_GetTransaction)
+        self.Register("Neo.Transaction.GetHash", self.Transaction_GetHash)
+        self.Register("Neo.Storage.GetContext", self.Storage_GetContext)
+        self.Register("Neo.Storage.GetReadOnlyContext", self.Storage_GetReadOnlyContext)
+        self.Register("Neo.Storage.Get", self.Storage_Get)
+        self.Register("Neo.StorageContext.AsReadOnly", self.StorageContext_AsReadOnly)
 
+        # Very OLD API
         self.Register("AntShares.Runtime.GetTrigger", self.Runtime_GetTrigger)
         self.Register("AntShares.Runtime.CheckWitness", self.Runtime_CheckWitness)
         self.Register("AntShares.Runtime.Notify", self.Runtime_Notify)
         self.Register("AntShares.Runtime.Log", self.Runtime_Log)
-
         self.Register("AntShares.Blockchain.GetHeight", self.Blockchain_GetHeight)
         self.Register("AntShares.Blockchain.GetHeader", self.Blockchain_GetHeader)
         self.Register("AntShares.Blockchain.GetBlock", self.Blockchain_GetBlock)
@@ -148,7 +199,6 @@ class StateReader(InteropService):
         self.Register("AntShares.Blockchain.GetValidators", self.Blockchain_GetValidators)
         self.Register("AntShares.Blockchain.GetAsset", self.Blockchain_GetAsset)
         self.Register("AntShares.Blockchain.GetContract", self.Blockchain_GetContract)
-
         self.Register("AntShares.Header.GetHash", self.Header_GetHash)
         self.Register("AntShares.Header.GetVersion", self.Header_GetVersion)
         self.Register("AntShares.Header.GetPrevHash", self.Header_GetPrevHash)
@@ -156,32 +206,25 @@ class StateReader(InteropService):
         self.Register("AntShares.Header.GetTimestamp", self.Header_GetTimestamp)
         self.Register("AntShares.Header.GetConsensusData", self.Header_GetConsensusData)
         self.Register("AntShares.Header.GetNextConsensus", self.Header_GetNextConsensus)
-
         self.Register("AntShares.Block.GetTransactionCount", self.Block_GetTransactionCount)
         self.Register("AntShares.Block.GetTransactions", self.Block_GetTransactions)
         self.Register("AntShares.Block.GetTransaction", self.Block_GetTransaction)
-
         self.Register("AntShares.Transaction.GetHash", self.Transaction_GetHash)
         self.Register("AntShares.Transaction.GetType", self.Transaction_GetType)
         self.Register("AntShares.Transaction.GetAttributes", self.Transaction_GetAttributes)
         self.Register("AntShares.Transaction.GetInputs", self.Transaction_GetInputs)
         self.Register("AntShares.Transaction.GetOutpus", self.Transaction_GetOutputs)
         self.Register("AntShares.Transaction.GetReferences", self.Transaction_GetReferences)
-
         self.Register("AntShares.Attribute.GetData", self.Attribute_GetData)
         self.Register("AntShares.Attribute.GetUsage", self.Attribute_GetUsage)
-
         self.Register("AntShares.Input.GetHash", self.Input_GetHash)
         self.Register("AntShares.Input.GetIndex", self.Input_GetIndex)
-
         self.Register("AntShares.Output.GetAssetId", self.Output_GetAssetId)
         self.Register("AntShares.Output.GetValue", self.Output_GetValue)
         self.Register("AntShares.Output.GetScriptHash", self.Output_GetScriptHash)
-
         self.Register("AntShares.Account.GetVotes", self.Account_GetVotes)
         self.Register("AntShares.Account.GetBalance", self.Account_GetBalance)
         self.Register("AntShares.Account.GetScriptHash", self.Account_GetScriptHash)
-
         self.Register("AntShares.Asset.GetAssetId", self.Asset_GetAssetId)
         self.Register("AntShares.Asset.GetAssetType", self.Asset_GetAssetType)
         self.Register("AntShares.Asset.GetAmount", self.Asset_GetAmount)
@@ -190,9 +233,7 @@ class StateReader(InteropService):
         self.Register("AntShares.Asset.GetOwner", self.Asset_GetOwner)
         self.Register("AntShares.Asset.GetAdmin", self.Asset_GetAdmin)
         self.Register("AntShares.Asset.GetIssuer", self.Asset_GetIssuer)
-
         self.Register("AntShares.Contract.GetScript", self.Contract_GetScript)
-
         self.Register("AntShares.Storage.GetContext", self.Storage_GetContext)
         self.Register("AntShares.Storage.Get", self.Storage_Get)
 
@@ -200,7 +241,7 @@ class StateReader(InteropService):
         if context is None:
             return False
 
-        contract = self._contracts.TryGet(context.ScriptHash.ToBytes())
+        contract = self.Contracts.TryGet(context.ScriptHash.ToBytes())
 
         if contract is not None:
             if contract.HasStorage:
@@ -499,12 +540,8 @@ class StateReader(InteropService):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
         address = Crypto.ToAddress(hash).encode('utf-8')
 
-        account = Blockchain.Default().GetAccountState(address)
-        if account:
-            engine.EvaluationStack.PushT(StackItem.FromInterface(account))
-        else:
-            engine.EvaluationStack.PushT(False)
-
+        account = self.Accounts.GetOrAdd(address, new_instance=AccountState(script_hash=hash))
+        engine.EvaluationStack.PushT(StackItem.FromInterface(account))
         return True
 
     def Blockchain_GetValidators(self, engine):
@@ -522,7 +559,7 @@ class StateReader(InteropService):
         asset = None
 
         if Blockchain.Default() is not None:
-            asset = Blockchain.Default().GetAssetState(UInt256(data=data))
+            asset = self.Assets.TryGet(UInt256(data=data))
         if asset is None:
             return False
         engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
@@ -530,13 +567,11 @@ class StateReader(InteropService):
 
     def Blockchain_GetContract(self, engine):
         hash = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
-        contract = None
-
-        if Blockchain.Default() is not None:
-            contract = Blockchain.Default().GetContract(hash)
+        contract = self.Contracts.TryGet(hash.ToBytes())
         if contract is None:
-            return False
-        engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+            engine.EvaluationStack.PushT(bytearray(0))
+        else:
+            engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
         return True
 
     def Header_GetIndex(self, engine):
@@ -891,28 +926,43 @@ class StateReader(InteropService):
 
         return True
 
+    def Storage_GetReadOnlyContext(self, engine):
+
+        hash = UInt160(data=engine.CurrentContext.ScriptHash())
+        context = StorageContext(script_hash=hash, read_only=True)
+
+        engine.EvaluationStack.PushT(StackItem.FromInterface(context))
+
+        return True
+
+    def StorageContext_AsReadOnly(self, engine):
+        context = engine.EvaluationStack.Pop.GetInterface()
+
+        if context is None:
+            return False
+
+        if not context.IsReadOnly:
+            context = StorageContext(script_hash=context.ScriptHash, read_only=True)
+
+        engine.EvaluationStack.PushT(StackItem.FromInterface(context))
+        return True
+
     def Storage_Get(self, engine):
 
         context = None
         try:
             item = engine.EvaluationStack.Pop()
             context = item.GetInterface()
-            shash = context.ScriptHash
         except Exception as e:
             logger.error("could not get storage context %s " % e)
             return False
 
-        contract = Blockchain.Default().GetContract(context.ScriptHash.ToBytes())
-
-        if contract is not None:
-            if not contract.HasStorage:
-                return False
-        else:
+        if not self.CheckStorageContext(context):
             return False
 
         key = engine.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        item = Blockchain.Default().GetStorageItem(storage_key)
+        item = self.Storages.TryGet(storage_key.ToArray())
 
         keystr = key
 
@@ -951,7 +1001,7 @@ class StateReader(InteropService):
         prefix = engine.EvaluationStack.Pop().GetByteArray()
         prefix = context.ScriptHash.ToArray() + prefix
 
-        iterator = self._storages.TryFind(prefix)
+        iterator = self.Storages.TryFind(prefix)
         engine.EvaluationStack.PushT(StackItem.FromInterface(iterator))
 
         return True
