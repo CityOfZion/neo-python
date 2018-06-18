@@ -208,6 +208,9 @@ class LevelDBBlockchain(Blockchain):
             else:
                 raise Exception("Database schema changed")
 
+    def GetStates(self, prefix, classref):
+        return DBCollection(self._db, None, prefix, classref)
+
     def GetAccountState(self, script_hash, print_all_accounts=False):
 
         if type(script_hash) is str:

@@ -40,7 +40,6 @@ def LoadAndRun(arguments, wallet):
 
 
 def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True):
-    print("arguments %s " % arguments)
 
     arguments, from_addr = get_from_addr(arguments)
     arguments, invoke_attrs = get_tx_attr_from_args(arguments)
