@@ -15,13 +15,13 @@ from neocore.UInt256 import UInt256
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neocore.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
-from neo.VM.InteropService import StackItem, stack_item_to_py, ByteArray, Array
+from neo.VM.InteropService import StackItem, stack_item_to_py, ByteArray, Array, Map
 from neo.Settings import settings
 from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
-from neo.SmartContract.Iterable.Wrapper import ArrayWrapper
-from neo.SmartContract.Iterable import Iterator, Enumerator, KeysWrapper, ValuesWrapper
+from neo.SmartContract.Iterable.Wrapper import ArrayWrapper, MapWrapper
+from neo.SmartContract.Iterable import KeysWrapper, ValuesWrapper
 from neo.SmartContract.Iterable.ConcatenatedEnumerator import ConcatenatedEnumerator
 
 
@@ -124,6 +124,8 @@ class StateReader(InteropService):
         self.Register("Neo.Enumerator.Create", self.Enumerator_Create)
         self.Register("Neo.Enumerator.Next", self.Enumerator_Next)
         self.Register("Neo.Enumerator.Value", self.Enumerator_Value)
+        self.Register("Neo.Enumerator.Concat", self.Enumerator_Concat)
+        self.Register("Neo.Iterator.Create", self.Iterator_Create)
         self.Register("Neo.Iterator.Key", self.Iterator_Key)
         self.Register("Neo.Iterator.Keys", self.Iterator_Keys)
 
@@ -958,7 +960,7 @@ class StateReader(InteropService):
         item = engine.EvaluationStack.Pop()
         if isinstance(item, Array):
             enumerator = ArrayWrapper(item)
-            engine.EvaluationStack.PushT(enumerator)
+            engine.EvaluationStack.PushT(StackItem.FromInterface(enumerator))
             return True
         return False
 
@@ -966,7 +968,6 @@ class StateReader(InteropService):
         item = engine.EvaluationStack.Pop().GetInterface()
         if item is None:
             return False
-
         engine.EvaluationStack.PushT(item.Next())
         return True
 
@@ -988,8 +989,16 @@ class StateReader(InteropService):
             return False
 
         result = ConcatenatedEnumerator(item1, item2)
-        engine.EvaluationStack.PushT(result)
+        engine.EvaluationStack.PushT(StackItem.FromInterface(result))
         return True
+
+    def Iterator_Create(self, engine):
+        item = engine.EvaluationStack.Pop()
+        if isinstance(item, Map):
+            iterator = MapWrapper(item)
+            engine.EvaluationStack.PushT(StackItem.FromInterface(iterator))
+            return True
+        return False
 
     def Iterator_Key(self, engine):
         iterator = engine.EvaluationStack.Pop().GetInterface()

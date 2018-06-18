@@ -201,7 +201,7 @@ class Array(StackItem, CollectionMixin):
         raise Exception("Not supported")
 
     def GetEnumerator(self):
-        return iter(self._array)
+        return enumerate(self._array)
 
     def CopyTo(self, array, index):
         for item in self._array:
@@ -490,7 +490,7 @@ class Map(StackItem, CollectionMixin):
         return self._dict
 
     def GetEnumerator(self):
-        return iter(self._dict)
+        return iter(self._dict.items())
 
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.Map)

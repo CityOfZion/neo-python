@@ -6,8 +6,8 @@ class ConcatenatedEnumerator(Enumerator):
 
     def __init__(self, first, second):
         # returns a (key,value) tuple per iteration
-        self.first = first
-        self.second = second
+        self.first = first.enumerator
+        self.second = second.enumerator
         self.current = self.first
 
         self.key = None

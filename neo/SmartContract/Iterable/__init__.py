@@ -60,6 +60,8 @@ class KeysWrapper(Enumerator):
 
 class EnumeratorBase(Iterator):
 
+    enumerator = None
+
     def __init__(self, item):
         self.enumerator = item
         self.value = None
