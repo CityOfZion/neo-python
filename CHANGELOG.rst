@@ -5,7 +5,8 @@ All notable changes to this project are documented in this file.
 
 [0.7.2] in progress
 -------------------
--
+- Added ``return address`` in ImportMultiSigContractAddr()
+- 
 
 [0.7.1] 2018-06-02
 ------------------
