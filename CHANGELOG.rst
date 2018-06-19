@@ -18,6 +18,7 @@ All notable changes to this project are documented in this file.
 - Add Neo.Blockchain.GetTransactionHeight API
 - Updating Enumerator API for parity with `Neo PR #244 <https://github.com/neo-project/neo/pull/244>`_
 - Unifying interop namespace `Neo PR #254 <https://github.com/neo-project/neo/pull/254>`_
+- Update ``neo-boa`` version for new Enumerator/Iterator interop methods
 
 [0.7.1] 2018-06-02
 ------------------
