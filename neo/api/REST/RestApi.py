@@ -205,7 +205,7 @@ class RestApi:
     def get_status(self, request):
         request.setHeader('Content-Type', 'application/json')
         return json.dumps({
-            'current_height': Blockchain.Default().Height,
+            'current_height': Blockchain.Default().Height + 1,
             'version': settings.VERSION_NAME,
             'num_peers': len(NodeLeader.Instance().Peers)
         }, indent=4, sort_keys=True)
