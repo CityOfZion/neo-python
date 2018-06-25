@@ -42,7 +42,7 @@ pbr==4.0.4
 peewee==2.10.2
 pluggy==0.6.0
 plyvel==1.0.4
-prompt-toolkit==1.0.15
+prompt-toolkit==2.0.3
 psutil==5.4.6
 py==1.5.3
 pycodestyle==2.4.0
