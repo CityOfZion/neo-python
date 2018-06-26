@@ -176,10 +176,9 @@ class PromptInterface:
             #        ("class:number", str(Blockchain.Default().Height + 1)),
             #        ("class:neo", '/'),
             #        ("class:number", str(Blockchain.Default().HeaderHeight + 1))]
-            out = [("", '[%s] Progress: ' % settings.net_name),
-                   ("", str(Blockchain.Default().Height + 1)),
-                   ("", '/'),
-                   ("", str(Blockchain.Default().HeaderHeight + 1))]
+            return "[%s] Progress: %s/%s" % (settings.net_name,
+                                             str(Blockchain.Default().Height + 1),
+                                             str(Blockchain.Default().HeaderHeight + 1))
         except Exception as e:
             pass
 
