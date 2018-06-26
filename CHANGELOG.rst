@@ -3,7 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.2] in progress
+[0.7.3-dev] in progress
+-----------------------
+- Updated the requirements
+
+
+[0.7.2] 2018-06-21
 -------------------
 - When using a custom datadir (with ``--datadir``), ``np-prompt`` will store log and history files there instead of
   the default directory. Note: if you use a custom datadir that does not yet exist, ``np-prompt`` starts without
@@ -20,6 +25,7 @@ All notable changes to this project are documented in this file.
 - Unifying interop namespace `Neo PR #254 <https://github.com/neo-project/neo/pull/254>`_
 - Update ``neo-boa`` version to v0.4.7 for new Enumerator/Iterator interop methods and additional python opcode support.
 - Fixed REST API ``/status`` ``current_height`` off-by-one `#475 <https://github.com/CityOfZion/neo-python/pull/475>`_
+
 
 [0.7.1] 2018-06-02
 ------------------
