@@ -235,18 +235,18 @@ class NotifyEvent(SmartContractEvent):
                     else:
                         self.addr_from = UInt160(data=payload[1].Value) if len(payload[1].Value) == 20 else empty
                     self.addr_to = UInt160(data=payload[2].Value) if len(payload[2].Value) == 20 else empty
-                    self.amount = int(BigInteger.FromBytes(payload[3].Value)) if isinstance(payload[3].Value, bytes) else int(payload[3].Value)
+                    self.amount = int(BigInteger.FromBytes(payload[3].Value)) if isinstance(payload[3].Value, (bytes, bytearray)) else int(payload[3].Value)
                     self.is_standard_notify = True
 
                 elif self.notify_type == NotifyType.REFUND and plen >= 3:  # Might have more arguments
                     self.addr_to = UInt160(data=payload[1].Value) if len(payload[1].Value) == 20 else empty
-                    self.amount = int(BigInteger.FromBytes(payload[2].Value)) if isinstance(payload[2].Value, bytes) else int(payload[2].Value)
+                    self.amount = int(BigInteger.FromBytes(payload[2].Value)) if isinstance(payload[2].Value, (bytes, bytearray)) else int(payload[2].Value)
                     self.addr_from = self.contract_hash
                     self.is_standard_notify = True
 
                 elif self.notify_type == NotifyType.MINT and plen == 3:
                     self.addr_to = UInt160(data=payload[1].Value) if len(payload[1].Value) == 20 else empty
-                    self.amount = int(BigInteger.FromBytes(payload[2].Value)) if isinstance(payload[2].Value, bytes) else int(payload[2].Value)
+                    self.amount = int(BigInteger.FromBytes(payload[2].Value)) if isinstance(payload[2].Value, (bytes, bytearray)) else int(payload[2].Value)
                     self.addr_from = self.contract_hash
                     self.is_standard_notify = True
 
@@ -255,8 +255,8 @@ class NotifyEvent(SmartContractEvent):
 
         elif self.event_payload.Type == ContractParameterType.String:
             self.notify_type = self.event_payload.Value
-        else:
-            logger.debug("NOTIFY %s %s" % (self.event_payload.Type, self.event_payload.Value))
+#        else:
+#            logger.debug("NOTIFY %s %s" % (self.event_payload.Type, self.event_payload.Value))
 
     def SerializePayload(self, writer):
 

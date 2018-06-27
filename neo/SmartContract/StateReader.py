@@ -982,8 +982,12 @@ class StateReader(InteropService):
         else:
             engine.EvaluationStack.PushT(bytearray(0))
 
+        tx_hash = None
+        if engine.ScriptContainer:
+            tx_hash = engine.ScriptContainer.Hash
+
         self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_GET, ContractParameter(ContractParameterType.String, value='%s -> %s' % (keystr, valStr)),
-                                                          context.ScriptHash, Blockchain.Default().Height + 1, engine.ScriptContainer.Hash, test_mode=engine.testMode))
+                                                          context.ScriptHash, Blockchain.Default().Height + 1, tx_hash, test_mode=engine.testMode))
 
         return True
 
