@@ -56,13 +56,12 @@ class UserWallet(Wallet):
             self.on_notify_sc_event(sc_event)
 
     def on_notify_sc_event(self, sc_event):
-        if not sc_event.test_mode:
-            notify_type = sc_event.event_payload[0]
-            if type(notify_type) is bytes:
-                if notify_type == b'hold_created':
-                    self.process_hold_created_event(sc_event.event_payload[1:])
-                elif notify_type in [b'hold_cancelled', b'hold_cleaned_up']:
-                    self.process_destroy_hold(notify_type, sc_event.event_payload[1])
+        if not sc_event.test_mode and isinstance(sc_event.notify_type, bytes):
+            notify_type = sc_event.notify_type
+            if notify_type == b'hold_created':
+                self.process_hold_created_event(sc_event.event_payload[1:])
+            elif notify_type in [b'hold_cancelled', b'hold_cleaned_up']:
+                self.process_destroy_hold(notify_type, sc_event.event_payload[1])
 
     def process_hold_created_event(self, payload):
         if len(payload) == 4:

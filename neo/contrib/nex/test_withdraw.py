@@ -14,6 +14,9 @@ import os
 import json
 
 
+settings.log_smart_contract_events = True
+
+
 class WithdrawWalletTestCase(WalletFixtureTestCase):
     FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/withdraw_fixture042518.tar.gz'
     FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/withdraw_fixture042518.tar.gz')

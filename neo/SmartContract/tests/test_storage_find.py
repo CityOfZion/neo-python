@@ -41,4 +41,4 @@ class TestStorageFind(WalletFixtureTestCase):
 
         self.assertEqual(len(events_emitted), 4)
 
-        self.assertEqual([b'Starting', b'my_prefixA', b'my_prefixB', b'Done'], [event.event_payload[0] for event in events_emitted])
+        self.assertEqual([b'Starting', b'my_prefixA', b'my_prefixB', b'Done'], [event.event_payload.Value[0].Value for event in events_emitted])

@@ -6,10 +6,13 @@ from neo.Core.Blockchain import Blockchain
 from neo.Wallets.Coin import CoinState
 from neo.Core.TX.Transaction import TransactionInput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
+from neo.SmartContract.ContractParameter import ContractParameterType
 from neocore.UInt256 import UInt256
+from neocore.Cryptography.ECCurve import ECDSA
 from decimal import Decimal
 from logzero import logger
 import json
+from prompt_toolkit import prompt
 
 
 def get_asset_attachments(params):
@@ -130,6 +133,13 @@ def get_from_addr(params):
     return params, from_addr
 
 
+def get_parse_addresses(params):
+    if '--no-parse' in params:
+        params.remove('--no-parse')
+        return params, False
+    return params, True
+
+
 def get_tx_attr_from_args(params):
     to_remove = []
     tx_attr_dict = []
@@ -171,7 +181,7 @@ def attr_obj_to_tx_attr(obj):
     return None
 
 
-def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
+def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True, parse_addr=True):
 
     # first, we'll try to parse an array
     try:
@@ -180,7 +190,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
             parsed = []
             for item in items:
-                parsed.append(parse_param(item, wallet))
+                parsed.append(parse_param(item, wallet, parse_addr=parse_addr))
             return parsed
 
     except Exception as e:
@@ -222,7 +232,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True):
 
         # check for address strings like 'ANE2ECgA6YAHR5Fh2BrSsiqTyGb5KaS19u' and
         # convert them to a bytearray
-        if len(p) == 34 and p[0] == 'A':
+        if parse_addr and len(p) == 34 and p[0] == 'A':
             addr = Helper.AddrStrToScriptHash(p).Data
             return addr
 
@@ -289,3 +299,42 @@ def string_from_fixed8(amount, decimals):
     amount_str = format(amount, formatter_str)
 
     return amount_str
+
+
+def gather_param(index, param_type):
+
+    from neo.bin.prompt import PromptInterface
+
+    ptype = ContractParameterType(param_type)
+    prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
+
+    result = prompt(prompt_message,
+                    completer=PromptInterface.prompt_completer,
+                    history=PromptInterface.history)
+
+    try:
+        if ptype == ContractParameterType.String:
+            return str(result)
+        elif ptype == ContractParameterType.Integer:
+            return int(result)
+        elif ptype == ContractParameterType.Boolean:
+            return bool(result)
+        elif ptype == ContractParameterType.PublicKey:
+            return ECDSA.decode_secp256r1(result).G
+        elif ptype == ContractParameterType.ByteArray:
+            parsed = eval(result, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes, 'str': str}}, {})
+            if isinstance(parsed, str):
+                if len(parsed) == 34 and parsed[0] == 'A':
+                    return Helper.AddrStrToScriptHash(parsed).Data
+                return parsed.encode('utf-8')
+            return parsed
+
+        elif ptype == ContractParameterType.Array:
+            return eval(result)
+        else:
+            raise Exception("Unknown param type %s " % ptype.name)
+    except Exception as e:
+
+        print("Could not parse param %s as %s " % (result, ptype))
+
+    return None

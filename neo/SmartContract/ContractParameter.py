@@ -4,6 +4,7 @@ from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neocore.BigInteger import BigInteger
 from neocore.Cryptography.ECCurve import ECDSA
+import binascii
 
 
 class ContractParameter:
@@ -16,7 +17,7 @@ class ContractParameter:
         """
 
         Args:
-            type (neo.SmartContract.ContractParameterType): The type of the parameter
+            type (neo.SmartContract.ContractParameterType.ContractParameterType): The type of the parameter
             value (*): The value of the parameter
         """
         self.Type = type
@@ -77,7 +78,7 @@ class ContractParameter:
         else:
             return ContractParameter(type, value=item.GetByteArray())
 
-    def ToJson(self):
+    def ToJson(self, auto_hex=True):
         """
         Converts a ContractParameter instance to a json representation
 
@@ -87,9 +88,14 @@ class ContractParameter:
         jsn = {}
         jsn['type'] = str(ContractParameterType(self.Type))
 
-        if self.Type in [ContractParameterType.Signature, ContractParameterType.ByteArray]:
+        if self.Type == ContractParameterType.Signature:
             jsn['value'] = self.Value.hex()
 
+        elif self.Type == ContractParameterType.ByteArray:
+            if auto_hex:
+                jsn['value'] = self.Value.hex()
+            else:
+                jsn['value'] = self.Value
         elif self.Type == ContractParameterType.Boolean:
             jsn['value'] = self.Value
 
@@ -111,8 +117,14 @@ class ContractParameter:
 
             res = []
             for item in self.Value:
-                res.append(item.ToJson())
+                res.append(item.ToJson(auto_hex=auto_hex))
             jsn['value'] = res
+
+        elif self.Type == ContractParameterType.InteropInterface:
+            try:
+                jsn['value'] = self.Value.ToJson()
+            except Exception as e:
+                pass
 
         return jsn
 
@@ -144,6 +156,39 @@ class ContractParameter:
         type = ContractParameterType.FromString(json['type'])
 
         value = json['value']
+        param = ContractParameter(type=type, value=None)
+
+        if type == ContractParameterType.Signature or type == ContractParameterType.ByteArray:
+            param.Value = bytearray.fromhex(value)
+
+        elif type == ContractParameterType.Boolean:
+            param.Value = bool(value)
+
+        elif type == ContractParameterType.Integer:
+            param.Value = int(value)
+
+        elif type == ContractParameterType.Hash160:
+            param.Value = UInt160.ParseString(value)
+
+        elif type == ContractParameterType.Hash256:
+            param.Value = UInt256.ParseString(value)
+
+        # @TODO Not sure if this is working...
+        elif type == ContractParameterType.PublicKey:
+            param.Value = ECDSA.decode_secp256r1(value).G
+
+        elif type == ContractParameterType.String:
+            param.Value = str(value)
+
+        elif type == ContractParameterType.Array:
+            val = [ContractParameter.FromJson(item) for item in value]
+            param.Value = val
+
+        return param
+
+    @staticmethod
+    def FromStringWithType(type, value):
+
         param = ContractParameter(type=type, value=None)
 
         if type == ContractParameterType.Signature or type == ContractParameterType.ByteArray:

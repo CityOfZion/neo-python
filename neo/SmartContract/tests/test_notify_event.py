@@ -5,6 +5,7 @@ from neocore.UInt256 import UInt256
 from neocore.BigInteger import BigInteger
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.BinaryWriter import BinaryWriter
+from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 
 
 class EventTestCase(TestCase):
@@ -17,7 +18,7 @@ class EventTestCase(TestCase):
 
     def test_1_serialize_runtime_log(self):
 
-        sc = SmartContractEvent(SmartContractEvent.RUNTIME_LOG, [], self.contract_hash, 99999, self.event_tx, True, False)
+        sc = SmartContractEvent(SmartContractEvent.RUNTIME_LOG, ContractParameter(ContractParameterType.Array, []), self.contract_hash, 99999, self.event_tx, True, False)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)
@@ -38,7 +39,7 @@ class EventTestCase(TestCase):
 
     def test_2_serialize_notify_no_payload(self):
 
-        sc = SmartContractEvent(SmartContractEvent.RUNTIME_NOTIFY, [], self.contract_hash, 99, self.event_tx, True, False)
+        sc = SmartContractEvent(SmartContractEvent.RUNTIME_NOTIFY, ContractParameter(ContractParameterType.Array, []), self.contract_hash, 99, self.event_tx, True, False)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)
@@ -59,7 +60,7 @@ class EventTestCase(TestCase):
 
     def test_2_serialize_single_notify_payload(self):
 
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'hello'], self.contract_hash, 99, self.event_tx, True, False)
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, ContractParameter(ContractParameterType.Array, [ContractParameter(ContractParameterType.String, b'hello')]), self.contract_hash, 99, self.event_tx, True, False)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)
@@ -86,7 +87,7 @@ class EventTestCase(TestCase):
 
     def test_3_serialize_single_transfer_notify_payload(self):
 
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'transfer'], self.contract_hash, 99, self.event_tx, True, False)
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, ContractParameter(ContractParameterType.Array, [ContractParameter(ContractParameterType.String, b'transfer')]), self.contract_hash, 99, self.event_tx, True, False)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)
@@ -112,7 +113,14 @@ class EventTestCase(TestCase):
 
     def test_4_serialize_full_transfer_notify_payload(self):
 
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'transfer', self.addr_to, self.addr_from, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, False)
+        payload = ContractParameter(ContractParameterType.Array, [
+            ContractParameter(ContractParameterType.String, b'transfer'),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_to),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_from),
+            ContractParameter(ContractParameterType.Integer, 123000)
+        ])
+
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, payload, self.contract_hash, 91349, self.event_tx, True, False)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)
@@ -137,7 +145,13 @@ class EventTestCase(TestCase):
 
     def test_5_serialize_full_refund_payload(self):
 
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'refund', self.addr_to, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, False)
+        payload = ContractParameter(ContractParameterType.Array, [
+            ContractParameter(ContractParameterType.String, b'refund'),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_to),
+            ContractParameter(ContractParameterType.Integer, 123000)
+        ])
+
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, payload, self.contract_hash, 91349, self.event_tx, True, False)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)
@@ -162,7 +176,14 @@ class EventTestCase(TestCase):
 
     def test_6_serialize_full_approve_payload(self):
 
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'approve', self.addr_to, self.addr_from, b'x\xe0\x01'], self.contract_hash, 91349, self.event_tx, True, False)
+        payload = ContractParameter(ContractParameterType.Array, [
+            ContractParameter(ContractParameterType.String, b'approve'),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_to),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_from),
+            ContractParameter(ContractParameterType.ByteArray, b'x\xe0\x01')
+        ])
+
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, payload, self.contract_hash, 91349, self.event_tx, True, False)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)

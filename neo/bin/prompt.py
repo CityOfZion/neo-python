@@ -82,6 +82,10 @@ class PromptFileHistory(FileHistory):
 
 
 class PromptInterface:
+
+    prompt_completer = None
+    history = None
+
     go_on = True
 
     _walletdb_loop = None
@@ -106,8 +110,8 @@ class PromptInterface:
                 'config debug {on/off}',
                 'config sc-events {on/off}',
                 'config maxpeers {num_peers}',
-                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
-                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
+                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse (parse address strings to script hash bytearray)',
+                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse (parse address strings to script hash bytearray)',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke}',
@@ -144,11 +148,9 @@ class PromptInterface:
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
-                'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr})',
+                'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
                 ]
-
-    history = None
 
     token_style = None
     start_height = None
@@ -156,7 +158,7 @@ class PromptInterface:
 
     def __init__(self, history_filename=None):
         if history_filename:
-            self.history = PromptFileHistory(history_filename)
+            PromptInterface.history = PromptFileHistory(history_filename)
 
         self.input_parser = InputParser()
         self.start_height = Blockchain.Default().Height
@@ -204,9 +206,9 @@ class PromptInterface:
 
         all_completions = standard_completions + self._known_things
 
-        completer = WordCompleter(all_completions)
+        PromptInterface.prompt_completer = WordCompleter(all_completions)
 
-        return completer
+        return PromptInterface.prompt_completer
 
     def quit(self):
         print('Shutting down. This may take a bit...')
@@ -924,7 +926,7 @@ class PromptInterface:
             try:
                 result = prompt("neo> ",
                                 completer=self.get_completer(),
-                                history=self.history,
+                                history=PromptInterface.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
                                 style=self.token_style,
                                 refresh_interval=3

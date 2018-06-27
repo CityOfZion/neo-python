@@ -48,9 +48,9 @@ class TestNotifyDebugEvents(BoaTest):
         tx, results, total_ops, engine = TestBuild(self.script, [['my_arg0']], self.GetWallet1(), '10', '07')
 
         self.assertTrue(self.execution_success)
-        self.assertEqual('my_arg0', self.dispatched_events[0].event_payload[0].decode())
+        self.assertEqual('my_arg0', self.dispatched_events[0].event_payload.Value)
         self.assertEqual(SmartContractEvent.RUNTIME_LOG, self.dispatched_events[0].event_type)
-        self.assertEqual('Start main', self.dispatched_events[1].event_payload[0].decode())
+        self.assertEqual('Start main', self.dispatched_events[1].event_payload.Value.decode())
         self.assertEqual(SmartContractEvent.RUNTIME_NOTIFY, self.dispatched_events[1].event_type)
 
     def test_validate_normal_behaviour2(self):
@@ -74,5 +74,5 @@ class TestNotifyDebugEvents(BoaTest):
 
         self.assertFalse(self.execution_success)
         self.assertEqual(SmartContractEvent.RUNTIME_NOTIFY, self.dispatched_events[0].event_type)
-        self.assertEqual('Start main', self.dispatched_events[0].event_payload[0].decode())
+        self.assertEqual('Start main', self.dispatched_events[0].event_payload.Value.decode())
         self.assertEqual(1, len(self.dispatched_events))

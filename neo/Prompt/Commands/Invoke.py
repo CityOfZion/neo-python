@@ -4,7 +4,7 @@ from neo.Blockchain import GetBlockchain
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import parse_param, get_asset_attachments, lookup_addr_str, get_owners_from_params
+from neo.Prompt.Utils import parse_param, get_asset_attachments, lookup_addr_str, get_owners_from_params, gather_param, get_parse_addresses
 
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -154,25 +154,33 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
         params = args[1:] if len(args) > 1 else []
 
         params, neo_to_attach, gas_to_attach = get_asset_attachments(params)
+        params, parse_addresses = get_parse_addresses(params)
         params.reverse()
 
+        if '--i' in params:
+            params = []
+            for index, iarg in enumerate(contract.Code.ParameterList):
+                params.append(gather_param(index, iarg))
+            params.reverse()
+
+        print("no parse addresss??? %s " % parse_addresses)
         sb = ScriptBuilder()
 
         for p in params:
 
             if parse_params:
-                item = parse_param(p, wallet)
+                item = parse_param(p, wallet, parse_addr=parse_addresses)
             else:
                 item = p
             if type(item) is list:
                 item.reverse()
                 listlength = len(item)
                 for listitem in item:
-                    subitem = parse_param(listitem, wallet)
+                    subitem = parse_param(listitem, wallet, parse_addr=parse_addresses)
                     if type(subitem) is list:
                         subitem.reverse()
                         for listitem2 in subitem:
-                            subsub = parse_param(listitem2, wallet)
+                            subsub = parse_param(listitem2, wallet, parse_addr=parse_addresses)
                             sb.push(subsub)
                         sb.push(len(subitem))
                         sb.Emit(PACK)
@@ -420,21 +428,29 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         shash = contract_state.Code.ScriptHash()
 
         invoke_args, neo_to_attach, gas_to_attach = get_asset_attachments(invoke_args)
+        invoke_args, no_parse_addresses = get_parse_addresses(invoke_args)
+
         invoke_args.reverse()
+
+        if '--i' in invoke_args:
+            invoke_args = []
+            for index, iarg in enumerate(contract_state.Code.ParameterList):
+                invoke_args.append(gather_param(index, iarg))
+            invoke_args.reverse()
 
         sb = ScriptBuilder()
 
         for p in invoke_args:
-            item = parse_param(p, wallet)
+            item = parse_param(p, wallet, parse_addr=no_parse_addresses)
             if type(item) is list:
                 item.reverse()
                 listlength = len(item)
                 for listitem in item:
-                    subitem = parse_param(listitem, wallet)
+                    subitem = parse_param(listitem, wallet, parse_addr=no_parse_addresses)
                     if type(subitem) is list:
                         subitem.reverse()
                         for listitem2 in subitem:
-                            subsub = parse_param(listitem2, wallet)
+                            subsub = parse_param(listitem2, wallet, parse_addr=no_parse_addresses)
                             sb.push(subsub)
                         sb.push(len(subitem))
                         sb.Emit(PACK)
