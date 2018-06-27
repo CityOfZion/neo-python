@@ -10,12 +10,11 @@ import logging
 import sys
 from time import sleep
 from logzero import logger
-from prompt_toolkit import prompt
-from prompt_toolkit.contrib.completers import WordCompleter
+from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
-from prompt_toolkit.shortcuts import print_tokens
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
+from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
+from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.styles import Style
 from twisted.internet import reactor, task
 
 from neo import __version__
@@ -162,20 +161,24 @@ class PromptInterface:
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
 
-        self.token_style = style_from_dict({
-            Token.Command: preferences.token_style['Command'],
-            Token.Neo: preferences.token_style['Neo'],
-            Token.Default: preferences.token_style['Default'],
-            Token.Number: preferences.token_style['Number'],
+        self.token_style = Style.from_dict({
+            "command": preferences.token_style['Command'],
+            "neo": preferences.token_style['Neo'],
+            "default": preferences.token_style['Default'],
+            "number": preferences.token_style['Number'],
         })
 
     def get_bottom_toolbar(self, cli=None):
         out = []
         try:
-            out = [(Token.Command, '[%s] Progress: ' % settings.net_name),
-                   (Token.Number, str(Blockchain.Default().Height + 1)),
-                   (Token.Neo, '/'),
-                   (Token.Number, str(Blockchain.Default().HeaderHeight + 1))]
+            # Note: not sure if prompt-toolkit still supports foreground colors, couldn't get it to work
+            # out = [("class:command", '[%s] Progress: ' % settings.net_name),
+            #        ("class:number", str(Blockchain.Default().Height + 1)),
+            #        ("class:neo", '/'),
+            #        ("class:number", str(Blockchain.Default().HeaderHeight + 1))]
+            return "[%s] Progress: %s/%s" % (settings.net_name,
+                                             str(Blockchain.Default().Height + 1),
+                                             str(Blockchain.Default().HeaderHeight + 1))
         except Exception as e:
             pass
 
@@ -217,8 +220,8 @@ class PromptInterface:
     def help(self):
         tokens = []
         for c in self.commands:
-            tokens.append((Token.Command, "%s\n" % c))
-        print_tokens(tokens, self.token_style)
+            tokens.append(("class:command", "%s\n" % c))
+        print_formatted_text(FormattedText(tokens), style=self.token_style)
 
     def do_open(self, arguments):
         if self.Wallet:
@@ -605,15 +608,15 @@ class PromptInterface:
         out += "Time elapsed %s mins\n" % mins
         out += "Blocks per min %s \n" % bpm
         out += "TPS: %s \n" % tps
-        tokens = [(Token.Number, out)]
-        print_tokens(tokens, self.token_style)
+        tokens = [("class:number", out)]
+        print_formatted_text(FormattedText(tokens), self.token_style)
 
     def show_nodes(self):
         if len(NodeLeader.Instance().Peers) > 0:
             out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
             for peer in NodeLeader.Instance().Peers:
                 out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
-            print_tokens([(Token.Number, out)], self.token_style)
+            print_formatted_text(FormattedText([("class:number", out)]), self.token_style)
         else:
             print("Not connected yet\n")
 
@@ -626,8 +629,8 @@ class PromptInterface:
             if block is not None:
 
                 bjson = json.dumps(block.ToJson(), indent=4)
-                tokens = [(Token.Number, bjson)]
-                print_tokens(tokens, self.token_style)
+                tokens = [("class:number", bjson)]
+                print_formatted_text(FormattedText(tokens), self.token_style)
                 print('\n')
                 if txarg and 'tx' in txarg:
 
@@ -660,8 +663,8 @@ class PromptInterface:
                     jsn['height'] = height
                     jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
                                        Blockchain.Default().GetAllUnspent(txid)]
-                    tokens = [(Token.Command, json.dumps(jsn, indent=4))]
-                    print_tokens(tokens, self.token_style)
+                    tokens = [("class:command", json.dumps(jsn, indent=4))]
+                    print_formatted_text(FormattedText(tokens), self.token_style)
                     print('\n')
             except Exception as e:
                 print("Could not find transaction from args: %s (%s)" % (e, args))
@@ -676,8 +679,8 @@ class PromptInterface:
 
             if account is not None:
                 bjson = json.dumps(account.ToJson(), indent=4)
-                tokens = [(Token.Number, bjson)]
-                print_tokens(tokens, self.token_style)
+                tokens = [("class:number", bjson)]
+                print_formatted_text(FormattedText(tokens), self.token_style)
                 print('\n')
             else:
                 print("Account %s not found" % item)
@@ -695,8 +698,8 @@ class PromptInterface:
                 print("Found %s results for %s" % (len(results), query))
                 for asset in results:
                     bjson = json.dumps(asset.ToJson(), indent=4)
-                    tokens = [(Token.Number, bjson)]
-                    print_tokens(tokens, self.token_style)
+                    tokens = [("class:number", bjson)]
+                    print_formatted_text(FormattedText(tokens), self.token_style)
                     print('\n')
 
                 return
@@ -705,8 +708,8 @@ class PromptInterface:
 
             if asset is not None:
                 bjson = json.dumps(asset.ToJson(), indent=4)
-                tokens = [(Token.Number, bjson)]
-                print_tokens(tokens, self.token_style)
+                tokens = [("class:number", bjson)]
+                print_formatted_text(FormattedText(tokens), self.token_style)
                 print('\n')
             else:
                 print("Asset %s not found" % item)
@@ -729,8 +732,8 @@ class PromptInterface:
                     print("Found %s results for %s" % (len(contracts), query))
                     for contract in contracts:
                         bjson = json.dumps(contract.ToJson(), indent=4)
-                        tokens = [(Token.Number, bjson)]
-                        print_tokens(tokens, self.token_style)
+                        tokens = [("class:number", bjson)]
+                        print_formatted_text(FormattedText(tokens), self.token_style)
                         print('\n')
                 else:
                     print("Please specify a search query")
@@ -741,8 +744,8 @@ class PromptInterface:
                     contract.DetermineIsNEP5()
                     jsn = contract.ToJson()
                     bjson = json.dumps(jsn, indent=4)
-                    tokens = [(Token.Number, bjson)]
-                    print_tokens(tokens, self.token_style)
+                    tokens = [("class:number", bjson)]
+                    print_formatted_text(FormattedText(tokens), self.token_style)
                     print('\n')
         else:
             print("Please specify a contract")
@@ -831,7 +834,7 @@ class PromptInterface:
         totalmb = total / (1024 * 1024)
         out = "Total: %s MB\n" % totalmb
         out += "Total buffers: %s\n" % StreamManager.TotalBuffers()
-        print_tokens([(Token.Number, out)], self.token_style)
+        print_formatted_text(FormattedText([("class:number", out)]), self.token_style)
 
     def handle_debug_storage(self, args):
         what = get_arg(args)
@@ -913,22 +916,23 @@ class PromptInterface:
 
 #        Blockchain.Default().PersistBlocks()
 
-        tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
-                  (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
+        tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
+                  ("class:command", '\'help\' '), ("class:default", 'to get started')]
 
-        print_tokens(tokens, self.token_style)
+        print_formatted_text(FormattedText(tokens), style=self.token_style)
         print('\n')
 
-        while self.go_on:
-
-            try:
-                result = prompt("neo> ",
+        session = PromptSession("neo> ",
                                 completer=self.get_completer(),
                                 history=self.history,
-                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                bottom_toolbar=self.get_bottom_toolbar,
                                 style=self.token_style,
                                 refresh_interval=3
                                 )
+        while self.go_on:
+
+            try:
+                result = session.prompt()
             except EOFError:
                 # Control-D pressed: quit
                 return self.quit()
