@@ -185,36 +185,3 @@ class ContractParameter:
             param.Value = val
 
         return param
-
-    @staticmethod
-    def FromStringWithType(type, value):
-
-        param = ContractParameter(type=type, value=None)
-
-        if type == ContractParameterType.Signature or type == ContractParameterType.ByteArray:
-            param.Value = bytearray.fromhex(value)
-
-        elif type == ContractParameterType.Boolean:
-            param.Value = bool(value)
-
-        elif type == ContractParameterType.Integer:
-            param.Value = int(value)
-
-        elif type == ContractParameterType.Hash160:
-            param.Value = UInt160.ParseString(value)
-
-        elif type == ContractParameterType.Hash256:
-            param.Value = UInt256.ParseString(value)
-
-        # @TODO Not sure if this is working...
-        elif type == ContractParameterType.PublicKey:
-            param.Value = ECDSA.decode_secp256r1(value).G
-
-        elif type == ContractParameterType.String:
-            param.Value = str(value)
-
-        elif type == ContractParameterType.Array:
-            val = [ContractParameter.FromJson(item) for item in value]
-            param.Value = val
-
-        return param

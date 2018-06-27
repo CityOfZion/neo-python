@@ -11,10 +11,6 @@ from neo.contrib.nex.withdraw import WithdrawAll, WithdrawOne, PrintHolds, \
     CleanupCompletedHolds, ShowCompletedHolds, RequestWithdrawFrom, DeleteHolds
 from neo.Settings import settings
 import os
-import json
-
-
-settings.log_smart_contract_events = True
 
 
 class WithdrawWalletTestCase(WalletFixtureTestCase):
