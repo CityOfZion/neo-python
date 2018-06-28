@@ -301,16 +301,21 @@ def string_from_fixed8(amount, decimals):
     return amount_str
 
 
-def gather_param(index, param_type):
-
+def get_input_prompt(message):
     from neo.bin.prompt import PromptInterface
+
+    result = prompt(message,
+                    completer=PromptInterface.prompt_completer,
+                    history=PromptInterface.history)
+    return result
+
+
+def gather_param(index, param_type):
 
     ptype = ContractParameterType(param_type)
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
 
-    result = prompt(prompt_message,
-                    completer=PromptInterface.prompt_completer,
-                    history=PromptInterface.history)
+    result = get_input_prompt(prompt_message)
 
     try:
         if ptype == ContractParameterType.String:
@@ -322,12 +327,10 @@ def gather_param(index, param_type):
         elif ptype == ContractParameterType.PublicKey:
             return ECDSA.decode_secp256r1(result).G
         elif ptype == ContractParameterType.ByteArray:
-            parsed = eval(result, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes, 'str': str}}, {})
-            if isinstance(parsed, str):
-                if len(parsed) == 34 and parsed[0] == 'A':
-                    return Helper.AddrStrToScriptHash(parsed).Data
-                return parsed.encode('utf-8')
-            return parsed
+            if isinstance(result, str) and len(result) == 34 and result[0] == 'A':
+                return Helper.AddrStrToScriptHash(result).Data
+
+            return eval(result, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes, 'str': str}}, {})
 
         elif ptype == ContractParameterType.Array:
             return eval(result)
@@ -335,6 +338,6 @@ def gather_param(index, param_type):
             raise Exception("Unknown param type %s " % ptype.name)
     except Exception as e:
 
-        print("Could not parse param %s as %s " % (result, ptype))
+        print("Could not parse param %s as %s : %s " % (result, ptype, e))
 
     return None
