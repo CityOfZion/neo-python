@@ -19,7 +19,7 @@ from twisted.internet import reactor, task
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
-from neo.SmartContract.ContractParameter import ContractParameter,ContractParameterType
+from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
 from neo.Wallets.utils import to_aes_key

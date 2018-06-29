@@ -287,7 +287,11 @@ class ByteArray(StackItem):
             return binascii.unhexlify(self._value).decode('utf-8')
         except Exception as e:
             pass
-        return self._value
+        try:
+            return self._value.decode('utf-8')
+        except Exception as e:
+            pass
+        return self._value.hex()
 
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.ByteArray)
@@ -503,7 +507,7 @@ class Map(StackItem, CollectionMixin):
             val.Serialize(writer)
 
     def GetString(self):
-        return dict((k.GetString(), v.GetString()) for k,v in self._dict.items())
+        return dict((k.GetString(), v.GetString()) for k, v in self._dict.items())
 
     def GetByteArray(self):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))
