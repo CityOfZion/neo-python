@@ -38,6 +38,7 @@ from prompt_toolkit import prompt
 from neocore.Cryptography.ECCurve import ECDSA
 
 from neo.VM.OpCode import PACK
+from prompt_toolkit.shortcuts import PromptSession
 
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
@@ -163,7 +164,6 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
                 params.append(gather_param(index, iarg))
             params.reverse()
 
-        print("no parse addresss??? %s " % parse_addresses)
         sb = ScriptBuilder()
 
         for p in params:
@@ -585,7 +585,7 @@ def gather_signatures(context, itx, owners):
         next_addr = scripthash_to_address(next_script.Data)
         try:
             print("\n*******************\n")
-            owner_input = prompt('Public Key and Signature for %s> ' % next_addr)
+            owner_input = PromptSession().prompt('Public Key and Signature for %s> ' % next_addr)
             items = owner_input.split(' ')
             pubkey = ECDSA.decode_secp256r1(items[0]).G
             sig = items[1]

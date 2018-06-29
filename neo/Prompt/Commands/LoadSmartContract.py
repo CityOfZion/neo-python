@@ -11,6 +11,7 @@ from neocore.Cryptography.Crypto import Crypto
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
 from neocore.BigInteger import BigInteger
+from prompt_toolkit.shortcuts import PromptSession
 
 
 def ImportContractAddr(wallet, args):
@@ -146,31 +147,18 @@ def GatherContractDetails(function_code, prompter):
     email = None
     description = None
 
+    session = PromptSession(completer=prompter.get_completer(), bottom_toolbar=prompter.get_bottom_toolbar, style=prompter.token_style)
+
     print("Please fill out the following contract details:")
-    name = prompt("[Contract Name] > ",
-                  completer=prompter.get_completer(),
-                  get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                  style=prompter.token_style)
+    name = session.prompt("[Contract Name] > ")
 
-    version = prompt("[Contract Version] > ",
-                     completer=prompter.get_completer(),
-                     get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                     style=prompter.token_style)
+    version = session.prompt("[Contract Version] > ")
 
-    author = prompt("[Contract Author] > ",
-                    completer=prompter.get_completer(),
-                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                    style=prompter.token_style)
+    author = session.prompt("[Contract Author] > ")
 
-    email = prompt("[Contract Email] > ",
-                   completer=prompter.get_completer(),
-                   get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                   style=prompter.token_style)
+    email = session.prompt("[Contract Email] > ")
 
-    description = prompt("[Contract Description] > ",
-                         completer=prompter.get_completer(),
-                         get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                         style=prompter.token_style)
+    description = session.prompt("[Contract Description] > ")
 
     print("Creating smart contract....")
     print("                 Name: %s " % name)

@@ -17,6 +17,7 @@ from twisted.internet import reactor
 
 import json
 import pdb
+from prompt_toolkit.shortcuts import PromptSession
 
 
 def PrintHolds(wallet):
@@ -116,7 +117,7 @@ def RequestWithdrawFrom(wallet, asset_id, contract_hash, to_addr, amount, requir
 
             print("Enter your password to complete this request")
 
-            passwd = prompt("[Password]> ", is_password=True)
+            passwd = PromptSession().prompt("[Password]> ", is_password=True)
 
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
@@ -170,7 +171,7 @@ def CleanupCompletedHolds(wallet, require_password=True):
 
             print("Enter your password to complete this request")
 
-            passwd = prompt("[Password]> ", is_password=True)
+            passwd = PromptSession().prompt("[Password]> ", is_password=True)
 
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
@@ -215,7 +216,7 @@ def CancelWithdrawalHolds(wallet, contract_hash, require_password=True):
 
             print("Enter your password to complete this request")
 
-            passwd = prompt("[Password]> ", is_password=True)
+            passwd = PromptSession().prompt("[Password]> ", is_password=True)
 
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
@@ -299,7 +300,7 @@ def WithdrawAll(wallet, require_password=True):
 
         print("Enter your password to complete this request")
 
-        passwd = prompt("[Password]> ", is_password=True)
+        passwd = PromptSession().prompt("[Password]> ", is_password=True)
 
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
@@ -331,7 +332,7 @@ def WithdrawOne(wallet, require_password=True):
 
             print("Enter your password to complete this request")
 
-            passwd = prompt("[Password]> ", is_password=True)
+            passwd = PromptSession().prompt("[Password]> ", is_password=True)
 
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")

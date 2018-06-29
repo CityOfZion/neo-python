@@ -6,6 +6,7 @@ from neo.Core.Helper import Helper
 from neocore.KeyPair import KeyPair
 from neo.SmartContract.Contract import Contract
 from neocore.Cryptography.Crypto import Crypto
+from prompt_toolkit.shortcuts import PromptSession
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
 
         if args.wallet_file:
 
-            passwd = prompt('[Wallet password]> ', is_password=True)
+            passwd = PromptSession().prompt('[Wallet password]> ', is_password=True)
             wallet = UserWallet.Open(args.wallet_file, to_aes_key(passwd))
 
             contract = wallet.GetDefaultContract()
@@ -41,8 +42,8 @@ def main():
 
         elif args.nep2:
 
-            nep2_key = prompt('[nep2 key]> ', is_password=True)
-            nep2_passwd = prompt("[nep2 key password]> ", is_password=True)
+            nep2_key = PromptSession().prompt('[nep2 key]> ', is_password=True)
+            nep2_passwd = PromptSession().prompt("[nep2 key password]> ", is_password=True)
 
             prikey = KeyPair.PrivateKeyFromNEP2(nep2_key, nep2_passwd)
             keypair = KeyPair(priv_key=prikey)

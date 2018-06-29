@@ -145,7 +145,7 @@ class TestInputParser(TestCase):
         self.assertEqual(params, ['a', 'b', 'c'])
         self.assertTrue(result)
 
-        params = ['a', 'b', 'c', '--no-parse']
+        params = ['a', 'b', 'c', '--no-parse-addr']
 
         params, result = Utils.get_parse_addresses(params)
 

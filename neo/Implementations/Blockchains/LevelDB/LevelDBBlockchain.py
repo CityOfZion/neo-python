@@ -36,6 +36,7 @@ from neo.EventHub import events
 
 
 from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import PromptSession
 
 
 class LevelDBBlockchain(Blockchain):
@@ -195,7 +196,7 @@ class LevelDBBlockchain(Blockchain):
             logger.warning("Database schema has changed from %s to %s.\n" % (version, self._sysversion))
             logger.warning("You must either resync from scratch, or use the np-bootstrap command to bootstrap the chain.")
 
-            res = prompt("Type 'continue' to erase your current database and sync from new. Otherwise this program will exit:\n> ")
+            res = PromptSession().prompt("Type 'continue' to erase your current database and sync from new. Otherwise this program will exit:\n> ")
             if res == 'continue':
 
                 with self._db.write_batch() as wb:

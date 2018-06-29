@@ -13,6 +13,7 @@ from prompt_toolkit import prompt
 import binascii
 import json
 import math
+from prompt_toolkit.shortcuts import PromptSession
 
 
 def DeleteAddress(prompter, wallet, addr):
@@ -173,7 +174,7 @@ def ClaimGas(wallet, require_password=True, args=None):
     if require_password:
         print("Enter your password to complete this claim")
 
-        passwd = prompt("[Password]> ", is_password=True)
+        passwd = PromptSession().prompt("[Password]> ", is_password=True)
 
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")

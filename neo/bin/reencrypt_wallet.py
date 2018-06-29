@@ -9,6 +9,7 @@ import hashlib
 import argparse
 import os
 from shutil import copyfile
+from prompt_toolkit.shortcuts import PromptSession
 
 
 def copy_wallet(path):
@@ -86,8 +87,8 @@ def main():
         print('Wallet file not found')
         return
 
-    password = prompt("[new password]> ", is_password=True)
-    password_confirmation = prompt("[new password again]> ", is_password=True)
+    password = PromptSession().prompt("[new password]> ", is_password=True)
+    password_confirmation = PromptSession().prompt("[new password again]> ", is_password=True)
 
     if password != password_confirmation or len(password) < 10:
         print("Please provide matching passwords (>10 characters long)")

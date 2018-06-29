@@ -13,6 +13,7 @@ from decimal import Decimal
 from logzero import logger
 import json
 from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import PromptSession
 
 
 def get_asset_attachments(params):
@@ -134,8 +135,8 @@ def get_from_addr(params):
 
 
 def get_parse_addresses(params):
-    if '--no-parse' in params:
-        params.remove('--no-parse')
+    if '--no-parse-addr' in params:
+        params.remove('--no-parse-addr')
         return params, False
     return params, True
 
@@ -304,9 +305,9 @@ def string_from_fixed8(amount, decimals):
 def get_input_prompt(message):
     from neo.bin.prompt import PromptInterface
 
-    result = prompt(message,
-                    completer=PromptInterface.prompt_completer,
-                    history=PromptInterface.history)
+    result = PromptSession(completer=PromptInterface.prompt_completer,
+                           history=PromptInterface.history).prompt(message)
+
     return result
 
 

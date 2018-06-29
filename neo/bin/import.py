@@ -11,6 +11,7 @@ import os
 import shutil
 from tqdm import trange
 from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import PromptSession
 
 
 def main():
@@ -62,7 +63,7 @@ def main():
         print("Will import %s blocks to %s" % (total_blocks, target_dir))
         print("This will overwrite any data currently in %s and %s.\nType 'confirm' to continue" % (target_dir, notif_target_dir))
 
-        confirm = prompt("[confirm]> ", is_password=False)
+        confirm = PromptSession().prompt("[confirm]> ", is_password=False)
         if not confirm == 'confirm':
             print("Cancelled operation")
             return False

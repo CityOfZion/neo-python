@@ -110,8 +110,8 @@ class PromptInterface:
                 'config debug {on/off}',
                 'config sc-events {on/off}',
                 'config maxpeers {num_peers}',
-                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse (parse address strings to script hash bytearray)',
-                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse (parse address strings to script hash bytearray)',
+                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
+                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke}',
@@ -148,7 +148,7 @@ class PromptInterface:
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
-                'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse (parse address strings to script hash bytearray)',
+                'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
                 ]
 
@@ -242,7 +242,7 @@ class PromptInterface:
                     print("Wallet file not found")
                     return
 
-                passwd = prompt("[password]> ", is_password=True)
+                passwd = PromptSession().prompt("[password]> ", is_password=True)
                 password_key = to_aes_key(passwd)
 
                 try:
@@ -271,8 +271,8 @@ class PromptInterface:
                     print("File already exists")
                     return
 
-                passwd1 = prompt("[password]> ", is_password=True)
-                passwd2 = prompt("[password again]> ", is_password=True)
+                passwd1 = PromptSession().prompt("[password]> ", is_password=True)
+                passwd2 = PromptSession().prompt("[password again]> ", is_password=True)
 
                 if passwd1 != passwd2 or len(passwd1) < 10:
                     print("Please provide matching passwords that are at least 10 characters long")
@@ -359,7 +359,7 @@ class PromptInterface:
                 print("Please supply a valid NEP2 encrypted private key")
                 return
 
-            nep2_passwd = prompt("[key password]> ", is_password=True)
+            nep2_passwd = PromptSession().prompt("[key password]> ", is_password=True)
 
             try:
                 prikey = KeyPair.PrivateKeyFromNEP2(nep2_key, nep2_passwd)
@@ -411,7 +411,7 @@ class PromptInterface:
             if not address:
                 return print("Please specify an address")
 
-            passwd = prompt("[wallet password]> ", is_password=True)
+            passwd = PromptSession().prompt("[wallet password]> ", is_password=True)
             if not self.Wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
@@ -430,15 +430,15 @@ class PromptInterface:
             if not address:
                 return print("Please specify an address")
 
-            passwd = prompt("[wallet password]> ", is_password=True)
+            passwd = PromptSession().prompt("[wallet password]> ", is_password=True)
             if not self.Wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
-            nep2_passwd1 = prompt("[key password]> ", is_password=True)
+            nep2_passwd1 = PromptSession().prompt("[key password]> ", is_password=True)
             if len(nep2_passwd1) < 10:
                 return print("Please provide a password with at least 10 characters")
 
-            nep2_passwd2 = prompt("[key password again]> ", is_password=True)
+            nep2_passwd2 = PromptSession().prompt("[key password again]> ", is_password=True)
             if nep2_passwd1 != nep2_passwd2:
                 return print("Passwords do not match")
 
@@ -780,7 +780,7 @@ class PromptInterface:
 
                 tx.Attributes = invoke_attrs
 
-                passwd = prompt("[password]> ", is_password=True)
+                passwd = PromptSession().prompt("[password]> ", is_password=True)
                 if not self.Wallet.ValidatePassword(passwd):
                     return print("Incorrect password")
 
@@ -822,7 +822,7 @@ class PromptInterface:
                         "-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("Enter your password to continue and deploy this contract")
 
-                    passwd = prompt("[password]> ", is_password=True)
+                    passwd = PromptSession().prompt("[password]> ", is_password=True)
                     if not self.Wallet.ValidatePassword(passwd):
                         return print("Incorrect password")
 
@@ -928,14 +928,16 @@ class PromptInterface:
         print_formatted_text(FormattedText(tokens), style=self.token_style)
         print('\n')
 
-        session = PromptSession("neo> ",
-                                completer=self.get_completer(),
-                                history=self.history,
-                                bottom_toolbar=self.get_bottom_toolbar,
-                                style=self.token_style,
-                                refresh_interval=3
-                                )
         while self.go_on:
+
+            session = PromptSession("neo> ",
+                                    completer=self.get_completer(),
+                                    history=self.history,
+                                    bottom_toolbar=self.get_bottom_toolbar,
+                                    style=self.token_style,
+                                    refresh_interval=3,
+                                    mouse_support=True
+                                    )
 
             try:
                 result = session.prompt()

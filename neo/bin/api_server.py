@@ -60,6 +60,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings
+from prompt_toolkit.shortcuts import PromptSession
 
 
 # Logfile default settings (only used if --logfile arg is used)
@@ -196,7 +197,7 @@ def main():
 
         passwd = os.environ.get('NEO_PYTHON_JSONRPC_WALLET_PASSWORD', None)
         if not passwd:
-            passwd = prompt("[password]> ", is_password=True)
+            passwd = PromptSession().prompt("[password]> ", is_password=True)
 
         password_key = to_aes_key(passwd)
         try:
