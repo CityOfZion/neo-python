@@ -609,14 +609,14 @@ class PromptInterface:
         out += "Blocks per min %s \n" % bpm
         out += "TPS: %s \n" % tps
         tokens = [("class:number", out)]
-        print_formatted_text(FormattedText(tokens), self.token_style)
+        print_formatted_text(FormattedText(tokens), style=self.token_style)
 
     def show_nodes(self):
         if len(NodeLeader.Instance().Peers) > 0:
             out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
             for peer in NodeLeader.Instance().Peers:
                 out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
-            print_formatted_text(FormattedText([("class:number", out)]), self.token_style)
+            print_formatted_text(FormattedText([("class:number", out)]), style=self.token_style)
         else:
             print("Not connected yet\n")
 
@@ -630,7 +630,7 @@ class PromptInterface:
 
                 bjson = json.dumps(block.ToJson(), indent=4)
                 tokens = [("class:number", bjson)]
-                print_formatted_text(FormattedText(tokens), self.token_style)
+                print_formatted_text(FormattedText(tokens), style=self.token_style)
                 print('\n')
                 if txarg and 'tx' in txarg:
 
@@ -664,7 +664,7 @@ class PromptInterface:
                     jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
                                        Blockchain.Default().GetAllUnspent(txid)]
                     tokens = [("class:command", json.dumps(jsn, indent=4))]
-                    print_formatted_text(FormattedText(tokens), self.token_style)
+                    print_formatted_text(FormattedText(tokens), style=self.token_style)
                     print('\n')
             except Exception as e:
                 print("Could not find transaction from args: %s (%s)" % (e, args))
@@ -680,7 +680,7 @@ class PromptInterface:
             if account is not None:
                 bjson = json.dumps(account.ToJson(), indent=4)
                 tokens = [("class:number", bjson)]
-                print_formatted_text(FormattedText(tokens), self.token_style)
+                print_formatted_text(FormattedText(tokens), style=self.token_style)
                 print('\n')
             else:
                 print("Account %s not found" % item)
@@ -699,7 +699,7 @@ class PromptInterface:
                 for asset in results:
                     bjson = json.dumps(asset.ToJson(), indent=4)
                     tokens = [("class:number", bjson)]
-                    print_formatted_text(FormattedText(tokens), self.token_style)
+                    print_formatted_text(FormattedText(tokens), style=self.token_style)
                     print('\n')
 
                 return
@@ -709,7 +709,7 @@ class PromptInterface:
             if asset is not None:
                 bjson = json.dumps(asset.ToJson(), indent=4)
                 tokens = [("class:number", bjson)]
-                print_formatted_text(FormattedText(tokens), self.token_style)
+                print_formatted_text(FormattedText(tokens), style=self.token_style)
                 print('\n')
             else:
                 print("Asset %s not found" % item)
@@ -733,7 +733,7 @@ class PromptInterface:
                     for contract in contracts:
                         bjson = json.dumps(contract.ToJson(), indent=4)
                         tokens = [("class:number", bjson)]
-                        print_formatted_text(FormattedText(tokens), self.token_style)
+                        print_formatted_text(FormattedText(tokens), style=self.token_style)
                         print('\n')
                 else:
                     print("Please specify a search query")
@@ -745,7 +745,7 @@ class PromptInterface:
                     jsn = contract.ToJson()
                     bjson = json.dumps(jsn, indent=4)
                     tokens = [("class:number", bjson)]
-                    print_formatted_text(FormattedText(tokens), self.token_style)
+                    print_formatted_text(FormattedText(tokens), style=self.token_style)
                     print('\n')
         else:
             print("Please specify a contract")
@@ -834,7 +834,7 @@ class PromptInterface:
         totalmb = total / (1024 * 1024)
         out = "Total: %s MB\n" % totalmb
         out += "Total buffers: %s\n" % StreamManager.TotalBuffers()
-        print_formatted_text(FormattedText([("class:number", out)]), self.token_style)
+        print_formatted_text(FormattedText([("class:number", out)]), style=self.token_style)
 
     def handle_debug_storage(self, args):
         what = get_arg(args)
