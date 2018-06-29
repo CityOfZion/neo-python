@@ -15,6 +15,7 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
+from prompt_toolkit import prompt
 from twisted.internet import reactor, task
 
 from neo import __version__
