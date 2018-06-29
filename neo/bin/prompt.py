@@ -936,7 +936,6 @@ class PromptInterface:
                                     bottom_toolbar=self.get_bottom_toolbar,
                                     style=self.token_style,
                                     refresh_interval=3,
-                                    mouse_support=True
                                     )
 
             try:
