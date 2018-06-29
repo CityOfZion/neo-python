@@ -329,10 +329,8 @@ def gather_param(index, param_type):
         elif ptype == ContractParameterType.ByteArray:
             if isinstance(result, str) and len(result) == 34 and result[0] == 'A':
                 return Helper.AddrStrToScriptHash(result).Data
-
             res = eval(result, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
             if isinstance(res, bytes):
-                print("CONVERTING BYTE STRING TO BYTEARRAY")
                 return bytearray(res)
             return res
 

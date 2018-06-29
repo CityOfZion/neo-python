@@ -117,7 +117,8 @@ class ContractParameter:
 
             res = []
             for item in self.Value:
-                res.append(item.ToJson(auto_hex=auto_hex))
+                if item:
+                    res.append(item.ToJson(auto_hex=auto_hex))
             jsn['value'] = res
 
         elif self.Type == ContractParameterType.InteropInterface:

@@ -1,4 +1,4 @@
-
+import binascii
 from logzero import logger
 
 from neo.VM.Mixins import EquatableMixin
@@ -284,17 +284,17 @@ class ByteArray(StackItem):
 
     def GetString(self):
         try:
-            return self._value.decode('utf-8')
+            return binascii.unhexlify(self._value).decode('utf-8')
         except Exception as e:
             pass
-        return str(self)
+        return self._value
 
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.ByteArray)
         writer.WriteVarBytes(self._value)
 
     def __str__(self):
-        return self._value.hex()
+        return self.GetString()
 
 #
 
@@ -483,6 +483,9 @@ class Map(StackItem, CollectionMixin):
     def __eq__(self, other):
         return self.Equals(other)
 
+    def __str__(self):
+        return self.GetString()
+
     def GetBoolean(self):
         return True
 
@@ -498,6 +501,9 @@ class Map(StackItem, CollectionMixin):
         for key, val in self._dict.items():
             key.Serialize(writer)
             val.Serialize(writer)
+
+    def GetString(self):
+        return dict((k.GetString(), v.GetString()) for k,v in self._dict.items())
 
     def GetByteArray(self):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))

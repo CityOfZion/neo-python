@@ -20,6 +20,7 @@ from twisted.internet import reactor, task
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
+from neo.SmartContract.ContractParameter import ContractParameter,ContractParameterType
 from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
 from neo.Wallets.utils import to_aes_key
@@ -760,11 +761,14 @@ class PromptInterface:
             tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
 
             if tx is not None and results is not None:
+
+                parameterized_results = [ContractParameter.ToParameter(item) for item in results]
+
                 print(
                     "\n-------------------------------------------------------------------------------------------------------------------------------------")
                 print("Test invoke successful")
                 print("Total operations: %s" % num_ops)
-                print("Results %s" % [str(item) for item in results])
+                print("Results %s" % [item.ToJson() for item in parameterized_results])
                 print("Invoke TX GAS cost: %s" % (tx.Gas.value / Fixed8.D))
                 print("Invoke TX fee: %s" % (fee.value / Fixed8.D))
                 print(
