@@ -239,7 +239,7 @@ class PromptInterface:
                     print("Wallet file not found")
                     return
 
-                passwd = self.prompt("[password]> ", is_password=True)
+                passwd = prompt("[password]> ", is_password=True)
                 password_key = to_aes_key(passwd)
 
                 try:
@@ -268,8 +268,8 @@ class PromptInterface:
                     print("File already exists")
                     return
 
-                passwd1 = self.prompt("[password]> ", is_password=True)
-                passwd2 = self.prompt("[password again]> ", is_password=True)
+                passwd1 = prompt("[password]> ", is_password=True)
+                passwd2 = prompt("[password again]> ", is_password=True)
 
                 if passwd1 != passwd2 or len(passwd1) < 10:
                     print("Please provide matching passwords that are at least 10 characters long")
@@ -356,7 +356,7 @@ class PromptInterface:
                 print("Please supply a valid NEP2 encrypted private key")
                 return
 
-            nep2_passwd = self.prompt("[key password]> ", is_password=True)
+            nep2_passwd = prompt("[key password]> ", is_password=True)
 
             try:
                 prikey = KeyPair.PrivateKeyFromNEP2(nep2_key, nep2_passwd)
@@ -408,7 +408,7 @@ class PromptInterface:
             if not address:
                 return print("Please specify an address")
 
-            passwd = self.prompt("[wallet password]> ", is_password=True)
+            passwd = prompt("[wallet password]> ", is_password=True)
             if not self.Wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
@@ -427,15 +427,15 @@ class PromptInterface:
             if not address:
                 return print("Please specify an address")
 
-            passwd = self.prompt("[wallet password]> ", is_password=True)
+            passwd = prompt("[wallet password]> ", is_password=True)
             if not self.Wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
-            nep2_passwd1 = self.prompt("[key password]> ", is_password=True)
+            nep2_passwd1 = prompt("[key password]> ", is_password=True)
             if len(nep2_passwd1) < 10:
                 return print("Please provide a password with at least 10 characters")
 
-            nep2_passwd2 = self.prompt("[key password again]> ", is_password=True)
+            nep2_passwd2 = prompt("[key password again]> ", is_password=True)
             if nep2_passwd1 != nep2_passwd2:
                 return print("Passwords do not match")
 
@@ -774,7 +774,7 @@ class PromptInterface:
 
                 tx.Attributes = invoke_attrs
 
-                passwd = self.prompt("[password]> ", is_password=True)
+                passwd = prompt("[password]> ", is_password=True)
                 if not self.Wallet.ValidatePassword(passwd):
                     return print("Incorrect password")
 
@@ -816,7 +816,7 @@ class PromptInterface:
                         "-------------------------------------------------------------------------------------------------------------------------------------\n")
                     print("Enter your password to continue and deploy this contract")
 
-                    passwd = self.prompt("[password]> ", is_password=True)
+                    passwd = prompt("[password]> ", is_password=True)
                     if not self.Wallet.ValidatePassword(passwd):
                         return print("Incorrect password")
 
@@ -929,8 +929,6 @@ class PromptInterface:
                                 style=self.token_style,
                                 refresh_interval=3
                                 )
-        self.prompt = session.prompt
-
         while self.go_on:
 
             try:
