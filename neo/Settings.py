@@ -14,7 +14,7 @@ import sys
 import logzero
 import pip
 from neocore.Cryptography import Helper
-from neorpc.Client import RPCClient
+from neorpc.Client import RPCClient, NEORPCException
 from neorpc.Settings import settings as rpc_settings
 
 from neo import __version__
@@ -311,8 +311,10 @@ class SettingsHolder:
         """
         rpc_settings.setup(self.RPC_LIST)
         client = RPCClient()
-        version = client.get_version()
-        if not version:
+
+        try:
+            version = client.get_version()
+        except NEORPCException:
             raise PrivnetConnectionError("Error: private network container doesn't seem to be running, or RPC is not enabled.")
 
         print("Privatenet useragent '%s', nonce: %s" % (version["useragent"], version["nonce"]))
