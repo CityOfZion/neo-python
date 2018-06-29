@@ -6,7 +6,6 @@ from neo.Core.Helper import Helper
 from neocore.KeyPair import KeyPair
 from neo.SmartContract.Contract import Contract
 from neocore.Cryptography.Crypto import Crypto
-#from prompt_toolkit.shortcuts import PromptSession
 
 
 def main():
