@@ -235,5 +235,6 @@ def ImportMultiSigContractAddr(wallet, args):
         wallet.AddContract(verification_contract)
 
         print("Added multi-sig contract address %s to wallet" % address)
+        return address
 
     return 'Hello'
