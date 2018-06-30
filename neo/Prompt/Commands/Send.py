@@ -12,7 +12,6 @@ from neocore.Fixed8 import Fixed8
 import json
 from prompt_toolkit import prompt
 import traceback
-from prompt_toolkit.shortcuts import PromptSession
 
 
 def construct_and_send(prompter, wallet, arguments, prompt_password=True):
@@ -77,7 +76,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
             return False
 
         if prompt_password:
-            passwd = PromptSession().prompt("[Password]> ", is_password=True)
+            passwd = prompt("[Password]> ", is_password=True)
 
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")

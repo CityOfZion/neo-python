@@ -4,7 +4,6 @@ from neo.Wallets.NEP5Token import NEP5Token
 from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
-from prompt_toolkit.shortcuts import PromptSession
 
 
 def token_send(wallet, args, prompt_passwd=True):
@@ -48,7 +47,7 @@ def token_send_from(wallet, args, prompt_passwd=True):
                     print("Transfer fee: %s " % (fee.value / Fixed8.D))
                     print("-------------------------------------------------------------\n")
 
-                    passwd = PromptSession().prompt("[Password]> ", is_password=True)
+                    passwd = prompt("[Password]> ", is_password=True)
 
                     if not wallet.ValidatePassword(passwd):
                         print("incorrect password")
@@ -82,7 +81,7 @@ def token_approve_allowance(wallet, args, prompt_passwd=True):
             print("-------------------------------------------------------------\n")
 
             if prompt_passwd:
-                passwd = PromptSession().prompt("[Password]> ", is_password=True)
+                passwd = prompt("[Password]> ", is_password=True)
 
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
@@ -136,7 +135,7 @@ def token_mint(wallet, args, prompt_passwd=True):
         print("-------------------------------------------------------------\n")
 
         if prompt_passwd:
-            passwd = PromptSession().prompt("[Password]> ", is_password=True)
+            passwd = prompt("[Password]> ", is_password=True)
 
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
@@ -168,7 +167,7 @@ def token_crowdsale_register(wallet, args, prompt_passwd=True):
         print("-------------------------------------------------------------\n")
 
         if prompt_passwd:
-            passwd = PromptSession().prompt("[Password]> ", is_password=True)
+            passwd = prompt("[Password]> ", is_password=True)
 
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
@@ -198,7 +197,7 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
             print("-------------------------------------------------------------\n")
 
             if prompt_passwd:
-                passwd = PromptSession().prompt("[Password]> ", is_password=True)
+                passwd = prompt("[Password]> ", is_password=True)
 
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")

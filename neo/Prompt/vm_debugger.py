@@ -8,7 +8,6 @@ import pdb
 import dis
 import json
 from logzero import logger
-from prompt_toolkit.shortcuts import PromptSession
 
 
 class DebugContext:
@@ -112,7 +111,7 @@ class VMDebugger:
 
         while self.continue_debug:
             try:
-                result = PromptSession().prompt("[%s debug]> " % dbg_title)
+                result = prompt("[%s debug]> " % dbg_title)
             except EOFError:
                 # Control-D pressed: quit
                 self.continue_debug = False

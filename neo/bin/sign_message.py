@@ -41,8 +41,8 @@ def main():
 
         elif args.nep2:
 
-            nep2_key = PromptSession().prompt('[nep2 key]> ', is_password=True)
-            nep2_passwd = PromptSession().prompt("[nep2 key password]> ", is_password=True)
+            nep2_key = prompt('[nep2 key]> ', is_password=True)
+            nep2_passwd = prompt("[nep2 key password]> ", is_password=True)
 
             prikey = KeyPair.PrivateKeyFromNEP2(nep2_key, nep2_passwd)
             keypair = KeyPair(priv_key=prikey)
