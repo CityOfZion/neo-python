@@ -134,7 +134,7 @@ def get_from_addr(params):
 
 
 def get_parse_addresses(params):
-    if '--no-parses-addr' in params:
+    if '--no-parse-addr' in params:
         params.remove('--no-parse-addr')
         return params, False
     return params, True
