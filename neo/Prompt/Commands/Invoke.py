@@ -163,7 +163,6 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
                 params.append(gather_param(index, iarg))
             params.reverse()
 
-        print("no parse addresss??? %s " % parse_addresses)
         sb = ScriptBuilder()
 
         for p in params:
