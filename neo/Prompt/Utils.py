@@ -12,7 +12,7 @@ from neocore.Cryptography.ECCurve import ECDSA
 from decimal import Decimal
 from logzero import logger
 import json
-from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import PromptSession
 
 
 def get_asset_attachments(params):
@@ -304,10 +304,8 @@ def string_from_fixed8(amount, decimals):
 def get_input_prompt(message):
     from neo.bin.prompt import PromptInterface
 
-    result = prompt(message,
-                    completer=PromptInterface.prompt_completer,
-                    history=PromptInterface.history)
-    return result
+    return PromptSession(completer=PromptInterface.prompt_completer,
+                         history=PromptInterface.history).prompt(message)
 
 
 def gather_param(index, param_type):
@@ -341,5 +339,4 @@ def gather_param(index, param_type):
     except Exception as e:
 
         print("Could not parse param %s as %s : %s " % (result, ptype, e))
-
-    return None
+        return gather_param(index, param_type)
