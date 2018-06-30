@@ -308,7 +308,7 @@ def get_input_prompt(message):
                          history=PromptInterface.history).prompt(message)
 
 
-def gather_param(index, param_type):
+def gather_param(index, param_type, do_continue=True):
 
     ptype = ContractParameterType(param_type)
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
@@ -339,4 +339,5 @@ def gather_param(index, param_type):
     except Exception as e:
 
         print("Could not parse param %s as %s : %s " % (result, ptype, e))
-        return gather_param(index, param_type)
+        if do_continue:
+            return gather_param(index, param_type, do_continue)

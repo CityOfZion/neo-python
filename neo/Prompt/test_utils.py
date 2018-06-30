@@ -227,6 +227,6 @@ class TestInputParser(TestCase):
             self.assertEqual(result, ['a', 'b', 'c', [1, 3, 4], 'e'])
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c", [1, 3, 4], "e"') as fake_prompt:
-            result = Utils.gather_param(0, ContractParameterType.Array)
+            result = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
 
             self.assertEqual(result, None)

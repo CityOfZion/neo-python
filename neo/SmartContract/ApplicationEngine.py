@@ -27,6 +27,7 @@ from neo.Settings import settings
 
 
 class ApplicationEngine(ExecutionEngine):
+
     ratio = 100000
     gas_free = 10 * 100000000
     gas_amount = 0
@@ -34,6 +35,8 @@ class ApplicationEngine(ExecutionEngine):
     testMode = False
 
     Trigger = None
+
+    invocation_args = None
 
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)

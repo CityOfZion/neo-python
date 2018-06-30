@@ -522,12 +522,9 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             testMode=invocation_test_mode
         )
 
+        engine.invocation_args = invoke_args
         engine.LoadScript(itx.Script, False)
         engine.LoadDebugInfoForScriptHash(debug_map, shash.Data)
-
-        # call execute in its own blocking thread
-
-#        reactor.stop()
 
         i_success = engine.Execute()
 
