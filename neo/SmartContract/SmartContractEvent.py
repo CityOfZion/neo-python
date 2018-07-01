@@ -4,6 +4,7 @@ from neocore.UInt160 import UInt160
 from neocore.BigInteger import BigInteger
 from neocore.Cryptography.Crypto import Crypto
 from neo.IO.MemoryStream import StreamManager
+from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neocore.IO.Mixins import SerializableMixin
 import binascii
 from logzero import logger
@@ -50,7 +51,7 @@ class SmartContractEvent(SerializableMixin):
     CONTRACT_DESTROY = "SmartContract.Contract.Destroy"
 
     event_type = None
-    event_payload = None
+    event_payload = None  # type:ContractParameter
     contract_hash = None
     block_number = None
     tx_hash = None
@@ -61,6 +62,10 @@ class SmartContractEvent(SerializableMixin):
     token = None
 
     def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False, test_mode=False):
+
+        if event_payload and not isinstance(event_payload, ContractParameter):
+            raise Exception("Event payload must be ContractParameter")
+
         self.event_type = event_type
         self.event_payload = event_payload
         self.contract_hash = contract_hash
@@ -71,11 +76,11 @@ class SmartContractEvent(SerializableMixin):
         self.token = None
 
         if not self.event_payload:
-            self.event_payload = []
+            self.event_payload = ContractParameter(ContractParameterType.Array, value=[])
 
         if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
-            if len(self.event_payload) and isinstance(self.event_payload[0], ContractState):
-                self.contract = self.event_payload[0]
+            if self.event_payload.Type == ContractParameterType.InteropInterface:
+                self.contract = self.event_payload.Value
 
     def Serialize(self, writer):
         writer.WriteVarString(self.event_type.encode('utf-8'))
@@ -211,38 +216,47 @@ class NotifyEvent(SmartContractEvent):
 
         self.is_standard_notify = False
 
-        plen = len(self.event_payload)
-        if plen > 0:
-            self.notify_type = self.event_payload[0]
+        if self.event_payload.Type == ContractParameterType.Array and len(self.event_payload.Value) > 0:
+
+            payload = self.event_payload.Value
+            plen = len(payload)
+
+            self.notify_type = payload[0].Value
+
             empty = UInt160(data=bytearray(20))
             try:
                 if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE]:
-                    if self.event_payload[1] is None:
+                    if payload[1].Value is None:
                         self.addr_from = empty
                         logger.info("Using contract addr from address %s " % self.event_payload)
-                    elif self.event_payload[1] is False:
+                    elif payload[1].Value is False:
                         logger.info("Using contract addr from address %s " % self.event_payload)
                         self.addr_from = empty
                     else:
-                        self.addr_from = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
-                    self.addr_to = UInt160(data=self.event_payload[2]) if len(self.event_payload[2]) == 20 else empty
-                    self.amount = int(BigInteger.FromBytes(event_payload[3])) if isinstance(event_payload[3], bytes) else int(event_payload[3])
+                        self.addr_from = UInt160(data=payload[1].Value) if len(payload[1].Value) == 20 else empty
+                    self.addr_to = UInt160(data=payload[2].Value) if len(payload[2].Value) == 20 else empty
+                    self.amount = int(BigInteger.FromBytes(payload[3].Value)) if isinstance(payload[3].Value, (bytes, bytearray)) else int(payload[3].Value)
                     self.is_standard_notify = True
 
                 elif self.notify_type == NotifyType.REFUND and plen >= 3:  # Might have more arguments
-                    self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
-                    self.amount = int(BigInteger.FromBytes(event_payload[2])) if isinstance(event_payload[2], bytes) else int(event_payload[2])
+                    self.addr_to = UInt160(data=payload[1].Value) if len(payload[1].Value) == 20 else empty
+                    self.amount = int(BigInteger.FromBytes(payload[2].Value)) if isinstance(payload[2].Value, (bytes, bytearray)) else int(payload[2].Value)
                     self.addr_from = self.contract_hash
                     self.is_standard_notify = True
 
                 elif self.notify_type == NotifyType.MINT and plen == 3:
-                    self.addr_to = UInt160(data=self.event_payload[1]) if len(self.event_payload[1]) == 20 else empty
-                    self.amount = int(BigInteger.FromBytes(event_payload[2])) if isinstance(event_payload[2], bytes) else int(event_payload[2])
+                    self.addr_to = UInt160(data=payload[1].Value) if len(payload[1].Value) == 20 else empty
+                    self.amount = int(BigInteger.FromBytes(payload[2].Value)) if isinstance(payload[2].Value, (bytes, bytearray)) else int(payload[2].Value)
                     self.addr_from = self.contract_hash
                     self.is_standard_notify = True
 
             except Exception as e:
                 logger.info("Could not determine notify event: %s %s" % (e, self.event_payload))
+
+        elif self.event_payload.Type == ContractParameterType.String:
+            self.notify_type = self.event_payload.Value
+#        else:
+#            logger.debug("NOTIFY %s %s" % (self.event_payload.Type, self.event_payload.Value))
 
     def SerializePayload(self, writer):
 

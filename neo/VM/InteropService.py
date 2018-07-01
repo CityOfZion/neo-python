@@ -1,4 +1,4 @@
-
+import binascii
 from logzero import logger
 
 from neo.VM.Mixins import EquatableMixin
@@ -284,17 +284,21 @@ class ByteArray(StackItem):
 
     def GetString(self):
         try:
+            return binascii.unhexlify(self._value).decode('utf-8')
+        except Exception as e:
+            pass
+        try:
             return self._value.decode('utf-8')
         except Exception as e:
             pass
-        return str(self)
+        return self._value.hex()
 
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.ByteArray)
         writer.WriteVarBytes(self._value)
 
     def __str__(self):
-        return self._value.hex()
+        return self.GetString()
 
 #
 
@@ -483,6 +487,9 @@ class Map(StackItem, CollectionMixin):
     def __eq__(self, other):
         return self.Equals(other)
 
+    def __str__(self):
+        return self.GetString()
+
     def GetBoolean(self):
         return True
 
@@ -498,6 +505,9 @@ class Map(StackItem, CollectionMixin):
         for key, val in self._dict.items():
             key.Serialize(writer)
             val.Serialize(writer)
+
+    def GetString(self):
+        return dict((k.GetString(), v.GetString()) for k, v in self._dict.items())
 
     def GetByteArray(self):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))
@@ -549,46 +559,3 @@ class InteropService:
 
         engine.EvaluationStack.PushT(engine.EntryContext.ScriptHash())
         return True
-
-
-def stack_item_to_py(stack_item):
-    """
-    Helper to convert a StackItem subclass to the specific Python object.
-    eg. Integer(StackItem) -> int, or ByteArray(StackItem) -> bytes
-
-    Works also with Array(StackItem).
-
-    Args:
-        stack_item (object): the StackItem subclass
-
-    Returns:
-        object: The StackItem subclass converted to it's native Python representation.
-    """
-    if isinstance(stack_item, Array):
-        return [stack_item_to_py(item) for item in stack_item.GetArray()]
-
-    elif isinstance(stack_item, Boolean):
-        return stack_item.GetBoolean()
-
-    elif isinstance(stack_item, ByteArray):
-        return bytes(stack_item.GetByteArray())
-
-    elif isinstance(stack_item, Integer):
-        return stack_item.GetBigInteger()
-
-    elif isinstance(stack_item, ByteArray):
-        return stack_item.GetBigInteger()
-
-    elif isinstance(stack_item, InteropInterface):
-        return stack_item.GetInterface()
-
-    elif isinstance(stack_item, Struct):
-        return [stack_item_to_py(item) for item in stack_item.GetArray()]
-
-    elif isinstance(stack_item, Map):
-        return stack_item._dict
-
-    elif stack_item is None:
-        return None
-    else:
-        raise ValueError('Not supported %s %s' % (stack_item, type(stack_item)))

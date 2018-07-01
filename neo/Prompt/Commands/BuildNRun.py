@@ -32,7 +32,6 @@ def LoadAndRun(arguments, wallet):
 
             script = content
 
-            print("arguments.... %s " % arguments)
             DoRun(script, arguments, wallet, path, from_addr=from_addr)
 
     except Exception as e:
@@ -94,7 +93,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
             if tx is not None and result is not None:
                 if verbose:
                     print("\n-----------------------------------------------------------")
-                    print("Calling %s with arguments %s " % (path, i_args))
+                    print("Calling %s with arguments %s " % (path, [item for item in reversed(engine.invocation_args)]))
                     print("Test deploy invoke successful")
                     print("Used total of %s operations " % total_ops)
                     print("Result %s " % return_type_results)

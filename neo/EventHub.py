@@ -54,36 +54,9 @@ def on_sc_event(sc_event):
 
     if sc_event.test_mode:
         payload = sc_event.event_payload
-        if isinstance(sc_event.event_payload, list):
-            payload = []
-            for item in sc_event.event_payload:
-                if isinstance(item, list):
-                    for listitem in item:
-                        try:
-                            payload.append(json.dumps(listitem.ToJson(), indent=4))
-                        except Exception as e:
-                            payload.append(listitem)
-                else:
-                    try:
-                        payload.append(json.dumps(item.ToJson(), indent=4))
-                    except Exception as e:
-                        payload.append(item)
-        logger.info("[test_mode][%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, payload))
+
+        logger.info("[test_mode][%s] [%s] %s" % (sc_event.event_type, sc_event.contract_hash, payload.ToJson(auto_hex=False)))
     else:
         payload = sc_event.event_payload
-        if isinstance(sc_event.event_payload, list):
-            payload = []
-            for item in sc_event.event_payload:
-                if isinstance(item, list):
-                    for listitem in item:
-                        try:
-                            payload.append(json.dumps(listitem.ToJson(), indent=4))
-                        except Exception as e:
-                            payload.append(listitem)
-                else:
-                    try:
-                        payload.append(json.dumps(item.ToJson(), indent=4))
-                    except Exception as e:
-                        payload.append(item)
 
-        logger.info("[%s][%s] [%s] [tx %s] %s" % (sc_event.event_type, sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), payload))
+        logger.info("[%s][%s] [%s] [tx %s] %s" % (sc_event.event_type, sc_event.block_number, sc_event.contract_hash, sc_event.tx_hash.ToString(), payload.ToJson(auto_hex=False)))

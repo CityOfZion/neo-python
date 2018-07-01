@@ -1,6 +1,7 @@
 from unittest import TestCase
 from neo.Settings import settings
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
+from neo.SmartContract.ContractParameter import ContractParameterType, ContractParameter
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from uuid import uuid1
@@ -34,7 +35,7 @@ class NotificationDBTestCase(TestCase):
 
     def test_1_notify_should_not_persist(self):
 
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [], self.contract_hash, 99, self.event_tx, True, False)
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, ContractParameter(ContractParameterType.Array, []), self.contract_hash, 99, self.event_tx, True, False)
 
         ndb = NotificationDB.instance()
         ndb.on_smart_contract_event(sc)
@@ -42,7 +43,7 @@ class NotificationDBTestCase(TestCase):
         self.assertEqual(ndb.current_events, [])
 
     def test_2_persist_isnt_notify_event(self):
-        sc = SmartContractEvent(SmartContractEvent.RUNTIME_NOTIFY, [], self.contract_hash, 99, self.event_tx, True, False)
+        sc = SmartContractEvent(SmartContractEvent.RUNTIME_NOTIFY, ContractParameter(ContractParameterType.Array, []), self.contract_hash, 99, self.event_tx, True, False)
 
         ndb = NotificationDB.instance()
         ndb.on_smart_contract_event(sc)
@@ -50,7 +51,13 @@ class NotificationDBTestCase(TestCase):
         self.assertEqual(ndb.current_events, [])
 
     def test_3_should_persist(self):
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'transfer', self.addr_to, self.addr_from, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, False)
+        payload = ContractParameter(ContractParameterType.Array, [
+            ContractParameter(ContractParameterType.String, b'transfer'),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_to),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_from),
+            ContractParameter(ContractParameterType.Integer, 123000)
+        ])
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, payload, self.contract_hash, 91349, self.event_tx, True, False)
 
         ndb = NotificationDB.instance()
         ndb.on_smart_contract_event(sc)
@@ -63,7 +70,15 @@ class NotificationDBTestCase(TestCase):
         ndb = NotificationDB.instance()
 
         self.assertEqual(len(ndb.current_events), 0)
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'transfer', self.addr_to, self.addr_from, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, True)
+
+        payload = ContractParameter(ContractParameterType.Array, [
+            ContractParameter(ContractParameterType.String, b'transfer'),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_to),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_from),
+            ContractParameter(ContractParameterType.Integer, 123000)
+        ])
+
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, payload, self.contract_hash, 91349, self.event_tx, True, True)
 
         ndb.on_smart_contract_event(sc)
 
@@ -128,7 +143,14 @@ class NotificationDBTestCase(TestCase):
         self.assertEqual(len(events), 0)
 
     def test_should_persist_mint_event(self):
-        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, [b'mint', self.addr_to, BigInteger(123000)], self.contract_hash, 91349, self.event_tx, True, False)
+
+        payload = ContractParameter(ContractParameterType.Array, [
+            ContractParameter(ContractParameterType.String, b'mint'),
+            ContractParameter(ContractParameterType.ByteArray, self.addr_to),
+            ContractParameter(ContractParameterType.Integer, 123000)
+        ])
+
+        sc = NotifyEvent(SmartContractEvent.RUNTIME_NOTIFY, payload, self.contract_hash, 91349, self.event_tx, True, False)
 
         ndb = NotificationDB.instance()
         ndb.on_smart_contract_event(sc)

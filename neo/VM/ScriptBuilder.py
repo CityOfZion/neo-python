@@ -106,7 +106,10 @@ class ScriptBuilder:
                 return self.push(binascii.hexlify(data.ToByteArray()))
         else:
             if not type(data) == bytearray:
-                buf = binascii.unhexlify(data)
+                try:
+                    buf = binascii.unhexlify(data)
+                except binascii.Error:
+                    buf = data
             else:
                 buf = bytes(data)
         if len(buf) <= int.from_bytes(PUSHBYTES75, 'big'):

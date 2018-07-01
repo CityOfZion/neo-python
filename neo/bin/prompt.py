@@ -13,6 +13,7 @@ from logzero import logger
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
+from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
 from prompt_toolkit import prompt
@@ -20,6 +21,7 @@ from twisted.internet import reactor, task
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
+from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
 from neo.Wallets.utils import to_aes_key
@@ -82,6 +84,10 @@ class PromptFileHistory(FileHistory):
 
 
 class PromptInterface:
+
+    prompt_completer = None
+    history = None
+
     go_on = True
 
     _walletdb_loop = None
@@ -106,8 +112,8 @@ class PromptInterface:
                 'config debug {on/off}',
                 'config sc-events {on/off}',
                 'config maxpeers {num_peers}',
-                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
-                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {test_params})',
+                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
+                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
                 'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke}',
@@ -144,11 +150,9 @@ class PromptInterface:
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
                 'sign {transaction in JSON format}',
-                'testinvoke {contract hash} {params} (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr})',
+                'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
                 ]
-
-    history = None
 
     token_style = None
     start_height = None
@@ -156,7 +160,7 @@ class PromptInterface:
 
     def __init__(self, history_filename=None):
         if history_filename:
-            self.history = PromptFileHistory(history_filename)
+            PromptInterface.history = PromptFileHistory(history_filename)
 
         self.input_parser = InputParser()
         self.start_height = Blockchain.Default().Height
@@ -208,9 +212,9 @@ class PromptInterface:
 
         all_completions = standard_completions + self._known_things
 
-        completer = WordCompleter(all_completions)
+        PromptInterface.prompt_completer = WordCompleter(all_completions)
 
-        return completer
+        return PromptInterface.prompt_completer
 
     def quit(self):
         print('Shutting down. This may take a bit...')
@@ -762,11 +766,14 @@ class PromptInterface:
             tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
 
             if tx is not None and results is not None:
+
+                parameterized_results = [ContractParameter.ToParameter(item) for item in results]
+
                 print(
                     "\n-------------------------------------------------------------------------------------------------------------------------------------")
                 print("Test invoke successful")
                 print("Total operations: %s" % num_ops)
-                print("Results %s" % [str(item) for item in results])
+                print("Results %s" % [item.ToJson() for item in parameterized_results])
                 print("Invoke TX GAS cost: %s" % (tx.Gas.value / Fixed8.D))
                 print("Invoke TX fee: %s" % (fee.value / Fixed8.D))
                 print(
@@ -798,7 +805,7 @@ class PromptInterface:
 
         if function_code:
 
-            contract_script = GatherContractDetails(function_code, self)
+            contract_script = GatherContractDetails(function_code)
 
             if contract_script is not None:
 
@@ -915,22 +922,21 @@ class PromptInterface:
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
 
-#        Blockchain.Default().PersistBlocks()
-
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
 
         print_formatted_text(FormattedText(tokens), style=self.token_style)
         print('\n')
 
-        session = PromptSession("neo> ",
-                                completer=self.get_completer(),
-                                history=self.history,
-                                bottom_toolbar=self.get_bottom_toolbar,
-                                style=self.token_style,
-                                refresh_interval=3
-                                )
         while self.go_on:
+
+            session = PromptSession("neo> ",
+                                    completer=self.get_completer(),
+                                    history=self.history,
+                                    bottom_toolbar=self.get_bottom_toolbar,
+                                    style=self.token_style,
+                                    refresh_interval=3,
+                                    )
 
             try:
                 result = session.prompt()
