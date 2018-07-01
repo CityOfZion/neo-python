@@ -318,35 +318,37 @@ def gather_param(index, param_type, do_continue=True):
         result = get_input_prompt(prompt_message)
 
         if ptype == ContractParameterType.String:
-            return str(result)
+            return str(result), False
         elif ptype == ContractParameterType.Integer:
-            return int(result)
+            return int(result), False
         elif ptype == ContractParameterType.Boolean:
-            return bool(result)
+            return bool(result), False
         elif ptype == ContractParameterType.PublicKey:
-            return ECDSA.decode_secp256r1(result).G
+            return ECDSA.decode_secp256r1(result).G, False
         elif ptype == ContractParameterType.ByteArray:
             if isinstance(result, str) and len(result) == 34 and result[0] == 'A':
-                return Helper.AddrStrToScriptHash(result).Data
+                return Helper.AddrStrToScriptHash(result).Data, False
             res = eval(result, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
             if isinstance(res, bytes):
-                return bytearray(res)
-            return res
+                return bytearray(res), False
+            return res, False
 
         elif ptype == ContractParameterType.Array:
             res = eval(result)
             if isinstance(res, list):
-                return res
+                return res, False
             raise Exception("Please provide a list")
         else:
             raise Exception("Unknown param type %s " % ptype.name)
 
     except KeyboardInterrupt:  # Control-C pressed: exit
 
-        return False
+        return None, True
 
     except Exception as e:
 
-        print("Could not parse param %s as %s : %s " % (result, ptype, e))
+        print("Could not parse param as %s : %s " % (ptype, e))
         if do_continue:
             return gather_param(index, param_type, do_continue)
+
+    return None, True

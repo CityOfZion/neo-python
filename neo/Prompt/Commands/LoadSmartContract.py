@@ -3,7 +3,7 @@ from neo.Prompt.Utils import parse_param
 from neo.Core.FunctionCode import FunctionCode
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import PromptSession
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Prompt.Utils import get_arg
@@ -139,38 +139,20 @@ def GatherLoadedContractParams(args, script):
     return out
 
 
-def GatherContractDetails(function_code, prompter):
-    name = None
-    version = None
-    author = None
-    email = None
-    description = None
+def GatherContractDetails(function_code):
 
     print("Please fill out the following contract details:")
-    name = prompt("[Contract Name] > ",
-                  completer=prompter.get_completer(),
-                  get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                  style=prompter.token_style)
 
-    version = prompt("[Contract Version] > ",
-                     completer=prompter.get_completer(),
-                     get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                     style=prompter.token_style)
+    from neo.bin.prompt import PromptInterface
 
-    author = prompt("[Contract Author] > ",
-                    completer=prompter.get_completer(),
-                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                    style=prompter.token_style)
+    session = PromptSession(completer=PromptInterface.prompt_completer,
+                            history=PromptInterface.history)
 
-    email = prompt("[Contract Email] > ",
-                   completer=prompter.get_completer(),
-                   get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                   style=prompter.token_style)
-
-    description = prompt("[Contract Description] > ",
-                         completer=prompter.get_completer(),
-                         get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                         style=prompter.token_style)
+    name = session.prompt("[Contract Name] > ")
+    version = session.prompt("[Contract Version] > ")
+    author = session.prompt("[Contract Author] > ")
+    email = session.prompt("[Contract Email] > ")
+    description = session.prompt("[Contract Description] > ")
 
     print("Creating smart contract....")
     print("                 Name: %s " % name)

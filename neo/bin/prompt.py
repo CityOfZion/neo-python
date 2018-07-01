@@ -805,7 +805,7 @@ class PromptInterface:
 
         if function_code:
 
-            contract_script = GatherContractDetails(function_code, self)
+            contract_script = GatherContractDetails(function_code)
 
             if contract_script is not None:
 
@@ -921,8 +921,6 @@ class PromptInterface:
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         dbloop.start(.1)
-
-#        Blockchain.Default().PersistBlocks()
 
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]

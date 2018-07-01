@@ -160,7 +160,10 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
         if '--i' in params:
             params = []
             for index, iarg in enumerate(contract.Code.ParameterList):
-                params.append(gather_param(index, iarg))
+                param, abort = gather_param(index, iarg)
+                if abort:
+                    return None, None, None, None
+                params.append(param)
             params.reverse()
 
         sb = ScriptBuilder()
@@ -434,7 +437,11 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         if '--i' in invoke_args:
             invoke_args = []
             for index, iarg in enumerate(contract_state.Code.ParameterList):
-                invoke_args.append(gather_param(index, iarg))
+                param, abort = gather_param(index, iarg)
+                if abort:
+                    return None, [], 0, None
+                else:
+                    invoke_args.append(param)
             invoke_args.reverse()
 
         sb = ScriptBuilder()

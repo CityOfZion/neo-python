@@ -156,77 +156,77 @@ class TestInputParser(TestCase):
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='hello') as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.String)
+            result, abort = Utils.gather_param(0, ContractParameterType.String)
 
             self.assertEqual(result, 'hello')
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value=1) as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.Integer)
+            result, abort = Utils.gather_param(0, ContractParameterType.Integer)
 
             self.assertEqual(result, 1)
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='1') as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.Integer)
+            result, abort = Utils.gather_param(0, ContractParameterType.Integer)
 
             self.assertEqual(result, 1)
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value=1.03) as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.Integer)
+            result, abort = Utils.gather_param(0, ContractParameterType.Integer)
 
             self.assertEqual(result, 1)
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="bytearray(b'abc')") as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.ByteArray)
+            result, abort = Utils.gather_param(0, ContractParameterType.ByteArray)
 
             self.assertEqual(result, bytearray(b'abc'))
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="b'abc'") as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.ByteArray)
+            result, abort = Utils.gather_param(0, ContractParameterType.ByteArray)
 
             self.assertEqual(result, bytearray(b'abc'))
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="abc'") as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.Boolean)
+            result, abort = Utils.gather_param(0, ContractParameterType.Boolean)
 
             self.assertEqual(result, True)
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value=0) as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.Boolean)
+            result, abort = Utils.gather_param(0, ContractParameterType.Boolean)
 
             self.assertEqual(result, False)
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value=0) as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.Boolean)
+            result, abort = Utils.gather_param(0, ContractParameterType.Boolean)
 
             self.assertEqual(result, False)
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='AeV59NyZtgj5AMQ7vY6yhr2MRvcfFeLWSb') as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.ByteArray)
+            result, abort = Utils.gather_param(0, ContractParameterType.ByteArray)
 
             self.assertEqual(result, bytearray(b'\xf9\x1dkp\x85\xdb|Z\xaf\t\xf1\x9e\xee\xc1\xca<\r\xb2\xc6\xec'))
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c"]') as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.Array)
+            result, abort = Utils.gather_param(0, ContractParameterType.Array)
 
             self.assertEqual(result, ['a', 'b', 'c'])
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c", [1, 3, 4], "e"]') as fake_prompt:
 
-            result = Utils.gather_param(0, ContractParameterType.Array)
+            result, abort = Utils.gather_param(0, ContractParameterType.Array)
 
             self.assertEqual(result, ['a', 'b', 'c', [1, 3, 4], 'e'])
 
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c", [1, 3, 4], "e"') as fake_prompt:
-            result = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
+            result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
 
             self.assertEqual(result, None)
