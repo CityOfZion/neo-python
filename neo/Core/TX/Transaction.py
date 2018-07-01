@@ -712,7 +712,10 @@ class Transaction(InventoryMixin):
                 if type(attr.Data) is UInt160:
                     hashes.add(attr.Data)
                 else:
-                    hashes.add(UInt160(data=attr.Data))
+                    if len(attr.Data) == 40:
+                        hashes.add(UInt160(data=binascii.unhexlify(attr.Data)))
+                    else:
+                        hashes.add(UInt160(data=attr.Data))
 
         for key, group in groupby(self.outputs, lambda p: p.AssetId):
             asset = GetBlockchain().GetAssetState(key.ToBytes())

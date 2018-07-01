@@ -50,7 +50,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         # if this is a token, we will use a different
         # transfer mechanism
         if type(assetId) is NEP5Token:
-            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), prompt_passwd=prompt_password)
+            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), prompt_passwd=prompt_password, tx_attributes=user_tx_attributes)
 
         f8amount = Fixed8.TryParse(amount, require_positive=True)
         if f8amount is None:

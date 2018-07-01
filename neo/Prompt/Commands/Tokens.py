@@ -181,12 +181,12 @@ def token_crowdsale_register(wallet, args, prompt_passwd=True):
     return False
 
 
-def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True):
+def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True, tx_attributes=[]):
     if from_address is None:
         print("Please specify --from-addr={addr} to send NEP5 tokens")
         return False
 
-    tx, fee, results = token.Transfer(wallet, from_address, to_address, amount)
+    tx, fee, results = token.Transfer(wallet, from_address, to_address, amount, tx_attributes=tx_attributes)
 
     if tx is not None and results is not None and len(results) > 0:
 
