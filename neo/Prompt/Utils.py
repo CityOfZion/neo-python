@@ -313,9 +313,10 @@ def gather_param(index, param_type, do_continue=True):
     ptype = ContractParameterType(param_type)
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
 
-    result = get_input_prompt(prompt_message)
-
     try:
+
+        result = get_input_prompt(prompt_message)
+
         if ptype == ContractParameterType.String:
             return str(result)
         elif ptype == ContractParameterType.Integer:
@@ -333,9 +334,17 @@ def gather_param(index, param_type, do_continue=True):
             return res
 
         elif ptype == ContractParameterType.Array:
-            return eval(result)
+            res = eval(result)
+            if isinstance(res, list):
+                return res
+            raise Exception("Please provide a list")
         else:
             raise Exception("Unknown param type %s " % ptype.name)
+
+    except KeyboardInterrupt:  # Control-C pressed: exit
+
+        return False
+
     except Exception as e:
 
         print("Could not parse param %s as %s : %s " % (result, ptype, e))
