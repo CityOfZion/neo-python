@@ -214,10 +214,15 @@ could lead to version conflicts.
     # create project dir
     mkdir myproject
     cd myproject
+    
+    #setup alias for python and pip
+    
+    alias python=python3
+    alias pip=pip3
 
-    # create virtual environment and activate
+   # create virtual environment and activate
 
-    python3.6 -m venv venv # this can also be python3 -m venv venv depending on your environment
+    python -m venv venv
     source venv/bin/activate
 
     (venv) pip install neo-python
