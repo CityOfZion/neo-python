@@ -194,7 +194,7 @@ could lead to version conflicts.
     git clone https://github.com/CityOfZion/neo-python.git
     cd neo-python
     
-    #setup alias for python and pip
+    # setup alias for python and pip
     
     alias python=python3
     alias pip=pip3
@@ -215,12 +215,12 @@ could lead to version conflicts.
     mkdir myproject
     cd myproject
     
-    #setup alias for python and pip
+    # setup alias for python and pip
     
     alias python=python3
     alias pip=pip3
 
-   # create virtual environment and activate
+    # create virtual environment and activate
 
     python -m venv venv
     source venv/bin/activate
@@ -231,7 +231,7 @@ could lead to version conflicts.
 
   ::
 
-    #uninstall pycryto & pycryptodome | reinstall pycryptodome-3.6.1
+    # uninstall pycryto & pycryptodome | reinstall pycryptodome-3.6.1
 
     pip uninstall pycryto pycryptodome
     pip install pycryptodome==3.6.1
