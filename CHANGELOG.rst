@@ -10,7 +10,7 @@ All notable changes to this project are documented in this file.
 - Adds ability to *not* parse address strings such as AeV59NyZtgj5AMQ7vY6yhr2MRvcfFeLWSb when inputting to smart contract by passing the ``--no-parse`` flag
 - Changes the structure of items dispatched in SmartContractEvents to use the ``ContractParameter`` interface for better type inference and variable usage.
 - Bugfix: np-api-server with open wallet now properly processes new blocks
-
+- Update neo-boa to v0.4.8 and neocore to v0.4.11
 
 [0.7.2] 2018-06-21
 -------------------
