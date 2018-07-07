@@ -1,10 +1,10 @@
 import sys
 import binascii
 from neocore.IO.Mixins import SerializableMixin
+from neo.Core.Size import GetVarSize
 
 
 class Witness(SerializableMixin):
-
     InvocationScript = None
     VerificationScript = None
 
@@ -23,7 +23,13 @@ class Witness(SerializableMixin):
             self.VerificationScript = verification_script
 
     def Size(self):
-        return sys.getsizeof(self.InvocationScript) + sys.getsizeof(self.VerificationScript)
+        """
+        Get the amount of bytes the serializable data of self consists off
+
+        Returns:
+            int:
+        """
+        return GetVarSize(self.InvocationScript) + GetVarSize(self.VerificationScript)
 
     def Deserialize(self, reader):
         self.InvocationScript = reader.ReadVarBytes()
@@ -33,10 +39,11 @@ class Witness(SerializableMixin):
         #        logger.info("Serializing Witnes.....")
         #        logger.info("INVOCATION %s " % self.InvocationScript)
         writer.WriteVarBytes(self.InvocationScript)
-#        logger.info("writer after invocation %s " % writer.stream.ToArray())
-#        logger.info("Now wringi verificiation script %s " % self.VerificationScript)
+        #        logger.info("writer after invocation %s " % writer.stream.ToArray())
+        #        logger.info("Now wringi verificiation script %s " % self.VerificationScript)
         writer.WriteVarBytes(self.VerificationScript)
-#        logger.info("Wrote verification script %s " % writer.stream.ToArray())
+
+    #        logger.info("Wrote verification script %s " % writer.stream.ToArray())
 
     def ToJson(self):
         #        logger.info("invocation %s " % self.InvocationScript)

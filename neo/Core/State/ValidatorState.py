@@ -2,10 +2,14 @@ from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class ValidatorState(StateBase):
     PublicKey = None
+    Registered = None  # bool
+    Votes = None  # Fixed8
 
     def __init__(self, pub_key=None):
         """
