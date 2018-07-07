@@ -4,6 +4,7 @@ from neo.Wallets.NEP5Token import NEP5Token
 from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 
 
 def token_send(wallet, args, prompt_passwd=True):
@@ -185,6 +186,12 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
     if from_address is None:
         print("Please specify --from-addr={addr} to send NEP5 tokens")
         return False
+
+    # because we cannot differentiate between a normal and multisig from_addr, and because we want to make
+    # sending NEP5 tokens straight forward even when sending from multisig addresses, we include the script_hash
+    # for verification by default to the transaction attributes. See PR/Issue: https://github.com/CityOfZion/neo-python/pull/491
+    from_script_hash = bytes(wallet.ToScriptHash(from_address).ToString2(), 'utf-8')
+    tx_attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script, data=from_script_hash))
 
     tx, fee, results = token.Transfer(wallet, from_address, to_address, amount, tx_attributes=tx_attributes)
 
