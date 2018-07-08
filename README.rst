@@ -231,7 +231,7 @@ could lead to version conflicts.
 
   ::
 
-    # uninstall pycrypto & pycryptodome | reinstall pycrypto-2.61 & pycryptodome-3.6.1
+    # uninstall pycrypto & pycryptodome | reinstall pycrypto-2.6.1 & pycryptodome-3.6.1
 
     pip uninstall pycrypto pycryptodome
     pip install pycryptodome==3.6.1
