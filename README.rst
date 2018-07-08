@@ -231,10 +231,11 @@ could lead to version conflicts.
 
   ::
 
-    # uninstall pycryto & pycryptodome | reinstall pycryptodome-3.6.1
+    # uninstall pycrypto & pycryptodome | reinstall pycrypto-2.61 & pycryptodome-3.6.1
 
-    pip uninstall pycryto pycryptodome
+    pip uninstall pycrypto pycryptodome
     pip install pycryptodome==3.6.1
+    pip install pycrypto==2.6.1
 
 Running
 -------
