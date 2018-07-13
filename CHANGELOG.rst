@@ -3,9 +3,9 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.3-dev] in progress
+[0.7.3] 2018-07-
 -----------------------
-- Updated the requirements
+- Updated package requirements, removed ``pycrypto`` from all dependencies to fix install error(s) `#485 <https://github.com/CityOfZion/neo-python/issues/485>`_
 - Adds option to enter arguments for smart contract in an 'interactive' mode, which allows for much better parsing of input, activated by passing the ``--i`` flag when invoking.
 - Adds ability to *not* parse address strings such as AeV59NyZtgj5AMQ7vY6yhr2MRvcfFeLWSb when inputting to smart contract by passing the ``--no-parse`` flag
 - Changes the structure of items dispatched in SmartContractEvents to use the ``ContractParameter`` interface for better type inference and variable usage.

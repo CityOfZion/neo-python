@@ -227,14 +227,6 @@ could lead to version conflicts.
 
     (venv) pip install neo-python
 
-3. Prior to First Run
-
-  ::
-
-    # uninstall pycrypto & pycryptodome | reinstall pycrypto-2.6.1 & pycryptodome-3.6.1
-
-    pip uninstall pycrypto pycryptodome
-    pip install pycrypto==2.6.1 pycryptodome==3.6.1
 
 Running
 -------
