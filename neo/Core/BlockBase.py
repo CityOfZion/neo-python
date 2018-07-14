@@ -7,6 +7,8 @@ from neo.Core.Helper import Helper
 from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
 from neocore.UInt256 import UInt256
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class BlockBase(VerifiableMixin):
@@ -96,12 +98,10 @@ class BlockBase(VerifiableMixin):
         Returns:
             int: size.
         """
-        uintsize = ctypes.sizeof(ctypes.c_uint)
-        ulongsize = ctypes.sizeof(ctypes.c_ulong)
         scriptsize = 0
         if self.Script is not None:
             scriptsize = self.Script.Size()
-        return uintsize + self.PrevHash.Size + self.MerkleRoot.Size + uintsize + uintsize + ulongsize + 160 + 1 + scriptsize
+        return s.uint32 + s.uint256 + s.uint256 + s.uint32 + s.uint32 + s.uint64 + s.uint160 + 1 + scriptsize
 
     def IndexBytes(self):
         """

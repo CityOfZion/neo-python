@@ -1,5 +1,6 @@
 from neocore.IO.Mixins import SerializableMixin
 import sys
+from neo.Core.Size import GetVarSize
 
 
 class HeadersPayload(SerializableMixin):
@@ -21,7 +22,7 @@ class HeadersPayload(SerializableMixin):
         Returns:
             int: size.
         """
-        return sys.getsizeof(self.Headers)
+        return GetVarSize(self.Headers)
 
     def Deserialize(self, reader):
         """

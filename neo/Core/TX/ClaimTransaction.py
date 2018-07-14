@@ -5,6 +5,7 @@ from neo.Core.TX.Transaction import TransactionType, Transaction
 from neocore.Fixed8 import Fixed8
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
+from neo.Core.Size import GetVarSize
 
 
 class ClaimTransaction(Transaction):
@@ -17,8 +18,7 @@ class ClaimTransaction(Transaction):
         Returns:
             int: size.
         """
-        # todo: will sys.getsizeof work as expected? __sizeof__ not implemented by CoinReference. should use Size() instead?
-        return super(ClaimTransaction, self).Size() + sys.getsizeof(self.Claims)
+        return super(ClaimTransaction, self).Size() + GetVarSize(self.Claims)
 
     def __init__(self, *args, **kwargs):
         """

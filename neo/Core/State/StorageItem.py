@@ -46,7 +46,6 @@ class StorageItem(StateBase):
         Returns:
             int: size.
         """
-        # return super(StorageItem, self).Size() + GetVarBytesSize(self.Value)
         return super(StorageItem, self).Size() + GetVarSize(self.Value)
 
     def Deserialize(self, reader):

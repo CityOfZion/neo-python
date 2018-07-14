@@ -1,7 +1,10 @@
 import sys
+import binascii
 from logzero import logger
-
+from neocore.UInt256 import UInt256
 from neocore.IO.Mixins import SerializableMixin
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class InvPayload(SerializableMixin):
@@ -31,7 +34,8 @@ class InvPayload(SerializableMixin):
         Returns:
             int: size.
         """
-        return sys.getsizeof(self.Type) + sys.getsizeof(self.Hashes)
+        corrected_hashes = list(map(lambda i: UInt256(data=binascii.unhexlify(i)), self.Hashes))
+        return s.uint8 + GetVarSize(corrected_hashes)
 
     def Deserialize(self, reader):
         """

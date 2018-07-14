@@ -6,6 +6,8 @@ from neo.Core.AssetType import AssetType
 from neocore.UInt160 import UInt160
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class AssetState(StateBase):
@@ -23,6 +25,9 @@ class AssetState(StateBase):
     Issuer = None
     Expiration = None
     IsFrozen = False
+
+    def Size(self):
+        return super(AssetState, self).Size() + s.uint256 + s.uint8 + GetVarSize(self.Name) + self.Amount.Size() + self.Available.Size() + s.uint8 + s.uint8 + self.Fee.Size() + s.uint160 + self.Owner.Size() + s.uint160 + s.uint160 + s.uint32 + s.uint8
 
     def __init__(self, asset_id=None, asset_type=None, name=None, amount=Fixed8(0), available=Fixed8(0),
                  precision=0, fee_mode=0, fee=Fixed8(0), fee_addr=UInt160(data=bytearray(20)), owner=None,

@@ -1,9 +1,9 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neocore.Fixed8 import Fixed8
+from neo.Core.Size import GetVarSize
 
 
 class StateTransaction(Transaction):
-
     Descriptors = None
 
     def Size(self):
@@ -14,7 +14,7 @@ class StateTransaction(Transaction):
             int: size.
         """
 
-        return super(StateTransaction, self).Size()
+        return super(StateTransaction, self).Size() + GetVarSize(self.Descriptors)
 
     def __init__(self, *args, **kwargs):
         """

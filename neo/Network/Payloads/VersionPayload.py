@@ -6,6 +6,8 @@ from logzero import logger
 from neocore.IO.Mixins import SerializableMixin
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Core.Blockchain import Blockchain
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class VersionPayload(SerializableMixin):
@@ -47,11 +49,7 @@ class VersionPayload(SerializableMixin):
         Returns:
             int: size.
         """
-        # needed to fix pycodestyle warnings.
-        size1 = ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_ulong) + ctypes.sizeof(ctypes.c_uint)
-        size2 = ctypes.sizeof(ctypes.c_ushort) + ctypes.sizeof(ctypes.c_uint)
-        size3 = sys.getsizeof(self.UserAgent) + ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_bool)
-        return size1 + size2 + size3
+        return s.uint32 + s.uint64 + s.uint32 + s.uint16 + s.uint32 + GetVarSize(self.UserAgent) + s.uint32 + s.uint8
 
     def Deserialize(self, reader):
         """

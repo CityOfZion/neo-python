@@ -1,6 +1,7 @@
 from enum import IntEnum, Enum
 from collections import Iterable
 from neocore.IO.Mixins import SerializableMixin
+from neocore.UIntBase import UIntBase
 
 """
 This helper class is intended to help resolve the correct calculation of network serializable objects.
@@ -19,72 +20,6 @@ class Size(IntEnum):
     uint64 = 8
     uint160 = 20
     uint256 = 32
-
-
-# def GetVarSize(iterator):
-#     """
-#     Get length of a variable sized input.
-#     Args:
-#         iterator(iterator)
-#     Returns:
-#         int: length
-#     """
-#     value_len = len(iterator)
-#
-#     result = value_len
-#     if (value_len < 0xFD):
-#         result += 1  # byte
-#     elif (value_len <= 0xFFF):
-#         result += 3  # byte + ushort
-#     else:
-#         result += 5  # byte + int
-#     return result
-
-
-def GetVarStringSize(string_value):
-    """
-    The counter part of BinaryWriter.WriteVarString
-    Args:
-        string_value:
-
-    Returns:
-
-    """
-    value_size = len(string_value.encode('utf-8'))
-    return GetVarIntSize(value_size) + value_size
-
-
-def GetVarIntSize(int_value):
-    """
-    The counterpart of BinaryWriter.WriteVarInt
-    Args:
-        int_value:
-
-    Returns:
-
-    """
-    if int_value < 0xFD:
-        return Size.uint8
-    elif int_value < 0xFFFF:
-        return Size.uint8 + Size.uint16
-    elif int_value < 0xFFFFFFFF:
-        return Size.uint8 + Size.uint32
-    else:
-        return Size.uint8 + Size.uint64
-
-
-def GetVarBytesSize(value):
-    """
-    The counter part of BinaryWriter.WriteVarBytes()
-    Args:
-        value:
-
-    Returns:
-
-    """
-    length = len(value)
-    int_size = GetVarIntSize(length)
-    return int_size + length
 
 
 def GetVarSize(value):
@@ -109,7 +44,11 @@ def GetVarSize(value):
 
         if value_length > 0:
             if isinstance(value[0], SerializableMixin):
-                value_size = sum(map(lambda t: t.Size(), value))
+                if isinstance(value[0], UIntBase):
+                    # because the Size() method in UIntBase is implemented as a property
+                    value_size = sum(map(lambda t: t.Size, value))
+                else:
+                    value_size = sum(map(lambda t: t.Size(), value))
 
             elif isinstance(value[0], Enum):
                 # Note: currently all Enum's in neo core (C#) are of type Byte. Only porting that part of the code

@@ -2,6 +2,7 @@ from neo.Core.TX.Transaction import Transaction, TransactionType
 import sys
 import binascii
 from neocore.Fixed8 import Fixed8
+from neo.Core.Size import Size as s
 
 
 class MinerTransaction(Transaction):
@@ -35,7 +36,7 @@ class MinerTransaction(Transaction):
         Returns:
             int: size.
         """
-        return super(MinerTransaction, self).Size() + sys.getsizeof(int)
+        return super(MinerTransaction, self).Size() + s.uint32
 
     def DeserializeExclusiveData(self, reader):
         """
