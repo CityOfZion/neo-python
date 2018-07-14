@@ -112,6 +112,8 @@ class PromptInterface:
                 'config debug {on/off}',
                 'config sc-events {on/off}',
                 'config maxpeers {num_peers}',
+                'config node-requests {reqsize} {queuesize}',
+                'config node-requests {slow/normal/fast}',
                 'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
                 'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
                 'import wif {wif}',
@@ -914,6 +916,11 @@ class PromptInterface:
             else:
                 print("Cannot configure VM instruction logging. Please specify on|off")
 
+        elif what == 'node-requests':
+            if len(args) == 3:
+                NodeLeader.Instance().setBlockReqSizeAndMax(int(args[1]), int(args[2]))
+            elif len(args) == 2:
+                NodeLeader.Instance().setBlockReqSizeByName(args[1])
         else:
             print(
                 "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
