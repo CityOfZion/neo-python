@@ -3,7 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.3] 2018-07-
+[0.7.4-dev] in progress
+-----------------------
+- Update NodeLeader peer monitoring system
+- Add ability to configure size of requests for blocks as well as block processing queue size
+
+[0.7.3] 2018-07-12
 -----------------------
 - Updated package requirements, removed ``pycrypto`` from all dependencies to fix install error(s) `#485 <https://github.com/CityOfZion/neo-python/issues/485>`_
 - Adds option to enter arguments for smart contract in an 'interactive' mode, which allows for much better parsing of input, activated by passing the ``--i`` flag when invoking.

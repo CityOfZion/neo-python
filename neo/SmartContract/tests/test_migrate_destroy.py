@@ -54,7 +54,7 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
 
         output = Compiler.instance().load('%s/MigrateTest1.py' % os.path.dirname(__file__)).default
         script = output.write()
-        print("script : %s " % script)
+
         tx, results, total_ops, engine = TestBuild(script, ['store_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
 
         self.assertEqual(len(results), 1)
@@ -69,76 +69,76 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
         tx, results, total_ops, engine = TestBuild(script, ['get_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
 
         self.assertEqual(len(results), 1)
-        # mylist = results[0].GetArray()
-        #
-        # self.assertEqual([item.GetByteArray() for item in mylist], [bytearray(b'\x01'), bytearray(b'abc'), bytearray(b'\x01\x02\x03')])
-        #
-        # tx, results, total_ops, engine = TestBuild(script, ['do_destroy', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
-        #
-        # self.assertEqual(len(results), 1)
-        # self.assertEqual(results[0].GetBoolean(), True)
-        # self.assertEqual(len(destroyed_items), 1)
-        #
-        # destroyed_hash = destroyed_items[0].contract_hash.ToBytes()
-        # script_table = engine._Table
-        # self.assertIsNone(script_table.GetScript(destroyed_hash))
+        mylist = results[0].GetArray()
 
-    # def test_build_contract_and_migrate(self):
-    #
-    #     items = []
-    #     migrated_items = []
-    #
-    #     def on_created(sc_event):
-    #         items.append(sc_event)
-    #
-    #     def on_migrated(sc_event):
-    #         migrated_items.append(sc_event)
-    #
-    #     events.on(SmartContractEvent.CONTRACT_CREATED, on_created)
-    #     events.on(SmartContractEvent.CONTRACT_MIGRATED, on_migrated)
-    #
-    #     output = Compiler.instance().load('%s/MigrateTest1.py' % os.path.dirname(__file__)).default
-    #     script = output.write()
-    #     tx, results, total_ops, engine = TestBuild(script, ['store_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
-    #
-    #     self.assertEqual(len(results), 1)
-    #     self.assertEqual(results[0].GetBoolean(), True)
-    #
-    #     self.assertEqual(len(items), 1)
-    #
-    #     created_hash = items[0].contract_hash.ToBytes()
-    #     script_table = engine._Table
-    #     self.assertIsNotNone(script_table.GetScript(created_hash))
-    #
-    #     migrateScript = Compiler.instance().load('%s/MigrateTest2.py' % os.path.dirname(__file__)).default.write()
-    #     tx, results, total_ops, engine = TestBuild(script, ['do_migrate', migrateScript], self.GetWallet1(), '0705', '05')
-    #
-    #     self.assertEqual(len(results), 1)
-    #     new_contract = results[0].GetInterface()
-    #     self.assertIsInstance(new_contract, ContractState)
-    #
-    #     self.assertEqual(len(migrated_items), 1)
-    #     self.assertEqual(new_contract, migrated_items[0].event_payload[0])
-    #
-    #     # now make sure the original contract isnt there
-    #     script_table = engine._Table
-    #     self.assertIsNone(script_table.GetScript(created_hash))
-    #
-    #     # and make sure the new one is there
-    #     migrated_hash = migrated_items[0].contract_hash
-    #
-    #     self.assertIsNotNone(script_table.GetScript(migrated_hash.ToBytes()))
-    #
-    #     # now make sure the new contract has the same storage
-    #
-    #     tx, results, total_ops, engine = TestBuild(migrateScript, ['i1'], self.GetWallet1(), '07', '05')
-    #     self.assertEqual(len(results), 1)
-    #     self.assertEqual(results[0].GetByteArray(), bytearray(b'\x01'))
-    #
-    #     tx, results, total_ops, engine = TestBuild(migrateScript, ['s2'], self.GetWallet1(), '07', '05')
-    #     self.assertEqual(len(results), 1)
-    #     self.assertEqual(results[0].GetByteArray(), bytearray(b'hello world'))
-    #
-    #     tx, results, total_ops, engine = TestBuild(migrateScript, ['i4'], self.GetWallet1(), '07', '05')
-    #     self.assertEqual(len(results), 1)
-    #     self.assertEqual(results[0].GetBigInteger(), 400000000000)
+        self.assertEqual([item.GetByteArray() for item in mylist], [bytearray(b'\x01'), bytearray(b'abc'), bytearray(b'\x01\x02\x03')])
+
+        tx, results, total_ops, engine = TestBuild(script, ['do_destroy', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].GetBoolean(), True)
+        self.assertEqual(len(destroyed_items), 1)
+
+        destroyed_hash = destroyed_items[0].contract_hash.ToBytes()
+        script_table = engine._Table
+        self.assertIsNone(script_table.GetScript(destroyed_hash))
+
+    def test_build_contract_and_migrate(self):
+
+        items = []
+        migrated_items = []
+
+        def on_created(sc_event):
+            items.append(sc_event)
+
+        def on_migrated(sc_event):
+            migrated_items.append(sc_event)
+
+        events.on(SmartContractEvent.CONTRACT_CREATED, on_created)
+        events.on(SmartContractEvent.CONTRACT_MIGRATED, on_migrated)
+
+        output = Compiler.instance().load('%s/MigrateTest1.py' % os.path.dirname(__file__)).default
+        script = output.write()
+        tx, results, total_ops, engine = TestBuild(script, ['store_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].GetBoolean(), True)
+
+        self.assertEqual(len(items), 1)
+
+        created_hash = items[0].contract_hash.ToBytes()
+        script_table = engine._Table
+        self.assertIsNotNone(script_table.GetScript(created_hash))
+
+        migrateScript = Compiler.instance().load('%s/MigrateTest2.py' % os.path.dirname(__file__)).default.write()
+        tx, results, total_ops, engine = TestBuild(script, ['do_migrate', migrateScript], self.GetWallet1(), '0705', '05')
+
+        self.assertEqual(len(results), 1)
+        new_contract = results[0].GetInterface()
+        self.assertIsInstance(new_contract, ContractState)
+
+        self.assertEqual(len(migrated_items), 1)
+        self.assertEqual(new_contract, migrated_items[0].event_payload.Value)
+
+        # now make sure the original contract isnt there
+        script_table = engine._Table
+        self.assertIsNone(script_table.GetScript(created_hash))
+
+        # and make sure the new one is there
+        migrated_hash = migrated_items[0].contract_hash
+
+        self.assertIsNotNone(script_table.GetScript(migrated_hash.ToBytes()))
+
+        # now make sure the new contract has the same storage
+
+        tx, results, total_ops, engine = TestBuild(migrateScript, ['i1'], self.GetWallet1(), '07', '05')
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].GetByteArray(), bytearray(b'\x01'))
+
+        tx, results, total_ops, engine = TestBuild(migrateScript, ['s2'], self.GetWallet1(), '07', '05')
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].GetByteArray(), bytearray(b'hello world'))
+
+        tx, results, total_ops, engine = TestBuild(migrateScript, ['i4'], self.GetWallet1(), '07', '05')
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].GetBigInteger(), 400000000000)

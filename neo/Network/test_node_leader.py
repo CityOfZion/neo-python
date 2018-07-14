@@ -107,9 +107,6 @@ class LeaderTestCase(WalletFixtureTestCase):
                         for peer in peers:
                             leader.RemoveConnectedPeer(peer)
 
-                        # and peers should be equal to the seed list
-                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
-
                         # test reset
                         leader.ResetBlockRequestsAndCache()
                         self.assertEqual(Blockchain.Default()._block_cache, {})
