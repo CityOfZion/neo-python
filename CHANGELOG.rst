@@ -9,6 +9,8 @@ All notable changes to this project are documented in this file.
 - Adds option to enter arguments for smart contract in an 'interactive' mode, which allows for much better parsing of input, activated by passing the ``--i`` flag when invoking.
 - Adds ability to *not* parse address strings such as AeV59NyZtgj5AMQ7vY6yhr2MRvcfFeLWSb when inputting to smart contract by passing the ``--no-parse`` flag
 - Changes the structure of items dispatched in SmartContractEvents to use the ``ContractParameter`` interface for better type inference and variable usage.
+- Fix size calculations for all serializable classes
+- Add ``size`` key to JSON output of Block and Transaction
 
 [0.7.2] 2018-06-21
 -------------------
