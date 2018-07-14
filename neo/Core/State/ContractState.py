@@ -13,6 +13,7 @@ class ContractPropertyState(IntEnum):
     NoProperty = 0
     HasStorage = 1 << 0
     HasDynamicInvoke = 1 << 1
+    Payable = 1 << 2
 
 
 class ContractState(StateBase):
@@ -46,6 +47,16 @@ class ContractState(StateBase):
             bool: True if supported. False otherwise.
         """
         return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
+
+    @property
+    def Payable(self):
+        """
+        Flag indicating if the contract should accept system assets or tokens
+
+        Returns:
+            bool: True if supported. False otherwise.
+        """
+        return self.ContractProperties & ContractPropertyState.Payable > 0
 
     @property
     def IsNEP5Contract(self):

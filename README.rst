@@ -167,6 +167,8 @@ Virtual Machine with Linux. You can find more information and a guide
 for setting up the Linux subsystem
 `here <https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213>`__.
 
+Installing "Ubuntu" from Microsoft Store installs Ubuntu 16.04. You should install Ubuntu 18.04 from Microsoft Store found here: https://www.microsoft.com/en-us/p/ubuntu-1804/9n9tngvndl3q?activetab=pivot%3aoverviewtab
+
 Python 3.6
 ~~~~~~~~~~
 
@@ -191,10 +193,15 @@ could lead to version conflicts.
 
     git clone https://github.com/CityOfZion/neo-python.git
     cd neo-python
+    
+    # setup alias for python and pip
+    
+    alias python=python3
+    alias pip=pip3
 
     # create virtual environment and activate
 
-    python3.6 -m venv venv # this can also be python3 -m venv venv depending on your environment
+    python -m venv venv
     source venv/bin/activate
 
     # install the package in an editable form
@@ -207,15 +214,18 @@ could lead to version conflicts.
     # create project dir
     mkdir myproject
     cd myproject
+    
+    # setup alias for python and pip
+    
+    alias python=python3
+    alias pip=pip3
 
     # create virtual environment and activate
 
-    python3.6 -m venv venv # this can also be python3 -m venv venv depending on your environment
+    python -m venv venv
     source venv/bin/activate
 
     (venv) pip install neo-python
-
-
 
 
 Running

@@ -201,6 +201,7 @@ def main():
         password_key = to_aes_key(passwd)
         try:
             wallet = UserWallet.Open(args.wallet, password_key)
+
         except Exception as e:
             print(f"Could not open wallet {e}")
             return
@@ -222,6 +223,11 @@ def main():
     Blockchain.RegisterBlockchain(blockchain)
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
     dbloop.start(.1)
+
+    # If a wallet is open, make sure it processes blocks
+    if wallet:
+        walletdb_loop = task.LoopingCall(wallet.ProcessBlocks)
+        walletdb_loop.start(1)
 
     # Setup twisted reactor, NodeLeader and start the NotificationDB
     reactor.suggestThreadPoolSize(15)

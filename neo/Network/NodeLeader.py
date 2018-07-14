@@ -8,7 +8,7 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 
 
 class NeoClientFactory(ReconnectingClientFactory):
@@ -37,7 +37,6 @@ class NodeLeader:
     _MissedBlocks = []
 
     BREQPART = 100
-    NREQMAX = 500
     BREQMAX = 10000
 
     KnownHashes = []
@@ -48,6 +47,8 @@ class NodeLeader:
     NodeCount = 0
 
     ServiceEnabled = False
+
+    peer_check_loop = None
 
     @staticmethod
     def Instance():
@@ -83,6 +84,10 @@ class NodeLeader:
         self.NodeId = random.randint(1294967200, 4294967200)
 
     def Restart(self):
+        if self.peer_check_loop:
+            self.peer_check_loop.stop()
+            self.peer_check_loop = None
+
         if len(self.Peers) == 0:
             self.ADDRS = []
             self.Start()
@@ -97,6 +102,33 @@ class NodeLeader:
             reactor.callLater(start_delay, self.SetupConnection, host, port)
             start_delay += 1
 
+        # check in on peers every 4 mins
+        self.peer_check_loop = task.LoopingCall(self.PeerCheckLoop)
+        self.peer_check_loop.start(240, now=False)
+
+    def setBlockReqSizeAndMax(self, breqpart=0, breqmax=0):
+        if breqpart > 0 and breqmax > 0 and breqmax > breqpart:
+            self.BREQPART = breqpart
+            self.BREQMAX = breqmax
+            logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
+        else:
+            logger.info("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
+
+    def setBlockReqSizeByName(self, name):
+        if name.lower() == 'slow':
+            self.BREQPART = 15
+            self.BREQMAX = 5000
+        elif name.lower() == 'normal':
+            self.BREQPART = 100
+            self.BREQMAX = 10000
+        elif name.lower() == 'fast':
+            self.BREQPART = 250
+            self.BREQMAX = 15000
+        else:
+            logger.info("configuration name %s not found. use 'slow', 'normal', or 'fast'" % name)
+
+        logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
+
     def RemoteNodePeerReceived(self, host, port, index):
         addr = '%s:%s' % (host, port)
         if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX:
@@ -109,6 +141,10 @@ class NodeLeader:
 
     def Shutdown(self):
         """Disconnect all connected peers."""
+        if self.peer_check_loop:
+            self.peer_check_loop.stop()
+            self.peer_check_loop = None
+
         for p in self.Peers:
             p.Disconnect()
 
@@ -140,10 +176,15 @@ class NodeLeader:
             self.Peers.remove(peer)
         if peer.Address in self.ADDRS:
             self.ADDRS.remove(peer.Address)
+
+    def PeerCheckLoop(self):
+        # often times things will get stuck on 1 peer
+        # with the below, we disconnect when there is only
+        # 1 peer, then restart when peers has reached 0
         if len(self.Peers) == 1:
             self.Peers[0].Disconnect()
         elif len(self.Peers) == 0:
-            reactor.callLater(10, self.Restart)
+            self.Restart()
 
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""

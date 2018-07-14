@@ -1,15 +1,17 @@
 from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
 from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
+from neocore.Fixed8 import Fixed8
 
 
 class ValidatorState(StateBase):
-    PublicKey = None
-    Registered = None  # bool
-    Votes = None  # Fixed8
+    PublicKey = None  # ECPoint
+    Registered = False  # bool
+    Votes = Fixed8.Zero()
 
     def __init__(self, pub_key=None):
         """
@@ -35,7 +37,7 @@ class ValidatorState(StateBase):
         """
         return super(ValidatorState, self).Size()
 
-    def Deserialize(self, reader):
+    def Deserialize(self, reader: BinaryReader):
         """
         Deserialize full object.
 
@@ -44,6 +46,8 @@ class ValidatorState(StateBase):
         """
         super(ValidatorState, self).Deserialize(reader)
         self.PublicKey = ECDSA.Deserialize_Secp256r1(reader)
+        self.Registered = reader.ReadBool()
+        self.Votes = reader.ReadFixed8()
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -65,7 +69,7 @@ class ValidatorState(StateBase):
 
         return v
 
-    def Serialize(self, writer):
+    def Serialize(self, writer: BinaryWriter):
         """
         Serialize full object.
 
@@ -74,6 +78,8 @@ class ValidatorState(StateBase):
         """
         super(ValidatorState, self).Serialize(writer)
         self.PublicKey.Serialize(writer)
+        writer.WriteBool(self.Registered)
+        writer.WriteFixed8(self.Votes)
 
     def ToJson(self):
         """
