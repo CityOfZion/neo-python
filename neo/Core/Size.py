@@ -53,7 +53,7 @@ def GetVarSize(value):
             elif isinstance(value[0], Enum):
                 # Note: currently all Enum's in neo core (C#) are of type Byte. Only porting that part of the code
                 value_size = value_length * Size.uint8
-            elif isinstance(value, bytes):
+            elif isinstance(value, (bytes, bytearray)):
                 # experimental replacement for: value_size = value.Length * Marshal.SizeOf<T>();
                 # because I don't think we have a reliable 'SizeOf' in python
                 value_size = value_length * Size.uint8
