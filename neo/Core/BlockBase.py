@@ -1,4 +1,3 @@
-import ctypes
 from .Mixins import VerifiableMixin
 from neocore.Cryptography.Helper import bin_dbl_sha256
 from neocore.Cryptography.Crypto import Crypto
@@ -8,7 +7,6 @@ from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
 from neocore.UInt256 import UInt256
 from neo.Core.Size import Size as s
-from neo.Core.Size import GetVarSize
 
 
 class BlockBase(VerifiableMixin):
@@ -212,9 +210,7 @@ class BlockBase(VerifiableMixin):
         """
         json = {}
         json["hash"] = self.Hash.To0xString()
-
-        # todo: this size isn't calculating correctly currently, but it should be included in the JSON
-        # json["size"] = self.Size()
+        json["size"] = self.Size()
         json["version"] = self.Version
         json["previousblockhash"] = self.PrevHash.To0xString()
         json["merkleroot"] = self.MerkleRoot.To0xString()

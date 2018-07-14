@@ -7,7 +7,7 @@ from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 
 from neo.Core.Size import Size as s
-from neo.Core.Size import GetVarIntSize, GetVarSize
+from neo.Core.Size import GetVarSize
 
 
 class AccountState(StateBase):

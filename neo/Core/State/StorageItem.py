@@ -1,7 +1,7 @@
 from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
-from neo.Core.Size import GetVarBytesSize, GetVarSize
+from neo.Core.Size import GetVarSize
 
 
 class StorageItem(StateBase):

@@ -6,7 +6,7 @@ from neocore.Fixed8 import Fixed8
 
 from enum import Enum
 from neo.Core.Size import Size as s
-from neo.Core.Size import GetVarSize, GetVarStringSize
+from neo.Core.Size import GetVarSize
 
 
 class StateType(Enum):
@@ -35,7 +35,7 @@ class StateDescriptor(SerializableMixin):
             int: size.
         """
 
-        return s.uint8 + GetVarSize(self.Key) + GetVarStringSize(self.Field) + GetVarSize(self.Value)
+        return s.uint8 + GetVarSize(self.Key) + GetVarSize(self.Field) + GetVarSize(self.Value)
 
     def Deserialize(self, reader: BinaryReader):
         """
