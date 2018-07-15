@@ -1,6 +1,7 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
 import sys
 from neocore.Fixed8 import Fixed8
+from neo.Core.Size import GetVarSize
 
 
 class InvocationTransaction(Transaction):
@@ -35,7 +36,7 @@ class InvocationTransaction(Transaction):
         Returns:
             int: size.
         """
-        return super(InvocationTransaction, self).Size() + sys.getsizeof(int)
+        return super(InvocationTransaction, self).Size() + GetVarSize(self.Script)
 
     def DeserializeExclusiveData(self, reader):
         """

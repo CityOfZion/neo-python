@@ -2,10 +2,11 @@ from neocore.IO.Mixins import SerializableMixin
 from neocore.Cryptography.Helper import bin_dbl_sha256
 from neo.Core.Helper import Helper
 from neo.Network.InventoryType import InventoryType
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class ConsensusPayload(SerializableMixin):
-
     InventoryType = InventoryType.Consensus
     Version = None
     PrevHash = None
@@ -23,7 +24,11 @@ class ConsensusPayload(SerializableMixin):
         return self._hash
 
     def Size(self):
-        raise NotImplementedError()
+        scriptsize = 0
+        if self.Script is not None:
+            scriptsize = self.Script.Size()
+
+        return s.uint32 + s.uint256 + s.uint32 + s.uint16 + s.uint32 + GetVarSize(self.Data) + 1 + scriptsize
 
     def GetMessage(self):
         return Helper.GetHashData(self)

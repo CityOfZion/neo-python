@@ -1,7 +1,7 @@
 from neocore.IO.Mixins import SerializableMixin
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
-import ctypes
+from neo.Core.Size import Size as s
 
 
 class StateBase(SerializableMixin):
@@ -14,7 +14,7 @@ class StateBase(SerializableMixin):
         Returns:
             int: size.
         """
-        return ctypes.sizeof(ctypes.c_byte)
+        return s.uint8
 
     @staticmethod
     def DeserializeFromDB(buffer):

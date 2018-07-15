@@ -3,6 +3,9 @@ from .StateBase import StateBase
 from .CoinState import CoinState
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
+from neo.Core.State.CoinState import CoinState
 
 
 class UnspentCoinState(StateBase):
@@ -44,7 +47,9 @@ class UnspentCoinState(StateBase):
         Returns:
             int: size.
         """
-        return super(UnspentCoinState, self).Size() + sys.getsizeof(self.Items)
+        # Items should be an array of type CoinState, not of ints!
+        corrected_items = list(map(lambda i: CoinState(i), self.Items))
+        return super(UnspentCoinState, self).Size() + GetVarSize(corrected_items)
 
     @property
     def IsAllSpent(self):

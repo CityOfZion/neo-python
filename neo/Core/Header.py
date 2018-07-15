@@ -20,6 +20,12 @@ class Header(BlockBase):
         self.Script = script
 
     def Size(self):
+        """
+        Get the amount of bytes the serializable data of self consists off
+
+        Returns:
+            int:
+        """
         return super(Header, self).Size() + 1
 
     def Deserialize(self, reader):

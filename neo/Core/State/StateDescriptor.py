@@ -5,6 +5,8 @@ from neo.IO.MemoryStream import StreamManager
 from neocore.Fixed8 import Fixed8
 
 from enum import Enum
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class StateType(Enum):
@@ -13,11 +15,10 @@ class StateType(Enum):
 
 
 class StateDescriptor(SerializableMixin):
-
     Type = None
-    Key = None
-    Field = None
-    Value = None
+    Key = None  # byte[]
+    Field = None  # string
+    Value = None  # byte[]
 
     @property
     def SystemFee(self):
@@ -33,7 +34,8 @@ class StateDescriptor(SerializableMixin):
         Returns:
             int: size.
         """
-        return super(StateDescriptor, self).Size()
+
+        return s.uint8 + GetVarSize(self.Key) + GetVarSize(self.Field) + GetVarSize(self.Value)
 
     def Deserialize(self, reader: BinaryReader):
         """

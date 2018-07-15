@@ -1,6 +1,8 @@
 import sys
-
+import binascii
 from neocore.IO.Mixins import SerializableMixin
+from neocore.UInt256 import UInt256
+from neo.Core.Size import GetVarSize
 
 
 class GetBlocksPayload(SerializableMixin):
@@ -25,7 +27,8 @@ class GetBlocksPayload(SerializableMixin):
         Returns:
             int: size.
         """
-        return sys.getsizeof(self.HashStart) + sys.getsizeof(self.HashStop)
+        corrected_hashes = list(map(lambda i: UInt256(data=binascii.unhexlify(i)), self.HashStart))
+        return GetVarSize(corrected_hashes) + self.hash_stop.Size
 
     def Deserialize(self, reader):
         """
