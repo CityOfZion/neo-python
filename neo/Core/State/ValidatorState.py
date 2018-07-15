@@ -35,7 +35,7 @@ class ValidatorState(StateBase):
         Returns:
             int: size.
         """
-        return super(ValidatorState, self).Size()
+        return super(ValidatorState, self).Size() + self.PublicKey.Size() + s.uint8 + self.Votes.Size()
 
     def Deserialize(self, reader: BinaryReader):
         """
