@@ -84,7 +84,6 @@ class PromptFileHistory(FileHistory):
 
 
 class PromptInterface:
-
     prompt_completer = None
     history = None
 
@@ -1111,7 +1110,7 @@ def main():
     cli = PromptInterface(fn_prompt_history)
 
     # Run things
-#    reactor.suggestThreadPoolSize(15)
+    #    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
 

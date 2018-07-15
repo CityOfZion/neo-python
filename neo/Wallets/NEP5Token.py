@@ -150,7 +150,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         return 0
 
-    def Transfer(self, wallet, from_addr, to_addr, amount):
+    def Transfer(self, wallet, from_addr, to_addr, amount, tx_attributes=[]):
         """
         Transfer a specified amount of the NEP5Token to another address.
 
@@ -159,6 +159,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
             from_addr (str): public address of the account to transfer the given amount from.
             to_addr (str): public address of the account to transfer the given amount to.
             amount (int): quantity to send.
+            tx_attributes (list): a list of TransactionAtribute objects.
 
         Returns:
             tuple:
@@ -171,7 +172,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
                                            [parse_param(from_addr, wallet), parse_param(to_addr, wallet),
                                             parse_param(amount)])
 
-        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [], from_addr=from_addr)
+        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [], from_addr=from_addr, invoke_attrs=tx_attributes)
 
         return tx, fee, results
 

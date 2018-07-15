@@ -4,6 +4,8 @@ from neo.Wallets.NEP5Token import NEP5Token
 from neocore.Fixed8 import Fixed8
 from prompt_toolkit import prompt
 from decimal import Decimal
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
+import binascii
 
 
 def token_send(wallet, args, prompt_passwd=True):
@@ -181,12 +183,18 @@ def token_crowdsale_register(wallet, args, prompt_passwd=True):
     return False
 
 
-def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True):
+def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True, tx_attributes=[]):
     if from_address is None:
         print("Please specify --from-addr={addr} to send NEP5 tokens")
         return False
 
-    tx, fee, results = token.Transfer(wallet, from_address, to_address, amount)
+    # because we cannot differentiate between a normal and multisig from_addr, and because we want to make
+    # sending NEP5 tokens straight forward even when sending from multisig addresses, we include the script_hash
+    # for verification by default to the transaction attributes. See PR/Issue: https://github.com/CityOfZion/neo-python/pull/491
+    from_script_hash = binascii.unhexlify(bytes(wallet.ToScriptHash(from_address).ToString2(), 'utf-8'))
+    tx_attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script, data=from_script_hash))
+
+    tx, fee, results = token.Transfer(wallet, from_address, to_address, amount, tx_attributes=tx_attributes)
 
     if tx is not None and results is not None and len(results) > 0:
 
