@@ -2,7 +2,7 @@
 Description:
     ScriptBuilder in neo, to create scripts
 Usage:
-    from neo.Core.Scripts.ScriptBuilder import ScriptBuilder
+    from neo.VM.ScriptBuilder import ScriptBuilder
 """
 import struct
 import binascii
