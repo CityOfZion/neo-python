@@ -8,6 +8,8 @@ All notable changes to this project are documented in this file.
 - Update NodeLeader peer monitoring system
 - Add ability to configure size of requests for blocks as well as block processing queue size
 - Update mainnet bootstrap files
+- Fix size calculations for all serializable classes
+- Add ``size`` key to JSON output of Block and Transaction
 - add prompt command to split VIN to multiple VOUT
 
 [0.7.3] 2018-07-12
@@ -16,9 +18,11 @@ All notable changes to this project are documented in this file.
 - Adds option to enter arguments for smart contract in an 'interactive' mode, which allows for much better parsing of input, activated by passing the ``--i`` flag when invoking.
 - Adds ability to *not* parse address strings such as AeV59NyZtgj5AMQ7vY6yhr2MRvcfFeLWSb when inputting to smart contract by passing the ``--no-parse`` flag
 - Changes the structure of items dispatched in SmartContractEvents to use the ``ContractParameter`` interface for better type inference and variable usage.
+- Fix sending NEP5 tokesn from a multisig address.
 - Bugfix: np-api-server with open wallet now properly processes new blocks
 - Update neo-boa to v0.4.8 and neocore to v0.4.11
 - Add VM support for ``Neo.Contract.IsPayable``
+
 
 [0.7.2] 2018-06-21
 -------------------

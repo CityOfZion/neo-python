@@ -1,6 +1,7 @@
 import ctypes
 from datetime import datetime
 from neocore.IO.Mixins import SerializableMixin
+from neo.Core.Size import Size as s
 
 
 class NetworkAddressWithTime(SerializableMixin):
@@ -33,7 +34,7 @@ class NetworkAddressWithTime(SerializableMixin):
         Returns:
             int: size.
         """
-        return ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_ulong) + 16 + ctypes.sizeof(ctypes.c_ushort)
+        return s.uint32 + s.uint64 + 16 + s.uint16
 
     def Deserialize(self, reader):
         """

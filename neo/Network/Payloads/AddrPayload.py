@@ -1,5 +1,6 @@
 from neocore.IO.Mixins import SerializableMixin
 import sys
+from neo.Core.Size import GetVarSize
 
 
 class AddrPayload(SerializableMixin):
@@ -21,7 +22,7 @@ class AddrPayload(SerializableMixin):
         Returns:
             int: size.
         """
-        return sys.getsizeof(self.NetworkAddressesWithTime)
+        return GetVarSize(self.NetworkAddressesWithTime)
 
     def Deserialize(self, reader):
         """

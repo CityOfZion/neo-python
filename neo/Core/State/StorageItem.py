@@ -1,6 +1,7 @@
 from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
+from neo.Core.Size import GetVarSize
 
 
 class StorageItem(StateBase):
@@ -45,7 +46,7 @@ class StorageItem(StateBase):
         Returns:
             int: size.
         """
-        return super(StorageItem, self).Size() + len(self.Value)
+        return super(StorageItem, self).Size() + GetVarSize(self.Value)
 
     def Deserialize(self, reader):
         """

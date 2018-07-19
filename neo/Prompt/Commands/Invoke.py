@@ -336,19 +336,18 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
             wallet_tx.Gas = tx_gas
             # reset the wallet outputs
             wallet_tx.outputs = outputs
-            wallet_tx.Attributes = []
+            wallet_tx.Attributes = [] if invoke_attrs is None else invoke_attrs
 
             return wallet_tx, net_fee, engine.EvaluationStack.Items, engine.ops_processed
 
         # this allows you to to test invocations that fail
         else:
             wallet_tx.outputs = outputs
-            wallet_tx.Attributes = []
+            wallet_tx.Attributes = [] if invoke_attrs is None else invoke_attrs
             return wallet_tx, min_fee, [], engine.ops_processed
 
     except Exception as e:
         service.ExecutionCompleted(engine, False, e)
-#        print("COULD NOT EXECUTE %s " % e)
 
     return None, None, None, None
 

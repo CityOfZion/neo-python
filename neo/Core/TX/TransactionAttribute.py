@@ -7,6 +7,8 @@ Usage:
 from logzero import logger
 from neocore.IO.Mixins import SerializableMixin
 from neocore.UIntBase import UIntBase
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class TransactionAttributeUsage:
@@ -153,3 +155,13 @@ class TransactionAttribute(SerializableMixin):
             'data': '' if not self.Data else self.Data.hex()
         }
         return obj
+
+    def Size(self):
+        if self.Usage == TransactionAttributeUsage.ContractHash or self.Usage == TransactionAttributeUsage.ECDH02 or self.Usage == TransactionAttributeUsage.ECDH03 or self.Usage == TransactionAttributeUsage.Vote or (self.Usage >= TransactionAttributeUsage.Hash1 and self.Usage <= TransactionAttributeUsage.Hash15):
+            return s.uint8 + 32
+        elif self.Usage == TransactionAttributeUsage.Script:
+            return s.uint8 + 20
+        elif self.Usage == TransactionAttributeUsage.DescriptionUrl:
+            return s.uint8 + s.uint8 + len(self.Data)
+        else:
+            return s.uint8 + GetVarSize(self.Data)

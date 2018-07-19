@@ -5,6 +5,7 @@ from neocore.IO.Mixins import SerializableMixin
 from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neocore.Cryptography.Helper import bin_dbl_sha256
+from neo.Core.Size import Size as s
 
 
 class ChecksumException(Exception):
@@ -55,8 +56,7 @@ class Message(SerializableMixin):
         Returns:
             int: size.
         """
-        return ctypes.sizeof(ctypes.c_uint) + 12 + ctypes.sizeof(ctypes.c_int) + ctypes.sizeof(ctypes.c_uint) + len(
-            self.Payload)
+        return s.uint32 + 12 + s.uint32 + s.uint32 + len(self.Payload)
 
     def Deserialize(self, reader):
         """

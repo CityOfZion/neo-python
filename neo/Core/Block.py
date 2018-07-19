@@ -12,6 +12,7 @@ from neo.Core.Header import Header
 from neo.Core.Witness import Witness
 from neocore.Fixed8 import Fixed8
 from neo.Blockchain import GetBlockchain
+from neo.Core.Size import GetVarSize
 
 
 class Block(BlockBase, InventoryMixin):
@@ -118,11 +119,7 @@ class Block(BlockBase, InventoryMixin):
         Returns:
             int: size.
         """
-        s = super(Block, self).Size()
-        # todo: is getsizeof the right thing to use? the calculation isn't consistent with C# nodes.
-        # due to __sizeof__ not being implemented by Transaction? need to use Transaction.Size() instead?
-        s = s + sys.getsizeof(self.Transactions)
-
+        s = super(Block, self).Size() + GetVarSize(self.Transactions)
         return s
 
     def CalculatneNetFee(self, transactions):

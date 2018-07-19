@@ -3,6 +3,8 @@ from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
 from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 from neocore.Fixed8 import Fixed8
 
 
@@ -33,7 +35,7 @@ class ValidatorState(StateBase):
         Returns:
             int: size.
         """
-        return super(ValidatorState, self).Size()
+        return super(ValidatorState, self).Size() + self.PublicKey.Size() + s.uint8 + self.Votes.Size()
 
     def Deserialize(self, reader: BinaryReader):
         """

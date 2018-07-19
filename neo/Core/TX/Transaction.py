@@ -24,6 +24,8 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neocore.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
 class TransactionResult(EquatableMixin):
@@ -157,6 +159,9 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
             'value': self.Value.ToNeoJsonString(),
             'address': self.Address
         }
+
+    def Size(self):
+        return self.Value.Size() + s.uint160 + s.uint256
 
 
 class TransactionInput(SerializableMixin, EquatableMixin):
@@ -358,12 +363,7 @@ class Transaction(InventoryMixin):
         Returns:
             int: size.
         """
-        # todo: will sys.getsizeof work as expected for each of these? is __sizeof__ implemented for each? should use Size() instead?
-        len_attributes = sys.getsizeof(self.Attributes)
-        len_inputs = sys.getsizeof(self.inputs)
-        len_outputs = sys.getsizeof(self.outputs)
-        len_scripts = sys.getsizeof(self.scripts)
-        return sys.getsizeof(self.Type) + sys.getsizeof(0) + len_attributes + len_inputs + len_outputs + len_scripts
+        return s.uint8 + s.uint8 + GetVarSize(self.Attributes) + GetVarSize(self.inputs) + GetVarSize(self.outputs) + GetVarSize(self.Scripts)
 
     def Height(self):
         return self.__height
@@ -591,8 +591,7 @@ class Transaction(InventoryMixin):
         """
         jsn = {}
         jsn["txid"] = self.Hash.To0xString()
-        # todo: this size isn't calculating correctly currently, but it should be included in the JSON
-        # jsn["size"] = self.Size()
+        jsn["size"] = self.Size()
         jsn["type"] = TransactionType.ToName(self.Type)
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]

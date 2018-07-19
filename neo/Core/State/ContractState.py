@@ -5,6 +5,9 @@ from neo.Core.FunctionCode import FunctionCode
 from enum import IntEnum
 import binascii
 
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
+
 
 class ContractPropertyState(IntEnum):
     NoProperty = 0
@@ -95,7 +98,11 @@ class ContractState(StateBase):
         Returns:
             int: size.
         """
-        return super(ContractState, self).Size()
+        script_size = GetVarSize(self.Code.Script)
+        parameterlist_size = GetVarSize(self.Code.ParameterList)
+        parameterreturntype_size = s.uint8
+
+        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
 
     def Deserialize(self, reader):
         """
