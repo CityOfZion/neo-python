@@ -109,12 +109,6 @@ class Coin(TrackableMixin):
     def __hash__(self):
         return int.from_bytes(self.Reference.PrevHash.Data + bytearray(self.Reference.PrevIndex), 'little')
 
-    def RefToBytes(self):
-        vin_index = bytearray(self.Reference.PrevIndex.to_bytes(1, 'little'))
-        vin_tx = self.Reference.PrevHash.Data
-        vindata = vin_tx + vin_index
-        return vindata
-
     def ToJson(self):
         """
         Convert object members to a dictionary that can be parsed as JSON.

@@ -41,7 +41,7 @@ from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHold
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register, token_history
 from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
-    ShowUnspentCoins
+    ShowUnspentCoins, SplitUnspentCoin
 
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.InputParser import InputParser
@@ -141,7 +141,8 @@ class PromptInterface:
                 'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
                 'wallet tkn_register {addr} ({addr}...) (--from-addr={addr})',
                 'wallet tkn_history {token symbol}',
-                'wallet unspent',
+                'wallet unspent (neo/gas)',
+                'wallet split {addr} {asset} {unspent index} {divide into number of vins}'
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
                 'withdraw holds # lists all current holds',
@@ -577,6 +578,8 @@ class PromptInterface:
             token_history(self.Wallet, notification_db, arguments[1:])
         elif item == 'unspent':
             ShowUnspentCoins(self.Wallet, arguments[1:])
+        elif item == 'split':
+            SplitUnspentCoin(self.Wallet, arguments[1:])
         elif item == 'alias':
             if len(arguments) == 3:
                 AddAlias(self.Wallet, arguments[1], arguments[2])

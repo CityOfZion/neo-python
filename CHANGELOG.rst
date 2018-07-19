@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file.
 - Update NodeLeader peer monitoring system
 - Add ability to configure size of requests for blocks as well as block processing queue size
 - Update mainnet bootstrap files
+- add prompt command to split VIN to multiple VOUT
 
 [0.7.3] 2018-07-12
 -----------------------
