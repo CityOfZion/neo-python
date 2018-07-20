@@ -12,7 +12,7 @@ All notable changes to this project are documented in this file.
 - Add ``size`` key to JSON output of Block and Transaction
 
 [0.7.3] 2018-07-12
------------------------
+------------------
 - Updated package requirements, removed ``pycrypto`` from all dependencies to fix install error(s) `#485 <https://github.com/CityOfZion/neo-python/issues/485>`_
 - Adds option to enter arguments for smart contract in an 'interactive' mode, which allows for much better parsing of input, activated by passing the ``--i`` flag when invoking.
 - Adds ability to *not* parse address strings such as AeV59NyZtgj5AMQ7vY6yhr2MRvcfFeLWSb when inputting to smart contract by passing the ``--no-parse`` flag
@@ -24,7 +24,7 @@ All notable changes to this project are documented in this file.
 
 
 [0.7.2] 2018-06-21
--------------------
+------------------
 - When using a custom datadir (with ``--datadir``), ``np-prompt`` will store log and history files there instead of
   the default directory. Note: if you use a custom datadir that does not yet exist, ``np-prompt`` starts without
   history or logs because those files are just created from scratch in the custom datadir.
@@ -124,7 +124,7 @@ All notable changes to this project are documented in this file.
 
 
 [0.6.5] 2018-03-31
------------------------
+------------------
 - Changed the ``eval()`` call when parsing the `--tx-attr` param to parse only json. Reduced the surface and options available on the other 2 eval calls to improve security.
 - fix wallet rebuild database lock errors (`PR #365 <https://github.com/CityOfZion/neo-python/pull/365>`_)
 - Fixed `synced_watch_only_balances` being always zero issue (`#209  <https://github.com/CityOfZion/neo-python/issues/209>`_)
