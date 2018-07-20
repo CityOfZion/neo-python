@@ -24,7 +24,7 @@ class SmartContract:
         def sc_notify(event):
             print("SmartContract Runtime.Notify event:", event)
             if isinstance(event.event_payload, ContractParameter) and event.event_payload.Type == ContractParameterType.Array and len(event.event_payload.Value):
-                print(event.event_payload.Value[0].decode("utf-8"))
+                print(event.event_payload.Value[0].Value.decode("utf-8"))
 
     Handlers receive as `event` argument an instance of the `neo.EventHub.SmartContractEvent`
     object. It has the following properties:
