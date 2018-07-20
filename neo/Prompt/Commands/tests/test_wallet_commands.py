@@ -3,7 +3,8 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportToken, ImportWatchAddr
+from neocore.Fixed8 import Fixed8
+from neo.Prompt.Commands.Wallet import DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
 import shutil
 
 
@@ -76,3 +77,52 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet = self.GetWallet1()
         synced_balances = wallet.GetSyncedBalances()
         self.assertEqual(len(synced_balances), 2)
+
+    def test_5_show_unspent(self):
+
+        wallet = self.GetWallet1(True)
+        unspents = ShowUnspentCoins(wallet, [])
+        self.assertEqual(len(unspents), 2)
+
+        unspents = ShowUnspentCoins(wallet, ['neo'])
+        self.assertEqual(len(unspents), 1)
+
+        unspents = ShowUnspentCoins(wallet, ['gas'])
+        self.assertEqual(len(unspents), 1)
+
+        unspents = ShowUnspentCoins(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx'])
+        self.assertEqual(len(unspents), 2)
+
+        unspents = ShowUnspentCoins(wallet, ['AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg'])
+        self.assertEqual(len(unspents), 0)
+
+        unspents = ShowUnspentCoins(wallet, ['--watch'])
+        self.assertEqual(len(unspents), 0)
+
+    def test_6_split_unspent(self):
+
+        wallet = self.GetWallet1(True)
+
+        # test bad
+        tx = SplitUnspentCoin(wallet, [])
+        self.assertEqual(tx, None)
+
+        # bad inputs
+        tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'neo', 3, 2])
+        self.assertEqual(tx, None)
+
+        # should be ok
+        tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'neo', 0, 2], prompt_passwd=False)
+        self.assertIsNotNone(tx)
+
+        # rebuild wallet and try with non-even amount of neo, should be split into integer values of NEO
+        wallet = self.GetWallet1(True)
+        tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'neo', 0, 3], prompt_passwd=False)
+        self.assertIsNotNone(tx)
+
+        self.assertEqual([Fixed8.FromDecimal(34), Fixed8.FromDecimal(34), Fixed8.FromDecimal(32)], [item.Value for item in tx.outputs])
+
+        # try with gas
+        wallet = self.GetWallet1(True)
+        tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'gas', 0, 3], prompt_passwd=False)
+        self.assertIsNotNone(tx)
