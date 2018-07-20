@@ -229,6 +229,8 @@ def ShowUnspentCoins(wallet, args):
         print('\n-----------------------------------------------')
         print(json.dumps(unspent.ToJson(), indent=4))
 
+    return unspents
+
 
 def SplitUnspentCoin(wallet, args, prompt_passwd=True):
     """
@@ -248,13 +250,13 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
         divisions = int(args[3])
     except Exception as e:
         logger.info("Invalid arguments specified: %s " % e)
-        return
+        return None
 
     try:
         unspentItem = wallet.FindUnspentCoinsByAsset(asset, from_addr=addr)[index]
     except Exception as e:
         logger.info("Could not find unspent item for asset with index %s %s :  %s" % (asset, index, e))
-        return
+        return None
 
     outputs = split_to_vouts(asset, addr, unspentItem.Output.Value, divisions)
 
@@ -267,7 +269,7 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
-            return False
+            return None
 
     if ctx.Completed:
 
@@ -278,11 +280,11 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
         if relayed:
             wallet.SaveTransaction(contract_tx)
             print("Relayed Tx: %s " % contract_tx.Hash.ToString())
-            return True
+            return contract_tx
         else:
             print("Could not relay tx %s " % contract_tx.Hash.ToString())
 
-    return False
+    return None
 
 
 def split_to_vouts(asset, addr, input_val, divisions):
