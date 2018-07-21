@@ -11,6 +11,8 @@ All notable changes to this project are documented in this file.
 - Fix size calculations for all serializable classes
 - Add ``size`` key to JSON output of Block and Transaction
 - add prompt command to split VIN to multiple VOUT
+- update notification endpoint to include ``total_pages`` in output, and allow ``pagesize`` paramater to be passed in
+- update seeds for mainnet
 
 [0.7.3] 2018-07-12
 ------------------
