@@ -80,7 +80,7 @@ This is an example of listening for ``Runtime.Notify`` events of a smart contrac
         # The event payload list has at least one element. As developer of the smart contract
         # you should know what data-type is in the bytes, and how to decode it. In this example,
         # it's just a string, so we decode it with utf-8:
-        print("- payload part 1:", event.event_payload.Value[0].decode("utf-8"))
+        print("- payload part 1:", event.event_payload.Value[0].Value.decode("utf-8"))
 
 
 The following decorators are currently available:
@@ -117,7 +117,7 @@ Here is another example, showing how to listen for all events and distinguishing
                 return
 
             # Decode the first payload item and print it
-            print("- payload part 1:", event.event_payload.Value[0].decode("utf-8"))
+            print("- payload part 1:", event.event_payload.Value[0].Value.decode("utf-8"))
 
 
 
