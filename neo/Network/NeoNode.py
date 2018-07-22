@@ -110,6 +110,7 @@ class NeoNode(Protocol):
 
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
+        self.endpoint = self.transport.getPeer()
         if self.block_loop:
             self.block_loop.stop()
             self.block_loop = None
@@ -233,6 +234,7 @@ class NeoNode(Protocol):
             self.Log("Command %s not implemented " % m.Command)
 
     def ProtocolReady(self):
+        self.RequestPeerInfo()
         self.AskForMoreHeaders()
 
         self.block_loop = task.LoopingCall(self.AskForMoreBlocks)

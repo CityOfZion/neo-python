@@ -17,6 +17,16 @@ class NeoClientFactory(ReconnectingClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         address = "%s:%s" % (connector.host, connector.port)
+        logger.debug("Failed connecting to %s " % address)
+        if "Connection refused" in str(reason) or "Operation timed out" in str(reason):
+            if address in NodeLeader.Instance().ADDRS:
+                NodeLeader.Instance().ADDRS.remove(address)
+                if address not in NodeLeader.Instance().DEAD_ADDRS:
+                    NodeLeader.Instance().DEAD_ADDRS.append(address)
+            
+
+    def clientConnectionLost(self, connector, reason):
+        address = "%s:%s" % (connector.host, connector.port)
         logger.debug("Dropped connection from %s " % address)
         for peer in NodeLeader.Instance().Peers:
             if peer.Address == address:
@@ -31,6 +41,7 @@ class NodeLeader:
     UnconnectedPeers = []
 
     ADDRS = []
+    DEAD_ADDRS = []
 
     NodeId = None
 
@@ -80,6 +91,7 @@ class NodeLeader:
         self.Peers = []
         self.UnconnectedPeers = []
         self.ADDRS = []
+        self.DEAD_ADDRS = []
         self.MissionsGlobal = []
         self.NodeId = random.randint(1294967200, 4294967200)
 
@@ -90,6 +102,7 @@ class NodeLeader:
 
         if len(self.Peers) == 0:
             self.ADDRS = []
+            self.DEAD_ADDRS = []
             self.Start()
 
     def Start(self):
@@ -98,7 +111,6 @@ class NodeLeader:
         start_delay = 0
         for bootstrap in settings.SEED_LIST:
             host, port = bootstrap.split(":")
-            self.ADDRS.append('%s:%s' % (host, port))
             reactor.callLater(start_delay, self.SetupConnection, host, port)
             start_delay += 1
 
@@ -131,13 +143,13 @@ class NodeLeader:
 
     def RemoteNodePeerReceived(self, host, port, index):
         addr = '%s:%s' % (host, port)
-        if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX:
+        if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX and addr not in self.DEAD_ADDRS:
             self.ADDRS.append(addr)
             reactor.callLater(index * 10, self.SetupConnection, host, port)
 
     def SetupConnection(self, host, port):
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
-            reactor.connectTCP(host, int(port), NeoClientFactory())
+            reactor.connectTCP(host, int(port), NeoClientFactory(), timeout=120)
 
     def Shutdown(self):
         """Disconnect all connected peers."""
@@ -160,6 +172,8 @@ class NodeLeader:
 
             if len(self.Peers) < settings.CONNECTED_PEER_MAX:
                 self.Peers.append(peer)
+                if peer.Address not in self.ADDRS:
+                    self.ADDRS.append(peer.Address)
             else:
                 if peer.Address in self.ADDRS:
                     self.ADDRS.remove(peer.Address)
@@ -174,17 +188,22 @@ class NodeLeader:
         """
         if peer in self.Peers:
             self.Peers.remove(peer)
-        if peer.Address in self.ADDRS:
-            self.ADDRS.remove(peer.Address)
 
     def PeerCheckLoop(self):
-        # often times things will get stuck on 1 peer
-        # with the below, we disconnect when there is only
-        # 1 peer, then restart when peers has reached 0
-        if len(self.Peers) == 1:
-            self.Peers[0].Disconnect()
-        elif len(self.Peers) == 0:
-            self.Restart()
+        # often times things will get stuck on 1 peer so
+        # every so often we will try to reconnect to peers
+        # that were previously active but lost their connection
+
+        start_delay = 0
+        connected  = []
+        for peer in self.Peers:
+            connected.append(peer.Address)
+        for addr in self.ADDRS:
+            if addr not in connected and len(self.Peers) < settings.CONNECTED_PEER_MAX and addr not in self.DEAD_ADDRS:
+                host, port = addr.split(":")
+                reactor.callLater(start_delay, self.SetupConnection, host, port)
+                start_delay += 1
+
 
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""
