@@ -113,13 +113,20 @@ OSX
 Ubuntu/Debian 16.10+
 ^^^^^^^^^^^^^^^^^^^^
 
-Ubuntu starting at 16.10 supports Python 3.6 in the official
-repositories, and you can just install Python 3.6 and all the system
-dependencies like this:
+Ubuntu starting at 16.10 supports Python 3.6+ in the official repositories. We recommend
+using Python 3.7. 
+
+First, ensure Ubuntu is fully up-to-date with this:
 
 ::
 
-    apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
+   sudo apt-get update && sudo apt-get upgrade
+
+You can install Python 3.7 and all the system dependencies like this:
+
+::
+
+   sudo apt-get install python3.7 python3.7-dev python3.7-venv python3-pip libleveldb-dev libssl-dev g++
 
 Older Ubuntu versions (eg. 16.04)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -158,25 +165,25 @@ Centos/Redhat/Fedora
 Windows
 ^^^^^^^
 
-Help needed. Installing the Python package plyvel seems to require C++
+Help needed for running natively. Installing the Python package plyvel seems to require C++
 compiler support tied to Visual Studio and libraries. Refer to
 `documentation <https://neo-python.readthedocs.io/en/latest/installwindows.html>`__.
 
-Currently you probably should use the Linux subsystem with Ubuntu, or a
+Currently, you should use the Linux subsystem with Ubuntu, or a
 Virtual Machine with Linux. You can find more information and a guide
 for setting up the Linux subsystem
 `here <https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213>`__.
 
 Installing "Ubuntu" from Microsoft Store installs Ubuntu 16.04. You should install Ubuntu 18.04 from Microsoft Store found here: https://www.microsoft.com/en-us/p/ubuntu-1804/9n9tngvndl3q?activetab=pivot%3aoverviewtab
 
-Python 3.6
+Python 3.7
 ~~~~~~~~~~
 
 neo-python is compatible with **Python 3.6 and later**.
 
-On \*nix systems, install Python 3.6 via your package manager, or
+On \*nix systems, install Python 3.7 via your package manager, or
 download an installation package from the `official
-homepage <https://www.python.org/downloads/release/python-364/>`__.
+homepage <https://www.python.org/downloads/>`__.
 
 
 Install
@@ -196,7 +203,7 @@ could lead to version conflicts.
     
     # setup alias for python and pip
     
-    alias python=python3
+    alias python=python3.7
     alias pip=pip3
 
     # create virtual environment and activate
@@ -217,7 +224,7 @@ could lead to version conflicts.
     
     # setup alias for python and pip
     
-    alias python=python3
+    alias python=python3.7
     alias pip=pip3
 
     # create virtual environment and activate
