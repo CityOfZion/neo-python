@@ -23,7 +23,6 @@ class NeoClientFactory(ReconnectingClientFactory):
                 NodeLeader.Instance().ADDRS.remove(address)
                 if address not in NodeLeader.Instance().DEAD_ADDRS:
                     NodeLeader.Instance().DEAD_ADDRS.append(address)
-            
 
     def clientConnectionLost(self, connector, reason):
         address = "%s:%s" % (connector.host, connector.port)
@@ -195,7 +194,7 @@ class NodeLeader:
         # that were previously active but lost their connection
 
         start_delay = 0
-        connected  = []
+        connected = []
         for peer in self.Peers:
             connected.append(peer.Address)
         for addr in self.ADDRS:
@@ -203,7 +202,6 @@ class NodeLeader:
                 host, port = addr.split(":")
                 reactor.callLater(start_delay, self.SetupConnection, host, port)
                 start_delay += 1
-
 
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""
