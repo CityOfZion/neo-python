@@ -110,7 +110,6 @@ class NeoNode(Protocol):
 
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
-        self.endpoint = self.transport.getPeer()
         if self.block_loop:
             self.block_loop.stop()
             self.block_loop = None
