@@ -113,8 +113,7 @@ OSX
 Ubuntu/Debian 16.10+
 ^^^^^^^^^^^^^^^^^^^^
 
-Ubuntu starting at 16.10 supports Python 3.6+ in the official repositories. We recommend
-using Python 3.7. 
+Ubuntu starting at 16.10 supports Python 3.6+ in the official repositories.
 
 First, ensure Ubuntu is fully up-to-date with this:
 
