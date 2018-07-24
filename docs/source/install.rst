@@ -2,7 +2,7 @@
 Installation
 ------------
 
-You will need to install the libleveldb library. Install `Python 3.6 <https://www.python.org/downloads/release/python-364/>`_ to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.5 and below are not supported.
+You will need to install the libleveldb library. Install `Python 3.7 <https://www.python.org/downloads/release/python-370/>`_ to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.5 and below are not supported.
 
 You should install platform specific items before installing ``neo-python``.
 
@@ -13,11 +13,19 @@ Platform Specific Instructions
 Ubuntu/Debian 16.10+
 """"""""""""""""""""
 
-Ubuntu starting at 16.10 supports Python 3.6 in the official repositories, and you can just install Python 3.6 and all the system dependencies like this:
+Ubuntu starting at 16.10 supports Python 3.6+ in the official repositories.
+
+First, ensure Ubuntu is fully up-to-date with this:
 
 ::
 
-    apt-get install python3.6 python3.6-dev python3-pip python3-venv libleveldb-dev libssl-dev g++
+   sudo apt-get update && sudo apt-get upgrade
+
+You can install Python 3.7 and all the system dependencies like this:
+
+::
+
+   sudo apt-get install python3.7 python3.7-dev python3.7-venv python3-pip libleveldb-dev libssl-dev g++
 
 
 Older Ubuntu versions (eg. 16.04)
@@ -130,15 +138,20 @@ Install from PyPi
 
 The easiest way to install ``neo-python`` on your machine is to download it and install from PyPi using ``pip``. First, we recommend you to create a virtual environment in order to isolate this installation from your system directories and then install it as you normally would do:
 
-  ::
+::
 
     # create project dir
     mkdir myproject
     cd myproject
+    
+    # setup alias for python and pip
+    
+    alias python=python3.7
+    alias pip=pip3
 
     # create virtual environment and activate
 
-    python3.6 -m venv venv # this can also be python3 -m venv venv depending on your environment
+    python -m venv venv
     source venv/bin/activate
 
     (venv) pip install neo-python
@@ -152,15 +165,21 @@ Make a Python 3 virtual environment and activate it via
 
 ::
 
-    python3.6 -m venv venv
+    git clone https://github.com/CityOfZion/neo-python.git
+    cd neo-python
+    
+    # setup alias for python and pip
+    
+    alias python=python3.7
+    alias pip=pip3
+
+    # create virtual environment and activate
+
+    python -m venv venv
     source venv/bin/activate
 
-Then install the requirements via
-
-::
-
-    pip install -U setuptools pip wheel
-    pip install -e .
+    # install the package in an editable form
+    (venv) pip install -e .
 
 
 Updating neo-python from Git
