@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.4-dev] in progress
 -----------------------
+- Add support for Python 3.7
 - Update NodeLeader peer monitoring system
 - Add ability to configure size of requests for blocks as well as block processing queue size
 - Update mainnet bootstrap files
