@@ -88,7 +88,7 @@ class UserWallet(Wallet):
         self._db = PWDatabase(self._path).DB
         try:
             self._db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, VINHold,
-                                    Transaction, TransactionInfo, NamedAddress], safe=True)
+                                    Transaction, TransactionInfo, NamedAddress])
         except Exception as e:
             logger.error("Could not build database %s %s " % (e, self._path))
 
