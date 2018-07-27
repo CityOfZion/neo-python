@@ -363,8 +363,8 @@ class UserWallet(Wallet):
         if k is None:
             k = Key.create(Name=key, Value=value)
 
-        name = str(k.Name)
-        val = str(k.Value)
+        name = bytes(k.Name, 'utf-8')
+        val = bytearray(k.Value)
 
         k.Name = name
         k.Value = val
