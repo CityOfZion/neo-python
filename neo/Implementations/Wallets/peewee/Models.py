@@ -1,5 +1,5 @@
-from peewee import Model, PrimaryKeyField, CharField, BooleanField, \
-     ForeignKeyField, IntegerField, DateTimeField, BlobField
+
+from peewee import Model, PrimaryKeyField, CharField, BooleanField, ForeignKeyField, IntegerField, DateTimeField, BlobField
 from .PWDatabase import PWDatabase
 from neocore.Cryptography.Crypto import Crypto
 from neocore.UInt256 import UInt256
@@ -54,8 +54,8 @@ class Coin(ModelBase):
 
 class Contract(ModelBase):
     Id = PrimaryKeyField()
-    RawData = BlobField() #changed
-    ScriptHash = BlobField()
+    RawData = CharField()
+    ScriptHash = CharField()
     PublicKeyHash = CharField()
     Account = ForeignKeyField(Account, null=True)
     Address = ForeignKeyField(Address)
@@ -63,12 +63,12 @@ class Contract(ModelBase):
 
 class Key(ModelBase):
     Id = PrimaryKeyField()
-    Name = CharField(unique=True) #req'd
-    Value = BlobField() #req'd
+    Name = CharField(unique=True)
+    Value = BlobField()
 
 
 class NEP5Token(ModelBase):
-    ContractHash = BlobField(unique=True)
+    ContractHash = CharField(unique=True)
     Name = CharField()
     Symbol = CharField()
     Decimals = IntegerField()
@@ -76,9 +76,9 @@ class NEP5Token(ModelBase):
 
 class Transaction(ModelBase):
     Id = PrimaryKeyField()
-    Hash = BlobField(unique=True)
+    Hash = CharField(unique=True)
     TransactionType = IntegerField()
-    RawData = BlobField() #changed
+    RawData = CharField()
     Height = IntegerField()
     DateTime = DateTimeField()
 
@@ -93,7 +93,7 @@ class TransactionInfo(ModelBase):
 class VINHold(ModelBase):
     Id = PrimaryKeyField()
     Index = IntegerField()
-    Hash = BlobField()
+    Hash = CharField()
     FromAddress = CharField()
     ToAddress = CharField()
     Amount = IntegerField()
