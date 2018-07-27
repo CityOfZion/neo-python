@@ -54,8 +54,8 @@ class Coin(ModelBase):
 
 class Contract(ModelBase):
     Id = PrimaryKeyField()
-    RawData = CharField()
-    ScriptHash = CharField()
+    RawData = BlobField()
+    ScriptHash = BlobField()
     PublicKeyHash = CharField()
     Account = ForeignKeyField(Account, null=True)
     Address = ForeignKeyField(Address)
@@ -68,7 +68,7 @@ class Key(ModelBase):
 
 
 class NEP5Token(ModelBase):
-    ContractHash = CharField(unique=True)
+    ContractHash = BlobField(unique=True)
     Name = CharField()
     Symbol = CharField()
     Decimals = IntegerField()
@@ -76,9 +76,9 @@ class NEP5Token(ModelBase):
 
 class Transaction(ModelBase):
     Id = PrimaryKeyField()
-    Hash = CharField(unique=True)
+    Hash = BlobField(unique=True)
     TransactionType = IntegerField()
-    RawData = CharField()
+    RawData = BlobField()
     Height = IntegerField()
     DateTime = DateTimeField()
 
@@ -93,7 +93,7 @@ class TransactionInfo(ModelBase):
 class VINHold(ModelBase):
     Id = PrimaryKeyField()
     Index = IntegerField()
-    Hash = CharField()
+    Hash = BlobField()
     FromAddress = CharField()
     ToAddress = CharField()
     Amount = IntegerField()
