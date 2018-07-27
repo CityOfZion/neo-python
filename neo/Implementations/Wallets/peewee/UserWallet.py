@@ -4,7 +4,6 @@ import binascii
 from logzero import logger
 from playhouse.migrate import SqliteMigrator, BooleanField, migrate
 from .PWDatabase import PWDatabase
-
 from neo.Wallets.Wallet import Wallet
 from neo.Wallets.Coin import Coin as WalletCoin
 from neo.SmartContract.Contract import Contract as WalletContract
@@ -353,6 +352,8 @@ class UserWallet(Wallet):
 
     def SaveStoredData(self, key, value):
         k = None
+        name = None
+        val = None
         try:
             k = Key.get(Name=key)
             k.Value = value
@@ -361,6 +362,12 @@ class UserWallet(Wallet):
 
         if k is None:
             k = Key.create(Name=key, Value=value)
+
+        name = str(k.Name)
+        val = str(k.Value)
+
+        k.Name = name
+        k.Value = val
 
         k.save()
 
