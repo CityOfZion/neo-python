@@ -131,6 +131,22 @@ def get_from_addr(params):
     return params, from_addr
 
 
+def get_fee(params):
+    to_remove = []
+    fee = None
+    for item in params:
+        if '--fee=' in item:
+            to_remove.append(item)
+            try:
+                fee = get_asset_amount(item.replace('--fee=', ''), Blockchain.SystemCoin().Hash)
+            except Exception as e:
+                pass
+    for item in to_remove:
+        params.remove(item)
+
+    return params, fee
+
+
 def get_parse_addresses(params):
     if '--no-parse-addr' in params:
         params.remove('--no-parse-addr')
