@@ -150,7 +150,7 @@ class PromptInterface:
                 'withdraw cleanup # cleans up completed holds',
                 'withdraw # withdraws the first hold availabe',
                 'withdraw all # withdraw all holds available',
-                'send {assetId or name} {address} {amount} (--from-addr={addr})',
+                'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
