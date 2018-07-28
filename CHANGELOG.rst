@@ -3,7 +3,13 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.4-dev] in progress
+[0.7.6] in progress
+-----------------------
+- adds ability to attach a fee to a ``send`` transaction:
+- update Node selection mechanism
+
+
+[0.7.5] 2018-07-19
 -----------------------
 - Update NodeLeader peer monitoring system
 - Add ability to configure size of requests for blocks as well as block processing queue size
