@@ -76,7 +76,7 @@ class NEP5Token(ModelBase):
 
 class Transaction(ModelBase):
     Id = PrimaryKeyField()
-    Hash = BlobField(unique=True)
+    Hash = CharField(unique=True)
     TransactionType = IntegerField()
     RawData = CharField()
     Height = IntegerField()
@@ -93,7 +93,7 @@ class TransactionInfo(ModelBase):
 class VINHold(ModelBase):
     Id = PrimaryKeyField()
     Index = IntegerField()
-    Hash = BlobField()
+    Hash = CharField()
     FromAddress = CharField()
     ToAddress = CharField()
     Amount = IntegerField()
