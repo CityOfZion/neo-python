@@ -327,9 +327,12 @@ class UserWallet(Wallet):
     def LoadStoredData(self, key):
         logger.debug("Looking for key %s " % key)
         try:
-            return Key.get(Name=key).Value
+            return Key.get(Name=key).Value.decode('utf-8')
         except Exception as e:
-            logger.error("Could not get key %s " % e)
+            try:
+                return Key.get(Name=key).Value
+            except Exception as e:
+                logger.error("Could not get key %s " % e)
 
         return None
 
@@ -352,24 +355,15 @@ class UserWallet(Wallet):
 
     def SaveStoredData(self, key, value):
         k = None
-        name = None
-        val = None
+
         try:
             k = Key.get(Name=key)
-            k.Value = value
+            k.Value.replace(value)
         except Exception as e:
             pass
 
         if k is None:
             k = Key.create(Name=key, Value=value)
-
-        name = bytes(k.Name, 'utf-8')
-        val = bytearray(k.Value)
-
-        k.Name = name
-        k.Value = val
-
-        k.save()
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
         for tx in block.FullTransactions:
