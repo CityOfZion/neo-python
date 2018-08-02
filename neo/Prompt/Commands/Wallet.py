@@ -10,11 +10,34 @@ from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
+from neo.Implementations.Wallets.peewee import UserWallet
 import binascii
 import json
 import math
 from logzero import logger
 
+def CreateAddress(prompter, wallet, args):
+    try:
+        int_args = int(args)
+    except Exception as e:
+        print('Enter the number of addresses to create < 3.')
+        return False
+
+    if wallet is None:
+        print("Please open a wallet.")
+        return False
+    if int_args > 3:
+        print('Please create 3 or less addresses at a time.')
+        return False
+    if int_args <= 0:
+        print('Enter a number greater than 0.')
+        return False
+    if int_args > 0 and int_args <= 3:
+        x = int_args
+        while x > 1:
+            wallet.CreateKey()
+            x = x - 1
+            return wallet
 
 def DeleteAddress(prompter, wallet, addr):
 
