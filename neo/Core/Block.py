@@ -212,7 +212,15 @@ class Block(BlockBase, InventoryMixin):
         witness.Deserialize(reader)
         block.Script = witness
 
-        block.Transactions = reader.ReadHashes()
+        bc = GetBlockchain()
+        tx_list = []
+        for tx_hash in reader.ReadHashes():
+            tx = bc.GetTransaction(tx_hash)[0]
+            if not tx:
+                raise Exception("Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
+            tx_list.append(tx)
+
+        block.Transactions = tx_list
 
         StreamManager.ReleaseStream(ms)
 

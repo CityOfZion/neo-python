@@ -5,8 +5,9 @@ All notable changes to this project are documented in this file.
 
 [0.7.6] in progress
 -----------------------
-- adds ability to attach a fee to a ``send`` transaction:
-- update Node selection mechanism
+- Adds ability to attach a fee to a ``send`` transaction:
+- Update Node selection mechanism
+- Store ``Transactions`` list items inside a ``Block`` in a consistent format.
 
 
 [0.7.5] 2018-07-19
