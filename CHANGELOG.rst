@@ -3,11 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.6] in progress
------------------------
-- Adds ability to attach a fee to a ``send`` transaction:
+[0.7.6] 2018-08-02
+------------------
+- Adds ability to attach a fee to a ``send`` transaction
 - Update Node selection mechanism
 - Store ``Transactions`` list items inside a ``Block`` in a consistent format.
+- Improved peer connection maintenance
 
 
 [0.7.5] 2018-07-19
