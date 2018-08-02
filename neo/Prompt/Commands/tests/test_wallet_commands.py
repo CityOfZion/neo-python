@@ -131,18 +131,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1(True)
 
-        #not specifying a number of addresses
+        # not specifying a number of addresses
         CreateAddress(None, wallet, None)
         self.assertEqual(len(wallet.Addresses), 1)
 
-        #trying to create too many addresses
+        # trying to create too many addresses
         CreateAddress(None, wallet, 5)
         self.assertEqual(len(wallet.Addresses), 1)
 
-        #should pass
+        # should pass
         success = CreateAddress(None, wallet, 1)
         self.assertTrue(success)
 
-        #check the number of addresses
+        # check the number of addresses
         self.assertEqual(len(wallet.Addresses), 2)
-
