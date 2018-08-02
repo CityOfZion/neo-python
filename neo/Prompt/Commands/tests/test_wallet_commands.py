@@ -4,7 +4,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
+from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
 import shutil
 
 
@@ -126,3 +126,23 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet = self.GetWallet1(True)
         tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'gas', 0, 3], prompt_passwd=False)
         self.assertIsNotNone(tx)
+
+    def test_7_create_address(self):
+
+        wallet = self.GetWallet1(True)
+
+        #not specifying a number of addresses
+        CreateAddress(None, wallet, None)
+        self.assertEqual(len(wallet.Addresses), 1)
+
+        #trying to create too many addresses
+        CreateAddress(None, wallet, 5)
+        self.assertEqual(len(wallet.Addresses), 1)
+
+        #should pass
+        success = CreateAddress(None, wallet, 1)
+        self.assertTrue(success)
+
+        #check the number of addresses
+        self.assertEqual(len(wallet.Addresses), 2)
+
