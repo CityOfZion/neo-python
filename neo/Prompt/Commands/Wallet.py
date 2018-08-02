@@ -16,6 +16,7 @@ import json
 import math
 from logzero import logger
 
+
 def CreateAddress(prompter, wallet, args):
     try:
         int_args = int(args)
@@ -38,6 +39,7 @@ def CreateAddress(prompter, wallet, args):
             wallet.CreateKey()
             x = x - 1
     return wallet
+
 
 def DeleteAddress(prompter, wallet, addr):
 
