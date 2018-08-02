@@ -40,7 +40,7 @@ from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHold
 
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register, token_history
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
+from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
     ShowUnspentCoins, SplitUnspentCoin
 
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
@@ -130,6 +130,7 @@ class PromptInterface:
                 'wallet claim (max_coins_to_claim)',
                 'wallet migrate',
                 'wallet rebuild {start block}',
+                'wallet create_addr {number of addresses <= 3}',
                 'wallet delete_addr {addr}',
                 'wallet delete_token {token_contract_hash}',
                 'wallet alias {addr} {title}',
@@ -537,6 +538,9 @@ class PromptInterface:
         elif item == 'migrate' and self.Wallet is not None:
             self.Wallet.Migrate()
             print("Migrated wallet")
+        elif item == 'create_addr':
+            addresses_to_create = get_arg(arguments, 1)
+            CreateAddress(self, self.Wallet, addresses_to_create)
         elif item == 'delete_addr':
             addr_to_delete = get_arg(arguments, 1)
             DeleteAddress(self, self.Wallet, addr_to_delete)
