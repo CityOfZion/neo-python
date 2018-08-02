@@ -33,11 +33,11 @@ def CreateAddress(prompter, wallet, args):
         print('Enter a number greater than 0.')
         return False
     if int_args > 0 and int_args <= 3:
-        x = int_args
+        x = int_args + 1
         while x > 1:
             wallet.CreateKey()
             x = x - 1
-            return wallet
+    return wallet
 
 def DeleteAddress(prompter, wallet, addr):
 
