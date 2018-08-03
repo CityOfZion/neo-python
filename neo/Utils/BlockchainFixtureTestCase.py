@@ -28,7 +28,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
         if not os.path.exists(cls.FIXTURE_FILENAME):
             logzero.logger.info(
-                "downloading fixture block database from %s. this may take a while" % cls.FIXTURE_REMOTE_LOC)
+                "downloading fixture block database from %s to %s. this may take a while" % (cls.FIXTURE_REMOTE_LOC, cls.FIXTURE_FILENAME))
 
             response = requests.get(cls.FIXTURE_REMOTE_LOC, stream=True)
 
