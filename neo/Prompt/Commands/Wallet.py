@@ -21,7 +21,7 @@ def CreateAddress(prompter, wallet, args):
     try:
         int_args = int(args)
     except Exception as e:
-        print('Enter the number of addresses to create < 3.')
+        print('Enter the number of addresses to create <= 3.')
         return False
 
     if wallet is None:
