@@ -9,7 +9,7 @@ services:
 cache:
   pip: true
   directories:
-    - $HOME/.neopython/fixtures/
+    - $HOME/.neopython/Chains
 
 addons:
   apt:
