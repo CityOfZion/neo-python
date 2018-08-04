@@ -3,9 +3,22 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.4-dev] in progress
------------------------
+[0.7.7-dev] in progress
+------------------------
 - Add support for Peewee 3.6.4
+
+
+[0.7.6] 2018-08-02
+------------------
+- Adds ability to attach a fee to a ``send`` transaction
+- Update Node selection mechanism
+- Store ``Transactions`` list items inside a ``Block`` in a consistent format.
+- Improved peer connection maintenance
+
+
+[0.7.5] 2018-07-19
+-----------------------
+- Add CreateAddress Feature
 - Update NodeLeader peer monitoring system
 - Add ability to configure size of requests for blocks as well as block processing queue size
 - Update mainnet bootstrap files
@@ -14,6 +27,7 @@ All notable changes to this project are documented in this file.
 - add prompt command to split VIN to multiple VOUT
 - update notification endpoint to include ``total_pages`` in output, and allow ``pagesize`` paramater to be passed in
 - update seeds for mainnet
+
 
 [0.7.3] 2018-07-12
 ------------------
