@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.7-dev] in progress
 ------------------------
-- ...
+- Accept incoming node connections
 
 
 [0.7.6] 2018-08-02
