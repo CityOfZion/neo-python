@@ -12,8 +12,19 @@ from twisted.internet import reactor, task
 
 
 class NeoClientFactory(ReconnectingClientFactory):
-    protocol = NeoNode
     maxRetries = 1
+
+    def __init__(self, incoming_client=False):
+        """
+
+        Args:
+            incoming_client (bool): true to create a NeoNode for an incoming client that initiates the P2P handshake.
+        """
+        self.incoming = incoming_client
+        super(NeoClientFactory, self).__init__()
+
+    def buildProtocol(self, addr):
+        return NeoNode(self.incoming)
 
     def clientConnectionFailed(self, connector, reason):
         address = "%s:%s" % (connector.host, connector.port)

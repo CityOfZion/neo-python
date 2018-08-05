@@ -16,7 +16,6 @@ from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
 from neo.Settings import settings
 
-
 MODE_MAINTAIN = 7
 MODE_CATCHUP = 2
 
@@ -34,10 +33,13 @@ class NeoNode(Protocol):
 
     identifier = None
 
-    def __init__(self):
+    def __init__(self, incoming_client=False):
         """
         Create an instance.
         The NeoNode class is the equivalent of the C# RemoteNode.cs class. It represents a single Node connected to the client.
+
+        Args:
+            incoming_client (bool): True if node is an incoming client and the handshake should be initiated.
         """
         from neo.Network.NodeLeader import NodeLeader
 
@@ -54,12 +56,15 @@ class NeoNode(Protocol):
         self.port = None
         self.identifier = self.leader.NodeCount
         self.leader.NodeCount += 1
+        self.incoming_client = incoming_client
+        self.expect_verack_next = False
 
         self.Log("New Node created %s " % self.identifier)
 
     def Disconnect(self):
         """Close the connection with the remote node client."""
         self.transport.loseConnection()
+        self.expect_verack_next = False
 
     @property
     def Address(self):
@@ -107,6 +112,9 @@ class NeoNode(Protocol):
         self.port = int(self.endpoint.port)
         self.leader.AddConnectedPeer(self)
         self.Log("Connection from %s" % self.endpoint)
+        if self.incoming_client:
+            # start protocol
+            self.SendVersion()
 
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
@@ -186,6 +194,10 @@ class NeoNode(Protocol):
             reader = BinaryReader(stream)
             message = Message()
             message.Deserialize(reader)
+
+            if self.incoming_client and self.expect_verack_next:
+                if message.Command != 'verack':
+                    self.Disconnect()
 
             # Propagate new message
             self.MessageReceived(message)
@@ -342,12 +354,23 @@ class NeoNode(Protocol):
         m = Message("version", VersionPayload(settings.NODE_PORT, self.remote_nodeid, settings.VERSION_NAME))
         self.SendSerializedMessage(m)
 
+    def SendVerack(self):
+        """Send version acknowledge"""
+        m = Message('verack')
+        self.SendSerializedMessage(m)
+        self.expect_verack_next = True
+
     def HandleVersion(self, payload):
         """Process the response of `self.RequestVersion`."""
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
-        self.nodeid = self.Version.Nonce
-#        self.Log("Remote version %s " % vars(self.Version))
-        self.SendVersion()
+
+        if self.incoming_client:
+            if self.Version.Nonce != self.nodeid:
+                self.Disconnect()
+            self.SendVerack()
+        else:
+            self.nodeid = self.Version.Nonce
+            self.SendVersion()
 
     def HandleVerack(self):
         """Handle the `verack` response."""

@@ -29,7 +29,7 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Network.NodeLeader import NodeLeader
+from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
 from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
@@ -49,6 +49,7 @@ from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
+from twisted.internet.endpoints import TCP4ServerEndpoint
 
 
 class PromptFileHistory(FileHistory):
@@ -1120,6 +1121,9 @@ def main():
     #    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
+
+    endpoint = TCP4ServerEndpoint(reactor, settings.NODE_PORT)
+    endpoint.listen(NeoClientFactory(incoming_client=True))
 
     # reactor.run() is blocking, until `quit()` is called which stops the reactor.
     reactor.run()
