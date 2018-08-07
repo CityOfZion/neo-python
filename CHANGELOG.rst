@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.7-dev] in progress
 ------------------------
-- ...
+- Adds support for ``IsPayable`` flag in prompt.
 
 
 [0.7.6] 2018-08-02
