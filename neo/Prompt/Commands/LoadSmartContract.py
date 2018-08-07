@@ -80,10 +80,10 @@ def LoadContract(args):
 
     if needs_dynamic_invoke:
         contract_properties += ContractPropertyState.HasDynamicInvoke
-    
+
     if is_payable:
         contract_properties += ContractPropertyState.Payable
-    
+
     script = None
 
     if '.py' in path:
@@ -138,7 +138,7 @@ def GatherLoadedContractParams(args, script):
 
     if needs_dynamic_invoke:
         contract_properties += ContractPropertyState.HasDynamicInvoke
-    
+
     if is_payable:
         contract_properties += ContractPropertyState.Payable
 
