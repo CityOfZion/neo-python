@@ -40,7 +40,7 @@ class FunctionCode(SerializableMixin):
         """
         from neo.Core.State.ContractState import ContractPropertyState
         return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
-    
+
     @property
     def IsPayable(self):
         """
