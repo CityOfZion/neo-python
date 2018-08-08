@@ -233,6 +233,7 @@ class NeoNode(Protocol):
             self.Log("Command %s not implemented " % m.Command)
 
     def ProtocolReady(self):
+        self.RequestPeerInfo()
         self.AskForMoreHeaders()
 
         self.block_loop = task.LoopingCall(self.AskForMoreBlocks)

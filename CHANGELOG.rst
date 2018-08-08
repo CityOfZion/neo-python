@@ -6,6 +6,7 @@ All notable changes to this project are documented in this file.
 [0.7.7-dev] in progress
 ------------------------
 - Add support for Peewee 3.6.4
+- Fix Block header problems with ``block_import.py`` script
 
 
 [0.7.6] 2018-08-02
