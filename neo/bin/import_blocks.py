@@ -99,6 +99,9 @@ def main():
             if block.Index > 0:
                 chain.AddBlockDirectly(block)
 
+            # reset blockheader
+            block._header = None
+
             # reset stream
             reader.stream.Cleanup()
 
