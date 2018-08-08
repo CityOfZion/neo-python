@@ -40,7 +40,6 @@ neocore==0.4.10
 numpy==1.14.5
 pbr==4.0.4
 peewee==2.10.2
-pexpect==4.2.1
 pluggy==0.6.0
 plyvel==1.0.4
 prompt-toolkit==2.0.3
