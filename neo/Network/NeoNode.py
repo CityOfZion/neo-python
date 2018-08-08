@@ -365,7 +365,7 @@ class NeoNode(Protocol):
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
 
         if self.incoming_client:
-            if self.Version.Nonce != self.nodeid:
+            if self.Version.Nonce == self.nodeid:
                 self.Disconnect()
             self.SendVerack()
         else:
@@ -374,8 +374,11 @@ class NeoNode(Protocol):
 
     def HandleVerack(self):
         """Handle the `verack` response."""
-        m = Message('verack')
-        self.SendSerializedMessage(m)
+        # only respond with a verack when we connect to another client, not when a client connected to us or
+        # we might end up in a verack loop
+        if not self.incoming_client:
+            m = Message('verack')
+            self.SendSerializedMessage(m)
         self.ProtocolReady()
 
     def HandleInvMessage(self, payload):
@@ -435,7 +438,7 @@ class NeoNode(Protocol):
             inventory (neo.Network.Inventory):
         """
         inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
-#        self.Log("Received headers %s " % ([h.Hash.ToBytes() for h in inventory.Headers]))
+        #        self.Log("Received headers %s " % ([h.Hash.ToBytes() for h in inventory.Headers]))
         if inventory is not None:
             BC.Default().AddHeaders(inventory.Headers)
 
