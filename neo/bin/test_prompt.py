@@ -22,7 +22,9 @@ class PromptTest(TestCase):
     def test_prompt_open_wallet(self):
 
         child = pexpect.spawn('np-prompt')
+        child.expect("neo")
         child.sendline('open wallet fixtures/testwallet.db3')
+        child.expect(pexpect.TIMEOUT)
         child.sendline('testpassword')
         index = child.expect(['Opened wallet at fixtures/testwallet.db3'])
 
