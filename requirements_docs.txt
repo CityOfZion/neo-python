@@ -45,6 +45,7 @@ numpy==1.14.0
 packaging==17.1
 pbr==3.1.1
 peewee==2.10.2
+pexpect==4.2.1
 pluggy==0.6.0
 prompt-toolkit==1.0.15
 psutil==5.4.3
