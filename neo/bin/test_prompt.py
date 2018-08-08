@@ -1,13 +1,14 @@
 from unittest import TestCase
 import pexpect
 
+
 class PromptTest(TestCase):
 
     def test_prompt_run(self):
 
         child = pexpect.spawn('np-prompt')
         index = child.expect(["neo", pexpect.EOF, pexpect.TIMEOUT])
-        
+
         if index == 0:
             print('np-prompt running as expected')
         elif index == 1:
@@ -18,15 +19,21 @@ class PromptTest(TestCase):
             print('test failed')
 
         self.assertEqual(index, 0)
+        child.terminate()
 
     def test_prompt_open_wallet(self):
 
-        child = pexpect.spawn('np-prompt')
-        child.expect("neo")
-        child.sendline('open wallet fixtures/testwallet.db3')
-        child.expect(pexpect.TIMEOUT)
-        child.sendline('testpassword')
-        index = child.expect(['Opened wallet at fixtures/testwallet.db3'])
+        try:
+            child = pexpect.spawn('np-prompt')
+            child.sendline('open wallet fixtures/testwallet.db3')
+            child.sendline('testpassword')
+            index = child.expect(['Opened wallet at fixtures/testwallet.db3'])
+
+        except Exception as e:
+            child = pexpect.spawn('python neo/bin/prompt.py -p')
+            child.sendline('open wallet fixtures/testwallet.db3')
+            child.sendline('testpassword')
+            index = child.expect(['Opened wallet at fixtures/testwallet.db3'])
 
         if index == 0:
             print('Opened testwallet.db3 successfully')
@@ -34,3 +41,4 @@ class PromptTest(TestCase):
             print('test failed')
 
         self.assertEqual(index, 0)
+        child.terminate()
