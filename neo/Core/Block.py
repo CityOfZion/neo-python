@@ -25,7 +25,7 @@ class Block(BlockBase, InventoryMixin):
     #  该区块的区块头
     #  < / summary >
 
-    __header = None
+    _header = None
 
     __is_trimmed = False
     #  < summary >
@@ -106,11 +106,11 @@ class Block(BlockBase, InventoryMixin):
         Returns:
             neo.Core.Header:
         """
-        if not self.__header:
-            self.__header = Header(self.PrevHash, self.MerkleRoot, self.Timestamp,
-                                   self.Index, self.ConsensusData, self.NextConsensus, self.Script)
+        if not self._header:
+            self._header = Header(self.PrevHash, self.MerkleRoot, self.Timestamp,
+                                  self.Index, self.ConsensusData, self.NextConsensus, self.Script)
 
-        return self.__header
+        return self._header
 
     def Size(self):
         """
