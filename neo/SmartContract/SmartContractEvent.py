@@ -265,7 +265,12 @@ class NotifyEvent(SmartContractEvent):
         if self.is_standard_notify:
             writer.WriteUInt160(self.addr_from)
             writer.WriteUInt160(self.addr_to)
-            writer.WriteVarInt(self.amount)
+
+            if self.Amount < 0xffffffffffffffff:
+                writer.WriteVarInt(self.amount)
+            else:
+                logger.warn("Writing Payload value amount greater than ulong long is not allowed.  Setting to ulong long max")
+                writer.WriteVarInt(0xffffffffffffffff)
 
     def DeserializePayload(self, reader):
         try:
