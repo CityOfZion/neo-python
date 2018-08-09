@@ -430,7 +430,7 @@ class StateReader(InteropService):
             stack_item = StackItem.DeserializeStackItem(reader)
             engine.EvaluationStack.PushT(stack_item)
         except Exception as e:
-            logger.error("Colud not Deserialize stack item: %s " % e)
+            logger.error("Could not Deserialize stack item: %s " % e)
             return False
         return True
 
