@@ -7,7 +7,7 @@ All notable changes to this project are documented in this file.
 ------------------------
 - Adds support for ``IsPayable`` flag in prompt.
 - Fix Block header problems with ``block_import.py`` script
-
+- Update bootstrap files for mainnet and testnet
 
 [0.7.6] 2018-08-02
 ------------------
