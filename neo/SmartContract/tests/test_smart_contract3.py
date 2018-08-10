@@ -44,6 +44,7 @@ class SmartContractTest3(BlockchainFixtureTestCase):
         self.assertIsNotNone(contract_added)
 
         self.assertEqual(contract_added.HasStorage, False)
+        self.assertEqual(contract_added.Payable, False)
         self.assertEqual(contract_added.Name, b'test create')
         self.assertEqual(contract_added.Email, b'flow@neo.org')
 

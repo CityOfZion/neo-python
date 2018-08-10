@@ -61,7 +61,7 @@ def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=None, tmp_chain_
             try:
                 shutil.rmtree(destination_dir)
             except Exception as e:
-                print("coludnt remove existing dir: %s %s" % (e, destination_dir))
+                print("couldn't remove existing dir: %s %s" % (e, destination_dir))
                 sys.exit(0)
 
         print("Opening archive %s " % tmp_file_name)
