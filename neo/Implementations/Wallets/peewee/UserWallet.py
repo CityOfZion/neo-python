@@ -327,12 +327,9 @@ class UserWallet(Wallet):
     def LoadStoredData(self, key):
         logger.debug("Looking for key %s " % key)
         try:
-            return Key.get(Name=key).Value.decode('utf-8')
+            return Key.get(Name=key).Value
         except Exception as e:
-            try:
-                return Key.get(Name=key).Value
-            except Exception as e:
-                logger.error("Could not get key %s " % e)
+            logger.error("Could not get key %s " % e)
 
         return None
 
