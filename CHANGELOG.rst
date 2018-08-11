@@ -6,8 +6,9 @@ All notable changes to this project are documented in this file.
 [0.7.7-dev] in progress
 ------------------------
 - Adds test for np-prompt using pexpect
-- Add CreateAddress Feature
-
+- Adds support for ``IsPayable`` flag in prompt.
+- Fix Block header problems with ``block_import.py`` script
+- Update bootstrap files for mainnet and testnet
 
 [0.7.6] 2018-08-02
 ------------------
@@ -19,6 +20,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.5] 2018-07-19
 -----------------------
+- Add CreateAddress Feature
 - Update NodeLeader peer monitoring system
 - Add ability to configure size of requests for blocks as well as block processing queue size
 - Update mainnet bootstrap files
