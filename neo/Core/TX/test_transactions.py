@@ -92,7 +92,7 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(contract['code']['hash'], '0xffbd1a7ad1e2348b6b3822426f364bfb4bcce3b9')
         self.assertEqual(contract['code']['returntype'], 1)
         self.assertEqual(contract['code']['parameters'], '020500')
-        self.assertEqual(Fixed8(settings.ALL_FEES['PublishTransaction']), tx.SystemFee())
+        self.assertEqual(Fixed8.FromDecimal(settings.ALL_FEES['PublishTransaction']), tx.SystemFee())
 
     ir = b'd100644011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111081234567890abcdef0415cd5b0769cc4ee2f1c9f4e0782756dabf246d0a4fe60a035400000000'
     ir_id = b'1a328cdd53c7f1710b4006304e8c75236a9b18523f037cdf069a96f0d7f01379'
@@ -137,7 +137,7 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(asset['admin'], 'ARFe4mTKRTETerRoMsyzBXoPt2EKBvBXFX')
         self.assertEqual(asset['name'], '[{"lang":"zh-CN","name":"TestCoin"}]')
         self.assertEqual(asset['precision'], 8)
-        self.assertEquals(Fixed8(settings.ALL_FEES['RegisterTransaction']), tx.SystemFee())
+        self.assertEquals(Fixed8.FromDecimal(settings.ALL_FEES['RegisterTransaction']), tx.SystemFee())
 
     cr = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce490241400bd2e921cee90c8de1a192e61e33eb8980a3dc00c388ee9aac0712178cc8fceed8bb59788f7caf3c4dc082abcdaaa49772fda86db4ceea243bda31bcde9b8a0b3c21034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e1104182f145967cc4ee2f1c9f4e0782756dabf246d0a4fe60a035441402fe3e20c303e26c3817fed6fc7db8edde4ac62b16eee796c01c2b59e382b7ddfc82f0b36c7f7520821c7b72b9aff50ae27a016961f1ef1dade9cafa85655380f2321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
     cr2 = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce49'
@@ -182,7 +182,7 @@ class TransactionTestCase(NeoTestCase):
 
         self.assertEqual(tx.ToArray(), self.eraw)
         self.assertEqual(tx.Hash.ToBytes(), self.eid)
-        self.assertEqual(Fixed8(settings.ALL_FEES['EnrollmentTransaction']), tx.SystemFee())
+        self.assertEqual(Fixed8.FromDecimal(settings.ALL_FEES['EnrollmentTransaction']), tx.SystemFee())
 
     yatx = b'800001f00431313131010206cc6f919695fb55c9605c55127128c29697d791af884c2636416c69a944880100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000e58e5999bcbf5d78f52ead40654131abb9ee27099b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5009a04f516000000e53a27d37d7f5a3187003c21efe3725304a7410601414058b4a41beabdcf62381f7feea02767a714eb8ea49212fdb47a6f0bed2d0ae87d27377d9c2b4412ebf816042f2144e6e08939c7d83638b61208d3a7f5ea47c3ba232102ca81fa6c7ef20219c417d876c2743ea87728d416632d09c18004652aed09e000ac'
     yatx_id = b'cedb5c4e24b1f6fc5b239f2d1049c3229ad5ed05293c696b3740dc236c3f41b4'
