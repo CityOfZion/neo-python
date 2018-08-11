@@ -24,26 +24,31 @@
 #
 # Once you are inside the container, you can start neo-python with `np-prompt` (using -p to connect to a private net).
 # To update neo-python, just run `git pull` and `pip install -e .`
-FROM ubuntu:17.10
+FROM alpine
 
 # Branch can be overwritten with --build-arg, eg: `--build-arg branch=development`
 ARG branch=master
 
 # Install dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    git-core \
-    python3.6 \
-    python3.6-dev \
-    python3.6-venv \
-    python3-pip \
-    libleveldb-dev \
-    libssl-dev \
+
+RUN apk --update --virtual=build-dependencies add wget \
+    git \
+    build-base \
+    linux-headers \
+    python3 \
+    python3-dev \
+    libffi-dev \
+    py-pip \
+    libressl-dev \
     vim \
-    man
+    man && \
+    apk --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --update add leveldb leveldb-dev && \
+    pip3 install --upgrade pip && \
+    pip3 install --upgrade setuptools virtualenv cffi
+
 
 # APT cleanup to reduce image size
-RUN rm -rf /var/lib/apt/lists/*
+RUN rm -rf /var/cache/apk/*
 
 # Clone and setup
 RUN git clone https://github.com/CityOfZion/neo-python.git
