@@ -95,6 +95,7 @@ class SettingsHolder:
     USE_DEBUG_STORAGE = False
     DEBUG_STORAGE_PATH = 'Chains/debugstorage'
 
+    ACCEPT_INCOMING_PEERS = False
     CONNECTED_PEER_MAX = 5
 
     SERVICE_ENABLED = True
@@ -182,6 +183,7 @@ class SettingsHolder:
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
+        self.ACCEPT_INCOMING_PEERS = config['AcceptIncomingPeers']
 
         self.BOOTSTRAP_FILE = config['BootstrapFile']
         self.NOTIF_BOOTSTRAP_FILE = config['NotificationBootstrapFile']

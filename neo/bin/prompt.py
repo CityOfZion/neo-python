@@ -7,13 +7,10 @@ import os
 import psutil
 import traceback
 import logging
-import sys
-from time import sleep
 from logzero import logger
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
-from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
 from prompt_toolkit import prompt
@@ -21,7 +18,7 @@ from twisted.internet import reactor, task
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
-from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
+from neo.SmartContract.ContractParameter import ContractParameter
 from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
 from neo.Wallets.utils import to_aes_key
@@ -49,7 +46,6 @@ from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
-from twisted.internet.endpoints import TCP4ServerEndpoint
 
 
 class PromptFileHistory(FileHistory):
@@ -1121,9 +1117,6 @@ def main():
     #    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
-
-    endpoint = TCP4ServerEndpoint(reactor, settings.NODE_PORT)
-    endpoint.listen(NeoClientFactory(incoming_client=True))
 
     # reactor.run() is blocking, until `quit()` is called which stops the reactor.
     reactor.run()

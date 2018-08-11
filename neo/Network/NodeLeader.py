@@ -9,6 +9,7 @@ from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet import reactor, task
+from twisted.internet.endpoints import TCP4ServerEndpoint
 
 
 class NeoClientFactory(ReconnectingClientFactory):
@@ -127,6 +128,10 @@ class NodeLeader:
         # check in on peers every 4 mins
         self.peer_check_loop = task.LoopingCall(self.PeerCheckLoop)
         self.peer_check_loop.start(240, now=False)
+
+        if settings.ACCEPT_INCOMING_PEERS:
+            endpoint = TCP4ServerEndpoint(reactor, settings.NODE_PORT)
+            endpoint.listen(NeoClientFactory(incoming_client=True))
 
     def setBlockReqSizeAndMax(self, breqpart=0, breqmax=0):
         if breqpart > 0 and breqmax > 0 and breqmax > breqpart:
