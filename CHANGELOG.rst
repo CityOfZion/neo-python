@@ -5,9 +5,12 @@ All notable changes to this project are documented in this file.
 
 [0.7.7-dev] in progress
 ------------------------
+- Add support for Peewee 3.6.4
 - Adds support for ``IsPayable`` flag in prompt.
 - Fix Block header problems with ``block_import.py`` script
 - Sync GAS price calculations with current Neo core
+- Update bootstrap files for mainnet and testnet
+- Fix ``ContextItem`` JSOn decoding
 
 
 [0.7.6] 2018-08-02
