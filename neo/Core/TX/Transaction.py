@@ -26,6 +26,7 @@ from neocore.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
+from neo.Settings import settings
 
 
 class TransactionResult(EquatableMixin):
@@ -237,7 +238,7 @@ class Transaction(InventoryMixin):
     scripts = []
 
     __system_fee = None
-    __network_fee = None
+    _network_fee = None
 
     InventoryType = InventoryType.TX
 
@@ -384,7 +385,7 @@ class Transaction(InventoryMixin):
         Returns:
             Fixed8:
         """
-        if self.__network_fee is None:
+        if self._network_fee is None:
 
             input = Fixed8(0)
 
@@ -398,11 +399,11 @@ class Transaction(InventoryMixin):
                 if tx_output.AssetId == GetBlockchain().SystemCoin().Hash:
                     output = output + tx_output.Value
 
-            self.__network_fee = input - output - self.SystemFee()
+            self._network_fee = input - output - self.SystemFee()
 
         #            logger.info("Determined network fee to be %s " % (self.__network_fee.value))
 
-        return self.__network_fee
+        return self._network_fee
 
     #        if self.__network_fee == Fixed8.Satoshi():
     #            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
