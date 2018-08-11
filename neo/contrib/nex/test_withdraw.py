@@ -173,4 +173,4 @@ class WithdrawWalletTestCase(WalletFixtureTestCase):
 
         wallet.LoadHolds()
 
-        self.assertEqual(wallet._holds, [])
+        self.assertEqual(len(wallet._holds), 0)
