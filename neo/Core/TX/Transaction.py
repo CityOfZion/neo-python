@@ -377,7 +377,7 @@ class Transaction(InventoryMixin):
             Fixed8: currently fixed to 0.
         """
         tx_name = TransactionType.ToName(self.Type)
-        return Fixed8(settings.ALL_FEES.get(tx_name, 0))
+        return Fixed8.FromDecimal(settings.ALL_FEES.get(tx_name, 0))
 
     def NetworkFee(self):
         """
