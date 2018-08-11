@@ -23,17 +23,10 @@ class PromptTest(TestCase):
 
     def test_prompt_open_wallet(self):
 
-        try:
-            child = pexpect.spawn('np-prompt')
-            child.sendline('open wallet fixtures/testwallet.db3')
-            child.sendline('testpassword')
-            index = child.expect(['Opened wallet at fixtures/testwallet.db3'])
-
-        except Exception as e:
-            child = pexpect.spawn('python neo/bin/prompt.py -p')
-            child.sendline('open wallet fixtures/testwallet.db3')
-            child.sendline('testpassword')
-            index = child.expect(['Opened wallet at fixtures/testwallet.db3'])
+        child = pexpect.spawn('np-prompt')
+        child.sendline('open wallet fixtures/testwallet.db3')
+        child.sendline('testpassword')
+        index = child.expect(['Opened wallet at fixtures/testwallet.db3'])
 
         if index == 0:
             print('Opened testwallet.db3 successfully')
