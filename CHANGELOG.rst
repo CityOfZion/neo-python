@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file.
 - Sync GAS price calculations with current Neo core
 - Update bootstrap files for mainnet and testnet
 - Fix ``ContextItem`` JSOn decoding
+- Fix ``sys_fee`` calculation for certain transaction types
 
 
 [0.7.6] 2018-08-02
