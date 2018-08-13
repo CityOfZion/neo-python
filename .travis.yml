@@ -6,6 +6,11 @@ sudo: required
 services:
   - docker
 
+cache:
+  pip: true
+  directories:
+    - $HOME/.neopython/fixtures/
+
 addons:
   apt:
     packages:
