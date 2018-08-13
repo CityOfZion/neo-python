@@ -1,8 +1,6 @@
 from logzero import logger
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.FunctionCode import FunctionCode
-from neo.Settings import settings
-from neocore.Fixed8 import Fixed8
 
 
 class PublishTransaction(Transaction):
@@ -24,15 +22,6 @@ class PublishTransaction(Transaction):
         """
         super(PublishTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.PublishTransaction
-
-    def SystemFee(self):
-        """
-        Get the system fee.
-
-        Returns:
-            Fixed8:
-        """
-        return Fixed8(int(settings.PUBLISH_TX_FEE))
 
     def DeserializeExclusiveData(self, reader):
         """
