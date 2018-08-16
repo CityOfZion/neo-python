@@ -17,7 +17,7 @@ class PromptTest(TestCase):
     def test_prompt_open_wallet(self):
 
         child = pexpect.spawn('np-prompt')
-        child.send('open wallet fixtures/testwallet.db3 \n')
+        child.send('open wallet fixtures/testwallet.db3\n')
         child.send('testpassword\n')
         child.expect([pexpect.EOF, pexpect.TIMEOUT])
         before = child.before
