@@ -7,7 +7,7 @@ class PromptTest(TestCase):
     def test_prompt_run(self):
 
         child = pexpect.spawn('np-prompt')
-        child.expect([pexpect.EOF, pexpect.TIMEOUT])
+        child.expect([pexpect.EOF, pexpect.TIMEOUT], timeout=10)  # if test is failing consider increasing timeout time
         before = child.before
         text = before.decode('utf-8', 'ignore')
         checktext = "neo>"
@@ -19,7 +19,7 @@ class PromptTest(TestCase):
         child = pexpect.spawn('np-prompt')
         child.send('open wallet fixtures/testwallet.db3\n')
         child.send('testpassword\n')
-        child.expect([pexpect.EOF, pexpect.TIMEOUT])
+        child.expect([pexpect.EOF, pexpect.TIMEOUT], timeout=15)  # if test is failing consider increasing timeout time
         before = child.before
         text = before.decode('utf-8', 'ignore')
         checktext = "Opened"
