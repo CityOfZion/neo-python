@@ -93,7 +93,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         else:
             signer_contract = wallet.GetContract(standard_contract)
 
-        if not signer_contract.IsMultiSigContract:
+        if not signer_contract.IsMultiSigContract and owners is None:
 
             data = standard_contract.Data
             tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,

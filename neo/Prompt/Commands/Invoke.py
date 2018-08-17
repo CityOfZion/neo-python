@@ -577,7 +577,7 @@ def gather_signatures(context, itx, owners):
     do_exit = False
     print("owners %s " % owners)
     print("\n\n*******************\n")
-    print("Gather Signatures for Transactino:\n%s " % json.dumps(itx.ToJson(), indent=4))
+    print("Gather Signatures for Transaction:\n%s " % json.dumps(itx.ToJson(), indent=4))
     print("Please use a client to sign the following: %s " % itx.GetHashData())
 
     owner_index = 0
