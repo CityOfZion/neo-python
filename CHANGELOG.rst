@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.9-dev] in progress
 -----------------------
--
+- Implemented `sendtoaddress` RPC method `#556 <https://github.com/CityOfZion/neo-python/pull/556>`_
 
 
 [0.7.8] 2018-09-06
