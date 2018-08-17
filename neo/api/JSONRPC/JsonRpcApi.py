@@ -437,7 +437,8 @@ class JsonRpcApi:
 
         data = standard_contract.Data
         tx.Attributes = [
-            TransactionAttribute(usage=TransactionAttributeUsage.Script, data=data)
+            TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                 data=data)
         ]
 
         context = ContractParametersContext(
@@ -463,7 +464,7 @@ class JsonRpcApi:
         address_to = params[1]
         try:
             address_to_sh = self.wallet.ToScriptHash(address_to)
-        except Exception as e:
+        except Exception:
             raise JsonRpcError(-32602, "Invalid params")
 
         amount = Fixed8.TryParse(params[2], require_positive=True)
