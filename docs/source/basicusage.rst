@@ -55,6 +55,8 @@ Start JSON and REST API Server on Mainnet:
 
     $ np-api-server --mainnet --port-rpc 10332 --port-rest 80
 
+Example notifications plus 'help' display:
+
 ::
 
   $ np-api-server --testnet --port-rpc 8080 --port-rest 8088
@@ -96,6 +98,7 @@ Start JSON and REST API Server on Mainnet:
     --syslog-local [0-7]  Log to a local syslog facility instead of 'user'.
                           Value must be between 0 and 7 (e.g. 0 for 'local0').
     --disable-stderr      Disable stderr logger
+
 
 Port Description
 """"""""""""""""""""""""""""""
