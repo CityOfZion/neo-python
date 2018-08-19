@@ -2,8 +2,8 @@
 
 ## Introduction
 ### What is the SeedList?
-The SeedList, simply put, is a list of URLs. They belong to the nodes that NEO-Python tries to connect to when it starts.
-You can find the SeedList in `protcol.json`, under in the neo-python directory under /neo/data. Note that there are three commonly used `protocol.*.json` files.
+The SeedList is a list of URLs belonging to the nodes that NEO-Python tries to connect to when it starts.
+You can find the SeedList in `protcol.*.json`, under in the neo-python directory under /neo/data. Note that there are three commonly used `protocol.*.json` files.
 This doc refers to `protocol.mainnet.json` but the information can be applied commonly.
 
 ```json
