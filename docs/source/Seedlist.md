@@ -56,8 +56,9 @@ A list of nodes that are available are shown above. The latest ones are pushed t
 *2* tells us if the node is responding. Generally, we take the ones that say `yes` and are green in color.
 
 We try to follow the standard protocol for ports.
+
 |                    | Main Net | Test Net |
-| ------------------ | ------------ | ------------- |
+| ------------------ | :------------ | :------------- |
 | JSON-RPC via HTTPS | 10331        | 20331         |
 | JSON-RPC via HTTP  | 10332        | 20332         |
 | P2P via TCP        | 10333        | 20333         |
