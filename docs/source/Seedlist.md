@@ -51,7 +51,7 @@ Alternatively, you could delete your venv folder, edit the parent file then rein
 How do we find out which nodes are alive? Use [NEO Network Status Monitor](http://monitor.cityofzion.io/).
 If you would like more information visit the NEO Netweork Status Montior [reposity](https://github.com/CityOfZion/neo-mon).
 
-![seedlist](../../../assets/seedlist.png)
+![seedlist](../seedlist.png)
 A list of nodes that are available are shown above. The latest ones are pushed to the top.
 *2* tells us if the node is responding. Generally, we take the ones that say `yes` and are green in color.
 
