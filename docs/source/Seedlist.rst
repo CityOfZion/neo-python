@@ -10,31 +10,32 @@ The SeedList is a list of URLs belonging to the nodes that NEO-Python tries to c
 You can find the SeedList in `protcol.*.json`, under in the neo-python directory under /neo/data. Note that there are three commonly used `protocol.*.json` files.
 This doc refers to `protocol.mainnet.json` but the information can be applied commonly.
 
-```json
-{
-  "ProtocolConfiguration": {
-    "Magic": ...,
-    "AddressVersion": ...,
-    "SecondsPerBlock": ...,
-    "StandbyValidators": [
-      ...
-    ],
-    "SeedList": [
-      "seed1.neo.org:10333",
-      "seed2.neo.org:10333",
-      "seed3.neo.org:10333",
-      "seed4.neo.org:10333",
-      "seed5.neo.org:10333"
-    ],
-    "RPCList":[
-      ...
-    ],
-    "SystemFee": {
-      ...
+::
+    json
+    {
+        "ProtocolConfiguration": {
+        "Magic": ...,
+        "AddressVersion": ...,
+        "SecondsPerBlock": ...,
+        "StandbyValidators": [
+        ...
+        ],
+        "SeedList": [
+          "seed1.neo.org:10333",
+          "seed2.neo.org:10333",
+          "seed3.neo.org:10333",
+          "seed4.neo.org:10333",
+          "seed5.neo.org:10333"
+        ],
+        "RPCList":[
+        ...
+        ],
+        "SystemFee": {
+        ...
+        }
+      }
     }
-  }
-}
-```
+  
 Here, NEO-Python is configured to connect to `seed1.neo.org`, `seed2.neo.org`, and so on through `PORT:10333`.
 
 Potential Problems
@@ -86,58 +87,59 @@ We will choose the following live node addresses:
 Editing the protocol
 """"""""""""""""""""
 To let NEO-Python know the new SeedList, we will paste the addresses chosen before into `protocol.mainnet.json`
-```json
-{
-  "ProtocolConfiguration": {
-    "Magic": ...,
-    "AddressVersion": ...,
-    "SecondsPerBlock": ...,
-    "StandbyValidators": [
-      ...
-    ],
-    "SeedList": [
-      "seed1.neo.org:10333",
-      "seed2.neo.org:10333",
-      "seed3.neo.org:10333",
-      "seed4.neo.org:10333",
-      "seed5.neo.org:10333",
-      "seed4.aphelion-neo.com:10333",
-      "node2.sgp1.bridgeprotocol.io:10333",
-      "seed2.aphelion-neo.com:10333",
-      "seed3.aphelion-neo.com:10333",
-      "node2.ams2.bridgeprotocol.io:10333",
-      "pyrpc1.narrative.network:10333",
-      "node2.nyc3.bridgeprotocol.io:10333",
-      "pyrpc4.narrative.network:10333",
-      "pyrpc2.narrative.network:10333",
-      "pyrpc3.narrative.network:10333",
-      "seed1.aphelion-neo.com:10333",
-      "seed1.switcheo.network:10333",
-      "seed2.switcheo.network:10333",
-      "seed5.cityofzion.io:10333",
-      "seed3.cityofzion.io:10333",
-      "seed3.switcheo.network:10333",
-      "seed1.o3node.org:10333",
-      "seed3.travala.com:10333",
-      "seed4.cityofzion.io:10333",
-      "seed2.cityofzion.io:10333",
-      "seed2.o3node.org:10333",
-      "seed3.o3node.org:10333",
-      "node1.sgp1.bridgeprotocol.io:10333",
-      "seed2.travala.com:10333",
-      "seed4.switcheo.network:10333",
-      "seed1.spotcoin.com:10333",
-      "node1.nyc3.bridgeprotocol.io:10333"
-    ],
-    "RPCList":[
-      ...
-    ],
-    "SystemFee": {
-      ...
+::
+    json
+    {
+        "ProtocolConfiguration": {
+        "Magic": ...,
+        "AddressVersion": ...,
+        "SecondsPerBlock": ...,
+        "StandbyValidators": [
+        ...
+        ],
+        "SeedList": [
+          "seed1.neo.org:10333",
+          "seed2.neo.org:10333",
+          "seed3.neo.org:10333",
+          "seed4.neo.org:10333",
+          "seed5.neo.org:10333",
+          "seed4.aphelion-neo.com:10333",
+          "node2.sgp1.bridgeprotocol.io:10333",
+          "seed2.aphelion-neo.com:10333",
+          "seed3.aphelion-neo.com:10333",
+          "node2.ams2.bridgeprotocol.io:10333",
+          "pyrpc1.narrative.network:10333",
+          "node2.nyc3.bridgeprotocol.io:10333",
+          "pyrpc4.narrative.network:10333",
+          "pyrpc2.narrative.network:10333",
+          "pyrpc3.narrative.network:10333",
+          "seed1.aphelion-neo.com:10333",
+          "seed1.switcheo.network:10333",
+          "seed2.switcheo.network:10333",
+          "seed5.cityofzion.io:10333",
+          "seed3.cityofzion.io:10333",
+          "seed3.switcheo.network:10333",
+          "seed1.o3node.org:10333",
+          "seed3.travala.com:10333",
+          "seed4.cityofzion.io:10333",
+          "seed2.cityofzion.io:10333",
+          "seed2.o3node.org:10333",
+          "seed3.o3node.org:10333",
+          "node1.sgp1.bridgeprotocol.io:10333",
+          "seed2.travala.com:10333",
+          "seed4.switcheo.network:10333",
+          "seed1.spotcoin.com:10333",
+          "node1.nyc3.bridgeprotocol.io:10333"
+        ],
+        "RPCList":[
+        ...
+        ],
+        "SystemFee": {
+        ...
+        }
+      }
     }
-  }
-}
-```
+  
 Notice that we've added `:10333` to the end of each of the addresses, to tell NEO-Python to connect using the `P2P` protocol.
 
 You can now start neo-python as usual.
