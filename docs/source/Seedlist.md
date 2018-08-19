@@ -44,7 +44,7 @@ By updating the SeedList with addresses of nodes we are certain are alive, we ca
 ## Updating a Seedlist in NEO-Python using Windows WSL (Ubuntu)
 If you are running neo-python using Ubuntu, you are mostly likely using a venv. Make sure to update the `protocol.mainnet.json` (as applicable) within your venv located at `lib/python3.6/site-packages/neo/data`.
 If this path does not exist, you haven't used it in your current venv and you can edit the file located under your neo-python folder at `neo/data`.
-Alternatively, you could delete your venv folder, edit the parent file then reinstall using `pip install e .`.
+Alternatively, you could delete your venv folder, edit the parent file, make a new venv folder (`python -m venv venv`), activate your venv, then reinstall using `pip install e .`.
 
 ### How to update?
 ####  Live nodes
