@@ -55,7 +55,7 @@ Start JSON and REST API Server on Mainnet:
 
     $ np-api-server --mainnet --port-rpc 10332 --port-rest 80
 
-Example notifications plus 'help' display:
+Example notifications plus help with all available arguments:
 
 ::
 
