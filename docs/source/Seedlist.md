@@ -33,13 +33,13 @@ This doc refers to `protocol.mainnet.json` but the information can be applied co
 ```
 Here, NEO-Python is configured to connect to `seed1.neo.org`, `seed2.neo.org`, and so on through `PORT:10333`.
 
-### Potential Issues with current setup
+### Potential Problems
 What happens if every node in our list is down?
 
 Neo-python is smart, so it will attempt to connect to neighbouring nodes. However, there are many unknown factors in this approach. Perhaps the neighbors are down. The wait time may be extended.
 
-## Updating the SeedList
-By updating the SeedList with addresses of nodes we are certain are alive, we can avoid lengthy wait times as described in **Potential Issues**.
+## Updating a SeedList
+By updating the SeedList with addresses of nodes we are certain are alive, we can avoid lengthy wait times as described in **Potential Problems**.
 
 ## Updating a Seedlist in NEO-Python using Windows WSL (Ubuntu)
 If you are running neo-python using Ubuntu, you are mostly likely using a venv. Make sure to update the `protocol.mainnet.json` (as applicable) within your venv located at `lib/python3.6/site-packages/neo/data`.
