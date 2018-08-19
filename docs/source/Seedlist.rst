@@ -11,6 +11,7 @@ You can find the SeedList in `protcol.*.json`, under in the neo-python directory
 This doc refers to `protocol.mainnet.json` but the information can be applied commonly.
 
 ::
+
     json
     {
         "ProtocolConfiguration": {
@@ -88,6 +89,7 @@ Editing the protocol
 """"""""""""""""""""
 To let NEO-Python know the new SeedList, we will paste the addresses chosen before into `protocol.mainnet.json`
 ::
+
     json
     {
         "ProtocolConfiguration": {
