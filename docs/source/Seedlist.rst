@@ -59,8 +59,8 @@ How to update?
 ==============
 Live nodes
 """"""""""
-How do we find out which nodes are alive? Use [NEO Network Status Monitor](http://monitor.cityofzion.io/).
-If you would like more information visit the NEO Netweork Status Montior [reposity](https://github.com/CityOfZion/neo-mon).
+How do we find out which nodes are alive? Use `NEO Network Status Monitor <http://monitor.cityofzion.io/>`_.
+If you would like more information visit the NEO Netweork Status Montior `reposity <https://github.com/CityOfZion/neo-mon>`_.
 
 ![seedlist](../seedlist.png)
 A list of nodes that are available are shown above. The latest ones are pushed to the top.
@@ -68,21 +68,37 @@ A list of nodes that are available are shown above. The latest ones are pushed t
 
 We try to follow the standard protocol for ports.
 
-|                    | Main Net | Test Net |
-| ------------------ | :------------ | :------------- |
-| JSON-RPC via HTTPS | 10331        | 20331         |
-| JSON-RPC via HTTP  | 10332        | 20332         |
-| P2P via TCP        | 10333        | 20333         |
-| P2P via WebSocket  | 10334        | 20334         |
+.. list-table:: Port Protocol
+   :widths: 20 10 10
+   :header-rows: 1
+   
+   * - 
+     - Main Net
+     - Test Net
+   * - JSON-RPC via HTTPS
+     - 10331
+     - 20331
+   * - JSON-RPC via HTTP 
+     - 10332 
+     - 20332
+   * - P2P via TCP
+     - 10333
+     - 20333
+   * - P2P via WebSocket
+     - 10334
+     - 20334
 
-With that, we will choose the first node over the third node, since *1* adheres the convention and *3* does not.
+We will choose the first node over the third node, since *1* adheres the convention and *3* does not.
 
-We will choose the following live node addresses:
-- `seed3.aphelion-neo.com`
-- `seed4.aphelion-neo.com`
-- `node2.ams2.bridgeprotocol.io`
-- `pyrpc1.nodeneo.ch`
-- `node2.nyc3.bridgeprotocol.io`
+Therefore, we will choose the following live node addresses:
+
+::
+
+    seed3.aphelion-neo.com
+    seed4.aphelion-neo.com
+    node2.ams2.bridgeprotocol.io
+    pyrpc1.nodeneo.ch
+    node2.nyc3.bridgeprotocol.io
 
 
 Editing the protocol
