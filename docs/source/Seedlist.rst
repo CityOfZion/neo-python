@@ -1,7 +1,11 @@
-# NEO-Python SeedList
+NEO-Python SeedList
+-------------------
 
-## Introduction
-### What is the SeedList?
+Introduction
+============
+What is the SeedList?
+"""""""""""""""""""""
+
 The SeedList is a list of URLs belonging to the nodes that NEO-Python tries to connect to when it starts.
 You can find the SeedList in `protcol.*.json`, under in the neo-python directory under /neo/data. Note that there are three commonly used `protocol.*.json` files.
 This doc refers to `protocol.mainnet.json` but the information can be applied commonly.
@@ -33,21 +37,26 @@ This doc refers to `protocol.mainnet.json` but the information can be applied co
 ```
 Here, NEO-Python is configured to connect to `seed1.neo.org`, `seed2.neo.org`, and so on through `PORT:10333`.
 
-### Potential Problems
+Potential Problems
+==================
 What happens if every node in our list is down?
 
 Neo-python is smart, so it will attempt to connect to neighbouring nodes. However, there are many unknown factors in this approach. Perhaps the neighbors are down. The wait time may be extended.
 
-## Updating a SeedList
+Updating a SeedList
+===================
 By updating the SeedList with addresses of nodes we are certain are alive, we can avoid lengthy wait times as described in **Potential Problems**.
 
-## Updating a Seedlist in NEO-Python using Windows WSL (Ubuntu)
+Updating a Seedlist in NEO-Python using Windows WSL (Ubuntu)
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 If you are running neo-python using Ubuntu, you are mostly likely using a venv. Make sure to update the `protocol.mainnet.json` (as applicable) within your venv located at `lib/python3.6/site-packages/neo/data`.
 If this path does not exist, you haven't used it in your current venv and you can edit the file located under your neo-python folder at `neo/data`.
 Alternatively, you could delete your venv folder, edit the parent file, make a new venv folder (`python -m venv venv`), activate your venv, then reinstall using `pip install e .`.
 
-### How to update?
-####  Live nodes
+How to update?
+==============
+Live nodes
+""""""""""
 How do we find out which nodes are alive? Use [NEO Network Status Monitor](http://monitor.cityofzion.io/).
 If you would like more information visit the NEO Netweork Status Montior [reposity](https://github.com/CityOfZion/neo-mon).
 
@@ -74,7 +83,8 @@ We will choose the following live node addresses:
 - `node2.nyc3.bridgeprotocol.io`
 
 
-#### Editing the protocol
+Editing the protocol
+""""""""""""""""""""
 To let NEO-Python know the new SeedList, we will paste the addresses chosen before into `protocol.mainnet.json`
 ```json
 {
