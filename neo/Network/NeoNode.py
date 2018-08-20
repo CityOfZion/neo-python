@@ -95,7 +95,7 @@ class NeoNode(Protocol):
             NetworkAddressWithTime: if we have a connection to a node.
             None: otherwise.
         """
-        if self.port is not None and self.host is not None:
+        if self.port is not None and self.host is not None and self.Version is not None:
             return NetworkAddressWithTime(self.host, self.port, self.Version.Services)
         return None
 
