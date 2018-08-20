@@ -7,7 +7,14 @@ What is the SeedList?
 """""""""""""""""""""
 
 The SeedList is a list of URLs belonging to the nodes that NEO-Python tries to connect to when it starts.
-You can find the SeedList in ``protcol.*.json``, under in the neo-python directory under ``/neo/data``. Note that there are three commonly used ``protocol.*.json`` files.
+You can find the SeedList in ``protcol.*.json``, under in the neo-python directory under ``/neo/data``. Note that there are three commonly used ``protocol.*.json`` files:
+
+::
+
+    protocol.mainnet.json
+    protocol.testnet.json
+    protocl.privnet.json
+
 This doc refers to ``protocol.mainnet.json`` but the information can be applied commonly.
 
 ::
@@ -37,7 +44,7 @@ This doc refers to ``protocol.mainnet.json`` but the information can be applied 
       }
     }
   
-Here, NEO-Python is configured to connect to ``seed1.neo.org``, ``seed2.neo.org``, and so on through ``PORT:10333``.
+Here, NEO-Python is configured to connect to ``seed1.neo.org``, ``seed2.neo.org``, etc. through ``PORT:10333``.
 
 Potential Problems
 ==================
@@ -165,3 +172,9 @@ To let NEO-Python know the new SeedList, we will paste the addresses chosen befo
 Notice that we've added ``:10333`` to the end of each of the addresses, to tell NEO-Python to connect using the 'P2P' protocol.
 
 You can now start neo-python as usual.
+
+JSON and REST API Servers
+=========================
+
+It is recommended that you update your seedlist prior to starting any API Servers to ensure maximum connections.
+For more information about API Servers visit 'here <https://neo-python.readthedocs.io/en/latest/basicusage.html#api-server-json-and-or-rest>'_.
