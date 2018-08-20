@@ -240,17 +240,16 @@ def make_unique_script_attr(attributes):
         if attr.Usage != TransactionAttributeUsage.Script:
             filtered_attr.append(attr)
         else:
-            if isinstance(attr.Data, UInt160):
+            data = attr.Data
+            if isinstance(data, UInt160):
                 # convert it to equal type
                 data = attr.Data.ToArray()
 
-                # only add if it's not already in the list
-                if data not in script_list:
-                    script_list.append(data)
-                    filtered_attr.append(attr)
-            else:
-                script_list.append(attr.Data)
+            # only add if it's not already in the list
+            if data not in script_list:
+                script_list.append(data)
                 filtered_attr.append(attr)
+
     return filtered_attr
 
 
