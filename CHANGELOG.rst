@@ -12,6 +12,7 @@ All notable changes to this project are documented in this file.
 - Update bootstrap files for mainnet and testnet
 - Fix ``ContextItem`` JSOn decoding
 - Fix ``sys_fee`` calculation for certain transaction types
+- Fix ``TransactionAttribute`` duplication in Transactions
 
 
 [0.7.6] 2018-08-02

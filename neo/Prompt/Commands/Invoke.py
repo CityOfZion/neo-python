@@ -245,7 +245,7 @@ def make_unique_script_attr(attributes):
                 data = attr.Data.ToArray()
 
                 # only add if it's not already in the list
-                if not data in script_list:
+                if data not in script_list:
                     script_list.append(data)
                     filtered_attr.append(attr)
             else:
