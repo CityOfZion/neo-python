@@ -118,12 +118,7 @@ If you want an external program to access your API server, an open firewall port
    * - JSON-RPC via HTTP 
      - 10332 
      - 20332
-   * - P2P via TCP
-     - 10333
-     - 20333
-   * - P2P via WebSocket
-     - 10334
-     - 20334
+
 
 Running an API Server using Windows WSL (Ubuntu)
 """"""""""""""""""""""""""""""""""""""""""""""""
