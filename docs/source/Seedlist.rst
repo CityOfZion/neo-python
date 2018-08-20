@@ -67,7 +67,7 @@ How to update?
 Live nodes
 """"""""""
 How do we find out which nodes are alive? Use `NEO Network Status Monitor <http://monitor.cityofzion.io/>`_.
-If you would like more information visit the NEO Netweork Status Montior `repository <https://github.com/CityOfZion/neo-mon>`_.
+If you would like more information visit the NEO Network Status Montior `repository <https://github.com/CityOfZion/neo-mon>`_.
 
 
 .. image:: ../seedlist.png
@@ -75,7 +75,7 @@ If you would like more information visit the NEO Netweork Status Montior `reposi
   :alt: seedlist
 
 A list of nodes that are available are shown above. The latest ones are pushed to the top.
-*2* tells us if the node is responding. Generally, we take the ones that are up indicated by the green color and "yes".
+*2* tells us if the node is responding. The preferable nodes that are "up", which is indicated by the green color and "yes".
 
 We follow the standard protocol for ports.
 
