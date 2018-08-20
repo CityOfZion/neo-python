@@ -75,9 +75,9 @@ If you would like more information visit the NEO Netweork Status Montior `reposi
   :alt: seedlist
 
 A list of nodes that are available are shown above. The latest ones are pushed to the top.
-*2* tells us if the node is responding. Generally, we take the ones that say "yes" and are green in color.
+*2* tells us if the node is responding. Generally, we take the ones that are up indicated by the green color and "yes".
 
-We try to follow the standard protocol for ports.
+We follow the standard protocol for ports.
 
 .. list-table:: Port Protocol
    :widths: 20 10 10
@@ -177,4 +177,4 @@ JSON and REST API Servers
 =========================
 
 It is recommended that you update your seedlist prior to starting any API Servers to ensure maximum connections.
-For more information about API Servers visit 'here <https://neo-python.readthedocs.io/en/latest/basicusage.html#api-server-json-and-or-rest>'_.
+For more information about API Servers visit `here <https://neo-python.readthedocs.io/en/latest/basicusage.html#api-server-json-and-or-rest>`_.
