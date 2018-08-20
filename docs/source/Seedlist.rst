@@ -13,7 +13,7 @@ You can find the SeedList in ``protcol.*.json``, under in the neo-python directo
 
     protocol.mainnet.json
     protocol.testnet.json
-    protocl.privnet.json
+    protocol.privnet.json
 
 This doc refers to ``protocol.mainnet.json`` but the information can be applied commonly.
 
