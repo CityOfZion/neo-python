@@ -77,7 +77,7 @@ If you would like more information visit the NEO Network Status Montior `reposit
 A list of nodes that are available are shown above. The latest ones are pushed to the top.
 *2* tells us if the node is responding. The preferable nodes are "up", which is indicated by the green color and "yes".
 
-We follow the standard protocol for ports.
+We follow this standard protocol for ports:
 
 .. list-table:: Port Protocol
    :widths: 20 10 10
