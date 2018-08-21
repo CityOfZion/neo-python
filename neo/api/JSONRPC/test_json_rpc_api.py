@@ -488,6 +488,25 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         node.Peers = []
         node.ADDRS = []
 
+    def test_getwalletheight_no_wallet(self):
+        req = self._gen_rpc_req("getwalletheight", params=["some id here"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_getwalletheight(self):
+        self.app.wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "neo/data/neo-privnet.sample.wallet"), to_aes_key("coz"))
+        
+        req = self._gen_rpc_req("getwalletheight", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        
+        self.assertEqual(1, res.get('result'))
+
     def test_getbalance_no_wallet(self):
         req = self._gen_rpc_req("getbalance", params=["some id here"])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
