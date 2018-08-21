@@ -31,6 +31,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.Utils import get_asset_id
+from neo.Wallets.Wallet import Wallet
 
 
 class JsonRpcError(Exception):
@@ -253,6 +254,12 @@ class JsonRpcApi:
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "getwalletheight":
+            if self.wallet:
+                return self.wallet.WalletHeight
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+                
         elif method == "listaddress":
             if self.wallet:
                 return self.list_address()
