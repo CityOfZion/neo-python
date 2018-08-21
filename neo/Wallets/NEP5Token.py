@@ -150,7 +150,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         return 0
 
-    def Transfer(self, wallet, from_addr, to_addr, amount, tx_attributes=[]):
+    def Transfer(self, wallet, from_addr, to_addr, amount, tx_attributes=None):
         """
         Transfer a specified amount of the NEP5Token to another address.
 
@@ -167,6 +167,9 @@ class NEP5Token(VerificationCode, SerializableMixin):
                 int: the transaction fee.
                 list: the neo VM evaluationstack results.
         """
+        if not tx_attributes:
+            tx_attributes = []
+
         sb = ScriptBuilder()
         sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'transfer',
                                            [parse_param(from_addr, wallet), parse_param(to_addr, wallet),
