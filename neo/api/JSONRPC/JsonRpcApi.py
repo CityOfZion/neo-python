@@ -259,7 +259,7 @@ class JsonRpcApi:
                 return self.wallet.WalletHeight
             else:
                 raise JsonRpcError(-400, "Access denied.")
-                
+
         elif method == "listaddress":
             if self.wallet:
                 return self.list_address()
