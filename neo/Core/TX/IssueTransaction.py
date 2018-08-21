@@ -5,7 +5,6 @@ Usage:
     from neo.Core.TX.IssueTransaction import IssueTransaction
 """
 from neo.Core.TX.Transaction import Transaction, TransactionType
-from neo.Settings import settings
 from neocore.Fixed8 import Fixed8
 from neo.Blockchain import GetSystemCoin, GetSystemShare
 
@@ -44,7 +43,7 @@ class IssueTransaction(Transaction):
         if all_neo_gas:
             return Fixed8.Zero()
 
-        return Fixed8(int(settings.ISSUE_TX_FEE))
+        return super(IssueTransaction, self).SystemFee()
 
     def GetScriptHashesForVerifying(self):
         pass

@@ -1,5 +1,5 @@
 ### Current behavior
-
+- Are you using the latest available version? If not, first update and verify the problem still exists.
 - What is the problem?
 - Include a screenshot if it makes sense.
 

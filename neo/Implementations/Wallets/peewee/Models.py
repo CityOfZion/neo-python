@@ -1,5 +1,5 @@
 
-from peewee import Model, PrimaryKeyField, CharField, BooleanField, ForeignKeyField, IntegerField, DateTimeField
+from peewee import Model, PrimaryKeyField, CharField, BooleanField, ForeignKeyField, IntegerField, DateTimeField, BlobField
 from .PWDatabase import PWDatabase
 from neocore.Cryptography.Crypto import Crypto
 from neocore.UInt256 import UInt256
@@ -16,13 +16,13 @@ class ModelBase(Model):
 
 class Account(ModelBase):
     Id = PrimaryKeyField()
-    PrivateKeyEncrypted = CharField(unique=True)
+    PrivateKeyEncrypted = BlobField(unique=True)
     PublicKeyHash = CharField()
 
 
 class Address(ModelBase):
     Id = PrimaryKeyField()
-    ScriptHash = CharField(unique=True)
+    ScriptHash = BlobField(unique=True)
     IsWatchOnly = BooleanField(default=False)
 
     def ToString(self):
@@ -31,7 +31,7 @@ class Address(ModelBase):
 
 class NamedAddress(ModelBase):
     Id = PrimaryKeyField()
-    ScriptHash = CharField(unique=True)
+    ScriptHash = BlobField(unique=True)
     Title = CharField()
 
     def UInt160ScriptHash(self):
@@ -43,11 +43,11 @@ class NamedAddress(ModelBase):
 
 class Coin(ModelBase):
     Id = PrimaryKeyField()
-    TxId = CharField()
+    TxId = BlobField()
     Index = IntegerField()
-    AssetId = CharField()
+    AssetId = BlobField()
     Value = IntegerField()
-    ScriptHash = CharField()
+    ScriptHash = BlobField()
     State = IntegerField()
     Address = ForeignKeyField(Address)
 
@@ -55,7 +55,7 @@ class Coin(ModelBase):
 class Contract(ModelBase):
     Id = PrimaryKeyField()
     RawData = CharField()
-    ScriptHash = CharField()
+    ScriptHash = BlobField()
     PublicKeyHash = CharField()
     Account = ForeignKeyField(Account, null=True)
     Address = ForeignKeyField(Address)
@@ -64,7 +64,7 @@ class Contract(ModelBase):
 class Key(ModelBase):
     Id = PrimaryKeyField()
     Name = CharField(unique=True)
-    Value = CharField()
+    Value = BlobField()
 
 
 class NEP5Token(ModelBase):

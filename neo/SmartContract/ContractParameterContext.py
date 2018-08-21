@@ -15,7 +15,6 @@ from neo.Core.Witness import Witness
 
 
 class ContractParamater:
-
     Type = None
     Value = None
 
@@ -34,7 +33,6 @@ class ContractParamater:
 
 
 class ContextItem:
-
     Script = None
     ContractParameters = None
     Signatures = None
@@ -52,7 +50,10 @@ class ContextItem:
             if type(self.Script) is str:
                 jsn['script'] = self.Script
             else:
-                jsn['script'] = self.Script.decode()
+                try:
+                    jsn['script'] = self.Script.decode()
+                except UnicodeDecodeError:
+                    jsn['script'] = binascii.hexlify(self.Script).decode()
         jsn['parameters'] = [p.ToJson() for p in self.ContractParameters]
         if self.Signatures is not None:
             jsn['signatures'] = {}
@@ -68,7 +69,6 @@ class ContextItem:
 
 
 class ContractParametersContext:
-
     Verifiable = None
 
     ScriptHashes = None
@@ -240,7 +240,7 @@ class ContractParametersContext:
                 if type(item.Script) is str:
                     item.Script = item.Script.encode('utf-8')
                 vscript = item.Script
-#                logger.info("SCRIPT IS %s " % item.Script)
+            #                logger.info("SCRIPT IS %s " % item.Script)
 
             witness = Witness(
                 invocation_script=sb.ToArray(),
