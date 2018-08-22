@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file.
 [0.7.7-dev] in progress
 ------------------------
 - Add Seedlist.rst and update Basicusage.rst for API Servers
+- Adds test for np-prompt using pexpect
+- Add getwalletheight RPC call
 - Add support for Peewee 3.6.4
 - Adds support for ``IsPayable`` flag in prompt.
 - Fix Block header problems with ``block_import.py`` script
@@ -13,6 +15,7 @@ All notable changes to this project are documented in this file.
 - Update bootstrap files for mainnet and testnet
 - Fix ``ContextItem`` JSOn decoding
 - Fix ``sys_fee`` calculation for certain transaction types
+- Fix ``TransactionAttribute`` duplication in Transactions
 
 
 [0.7.6] 2018-08-02
