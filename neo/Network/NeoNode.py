@@ -544,12 +544,12 @@ class NeoNode(Protocol):
                 if not item:
                     item = BC.Default().GetBlock(hash)
                 if item:
-                    message = Message(command='block', payload=item, print_payload=True)
+                    message = Message(command='block', payload=item, print_payload=False)
                     self.SendSerializedMessage(message)
 
             elif inventory.Type == InventoryType.ConsensusInt:
                 if item:
-                    self.SendSerializedMessage(Message(command='consensus', payload=item, print_payload=True))
+                    self.SendSerializedMessage(Message(command='consensus', payload=item, print_payload=False))
 
     def HandleGetBlocksMessageReceived(self, payload):
         """
