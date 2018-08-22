@@ -139,7 +139,7 @@ class PromptInterface:
                 'wallet tkn_register {addr} ({addr}...) (--from-addr={addr})',
                 'wallet tkn_history {token symbol}',
                 'wallet unspent (neo/gas)',
-                'wallet split {addr} {asset} {unspent index} {divide into number of vins}'
+                'wallet split {addr} {asset} {unspent index} {divide into number of vins}',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
                 'withdraw holds # lists all current holds',

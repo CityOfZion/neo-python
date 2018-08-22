@@ -6,12 +6,17 @@ All notable changes to this project are documented in this file.
 [0.7.7-dev] in progress
 ------------------------
 - Accept incoming node connections, configurable via protocol config file setting
+- Add Seedlist.rst and update Basicusage.rst for API Servers
+- Add test for np-prompt using pexpect
+- Add getwalletheight RPC call
 - Add support for Peewee 3.6.4
-- Adds support for ``IsPayable`` flag in prompt.
+- Add support for ``IsPayable`` flag in prompt.
 - Fix Block header problems with ``block_import.py`` script
 - Sync GAS price calculations with current Neo core
 - Update bootstrap files for mainnet and testnet
 - Fix ``ContextItem`` JSOn decoding
+- Fix ``sys_fee`` calculation for certain transaction types
+- Fix ``TransactionAttribute`` duplication in Transactions
 
 
 [0.7.6] 2018-08-02

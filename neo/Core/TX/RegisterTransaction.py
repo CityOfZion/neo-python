@@ -8,7 +8,6 @@ from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.AssetType import AssetType
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
-from neo.Settings import settings
 from neocore.Fixed8 import Fixed8
 
 
@@ -87,7 +86,7 @@ In English:
         if self.AssetType == AssetType.GoverningToken or self.AssetType == AssetType.UtilityToken:
             return Fixed8.Zero()
 
-        return Fixed8(int(settings.REGISTER_TX_FEE))
+        return super(RegisterTransaction, self).SystemFee()
 
     def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""
