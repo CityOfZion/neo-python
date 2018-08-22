@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.7-dev] in progress
 ------------------------
+- Add Seedlist.rst and update Basicusage.rst for API Servers
 - Adds test for np-prompt using pexpect
 - Add getwalletheight RPC call
 - Add support for Peewee 3.6.4
