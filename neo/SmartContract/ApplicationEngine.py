@@ -295,7 +295,6 @@ class ApplicationEngine(ExecutionEngine):
         elif opcode == CHECKMULTISIG:
             if self.EvaluationStack.Count == 0:
                 return 1
-            
             item = self.EvaluationStack.Peek()
 
             if isinstance(item, Array):
