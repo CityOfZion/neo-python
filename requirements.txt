@@ -47,7 +47,6 @@ psutil==5.4.6
 py==1.5.4
 pycodestyle==2.4.0
 pycparser==2.18
-pycryptodome==3.6.3
 Pygments==2.2.0
 pymitter==0.2.3
 Pympler==0.5
