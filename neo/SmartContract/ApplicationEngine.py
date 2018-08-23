@@ -298,7 +298,7 @@ class ApplicationEngine(ExecutionEngine):
             
             item = self.EvaluationStack.Peek()
 
-            if isinstance(item, list):
+            if isinstance(item, Array):
                 n = item.count
             else:
                 n = item.GetBigInteger()
