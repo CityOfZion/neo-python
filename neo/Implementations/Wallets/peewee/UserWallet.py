@@ -325,7 +325,6 @@ class UserWallet(Wallet):
         return tokens
 
     def LoadStoredData(self, key):
-        logger.debug("Looking for key %s " % key)
         try:
             return Key.get(Name=key).Value
         except Exception as e:
@@ -352,12 +351,12 @@ class UserWallet(Wallet):
 
     def SaveStoredData(self, key, value):
         k = None
-
         try:
             k = Key.get(Name=key)
-            k.Value.replace(value)
+            k.Value = value
+            k.save()
         except Exception as e:
-            pass
+            print("Could not save stored data %s " % e)
 
         if k is None:
             k = Key.create(Name=key, Value=value)
