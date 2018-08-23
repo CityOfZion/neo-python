@@ -292,6 +292,8 @@ class ApplicationEngine(ExecutionEngine):
             return 20
         elif opcode == CHECKSIG:
             return 100
+        elif opcode == VERIFY:
+            return 100
         elif opcode == CHECKMULTISIG:
             if self.EvaluationStack.Count == 0:
                 return 1
