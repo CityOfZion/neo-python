@@ -297,7 +297,14 @@ class ApplicationEngine(ExecutionEngine):
         elif opcode == CHECKMULTISIG:
             if self.EvaluationStack.Count == 0:
                 return 1
-            n = self.EvaluationStack.Peek().GetBigInteger()
+            
+            item = self.EvaluationStack.Peek()
+
+            array = isinstance(item, list)
+            if array is True:
+                n = len(item)
+            else:
+                n = item.GetBigInteger()
 
             if n < 1:
                 return 1
