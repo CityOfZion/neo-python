@@ -4,7 +4,8 @@ Changelog
 All notable changes to this project are documented in this file.
 
 [0.7.7-dev] in progress
-------------------------
+-----------------------
+- Update neo-core to v0.5.1
 - Update test_prompt.py to acheive passing neo-python-core build
 - Add Seedlist.rst and update Basicusage.rst for API Servers
 - Adds test for np-prompt using pexpect
