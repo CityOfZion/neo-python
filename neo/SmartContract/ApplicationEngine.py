@@ -290,9 +290,7 @@ class ApplicationEngine(ExecutionEngine):
             return 10
         elif opcode == HASH160 or opcode == HASH256:
             return 20
-        elif opcode == CHECKSIG:
-            return 100
-        elif opcode == VERIFY:
+        elif opcode in [CHECKSIG, VERIFY]:
             return 100
         elif opcode == CHECKMULTISIG:
             if self.EvaluationStack.Count == 0:
@@ -300,9 +298,8 @@ class ApplicationEngine(ExecutionEngine):
             
             item = self.EvaluationStack.Peek()
 
-            array = isinstance(item, list)
-            if array is True:
-                n = len(item)
+            if isinstance(item, list):
+                n = item.count
             else:
                 n = item.GetBigInteger()
 
