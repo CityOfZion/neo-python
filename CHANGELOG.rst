@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.7-dev] in progress
 ------------------------
+- Fix issue with ``UserWallet.SaveStoredData``
 - Update neo-core to v0.5.1
 - Add appropriate GAS cost for ``CHECKMULTISIG`` for an array
 - Add appropriate GAS cost for ``VERIFY``
