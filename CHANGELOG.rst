@@ -7,6 +7,7 @@ All notable changes to this project are documented in this file.
 ------------------------
 - Add appropriate GAS cost for ``CHECKMULTISIG`` for an array
 - Add appropriate GAS cost for ``VERIFY``
+- Update test_prompt.py to acheive passing neo-python-core build
 - Add Seedlist.rst and update Basicusage.rst for API Servers
 - Adds test for np-prompt using pexpect
 - Add getwalletheight RPC call
