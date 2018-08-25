@@ -179,6 +179,19 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['confirmations'], 758977)
         self.assertEqual(res['result']['nextblockhash'], '0xa0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf')
 
+    def test_get_block_free_tx_only(self):
+        req = self._gen_rpc_req("getblockfreetxonly", params=["0x41720c35f5f15e5dc343d67fb54ab1e3825de47b476b5ae56cede2bf30657fde", 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertNotIn("MinerTransaction", str(res['result']))
+        self.assertIn("'net_fee': '0'", str(res['result']))
+
+    def test_get_block_priority_tx_only(self):
+        req = self._gen_rpc_req("getblockprioritytxonly", params=["0x41720c35f5f15e5dc343d67fb54ab1e3825de47b476b5ae56cede2bf30657fde", 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual([], res['result'])
+
     def test_get_block_hash(self):
         req = self._gen_rpc_req("getblock", params=['a0d34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf', 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
@@ -272,6 +285,30 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             for entry in mempool:
                 self.assertEqual(entry[0:2], "0x")
                 self.assertEqual(len(entry), 66)
+
+    def test_get_raw_mempool_free_tx_only(self):
+        req = self._gen_rpc_req("getrawmempoolfreetxonly", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        mempool = res['result']
+
+        # when running only these tests, mempool is empty. when running all tests, there are a
+        # number of entries
+        if len(mempool) > 0:
+            for entry in mempool:
+                self.assertIn("'net_fee': '0'", entry)
+
+    def test_get_raw_mempool_priority_tx_only(self):
+        req = self._gen_rpc_req("getrawmempoolprioritytxonly", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        mempool = res['result']
+
+        # when running only these tests, mempool is empty. when running all tests, there are a
+        # number of entries
+        if len(mempool) > 0:
+            for entry in mempool:
+                self.assertNotIn("'net_fee': '0'", entry)
 
     def test_get_version(self):
         # TODO: what's the nonce? on testnet live server response it's always 771199013
