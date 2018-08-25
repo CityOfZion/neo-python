@@ -152,6 +152,44 @@ class JsonRpcApi:
                 raise JsonRpcError(-100, "Unknown block")
             return self.get_block_output(block, params)
 
+        elif method == "getblockfreetxonly":
+            # this should work for either str or int
+            # requires 1 for the second param
+            block = Blockchain.Default().GetBlock(params[0])
+            if not block:
+                raise JsonRpcError(-100, "Unknown block")
+            req = self.get_block_output(block, params)
+            length = len(req['tx']) - 1
+
+            p = 0
+            tx = []
+            while p <= length:
+                if "'net_fee': '0'" in str(req['tx'][p]) and "MinerTransaction" not in str(req['tx'][p]):
+                    tx.append(req['tx'][p])
+                    p += 1
+                else:
+                    p += 1
+            return tx
+
+        elif method == "getblockpriorityfeetxonly":
+            # this should work for either str or int
+            # requires 1 for the second param
+            block = Blockchain.Default().GetBlock(params[0])
+            if not block:
+                raise JsonRpcError(-100, "Unknown block")
+            req = self.get_block_output(block, params)
+            length = len(req['tx']) - 1
+
+            p = 0
+            tx = []
+            while p <= length:
+                if "'net_fee': '0'" not in str(req['tx'][p]) and "MinerTransaction" not in str(req['tx'][p]):
+                    tx.append(req['tx'][p])
+                    p += 1
+                else:
+                    p += 1
+            return tx
+
         elif method == "getblockcount":
             return Blockchain.Default().Height + 1
 
@@ -181,6 +219,50 @@ class JsonRpcApi:
 
         elif method == "getrawmempool":
             return list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
+
+        elif method == "getrawmempoolfreetxonly":
+            rawmempool = list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
+            length = len(rawmempool) - 1
+
+            p = 0
+            transactions = []
+            while p <= length:
+                d = NodeLeader.Instance().GetTransaction(self, str(rawmempool[p]))
+                transactions.append(d)
+                p += 1
+            transactions_length = len(transactions) - 1
+
+            p = 0
+            tx = []
+            while p <= transactions_length:
+                if "'net_fee': '0'" in str(transactions[p]):
+                    tx.append(transactions[p])
+                    p += 1
+                else:
+                    p += 1
+            return tx
+
+        elif method == "getrawmempoolpriorityfeetxonly":
+            rawmempool = list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
+            length = len(rawmempool) - 1
+
+            p = 0
+            transactions = []
+            while p <= length:
+                d = NodeLeader.Instance().GetTransaction(self, str(rawmempool[p]))
+                transactions.append(d)
+                p += 1
+            transactions_length = len(transactions) - 1
+
+            p = 0
+            tx = []
+            while p <= transactions_length:
+                if "'net_fee': '0'" not in str(transactions[p]):
+                    tx.append(transactions[p])
+                    p += 1
+                else:
+                    p += 1
+            return tx
 
         elif method == "getversion":
             return {
