@@ -2,6 +2,10 @@ Changelog
 =========
 
 All notable changes to this project are documented in this file.
+[0.7.8] In Progress...
+------------------
+- Add ``getblockfreetxonly``, ``getblockprioritytxonly``, ``getrawmempoolfreetxonly``, and ``getrawmempoolprioritytxonly`` RPC API methods
+
 
 [0.7.7] 2018-08-23
 ------------------
