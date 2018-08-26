@@ -10,6 +10,7 @@ from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState
@@ -144,10 +145,9 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
 def TestInvokeContract(wallet, args, withdrawal_tx=None,
                        parse_params=True, from_addr=None,
                        min_fee=DEFAULT_MIN_FEE, invoke_attrs=None, owners=None):
-
-    BC = GetBlockchain()
-
-    contract = BC.GetContract(args[0])
+    
+    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+    contract = blockchain.GetContract(args[0])
 
     if contract:
         #
