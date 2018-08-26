@@ -4,7 +4,9 @@ Changelog
 All notable changes to this project are documented in this file.
 
 [0.7.8-dev] 2018-xx-xx
+----------------------
 - Prefix ``vin`` JSON output format to match C#
+- Update ``neo-boa`` to v0.5.0 for Python 3.7 compatibility
 
 
 [0.7.7] 2018-08-23
