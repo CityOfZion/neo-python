@@ -162,16 +162,17 @@ class JsonRpcApi:
             length = len(req['tx']) - 1
 
             p = 0
-            tx = []
+            free_tx = []
             while p <= length:
-                if "'net_fee': '0'" in str(req['tx'][p]) and "MinerTransaction" not in str(req['tx'][p]):
-                    tx.append(req['tx'][p])
+                fee = req['tx'][p]['net_fee']
+                if fee == '0' and req['tx'][p]['type'] != 'MinerTransaction':
+                    free_tx.append(req['tx'][p])
                     p += 1
                 else:
                     p += 1
-            return tx
+            return free_tx
 
-        elif method == "getblockpriorityfeetxonly":
+        elif method == "getblockprioritytxonly":
             # this should work for either str or int
             # requires 1 for the second param
             block = Blockchain.Default().GetBlock(params[0])
@@ -181,14 +182,15 @@ class JsonRpcApi:
             length = len(req['tx']) - 1
 
             p = 0
-            tx = []
+            priority_tx = []
             while p <= length:
-                if "'net_fee': '0'" not in str(req['tx'][p]) and "MinerTransaction" not in str(req['tx'][p]):
-                    tx.append(req['tx'][p])
+                fee = req['tx'][p]['net_fee']
+                if fee != '0':
+                    priority_tx.append(req['tx'][p])
                     p += 1
                 else:
                     p += 1
-            return tx
+            return priority_tx
 
         elif method == "getblockcount":
             return Blockchain.Default().Height + 1
@@ -242,7 +244,7 @@ class JsonRpcApi:
                     p += 1
             return tx
 
-        elif method == "getrawmempoolpriorityfeetxonly":
+        elif method == "getrawmempoolprioritytxonly":
             rawmempool = list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
             length = len(rawmempool) - 1
 
