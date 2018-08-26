@@ -235,14 +235,15 @@ class JsonRpcApi:
             transactions_length = len(transactions) - 1
 
             p = 0
-            tx = []
+            free_tx = []
             while p <= transactions_length:
-                if "'net_fee': '0'" in str(transactions[p]):
-                    tx.append(transactions[p])
+                fee = transactions[p]['net_fee']
+                if fee == '0':
+                    free_tx.append(transactions[p])
                     p += 1
                 else:
                     p += 1
-            return tx
+            return free_tx
 
         elif method == "getrawmempoolprioritytxonly":
             rawmempool = list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
@@ -257,14 +258,15 @@ class JsonRpcApi:
             transactions_length = len(transactions) - 1
 
             p = 0
-            tx = []
+            priority_tx = []
             while p <= transactions_length:
-                if "'net_fee': '0'" not in str(transactions[p]):
-                    tx.append(transactions[p])
+                fee = transactions[p]['net_fee']
+                if fee != '0':
+                    priority_tx.append(transactions[p])
                     p += 1
                 else:
                     p += 1
-            return tx
+            return priority_tx
 
         elif method == "getversion":
             return {
