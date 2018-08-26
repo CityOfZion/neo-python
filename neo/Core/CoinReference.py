@@ -83,7 +83,7 @@ class CoinReference(SerializableMixin):
              dict:
         """
         out = {
-            'txid': self.PrevHash.ToString(),
+            'txid': self.PrevHash.To0xString(),
             'vout': self.PrevIndex
         }
 
