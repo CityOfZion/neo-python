@@ -147,6 +147,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
                        min_fee=DEFAULT_MIN_FEE, invoke_attrs=None, owners=None):
     
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+    Blockchain.RegisterBlockchain(blockchain)
     contract = blockchain.GetContract(args[0])
 
     if contract:
