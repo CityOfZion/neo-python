@@ -7,6 +7,7 @@ All notable changes to this project are documented in this file.
 ----------------------
 - Prefix ``vin`` JSON output format to match C#
 - Update ``neo-boa`` to v0.5.0 for Python 3.7 compatibility
+- Update pexpect to 4.6.0 to be compatible with Python 3.7
 
 
 [0.7.7] 2018-08-23
