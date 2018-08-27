@@ -229,7 +229,7 @@ class JsonRpcApi:
             p = 0
             transactions = []
             while p <= length:
-                d = NodeLeader.Instance().GetTransaction(self, str(rawmempool[p]))
+                d = NodeLeader.Instance().GetTransaction(self, rawmempool[p])
                 transactions.append(d)
                 p += 1
             transactions_length = len(transactions) - 1
@@ -252,7 +252,7 @@ class JsonRpcApi:
             p = 0
             transactions = []
             while p <= length:
-                d = NodeLeader.Instance().GetTransaction(self, str(rawmempool[p]))
+                d = NodeLeader.Instance().GetTransaction(self, rawmempool[p])
                 transactions.append(d)
                 p += 1
             transactions_length = len(transactions) - 1
