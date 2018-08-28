@@ -3,9 +3,22 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.7-dev] in progress
-------------------------
+
+[0.7.8-dev] 2018-xx-xx
+----------------------
+- Prefix ``vin`` JSON output format to match C#
+- Update ``neo-boa`` to v0.5.0 for Python 3.7 compatibility
+- Update pexpect to 4.6.0 to be compatible with Python 3.7
 - Accept incoming node connections, configurable via protocol config file setting
+
+
+[0.7.7] 2018-08-23
+------------------
+- Fix issue with ``UserWallet.SaveStoredData``
+- Update neo-core to v0.5.1
+- Add appropriate GAS cost for ``CHECKMULTISIG`` for an array
+- Add appropriate GAS cost for ``VERIFY``
+- Update test_prompt.py to acheive passing neo-python-core build
 - Add Seedlist.rst and update Basicusage.rst for API Servers
 - Add test for np-prompt using pexpect
 - Add getwalletheight RPC call
