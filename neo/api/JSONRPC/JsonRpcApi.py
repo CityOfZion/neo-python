@@ -225,7 +225,6 @@ class JsonRpcApi:
         elif method == "getrawmempoolfreetxonly":
             rawmempool = list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
             length = len(rawmempool) - 1
-            print(rawmempool)
 
             p = 0
             transactions = []
@@ -236,7 +235,6 @@ class JsonRpcApi:
                 d = self.get_tx_output(tx, height, 1)
                 transactions.append(d)
                 p += 1
-            print(transactions)
             transactions_length = len(transactions) - 1
 
             p = 0
@@ -253,7 +251,6 @@ class JsonRpcApi:
         elif method == "getrawmempoolprioritytxonly":
             rawmempool = list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
             length = len(rawmempool) - 1
-            print(rawmempool)
 
             p = 0
             transactions = []
@@ -264,7 +261,6 @@ class JsonRpcApi:
                 d = self.get_tx_output(tx, height, 1)
                 transactions.append(d)
                 p += 1
-            print(transactions)
             transactions_length = len(transactions) - 1
 
             p = 0
