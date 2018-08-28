@@ -21,7 +21,7 @@
       "seed3.neo.org:10333",
       "seed1.redpulse.com:10333"
     ],
-    "RPCList":[
+    "RPCList": [
       "http://18.217.24.130:8080",
       "http://18.220.214.143:8080",
       "http://13.58.198.112:8080",
@@ -41,11 +41,14 @@
     "RPCPort": 10332,
     "NodePort": 10333,
     "WsPort": 10334,
-    "UriPrefix": [ "http://*:10332" ],
+    "UriPrefix": [
+      "http://*:10332"
+    ],
     "SslCert": "",
     "SslCertPassword": "",
     "BootstrapFile": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Main2600xxx.tar.gz",
     "NotificationBootstrapFile": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/MainNotif2600xxx.tar.gz",
-    "DebugStorage":1
+    "DebugStorage":1,
+    "AcceptIncomingPeers": true
   }
 }
