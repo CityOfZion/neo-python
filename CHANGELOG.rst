@@ -10,7 +10,7 @@ All notable changes to this project are documented in this file.
 - Update ``neo-boa`` to v0.5.0 for Python 3.7 compatibility
 - Update pexpect to 4.6.0 to be compatible with Python 3.7
 - Accept incoming node connections, configurable via protocol config file setting
-
+- Fixes vulnerability to RPC invoke functionality that can send node into unclosed loop during 'test' invokes
 
 [0.7.7] 2018-08-23
 ------------------
