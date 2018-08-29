@@ -353,7 +353,9 @@ class NeoNode(Protocol):
 
         peerlist = []
         for peer in self.leader.Peers:
-            peerlist.append(peer.GetNetworkAddressWithTime())
+            addr = peer.GetNetworkAddressWithTime()
+            if addr is not None:
+                peerlist.append(addr)
         self.Log("Peer list %s " % list(map(lambda p: p.ToString(), peerlist)))
 
         addrpayload = AddrPayload(addresses=peerlist)
