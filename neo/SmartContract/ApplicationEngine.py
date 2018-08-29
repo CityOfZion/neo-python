@@ -237,7 +237,7 @@ class ApplicationEngine(ExecutionEngine):
                     return False
 
                 if self.testMode and self.ops_processed > self.max_free_ops:
-                    logger.error("Too many free operations processed")
+                    logger.debug("Too many free operations processed")
                     self._VMState |= VMState.FAULT
                     return False
 

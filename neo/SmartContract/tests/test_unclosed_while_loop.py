@@ -14,18 +14,25 @@ class StringIn(str):
         return self in other
 
 
-class TestVMErrors(BoaTest):
+class TestUnclosedWhileLoop(BoaTest):
     engine = ExecutionEngine()
     script = None
 
     @classmethod
     def setUpClass(cls):
-        super(TestVMErrors, cls).setUpClass()
-        output = Compiler.instance().load('%s/sc_vm_errors.py' % os.path.dirname(__file__)).default
+        super(TestUnclosedWhileLoop, cls).setUpClass()
+
+        # the following script is a simple contract that is basically `while True`
+
         cls.script = binascii.unhexlify(b'00c56b620000')
         settings.set_loglevel(DEBUG)
 
-    @patch('logzero.logger.error')
-    def test_invalid_array_index(self, mocked_logger):
+    @classmethod
+    def tearDownClass(cls):
+        super(TestUnclosedWhileLoop, cls).tearDownClass()
+        settings.set_loglevel(INFO)
+
+    @patch('logzero.logger.debug')
+    def test_unclosed_loop_script(self, mocked_logger):
         tx, results, total_ops, engine = TestBuild(self.script, [], self.GetWallet1(), '', 'ff')
         mocked_logger.assert_called_with(StringIn('Too many free operations processed'))
