@@ -200,14 +200,11 @@ could lead to version conflicts.
     git clone https://github.com/CityOfZion/neo-python.git
     cd neo-python
     
-    # setup alias for python and pip
+    # if you want to use the development branch, switch now
+    git checkout development
     
-    alias python=python3.7
-    alias pip=pip3
-
     # create virtual environment and activate
-
-    python -m venv venv
+    python3.7 -m venv venv
     source venv/bin/activate
 
     # install the package in an editable form
@@ -220,15 +217,9 @@ could lead to version conflicts.
     # create project dir
     mkdir myproject
     cd myproject
-    
-    # setup alias for python and pip
-    
-    alias python=python3.7
-    alias pip=pip3
 
     # create virtual environment and activate
-
-    python -m venv venv
+    python3.7 -m venv venv
     source venv/bin/activate
 
     (venv) pip install neo-python
