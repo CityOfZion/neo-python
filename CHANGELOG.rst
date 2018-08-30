@@ -11,6 +11,8 @@ All notable changes to this project are documented in this file.
 - Update pexpect to 4.6.0 to be compatible with Python 3.7
 - Accept incoming node connections, configurable via protocol config file setting
 - Fixes vulnerability to RPC invoke functionality that can send node into unclosed loop during 'test' invokes
+- Fix issue with opening recently created wallets
+
 
 [0.7.7] 2018-08-23
 ------------------
