@@ -630,7 +630,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key('awesomepassword')
         )
-        req = self._gen_rpc_req("sendtoaddress", params=["arg"])
+        req = self._gen_rpc_req("sendfromaddress", params=["arg"])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
@@ -640,11 +640,11 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet = None
         os.remove(test_wallet_path)
 
-     def test_send_from_address(self):
+    def test_send_from_address(self):
         self.app.wallet = UserWalletTestCase.GetWallet1(recreate=True)
         address_to = UserWalletTestCase.watch_addr_str
-        address_from = UserWalletTestCase.watch_addr_str
-        req = self._gen_rpc_req("sendtoaddress", params=['neo', address_to, address_from, 1])
+        address_from = UserWalletTestCase.wallet_1_addr
+        req = self._gen_rpc_req("sendfromaddress", params=['neo', address_to, address_from, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res.get('jsonrpc', None), '2.0')
