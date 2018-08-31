@@ -17,7 +17,10 @@ from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response, cors_header
 from neo.Core.State.AccountState import AccountState
-from neo.Core.TX.Transaction import Transaction
+from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
+    ContractTransaction
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
+    TransactionAttributeUsage
 from neo.Core.State.CoinState import CoinState
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
@@ -27,6 +30,7 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Core.State.StorageKey import StorageKey
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
+from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
@@ -276,6 +280,12 @@ class JsonRpcApi:
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "sendfromaddress":
+            if self.wallet:
+                return self.send_from_address(params)
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
         raise JsonRpcError.methodNotFound()
 
     def get_custom_error_payload(self, request_id, code, message):
@@ -397,3 +407,57 @@ class JsonRpcApi:
                 "watchonly": addr.IsWatchOnly,
             })
         return result
+    
+    def send_from_address(self, params):
+        asset, address_to, address_from, amount, fee = self.parse_send_from_params(params)
+        standard_contract = self.wallet.GetStandardAddress()
+        signer_contract = self.wallet.GetContract(standard_contract)
+         output = TransactionOutput(AssetId=asset,
+                                   Value=amount,
+                                   script_hash=address_to)
+        contract_tx = ContractTransaction(outputs=[output])
+        tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                         change_address=None,
+                                         fee=fee,
+                                         from_addr= address_from)
+        if tx is None:
+            raise JsonRpcError(-300, "Insufficient funds")
+         data = standard_contract.Data
+        tx.Attributes = [
+            TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                 data=data)
+        ]
+         context = ContractParametersContext(
+            tx, isMultiSig=signer_contract.IsMultiSigContract
+        )
+        self.wallet.Sign(context)
+         if context.Completed:
+            tx.scripts = context.GetScripts()
+            NodeLeader.Instance().Relay(tx)
+            return tx.ToJson()
+        else:
+            return context.toJson()
+
+     def parse_send_from_params(self, params):
+        if len(params) not in [4, 5]:
+            raise JsonRpcError(-32602, "Invalid params")
+         asset_id = get_asset_id(self.wallet, params[0])
+        if not type(asset_id) is UInt256:
+            raise JsonRpcError(-32602, "Invalid params")
+         address_to = params[1]
+        try:
+            address_to_sh = self.wallet.ToScriptHash(address_to)
+        except Exception:
+            raise JsonRpcError(-32602, "Invalid params")
+         from_addr= params[2]
+        try:
+            address_from_sh = self.wallet.ToScriptHash(address_from)
+        except Exception:
+            raise JsonRpcError(-32602, "Invalid params")
+         amount = Fixed8.TryParse(params[3], require_positive=True)
+        if not amount:
+            raise JsonRpcError(-32602, "Invalid params")
+         fee = Fixed8.TryParse(params[4]) if len(params) == 5 else Fixed8.Zero()
+        if fee < Fixed8.Zero():
+            raise JsonRpcError(-32602, "Invalid params")
+         return asset_id, address_to_sh, address_from_sh, amount, fee
