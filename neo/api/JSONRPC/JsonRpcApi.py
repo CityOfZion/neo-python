@@ -134,7 +134,7 @@ class JsonRpcApi:
                     raise JsonRpcError(-2146233033, "One of the identified items was in an invalid format.")
 
             return acct.ToJson()
-        
+
         elif method == "getaddresstxs":
             if params[1] <= 0:
                 return JsonRpcError(-32600, "Invalid Request")
@@ -314,7 +314,6 @@ class JsonRpcApi:
         query.LoadTransactions()
         jsn = query.ToJson()
         return jsn
-
 
     def get_custom_error_payload(self, request_id, code, message):
         return {
