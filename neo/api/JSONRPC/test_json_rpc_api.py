@@ -22,6 +22,7 @@ from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import ROOT_INSTALL_PATH
+from neo.Prompt.Commands.tests.test_send_command import UserWalletTestCase
 
 
 def mock_request(body):
@@ -614,3 +615,41 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(test_wallet_path)
+
+    def test_send_from_address_no_wallet(self):
+        req = self._gen_rpc_req("sendfromaddress", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+        
+    def test_send_from_address_wrong_arguments(self):
+        test_wallet_path = os.path.join(mkdtemp(), "sendfromaddress.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+        req = self._gen_rpc_req("sendtoaddress", params=["arg"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+     def test_send_from_address(self):
+        self.app.wallet = UserWalletTestCase.GetWallet1(recreate=True)
+        address_to = UserWalletTestCase.watch_addr_str
+        address_from = UserWalletTestCase.watch_addr_str
+        req = self._gen_rpc_req("sendtoaddress", params=['neo', address_to, address_from, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(UserWalletTestCase.wallet_1_dest())
