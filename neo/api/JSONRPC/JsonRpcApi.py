@@ -436,7 +436,7 @@ class JsonRpcApi:
             NodeLeader.Instance().Relay(tx)
             return tx.ToJson()
         else:
-            return context.toJson()
+            return context.ToJson()
 
     def parse_send_from_params(self, params):
         if len(params) not in [4, 5]:
