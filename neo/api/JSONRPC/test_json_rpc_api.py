@@ -131,6 +131,26 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(-2146233033, res['error']['code'])
         self.assertEqual('One of the identified items was in an invalid format.', res['error']['message'])
 
+    def test_get_address_txs(self):
+        addr = "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK"
+        num_tx = 5
+        req = self._gen_rpc_req("getaddresstxs", params=[addr, num_tx])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(5, len(res['result']))
+        for data in res['result']:
+            address = data['addr']
+            self.assertEqual(addr, address)
+        self.assertNotEqual(res['result'][0]['block'], res['result'][1]['block'])
+
+    def test_get_address_txs_bad(self):
+        addr = "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK"
+        # missing number of tx
+        req = self._gen_rpc_req("getaddresstxs", params=[addr])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertIn("error", res)
+
     def test_get_asset_state(self):
         asset_str = '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
         req = self._gen_rpc_req("getassetstate", params=[asset_str])

@@ -135,6 +135,35 @@ class JsonRpcApi:
 
             return acct.ToJson()
 
+        elif method == "getaddresstxs":
+            if params[1] <= 0:
+                return JsonRpcError(-32600, "Invalid Request")
+
+            first_block = Blockchain.Default().Height
+
+            all_transactions = []
+            block_transactions = {}
+
+            q = first_block - 1
+            while q >= 0 and len(all_transactions) < params[1]:
+                blk = self.get_block(q)
+                req = blk['tx']
+                p = 0
+                while p <= len(req) - 1:
+
+                    for info in req[p]['vout']:
+                        address = info['address']
+
+                        if address == params[0]:
+                            txid = req[p]['txid']
+                            tx_type = req[p]['type']
+                            block_transactions = {"addr": address, "txid": txid, "type": tx_type, "block": blk['index']}
+
+                            all_transactions.append(block_transactions)
+                    p += 1
+                q -= 1
+            return all_transactions
+
         elif method == "getassetstate":
             asset_id = UInt256.ParseString(params[0])
             asset = Blockchain.Default().GetAssetState(asset_id.ToBytes())
@@ -277,6 +306,14 @@ class JsonRpcApi:
                 raise JsonRpcError(-400, "Access denied.")
 
         raise JsonRpcError.methodNotFound()
+
+    def get_block(self, block):
+        query = Blockchain.Default().GetBlock(block)
+        if not query:
+            raise JsonRpcError(-100, "Unknown block")
+        query.LoadTransactions()
+        jsn = query.ToJson()
+        return jsn
 
     def get_custom_error_payload(self, request_id, code, message):
         return {
