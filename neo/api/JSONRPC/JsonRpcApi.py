@@ -153,7 +153,7 @@ class JsonRpcApi:
 
                     for info in req[p]['vout']:
                         address = info['address']
-        
+
                         if address == params[0]:
                             txid = req[p]['txid']
                             tx_type = req[p]['type']
