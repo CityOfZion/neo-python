@@ -622,7 +622,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -400)
         self.assertEqual(error.get('message', None), "Access denied.")
-        
+
     def test_send_from_address_wrong_arguments(self):
         test_wallet_path = os.path.join(mkdtemp(), "sendfromaddress.db3")
         self.app.wallet = UserWallet.Create(
