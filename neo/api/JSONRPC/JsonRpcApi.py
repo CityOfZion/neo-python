@@ -407,7 +407,7 @@ class JsonRpcApi:
                 "watchonly": addr.IsWatchOnly,
             })
         return result
-    
+
     def send_from_address(self, params):
         asset, address_to, address_from, amount, fee = self.parse_send_from_params(params)
         standard_contract = self.wallet.GetStandardAddress()
@@ -419,7 +419,7 @@ class JsonRpcApi:
         tx = self.wallet.MakeTransaction(tx=contract_tx,
                                          change_address=None,
                                          fee=fee,
-                                         from_addr= address_from)
+                                         from_addr=address_from)
         if tx is None:
             raise JsonRpcError(-300, "Insufficient funds")
         data = standard_contract.Data
