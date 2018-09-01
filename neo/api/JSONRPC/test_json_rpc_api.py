@@ -653,4 +653,3 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(UserWalletTestCase.wallet_1_dest())
-
