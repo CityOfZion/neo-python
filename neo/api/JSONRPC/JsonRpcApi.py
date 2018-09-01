@@ -461,3 +461,4 @@ class JsonRpcApi:
         if fee < Fixed8.Zero():
             raise JsonRpcError(-32602, "Invalid params")
         return asset_id, address_to_sh, address_from_sh, amount, fee
+
