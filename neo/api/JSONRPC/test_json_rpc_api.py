@@ -652,4 +652,3 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertIn('vin', res.get('result', {}).keys())
         self.app.wallet.Close()
         self.app.wallet = None
-        os.remove(UserWalletTestCase.wallet_1_dest())
