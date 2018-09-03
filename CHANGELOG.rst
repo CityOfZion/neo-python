@@ -13,7 +13,7 @@ All notable changes to this project are documented in this file.
 - Fixes vulnerability to RPC invoke functionality that can send node into unclosed loop during 'test' invokes
 - Fix issue with opening recently created wallets
 - Remove unnecessary notification from ``SaveStoredData``
-- Update docs, especial ``toctree`` so all information in docs is display on "readthedocs"
+- Update docs ``toctree`` so all pages are indexed & added instructions for contributing to docs
 
 
 [0.7.7] 2018-08-23
