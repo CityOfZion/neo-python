@@ -3,6 +3,9 @@ Contributing
 
 Contributions are always welcome!
 
+Guidelines
+----------
+
 When contributing please note the following:
 
 1.  NEO-Python Docs use the sphinx module to build https://neo-python.readthedocs.io/en/latest/. So, make sure every docucment you add uses reStructuredText (e.g. <yourfile>.rst).
