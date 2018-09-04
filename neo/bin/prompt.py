@@ -193,7 +193,7 @@ class PromptInterface:
     def get_completer(self):
 
         standard_completions = ['block', 'tx', 'header', 'mem', 'neo', 'gas',
-                                'help', 'state', 'nodes', 'exit', 'quit', 'node-requests'
+                                'help', 'state', 'nodes', 'exit', 'quit', 'node-requests',
                                 'config', 'import', 'export', 'open', 'maxpeers', 'sc-events',
                                 'wallet', 'contract', 'asset', 'account', 'wif', 'debug',
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
