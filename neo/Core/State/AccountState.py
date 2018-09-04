@@ -6,9 +6,11 @@ from neo.IO.MemoryStream import StreamManager
 from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
+
 
 class AccountState(StateBase):
-
     ScriptHash = None
     IsFrozen = False
     Votes = []
@@ -85,7 +87,7 @@ class AccountState(StateBase):
         Returns:
             int: size.
         """
-        return super(AccountState, self).Size() + sys.getsizeof(self.ScriptHash)
+        return super(AccountState, self).Size() + s.uint160 + s.uint8 + GetVarSize(self.Votes) + GetVarSize(len(self.Balances)) + (len(self.Balances) * (32 + 8))
 
     @staticmethod
     def DeserializeFromDB(buffer):

@@ -1,3 +1,7 @@
+import sys
+import importlib
+import binascii
+
 #  Constants
 PUSH0 = b'\x00'  # An empty array of bytes is pushed onto the stack.
 PUSHF = PUSH0
@@ -186,15 +190,14 @@ CHECKSIG = b'\xAC'
 VERIFY = b'\xAD'
 CHECKMULTISIG = b'\xAE'
 
-
 #  Array
 ARRAYSIZE = b'\xC0'
 PACK = b'\xC1'
 UNPACK = b'\xC2'
 PICKITEM = b'\xC3'
 SETITEM = b'\xC4'
-NEWARRAY = b'\xC5'  # 用作引用類型
-NEWSTRUCT = b'\xC6'  # 用作值類型
+NEWARRAY = b'\xC5'  # Used as a reference type
+NEWSTRUCT = b'\xC6'  # Used as a value type
 NEWMAP = b'\xC7'
 APPEND = b'\xC8'
 REVERSE = b'\xC9'
@@ -208,9 +211,6 @@ VALUES = b'\xCD'
 THROW = b'\xF0'
 THROWIFNOT = b'\xF1'
 
-import sys
-import importlib
-import binascii
 
 module = importlib.import_module('neo.VM.OpCode')
 items = dir(sys.modules[__name__])

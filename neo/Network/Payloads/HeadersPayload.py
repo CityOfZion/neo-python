@@ -1,5 +1,7 @@
 from neocore.IO.Mixins import SerializableMixin
 import sys
+from neo.Core.Size import GetVarSize
+from neocore.IO.BinaryWriter import BinaryWriter
 
 
 class HeadersPayload(SerializableMixin):
@@ -21,7 +23,7 @@ class HeadersPayload(SerializableMixin):
         Returns:
             int: size.
         """
-        return sys.getsizeof(self.Headers)
+        return GetVarSize(self.Headers)
 
     def Deserialize(self, reader):
         """
@@ -32,11 +34,11 @@ class HeadersPayload(SerializableMixin):
         """
         self.Headers = reader.ReadSerializableArray('neo.Core.Header.Header')
 
-    def Serialize(self, writer):
+    def Serialize(self, writer: BinaryWriter):
         """
         Serialize object.
 
         Args:
             writer (neo.IO.BinaryWriter):
         """
-        writer.Write(self.Headers)
+        writer.WriteSerializableArray(self.Headers)

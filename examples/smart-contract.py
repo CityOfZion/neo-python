@@ -14,6 +14,7 @@ from logzero import logger
 from twisted.internet import reactor, task
 
 from neo.contrib.smartcontract import SmartContract
+from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neo.Network.NodeLeader import NodeLeader
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
@@ -34,13 +35,13 @@ def sc_notify(event):
     logger.info("SmartContract Runtime.Notify event: %s", event)
 
     # Make sure that the event payload list has at least one element.
-    if not len(event.event_payload):
+    if not isinstance(event.event_payload, ContractParameter) or event.event_payload.Type != ContractParameterType.Array or not len(event.event_payload.Value):
         return
 
     # The event payload list has at least one element. As developer of the smart contract
     # you should know what data-type is in the bytes, and how to decode it. In this example,
     # it's just a string, so we decode it with utf-8:
-    logger.info("- payload part 1: %s", event.event_payload[0].decode("utf-8"))
+    logger.info("- payload part 1: %s", event.event_payload.Value[0].Value.decode("utf-8"))
 
 
 def custom_background_code():

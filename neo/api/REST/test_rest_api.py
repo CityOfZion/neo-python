@@ -184,6 +184,7 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         self.assertEqual(jsn['total'], 1027)
         results = jsn['results']
         self.assertEqual(len(results), 500)
+        self.assertEqual(jsn['total_pages'], 3)
 
         mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?page=1')
         res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
@@ -196,6 +197,28 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
         jsn = json.loads(res)
         self.assertEqual(jsn['total'], 1027)
+        results = jsn['results']
+        self.assertEqual(len(results), 500)
+
+        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?page=3')
+        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        jsn = json.loads(res)
+        self.assertEqual(jsn['total'], 1027)
+        results = jsn['results']
+        self.assertEqual(len(results), 27)
+
+    def test_pagination_page_size_for_addr_results(self):
+        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?pagesize=100')
+        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        jsn = json.loads(res)
+        self.assertEqual(jsn['total'], 1027)
+        results = jsn['results']
+        self.assertEqual(len(results), 100)
+        self.assertEqual(jsn['total_pages'], 11)
+
+        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?pagesize=100&page=11')
+        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        jsn = json.loads(res)
         results = jsn['results']
         self.assertEqual(len(results), 27)
 

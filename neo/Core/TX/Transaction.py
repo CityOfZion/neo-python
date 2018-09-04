@@ -24,6 +24,9 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neocore.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
+from neo.Settings import settings
 
 
 class TransactionResult(EquatableMixin):
@@ -158,6 +161,9 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
             'address': self.Address
         }
 
+    def Size(self):
+        return self.Value.Size() + s.uint160 + s.uint256
+
 
 class TransactionInput(SerializableMixin, EquatableMixin):
     """docstring for TransactionInput"""
@@ -232,7 +238,7 @@ class Transaction(InventoryMixin):
     scripts = []
 
     __system_fee = None
-    __network_fee = None
+    _network_fee = None
 
     InventoryType = InventoryType.TX
 
@@ -358,12 +364,7 @@ class Transaction(InventoryMixin):
         Returns:
             int: size.
         """
-        # todo: will sys.getsizeof work as expected for each of these? is __sizeof__ implemented for each? should use Size() instead?
-        len_attributes = sys.getsizeof(self.Attributes)
-        len_inputs = sys.getsizeof(self.inputs)
-        len_outputs = sys.getsizeof(self.outputs)
-        len_scripts = sys.getsizeof(self.scripts)
-        return sys.getsizeof(self.Type) + sys.getsizeof(0) + len_attributes + len_inputs + len_outputs + len_scripts
+        return s.uint8 + s.uint8 + GetVarSize(self.Attributes) + GetVarSize(self.inputs) + GetVarSize(self.outputs) + GetVarSize(self.Scripts)
 
     def Height(self):
         return self.__height
@@ -375,7 +376,8 @@ class Transaction(InventoryMixin):
         Returns:
             Fixed8: currently fixed to 0.
         """
-        return Fixed8(0)
+        tx_name = TransactionType.ToName(self.Type)
+        return Fixed8.FromDecimal(settings.ALL_FEES.get(tx_name, 0))
 
     def NetworkFee(self):
         """
@@ -384,7 +386,7 @@ class Transaction(InventoryMixin):
         Returns:
             Fixed8:
         """
-        if self.__network_fee is None:
+        if self._network_fee is None:
 
             input = Fixed8(0)
 
@@ -398,11 +400,11 @@ class Transaction(InventoryMixin):
                 if tx_output.AssetId == GetBlockchain().SystemCoin().Hash:
                     output = output + tx_output.Value
 
-            self.__network_fee = input - output - self.SystemFee()
+            self._network_fee = input - output - self.SystemFee()
 
         #            logger.info("Determined network fee to be %s " % (self.__network_fee.value))
 
-        return self.__network_fee
+        return self._network_fee
 
     #        if self.__network_fee == Fixed8.Satoshi():
     #            Fixed8 input = References.Values.Where(p= > p.AssetId.Equals(.SystemCoin.Hash)).Sum(p= > p.Value);
@@ -591,8 +593,7 @@ class Transaction(InventoryMixin):
         """
         jsn = {}
         jsn["txid"] = self.Hash.To0xString()
-        # todo: this size isn't calculating correctly currently, but it should be included in the JSON
-        # jsn["size"] = self.Size()
+        jsn["size"] = self.Size()
         jsn["type"] = TransactionType.ToName(self.Type)
         jsn["version"] = self.Version
         jsn["attributes"] = [attr.ToJson() for attr in self.Attributes]

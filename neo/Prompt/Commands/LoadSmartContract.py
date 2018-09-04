@@ -57,8 +57,8 @@ def ImportContractAddr(wallet, args):
 
 
 def LoadContract(args):
-    if len(args) < 5:
-        print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage} {needs_dynamic_invoke}'")
+    if len(args) < 6:
+        print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}'")
         return
 
     path = args[0]
@@ -71,6 +71,7 @@ def LoadContract(args):
 
     needs_storage = bool(parse_param(args[3]))
     needs_dynamic_invoke = bool(parse_param(args[4]))
+    is_payable = bool(parse_param(args[5]))
 
     contract_properties = 0
 
@@ -79,6 +80,9 @@ def LoadContract(args):
 
     if needs_dynamic_invoke:
         contract_properties += ContractPropertyState.HasDynamicInvoke
+
+    if is_payable:
+        contract_properties += ContractPropertyState.Payable
 
     script = None
 
@@ -114,8 +118,8 @@ def LoadContract(args):
 
 
 def GatherLoadedContractParams(args, script):
-    if len(args) < 4:
-        raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke}")
+    if len(args) < 5:
+        raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}")
     params = parse_param(args[0], ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
@@ -125,6 +129,7 @@ def GatherLoadedContractParams(args, script):
 
     needs_storage = bool(parse_param(args[2]))
     needs_dynamic_invoke = bool(parse_param(args[3]))
+    is_payable = bool(parse_param(args[4]))
 
     contract_properties = 0
 
@@ -133,6 +138,9 @@ def GatherLoadedContractParams(args, script):
 
     if needs_dynamic_invoke:
         contract_properties += ContractPropertyState.HasDynamicInvoke
+
+    if is_payable:
+        contract_properties += ContractPropertyState.Payable
 
     out = generate_deploy_script(script, contract_properties=contract_properties, return_type=return_type, parameter_list=params)
 
@@ -162,6 +170,7 @@ def GatherContractDetails(function_code):
     print("          Description: %s " % description)
     print("        Needs Storage: %s " % function_code.HasStorage)
     print(" Needs Dynamic Invoke: %s " % function_code.HasDynamicInvoke)
+    print("           Is Payable: %s " % function_code.IsPayable)
     print(json.dumps(function_code.ToJson(), indent=4))
 
     return generate_deploy_script(function_code.Script, name, version, author, email, description,

@@ -5,11 +5,15 @@ from neo.Core.FunctionCode import FunctionCode
 from enum import IntEnum
 import binascii
 
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
+
 
 class ContractPropertyState(IntEnum):
     NoProperty = 0
     HasStorage = 1 << 0
     HasDynamicInvoke = 1 << 1
+    Payable = 1 << 2
 
 
 class ContractState(StateBase):
@@ -43,6 +47,16 @@ class ContractState(StateBase):
             bool: True if supported. False otherwise.
         """
         return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
+
+    @property
+    def Payable(self):
+        """
+        Flag indicating if the contract should accept system assets or tokens
+
+        Returns:
+            bool: True if supported. False otherwise.
+        """
+        return self.ContractProperties & ContractPropertyState.Payable > 0
 
     @property
     def IsNEP5Contract(self):
@@ -84,7 +98,11 @@ class ContractState(StateBase):
         Returns:
             int: size.
         """
-        return super(ContractState, self).Size()
+        script_size = GetVarSize(self.Code.Script)
+        parameterlist_size = GetVarSize(self.Code.ParameterList)
+        parameterreturntype_size = s.uint8
+
+        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
 
     def Deserialize(self, reader):
         """
@@ -185,7 +203,8 @@ class ContractState(StateBase):
             'description': self.Description.decode('utf-8'),
             'properties': {
                 'storage': self.HasStorage,
-                'dynamic_invoke': self.HasDynamicInvoke
+                'dynamic_invoke': self.HasDynamicInvoke,
+                'payable': self.Payable
             }
         }
 

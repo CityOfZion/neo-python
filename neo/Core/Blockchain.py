@@ -106,7 +106,7 @@ class Blockchain:
         prev_hash = UInt256(data=bytearray(32))
         timestamp = int(datetime(2016, 7, 15, 15, 8, 21, tzinfo=pytz.utc).timestamp())
         index = 0
-        consensus_data = 2083236893  # 向比特币致敬 ( Pay Tribute To Bitcoin )
+        consensus_data = 2083236893  # Pay tribute To Bitcoin
         next_consensus = Blockchain.GetConsensusAddress(Blockchain.StandbyValidators())
         script = Witness(bytearray(0), bytearray(PUSHT))
 
@@ -372,7 +372,7 @@ class Blockchain:
 
         votes = Counter([len(vs.PublicKeys) for vs in self.GetVotes(others)]).items()
 
-        # TODO: 此处排序可能将耗费大量内存，考虑是否采用其它机制
+        # TODO: Sorting here may cost a lot of memory, considering whether to use other mechanisms
         #           votes = GetVotes(others).OrderBy(p => p.PublicKeys.Length).ToArray()
         #            int validators_count = (int)votes.WeightedFilter(0.25, 0.75, p => p.Count.GetData(), (p, w) => new
         #            {

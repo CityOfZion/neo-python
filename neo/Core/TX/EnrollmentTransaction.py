@@ -1,8 +1,5 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
-import sys
 from neocore.Cryptography.ECCurve import ECDSA
-from neo.Settings import settings
-from neocore.Fixed8 import Fixed8
 
 
 class EnrollmentTransaction(Transaction):
@@ -27,16 +24,7 @@ class EnrollmentTransaction(Transaction):
         Returns:
             int: size.
         """
-        return super(EnrollmentTransaction, self).Size() + sys.getsizeof(int)
-
-    def SystemFee(self):
-        """
-        Get the enrollment fee.
-
-        Returns:
-            Fixed8:
-        """
-        return Fixed8(int(settings.ENROLLMENT_TX_FEE))
+        return super(EnrollmentTransaction, self).Size() + self.PublicKey.Size()
 
     def DeserializeExclusiveData(self, reader):
         """

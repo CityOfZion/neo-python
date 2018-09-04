@@ -3,17 +3,74 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.3-dev] in progress
+
+[0.7.8-dev] 2018-xx-xx
+----------------------
+- Prefix ``vin`` JSON output format to match C#
+- Update ``neo-boa`` to v0.5.0 for Python 3.7 compatibility
+- Update pexpect to 4.6.0 to be compatible with Python 3.7
+- Accept incoming node connections, configurable via protocol config file setting (default: OFF)
+- Fixes vulnerability to RPC invoke functionality that can send node into unclosed loop during 'test' invokes
+- Fix issue with opening recently created wallets
+- Fix import_blocks.py block hash caching issue
+- Update prompt.py: add ``account`` to help, update help, update standard completions, add ``config maxpeers`` functionality, update ``configure`` function arguments to behave as intended
+
+
+[0.7.7] 2018-08-23
+------------------
+- Fix issue with ``UserWallet.SaveStoredData``
+- Update neo-core to v0.5.1
+- Add appropriate GAS cost for ``CHECKMULTISIG`` for an array
+- Add appropriate GAS cost for ``VERIFY``
+- Update test_prompt.py to acheive passing neo-python-core build
+- Add Seedlist.rst and update Basicusage.rst for API Servers
+- Add test for np-prompt using pexpect
+- Add getwalletheight RPC call
+- Add support for Peewee 3.6.4
+- Add support for ``IsPayable`` flag in prompt.
+- Fix Block header problems with ``block_import.py`` script
+- Sync GAS price calculations with current Neo core
+- Update bootstrap files for mainnet and testnet
+- Fix ``ContextItem`` JSOn decoding
+- Fix ``sys_fee`` calculation for certain transaction types
+- Fix ``TransactionAttribute`` duplication in Transactions
+
+
+[0.7.6] 2018-08-02
+------------------
+- Adds ability to attach a fee to a ``send`` transaction
+- Update Node selection mechanism
+- Store ``Transactions`` list items inside a ``Block`` in a consistent format.
+- Improved peer connection maintenance
+
+
+[0.7.5] 2018-07-19
 -----------------------
-- Updated the requirements
+- Add CreateAddress Feature
+- Update NodeLeader peer monitoring system
+- Add ability to configure size of requests for blocks as well as block processing queue size
+- Update mainnet bootstrap files
+- Fix size calculations for all serializable classes
+- Add ``size`` key to JSON output of Block and Transaction
+- add prompt command to split VIN to multiple VOUT
+- update notification endpoint to include ``total_pages`` in output, and allow ``pagesize`` paramater to be passed in
+- update seeds for mainnet
+
+
+[0.7.3] 2018-07-12
+------------------
+- Updated package requirements, removed ``pycrypto`` from all dependencies to fix install error(s) `#485 <https://github.com/CityOfZion/neo-python/issues/485>`_
 - Adds option to enter arguments for smart contract in an 'interactive' mode, which allows for much better parsing of input, activated by passing the ``--i`` flag when invoking.
 - Adds ability to *not* parse address strings such as AeV59NyZtgj5AMQ7vY6yhr2MRvcfFeLWSb when inputting to smart contract by passing the ``--no-parse`` flag
 - Changes the structure of items dispatched in SmartContractEvents to use the ``ContractParameter`` interface for better type inference and variable usage.
+- Fix sending NEP5 tokesn from a multisig address.
 - Bugfix: np-api-server with open wallet now properly processes new blocks
+- Update neo-boa to v0.4.8 and neocore to v0.4.11
+- Add VM support for ``Neo.Contract.IsPayable``
 
 
 [0.7.2] 2018-06-21
--------------------
+------------------
 - When using a custom datadir (with ``--datadir``), ``np-prompt`` will store log and history files there instead of
   the default directory. Note: if you use a custom datadir that does not yet exist, ``np-prompt`` starts without
   history or logs because those files are just created from scratch in the custom datadir.
@@ -113,7 +170,7 @@ All notable changes to this project are documented in this file.
 
 
 [0.6.5] 2018-03-31
------------------------
+------------------
 - Changed the ``eval()`` call when parsing the `--tx-attr` param to parse only json. Reduced the surface and options available on the other 2 eval calls to improve security.
 - fix wallet rebuild database lock errors (`PR #365 <https://github.com/CityOfZion/neo-python/pull/365>`_)
 - Fixed `synced_watch_only_balances` being always zero issue (`#209  <https://github.com/CityOfZion/neo-python/issues/209>`_)

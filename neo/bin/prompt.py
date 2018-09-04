@@ -7,13 +7,10 @@ import os
 import psutil
 import traceback
 import logging
-import sys
-from time import sleep
 from logzero import logger
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
-from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
 from prompt_toolkit import prompt
@@ -21,7 +18,7 @@ from twisted.internet import reactor, task
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
-from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
+from neo.SmartContract.ContractParameter import ContractParameter
 from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
 from neo.Wallets.utils import to_aes_key
@@ -29,7 +26,7 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Network.NodeLeader import NodeLeader
+from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
 from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
@@ -40,8 +37,8 @@ from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHold
 
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register, token_history
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
-    ShowUnspentCoins
+from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
+    ShowUnspentCoins, SplitUnspentCoin
 
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.InputParser import InputParser
@@ -84,7 +81,6 @@ class PromptFileHistory(FileHistory):
 
 
 class PromptInterface:
-
     prompt_completer = None
     history = None
 
@@ -101,22 +97,25 @@ class PromptInterface:
                 'block {index/hash} (tx)',
                 'header {index/hash}',
                 'tx {hash}',
-                'asset {assetId}',
+                'account {address} # returns account state',
+                'asset {assetId} # returns asset state',
                 'asset search {query}',
-                'contract {contract hash}',
+                'contract {contract hash} # returns contract state',
                 'contract search {query}',
                 'notifications {block_number or address}',
-                'mem',
-                'nodes',
+                'mem # returns memory in use and number of buffers',
+                'nodes # returns connected peers',
                 'state',
                 'config debug {on/off}',
                 'config sc-events {on/off}',
                 'config maxpeers {num_peers}',
-                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
-                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
+                'config node-requests {reqsize} {queuesize}',
+                'config node-requests {slow/normal/fast}',
+                'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {is_payable} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
+                'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {is_payable} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
                 'import wif {wif}',
                 'import nep2 {nep2_encrypted_key}',
-                'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke}',
+                'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke} {is_payable}',
                 'import contract_addr {contract_hash} {pubkey}',
                 'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...',
                 'import watch_addr {address}',
@@ -129,6 +128,7 @@ class PromptInterface:
                 'wallet claim (max_coins_to_claim)',
                 'wallet migrate',
                 'wallet rebuild {start block}',
+                'wallet create_addr {number of addresses <= 3}',
                 'wallet delete_addr {addr}',
                 'wallet delete_token {token_contract_hash}',
                 'wallet alias {addr} {title}',
@@ -139,7 +139,8 @@ class PromptInterface:
                 'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
                 'wallet tkn_register {addr} ({addr}...) (--from-addr={addr})',
                 'wallet tkn_history {token symbol}',
-                'wallet unspent',
+                'wallet unspent (neo/gas)',
+                'wallet split {addr} {asset} {unspent index} {divide into number of vins}',
                 'wallet close',
                 'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
                 'withdraw holds # lists all current holds',
@@ -148,7 +149,7 @@ class PromptInterface:
                 'withdraw cleanup # cleans up completed holds',
                 'withdraw # withdraws the first hold availabe',
                 'withdraw all # withdraw all holds available',
-                'send {assetId or name} {address} {amount} (--from-addr={addr})',
+                'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
@@ -192,12 +193,17 @@ class PromptInterface:
     def get_completer(self):
 
         standard_completions = ['block', 'tx', 'header', 'mem', 'neo', 'gas',
-                                'help', 'state', 'nodes', 'exit', 'quit',
-                                'config', 'import', 'export', 'open',
-                                'wallet', 'contract', 'asset', 'wif',
+                                'help', 'state', 'nodes', 'exit', 'quit', 'node-requests',
+                                'config', 'import', 'export', 'open', 'maxpeers', 'sc-events',
+                                'wallet', 'contract', 'asset', 'account', 'wif', 'debug',
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
                                 'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance',
-                                'tkn_register', 'build', 'notifications', 'tkn_history']
+                                'tkn_register', 'build', 'notifications', 'tkn_history',
+                                'sign', 'send', 'withdraw', 'nep2', 'multisig_addr', 'token',
+                                'claim', 'migrate', 'rebuild', 'create_addr', 'delete_addr',
+                                'delete_token', 'alias', 'unspent', 'split', 'close',
+                                'withdraw_reqest', 'holds', 'completed', 'cancel', 'cleanup',
+                                'all', 'debugstorage']
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
@@ -535,6 +541,9 @@ class PromptInterface:
         elif item == 'migrate' and self.Wallet is not None:
             self.Wallet.Migrate()
             print("Migrated wallet")
+        elif item == 'create_addr':
+            addresses_to_create = get_arg(arguments, 1)
+            CreateAddress(self, self.Wallet, addresses_to_create)
         elif item == 'delete_addr':
             addr_to_delete = get_arg(arguments, 1)
             DeleteAddress(self, self.Wallet, addr_to_delete)
@@ -575,6 +584,8 @@ class PromptInterface:
             token_history(self.Wallet, notification_db, arguments[1:])
         elif item == 'unspent':
             ShowUnspentCoins(self.Wallet, arguments[1:])
+        elif item == 'split':
+            SplitUnspentCoin(self.Wallet, arguments[1:])
         elif item == 'alias':
             if len(arguments) == 3:
                 AddAlias(self.Wallet, arguments[1], arguments[2])
@@ -863,60 +874,90 @@ class PromptInterface:
         what = get_arg(args)
 
         if what == 'debug':
-            c1 = get_arg(args, 1).lower()
+            c1 = get_arg(args, 1)
             if c1 is not None:
+                c1 = c1.lower()
                 if c1 == 'on' or c1 == '1':
                     print("Debug logging is now enabled")
                     settings.set_loglevel(logging.DEBUG)
-                if c1 == 'off' or c1 == '0':
+                elif c1 == 'off' or c1 == '0':
                     print("Debug logging is now disabled")
                     settings.set_loglevel(logging.INFO)
+                else:
+                    print("Cannot configure log. Please specify on|off")
 
             else:
                 print("Cannot configure log. Please specify on|off")
 
         elif what == 'sc-events':
-            c1 = get_arg(args, 1).lower()
+            c1 = get_arg(args, 1)
             if c1 is not None:
+                c1 = c1.lower()
                 if c1 == 'on' or c1 == '1':
                     print("Smart contract event logging is now enabled")
                     settings.set_log_smart_contract_events(True)
-                if c1 == 'off' or c1 == '0':
+                elif c1 == 'off' or c1 == '0':
                     print("Smart contract event logging is now disabled")
                     settings.set_log_smart_contract_events(False)
+                else:
+                    print("Cannot configure log. Please specify on|off")
 
             else:
                 print("Cannot configure log. Please specify on|off")
 
         elif what == 'sc-debug-notify':
-            c1 = get_arg(args, 1).lower()
+            c1 = get_arg(args, 1)
             if c1 is not None:
+                c1 = c1.lower()
                 if c1 == 'on' or c1 == '1':
                     print("Smart contract emit Notify events on execution failure is now enabled")
                     settings.set_emit_notify_events_on_sc_execution_error(True)
-                if c1 == 'off' or c1 == '0':
+                elif c1 == 'off' or c1 == '0':
                     print("Smart contract emit Notify events on execution failure is now disabled")
                     settings.set_emit_notify_events_on_sc_execution_error(False)
+                else:
+                    print("Cannot configure log. Please specify on|off")
 
             else:
                 print("Cannot configure log. Please specify on|off")
 
         elif what == 'vm-log':
-            c1 = get_arg(args, 1).lower()
+            c1 = get_arg(args, 1)
             if c1 is not None:
+                c1 = c1.lower()
                 if c1 == 'on' or c1 == '1':
                     print("VM instruction execution logging is now enabled")
                     settings.set_log_vm_instruction(True)
-                if c1 == 'off' or c1 == '0':
+                elif c1 == 'off' or c1 == '0':
                     print("VM instruction execution logging is now disabled")
                     settings.set_log_vm_instruction(False)
+                else:
+                    print("Cannot configure VM instruction logging. Please specify on|off")
 
             else:
                 print("Cannot configure VM instruction logging. Please specify on|off")
 
+        elif what == 'node-requests':
+            if len(args) in [2, 3]:
+                if len(args) == 3:
+                    NodeLeader.Instance().setBlockReqSizeAndMax(int(args[1]), int(args[2]))
+                elif len(args) == 2:
+                    NodeLeader.Instance().setBlockReqSizeByName(args[1])
+            else:
+                print("Invalid number of arguments")
+
+        elif what == 'maxpeers':
+            c1 = get_arg(args, 1)
+            if c1 is not None:
+                print("Maxpeers set to ", c1)
+                settings.set_max_peers(c1)
+
+            else:
+                print("Maintaining current number of maxpeers")
+
         else:
             print(
-                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
+                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off', 'config vm-log on|off', or 'config maxpeers {num_peers}'" % what)
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
@@ -1104,7 +1145,7 @@ def main():
     cli = PromptInterface(fn_prompt_history)
 
     # Run things
-#    reactor.suggestThreadPoolSize(15)
+    #    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
 

@@ -16,7 +16,6 @@ from prompt_toolkit.shortcuts import PromptSession
 
 
 def get_asset_attachments(params):
-
     to_remove = []
     neo_to_attach = None
     gas_to_attach = None
@@ -86,7 +85,6 @@ def get_asset_id(wallet, asset_str):
 
 
 def get_asset_amount(amount, assetId):
-
     f8amount = Fixed8.TryParse(amount)
     if f8amount is None:
         print("invalid amount format")
@@ -133,6 +131,22 @@ def get_from_addr(params):
     return params, from_addr
 
 
+def get_fee(params):
+    to_remove = []
+    fee = None
+    for item in params:
+        if '--fee=' in item:
+            to_remove.append(item)
+            try:
+                fee = get_asset_amount(item.replace('--fee=', ''), Blockchain.SystemCoin().Hash)
+            except Exception as e:
+                pass
+    for item in to_remove:
+        params.remove(item)
+
+    return params, fee
+
+
 def get_parse_addresses(params):
     if '--no-parse-addr' in params:
         params.remove('--no-parse-addr')
@@ -149,8 +163,8 @@ def get_tx_attr_from_args(params):
             try:
                 attr_str = item.replace('--tx-attr=', '')
 
-# this doesn't work for loading in bytearrays
-#                tx_attr_obj = json.loads(attr_str)
+                # this doesn't work for loading in bytearrays
+                #                tx_attr_obj = json.loads(attr_str)
                 tx_attr_obj = eval(attr_str)
                 if type(tx_attr_obj) is dict:
                     if attr_obj_to_tx_attr(tx_attr_obj) is not None:
@@ -175,6 +189,8 @@ def attr_obj_to_tx_attr(obj):
         if type(datum) is str:
             datum = datum.encode('utf-8')
         usage = obj['usage']
+        if usage == TransactionAttributeUsage.Script and len(datum) == 40:
+            datum = binascii.unhexlify(datum)
         return TransactionAttribute(usage=usage, data=datum)
     except Exception as e:
         logger.error("could not convert object %s into TransactionAttribute: %s " % (obj, e))
@@ -182,7 +198,6 @@ def attr_obj_to_tx_attr(obj):
 
 
 def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True, parse_addr=True):
-
     # first, we'll try to parse an array
     try:
         items = eval(p, {"__builtins__": {'list': list}}, {})
@@ -258,7 +273,6 @@ def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
 
 
 def lookup_addr_str(wallet, addr):
-
     for alias in wallet.NamedAddr:
         if addr == alias.Title:
             return alias.UInt160ScriptHash()
@@ -270,7 +284,6 @@ def lookup_addr_str(wallet, addr):
 
 
 def parse_hold_vins(results):
-
     holds = results[0].GetByteArray()
     holdlen = len(holds)
     numholds = int(holdlen / 33)
@@ -292,7 +305,6 @@ def parse_hold_vins(results):
 
 
 def string_from_fixed8(amount, decimals):
-
     precision_mult = pow(10, decimals)
     amount = Decimal(amount) / Decimal(precision_mult)
     formatter_str = '.%sf' % decimals
@@ -309,7 +321,6 @@ def get_input_prompt(message):
 
 
 def gather_param(index, param_type, do_continue=True):
-
     ptype = ContractParameterType(param_type)
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
 

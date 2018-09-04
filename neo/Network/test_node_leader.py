@@ -54,7 +54,7 @@ class LeaderTestCase(WalletFixtureTestCase):
         def mock_call_later(delay, method, *args):
             method(*args)
 
-        def mock_connect_tcp(host, port, factory):
+        def mock_connect_tcp(host, port, factory, timeout=120):
             node = NeoNode()
             node.endpoint = Endpoint(host, port)
             leader.AddConnectedPeer(node)
@@ -95,7 +95,7 @@ class LeaderTestCase(WalletFixtureTestCase):
                         leader.RemoveConnectedPeer(peer)
 
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
-                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST) - 1)
+                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST))
 
                         # now test adding another
                         leader.RemoteNodePeerReceived('hello.com', 1234, 6)
@@ -106,9 +106,6 @@ class LeaderTestCase(WalletFixtureTestCase):
                         peers = leader.Peers[:]
                         for peer in peers:
                             leader.RemoveConnectedPeer(peer)
-
-                        # and peers should be equal to the seed list
-                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
                         # test reset
                         leader.ResetBlockRequestsAndCache()
@@ -132,7 +129,7 @@ class LeaderTestCase(WalletFixtureTestCase):
         def mock_call_later(delay, method, *args):
             method(*args)
 
-        def mock_connect_tcp(host, port, factory):
+        def mock_connect_tcp(host, port, factory, timeout=120):
             node = NeoNode()
             node.endpoint = Endpoint(host, port)
             leader.AddConnectedPeer(node)

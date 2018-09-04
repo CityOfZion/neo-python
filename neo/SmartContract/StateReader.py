@@ -143,7 +143,7 @@ class StateReader(InteropService):
         self.Register("Neo.Asset.GetAdmin", self.Asset_GetAdmin)
         self.Register("Neo.Asset.GetIssuer", self.Asset_GetIssuer)
         self.Register("Neo.Contract.GetScript", self.Contract_GetScript)
-#        self.Register("Neo.Contract.IsPayable", self.Contract_IsPayable)
+        self.Register("Neo.Contract.IsPayable", self.Contract_IsPayable)
         self.Register("Neo.Storage.Find", self.Storage_Find)
         self.Register("Neo.Enumerator.Create", self.Enumerator_Create)
         self.Register("Neo.Enumerator.Next", self.Enumerator_Next)
@@ -430,7 +430,7 @@ class StateReader(InteropService):
             stack_item = StackItem.DeserializeStackItem(reader)
             engine.EvaluationStack.PushT(stack_item)
         except Exception as e:
-            logger.error("Colud not Deserialize stack item: %s " % e)
+            logger.error("Could not Deserialize stack item: %s " % e)
             return False
         return True
 
@@ -912,6 +912,14 @@ class StateReader(InteropService):
         if contract is None:
             return False
         engine.EvaluationStack.PushT(contract.Code.Script)
+        return True
+
+    def Contract_IsPayable(self, engine):
+
+        contract = engine.EvaluationStack.Pop().GetInterface()
+        if contract is None:
+            return False
+        engine.EvaluationStack.PushT(contract.Payable)
         return True
 
     def Storage_GetContext(self, engine):

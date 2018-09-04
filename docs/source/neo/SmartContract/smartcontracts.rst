@@ -6,7 +6,7 @@ A common use case for implementing neo-python is to interact with smart contract
 include ``Runtime.Notify``, ``Runtime.Log``, execution success or failure and ``Storage.GET/PUT/DELETE``.
 
 Event Types
-"""""""""""""""""""""
+"""""""""""
 
 This is a list of smart contract event types which can currently be handled with neo-python:
 
@@ -58,7 +58,7 @@ Property              Data type Info
 
 
 neo.contrib.smartcontract.SmartContract
-"""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""
 
 Developers can easily subscribe to these events by using ``neo.contrib.smartcontract.SmartContract``.
 This is an example of listening for ``Runtime.Notify`` events of a smart contract with the hash ``6537b4bd100e514119e3a7ab49d520d20ef2c2a4``:
@@ -74,13 +74,13 @@ This is an example of listening for ``Runtime.Notify`` events of a smart contrac
         print("SmartContract Runtime.Notify event:", event)
 
         # Make sure that the event payload list has at least one element.
-        if not len(event.event_payload):
+        if not isinstance(event.event_payload, ContractParameter) or event.event_payload.Type != ContractParameterType.Array or not len(event.event_payload.Value):
             return
 
         # The event payload list has at least one element. As developer of the smart contract
         # you should know what data-type is in the bytes, and how to decode it. In this example,
         # it's just a string, so we decode it with utf-8:
-        print("- payload part 1:", event.event_payload[0].decode("utf-8"))
+        print("- payload part 1:", event.event_payload.Value[0].Value.decode("utf-8"))
 
 
 The following decorators are currently available:
@@ -101,6 +101,7 @@ Here is another example, showing how to listen for all events and distinguishing
 ::
 
     from neo.contrib.smartcontract import SmartContract
+    from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
     from neo.EventHub import SmartContractEvent
 
     smart_contract = SmartContract("6537b4bd100e514119e3a7ab49d520d20ef2c2a4")
@@ -112,18 +113,18 @@ Here is another example, showing how to listen for all events and distinguishing
         # Check if it is a Runtime.Notify event
         if event.event_type == SmartContractEvent.RUNTIME_NOTIFY:
             # Exit if an empty payload list
-            if not len(event.event_payload):
+            if not isinstance(event.event_payload, ContractParameter) or event.event_payload.Type != ContractParameterType.Array or not len(event.event_payload.Value):
                 return
 
             # Decode the first payload item and print it
-            print("- payload part 1:", event.event_payload[0].decode("utf-8"))
+            print("- payload part 1:", event.event_payload.Value[0].Value.decode("utf-8"))
 
 
 
 
 
 Smart Contracts within the Prompt
-"""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""
 
 One of the most enjoyable features of ``neo-python`` is the ability to quickly build, test, import, and invoke smart contracts on the NEO platform.
 

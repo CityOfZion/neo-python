@@ -3,7 +3,7 @@ from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args, get_owners_from_params
+from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args, get_owners_from_params, get_fee
 from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Prompt.Commands.Invoke import gather_signatures
 from neo.Wallets.NEP5Token import NEP5Token
@@ -26,7 +26,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         arguments, from_address = get_from_addr(arguments)
         arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
         arguments, owners = get_owners_from_params(arguments)
-
+        arguments, priority_fee = get_fee(arguments)
         to_send = get_arg(arguments)
         address_to = get_arg(arguments, 1)
         amount = get_arg(arguments, 2)
@@ -50,7 +50,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         # if this is a token, we will use a different
         # transfer mechanism
         if type(assetId) is NEP5Token:
-            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), prompt_passwd=prompt_password)
+            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), prompt_passwd=prompt_password, tx_attributes=user_tx_attributes)
 
         f8amount = Fixed8.TryParse(amount, require_positive=True)
         if f8amount is None:
@@ -62,6 +62,10 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
             return False
 
         fee = Fixed8.Zero()
+        if priority_fee is not None:
+            fee = priority_fee
+
+        print("sending with fee: %s " % fee.ToString())
 
         output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         tx = ContractTransaction(outputs=[output])
@@ -89,7 +93,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         else:
             signer_contract = wallet.GetContract(standard_contract)
 
-        if not signer_contract.IsMultiSigContract:
+        if not signer_contract.IsMultiSigContract and owners is None:
 
             data = standard_contract.Data
             tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,

@@ -10,19 +10,21 @@
             "http://*:20332"
         ],
         "WsPort": 20334,
-        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/Test1413xxx.tar.gz",
-        "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/TestNotif1413xxx.tar.gz",
-        "DebugStorage":1
+        "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Test168xxxx.tar.gz",
+        "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/TestNotif168xxxx.tar.gz",
+        "DebugStorage":1,
+        "AcceptIncomingPeers": false
+
     },
     "ProtocolConfiguration": {
         "AddressVersion": 23,
         "Magic": 1953787457,
         "SeedList": [
-            "18.218.97.227:20333",
-            "18.219.30.120:20333",
-            "18.219.13.91:20333",
-            "13.59.116.121:20333",
-            "18.218.255.178:20333"
+            "13.58.169.218:20333",
+            "13.58.33.157:20333",
+            "18.222.161.128:20333",
+            "18.191.171.240:20333",
+            "18.222.168.189:20333"
         ],
         "RPCList":[
             "http://18.221.221.195:8880",
