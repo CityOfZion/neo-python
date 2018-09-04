@@ -1,3 +1,7 @@
+import sys
+import importlib
+import binascii
+
 #  Constants
 PUSH0 = b'\x00'  # An empty array of bytes is pushed onto the stack.
 PUSHF = PUSH0
@@ -111,11 +115,6 @@ SYSCALL = b'\x68'
 TAILCALL = b'\x69'
 
 
-# Exceptions
-THROW = b'\xf0'
-THROWIFNOT = b'\xf1'
-
-
 #  Stack
 DUPFROMALTSTACK = b'\x6A'
 TOALTSTACK = b'\x6B'  # Puts the input onto the top of the alt stack. Removes it from the main stack.
@@ -188,8 +187,8 @@ SHA256 = b'\xA8'  # The input is hashed using SHA-256.
 HASH160 = b'\xA9'
 HASH256 = b'\xAA'
 CHECKSIG = b'\xAC'
+VERIFY = b'\xAD'
 CHECKMULTISIG = b'\xAE'
-
 
 #  Array
 ARRAYSIZE = b'\xC0'
@@ -197,13 +196,21 @@ PACK = b'\xC1'
 UNPACK = b'\xC2'
 PICKITEM = b'\xC3'
 SETITEM = b'\xC4'
-NEWARRAY = b'\xC5'  # 用作引用類型
-NEWSTRUCT = b'\xC6'  # 用作值類型
+NEWARRAY = b'\xC5'  # Used as a reference type
+NEWSTRUCT = b'\xC6'  # Used as a value type
+NEWMAP = b'\xC7'
+APPEND = b'\xC8'
+REVERSE = b'\xC9'
+REMOVE = b'\xCA'
 
+HASKEY = b'\xCB'
+KEYS = b'\xCC'
+VALUES = b'\xCD'
 
-import sys
-import importlib
-import binascii
+# Exceptions
+THROW = b'\xF0'
+THROWIFNOT = b'\xF1'
+
 
 module = importlib.import_module('neo.VM.OpCode')
 items = dir(sys.modules[__name__])

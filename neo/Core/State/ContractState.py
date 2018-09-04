@@ -1,24 +1,90 @@
-
 from .StateBase import StateBase
-import sys
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neocore.IO.BinaryReader import BinaryReader
+from neo.IO.MemoryStream import StreamManager
 from neo.Core.FunctionCode import FunctionCode
+from enum import IntEnum
+import binascii
+
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
+
+
+class ContractPropertyState(IntEnum):
+    NoProperty = 0
+    HasStorage = 1 << 0
+    HasDynamicInvoke = 1 << 1
+    Payable = 1 << 2
 
 
 class ContractState(StateBase):
-
     Code = None
-    HasStorage = False
+    ContractProperties = None
     Name = None
     CodeVersion = None
     Author = None
     Email = None
     Description = None
 
-    def __init__(self, code=None, has_storage=False, name=None, version=None, author=None, email=None, description=None):
+    _is_nep5 = None
+    _nep_token = None
+
+    @property
+    def HasStorage(self):
+        """
+        Flag indicating if the contract has storage.
+
+        Returns:
+            bool: True if available. False otherwise.
+        """
+        return self.ContractProperties & ContractPropertyState.HasStorage > 0
+
+    @property
+    def HasDynamicInvoke(self):
+        """
+        Flag indicating if the contract supports dynamic invocation.
+
+        Returns:
+            bool: True if supported. False otherwise.
+        """
+        return self.ContractProperties & ContractPropertyState.HasDynamicInvoke > 0
+
+    @property
+    def Payable(self):
+        """
+        Flag indicating if the contract should accept system assets or tokens
+
+        Returns:
+            bool: True if supported. False otherwise.
+        """
+        return self.ContractProperties & ContractPropertyState.Payable > 0
+
+    @property
+    def IsNEP5Contract(self):
+        """
+        Property to indicate whether this is an NEP5 Contract
+        Returns:
+            bool
+        """
+        if self._is_nep5 is None:
+            self.DetermineIsNEP5()
+        return self._is_nep5
+
+    def __init__(self, code=None, contract_properties=0, name=None, version=None, author=None, email=None,
+                 description=None):
+        """
+        Create an instance.
+
+        Args:
+            code (neo.Core.FunctionCode):
+            contract_properties (neo.SmartContract.ContractParameterType): contract type.
+            name (bytes):
+            version (bytes):
+            author (bytes):
+            email (bytes):
+            description (bytes):
+        """
         self.Code = code
-        self.HasStorage = has_storage
+        self.ContractProperties = contract_properties
         self.Name = name
         self.CodeVersion = version
         self.Author = author
@@ -26,16 +92,32 @@ class ContractState(StateBase):
         self.Description = description
 
     def Size(self):
-        return super(ContractState, self).Size()
+        """
+        Get the total size in bytes of the object.
+
+        Returns:
+            int: size.
+        """
+        script_size = GetVarSize(self.Code.Script)
+        parameterlist_size = GetVarSize(self.Code.ParameterList)
+        parameterreturntype_size = s.uint8
+
+        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neocore.IO.BinaryReader):
+        """
         super(ContractState, self).Deserialize(reader)
 
         code = FunctionCode()
         code.Deserialize(reader)
         self.Code = code
 
-        self.HasStorage = reader.ReadBool()
+        self.ContractProperties = reader.ReadUInt8()
         self.Name = reader.ReadVarString(max=252)
         self.CodeVersion = reader.ReadVarString(max=252)
         self.Author = reader.ReadVarString(max=252)
@@ -44,6 +126,15 @@ class ContractState(StateBase):
 
     @staticmethod
     def DeserializeFromDB(buffer):
+        """
+        Deserialize full object.
+
+        Args:
+            buffer (bytes, bytearray, BytesIO): (Optional) data to create the stream from.
+
+        Returns:
+            ContractState:
+        """
         m = StreamManager.GetStream(buffer)
         reader = BinaryReader(m)
         c = ContractState()
@@ -54,18 +145,44 @@ class ContractState(StateBase):
         return c
 
     def Serialize(self, writer):
+        """
+        Serialize full object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         super(ContractState, self).Serialize(writer)
 
         self.Code.Serialize(writer)
-        writer.WriteBool(self.HasStorage)
+        writer.WriteUInt8(self.ContractProperties)
         writer.WriteVarString(self.Name)
         writer.WriteVarString(self.CodeVersion)
         writer.WriteVarString(self.Author)
         writer.WriteVarString(self.Email)
         writer.WriteVarString(self.Description)
 
-    def ToJson(self):
+    def DetermineIsNEP5(self):
+        """
+        Determines if this Smart contract is an NEP5 Token or not.
+        Returns:
+            bool
+        """
+        from neo.Wallets.NEP5Token import NEP5Token
 
+        self._is_nep5 = False
+        token = NEP5Token(binascii.hexlify(self.Code.Script))
+        if token.Query():
+            self._nep_token = token
+            self._is_nep5 = True
+        return self._is_nep5
+
+    def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         codejson = self.Code.ToJson()
 
         name = 'Contract'
@@ -75,14 +192,23 @@ class ContractState(StateBase):
         except Exception as e:
             pass
 
-        return {
+        jsn = {
 
             'version': self.StateVersion,
             'code': codejson,
-            'storage': self.HasStorage,
             'name': name,
             'code_version': self.CodeVersion.decode('utf-8'),
             'author': self.Author.decode('utf-8'),
             'email': self.Email.decode('utf-8'),
-            'description': self.Description.decode('utf-8')
+            'description': self.Description.decode('utf-8'),
+            'properties': {
+                'storage': self.HasStorage,
+                'dynamic_invoke': self.HasDynamicInvoke,
+                'payable': self.Payable
+            }
         }
+
+        if self._nep_token:
+            jsn['token'] = self._nep_token.ToJson()
+
+        return jsn

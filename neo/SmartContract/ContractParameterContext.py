@@ -1,34 +1,38 @@
+import json
+import binascii
+
+from logzero import logger
+
 from neo.Core.TX.Transaction import ContractTransaction
 from neo.SmartContract.Contract import Contract, ContractType
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.IO.MemoryStream import MemoryStream
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
-import json
-import binascii
-import pdb
-from neo.Core.FunctionCode import FunctionCode
 
 
-class ContractParamater():
-
+class ContractParamater:
     Type = None
     Value = None
 
     def __init__(self, type):
-        self.Type = type
+        if isinstance(type, ContractParameterType):
+            self.Type = type
+        elif isinstance(type, int):
+            self.Type = ContractParameterType(type)
+        else:
+            raise Exception("Invalid Contract Parameter Type %s. Must be ContractParameterType or int" % type)
 
     def ToJson(self):
         jsn = {}
-        jsn['type'] = ToName(self.Type)
+        jsn['type'] = self.Type.name
         return jsn
 
 
-class ContextItem():
-
+class ContextItem:
     Script = None
     ContractParameters = None
     Signatures = None
@@ -46,7 +50,10 @@ class ContextItem():
             if type(self.Script) is str:
                 jsn['script'] = self.Script
             else:
-                jsn['script'] = self.Script.decode()
+                try:
+                    jsn['script'] = self.Script.decode()
+                except UnicodeDecodeError:
+                    jsn['script'] = binascii.hexlify(self.Script).decode()
         jsn['parameters'] = [p.ToJson() for p in self.ContractParameters]
         if self.Signatures is not None:
             jsn['signatures'] = {}
@@ -57,12 +64,11 @@ class ContextItem():
                     else:
                         jsn['signatures'][key] = value.decode()
                 else:
-                    print("Seems like {} has empty signature".format(key))
+                    logger.info("Seems like {} has empty signature".format(key))
         return jsn
 
 
-class ContractParametersContext():
-
+class ContractParametersContext:
     Verifiable = None
 
     ScriptHashes = None
@@ -112,11 +118,12 @@ class ContractParametersContext():
     def Add(self, contract, index, parameter):
 
         item = self.CreateItem(contract)
-        item.ContractParameters[index].Value = parameter
 
-#        pdb.set_trace()
+        if item:
+            item.ContractParameters[index].Value = parameter
+            return True
 
-        return True
+        return False
 
     def CreateItem(self, contract):
 
@@ -127,9 +134,7 @@ class ContractParametersContext():
             return None
 
         item = ContextItem(contract)
-
         self.ContextItems[contract.ScriptHash.ToBytes()] = item
-
         return item
 
     def AddSignature(self, contract, pubkey, signature):
@@ -173,17 +178,16 @@ class ContractParametersContext():
             return True
 
         else:
-
             index = -1
+            if contract.ParameterList == '00':
+                contract.ParameterList = b'\x00'
             length = len(contract.ParameterList)
             for i in range(0, length):
-
-                if contract.ParameterList[i] == ContractParameterType.Signature:
+                if ContractParameterType(contract.ParameterList[i]) == ContractParameterType.Signature:
                     if index >= 0:
                         raise Exception("Signature must be first")
                     else:
                         index = i
-
             return self.Add(contract, index, signature)
 
     def GetIndex(self, script_hash):
@@ -219,8 +223,16 @@ class ContractParametersContext():
             plist.reverse()
 
             for p in plist:
-
-                sb.push(p.Value)
+                if type(p.Value) is list:
+                    pa = p.Value
+                    pa.reverse()
+                    listlength = len(pa)
+                    for listitem in pa:
+                        sb.push(listitem)
+                    sb.push(listlength)
+                    sb.Emit(OpCode.PACK)
+                else:
+                    sb.push(p.Value)
 
             vscript = bytearray(0)
 
@@ -228,10 +240,9 @@ class ContractParametersContext():
                 if type(item.Script) is str:
                     item.Script = item.Script.encode('utf-8')
                 vscript = item.Script
-#                print("SCRIPT IS %s " % item.Script)
+            #                logger.info("SCRIPT IS %s " % item.Script)
 
             witness = Witness(
-                #                invocation_script='40fdb984faf0a400b6894c1ce5b317cf894ba3eb89b899cefda2ac307b278418b943534ad298884f9200dc4b7e1dc244db16c62a44a830a860060ec11d3e6e9717',
                 invocation_script=sb.ToArray(),
                 verification_script=vscript
             )
@@ -285,4 +296,4 @@ class ContractParametersContext():
                 raise ("Unsupported transaction type in JSON")
 
         except Exception as e:
-            print("Failed to import ContractParametersContext from JSON: {}".format(e))
+            logger.error("Failed to import ContractParametersContext from JSON: {}".format(e))

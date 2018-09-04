@@ -22,7 +22,7 @@ def GetSystemShare():
 
 def GetStateReader():
     from neo.SmartContract.StateReader import StateReader
-    return StateReader.Instance()
+    return StateReader()
 
 
 def GetConsensusAddress(validators):

@@ -1,8 +1,10 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
+from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neo.UInt160 import UInt160
-from neo.Prompt.Commands.Wallet import DeleteAddress, ImportToken, ImportWatchAddr
+from neocore.UInt160 import UInt160
+from neocore.Fixed8 import Fixed8
+from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
 import shutil
 
 
@@ -28,7 +30,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
             shutil.copyfile(cls.wallet_1_path(), cls.wallet_1_dest())
-            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(), UserWalletTestCase.wallet_1_pass())
+            cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_1_pass()))
         return cls._wallet1
 
     def test_1_import_addr(self):
@@ -69,3 +72,76 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(token.symbol, 'NEP5')
         self.assertEqual(token.decimals, 8)
         self.assertEqual(token.Address, 'AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg')
+
+    def test_4_get_synced_balances(self):
+        wallet = self.GetWallet1()
+        synced_balances = wallet.GetSyncedBalances()
+        self.assertEqual(len(synced_balances), 2)
+
+    def test_5_show_unspent(self):
+
+        wallet = self.GetWallet1(True)
+        unspents = ShowUnspentCoins(wallet, [])
+        self.assertEqual(len(unspents), 2)
+
+        unspents = ShowUnspentCoins(wallet, ['neo'])
+        self.assertEqual(len(unspents), 1)
+
+        unspents = ShowUnspentCoins(wallet, ['gas'])
+        self.assertEqual(len(unspents), 1)
+
+        unspents = ShowUnspentCoins(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx'])
+        self.assertEqual(len(unspents), 2)
+
+        unspents = ShowUnspentCoins(wallet, ['AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg'])
+        self.assertEqual(len(unspents), 0)
+
+        unspents = ShowUnspentCoins(wallet, ['--watch'])
+        self.assertEqual(len(unspents), 0)
+
+    def test_6_split_unspent(self):
+
+        wallet = self.GetWallet1(True)
+
+        # test bad
+        tx = SplitUnspentCoin(wallet, [])
+        self.assertEqual(tx, None)
+
+        # bad inputs
+        tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'neo', 3, 2])
+        self.assertEqual(tx, None)
+
+        # should be ok
+        tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'neo', 0, 2], prompt_passwd=False)
+        self.assertIsNotNone(tx)
+
+        # rebuild wallet and try with non-even amount of neo, should be split into integer values of NEO
+        wallet = self.GetWallet1(True)
+        tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'neo', 0, 3], prompt_passwd=False)
+        self.assertIsNotNone(tx)
+
+        self.assertEqual([Fixed8.FromDecimal(34), Fixed8.FromDecimal(34), Fixed8.FromDecimal(32)], [item.Value for item in tx.outputs])
+
+        # try with gas
+        wallet = self.GetWallet1(True)
+        tx = SplitUnspentCoin(wallet, ['APRgMZHZubii29UXF9uFa6sohrsYupNAvx', 'gas', 0, 3], prompt_passwd=False)
+        self.assertIsNotNone(tx)
+
+    def test_7_create_address(self):
+
+        wallet = self.GetWallet1(True)
+
+        # not specifying a number of addresses
+        CreateAddress(None, wallet, None)
+        self.assertEqual(len(wallet.Addresses), 1)
+
+        # trying to create too many addresses
+        CreateAddress(None, wallet, 5)
+        self.assertEqual(len(wallet.Addresses), 1)
+
+        # should pass
+        success = CreateAddress(None, wallet, 1)
+        self.assertTrue(success)
+
+        # check the number of addresses
+        self.assertEqual(len(wallet.Addresses), 2)

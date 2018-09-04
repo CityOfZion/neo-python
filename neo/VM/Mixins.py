@@ -1,33 +1,41 @@
+from abc import ABC, abstractmethod
 
-class EquatableMixin():
 
+class EquatableMixin(ABC):
+
+    @abstractmethod
     def Equals(self, other):
         pass
 
 
-class InteropMixin():
+class InteropMixin:
     pass
 
 
-class ScriptTableMixin():
+class ScriptTableMixin(ABC):
 
+    @abstractmethod
     def GetScript(self, script_hash):
         pass
 
 
-class ScriptContainerMixin(InteropMixin):
+class ScriptContainerMixin(ABC, InteropMixin):
 
+    @abstractmethod
     def GetMessage(self):
         pass
 
 
-class CryptoMixin():
+class CryptoMixin(ABC):
 
+    @abstractmethod
     def Hash160(self, message):
         pass
 
+    @abstractmethod
     def Hash256(self, message):
         pass
 
+    @abstractmethod
     def VerifySignature(self, message, signature, pubkey):
         pass

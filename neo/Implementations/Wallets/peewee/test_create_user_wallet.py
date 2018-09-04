@@ -1,11 +1,9 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Wallets.utils import to_aes_key
 from neo.Core.Blockchain import Blockchain
-from neo.UInt160 import UInt160
-from neo.Fixed8 import Fixed8
-from neo.Wallets.KeyPair import KeyPair
-import json
-from sqlite3 import OperationalError
+from neocore.UInt160 import UInt160
+from neocore.KeyPair import KeyPair
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -29,7 +27,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
-            cls._wallet1 = UserWallet.Create(UserWalletTestCase.new_wallet_dest(), 'awesomepassword')
+            cls._wallet1 = UserWallet.Create(UserWalletTestCase.new_wallet_dest(),
+                                             to_aes_key('awesomepassword'))
         return cls._wallet1
 
     def test_1_initial_setup(self):

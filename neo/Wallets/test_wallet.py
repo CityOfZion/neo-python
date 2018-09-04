@@ -1,10 +1,16 @@
-from neo.Utils.NeoTestCase import NeoTestCase
-from neo.Wallets.KeyPair import KeyPair
-from neo.UInt160 import UInt160
-from neo.SmartContract.Contract import Contract
-import binascii
-from neo.Cryptography.Crypto import Crypto
+import os
 import hashlib
+import binascii
+
+from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Wallets.utils import to_aes_key
+from neocore.KeyPair import KeyPair
+from neocore.UInt160 import UInt160
+from neo.SmartContract.Contract import Contract
+from neocore.Cryptography.Crypto import Crypto
+from neo.Wallets.Wallet import Wallet
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Settings import ROOT_INSTALL_PATH
 
 
 class WalletTestCase(NeoTestCase):
@@ -99,6 +105,29 @@ class WalletTestCase(NeoTestCase):
 
         self.assertEqual(hhex, self.hashhex)
 
-        sig = Crypto.Sign(self.nmsg, key.PrivateKey, key.PublicKey)
+        sig = Crypto.Sign(self.nmsg, key.PrivateKey)
 
         self.assertEqual(sig.hex(), self.neon_sig)
+
+    def test_get_contains_key_should_be_found(self):
+        wallet = Wallet("fakepath", to_aes_key("123"), True)
+        wallet.CreateKey()
+        keypair = wallet.GetKeys()[0]
+        self.assertTrue(wallet.ContainsKey(keypair.PublicKey))
+
+    def test_get_contains_key_should_not_be_found(self):
+        wallet = Wallet("fakepath", to_aes_key("123"), True)
+        wallet.CreateKey()
+        keypair = KeyPair(priv_key=self.pk)
+        self.assertFalse(wallet.ContainsKey(keypair.PublicKey))
+
+    def test_privnet_wallet(self):
+        """ Simple test if we can open the privnet wallet """
+        wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "neo/data/neo-privnet.sample.wallet"), to_aes_key("coz"))
+
+    def test_wallet_height(self):
+        wallet = UserWallet("fakepath", to_aes_key("123"), True)
+        wallet.SaveStoredData('Height', 1234)
+        wallet._current_height = wallet.LoadStoredData('Height')
+        self.assertEqual(wallet._current_height, 1234)
+        self.assertEqual(wallet.WalletHeight, 1234)

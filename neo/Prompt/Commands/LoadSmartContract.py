@@ -1,23 +1,19 @@
-
-import os
 import binascii
 from neo.Prompt.Utils import parse_param
 from neo.Core.FunctionCode import FunctionCode
-from prompt_toolkit import prompt
+from neo.Core.State.ContractState import ContractPropertyState
+from neo.SmartContract.ContractParameterType import ContractParameterType
+from prompt_toolkit.shortcuts import PromptSession
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.Core.TX.InvocationTransaction import InvocationTransaction
-from neo.VM import OpCode
 from neo.Prompt.Utils import get_arg
-from neo.Cryptography.Crypto import Crypto
+from neocore.Cryptography.Crypto import Crypto
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
-
-import pdb
+from neocore.BigInteger import BigInteger
 
 
 def ImportContractAddr(wallet, args):
-
     if wallet is None:
         print("please open a wallet")
         return
@@ -55,14 +51,14 @@ def ImportContractAddr(wallet, args):
             wallet.AddContract(verification_contract)
 
             print("Added contract addres %s to wallet" % address)
+            return
 
-    return 'Hello'
+    print("Could not add contract.  Invalid public key or contract address")
 
 
 def LoadContract(args):
-
-    if len(args) < 4:
-        print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage}'")
+    if len(args) < 6:
+        print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}'")
         return
 
     path = args[0]
@@ -71,12 +67,22 @@ def LoadContract(args):
     if type(params) is str:
         params = params.encode('utf-8')
 
-    return_type = parse_param(args[2], ignore_int=True, prefer_hex=False)
-
-    if type(return_type) is str:
-        return_type = return_type.encode('utf-8')
+    return_type = BigInteger(ContractParameterType.FromString(args[2]).value)
 
     needs_storage = bool(parse_param(args[3]))
+    needs_dynamic_invoke = bool(parse_param(args[4]))
+    is_payable = bool(parse_param(args[5]))
+
+    contract_properties = 0
+
+    if needs_storage:
+        contract_properties += ContractPropertyState.HasStorage
+
+    if needs_dynamic_invoke:
+        contract_properties += ContractPropertyState.HasDynamicInvoke
+
+    if is_payable:
+        contract_properties += ContractPropertyState.Payable
 
     script = None
 
@@ -103,7 +109,7 @@ def LoadContract(args):
             plist = bytearray(binascii.unhexlify(params))
         except Exception as e:
             plist = bytearray(b'\x10')
-        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=binascii.unhexlify(return_type), needs_storage=needs_storage)
+        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=return_type, contract_properties=contract_properties)
 
         return function_code
 
@@ -112,79 +118,68 @@ def LoadContract(args):
 
 
 def GatherLoadedContractParams(args, script):
-
+    if len(args) < 5:
+        raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}")
     params = parse_param(args[0], ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
         params = params.encode('utf-8')
 
-    return_type = parse_param(args[1], ignore_int=True, prefer_hex=False)
-
-    if type(return_type) is str:
-        return_type = return_type.encode('utf-8')
+    return_type = BigInteger(ContractParameterType.FromString(args[1]).value)
 
     needs_storage = bool(parse_param(args[2]))
+    needs_dynamic_invoke = bool(parse_param(args[3]))
+    is_payable = bool(parse_param(args[4]))
 
-    out = generate_deploy_script(script, needs_storage=needs_storage, return_type=return_type, parameter_list=params)
+    contract_properties = 0
+
+    if needs_storage:
+        contract_properties += ContractPropertyState.HasStorage
+
+    if needs_dynamic_invoke:
+        contract_properties += ContractPropertyState.HasDynamicInvoke
+
+    if is_payable:
+        contract_properties += ContractPropertyState.Payable
+
+    out = generate_deploy_script(script, contract_properties=contract_properties, return_type=return_type, parameter_list=params)
 
     return out
 
 
-def GatherContractDetails(function_code, prompter):
-
-    name = None
-    version = None
-    author = None
-    email = None
-    description = None
+def GatherContractDetails(function_code):
 
     print("Please fill out the following contract details:")
-    name = prompt("[Contract Name] > ",
-                  completer=prompter.get_completer(),
-                  history=prompter.history,
-                  get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                  style=prompter.token_style)
 
-    version = prompt("[Contract Version] > ",
-                     completer=prompter.get_completer(),
-                     history=prompter.history,
-                     get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                     style=prompter.token_style)
+    from neo.bin.prompt import PromptInterface
 
-    author = prompt("[Contract Author] > ",
-                    completer=prompter.get_completer(),
-                    history=prompter.history,
-                    get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                    style=prompter.token_style)
+    session = PromptSession(completer=PromptInterface.prompt_completer,
+                            history=PromptInterface.history)
 
-    email = prompt("[Contract Email] > ",
-                   completer=prompter.get_completer(),
-                   history=prompter.history,
-                   get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                   style=prompter.token_style)
-
-    description = prompt("[Contract Description] > ",
-                         completer=prompter.get_completer(),
-                         history=prompter.history,
-                         get_bottom_toolbar_tokens=prompter.get_bottom_toolbar,
-                         style=prompter.token_style)
+    name = session.prompt("[Contract Name] > ")
+    version = session.prompt("[Contract Version] > ")
+    author = session.prompt("[Contract Author] > ")
+    email = session.prompt("[Contract Email] > ")
+    description = session.prompt("[Contract Description] > ")
 
     print("Creating smart contract....")
-    print("         Name: %s " % name)
-    print("      Version: %s" % version)
-    print("       Author: %s " % author)
-    print("        Email: %s " % email)
-    print("  Description: %s " % description)
-    print("Needs Storage: %s " % function_code.NeedsStorage)
+    print("                 Name: %s " % name)
+    print("              Version: %s" % version)
+    print("               Author: %s " % author)
+    print("                Email: %s " % email)
+    print("          Description: %s " % description)
+    print("        Needs Storage: %s " % function_code.HasStorage)
+    print(" Needs Dynamic Invoke: %s " % function_code.HasDynamicInvoke)
+    print("           Is Payable: %s " % function_code.IsPayable)
     print(json.dumps(function_code.ToJson(), indent=4))
 
     return generate_deploy_script(function_code.Script, name, version, author, email, description,
-                                  function_code.NeedsStorage, ord(function_code.ReturnType),
+                                  function_code.ContractProperties, function_code.ReturnTypeBigInteger,
                                   function_code.ParameterList)
 
 
 def generate_deploy_script(script, name='test', version='test', author='test', email='test',
-                           description='test', needs_storage=False, return_type=b'\xff', parameter_list=[]):
+                           description='test', contract_properties=0, return_type=BigInteger(255), parameter_list=[]):
     sb = ScriptBuilder()
 
     plist = parameter_list
@@ -198,7 +193,7 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
     sb.push(binascii.hexlify(author.encode('utf-8')))
     sb.push(binascii.hexlify(version.encode('utf-8')))
     sb.push(binascii.hexlify(name.encode('utf-8')))
-    sb.WriteBool(needs_storage)
+    sb.push(contract_properties)
     sb.push(return_type)
     sb.push(plist)
     sb.WriteVarData(script)
@@ -209,9 +204,8 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
 
 
 def ImportMultiSigContractAddr(wallet, args):
-
     if len(args) < 4:
-        print("please specify multisig contract like such: 'import multisig {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
+        print("please specify multisig contract like such: 'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
         return
 
     if wallet is None:
@@ -223,7 +217,6 @@ def ImportMultiSigContractAddr(wallet, args):
     publicKeys = args[2:]
 
     if publicKeys[1]:
-
         pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
 
         verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)
@@ -233,5 +226,6 @@ def ImportMultiSigContractAddr(wallet, args):
         wallet.AddContract(verification_contract)
 
         print("Added multi-sig contract address %s to wallet" % address)
+        return address
 
     return 'Hello'

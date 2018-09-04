@@ -1,21 +1,18 @@
-from neo.Utils.NeoTestCase import NeoTestCase
-from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
-
-from neo.Core.Blockchain import Blockchain
-
 import tarfile
 import requests
-import os
-from autologging import logged
 import shutil
-import time
+
+from neo.Settings import settings
+from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
+from neo.Core.Blockchain import Blockchain
+import logzero
+import os
 
 
-@logged
 class BlockchainFixtureTestCase(NeoTestCase):
-
-    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v4.tar.gz'
-    FIXTURE_FILENAME = './Chains/fixtures_v4.tar.gz'
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v7.tar.gz'
+    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v7.tar.gz')
     _blockchain = None
 
     @classmethod
@@ -30,27 +27,28 @@ class BlockchainFixtureTestCase(NeoTestCase):
         super(BlockchainFixtureTestCase, cls).setUpClass()
 
         if not os.path.exists(cls.FIXTURE_FILENAME):
-
-            print("downloading fixture block database. this may take a while")
+            logzero.logger.info(
+                "downloading fixture block database from %s. this may take a while" % cls.FIXTURE_REMOTE_LOC)
 
             response = requests.get(cls.FIXTURE_REMOTE_LOC, stream=True)
 
             response.raise_for_status()
+            os.makedirs(os.path.dirname(cls.FIXTURE_FILENAME), exist_ok=True)
             with open(cls.FIXTURE_FILENAME, 'wb+') as handle:
                 for block in response.iter_content(1024):
                     handle.write(block)
 
         try:
             tar = tarfile.open(cls.FIXTURE_FILENAME)
-            tar.extractall()
+            tar.extractall(path=settings.DATA_DIR_PATH)
             tar.close()
         except Exception as e:
             raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.FIXTURE_FILENAME))
 
         if not os.path.exists(cls.leveldb_testpath()):
-            raise Exception("Error downloading fixtures")
+            raise Exception("Error downloading fixtures at %s" % cls.leveldb_testpath())
 
-        cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath())
+        cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath(), skip_version_check=True)
         Blockchain.RegisterBlockchain(cls._blockchain)
 
     @classmethod

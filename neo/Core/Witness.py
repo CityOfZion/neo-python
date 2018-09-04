@@ -1,13 +1,10 @@
-# -*- coding:utf-8 -*-
-
-from neo.IO.Mixins import SerializableMixin
 import sys
-import json
 import binascii
+from neocore.IO.Mixins import SerializableMixin
+from neo.Core.Size import GetVarSize
 
 
 class Witness(SerializableMixin):
-
     InvocationScript = None
     VerificationScript = None
 
@@ -26,23 +23,30 @@ class Witness(SerializableMixin):
             self.VerificationScript = verification_script
 
     def Size(self):
-        return sys.getsizeof(self.InvocationScript) + sys.getsizeof(self.VerificationScript)
+        """
+        Get the amount of bytes the serializable data of self consists off
+
+        Returns:
+            int:
+        """
+        return GetVarSize(self.InvocationScript) + GetVarSize(self.VerificationScript)
 
     def Deserialize(self, reader):
         self.InvocationScript = reader.ReadVarBytes()
         self.VerificationScript = reader.ReadVarBytes()
 
     def Serialize(self, writer):
-        #        print("Serializing Witnes.....")
-        #        print("INVOCATION %s " % self.InvocationScript)
+        #        logger.info("Serializing Witnes.....")
+        #        logger.info("INVOCATION %s " % self.InvocationScript)
         writer.WriteVarBytes(self.InvocationScript)
-#        print("writer after invocation %s " % writer.stream.ToArray())
-#        print("Now wringi verificiation script %s " % self.VerificationScript)
+        #        logger.info("writer after invocation %s " % writer.stream.ToArray())
+        #        logger.info("Now wringi verificiation script %s " % self.VerificationScript)
         writer.WriteVarBytes(self.VerificationScript)
-#        print("Wrote verification script %s " % writer.stream.ToArray())
+
+    #        logger.info("Wrote verification script %s " % writer.stream.ToArray())
 
     def ToJson(self):
-        #        print("invocation %s " % self.InvocationScript)
+        #        logger.info("invocation %s " % self.InvocationScript)
         data = {
             'invocation': self.InvocationScript.hex(),
             'verification': self.VerificationScript.hex()

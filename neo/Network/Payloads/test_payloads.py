@@ -1,25 +1,24 @@
+import random
+import binascii
+from datetime import datetime
+
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Network.Payloads.VersionPayload import VersionPayload
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Network.Message import Message
 from neo.IO.Helper import Helper as IOHelper
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import MemoryStream, StreamManager
+from neocore.IO.BinaryWriter import BinaryWriter
+from neocore.IO.BinaryReader import BinaryReader
+from neo.IO.MemoryStream import StreamManager
 from neo.Settings import settings
 from neo.Core.Helper import Helper
-import random
-import binascii
-from autologging import logged
-from datetime import datetime
 
 
-@logged
 class PayloadTestCase(NeoTestCase):
 
     port = 20333
     nonce = random.randint(12949672, 42949672)
-    ua = "/NEO:2.0.1/"
+    ua = "/NEO:2.4.1/"
 
     payload = None
 

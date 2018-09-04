@@ -1,25 +1,21 @@
-# -*- coding:utf-8 -*-
-
+import sys
+from logzero import logger
 from neo.Network.Mixins import InventoryMixin
 from neo.Network.InventoryType import InventoryType
 from neo.Core.BlockBase import BlockBase
 from neo.Core.TX.Transaction import Transaction, TransactionType
-from neo.IO.MemoryStream import MemoryStream, StreamManager
-from neo.IO.BinaryReader import BinaryReader
-from neo.IO.BinaryWriter import BinaryWriter
-from neo.Cryptography.MerkleTree import MerkleTree
-import sys
-from autologging import logged
+from neocore.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import StreamManager
+from neocore.Cryptography.MerkleTree import MerkleTree
 from neo.Core.Header import Header
 from neo.Core.Witness import Witness
-from neo.Fixed8 import Fixed8
+from neocore.Fixed8 import Fixed8
 from neo.Blockchain import GetBlockchain
-from neo.Settings import settings
+from neo.Core.Size import GetVarSize
 
 
-@logged
 class Block(BlockBase, InventoryMixin):
-
     #  < summary >
     #  交易列表
     #  < / summary >
@@ -29,7 +25,7 @@ class Block(BlockBase, InventoryMixin):
     #  该区块的区块头
     #  < / summary >
 
-    __header = None
+    _header = None
 
     __is_trimmed = False
     #  < summary >
@@ -40,6 +36,19 @@ class Block(BlockBase, InventoryMixin):
     def __init__(self, prevHash=None, timestamp=None, index=None,
                  consensusData=None, nextConsensus=None,
                  script=None, transactions=None, build_root=False):
+        """
+        Create an instance.
+
+        Args:
+            prevHash (UInt160):
+            timestamp (int): seconds since Unix epoch.
+            index (int): block height.
+            consensusData (int): uint64.
+            nextConsensus (UInt160):
+            script (neo.Core.Witness): script used to verify the block.
+            transactions (list): of neo.Core.TX.Transaction.Transaction objects.
+            build_root (bool): flag indicating whether to rebuild the merkle root.
+        """
 
         super(Block, self).__init__()
         self.Version = 0
@@ -51,7 +60,6 @@ class Block(BlockBase, InventoryMixin):
         self.Script = script
 
         if transactions:
-
             self.Transactions = transactions
         else:
             self.Transactions = []
@@ -61,7 +69,15 @@ class Block(BlockBase, InventoryMixin):
 
     @property
     def FullTransactions(self):
+        """
+        Get the list of full Transaction objects.
 
+        Note: Transactions can be trimmed to contain only the header and the hash. This will get the full data if
+        trimmed transactions are found.
+
+        Returns:
+            list: of neo.Core.TX.Transaction.Transaction objects.
+        """
         is_trimmed = False
         try:
             tx = self.Transactions[0]
@@ -84,17 +100,26 @@ class Block(BlockBase, InventoryMixin):
 
     @property
     def Header(self):
-        if not self.__header:
+        """
+        Get the block header.
 
-            self.__header = Header(self.PrevHash, self.MerkleRoot, self.Timestamp,
-                                   self.Index, self.ConsensusData, self.NextConsensus, self.Script)
+        Returns:
+            neo.Core.Header:
+        """
+        if not self._header:
+            self._header = Header(self.PrevHash, self.MerkleRoot, self.Timestamp,
+                                  self.Index, self.ConsensusData, self.NextConsensus, self.Script)
 
-        return self.__header
+        return self._header
 
     def Size(self):
-        s = super(Block, self).Size()
-        s = s + sys.getsizeof(self.Transactions)
+        """
+        Get the total size in bytes of the object.
 
+        Returns:
+            int: size.
+        """
+        s = super(Block, self).Size() + GetVarSize(self.Transactions)
         return s
 
     def CalculatneNetFee(self, transactions):
@@ -106,16 +131,33 @@ class Block(BlockBase, InventoryMixin):
         return 0
 
     def TotalFees(self):
+        """
+        Get the total transaction fees in the block.
+
+        Returns:
+            Fixed8:
+        """
         amount = Fixed8.Zero()
         for tx in self.Transactions:
             amount += tx.SystemFee()
         return amount
 
-    #  < summary >
-    #  反序列化
-    #  < / summary >
-    #  < param name = "reader" > 数据来源 < / param >
+    def LoadTransactions(self):
+        """
+        Loads transaction data for a block
+        Returns:
+            list: A list of transaction objects in the block
+        """
+        transactions = self.FullTransactions
+        return transactions
+
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         super(Block, self).Deserialize(reader)
 
         self.Transactions = []
@@ -132,14 +174,16 @@ class Block(BlockBase, InventoryMixin):
         if MerkleTree.ComputeRoot([tx.Hash for tx in self.Transactions]) != self.MerkleRoot:
             raise Exception("Merkle Root Mismatch")
 
-    #  < summary >
-    #  比较当前区块与指定区块是否相等
-    #  < / summary >
-    #  < param name = "other" > 要比较的区块 < / param >
-    #  < returns > 返回对象是否相等 < / returns >
-
     def Equals(self, other):
+        """
+        Test for equality.
 
+        Args:
+            other (obj):
+
+        Returns:
+            bool: True `other` equals self.
+        """
         if other is None:
             return False
         if other is self:
@@ -147,8 +191,16 @@ class Block(BlockBase, InventoryMixin):
         return self.Hash == other.Hash
 
     @staticmethod
-    def FromTrimmedData(byts, index=None, transaction_method=None):
+    def FromTrimmedData(byts):
+        """
+        Deserialize a block from raw bytes.
 
+        Args:
+            byts:
+
+        Returns:
+            Block:
+        """
         block = Block()
         block.__is_trimmed = True
         ms = StreamManager.GetStream(byts)
@@ -158,78 +210,95 @@ class Block(BlockBase, InventoryMixin):
         reader.ReadByte()
         witness = Witness()
         witness.Deserialize(reader)
-        block.witness = witness
+        block.Script = witness
 
-        block.Transactions = reader.ReadHashes()
+        bc = GetBlockchain()
+        tx_list = []
+        for tx_hash in reader.ReadHashes():
+            tx = bc.GetTransaction(tx_hash)[0]
+            if not tx:
+                raise Exception("Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
+            tx_list.append(tx)
+
+        block.Transactions = tx_list
 
         StreamManager.ReleaseStream(ms)
 
         return block
 
-    # < summary >
-    # 获得区块的HashCode
-    # < / summary >
-    # < returns > 返回区块的HashCode < / returns >
     def GetHashCode(self):
+        """
+        Get the hash code of the block.
+
+        Returns:
+            UInt256:
+        """
         return self.Hash
 
-    # < summary >
-    # 根据区块中所有交易的Hash生成MerkleRoot
-    # < / summary >
     def RebuildMerkleRoot(self):
-        self.__log.debug("Rebuilding merlke root!")
+        """Rebuild the merkle root of the block"""
+        logger.debug("Rebuilding merkle root!")
         if self.Transactions is not None and len(self.Transactions) > 0:
             self.MerkleRoot = MerkleTree.ComputeRoot([tx.Hash for tx in self.Transactions])
 
-    # < summary >
-    # 序列化
-    # < / summary >
-    # < param name = "writer" > 存放序列化后的数据 < / param >
     def Serialize(self, writer):
-        super(BlockBase, self).Serialize(writer)
+        """
+        Serialize full object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
+        super(Block, self).Serialize(writer)
         writer.WriteSerializableArray(self.Transactions)
 
-    # < summary >
-    # 变成json对象
-    # < / summary >
-    # < returns > 返回json对象 < / returns >
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         json = super(Block, self).ToJson()
-        if self.__is_trimmed:
-            json['tx'] = self.Transactions
+        if self.Transactions[0] and isinstance(self.Transactions[0], str):
+            json['tx'] = ['0x%s' % tx for tx in self.Transactions]
         else:
             json['tx'] = [tx.ToJson() for tx in self.Transactions]
 
-        json['sys_fee'] = GetBlockchain().GetSysFeeAmount(self.Hash)
+        # json['sys_fee'] = GetBlockchain().GetSysFeeAmount(self.Hash)
         return json
 
-    # < summary >
-    # 把区块对象变为只包含区块头和交易Hash的字节数组，去除交易数据
-    # < / summary >
-    # < returns > 返回只包含区块头和交易Hash的字节数组 < / returns >
     def Trim(self):
+        """
+        Returns a byte array that contains only the block header and transaction hash.
+
+        Returns:
+            bytes:
+        """
         ms = StreamManager.GetStream()
         writer = BinaryWriter(ms)
         self.SerializeUnsigned(writer)
         writer.WriteByte(1)
         self.Script.Serialize(writer)
+
         writer.WriteHashes([tx.Hash.ToBytes() for tx in self.Transactions])
         retVal = ms.ToArray()
         StreamManager.ReleaseStream(ms)
         return retVal
 
-    # < summary >
-    # 验证该区块是否合法
-    # < / summary >
-    # < paramname = "completely" > 是否同时验证区块中的每一笔交易 < / param >
-    # < returns > 返回该区块的合法性，返回true即为合法，否则，非法。 < / returns >
     def Verify(self, completely=False):
+        """
+        Verify the integrity of the block.
 
+        Args:
+            completely: (Not functional at this time).
+
+        Returns:
+            bool: True if valid. False otherwise.
+        """
         res = super(Block, self).Verify()
         if not res:
             return False
 
-        self.__log.debug("Verifying BLOCK!!")
         from neo.Blockchain import GetBlockchain, GetConsensusAddress
 
         # first TX has to be a miner transaction. other tx after that cant be miner tx
@@ -248,7 +317,7 @@ class Block(BlockBase, InventoryMixin):
             for tx in self.Transactions:
                 if not tx.Verify():
                     pass
-            self.__log.debug("Blocks cannot be fully validated at this moment.  please pass completely=False")
+            logger.error("Blocks cannot be fully validated at this moment.  please pass completely=False")
             raise NotImplementedError()
             # do this below!
             # foreach(Transaction tx in Transactions)

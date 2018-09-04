@@ -3,8 +3,8 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import TransactionType
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Fixed8 import Fixed8
-from neo.UInt160 import UInt160
+from neocore.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
@@ -20,10 +20,7 @@ from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 
-from autologging import logged
 
-
-@logged
 class TestLevelDBBlockchain(LevelDBBlockchain):
 
     def Persist(self, block):
@@ -110,7 +107,11 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                 elif tx.Type == TransactionType.EnrollmentTransaction:
 
                     validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
-                    #                        print("VALIDATOR %s " % validator.ToJson())
+                    #                        logger.info("VALIDATOR %s " % validator.ToJson())
+
+                elif tx.Type == TransactionType.StateTransaction:
+                    # @TODO Implement persistence for State Descriptors
+                    pass
 
                 elif tx.Type == TransactionType.PublishTransaction:
 
@@ -145,9 +146,8 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                     # the changes made by the contract to the database
                     try:
                         success = engine.Execute()
-                        if success:
-                            service.Commit()
+                        # service.ExecutionCompleted(engine, success)
                         return True
                     except Exception as e:
-                        print("could not execute %s " % e)
+                        # service.ExecutionCompleted(self, False, e)
                         return False

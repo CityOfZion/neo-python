@@ -1,8 +1,6 @@
-# -*- coding: UTF-8 -*-
-
 from neo.Core.BlockBase import BlockBase
-from neo.IO.MemoryStream import MemoryStream, StreamManager
-from neo.IO.BinaryReader import BinaryReader
+from neocore.IO.BinaryReader import BinaryReader
+from neo.IO.MemoryStream import StreamManager
 from neo.Core.Witness import Witness
 
 
@@ -22,15 +20,35 @@ class Header(BlockBase):
         self.Script = script
 
     def Size(self):
+        """
+        Get the amount of bytes the serializable data of self consists off
+
+        Returns:
+            int:
+        """
         return super(Header, self).Size() + 1
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         super(Header, self).Deserialize(reader)
         if reader.ReadByte() != 0:
             raise Exception('Incorrect Header Format')
 
     def Equals(self, other):
+        """
+        Test for equality.
 
+        Args:
+            other (obj):
+
+        Returns:
+            bool: True `other` equals self.
+        """
         if other is None:
             return False
         if other is self:
@@ -39,7 +57,16 @@ class Header(BlockBase):
 
     @staticmethod
     def FromTrimmedData(data, index):
+        """
+        Deserialize into a Header object from the provided data.
 
+        Args:
+            data (bytes):
+            index: UNUSED
+
+        Returns:
+            Header:
+        """
         header = Header()
 
         ms = StreamManager.GetStream(data)
@@ -57,9 +84,20 @@ class Header(BlockBase):
         return header
 
     def GetHashCode(self):
+        """
+        Get the hash code of the header.
+
+        Returns:
+            UInt256:
+        """
         return self.Hash
 
     def Serialize(self, writer):
+        """
+        Serialize full object.
 
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         super(Header, self).Serialize(writer)
         writer.WriteByte(0)

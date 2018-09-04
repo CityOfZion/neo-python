@@ -1,36 +1,55 @@
+import hashlib
+import datetime
 
+from neo.VM.OpCode import *
+from logzero import logger
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
-from neo.VM.OpCode import *
-from autologging import logged
-from neo.SmartContract.ContractParameterType import ContractParameterType
-from neo.BigInteger import BigInteger
-import hashlib
-from neo.VM.InteropService import Array, Struct, StackItem
-import sys
-import os
-from neo.UInt160 import UInt160
-import traceback
-import pdb
+from neo.VM.InteropService import Array, Struct, CollectionMixin, Map, Boolean
+from neocore.UInt160 import UInt160
+from neo.Settings import settings
+from neo.VM.VMFault import VMFault
+from neo.Prompt.vm_debugger import VMDebugger
+from logging import DEBUG as LOGGING_LEVEL_DEBUG
 
 
-@logged
-class ExecutionEngine():
-
+class ExecutionEngine:
     _Table = None
     _Service = None
 
     _ScriptContainer = None
     _Crypto = None
 
-    _VMState = VMState.BREAK
+    _VMState = None
 
     _InvocationStack = None
     _EvaluationStack = None
     _AltStack = None
 
+    _ExecutedScriptHashes = None
+
     ops_processed = 0
+
+    _exit_on_error = False
+
+    log_file_name = 'vm_instructions.log'
+    # file descriptor
+    log_file = None
+    _is_write_log = False
+
+    _debug_map = None
+    _vm_debugger = None
+
+    def write_log(self, message):
+        """
+        Write a line to the VM instruction log file.
+
+        Args:
+            message (str): string message to write to file.
+        """
+        if self._is_write_log and self.log_file and not self.log_file.closed:
+            self.log_file.write(message + '\n')
 
     @property
     def ScriptContainer(self):
@@ -67,46 +86,39 @@ class ExecutionEngine():
         return None
 
     @property
+    def ExitOnError(self):
+        return self._exit_on_error
+
+    @property
     def EntryContext(self):
         return self.InvocationStack.Peek(self.InvocationStack.Count - 1)
 
-    def __init__(self, container=None, crypto=None, table=None, service=None):
+    @property
+    def ExecutedScriptHashes(self):
+        return self._ExecutedScriptHashes
+
+    def __init__(self, container=None, crypto=None, table=None, service=None, exit_on_error=False):
+        self._VMState = VMState.BREAK
         self._ScriptContainer = container
         self._Crypto = crypto
         self._Table = table
         self._Service = service
-
+        self._exit_on_error = exit_on_error
         self._InvocationStack = RandomAccessStack(name='Invocation')
         self._EvaluationStack = RandomAccessStack(name='Evaluation')
         self._AltStack = RandomAccessStack(name='Alt')
-
+        self._ExecutedScriptHashes = []
         self.ops_processed = 0
+        self._debug_map = None
+        self._is_write_log = settings.log_vm_instructions
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
 
-    def ResultsForCode(self, contract):
-        try:
-            return_type = contract.ReturnType
-
-            item = self.EvaluationStack.Items[0]
-            if return_type == ContractParameterType.Integer:
-                return item.GetBigInteger()
-            elif return_type == ContractParameterType.Boolean:
-                return item.GetBoolean()
-            elif return_type == ContractParameterType.ByteArray:
-                return item.GetByteArray()
-            elif return_type == ContractParameterType.String:
-                return item.GetString()
-            elif return_type == ContractParameterType.Array:
-                return item.GetArray()
-            else:
-                print("couldnt format results for return type %s " % return_type)
-            return item
-        except Exception as e:
-            pass
-
-        return self.EvaluationStack.Items
+    def LoadDebugInfoForScriptHash(self, debug_map, script_hash):
+        if debug_map and script_hash:
+            self._debug_map = debug_map
+            self._debug_map['script_hash'] = script_hash
 
     def Dispose(self):
         while self._InvocationStack.Count > 0:
@@ -115,8 +127,16 @@ class ExecutionEngine():
     def Execute(self):
         self._VMState &= ~VMState.BREAK
 
-        while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0 and self._VMState & VMState.BREAK == 0:
-            self.StepInto()
+        def loop_stepinto():
+            while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0 and self._VMState & VMState.BREAK == 0:
+                self.StepInto()
+
+        if settings.log_vm_instructions:
+            with open(self.log_file_name, 'w') as self.log_file:
+                self.write_log(str(datetime.datetime.now()))
+                loop_stepinto()
+        else:
+            loop_stepinto()
 
     def ExecuteOp(self, opcode, context):
         estack = self._EvaluationStack
@@ -124,7 +144,7 @@ class ExecutionEngine():
         astack = self._AltStack
 
         if opcode > PUSH16 and opcode != RET and context.PushOnly:
-            self._VMState |= VMState.FAULT
+            return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
 
         if opcode >= PUSHBYTES1 and opcode <= PUSHBYTES75:
             bytestoread = context.OpReader.ReadBytes(int.from_bytes(opcode, 'little'))
@@ -136,7 +156,7 @@ class ExecutionEngine():
                        PUSH9, PUSH10, PUSH11, PUSH12, PUSH13, PUSH14, PUSH15, PUSH16]
 
             if opcode == PUSH0:
-                estack.PushT(bytearray([0]))
+                estack.PushT(bytearray(0))
 
             elif opcode == PUSHDATA1:
                 lenngth = context.OpReader.ReadByte()
@@ -158,8 +178,7 @@ class ExecutionEngine():
                 offset = context.InstructionPointer + offset_b - 3
 
                 if offset < 0 or offset > len(context.Script):
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.INVALID_JUMP)
 
                 fValue = True
                 if opcode > JMP:
@@ -182,15 +201,23 @@ class ExecutionEngine():
 
             elif opcode == APPCALL or opcode == TAILCALL:
                 if self._Table is None:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN2)
 
-                script_hash = UInt160(data=context.OpReader.ReadBytes(20)).ToBytes()
-                script = self._Table.GetScript(script_hash)
+                script_hash = context.OpReader.ReadBytes(20)
+
+                is_normal_call = False
+                for b in script_hash:
+                    if b > 0:
+                        is_normal_call = True
+
+                if not is_normal_call:
+                    script_hash = self.EvaluationStack.Pop().GetByteArray()
+
+                script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
 
                 if script is None:
-                    self._VMState |= VMState.FAULT
-                    return
+                    logger.error("Could not find script from script table: %s " % script_hash)
+                    return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
                 if opcode == TAILCALL:
                     istack.Pop().Dispose()
@@ -199,12 +226,12 @@ class ExecutionEngine():
 
             elif opcode == SYSCALL:
                 call = context.OpReader.ReadVarBytes(252).decode('ascii')
+                self.write_log(call)
                 if not self._Service.Invoke(call, self):
-                    self._VMState |= VMState.FAULT
+                    return self.VM_FAULT_and_report(VMFault.SYSCALL_ERROR, call)
 
             # stack operations
             elif opcode == DUPFROMALTSTACK:
-                item = astack.Peek()
                 estack.PushT(astack.Peek())
 
             elif opcode == TOALTSTACK:
@@ -224,12 +251,10 @@ class ExecutionEngine():
                 n = estack.Pop().GetBigInteger()
 
                 if n < 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN3)
 
                 # if n == 0 break, same as do x if n > 0
                 if n > 0:
-
                     item = estack.Peek(n)
                     estack.Set(n, estack.Peek())
                     estack.Set(0, item)
@@ -238,8 +263,7 @@ class ExecutionEngine():
                 n = estack.Pop().GetBigInteger()
 
                 if n <= 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN4)
 
                 estack.Insert(n, estack.Peek())
 
@@ -268,8 +292,7 @@ class ExecutionEngine():
 
                 n = estack.Pop().GetBigInteger()
                 if n < 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN5)
 
                 estack.PushT(estack.Peek(n))
 
@@ -277,8 +300,7 @@ class ExecutionEngine():
 
                 n = estack.Pop().GetBigInteger()
                 if n < 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN6)
 
                 if n > 0:
                     estack.PushT(estack.Remove(n))
@@ -317,13 +339,11 @@ class ExecutionEngine():
 
                 count = estack.Pop().GetBigInteger()
                 if count < 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.SUBSTR_INVALID_LENGTH)
 
                 index = estack.Pop().GetBigInteger()
                 if index < 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.SUBSTR_INVALID_INDEX)
 
                 x = estack.Pop().GetByteArray()
 
@@ -333,8 +353,7 @@ class ExecutionEngine():
 
                 count = estack.Pop().GetBigInteger()
                 if count < 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.LEFT_INVALID_COUNT)
 
                 x = estack.Pop().GetByteArray()
                 estack.PushT(x[:count])
@@ -343,13 +362,11 @@ class ExecutionEngine():
 
                 count = estack.Pop().GetBigInteger()
                 if count < 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.RIGHT_INVALID_COUNT)
 
                 x = estack.Pop().GetByteArray()
                 if len(x) < count:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.RIGHT_UNKNOWN)
 
                 estack.PushT(x[-count:])
 
@@ -367,7 +384,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
                 estack.PushT(x1 & x2)
 
             elif opcode == OR:
@@ -431,7 +447,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
                 estack.PushT(x1 + x2)
 
             elif opcode == SUB:
@@ -536,7 +551,6 @@ class ExecutionEngine():
 
                 x2 = estack.Pop().GetBigInteger()
                 x1 = estack.Pop().GetBigInteger()
-
                 estack.PushT(min(x1, x2))
 
             elif opcode == MAX:
@@ -575,25 +589,35 @@ class ExecutionEngine():
 
                 pubkey = estack.Pop().GetByteArray()
                 sig = estack.Pop().GetByteArray()
-
-                try:
-
-                    res = self.Crypto.VerifySignature(self.ScriptContainer.GetMessage(), sig, pubkey)
-                    estack.PushT(res)
-
-                except Exception as e:
-                    print("couldnt operate signature verification")
+                container = self.ScriptContainer
+                if not container:
+                    logger.debug("Cannot check signature without container")
                     estack.PushT(False)
-                    traceback.print_stack()
-                    traceback.print_exc()
+                    return
+                try:
+                    res = self.Crypto.VerifySignature(container.GetMessage(), sig, pubkey)
+                    estack.PushT(res)
+                except Exception as e:
+                    estack.PushT(False)
+                    logger.error("Could not checksig: %s " % e)
+
+            elif opcode == VERIFY:
+                pubkey = estack.Pop().GetByteArray()
+                sig = estack.Pop().GetByteArray()
+                message = estack.Pop().GetByteArray()
+                try:
+                    res = self.Crypto.VerifySignature(message, sig, pubkey, unhex=False)
+                    estack.PushT(res)
+                except Exception as e:
+                    estack.PushT(False)
+                    logger.error("Could not checksig: %s " % e)
 
             elif opcode == CHECKMULTISIG:
 
                 n = estack.Pop().GetBigInteger()
 
                 if n < 1:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.CHECKMULTISIG_INVALID_PUBLICKEY_COUNT)
 
                 pubkeys = []
                 for i in range(0, n):
@@ -602,15 +626,14 @@ class ExecutionEngine():
                 m = estack.Pop().GetBigInteger()
 
                 if m < 1 or m > n:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.CHECKMULTISIG_SIGNATURE_ERROR, m, n)
 
                 sigs = []
 
                 for i in range(0, m):
                     sigs.append(estack.Pop().GetByteArray())
 
-                message = self.ScriptContainer.GetMessage()
+                message = self.ScriptContainer.GetMessage() if self.ScriptContainer else ''
 
                 fSuccess = True
 
@@ -638,19 +661,21 @@ class ExecutionEngine():
 
                 item = estack.Pop()
 
-                if not item.IsArray:
-                    estack.PushT(len(item.GetByteArray()))
+                if not item:
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN7)
+
+                if isinstance(item, CollectionMixin):
+                    estack.PushT(item.Count)
 
                 else:
-                    estack.PushT(len(item.GetArray()))
+                    estack.PushT(len(item.GetByteArray()))
 
             elif opcode == PACK:
 
                 size = estack.Pop().GetBigInteger()
 
                 if size < 0 or size > estack.Count:
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN8)
 
                 items = []
 
@@ -663,9 +688,8 @@ class ExecutionEngine():
             elif opcode == UNPACK:
                 item = estack.Pop()
 
-                if not item.IsArray:
-                    self._VMState |= VMState.FAULT
-                    return
+                if not isinstance(item, Array):
+                    return self.VM_FAULT_and_report(VMFault.UNPACK_INVALID_TYPE, item)
 
                 items = item.GetArray()
                 items.reverse()
@@ -676,87 +700,215 @@ class ExecutionEngine():
 
             elif opcode == PICKITEM:
 
-                index = estack.Pop().GetBigInteger()
+                key = estack.Pop()
 
-                if index < 0:
-                    self._VMState |= VMState.FAULT
-                    return
+                if isinstance(key, CollectionMixin):
+                    # key must be an array index or dictionary key, but not a collection
+                    return self.VM_FAULT_and_report(VMFault.KEY_IS_COLLECTION, key)
 
-                item = estack.Pop()
+                collection = estack.Pop()
 
-                if not item.IsArray:
-                    self._VMState |= VMState.FAULT
-                    return
+                if isinstance(collection, Array):
+                    index = key.GetBigInteger()
+                    if index < 0 or index >= collection.Count:
+                        return self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_INDEX, index, collection.Count)
 
-                items = item.GetArray()
+                    items = collection.GetArray()
+                    to_pick = items[index]
+                    estack.PushT(to_pick)
 
-                if index >= len(items):
-                    self._VMState |= VMState.FAULT
-                    return
+                elif isinstance(collection, Map):
+                    success, value = collection.TryGetValue(key)
 
-                to_pick = items[index]
-                estack.PushT(to_pick)
+                    if success:
+                        estack.PushT(value)
+                    else:
+                        return self.VM_FAULT_and_report(VMFault.DICT_KEY_NOT_FOUND, key, collection.Keys)
+
+                else:
+                    return self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_TYPE, key, collection)
 
             elif opcode == SETITEM:
+                value = estack.Pop()
 
-                newItem = estack.Pop()
+                if isinstance(value, Struct):
+                    value = value.Clone()
 
-                if issubclass(type(newItem), StackItem) and newItem.IsStruct:
-                    newItem = newItem.Clone()
+                key = estack.Pop()
 
-                index = estack.Pop().GetBigInteger()
+                if isinstance(key, CollectionMixin):
+                    return self.VM_FAULT_and_report(VMFault.KEY_IS_COLLECTION)
 
-                arrItem = estack.Pop()
+                collection = estack.Pop()
 
-                if not issubclass(type(arrItem), StackItem) or not arrItem.IsArray:
-                    self._VMState |= VMState.FAULT
-                    return
+                if isinstance(collection, Array):
 
-                items = arrItem.GetArray()
+                    index = key.GetBigInteger()
 
-                if index < 0 or index >= len(items):
-                    self._VMState |= VMState.FAULT
-                    return
+                    if index < 0 or index >= collection.Count:
+                        return self.VM_FAULT_and_report(VMFault.SETITEM_INVALID_INDEX)
 
-                items[index] = newItem
+                    items = collection.GetArray()
+                    items[index] = value
+
+                elif isinstance(collection, Map):
+
+                    collection.SetItem(key, value)
+
+                else:
+
+                    return self.VM_FAULT_and_report(VMFault.SETITEM_INVALID_TYPE, key, collection)
 
             elif opcode == NEWARRAY:
 
                 count = estack.Pop().GetBigInteger()
-                items = [None for i in range(0, count)]
+                items = [Boolean(False) for i in range(0, count)]
                 estack.PushT(Array(items))
 
             elif opcode == NEWSTRUCT:
 
                 count = estack.Pop().GetBigInteger()
 
-                items = [None for i in range(0, count)]
+                items = [Boolean(False) for i in range(0, count)]
 
                 estack.PushT(Struct(items))
 
+            elif opcode == NEWMAP:
+                estack.PushT(Map())
+
+            elif opcode == APPEND:
+                newItem = estack.Pop()
+
+                if isinstance(newItem, Struct):
+                    newItem = newItem.Clone()
+
+                arrItem = estack.Pop()
+
+                if not isinstance(arrItem, Array):
+                    return self.VM_FAULT_and_report(VMFault.APPEND_INVALID_TYPE, arrItem)
+
+                arr = arrItem.GetArray()
+                arr.append(newItem)
+
+            elif opcode == REVERSE:
+
+                arrItem = estack.Pop()
+                if not isinstance(arrItem, Array):
+                    return self.VM_FAULT_and_report(VMFault.REVERSE_INVALID_TYPE, arrItem)
+
+                arrItem.Reverse()
+
+            elif opcode == REMOVE:
+
+                key = estack.Pop()
+
+                if isinstance(key, CollectionMixin):
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
+
+                collection = estack.Pop()
+
+                if isinstance(collection, Array):
+
+                    index = key.GetBigInteger()
+
+                    if index < 0 or index >= collection.Count:
+                        return self.VM_FAULT_and_report(VMFault.REMOVE_INVALID_INDEX, index, collection.Count)
+
+                    collection.RemoveAt(index)
+
+                elif isinstance(collection, Map):
+
+                    collection.Remove(key)
+
+                else:
+
+                    return self.VM_FAULT_and_report(VMFault.REMOVE_INVALID_TYPE, key, collection)
+
+            elif opcode == HASKEY:
+
+                key = estack.Pop()
+
+                if isinstance(key, CollectionMixin):
+                    return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+                collection = estack.Pop()
+
+                if isinstance(collection, Array):
+
+                    index = key.GetBigInteger()
+
+                    if index < 0:
+                        return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+                    estack.PushT(index < collection.Count)
+
+                elif isinstance(collection, Map):
+
+                    estack.PushT(collection.ContainsKey(key))
+
+                else:
+
+                    return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+            elif opcode == KEYS:
+
+                collection = estack.Pop()
+
+                if isinstance(collection, Map):
+
+                    estack.PushT(Array(collection.Keys))
+                else:
+                    return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+            elif opcode == VALUES:
+
+                collection = estack.Pop()
+                values = []
+
+                if isinstance(collection, Map):
+                    values = collection.Values
+
+                elif isinstance(collection, Array):
+                    values = collection
+
+                else:
+                    return self.VM_FAULT_and_report(VMFault.DICT_KEY_ERROR)
+
+                newArray = Array()
+                for item in values:
+                    if isinstance(item, Struct):
+                        newArray.Add(item.Clone())
+                    else:
+                        newArray.Add(item)
+
+                estack.PushT(newArray)
+
             elif opcode == THROW:
-                self._VMState |= VMState.FAULT
-                return
+                return self.VM_FAULT_and_report(VMFault.THROW)
 
             elif opcode == THROWIFNOT:
                 if not estack.Pop().GetBoolean():
-                    self._VMState |= VMState.FAULT
-                    return
+                    return self.VM_FAULT_and_report(VMFault.THROWIFNOT)
 
             else:
-
-                self._VMState |= VMState.FAULT
-                return
+                return self.VM_FAULT_and_report(VMFault.UNKNOWN_OPCODE, opcode)
 
         if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
-
-            if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
-                self._VMState |= VMState.BREAK
+            if len(self.CurrentContext.Breakpoints):
+                if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
+                    self._vm_debugger = VMDebugger(self)
+                    self._vm_debugger.start()
 
     def LoadScript(self, script, push_only=False):
 
         context = ExecutionContext(self, script, push_only)
+
+        if self._debug_map and context.ScriptHash() == self._debug_map['script_hash']:
+            context.Breakpoints = set(self._debug_map['breakpoints'])
+
         self._InvocationStack.PushT(context)
+
+        self._ExecutedScriptHashes.append(context.ScriptHash())
 
     def RemoveBreakPoint(self, position):
 
@@ -769,7 +921,8 @@ class ExecutionEngine():
             self._VMState |= VMState.HALT
 
         if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-            self.__log.debug("stopping because vm state is %s " % self._VMState)
+            logger.info("stopping because vm state is %s " % self._VMState)
+            return
 
         op = None
 
@@ -778,19 +931,21 @@ class ExecutionEngine():
         else:
             op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
 
-#        opname = ToName(op)
-#        print("____________________________________________________")
-#        print("%02x -> %s" % (int.from_bytes(op,byteorder='little'), opname))
-#        print("-----------------------------------")
-
         self.ops_processed += 1
 
         try:
+            if self._is_write_log:
+                self.write_log("{} {}".format(self.ops_processed, ToName(op)))
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
-            self.__log.debug("could not execute op %s " % e)
-            self.__log.error("Exception", exc_info=1)
-            raise e
+            error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))
+            self.write_log(error_msg)
+
+            if self._exit_on_error:
+                self._VMState |= VMState.FAULT
+            else:
+                logger.error(error_msg)
+                logger.exception(e)
 
     def StepOut(self):
         self._VMState &= ~VMState.BREAK
@@ -800,7 +955,6 @@ class ExecutionEngine():
                 self._VMState & VMState.FAULT == 0 and \
                 self._VMState & VMState.BREAK == 0 and \
                 self._InvocationStack.Count > count:
-
             self.StepInto()
 
     def StepOver(self):
@@ -814,5 +968,85 @@ class ExecutionEngine():
                 self._VMState & VMState.FAULT == 0 and \
                 self._VMState & VMState.BREAK == 0 and \
                 self._InvocationStack.Count > count:
-
             self.StepInto()
+
+    def VM_FAULT_and_report(self, id, *args):
+        self._VMState |= VMState.FAULT
+
+        if settings.log_level != LOGGING_LEVEL_DEBUG:
+            return
+
+        if id == VMFault.INVALID_JUMP:
+            error_msg = "Attemping to JMP/JMPIF/JMPIFNOT to an invalid location."
+
+        elif id == VMFault.INVALID_CONTRACT:
+            script_hash = args[0]
+            error_msg = "Trying to call an unknown contract with script_hash {}\nMake sure the contract exists on the blockchain".format(script_hash)
+
+        elif id == VMFault.CHECKMULTISIG_INVALID_PUBLICKEY_COUNT:
+            error_msg = "CHECKMULTISIG - provided public key count is less than 1."
+
+        elif id == VMFault.CHECKMULTISIG_SIGNATURE_ERROR:
+            if args[0] < 1:
+                error_msg = "CHECKMULTISIG - Minimum required signature count cannot be less than 1."
+            else:  # m > n
+                m = args[0]
+                n = args[1]
+                error_msg = "CHECKMULTISIG - Insufficient signatures provided ({}). Minimum required is {}".format(m, n)
+
+        elif id == VMFault.UNPACK_INVALID_TYPE:
+            item = args[0]
+            error_msg = "Failed to UNPACK item. Item is not an array but of type: {}".format(type(item))
+
+        elif id == VMFault.PICKITEM_INVALID_TYPE:
+            index = args[0]
+            item = args[1]
+            error_msg = "Cannot access item at index {}. Item is not an array or dict but of type: {}".format(index, type(item))
+
+        elif id == VMFault.PICKITEM_NEGATIVE_INDEX:
+            error_msg = "Attempting to access an array using a negative index"
+
+        elif id == VMFault.PICKITEM_INVALID_INDEX:
+            index = args[0]
+            length = args[1]
+            error_msg = "Array index is less than zero or {} exceeds list length {}".format(index, length)
+
+        elif id == VMFault.APPEND_INVALID_TYPE:
+            item = args[0]
+            error_msg = "Cannot append to item. Item is not an array but of type: {}".format(type(item))
+
+        elif id == VMFault.REVERSE_INVALID_TYPE:
+            item = args[0]
+            error_msg = "Cannot REVERSE item. Item is not an array but of type: {}".format(type(item))
+
+        elif id == VMFault.REMOVE_INVALID_TYPE:
+            item = args[0]
+            index = args[1]
+            error_msg = "Cannot REMOVE item at index {}. Item is not an array but of type: {}".format(index, type(item))
+
+        elif id == VMFault.REMOVE_INVALID_INDEX:
+            index = args[0]
+            length = args[1]
+
+            if index < 0:
+                error_msg = "Cannot REMOVE item at index {}. Index < 0".format(index)
+
+            else:  # index >= len(items):
+                error_msg = "Cannot REMOVE item at index {}. Index exceeds array length {}".format(index, length)
+
+        elif id == VMFault.POP_ITEM_NOT_ARRAY:
+            error_msg = "Items(s) not array: %s" % [item for item in args]
+
+        elif id == VMFault.UNKNOWN_OPCODE:
+            opcode = args[0]
+            error_msg = "Unknown opcode found: {}".format(opcode)
+
+        else:
+            error_msg = id
+
+        if id in [VMFault.THROW, VMFault.THROWIFNOT]:
+            logger.debug("({}) {}".format(self.ops_processed, id))
+        else:
+            logger.error("({}) {}".format(self.ops_processed, error_msg))
+
+        return

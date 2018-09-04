@@ -1,0 +1,44 @@
+{
+  "ProtocolConfiguration": {
+    "Magic": 1010102,
+    "AddressVersion": 23,
+    "StandbyValidators": [
+      "032d9e51c7d48b0f5cc63d63deb89767685832cf69eb7113900290f217ae0504ee",
+      "022a5b7ccf03166a95e1750f0c350c734c34fe7aac66622eecdb5a529d2e69b1df",
+      "03c478d43271c297696ee3ab5a7946ee60287015c7dca6cba867819c7f271bc4ea",
+      "0393ef777d01fb60eef1da3474b975c6a393b464bcfe588e2ad7dbc4dbdfa2c244"
+    ],
+    "SeedList": [
+      "188.68.34.29:10330",
+      "188.68.34.29:10332",
+      "188.68.34.29:10334",
+      "188.68.34.29:10336"
+    ],
+    "RPCList":[
+      "http://188.68.34.29:10001",
+      "http://188.68.34.29:10002",
+      "http://188.68.34.29:10003",
+      "http://188.68.34.29:10004"
+    ],
+    "SystemFee": {
+        "EnrollmentTransaction": 1000,
+        "IssueTransaction": 500,
+        "PublishTransaction": 500,
+        "RegisterTransaction": 10000
+    }
+  },
+
+  "ApplicationConfiguration": {
+    "DataDirectoryPath": "Chains/coznet",
+    "NotificationDataPath": "Chains/coz_notif",
+    "RPCPort": 20332,
+    "NodePort": 20333,
+    "WsPort": 20334,
+    "UriPrefix": [ "http://*:20332"],
+    "SslCert": "",
+    "SslCertPassword": "",
+    "BootstrapFile":"",
+    "NotificationBootstrapFile":"",
+    "DebugStorage":1
+  }
+}

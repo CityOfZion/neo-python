@@ -1,21 +1,21 @@
-# -*- coding: UTF-8 -*-
+from neocore.IO.Mixins import SerializableMixin
+from abc import ABC, abstractmethod
 
-from neo.IO.Mixins import SerializableMixin
 
-
-class ClonableMixin(object):
+class ClonableMixin(ABC):
+    @abstractmethod
     def clone(self):
         pass
 
 
-class CodeMixin(object):
+class CodeMixin:
     scripts = []
     parameter_list = []
     return_type = None
     script_hash = None
 
 
-class VerifiableMixin(SerializableMixin):
+class VerifiableMixin(ABC, SerializableMixin):
 
     scripts = []
 
@@ -23,6 +23,7 @@ class VerifiableMixin(SerializableMixin):
     # 反序列化未签名的数据
     # </summary>
     # <param name="reader">数据来源</param>
+    @abstractmethod
     def DeserializeUnsigned(self, reader):
         pass
 
@@ -30,6 +31,7 @@ class VerifiableMixin(SerializableMixin):
     # 获得需要校验的脚本Hash值
     # </summary>
     # <returns>返回需要校验的脚本Hash值</returns>
+    @abstractmethod
     def GetScriptHashesForVerifying(self):
         pass
 
@@ -37,5 +39,12 @@ class VerifiableMixin(SerializableMixin):
     # 序列化未签名的数据
     # </summary>
     # <param name="writer">存放序列化后的结果</param>
+    @abstractmethod
     def SerializeUnsigned(self, writer):
         pass
+
+
+class EquatableMixin:
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__

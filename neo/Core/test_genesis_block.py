@@ -2,16 +2,14 @@ from neo.Utils.VerifiableTestCase import VerifiableTestCase
 from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
-from neo.Core.TX.Transaction import *
+from neo.Core.TX.Transaction import TransactionOutput
+from neo.Blockchain import GetSystemShare, GetGenesis, GetSystemCoin
 from neo.SmartContract.Contract import Contract
 from neo.Core.Blockchain import Blockchain
-from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
-from neo.VM.OpCode import *
+from neo.VM.OpCode import PUSHT
 from neo.Settings import settings
-from neo.Cryptography.Crypto import Crypto
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-import shutil
+from neocore.Cryptography.Crypto import Crypto
 
 
 class GenesisBlockTestCase(VerifiableTestCase):

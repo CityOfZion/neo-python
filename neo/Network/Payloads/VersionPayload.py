@@ -1,16 +1,16 @@
-from neo.IO.Mixins import SerializableMixin
-from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
-from neo.Core.Blockchain import Blockchain
-
 import sys
 import ctypes
 import datetime
-from autologging import logged
+from logzero import logger
+
+from neocore.IO.Mixins import SerializableMixin
+from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
+from neo.Core.Blockchain import Blockchain
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
 
-@logged
 class VersionPayload(SerializableMixin):
-
     Version = None
     Services = None
     Timestamp = None
@@ -21,6 +21,14 @@ class VersionPayload(SerializableMixin):
     Relay = False
 
     def __init__(self, port=None, nonce=None, userAgent=None):
+        """
+        Create an instance.
+
+        Args:
+            port (int):
+            nonce (int):
+            userAgent (str): client user agent string.
+        """
         if port and nonce and userAgent:
             self.Port = port
             self.Version = 0
@@ -35,24 +43,38 @@ class VersionPayload(SerializableMixin):
             self.Relay = True
 
     def Size(self):
-        return ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_ulong) + ctypes.sizeof(ctypes.c_uint) + \
-            ctypes.sizeof(ctypes.c_ushort) + ctypes.sizeof(ctypes.c_uint) + \
-            sys.getsizeof(self.UserAgent) + ctypes.sizeof(ctypes.c_uint) + ctypes.sizeof(ctypes.c_bool)
+        """
+        Get the total size in bytes of the object.
+
+        Returns:
+            int: size.
+        """
+        return s.uint32 + s.uint64 + s.uint32 + s.uint16 + s.uint32 + GetVarSize(self.UserAgent) + s.uint32 + s.uint8
 
     def Deserialize(self, reader):
-        self.__log.debug("DESERIALIZING VERSION!!!!")
-        self.Version = reader.ReadUInt32()
+        """
+        Deserialize full object.
 
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
+        self.Version = reader.ReadUInt32()
         self.Services = reader.ReadUInt64()
         self.Timestamp = reader.ReadUInt32()
         self.Port = reader.ReadUInt16()
         self.Nonce = reader.ReadUInt32()
         self.UserAgent = reader.ReadVarString().decode('utf-8')
         self.StartHeight = reader.ReadUInt32()
-        self.__log.debug("VERSION START HEIGH:T %s " % self.StartHeight)
+        logger.debug("Version start height: T %s " % self.StartHeight)
         self.Relay = reader.ReadBool()
 
     def Serialize(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         writer.WriteUInt32(self.Version)
         writer.WriteUInt64(self.Services)
         writer.WriteUInt32(self.Timestamp)

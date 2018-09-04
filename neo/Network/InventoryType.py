@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Inventory Type
@@ -7,13 +6,21 @@ Usage:
 """
 
 
-class InventoryType(object):
-    TX = b'\x01'         # Transaction
-    Block = b'\x02'      # Block
+class InventoryType:
+    TX = b'\x01'  # Transaction
+    Block = b'\x02'  # Block
     Consensus = b'\xe0'  # Consensus information
+
+    TXInt = 1
+    BlockInt = 2
+    ConsensusInt = 224
 
     @staticmethod
     def AllInventoriesInt():
-        return [int.from_bytes(InventoryType.TX, 'little'),
-                int.from_bytes(InventoryType.Block, 'little'),
-                int.from_bytes(InventoryType.Consensus, 'little')]
+        """
+        Get all inventory types as ints.
+
+        Returns:
+            list: of int formatted inventory types.
+        """
+        return [1, 2, 224]

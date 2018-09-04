@@ -1,14 +1,11 @@
 import binascii
-from autologging import logged
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
-import inspect
+from logzero import logger
+from neo.SmartContract.Iterable import EnumeratorBase
 
 
-@logged
-class DBCollection():
-
+class DBCollection:
     DB = None
-    SN = None
+    #    SN = None
     Prefix = None
 
     ClassRef = None
@@ -18,19 +15,17 @@ class DBCollection():
     Changed = []
     Deleted = []
 
-    Debug = False
-
     _built_keys = False
 
-    def __init__(self, db, sn, prefix, class_ref, debug=False):
+    DebugStorage = False
+
+    def __init__(self, db, sn, prefix, class_ref):
 
         self.DB = db
-        self.SN = sn
 
         self.Prefix = prefix
 
         self.ClassRef = class_ref
-        self.Debug = debug
 
         self.Collection = {}
         self.Changed = []
@@ -52,40 +47,36 @@ class DBCollection():
                     ret[key] = val
             return ret
         except Exception as e:
-            print("error getting items %s " % e)
+            logger.error("error getting items %s " % e)
 
         return {}
 
     def _BuildCollectionKeys(self):
-        for key in self.SN.iterator(prefix=self.Prefix, include_value=False):
+        for key in self.DB.iterator(prefix=self.Prefix, include_value=False):
             key = key[1:]
             if key not in self.Collection.keys():
                 self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
-        try:
 
-            for keyval in self.Changed:
-                item = self.Collection[keyval]
-                if item is None:
-                    print("key %s %s " % (keyval, self.Collection[keyval]))
-                    print("THIS IS BAD %s " % self.Collection.items())
-                    raise Exception("ITEM NONONEEEE %s " % keyval)
-                else:
-                    wb.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
-            for keyval in self.Deleted:
-                wb.delete(self.Prefix + keyval)
-            if destroy:
-                self.Destroy()
-            else:
-                self.Changed = []
-                self.Deleted = []
-        except Exception as e:
-            print("COULD NOT COMMIT %s %s " % (e, self.ClassRef))
-            (frame, filename, line_number,
-             function_name, lines, index) = inspect.getouterframes(inspect.currentframe())[1]
-            print(frame, filename, line_number, function_name, lines, index)
-            raise Exception("BAD")
+        for keyval in self.Changed:
+            item = self.Collection[keyval]
+            if item:
+                self.DB.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+        for keyval in self.Deleted:
+            self.DB.delete(self.Prefix + keyval)
+            self.Collection[keyval] = None
+        if destroy:
+            self.Destroy()
+        else:
+            self.Changed = []
+            self.Deleted = []
+
+    def Reset(self):
+        for keyval in self.Changed:
+            self.Collection[keyval] = None
+        self.Changed = []
+        self.Deleted = []
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
@@ -103,7 +94,23 @@ class DBCollection():
 
         return item
 
+    def ReplaceOrAdd(self, keyval, new_instance):
+
+        item = new_instance
+
+        if keyval in self.Deleted:
+            self.Deleted.remove(keyval)
+
+        self.Add(keyval, item)
+
+        return item
+
     def GetOrAdd(self, keyval, new_instance):
+
+        existing = self.TryGet(keyval)
+
+        if existing:
+            return existing
 
         item = new_instance
 
@@ -119,6 +126,9 @@ class DBCollection():
 
     def TryGet(self, keyval):
 
+        if keyval in self.Deleted:
+            return None
+
         if keyval in self.Collection.keys():
             item = self.Collection[keyval]
             if item is None:
@@ -127,11 +137,10 @@ class DBCollection():
             return item
 
         # otherwise, chekc in the database
-        key = self.SN.get(self.Prefix + keyval)
+        key = self.DB.get(self.Prefix + keyval)
 
         # if the key is there, get the item
         if key is not None:
-
             self.MarkChanged(keyval)
 
             item = self._GetItem(keyval)
@@ -141,13 +150,18 @@ class DBCollection():
         return None
 
     def _GetItem(self, keyval):
+        if keyval in self.Deleted:
+            return None
+
         try:
-            buffer = self.SN.get(self.Prefix + keyval)
-            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
-            self.Collection[keyval] = item
-            return item
+            buffer = self.DB.get(self.Prefix + keyval)
+            if buffer:
+                item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(buffer))
+                self.Collection[keyval] = item
+                return item
+            return None
         except Exception as e:
-            print("Could not deserialize item from key %s : %s" % (keyval, e))
+            logger.error("Could not deserialize item from key %s : %s" % (keyval, e))
 
         return None
 
@@ -163,12 +177,39 @@ class DBCollection():
         if keyval not in self.Changed:
             self.Changed.append(keyval)
 
+    def TryFind(self, key_prefix):
+        candidates = {}
+        for keyval in self.Collection.keys():
+            # See if we find a partial match in the keys that not have been committed yet, excluding those that are to be deleted
+            if key_prefix in keyval and keyval not in self.Deleted:
+                candidates[keyval[20:]] = self.Collection[keyval].Value
+
+        db_results = self.Find(key_prefix)
+
+        # {**x, **y} merges two dictionaries, with the values of y overwriting the vals of x
+        # withouth this merge, you sometimes get 2 results for each key
+        # then take the dict and make a list of tuples
+        final_collection = [(k, v) for k, v in {**db_results, **candidates}.items()]
+
+        return EnumeratorBase(iter(final_collection))
+
+    def Find(self, key_prefix):
+        key_prefix = self.Prefix + key_prefix
+        res = {}
+        for key, val in self.DB.iterator(prefix=key_prefix):
+            # we want the storage item, not the raw bytes
+            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
+            # also here we need to skip the 1 byte storage prefix
+            res_key = key[21:]
+            res[res_key] = item
+        return res
+
     def Destroy(self):
         self.DB = None
-        self.SN = None
+        #        self.SN = None
         self.Collection = None
         self.ClassRef = None
         self.Prefix = None
         self.Deleted = None
         self.Changed = None
-        self.__log = None
+        logger = None

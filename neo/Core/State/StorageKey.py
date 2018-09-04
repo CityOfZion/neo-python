@@ -1,35 +1,50 @@
-
-from neo.IO.Mixins import SerializableMixin
+from neocore.IO.Mixins import SerializableMixin
 import mmh3
-from neo.BigInteger import BigInteger
+from neocore.BigInteger import BigInteger
 
 
-class StorageKey(SerializableMixin):
-
+class StorageKey():
     ScriptHash = None
     Key = None
 
     def __init__(self, script_hash=None, key=None):
+        """
+        Create an instance.
+
+        Args:
+            script_hash (UInt160):
+            key (bytes):
+        """
         self.ScriptHash = script_hash
         self.Key = key
 
     def _murmur(self):
+        """
+        Get the murmur hash of the key.
+
+        Returns:
+            int: 32-bit
+        """
         return mmh3.hash(bytes(self.Key))
 
     def GetHashCode(self):
+        """
+        Get the hash code of the key.
+
+        Returns:
+            int:
+        """
         return abs(self.ScriptHash.GetHashCode() + self._murmur())
 
     def GetHashCodeBytes(self):
+        """
+        Get the hash code in bytes.
+
+        Returns:
+            bytes:
+        """
         bigint = BigInteger(self.GetHashCode())
         return bigint.ToByteArray()
-
-    def Deserialize(self, reader):
-        self.ScriptHash = reader.ReadUInt160()
-        self.Key = reader.ReadBytes()
-
-    def Serialize(self, writer):
-        writer.WriteUInt160(self.ScriptHash)
-        writer.WriteVarBytes(self.Key)
 
     def __eq__(self, other):
         if other is None:
@@ -38,3 +53,12 @@ class StorageKey(SerializableMixin):
             return True
 
         return self.ScriptHash == other.ScriptHash and self.Key == other.Key
+
+    def ToArray(self):
+        """
+        Convert object members to bytes and a concatenate them.
+
+        Returns:
+            bytes:
+        """
+        return bytes(self.ScriptHash.ToArray()) + bytes(self.Key)

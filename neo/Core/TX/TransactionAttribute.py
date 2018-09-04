@@ -1,19 +1,17 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Transaction Attribute
 Usage:
     from neo.Core.TX.TransactionAttribute import TransactionAttribute
 """
+from logzero import logger
+from neocore.IO.Mixins import SerializableMixin
+from neocore.UIntBase import UIntBase
+from neo.Core.Size import Size as s
+from neo.Core.Size import GetVarSize
 
-from neo.Network.Inventory import Inventory
-from neo.IO.Mixins import SerializableMixin
 
-import binascii
-from autologging import logged
-
-
-class TransactionAttributeUsage(object):
+class TransactionAttributeUsage:
     ContractHash = int.from_bytes(b'\x00', 'little')
 
     ECDH02 = int.from_bytes(b'\x02', 'little')
@@ -61,19 +59,30 @@ class TransactionAttributeUsage(object):
     Remark15 = int.from_bytes(b'\xff', 'little')
 
 
-@logged
-class TransactionAttribute(Inventory, SerializableMixin):
-
+class TransactionAttribute(SerializableMixin):
     MAX_ATTR_DATA_SIZE = 65535
 
     """docstring for TransactionAttribute"""
 
     def __init__(self, usage=None, data=None):
+        """
+        Create an instance.
+
+        Args:
+            usage (neo.Core.TX.TransactionAttribute.TransactionAttributeUsage):
+            data (bytes):
+        """
         super(TransactionAttribute, self).__init__()
         self.Usage = usage
         self.Data = data
 
     def Deserialize(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         usage = reader.ReadByte()
         self.Usage = usage
 
@@ -94,10 +103,22 @@ class TransactionAttribute(Inventory, SerializableMixin):
         elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
             self.Data = reader.ReadVarBytes(max=self.MAX_ATTR_DATA_SIZE)
         else:
-            self.__log.debug("format error!!!")
+            logger.error("format error!!!")
 
     def Serialize(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+
+        Raises:
+            Exception: if the length exceeds the maximum allowed number of attributes in a transaction.
+        """
         writer.WriteByte(self.Usage)
+
+        if isinstance(self.Data, UIntBase):
+            self.Data = self.Data.Data
 
         length = len(self.Data)
 
@@ -120,12 +141,27 @@ class TransactionAttribute(Inventory, SerializableMixin):
         elif self.Usage == TransactionAttributeUsage.Description or self.Usage >= TransactionAttributeUsage.Remark:
             writer.WriteVarString(self.Data)
         else:
-            self.__log.debug("format error!!!")
+            logger.error("format error!!!")
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
 
+        Returns:
+             dict:
+        """
         obj = {
             'usage': self.Usage,
             'data': '' if not self.Data else self.Data.hex()
         }
         return obj
+
+    def Size(self):
+        if self.Usage == TransactionAttributeUsage.ContractHash or self.Usage == TransactionAttributeUsage.ECDH02 or self.Usage == TransactionAttributeUsage.ECDH03 or self.Usage == TransactionAttributeUsage.Vote or (self.Usage >= TransactionAttributeUsage.Hash1 and self.Usage <= TransactionAttributeUsage.Hash15):
+            return s.uint8 + 32
+        elif self.Usage == TransactionAttributeUsage.Script:
+            return s.uint8 + 20
+        elif self.Usage == TransactionAttributeUsage.DescriptionUrl:
+            return s.uint8 + s.uint8 + len(self.Data)
+        else:
+            return s.uint8 + GetVarSize(self.Data)

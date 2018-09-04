@@ -1,15 +1,9 @@
-
-
+from logzero import logger
 from neo.Core.TX.Transaction import Transaction, TransactionType
-import sys
 from neo.Core.FunctionCode import FunctionCode
-import binascii
-from neo.Settings import settings
-from neo.Fixed8 import Fixed8
 
 
 class PublishTransaction(Transaction):
-
     Code = None
     NeedStorage = False
     Name = ''
@@ -19,15 +13,25 @@ class PublishTransaction(Transaction):
     Description = ''
 
     def __init__(self, *args, **kwargs):
+        """
+        Create instance.
+
+        Args:
+            *args:
+            **kwargs:
+        """
         super(PublishTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.PublishTransaction
 
-    def SystemFee(self):
-        return Fixed8(int(settings.PUBLISH_TX_FEE))
-
     def DeserializeExclusiveData(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         if self.Version > 1:
-            self.__log.debug("format exception...")
+            logger.error("format exception...")
 
         self.Code = FunctionCode()
         self.Code.Deserialize(reader)
@@ -44,7 +48,12 @@ class PublishTransaction(Transaction):
         self.Description = reader.ReadVarString()
 
     def SerializeExclusiveData(self, writer):
+        """
+        Serialize object.
 
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         self.Code.Serialize(writer)
 
         if self.Version >= 1:
@@ -57,6 +66,12 @@ class PublishTransaction(Transaction):
         writer.WriteVarString(self.Description)
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         jsn = super(PublishTransaction, self).ToJson()
         jsn['contract'] = {}
         jsn['contract']['code'] = self.Code.ToJson()

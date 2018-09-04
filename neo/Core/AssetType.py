@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Asset Type in neo
@@ -7,7 +6,7 @@ Usage:
 """
 
 
-class AssetType(object):
+class AssetType:
     CreditFlag = 0x40
     DutyFlag = 0x80
 
@@ -21,6 +20,12 @@ class AssetType(object):
 
     @staticmethod
     def AllTypes():
+        """
+        Get a list of all available asset types.
+
+        Returns:
+            list: of AssetType items.
+        """
         return [AssetType.CreditFlag, AssetType.DutyFlag, AssetType.GoverningToken,
                 AssetType.UtilityToken, AssetType.Currency, AssetType.Share,
                 AssetType.Invoice, AssetType.Token]

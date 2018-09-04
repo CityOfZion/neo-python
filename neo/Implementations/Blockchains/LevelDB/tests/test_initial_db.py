@@ -2,14 +2,15 @@ from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
 from neo.IO.Helper import Helper
+from neo.Settings import settings
 import shutil
 import binascii
-from neo.Settings import settings
+import os
 
 
 class LevelDBTest(NeoTestCase):
 
-    LEVELDB_TESTPATH = './UnitTestChain'
+    LEVELDB_TESTPATH = os.path.join(settings.DATA_DIR_PATH, 'UnitTestChain')
 
     _blockchain = None
 
@@ -20,7 +21,7 @@ class LevelDBTest(NeoTestCase):
 
     @classmethod
     def setUpClass(self):
-        self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH)
+        self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH, skip_version_check=True)
         Blockchain.RegisterBlockchain(self._blockchain)
         self._genesis = Blockchain.GenesisBlock()
 

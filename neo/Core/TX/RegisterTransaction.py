@@ -1,26 +1,16 @@
-# -*- coding:utf-8 -*-
 """
 Description:
     Register Transaction
 Usage:
     from neo.Core.TX.RegisterTransaction import RegisterTransaction
 """
-from neo.Fixed8 import Fixed8
 from neo.Core.TX.Transaction import Transaction, TransactionType
-
-import binascii
 from neo.Core.AssetType import AssetType
-from neo.Cryptography.ECCurve import ECDSA
-from autologging import logged
-from neo.Cryptography.Helper import hash_to_wallet_address
-from neo.Cryptography.Crypto import Crypto
-from neo.Cryptography.ECCurve import EllipticCurve, ECDSA
-
-from neo.Settings import settings
-from neo.Fixed8 import Fixed8
+from neocore.Cryptography.Crypto import Crypto
+from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neocore.Fixed8 import Fixed8
 
 
-@logged
 class RegisterTransaction(Transaction):
     """
         # 发行总量，共有2种模式：
@@ -33,13 +23,13 @@ class RegisterTransaction(Transaction):
 
 
 In English:
-         # Total number of releases, there are 2 modes:
-         # 1. Limited amount: When Amount is positive, it means that the maximum amount of current assets is Amount and can not be modified (the equity may support the expansion or issuance in the future, will consider the need for company signature or a certain percentage of shareholder signature recognition ).
-         # 2. Unlimited mode: When Amount is equal to -1, it means that the current asset can be issued by the creator unlimited. This mode of freedom is the largest, but the credibility of the lowest, not recommended.
-         # In the use of the process, according to the different types of assets, can use the total amount of different models, the specific rules are as follows:
-         # 1. For equity, use only limited models;
-         # 2. For currencies, use only unlimited models;
-         # 3. For point coupons, you can use any pattern;
+        # Total number of releases, there are 2 modes:
+        # 1. Limited amount: When Amount is positive, it means that the maximum amount of current assets is Amount and can not be modified (the equity may support the expansion or issuance in the future, will consider the need for company signature or a certain percentage of shareholder signature recognition).
+        # 2. Unlimited mode: When Amount is equal to -1, it means that the current asset can be issued by the creator unlimited. This mode of freedom is the largest, but the credibility of the lowest, not recommended. 
+        # In the use of the process, according to the different types of assets, can use the total amount of different models, the specific rules are as follows:
+        # 1. For equity, use only limited models;        
+        # 2. For currencies, use only unlimited models;  
+        # 3. For point coupons, you can use any pattern;
 """
 
     def __init__(self, inputs=None,
@@ -50,7 +40,19 @@ In English:
                  precision=0,
                  owner=None,
                  admin=None):
+        """
+        Create an instance.
 
+        Args:
+            inputs (list):
+            outputs (list):
+            assettype (neo.Core.AssetType):
+            assetname (str):
+            amount (Fixed8):
+            precision (int): number of decimals the asset has.
+            owner (EllipticCurve.ECPoint):
+            admin (UInt160):
+        """
         super(RegisterTransaction, self).__init__(inputs, outputs)
         self.Type = TransactionType.RegisterTransaction  # 0x40
         self.AssetType = assettype
@@ -75,11 +77,16 @@ In English:
         self.Precision = precision
 
     def SystemFee(self):
+        """
+        Get the system fee.
 
+        Returns:
+            Fixed8:
+        """
         if self.AssetType == AssetType.GoverningToken or self.AssetType == AssetType.UtilityToken:
             return Fixed8.Zero()
 
-        return Fixed8(int(settings.REGISTER_TX_FEE))
+        return super(RegisterTransaction, self).SystemFee()
 
     def GetScriptHashesForVerifying(self):
         """Get ScriptHash From SignatureContract"""
@@ -88,16 +95,28 @@ In English:
         pass
 
     def DeserializeExclusiveData(self, reader):
+        """
+        Deserialize full object.
+
+        Args:
+            reader (neo.IO.BinaryReader):
+        """
         self.Type = TransactionType.RegisterTransaction
         self.AssetType = reader.ReadByte()
         self.Name = reader.ReadVarString()
         self.Amount = reader.ReadFixed8()
         self.Precision = reader.ReadByte()
         self.Owner = ECDSA.Deserialize_Secp256r1(reader)
-#        self.Owner = ecdsa.G
+        #        self.Owner = ecdsa.G
         self.Admin = reader.ReadUInt160()
 
     def SerializeExclusiveData(self, writer):
+        """
+        Serialize object.
+
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         writer.WriteByte(self.AssetType)
         writer.WriteVarString(self.Name)
         writer.WriteFixed8(self.Amount)
@@ -108,6 +127,12 @@ In English:
         writer.WriteUInt160(self.Admin)
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
+
+        Returns:
+             dict:
+        """
         jsn = super(RegisterTransaction, self).ToJson()
 
         asset = {

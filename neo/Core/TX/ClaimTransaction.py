@@ -1,32 +1,56 @@
-
-from neo.Core.TX.Transaction import *
-from neo.Fixed8 import Fixed8
-from neo.Core.Blockchain import Blockchain
-from autologging import logged
 import sys
 from itertools import groupby
+from logzero import logger
+from neo.Core.TX.Transaction import TransactionType, Transaction
+from neocore.Fixed8 import Fixed8
+from neo.Core.Blockchain import Blockchain
+from neo.Core.CoinReference import CoinReference
+from neo.Core.Size import GetVarSize
 
 
-@logged
 class ClaimTransaction(Transaction):
-
     Claims = set()
 
-    @property
     def Size(self):
-        return super(ClaimTransaction, self).Size() + sys.getsizeof(self.Claims)
+        """
+        Get the total size in bytes of the object.
+
+        Returns:
+            int: size.
+        """
+        return super(ClaimTransaction, self).Size() + GetVarSize(self.Claims)
 
     def __init__(self, *args, **kwargs):
+        """
+        Create an instance.
 
+        Args:
+            *args:
+            **kwargs:
+        """
         super(ClaimTransaction, self).__init__(*args, **kwargs)
 
         self.Type = TransactionType.ClaimTransaction
 
     def NetworkFee(self):
+        """
+        Get the network fee for a claim transaction.
+
+        Returns:
+            Fixed8: currently fixed to 0.
+        """
         return Fixed8(0)
 
     def DeserializeExclusiveData(self, reader):
+        """
+        Deserialize full object.
 
+        Args:
+            reader (neo.IO.BinaryReader):
+
+        Raises:
+            Exception: If the transaction type is incorrect or if there are no claims.
+        """
         self.Type = TransactionType.ClaimTransaction
         if self.Version != 0:
             raise Exception('Format Exception')
@@ -44,6 +68,15 @@ class ClaimTransaction(Transaction):
             raise Exception('Format Exception')
 
     def GetScriptHashesForVerifying(self):
+        """
+        Get a list of script hashes for verifying transactions.
+
+        Raises:
+            Exception: if there are no valid transactions to claim from.
+
+        Returns:
+            list: of UInt160 type script hashes.
+        """
         hashes = super(ClaimTransaction, self).GetScriptHashesForVerifying()
 
         for hash, group in groupby(self.Claims, lambda x: x.PrevHash):
@@ -66,11 +99,21 @@ class ClaimTransaction(Transaction):
         return hashes
 
     def SerializeExclusiveData(self, writer):
+        """
+        Serialize object.
 
+        Args:
+            writer (neo.IO.BinaryWriter):
+        """
         writer.WriteSerializableArray(self.Claims)
 
     def ToJson(self):
+        """
+        Convert object members to a dictionary that can be parsed as JSON.
 
+        Returns:
+             dict:
+        """
         json = super(ClaimTransaction, self).ToJson()
 
         json['claims'] = [claim.ToJson() for claim in self.Claims]
@@ -78,7 +121,15 @@ class ClaimTransaction(Transaction):
         return json
 
     def Verify(self, mempool):
+        """
+        Verify the transaction.
 
+        Args:
+            mempool:
+
+        Returns:
+            bool: True if verified. False otherwise.
+        """
         if not super(ClaimTransaction, self).Verify(mempool):
             return False
 
@@ -96,7 +147,8 @@ class ClaimTransaction(Transaction):
         otherclaimTxs = [tx for tx in mempool if tx is ClaimTransaction and tx is not self]
         for other in otherclaimTxs:
             # check to see if the length of the intersection between this objects claim's and the other txs claims is > 0
-            if len([list(filter(lambda x: x in self.Claims, otherClaims)) for otherClaims in other.Claims]): return False
+            if len([list(filter(lambda x: x in self.Claims, otherClaims)) for otherClaims in other.Claims]):
+                return False
 
         txResult = None
         for tx in self.GetTransactionResults():
@@ -111,6 +163,6 @@ class ClaimTransaction(Transaction):
             return Blockchain.CalculateBonusIgnoreClaimed(self.Claims, False) == -txResult.Amount
 
         except Exception as e:
-            self.__log.debug('couldnt calculate bonus: %s ' % e)
+            logger.error('Could not calculate bonus: %s ' % e)
 
         return False
