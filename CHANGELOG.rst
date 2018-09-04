@@ -12,7 +12,7 @@ All notable changes to this project are documented in this file.
 - Accept incoming node connections, configurable via protocol config file setting
 - Fixes vulnerability to RPC invoke functionality that can send node into unclosed loop during 'test' invokes
 - Fix issue with opening recently created wallets
-- Remove unnecessary notification from ``SaveStoredData``
+- Fix import_blocks.py block hash caching issue
 
 
 [0.7.7] 2018-08-23
