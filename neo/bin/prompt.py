@@ -97,13 +97,14 @@ class PromptInterface:
                 'block {index/hash} (tx)',
                 'header {index/hash}',
                 'tx {hash}',
-                'asset {assetId}',
+                'account {address} # returns account state',
+                'asset {assetId} # returns asset state',
                 'asset search {query}',
-                'contract {contract hash}',
+                'contract {contract hash} # returns contract state',
                 'contract search {query}',
                 'notifications {block_number or address}',
-                'mem',
-                'nodes',
+                'mem # returns memory in use and number of buffers',
+                'nodes # returns connected peers',
                 'state',
                 'config debug {on/off}',
                 'config sc-events {on/off}',
@@ -192,12 +193,17 @@ class PromptInterface:
     def get_completer(self):
 
         standard_completions = ['block', 'tx', 'header', 'mem', 'neo', 'gas',
-                                'help', 'state', 'nodes', 'exit', 'quit',
-                                'config', 'import', 'export', 'open',
-                                'wallet', 'contract', 'asset', 'wif',
+                                'help', 'state', 'nodes', 'exit', 'quit', 'node-requests'
+                                'config', 'import', 'export', 'open', 'maxpeers', 'sc-events',
+                                'wallet', 'contract', 'asset', 'account', 'wif', 'debug',
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
                                 'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance',
-                                'tkn_register', 'build', 'notifications', 'tkn_history']
+                                'tkn_register', 'build', 'notifications', 'tkn_history',
+                                'sign', 'send', 'withdraw', 'nep2', 'multisig_addr', 'token',
+                                'claim', 'migrate', 'rebuild', 'create_addr', 'delete_addr',
+                                'delete_token', 'alias', 'unspent', 'split', 'close',
+                                'withdraw_reqest', 'holds', 'completed', 'cancel', 'cleanup',
+                                'all', 'debugstorage']
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
@@ -868,65 +874,90 @@ class PromptInterface:
         what = get_arg(args)
 
         if what == 'debug':
-            c1 = get_arg(args, 1).lower()
+            c1 = get_arg(args, 1)
             if c1 is not None:
+                c1 = c1.lower()
                 if c1 == 'on' or c1 == '1':
                     print("Debug logging is now enabled")
                     settings.set_loglevel(logging.DEBUG)
-                if c1 == 'off' or c1 == '0':
+                elif c1 == 'off' or c1 == '0':
                     print("Debug logging is now disabled")
                     settings.set_loglevel(logging.INFO)
+                else:
+                    print("Cannot configure log. Please specify on|off")
 
             else:
                 print("Cannot configure log. Please specify on|off")
 
         elif what == 'sc-events':
-            c1 = get_arg(args, 1).lower()
+            c1 = get_arg(args, 1)
             if c1 is not None:
+                c1 = c1.lower()
                 if c1 == 'on' or c1 == '1':
                     print("Smart contract event logging is now enabled")
                     settings.set_log_smart_contract_events(True)
-                if c1 == 'off' or c1 == '0':
+                elif c1 == 'off' or c1 == '0':
                     print("Smart contract event logging is now disabled")
                     settings.set_log_smart_contract_events(False)
+                else:
+                    print("Cannot configure log. Please specify on|off")
 
             else:
                 print("Cannot configure log. Please specify on|off")
 
         elif what == 'sc-debug-notify':
-            c1 = get_arg(args, 1).lower()
+            c1 = get_arg(args, 1)
             if c1 is not None:
+                c1 = c1.lower()
                 if c1 == 'on' or c1 == '1':
                     print("Smart contract emit Notify events on execution failure is now enabled")
                     settings.set_emit_notify_events_on_sc_execution_error(True)
-                if c1 == 'off' or c1 == '0':
+                elif c1 == 'off' or c1 == '0':
                     print("Smart contract emit Notify events on execution failure is now disabled")
                     settings.set_emit_notify_events_on_sc_execution_error(False)
+                else:
+                    print("Cannot configure log. Please specify on|off")
 
             else:
                 print("Cannot configure log. Please specify on|off")
 
         elif what == 'vm-log':
-            c1 = get_arg(args, 1).lower()
+            c1 = get_arg(args, 1)
             if c1 is not None:
+                c1 = c1.lower()
                 if c1 == 'on' or c1 == '1':
                     print("VM instruction execution logging is now enabled")
                     settings.set_log_vm_instruction(True)
-                if c1 == 'off' or c1 == '0':
+                elif c1 == 'off' or c1 == '0':
                     print("VM instruction execution logging is now disabled")
                     settings.set_log_vm_instruction(False)
+                else:
+                    print("Cannot configure VM instruction logging. Please specify on|off")
 
             else:
                 print("Cannot configure VM instruction logging. Please specify on|off")
 
         elif what == 'node-requests':
-            if len(args) == 3:
-                NodeLeader.Instance().setBlockReqSizeAndMax(int(args[1]), int(args[2]))
-            elif len(args) == 2:
-                NodeLeader.Instance().setBlockReqSizeByName(args[1])
+            if len(args) in [2, 3]:
+                if len(args) == 3:
+                    NodeLeader.Instance().setBlockReqSizeAndMax(int(args[1]), int(args[2]))
+                elif len(args) == 2:
+                    NodeLeader.Instance().setBlockReqSizeByName(args[1])
+            else:
+                print("Invalid number of arguments")
+
+        elif what == 'maxpeers':
+            c1 = get_arg(args, 1)
+            if c1 is not None:
+                print("Maxpeers set to ", c1)
+                settings.set_max_peers(c1)
+
+            else:
+                print("Maintaining current number of maxpeers")
+
         else:
             print(
-                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
+                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off', 'config vm-log on|off', or 'config maxpeers {num_peers}'" % what)
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
