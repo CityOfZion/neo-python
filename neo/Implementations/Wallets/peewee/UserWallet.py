@@ -356,7 +356,7 @@ class UserWallet(Wallet):
             k.Value = value
             k.save()
         except Exception as e:
-            print("Could not save stored data %s " % e)
+            pass
 
         if k is None:
             k = Key.create(Name=key, Value=value)
