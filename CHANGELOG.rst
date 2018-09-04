@@ -13,6 +13,7 @@ All notable changes to this project are documented in this file.
 - Fixes vulnerability to RPC invoke functionality that can send node into unclosed loop during 'test' invokes
 - Fix issue with opening recently created wallets
 - Fix import_blocks.py block hash caching issue
+- Update prompt.py: add ``account`` to help, update help, update standard completions, add ``config maxpeers`` functionality, update ``configure`` function arguments to behave as intended
 
 
 [0.7.7] 2018-08-23
