@@ -7,6 +7,19 @@ All notable changes to this project are documented in this file.
 - Add ``getblockfreetxonly``, ``getblockprioritytxonly``, ``getrawmempoolfreetxonly``, and ``getrawmempoolprioritytxonly`` RPC API methods
 
 
+
+[0.7.8-dev] 2018-xx-xx
+----------------------
+- Prefix ``vin`` JSON output format to match C#
+- Update ``neo-boa`` to v0.5.0 for Python 3.7 compatibility
+- Update pexpect to 4.6.0 to be compatible with Python 3.7
+- Accept incoming node connections, configurable via protocol config file setting (default: OFF)
+- Fixes vulnerability to RPC invoke functionality that can send node into unclosed loop during 'test' invokes
+- Fix issue with opening recently created wallets
+- Fix import_blocks.py block hash caching issue
+- Update prompt.py: add ``account`` to help, update help, update standard completions, add ``config maxpeers`` functionality, update ``configure`` function arguments to behave as intended
+
+
 [0.7.7] 2018-08-23
 ------------------
 - Fix issue with ``UserWallet.SaveStoredData``
@@ -15,10 +28,10 @@ All notable changes to this project are documented in this file.
 - Add appropriate GAS cost for ``VERIFY``
 - Update test_prompt.py to acheive passing neo-python-core build
 - Add Seedlist.rst and update Basicusage.rst for API Servers
-- Adds test for np-prompt using pexpect
+- Add test for np-prompt using pexpect
 - Add getwalletheight RPC call
 - Add support for Peewee 3.6.4
-- Adds support for ``IsPayable`` flag in prompt.
+- Add support for ``IsPayable`` flag in prompt.
 - Fix Block header problems with ``block_import.py`` script
 - Sync GAS price calculations with current Neo core
 - Update bootstrap files for mainnet and testnet

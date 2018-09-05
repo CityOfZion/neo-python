@@ -38,6 +38,8 @@ class ApplicationEngine(ExecutionEngine):
 
     invocation_args = None
 
+    max_free_ops = 500000
+
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
 
@@ -231,6 +233,11 @@ class ApplicationEngine(ExecutionEngine):
 
                 if not self.testMode and self.gas_consumed > self.gas_amount:
                     logger.debug("NOT ENOUGH GAS")
+                    self._VMState |= VMState.FAULT
+                    return False
+
+                if self.testMode and self.ops_processed > self.max_free_ops:
+                    logger.debug("Too many free operations processed")
                     self._VMState |= VMState.FAULT
                     return False
 
