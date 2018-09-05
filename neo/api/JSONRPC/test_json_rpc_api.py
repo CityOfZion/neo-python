@@ -295,8 +295,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # when running only these tests, mempool is empty. when running all tests, there are a
         # number of entries
         if len(mempool) > 0:
-            for entry in mempool:
-                self.assertIn("'net_fee': '0'", entry)
+            self.assertIn("'net_fee': '0'", str(mempool))
 
     def test_get_raw_mempool_priority_tx_only(self):
         req = self._gen_rpc_req("getrawmempoolprioritytxonly", params=[])
@@ -307,8 +306,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # when running only these tests, mempool is empty. when running all tests, there are a
         # number of entries
         if len(mempool) > 0:
-            for entry in mempool:
-                self.assertNotIn("'net_fee': '0'", entry)
+            self.assertNotIn("'net_fee': '0'", str(mempool))
 
     def test_get_version(self):
         # TODO: what's the nonce? on testnet live server response it's always 771199013
