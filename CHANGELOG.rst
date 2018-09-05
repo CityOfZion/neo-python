@@ -14,6 +14,7 @@ All notable changes to this project are documented in this file.
 - Fix issue with opening recently created wallets
 - Fix import_blocks.py block hash caching issue
 - Update prompt.py: add ``account`` to help, update help, update standard completions, add ``config maxpeers`` functionality, update ``configure`` function arguments to behave as intended
+- Update docs ``toctree`` so all pages are indexed & added instructions for contributing to docs
 
 
 [0.7.7] 2018-08-23
