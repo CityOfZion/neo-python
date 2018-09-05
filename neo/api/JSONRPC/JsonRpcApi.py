@@ -233,7 +233,7 @@ class JsonRpcApi:
                 tx, height = Blockchain.Default().GetTransaction(tx_id)
                 if not tx:
                     raise JsonRpcError(-100, "Unknown Transaction")
-                d = self.get_tx_output(tx, height, 1)
+                d = tx.ToJson()
                 transactions.append(d)
                 p += 1
             transactions_length = len(transactions) - 1
@@ -260,7 +260,7 @@ class JsonRpcApi:
                 tx, height = Blockchain.Default().GetTransaction(tx_id)
                 if not tx:
                     raise JsonRpcError(-100, "Unknown Transaction")
-                d = self.get_tx_output(tx, height, 1)
+                d = tx.ToJson()
                 transactions.append(d)
                 p += 1
             transactions_length = len(transactions) - 1
