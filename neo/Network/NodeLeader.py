@@ -130,8 +130,7 @@ class NodeLeader:
         self.peer_check_loop.start(240, now=False)
 
         if settings.ACCEPT_INCOMING_PEERS:
-            endpoint = TCP4ServerEndpoint(reactor, settings.NODE_PORT)
-            endpoint.listen(NeoClientFactory(incoming_client=True))
+            reactor.listenTCP(settings.NODE_PORT, NeoClientFactory(incoming_client=True))
 
     def setBlockReqSizeAndMax(self, breqpart=0, breqmax=0):
         if breqpart > 0 and breqmax > 0 and breqmax > breqpart:

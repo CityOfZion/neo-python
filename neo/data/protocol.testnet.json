@@ -13,7 +13,7 @@
         "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Test168xxxx.tar.gz",
         "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/TestNotif168xxxx.tar.gz",
         "DebugStorage":1,
-        "AcceptIncomingPeers": true
+        "AcceptIncomingPeers": false
 
     },
     "ProtocolConfiguration": {

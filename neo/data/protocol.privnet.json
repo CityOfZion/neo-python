@@ -28,7 +28,7 @@
     "DataDirectoryPath": "Chains/privnet",
     "NotificationDataPath": "Chains/privnet_notif",
     "RPCPort": 20332,
-    "NodePort": 20339,
+    "NodePort": 20333,
     "WsPort": 20334,
     "UriPrefix": [
       "http://*:20332"
@@ -38,6 +38,6 @@
     "BootstrapFile": "",
     "NotificationBootstrapFile": "",
     "DebugStorage": 1,
-    "AcceptIncomingPeers": true
+    "AcceptIncomingPeers": false
   }
 }
