@@ -280,9 +280,9 @@ class JsonRpcApi:
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
-        elif method == "sendfromaddress":
+        elif method == "sendfrom":
             if self.wallet:
-                return self.send_from_address(params)
+                return self.send_from(params)
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
@@ -408,7 +408,7 @@ class JsonRpcApi:
             })
         return result
 
-    def send_from_address(self, params):
+    def send_from(self, params):
         asset, address_to, address_from, amount, fee = self.parse_send_from_params(params)
         standard_contract = self.wallet.GetStandardAddress()
         signer_contract = self.wallet.GetContract(standard_contract)
