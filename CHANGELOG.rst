@@ -298,7 +298,7 @@ All notable changes to this project are documented in this file.
 
 
 
-[0.4.9] 2018-02-21
+[0.4.7] 2018-02-21
 ------------------
 - wallet sync error and password fixes related to encryption changes (`PR #245 <https://github.com/CityOfZion/neo-python/pull/245>`_)
 - import contract_addr and build ... test fixes (`PR #237 <https://github.com/CityOfZion/neo-python/pull/237>`_)
@@ -310,7 +310,7 @@ All notable changes to this project are documented in this file.
 - Bugfix for smart contract storage events (`PR #228 <https://github.com/CityOfZion/neo-python/pull/228>`_)
 
 
-[0.4.8] 2018-02-15
+[0.4.6] 2018-02-15
 ------------------
 
 - Fix Gas Cost Calculation (`PR #220 <https://github.com/CityOfZion/neo-python/pull/220>`_)
@@ -322,7 +322,7 @@ All notable changes to this project are documented in this file.
 - upstream neocore update
 
 
-[0.4.6] 2018-01-24
+[0.4.5] 2018-01-24
 ------------------
 
 - Added support for StateTransaction and StateDescriptors (`PR #193 <https://github.com/CityOfZion/neo-python/pull/193>`_)
@@ -332,7 +332,7 @@ All notable changes to this project are documented in this file.
 - Minor cleanups and documentation updates
 
 
-[0.4.5] 2018-01-18
+[0.4.4] 2018-01-18
 ------------------
 
 - updated ``neo-boa`` to ``0.2.2``, added support for array ``REMOVE`` VM opcodes
@@ -343,14 +343,6 @@ All notable changes to this project are documented in this file.
 - ability to claim GAS from SC address
 - lots of documentation
 - various small bugfixes
-
-
-[0.4.4] 2017-12-21
-------------------
-
-- updated ``neo-boa`` to ``0.2.1``
-- added support for array ``REVERSE`` and ``APPEND`` VM opcodes
-
 
 [0.4.3] 2017-12-21
 ------------------
