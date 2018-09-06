@@ -298,7 +298,7 @@ All notable changes to this project are documented in this file.
 
 
 
-[0.4.8] 2018-02-21
+[0.4.9] 2018-02-21
 ------------------
 - wallet sync error and password fixes related to encryption changes (`PR #245 <https://github.com/CityOfZion/neo-python/pull/245>`_)
 - import contract_addr and build ... test fixes (`PR #237 <https://github.com/CityOfZion/neo-python/pull/237>`_)
@@ -310,7 +310,7 @@ All notable changes to this project are documented in this file.
 - Bugfix for smart contract storage events (`PR #228 <https://github.com/CityOfZion/neo-python/pull/228>`_)
 
 
-[0.4.6] 2018-02-15
+[0.4.8] 2018-02-15
 ------------------
 
 - Fix Gas Cost Calculation (`PR #220 <https://github.com/CityOfZion/neo-python/pull/220>`_)
