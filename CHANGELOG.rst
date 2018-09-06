@@ -345,7 +345,7 @@ All notable changes to this project are documented in this file.
 - various small bugfixes
 
 
-[0.4.3] 2017-12-21
+[0.4.4] 2017-12-21
 ------------------
 
 - updated ``neo-boa`` to ``0.2.1``
