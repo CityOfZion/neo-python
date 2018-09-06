@@ -126,7 +126,7 @@ The solution probably is
 
 
 Install from PyPi
-================
+=================
 
 The easiest way to install ``neo-python`` on your machine is to download it and install from PyPi using ``pip``. First, we recommend you to create a virtual environment in order to isolate this installation from your system directories and then install it as you normally would do:
 
