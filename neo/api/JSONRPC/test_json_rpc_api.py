@@ -615,21 +615,21 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet = None
         os.remove(test_wallet_path)
 
-    def test_send_from_address_no_wallet(self):
-        req = self._gen_rpc_req("sendfromaddress", params=[])
+    def test_send_from_no_wallet(self):
+        req = self._gen_rpc_req("sendfrom", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -400)
         self.assertEqual(error.get('message', None), "Access denied.")
 
-    def test_send_from_address_wrong_arguments(self):
+    def test_send_from_wrong_arguments(self):
         test_wallet_path = os.path.join(mkdtemp(), "sendfromaddress.db3")
         self.app.wallet = UserWallet.Create(
             test_wallet_path,
             to_aes_key('awesomepassword')
         )
-        req = self._gen_rpc_req("sendfromaddress", params=["arg"])
+        req = self._gen_rpc_req("sendfrom", params=["arg"])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
@@ -639,12 +639,12 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet = None
         os.remove(test_wallet_path)
 
-    def test_send_from_address(self):
+    def test_send_from(self):
         self.app.wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "fixtures/testwallet.db3"), to_aes_key("testpassword"))
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'APRgMZHZubii29UXF9uFa6sohrsYupNAvx'
         neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
-        req = self._gen_rpc_req("sendfromaddress", params=[neo_id, address_to, address_from, 1])
+        req = self._gen_rpc_req("sendfrom", params=[neo_id, address_to, address_from, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res.get('jsonrpc', None), '2.0')
