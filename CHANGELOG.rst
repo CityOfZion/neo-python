@@ -223,10 +223,10 @@ All notable changes to this project are documented in this file.
   - move ``prompt.py`` and other scripts to ``neo/bin``
   - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
   - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
-    - ``np-prompt``
-    - ``np-api-server``
-    - ``np-bootstrap``
-    - ``np-reencrypt-wallet``
+     - ``np-prompt``
+     - ``np-api-server``
+     - ``np-bootstrap``
+     - ``np-reencrypt-wallet``
   - updated docs for Pypi changes
 
 
