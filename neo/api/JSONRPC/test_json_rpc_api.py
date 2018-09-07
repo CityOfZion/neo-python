@@ -288,6 +288,12 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertTrue(res["result"]["isvalid"])
 
+        # address with invalid checksum
+        req = self._gen_rpc_req("validateaddress", params=["AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2x"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertFalse(res["result"]["isvalid"])
+
         # example from docs.neo.org
         req = self._gen_rpc_req("validateaddress", params=["152f1muMCNa7goXYhYAQC61hxEgGacmncB"])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
@@ -536,6 +542,23 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(test_wallet_path)
+
+    def test_getbalance_invalid_params(self):
+        test_wallet_path = os.path.join(mkdtemp(), "getbalance.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+
+        # max param length should be one, we provide 2
+        req = self._gen_rpc_req("getbalance", params=[1, 2])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Params should contain 1 id.")
 
     def test_getbalance_token_with_wallet(self):
         test_wallet_path = os.path.join(mkdtemp(), "getbalance.db3")
