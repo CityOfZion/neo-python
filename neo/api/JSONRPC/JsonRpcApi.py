@@ -213,7 +213,7 @@ class JsonRpcApi:
             if diff > 0 and mins > 0:
                 bpm = diff / mins
                 tps = Blockchain.Default().TXProcessed / secs
-            
+
             return {
                 'Progress': [height, "/", headers],
                 'Block-cache length': Blockchain.Default().BlockCacheCount,
