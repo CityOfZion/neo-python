@@ -3,9 +3,13 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.7.9-dev] in progress
+-----------------------
+-
 
-[0.7.8-dev] 2018-xx-xx
-----------------------
+
+[0.7.8] 2018-09-06
+------------------
 - Prefix ``vin`` JSON output format to match C#
 - Update ``neo-boa`` to v0.5.0 for Python 3.7 compatibility
 - Update ``pexpect`` to 4.6.0 to be compatible with Python 3.7
