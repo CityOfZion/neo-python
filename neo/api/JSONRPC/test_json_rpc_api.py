@@ -259,6 +259,14 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown contract')
 
+    def test_node_state(self):
+        req = self._gen_rpc_req("getnodestate", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertGreater(res['result']['Progress'][0], 0)
+        self.assertGreater(res['result']['Progress'][2], 0)
+        self.assertGreater(res['result']['Time elapsed (minutes)'], 0)
+
     def test_get_raw_mempool(self):
         # TODO: currently returns empty list. test with list would be great
         req = self._gen_rpc_req("getrawmempool", params=[])

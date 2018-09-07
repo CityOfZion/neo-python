@@ -7,6 +7,7 @@ See also:
 * http://www.jsonrpc.org/specification
 """
 import json
+import datetime
 import base58
 import binascii
 from json.decoder import JSONDecodeError
@@ -79,6 +80,8 @@ class JsonRpcApi:
     def __init__(self, port, wallet=None):
         self.port = port
         self.wallet = wallet
+        self.start_height = Blockchain.Default().Height
+        self.start_dt = datetime.datetime.utcnow()
 
     def get_data(self, body: dict):
 
@@ -193,6 +196,32 @@ class JsonRpcApi:
             if contract is None:
                 raise JsonRpcError(-100, "Unknown contract")
             return contract.ToJson()
+
+        elif method == "getnodestate":
+            height = Blockchain.Default().Height
+            headers = Blockchain.Default().HeaderHeight
+
+            diff = height - self.start_height
+            now = datetime.datetime.utcnow()
+            difftime = now - self.start_dt
+
+            mins = difftime / datetime.timedelta(minutes=1)
+            secs = mins * 60
+
+            bpm = 0
+            tps = 0
+            if diff > 0 and mins > 0:
+                bpm = diff / mins
+                tps = Blockchain.Default().TXProcessed / secs
+
+            return {
+                'Progress': [height, "/", headers],
+                'Block-cache length': Blockchain.Default().BlockCacheCount,
+                'Blocks since program start': diff,
+                'Time elapsed (minutes)': mins,
+                'Blocks per min': bpm,
+                'TPS': tps
+            }
 
         elif method == "getrawmempool":
             return list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
