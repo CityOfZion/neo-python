@@ -6,6 +6,7 @@ Run only thse tests:
 import json
 import binascii
 import os
+import shutil
 from tempfile import mkdtemp
 from klein.test.test_resource import requestMock
 
@@ -22,7 +23,7 @@ from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import ROOT_INSTALL_PATH
-from neo.Prompt.Commands.tests.test_send_command import UserWalletTestCase
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
 
 def mock_request(body):
@@ -709,10 +710,17 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         os.remove(test_wallet_path)
 
     def test_send_to_address(self):
-        self.app.wallet = UserWalletTestCase.GetWallet1(recreate=True)
-        address = UserWalletTestCase.watch_addr_str
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_rpc_req("sendtoaddress", params=['neo', address, 1])
+        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
@@ -722,4 +730,4 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
         self.app.wallet.Close()
         self.app.wallet = None
-        os.remove(UserWalletTestCase.wallet_1_dest())
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
