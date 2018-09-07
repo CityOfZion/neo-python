@@ -14,6 +14,8 @@ All notable changes to this project are documented in this file.
 - Fix issue with opening recently created wallets
 - Fix import_blocks.py block hash caching issue
 - Update prompt.py: add ``account`` to help, update help, update standard completions, add ``config maxpeers`` functionality, update ``configure`` function arguments to behave as intended
+- Add support for multiple requests in one transaction for JSON-RPC
+- Update docs ``toctree`` so all pages are indexed & added instructions for contributing to docs
 - Add ``getblockfreetxonly``, ``getblockprioritytxonly``, ``getrawmempoolfreetxonly``, and ``getrawmempoolprioritytxonly`` RPC API methods
 
 
