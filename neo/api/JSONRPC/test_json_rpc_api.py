@@ -676,3 +676,67 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # test for success in second valid request
         expected_verbose_hash = '0x0012f8566567a9d7ddf25acb5cf98286c9703297de675d01ba73fbfe6bcb841c'
         self.assertEqual(res[1]['result']['hash'], expected_verbose_hash)
+
+    def test_sendmany_no_wallet(self):
+        req = self._gen_rpc_req("sendmany", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_sendmany_wrong_arguments(self):
+        test_wallet_path = os.path.join(mkdtemp(), "sendfromaddress.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+        req = self._gen_rpc_req("sendmany", params=["arg"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_sendmany_with_changeaddress(self):
+        self.app.wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "fixtures/testwallet.db3"), to_aes_key("testpassword"))
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
+        output = [{"asset": neo_id,
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": neo_id,
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+        self.assertEqual('1', res['result']['net_fee'])
+        self.app.wallet.Close()
+        self.app.wallet = None
+
+    def test_sendmany_min_params(self):
+        self.app.wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "fixtures/testwallet.db3"), to_aes_key("testpassword"))
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
+        output = [{"asset": neo_id,
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": neo_id,
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+        self.assertIn("APRgMZHZubii29UXF9uFa6sohrsYupNAvx", res['result']['vout'][2]['address'])
+        self.app.wallet.Close()
+        self.app.wallet = None
