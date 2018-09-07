@@ -215,12 +215,12 @@ class JsonRpcApi:
                 tps = Blockchain.Default().TXProcessed / secs
             
             return {
-                'Progress': "%s / %s" % (height, headers),
-                'Block-cache length': "%s" % Blockchain.Default().BlockCacheCount,
-                'Blocks since program start': "%s" % diff,
-                'Time elapsed': "%s mins" % mins,
-                'Blocks per min': "%s" % bpm,
-                'TPS': "%s" % tps
+                'Progress': [height, "/", headers],
+                'Block-cache length': Blockchain.Default().BlockCacheCount,
+                'Blocks since program start': diff,
+                'Time elapsed (minutes)': mins,
+                'Blocks per min': bpm,
+                'TPS': tps
             }
 
         elif method == "getrawmempool":
