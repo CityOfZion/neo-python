@@ -6,6 +6,7 @@ Run only thse tests:
 import json
 import binascii
 import os
+import shutil
 from tempfile import mkdtemp
 from klein.test.test_resource import requestMock
 
@@ -22,6 +23,7 @@ from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import ROOT_INSTALL_PATH
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
 
 def mock_request(body):
@@ -702,11 +704,17 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         os.remove(test_wallet_path)
 
     def test_send_from(self):
-        self.app.wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "fixtures/testwallet.db3"), to_aes_key("testpassword"))
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'APRgMZHZubii29UXF9uFa6sohrsYupNAvx'
-        neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
-        req = self._gen_rpc_req("sendfrom", params=[neo_id, address_to, address_from, 1])
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_to, address_from, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res.get('jsonrpc', None), '2.0')
@@ -714,3 +722,4 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertIn('vin', res.get('result', {}).keys())
         self.app.wallet.Close()
         self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
