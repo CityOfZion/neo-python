@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.9-dev] in progress
 -----------------------
--
+- Add `getnodestate` RPC method
 
 
 [0.7.8] 2018-09-06
