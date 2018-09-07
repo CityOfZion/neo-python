@@ -6,6 +6,7 @@ Run only thse tests:
 import json
 import binascii
 import os
+import shutil
 from tempfile import mkdtemp
 from klein.test.test_resource import requestMock
 
@@ -22,6 +23,7 @@ from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import ROOT_INSTALL_PATH
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
 
 def mock_request(body):
@@ -702,13 +704,19 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         os.remove(test_wallet_path)
 
     def test_sendmany_with_changeaddress(self):
-        self.app.wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "fixtures/testwallet.db3"), to_aes_key("testpassword"))
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
-        neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
-        output = [{"asset": neo_id,
+        output = [{"asset": 'neo',
                    "value": 1,
                    "address": address_to},
-                  {"asset": neo_id,
+                  {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
         req = self._gen_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
@@ -720,15 +728,22 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual('1', res['result']['net_fee'])
         self.app.wallet.Close()
         self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
 
     def test_sendmany_min_params(self):
-        self.app.wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "fixtures/testwallet.db3"), to_aes_key("testpassword"))
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
-        neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
-        output = [{"asset": neo_id,
+        output = [{"asset": 'neo',
                    "value": 1,
                    "address": address_to},
-                  {"asset": neo_id,
+                  {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
         req = self._gen_rpc_req("sendmany", params=[output])
@@ -740,3 +755,4 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertIn("APRgMZHZubii29UXF9uFa6sohrsYupNAvx", res['result']['vout'][2]['address'])
         self.app.wallet.Close()
         self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
