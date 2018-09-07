@@ -80,19 +80,9 @@ class JsonRpcApi:
         self.port = port
         self.wallet = wallet
 
-    #
-    # JSON-RPC API Route
-    #
-    @app.route('/')
-    @json_response
-    @cors_header
-    def home(self, request):
-        # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
-        body = None
-        request_id = None
+    def get_data(self, body: dict):
 
         try:
-            body = json.loads(request.content.read().decode("utf-8"))
             request_id = body["id"] if body and "id" in body else None
 
             if "jsonrpc" not in body or body["jsonrpc"] != "2.0":
@@ -112,15 +102,40 @@ class JsonRpcApi:
                 "result": result
             }
 
-        except JSONDecodeError as e:
-            error = JsonRpcError.parseError()
-            return self.get_custom_error_payload(request_id, error.code, error.message)
-
         except JsonRpcError as e:
             return self.get_custom_error_payload(request_id, e.code, e.message)
 
         except Exception as e:
             error = JsonRpcError.internalError(str(e))
+            return self.get_custom_error_payload(request_id, error.code, error.message)
+
+    #
+    # JSON-RPC API Route
+    #
+    @app.route('/')
+    @json_response
+    @cors_header
+    def home(self, request):
+        # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
+        # or multiple requests in 1 transaction
+        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10], {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}
+        request_id = None
+
+        try:
+            content = json.loads(request.content.read().decode("utf-8"))
+
+            # test if it's a multi-request message
+            if isinstance(content, list):
+                result = []
+                for body in content:
+                    result.append(self.get_data(body))
+                return result
+
+            # otherwise it's a single request
+            return self.get_data(content)
+
+        except JSONDecodeError as e:
+            error = JsonRpcError.parseError()
             return self.get_custom_error_payload(request_id, error.code, error.message)
 
     def json_rpc_method_handler(self, method, params):
@@ -238,9 +253,6 @@ class JsonRpcApi:
             transaction = Transaction.DeserializeFromBufer(tx_script)
             result = NodeLeader.Instance().Relay(transaction)
             return result
-
-        elif method == "submitblock":
-            raise NotImplementedError()
 
         elif method == "validateaddress":
             return self.validateaddress(params)
