@@ -34,7 +34,9 @@ class InvPayload(SerializableMixin):
         Returns:
             int: size.
         """
-        corrected_hashes = list(map(lambda i: UInt256(data=binascii.unhexlify(i)), self.Hashes))
+        if len(self.Hashes) > 0:
+            if not isinstance(self.Hashes[0], UInt256):
+                corrected_hashes = list(map(lambda i: UInt256(data=binascii.unhexlify(i)), self.Hashes))
         return s.uint8 + GetVarSize(corrected_hashes)
 
     def Deserialize(self, reader):

@@ -58,7 +58,7 @@ def GetVarSize(value):
                 # because I don't think we have a reliable 'SizeOf' in python
                 value_size = value_length * Size.uint8
             else:
-                raise Exception("Can not accurately determine size of objects that do not inherit from 'SerializableMixin' or 'Enum'")
+                raise Exception("Can not accurately determine size of objects that do not inherit from 'SerializableMixin', 'Enum' or 'bytes'. Found type: {}".format(type(value[0])))
 
     else:
         raise Exception("[NOT SUPPORTED] Unexpected value type {} for GetVarSize()".format(type(value)))

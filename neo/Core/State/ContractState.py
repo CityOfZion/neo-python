@@ -203,7 +203,8 @@ class ContractState(StateBase):
             'description': self.Description.decode('utf-8'),
             'properties': {
                 'storage': self.HasStorage,
-                'dynamic_invoke': self.HasDynamicInvoke
+                'dynamic_invoke': self.HasDynamicInvoke,
+                'payable': self.Payable
             }
         }
 

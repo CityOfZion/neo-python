@@ -25,7 +25,7 @@ class Block(BlockBase, InventoryMixin):
     #  该区块的区块头
     #  < / summary >
 
-    __header = None
+    _header = None
 
     __is_trimmed = False
     #  < summary >
@@ -106,11 +106,11 @@ class Block(BlockBase, InventoryMixin):
         Returns:
             neo.Core.Header:
         """
-        if not self.__header:
-            self.__header = Header(self.PrevHash, self.MerkleRoot, self.Timestamp,
-                                   self.Index, self.ConsensusData, self.NextConsensus, self.Script)
+        if not self._header:
+            self._header = Header(self.PrevHash, self.MerkleRoot, self.Timestamp,
+                                  self.Index, self.ConsensusData, self.NextConsensus, self.Script)
 
-        return self.__header
+        return self._header
 
     def Size(self):
         """
@@ -212,7 +212,15 @@ class Block(BlockBase, InventoryMixin):
         witness.Deserialize(reader)
         block.Script = witness
 
-        block.Transactions = reader.ReadHashes()
+        bc = GetBlockchain()
+        tx_list = []
+        for tx_hash in reader.ReadHashes():
+            tx = bc.GetTransaction(tx_hash)[0]
+            if not tx:
+                raise Exception("Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
+            tx_list.append(tx)
+
+        block.Transactions = tx_list
 
         StreamManager.ReleaseStream(ms)
 

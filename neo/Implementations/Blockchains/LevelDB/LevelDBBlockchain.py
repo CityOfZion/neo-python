@@ -34,7 +34,6 @@ from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
-
 from prompt_toolkit import prompt
 
 
@@ -111,7 +110,7 @@ class LevelDBBlockchain(Blockchain):
 
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)
-        #            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
+            #            self._db = plyvel.DB(self._path, create_if_missing=True, bloom_filter_bits=16, compression=None)
             logger.info("Created Blockchain DB at %s " % self._path)
         except Exception as e:
             logger.info("leveldb unavailable, you may already be running this process: %s " % e)
@@ -449,6 +448,8 @@ class LevelDBBlockchain(Blockchain):
         return True if tx is not None else False
 
     def GetHeader(self, hash):
+        if isinstance(hash, UInt256):
+            hash = hash.ToString().encode()
 
         try:
             out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
@@ -551,7 +552,11 @@ class LevelDBBlockchain(Blockchain):
             pass
 
         if intval is None and len(height_or_hash) == 64:
-            bhash = height_or_hash.encode('utf-8')
+            if isinstance(height_or_hash, str):
+                bhash = height_or_hash.encode('utf-8')
+            else:
+                bhash = height_or_hash
+
             if bhash in self._header_index:
                 hash = bhash
         elif intval is None and len(height_or_hash) == 66:
@@ -577,7 +582,12 @@ class LevelDBBlockchain(Blockchain):
         return None
 
     def GetNextBlockHash(self, hash):
-        header = self.GetHeader(hash.ToBytes())
+        if isinstance(hash, (UInt256, bytes)):
+            header = self.GetHeader(hash)
+        else:
+            # unclear why this branch exists
+            header = self.GetHeader(hash.ToBytes())
+
         if header:
             if header.Index + 1 >= len(self._header_index):
                 return None

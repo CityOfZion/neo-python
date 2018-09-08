@@ -4,7 +4,6 @@ import binascii
 from logzero import logger
 from playhouse.migrate import SqliteMigrator, BooleanField, migrate
 from .PWDatabase import PWDatabase
-
 from neo.Wallets.Wallet import Wallet
 from neo.Wallets.Coin import Coin as WalletCoin
 from neo.SmartContract.Contract import Contract as WalletContract
@@ -89,7 +88,7 @@ class UserWallet(Wallet):
         self._db = PWDatabase(self._path).DB
         try:
             self._db.create_tables([Account, Address, Coin, Contract, Key, NEP5Token, VINHold,
-                                    Transaction, TransactionInfo, NamedAddress], safe=True)
+                                    Transaction, TransactionInfo, NamedAddress])
         except Exception as e:
             logger.error("Could not build database %s %s " % (e, self._path))
 
@@ -326,7 +325,6 @@ class UserWallet(Wallet):
         return tokens
 
     def LoadStoredData(self, key):
-        logger.debug("Looking for key %s " % key)
         try:
             return Key.get(Name=key).Value
         except Exception as e:
@@ -356,13 +354,12 @@ class UserWallet(Wallet):
         try:
             k = Key.get(Name=key)
             k.Value = value
+            k.save()
         except Exception as e:
             pass
 
         if k is None:
             k = Key.create(Name=key, Value=value)
-
-        k.save()
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
         for tx in block.FullTransactions:
