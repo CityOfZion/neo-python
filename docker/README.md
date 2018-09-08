@@ -1,7 +1,7 @@
 This directory contains various Docker related utilities.
 
-* `Dockerfile.master` -- a Dockerfile to build neo-python's master branch
-* `Dockerfile.dev` -- a Dockerfile to build neo-python's development branch
+* `Dockerfile` -- a Dockerfile to build neo-python's (Ubuntu Linux distribution)
+* `Dockerfile.Alpine` -- a Dockerfile to build neo-python's (Alpine Linux distribution)
 * `docker-compose-neoscan.yml` -- a Docker compose file to start a private network and a neoscan container
 
 ---
