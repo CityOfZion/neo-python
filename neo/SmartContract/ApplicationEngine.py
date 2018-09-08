@@ -3,7 +3,7 @@ from logzero import logger
 
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.OpCode import CALL, APPCALL, CHECKSIG, HASH160, HASH256, NOP, SHA1, SHA256, DEPTH, DUP, PACK, TUCK, OVER, \
-    SYSCALL, TAILCALL, NEWARRAY, NEWSTRUCT, PUSH16, UNPACK, CAT, CHECKMULTISIG, PUSHDATA4
+    SYSCALL, TAILCALL, NEWARRAY, NEWSTRUCT, PUSH16, UNPACK, CAT, CHECKMULTISIG, PUSHDATA4, VERIFY
 from neo.VM import VMState
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
@@ -37,6 +37,8 @@ class ApplicationEngine(ExecutionEngine):
     Trigger = None
 
     invocation_args = None
+
+    max_free_ops = 500000
 
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
@@ -234,6 +236,11 @@ class ApplicationEngine(ExecutionEngine):
                     self._VMState |= VMState.FAULT
                     return False
 
+                if self.testMode and self.ops_processed > self.max_free_ops:
+                    logger.debug("Too many free operations processed")
+                    self._VMState |= VMState.FAULT
+                    return False
+
                 if not self.CheckItemSize():
                     logger.debug("ITEM SIZE TOO BIG")
                     self._VMState |= VMState.FAULT
@@ -290,12 +297,17 @@ class ApplicationEngine(ExecutionEngine):
             return 10
         elif opcode == HASH160 or opcode == HASH256:
             return 20
-        elif opcode == CHECKSIG:
+        elif opcode in [CHECKSIG, VERIFY]:
             return 100
         elif opcode == CHECKMULTISIG:
             if self.EvaluationStack.Count == 0:
                 return 1
-            n = self.EvaluationStack.Peek().GetBigInteger()
+            item = self.EvaluationStack.Peek()
+
+            if isinstance(item, Array):
+                n = item.Count
+            else:
+                n = item.GetBigInteger()
 
             if n < 1:
                 return 1

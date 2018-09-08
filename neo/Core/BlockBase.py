@@ -117,6 +117,7 @@ class BlockBase(VerifiableMixin):
         Args:
             reader (neo.IO.BinaryReader):
         """
+        self.__hash = None
         self.DeserializeUnsigned(reader)
         byt = reader.ReadByte()
         if int(byt) != 1:

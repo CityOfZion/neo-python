@@ -46,8 +46,16 @@ Take a look at the examples in the ``/examples`` directory: https://github.com/C
 See also the sections about "Settings and Logging" and "Interacting with Smart Contracts".
 
 
-Api server ( JSON and/or REST)
+API server (JSON and/or REST)
 """"""""""""""""""""""""""""""
+
+Start JSON and REST API Server on Mainnet:
+
+::
+
+    $ np-api-server --mainnet --port-rpc 10332 --port-rest 80
+
+Example notifications plus help with all available arguments:
 
 ::
 
@@ -66,27 +74,58 @@ Api server ( JSON and/or REST)
                      [--port-rpc PORT_RPC] [--port-rest PORT_REST]
                      [--logfile LOGFILE] [--syslog] [--syslog-local [0-7]]
                      [--disable-stderr] [--datadir DATADIR]
+                     [--maxpeers MAXPEERS] [--wallet WALLET] [--host HOST]
 
-  optional arguments:
+    optional arguments:
     -h, --help            show this help message and exit
     --datadir DATADIR     Absolute path to use for database directories
+    --maxpeers MAXPEERS   Max peers to use for P2P Joining
+    --wallet WALLET       Open wallet. Will allow you to use methods that
+                          require an open wallet
+    --host HOST           Hostname ( for example 127.0.0.1)
 
-  Network options:
+    Network options:
     --mainnet             Use MainNet
     --testnet             Use TestNet
     --privnet             Use PrivNet
     --coznet              Use CozNet
     --config CONFIG       Use a specific config file
 
-  Mode(s):
-    --port-rpc PORT_RPC   port to use for the json-rpc api (eg. 10332)
-    --port-rest PORT_REST
-                          port to use for the rest api (eg. 80)
+    Mode(s):
+    --port-rpc PORT_RPC     port to use for the json-rpc api (eg. 10332)
+    --port-rest PORT_REST   port to use for the rest api (eg. 80)
 
-  Logging options:
+    Logging options:
     --logfile LOGFILE     Logfile
     --syslog              Log to syslog instead of to log file ('user' is the
                           default facility)
     --syslog-local [0-7]  Log to a local syslog facility instead of 'user'.
                           Value must be between 0 and 7 (e.g. 0 for 'local0').
     --disable-stderr      Disable stderr logger
+
+
+Port Description
+""""""""""""""""""""""""""""""
+
+If you want an external program to access your API server, an open firewall port is required. The following is a port description that can be set to fully open or open-on-demand.
+
+.. list-table:: Port Description
+   :widths: 20 10 10
+   :header-rows: 1
+   
+   * - 
+     - Main Net
+     - Test Net
+   * - JSON-RPC via HTTPS
+     - 10331
+     - 20331
+   * - JSON-RPC via HTTP 
+     - 10332 
+     - 20332
+
+
+Running an API Server using Windows WSL (Ubuntu)
+""""""""""""""""""""""""""""""""""""""""""""""""
+
+If you are running neo-python on Windows WSL (Ubuntu), opening the respective ports on your router is not enough.
+You will need to add a new inbound rule to your Windows Firewall as described `here <https://www.nextofwindows.com/allow-server-running-inside-wsl-to-be-accessible-outside-windows-10-host>`_.
