@@ -344,6 +344,9 @@ class NeoNode(Protocol):
         """Process response of `self.RequestPeerInfo`."""
         addrs = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.AddrPayload.AddrPayload')
 
+        if not addrs:
+            return
+
         for index, nawt in enumerate(addrs.NetworkAddressesWithTime):
             self.leader.RemoteNodePeerReceived(nawt.Address, nawt.Port, index)
 
@@ -383,6 +386,9 @@ class NeoNode(Protocol):
         """Process the response of `self.RequestVersion`."""
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
 
+        if not self.Version:
+            return
+
         if self.incoming_client:
             if self.Version.Nonce == self.nodeid:
                 self.Disconnect()
@@ -409,6 +415,8 @@ class NeoNode(Protocol):
             return
 
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
+        if not inventory:
+            return
 
         if inventory.Type == InventoryType.BlockInt:
 
@@ -471,6 +479,8 @@ class NeoNode(Protocol):
             inventory (neo.Network.Inventory):
         """
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
+        if not block:
+            return
 
         blockhash = block.Hash.ToBytes()
         if blockhash in BC.Default().BlockRequests:
@@ -523,6 +533,8 @@ class NeoNode(Protocol):
             payload (neo.Network.Inventory):
         """
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
+        if not inventory:
+            return
 
         for hash in inventory.Hashes:
             hash = hash.encode('utf-8')
@@ -564,6 +576,8 @@ class NeoNode(Protocol):
             return
 
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload')
+        if not inventory:
+            return
 
         blockchain = BC.Default()
         hash = inventory.HashStart[0]
