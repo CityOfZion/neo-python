@@ -934,10 +934,11 @@ class ExecutionEngine:
                 return self.VM_FAULT_and_report(VMFault.UNKNOWN_OPCODE, opcode)
 
         if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
-            if len(self.CurrentContext.Breakpoints):
-                if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
-                    self._vm_debugger = VMDebugger(self)
-                    self._vm_debugger.start()
+            # if len(self.CurrentContext.Breakpoints):
+            #     if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
+            #         self._vm_debugger = VMDebugger(self)
+            #         self._vm_debugger.start()
+            pass
 
     def LoadScript(self, script, rvcount=-1):
 
@@ -945,7 +946,7 @@ class ExecutionEngine:
 
         # if self._debug_map and context.ScriptHash() == self._debug_map['script_hash']:
         #     context.Breakpoints = set(self._debug_map['breakpoints'])
-        # 
+        #
         self._InvocationStack.PushT(context)
         return context
 

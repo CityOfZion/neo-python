@@ -96,7 +96,7 @@ class Blockchain:
                                    amount, precision, owner, admin)
 
     @staticmethod
-    def GenesisBlock():
+    def GenesisBlock() -> Block:
         """
         Create the GenesisBlock.
 
@@ -128,7 +128,7 @@ class Blockchain:
                      True)
 
     @staticmethod
-    def Default():
+    def Default() -> 'Blockchain':
         """
         Get the default registered blockchain instance.
 
@@ -221,8 +221,7 @@ class Blockchain:
                 continue
 
             for coinref in group:
-                if coinref.PrevIndex >= len(tx.outputs) or tx.outputs[
-                        coinref.PrevIndex].AssetId != Blockchain.SystemShare().Hash:
+                if coinref.PrevIndex >= len(tx.outputs) or tx.outputs[coinref.PrevIndex].AssetId != Blockchain.SystemShare().Hash:
                     raise Exception("Invalid coin reference")
                 spent_coin = SpentCoin(output=tx.outputs[coinref.PrevIndex], start_height=height_start,
                                        end_height=height_end)

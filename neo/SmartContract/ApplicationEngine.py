@@ -1,10 +1,12 @@
 import binascii
 from logzero import logger
 
+from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.OpCode import CALL, APPCALL, CHECKSIG, HASH160, HASH256, NOP, SHA1, SHA256, DEPTH, DUP, PACK, TUCK, OVER, \
-    SYSCALL, TAILCALL, NEWARRAY, NEWSTRUCT, PUSH16, UNPACK, CAT, CHECKMULTISIG, PUSHDATA4, VERIFY
+    SYSCALL, TAILCALL, NEWARRAY, NEWSTRUCT, PUSH16, UNPACK, CAT, CHECKMULTISIG, PUSHDATA4, VERIFY, SETITEM, APPEND, NEWMAP
 from neo.VM import VMState
+from neo.VM.InteropService import CollectionMixin, Map, Array
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
 
@@ -27,7 +29,6 @@ from neo.Settings import settings
 
 
 class ApplicationEngine(ExecutionEngine):
-
     ratio = 100000
     gas_free = 10 * 100000000
     gas_amount = 0
@@ -39,6 +40,8 @@ class ApplicationEngine(ExecutionEngine):
     invocation_args = None
 
     max_free_ops = 500000
+
+    maxItemSize = 1024 * 1024
 
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
@@ -56,22 +59,41 @@ class ApplicationEngine(ExecutionEngine):
         maxArraySize = 1024
         cx = self.CurrentContext
 
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
-
         opcode = cx.NextInstruction
 
         if opcode in [PACK, NEWARRAY, NEWSTRUCT]:
+            if cx.EvaluationStack.Count == 0:
+                return False
+            size = cx.EvaluationStack.Peek().GetBigInteger()
 
-            size = self.EvaluationStack.Peek().GetBigInteger()
-
-            if size > maxArraySize:
-                logger.error("ARRAY SIZE TOO BIG!!!")
+        elif opcode == SETITEM:
+            if cx.EvaluationStack.Count < 3:
                 return False
 
+            map = cx.EvaluationStack.Peek(2)
+            if not isinstance(map, Map):
+                return True
+
+            key = cx.EvaluationStack.Peek(1)
+            if isinstance(key, CollectionMixin):
+                return False
+
+            if map.ContainsKey(key):
+                return True
+            size = map.Count + 1
+
+        elif opcode == APPEND:
+            if cx.EvaluationStack.Count < 2:
+                return False
+
+            collection: Array = cx.EvaluationStack.Peek(1)
+            if isinstance(collection, Array):
+                return False
+            size = collection.Count + 1
+        else:
             return True
 
-        return True
+        return size <= maxArraySize
 
     def CheckInvocationStack(self):
 
@@ -94,12 +116,7 @@ class ApplicationEngine(ExecutionEngine):
 
     def CheckItemSize(self):
 
-        maxItemSize = 1024 * 1024
         cx = self.CurrentContext
-
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
-
         opcode = cx.NextInstruction
 
         if opcode == PUSHDATA4:
@@ -113,7 +130,7 @@ class ApplicationEngine(ExecutionEngine):
             lengthpointer = cx.Script[position:position + 4]
             length = int.from_bytes(lengthpointer, 'little')
 
-            if length > maxItemSize:
+            if length > self.maxItemSize:
                 logger.error("ITEM IS GREATER THAN MAX ITEM SIZE!")
                 return False
 
@@ -121,19 +138,19 @@ class ApplicationEngine(ExecutionEngine):
 
         elif opcode == CAT:
 
-            if self.EvaluationStack.Count < 2:
+            if cx.EvaluationStack.Count < 2:
                 logger.error("NOT ENOUGH ITEMS TO CONCAT")
                 return False
 
             length = 0
 
             try:
-                length = len(self.EvaluationStack.Peek(0).GetByteArray()) + len(self.EvaluationStack.Peek(1).GetByteArray())
+                length = len(cx.EvaluationStack.Peek(0).GetByteArray()) + len(cx.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
                 logger.error("COULD NOT GET STR LENGTH!")
                 raise e
 
-            if length > maxItemSize:
+            if length > self.maxItemSize:
                 logger.error("ITEM IS GREATER THAN MAX SIZE!!!")
                 return False
 
@@ -144,26 +161,18 @@ class ApplicationEngine(ExecutionEngine):
     def CheckStackSize(self):
 
         maxStackSize = 2 * 1024
-        cx = self.CurrentContext
-
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
 
         size = 0
-
+        cx = self.CurrentContext
         opcode = cx.NextInstruction
 
         if opcode < PUSH16:
             size = 1
-
         else:
-
-            if opcode in [DEPTH, DUP, OVER, TUCK]:
+            if opcode in [DEPTH, DUP, OVER, TUCK, NEWMAP]:
                 size = 1
-
             elif opcode == UNPACK:
-
-                item = self.EvaluationStack.Peek()
+                item = cx.EvaluationStack.Peek()
 
                 if not item.IsArray:
                     logger.error("ITEM NOT ARRAY:")
@@ -174,7 +183,8 @@ class ApplicationEngine(ExecutionEngine):
         if size == 0:
             return True
 
-        size += self.EvaluationStack.Count + self.AltStack.Count
+        for execution_context in self.InvocationStack.Items:
+            size += execution_context.EvaluationStack.Count + execution_context.AltStack.Count
 
         if size > maxStackSize:
             logger.error("SIZE IS OVER MAX STACK SIZE!!!!")
@@ -279,9 +289,6 @@ class ApplicationEngine(ExecutionEngine):
 
     def GetPrice(self):
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
-            return 0
-
         opcode = self.CurrentContext.NextInstruction
 
         if opcode <= PUSH16:
@@ -289,21 +296,21 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == NOP:
             return 0
-        elif opcode == APPCALL or opcode == TAILCALL:
+        elif opcode in [APPCALL, TAILCALL]:
             return 10
         elif opcode == SYSCALL:
             return self.GetPriceForSysCall()
-        elif opcode == SHA1 or opcode == SHA256:
+        elif opcode in [SHA1, SHA256]:
             return 10
-        elif opcode == HASH160 or opcode == HASH256:
+        elif opcode in [HASH160, HASH256]:
             return 20
-        elif opcode in [CHECKSIG, VERIFY]:
+        elif opcode == CHECKSIG:
             return 100
         elif opcode == CHECKMULTISIG:
-            if self.EvaluationStack.Count == 0:
+            if self.CurrentContext.EvaluationStack.Count == 0:
                 return 1
-            item = self.EvaluationStack.Peek()
 
+            item = self.CurrentContext.EvaluationStack.Peek()
             if isinstance(item, Array):
                 n = item.Count
             else:
@@ -314,7 +321,8 @@ class ApplicationEngine(ExecutionEngine):
 
             return 100 * n
 
-        return 1
+        else:
+            return 1
 
     def GetPriceForSysCall(self):
 
@@ -376,13 +384,13 @@ class ApplicationEngine(ExecutionEngine):
             return int(5000 * 100000000 / self.ratio)
 
         elif api == "Neo.Asset.Renew":
-            return int(self.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio)
+            return int(self.CurrentContext.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio)
 
         elif api == "Neo.Contract.Create" or api == "Neo.Contract.Migrate":
 
             fee = int(100 * 100000000 / self.ratio)  # 100 gas for contract with no storage no dynamic invoke
 
-            contract_properties = self.EvaluationStack.Peek(3).GetBigInteger()
+            contract_properties = self.CurrentContext.EvaluationStack.Peek(3).GetBigInteger()
 
             if contract_properties & ContractPropertyState.HasStorage > 0:
                 fee += int(400 * 100000000 / self.ratio)  # if contract has storage, we add 400 gas
@@ -396,8 +404,8 @@ class ApplicationEngine(ExecutionEngine):
             return 100
 
         elif api == "Neo.Storage.Put":
-            l1 = len(self.EvaluationStack.Peek(1).GetByteArray())
-            l2 = len(self.EvaluationStack.Peek(2).GetByteArray())
+            l1 = len(self.CurrentContext.EvaluationStack.Peek(1).GetByteArray())
+            l2 = len(self.CurrentContext.EvaluationStack.Peek(2).GetByteArray())
             return (int((l1 + l2 - 1) / 1024) + 1) * 1000
 
         elif api == "Neo.Storage.Delete":
@@ -446,7 +454,7 @@ class ApplicationEngine(ExecutionEngine):
 
         script = binascii.unhexlify(script)
 
-        engine.LoadScript(script, False)
+        engine.LoadScript(script)
 
         try:
             success = engine.Execute()

@@ -68,7 +68,7 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
             relayed = False
 
-#            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
+            #            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
 
             relayed = NodeLeader.Instance().Relay(wallet_tx)
 
@@ -91,7 +91,6 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
 
 def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invoke_attrs=None):
-
     wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
 
     if wallet_tx:
@@ -149,7 +148,6 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
 def TestInvokeContract(wallet, args, withdrawal_tx=None,
                        parse_params=True, from_addr=None,
                        min_fee=DEFAULT_MIN_FEE, invoke_attrs=None, owners=None):
-
     BC = GetBlockchain()
 
     contract = BC.GetContract(args[0])
@@ -206,7 +204,6 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
         outputs = []
 
         if neo_to_attach:
-
             output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash,
                                        Value=neo_to_attach,
                                        script_hash=contract.Code.ScriptHash(),
@@ -214,7 +211,6 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
             outputs.append(output)
 
         if gas_to_attach:
-
             output = TransactionOutput(AssetId=Blockchain.SystemCoin().Hash,
                                        Value=gas_to_attach,
                                        script_hash=contract.Code.ScriptHash())
@@ -372,7 +368,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
 
-            return wallet_tx, net_fee, engine.EvaluationStack.Items, engine.ops_processed
+            return wallet_tx, net_fee, engine.CurrentContext.EvaluationStack.Items, engine.ops_processed
 
         # this allows you to to test invocations that fail
         else:
@@ -447,7 +443,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
     if d_success:
 
-        items = engine.EvaluationStack.Items
+        items = engine.CurrentContext.EvaluationStack.Items
 
         contract_state = None
         for i in items:
@@ -596,7 +592,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             # set the amount of gas the tx will need
             itx.Gas = consumed
             itx.Attributes = []
-            result = engine.EvaluationStack.Items
+            result = engine.CurrentContext.EvaluationStack.Items
             return itx, result, total_ops, engine
         else:
             print("error executing invoke contract...")

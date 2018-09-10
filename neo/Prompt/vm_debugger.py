@@ -11,7 +11,6 @@ from logzero import logger
 
 
 class DebugContext:
-
     start = None
     end = None
     line = None
@@ -78,7 +77,6 @@ class DebugContext:
 
 
 class VMDebugger:
-
     engine = None
     parser = None
 
@@ -100,7 +98,7 @@ class VMDebugger:
     def start(self):
 
         self.continue_debug = True
-#        pprint.pprint(self.debug_map)
+        #        pprint.pprint(self.debug_map)
 
         dbg_title = self.debug_map['avm']['name']
         print("\n")
@@ -128,8 +126,8 @@ class VMDebugger:
                     self.continue_debug = False
 
                 elif command == 'estack':
-                    if len(self.engine.EvaluationStack.Items):
-                        for item in self.engine.EvaluationStack.Items:
+                    if len(self.engine.CurrentContext.EvaluationStack.Items):
+                        for item in self.engine.CurrentContext.EvaluationStack.Items:
                             print(ContractParameter.ToParameter(item).ToJson())
                     else:
                         print("Evaluation stack empty")

@@ -16,6 +16,7 @@ from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neocore.Fixed8 import Fixed8
 from neo.VM.InteropService import StackItem
+from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
@@ -100,11 +101,11 @@ class StateMachine(StateReader):
     def Deprecated_Method(self, engine):
         logger.debug("Method No Longer operational")
 
-    def Asset_Create(self, engine):
+    def Asset_Create(self, engine: ExecutionEngine):
 
         tx = engine.ScriptContainer
 
-        asset_type = int(engine.EvaluationStack.Pop().GetBigInteger())
+        asset_type = int(engine.CurrentContext.EvaluationStack.Pop().GetBigInteger())
 
         if asset_type not in AssetType.AllTypes() or \
                 asset_type == AssetType.CreditFlag or \
@@ -113,12 +114,12 @@ class StateMachine(StateReader):
                 asset_type == AssetType.UtilityToken:
             return False
 
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 1024:
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 1024:
             return False
 
-        name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+        name = engine.CurrentContext.EvaluationStack.Pop().GetByteArray().decode('utf-8')
 
-        amount = Fixed8(engine.EvaluationStack.Pop().GetBigInteger())
+        amount = Fixed8(engine.CurrentContext.EvaluationStack.Pop().GetBigInteger())
 
         if amount == Fixed8.Zero() or amount < Fixed8.NegativeSatoshi():
             return False
@@ -126,7 +127,7 @@ class StateMachine(StateReader):
         if asset_type == AssetType.Invoice and amount != Fixed8.NegativeSatoshi():
             return False
 
-        precision = int(engine.EvaluationStack.Pop().GetBigInteger())
+        precision = int(engine.CurrentContext.EvaluationStack.Pop().GetBigInteger())
 
         if precision > 8:
             return False
@@ -137,7 +138,7 @@ class StateMachine(StateReader):
         if amount != Fixed8.NegativeSatoshi() and amount.value % pow(10, 8 - precision) != 0:
             return False
 
-        ownerData = engine.EvaluationStack.Pop().GetByteArray()
+        ownerData = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
         owner = ECDSA.decode_secp256r1(ownerData, unhex=False).G
 
@@ -148,9 +149,9 @@ class StateMachine(StateReader):
             logger.error("check witness false...")
             return False
 
-        admin = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
+        admin = UInt160(data=engine.CurrentContext.EvaluationStack.Pop().GetByteArray())
 
-        issuer = UInt160(data=engine.EvaluationStack.Pop().GetByteArray())
+        issuer = UInt160(data=engine.CurrentContext.EvaluationStack.Pop().GetByteArray())
 
         new_asset = AssetState(
             asset_id=tx.Hash, asset_type=asset_type, name=name, amount=amount,
@@ -164,18 +165,18 @@ class StateMachine(StateReader):
         # print("*****************************************************")
         # print("CREATED ASSET %s " % tx.Hash.ToBytes())
         # print("*****************************************************")
-        engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
+        engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
         return True
 
-    def Asset_Renew(self, engine):
+    def Asset_Renew(self, engine: ExecutionEngine):
 
-        current_asset = engine.EvaluationStack.Pop().GetInterface()
+        current_asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
 
         if current_asset is None:
             return False
 
-        years = engine.EvaluationStack.Pop().GetBigInteger()
+        years = engine.CurrentContext.EvaluationStack.Pop().GetBigInteger()
 
         asset = self._assets.GetAndChange(current_asset.AssetId.ToBytes())
 
@@ -191,52 +192,46 @@ class StateMachine(StateReader):
 
             asset.Expiration = sys.maxsize
 
-        # tx = engine.ScriptContainer
-        # print("*****************************************************")
-        # print("Renewed ASSET %s " % tx.Hash.ToBytes())
-        # print("*****************************************************")
-        engine.EvaluationStack.PushT(StackItem.FromInterface(asset))
+        # does not seem to happen in C#
+        # engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
-        engine.EvaluationStack.PushT(asset.Expiration)
+        engine.CurrentContext.EvaluationStack.PushT(asset.Expiration)
 
         return True
 
-    def Contract_Create(self, engine):
+    def Contract_Create(self, engine: ExecutionEngine):
 
-        script = engine.EvaluationStack.Pop().GetByteArray()
+        script = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
         if len(script) > 1024 * 1024:
             return False
 
-        param_list = engine.EvaluationStack.Pop().GetByteArray()
+        param_list = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
         if len(param_list) > 252:
             return False
+        return_type = int(engine.CurrentContext.EvaluationStack.Pop().GetBigInteger())
+        contract_properties = int(engine.CurrentContext.EvaluationStack.Pop().GetBigInteger())
 
-        return_type = int(engine.EvaluationStack.Pop().GetBigInteger())
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        name = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
-        contract_properties = int(engine.EvaluationStack.Pop().GetBigInteger())
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        code_version = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        author = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
+
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
+            return False
+        email = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
+
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 65536:
             return False
 
-        name = engine.EvaluationStack.Pop().GetByteArray()
-
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
-            return False
-        code_version = engine.EvaluationStack.Pop().GetByteArray()
-
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
-            return False
-        author = engine.EvaluationStack.Pop().GetByteArray()
-
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
-            return False
-        email = engine.EvaluationStack.Pop().GetByteArray()
-
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 65536:
-            return False
-
-        description = engine.EvaluationStack.Pop().GetByteArray()
+        description = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
         hash = Crypto.ToScriptHash(script, unhex=False)
 
@@ -251,7 +246,7 @@ class StateMachine(StateReader):
 
             self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
 
-        engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+        engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_CREATED, ContractParameter(ContractParameterType.InteropInterface, contract),
@@ -260,42 +255,42 @@ class StateMachine(StateReader):
                                test_mode=engine.testMode))
         return True
 
-    def Contract_Migrate(self, engine):
+    def Contract_Migrate(self, engine: ExecutionEngine):
 
-        script = engine.EvaluationStack.Pop().GetByteArray()
+        script = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
         if len(script) > 1024 * 1024:
             return False
 
-        param_list = engine.EvaluationStack.Pop().GetByteArray()
+        param_list = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
         if len(param_list) > 252:
             return False
 
-        return_type = int(engine.EvaluationStack.Pop().GetBigInteger())
+        return_type = int(engine.CurrentContext.EvaluationStack.Pop().GetBigInteger())
 
-        contract_properties = engine.EvaluationStack.Pop().GetBigInteger()
+        contract_properties = engine.CurrentContext.EvaluationStack.Pop().GetBigInteger()
 
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
 
-        name = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+        name = engine.CurrentContext.EvaluationStack.Pop().GetByteArray().decode('utf-8')
 
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
-        version = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+        version = engine.CurrentContext.EvaluationStack.Pop().GetByteArray().decode('utf-8')
 
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
-        author = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+        author = engine.CurrentContext.EvaluationStack.Pop().GetByteArray().decode('utf-8')
 
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 252:
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
             return False
-        email = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+        email = engine.CurrentContext.EvaluationStack.Pop().GetByteArray().decode('utf-8')
 
-        if len(engine.EvaluationStack.Peek().GetByteArray()) > 65536:
+        if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 65536:
             return False
-        description = engine.EvaluationStack.Pop().GetByteArray().decode('utf-8')
+        description = engine.CurrentContext.EvaluationStack.Pop().GetByteArray().decode('utf-8')
 
         hash = Crypto.ToScriptHash(script, unhex=False)
 
@@ -319,7 +314,7 @@ class StateMachine(StateReader):
                     item = StorageItem(val)
                     self._storages.Add(key.ToArray(), item)
 
-        engine.EvaluationStack.PushT(StackItem.FromInterface(contract))
+        engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_MIGRATED, ContractParameter(ContractParameterType.InteropInterface, contract),
@@ -331,7 +326,7 @@ class StateMachine(StateReader):
 
     def Contract_GetStorageContext(self, engine):
 
-        contract = engine.EvaluationStack.Pop().GetInterface()
+        contract = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
 
         shash = contract.Code.ScriptHash()
 
@@ -341,7 +336,7 @@ class StateMachine(StateReader):
 
             if created == UInt160(data=engine.CurrentContext.ScriptHash()):
                 context = StorageContext(script_hash=shash)
-                engine.EvaluationStack.PushT(StackItem.FromInterface(context))
+                engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(context))
 
                 return True
 
@@ -368,12 +363,12 @@ class StateMachine(StateReader):
                                test_mode=engine.testMode))
         return True
 
-    def Storage_Put(self, engine):
+    def Storage_Put(self, engine: ExecutionEngine):
 
         context = None
         try:
 
-            context = engine.EvaluationStack.Pop().GetInterface()
+            context = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
         except Exception as e:
             logger.error("Storage Context Not found on stack")
             return False
@@ -381,11 +376,11 @@ class StateMachine(StateReader):
         if not self.CheckStorageContext(context):
             return False
 
-        key = engine.EvaluationStack.Pop().GetByteArray()
+        key = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
         if len(key) > 1024:
             return False
 
-        value = engine.EvaluationStack.Pop().GetByteArray()
+        value = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
         new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
@@ -410,14 +405,14 @@ class StateMachine(StateReader):
 
         return True
 
-    def Storage_Delete(self, engine):
+    def Storage_Delete(self, engine: ExecutionEngine):
 
-        context = engine.EvaluationStack.Pop().GetInterface()
+        context = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
 
         if not self.CheckStorageContext(context):
             return False
 
-        key = engine.EvaluationStack.Pop().GetByteArray()
+        key = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
 

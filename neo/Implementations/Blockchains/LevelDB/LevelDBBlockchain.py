@@ -780,7 +780,7 @@ class LevelDBBlockchain(Blockchain):
                         testMode=False
                     )
 
-                    engine.LoadScript(tx.Script, False)
+                    engine.LoadScript(tx.Script)
 
                     try:
                         success = engine.Execute()

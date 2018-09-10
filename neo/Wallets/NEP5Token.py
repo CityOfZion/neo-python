@@ -100,15 +100,15 @@ class NEP5Token(VerificationCode, SerializableMixin):
         except Exception as e:
             pass
 
-        if engine and len(engine.EvaluationStack.Items) == 3:
-            results = engine.EvaluationStack.Items
+        if engine and len(engine.CurrentContext.EvaluationStack.Items) == 3:
+            results = engine.CurrentContext.EvaluationStack.Items
 
             try:
                 self.name = results[0].GetString()
                 self.symbol = results[1].GetString()
                 self.decimals = results[2].GetBigInteger()
                 if len(self.name) > 1 and self.name != 'Stack Item' \
-                        and len(self.symbol) > 1 and self.symbol != 'Stack Item'\
+                        and len(self.symbol) > 1 and self.symbol != 'Stack Item' \
                         and self.decimals < 10:
                     return True
             except Exception as e:
