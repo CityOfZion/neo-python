@@ -24,8 +24,7 @@ class ExecutionEngine:
     _VMState = None
 
     _InvocationStack = None
-    _EvaluationStack = None
-    _AltStack = None
+    _ResultStack = None
 
     _ExecutedScriptHashes = None
 
@@ -68,15 +67,11 @@ class ExecutionEngine:
         return self._InvocationStack
 
     @property
-    def EvaluationStack(self):
-        return self._EvaluationStack
+    def ResultStack(self):
+        return self._ResultStack
 
     @property
-    def AltStack(self):
-        return self._AltStack
-
-    @property
-    def CurrentContext(self):
+    def CurrentContext(self) -> ExecutionContext:
         return self._InvocationStack.Peek()
 
     @property
@@ -105,8 +100,7 @@ class ExecutionEngine:
         self._Service = service
         self._exit_on_error = exit_on_error
         self._InvocationStack = RandomAccessStack(name='Invocation')
-        self._EvaluationStack = RandomAccessStack(name='Evaluation')
-        self._AltStack = RandomAccessStack(name='Alt')
+        self._ResultStack = RandomAccessStack(name='Result')
         self._ExecutedScriptHashes = []
         self.ops_processed = 0
         self._debug_map = None
@@ -138,13 +132,10 @@ class ExecutionEngine:
         else:
             loop_stepinto()
 
-    def ExecuteOp(self, opcode, context):
-        estack = self._EvaluationStack
+    def ExecuteOp(self, opcode, context: ExecutionContext):
+        estack = context._EvaluationStack
         istack = self._InvocationStack
-        astack = self._AltStack
-
-        if opcode > PUSH16 and opcode != RET and context.PushOnly:
-            return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
+        astack = context._AltStack
 
         if opcode >= PUSHBYTES1 and opcode <= PUSHBYTES75:
             bytestoread = context.OpReader.ReadBytes(int.from_bytes(opcode, 'little'))
@@ -166,7 +157,6 @@ class ExecutionEngine:
             elif opcode == PUSHDATA4:
                 estack.PushT(context.OpReader.ReadBytes(context.OpReader.ReadUInt32()))
             elif opcode in pushops:
-                # EvaluationStack.Push((int)opcode - (int)OpCode.PUSH1 + 1);
                 topush = int.from_bytes(opcode, 'little') - int.from_bytes(PUSH1, 'little') + 1
                 estack.PushT(topush)
 
@@ -189,13 +179,31 @@ class ExecutionEngine:
                     context.SetInstructionPointer(offset)
 
             elif opcode == CALL:
-                istack.PushT(context.Clone())
-                context.SetInstructionPointer(context.InstructionPointer + 2)
+                context_call = self.LoadScript(context.Script)
+                context.EvaluationStack.CopyTo(context_call.EvaluationStack)
+                context_call.InstructionPointer = context.InstructionPointer
+                context.EvaluationStack.Clear()
+                context.InstructionPointer += 2
 
-                self.ExecuteOp(JMP, self.CurrentContext)
+                self.ExecuteOp(JMP, context_call)
 
             elif opcode == RET:
-                istack.Pop().Dispose()
+                context_pop: ExecutionContext = istack.Pop()
+                rvcount = context_pop._RVCount
+
+                if rvcount == -1:
+                    rvcount = context_pop.EvaluationStack.Count
+
+                if rvcount > 0:
+                    if context_pop.EvaluationStack.Count < rvcount:
+                        return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
+
+                    if istack.Count == 0:
+                        stack_eval = self._ResultStack
+                    else:
+                        stack_eval = self.CurrentContext.EvaluationStack
+                    context_pop.EvaluationStack.CopyTo(stack_eval, rvcount)
+
                 if istack.Count == 0:
                     self._VMState |= VMState.HALT
 
@@ -211,7 +219,7 @@ class ExecutionEngine:
                         is_normal_call = True
 
                 if not is_normal_call:
-                    script_hash = self.EvaluationStack.Pop().GetByteArray()
+                    script_hash = estack.Pop().GetByteArray()
 
                 script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
 
@@ -219,10 +227,13 @@ class ExecutionEngine:
                     logger.error("Could not find script from script table: %s " % script_hash)
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
-                if opcode == TAILCALL:
-                    istack.Pop().Dispose()
+                context_new = self.LoadScript(script)
+                estack.CopyTo(context_new.EvaluationStack)
 
-                self.LoadScript(script)
+                if opcode == TAILCALL:
+                    istack.Remove(1).Dispose()
+                else:
+                    estack.Clear()
 
             elif opcode == SYSCALL:
                 call = context.OpReader.ReadVarBytes(252).decode('ascii')
@@ -277,16 +288,10 @@ class ExecutionEngine:
                 estack.PushT(estack.Peek())
 
             elif opcode == NIP:
-                x2 = estack.Pop()
-                estack.Pop()
-                estack.PushT(x2)
+                estack.Remove(1)
 
             elif opcode == OVER:
-
-                x2 = estack.Pop()
-                x1 = estack.Peek()
-                estack.PushT(x2)
-                estack.PushT(x1)
+                estack.PushT(estack.Peek(1))
 
             elif opcode == PICK:
 
@@ -306,28 +311,13 @@ class ExecutionEngine:
                     estack.PushT(estack.Remove(n))
 
             elif opcode == ROT:
-                x3 = estack.Pop()
-                x2 = estack.Pop()
-                x1 = estack.Pop()
-
-                estack.PushT(x2)
-                estack.PushT(x3)
-                estack.PushT(x1)
+                estack.PushT(estack.Remove(2))
 
             elif opcode == SWAP:
-
-                x2 = estack.Pop()
-                x1 = estack.Pop()
-                estack.PushT(x2)
-                estack.PushT(x1)
+                estack.PushT(estack.Remove(1))
 
             elif opcode == TUCK:
-
-                x2 = estack.Pop()
-                x1 = estack.Pop()
-                estack.PushT(x2)
-                estack.PushT(x1)
-                estack.PushT(x2)
+                estack.Insert(2, estack.Peek())
 
             elif opcode == CAT:
 
@@ -883,6 +873,56 @@ class ExecutionEngine:
 
                 estack.PushT(newArray)
 
+            # stack isolation
+            elif opcode == CALL_I:
+                rvcount = context.OpReader.ReadByte()
+                pcount = context.OpReader.ReadByte()
+
+                if estack.Count < pcount:
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION)
+
+                context_call = self.LoadScript(context.Script, rvcount)
+                estack.CopyTo(context_call.EvaluationStack, pcount)
+                context_call.InstructionPointer = context.InstructionPointer
+
+                for i in range(0, pcount, 1):
+                    estack.Pop()
+                context.InstructionPointer += 2
+                self.ExecuteOp(JMP, context_call)
+
+            elif opcode in [CALL_E, CALL_ED, CALL_ET, CALL_EDT]:
+                if self._Table is None:
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION2)
+
+                rvcount = context.OpReader.ReadByte()
+                pcount = context.OpReader.ReadByte()
+
+                if estack.Count < pcount:
+                    return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION)
+
+                if opcode in [CALL_ET, CALL_EDT]:
+                    if context._RVCount != rvcount:
+                        return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION3)
+
+                if opcode in [CALL_ED, CALL_EDT]:
+                    script_hash = estack.Pop().GetByteArray()
+                else:
+                    script_hash = context.OpReader.ReadBytes(20)
+
+                script = self._Table.GetScript(script_hash)
+                if script is None:
+                    logger.error("Could not find script from script table: %s " % script_hash)
+                    return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
+
+                context_new = self.LoadScript(script, rvcount)
+                estack.CopyTo(context_new.EvaluationStack, pcount)
+
+                if opcode in [CALL_ET, CALL_EDT]:
+                    istack.Remove(1).Dispose()
+                else:
+                    for i in range(0, pcount, 1):
+                        estack.Pop()
+
             elif opcode == THROW:
                 return self.VM_FAULT_and_report(VMFault.THROW)
 
@@ -899,16 +939,15 @@ class ExecutionEngine:
                     self._vm_debugger = VMDebugger(self)
                     self._vm_debugger.start()
 
-    def LoadScript(self, script, push_only=False):
+    def LoadScript(self, script, rvcount=-1):
 
-        context = ExecutionContext(self, script, push_only)
+        context = ExecutionContext(self, script, rvcount)
 
-        if self._debug_map and context.ScriptHash() == self._debug_map['script_hash']:
-            context.Breakpoints = set(self._debug_map['breakpoints'])
-
+        # if self._debug_map and context.ScriptHash() == self._debug_map['script_hash']:
+        #     context.Breakpoints = set(self._debug_map['breakpoints'])
+        # 
         self._InvocationStack.PushT(context)
-
-        self._ExecutedScriptHashes.append(context.ScriptHash())
+        return context
 
     def RemoveBreakPoint(self, position):
 
