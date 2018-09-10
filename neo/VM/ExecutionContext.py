@@ -33,8 +33,7 @@ class ExecutionContext:
 
     @InstructionPointer.setter
     def InstructionPointer(self, value):
-        position = self.__OpReader.stream.tell() + value
-        self.__OpReader.stream.seek(position)
+        self.__OpReader.stream.seek(value)
 
     def SetInstructionPointer(self, value):
         self.__OpReader.stream.seek(value)

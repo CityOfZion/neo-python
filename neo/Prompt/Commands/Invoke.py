@@ -330,7 +330,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
         testMode=True
     )
 
-    engine.LoadScript(wallet_tx.Script, False)
+    engine.LoadScript(wallet_tx.Script)
 
     try:
         success = engine.Execute()
@@ -368,7 +368,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
 
-            return wallet_tx, net_fee, engine.CurrentContext.EvaluationStack.Items, engine.ops_processed
+            return wallet_tx, net_fee, engine.ResultStack.Items, engine.ops_processed
 
         # this allows you to to test invocations that fail
         else:
@@ -434,7 +434,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         testMode=True
     )
 
-    engine.LoadScript(dtx.Script, False)
+    engine.LoadScript(dtx.Script)
 
     # first we will execute the test deploy
     # then right after, we execute the test invoke
@@ -443,7 +443,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
     if d_success:
 
-        items = engine.CurrentContext.EvaluationStack.Items
+        items = engine.ResultStack.Items
 
         contract_state = None
         for i in items:
@@ -561,7 +561,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         )
 
         engine.invocation_args = invoke_args
-        engine.LoadScript(itx.Script, False)
+        engine.LoadScript(itx.Script)
         engine.LoadDebugInfoForScriptHash(debug_map, shash.Data)
 
         i_success = engine.Execute()
@@ -592,7 +592,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             # set the amount of gas the tx will need
             itx.Gas = consumed
             itx.Attributes = []
-            result = engine.CurrentContext.EvaluationStack.Items
+            result = engine.ResultStack.Items
             return itx, result, total_ops, engine
         else:
             print("error executing invoke contract...")

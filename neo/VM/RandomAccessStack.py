@@ -28,12 +28,12 @@ class RandomAccessStack:
         if count == 0:
             return
         if count == -1:
-            stack._list + self._list
+            stack._list.extend(self._list)
             stack._size += self._size
         else:
             # only add the last ``count`` elements of self._list
             skip_count = self._size - count
-            stack._list + self._list[skip_count:]
+            stack._list.extend(self._list[skip_count:])
             stack._size += count
 
     def GetEnumerator(self):

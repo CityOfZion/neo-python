@@ -134,7 +134,7 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
                         testMode=True
                     )
 
-                    engine.LoadScript(tx.Script, False)
+                    engine.LoadScript(tx.Script)
 
                     # normally, this function does not return true/false
                     # for testing purposes, we try to execute and if an exception is raised

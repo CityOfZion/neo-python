@@ -231,50 +231,48 @@ class ApplicationEngine(ExecutionEngine):
     def Execute(self):
         def loop_validation_and_stepinto():
             while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
+                if self.CurrentContext.InstructionPointer < len(self.CurrentContext.Script):
+                    try:
+                        self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
+                    except Exception as e:
+                        logger.debug("Exception calculating gas consumed %s " % e)
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                try:
+                    if not self.testMode and self.gas_consumed > self.gas_amount:
+                        logger.debug("NOT ENOUGH GAS")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                    self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
-                #                print("gas consumeb: %s " % self.gas_consumed)
-                except Exception as e:
-                    logger.debug("Exception calculating gas consumed %s " % e)
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if self.testMode and self.ops_processed > self.max_free_ops:
+                        logger.debug("Too many free operations processed")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.testMode and self.gas_consumed > self.gas_amount:
-                    logger.debug("NOT ENOUGH GAS")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckItemSize():
+                        logger.debug("ITEM SIZE TOO BIG")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if self.testMode and self.ops_processed > self.max_free_ops:
-                    logger.debug("Too many free operations processed")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckStackSize():
+                        logger.debug("STACK SIZE TOO BIG")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.CheckItemSize():
-                    logger.debug("ITEM SIZE TOO BIG")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckArraySize():
+                        logger.debug("ARRAY SIZE TOO BIG")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.CheckStackSize():
-                    logger.debug("STACK SIZE TOO BIG")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckInvocationStack():
+                        logger.debug("INVOCATION SIZE TO BIIG")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.CheckArraySize():
-                    logger.debug("ARRAY SIZE TOO BIG")
-                    self._VMState |= VMState.FAULT
-                    return False
-
-                if not self.CheckInvocationStack():
-                    logger.debug("INVOCATION SIZE TO BIIG")
-                    self._VMState |= VMState.FAULT
-                    return False
-
-                if not self.CheckDynamicInvoke():
-                    logger.debug("Dynamic invoke without proper contract")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckDynamicInvoke():
+                        logger.debug("Dynamic invoke without proper contract")
+                        self._VMState |= VMState.FAULT
+                        return False
 
                 self.StepInto()
 

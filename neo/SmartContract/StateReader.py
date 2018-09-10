@@ -274,7 +274,7 @@ class StateReader(InteropService):
             logger.error("Could not get entry script: %s " % e)
 
         payload = ContractParameter(ContractParameterType.Array, value=[])
-        for item in engine.CurrentContext.EvaluationStack.Items:
+        for item in engine.ResultStack.Items:
             payload.Value.append(ContractParameter.ToParameter(item))
 
         if success:
