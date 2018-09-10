@@ -204,6 +204,9 @@ class ExecutionEngine:
                         stack_eval = self.CurrentContext.EvaluationStack
                     context_pop.EvaluationStack.CopyTo(stack_eval, rvcount)
 
+                if context_pop._RVCount == -1 and istack.Count > 0:
+                    context_pop.AltStack.CopyTo(self.CurrentContext.AltStack)
+
                 if istack.Count == 0:
                     self._VMState |= VMState.HALT
 
@@ -948,6 +951,7 @@ class ExecutionEngine:
         #     context.Breakpoints = set(self._debug_map['breakpoints'])
         #
         self._InvocationStack.PushT(context)
+        self._ExecutedScriptHashes.append(context.ScriptHash())
         return context
 
     def RemoveBreakPoint(self, position):

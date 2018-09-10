@@ -42,10 +42,10 @@ class RandomAccessStack:
     def Insert(self, index, item):
         index = int(index)
 
-        if index < 0 or index > self._size:
+        if index > self._size:
             raise Exception("Invalid list operation")
 
-        self._list.insert(index, item)
+        self._list.insert(self._size - index, item)
         self._size += 1
 
     # @TODO can be optimized
@@ -58,7 +58,8 @@ class RandomAccessStack:
         if index < 0:
             raise Exception("Invalid list operation")
 
-        return self._list[self._size - 1 - index]
+        index = self._size - index - 1
+        return self._list[index]
 
     def Pop(self):
         #        self.PrintList("POPSTACK <- ")
@@ -90,7 +91,7 @@ class RandomAccessStack:
     def Set(self, index, item):
         index = int(index)
 
-        if index > self._size:
+        if index >= self._size:
             raise Exception("Invalid list operation")
         if index < 0:
             index += self._size
