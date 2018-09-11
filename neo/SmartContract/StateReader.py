@@ -391,7 +391,7 @@ class StateReader(InteropService):
 
     def Runtime_GetCurrentTime(self, engine: ExecutionEngine):
         BC = Blockchain.Default()
-        header = BC.GetHeader(BC.Height)
+        header = BC.GetHeaderByHeight(BC.Height)
         if header is None:
             header = Blockchain.GenesisBlock()
 
