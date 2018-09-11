@@ -40,6 +40,8 @@ class ExecutionEngine:
     _debug_map = None
     _vm_debugger = None
 
+    _breakpoints = None
+
     def write_log(self, message):
         """
         Write a line to the VM instruction log file.
@@ -105,9 +107,15 @@ class ExecutionEngine:
         self.ops_processed = 0
         self._debug_map = None
         self._is_write_log = settings.log_vm_instructions
+        self._breakpoints = dict()
 
-    def AddBreakPoint(self, position):
-        self.CurrentContext.Breakpoints.add(position)
+    def AddBreakPoint(self, script_hash, position):
+        ctx_breakpoints = self._breakpoints.get(script_hash, None)
+        if ctx_breakpoints is None:
+            self._breakpoints[script_hash] = set([position])
+        else:
+            # add by reference
+            ctx_breakpoints.add(position)
 
     def LoadDebugInfoForScriptHash(self, debug_map, script_hash):
         if debug_map and script_hash:
@@ -937,28 +945,43 @@ class ExecutionEngine:
                 return self.VM_FAULT_and_report(VMFault.UNKNOWN_OPCODE, opcode)
 
         if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
-            # if len(self.CurrentContext.Breakpoints):
-            #     if self.CurrentContext.InstructionPointer in self.CurrentContext.Breakpoints:
-            #         self._vm_debugger = VMDebugger(self)
-            #         self._vm_debugger.start()
-            pass
+            script_hash = self.CurrentContext.ScriptHash()
+            bps = self._breakpoints.get(self.CurrentContext.ScriptHash(), None)
+            if bps is not None:
+                if self.CurrentContext.InstructionPointer in bps:
+                    self._vm_debugger = VMDebugger(self)
+                    self._vm_debugger.start()
 
     def LoadScript(self, script, rvcount=-1):
 
         context = ExecutionContext(self, script, rvcount)
-
-        # if self._debug_map and context.ScriptHash() == self._debug_map['script_hash']:
-        #     context.Breakpoints = set(self._debug_map['breakpoints'])
-        #
         self._InvocationStack.PushT(context)
         self._ExecutedScriptHashes.append(context.ScriptHash())
+
+        # add break points for current script if available
+        script_hash = context.ScriptHash()
+        if self._debug_map and script_hash == self._debug_map['script_hash']:
+            self._breakpoints[script_hash] = set(self._debug_map['breakpoints'])
+
         return context
 
-    def RemoveBreakPoint(self, position):
-
-        if self._InvocationStack.Count == 0:
+    def RemoveBreakPoint(self, script_hash, position):
+        # test if any breakpoints exist for script hash
+        ctx = self._breakpoints.get(script_hash, None)
+        if ctx is None:
             return False
-        return self.CurrentContext.Breakpoints.remove(position)
+
+        # remove if specific bp exists
+        if position in ctx:
+            ctx.remove(position)
+        else:
+            return False
+
+        # clear set from breakpoints list if no more bp's exist for it
+        if len(ctx) == 0:
+            del self._breakpoints[script_hash]
+
+        return True
 
     def StepInto(self):
         if self._InvocationStack.Count == 0:
