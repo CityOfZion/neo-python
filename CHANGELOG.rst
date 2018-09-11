@@ -3,17 +3,23 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.7.9-dev] in progress
+-----------------------
+- Gracefully handle network packet deserialization failures
 
-[0.7.8-dev] 2018-xx-xx
-----------------------
+
+[0.7.8] 2018-09-06
+------------------
 - Prefix ``vin`` JSON output format to match C#
 - Update ``neo-boa`` to v0.5.0 for Python 3.7 compatibility
-- Update pexpect to 4.6.0 to be compatible with Python 3.7
+- Update ``pexpect`` to 4.6.0 to be compatible with Python 3.7
 - Accept incoming node connections, configurable via protocol config file setting (default: OFF)
 - Fixes vulnerability to RPC invoke functionality that can send node into unclosed loop during 'test' invokes
 - Fix issue with opening recently created wallets
-- Fix import_blocks.py block hash caching issue
+- Fix ``import_blocks.py`` block hash caching issue
 - Update prompt.py: add ``account`` to help, update help, update standard completions, add ``config maxpeers`` functionality, update ``configure`` function arguments to behave as intended
+- Add support for multiple requests in one transaction for JSON-RPC
+- Update docs ``toctree`` so all pages are indexed & added instructions for contributing to docs
 
 
 [0.7.7] 2018-08-23
@@ -222,10 +228,10 @@ All notable changes to this project are documented in this file.
   - move ``prompt.py`` and other scripts to ``neo/bin``
   - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
   - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
-    - ``np-prompt``
-    - ``np-api-server``
-    - ``np-bootstrap``
-    - ``np-reencrypt-wallet``
+     - ``np-prompt``
+     - ``np-api-server``
+     - ``np-bootstrap``
+     - ``np-reencrypt-wallet``
   - updated docs for Pypi changes
 
 
@@ -342,14 +348,6 @@ All notable changes to this project are documented in this file.
 - ability to claim GAS from SC address
 - lots of documentation
 - various small bugfixes
-
-
-[0.4.3] 2017-12-21
-------------------
-
-- updated ``neo-boa`` to ``0.2.1``
-- added support for array ``REVERSE`` and ``APPEND`` VM opcodes
-
 
 [0.4.3] 2017-12-21
 ------------------
