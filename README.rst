@@ -186,7 +186,7 @@ Python 3.6+
 
 neo-python is compatible with **Python 3.6 and later**.
 
-On \*nix systems, install Python 3.7 via your package manager, or
+On \*nix systems, install Python 3.6 or Python 3.7 via your package manager, or
 download an installation package from the `official
 homepage <https://www.python.org/downloads/>`__.
 
