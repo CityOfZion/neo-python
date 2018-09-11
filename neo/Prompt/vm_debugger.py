@@ -126,9 +126,12 @@ class VMDebugger:
                     self.continue_debug = False
 
                 elif command == 'estack':
-                    if len(self.engine.CurrentContext.EvaluationStack.Items):
-                        for item in self.engine.CurrentContext.EvaluationStack.Items:
-                            print(ContractParameter.ToParameter(item).ToJson())
+                    if self.engine._InvocationStack.Count > 0:  # eval stack now only available via ExecutionContext objects in the istack
+                        if len(self.engine.CurrentContext.EvaluationStack.Items):
+                            for item in self.engine.CurrentContext.EvaluationStack.Items:
+                                print(ContractParameter.ToParameter(item).ToJson())
+                        else:
+                            print("Evaluation stack empty")
                     else:
                         print("Evaluation stack empty")
 
@@ -144,6 +147,14 @@ class VMDebugger:
                             print(ContractParameter.ToParameter(item).ToJson())
                     else:
                         print("Alt Stack Empty")
+
+                elif command == 'rstack':
+                    items = self.engine.ResultStack.Items
+                    if len(items):
+                        for item in items:
+                            pprint.pprint(item)
+                    else:
+                        print("Result stack empty")
 
                 elif command == 'ctx':
                     ctx.print()

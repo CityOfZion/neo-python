@@ -32,68 +32,68 @@ class BlockchainInteropTest(BlockchainFixtureTestCase):
 
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext()
+        self.econtext = ExecutionContext(engine=self.engine)
         self.state_reader = StateReader()
 
     def test_interop_getblock(self):
-
         height = StackItem.New(1234)
 
-        self.engine.EvaluationStack.PushT(height)
+        self.econtext.EvaluationStack.PushT(height)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Blockchain_GetBlock(self.engine)
 
-        block = self.engine.EvaluationStack.Pop().GetInterface()
+        block = self.econtext.EvaluationStack.Pop().GetInterface()
 
         self.assertIsInstance(block, Block)
 
     def test_interop_get_transaction(self):
-
         u256 = UInt256.ParseString('e4d2ea5df2adf77df91049beccbb16f98863b93a16439c60381eac1f23bff178')
 
         hash = StackItem.New(u256.Data)
 
-        self.engine.EvaluationStack.PushT(hash)
+        self.econtext.EvaluationStack.PushT(hash)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Blockchain_GetTransaction(self.engine)
 
-        tx = self.engine.EvaluationStack.Pop().GetInterface()
+        tx = self.econtext.EvaluationStack.Pop().GetInterface()
 
         self.assertIsInstance(tx, Transaction)
 
     def test_interop_get_bad_transaction(self):
-
         u256 = UInt256.ParseString('e4d2ea5df2adf77df91049beccbb16f98863b93a16439c60381eac1f23bff176')
 
         hash = StackItem.New(u256.Data)
 
-        self.engine.EvaluationStack.PushT(hash)
+        self.econtext.EvaluationStack.PushT(hash)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Blockchain_GetTransaction(self.engine)
 
-        tx = self.engine.EvaluationStack.Pop().GetInterface()
+        tx = self.econtext.EvaluationStack.Pop().GetInterface()
 
         self.assertIsNone(tx)
 
     def test_interop_get_transaction_height(self):
-
         u256 = UInt256.ParseString('e4d2ea5df2adf77df91049beccbb16f98863b93a16439c60381eac1f23bff178')
 
         hash = StackItem.New(u256.Data)
 
-        self.engine.EvaluationStack.PushT(hash)
+        self.econtext.EvaluationStack.PushT(hash)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Blockchain_GetTransactionHeight(self.engine)
 
-        height = self.engine.EvaluationStack.Pop().GetBigInteger()
+        height = self.econtext.EvaluationStack.Pop().GetBigInteger()
 
         self.assertEqual(height, 4999)
 
     def test_interop_get_bad_transaction_height(self):
-
         u256 = UInt256.ParseString('e4d2ea5df2adf77df91049beccbb16f98863b93a16439c60381eac1f23bff176')
 
         hash = StackItem.New(u256.Data)
 
-        self.engine.EvaluationStack.PushT(hash)
+        self.econtext.EvaluationStack.PushT(hash)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Blockchain_GetTransactionHeight(self.engine)
 
-        height = self.engine.EvaluationStack.Pop().GetBigInteger()
+        height = self.econtext.EvaluationStack.Pop().GetBigInteger()
 
         self.assertEqual(height, -1)

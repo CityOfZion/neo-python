@@ -87,7 +87,7 @@ class ApplicationEngine(ExecutionEngine):
                 return False
 
             collection: Array = cx.EvaluationStack.Peek(1)
-            if isinstance(collection, Array):
+            if not isinstance(collection, Array):
                 return False
             size = collection.Count + 1
         else:
