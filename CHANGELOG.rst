@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.7.9-dev] in progress
 -----------------------
+- Gracefully handle network packet deserialization failures
 - Add documentation support for Python 3.7
 
 
