@@ -6,6 +6,7 @@ All notable changes to this project are documented in this file.
 [0.7.9-dev] in progress
 -----------------------
 - Gracefully handle network packet deserialization failures
+- Implementation Stack Isolation (NEP8)
 
 
 [0.7.8] 2018-09-06
