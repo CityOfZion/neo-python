@@ -2,7 +2,7 @@
 Installation
 ------------
 
-You will need to install the libleveldb library. Install `Python 3.7 <https://www.python.org/downloads/release/python-370/>`_ to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.5 and below are not supported.
+You will need to install the libleveldb library. Install `Python 3.6 <https://www.python.org/downloads/release/python-366/>`__ or  `Python 3.7 <https://www.python.org/downloads/release/python-370/>`_ to make sure you don't run into any issues with your version of Python being different than the current maintainer's version. Note that Python 3.5 and below are not supported.
 
 You should install platform specific items before installing ``neo-python``.
 
@@ -20,12 +20,19 @@ First, ensure Ubuntu is fully up-to-date with this:
 ::
 
    sudo apt-get update && sudo apt-get upgrade
-
+   
 You can install Python 3.7 and all the system dependencies like this:
 
 ::
-
+   
    sudo apt-get install python3.7 python3.7-dev python3.7-venv python3-pip libleveldb-dev libssl-dev g++
+  
+
+Or, you can install Python 3.6 and all the system dependencies like this:
+
+::
+
+    sudo apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
 
 
 Older Ubuntu versions (eg. 16.04)
@@ -144,14 +151,12 @@ The easiest way to install ``neo-python`` on your machine is to download it and 
     mkdir myproject
     cd myproject
     
-    # setup alias for python and pip
+    # create virtual environment using Python 3.7 and activate or skip to the next step for Python 3.6
+    python3.7 -m venv venv
+    source venv/bin/activate
     
-    alias python=python3.7
-    alias pip=pip3
-
-    # create virtual environment and activate
-
-    python -m venv venv
+    # create virtual environment using Python 3.6 and activate
+    python3.6 -m venv venv
     source venv/bin/activate
 
     (venv) pip install neo-python
@@ -168,14 +173,15 @@ Make a Python 3 virtual environment and activate it via
     git clone https://github.com/CityOfZion/neo-python.git
     cd neo-python
     
-    # setup alias for python and pip
+    # if you want to use the development branch, switch now
+    git checkout development
     
-    alias python=python3.7
-    alias pip=pip3
-
-    # create virtual environment and activate
-
-    python -m venv venv
+    # create virtual environment using Python 3.7 and activate or skip to the next step for Python 3.6
+    python3.7 -m venv venv
+    source venv/bin/activate
+    
+    # create virtual environment using Python 3.6 and activate
+    python3.6 -m venv venv
     source venv/bin/activate
 
     # install the package in an editable form
