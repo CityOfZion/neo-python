@@ -952,7 +952,7 @@ class ExecutionEngine:
                     self._vm_debugger = VMDebugger(self)
                     self._vm_debugger.start()
 
-    def LoadScript(self, script, rvcount=-1):
+    def LoadScript(self, script, rvcount=-1) -> ExecutionContext:
 
         context = ExecutionContext(self, script, rvcount)
         self._InvocationStack.PushT(context)

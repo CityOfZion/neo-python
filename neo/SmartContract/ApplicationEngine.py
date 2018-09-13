@@ -1,11 +1,14 @@
 import binascii
+import sys
 from logzero import logger
 
-from neo.VM.ExecutionContext import ExecutionContext
+from collections import deque
 from neo.VM.ExecutionEngine import ExecutionEngine
-from neo.VM.OpCode import CALL, APPCALL, CHECKSIG, HASH160, HASH256, NOP, SHA1, SHA256, DEPTH, DUP, PACK, TUCK, OVER, \
-    SYSCALL, TAILCALL, NEWARRAY, NEWSTRUCT, PUSH16, UNPACK, CAT, CHECKMULTISIG, PUSHDATA4, VERIFY, SETITEM, APPEND, NEWMAP
+from neo.VM import OpCode
+from neo.VM.OpCode import PACK, NEWARRAY, NEWSTRUCT, SETITEM, APPEND, CALL, APPCALL, PUSHDATA4, CAT, PUSH16, TAILCALL, \
+    SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG
 from neo.VM import VMState
+from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM.InteropService import CollectionMixin, Map, Array
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
@@ -53,6 +56,7 @@ class ApplicationEngine(ExecutionEngine):
         self.Trigger = trigger_type
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
+        self._is_stackitem_count_strict = True
 
     def CheckArraySize(self):
 
@@ -159,38 +163,73 @@ class ApplicationEngine(ExecutionEngine):
         return True
 
     def CheckStackSize(self):
-
         maxStackSize = 2 * 1024
 
         size = 0
         cx = self.CurrentContext
         opcode = cx.NextInstruction
 
-        if opcode < PUSH16:
-            size = 1
+        if opcode <= PUSH16:
+            size += 1
         else:
-            if opcode in [DEPTH, DUP, OVER, TUCK, NEWMAP]:
-                size = 1
-            elif opcode == UNPACK:
-                item = cx.EvaluationStack.Peek()
+            if opcode in [OpCode.JMPIF, OpCode.JMPIFNOT, OpCode.DROP, OpCode.NIP, OpCode.EQUAL, OpCode.BOOLAND, OpCode.BOOLOR, OpCode.CHECKMULTISIG, OpCode.REVERSE, OpCode.HASKEY, OpCode.THROWIFNOT]:
+                size -= 1
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.XSWAP, OpCode.ROLL, OpCode.CAT, OpCode.LEFT, OpCode.RIGHT, OpCode.AND, OpCode.OR, OpCode.XOR, OpCode.ADD, OpCode.SUB, OpCode.MUL, OpCode.DIV, OpCode.SHL, OpCode.SHR, OpCode.NUMEQUAL, OpCode.NUMNOTEQUAL, OpCode.LT, OpCode.GT, OpCode.LTE, OpCode.GTE, OpCode.MIN, OpCode.MAX, OpCode.CHECKSIG, OpCode.CALL_ED, OpCode.CALL_EDT]:
+                size -= 1
+            elif opcode in [OpCode.APPCALL, OpCode.TAILCALL, OpCode.NOT, OpCode.ARRAYSIZE]:
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.SYSCALL, OpCode.PICKITEM, OpCode.SETITEM, OpCode.APPEND, OpCode.VALUES]:
+                sys.maxsize
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.DUPFROMALTSTACK, OpCode.DEPTH, OpCode.DUP, OpCode.OVER, OpCode.TUCK, OpCode.NEWMAP]:
+                size += 1
+            elif opcode in [OpCode.XDROP, OpCode.REMOVE]:
+                size -= 2
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.SUBSTR, OpCode.WITHIN, OpCode.VERIFY]:
+                size -= 2
+            elif opcode == OpCode.UNPACK:
+                size += self.CurrentContext.EvaluationStack.Peek().GetBigInteger
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.NEWARRAY, OpCode.NEWSTRUCT]:
+                size += self.CurrentContext.EvaluationStack.Peek().Count
+            elif opcode == OpCode.KEYS:
+                size += self.CurrentContext.EvaluationStack.Peek().Count
+                self._is_stackitem_count_strict = False
 
-                if not item.IsArray:
-                    logger.error("ITEM NOT ARRAY:")
-                    return False
-
-                size = len(item.GetArray())
-
-        if size == 0:
+        if size <= maxStackSize:
             return True
 
-        for execution_context in self.InvocationStack.Items:
-            size += execution_context.EvaluationStack.Count + execution_context.AltStack.Count
-
-        if size > maxStackSize:
-            logger.error("SIZE IS OVER MAX STACK SIZE!!!!")
+        if self._is_stackitem_count_strict:
             return False
 
+        stack_item_list = []
+        for execution_context in self.InvocationStack.Items:  # type: ExecutionContext
+            stack_item_list += execution_context.EvaluationStack.Items + execution_context.AltStack.Items
+
+        stackitem_count = self.GetItemCount(stack_item_list)
+        if stackitem_count > maxStackSize:
+            return False
+
+        self._is_stackitem_count_strict = True
         return True
+
+    def GetItemCount(self, items_list):  # list of StackItems
+        count = 0
+        items = deque(items_list)
+        while items:
+            stackitem = items.pop()
+            if isinstance(stackitem, Map):
+                items.extend(stackitem.Values)
+                continue
+
+            if isinstance(stackitem, Array):
+                items.extend(stackitem.GetArray())
+                continue
+            count += 1
+
+        return count
 
     def CheckDynamicInvoke(self):
         cx = self.CurrentContext
@@ -200,7 +239,7 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = cx.NextInstruction
 
-        if opcode == APPCALL:
+        if opcode in [OpCode.APPCALL, OpCode.TAILCALL]:
             opreader = cx.OpReader
             # read the current position of the stream
             start_pos = opreader.stream.tell()
@@ -224,8 +263,13 @@ class ApplicationEngine(ExecutionEngine):
 
             # if current contract state cant do dynamic calls, return False
             return current_contract_state.HasDynamicInvoke
+        elif opcode in [OpCode.CALL_ED, OpCode.CALL_EDT]:
+            current = UInt160(data=cx.ScriptHash())
+            current_contract_state = self._Table.GetContractState(current.ToBytes())
+            return current_contract_state.HasDynamicInvoke
 
-        return True
+        else:
+            return True
 
     # @profile_it
     def Execute(self):
