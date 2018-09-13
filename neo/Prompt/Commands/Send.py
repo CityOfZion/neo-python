@@ -31,6 +31,10 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         address_to = get_arg(arguments, 1)
         amount = get_arg(arguments, 2)
 
+        if int(float(amount)) == 0:
+            print("invalid amount format")
+            return False
+
         assetId = get_asset_id(wallet, to_send)
 
         if assetId is None:
@@ -53,7 +57,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
             return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), prompt_passwd=prompt_password, tx_attributes=user_tx_attributes)
 
         f8amount = Fixed8.TryParse(amount, require_positive=True)
-        if f8amount is None or f8amount == 0:
+        if f8amount is None:
             print("invalid amount format")
             return False
 
