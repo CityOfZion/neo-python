@@ -2,6 +2,7 @@ import binascii
 
 from logzero import logger
 
+from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.VM.InteropService import InteropService
 from neo.SmartContract.Contract import Contract
 from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
@@ -410,6 +411,10 @@ class StateReader(InteropService):
             return False
 
         ms.flush()
+
+        if ms.tell() > ApplicationEngine.maxItemSize:
+            return False
+
         retVal = ByteArray(ms.getvalue())
         StreamManager.ReleaseStream(ms)
         engine.CurrentContext.EvaluationStack.PushT(retVal)
@@ -631,6 +636,9 @@ class StateReader(InteropService):
         if block is None:
             return False
 
+        if len(block.FullTransactions) > ApplicationEngine.maxArraySize:
+            return False
+
         txlist = [StackItem.FromInterface(tx) for tx in block.FullTransactions]
         engine.CurrentContext.EvaluationStack.PushT(txlist)
         return True
@@ -670,6 +678,9 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
+        if len(tx.Attributes) > ApplicationEngine.maxArraySize:
+            return False
+
         attr = [StackItem.FromInterface(attr) for attr in tx.Attributes]
         engine.CurrentContext.EvaluationStack.PushT(attr)
         return True
@@ -677,6 +688,9 @@ class StateReader(InteropService):
     def Transaction_GetInputs(self, engine: ExecutionEngine):
         tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
         if tx is None:
+            return False
+
+        if len(tx.inputs) > ApplicationEngine.maxArraySize:
             return False
 
         inputs = [StackItem.FromInterface(input) for input in tx.inputs]
@@ -687,6 +701,9 @@ class StateReader(InteropService):
         tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
 
         if tx is None:
+            return False
+
+        if len(tx.outputs) > ApplicationEngine.maxArraySize:
             return False
 
         outputs = []
@@ -703,6 +720,9 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
+        if len(tx.inputs) > ApplicationEngine.maxArraySize:
+            return False
+
         refs = [StackItem.FromInterface(tx.References[input]) for input in tx.inputs]
 
         engine.CurrentContext.EvaluationStack.PushT(refs)
@@ -714,7 +734,11 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        refs = [StackItem.FromInterface(unspent) for unspent in Blockchain.Default().GetAllUnspent(tx.Hash)]
+        outputs = Blockchain.Default().GetAllUnspent(tx.Hash)
+        if len(outputs) > ApplicationEngine.maxArraySize:
+            return False
+
+        refs = [StackItem.FromInterface(unspent) for unspent in outputs]
         engine.CurrentContext.EvaluationStack.PushT(refs)
         return True
 

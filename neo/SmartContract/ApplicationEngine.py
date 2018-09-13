@@ -45,6 +45,7 @@ class ApplicationEngine(ExecutionEngine):
     max_free_ops = 500000
 
     maxItemSize = 1024 * 1024
+    maxArraySize = 1024
 
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
@@ -59,8 +60,6 @@ class ApplicationEngine(ExecutionEngine):
         self._is_stackitem_count_strict = True
 
     def CheckArraySize(self):
-
-        maxArraySize = 1024
         cx = self.CurrentContext
 
         opcode = cx.NextInstruction
@@ -97,7 +96,7 @@ class ApplicationEngine(ExecutionEngine):
         else:
             return True
 
-        return size <= maxArraySize
+        return size <= self.maxArraySize
 
     def CheckInvocationStack(self):
 
