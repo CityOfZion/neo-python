@@ -223,7 +223,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertFalse(res)
 
     def test_19_sendmany_bad_asset(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect = ["neo", self.watch_addr_str, "1", "blah", self.watch_addr_str, "1"]):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "blah", self.watch_addr_str, "1"]):
 
             wallet = self.GetWallet1(recreate=True)
 
@@ -234,7 +234,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
 
     def test_20_sendmany_bad_address(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect = ["neo", self.watch_addr_str, "1", "gas", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXq", "1"]):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXq", "1"]):
 
             wallet = self.GetWallet1(recreate=True)
 
@@ -245,7 +245,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
 
     def test_21_sendmany_send_0(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect = ["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "0"]):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "0"]):
 
             wallet = self.GetWallet1(recreate=True)
 
@@ -255,8 +255,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             self.assertFalse(res)
 
-    def test_22_sendmany_insufficient_funds(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect = ["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1000"]):
+    def test_22_sendmany_negative(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "-1"]):
 
             wallet = self.GetWallet1(recreate=True)
 
@@ -266,8 +266,30 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             self.assertFalse(res)
 
-    def test_23_sendmany_token(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect = ["neo", self.watch_addr_str, "1", "NEP5", self.watch_addr_str, "32"]):
+    def test_23_sendmany_weird_amount(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "5.abc3"]):
+
+            wallet = self.GetWallet1(recreate=True)
+
+            args = ["--outgoing=2"]
+
+            res = construct_and_send_many(None, wallet, args, prompt_password=False)
+
+            self.assertFalse(res)
+
+    def test_24_sendmany_insufficient_funds(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1000"]):
+
+            wallet = self.GetWallet1(recreate=True)
+
+            args = ["--outgoing=2"]
+
+            res = construct_and_send_many(None, wallet, args, prompt_password=False)
+
+            self.assertFalse(res)
+
+    def test_25_sendmany_token(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "NEP5", self.watch_addr_str, "32"]):
 
             wallet = self.GetWallet1(recreate=True)
 
@@ -281,8 +303,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             self.assertFalse(res)
 
-    def test_24_sendmany_good_simple(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect = ["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
+    def test_26_sendmany_good_simple(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
 
             wallet = self.GetWallet1(recreate=True)
 
@@ -292,8 +314,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             self.assertTrue(res)
 
-    def test_25_sendmany_good_complex(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect = ["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
+    def test_27_sendmany_good_complex(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
 
             wallet = self.GetWallet1(recreate=True)
 
