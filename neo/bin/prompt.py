@@ -31,7 +31,7 @@ from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
     ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
+from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign, construct_and_send_many
 from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
     CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
 
@@ -150,6 +150,7 @@ class PromptInterface:
                 'withdraw # withdraws the first hold availabe',
                 'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee})',
+                'sendmany (--outgoing={number outgoing}) (--change-addr={addr}) (--from-addr={addr}) (--fee={priority_fee})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
@@ -199,7 +200,7 @@ class PromptInterface:
                                 'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
                                 'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance',
                                 'tkn_register', 'build', 'notifications', 'tkn_history',
-                                'sign', 'send', 'withdraw', 'nep2', 'multisig_addr', 'token',
+                                'sign', 'send', 'sendmany', 'withdraw', 'nep2', 'multisig_addr', 'token',
                                 'claim', 'migrate', 'rebuild', 'create_addr', 'delete_addr',
                                 'delete_token', 'alias', 'unspent', 'split', 'close',
                                 'withdraw_reqest', 'holds', 'completed', 'cancel', 'cleanup',
@@ -596,6 +597,9 @@ class PromptInterface:
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
+
+    def do_send_many(self, arguments):
+        construct_and_send_many(self, self.Wallet, arguments)
 
     def do_sign(self, arguments):
         jsn = get_arg(arguments)
@@ -1014,6 +1018,8 @@ class PromptInterface:
                         self.show_wallet(arguments)
                     elif command == 'send':
                         self.do_send(arguments)
+                    elif command == 'sendmany':
+                        self.do_send_many(arguments)
                     elif command == 'sign':
                         self.do_sign(arguments)
                     elif command == 'block':
