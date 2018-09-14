@@ -131,6 +131,38 @@ def get_from_addr(params):
     return params, from_addr
 
 
+def get_change_addr(params):
+    to_remove = []
+    change_addr = None
+    for item in params:
+        if '--change-addr=' in item:
+            to_remove.append(item)
+            try:
+                change_addr = item.replace('--change-addr=', '')
+            except Exception as e:
+                pass
+    for item in to_remove:
+        params.remove(item)
+
+    return params, change_addr
+
+
+def get_outgoing(params):
+    to_remove = []
+    outgoing = None
+    for item in params:
+        if '--outgoing=' in item:
+            to_remove.append(item)
+            try:
+                outgoing = int(item.replace('--outgoing=', ''))
+            except Exception as e:
+                pass
+    for item in to_remove:
+        params.remove(item)
+
+    return params, outgoing
+
+
 def get_fee(params):
     to_remove = []
     fee = None
