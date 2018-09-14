@@ -191,3 +191,33 @@ class UserWalletTestCase(WalletFixtureTestCase):
         construct_and_send(None, wallet, args, prompt_password=False)
 
         self.assertTrue(mock.called)
+
+    def test_16_sendmany_no_wallet(self):
+
+        wallet = None
+
+        args = ["--outgoing=2"]
+
+        res = construct_and_send_many(None, wallet, args, prompt_password=False)
+
+        self.assertFalse(res)
+
+    def test_17_sendmany_not_enough_args(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        args = []
+
+        res = construct_and_send_many(None, wallet, args, prompt_password=False)
+
+        self.assertFalse(res)
+
+    def test_18_sendmany_bad_outgoing(self):
+
+        wallet = self.GetWallet1(recreate=True)
+
+        args = ["--outgoing=0"]
+
+        res = construct_and_send_many(None, wallet, args, prompt_password=False)
+
+        self.assertFalse(res)
