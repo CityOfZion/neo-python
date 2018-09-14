@@ -179,7 +179,7 @@ class ApplicationEngine(ExecutionEngine):
             elif opcode in [OpCode.APPCALL, OpCode.TAILCALL, OpCode.NOT, OpCode.ARRAYSIZE]:
                 self._is_stackitem_count_strict = False
             elif opcode in [OpCode.SYSCALL, OpCode.PICKITEM, OpCode.SETITEM, OpCode.APPEND, OpCode.VALUES]:
-                sys.maxsize
+                size = sys.maxsize
                 self._is_stackitem_count_strict = False
             elif opcode in [OpCode.DUPFROMALTSTACK, OpCode.DEPTH, OpCode.DUP, OpCode.OVER, OpCode.TUCK, OpCode.NEWMAP]:
                 size += 1

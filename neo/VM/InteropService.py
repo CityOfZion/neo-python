@@ -225,6 +225,10 @@ class Boolean(StackItem):
     def __init__(self, value):
         self._value = value
 
+    @property
+    def Count(self):
+        return 1
+
     def Equals(self, other):
         if other is None:
             return False
@@ -258,6 +262,10 @@ class ByteArray(StackItem):
 
     def __init__(self, value):
         self._value = value
+
+    @property
+    def Count(self):
+        return len(self._value)
 
     def Equals(self, other):
         if other is None:
@@ -307,6 +315,10 @@ class Integer(StackItem):
         if type(value) is not BigInteger:
             raise Exception("Must be big integer instance")
         self._value = value
+
+    @property
+    def Count(self):
+        return 1
 
     def Equals(self, other):
         if other is None:
