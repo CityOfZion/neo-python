@@ -145,6 +145,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
 
     return False
 
+
 def construct_and_send_many(prompter, wallet, arguments, prompt_password=True):
     try:
         if not wallet:
@@ -287,6 +288,7 @@ def construct_and_send_many(prompter, wallet, arguments, prompt_password=True):
         traceback.print_exc()
 
     return False
+
 
 def parse_and_sign(prompter, wallet, jsn):
 
