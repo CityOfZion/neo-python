@@ -229,6 +229,10 @@ class SettingsHolder:
             print("- RPC:", ", ".join(self.RPC_LIST))
         self.check_privatenet()
 
+    def setup_fixturenet(self, host=None):
+        """ Load settings from privnet JSON config file. """
+        self.setup(FILENAME_SETTINGS_PRIVNET)
+
     def setup_coznet(self):
         """ Load settings from the coznet JSON config file """
         self.setup(FILENAME_SETTINGS_COZNET)
