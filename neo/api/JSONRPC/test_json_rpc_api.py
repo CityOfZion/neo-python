@@ -6,6 +6,7 @@ Run only thse tests:
 import json
 import binascii
 import os
+import shutil
 from tempfile import mkdtemp
 from klein.test.test_resource import requestMock
 
@@ -22,6 +23,7 @@ from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import ROOT_INSTALL_PATH
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
 
 def mock_request(body):
@@ -676,3 +678,56 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # test for success in second valid request
         expected_verbose_hash = '0x0012f8566567a9d7ddf25acb5cf98286c9703297de675d01ba73fbfe6bcb841c'
         self.assertEqual(res[1]['result']['hash'], expected_verbose_hash)
+
+    def test_send_to_address_no_wallet(self):
+        req = self._gen_rpc_req("sendtoaddress", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_send_to_address_wrong_arguments(self):
+        test_wallet_path = os.path.join(mkdtemp(), "sendtoaddress.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+
+        req = self._gen_rpc_req("sendtoaddress", params=["arg"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_send_to_address(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+
+        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
