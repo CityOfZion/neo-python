@@ -73,17 +73,17 @@ class ApplicationEngine(ExecutionEngine):
             if cx.EvaluationStack.Count < 3:
                 return False
 
-            map = cx.EvaluationStack.Peek(2)
-            if not isinstance(map, Map):
+            map_stackitem = cx.EvaluationStack.Peek(2)
+            if not isinstance(map_stackitem, Map):
                 return True
 
             key = cx.EvaluationStack.Peek(1)
             if isinstance(key, CollectionMixin):
                 return False
 
-            if map.ContainsKey(key):
+            if map_stackitem.ContainsKey(key):
                 return True
-            size = map.Count + 1
+            size = map_stackitem.Count + 1
 
         elif opcode == APPEND:
             if cx.EvaluationStack.Count < 2:

@@ -203,7 +203,7 @@ HASKEY = b'\xCB'
 KEYS = b'\xCC'
 VALUES = b'\xCD'
 
-# Stack isolation
+# Stack isolation instructions, see link for description: https://github.com/neo-project/proposals/blob/c20182cecd92102b9e5a3158a005762eefb8dbdf/nep-8.mediawiki#Specification
 CALL_I = b'\xE0'
 CALL_E = b'\xE1'
 CALL_ED = b'\xE2'
