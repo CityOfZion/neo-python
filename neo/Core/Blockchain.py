@@ -164,7 +164,7 @@ class Blockchain:
     def AddBlock(self, block):
         pass
 
-    def AddBlockDirectly(self, block):
+    def AddBlockDirectly(self, block, do_persist_complete=True):
         pass
 
     def AddHeaders(self, headers):
