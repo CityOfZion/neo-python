@@ -183,7 +183,7 @@ class SettingsHolder:
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
-        self.ACCEPT_INCOMING_PEERS = config['AcceptIncomingPeers']
+        self.ACCEPT_INCOMING_PEERS = config.get('AcceptIncomingPeers', False)
 
         self.BOOTSTRAP_FILE = config['BootstrapFile']
         self.NOTIF_BOOTSTRAP_FILE = config['NotificationBootstrapFile']
