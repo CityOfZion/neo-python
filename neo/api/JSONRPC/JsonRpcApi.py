@@ -279,7 +279,7 @@ class JsonRpcApi:
 
         elif method == "gettxhistory":
             if self.wallet:
-                res=[]
+                res = []
                 for tx in self.wallet.GetTransactions():
                     json = tx.ToJson()
                     tx_id = UInt256.ParseString(json['txid'])
