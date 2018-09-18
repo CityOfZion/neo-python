@@ -49,7 +49,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
         if not os.path.exists(cls.leveldb_testpath()):
             raise Exception("Error downloading fixtures at %s" % cls.leveldb_testpath())
 
-        settings.setup_fixturenet()
+        settings.setup_unittest_net()
 
         cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath(), skip_version_check=True)
         Blockchain.RegisterBlockchain(cls._blockchain)

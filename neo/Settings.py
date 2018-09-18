@@ -37,6 +37,7 @@ FILENAME_SETTINGS_MAINNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.m
 FILENAME_SETTINGS_TESTNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.testnet.json')
 FILENAME_SETTINGS_PRIVNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.privnet.json')
 FILENAME_SETTINGS_COZNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.coz.json')
+FILENAME_SETTINGS_UNITTEST_NET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.unittest-net.json')
 
 
 class PrivnetConnectionError(Exception):
@@ -229,9 +230,9 @@ class SettingsHolder:
             print("- RPC:", ", ".join(self.RPC_LIST))
         self.check_privatenet()
 
-    def setup_fixturenet(self, host=None):
+    def setup_unittest_net(self, host=None):
         """ Load settings from privnet JSON config file. """
-        self.setup(FILENAME_SETTINGS_PRIVNET)
+        self.setup(FILENAME_SETTINGS_UNITTEST_NET)
 
     def setup_coznet(self):
         """ Load settings from the coznet JSON config file """
