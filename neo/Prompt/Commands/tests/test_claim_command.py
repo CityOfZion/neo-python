@@ -69,10 +69,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        # there is something wrong in the next assertion. The fixture does not match the real blockchain? 
-        # the value should be 0.0002685 but in the fixture I get -0.0003665. 
-        # The mismatch happens in the method CalculateBonusInternal: endamount = Blockchain.Default().GetSysFeeAmountByHeight(coinheight.end - 1)
-        self.assertEqual(Fixed8.FromDecimal(-0.0003665), unavailable_bonus) 
+        self.assertEqual(Fixed8.FromDecimal(0.0002685), unavailable_bonus) 
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -92,10 +89,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        # there is something wrong in the next assertion. The fixture does not match the real blockchain? 
-        # the value should be 0.0002685 but in the fixture I get -0.000669. 
-        # The mismatch happens in the method CalculateBonusInternal: endamount = Blockchain.Default().GetSysFeeAmountByHeight(coinheight.end - 1)
-        self.assertEqual(Fixed8.FromDecimal(-0.000669), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.000601), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 

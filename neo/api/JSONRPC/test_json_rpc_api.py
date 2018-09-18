@@ -6,6 +6,7 @@ Run only thse tests:
 import json
 import binascii
 import os
+import shutil
 from tempfile import mkdtemp
 from klein.test.test_resource import requestMock
 
@@ -23,6 +24,7 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
 
 from neo.Settings import ROOT_INSTALL_PATH, settings
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
 
 def mock_request(body):
@@ -164,7 +166,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getbestblockhash", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], '0x7d4761120d8e13d18b5e8c4b33d5bcea380b242e99148ee263bf218fae36f072')
+        self.assertEqual(res['result'], '0x62539bdf30ff2567355efb38b1911cc07258710cfab5b50d3e32751618969bcb')
 
     def test_get_connectioncount(self):
         # @TODO
@@ -179,7 +181,6 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
-        self.assertEqual(GetBlockchain().GetBlock(1).ToJson()['hash'], '0x55f745c9098d5d5bdaff9f8f32aad29c904c83d9832b48c16e677d30c7da4273')
         self.assertEqual(res['result']['index'], 10)
         self.assertEqual(res['result']['hash'], '0xd69e7a1f62225a35fed91ca578f33447d93fa0fd2b2f662b957e19c38c1dab1e')
         self.assertEqual(res['result']['confirmations'], GetBlockchain().Height - 10 + 1)
@@ -618,3 +619,95 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(test_wallet_path)
+
+    def test_valid_multirequest(self):
+        raw_block_request = {"jsonrpc": "2.0", "method": "getblock", "params": [1], "id": 1}
+        verbose_block_request = {"jsonrpc": "2.0", "method": "getblock", "params": [1, 1], "id": 2}
+
+        multi_request = json.dumps([raw_block_request, verbose_block_request])
+        mock_req = mock_request(multi_request.encode())
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(type(res), list)
+        self.assertEqual(len(res), 2)
+        expected_raw_block = '00000000999086db552ba8f84734bddca55b25a8d3d8c5f866f941209169c38d35376e9902c78a8ae8efe7e9d46f76399a9d9449155e861d6849c110ea5f6b7d146a9a8aa4d1305b01000000bd7d9349807816a1be48d3a3f5d10013ab9ffee489706078714f1ea201c340dcbeadb300ff983f40f537ba6d63721cafda183b2cd161801ffb0f8316f100b63dbfbae665bba75fa1a954f14351f91cbf07bf90e60ff79f3e9076bcb1b512184075c25a44184ce92f7d7af1d2f22bee69374dd1bf0327f8956ede0dc23dda90106cf555fb8202fe6db9acda1d0b4fff8fdcd0404daa4b359c73017c7cdb80094640fb383c7016aae89a0a01b3c431a5625340378b95b57f4b71c4427ff1177a786b11b1c8060c075e3234afdd03790764ccd99680ea102890e359ab9050b5b32b2b8b532102103a7f7dd016558597f7960d27c516a4394fd968b9e65155eb4b013e4040406e2102a7bc55fe8684e0119768d104ba30795bdcc86619e864add26156723ed185cd622102b3622bf4017bdfe317c58aed5f4c753f206b7db896046fa7d774bbc4bf7f8dc22103d90c07df63e690ce77912e10ab51acc944b66860237b608c4f8f8309e71ee69954ae010000bd7d934900000000'
+        self.assertEqual(res[0]['result'], expected_raw_block)
+        expected_verbose_hash = '0x55f745c9098d5d5bdaff9f8f32aad29c904c83d9832b48c16e677d30c7da4273'
+        self.assertEqual(res[1]['result']['hash'], expected_verbose_hash)
+
+    def test_multirequest_with_1_invalid_request(self):
+        """
+        We provide 2 requests, first one invalid and should return and error, second one  valid and should still come up with correct results
+        """
+        # block request of invalid block, should fail
+        raw_block_request = {"jsonrpc": "2.0", "method": "getblock", "params": [10000000000], "id": 1}
+        verbose_block_request = {"jsonrpc": "2.0", "method": "getblock", "params": [1, 1], "id": 2}
+
+        multi_request = json.dumps([raw_block_request, verbose_block_request])
+        mock_req = mock_request(multi_request.encode())
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(type(res), list)
+        self.assertEqual(len(res), 2)
+
+        # test for errors in first invalid request
+        error = res[0].get('error', {})
+        self.assertEqual(error.get('code', None), -100)
+        self.assertEqual(error.get('message', None), "Unknown block")
+
+        # test for success in second valid request
+        expected_verbose_hash = '0x55f745c9098d5d5bdaff9f8f32aad29c904c83d9832b48c16e677d30c7da4273'
+        self.assertEqual(res[1]['result']['hash'], expected_verbose_hash)
+
+    def test_send_to_address_no_wallet(self):
+        req = self._gen_rpc_req("sendtoaddress", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_send_to_address_wrong_arguments(self):
+        test_wallet_path = os.path.join(mkdtemp(), "sendtoaddress.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+
+        req = self._gen_rpc_req("sendtoaddress", params=["arg"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_send_to_address(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+
+        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
