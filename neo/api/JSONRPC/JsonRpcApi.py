@@ -36,6 +36,7 @@ from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.Utils import get_asset_id
 from neo.Wallets.Wallet import Wallet
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
 
 class JsonRpcError(Exception):
@@ -273,6 +274,23 @@ class JsonRpcApi:
         elif method == "getwalletheight":
             if self.wallet:
                 return self.wallet.WalletHeight
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
+        elif method == "gettxhistory":
+            if self.wallet:
+                res = []
+                for tx in self.wallet.GetTransactions():
+                    json = tx.ToJson()
+                    tx_id = UInt256.ParseString(json['txid'])
+                    txx, height = Blockchain.Default().GetTransaction(tx_id)
+                    header = Blockchain.Default().GetHeaderByHeight(height)
+                    block_index = header.Index
+                    json['block_index'] = block_index
+                    block_timestamp = header.Timestamp
+                    json['blocktime'] = block_timestamp
+                    res.append(json)
+                return res
             else:
                 raise JsonRpcError(-400, "Access denied.")
 

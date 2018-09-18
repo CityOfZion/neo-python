@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file.
 - Implemented `sendtoaddress` RPC method `#556 <https://github.com/CityOfZion/neo-python/pull/556>`_
 - Gracefully handle network packet deserialization failures
 - Default ``ApplicationConfiguration.AcceptIncomingPeers`` to ``False``, if config value is not present
+- Adds ``gettxhistory`` RPC method
 
 
 [0.7.8] 2018-09-06
