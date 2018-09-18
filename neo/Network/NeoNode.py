@@ -268,7 +268,7 @@ class NeoNode(Protocol):
         self.Log("On neo Node loop error %s " % err)
 
     def onThreadDeferredErr(self, err):
-        self.Log("On Call from thread earr %s " % err)
+        self.Log("On Call from thread error %s " % err)
 
     def ProtocolReady(self):
         self.RequestPeerInfo()
@@ -284,8 +284,6 @@ class NeoNode(Protocol):
         peerLoopDeferred.addErrback(self.OnLoopError)
 
     def AskForMoreHeaders(self):
-        # self.Log("asking for more headers...")
-
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
@@ -302,7 +300,6 @@ class NeoNode(Protocol):
 
         if self.sync_mode != current_mode:
             self.block_loop.stop()
-            # self.Log("Changing sync mode from %s to %s" % (current_mode, self.sync_mode))
             self.block_loop.start(self.sync_mode)
         else:
             if len(BC.Default().BlockRequests) > self.leader.BREQMAX:
@@ -378,7 +375,6 @@ class NeoNode(Protocol):
 
     def RequestVersion(self):
         """Request the remote client version."""
-        # self.Log("All caught up, requesting version")
         m = Message("getversion")
         self.SendSerializedMessage(m)
 
@@ -448,11 +444,6 @@ class NeoNode(Protocol):
         elif inventory.Type == InventoryType.ConsensusInt:
             pass
 
-    #        for hash in inventory.Hashes:
-    #            if not hash in self.leader.KnownHashes:
-    #                if not hash in self.leader.MissionsGlobal:
-    #                    self.leader.MissionsGlobal.append(hash)
-
     def SendSerializedMessage(self, message):
         """
         Send the `message` to the remote client.
@@ -466,7 +457,7 @@ class NeoNode(Protocol):
             self.bytes_out += len(ba2)
             self.transport.write(ba2)
         except Exception as e:
-            self.Log("Could not send serialiized message %s " % e)
+            self.Log("Could not send serialized message %s " % e)
 
     def HandleBlockHeadersReceived(self, inventory):
         """
@@ -477,7 +468,6 @@ class NeoNode(Protocol):
         """
         try:
             inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
-            #        self.Log("Received headers %s " % ([h.Hash.ToBytes() for h in inventory.Headers]))
             if inventory is not None:
                 BC.Default().AddHeaders(inventory.Headers)
 

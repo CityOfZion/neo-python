@@ -168,7 +168,7 @@ class NodeLeader:
             try:
                 reactor.connectTCP(host, int(port), NeoClientFactory(), timeout=120)
             except Exception as e:
-                print("Could not connect TCP to %s:%s " % (host, port))
+                logger.debug("Could not connect TCP to %s:%s " % (host, port))
 
     def Shutdown(self):
         """Disconnect all connected peers."""
@@ -212,7 +212,7 @@ class NodeLeader:
             self.Peers.remove(peer)
 
     def onSetupConnectionErr(self, err):
-        print("On setup connectioin error! %s" % err)
+        logger.debug("On setup connectioin error! %s" % err)
 
     def PeerCheckLoop(self):
         # often times things will get stuck on 1 peer so
@@ -326,7 +326,6 @@ class NodeLeader:
             pass
 
         relayed = self.RelayDirectly(inventory)
-        # self.
         return relayed
 
     def GetTransaction(self, hash):
