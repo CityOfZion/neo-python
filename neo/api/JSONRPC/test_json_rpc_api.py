@@ -540,7 +540,12 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
 
         for tx in res['result']:
-            self.assertIn('txid', tx.keys()) 
+            self.assertIn('txid', tx.keys())
+            self.assertIsNotNone(tx['txid'])
+            self.assertIn('block_index', tx.keys())
+            self.assertIsNotNone(tx['block_index'])
+            self.assertIn('blocktime', tx.keys())
+            self.assertIsNotNone(tx['blocktime'])
         self.assertEqual(len(res['result']), 2)
 
         self.app.wallet.Close()
