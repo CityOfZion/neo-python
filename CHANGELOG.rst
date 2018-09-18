@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - Gracefully handle network packet deserialization failures
 - Fix issue resetting storage between Smart Contract invocations
 - Default ``ApplicationConfiguration.AcceptIncomingPeers`` to ``False``, if config value is not present
+- Fix ``Blockchain.DeregisterBlockchain`` not clearing all static variables
 
 [0.7.8] 2018-09-06
 ------------------
