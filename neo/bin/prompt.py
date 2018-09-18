@@ -313,7 +313,8 @@ class PromptInterface:
 
     def start_wallet_loop(self):
         self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-        self._walletdb_loop.start(1)
+        loop_deferred = self._walletdb_loop.start(1)
+        loop_deferred.addErrback(self.on_looperror)
 
     def stop_wallet_loop(self):
         self._walletdb_loop.stop()
@@ -643,7 +644,7 @@ class PromptInterface:
             block = Blockchain.Default().GetBlock(item)
 
             if block is not None:
-
+                block.LoadTransactions()
                 bjson = json.dumps(block.ToJson(), indent=4)
                 tokens = [("class:number", bjson)]
                 print_formatted_text(FormattedText(tokens), style=self.token_style)
@@ -959,9 +960,13 @@ class PromptInterface:
             print(
                 "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off', 'config vm-log on|off', or 'config maxpeers {num_peers}'" % what)
 
+    def on_looperror(self, err):
+        logger.error("On DB loop error! %s " % err)
+
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
+        dbloop_deferred = dbloop.start(.1)
+        dbloop_deferred.addErrback(self.on_looperror)
 
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
