@@ -279,7 +279,18 @@ class JsonRpcApi:
 
         elif method == "gettxhistory":
             if self.wallet:
-                return [tx.ToJson() for tx in self.wallet.GetTransactions()]
+                res=[]
+                for tx in self.wallet.GetTransactions():
+                    json = tx.ToJson()
+                    tx_id = UInt256.ParseString(json['txid'])
+                    txx, height = Blockchain.Default().GetTransaction(tx_id)
+                    header = Blockchain.Default().GetHeaderByHeight(height)
+                    block_index = header.Index
+                    json['block_index'] = block_index
+                    block_timestamp = header.Timestamp
+                    json['blocktime'] = block_timestamp
+                    res.append(json)
+                return res
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
