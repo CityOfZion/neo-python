@@ -69,7 +69,7 @@ class NodeLeader:
 
     ServiceEnabled = False
 
-    peer_check_loop = None
+    peer_loop_deferred = None
 
     @staticmethod
     def Instance():
@@ -106,9 +106,9 @@ class NodeLeader:
         self.NodeId = random.randint(1294967200, 4294967200)
 
     def Restart(self):
-        if self.peer_check_loop:
-            self.peer_check_loop.stop()
-            self.peer_check_loop = None
+        if self.peer_loop_deferred:
+            self.peer_loop_deferred.cancel()
+            self.peer_loop_deferred = None
 
         if len(self.Peers) == 0:
             self.ADDRS = []
@@ -125,9 +125,9 @@ class NodeLeader:
             start_delay += 1
 
         # check in on peers every 4 mins
-        self.peer_check_loop = task.LoopingCall(self.PeerCheckLoop)
-        peerLoopDeferred = self.peer_check_loop.start(240, now=False)
-        peerLoopDeferred.addErrback(self.OnPeerLoopError)
+        peer_check_loop = task.LoopingCall(self.PeerCheckLoop)
+        self.peer_loop_deferred = peer_check_loop.start(240, now=False)
+        self.peer_loop_deferred.addErrback(self.OnPeerLoopError)
 
         if settings.ACCEPT_INCOMING_PEERS:
             reactor.listenTCP(settings.NODE_PORT, NeoClientFactory(incoming_client=True))
@@ -171,15 +171,15 @@ class NodeLeader:
 
     def Shutdown(self):
         """Disconnect all connected peers."""
-        if self.peer_check_loop:
-            self.peer_check_loop.stop()
-            self.peer_check_loop = None
+        if self.peer_loop_deferred:
+            self.peer_loop_deferred.cancel()
+            self.peer_loop_deferred = None
 
         for p in self.Peers:
             p.Disconnect()
 
     def OnPeerLoopError(self, err):
-        logger.error("Error on Peer check loop %s " % err)
+        logger.debug("Error on Peer check loop %s " % err)
 
     def AddConnectedPeer(self, peer):
         """
@@ -211,7 +211,7 @@ class NodeLeader:
             self.Peers.remove(peer)
 
     def onSetupConnectionErr(self, err):
-        logger.error("On setup connectioin error! %s" % err)
+        logger.debug("On setup connection error! %s" % err)
 
     def PeerCheckLoop(self):
         # often times things will get stuck on 1 peer so
