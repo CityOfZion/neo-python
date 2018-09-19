@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file.
 - Default ``ApplicationConfiguration.AcceptIncomingPeers`` to ``False``, if config value is not present
 - Update seed list to include NGD nodes
 - Fix unhandled deferred errors
+- Fix ``Blockchain.DeregisterBlockchain`` not clearing all static variables
 
 [0.7.8] 2018-09-06
 ------------------
