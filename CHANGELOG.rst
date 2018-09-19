@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - Fix issue resetting storage between Smart Contract invocations
 - Default ``ApplicationConfiguration.AcceptIncomingPeers`` to ``False``, if config value is not present
 - Fix ``Blockchain.DeregisterBlockchain`` not clearing all static variables
+- Migrate the existing test cases, which depend on BlockchainFixtureTestCase and WalletFixtureTestCase, to a privnet. Reduction of the fixtures' size to about 7MB. `#478 <https://github.com/CityOfZion/neo-python/issues/478>`_
 
 [0.7.8] 2018-09-06
 ------------------
