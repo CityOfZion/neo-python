@@ -117,7 +117,6 @@ class NodeLeader:
 
     def Start(self):
         """Start connecting to the node list."""
-        # start up endpoints
         start_delay = 0
         for bootstrap in settings.SEED_LIST:
             host, port = bootstrap.split(":")
@@ -168,7 +167,7 @@ class NodeLeader:
             try:
                 reactor.connectTCP(host, int(port), NeoClientFactory(), timeout=120)
             except Exception as e:
-                logger.debug("Could not connect TCP to %s:%s " % (host, port))
+                logger.error("Could not connect TCP to %s:%s " % (host, port))
 
     def Shutdown(self):
         """Disconnect all connected peers."""
@@ -212,7 +211,7 @@ class NodeLeader:
             self.Peers.remove(peer)
 
     def onSetupConnectionErr(self, err):
-        logger.debug("On setup connectioin error! %s" % err)
+        logger.error("On setup connectioin error! %s" % err)
 
     def PeerCheckLoop(self):
         # often times things will get stuck on 1 peer so

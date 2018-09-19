@@ -992,6 +992,8 @@ class PromptInterface:
             except KeyboardInterrupt:
                 # Control-C pressed: do nothing
                 continue
+            except Exception as e:
+                logger.error("Exception handling input: %s " % e)
 
             try:
                 command, arguments = self.input_parser.parse_input(result)
@@ -1150,8 +1152,9 @@ def main():
     cli = PromptInterface(fn_prompt_history)
 
     # Run things
-    #    reactor.suggestThreadPoolSize(15)
-    reactor.callInThread(cli.run)
+
+    d = reactor.callInThread(cli.run)
+
     NodeLeader.Instance().Start()
 
     # reactor.run() is blocking, until `quit()` is called which stops the reactor.

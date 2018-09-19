@@ -1,6 +1,5 @@
 import binascii
 import random
-import traceback
 from logzero import logger
 from twisted.internet.protocol import Protocol
 from twisted.internet import error as twisted_error
@@ -68,10 +67,10 @@ class NeoNode(Protocol):
 
     def Disconnect(self, reason=None):
         """Close the connection with the remote node client."""
+        self.expect_verack_next = False
         if reason:
             logger.debug(reason)
         self.transport.loseConnection()
-        self.expect_verack_next = False
 
     @property
     def Address(self):
@@ -125,20 +124,23 @@ class NeoNode(Protocol):
 
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
-        if self.block_loop:
-            self.block_loop.stop()
-            self.block_loop = None
-        if self.peer_loop:
-            self.peer_loop.stop()
-            self.peer_loop = None
+        try:
+            if self.block_loop:
+                self.block_loop.stop()
+                self.block_loop = None
+            if self.peer_loop:
+                self.peer_loop.stop()
+                self.peer_loop = None
 
-        self.ReleaseBlockRequests()
-        self.leader.RemoveConnectedPeer(self)
+            self.ReleaseBlockRequests()
+            self.leader.RemoveConnectedPeer(self)
 
-        if reason and reason.check(twisted_error.ConnectionDone):
-            self.Log("client {} disconnected normally with reason:{}".format(self.remote_nodeid, reason))
-        else:
-            self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
+            if reason and reason.check(twisted_error.ConnectionDone):
+                self.Log("client {} disconnected normally with reason:{}".format(self.remote_nodeid, reason))
+            else:
+                self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
+        except Exception as e:
+            logger.error("Error with connection lost: %s " % e)
 
     def ReleaseBlockRequests(self):
         bcr = BC.Default().BlockRequests
@@ -256,8 +258,7 @@ class NeoNode(Protocol):
         elif m.Command == 'getheaders':
             self.HandleGetHeadersMessageReceived(m.Payload)
         elif m.Command == 'headers':
-            headerResultDeferred = threads.deferToThread(self.HandleBlockHeadersReceived, m.Payload)
-            headerResultDeferred.addErrback(self.onThreadDeferredErr)
+            reactor.callFromThread(self.HandleBlockHeadersReceived, m.Payload)
 
         elif m.Command == 'addr':
             self.HandlePeerInfoReceived(m.Payload)
@@ -265,10 +266,10 @@ class NeoNode(Protocol):
             self.Log("Command not implemented {} {} ".format(m.Command, self.endpoint))
 
     def OnLoopError(self, err):
-        self.Log("On neo Node loop error %s " % err)
+        logger.error("On neo Node loop error %s " % err)
 
     def onThreadDeferredErr(self, err):
-        self.Log("On Call from thread error %s " % err)
+        logger.error("On Call from thread error %s " % err)
 
     def ProtocolReady(self):
         self.RequestPeerInfo()
