@@ -27,7 +27,6 @@ from neo.Settings import settings
 
 
 class ApplicationEngine(ExecutionEngine):
-
     ratio = 100000
     gas_free = 10 * 100000000
     gas_amount = 0
@@ -406,7 +405,7 @@ class ApplicationEngine(ExecutionEngine):
         return 1
 
     @staticmethod
-    def Run(script, container=None, exit_on_error=False, gas=Fixed8.Zero(), test_mode=True):
+    def Run(script, container=None, exit_on_error=False, gas=Fixed8.Zero(), test_mode=False):
         """
         Runs a script in a test invoke environment
 
