@@ -28,15 +28,15 @@ class Blockchain:
 
     GENERATION_AMOUNT = [8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
-    __blockchain = None
+    _blockchain = None
 
-    __validators = []
+    _validators = []
 
-    __genesis_block = None
+    _genesis_block = None
 
-    __instance = None
+    _instance = None
 
-    __blockrequests = set()
+    _blockrequests = set()
 
     _paused = False
 
@@ -52,12 +52,12 @@ class Blockchain:
 
     @staticmethod
     def StandbyValidators():
-        if len(Blockchain.__validators) < 1:
+        if len(Blockchain._validators) < 1:
             vlist = settings.STANDBY_VALIDATORS
             for pkey in settings.STANDBY_VALIDATORS:
-                Blockchain.__validators.append(ECDSA.decode_secp256r1(pkey).G)
+                Blockchain._validators.append(ECDSA.decode_secp256r1(pkey).G)
 
-        return Blockchain.__validators
+        return Blockchain._validators
 
     @staticmethod
     @lru_cache(maxsize=2)
@@ -135,11 +135,11 @@ class Blockchain:
         Returns:
             obj: Currently set to `neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain`.
         """
-        if Blockchain.__instance is None:
-            Blockchain.__instance = Blockchain()
+        if Blockchain._instance is None:
+            Blockchain._instance = Blockchain()
             Blockchain.GenesisBlock().RebuildMerkleRoot()
 
-        return Blockchain.__instance
+        return Blockchain._instance
 
     @property
     def CurrentBlockHash(self):
@@ -178,10 +178,10 @@ class Blockchain:
         Returns:
             set:
         """
-        return self.__blockrequests
+        return self._blockrequests
 
     def ResetBlockRequests(self):
-        self.__blockrequests = set()
+        self._blockrequests = set()
 
     @staticmethod
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
@@ -221,8 +221,7 @@ class Blockchain:
                 continue
 
             for coinref in group:
-                if coinref.PrevIndex >= len(tx.outputs) or tx.outputs[
-                        coinref.PrevIndex].AssetId != Blockchain.SystemShare().Hash:
+                if coinref.PrevIndex >= len(tx.outputs) or tx.outputs[coinref.PrevIndex].AssetId != Blockchain.SystemShare().Hash:
                     raise Exception("Invalid coin reference")
                 spent_coin = SpentCoin(output=tx.outputs[coinref.PrevIndex], start_height=height_start,
                                        end_height=height_end)
@@ -465,12 +464,27 @@ class Blockchain:
         Args:
             blockchain: a blockchain instance. E.g. neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain
         """
-        if Blockchain.__instance is None:
-            Blockchain.__instance = blockchain
+        if Blockchain._instance is None:
+            Blockchain._instance = blockchain
 
     @staticmethod
     def DeregisterBlockchain():
         """
         Remove the default blockchain instance.
         """
-        Blockchain.__instance = None
+        Blockchain.SECONDS_PER_BLOCK = 15
+        Blockchain.DECREMENT_INTERVAL = 2000000
+        Blockchain.GENERATION_AMOUNT = [8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        Blockchain._blockchain = None
+        Blockchain._validators = []
+        Blockchain._genesis_block = None
+        Blockchain._instance = None
+        Blockchain._blockrequests = set()
+        Blockchain._paused = False
+        Blockchain.BlockSearchTries = 0
+        Blockchain.CACHELIM = 4000
+        Blockchain.CMISSLIM = 5
+        Blockchain.LOOPTIME = .1
+        Blockchain.PersistCompleted = Events()
+        Blockchain.Notify = Events()
+        Blockchain._instance = None
