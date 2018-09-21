@@ -4,6 +4,7 @@ from neo.Wallets.utils import to_aes_key
 from neo.Prompt.Commands.Wallet import AddAlias
 from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
+from neo.Core.Helper import Helper
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neocore.KeyPair import KeyPair
@@ -50,7 +51,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         addr = jsn['addresses'][0]
 
-        self.assertEqual(self.wallet_1_addr, addr['script_hash'])
+        self.assertEqual(self.wallet_1_addr, addr['address'])
+        self.assertEqual(str(Helper.AddrStrToScriptHash(self.wallet_1_addr)), addr['script_hash'])
 
         balance_should_be = Fixed8.FromDecimal(100)
 
@@ -88,7 +90,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         found = False
         for addr in all_addr:
 
-            if addr['script_hash'] == self.watch_addr_str:
+            if addr['address'] == self.watch_addr_str:
                 self.assertEqual(addr['is_watch_only'], True)
                 found = True
 
