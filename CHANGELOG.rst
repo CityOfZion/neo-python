@@ -12,7 +12,7 @@ All notable changes to this project are documented in this file.
 - Update seed list to include NGD nodes
 - Fix unhandled deferred errors
 - Fix ``Blockchain.DeregisterBlockchain`` not clearing all static variables
-- Fix output of ``AccountState.ToJson``
+- Fix 'script_hash' output in ``ToJson`` in AccountState, Adds an 'address' key, Adds a test for ``ToJson`` in AccountState, Replaces the variable ``script_hash`` in ``GetAccountState`` in LevelDBBlockchain with ``address``, Adds a test for ``GetAccountState`` in LevelDBBlockchain
 
 [0.7.8] 2018-09-06
 ------------------
