@@ -36,3 +36,15 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         # and also a invalid retrieval
         block = self._blockchain.GetBlockByHeight(800000)
         self.assertEqual(block, None)
+
+    def test_04_GetAccountState(self):
+        # test passing an address
+        addr = "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"
+        acct = Blockchain.Default().GetAccountState(addr)
+        acct = acct.ToJson()
+        self.assertIn('balances', acct.keys())
+
+        #test failure
+        addr = "Axozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2"
+        acct = Blockchain.Default().GetAccountState(addr)
+        self.assertIsNone(acct)
