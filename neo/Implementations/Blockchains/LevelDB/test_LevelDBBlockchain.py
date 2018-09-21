@@ -1,4 +1,5 @@
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
+from neo.Core.Blockchain import Blockchain
 from neo.Settings import settings
 import os
 
