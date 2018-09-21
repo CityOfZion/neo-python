@@ -209,17 +209,17 @@ class LevelDBBlockchain(Blockchain):
     def GetStates(self, prefix, classref):
         return DBCollection(self._db, prefix, classref)
 
-    def GetAccountState(self, script_hash, print_all_accounts=False):
+    def GetAccountState(self, address, print_all_accounts=False):
 
-        if type(script_hash) is str:
+        if type(address) is str:
             try:
-                script_hash = script_hash.encode('utf-8')
+                address = address.encode('utf-8')
             except Exception as e:
                 logger.info("could not convert argument to bytes :%s " % e)
                 return None
 
         accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
-        acct = accounts.TryGet(keyval=script_hash)
+        acct = accounts.TryGet(keyval=address)
 
         return acct
 
