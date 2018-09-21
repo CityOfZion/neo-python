@@ -6,13 +6,14 @@ from neo.Settings import settings
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
+from neo.Settings import settings
 import logzero
 import os
 
 
 class BlockchainFixtureTestCase(NeoTestCase):
-    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v7.tar.gz'
-    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v7.tar.gz')
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v8.tar.gz'
+    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v8.tar.gz')
     _blockchain = None
 
     @classmethod
@@ -47,6 +48,8 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
         if not os.path.exists(cls.leveldb_testpath()):
             raise Exception("Error downloading fixtures at %s" % cls.leveldb_testpath())
+
+        settings.setup_unittest_net()
 
         cls._blockchain = TestLevelDBBlockchain(path=cls.leveldb_testpath(), skip_version_check=True)
         Blockchain.RegisterBlockchain(cls._blockchain)

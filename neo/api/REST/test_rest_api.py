@@ -17,15 +17,9 @@ from klein.test.test_resource import requestMock
 
 class NotificationDBTestCase(BlockchainFixtureTestCase):
 
-    N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixture_v3.tar.gz'
-    N_FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/notif_fixture_v3.tar.gz')
+    N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixtures_v8.tar.gz'
+    N_FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/notif_fixtures_v8.tar.gz')
     N_NOTIFICATION_DB_NAME = os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_notifications')
-
-    contract_hash = UInt160(data=bytearray(b'\x11\xc4\xd1\xf4\xfb\xa6\x19\xf2b\x88p\xd3n:\x97s\xe8tp['))
-    event_tx = '042e4168cb2d563714d3f35ff76b7efc6c7d428360c97b6b45a18b5b1a4faa40'
-
-    addr_to = 'AHbmRX5sL8oxp4dJZRNg5crCGUGxuMUyRB'
-    addr_from = 'AcFnRrVC5emrTEkuFuRPufcuTb6KsAJ3vR'
 
     app = None  # type:RestApi
 
@@ -56,7 +50,6 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
 
         except Exception as e:
             raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.N_FIXTURE_FILENAME))
-
         if not os.path.exists(cls.N_NOTIFICATION_DB_NAME):
             raise Exception("Error downloading fixtures")
 
@@ -79,7 +72,7 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
 
         ndb = NotificationDB.instance()
 
-        events = ndb.get_by_block(627529)
+        events = ndb.get_by_block(9583)
 
         self.assertEqual(len(events), 1)
 
@@ -94,8 +87,8 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         self.assertIn('endpoints', res)
 
     def test_4_by_block(self):
-        mock_req = requestMock(path=b'/block/627529')
-        res = self.app.get_by_block(mock_req, 627529)
+        mock_req = requestMock(path=b'/block/9583')
+        res = self.app.get_by_block(mock_req, 9583)
         jsn = json.loads(res)
         self.assertEqual(jsn['total'], 1)
         results = jsn['results']
@@ -120,12 +113,12 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         self.assertIn('Higher than current block', jsn['message'])
 
     def test_7_by_addr(self):
-        mock_req = requestMock(path=b'/addr/AL5e5ZcqtBTKjcQ8reiePrUBMYSD88v59a')
-        res = self.app.get_by_addr(mock_req, 'AL5e5ZcqtBTKjcQ8reiePrUBMYSD88v59a')
+        mock_req = requestMock(path=b'/addr/AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
+        res = self.app.get_by_addr(mock_req, 'AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
         jsn = json.loads(res)
-        self.assertEqual(jsn['total'], 127)
+        self.assertEqual(jsn['total'], 1007)
         results = jsn['results']
-        self.assertEqual(len(results), 127)
+        self.assertEqual(len(results), 500)
 
     def test_8_bad_addr(self):
         mock_req = requestMock(path=b'/addr/AcFnRrVC5emrTEkuFuRPufcuTb6KsAJ3v')
@@ -137,8 +130,8 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         self.assertIn('Could not get notifications', jsn['message'])
 
     def test_9_by_tx(self):
-        mock_req = requestMock(path=b'/tx/0x4c927a7f365cb842ea3576eae474a89183c9e43970a8509b23570a86cb4f5121')
-        res = self.app.get_by_tx(mock_req, '0x4c927a7f365cb842ea3576eae474a89183c9e43970a8509b23570a86cb4f5121')
+        mock_req = requestMock(path=b'/tx/0xa2a37fd2ab7048d70d51eaa8af2815e0e542400329b05a34274771174180a7e8')
+        res = self.app.get_by_tx(mock_req, '0xa2a37fd2ab7048d70d51eaa8af2815e0e542400329b05a34274771174180a7e8')
         jsn = json.loads(res)
         self.assertEqual(jsn['total'], 1)
         results = jsn['results']
@@ -154,16 +147,16 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         self.assertIn('Could not get tx with hash', jsn['message'])
 
     def test_get_by_contract(self):
-        mock_req = requestMock(path=b'/contract/73d2f26ada9cd95861eed99e43f9aafa05630849')
-        res = self.app.get_by_contract(mock_req, '73d2f26ada9cd95861eed99e43f9aafa05630849')
+        mock_req = requestMock(path=b'/contract/b9fbcff6e50fd381160b822207231233dd3c56c2')
+        res = self.app.get_by_contract(mock_req, 'b9fbcff6e50fd381160b822207231233dd3c56c2')
         jsn = json.loads(res)
-        self.assertEqual(jsn['total'], 4)
+        self.assertEqual(jsn['total'], 1006)
         results = jsn['results']
-        self.assertEqual(len(results), 4)
+        self.assertEqual(len(results), 500)
 
     def test_get_by_contract_empty(self):
-        mock_req = requestMock(path=b'/contract/a3d2f26ada9cd95861eed99e43f9aafa05630849')
-        res = self.app.get_by_contract(mock_req, 'a3d2f26ada9cd95861eed99e43f9aafa05630849')
+        mock_req = requestMock(path=b'/contract/910cba960880c75072d0c625dfff459f72aae047')
+        res = self.app.get_by_contract(mock_req, '910cba960880c75072d0c625dfff459f72aae047')
         jsn = json.loads(res)
         self.assertEqual(jsn['total'], 0)
         results = jsn['results']
@@ -173,54 +166,54 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
         mock_req = requestMock(path=b'/tokens')
         res = self.app.get_tokens(mock_req)
         jsn = json.loads(res)
-        self.assertEqual(jsn['total'], 364)
+        self.assertEqual(jsn['total'], 5)
         results = jsn['results']
         self.assertIsInstance(results, list)
 
     def test_pagination_for_addr_results(self):
-        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
-        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        mock_req = requestMock(path=b'/addr/AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
+        res = self.app.get_by_addr(mock_req, 'AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
         jsn = json.loads(res)
-        self.assertEqual(jsn['total'], 1027)
+        self.assertEqual(jsn['total'], 1007)
         results = jsn['results']
         self.assertEqual(len(results), 500)
         self.assertEqual(jsn['total_pages'], 3)
 
-        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?page=1')
-        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        mock_req = requestMock(path=b'/addr/AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9?page=1')
+        res = self.app.get_by_addr(mock_req, 'AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
         jsn = json.loads(res)
-        self.assertEqual(jsn['total'], 1027)
+        self.assertEqual(jsn['total'], 1007)
         results = jsn['results']
         self.assertEqual(len(results), 500)
 
-        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?page=2')
-        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        mock_req = requestMock(path=b'/addr/AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9?page=2')
+        res = self.app.get_by_addr(mock_req, 'AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
         jsn = json.loads(res)
-        self.assertEqual(jsn['total'], 1027)
+        self.assertEqual(jsn['total'], 1007)
         results = jsn['results']
         self.assertEqual(len(results), 500)
 
-        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?page=3')
-        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        mock_req = requestMock(path=b'/addr/AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9?page=3')
+        res = self.app.get_by_addr(mock_req, 'AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
         jsn = json.loads(res)
-        self.assertEqual(jsn['total'], 1027)
+        self.assertEqual(jsn['total'], 1007)
         results = jsn['results']
-        self.assertEqual(len(results), 27)
+        self.assertEqual(len(results), 7)
 
     def test_pagination_page_size_for_addr_results(self):
-        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?pagesize=100')
-        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        mock_req = requestMock(path=b'/addr/AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9?pagesize=100')
+        res = self.app.get_by_addr(mock_req, 'AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
         jsn = json.loads(res)
-        self.assertEqual(jsn['total'], 1027)
+        self.assertEqual(jsn['total'], 1007)
         results = jsn['results']
         self.assertEqual(len(results), 100)
         self.assertEqual(jsn['total_pages'], 11)
 
-        mock_req = requestMock(path=b'/addr/AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM?pagesize=100&page=11')
-        res = self.app.get_by_addr(mock_req, 'AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM')
+        mock_req = requestMock(path=b'/addr/AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9?pagesize=100&page=11')
+        res = self.app.get_by_addr(mock_req, 'AXpNr3SDfLXbPHNdqxYeHK5cYpKMHZxMZ9')
         jsn = json.loads(res)
         results = jsn['results']
-        self.assertEqual(len(results), 27)
+        self.assertEqual(len(results), 7)
 
     def test_block_heigher_than_current(self):
         mock_req = requestMock(path=b'/block/8000000')

@@ -9,12 +9,14 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
     def leveldb_testpath(self):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
+    # test need to be updated whenever we change the fixtures
     def test_01_initial_setup(self):
-        self.assertEqual(self._blockchain.Height, 758986)
+        self.assertEqual(self._blockchain.Height, 12349)
 
     def test_02_GetBlockHash(self):
         # test requested block height exceeding blockchain current_height
-        result = self._blockchain.GetBlockHash(800000)
+        invalid_bc_height = self._blockchain.Height + 1
+        result = self._blockchain.GetBlockHash(invalid_bc_height)
         self.assertEqual(result, None)
 
         # test header index length mismatch
@@ -35,7 +37,8 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         self.assertEqual(block.GetHashCode().ToString(), self._blockchain.GetBlockHash(100).decode('utf-8'))
 
         # and also a invalid retrieval
-        block = self._blockchain.GetBlockByHeight(800000)
+        invalid_bc_height = self._blockchain.Height + 1
+        block = self._blockchain.GetBlockByHeight(invalid_bc_height)
         self.assertEqual(block, None)
 
     def test_04_GetAccountState(self):
