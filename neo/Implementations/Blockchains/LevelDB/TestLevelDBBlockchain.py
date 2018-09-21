@@ -25,15 +25,13 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
 
     def Persist(self, block):
 
-        sn = self._db.snapshot()
-
-        accounts = DBCollection(self._db, sn, DBPrefix.ST_Account, AccountState)
-        unspentcoins = DBCollection(self._db, sn, DBPrefix.ST_Coin, UnspentCoinState)
-        spentcoins = DBCollection(self._db, sn, DBPrefix.ST_SpentCoin, SpentCoinState)
-        assets = DBCollection(self._db, sn, DBPrefix.ST_Asset, AssetState)
-        validators = DBCollection(self._db, sn, DBPrefix.ST_Validator, ValidatorState)
-        contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
-        storages = DBCollection(self._db, sn, DBPrefix.ST_Storage, StorageItem)
+        accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
+        unspentcoins = DBCollection(self._db, DBPrefix.ST_Coin, UnspentCoinState)
+        spentcoins = DBCollection(self._db, DBPrefix.ST_SpentCoin, SpentCoinState)
+        assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState)
+        validators = DBCollection(self._db, DBPrefix.ST_Validator, ValidatorState)
+        contracts = DBCollection(self._db, DBPrefix.ST_Contract, ContractState)
+        storages = DBCollection(self._db, DBPrefix.ST_Storage, StorageItem)
 
         amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
         amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')

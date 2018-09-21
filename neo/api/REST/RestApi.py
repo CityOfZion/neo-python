@@ -156,7 +156,7 @@ class RestApi:
             tx, height = bc.GetTransaction(hash)
             if not tx:
                 return self.format_message("Could not find transaction for hash %s" % (tx_hash))
-            block_notifications = self.notif.get_by_block(height - 1)
+            block_notifications = self.notif.get_by_block(height)
             for n in block_notifications:
                 if n.tx_hash == tx.Hash:
                     notifications.append(n)

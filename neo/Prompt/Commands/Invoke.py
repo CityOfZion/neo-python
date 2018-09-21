@@ -264,13 +264,11 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
 
     bc = GetBlockchain()
 
-    sn = bc._db.snapshot()
-
-    accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
-    assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
-    validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
-    storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
+    accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
+    assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
+    validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
+    contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
+    storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
 
     # if we are using a withdrawal tx, don't recreate the invocation tx
     # also, we don't want to reset the inputs / outputs
@@ -387,18 +385,15 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                            debug_map=None, invoke_attrs=None, owners=None):
     bc = GetBlockchain()
 
-    sn = bc._db.snapshot()
-
-    accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
-    assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
-    validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
-    storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
+    accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
+    assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
+    validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
+    contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
+    storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
 
     if settings.USE_DEBUG_STORAGE:
         debug_storage = DebugStorage.instance()
-        debug_sn = debug_storage.db.snapshot()
-        storages = DBCollection(debug_storage.db, debug_sn, DBPrefix.ST_Storage, StorageItem)
+        storages = DBCollection(debug_storage.db, DBPrefix.ST_Storage, StorageItem)
         storages.DebugStorage = True
 
     dtx = InvocationTransaction()
@@ -607,7 +602,6 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
 def gather_signatures(context, itx, owners):
     do_exit = False
-    print("owners %s " % owners)
     print("\n\n*******************\n")
     print("Gather Signatures for Transaction:\n%s " % json.dumps(itx.ToJson(), indent=4))
     print("Please use a client to sign the following: %s " % itx.GetHashData())
