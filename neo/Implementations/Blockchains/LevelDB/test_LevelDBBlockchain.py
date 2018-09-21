@@ -45,7 +45,7 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         acct = acct.ToJson()
         self.assertIn('balances', acct.keys())
 
-        #test failure
+        # test failure
         addr = "Axozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2"
         acct = Blockchain.Default().GetAccountState(addr)
         self.assertIsNone(acct)
