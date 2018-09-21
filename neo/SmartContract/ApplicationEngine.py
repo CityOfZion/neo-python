@@ -423,13 +423,12 @@ class ApplicationEngine(ExecutionEngine):
         from neo.EventHub import events
 
         bc = Blockchain.Default()
-        sn = bc._db.snapshot()
 
-        accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
-        assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
-        validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
-        contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
-        storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
+        accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
+        assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
+        validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
+        contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
+        storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
 
         script_table = CachedScriptTable(contracts)
         service = StateMachine(accounts, validators, assets, contracts, storages, None)
