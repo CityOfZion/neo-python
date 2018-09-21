@@ -17,10 +17,9 @@ from neo.Core.State.AssetState import AssetState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.StorageItem import StorageItem
-
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
-
+from neo.VM.InteropService import Array
 from neocore.UInt160 import UInt160
 import datetime
 from neo.Settings import settings

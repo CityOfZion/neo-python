@@ -216,7 +216,6 @@ class ExecutionEngine:
                 script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
 
                 if script is None:
-                    logger.error("Could not find script from script table: %s " % script_hash)
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
                 if opcode == TAILCALL:
@@ -943,32 +942,6 @@ class ExecutionEngine:
 
             if self._exit_on_error:
                 self._VMState |= VMState.FAULT
-            else:
-                logger.error(error_msg)
-                logger.exception(e)
-
-    def StepOut(self):
-        self._VMState &= ~VMState.BREAK
-        count = self._InvocationStack.Count
-
-        while self._VMState & VMState.HALT == 0 and \
-                self._VMState & VMState.FAULT == 0 and \
-                self._VMState & VMState.BREAK == 0 and \
-                self._InvocationStack.Count > count:
-            self.StepInto()
-
-    def StepOver(self):
-        if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-            return
-
-        self._VMState &= ~VMState.BREAK
-        count = self._InvocationStack.Count
-
-        while self._VMState & VMState.HALT == 0 and \
-                self._VMState & VMState.FAULT == 0 and \
-                self._VMState & VMState.BREAK == 0 and \
-                self._InvocationStack.Count > count:
-            self.StepInto()
 
     def VM_FAULT_and_report(self, id, *args):
         self._VMState |= VMState.FAULT
