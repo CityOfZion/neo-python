@@ -114,7 +114,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['balances']['0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'], '4061.0')
-        self.assertEqual(res['result']['script_hash'], addr_str)
+        self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_not_existing_yet(self):
         addr_str = 'AHozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2'
@@ -122,7 +122,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['balances'], {})
-        self.assertEqual(res['result']['script_hash'], addr_str)
+        self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_failure(self):
         addr_str = 'Axozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2'
