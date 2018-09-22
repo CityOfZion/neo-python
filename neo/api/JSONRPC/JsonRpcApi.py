@@ -298,6 +298,12 @@ class JsonRpcApi:
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "dumpprivkey":
+            if self.wallet:
+                return self.dump_priv_key(params)
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
         raise JsonRpcError.methodNotFound()
 
     def get_custom_error_payload(self, request_id, code, message):
@@ -476,3 +482,22 @@ class JsonRpcApi:
             raise JsonRpcError(-32602, "Invalid params")
 
         return asset_id, address_to_sh, amount, fee
+
+    def dump_priv_key(self, params):
+        if not params or params[0] == '':
+            raise JsonRpcError(-100, "Missing argument")
+
+        isValid = False
+        try:
+            data = base58.b58decode_check(params[0])
+            if len(data) == 21 and data[0] == settings.ADDRESS_VERSION:
+                isValid = True
+        except Exception as e:
+            pass
+        if isValid:
+            keys = self.wallet.GetKeys()
+            for key in keys:
+                if key.GetAddress() == params[0]:
+                    export = key.Export()
+                    return export
+        raise JsonRpcError(-32602, "Invalid params")
