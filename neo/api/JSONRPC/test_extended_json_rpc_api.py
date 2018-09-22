@@ -1,5 +1,5 @@
 """
-Run only thse tests:
+Run only these tests:
 
     $ python -m unittest neo.api.JSONRPC.test_extended_json_rpc_api
 """
