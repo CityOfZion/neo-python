@@ -711,3 +711,77 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_dump_priv_key_no_wallet(self):
+        req = self._gen_rpc_req("dumpprivkey", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_dump_priv_key_bad_args(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+
+        # test too few arguments
+        req = self._gen_rpc_req("dumpprivkey", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -100)
+        self.assertEqual(error.get('message', None), "Missing argument")
+
+        # test invalid args
+        req = self._gen_rpc_req("dumpprivkey", params=[""])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -100)
+        self.assertEqual(error.get('message', None), "Missing argument")
+
+        # test invalid address
+        req = self._gen_rpc_req("dumpprivkey", params=["AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_dump_priv_key(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+
+        req = self._gen_rpc_req("dumpprivkey", params=["AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(res['result'], "Ky94Rq8rb1z8UzTthYmy1ApbZa9xsKTvQCiuGUZJZbaDJZdkvLRV")
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
