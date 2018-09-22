@@ -92,7 +92,6 @@ class JsonRpcApi:
             JsonRpcApi.start_height = Blockchain.Default().Height
             JsonRpcApi.start_dt = datetime.datetime.utcnow()
 
-
     def get_data(self, body: dict):
 
         try:
