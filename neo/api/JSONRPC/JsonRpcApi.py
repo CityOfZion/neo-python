@@ -161,10 +161,7 @@ class JsonRpcApi:
             elif method == "gettxhistory":
                 return ExtendedJsonRpcApi.get_tx_history(self)
 
-            else:
-                pass
-
-        elif method == "getaccountstate":
+        if method == "getaccountstate":
             acct = Blockchain.Default().GetAccountState(params[0])
             if acct is None:
                 try:
