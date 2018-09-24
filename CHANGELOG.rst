@@ -14,6 +14,7 @@ All notable changes to this project are documented in this file.
 - Fix ``Blockchain.DeregisterBlockchain`` not clearing all static variables
 - Disable ``prompt.py`` test cases due to high time consumption and unreliable results.
 - Migrate the existing test cases, which depend on BlockchainFixtureTestCase and WalletFixtureTestCase, to a privnet. Reduction of the fixtures' size to about 7MB. `#478 <https://github.com/CityOfZion/neo-python/issues/478>`_
+- Add ``getblockheader`` RPC method
 
 
 [0.7.8] 2018-09-06
