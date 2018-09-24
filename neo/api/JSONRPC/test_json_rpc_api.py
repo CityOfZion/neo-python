@@ -23,7 +23,6 @@ from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import ROOT_INSTALL_PATH
-from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
 
 def mock_request(body):
