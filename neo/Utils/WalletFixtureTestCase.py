@@ -12,43 +12,43 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
 
     @classmethod
     def wallet_1_path(cls):
-        return './fixtures/testwallet.db3'
+        return './fixtures/neo-test1-w.wallet' 
 
     @classmethod
     def wallet_1_dest(cls):
-        return './wallet1.db3'
+        return './wallet1.wallet'
 
     @classmethod
     def wallet_1_pass(cls):
-        return 'testpassword'
+        return '1234567890'
 
     @classmethod
     def wallet_2_path(cls):
-        return './fixtures/testwallet2.db3'
+        return './fixtures/neo-test2-w.wallet'
 
     @classmethod
     def wallet_2_dest(cls):
-        return './wallet2.db3'
+        return './wallet2.wallet'
 
     @classmethod
     def wallet_2_pass(cls):
-        return 'testwallet'
+        return '1234567890'
 
     @classmethod
     def wallet_3_path(cls):
-        return './fixtures/testwallet3.db3'
+        return './fixtures/neo-test3-w.wallet' 
 
     @classmethod
     def wallet_3_dest(cls):
-        return './wallet3.db3'
+        return './wallet3.wallet'
 
     @classmethod
     def wallet_3_pass(cls):
-        return 'testpassword'
+        return '1234567890'
 
     @classmethod
     def new_wallet_dest(cls):
-        return './newwallet.db3'
+        return './newwallet.wallet'
 
     @classmethod
     def new_wallet_pass(self):

@@ -292,6 +292,12 @@ class JsonRpcApi:
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "sendtoaddress":
+            if self.wallet:
+                return self.send_to_address(params)
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
         raise JsonRpcError.methodNotFound()
 
     def get_custom_error_payload(self, request_id, code, message):
@@ -413,3 +419,60 @@ class JsonRpcApi:
                 "watchonly": addr.IsWatchOnly,
             })
         return result
+
+    def send_to_address(self, params):
+        asset, address, amount, fee = self.parse_send_params(params)
+        standard_contract = self.wallet.GetStandardAddress()
+        signer_contract = self.wallet.GetContract(standard_contract)
+
+        output = TransactionOutput(AssetId=asset,
+                                   Value=amount,
+                                   script_hash=address)
+        contract_tx = ContractTransaction(outputs=[output])
+        tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                         change_address=None,
+                                         fee=fee)
+        if tx is None:
+            raise JsonRpcError(-300, "Insufficient funds")
+
+        data = standard_contract.Data
+        tx.Attributes = [
+            TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                 data=data)
+        ]
+
+        context = ContractParametersContext(
+            tx, isMultiSig=signer_contract.IsMultiSigContract
+        )
+        self.wallet.Sign(context)
+
+        if context.Completed:
+            tx.scripts = context.GetScripts()
+            NodeLeader.Instance().Relay(tx)
+            return tx.ToJson()
+        else:
+            return context.toJson()
+
+    def parse_send_params(self, params):
+        if len(params) not in [3, 4]:
+            raise JsonRpcError(-32602, "Invalid params")
+
+        asset_id = get_asset_id(self.wallet, params[0])
+        if not type(asset_id) is UInt256:
+            raise JsonRpcError(-32602, "Invalid params")
+
+        address_to = params[1]
+        try:
+            address_to_sh = self.wallet.ToScriptHash(address_to)
+        except Exception:
+            raise JsonRpcError(-32602, "Invalid params")
+
+        amount = Fixed8.TryParse(params[2], require_positive=True)
+        if not amount:
+            raise JsonRpcError(-32602, "Invalid params")
+
+        fee = Fixed8.TryParse(params[3]) if len(params) == 4 else Fixed8.Zero()
+        if fee < Fixed8.Zero():
+            raise JsonRpcError(-32602, "Invalid params")
+
+        return asset_id, address_to_sh, amount, fee
