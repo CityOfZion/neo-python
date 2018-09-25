@@ -21,7 +21,7 @@ addons:
 install:
   - pip install -e .
   - pip install coveralls
-  - pip install -e git+https://github.com/CityOfZion/neo-boa.git@feature-nep8#egg=neo-boa
+  - pip install -e git+https://github.com/CityOfZion/neo-boa.git@master#egg=neo-boa
 
 # command to run tests
 script:
