@@ -598,15 +598,12 @@ class LevelDBBlockchain(Blockchain):
         return True
 
     def ProcessNewHeaders(self, headers):
-        start = time.clock()
 
         lastheader = headers[-1]
 
         hashes = [h.Hash.ToBytes() for h in headers]
 
         self._header_index = self._header_index + hashes
-
-        logger.debug("Process Headers: %s %s" % (lastheader, (time.clock() - start)))
 
         if lastheader is not None:
             self.OnAddHeader(lastheader)

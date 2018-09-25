@@ -920,7 +920,8 @@ class ExecutionEngine:
                 else:
                     script_hash = context.OpReader.ReadBytes(20)
 
-                script = self._Table.GetScript(script_hash)
+                script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
+
                 if script is None:
                     logger.error("Could not find script from script table: %s " % script_hash)
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
