@@ -218,16 +218,22 @@ def main():
     observer = STDLibLogObserver(name=logzero.LOGZERO_DEFAULT_LOGGER)
     globalLogPublisher.addObserver(observer)
 
+    def loopingCallErrorHandler(error):
+        logger.info("Error in loop: %s " % error)
+
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
+
     dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-    dbloop.start(.1)
+    db_loop_deferred = dbloop.start(.1)
+    db_loop_deferred.addErrback(loopingCallErrorHandler)
 
     # If a wallet is open, make sure it processes blocks
     if wallet:
         walletdb_loop = task.LoopingCall(wallet.ProcessBlocks)
-        walletdb_loop.start(1)
+        wallet_loop_deferred = walletdb_loop.start(1)
+        wallet_loop_deferred.addErrback(loopingCallErrorHandler)
 
     # Setup twisted reactor, NodeLeader and start the NotificationDB
     reactor.suggestThreadPoolSize(15)

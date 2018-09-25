@@ -39,6 +39,12 @@ class StateMachine(StateReader):
         self._storages = storages
         self._wb = wb
 
+        self._accounts.MarkForReset()
+        self._validators.MarkForReset()
+        self._assets.MarkForReset()
+        self._contracts.MarkForReset()
+        self._storages.MarkForReset()
+
         # Standard Library
         self.Register("System.Contract.GetStorageContext", self.Contract_GetStorageContext)
         self.Register("System.Contract.Destroy", self.Contract_Destroy)
