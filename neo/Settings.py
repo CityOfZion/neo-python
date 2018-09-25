@@ -193,20 +193,11 @@ class SettingsHolder:
 
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
-        if 'DebugStorage' in config:
-            self.USE_DEBUG_STORAGE = config['DebugStorage']
-
-        if 'DebugStoragePath' in config:
-            self.DEBUG_STORAGE_PATH = config['DebugStoragePath']
-
-        if 'NotificationDataPath' in config:
-            self.NOTIFICATION_DB_PATH = config['NotificationDataPath']
-
-        if 'ServiceEnabled' in config:
-            self.SERVICE_ENABLED = bool(config['ServiceEnabled'])
-
-        if 'CompilerNep8' in config:
-            self.COMPILER_NEP_8 = bool(config['CompilerNep8'])
+        self.USE_DEBUG_STORAGE = config.get('DebugStorage', True)
+        self.DEBUG_STORAGE_PATH = config.get('DebugStoragePath', 'Chains/debugstorage')
+        self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
+        self.SERVICE_ENABLED = config.get('ServiceEnabled', True)
+        self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
