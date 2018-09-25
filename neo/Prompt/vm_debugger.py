@@ -8,6 +8,7 @@ import pdb
 import dis
 import json
 from logzero import logger
+from neo.Settings import settings
 
 
 class DebugContext:
@@ -36,7 +37,7 @@ class DebugContext:
         self.file_lines = []
 
         try:
-            default_module = Compiler.load(self.file_url).default
+            default_module = Compiler.load(self.file_url, use_nep8=settings.COMPILER_NEP_8).default
             self.method = default_module.method_by_name(self.method_name)
         except Exception as e:
             logger.error('Could not load module %s %s ' % (self.file_url, e))

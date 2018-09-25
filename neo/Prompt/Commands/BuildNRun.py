@@ -12,6 +12,7 @@ import os
 import json
 import traceback
 from neocore.BigInteger import BigInteger
+from neo.Settings import settings
 
 
 def LoadAndRun(arguments, wallet):
@@ -45,7 +46,7 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invoca
     arguments, invoke_attrs = get_tx_attr_from_args(arguments)
     arguments, owners = get_owners_from_params(arguments)
     path = get_arg(arguments)
-    contract_script = Compiler.instance().load_and_save(path)
+    contract_script = Compiler.instance().load_and_save(path, use_nep8=settings.COMPILER_NEP_8)
 
     newpath = path.replace('.py', '.avm')
     logger.info("Saved output to %s " % newpath)

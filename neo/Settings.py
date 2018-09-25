@@ -101,6 +101,8 @@ class SettingsHolder:
 
     SERVICE_ENABLED = True
 
+    COMPILER_NEP_8 = True
+
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
     # Logging settings
@@ -202,6 +204,9 @@ class SettingsHolder:
 
         if 'ServiceEnabled' in config:
             self.SERVICE_ENABLED = bool(config['ServiceEnabled'])
+
+        if 'CompilerNep8' in config:
+            self.COMPILER_NEP_8 = bool(config['CompilerNep8'])
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
