@@ -16,6 +16,7 @@ from tqdm import trange
 from prompt_toolkit import prompt
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
