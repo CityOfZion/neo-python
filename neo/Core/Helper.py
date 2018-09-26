@@ -193,9 +193,9 @@ class Helper:
 
             state_reader = GetStateReader()
             engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
-            engine.LoadScript(verification, False)
-            invoction = verifiable.Scripts[i].InvocationScript
-            engine.LoadScript(invoction, True)
+            engine.LoadScript(verification)
+            invocation = verifiable.Scripts[i].InvocationScript
+            engine.LoadScript(invocation)
 
             try:
                 success = engine.Execute()
@@ -203,7 +203,7 @@ class Helper:
             except Exception as e:
                 state_reader.ExecutionCompleted(engine, False, e)
 
-            if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
+            if engine.ResultStack.Count != 1 or not engine.ResultStack.Pop().GetBoolean():
                 Helper.EmitServiceEvents(state_reader)
                 return False
 
