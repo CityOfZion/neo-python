@@ -9,35 +9,32 @@ from neo.SmartContract.Iterable.ConcatenatedEnumerator import ConcatenatedEnumer
 
 
 class InteropSerializeDeserializeTestCase(TestCase):
-
     engine = None
     econtext = None
     state_reader = None
 
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext()
+        self.econtext = ExecutionContext(engine=self.engine)
         self.state_reader = StateReader()
 
     def test_iter_array(self):
-
         my_array = Array([StackItem.New(12),
                           StackItem.New(b'Hello World'),
                           StackItem.New(True),
                           Array([StackItem.New(113442), StackItem.New(2), StackItem.New(3)])
                           ])
-        self.engine.EvaluationStack.PushT(my_array)
-
+        self.econtext.EvaluationStack.PushT(my_array)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Enumerator_Create(self.engine)
 
-        iterable = self.engine.EvaluationStack.Peek(0).GetInterface()
+        iterable = self.econtext.EvaluationStack.Peek(0).GetInterface()
 
         self.assertIsInstance(iterable, ArrayWrapper)
 
         keys = []
         values = []
         while iterable.Next():
-
             currentKey = iterable.Key()
             keys.append(currentKey.GetBigInteger())
             values.append(iterable.Value())
@@ -46,7 +43,6 @@ class InteropSerializeDeserializeTestCase(TestCase):
         self.assertEqual(values, my_array.GetArray())
 
     def test_iter_map(self):
-
         my_map = Map(
             {
                 StackItem.New('a'): StackItem.New(1),
@@ -55,11 +51,12 @@ class InteropSerializeDeserializeTestCase(TestCase):
             }
         )
 
-        self.engine.EvaluationStack.PushT(my_map)
+        self.econtext.EvaluationStack.PushT(my_map)
+        self.engine.InvocationStack.PushT(self.econtext)
 
         self.state_reader.Iterator_Create(self.engine)
 
-        iterable = self.engine.EvaluationStack.Peek(0).GetInterface()
+        iterable = self.econtext.EvaluationStack.Peek(0).GetInterface()
 
         self.assertIsInstance(iterable, MapWrapper)
 
@@ -76,47 +73,44 @@ class InteropSerializeDeserializeTestCase(TestCase):
         self.assertEqual(values, my_map.Values)
 
     def test_iter_array_keys(self):
-
         my_array = Array([StackItem.New(12),
                           StackItem.New(b'Hello World'),
                           StackItem.New(True),
                           Array([StackItem.New(113442), StackItem.New(2), StackItem.New(3)])
                           ])
-        self.engine.EvaluationStack.PushT(my_array)
-
+        self.econtext.EvaluationStack.PushT(my_array)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Enumerator_Create(self.engine)
 
         create_iterkeys = self.state_reader.Iterator_Keys(self.engine)
 
         self.assertEqual(create_iterkeys, True)
 
-        iterkeys = self.engine.EvaluationStack.Peek(0).GetInterface()
+        iterkeys = self.econtext.EvaluationStack.Peek(0).GetInterface()
 
         self.assertIsInstance(iterkeys, KeysWrapper)
 
         keys = []
         while iterkeys.Next():
-
             keys.append(iterkeys.Value().GetBigInteger())
 
         self.assertEqual(keys, [0, 1, 2, 3])
 
     def test_iter_array_values(self):
-
         my_array = Array([StackItem.New(12),
                           StackItem.New(b'Hello World'),
                           StackItem.New(True),
                           Array([StackItem.New(113442), StackItem.New(2), StackItem.New(3)])
                           ])
-        self.engine.EvaluationStack.PushT(my_array)
-
+        self.econtext.EvaluationStack.PushT(my_array)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Enumerator_Create(self.engine)
 
         create_itervalues = self.state_reader.Iterator_Values(self.engine)
 
         self.assertEqual(create_itervalues, True)
 
-        itervals = self.engine.EvaluationStack.Peek(0).GetInterface()
+        itervals = self.econtext.EvaluationStack.Peek(0).GetInterface()
 
         self.assertIsInstance(itervals, ValuesWrapper)
 
@@ -127,7 +121,6 @@ class InteropSerializeDeserializeTestCase(TestCase):
         self.assertEqual(values, my_array.GetArray())
 
     def test_iter_concat(self):
-
         my_array = Array([StackItem.New(12),
                           StackItem.New(b'Hello World'),
                           StackItem.New(True),
@@ -136,11 +129,11 @@ class InteropSerializeDeserializeTestCase(TestCase):
 
         my_array2 = Array([StackItem.New(b'a'), StackItem.New(b'b'), StackItem.New(4), StackItem.New(100)])
 
-        self.engine.EvaluationStack.PushT(my_array2)
-
+        self.econtext.EvaluationStack.PushT(my_array2)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader.Enumerator_Create(self.engine)
 
-        self.engine.EvaluationStack.PushT(my_array)
+        self.econtext.EvaluationStack.PushT(my_array)
 
         self.state_reader.Enumerator_Create(self.engine)
 
@@ -148,7 +141,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
 
         self.assertEqual(result, True)
 
-        concatted_enum = self.engine.EvaluationStack.Peek().GetInterface()
+        concatted_enum = self.econtext.EvaluationStack.Peek().GetInterface()
 
         self.assertIsInstance(concatted_enum, ConcatenatedEnumerator)
 
@@ -156,63 +149,57 @@ class InteropSerializeDeserializeTestCase(TestCase):
         count = 0
 
         while concatted_enum.Next():
-
             count += 1
             values.append(concatted_enum.Value())
 
         self.assertEqual(count, 8)
-
         self.assertEqual(values, my_array.GetArray() + my_array2.GetArray())
 
     def test_iter_array_bad(self):
-
         my_item = StackItem.New(12)
-        self.engine.EvaluationStack.PushT(my_item)
+        self.econtext.EvaluationStack.PushT(my_item)
+        self.engine.InvocationStack.PushT(self.econtext)
 
         result = self.state_reader.Enumerator_Create(self.engine)
 
         self.assertEqual(result, False)
-
-        self.assertEqual(self.engine.EvaluationStack.Count, 0)
+        self.assertEqual(self.econtext.EvaluationStack.Count, 0)
 
     def test_iter_map_bad(self):
-
         my_item = StackItem.New(12)
-        self.engine.EvaluationStack.PushT(my_item)
-
+        self.econtext.EvaluationStack.PushT(my_item)
+        self.engine.InvocationStack.PushT(self.econtext)
         result = self.state_reader.Iterator_Create(self.engine)
 
         self.assertEqual(result, False)
-
-        self.assertEqual(self.engine.EvaluationStack.Count, 0)
+        self.assertEqual(self.econtext.EvaluationStack.Count, 0)
 
     def test_iter_array_key_bad(self):
         my_item = StackItem.New(12)
-        self.engine.EvaluationStack.PushT(my_item)
+        self.econtext.EvaluationStack.PushT(my_item)
+        self.engine.InvocationStack.PushT(self.econtext)
 
         result = self.state_reader.Iterator_Key(self.engine)
 
         self.assertEqual(result, False)
-
-        self.assertEqual(self.engine.EvaluationStack.Count, 0)
+        self.assertEqual(self.econtext.EvaluationStack.Count, 0)
 
     def test_iter_array_values_bad(self):
         my_item = StackItem.New(12)
-        self.engine.EvaluationStack.PushT(my_item)
+        self.econtext.EvaluationStack.PushT(my_item)
+        self.engine.InvocationStack.PushT(self.econtext)
 
         result = self.state_reader.Iterator_Values(self.engine)
 
         self.assertEqual(result, False)
-
-        self.assertEqual(self.engine.EvaluationStack.Count, 0)
+        self.assertEqual(self.econtext.EvaluationStack.Count, 0)
 
     def test_iter_array_keys_bad(self):
 
         my_item = StackItem.New(12)
-        self.engine.EvaluationStack.PushT(my_item)
-
+        self.econtext.EvaluationStack.PushT(my_item)
+        self.engine.InvocationStack.PushT(self.econtext)
         result = self.state_reader.Iterator_Keys(self.engine)
 
         self.assertEqual(result, False)
-
-        self.assertEqual(self.engine.EvaluationStack.Count, 0)
+        self.assertEqual(self.econtext.EvaluationStack.Count, 0)
