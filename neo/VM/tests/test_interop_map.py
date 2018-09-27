@@ -25,7 +25,7 @@ class InteropTest(TestCase):
 
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext()
+        self.econtext = ExecutionContext(engine=self.engine)
 
     def test_interop_map1(self):
         map = Map()
@@ -77,36 +77,36 @@ class InteropTest(TestCase):
     def test_op_map1(self):
         self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
 
-        self.assertEqual(len(self.engine.EvaluationStack.Items), 1)
-        self.assertIsInstance(self.engine.EvaluationStack.Items[0], Map)
-        self.assertEqual(self.engine.EvaluationStack.Items[0].GetMap(), {})
+        self.assertEqual(len(self.econtext.EvaluationStack.Items), 1)
+        self.assertIsInstance(self.econtext.EvaluationStack.Items[0], Map)
+        self.assertEqual(self.econtext.EvaluationStack.Items[0].GetMap(), {})
 
     def test_op_map2(self):
         self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
-        self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
-        self.engine.EvaluationStack.PushT(StackItem.New('myVal'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
         self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
 
-        self.assertEqual(len(self.engine.EvaluationStack.Items), 0)
+        self.assertEqual(len(self.econtext.EvaluationStack.Items), 0)
 
     def test_op_map3(self):
         # set item should fail if not enough things on estack
 
-        self.engine.EvaluationStack.PushT(StackItem.New('myvalue'))
-        self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('myvalue'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
 
         with self.assertRaises(Exception) as context:
             self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
 
-        self.assertEqual(len(self.engine.EvaluationStack.Items), 0)
+        self.assertEqual(len(self.econtext.EvaluationStack.Items), 0)
         self.assertEqual(self.engine.State, VMState.BREAK)
 
     @patch('logzero.logger.error')
     def test_op_map4(self, mocked_logger):
         # set item should fail if these are out of order
-        self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
         self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
-        self.engine.EvaluationStack.PushT(StackItem.New('myVal'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
         self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
 
         self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
@@ -116,9 +116,9 @@ class InteropTest(TestCase):
     @patch('logzero.logger.error')
     def test_op_map5(self, mocked_logger):
         # set item should fail if these are out of order
-        self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
-        self.engine.EvaluationStack.PushT(StackItem.New('mykey'))
-        self.engine.EvaluationStack.PushT(StackItem.New('myVal'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
         self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
 
         self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
@@ -128,18 +128,18 @@ class InteropTest(TestCase):
     @patch('logzero.logger.error')
     def test_op_map6(self, mocked_logger):
         # we can pick an item from a dict
-        self.engine.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
-        self.engine.EvaluationStack.PushT(StackItem.New('a'))
+        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
+        self.econtext.EvaluationStack.PushT(StackItem.New('a'))
         self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
-        self.assertEqual(len(self.engine.EvaluationStack.Items), 1)
-        self.assertEqual(self.engine.EvaluationStack.Items[0].GetBigInteger(), 4)
+        self.assertEqual(len(self.econtext.EvaluationStack.Items), 1)
+        self.assertEqual(self.econtext.EvaluationStack.Items[0].GetBigInteger(), 4)
 
     @patch('logzero.logger.error')
     def test_op_map7(self, mocked_logger):
         # pick item with key is collection causes error
-        self.engine.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
-        self.engine.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
+        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
+        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
         self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
         self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
@@ -147,10 +147,10 @@ class InteropTest(TestCase):
         mocked_logger.assert_called_with(StringIn('VMFault.KEY_IS_COLLECTION'))
 
     @patch('logzero.logger.error')
-    def test_op_map7(self, mocked_logger):
+    def test_op_map8(self, mocked_logger):
         # pick item on non collection causes error
-        self.engine.EvaluationStack.PushT(StackItem.New('a'))
-        self.engine.EvaluationStack.PushT(StackItem.New('a'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('a'))
+        self.econtext.EvaluationStack.PushT(StackItem.New('a'))
         self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
         self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
@@ -160,8 +160,8 @@ class InteropTest(TestCase):
     @patch('logzero.logger.error')
     def test_op_map9(self, mocked_logger):
         # pick item key not found
-        self.engine.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
-        self.engine.EvaluationStack.PushT(StackItem.New('b'))
+        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
+        self.econtext.EvaluationStack.PushT(StackItem.New('b'))
         self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
         self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
@@ -170,31 +170,31 @@ class InteropTest(TestCase):
 
     def test_op_map10(self):
         # pick item key not found
-        self.engine.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
+        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
         self.engine.ExecuteOp(OpCode.KEYS, self.econtext)
 
-        self.assertIsInstance(self.engine.EvaluationStack.Items[0], Array)
-        items = self.engine.EvaluationStack.Items[0].GetArray()
+        self.assertIsInstance(self.econtext.EvaluationStack.Items[0], Array)
+        items = self.econtext.EvaluationStack.Items[0].GetArray()
         self.assertEqual(items, [StackItem.New('a'), StackItem.New('b')])
 
     def test_op_map11(self):
-        self.engine.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
+        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
         self.engine.ExecuteOp(OpCode.VALUES, self.econtext)
 
-        self.assertIsInstance(self.engine.EvaluationStack.Items[0], Array)
-        items = self.engine.EvaluationStack.Items[0].GetArray()
+        self.assertIsInstance(self.econtext.EvaluationStack.Items[0], Array)
+        items = self.econtext.EvaluationStack.Items[0].GetArray()
         self.assertEqual(items, [StackItem.New(4), StackItem.New(5)])
 
     def test_op_map12(self):
-        self.engine.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
-        self.engine.EvaluationStack.PushT(StackItem.New('b'))
+        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
+        self.econtext.EvaluationStack.PushT(StackItem.New('b'))
         self.engine.ExecuteOp(OpCode.HASKEY, self.econtext)
 
-        self.assertEqual(self.engine.EvaluationStack.Items[0].GetBoolean(), True)
+        self.assertEqual(self.econtext.EvaluationStack.Items[0].GetBoolean(), True)
 
     def test_op_map13(self):
-        self.engine.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
-        self.engine.EvaluationStack.PushT(StackItem.New('c'))
+        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
+        self.econtext.EvaluationStack.PushT(StackItem.New('c'))
         self.engine.ExecuteOp(OpCode.HASKEY, self.econtext)
 
-        self.assertEqual(self.engine.EvaluationStack.Items[0].GetBoolean(), False)
+        self.assertEqual(self.econtext.EvaluationStack.Items[0].GetBoolean(), False)
