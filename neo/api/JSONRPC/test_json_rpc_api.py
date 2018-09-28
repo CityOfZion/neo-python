@@ -785,7 +785,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
         self.assertIn('vin', res.get('result', {}).keys())
-        self.assertIn("APRgMZHZubii29UXF9uFa6sohrsYupNAvx", res['result']['vout'][2]['address'])
+        self.assertIn("AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3", res['result']['vout'][2]['address'])
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
