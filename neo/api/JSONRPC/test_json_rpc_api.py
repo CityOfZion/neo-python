@@ -944,3 +944,25 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_fails_to_sign_tx(self):
+        with patch('neo.api.JSONRPC.JsonRpcApi.Wallet.Sign', return_value='False'):
+            test_wallet_path = shutil.copyfile(
+                WalletFixtureTestCase.wallet_1_path(),
+                WalletFixtureTestCase.wallet_1_dest()
+            )
+            self.app.wallet = UserWallet.Open(
+                test_wallet_path,
+                to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+            )
+            address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+            address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+            req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+            mock_req = mock_request(json.dumps(req).encode("utf-8"))
+            res = json.loads(self.app.home(mock_req))
+            self.assertEqual(res.get('jsonrpc', None), '2.0')
+            self.assertIn('type', res.get('result', {}).keys())
+            self.assertIn('hex', res.get('result', {}).keys())
+            self.app.wallet.Close()
+            self.app.wallet = None
+            os.remove(WalletFixtureTestCase.wallet_1_dest())
