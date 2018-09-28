@@ -69,6 +69,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         debugger = engine._vm_debugger
         context = debugger.get_context()
         context.print()
-        self.assertEqual(debugger.index, 155)
+        self.assertEqual(debugger.index, 157)
         self.assertEqual(context.method.name, 'another_method')
         self.assertEqual(context.line, 38)
