@@ -6,6 +6,7 @@ from neo.Core.Blockchain import Blockchain
 import argparse
 from tqdm import trange
 import binascii
+from neo.Core.Helper import Helper
 
 
 def main():
@@ -67,7 +68,14 @@ def main():
 
             block = chain.GetBlockByHeight(index)
             block.LoadTransactions()
-            output = binascii.unhexlify(block.ToArray())
+
+            # make sure this block has transactions
+            # otherwise we will have a bad import
+            if len(block.Transactions) < 1:
+                raise Exception("Block %s has no transactions %s " % block.Index)
+
+            output = Helper.ToStream(block)
+
             output_length = len(output).to_bytes(4, 'little')
             file_out.write(output_length)
             file_out.write(output)

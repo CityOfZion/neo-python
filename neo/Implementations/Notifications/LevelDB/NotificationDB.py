@@ -39,7 +39,6 @@ class NotificationDB:
         if not NotificationDB.__instance:
             if settings.NOTIFICATION_DB_PATH:
                 NotificationDB.__instance = NotificationDB(settings.notification_leveldb_path)
-#                logger.info("Created Notification DB At %s " % settings.NOTIFICATION_DB_PATH)
             else:
                 logger.info("Notification DB Path not configured in settings")
         return NotificationDB.__instance
