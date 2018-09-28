@@ -298,6 +298,12 @@ class JsonRpcApi:
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "sendmany":
+            if self.wallet:
+                return self.send_many(params)
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
         raise JsonRpcError.methodNotFound()
 
     def get_custom_error_payload(self, request_id, code, message):
@@ -476,3 +482,60 @@ class JsonRpcApi:
             raise JsonRpcError(-32602, "Invalid params")
 
         return asset_id, address_to_sh, amount, fee
+
+    def send_many(self, params):
+        if len(params) not in [1, 2, 3] or type(params[0]) is not list:
+            raise JsonRpcError(-32602, "Invalid params")
+        output = []
+        for info in params[0]:
+            asset = get_asset_id(self.wallet, info['asset'])
+            if not type(asset) is UInt256:
+                raise JsonRpcError(-32602, "Invalid params")
+            address = info["address"]
+            try:
+                address = self.wallet.ToScriptHash(address)
+            except Exception:
+                raise JsonRpcError(-32602, "Invalid params")
+            amount = Fixed8.TryParse(info["value"], require_positive=True)
+            if not amount:
+                raise JsonRpcError(-32602, "Invalid params")
+            tx_output = TransactionOutput(AssetId=asset,
+                                          Value=amount,
+                                          script_hash=address)
+            output.append(tx_output)
+
+        standard_contract = self.wallet.GetStandardAddress()
+        signer_contract = self.wallet.GetContract(standard_contract)
+
+        contract_tx = ContractTransaction(outputs=output)
+
+        fee = Fixed8.TryParse(params[1]) if len(params) in [2, 3] else Fixed8.Zero()
+        if fee < Fixed8.Zero():
+            raise JsonRpcError(-32602, "Invalid params")
+
+        change_addr = params[2] if len(params) == 3 else self.wallet.Addresses[0]
+        try:
+            change_addr = self.wallet.ToScriptHash(change_addr)
+        except Exception:
+                raise JsonRpcError(-32602, "Invalid params")
+
+        tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                         change_address=change_addr,
+                                         fee=fee)
+        if tx is None:
+            raise JsonRpcError(-300, "Insufficient funds")
+        data = standard_contract.Data
+        tx.Attributes = [
+            TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                 data=data)
+        ]
+        context = ContractParametersContext(
+            tx, isMultiSig=signer_contract.IsMultiSigContract
+        )
+        self.wallet.Sign(context)
+        if context.Completed:
+            tx.scripts = context.GetScripts()
+            NodeLeader.Instance().Relay(tx)
+            return tx.ToJson()
+        else:
+            return context.ToJson()
