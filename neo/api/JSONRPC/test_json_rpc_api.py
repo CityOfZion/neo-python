@@ -27,6 +27,7 @@ from neo.Settings import ROOT_INSTALL_PATH, settings
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from mock import patch
 
+
 def mock_request(body):
     return requestMock(path=b'/', method="POST", body=body)
 
