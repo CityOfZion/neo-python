@@ -12,14 +12,21 @@
       "02486fd15702c4490a26703112a5cc1d0923fd697a33406bd5a1c00e0013b09a70"
     ],
     "SeedList": [
-      "13.58.252.110:10333",
-      "18.216.146.68:10333",
-      "18.217.91.255:10333",
-      "18.218.62.119:10333",
-      "18.196.141.225:10333",
+      "seed1.ngd.network:10333",
+      "seed2.ngd.network:10333",
+      "seed3.ngd.network:10333",
+      "seed4.ngd.network:10333",
+      "seed5.ngd.network:10333",
+      "seed6.ngd.network:10333",
+      "seed7.ngd.network:10333",
+      "seed8.ngd.network:10333",
+      "seed9.ngd.network:10333",
+      "seed10.ngd.network:10333",
+      "seed1.neo.org:10333",
       "seed2.neo.org:10333",
       "seed3.neo.org:10333",
-      "seed1.redpulse.com:10333"
+      "seed4.neo.org:10333",
+      "seed5.neo.org:10333"
     ],
     "RPCList": [
       "http://18.217.24.130:8080",
@@ -49,6 +56,8 @@
     "BootstrapFile": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Main2600xxx.tar.gz",
     "NotificationBootstrapFile": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/MainNotif2600xxx.tar.gz",
     "DebugStorage": 1,
-    "AcceptIncomingPeers": false
+    "AcceptIncomingPeers": false,
+    "CompilerNep8":false
+
   }
 }
