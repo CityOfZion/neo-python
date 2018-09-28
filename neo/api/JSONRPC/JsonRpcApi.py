@@ -530,9 +530,7 @@ class JsonRpcApi:
         except Exception:
             raise JsonRpcError(-32602, "Invalid params")
         amount = Fixed8.TryParse(params[3], require_positive=True)
-        if float(amount) == 0:
-            raise JsonRpcError(-32602, "Invalid params")
-        if not amount:
+        if not amount or float(params[3]) ==0:
             raise JsonRpcError(-32602, "Invalid params")
         fee = Fixed8.TryParse(params[4]) if len(params) >= 5 else Fixed8.Zero()
         if fee < Fixed8.Zero():
