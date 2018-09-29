@@ -294,19 +294,22 @@ class JsonRpcApi:
 
         elif method == "sendtoaddress":
             if self.wallet:
-                return self.send_to_address_from_or_many(method, params)
+                contract_tx, fee = self.parse_send_to_address_params(params)
+                return self.process_transaction(contract_tx=contract_tx, fee=fee)
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
         elif method == "sendfrom":
             if self.wallet:
-                return self.send_to_address_from_or_many(method, params)
+                contract_tx, address_from, fee, change_addr = self.parse_send_from_params(params)
+                return self.process_transaction(contract_tx=contract_tx, fee=fee, address_from=address_from, change_addr=change_addr)
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
         elif method == "sendmany":
             if self.wallet:
-                return self.send_to_address_from_or_many(method, params)
+                contract_tx, fee, change_addr = self.parse_send_many_params(params)
+                return self.process_transaction(contract_tx=contract_tx, fee=fee, change_addr=change_addr)
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
@@ -432,42 +435,6 @@ class JsonRpcApi:
             })
         return result
 
-    def send_to_address_from_or_many(self, method, params):
-        if method == "sendtoaddress":
-            contract_tx, fee = self.parse_send_to_address_params(params)
-            change_addr = None
-            address_from = None
-        elif method == "sendfrom":
-            contract_tx, address_from, fee, change_addr = self.parse_send_from_params(params)
-        elif method == "sendmany":
-            contract_tx, fee, change_addr = self.parse_send_many_params(params)
-            address_from = None
-
-        standard_contract = self.wallet.GetStandardAddress()
-        signer_contract = self.wallet.GetContract(standard_contract)
-
-        tx = self.wallet.MakeTransaction(tx=contract_tx,
-                                         change_address=change_addr,
-                                         fee=fee,
-                                         from_addr=address_from)
-        if tx is None:
-            raise JsonRpcError(-300, "Insufficient funds")
-        data = standard_contract.Data
-        tx.Attributes = [
-            TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                 data=data)
-        ]
-        context = ContractParametersContext(
-            tx, isMultiSig=signer_contract.IsMultiSigContract
-        )
-        self.wallet.Sign(context)
-        if context.Completed:
-            tx.scripts = context.GetScripts()
-            NodeLeader.Instance().Relay(tx)
-            return tx.ToJson()
-        else:
-            return context.ToJson()
-
     def parse_send_to_address_params(self, params):
         if len(params) not in [3, 4]:
             raise JsonRpcError(-32602, "Invalid params")
@@ -566,3 +533,29 @@ class JsonRpcApi:
             except Exception:
                 raise JsonRpcError(-32602, "Invalid params")
         return contract_tx, fee, change_addr_sh
+
+    def process_transaction(self, contract_tx, fee=None, address_from=None, change_addr=None):
+        standard_contract = self.wallet.GetStandardAddress()
+        signer_contract = self.wallet.GetContract(standard_contract)
+
+        tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                         change_address=change_addr,
+                                         fee=fee,
+                                         from_addr=address_from)
+        if tx is None:
+            raise JsonRpcError(-300, "Insufficient funds")
+        data = standard_contract.Data
+        tx.Attributes = [
+            TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                 data=data)
+        ]
+        context = ContractParametersContext(
+            tx, isMultiSig=signer_contract.IsMultiSigContract
+        )
+        self.wallet.Sign(context)
+        if context.Completed:
+            tx.scripts = context.GetScripts()
+            NodeLeader.Instance().Relay(tx)
+            return tx.ToJson()
+        else:
+            return context.ToJson()
