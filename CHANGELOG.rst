@@ -27,7 +27,6 @@ All notable changes to this project are documented in this file.
 - Update to compiler version ``v0.5.3``
 
 
-
 [0.7.8] 2018-09-06
 ------------------
 - Prefix ``vin`` JSON output format to match C#
