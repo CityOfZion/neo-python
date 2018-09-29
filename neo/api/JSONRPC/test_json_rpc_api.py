@@ -1451,11 +1451,11 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             )
             address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
             output = [{"asset": 'neo',
-                    "value": 1,
-                    "address": address_to},
-                    {"asset": 'neo',
-                    "value": 1,
-                    "address": address_to}]
+                     "value": 1,
+                     "address": address_to},
+                     {"asset": 'neo',
+                     "value": 1,
+                     "address": address_to}]
             req = self._gen_rpc_req("sendmany", params=[output])
             mock_req = mock_request(json.dumps(req).encode("utf-8"))
             res = json.loads(self.app.home(mock_req))
