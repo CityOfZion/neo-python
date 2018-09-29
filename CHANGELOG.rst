@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.1] In Progress
 -------------------
+- Add ``sendfrom`` RPC method
 
 
 [0.8.0] 2018-09-28
