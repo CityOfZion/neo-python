@@ -69,7 +69,7 @@ class Helper:
             value (neo.IO.Mixins.SerializableMixin): object extending SerializableMixin.
 
         Returns:
-            bytes:
+            bytes: hex formatted bytes
         """
         ms = StreamManager.GetStream()
         writer = BinaryWriter(ms)
@@ -77,6 +77,27 @@ class Helper:
         value.Serialize(writer)
 
         retVal = ms.ToArray()
+        StreamManager.ReleaseStream(ms)
+
+        return retVal
+
+    @staticmethod
+    def ToStream(value):
+        """
+        Serialize the given `value` to a an array of bytes.
+
+        Args:
+            value (neo.IO.Mixins.SerializableMixin): object extending SerializableMixin.
+
+        Returns:
+            bytes: not hexlified
+        """
+        ms = StreamManager.GetStream()
+        writer = BinaryWriter(ms)
+
+        value.Serialize(writer)
+
+        retVal = ms.getvalue()
         StreamManager.ReleaseStream(ms)
 
         return retVal

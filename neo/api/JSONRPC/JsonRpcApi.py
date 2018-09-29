@@ -457,7 +457,7 @@ class JsonRpcApi:
             NodeLeader.Instance().Relay(tx)
             return tx.ToJson()
         else:
-            return context.toJson()
+            return context.ToJson()
 
     def parse_send_params(self, params):
         if len(params) not in [3, 4]:
@@ -474,7 +474,7 @@ class JsonRpcApi:
             raise JsonRpcError(-32602, "Invalid params")
 
         amount = Fixed8.TryParse(params[2], require_positive=True)
-        if not amount:
+        if not amount or float(params[2]) == 0:
             raise JsonRpcError(-32602, "Invalid params")
 
         fee = Fixed8.TryParse(params[3]) if len(params) == 4 else Fixed8.Zero()

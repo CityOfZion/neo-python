@@ -178,11 +178,6 @@ class PromptInterface:
     def get_bottom_toolbar(self, cli=None):
         out = []
         try:
-            # Note: not sure if prompt-toolkit still supports foreground colors, couldn't get it to work
-            # out = [("class:command", '[%s] Progress: ' % settings.net_name),
-            #        ("class:number", str(Blockchain.Default().Height + 1)),
-            #        ("class:neo", '/'),
-            #        ("class:number", str(Blockchain.Default().HeaderHeight + 1))]
             return "[%s] Progress: %s/%s" % (settings.net_name,
                                              str(Blockchain.Default().Height + 1),
                                              str(Blockchain.Default().HeaderHeight + 1))
