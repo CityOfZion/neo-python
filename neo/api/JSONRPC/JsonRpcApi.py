@@ -300,7 +300,13 @@ class JsonRpcApi:
 
         elif method == "sendfrom":
             if self.wallet:
-                return self.send_from(params)
+                return self.send_from_or_many(method, params)
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
+        elif method == "sendmany":
+            if self.wallet:
+                return self.send_from_or_many(method, params)
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
@@ -483,14 +489,16 @@ class JsonRpcApi:
 
         return asset_id, address_to_sh, amount, fee
 
-    def send_from(self, params):
-        asset, address_from, address_to, amount, fee, change_addr = self.parse_send_from_params(params)
+    def send_from_or_many(self, method, params):
+        if method == "sendfrom":
+            contract_tx, address_from, fee, change_addr = self.parse_send_from_params(params)
+        elif method == "sendmany":
+            contract_tx, fee, change_addr = self.parse_send_many_params(params)
+            address_from = None
+
         standard_contract = self.wallet.GetStandardAddress()
         signer_contract = self.wallet.GetContract(standard_contract)
-        output = TransactionOutput(AssetId=asset,
-                                   Value=amount,
-                                   script_hash=address_to)
-        contract_tx = ContractTransaction(outputs=[output])
+
         tx = self.wallet.MakeTransaction(tx=contract_tx,
                                          change_address=change_addr,
                                          fee=fee,
@@ -532,6 +540,10 @@ class JsonRpcApi:
         amount = Fixed8.TryParse(params[3], require_positive=True)
         if not amount or float(params[3]) == 0:
             raise JsonRpcError(-32602, "Invalid params")
+        output = TransactionOutput(AssetId=asset_id,
+                                   Value=amount,
+                                   script_hash=address_to_sh)
+        contract_tx = ContractTransaction(outputs=[output])
         fee = Fixed8.TryParse(params[4]) if len(params) >= 5 else Fixed8.Zero()
         if fee < Fixed8.Zero():
             raise JsonRpcError(-32602, "Invalid params")
@@ -542,4 +554,39 @@ class JsonRpcApi:
                 change_addr_sh = self.wallet.ToScriptHash(change_addr)
             except Exception:
                 raise JsonRpcError(-32602, "Invalid params")
-        return asset_id, address_from_sh, address_to_sh, amount, fee, change_addr_sh
+        return contract_tx, address_from_sh, fee, change_addr_sh
+
+    def parse_send_many_params(self, params):
+        if type(params[0]) is not list:
+            raise JsonRpcError(-32602, "Invalid params")
+        if len(params) not in [1, 2, 3]:
+            raise JsonRpcError(-32602, "Invalid params")
+        output = []
+        for info in params[0]:
+            asset = get_asset_id(self.wallet, info['asset'])
+            if not type(asset) is UInt256:
+                raise JsonRpcError(-32602, "Invalid params")
+            address = info["address"]
+            try:
+                address = self.wallet.ToScriptHash(address)
+            except Exception:
+                raise JsonRpcError(-32602, "Invalid params")
+            amount = Fixed8.TryParse(info["value"], require_positive=True)
+            if not amount or float(info["value"]) == 0:
+                raise JsonRpcError(-32602, "Invalid params")
+            tx_output = TransactionOutput(AssetId=asset,
+                                          Value=amount,
+                                          script_hash=address)
+            output.append(tx_output)
+        contract_tx = ContractTransaction(outputs=output)
+        fee = Fixed8.TryParse(params[1]) if len(params) >= 2 else Fixed8.Zero()
+        if fee < Fixed8.Zero():
+            raise JsonRpcError(-32602, "Invalid params")
+        change_addr_sh = None
+        if len(params) >= 3:
+            change_addr = params[2]
+            try:
+                change_addr_sh = self.wallet.ToScriptHash(change_addr)
+            except Exception:
+                raise JsonRpcError(-32602, "Invalid params")
+        return contract_tx, fee, change_addr_sh
