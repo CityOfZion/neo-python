@@ -768,7 +768,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
-        address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'
+        address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'  # "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX" is too short causing ToScriptHash to fail
 
         req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
@@ -939,6 +939,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
         self.assertIn('vin', res.get('result', {}).keys())
+        self.assertEqual(address_to, res['result']['vout'][0]['address'])
+        self.assertEqual(address_from, res['result']['vout'][1]['address'])
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
@@ -954,13 +956,23 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        amount = 1
+        net_fee = 0.005
         change_addr = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1, .005, change_addr])
+        address_from_account_state = GetBlockchain().GetAccountState(address_from).ToJson()
+        address_from_gas_bal = address_from_account_state['balances']['0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7']
+
+        req = self._gen_rpc_req("sendfrom", params=['gas', address_from, address_to, amount, net_fee, change_addr])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
+
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
+        self.assertEqual(address_to, res['result']['vout'][0]['address'])
+        self.assertEqual(change_addr, res['result']['vout'][1]['address'])
+        self.assertEqual(float(address_from_gas_bal) - amount - net_fee, float(res['result']['vout'][1]['value'])) 
         self.assertEqual(res['result']['net_fee'], "0.005")
+
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
@@ -1038,7 +1050,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
-        req = self._gen_rpc_req("sendfrom", params=['neo', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc', address_to, -1])
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc'  # "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc" is too short causing ToScriptHash to fail
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
@@ -1057,8 +1070,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'  # "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX" is too short causing ToScriptHash to fail
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX', -1])
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
@@ -1146,9 +1160,11 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
             mock_req = mock_request(json.dumps(req).encode("utf-8"))
             res = json.loads(self.app.home(mock_req))
+
             self.assertEqual(res.get('jsonrpc', None), '2.0')
             self.assertIn('type', res.get('result', {}).keys())
             self.assertIn('hex', res.get('result', {}).keys())
+
             self.app.wallet.Close()
             self.app.wallet = None
             os.remove(WalletFixtureTestCase.wallet_1_dest())
@@ -1180,10 +1196,19 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
+
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
         self.assertIn('vin', res.get('result', {}).keys())
         self.assertEqual('1', res['result']['net_fee'])
+
+        # check for 2 transfers
+        transfers = 0
+        for info in res['result']['vout']:
+            if info['address'] == "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK":
+                transfers += 1
+        self.assertEqual(2, transfers)
+
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
@@ -1292,7 +1317,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
-        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'  # "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX" is too short causing ToScriptHash to fail
         output = [{"asset": 'neo',
                    "value": 1,
                    "address": address_to},
@@ -1396,14 +1421,15 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
-        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_to = "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK"
+        change_addr = "APRgMZHZubii29UXF9uFa6sohrsYupNAv"  # "APRgMZHZubii29UXF9uFa6sohrsYupNAv" is too short causing ToScriptHash to fail
         output = [{"asset": 'neo',
                    "value": 1,
                    "address": address_to},
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output, 0.005, "APRgMZHZubii29UXF9uFa6sohrsYupNAv"])
+        req = self._gen_rpc_req("sendmany", params=[output, 0.005, change_addr])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
