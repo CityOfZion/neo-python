@@ -313,6 +313,8 @@ class JsonRpcApi:
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        raise JsonRpcError.methodNotFound()
+
     def get_custom_error_payload(self, request_id, code, message):
         return {
             "jsonrpc": "2.0",
