@@ -3,8 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.9-dev] in progress
------------------------
+[0.8.1] In Progress
+-------------------
+
+
+[0.8.0] 2018-09-28
+------------------
 - Implemented `sendtoaddress` RPC method `#556 <https://github.com/CityOfZion/neo-python/pull/556>`_
 - Gracefully handle network packet deserialization failures
 - Implementation Stack Isolation (NEP8)
@@ -16,6 +20,10 @@ All notable changes to this project are documented in this file.
 - Disable ``prompt.py`` test cases due to high time consumption and unreliable results.
 - Migrate the existing test cases, which depend on BlockchainFixtureTestCase and WalletFixtureTestCase, to a privnet. Reduction of the fixtures' size to about 7MB. `#478 <https://github.com/CityOfZion/neo-python/issues/478>`_
 - Ensure non-zero send value in prompt.py
+- Update block importing and exporting functionality.
+- Add send-zero provision and improved test coverage to ``sendtoaddress``
+- Update Mainnet bootstrap files
+- Update to compiler version ``v0.5.3``
 
 
 [0.7.8] 2018-09-06
