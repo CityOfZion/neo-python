@@ -5,11 +5,11 @@ All notable changes to this project are documented in this file.
 
 [0.8.1] In Progress
 -------------------
-
+- Add ``sendmany`` and ``sendfrom`` RPC methods & tests and integrate with ``sendtoaddress``
 
 [0.8.0] 2018-09-28
 ------------------
-- Implemented `sendtoaddress` RPC method `#556 <https://github.com/CityOfZion/neo-python/pull/556>`_
+- Implemented ``sendtoaddress`` RPC method `#556 <https://github.com/CityOfZion/neo-python/pull/556>`_
 - Gracefully handle network packet deserialization failures
 - Implementation Stack Isolation (NEP8)
 - Fix issue resetting storage between Smart Contract invocations
