@@ -111,8 +111,7 @@ class Wallet:
                 raise Exception("Password hash not found in database")
 
             hkey = hashlib.sha256(passwordKey).digest()
-
-            if self.LoadStoredData('MigrationState') != '1':
+            if int(self.LoadStoredData('MigrationState')) != 1:
                 raise Exception("This wallet is currently vulnerable. Please "
                                 "execute the \"reencrypt_wallet.py\" script "
                                 "on this wallet before continuing")

@@ -37,6 +37,7 @@ FILENAME_SETTINGS_MAINNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.m
 FILENAME_SETTINGS_TESTNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.testnet.json')
 FILENAME_SETTINGS_PRIVNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.privnet.json')
 FILENAME_SETTINGS_COZNET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.coz.json')
+FILENAME_SETTINGS_UNITTEST_NET = os.path.join(ROOT_INSTALL_PATH, 'neo/data/protocol.unittest-net.json')
 
 
 class PrivnetConnectionError(Exception):
@@ -95,9 +96,12 @@ class SettingsHolder:
     USE_DEBUG_STORAGE = False
     DEBUG_STORAGE_PATH = 'Chains/debugstorage'
 
+    ACCEPT_INCOMING_PEERS = False
     CONNECTED_PEER_MAX = 5
 
     SERVICE_ENABLED = True
+
+    COMPILER_NEP_8 = True
 
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
@@ -182,23 +186,18 @@ class SettingsHolder:
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
         self.URI_PREFIX = config['UriPrefix']
+        self.ACCEPT_INCOMING_PEERS = config.get('AcceptIncomingPeers', False)
 
         self.BOOTSTRAP_FILE = config['BootstrapFile']
         self.NOTIF_BOOTSTRAP_FILE = config['NotificationBootstrapFile']
 
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
-        if 'DebugStorage' in config:
-            self.USE_DEBUG_STORAGE = config['DebugStorage']
-
-        if 'DebugStoragePath' in config:
-            self.DEBUG_STORAGE_PATH = config['DebugStoragePath']
-
-        if 'NotificationDataPath' in config:
-            self.NOTIFICATION_DB_PATH = config['NotificationDataPath']
-
-        if 'ServiceEnabled' in config:
-            self.SERVICE_ENABLED = bool(config['ServiceEnabled'])
+        self.USE_DEBUG_STORAGE = config.get('DebugStorage', True)
+        self.DEBUG_STORAGE_PATH = config.get('DebugStoragePath', 'Chains/debugstorage')
+        self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
+        self.SERVICE_ENABLED = config.get('ServiceEnabled', True)
+        self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
@@ -226,6 +225,10 @@ class SettingsHolder:
             print("- P2P:", ", ".join(self.SEED_LIST))
             print("- RPC:", ", ".join(self.RPC_LIST))
         self.check_privatenet()
+
+    def setup_unittest_net(self, host=None):
+        """ Load settings from privnet JSON config file. """
+        self.setup(FILENAME_SETTINGS_UNITTEST_NET)
 
     def setup_coznet(self):
         """ Load settings from the coznet JSON config file """

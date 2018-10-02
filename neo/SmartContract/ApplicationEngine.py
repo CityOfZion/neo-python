@@ -1,10 +1,15 @@
 import binascii
+import sys
 from logzero import logger
 
+from collections import deque
 from neo.VM.ExecutionEngine import ExecutionEngine
-from neo.VM.OpCode import CALL, APPCALL, CHECKSIG, HASH160, HASH256, NOP, SHA1, SHA256, DEPTH, DUP, PACK, TUCK, OVER, \
-    SYSCALL, TAILCALL, NEWARRAY, NEWSTRUCT, PUSH16, UNPACK, CAT, CHECKMULTISIG, PUSHDATA4, VERIFY
+from neo.VM import OpCode
+from neo.VM.OpCode import PACK, NEWARRAY, NEWSTRUCT, SETITEM, APPEND, CALL, APPCALL, PUSHDATA4, CAT, PUSH16, TAILCALL, \
+    SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG
 from neo.VM import VMState
+from neo.VM.ExecutionContext import ExecutionContext
+from neo.VM.InteropService import CollectionMixin, Map, Array
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
 
@@ -17,17 +22,15 @@ from neo.Core.State.AssetState import AssetState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.StorageItem import StorageItem
-
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract import TriggerType
-
+from neo.VM.InteropService import Array
 from neocore.UInt160 import UInt160
 import datetime
 from neo.Settings import settings
 
 
 class ApplicationEngine(ExecutionEngine):
-
     ratio = 100000
     gas_free = 10 * 100000000
     gas_amount = 0
@@ -37,6 +40,11 @@ class ApplicationEngine(ExecutionEngine):
     Trigger = None
 
     invocation_args = None
+
+    max_free_ops = 500000
+
+    maxItemSize = 1024 * 1024
+    maxArraySize = 1024
 
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
@@ -48,28 +56,46 @@ class ApplicationEngine(ExecutionEngine):
         self.Trigger = trigger_type
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
+        self._is_stackitem_count_strict = True
 
     def CheckArraySize(self):
-
-        maxArraySize = 1024
         cx = self.CurrentContext
-
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
 
         opcode = cx.NextInstruction
 
         if opcode in [PACK, NEWARRAY, NEWSTRUCT]:
+            if cx.EvaluationStack.Count == 0:
+                return False
+            size = cx.EvaluationStack.Peek().GetBigInteger()
 
-            size = self.EvaluationStack.Peek().GetBigInteger()
-
-            if size > maxArraySize:
-                logger.error("ARRAY SIZE TOO BIG!!!")
+        elif opcode == SETITEM:
+            if cx.EvaluationStack.Count < 3:
                 return False
 
+            map_stackitem = cx.EvaluationStack.Peek(2)
+            if not isinstance(map_stackitem, Map):
+                return True
+
+            key = cx.EvaluationStack.Peek(1)
+            if isinstance(key, CollectionMixin):
+                return False
+
+            if map_stackitem.ContainsKey(key):
+                return True
+            size = map_stackitem.Count + 1
+
+        elif opcode == APPEND:
+            if cx.EvaluationStack.Count < 2:
+                return False
+
+            collection: Array = cx.EvaluationStack.Peek(1)
+            if not isinstance(collection, Array):
+                return False
+            size = collection.Count + 1
+        else:
             return True
 
-        return True
+        return size <= self.maxArraySize
 
     def CheckInvocationStack(self):
 
@@ -92,12 +118,7 @@ class ApplicationEngine(ExecutionEngine):
 
     def CheckItemSize(self):
 
-        maxItemSize = 1024 * 1024
         cx = self.CurrentContext
-
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
-
         opcode = cx.NextInstruction
 
         if opcode == PUSHDATA4:
@@ -111,7 +132,7 @@ class ApplicationEngine(ExecutionEngine):
             lengthpointer = cx.Script[position:position + 4]
             length = int.from_bytes(lengthpointer, 'little')
 
-            if length > maxItemSize:
+            if length > self.maxItemSize:
                 logger.error("ITEM IS GREATER THAN MAX ITEM SIZE!")
                 return False
 
@@ -119,19 +140,19 @@ class ApplicationEngine(ExecutionEngine):
 
         elif opcode == CAT:
 
-            if self.EvaluationStack.Count < 2:
+            if cx.EvaluationStack.Count < 2:
                 logger.error("NOT ENOUGH ITEMS TO CONCAT")
                 return False
 
             length = 0
 
             try:
-                length = len(self.EvaluationStack.Peek(0).GetByteArray()) + len(self.EvaluationStack.Peek(1).GetByteArray())
+                length = len(cx.EvaluationStack.Peek(0).GetByteArray()) + len(cx.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
                 logger.error("COULD NOT GET STR LENGTH!")
                 raise e
 
-            if length > maxItemSize:
+            if length > self.maxItemSize:
                 logger.error("ITEM IS GREATER THAN MAX SIZE!!!")
                 return False
 
@@ -140,45 +161,73 @@ class ApplicationEngine(ExecutionEngine):
         return True
 
     def CheckStackSize(self):
-
         maxStackSize = 2 * 1024
-        cx = self.CurrentContext
-
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
 
         size = 0
-
+        cx = self.CurrentContext
         opcode = cx.NextInstruction
 
-        if opcode < PUSH16:
-            size = 1
-
+        if opcode <= PUSH16:
+            size += 1
         else:
+            if opcode in [OpCode.JMPIF, OpCode.JMPIFNOT, OpCode.DROP, OpCode.NIP, OpCode.EQUAL, OpCode.BOOLAND, OpCode.BOOLOR, OpCode.CHECKMULTISIG, OpCode.REVERSE, OpCode.HASKEY, OpCode.THROWIFNOT]:
+                size -= 1
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.XSWAP, OpCode.ROLL, OpCode.CAT, OpCode.LEFT, OpCode.RIGHT, OpCode.AND, OpCode.OR, OpCode.XOR, OpCode.ADD, OpCode.SUB, OpCode.MUL, OpCode.DIV, OpCode.SHL, OpCode.SHR, OpCode.NUMEQUAL, OpCode.NUMNOTEQUAL, OpCode.LT, OpCode.GT, OpCode.LTE, OpCode.GTE, OpCode.MIN, OpCode.MAX, OpCode.CHECKSIG, OpCode.CALL_ED, OpCode.CALL_EDT]:
+                size -= 1
+            elif opcode in [OpCode.APPCALL, OpCode.TAILCALL, OpCode.NOT, OpCode.ARRAYSIZE]:
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.SYSCALL, OpCode.PICKITEM, OpCode.SETITEM, OpCode.APPEND, OpCode.VALUES]:
+                size = sys.maxsize
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.DUPFROMALTSTACK, OpCode.DEPTH, OpCode.DUP, OpCode.OVER, OpCode.TUCK, OpCode.NEWMAP]:
+                size += 1
+            elif opcode in [OpCode.XDROP, OpCode.REMOVE]:
+                size -= 2
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.SUBSTR, OpCode.WITHIN, OpCode.VERIFY]:
+                size -= 2
+            elif opcode == OpCode.UNPACK:
+                size += self.CurrentContext.EvaluationStack.Peek().GetBigInteger
+                self._is_stackitem_count_strict = False
+            elif opcode in [OpCode.NEWARRAY, OpCode.NEWSTRUCT]:
+                size += self.CurrentContext.EvaluationStack.Peek().Count
+            elif opcode == OpCode.KEYS:
+                size += self.CurrentContext.EvaluationStack.Peek().Count
+                self._is_stackitem_count_strict = False
 
-            if opcode in [DEPTH, DUP, OVER, TUCK]:
-                size = 1
-
-            elif opcode == UNPACK:
-
-                item = self.EvaluationStack.Peek()
-
-                if not item.IsArray:
-                    logger.error("ITEM NOT ARRAY:")
-                    return False
-
-                size = len(item.GetArray())
-
-        if size == 0:
+        if size <= maxStackSize:
             return True
 
-        size += self.EvaluationStack.Count + self.AltStack.Count
-
-        if size > maxStackSize:
-            logger.error("SIZE IS OVER MAX STACK SIZE!!!!")
+        if self._is_stackitem_count_strict:
             return False
 
+        stack_item_list = []
+        for execution_context in self.InvocationStack.Items:  # type: ExecutionContext
+            stack_item_list += execution_context.EvaluationStack.Items + execution_context.AltStack.Items
+
+        stackitem_count = self.GetItemCount(stack_item_list)
+        if stackitem_count > maxStackSize:
+            return False
+
+        self._is_stackitem_count_strict = True
         return True
+
+    def GetItemCount(self, items_list):  # list of StackItems
+        count = 0
+        items = deque(items_list)
+        while items:
+            stackitem = items.pop()
+            if isinstance(stackitem, Map):
+                items.extend(stackitem.Values)
+                continue
+
+            if isinstance(stackitem, Array):
+                items.extend(stackitem.GetArray())
+                continue
+            count += 1
+
+        return count
 
     def CheckDynamicInvoke(self):
         cx = self.CurrentContext
@@ -188,7 +237,7 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = cx.NextInstruction
 
-        if opcode == APPCALL:
+        if opcode in [OpCode.APPCALL, OpCode.TAILCALL]:
             opreader = cx.OpReader
             # read the current position of the stream
             start_pos = opreader.stream.tell()
@@ -212,52 +261,60 @@ class ApplicationEngine(ExecutionEngine):
 
             # if current contract state cant do dynamic calls, return False
             return current_contract_state.HasDynamicInvoke
+        elif opcode in [OpCode.CALL_ED, OpCode.CALL_EDT]:
+            current = UInt160(data=cx.ScriptHash())
+            current_contract_state = self._Table.GetContractState(current.ToBytes())
+            return current_contract_state.HasDynamicInvoke
 
-        return True
+        else:
+            return True
 
     # @profile_it
     def Execute(self):
         def loop_validation_and_stepinto():
             while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
+                if self.CurrentContext.InstructionPointer < len(self.CurrentContext.Script):
+                    try:
+                        self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
+                    except Exception as e:
+                        logger.debug("Exception calculating gas consumed %s " % e)
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                try:
+                    if not self.testMode and self.gas_consumed > self.gas_amount:
+                        logger.debug("NOT ENOUGH GAS")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                    self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
-                #                print("gas consumeb: %s " % self.gas_consumed)
-                except Exception as e:
-                    logger.debug("Exception calculating gas consumed %s " % e)
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if self.testMode and self.ops_processed > self.max_free_ops:
+                        logger.debug("Too many free operations processed")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.testMode and self.gas_consumed > self.gas_amount:
-                    logger.debug("NOT ENOUGH GAS")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckItemSize():
+                        logger.debug("ITEM SIZE TOO BIG")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.CheckItemSize():
-                    logger.debug("ITEM SIZE TOO BIG")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckStackSize():
+                        logger.debug("STACK SIZE TOO BIG")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.CheckStackSize():
-                    logger.debug("STACK SIZE TOO BIG")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckArraySize():
+                        logger.debug("ARRAY SIZE TOO BIG")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.CheckArraySize():
-                    logger.debug("ARRAY SIZE TOO BIG")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckInvocationStack():
+                        logger.debug("INVOCATION SIZE TO BIIG")
+                        self._VMState |= VMState.FAULT
+                        return False
 
-                if not self.CheckInvocationStack():
-                    logger.debug("INVOCATION SIZE TO BIIG")
-                    self._VMState |= VMState.FAULT
-                    return False
-
-                if not self.CheckDynamicInvoke():
-                    logger.debug("Dynamic invoke without proper contract")
-                    self._VMState |= VMState.FAULT
-                    return False
+                    if not self.CheckDynamicInvoke():
+                        logger.debug("Dynamic invoke without proper contract")
+                        self._VMState |= VMState.FAULT
+                        return False
 
                 self.StepInto()
 
@@ -272,9 +329,6 @@ class ApplicationEngine(ExecutionEngine):
 
     def GetPrice(self):
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
-            return 0
-
         opcode = self.CurrentContext.NextInstruction
 
         if opcode <= PUSH16:
@@ -282,21 +336,21 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == NOP:
             return 0
-        elif opcode == APPCALL or opcode == TAILCALL:
+        elif opcode in [APPCALL, TAILCALL]:
             return 10
         elif opcode == SYSCALL:
             return self.GetPriceForSysCall()
-        elif opcode == SHA1 or opcode == SHA256:
+        elif opcode in [SHA1, SHA256]:
             return 10
-        elif opcode == HASH160 or opcode == HASH256:
+        elif opcode in [HASH160, HASH256]:
             return 20
-        elif opcode in [CHECKSIG, VERIFY]:
+        elif opcode == CHECKSIG:
             return 100
         elif opcode == CHECKMULTISIG:
-            if self.EvaluationStack.Count == 0:
+            if self.CurrentContext.EvaluationStack.Count == 0:
                 return 1
-            item = self.EvaluationStack.Peek()
 
+            item = self.CurrentContext.EvaluationStack.Peek()
             if isinstance(item, Array):
                 n = item.Count
             else:
@@ -307,7 +361,8 @@ class ApplicationEngine(ExecutionEngine):
 
             return 100 * n
 
-        return 1
+        else:
+            return 1
 
     def GetPriceForSysCall(self):
 
@@ -369,13 +424,13 @@ class ApplicationEngine(ExecutionEngine):
             return int(5000 * 100000000 / self.ratio)
 
         elif api == "Neo.Asset.Renew":
-            return int(self.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio)
+            return int(self.CurrentContext.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio)
 
         elif api == "Neo.Contract.Create" or api == "Neo.Contract.Migrate":
 
             fee = int(100 * 100000000 / self.ratio)  # 100 gas for contract with no storage no dynamic invoke
 
-            contract_properties = self.EvaluationStack.Peek(3).GetBigInteger()
+            contract_properties = self.CurrentContext.EvaluationStack.Peek(3).GetBigInteger()
 
             if contract_properties & ContractPropertyState.HasStorage > 0:
                 fee += int(400 * 100000000 / self.ratio)  # if contract has storage, we add 400 gas
@@ -389,8 +444,8 @@ class ApplicationEngine(ExecutionEngine):
             return 100
 
         elif api == "Neo.Storage.Put":
-            l1 = len(self.EvaluationStack.Peek(1).GetByteArray())
-            l2 = len(self.EvaluationStack.Peek(2).GetByteArray())
+            l1 = len(self.CurrentContext.EvaluationStack.Peek(1).GetByteArray())
+            l2 = len(self.CurrentContext.EvaluationStack.Peek(2).GetByteArray())
             return (int((l1 + l2 - 1) / 1024) + 1) * 1000
 
         elif api == "Neo.Storage.Delete":
@@ -416,13 +471,12 @@ class ApplicationEngine(ExecutionEngine):
         from neo.EventHub import events
 
         bc = Blockchain.Default()
-        sn = bc._db.snapshot()
 
-        accounts = DBCollection(bc._db, sn, DBPrefix.ST_Account, AccountState)
-        assets = DBCollection(bc._db, sn, DBPrefix.ST_Asset, AssetState)
-        validators = DBCollection(bc._db, sn, DBPrefix.ST_Validator, ValidatorState)
-        contracts = DBCollection(bc._db, sn, DBPrefix.ST_Contract, ContractState)
-        storages = DBCollection(bc._db, sn, DBPrefix.ST_Storage, StorageItem)
+        accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
+        assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
+        validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
+        contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
+        storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
 
         script_table = CachedScriptTable(contracts)
         service = StateMachine(accounts, validators, assets, contracts, storages, None)
@@ -439,7 +493,7 @@ class ApplicationEngine(ExecutionEngine):
 
         script = binascii.unhexlify(script)
 
-        engine.LoadScript(script, False)
+        engine.LoadScript(script)
 
         try:
             success = engine.Execute()

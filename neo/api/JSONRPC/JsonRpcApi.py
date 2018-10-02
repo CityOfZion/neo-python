@@ -17,7 +17,10 @@ from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response, cors_header
 from neo.Core.State.AccountState import AccountState
-from neo.Core.TX.Transaction import Transaction
+from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
+    ContractTransaction
+from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
+    TransactionAttributeUsage
 from neo.Core.State.CoinState import CoinState
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
@@ -27,6 +30,7 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Core.State.StorageKey import StorageKey
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
+from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
@@ -80,19 +84,9 @@ class JsonRpcApi:
         self.port = port
         self.wallet = wallet
 
-    #
-    # JSON-RPC API Route
-    #
-    @app.route('/')
-    @json_response
-    @cors_header
-    def home(self, request):
-        # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
-        body = None
-        request_id = None
+    def get_data(self, body: dict):
 
         try:
-            body = json.loads(request.content.read().decode("utf-8"))
             request_id = body["id"] if body and "id" in body else None
 
             if "jsonrpc" not in body or body["jsonrpc"] != "2.0":
@@ -112,15 +106,40 @@ class JsonRpcApi:
                 "result": result
             }
 
-        except JSONDecodeError as e:
-            error = JsonRpcError.parseError()
-            return self.get_custom_error_payload(request_id, error.code, error.message)
-
         except JsonRpcError as e:
             return self.get_custom_error_payload(request_id, e.code, e.message)
 
         except Exception as e:
             error = JsonRpcError.internalError(str(e))
+            return self.get_custom_error_payload(request_id, error.code, error.message)
+
+    #
+    # JSON-RPC API Route
+    #
+    @app.route('/')
+    @json_response
+    @cors_header
+    def home(self, request):
+        # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
+        # or multiple requests in 1 transaction
+        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10], {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}
+        request_id = None
+
+        try:
+            content = json.loads(request.content.read().decode("utf-8"))
+
+            # test if it's a multi-request message
+            if isinstance(content, list):
+                result = []
+                for body in content:
+                    result.append(self.get_data(body))
+                return result
+
+            # otherwise it's a single request
+            return self.get_data(content)
+
+        except JSONDecodeError as e:
+            error = JsonRpcError.parseError()
             return self.get_custom_error_payload(request_id, error.code, error.message)
 
     def json_rpc_method_handler(self, method, params):
@@ -239,9 +258,6 @@ class JsonRpcApi:
             result = NodeLeader.Instance().Relay(transaction)
             return result
 
-        elif method == "submitblock":
-            raise NotImplementedError()
-
         elif method == "validateaddress":
             return self.validateaddress(params)
 
@@ -273,6 +289,12 @@ class JsonRpcApi:
                     PublicKeyHash=keys.PublicKeyHash.ToBytes()
                 )
                 return account.contract_set[0].Address.ToString()
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
+        elif method == "sendtoaddress":
+            if self.wallet:
+                return self.send_to_address(params)
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
@@ -322,7 +344,7 @@ class JsonRpcApi:
             "script": script.decode('utf-8'),
             "state": VMStateStr(appengine.State),
             "gas_consumed": appengine.GasConsumed().ToString(),
-            "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.EvaluationStack.Items]
+            "stack": [ContractParameter.ToParameter(item).ToJson() for item in appengine.ResultStack.Items]
         }
 
     def validateaddress(self, params):
@@ -397,3 +419,60 @@ class JsonRpcApi:
                 "watchonly": addr.IsWatchOnly,
             })
         return result
+
+    def send_to_address(self, params):
+        asset, address, amount, fee = self.parse_send_params(params)
+        standard_contract = self.wallet.GetStandardAddress()
+        signer_contract = self.wallet.GetContract(standard_contract)
+
+        output = TransactionOutput(AssetId=asset,
+                                   Value=amount,
+                                   script_hash=address)
+        contract_tx = ContractTransaction(outputs=[output])
+        tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                         change_address=None,
+                                         fee=fee)
+        if tx is None:
+            raise JsonRpcError(-300, "Insufficient funds")
+
+        data = standard_contract.Data
+        tx.Attributes = [
+            TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                 data=data)
+        ]
+
+        context = ContractParametersContext(
+            tx, isMultiSig=signer_contract.IsMultiSigContract
+        )
+        self.wallet.Sign(context)
+
+        if context.Completed:
+            tx.scripts = context.GetScripts()
+            NodeLeader.Instance().Relay(tx)
+            return tx.ToJson()
+        else:
+            return context.ToJson()
+
+    def parse_send_params(self, params):
+        if len(params) not in [3, 4]:
+            raise JsonRpcError(-32602, "Invalid params")
+
+        asset_id = get_asset_id(self.wallet, params[0])
+        if not type(asset_id) is UInt256:
+            raise JsonRpcError(-32602, "Invalid params")
+
+        address_to = params[1]
+        try:
+            address_to_sh = self.wallet.ToScriptHash(address_to)
+        except Exception:
+            raise JsonRpcError(-32602, "Invalid params")
+
+        amount = Fixed8.TryParse(params[2], require_positive=True)
+        if not amount or float(params[2]) == 0:
+            raise JsonRpcError(-32602, "Invalid params")
+
+        fee = Fixed8.TryParse(params[3]) if len(params) == 4 else Fixed8.Zero()
+        if fee < Fixed8.Zero():
+            raise JsonRpcError(-32602, "Invalid params")
+
+        return asset_id, address_to_sh, amount, fee

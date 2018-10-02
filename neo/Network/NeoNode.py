@@ -2,7 +2,9 @@ import binascii
 import random
 from logzero import logger
 from twisted.internet.protocol import Protocol
-from twisted.internet import reactor, task
+from twisted.internet import error as twisted_error
+from twisted.internet import reactor, task, threads
+
 from neo.Core.Blockchain import Blockchain as BC
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Network.Message import Message
@@ -13,9 +15,10 @@ from .Payloads.GetBlocksPayload import GetBlocksPayload
 from .Payloads.InvPayload import InvPayload
 from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
+from .Payloads.HeadersPayload import HeadersPayload
+from .Payloads.AddrPayload import AddrPayload
 from .InventoryType import InventoryType
 from neo.Settings import settings
-
 
 MODE_MAINTAIN = 7
 MODE_CATCHUP = 2
@@ -26,18 +29,21 @@ class NeoNode(Protocol):
 
     leader = None
 
-    block_loop = None
+    block_loop_deferred = None
 
-    peer_loop = None
+    peer_loop_deferred = None
 
     sync_mode = MODE_CATCHUP
 
     identifier = None
 
-    def __init__(self):
+    def __init__(self, incoming_client=False):
         """
         Create an instance.
         The NeoNode class is the equivalent of the C# RemoteNode.cs class. It represents a single Node connected to the client.
+
+        Args:
+            incoming_client (bool): True if node is an incoming client and the handshake should be initiated.
         """
         from neo.Network.NodeLeader import NodeLeader
 
@@ -54,11 +60,16 @@ class NeoNode(Protocol):
         self.port = None
         self.identifier = self.leader.NodeCount
         self.leader.NodeCount += 1
+        self.incoming_client = incoming_client
+        self.expect_verack_next = False
 
         self.Log("New Node created %s " % self.identifier)
 
-    def Disconnect(self):
+    def Disconnect(self, reason=None):
         """Close the connection with the remote node client."""
+        self.expect_verack_next = False
+        if reason:
+            logger.debug(reason)
         self.transport.loseConnection()
 
     @property
@@ -84,7 +95,7 @@ class NeoNode(Protocol):
             NetworkAddressWithTime: if we have a connection to a node.
             None: otherwise.
         """
-        if self.port is not None and self.host is not None:
+        if self.port is not None and self.host is not None and self.Version is not None:
             return NetworkAddressWithTime(self.host, self.port, self.Version.Services)
         return None
 
@@ -107,19 +118,27 @@ class NeoNode(Protocol):
         self.port = int(self.endpoint.port)
         self.leader.AddConnectedPeer(self)
         self.Log("Connection from %s" % self.endpoint)
+        if self.incoming_client:
+            # start protocol
+            self.SendVersion()
 
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
-        if self.block_loop:
-            self.block_loop.stop()
-            self.block_loop = None
-        if self.peer_loop:
-            self.peer_loop.stop()
-            self.peer_loop = None
+        try:
+            if self.block_loop_deferred:
+                self.block_loop_deferred.cancel()
+            if self.peer_loop_deferred:
+                self.block_loop_deferred.cancel()
 
-        self.ReleaseBlockRequests()
-        self.leader.RemoveConnectedPeer(self)
-        self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
+            self.ReleaseBlockRequests()
+            self.leader.RemoveConnectedPeer(self)
+
+            if reason and reason.check(twisted_error.ConnectionDone):
+                self.Log("client {} disconnected normally with reason:{}".format(self.remote_nodeid, reason))
+            else:
+                self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
+        except Exception as e:
+            logger.error("Error with connection lost: %s " % e)
 
     def ReleaseBlockRequests(self):
         bcr = BC.Default().BlockRequests
@@ -187,6 +206,10 @@ class NeoNode(Protocol):
             message = Message()
             message.Deserialize(reader)
 
+            if self.incoming_client and self.expect_verack_next:
+                if message.Command != 'verack':
+                    self.Disconnect("Expected 'verack' got {}".format(message.Command))
+
             # Propagate new message
             self.MessageReceived(message)
 
@@ -211,7 +234,13 @@ class NeoNode(Protocol):
         """
 
         if m.Command == 'verack':
-            self.HandleVerack()
+            # only respond with a verack when we connect to another client, not when a client connected to us or
+            # we might end up in a verack loop
+            if self.incoming_client:
+                if self.expect_verack_next:
+                    self.expect_verack_next = False
+            else:
+                self.HandleVerack()
         elif m.Command == 'version':
             self.HandleVersion(m.Payload)
         elif m.Command == 'getaddr':
@@ -224,27 +253,36 @@ class NeoNode(Protocol):
             self.HandleInvMessage(m.Payload)
         elif m.Command == 'block':
             self.HandleBlockReceived(m.Payload)
+        elif m.Command == 'getheaders':
+            self.HandleGetHeadersMessageReceived(m.Payload)
         elif m.Command == 'headers':
             reactor.callFromThread(self.HandleBlockHeadersReceived, m.Payload)
-        #            self.HandleBlockHeadersReceived(m.Payload)
+
         elif m.Command == 'addr':
             self.HandlePeerInfoReceived(m.Payload)
         else:
-            self.Log("Command %s not implemented " % m.Command)
+            self.Log("Command not implemented {} {} ".format(m.Command, self.endpoint))
+
+    def OnLoopError(self, err):
+        self.Log("On neo Node loop error %s " % err)
+
+    def onThreadDeferredErr(self, err):
+        logger.error("On Call from thread error %s " % err)
 
     def ProtocolReady(self):
+        block_loop = task.LoopingCall(self.AskForMoreBlocks)
+        self.block_loop_deferred = block_loop.start(self.sync_mode, now=False)
+        self.block_loop_deferred.addErrback(self.OnLoopError)
+
+        # ask every 3 minutes for new peers
+        peer_loop = task.LoopingCall(self.RequestPeerInfo)
+        self.peer_loop_deferred = peer_loop.start(120, now=False)
+        self.peer_loop_deferred.addErrback(self.OnLoopError)
+
         self.RequestPeerInfo()
         self.AskForMoreHeaders()
 
-        self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
-        self.block_loop.start(self.sync_mode)
-
-        # ask every 3 minutes for new peers
-        self.peer_loop = task.LoopingCall(self.RequestPeerInfo)
-        self.peer_loop.start(120, now=False)
-
     def AskForMoreHeaders(self):
-        # self.Log("asking for more headers...")
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
@@ -260,9 +298,11 @@ class NeoNode(Protocol):
             self.sync_mode = MODE_MAINTAIN
 
         if self.sync_mode != current_mode:
-            self.block_loop.stop()
-            # self.Log("Changing sync mode from %s to %s" % (current_mode, self.sync_mode))
-            self.block_loop.start(self.sync_mode)
+            self.block_loop_deferred.cancel()
+            block_loop = task.LoopingCall(self.AskForMoreBlocks)
+            self.block_loop_deferred = block_loop.start(self.sync_mode)
+            self.block_loop_deferred.addErrback(self.OnLoopError)
+
         else:
             if len(BC.Default().BlockRequests) > self.leader.BREQMAX:
                 self.leader.ResetBlockRequestsAndCache()
@@ -303,7 +343,8 @@ class NeoNode(Protocol):
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
-            reactor.callInThread(self.SendSerializedMessage, message)
+            sendDeferred = threads.deferToThread(self.SendSerializedMessage, message)
+            sendDeferred.addErrback(self.onThreadDeferredErr)
 
     def RequestPeerInfo(self):
         """Request the peer address information from the remote client."""
@@ -313,27 +354,29 @@ class NeoNode(Protocol):
         """Process response of `self.RequestPeerInfo`."""
         addrs = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.AddrPayload.AddrPayload')
 
+        if not addrs:
+            return
+
         for index, nawt in enumerate(addrs.NetworkAddressesWithTime):
             self.leader.RemoteNodePeerReceived(nawt.Address, nawt.Port, index)
 
     def SendPeerInfo(self):
+        if not self.leader.ServiceEnabled:
+            return
 
-        #        self.Log("SENDING PEER INFO %s " % self)
+        peerlist = []
+        for peer in self.leader.Peers:
+            addr = peer.GetNetworkAddressWithTime()
+            if addr is not None:
+                peerlist.append(addr)
+        self.Log("Peer list %s " % list(map(lambda p: p.ToString(), peerlist)))
 
-        #        peerlist = []
-        #        for peer in self.leader.Peers:
-        #            peerlist.append( peer.GetNetworkAddressWithTime())
-        #        self.Log("Peer list %s " % peerlist)
-
-        #        addrpayload = AddrPayload(addresses=peerlist)
-        #        message = Message('addr',addrpayload)
-        #        self.SendSerializedMessage(message)
-        #       dont send peer info now
-        pass
+        addrpayload = AddrPayload(addresses=peerlist)
+        message = Message('addr', addrpayload)
+        self.SendSerializedMessage(message)
 
     def RequestVersion(self):
         """Request the remote client version."""
-        # self.Log("All caught up, requesting version")
         m = Message("getversion")
         self.SendSerializedMessage(m)
 
@@ -342,12 +385,26 @@ class NeoNode(Protocol):
         m = Message("version", VersionPayload(settings.NODE_PORT, self.remote_nodeid, settings.VERSION_NAME))
         self.SendSerializedMessage(m)
 
+    def SendVerack(self):
+        """Send version acknowledge"""
+        m = Message('verack')
+        self.SendSerializedMessage(m)
+        self.expect_verack_next = True
+
     def HandleVersion(self, payload):
         """Process the response of `self.RequestVersion`."""
         self.Version = IOHelper.AsSerializableWithType(payload, "neo.Network.Payloads.VersionPayload.VersionPayload")
-        self.nodeid = self.Version.Nonce
-#        self.Log("Remote version %s " % vars(self.Version))
-        self.SendVersion()
+
+        if not self.Version:
+            return
+
+        if self.incoming_client:
+            if self.Version.Nonce == self.nodeid:
+                self.Disconnect()
+            self.SendVerack()
+        else:
+            self.nodeid = self.Version.Nonce
+            self.SendVersion()
 
     def HandleVerack(self):
         """Handle the `verack` response."""
@@ -367,6 +424,8 @@ class NeoNode(Protocol):
             return
 
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
+        if not inventory:
+            return
 
         if inventory.Type == InventoryType.BlockInt:
 
@@ -387,11 +446,6 @@ class NeoNode(Protocol):
         elif inventory.Type == InventoryType.ConsensusInt:
             pass
 
-#        for hash in inventory.Hashes:
-#            if not hash in self.leader.KnownHashes:
-#                if not hash in self.leader.MissionsGlobal:
-#                    self.leader.MissionsGlobal.append(hash)
-
     def SendSerializedMessage(self, message):
         """
         Send the `message` to the remote client.
@@ -399,10 +453,13 @@ class NeoNode(Protocol):
         Args:
             message (neo.Network.Message):
         """
-        ba = Helper.ToArray(message)
-        ba2 = binascii.unhexlify(ba)
-        self.bytes_out += len(ba2)
-        self.transport.write(ba2)
+        try:
+            ba = Helper.ToArray(message)
+            ba2 = binascii.unhexlify(ba)
+            self.bytes_out += len(ba2)
+            self.transport.write(ba2)
+        except Exception as e:
+            self.Log("Could not send serialized message %s " % e)
 
     def HandleBlockHeadersReceived(self, inventory):
         """
@@ -411,15 +468,19 @@ class NeoNode(Protocol):
         Args:
             inventory (neo.Network.Inventory):
         """
-        inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
-#        self.Log("Received headers %s " % ([h.Hash.ToBytes() for h in inventory.Headers]))
-        if inventory is not None:
-            BC.Default().AddHeaders(inventory.Headers)
+        try:
+            inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
+            if inventory is not None:
+                BC.Default().AddHeaders(inventory.Headers)
 
-        if BC.Default().HeaderHeight < self.Version.StartHeight:
-            self.AskForMoreHeaders()
-        else:
-            reactor.callLater(5, self.AskForMoreHeaders)
+            if BC.Default().HeaderHeight < self.Version.StartHeight:
+                self.AskForMoreHeaders()
+            else:
+                deferredCall = task.deferLater(reactor, 5, self.AskForMoreHeaders)
+                deferredCall.addErrback(self.onThreadDeferredErr)
+
+        except Exception as e:
+            self.Log("Error handling Block headers %s " % e)
 
     def HandleBlockReceived(self, inventory):
         """
@@ -429,6 +490,8 @@ class NeoNode(Protocol):
             inventory (neo.Network.Inventory):
         """
         block = IOHelper.AsSerializableWithType(inventory, 'neo.Core.Block.Block')
+        if not block:
+            return
 
         blockhash = block.Hash.ToBytes()
         if blockhash in BC.Default().BlockRequests:
@@ -437,6 +500,37 @@ class NeoNode(Protocol):
             self.myblockrequests.remove(blockhash)
 
         self.leader.InventoryReceived(block)
+
+    def HandleGetHeadersMessageReceived(self, payload):
+
+        if not self.leader.ServiceEnabled:
+            return
+
+        inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload')
+
+        if not inventory:
+            return
+
+        blockchain = BC.Default()
+
+        hash = inventory.HashStart[0]
+
+        if hash is None or hash == inventory.HashStop:
+            self.Log("getheaders: Hash {} not found or hashstop reached".format(inventory.HashStart))
+            return
+
+        headers = []
+        header_count = 0
+
+        while hash != inventory.HashStop and header_count < 2000:
+            hash = blockchain.GetNextBlockHash(hash)
+            if not hash:
+                break
+            headers.append(blockchain.GetHeader(hash))
+            header_count += 1
+
+        if header_count > 0:
+            self.SendSerializedMessage(Message('headers', HeadersPayload(headers=headers)))
 
     def HandleBlockReset(self, hash):
         """Process block reset request."""
@@ -450,6 +544,8 @@ class NeoNode(Protocol):
             payload (neo.Network.Inventory):
         """
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
+        if not inventory:
+            return
 
         for hash in inventory.Hashes:
             hash = hash.encode('utf-8')
@@ -473,12 +569,12 @@ class NeoNode(Protocol):
                 if not item:
                     item = BC.Default().GetBlock(hash)
                 if item:
-                    message = Message(command='block', payload=item, print_payload=True)
+                    message = Message(command='block', payload=item, print_payload=False)
                     self.SendSerializedMessage(message)
 
             elif inventory.Type == InventoryType.ConsensusInt:
                 if item:
-                    self.SendSerializedMessage(Message(command='consensus', payload=item, print_payload=True))
+                    self.SendSerializedMessage(Message(command='consensus', payload=item, print_payload=False))
 
     def HandleGetBlocksMessageReceived(self, payload):
         """
@@ -491,22 +587,23 @@ class NeoNode(Protocol):
             return
 
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload')
+        if not inventory:
+            return
 
-        if not BC.Default().GetHeader(inventory.HashStart):
-            self.Log("Hash %s not found %s " % inventory.HashStart)
+        blockchain = BC.Default()
+        hash = inventory.HashStart[0]
+        if not blockchain.GetHeader(hash):
             return
 
         hashes = []
         hcount = 0
-        hash = inventory.HashStart
         while hash != inventory.HashStop and hcount < 500:
-            hash = BC.Default().GetNextBlockHash(hash)
+            hash = blockchain.GetNextBlockHash(hash)
             if hash is None:
                 break
             hashes.append(hash)
             hcount += 1
         if hcount > 0:
-            self.Log("sending inv hashes! %s " % hashes)
             self.SendSerializedMessage(Message('inv', InvPayload(type=InventoryType.Block, hashes=hashes)))
 
     def Relay(self, inventory):

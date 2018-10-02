@@ -69,7 +69,7 @@ class Helper:
             value (neo.IO.Mixins.SerializableMixin): object extending SerializableMixin.
 
         Returns:
-            bytes:
+            bytes: hex formatted bytes
         """
         ms = StreamManager.GetStream()
         writer = BinaryWriter(ms)
@@ -77,6 +77,27 @@ class Helper:
         value.Serialize(writer)
 
         retVal = ms.ToArray()
+        StreamManager.ReleaseStream(ms)
+
+        return retVal
+
+    @staticmethod
+    def ToStream(value):
+        """
+        Serialize the given `value` to a an array of bytes.
+
+        Args:
+            value (neo.IO.Mixins.SerializableMixin): object extending SerializableMixin.
+
+        Returns:
+            bytes: not hexlified
+        """
+        ms = StreamManager.GetStream()
+        writer = BinaryWriter(ms)
+
+        value.Serialize(writer)
+
+        retVal = ms.getvalue()
         StreamManager.ReleaseStream(ms)
 
         return retVal
@@ -172,9 +193,9 @@ class Helper:
 
             state_reader = GetStateReader()
             engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
-            engine.LoadScript(verification, False)
-            invoction = verifiable.Scripts[i].InvocationScript
-            engine.LoadScript(invoction, True)
+            engine.LoadScript(verification)
+            invocation = verifiable.Scripts[i].InvocationScript
+            engine.LoadScript(invocation)
 
             try:
                 success = engine.Execute()
@@ -182,7 +203,7 @@ class Helper:
             except Exception as e:
                 state_reader.ExecutionCompleted(engine, False, e)
 
-            if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
+            if engine.ResultStack.Count != 1 or not engine.ResultStack.Pop().GetBoolean():
                 Helper.EmitServiceEvents(state_reader)
                 return False
 

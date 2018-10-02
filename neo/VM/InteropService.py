@@ -7,7 +7,6 @@ from neo.SmartContract import StackItemType
 
 
 class CollectionMixin:
-
     IsSynchronized = False
     SyncRoot = None
 
@@ -59,14 +58,14 @@ class StackItem(EquatableMixin):
     def Serialize(self, writer):
         pass
 
-#    def Deserialize(self, reader):
-#        pass
+    #    def Deserialize(self, reader):
+    #        pass
 
     def __hash__(self):
         hash = 17
         for b in self.GetByteArray():
             hash = hash * 31 + b
-#        print("hash code %s " % hash)
+        #        print("hash code %s " % hash)
         return hash
 
     def __str__(self):
@@ -133,12 +132,11 @@ class StackItem(EquatableMixin):
         elif typ is list:
             return Array(value)
 
-#        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
+        #        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
         return value
 
 
 class Array(StackItem, CollectionMixin):
-
     _array = None  # a list of stack items
 
     @property
@@ -219,7 +217,6 @@ class Array(StackItem, CollectionMixin):
 
 
 class Boolean(StackItem):
-
     TRUE = bytearray([1])
     FALSE = bytearray([0])
 
@@ -227,6 +224,10 @@ class Boolean(StackItem):
 
     def __init__(self, value):
         self._value = value
+
+    @property
+    def Count(self):
+        return 1
 
     def Equals(self, other):
         if other is None:
@@ -257,11 +258,14 @@ class Boolean(StackItem):
 
 
 class ByteArray(StackItem):
-
     _value = None
 
     def __init__(self, value):
         self._value = value
+
+    @property
+    def Count(self):
+        return len(self._value)
 
     def Equals(self, other):
         if other is None:
@@ -300,17 +304,21 @@ class ByteArray(StackItem):
     def __str__(self):
         return self.GetString()
 
+
 #
 
 
 class Integer(StackItem):
-
     _value = None
 
     def __init__(self, value):
         if type(value) is not BigInteger:
             raise Exception("Must be big integer instance")
         self._value = value
+
+    @property
+    def Count(self):
+        return 1
 
     def Equals(self, other):
         if other is None:
@@ -341,7 +349,6 @@ class Integer(StackItem):
 
 
 class InteropInterface(StackItem):
-
     _object = None
 
     def __init__(self, value):
@@ -422,7 +429,6 @@ class Struct(Array):
 
 
 class Map(StackItem, CollectionMixin):
-
     _dict = None
 
     def __init__(self, dict=None):
@@ -514,7 +520,6 @@ class Map(StackItem, CollectionMixin):
 
 
 class InteropService:
-
     _dictionary = {}
 
     def __init__(self):
@@ -529,33 +534,28 @@ class InteropService:
 
     def Invoke(self, method, engine):
         if method not in self._dictionary.keys():
-
-            logger.info("method %s not found in ->" % method)
-            for k, v in self._dictionary.items():
-                logger.info("%s -> %s " % (k, v))
-            return False
-
+            logger.warn("method %s not found" % method)
         func = self._dictionary[method]
         # logger.info("[InteropService Method] %s " % func)
         return func(engine)
 
     @staticmethod
     def GetScriptContainer(engine):
-        engine.EvaluationStack.PushT(StackItem.FromInterface(engine.ScriptContainer))
+        engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(engine.ScriptContainer))
         return True
 
     @staticmethod
     def GetExecutingScriptHash(engine):
-        engine.EvaluationStack.PushT(engine.CurrentContext.ScriptHash())
+        engine.CurrentContext.EvaluationStack.PushT(engine.CurrentContext.ScriptHash())
         return True
 
     @staticmethod
     def GetCallingScriptHash(engine):
-        engine.EvaluationStack.PushT(engine.CallingContext.ScriptHash())
+        engine.CurrentContext.EvaluationStack.PushT(engine.CallingContext.ScriptHash())
         return True
 
     @staticmethod
     def GetEntryScriptHash(engine):
 
-        engine.EvaluationStack.PushT(engine.EntryContext.ScriptHash())
+        engine.CurrentContext.EvaluationStack.PushT(engine.EntryContext.ScriptHash())
         return True

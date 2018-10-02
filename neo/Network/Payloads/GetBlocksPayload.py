@@ -9,7 +9,7 @@ class GetBlocksPayload(SerializableMixin):
     HashStart = []
     HashStop = None
 
-    def __init__(self, hash_start=[], hash_stop=None):
+    def __init__(self, hash_start=[], hash_stop=UInt256()):
         """
         Create an instance.
 
@@ -37,7 +37,7 @@ class GetBlocksPayload(SerializableMixin):
         Args:
             reader (neo.IO.BinaryReader):
         """
-        self.HashStart = reader.ReadHashes()
+        self.HashStart = reader.ReadSerializableArray('neocore.UInt256.UInt256')
         self.HashStop = reader.ReadUInt256()
 
     def Serialize(self, writer):
