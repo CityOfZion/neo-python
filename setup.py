@@ -25,8 +25,8 @@ setup(
     long_description=readme,
     author="Thomas Saunders",
     author_email='tom@cityofzion.io',
-    maintainer="Chris Hager",
-    maintainer_email='chris@cityofzion.io',
+    maintainer="Erik van den Brink",
+    maintainer_email='erik@cityofzion.io',
     url='https://github.com/CityOfZion/neo-python',
     packages=find_packages(include=['neo']),
     entry_points = {
