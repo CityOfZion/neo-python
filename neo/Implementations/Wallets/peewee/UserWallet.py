@@ -40,7 +40,7 @@ class UserWallet(Wallet):
 
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)
         logger.debug("initialized user wallet %s " % self)
-        self.__dbaccount=None
+        self.__dbaccount = None
         self._aliases = None
         self._db = None
         self.LoadNamedAddresses()
@@ -298,8 +298,6 @@ class UserWallet(Wallet):
 
     def LoadNamedAddresses(self):
         self._aliases = NamedAddress.select()
-
-
 
     @property
     def NamedAddr(self):

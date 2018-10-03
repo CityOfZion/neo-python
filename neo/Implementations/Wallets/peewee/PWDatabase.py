@@ -20,7 +20,6 @@ class PWDatabase:
 
     def __init__(self, path):
         try:
-            print("Creating new database!! %s " % path)
             self._db = SqliteDatabase(path, check_same_thread=False)
             PWDatabase.DBProxy().initialize(self._db)
             self.startup()

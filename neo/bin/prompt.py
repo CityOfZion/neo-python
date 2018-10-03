@@ -448,7 +448,6 @@ class PromptInterface:
 
         print("Command export %s not found" % item)
 
-
     def do_notifications(self, arguments):
         if NotificationDB.instance() is None:
             print("No notification DB Configured")

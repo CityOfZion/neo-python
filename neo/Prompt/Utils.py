@@ -283,7 +283,6 @@ def lookup_addr_str(wallet, addr):
         print(e)
 
 
-
 def string_from_fixed8(amount, decimals):
     precision_mult = pow(10, decimals)
     amount = Decimal(amount) / Decimal(precision_mult)
