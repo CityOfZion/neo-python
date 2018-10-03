@@ -266,7 +266,10 @@ class NotifyEvent(SmartContractEvent):
             writer.WriteUInt160(self.addr_from)
             writer.WriteUInt160(self.addr_to)
 
-            if self.Amount < 0xffffffffffffffff:
+            if self.Amount < 0:
+                logger.warn("Transfer Amount less than 0")
+                writer.WriteVarInt(0)
+            elif self.Amount < 0xffffffffffffffff:
                 writer.WriteVarInt(self.amount)
             else:
                 logger.warn("Writing Payload value amount greater than ulong long is not allowed.  Setting to ulong long max")
