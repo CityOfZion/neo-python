@@ -8,7 +8,7 @@ All notable changes to this project are documented in this file.
 - Add ``sendmany`` and ``sendfrom`` RPC methods & tests and integrate with ``sendtoaddress``
 - Updated all the dependencies
 - Add ``Neo.Transaction.GetWitnesses``, ``Neo.Witness.GetInvocationScript``, ``Neo.Witness.GetVerificationScript``
-
+- Removes all ``hold`` and ``withdraw`` related functionality from wallet and prompt
 
 [0.8.0] 2018-09-28
 ------------------
