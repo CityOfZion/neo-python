@@ -111,6 +111,7 @@ class PromptInterface:
                 'config maxpeers {num_peers}',
                 'config node-requests {reqsize} {queuesize}',
                 'config node-requests {slow/normal/fast}',
+                'config compiler-nep8 {on/off}',
                 'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {is_payable} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
                 'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {is_payable} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
                 'import wif {wif}',
@@ -177,11 +178,6 @@ class PromptInterface:
     def get_bottom_toolbar(self, cli=None):
         out = []
         try:
-            # Note: not sure if prompt-toolkit still supports foreground colors, couldn't get it to work
-            # out = [("class:command", '[%s] Progress: ' % settings.net_name),
-            #        ("class:number", str(Blockchain.Default().Height + 1)),
-            #        ("class:neo", '/'),
-            #        ("class:number", str(Blockchain.Default().HeaderHeight + 1))]
             return "[%s] Progress: %s/%s" % (settings.net_name,
                                              str(Blockchain.Default().Height + 1),
                                              str(Blockchain.Default().HeaderHeight + 1))
@@ -203,7 +199,7 @@ class PromptInterface:
                                 'claim', 'migrate', 'rebuild', 'create_addr', 'delete_addr',
                                 'delete_token', 'alias', 'unspent', 'split', 'close',
                                 'withdraw_reqest', 'holds', 'completed', 'cancel', 'cleanup',
-                                'all', 'debugstorage']
+                                'all', 'debugstorage', 'compiler-nep8', ]
 
         if self.Wallet:
             for addr in self.Wallet.Addresses:
@@ -957,10 +953,24 @@ class PromptInterface:
 
             else:
                 print("Maintaining current number of maxpeers")
+        elif what == 'compiler-nep8':
+            c1 = get_arg(args, 1)
+            if c1 is not None:
+                c1 = c1.lower()
+                if c1 == 'on' or c1 == '1':
+                    print("Compiler NEP8 instructions on")
+                    settings.COMPILER_NEP_8 = True
+                elif c1 == 'off' or c1 == '0':
+                    print("Compiler NEP8 instructions off")
+                    settings.COMPILER_NEP_8 = False
+                else:
+                    print("Cannot configure compiler NEP8 instructions. Please specify on|off")
+            else:
+                print("Cannot configure compiler NEP8 instructions. Please specify on|off")
 
         else:
             print(
-                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off', 'config vm-log on|off', or 'config maxpeers {num_peers}'" % what)
+                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off', 'config vm-log on|off', config compiler-nep8 on|off, or 'config maxpeers {num_peers}'" % what)
 
     def on_looperror(self, err):
         logger.debug("On DB loop error! %s " % err)

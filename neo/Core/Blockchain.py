@@ -96,7 +96,7 @@ class Blockchain:
                                    amount, precision, owner, admin)
 
     @staticmethod
-    def GenesisBlock():
+    def GenesisBlock() -> Block:
         """
         Create the GenesisBlock.
 
@@ -128,7 +128,7 @@ class Blockchain:
                      True)
 
     @staticmethod
-    def Default():
+    def Default() -> 'Blockchain':
         """
         Get the default registered blockchain instance.
 
