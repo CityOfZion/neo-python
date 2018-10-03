@@ -437,40 +437,7 @@ class JsonRpcApi:
             })
         return result
 
-    def send_to_address(self, params):
-        asset, address, amount, fee = self.parse_send_params(params)
-        standard_contract = self.wallet.GetStandardAddress()
-        signer_contract = self.wallet.GetContract(standard_contract)
-
-        output = TransactionOutput(AssetId=asset,
-                                   Value=amount,
-                                   script_hash=address)
-        contract_tx = ContractTransaction(outputs=[output])
-        tx = self.wallet.MakeTransaction(tx=contract_tx,
-                                         change_address=None,
-                                         fee=fee)
-        if tx is None:
-            raise JsonRpcError(-300, "Insufficient funds")
-
-        data = standard_contract.Data
-        tx.Attributes = [
-            TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                 data=data)
-        ]
-
-        context = ContractParametersContext(
-            tx, isMultiSig=signer_contract.IsMultiSigContract
-        )
-        self.wallet.Sign(context)
-
-        if context.Completed:
-            tx.scripts = context.GetScripts()
-            NodeLeader.Instance().Relay(tx)
-            return tx.ToJson()
-        else:
-            return context.ToJson()
-
-    def parse_send_params(self, params):
+    def parse_send_to_address_params(self, params):
         if len(params) not in [3, 4]:
             raise JsonRpcError(-32602, "Invalid params")
 
