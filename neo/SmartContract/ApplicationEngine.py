@@ -411,8 +411,14 @@ class ApplicationEngine(ExecutionEngine):
         elif api == "Neo.Transaction.GetReferences":
             return 200
 
+        elif api == "Neo.Transaction.GetWitnesses":
+            return 200
+
         elif api == "Neo.Transaction.GetUnspentCoins":
             return 200
+
+        elif api in ["Neo.Witness.GetInvocationScript", "Neo.Witness.GetVerificationScript"]:
+            return 100
 
         elif api == "Neo.Account.SetVotes":
             return 1000

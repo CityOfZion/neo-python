@@ -125,7 +125,10 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetOutputs", self.Transaction_GetOutputs)
         self.Register("Neo.Transaction.GetReferences", self.Transaction_GetReferences)
         self.Register("Neo.Transaction.GetUnspentCoins", self.Transaction_GetUnspentCoins)
+        self.Register("Neo.Transaction.GetWitnesses", self.Transaction_GetWitnesses)
         self.Register("Neo.InvocationTransaction.GetScript", self.InvocationTransaction_GetScript)
+        self.Register("Neo.Witness.GetInvocationScript", self.Witness_GetInvocationScript)
+        self.Register("Neo.Witness.GetVerificationScript", self.Witness_GetVerificationScript)
         self.Register("Neo.Attribute.GetUsage", self.Attribute_GetUsage)
         self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
         self.Register("Neo.Input.GetHash", self.Input_GetHash)
@@ -742,11 +745,38 @@ class StateReader(InteropService):
         engine.CurrentContext.EvaluationStack.PushT(refs)
         return True
 
+    def Transaction_GetWitnesses(self, engine: ExecutionEngine):
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+
+        if tx is None:
+            return False
+
+        if len(tx.scripts) > ApplicationEngine.maxArraySize:
+            return False
+
+        witnesses = [StackItem.FromInterface(s) for s in tx.scripts]
+        engine.CurrentContext.EvaluationStack.PushT(witnesses)
+        return True
+
     def InvocationTransaction_GetScript(self, engine: ExecutionEngine):
         tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
         if tx is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(tx.Script)
+        return True
+
+    def Witness_GetInvocationScript(self, engine: ExecutionEngine):
+        witness = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        if witness is None:
+            return False
+        engine.CurrentContext.EvaluationStack.PushT(witness.InvocationScript)
+        return True
+
+    def Witness_GetVerificationScript(self, engine: ExecutionEngine):
+        witness = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        if witness is None:
+            return False
+        engine.CurrentContext.EvaluationStack.PushT(witness.VerificationScript)
         return True
 
     def Attribute_GetUsage(self, engine: ExecutionEngine):
