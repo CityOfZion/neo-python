@@ -297,8 +297,15 @@ class StateReader(InteropService):
                                                                   height, tx_hash, success, engine.testMode))
 
         else:
-            payload.Value.append(ContractParameter(ContractParameterType.String, error))
-            payload.Value.append(ContractParameter(ContractParameterType.String, engine._VMState))
+            # when a contract raises an exception
+            # we should display that in the notification
+            if engine.CurrentContext.EvaluationStack.Count > 0:
+                for item in engine.CurrentContext.EvaluationStack.Items:
+                    payload.Value.append(ContractParameter(ContractParameterType.String, item.GetString()))
+            else:
+                payload.Value.append(ContractParameter(ContractParameterType.String, error))
+                payload.Value.append(ContractParameter(ContractParameterType.String, engine._VMState))
+
             if engine.Trigger == Application:
                 self.events_to_dispatch.append(
                     SmartContractEvent(SmartContractEvent.EXECUTION_FAIL, payload,

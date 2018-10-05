@@ -316,8 +316,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
         wallet_tx.scripts = context.GetScripts()
     else:
         logger.warn("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
-    #        if not gather_signatures(context, wallet_tx, owners):
-    #            return None, [], 0, None
+
 
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
@@ -371,7 +370,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
         # this allows you to to test invocations that fail
         else:
             wallet_tx.outputs = outputs
-            wallet_tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
+#            wallet_tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
             return wallet_tx, min_fee, [], engine.ops_processed
 
     except Exception as e:
