@@ -87,6 +87,9 @@ def construct_send_many(prompter, wallet, arguments):
 
     arguments, outgoing = get_outgoing(arguments)
 
+    if outgoing is None:
+        print("invalid outgoing number")
+        return False
     if outgoing < 1:
         print("invalid outgoing number")
         return False
