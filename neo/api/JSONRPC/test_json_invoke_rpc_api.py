@@ -33,7 +33,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     def setUp(self):
-        self.app = JsonRpcApi(20332)
+        self.app = JsonRpcApi(9479)
 
     def test_invalid_json_payload(self):
         mock_req = mock_request(b"{ invalid")
@@ -55,7 +55,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         return ret
 
     def test_invoke_1(self):
-        contract_hash = 'd7678dd97c000be3f33e9362e673101bac4ca654'
+        contract_hash = 'b9fbcff6e50fd381160b822207231233dd3c56c2'
         jsn = [
             {
                 'type': str(ContractParameterType.String),
@@ -70,16 +70,16 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
-        self.assertEqual(res['result']['gas_consumed'], '0.205')
+        self.assertEqual(res['result']['gas_consumed'], '0.128')
         results = []
         for p in res['result']['stack']:
             results.append(ContractParameter.FromJson(p))
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].Type, ContractParameterType.ByteArray)
-        self.assertEqual(results[0].Value, bytearray(b'LOCALTOKEN'))
+        self.assertEqual(results[0].Value, bytearray(b'NEX Template V2'))
 
     def test_invoke_2(self):
-        contract_hash = 'd7678dd97c000be3f33e9362e673101bac4ca654'
+        contract_hash = 'b9fbcff6e50fd381160b822207231233dd3c56c2'
         jsn = [
             {
                 'type': str(ContractParameterType.String),
@@ -90,7 +90,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
                 'value': [
                     {
                         'type': str(ContractParameterType.ByteArray),
-                        'value': bytearray(b'\xec\xa8\xfc\xf9Nz*\x7f\xc3\xfdT\xae\x0e\xd3\xd3MR\xec%\x90').hex()
+                        'value': bytearray(b'#\xba\'\x03\xc52c\xe8\xd6\xe5"\xdc2 39\xdc\xd8\xee\xe9').hex()
                     }
                 ]
             }
@@ -104,10 +104,10 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
             results.append(ContractParameter.FromJson(p))
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].Type, ContractParameterType.ByteArray)
-        self.assertEqual(results[0].Value, bytearray(b'\xe9\x0f\x80\xbb\x04\x90\x00'))
+        self.assertEqual(results[0].Value, bytearray(b'\x00\x90\x8c\xd4v\xe2\x00'))
 
     def test_invoke_3(self):
-        contract_hash = 'd7678dd97c000be3f33e9362e673101bac4ca654'
+        contract_hash = 'b9fbcff6e50fd381160b822207231233dd3c56c2'
         req = self._gen_rpc_req("invokefunction", params=[contract_hash, 'symbol'])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
@@ -117,12 +117,12 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
             results.append(ContractParameter.FromJson(p))
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].Type, ContractParameterType.ByteArray)
-        self.assertEqual(results[0].Value, bytearray(b'LWTF'))
+        self.assertEqual(results[0].Value, bytearray(b'NXT2'))
 
     def test_invoke_4(self):
-        contract_hash = 'd7678dd97c000be3f33e9362e673101bac4ca654'
+        contract_hash = 'b9fbcff6e50fd381160b822207231233dd3c56c2'
         params = [{'type': str(ContractParameterType.ByteArray),
-                   'value': bytearray(b'\xec\xa8\xfc\xf9Nz*\x7f\xc3\xfdT\xae\x0e\xd3\xd3MR\xec%\x90').hex()}]
+                   'value': bytearray(b'#\xba\'\x03\xc52c\xe8\xd6\xe5"\xdc2 39\xdc\xd8\xee\xe9').hex()}]
 
         req = self._gen_rpc_req("invokefunction", params=[contract_hash, 'balanceOf', params])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
@@ -133,10 +133,11 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
             results.append(ContractParameter.FromJson(p))
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].Type, ContractParameterType.ByteArray)
-        self.assertEqual(results[0].Value, bytearray(b'\xe9\x0f\x80\xbb\x04\x90\x00'))
+        self.assertEqual(results[0].Value, bytearray(b'\x00\x90\x8c\xd4v\xe2\x00'))
 
     def test_invoke_5(self):
-        test_script = '00046e616d656754a64cac1b1073e662933ef3e30b007cd98d67d7000673796d626f6c6754a64cac1b1073e662933ef3e30b007cd98d67d70008646563696d616c736754a64cac1b1073e662933ef3e30b007cd98d67d7'
+        test_script = "00046e616d6567c2563cdd3312230722820b1681d30fe5f6cffbb9000673796d626f6c67c2563cdd3312230722820b1681d30fe5f6cffbb90008646563696d616c7367c2563cdd3312230722820b1681d30fe5f6cffbb9" 
+
         req = self._gen_rpc_req("invokescript", params=[test_script])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
@@ -145,9 +146,10 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         results = []
         for p in res['result']['stack']:
             results.append(ContractParameter.FromJson(p))
+
         self.assertEqual(len(results), 3)
-        self.assertEqual(results[0].Value, bytearray(b'LOCALTOKEN'))
-        self.assertEqual(results[1].Value, bytearray(b'LWTF'))
+        self.assertEqual(results[0].Value, bytearray(b'NEX Template V2'))
+        self.assertEqual(results[1].Value, bytearray(b'NXT2'))
         self.assertEqual(results[2].Value, 8)
 
     def test_bad_invoke_script(self):

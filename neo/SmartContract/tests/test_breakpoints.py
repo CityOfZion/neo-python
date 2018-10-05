@@ -11,9 +11,9 @@ from neo.Prompt.vm_debugger import VMDebugger, DebugContext
 
 class UserWalletTestCase(WalletFixtureTestCase):
 
-    wallet_1_script_hash = UInt160(data=b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)')
+    wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
 
-    wallet_1_addr = 'APRgMZHZubii29UXF9uFa6sohrsYupNAvx'
+    wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
 
     import_watch_addr = UInt160(data=b'\xaf\x12\xa8h{\x14\x94\x8b\xc4\xa0\x08\x12\x8aU\nci[\xc1\xa5')
     watch_addr_str = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
@@ -69,6 +69,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         debugger = engine._vm_debugger
         context = debugger.get_context()
         context.print()
-        self.assertEqual(debugger.index, 155)
+        self.assertEqual(debugger.index, 157)
         self.assertEqual(context.method.name, 'another_method')
         self.assertEqual(context.line, 38)

@@ -21,6 +21,8 @@ class LevelDBTest(NeoTestCase):
 
     @classmethod
     def setUpClass(self):
+        settings.setup_unittest_net()
+        Blockchain.DeregisterBlockchain()
         self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH, skip_version_check=True)
         Blockchain.RegisterBlockchain(self._blockchain)
         self._genesis = Blockchain.GenesisBlock()
@@ -43,17 +45,18 @@ class LevelDBTest(NeoTestCase):
         self.assertEqual(self._blockchain.Height, 0)
 
     def test_add_header(self):
-
         hexdata = binascii.unhexlify(self.block_one_raw)
-
         block_one = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
 
-        if settings.MAGIC == 1953787457:
-            self.assertEqual(self._blockchain.CurrentHeaderHash, b'b3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef')
+        if settings.MAGIC == 56753:
+            self.assertEqual(self._blockchain.CurrentHeaderHash, b'996e37358dc369912041f966f8c5d8d3a8255ba5dcbd3447f8a82b55db869099')
         else:
             self.assertEqual(self._blockchain.CurrentHeaderHash, b'd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf')
 
         self.assertEqual(self._blockchain.HeaderHeight, 0)
+
+        self._blockchain.AddBlock(block_one)
+        self.assertEqual(self._blockchain.HeaderHeight, 1)
 
     def test_sys_block_fees(self):
 

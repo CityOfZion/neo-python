@@ -1,21 +1,27 @@
 from neo.IO.MemoryStream import StreamManager
 from neocore.IO.BinaryReader import BinaryReader
-from neocore.UInt160 import UInt160
+from neo.VM.RandomAccessStack import RandomAccessStack
 
 
 class ExecutionContext:
-
-    _Engine = None
-
     Script = None
-
-    PushOnly = False
 
     __OpReader = None
 
     __mstream = None
 
-    Breakpoints = None
+    _RVCount = None
+
+    _EvaluationStack = None
+    _AltStack = None
+
+    @property
+    def EvaluationStack(self):
+        return self._EvaluationStack
+
+    @property
+    def AltStack(self):
+        return self._AltStack
 
     @property
     def OpReader(self):
@@ -24,6 +30,10 @@ class ExecutionContext:
     @property
     def InstructionPointer(self):
         return self.__OpReader.stream.tell()
+
+    @InstructionPointer.setter
+    def InstructionPointer(self, value):
+        self.__OpReader.stream.seek(value)
 
     def SetInstructionPointer(self, value):
         self.__OpReader.stream.seek(value)
@@ -36,23 +46,17 @@ class ExecutionContext:
 
     def ScriptHash(self):
         if self._script_hash is None:
-            self._script_hash = self._Engine.Crypto.Hash160(self.Script)
+            self._script_hash = self.crypto.Hash160(self.Script)
         return self._script_hash
 
-    def __init__(self, engine=None, script=None, push_only=False, break_points=set()):
-        self._Engine = engine
+    def __init__(self, engine=None, script=None, rvcount=0):
         self.Script = script
-        self.PushOnly = push_only
-        self.Breakpoints = break_points
         self.__mstream = StreamManager.GetStream(self.Script)
         self.__OpReader = BinaryReader(self.__mstream)
-
-    def Clone(self):
-
-        context = ExecutionContext(self._Engine, self.Script, self.PushOnly, self.Breakpoints)
-        context.SetInstructionPointer(self.InstructionPointer)
-
-        return context
+        self._EvaluationStack = RandomAccessStack(name='Evaluation')
+        self._AltStack = RandomAccessStack(name='Alt')
+        self._RVCount = rvcount
+        self.crypto = engine.Crypto
 
     def Dispose(self):
         self.__OpReader = None

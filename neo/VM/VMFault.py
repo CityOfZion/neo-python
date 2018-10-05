@@ -42,3 +42,7 @@ class VMFault(Enum):
     THROW = auto()
     THROWIFNOT = auto()
     UNKNOWN_OPCODE = auto()
+
+    UNKNOWN_STACKISOLATION = auto()
+    UNKNOWN_STACKISOLATION2 = auto()
+    UNKNOWN_STACKISOLATION3 = auto()

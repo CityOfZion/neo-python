@@ -32,6 +32,10 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         address_to = get_arg(arguments, 1)
         amount = get_arg(arguments, 2)
 
+        if float(amount) == 0:
+            print("amount cannot be 0")
+            return False
+
         assetId = get_asset_id(wallet, to_send)
 
         if assetId is None:
