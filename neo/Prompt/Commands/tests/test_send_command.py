@@ -151,6 +151,15 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertFalse(res)
 
+    def test_send_bad_precision_amount(self):
+
+        wallet = self.GetWallet1(recreate=True)
+        args = ['neo', self.watch_addr_str, '12.01']
+
+        res = construct_send_basic(None, wallet, args)
+
+        self.assertFalse(res)
+
     def test_send_negative_fee(self):
 
         wallet = self.GetWallet1(recreate=True)
@@ -303,6 +312,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
                 self.assertFalse(res)
 
+    def test_could_not_send(self):
+
+        wallet = self.GetWallet1(recreate=True)
+        args = ['gas', self.watch_addr_str, '2']
+
+        contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
+        res = process_transaction(None, wallet, contract_tx, scripthash_from, fee, owners, user_tx_attributes)  # forces the 'try:' to fail
+
+        self.assertFalse(res)
+
     def test_sendmany_good_simple(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
 
@@ -371,6 +390,15 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertFalse(res)
 
+    def test_sendmany_weird_outgoing(self):
+
+        wallet = self.GetWallet1(recreate=True)
+        args = ['--outgoing=0.5']  # weird number outgoing
+
+        res = construct_send_many(None, wallet, args)
+
+        self.assertFalse(res)
+
     def test_sendmany_bad_assetid(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "blah", self.watch_addr_str, "1"]):
 
@@ -382,11 +410,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
 
     def test_sendmany_token(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "NEP5", self.watch_addr_str, "32"]):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "NXT4", self.watch_addr_str, "32"]):
 
             wallet = self.GetWallet1(recreate=True)
 
-            token_hash = 'f8d448b227991cf07cb96a6f9c0322437f1599b9'
+            token_hash = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
             ImportToken(wallet, token_hash)
 
             args = ["--outgoing=2", '--from-addr=%s' % self.wallet_1_addr]
@@ -427,6 +455,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_weird_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "5.abc3"]):
+
+            wallet = self.GetWallet1(recreate=True)
+            args = ['--outgoing=2']
+
+            res = construct_send_many(None, wallet, args)
+
+            self.assertFalse(res)
+
+    def test_sendmany_bad_precision_amount(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["gas", self.watch_addr_str, "1", "neo", self.watch_addr_str, "5.01"]):
 
             wallet = self.GetWallet1(recreate=True)
             args = ['--outgoing=2']
