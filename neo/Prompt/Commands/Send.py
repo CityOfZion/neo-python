@@ -15,225 +15,162 @@ from prompt_toolkit import prompt
 import traceback
 
 
-def construct_and_send(prompter, wallet, arguments, prompt_password=True):
-    try:
-        if not wallet:
-            print("please open a wallet")
-            return False
-        if len(arguments) < 3:
-            print("Not enough arguments")
+def construct_send_basic(prompter, wallet, arguments):
+    if not wallet:
+        print("please open a wallet")
+        return False
+    if len(arguments) < 3:
+        print("Not enough arguments")
+        return False
+
+    arguments, from_address = get_from_addr(arguments)
+    arguments, priority_fee = get_fee(arguments)
+    arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
+    arguments, owners = get_owners_from_params(arguments)
+    to_send = get_arg(arguments)
+    address_to = get_arg(arguments, 1)
+    amount = get_arg(arguments, 2)
+
+    assetId = get_asset_id(wallet, to_send)
+    if assetId is None:
+        print("Asset id not found")
+        return False
+
+    scripthash_to = lookup_addr_str(wallet, address_to)
+    if scripthash_to is None:
+        print("invalid address")
+        return False
+
+    scripthash_from = None
+    if from_address is not None:
+        scripthash_from = lookup_addr_str(wallet, from_address)
+        if scripthash_from is None:
+            print("invalid address")
             return False
 
-        arguments, from_address = get_from_addr(arguments)
-        arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
-        arguments, owners = get_owners_from_params(arguments)
-        arguments, priority_fee = get_fee(arguments)
-        to_send = get_arg(arguments)
-        address_to = get_arg(arguments, 1)
-        amount = get_arg(arguments, 2)
+    # if this is a token, we will use a different
+    # transfer mechanism
+    if type(assetId) is NEP5Token:
+        return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), tx_attributes=user_tx_attributes)
 
-        if float(amount) == 0:
-            print("amount cannot be 0")
+    f8amount = Fixed8.TryParse(amount, require_positive=True)
+    if f8amount is None:
+        print("invalid amount format")
+        return False
+    if float(str(f8amount)) == 0:
+        print("amount cannot be 0")
+        return False
+
+    if type(assetId) is UInt256 and f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
+        print("incorrect amount precision")
+        return False
+
+    fee = Fixed8.Zero()
+    if priority_fee is not None:
+        fee = priority_fee
+        if fee < Fixed8.Zero():
+            print("fee cannot be negative")
             return False
 
+    output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
+    contract_tx = ContractTransaction(outputs=[output])
+    return contract_tx, scripthash_from, fee, owners, user_tx_attributes
+
+
+def construct_send_many(prompter, wallet, arguments):
+    if not wallet:
+        print("please open a wallet")
+        return False
+    if len(arguments) is 0:
+        print("Not enough arguments")
+        return False
+
+    arguments, outgoing = get_outgoing(arguments)
+
+    if outgoing < 1:
+        print("invalid outgoing number")
+        return False
+
+    arguments, from_address = get_from_addr(arguments)
+    arguments, change_address = get_change_addr(arguments)
+    arguments, priority_fee = get_fee(arguments)
+    arguments, owners = get_owners_from_params(arguments)
+    arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
+
+    output = []
+    for i in range(outgoing):
+        print('Outgoing Number ', i + 1)
+        to_send = prompt("Asset to send: ")
         assetId = get_asset_id(wallet, to_send)
-
         if assetId is None:
             print("Asset id not found")
             return False
-
+        if type(assetId) is NEP5Token:
+            print('Sendmany does not support NEP5 tokens')
+            return False
+        address_to = prompt("Address to: ")
         scripthash_to = lookup_addr_str(wallet, address_to)
         if scripthash_to is None:
             print("invalid address")
             return False
-
-        scripthash_from = None
-
-        if from_address is not None:
-            scripthash_from = lookup_addr_str(wallet, from_address)
-
-        # if this is a token, we will use a different
-        # transfer mechanism
-        if type(assetId) is NEP5Token:
-            return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), prompt_passwd=prompt_password, tx_attributes=user_tx_attributes)
-
+        amount = prompt("Amount to send: ")
         f8amount = Fixed8.TryParse(amount, require_positive=True)
         if f8amount is None:
             print("invalid amount format")
             return False
-
+        if float(str(f8amount)) == 0:
+            print("amount cannot be 0")
+            return False
         if type(assetId) is UInt256 and f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
             print("incorrect amount precision")
             return False
-
-        fee = Fixed8.Zero()
-        if priority_fee is not None:
-            fee = priority_fee
-
-        print("sending with fee: %s " % fee.ToString())
-
-        output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
-        tx = ContractTransaction(outputs=[output])
-
-        ttx = wallet.MakeTransaction(tx=tx,
-                                     change_address=None,
-                                     fee=fee,
-                                     from_addr=scripthash_from)
-
-        if ttx is None:
-            print("insufficient funds")
-            return False
-
-        if prompt_password:
-            passwd = prompt("[Password]> ", is_password=True)
-
-            if not wallet.ValidatePassword(passwd):
-                print("incorrect password")
-                return False
-
-        standard_contract = wallet.GetStandardAddress()
-
-        if scripthash_from is not None:
-            signer_contract = wallet.GetContract(scripthash_from)
-        else:
-            signer_contract = wallet.GetContract(standard_contract)
-
-        if not signer_contract.IsMultiSigContract and owners is None:
-
-            data = standard_contract.Data
-            tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                                  data=data)]
-
-        # insert any additional user specified tx attributes
-        tx.Attributes = tx.Attributes + user_tx_attributes
-
-        if owners:
-            owners = list(owners)
-            for owner in owners:
-                tx.Attributes.append(
-                    TransactionAttribute(usage=TransactionAttributeUsage.Script, data=owner))
-
-        context = ContractParametersContext(tx, isMultiSig=signer_contract.IsMultiSigContract)
-        wallet.Sign(context)
-
-        if owners:
-            owners = list(owners)
-            gather_signatures(context, tx, owners)
-
-        if context.Completed:
-
-            tx.scripts = context.GetScripts()
-
-#            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
-
-            relayed = NodeLeader.Instance().Relay(tx)
-
-            if relayed:
-                wallet.SaveTransaction(tx)
-
-                print("Relayed Tx: %s " % tx.Hash.ToString())
-                return tx
-            else:
-
-                print("Could not relay tx %s " % tx.Hash.ToString())
-
-        else:
-            print("Transaction initiated, but the signature is incomplete")
-            print(json.dumps(context.ToJson(), separators=(',', ':')))
-            return False
-
-    except Exception as e:
-        print("could not send: %s " % e)
-        traceback.print_stack()
-        traceback.print_exc()
-
-    return False
-
-
-def construct_and_send_many(prompter, wallet, arguments, prompt_password=True):
-    try:
-        if not wallet:
-            print("please open a wallet")
-            return False
-        if len(arguments) is 0:
-            print("Not enough arguments")
-            return False
-
-        arguments, outgoing = get_outgoing(arguments)
-
-        if outgoing < 1:
-            print("invalid outgoing number")
-            return False
-
-        arguments, change_address = get_change_addr(arguments)
-        arguments, from_address = get_from_addr(arguments)
-        arguments, owners = get_owners_from_params(arguments)
-        arguments, priority_fee = get_fee(arguments)
-        arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
-
-        output = []
-        for i in range(outgoing):
-            print('Outgoing Number ', i + 1)
-            to_send = prompt("Asset to send: ")
-            assetId = get_asset_id(wallet, to_send)
-            if assetId is None:
-                print("Asset id not found")
-                return False
-            if type(assetId) is NEP5Token:
-                print('Sendmany does not support NEP5 tokens')
-                return False
-            address_to = prompt("Address to: ")
-            scripthash_to = lookup_addr_str(wallet, address_to)
-            if scripthash_to is None:
-                print("invalid address")
-                return False
-            amount = prompt("Amount to send: ")
-            if float(amount) == 0:
-                print("amount cannot be 0")
-                return False
-            f8amount = Fixed8.TryParse(amount, require_positive=True)
-            if f8amount is None:
-                print("invalid amount format")
-                return False
-            if type(assetId) is UInt256 and f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
-                print("incorrect amount precision")
-                return False
-            tx_output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
-            output.append(tx_output)
+        tx_output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
+        output.append(tx_output)
+        contract_tx = ContractTransaction(outputs=output)
 
         scripthash_from = None
 
         if from_address is not None:
             scripthash_from = lookup_addr_str(wallet, from_address)
+            if scripthash_from is None:
+                print("invalid address")
+                return False
 
         scripthash_change = None
 
         if change_address is not None:
             scripthash_change = lookup_addr_str(wallet, change_address)
+            if scripthash_change is None:
+                print("invalid address")
+                return False
 
         fee = Fixed8.Zero()
         if priority_fee is not None:
             fee = priority_fee
+            if fee < Fixed8.Zero():
+                print("fee cannot be negative")
+                return False
 
         print("sending with fee: %s " % fee.ToString())
+    return contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes
 
-        tx = ContractTransaction(outputs=output)
 
-        ttx = wallet.MakeTransaction(tx=tx,
-                                     change_address=scripthash_change,
-                                     fee=fee,
-                                     from_addr=scripthash_from)
+def process_transaction(prompter, wallet, contract_tx, scripthash_from=None, scripthash_change=None, fee=None, owners=None, user_tx_attributes=None):
+    try:
+        tx = wallet.MakeTransaction(tx=contract_tx,
+                                    change_address=scripthash_change,
+                                    fee=fee,
+                                    from_addr=scripthash_from)
 
-        if ttx is None:
+        if tx is None:
             print("insufficient funds")
             return False
 
-        if prompt_password:
-            passwd = prompt("[Password]> ", is_password=True)
-
-            if not wallet.ValidatePassword(passwd):
-                print("incorrect password")
-                return False
+        # password prompt
+        passwd = prompt("[Password]> ", is_password=True)
+        if not wallet.ValidatePassword(passwd):
+            print("incorrect password")
+            return False
 
         standard_contract = wallet.GetStandardAddress()
 
