@@ -297,14 +297,16 @@ class StateReader(InteropService):
                                                                   height, tx_hash, success, engine.testMode))
 
         else:
-            # when a contract raises an exception
+            # when a contract exits in a faulted state
             # we should display that in the notification
-            if engine.CurrentContext.EvaluationStack.Count > 0:
-                for item in engine.CurrentContext.EvaluationStack.Items:
-                    payload.Value.append(ContractParameter(ContractParameterType.String, item.GetString()))
-            else:
-                payload.Value.append(ContractParameter(ContractParameterType.String, error))
-                payload.Value.append(ContractParameter(ContractParameterType.String, engine._VMState))
+            if not error:
+                error = 'Execution exited in a faulted state. Any payload besides this message contained in this event is the contents of the EvaluationStack of the current script context.'
+
+            payload.Value.append(ContractParameter(ContractParameterType.String, error))
+
+            # If we do not add the eval stack, then exceptions that are raised in a contract
+            # are not displayed to the event consumer
+            [payload.Value.append(ContractParameter.ToParameter(item)) for item in engine.CurrentContext.EvaluationStack.Items]
 
             if engine.Trigger == Application:
                 self.events_to_dispatch.append(

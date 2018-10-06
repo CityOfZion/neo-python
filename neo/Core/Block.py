@@ -235,7 +235,7 @@ class Block(BlockBase, InventoryMixin):
             tx_list.append(tx)
 
         if len(tx_list) < 1:
-            raise Exception("Invalid block, no transactions found %s " % block.Index)
+            raise Exception("Invalid block, no transactions found")
 
         block.Transactions = tx_list
 
