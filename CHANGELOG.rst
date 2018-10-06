@@ -13,7 +13,7 @@ All notable changes to this project are documented in this file.
 - Removes all ``hold`` and ``withdraw`` related functionality from wallet and prompt
 - Fix 'script_hash' output in ``ToJson`` in AccountState, Adds an 'address' key, Adds a test for ``ToJson`` in AccountState, Replaces the variable ``script_hash`` in ``GetAccountState`` in LevelDBBlockchain with ``address``, Adds a test for ``GetAccountState`` in LevelDBBlockchain
 - Add documentation support for Python 3.7
-
+- Change execution fail event payload to give more meaningful error messages
 
 [0.8.0] 2018-09-28
 ------------------

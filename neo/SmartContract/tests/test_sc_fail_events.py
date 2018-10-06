@@ -22,11 +22,9 @@ class TestNotifyDebugEvents(BoaTest):
     def on_fail_event(self, evt):
         self.dispatched_events.append(evt)
 
-
     def setUp(self):
         self.dispatched_events = []
         events.on(SmartContractEvent.EXECUTION_FAIL, self.on_fail_event)
-
 
     def tearDown(self):
         events.off(SmartContractEvent.EXECUTION_FAIL)
@@ -38,7 +36,6 @@ class TestNotifyDebugEvents(BoaTest):
         evt = self.dispatched_events.pop()
         fail_msg = 'Execution exited in a faulted state. Any payload besides this message contained in this event is the contents of the EvaluationStack of the current script context.'
         self.assertEqual(evt.event_payload.Value[0].Value, fail_msg)
-
 
         tx, results, total_ops, engine = TestBuild(self.script, ['testException'], self.GetWallet1(), '01', '07')
 
