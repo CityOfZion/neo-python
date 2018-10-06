@@ -1,55 +1,6 @@
 from neo.Utils.NeoTestCase import NeoTestCase
-from neo.logging import log_manager
-from contextlib import contextmanager
+from neo.logging import log_manager, logHandler
 import logging
-import collections
-
-
-class _CapturingHandler(logging.Handler):
-    """
-    A logging handler capturing all (raw and formatted) logging output.
-    """
-
-    def __init__(self):
-        logging.Handler.__init__(self)
-        _LoggingWatcher = collections.namedtuple("_LoggingWatcher",
-                                                 ["records", "output"])
-
-        self.watcher = _LoggingWatcher([], [])
-
-    def flush(self):
-        pass
-
-    def emit(self, record):
-        self.watcher.records.append(record)
-        msg = self.format(record)
-        self.watcher.output.append(msg)
-
-
-@contextmanager
-def logHandler(component_name: str, level: int):
-    """
-    logHandler is a context manager that captures LogRecords and Messages on the handler level and not on the logger level.
-    It temporarily replaces the first handler (which should be the STDIO handler) to test for correct behavior of filtering output.
-
-    """
-    LOGGING_FORMAT = "%(levelname)s:%(name)s:%(message)s"
-
-    _logger = log_manager.getLogger(component_name)
-    # save original handler
-    stdio_handler = _logger.handlers[0]
-
-    # replace with our capture handler
-    capture_handler = _CapturingHandler()
-    capture_handler.setLevel(level)
-    capture_handler.setFormatter(logging.Formatter(LOGGING_FORMAT))
-    _logger.handlers[0] = capture_handler
-    _logger.addHandler(capture_handler)
-
-    yield capture_handler.watcher
-
-    # restore original handler
-    _logger.handlers[0] = stdio_handler
 
 
 class LogManagerTestCase(NeoTestCase):
@@ -57,8 +8,7 @@ class LogManagerTestCase(NeoTestCase):
         """
         Make sure the the logger instance
         """
-        with logHandler('generic', level=logging.INFO) as context:
-            self.assertLogs()
+        with self.assertLogHandler('generic', level=logging.INFO) as context:
             logger = log_manager.getLogger()
 
             logger.info("generic info")
@@ -73,8 +23,8 @@ class LogManagerTestCase(NeoTestCase):
             self.assertNotIn('DEBUG:', context.output)
 
     def test_disable_specific_component(self):
-        with logHandler('generic', level=logging.INFO) as generic_context:
-            with logHandler('db', level=logging.INFO) as db_context:
+        with self.assertLogHandler('generic', level=logging.INFO) as generic_context:
+            with self.assertLogHandler('db', level=logging.INFO) as db_context:
                 generic_logger = log_manager.getLogger()
                 db_logger = log_manager.getLogger('db')
 
@@ -99,8 +49,8 @@ class LogManagerTestCase(NeoTestCase):
                 self.assertEqual(len(db_context.output), 2)
 
     def test_disable_all_components_via_config(self):
-        with logHandler('generic', level=logging.INFO) as generic_context:
-            with logHandler('db', level=logging.INFO) as db_context:
+        with self.assertLogHandler('generic', level=logging.INFO) as generic_context:
+            with self.assertLogHandler('db', level=logging.INFO) as db_context:
                 generic_logger = log_manager.getLogger()
                 db_logger = log_manager.getLogger('db')
 
@@ -123,8 +73,8 @@ class LogManagerTestCase(NeoTestCase):
         def count_in(needle, stack):
             return sum(map(lambda item: needle in item, stack))
 
-        with logHandler('generic', level=logging.INFO) as generic_context:
-            with logHandler('db', level=logging.INFO) as db_context:
+        with self.assertLogHandler('generic', level=logging.INFO) as generic_context:
+            with self.assertLogHandler('db', level=logging.INFO) as db_context:
                 generic_logger = log_manager.getLogger()
                 db_logger = log_manager.getLogger('db')
 
@@ -167,8 +117,8 @@ class LogManagerTestCase(NeoTestCase):
         self.assertIn("Failed to configure component. Invalid name", str(context.exception))
 
     def test_mute_and_unmute_stdio(self):
-        with logHandler('generic', level=logging.DEBUG) as generic_context:
-            with logHandler('network', level=logging.DEBUG) as network_context:
+        with self.assertLogHandler('generic', level=logging.DEBUG) as generic_context:
+            with self.assertLogHandler('network', level=logging.DEBUG) as network_context:
                 generic_logger = log_manager.getLogger()
                 network_logger = log_manager.getLogger('network')
 
