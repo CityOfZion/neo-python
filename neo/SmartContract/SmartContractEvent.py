@@ -159,6 +159,7 @@ class SmartContractEvent(SerializableMixin):
 
         if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
             jsn['contract'] = self.contract.ToJson()
+            del jsn['contract']['code']['script']
 
         if self.token:
             jsn['token'] = self.token.ToJson()
@@ -295,5 +296,5 @@ class NotifyEvent(SmartContractEvent):
         jsn['notify_type'] = self.Type
         jsn['addr_to'] = self.AddressTo
         jsn['addr_from'] = self.AddressFrom
-        jsn['amount'] = self.Amount
+        jsn['amount'] = "%s" % self.Amount
         return jsn
