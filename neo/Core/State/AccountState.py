@@ -267,7 +267,8 @@ class AccountState(StateBase):
         json = super(AccountState, self).ToJson()
         addr = Crypto.ToAddress(self.ScriptHash)
 
-        json['script_hash'] = addr
+        json['address'] = addr
+        json['script_hash'] = str(self.ScriptHash)
         json['frozen'] = self.IsFrozen
         json['votes'] = [v.hex() for v in self.Votes]
 
