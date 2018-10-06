@@ -1,5 +1,5 @@
 .. image:: http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png
-   :alt: CoZ logo
+    :alt: CoZ logo
 
 neo-python
 ----------
@@ -35,10 +35,11 @@ What does it currently do
 -  Runs smart contracts on the blockchain in a Python virtual machine
 -  Very basic Wallet functionality (not fully tested, please do not use
    on mainnet)
--  `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki%3E>`__
+-  `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>`__
    and
    `NEP5 <https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki>`__
    compliant wallet functionality
+- `NEP-7 <https://github.com/neo-project/proposals/blob/master/nep-7.mediawiki>`__ and `NEP-8 <https://github.com/neo-project/proposals/blob/c20182cecd92102b9e5a3158a005762eefb8dbdf/nep-8.mediawiki>`__ support
 -  RPC Client
 -  RPC server
 -  Notification Server ( for viewing transfers of NEP5 tokens )
@@ -63,11 +64,11 @@ Get help or give help
 -  Open a new
    `issue <https://github.com/CityOfZion/neo-python/issues/new>`__ if
    you encounter a problem.
--  Or ping **@localhuman** or **@metachris** on the `NEO
+-  Or ping **@localhuman**, **@metachris** or **@ixje** on the `NEO
    Discord <https://discord.gg/R8v48YA>`__.
--  Pull requests welcome. You can help with wallet functionality,
-   writing tests or documentation, or on any other feature you deem
-   awesome.
+-  Pull requests welcome. Have a look at the issue list for ideas.
+   You can help with wallet functionality, writing tests or documentation,
+   or on any other feature you deem awesome.
 
 Getting started
 ---------------
@@ -343,6 +344,7 @@ sure to check out the details of the parameters:
                             file. Default: 'dark'
       -v, --verbose         Show smart-contract events by default
       --datadir DATADIR     Absolute path to use for database directories
+      --maxpeers MAXPEERS   Max peers to use for P2P Joining
       --version             show program's version number and exit
 
 Logging
@@ -355,10 +357,9 @@ Currently, ``np-prompt`` logs to ``prompt.log``
 Tests
 -----
 
-Note that some of the unit tests use a giant blockchain fixture database
-(~800MB). This file is not kept in the repo, but are downloaded the
-first time the tests are run, this can take some time (depending on the
-internet connection), but happens only once.
+Note we make use of a Blockchain fixture database (~15 MB). This file is not kept in the repo,
+but is downloaded the first time the tests are run, this can take some time (depending on the internet connection),
+but happens only once.
 
 Useful commands
 ---------------

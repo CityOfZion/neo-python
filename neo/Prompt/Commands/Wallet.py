@@ -233,6 +233,7 @@ def ShowUnspentCoins(wallet, args):
     addr = None
     asset_type = None
     watch_only = 0
+    do_count = False
     try:
         for item in args:
             if len(item) == 34:
@@ -241,6 +242,8 @@ def ShowUnspentCoins(wallet, args):
                 asset_type = get_asset_id(wallet, item)
             if item == '--watch':
                 watch_only = 64
+            elif item == '--count':
+                do_count = True
 
     except Exception as e:
         print("Invalid arguments specified")
@@ -249,6 +252,11 @@ def ShowUnspentCoins(wallet, args):
         unspents = wallet.FindUnspentCoinsByAsset(asset_type, from_addr=addr, watch_only_val=watch_only)
     else:
         unspents = wallet.FindUnspentCoins(from_addr=addr, watch_only_val=watch_only)
+
+    if do_count:
+        print('\n-----------------------------------------------')
+        print('Total Unspent: %s' % len(unspents))
+        return unspents
 
     for unspent in unspents:
         print('\n-----------------------------------------------')
@@ -268,11 +276,18 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
 
     :return: bool
     """
+
+    fee = Fixed8.Zero()
+
     try:
         addr = wallet.ToScriptHash(args[0])
         asset = get_asset_id(wallet, args[1])
         index = int(args[2])
         divisions = int(args[3])
+
+        if len(args) == 5:
+            fee = Fixed8.TryParse(args[4])
+
     except Exception as e:
         logger.info("Invalid arguments specified: %s " % e)
         return None
@@ -285,7 +300,14 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
 
     outputs = split_to_vouts(asset, addr, unspentItem.Output.Value, divisions)
 
+    # subtract a fee from the first vout
+    if outputs[0].Value > fee:
+        outputs[0].Value -= fee
+    else:
+        raise Exception("Fee could not be subtracted from outputs.")
+
     contract_tx = ContractTransaction(outputs=outputs, inputs=[unspentItem.Reference])
+
     ctx = ContractParametersContext(contract_tx)
     wallet.Sign(ctx)
 

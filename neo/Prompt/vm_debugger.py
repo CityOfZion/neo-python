@@ -8,10 +8,10 @@ import pdb
 import dis
 import json
 from logzero import logger
+from neo.Settings import settings
 
 
 class DebugContext:
-
     start = None
     end = None
     line = None
@@ -37,7 +37,7 @@ class DebugContext:
         self.file_lines = []
 
         try:
-            default_module = Compiler.load(self.file_url).default
+            default_module = Compiler.load(self.file_url, use_nep8=settings.COMPILER_NEP_8).default
             self.method = default_module.method_by_name(self.method_name)
         except Exception as e:
             logger.error('Could not load module %s %s ' % (self.file_url, e))
@@ -78,7 +78,6 @@ class DebugContext:
 
 
 class VMDebugger:
-
     engine = None
     parser = None
 
@@ -100,7 +99,7 @@ class VMDebugger:
     def start(self):
 
         self.continue_debug = True
-#        pprint.pprint(self.debug_map)
+        #        pprint.pprint(self.debug_map)
 
         dbg_title = self.debug_map['avm']['name']
         print("\n")
@@ -128,9 +127,12 @@ class VMDebugger:
                     self.continue_debug = False
 
                 elif command == 'estack':
-                    if len(self.engine.EvaluationStack.Items):
-                        for item in self.engine.EvaluationStack.Items:
-                            print(ContractParameter.ToParameter(item).ToJson())
+                    if self.engine._InvocationStack.Count > 0:  # eval stack now only available via ExecutionContext objects in the istack
+                        if len(self.engine.CurrentContext.EvaluationStack.Items):
+                            for item in self.engine.CurrentContext.EvaluationStack.Items:
+                                print(ContractParameter.ToParameter(item).ToJson())
+                        else:
+                            print("Evaluation stack empty")
                     else:
                         print("Evaluation stack empty")
 
@@ -146,6 +148,14 @@ class VMDebugger:
                             print(ContractParameter.ToParameter(item).ToJson())
                     else:
                         print("Alt Stack Empty")
+
+                elif command == 'rstack':
+                    items = self.engine.ResultStack.Items
+                    if len(items):
+                        for item in items:
+                            pprint.pprint(item)
+                    else:
+                        print("Result stack empty")
 
                 elif command == 'ctx':
                     ctx.print()

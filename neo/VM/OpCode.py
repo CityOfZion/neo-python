@@ -102,7 +102,6 @@ PUSH14 = b'\x5E'  # The number 14 is pushed onto the stack.
 PUSH15 = b'\x5F'  # The number 15 is pushed onto the stack.
 PUSH16 = b'\x60'  # The number 16 is pushed onto the stack.
 
-
 #  Flow control
 NOP = b'\x61'  # Does nothing.
 JMP = b'\x62'
@@ -113,7 +112,6 @@ RET = b'\x66'
 APPCALL = b'\x67'
 SYSCALL = b'\x68'
 TAILCALL = b'\x69'
-
 
 #  Stack
 DUPFROMALTSTACK = b'\x6A'
@@ -133,14 +131,12 @@ ROT = b'\x7B'  # The top three items on the stack are rotated to the left.
 SWAP = b'\x7C'  # The top two items on the stack are swapped.
 TUCK = b'\x7D'  # The item at the top of the stack is copied and inserted before the second-to-top item.
 
-
 #  Splice
 CAT = b'\x7E'  # Concatenates two strings.
 SUBSTR = b'\x7F'  # Returns a section of a string.
 LEFT = b'\x80'  # Keeps only characters left of the specified point in a string.
 RIGHT = b'\x81'  # Keeps only characters right of the specified point in a string.
 SIZE = b'\x82'  # Returns the length of the input string.
-
 
 #  Bitwise logic
 INVERT = b'\x83'  # Flips all of the bits in the input.
@@ -207,17 +203,22 @@ HASKEY = b'\xCB'
 KEYS = b'\xCC'
 VALUES = b'\xCD'
 
+# Stack isolation instructions, see link for description: https://github.com/neo-project/proposals/blob/c20182cecd92102b9e5a3158a005762eefb8dbdf/nep-8.mediawiki#Specification
+CALL_I = b'\xE0'
+CALL_E = b'\xE1'
+CALL_ED = b'\xE2'
+CALL_ET = b'\xE3'
+CALL_EDT = b'\xE4'
+
 # Exceptions
 THROW = b'\xF0'
 THROWIFNOT = b'\xF1'
-
 
 module = importlib.import_module('neo.VM.OpCode')
 items = dir(sys.modules[__name__])
 
 
 def ToName(op):
-
     if type(op) is bytes:
         op = int.from_bytes(op, 'little')
 

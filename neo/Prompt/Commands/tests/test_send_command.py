@@ -191,3 +191,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
         construct_and_send(None, wallet, args, prompt_password=False)
 
         self.assertTrue(mock.called)
+
+    def test_15_send_0(self):
+        wallet = self.GetWallet1(recreate=True)
+
+        args = ['neo', "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "0.00"]
+
+        res = construct_and_send(None, wallet, args, prompt_password=False)
+
+        self.assertFalse(res)
