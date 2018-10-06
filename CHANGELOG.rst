@@ -8,6 +8,8 @@ All notable changes to this project are documented in this file.
 - Add ``sendmany`` and ``sendfrom`` RPC methods & tests and integrate with ``sendtoaddress``
 - Updated all the dependencies
 - Add ``Neo.Transaction.GetWitnesses``, ``Neo.Witness.GetInvocationScript``, ``Neo.Witness.GetVerificationScript``
+- Change notification transfer event format to use string quoted integer
+- Fix Notification token list to include correct hash for contract and token
 - Removes all ``hold`` and ``withdraw`` related functionality from wallet and prompt
 - Fix 'script_hash' output in ``ToJson`` in AccountState, Adds an 'address' key, Adds a test for ``ToJson`` in AccountState, Replaces the variable ``script_hash`` in ``GetAccountState`` in LevelDBBlockchain with ``address``, Adds a test for ``GetAccountState`` in LevelDBBlockchain
 - Add documentation support for Python 3.7
