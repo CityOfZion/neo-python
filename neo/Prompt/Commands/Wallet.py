@@ -10,11 +10,12 @@ from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
-from neo.Implementations.Wallets.peewee import UserWallet
 import binascii
 import json
 import math
-from logzero import logger
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 def CreateAddress(prompter, wallet, args):
@@ -42,7 +43,6 @@ def CreateAddress(prompter, wallet, args):
 
 
 def DeleteAddress(prompter, wallet, addr):
-
     scripthash = wallet.ToScriptHash(addr)
 
     success, coins = wallet.DeleteAddress(scripthash)
@@ -57,7 +57,6 @@ def DeleteAddress(prompter, wallet, addr):
 
 
 def DeleteToken(wallet, contract_hash):
-
     hash = UInt160.ParseString(contract_hash)
 
     success = wallet.DeleteNEP5Token(hash)
@@ -72,7 +71,6 @@ def DeleteToken(wallet, contract_hash):
 
 
 def ImportWatchAddr(wallet, addr):
-
     if wallet is None:
         print("Please open a wallet")
         return False
@@ -99,7 +97,6 @@ def ImportWatchAddr(wallet, addr):
 
 
 def ImportToken(wallet, contract_hash):
-
     if wallet is None:
         print("please open a wallet")
         return False
@@ -134,7 +131,6 @@ def AddAlias(wallet, addr, title):
 
 
 def ClaimGas(wallet, require_password=True, args=None):
-
     if args:
         params, from_addr_str = get_from_addr(args)
     else:
@@ -229,7 +225,6 @@ def ClaimGas(wallet, require_password=True, args=None):
 
 
 def ShowUnspentCoins(wallet, args):
-
     addr = None
     asset_type = None
     watch_only = 0

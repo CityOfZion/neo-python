@@ -4,11 +4,12 @@ Description:
 Usage:
     from neo.Core.TX.TransactionAttribute import TransactionAttribute
 """
-from logzero import logger
 from neocore.IO.Mixins import SerializableMixin
 from neocore.UIntBase import UIntBase
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
+from neo.logging import log_manager
+logger = log_manager.getLogger()
 
 
 class TransactionAttributeUsage:

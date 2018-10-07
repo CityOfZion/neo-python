@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import binascii
 
-from logzero import logger
 from playhouse.migrate import SqliteMigrator, BooleanField, migrate
 from .PWDatabase import PWDatabase
 from neo.Wallets.Wallet import Wallet
@@ -20,11 +19,12 @@ from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neocore.UInt256 import UInt256
 from neo.Wallets.Coin import CoinState
-from neo.EventHub import SmartContractEvent, events
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
     TransactionInfo, NEP5Token, NamedAddress, VINHold
-import json
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class UserWallet(Wallet):

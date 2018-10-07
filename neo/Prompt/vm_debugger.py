@@ -7,8 +7,10 @@ import pprint
 import pdb
 import dis
 import json
-from logzero import logger
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class DebugContext:

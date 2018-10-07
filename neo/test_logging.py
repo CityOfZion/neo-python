@@ -1,5 +1,5 @@
 from neo.Utils.NeoTestCase import NeoTestCase
-from neo.logging import log_manager, logHandler
+from neo.logging import log_manager
 import logging
 
 

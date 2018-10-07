@@ -59,4 +59,19 @@ class _AssertLogHandlerContext(_BaseTestCaseContext):
 
 class NeoTestCase(TestCase):
     def assertLogHandler(self, component_name: str, level: int):
+        """
+        This method must be used as a context manager, and will yield
+        a recording object with two attributes: `output` and `records`.
+        At the end of the context manager, the `output` attribute will
+        be a list of the matching formatted log messages of the stdio handler
+        and the `records` attribute will be a list of the corresponding LogRecord
+        objects.
+
+        Args:
+            component_name: the component we want to capture logs of i.e. vm or network
+            level: the logging level to capture at i.e. DEBUG, INFO, ERROR
+
+        Returns:
+            context manager
+        """
         return _AssertLogHandlerContext(self, component_name, level)

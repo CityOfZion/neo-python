@@ -1,9 +1,5 @@
-import time
 import plyvel
 import binascii
-
-from logzero import logger
-
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
@@ -35,6 +31,9 @@ from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
 from prompt_toolkit import prompt
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('db')
 
 
 class LevelDBBlockchain(Blockchain):

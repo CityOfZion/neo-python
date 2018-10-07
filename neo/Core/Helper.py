@@ -1,5 +1,4 @@
 from base58 import b58decode
-from logzero import logger
 import binascii
 from neo.Blockchain import GetBlockchain, GetStateReader
 from neocore.Cryptography.Crypto import Crypto
@@ -12,6 +11,9 @@ from neocore.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo.Settings import settings
 from neo.EventHub import events
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class Helper:
@@ -170,7 +172,7 @@ class Helper:
         try:
             hashes = verifiable.GetScriptHashesForVerifying()
         except Exception as e:
-            logger.error("couldn't get script hashes %s " % e)
+            logger.debug("couldn't get script hashes %s " % e)
             return False
 
         if len(hashes) != len(verifiable.Scripts):

@@ -4,15 +4,14 @@ from neocore.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Wallets.Coin import CoinState
-from neo.Core.TX.Transaction import TransactionInput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameter import ContractParameterType
-from neocore.UInt256 import UInt256
 from neocore.Cryptography.ECCurve import ECDSA
 from decimal import Decimal
-from logzero import logger
-import json
 from prompt_toolkit.shortcuts import PromptSession
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 def get_asset_attachments(params):
