@@ -294,8 +294,6 @@ class NotificationDB:
         results = []
         for val in tokens_snapshot.iterator(include_key=False):
             event = SmartContractEvent.FromByteArray(val)
-            # for get_tokens calls, we dont want to send the whole script
-            event.contract.Code.Script = bytearray()
             results.append(event)
         return results
 

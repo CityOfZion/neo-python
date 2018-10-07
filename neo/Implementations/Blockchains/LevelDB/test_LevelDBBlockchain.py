@@ -1,4 +1,5 @@
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
+from neo.Core.Blockchain import Blockchain
 from neo.Settings import settings
 import os
 
@@ -39,3 +40,15 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         invalid_bc_height = self._blockchain.Height + 1
         block = self._blockchain.GetBlockByHeight(invalid_bc_height)
         self.assertEqual(block, None)
+
+    def test_04_GetAccountState(self):
+        # test passing an address
+        addr = "AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y"
+        acct = Blockchain.Default().GetAccountState(addr)
+        acct = acct.ToJson()
+        self.assertIn('balances', acct.keys())
+
+        # test failure
+        addr = "AK2nJJpJr6o664CWJKi1QRXjqeic2zRp81"
+        acct = Blockchain.Default().GetAccountState(addr)
+        self.assertIsNone(acct)

@@ -1,5 +1,5 @@
 .. image:: http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png
-   :alt: CoZ logo
+    :alt: CoZ logo
 
 neo-python
 ----------
@@ -35,10 +35,11 @@ What does it currently do
 -  Runs smart contracts on the blockchain in a Python virtual machine
 -  Very basic Wallet functionality (not fully tested, please do not use
    on mainnet)
--  `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki%3E>`__
+-  `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>`__
    and
    `NEP5 <https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki>`__
    compliant wallet functionality
+- `NEP-7 <https://github.com/neo-project/proposals/blob/master/nep-7.mediawiki>`__ and `NEP-8 <https://github.com/neo-project/proposals/blob/c20182cecd92102b9e5a3158a005762eefb8dbdf/nep-8.mediawiki>`__ support
 -  RPC Client
 -  RPC server
 -  Notification Server ( for viewing transfers of NEP5 tokens )
@@ -63,11 +64,11 @@ Get help or give help
 -  Open a new
    `issue <https://github.com/CityOfZion/neo-python/issues/new>`__ if
    you encounter a problem.
--  Or ping **@localhuman** or **@metachris** on the `NEO
+-  Or ping **@localhuman**, **@metachris** or **@ixje** on the `NEO
    Discord <https://discord.gg/R8v48YA>`__.
--  Pull requests welcome. You can help with wallet functionality,
-   writing tests or documentation, or on any other feature you deem
-   awesome.
+-  Pull requests welcome. Have a look at the issue list for ideas.
+   You can help with wallet functionality, writing tests or documentation,
+   or on any other feature you deem awesome.
 
 Getting started
 ---------------
@@ -77,8 +78,7 @@ neo-python has two System dependencies (everything else is covered with
 
 -  `LevelDB <https://github.com/google/leveldb>`__
 -  `Python
-   3.6+ <https://www.python.org/downloads/release/python-364/>`__ (3.5
-   and below is not supported)
+   3.6 <https://www.python.org/downloads/release/python-366/>`__ or `Python 3.7 <https://www.python.org/downloads/release/python-370/>`__ (3.5 and below is not supported)
 
 We have published a Youtube
 `video <https://www.youtube.com/watch?v=ZZXz261AXrM>`__ to help get you
@@ -113,13 +113,26 @@ OSX
 Ubuntu/Debian 16.10+
 ^^^^^^^^^^^^^^^^^^^^
 
-Ubuntu starting at 16.10 supports Python 3.6 in the official
-repositories, and you can just install Python 3.6 and all the system
-dependencies like this:
+Ubuntu starting at 16.10 supports Python 3.6+ in the official repositories.
+
+First, ensure Ubuntu is fully up-to-date with this:
 
 ::
 
-    apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
+   sudo apt-get update && sudo apt-get upgrade
+   
+You can install Python 3.7 and all the system dependencies like this:
+
+::
+   
+   sudo apt-get install python3.7 python3.7-dev python3.7-venv python3-pip libleveldb-dev libssl-dev g++
+  
+
+Or, you can install Python 3.6 and all the system dependencies like this:
+
+::
+
+    sudo apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
 
 Older Ubuntu versions (eg. 16.04)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -158,25 +171,25 @@ Centos/Redhat/Fedora
 Windows
 ^^^^^^^
 
-Help needed. Installing the Python package plyvel seems to require C++
-compiler support tied to Visual Studio and libraries. Refer to
-`documentation <https://neo-python.readthedocs.io/en/latest/installwindows.html>`__.
-
-Currently you probably should use the Linux subsystem with Ubuntu, or a
+Currently, you should use the Linux subsystem with Ubuntu, or a
 Virtual Machine with Linux. You can find more information and a guide
 for setting up the Linux subsystem
 `here <https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213>`__.
 
 Installing "Ubuntu" from Microsoft Store installs Ubuntu 16.04. You should install Ubuntu 18.04 from Microsoft Store found here: https://www.microsoft.com/en-us/p/ubuntu-1804/9n9tngvndl3q?activetab=pivot%3aoverviewtab
 
-Python 3.6
+Help needed for running natively. Installing the Python package plyvel seems to require C++
+compiler support tied to Visual Studio and libraries. Refer to
+`documentation <https://neo-python.readthedocs.io/en/latest/installwindows.html>`__.
+
+Python 3.6+
 ~~~~~~~~~~
 
 neo-python is compatible with **Python 3.6 and later**.
 
-On \*nix systems, install Python 3.6 via your package manager, or
+On \*nix systems, install Python 3.6 or Python 3.7 via your package manager, or
 download an installation package from the `official
-homepage <https://www.python.org/downloads/release/python-364/>`__.
+homepage <https://www.python.org/downloads/>`__.
 
 
 Install
@@ -197,8 +210,12 @@ could lead to version conflicts.
     # if you want to use the development branch, switch now
     git checkout development
     
-    # create virtual environment and activate
-    python3 -m venv venv
+    # create virtual environment using Python 3.7 and activate or skip to the next step for Python 3.6
+    python3.7 -m venv venv
+    source venv/bin/activate
+    
+    # create virtual environment using Python 3.6 and activate
+    python3.6 -m venv venv
     source venv/bin/activate
 
     # install the package in an editable form
@@ -212,8 +229,12 @@ could lead to version conflicts.
     mkdir myproject
     cd myproject
 
-    # create virtual environment and activate
-    python3 -m venv venv
+    # create virtual environment using Python 3.7 and activate or skip to the next step for Python 3.6
+    python3.7 -m venv venv
+    source venv/bin/activate
+    
+    # create virtual environment using Python 3.6 and activate
+    python3.6 -m venv venv
     source venv/bin/activate
 
     (venv) pip install neo-python
@@ -323,6 +344,7 @@ sure to check out the details of the parameters:
                             file. Default: 'dark'
       -v, --verbose         Show smart-contract events by default
       --datadir DATADIR     Absolute path to use for database directories
+      --maxpeers MAXPEERS   Max peers to use for P2P Joining
       --version             show program's version number and exit
 
 Logging
@@ -335,10 +357,9 @@ Currently, ``np-prompt`` logs to ``prompt.log``
 Tests
 -----
 
-Note that some of the unit tests use a giant blockchain fixture database
-(~800MB). This file is not kept in the repo, but are downloaded the
-first time the tests are run, this can take some time (depending on the
-internet connection), but happens only once.
+Note we make use of a Blockchain fixture database (~15 MB). This file is not kept in the repo,
+but is downloaded the first time the tests are run, this can take some time (depending on the internet connection),
+but happens only once.
 
 Useful commands
 ---------------
@@ -403,7 +424,7 @@ Troubleshooting
 If you run into problems, check these things before ripping out your
 hair:
 
--  Double-check that you are using Python 3.6.x
+-  Double-check that you are using Python 3.6.x or Python 3.7.x
 -  Update the project dependencies (``pip install -e .``)
 -  If you encounter any problems, please take a look at the
    `installation
