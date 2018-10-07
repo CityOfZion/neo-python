@@ -6,8 +6,6 @@ import json
 import os
 import psutil
 import traceback
-import logging
-from logzero import logger
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
@@ -27,6 +25,7 @@ from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
+from neo.Prompt.Commands.config import start_output_config
 from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
@@ -44,6 +43,9 @@ from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class PromptFileHistory(FileHistory):
@@ -104,7 +106,7 @@ class PromptInterface:
                 'mem # returns memory in use and number of buffers',
                 'nodes # returns connected peers',
                 'state',
-                'config debug {on/off}',
+                'config output_levels (interactive)',
                 'config sc-events {on/off}',
                 'config maxpeers {num_peers}',
                 'config node-requests {reqsize} {queuesize}',
@@ -824,22 +826,8 @@ class PromptInterface:
     def configure(self, args):
         what = get_arg(args)
 
-        if what == 'debug':
-            c1 = get_arg(args, 1)
-            if c1 is not None:
-                c1 = c1.lower()
-                if c1 == 'on' or c1 == '1':
-                    print("Debug logging is now enabled")
-                    settings.set_loglevel(logging.DEBUG)
-                elif c1 == 'off' or c1 == '0':
-                    print("Debug logging is now disabled")
-                    settings.set_loglevel(logging.INFO)
-                else:
-                    print("Cannot configure log. Please specify on|off")
-
-            else:
-                print("Cannot configure log. Please specify on|off")
-
+        if what == 'output_levels':
+            start_output_config()
         elif what == 'sc-events':
             c1 = get_arg(args, 1)
             if c1 is not None:
@@ -922,7 +910,7 @@ class PromptInterface:
 
         else:
             print(
-                "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off', 'config vm-log on|off', config compiler-nep8 on|off, or 'config maxpeers {num_peers}'" % what)
+                "Cannot configure %s try 'config sc-events on|off', 'config output_levels', 'config sc-debug-notify on|off', 'config vm-log on|off', config compiler-nep8 on|off, or 'config maxpeers {num_peers}'" % what)
 
     def on_looperror(self, err):
         logger.debug("On DB loop error! %s " % err)
