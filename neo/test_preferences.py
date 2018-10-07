@@ -29,7 +29,8 @@ class PreferencesTestCase(NeoTestCase):
             self.assertEqual(prefs._prefs, PREFERENCES_DEFAULT)
 
             # Make sure it's possible to get the theme prefs
-            self.assertEqual(prefs.token_style, PREFERENCES_DEFAULT["themes"]["dark"])
+            current_selected_theme = prefs._prefs['theme']
+            self.assertEqual(prefs.token_style, PREFERENCES_DEFAULT["themes"][current_selected_theme])
 
             # Cannot set an invalid theme
             with self.assertRaises(ValueError):
