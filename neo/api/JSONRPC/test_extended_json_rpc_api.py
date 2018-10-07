@@ -7,7 +7,7 @@ import json
 import os
 import shutil
 from klein.test.test_resource import requestMock
-from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
+from neo.api.JSONRPC.ExtendedJsonRpcApi import ExtendedJsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
@@ -28,7 +28,7 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     def setUp(self):
-        self.app = JsonRpcApi(20332, extended=True)  # switch on extended json-rpc api
+        self.app = ExtendedJsonRpcApi(20332)
 
     def test_invalid_json_payload(self):
         mock_req = mock_request(b"{ invalid")
@@ -80,7 +80,7 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res["error"]["message"], "Method not found")
 
     def test_get_node_state(self):
-        req = self._gen_rpc_req("getnodestate", params=[])
+        req = self._gen_rpc_req("getnodestate")
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertGreater(res['result']['Progress'][0], 0)
@@ -88,7 +88,7 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertGreater(res['result']['Time elapsed (minutes)'], 0)
 
     def test_gettxhistory_no_wallet(self):
-        req = self._gen_rpc_req("gettxhistory", params=[])
+        req = self._gen_rpc_req("gettxhistory")
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
@@ -100,11 +100,11 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
             WalletFixtureTestCase.wallet_1_path(),
             WalletFixtureTestCase.wallet_1_dest()
         )
-        JsonRpcApi.wallet = UserWallet.Open(
+        self.app.wallet = UserWallet.Open(
             test_wallet_path,
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
-        req = self._gen_rpc_req("gettxhistory", params=[])
+        req = self._gen_rpc_req("gettxhistory")
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         for tx in res['result']:
@@ -115,6 +115,6 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
             self.assertIn('blocktime', tx.keys())
             self.assertIsNotNone(tx['blocktime'])
         self.assertEqual(len(res['result']), 9)
-        JsonRpcApi.wallet.Close()
-        JsonRpcApi.wallet = None
+        self.app.wallet.Close()
+        self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
