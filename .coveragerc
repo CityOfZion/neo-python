@@ -9,3 +9,7 @@ omit =
   examples/*
   docs/*
   neo/SmartContract/tests/StorageTest.py
+  neo/SmartContract/tests/BreakpointTest.py
+  neo/SmartContract/tests/MigrateTest1.py
+  neo/SmartContract/tests/MigrateTest2.py
+  neo/SmartContract/tests/ExecutionFailEventTest.py

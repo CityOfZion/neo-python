@@ -4,6 +4,8 @@ Installation (Windows)
 The instructions are written for Windows 7 x64 with MSYS2 environment and Visual Studio 2017. It should probably work for other Windows distributions.
 Another option is to setup a Linux Subsystem with Ubuntu (see also `here <https://medium.com/@gubanotorious/installing-and-running-neo-python-on-windows-10-284fb518b213>`_ for more infos and a guide).
 
+ - Note: Installing "Ubuntu" from Microsoft Store installs Ubuntu 16.04. You should install Ubuntu 18.04 from Microsoft Store found here: https://www.microsoft.com/en-us/p/ubuntu-1804/9n9tngvndl3q?activetab=pivot%3aoverviewtab
+
 Building LevelDB
 ================
 
