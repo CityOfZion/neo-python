@@ -36,7 +36,6 @@ from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.Utils import get_asset_id
 from neo.Wallets.Wallet import Wallet
-import datetime
 
 
 class JsonRpcError(Exception):
@@ -80,17 +79,10 @@ class JsonRpcError(Exception):
 class JsonRpcApi:
     app = Klein()
     port = None
-    wallet = None
-    start_height = None
-    start_dt = None
 
-    def __init__(self, port, wallet=None, extended=False):
+    def __init__(self, port, wallet=None):
         self.port = port
-        JsonRpcApi.wallet = wallet
-        self.extended = extended
-        if extended:
-            JsonRpcApi.start_height = Blockchain.Default().Height
-            JsonRpcApi.start_dt = datetime.datetime.utcnow()
+        self.wallet = wallet
 
     def get_data(self, body: dict):
 
@@ -151,15 +143,6 @@ class JsonRpcApi:
             return self.get_custom_error_payload(request_id, error.code, error.message)
 
     def json_rpc_method_handler(self, method, params):
-
-        if self.extended:
-            from neo.api.JSONRPC.ExtendedJsonRpcApi import ExtendedJsonRpcApi
-
-            if method == "getnodestate":
-                return ExtendedJsonRpcApi.get_node_state(self)
-
-            elif method == "gettxhistory":
-                return ExtendedJsonRpcApi.get_tx_history(self)
 
         if method == "getaccountstate":
             acct = Blockchain.Default().GetAccountState(params[0])
