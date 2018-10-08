@@ -39,7 +39,6 @@ class NotificationDB:
         if not NotificationDB.__instance:
             if settings.NOTIFICATION_DB_PATH:
                 NotificationDB.__instance = NotificationDB(settings.notification_leveldb_path)
-#                logger.info("Created Notification DB At %s " % settings.NOTIFICATION_DB_PATH)
             else:
                 logger.info("Notification DB Path not configured in settings")
         return NotificationDB.__instance
@@ -295,8 +294,6 @@ class NotificationDB:
         results = []
         for val in tokens_snapshot.iterator(include_key=False):
             event = SmartContractEvent.FromByteArray(val)
-            # for get_tokens calls, we dont want to send the whole script
-            event.contract.Code.Script = bytearray()
             results.append(event)
         return results
 

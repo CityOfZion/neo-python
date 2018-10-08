@@ -87,6 +87,16 @@ class StateTestCase(NeoTestCase):
 
 #        print("account 1 %s " % json.dumps(account1.ToJson(), indent=4))
 
+    def test_accountstate_ToJson(self):
+
+        hash = UInt160(data=self.ac2_h)
+        account = AccountState(script_hash=hash)
+
+        res = account.ToJson()
+
+        self.assertEqual(res['address'], account.Address)
+        self.assertEqual(res['script_hash'], str(hash))
+
     assset = b'00e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6001445b7b226c616e67223a227a682d434e222c226e616d65223a22e5b08fe89a81e5b881227d2c7b226c616e67223a22656e222c226e616d65223a22416e74436f696e227d5d0000c16ff28623000000000000000000080000000000000000000000000000000000000000000000000000000000009f7fd096d37ed2c0e3f7f0cfc924beef4ffceb689f7fd096d37ed2c0e3f7f0cfc924beef4ffceb6800093d0000'
     assetkey = b'602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
 

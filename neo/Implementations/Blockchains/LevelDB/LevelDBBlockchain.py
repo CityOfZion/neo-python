@@ -209,17 +209,17 @@ class LevelDBBlockchain(Blockchain):
     def GetStates(self, prefix, classref):
         return DBCollection(self._db, prefix, classref)
 
-    def GetAccountState(self, script_hash, print_all_accounts=False):
+    def GetAccountState(self, address, print_all_accounts=False):
 
-        if type(script_hash) is str:
+        if type(address) is str:
             try:
-                script_hash = script_hash.encode('utf-8')
+                address = address.encode('utf-8')
             except Exception as e:
                 logger.info("could not convert argument to bytes :%s " % e)
                 return None
 
         accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
-        acct = accounts.TryGet(keyval=script_hash)
+        acct = accounts.TryGet(keyval=address)
 
         return acct
 
@@ -603,15 +603,12 @@ class LevelDBBlockchain(Blockchain):
         return True
 
     def ProcessNewHeaders(self, headers):
-        start = time.clock()
 
         lastheader = headers[-1]
 
         hashes = [h.Hash.ToBytes() for h in headers]
 
         self._header_index = self._header_index + hashes
-
-        logger.debug("Process Headers: %s %s" % (lastheader, (time.clock() - start)))
 
         if lastheader is not None:
             self.OnAddHeader(lastheader)
@@ -758,7 +755,7 @@ class LevelDBBlockchain(Blockchain):
                         testMode=False
                     )
 
-                    engine.LoadScript(tx.Script, False)
+                    engine.LoadScript(tx.Script)
 
                     try:
                         success = engine.Execute()

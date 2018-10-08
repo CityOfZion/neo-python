@@ -3,10 +3,23 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.7.9-dev] in progress
------------------------
-- Implemented `sendtoaddress` RPC method `#556 <https://github.com/CityOfZion/neo-python/pull/556>`_
+[0.8.1] 2018-10-06
+------------------
+- Add ``sendmany`` and ``sendfrom`` RPC methods & tests and integrate with ``sendtoaddress``
+- Updated all the dependencies
+- Add ``Neo.Transaction.GetWitnesses``, ``Neo.Witness.GetInvocationScript``, ``Neo.Witness.GetVerificationScript``
+- Change notification transfer event format to use string quoted integer
+- Fix Notification token list to include correct hash for contract and token
+- Removes all ``hold`` and ``withdraw`` related functionality from wallet and prompt
+- Fix 'script_hash' output in ``ToJson`` in AccountState, Adds an 'address' key, Adds a test for ``ToJson`` in AccountState, Replaces the variable ``script_hash`` in ``GetAccountState`` in LevelDBBlockchain with ``address``, Adds a test for ``GetAccountState`` in LevelDBBlockchain
+- Add documentation support for Python 3.7
+- Change execution fail event payload to give more meaningful error messages
+
+[0.8.0] 2018-09-28
+------------------
+- Implemented ``sendtoaddress`` RPC method `#556 <https://github.com/CityOfZion/neo-python/pull/556>`_
 - Gracefully handle network packet deserialization failures
+- Implementation Stack Isolation (NEP8)
 - Fix issue resetting storage between Smart Contract invocations
 - Default ``ApplicationConfiguration.AcceptIncomingPeers`` to ``False``, if config value is not present
 - Update seed list to include NGD nodes
@@ -14,7 +27,11 @@ All notable changes to this project are documented in this file.
 - Fix ``Blockchain.DeregisterBlockchain`` not clearing all static variables
 - Disable ``prompt.py`` test cases due to high time consumption and unreliable results.
 - Migrate the existing test cases, which depend on BlockchainFixtureTestCase and WalletFixtureTestCase, to a privnet. Reduction of the fixtures' size to about 7MB. `#478 <https://github.com/CityOfZion/neo-python/issues/478>`_
-
+- Ensure non-zero send value in prompt.py
+- Update block importing and exporting functionality.
+- Add send-zero provision and improved test coverage to ``sendtoaddress``
+- Update Mainnet bootstrap files
+- Update to compiler version ``v0.5.3``
 
 [0.7.8] 2018-09-06
 ------------------
