@@ -3,6 +3,10 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.8.2] In Progress
+-------------------
+- Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
+
 [0.8.1] 2018-10-06
 ------------------
 - Add ``sendmany`` and ``sendfrom`` RPC methods & tests and integrate with ``sendtoaddress``
