@@ -567,7 +567,7 @@ class JsonRpcApi:
         else:
             return context.ToJson()
 
-   def get_blockheader_output(self, blockheader, params):
+    def get_blockheader_output(self, blockheader, params):
 
         if len(params) >= 2 and params[1]:
             jsn = blockheader.ToJson()
