@@ -483,15 +483,3 @@ class JsonRpcApi:
             raise JsonRpcError(-32602, "Invalid params")
 
         return asset_id, address_to_sh, amount, fee
-
-    def get_blockheader_output(self, blockheader, params):
-
-        if len(params) >= 2 and params[1]:
-            jsn = blockheader.ToJson()
-            jsn['confirmations'] = Blockchain.Default().Height - blockheader.Index + 1
-            hash = Blockchain.Default().GetNextBlockHash(blockheader.Hash)
-            if hash:
-                jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
-            return jsn
-
-        return Helper.ToArray(blockheader).decode('utf-8')
