@@ -6,6 +6,7 @@ All notable changes to this project are documented in this file.
 [0.8.2] In Progress
 -------------------
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
+- Fix return types of ``claimGas`` function.
 
 [0.8.1] 2018-10-06
 ------------------

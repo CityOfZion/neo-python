@@ -42,7 +42,6 @@ def CreateAddress(prompter, wallet, args):
 
 
 def DeleteAddress(prompter, wallet, addr):
-
     scripthash = wallet.ToScriptHash(addr)
 
     success, coins = wallet.DeleteAddress(scripthash)
@@ -57,7 +56,6 @@ def DeleteAddress(prompter, wallet, addr):
 
 
 def DeleteToken(wallet, contract_hash):
-
     hash = UInt160.ParseString(contract_hash)
 
     success = wallet.DeleteNEP5Token(hash)
@@ -72,7 +70,6 @@ def DeleteToken(wallet, contract_hash):
 
 
 def ImportWatchAddr(wallet, addr):
-
     if wallet is None:
         print("Please open a wallet")
         return False
@@ -99,7 +96,6 @@ def ImportWatchAddr(wallet, addr):
 
 
 def ImportToken(wallet, contract_hash):
-
     if wallet is None:
         print("please open a wallet")
         return False
@@ -134,6 +130,18 @@ def AddAlias(wallet, addr, title):
 
 
 def ClaimGas(wallet, require_password=True, args=None):
+    """
+
+    Args:
+        wallet:
+        require_password:
+        args:
+
+    Returns:
+        (claim transaction, relayed status)
+            if successful: (tx, True)
+            if unsuccessful: (None, False)
+    """
 
     if args:
         params, from_addr_str = get_from_addr(args)
@@ -146,17 +154,17 @@ def ClaimGas(wallet, require_password=True, args=None):
     unclaimed_count = len(unclaimed_coins)
     if unclaimed_count == 0:
         print("no claims to process")
-        return False
+        return None, False
 
     max_coins_per_claim = None
     if params:
         max_coins_per_claim = get_arg(params, 0, convert_to_int=True)
         if not max_coins_per_claim:
             print("max_coins_to_claim must be an integer")
-            return False
+            return None, False
         if max_coins_per_claim <= 0:
             print("max_coins_to_claim must be greater than zero")
-            return False
+            return None, False
     if max_coins_per_claim and unclaimed_count > max_coins_per_claim:
         unclaimed_coins = unclaimed_coins[:max_coins_per_claim]
 
@@ -166,7 +174,7 @@ def ClaimGas(wallet, require_password=True, args=None):
 
     if available_bonus == Fixed8.Zero():
         print("No gas to claim")
-        return False
+        return None, False
 
     claim_tx = ClaimTransaction()
     claim_tx.Claims = unclaimed_coin_refs
@@ -203,7 +211,7 @@ def ClaimGas(wallet, require_password=True, args=None):
 
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
-            return
+            return None, False
 
     if context.Completed:
 
@@ -229,7 +237,6 @@ def ClaimGas(wallet, require_password=True, args=None):
 
 
 def ShowUnspentCoins(wallet, args):
-
     addr = None
     asset_type = None
     watch_only = 0
