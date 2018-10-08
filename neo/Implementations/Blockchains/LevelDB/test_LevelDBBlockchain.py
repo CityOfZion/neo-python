@@ -53,7 +53,7 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         acct = Blockchain.Default().GetAccountState(addr)
         self.assertIsNone(acct)
 
-   def test_GetHeaderBy(self):
+    def test_GetHeaderBy(self):
         # test correct retrieval with hash
         blockheader = self._blockchain.GetHeaderBy("2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f")
         self.assertEqual(blockheader.GetHashCode().ToString(), self._blockchain.GetBlockHash(11).decode('utf-8'))
