@@ -1491,3 +1491,46 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             self.app.wallet.Close()
             self.app.wallet = None
             os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+     def test_getblockheader_int(self):
+        req = self._gen_rpc_req("getblockheader", params=[10, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['index'], 10)
+        self.assertEqual(res['result']['hash'], '0xd69e7a1f62225a35fed91ca578f33447d93fa0fd2b2f662b957e19c38c1dab1e')
+        self.assertEqual(res['result']['confirmations'], GetBlockchain().Height - 10 + 1)
+        self.assertEqual(res['result']['nextblockhash'], '0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f')
+
+    def test_getblockheader_hash(self):
+        req = self._gen_rpc_req("getblockheader", params=['2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(res['result']['index'], 11)
+        self.assertEqual(res['result']['confirmations'], GetBlockchain().Height - 11 + 1)
+        self.assertEqual(res['result']['previousblockhash'], '0xd69e7a1f62225a35fed91ca578f33447d93fa0fd2b2f662b957e19c38c1dab1e')
+
+    def test_getblockheader_hash_0x(self):
+        req = self._gen_rpc_req("getblockheader", params=['0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['index'], 11)
+
+    def test_getblockheader_hash_failure(self):
+        req = self._gen_rpc_req("getblockheader", params=[GetBlockchain().Height + 1, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown block')
+
+    def test_getblockheader_non_verbose(self):
+        req = self._gen_rpc_req("getblockheader", params=[11, 0])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertIsNotNone(res['result'])
+
+        # we should be able to instantiate a matching block with the result
+        output = binascii.unhexlify(res['result'])
+        blockheader = Helper.AsSerializableWithType(output, 'neo.Core.Header.Header')
+        self.assertEqual(blockheader.Index, 11)
+        self.assertEqual(str(blockheader.Hash), GetBlockchain().GetBlockHash(11).decode('utf8'))
