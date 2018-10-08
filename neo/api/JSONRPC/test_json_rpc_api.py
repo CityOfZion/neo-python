@@ -1492,7 +1492,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             self.app.wallet = None
             os.remove(WalletFixtureTestCase.wallet_1_dest())
 
-     def test_getblockheader_int(self):
+    def test_getblockheader_int(self):
         req = self._gen_rpc_req("getblockheader", params=[10, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
