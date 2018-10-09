@@ -7,6 +7,7 @@ All notable changes to this project are documented in this file.
 -------------------
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
 - Fix return types of ``claimGas`` function.
+- Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
 
 [0.8.1] 2018-10-06
 ------------------
