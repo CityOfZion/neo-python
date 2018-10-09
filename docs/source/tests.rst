@@ -139,6 +139,7 @@ Our test fixtures are reset and extracted 20+ times in our build system so any s
 10) Create the fixtures by incrementing the suffix number (x+1):
 
 .. code-block:: sh
+
 	notif_fixtures_vx+1.tar.gz
 	fixtures_vx+1.tar.gz
 
