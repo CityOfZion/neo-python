@@ -31,7 +31,7 @@ from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
     ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
+from neo.Prompt.Commands.Send import construct_send_basic, construct_send_many, process_transaction, parse_and_sign
 
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register, token_history
@@ -547,18 +547,14 @@ class PromptInterface:
             print("Wallet: '{}' is an invalid parameter".format(item))
 
     def do_send(self, arguments):
-        try:
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(self, self.Wallet, arguments)
-        except Exception as e:
-            return
-        process_transaction(self, self.Wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+        framework = construct_send_basic(self, self.Wallet, arguments)
+        if type(framework) is list:
+            process_transaction(self, self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
     def do_send_many(self, arguments):
-        try:
-            contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes = construct_send_many(self, self.Wallet, arguments)
-        except Exception as e:
-            return
-        process_transaction(self, self.Wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, scripthash_change=scripthash_change, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+        framework = construct_send_basic(self, self.Wallet, arguments)
+        if type(framework) is list:
+            process_transaction(self, self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
 
     def do_sign(self, arguments):
         jsn = get_arg(arguments)
