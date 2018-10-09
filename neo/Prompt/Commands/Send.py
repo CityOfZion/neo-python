@@ -121,32 +121,32 @@ def construct_send_many(wallet, arguments):
             return False
         tx_output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         output.append(tx_output)
-        contract_tx = ContractTransaction(outputs=output)
+    contract_tx = ContractTransaction(outputs=output)
 
-        scripthash_from = None
+    scripthash_from = None
 
-        if from_address is not None:
-            scripthash_from = lookup_addr_str(wallet, from_address)
-            if scripthash_from is None:
-                print("invalid address")
-                return False
+    if from_address is not None:
+        scripthash_from = lookup_addr_str(wallet, from_address)
+        if scripthash_from is None:
+            print("invalid address")
+            return False
 
-        scripthash_change = None
+    scripthash_change = None
 
-        if change_address is not None:
-            scripthash_change = lookup_addr_str(wallet, change_address)
-            if scripthash_change is None:
-                print("invalid address")
-                return False
+    if change_address is not None:
+        scripthash_change = lookup_addr_str(wallet, change_address)
+        if scripthash_change is None:
+            print("invalid address")
+            return False
 
-        fee = Fixed8.Zero()
-        if priority_fee is not None:
-            fee = priority_fee
-            if fee is False:
-                print("invalid fee")
-                return False
+    fee = Fixed8.Zero()
+    if priority_fee is not None:
+        fee = priority_fee
+        if fee is False:
+            print("invalid fee")
+            return False
 
-        print("sending with fee: %s " % fee.ToString())
+    print("sending with fee: %s " % fee.ToString())
     return [contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes]
 
 
