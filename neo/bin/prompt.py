@@ -547,18 +547,18 @@ class PromptInterface:
             print("Wallet: '{}' is an invalid parameter".format(item))
 
     def do_send(self, arguments):
-        framework = construct_send_basic(self, self.Wallet, arguments)
+        framework = construct_send_basic(self.Wallet, arguments)
         if type(framework) is list:
-            process_transaction(self, self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
+            process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
     def do_send_many(self, arguments):
-        framework = construct_send_basic(self, self.Wallet, arguments)
+        framework = construct_send_many(self.Wallet, arguments)
         if type(framework) is list:
-            process_transaction(self, self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
+            process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
 
     def do_sign(self, arguments):
         jsn = get_arg(arguments)
-        parse_and_sign(self, self.Wallet, jsn)
+        parse_and_sign(self.Wallet, jsn)
 
     def show_state(self):
         height = Blockchain.Default().Height
