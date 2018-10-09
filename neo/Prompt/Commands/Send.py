@@ -4,7 +4,7 @@ from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAt
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args, \
-    get_owners_from_params, get_fee, get_outgoing, get_change_addr, get_asset_amount
+    get_owners_from_params, get_fee, get_change_addr, get_asset_amount
 from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Prompt.Commands.Invoke import gather_signatures
 from neo.Wallets.NEP5Token import NEP5Token
@@ -81,10 +81,12 @@ def construct_send_many(wallet, arguments):
         print("Not enough arguments")
         return False
 
-    arguments, outgoing = get_outgoing(arguments)
-
+    outgoing = get_arg(arguments, convert_to_int=True)
     if outgoing is None:
-        print("please enter a valid outgoing number")
+        print("invalid outgoing number")
+        return False
+    if outgoing < 1:
+        print("outgoing number must be >= 1")
         return False
 
     arguments, from_address = get_from_addr(arguments)
