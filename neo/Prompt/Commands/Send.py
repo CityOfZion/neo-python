@@ -49,9 +49,6 @@ def construct_send_basic(prompter, wallet, arguments):
             return False
 
 
-    output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
-    contract_tx = ContractTransaction(outputs=[output])
-    return contract_tx, scripthash_from, fee, owners, user_tx_attributes
 
 
 def construct_send_many(prompter, wallet, arguments):
