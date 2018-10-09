@@ -8,7 +8,6 @@ All notable changes to this project are documented in this file.
 - Add ``sendmany`` and ``sendfrom`` RPC methods & tests and integrate with ``sendtoaddress``
 - Updated all the dependencies
 - Add ``Neo.Transaction.GetWitnesses``, ``Neo.Witness.GetInvocationScript``, ``Neo.Witness.GetVerificationScript``
-- Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
 
 
 [0.8.0] 2018-09-28
