@@ -20,13 +20,13 @@ reqs = [str(ir.req) for ir in install_reqs]
 setup(
     name='neo-python',
     python_requires='>=3.6',
-    version='0.8.0',
+    version='0.8.1',
     description="Python Node and SDK for the NEO blockchain",
     long_description=readme,
     author="Thomas Saunders",
     author_email='tom@cityofzion.io',
-    maintainer="Chris Hager",
-    maintainer_email='chris@cityofzion.io',
+    maintainer="Erik van den Brink",
+    maintainer_email='erik@cityofzion.io',
     url='https://github.com/CityOfZion/neo-python',
     packages=find_packages(include=['neo']),
     entry_points = {
