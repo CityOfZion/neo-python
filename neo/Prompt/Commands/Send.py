@@ -31,6 +31,14 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
         address_to = get_arg(arguments, 1)
         amount = get_arg(arguments, 2)
 
+        try:
+            if float(amount) == 0:
+                print("amount cannot be 0")
+                return False
+        except ValueError:
+            # float parse error
+            return False
+
         assetId = get_asset_id(wallet, to_send)
 
         if assetId is None:
@@ -94,7 +102,6 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
             signer_contract = wallet.GetContract(standard_contract)
 
         if not signer_contract.IsMultiSigContract and owners is None:
-
             data = standard_contract.Data
             tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                                   data=data)]
@@ -119,7 +126,7 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
 
             tx.scripts = context.GetScripts()
 
-#            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
+            #            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
 
             relayed = NodeLeader.Instance().Relay(tx)
 
@@ -146,7 +153,6 @@ def construct_and_send(prompter, wallet, arguments, prompt_password=True):
 
 
 def parse_and_sign(prompter, wallet, jsn):
-
     try:
         context = ContractParametersContext.FromJson(jsn)
         if context is None:

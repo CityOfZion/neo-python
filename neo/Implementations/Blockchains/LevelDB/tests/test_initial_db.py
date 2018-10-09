@@ -45,18 +45,18 @@ class LevelDBTest(NeoTestCase):
         self.assertEqual(self._blockchain.Height, 0)
 
     def test_add_header(self):
-            hexdata = binascii.unhexlify(self.block_one_raw)
-            block_one = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
+        hexdata = binascii.unhexlify(self.block_one_raw)
+        block_one = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
 
-            if settings.MAGIC == 56753:
-                self.assertEqual(self._blockchain.CurrentHeaderHash, b'996e37358dc369912041f966f8c5d8d3a8255ba5dcbd3447f8a82b55db869099')
-            else:
-                self.assertEqual(self._blockchain.CurrentHeaderHash, b'd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf')
+        if settings.MAGIC == 56753:
+            self.assertEqual(self._blockchain.CurrentHeaderHash, b'996e37358dc369912041f966f8c5d8d3a8255ba5dcbd3447f8a82b55db869099')
+        else:
+            self.assertEqual(self._blockchain.CurrentHeaderHash, b'd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf')
 
-            self.assertEqual(self._blockchain.HeaderHeight, 0)
+        self.assertEqual(self._blockchain.HeaderHeight, 0)
 
-            self._blockchain.AddBlock(block_one)
-            self.assertEqual(self._blockchain.HeaderHeight, 1)
+        self._blockchain.AddBlock(block_one)
+        self.assertEqual(self._blockchain.HeaderHeight, 1)
 
     def test_sys_block_fees(self):
 

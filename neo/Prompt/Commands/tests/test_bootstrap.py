@@ -5,7 +5,6 @@ import shutil
 
 
 class BootstrapTestCase(TestCase):
-
     bootstrap_file_good = 'https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_testnet/bootstraptest.tar.gz'
     bootstrap_file_bad = 'https://s3.us-east-2.amazonaws.com/blah.tar.gz'
 
@@ -24,6 +23,9 @@ class BootstrapTestCase(TestCase):
     def test_1_bad_bootstrap_file(self):
 
         # this should exit 0
+        print("***                                     ***")
+        print("*** This test expects a `404 Not found` ***")
+        print("***                                     ***")
         with self.assertRaises(SystemExit):
             BootstrapBlockchainFile(self.bootstrap_target_dir, self.bootstrap_file_bad, require_confirm=False)
 

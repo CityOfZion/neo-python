@@ -159,6 +159,7 @@ class SmartContractEvent(SerializableMixin):
 
         if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
             jsn['contract'] = self.contract.ToJson()
+            del jsn['contract']['code']['script']
 
         if self.token:
             jsn['token'] = self.token.ToJson()
@@ -266,7 +267,10 @@ class NotifyEvent(SmartContractEvent):
             writer.WriteUInt160(self.addr_from)
             writer.WriteUInt160(self.addr_to)
 
-            if self.Amount < 0xffffffffffffffff:
+            if self.Amount < 0:
+                logger.warn("Transfer Amount less than 0")
+                writer.WriteVarInt(0)
+            elif self.Amount < 0xffffffffffffffff:
                 writer.WriteVarInt(self.amount)
             else:
                 logger.warn("Writing Payload value amount greater than ulong long is not allowed.  Setting to ulong long max")
@@ -292,5 +296,5 @@ class NotifyEvent(SmartContractEvent):
         jsn['notify_type'] = self.Type
         jsn['addr_to'] = self.AddressTo
         jsn['addr_from'] = self.AddressFrom
-        jsn['amount'] = self.Amount
+        jsn['amount'] = "%s" % self.Amount
         return jsn

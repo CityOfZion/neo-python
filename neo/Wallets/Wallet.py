@@ -48,10 +48,6 @@ class Wallet:
 
     _current_height = 0
 
-    _db_path = _path
-
-    _indexedDB = None
-
     _vin_exclude = None
 
     _lock = None  # allows locking for threads that may need to access the DB concurrently (e.g. ProcessBlocks and Rebuild)
@@ -81,12 +77,6 @@ class Wallet:
             self._keys = {}
             self._contracts = {}
             self._coins = {}
-
-            if Blockchain.Default() is None:
-                self._indexedDB = LevelDBBlockchain(settings.chain_leveldb_path)
-                Blockchain.RegisterBlockchain(self._indexedDB)
-            else:
-                self._indexedDB = Blockchain.Default()
 
             self._current_height = 0
 
