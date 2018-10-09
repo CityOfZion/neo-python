@@ -129,7 +129,7 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(error.get('code', None), -400)
         self.assertEqual(error.get('message', None), "Access denied.")
 
-    def test_dump_priv_key_bad_args(self):
+    def test_dump_priv_key_too_few_args(self):
         test_wallet_path = shutil.copyfile(
             WalletFixtureTestCase.wallet_1_path(),
             WalletFixtureTestCase.wallet_1_dest()
@@ -138,8 +138,6 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
-
-        # test too few arguments
         req = self._gen_rpc_req("dumpprivkey", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
@@ -149,7 +147,19 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(error.get('code', None), -100)
         self.assertEqual(error.get('message', None), "Missing argument")
 
-        # test invalid args
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_dump_priv_key_invalid_args(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
         req = self._gen_rpc_req("dumpprivkey", params=[""])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
@@ -159,8 +169,20 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(error.get('code', None), -100)
         self.assertEqual(error.get('message', None), "Missing argument")
 
-        # test invalid address (address is too short)
-        req = self._gen_rpc_req("dumpprivkey", params=["AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc"])
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_dump_priv_key_bad_address(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        req = self._gen_rpc_req("dumpprivkey", params=["AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc"])  # address is too short
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
