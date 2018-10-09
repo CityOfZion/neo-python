@@ -8,6 +8,6 @@ def Main(operation):
     if operation == 'payable':
         script_hash = GetExecutingScriptHash()
         contract = GetContract(script_hash)
-        return contract.IsPayable
+        return contract.Payable
 
     return 'unknown operation'

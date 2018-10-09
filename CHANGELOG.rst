@@ -5,8 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.2] In Progress
 ------------------
-- Change ```self.Register("Neo.Contract.IsPayable", self.Contract_IsPayable)``` to ```self.Register("Neo.Contract.GetIsPayable", self.Contract_IsPayable)``` in StateReader.py
-- Added a `PayableTest.py`, `PayableTest.avm` to make sure my solution worked. Renamed the original `PayableTest.avm` to `PayableTest_orig.avm`.
+- Added a test to check if a contract is payable. Renamed the original `PayableTest.avm` to `PayableTest_orig.avm`.
 
 [0.8.1] 2018-10-06
 ------------------

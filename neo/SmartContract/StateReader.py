@@ -148,7 +148,7 @@ class StateReader(InteropService):
         self.Register("Neo.Asset.GetAdmin", self.Asset_GetAdmin)
         self.Register("Neo.Asset.GetIssuer", self.Asset_GetIssuer)
         self.Register("Neo.Contract.GetScript", self.Contract_GetScript)
-        self.Register("Neo.Contract.GetIsPayable", self.Contract_IsPayable)
+        self.Register("Neo.Contract.IsPayable", self.Contract_IsPayable)
         self.Register("Neo.Storage.Find", self.Storage_Find)
         self.Register("Neo.Enumerator.Create", self.Enumerator_Create)
         self.Register("Neo.Enumerator.Next", self.Enumerator_Next)
