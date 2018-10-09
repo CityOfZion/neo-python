@@ -45,19 +45,21 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['neo', self.watch_addr_str, '50']
 
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_basic(None, wallet, args)
+            res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertTrue(res)
 
-    def test_send_gas(self):
+    def test_send_gas_mimic_prompt(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
 
             wallet = self.GetWallet1(recreate=True)
             args = ['gas', self.watch_addr_str, '5']
+            res = False
 
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_basic(None, wallet, args)
+            if type(framework) is list:
+                res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertTrue(res)
 
@@ -67,8 +69,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['neo', self.watch_addr_str, '1', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', '--fee=0.005']
 
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_basic(None, wallet, args)
+            res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertTrue(res)  # verify successful tx
 
@@ -82,27 +84,27 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet = None
         args = ['neo', self.watch_addr_str, '50']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_bad_args(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['neo', self.watch_addr_str]  # too few args
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_bad_assetid(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['blah', self.watch_addr_str, '12']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_bad_address_to(self):
 
@@ -110,9 +112,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
         address_to = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE'  # address_to is too short causing ToScriptHash to fail
         args = ['neo', address_to, '12']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_bad_address_from(self):
 
@@ -120,54 +122,63 @@ class UserWalletTestCase(WalletFixtureTestCase):
         address_from = '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc'  # address_from is too short causing ToScriptHash to fail
         args = ['neo', self.watch_addr_str, '12', address_from]  
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_negative_amount(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['neo', self.watch_addr_str, '-12']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_zero_amount(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['neo', self.watch_addr_str, '0']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_weird_amount(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['neo', self.watch_addr_str, '12.abc3']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_bad_precision_amount(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['neo', self.watch_addr_str, '12.01']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_negative_fee(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['neo', self.watch_addr_str, '12', '--fee=-0.005']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
+
+    def test_send_weird_fee(self):
+
+        wallet = self.GetWallet1(recreate=True)
+        args = ['neo', self.watch_addr_str, '12', '--fee=0.0abc']
+
+        framework = construct_send_basic(None, wallet, args)
+
+        self.assertFalse(framework)
 
     def test_send_token_bad(self):
 
@@ -178,9 +189,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         args = ['NEP5', self.watch_addr_str, '32']
 
-        res = construct_send_basic(None, wallet, args)
+        framework = construct_send_basic(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_send_token_ok(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
@@ -192,17 +203,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             args = ['NXT4', self.watch_addr_str, '30', '--from-addr=%s' % self.wallet_1_addr]
 
-            res = construct_send_basic(None, wallet, args)
+            framework = construct_send_basic(None, wallet, args)
 
-            self.assertTrue(res)
+            self.assertTrue(framework)
 
     def test_insufficient_funds(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['gas', self.watch_addr_str, '72620']
 
-        contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-        res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+        framework = construct_send_basic(None, wallet, args)
+        res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
         self.assertFalse(res)
 
@@ -212,8 +223,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['neo', self.watch_addr_str, '50']
 
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_basic(None, wallet, args)
+            res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertFalse(res)
 
@@ -225,8 +236,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             args = ['gas', self.wallet_1_addr, '2', "--owners=['AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK','APRgMZHZubii29UXF9uFa6sohrsYupNAvx']"]
 
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-            process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_basic(None, wallet, args)
+            process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertTrue(mock.called)
 
@@ -236,8 +247,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['gas', self.watch_addr_str, '2', '--tx-attr={"usage":241,"data":"This is a remark"}']
 
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_basic(None, wallet, args)
+            res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertTrue(res)
             self.assertEqual(2, len(res.Attributes))
@@ -248,8 +259,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['gas', self.watch_addr_str, '2', '--tx-attr=[{"usage":241,"data":"This is a remark"},{"usage":242,"data":"This is a remark 2"}]']
 
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_basic(None, wallet, args)
+            res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertTrue(res)
             self.assertEqual(3, len(res.Attributes))
@@ -260,8 +271,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['gas', self.watch_addr_str, '2', '--tx-attr=[{"usa:241"data":his is a remark"}]']
 
-            contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_basic(None, wallet, args)
+            res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertTrue(res)
             self.assertEqual(1, len(res.Attributes))
@@ -295,8 +306,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 wallet = self.GetWallet1(recreate=True)
                 args = ['gas', self.watch_addr_str, '2']
 
-                contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-                res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+                framework = construct_send_basic(None, wallet, args)
+                res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
                 self.assertFalse(res)
 
@@ -307,8 +318,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 wallet = self.GetWallet1(recreate=True)
                 args = ['gas', self.watch_addr_str, '2']
 
-                contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(None, wallet, args)
-                res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+                framework = construct_send_basic(None, wallet, args)
+                res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
                 self.assertFalse(res)
 
@@ -328,8 +339,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ["--outgoing=2"]
 
-            contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes = construct_send_many(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, scripthash_change=scripthash_change, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_many(None, wallet, args)
+            res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
 
             self.assertTrue(res)  # verify successful tx
 
@@ -352,8 +363,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             address_from_account_state = Blockchain.Default().GetAccountState(self.wallet_1_addr).ToJson()
             address_from_gas_bal = address_from_account_state['balances']['0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7']
 
-            contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes = construct_send_many(None, wallet, args)
-            res = process_transaction(None, wallet, contract_tx=contract_tx, scripthash_from=scripthash_from, scripthash_change=scripthash_change, fee=fee, owners=owners, user_tx_attributes=user_tx_attributes)
+            framework = construct_send_many(None, wallet, args)
+            res = process_transaction(None, wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
 
             self.assertTrue(res)  # verify successful tx
 
@@ -368,36 +379,36 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet = None
         args = ['--outgoing=2']
 
-        res = construct_send_many(None, wallet, args)
+        framework = construct_send_many(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_sendmany_bad_args(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = []  # too few args
 
-        res = construct_send_many(None, wallet, args)
+        framework = construct_send_many(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_sendmany_bad_outgoing(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['--outgoing=0']  # too few outgoing
 
-        res = construct_send_many(None, wallet, args)
+        framework = construct_send_many(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_sendmany_weird_outgoing(self):
 
         wallet = self.GetWallet1(recreate=True)
         args = ['--outgoing=0.5']  # weird number outgoing
 
-        res = construct_send_many(None, wallet, args)
+        framework = construct_send_many(None, wallet, args)
 
-        self.assertFalse(res)
+        self.assertFalse(framework)
 
     def test_sendmany_bad_assetid(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "blah", self.watch_addr_str, "1"]):
@@ -405,9 +416,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['--outgoing=2']
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_token(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "NXT4", self.watch_addr_str, "32"]):
@@ -419,9 +430,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             args = ["--outgoing=2", '--from-addr=%s' % self.wallet_1_addr]
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_bad_address_to(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", "AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE", "1"]):  # address is too short
@@ -429,9 +440,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['--outgoing=2']
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_negative_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "-1"]):
@@ -439,9 +450,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['--outgoing=2']
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_zero_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "0"]):
@@ -449,9 +460,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['--outgoing=2']
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_weird_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "5.abc3"]):
@@ -459,9 +470,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['--outgoing=2']
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_bad_precision_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["gas", self.watch_addr_str, "1", "neo", self.watch_addr_str, "5.01"]):
@@ -469,9 +480,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['--outgoing=2']
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_bad_address_from(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
@@ -480,9 +491,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             address_from = '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc'  # address_from is too short causing ToScriptHash to fail
             args = ['--outgoing=2', address_from]  
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_bad_change_address(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
@@ -491,9 +502,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             change_address = '--change-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE'  # change address is too short causing ToScriptHash to fail
             args = ['--outgoing=2', change_address]  
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
 
     def test_sendmany_negative_fee(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
@@ -501,6 +512,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
             wallet = self.GetWallet1(recreate=True)
             args = ['--outgoing=2', '--fee=-0.005']
 
-            res = construct_send_many(None, wallet, args)
+            framework = construct_send_many(None, wallet, args)
 
-            self.assertFalse(res)
+            self.assertFalse(framework)
