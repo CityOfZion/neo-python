@@ -298,7 +298,7 @@ class Blockchain:
     def GetAccountStateByIndex(self, index):
         pass
 
-    def GetAccountState(self, script_hash):
+    def GetAccountState(self, address):
         pass
 
     def GetAssetState(self, assetId):

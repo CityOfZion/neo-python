@@ -315,27 +315,6 @@ def lookup_addr_str(wallet, addr):
         print(e)
 
 
-def parse_hold_vins(results):
-    holds = results[0].GetByteArray()
-    holdlen = len(holds)
-    numholds = int(holdlen / 33)
-
-    vins = []
-    for i in range(0, numholds):
-        hstart = i * 33
-        hend = hstart + 33
-        item = holds[hstart:hend]
-
-        vin_index = item[0]
-        vin_tx_id = UInt256(data=item[1:])
-
-        t_input = TransactionInput(prevHash=vin_tx_id, prevIndex=vin_index)
-
-        vins.append(t_input)
-
-    return vins
-
-
 def string_from_fixed8(amount, decimals):
     precision_mult = pow(10, decimals)
     amount = Decimal(amount) / Decimal(precision_mult)

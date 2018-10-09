@@ -9,12 +9,15 @@ from neo.Core.Blockchain import Blockchain
 from neo.Settings import settings
 import logzero
 import os
+import neo
 
 
 class BlockchainFixtureTestCase(NeoTestCase):
     FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v8.tar.gz'
     FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v8.tar.gz')
     _blockchain = None
+
+    root_folder = os.path.dirname(neo.__file__)[:-4]
 
     @classmethod
     def leveldb_testpath(cls):

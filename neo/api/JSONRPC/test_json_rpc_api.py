@@ -1,5 +1,5 @@
 """
-Run only thse tests:
+Run only these tests:
 
     $ python -m unittest neo.api.JSONRPC.test_json_rpc_api
 """
@@ -119,7 +119,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['balances']['0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'], '99989900.0')
-        self.assertEqual(res['result']['script_hash'], addr_str)
+        self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_not_existing_yet(self):
         addr_str = 'AHozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2'
@@ -127,7 +127,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['balances'], {})
-        self.assertEqual(res['result']['script_hash'], addr_str)
+        self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_failure(self):
         addr_str = 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp81'
