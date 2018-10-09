@@ -97,7 +97,7 @@ e) Create new wallets only if absolutely necessary.
 
 .. code-block:: sh
 	
-	python prompt.py -p
+	python prompt.py -u
 
 6) Use the following wallets for generating transactions:
 
@@ -120,7 +120,7 @@ e) Create new wallets only if absolutely necessary.
 
 (In case the source code of the new smart contract is not present in the above zip folder, please add it.)
 
-8) If you have deployed a new smart contract on the ``neo-privnet-unittest`` image, please user the word ``test`` as prefix while defining the ``contract name``. 
+8) If you have deployed a new smart contract on the ``neo-privnet-unittest`` image, please use the word ``test`` as prefix while defining the ``contract name``. 
 In that way we can easily find out all the contracts deploy on the image by running this command:
 
 .. code-block:: sh
