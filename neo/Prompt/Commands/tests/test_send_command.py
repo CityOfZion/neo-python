@@ -337,7 +337,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
 
             wallet = self.GetWallet1(recreate=True)
-            args = ["--outgoing=2"]
+            args = ["2"]
 
             framework = construct_send_many(wallet, args)
             res = process_transaction(wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
@@ -358,7 +358,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", "gas", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", UserWalletTestCase.wallet_1_pass()]):
 
             wallet = self.GetWallet1(recreate=True)
-            args = ["--outgoing=2", '--from-addr=%s' % self.wallet_1_addr, '--change-addr=%s' % self.watch_addr_str, '--fee=0.005']
+            args = ["2", '--from-addr=%s' % self.wallet_1_addr, '--change-addr=%s' % self.watch_addr_str, '--fee=0.005']
 
             address_from_account_state = Blockchain.Default().GetAccountState(self.wallet_1_addr).ToJson()
             address_from_gas_bal = address_from_account_state['balances']['0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7']
@@ -377,7 +377,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_sendmany_no_wallet(self):
 
         wallet = None
-        args = ['--outgoing=2']
+        args = ['2']
 
         framework = construct_send_many(wallet, args)
 
@@ -395,7 +395,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_sendmany_bad_outgoing(self):
 
         wallet = self.GetWallet1(recreate=True)
-        args = ['--outgoing=0']  # too few outgoing
+        args = ['0']  # too few outgoing
 
         framework = construct_send_many(wallet, args)
 
@@ -404,7 +404,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_sendmany_weird_outgoing(self):
 
         wallet = self.GetWallet1(recreate=True)
-        args = ['--outgoing=0.5']  # weird number outgoing
+        args = ['0.5']  # weird number outgoing
 
         framework = construct_send_many(wallet, args)
 
@@ -414,7 +414,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "blah", self.watch_addr_str, "1"]):
 
             wallet = self.GetWallet1(recreate=True)
-            args = ['--outgoing=2']
+            args = ['2']
 
             framework = construct_send_many(wallet, args)
 
@@ -428,7 +428,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             token_hash = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
             ImportToken(wallet, token_hash)
 
-            args = ["--outgoing=2", '--from-addr=%s' % self.wallet_1_addr]
+            args = ["2", '--from-addr=%s' % self.wallet_1_addr]
 
             framework = construct_send_many(wallet, args)
 
@@ -438,7 +438,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", "AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE", "1"]):  # address is too short
 
             wallet = self.GetWallet1(recreate=True)
-            args = ['--outgoing=2']
+            args = ['2']
 
             framework = construct_send_many(wallet, args)
 
@@ -448,7 +448,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "-1"]):
 
             wallet = self.GetWallet1(recreate=True)
-            args = ['--outgoing=2']
+            args = ['2']
 
             framework = construct_send_many(wallet, args)
 
@@ -458,7 +458,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "0"]):
 
             wallet = self.GetWallet1(recreate=True)
-            args = ['--outgoing=2']
+            args = ['2']
 
             framework = construct_send_many(wallet, args)
 
@@ -468,7 +468,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "5.abc3"]):
 
             wallet = self.GetWallet1(recreate=True)
-            args = ['--outgoing=2']
+            args = ['2']
 
             framework = construct_send_many(wallet, args)
 
@@ -478,7 +478,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["gas", self.watch_addr_str, "1", "neo", self.watch_addr_str, "5.01"]):
 
             wallet = self.GetWallet1(recreate=True)
-            args = ['--outgoing=2']
+            args = ['2']
 
             framework = construct_send_many(wallet, args)
 
@@ -489,7 +489,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             wallet = self.GetWallet1(recreate=True)
             address_from = '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc'  # address_from is too short causing ToScriptHash to fail
-            args = ['--outgoing=2', address_from]  
+            args = ['2', address_from]  
 
             framework = construct_send_many(wallet, args)
 
@@ -500,7 +500,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             wallet = self.GetWallet1(recreate=True)
             change_address = '--change-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE'  # change address is too short causing ToScriptHash to fail
-            args = ['--outgoing=2', change_address]  
+            args = ['2', change_address]  
 
             framework = construct_send_many(wallet, args)
 
@@ -510,7 +510,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
 
             wallet = self.GetWallet1(recreate=True)
-            args = ['--outgoing=2', '--fee=-0.005']
+            args = ['2', '--fee=-0.005']
 
             framework = construct_send_many(wallet, args)
 
