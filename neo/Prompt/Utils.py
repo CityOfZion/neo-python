@@ -134,23 +134,6 @@ def get_change_addr(params):
     return params, change_addr
 
 
-def get_outgoing(params):
-    outgoing = None
-    for item in params:
-        if '--outgoing' in item:
-            params.remove(item)
-            outgoing = item.replace('--outgoing=', '')
-            try:
-                outgoing = int(outgoing)
-            except ValueError:
-                print("invalid outgoing number")
-                return params, None
-            if outgoing < 1:
-                print("outgoing number must be >= 1")
-                return params, None
-    return params, outgoing
-
-
 def get_fee(params):
     fee = None
     for item in params:
