@@ -57,12 +57,8 @@ def construct_send_basic(prompter, wallet, arguments):
     if f8amount is False:
         print("invalid amount")
         return False
-    try:
-        if float(amount) == 0:
-            print("amount cannot be 0")
-            return False
-    except ValueError:
-        # float parse error
+    if float(amount) == 0:
+        print("amount cannot be 0")
         return False
 
     fee = Fixed8.Zero()
@@ -118,12 +114,8 @@ def construct_send_many(prompter, wallet, arguments):
         if f8amount is False:
             print("invalid amount")
             return False
-        try:
-            if float(amount) == 0:
-                print("amount cannot be 0")
-                return False
-        except ValueError:
-            # float parse error
+        if float(amount) == 0:
+            print("amount cannot be 0")
             return False
         tx_output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         output.append(tx_output)
