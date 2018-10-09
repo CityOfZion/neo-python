@@ -48,29 +48,6 @@ def construct_send_basic(prompter, wallet, arguments):
             print("invalid address")
             return False
 
-    # if this is a token, we will use a different
-    # transfer mechanism
-    if type(assetId) is NEP5Token:
-        return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), tx_attributes=user_tx_attributes)
-
-    f8amount = Fixed8.TryParse(amount, require_positive=True)
-    if f8amount is None:
-        print("invalid amount format")
-        return False
-    if float(str(f8amount)) == 0:
-        print("amount cannot be 0")
-        return False
-
-    if type(assetId) is UInt256 and f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
-        print("incorrect amount precision")
-        return False
-
-    fee = Fixed8.Zero()
-    if priority_fee is not None:
-        fee = priority_fee
-        if fee < Fixed8.Zero():
-            print("fee cannot be negative")
-            return False
 
     output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
     contract_tx = ContractTransaction(outputs=[output])
