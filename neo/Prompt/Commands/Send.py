@@ -15,7 +15,7 @@ from prompt_toolkit import prompt
 import traceback
 
 
-def construct_send_basic(prompter, wallet, arguments):
+def construct_send_basic(wallet, arguments):
     if not wallet:
         print("please open a wallet")
         return False
@@ -73,7 +73,7 @@ def construct_send_basic(prompter, wallet, arguments):
     return [contract_tx, scripthash_from, fee, owners, user_tx_attributes]
 
 
-def construct_send_many(prompter, wallet, arguments):
+def construct_send_many(wallet, arguments):
     if not wallet:
         print("please open a wallet")
         return False
@@ -148,7 +148,7 @@ def construct_send_many(prompter, wallet, arguments):
     return [contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes]
 
 
-def process_transaction(prompter, wallet, contract_tx, scripthash_from=None, scripthash_change=None, fee=None, owners=None, user_tx_attributes=None):
+def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_change=None, fee=None, owners=None, user_tx_attributes=None):
     try:
         tx = wallet.MakeTransaction(tx=contract_tx,
                                     change_address=scripthash_change,
@@ -224,7 +224,7 @@ def process_transaction(prompter, wallet, contract_tx, scripthash_from=None, scr
     return False
 
 
-def parse_and_sign(prompter, wallet, jsn):
+def parse_and_sign(wallet, jsn):
 
     try:
         context = ContractParametersContext.FromJson(jsn)
