@@ -28,18 +28,18 @@ What does it currently do
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  This project aims to be a full port of the original C# `NEO
-   project <https://github.com/neo-project>`__
+   project <https://github.com/neo-project>`_
 -  Run a Python based P2P node
 -  Interactive CLI for configuring node and inspecting blockchain
 -  Build, deploy, and run smart contracts
 -  Runs smart contracts on the blockchain in a Python virtual machine
 -  Very basic Wallet functionality (not fully tested, please do not use
    on mainnet)
--  `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>`__
+-  `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>`_
    and
-   `NEP5 <https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki>`__
+   `NEP5 <https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki>`_
    compliant wallet functionality
-- `NEP-7 <https://github.com/neo-project/proposals/blob/master/nep-7.mediawiki>`__ and `NEP-8 <https://github.com/neo-project/proposals/blob/c20182cecd92102b9e5a3158a005762eefb8dbdf/nep-8.mediawiki>`__ support
+- `NEP-7 <https://github.com/neo-project/proposals/blob/master/nep-7.mediawiki>`_ and `NEP-8 <https://github.com/neo-project/proposals/blob/c20182cecd92102b9e5a3158a005762eefb8dbdf/nep-8.mediawiki>`_ support
 -  RPC Client
 -  RPC server
 -  Notification Server ( for viewing transfers of NEP5 tokens )
@@ -56,16 +56,16 @@ Documentation
 
 The full documentation on how to install, configure and use neo-python
 can be found at `Read The
-Docs <https://neo-python.readthedocs.io/en/latest/>`__.
+Docs <https://neo-python.readthedocs.io/en/latest/>`_.
 
 Get help or give help
 ~~~~~~~~~~~~~~~~~~~~~
 
 -  Open a new
-   `issue <https://github.com/CityOfZion/neo-python/issues/new>`__ if
+   `issue <https://github.com/CityOfZion/neo-python/issues/new>`_ if
    you encounter a problem.
 -  Or ping **@localhuman**, **@metachris** or **@ixje** on the `NEO
-   Discord <https://discord.gg/R8v48YA>`__.
+   Discord <https://discord.gg/R8v48YA>`_.
 -  Pull requests welcome. Have a look at the issue list for ideas.
    You can help with wallet functionality, writing tests or documentation,
    or on any other feature you deem awesome.
@@ -76,14 +76,14 @@ Getting started
 neo-python has two System dependencies (everything else is covered with
 ``pip``):
 
--  `LevelDB <https://github.com/google/leveldb>`__
+-  `LevelDB <https://github.com/google/leveldb>`_
 -  `Python
-   3.6 <https://www.python.org/downloads/release/python-366/>`__ or `Python 3.7 <https://www.python.org/downloads/release/python-370/>`__ (3.5 and below is not supported)
+   3.6 <https://www.python.org/downloads/release/python-366/>`_ or `Python 3.7 <https://www.python.org/downloads/release/python-370/>`_ (3.5 and below is not supported)
 
 We have published a Youtube
-`video <https://www.youtube.com/watch?v=ZZXz261AXrM>`__ to help get you
+`video <https://www.youtube.com/watch?v=ZZXz261AXrM>`_ to help get you
 started. There are many more videos under the
-`CityOfZion <https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg>`__
+`CityOfZion <https://www.youtube.com/channel/UCzlQUNLrRa8qJkz40G91iJg>`_
 Youtube channel, check them out.
 
 Docker
@@ -91,7 +91,7 @@ Docker
 
 Using Docker is another option to run neo-python. There are example
 Dockerfiles provided in the
-`/docker folder <https://github.com/CityOfZion/neo-python/tree/development/docker>`__,
+`/docker folder <https://github.com/CityOfZion/neo-python/tree/development/docker>`_,
 and we have an image on Docker hub, tagged after the neo-python
 releases: https://hub.docker.com/r/cityofzion/neo-python/
 
@@ -120,13 +120,13 @@ First, ensure Ubuntu is fully up-to-date with this:
 ::
 
    sudo apt-get update && sudo apt-get upgrade
-   
+
 You can install Python 3.7 and all the system dependencies like this:
 
 ::
-   
+
    sudo apt-get install python3.7 python3.7-dev python3.7-venv python3-pip libleveldb-dev libssl-dev g++
-  
+
 
 Or, you can install Python 3.6 and all the system dependencies like this:
 
@@ -183,7 +183,7 @@ compiler support tied to Visual Studio and libraries. Refer to
 `documentation <https://neo-python.readthedocs.io/en/latest/installwindows.html>`__.
 
 Python 3.6+
-~~~~~~~~~~
+~~~~~~~~~~~
 
 neo-python is compatible with **Python 3.6 and later**.
 
@@ -206,14 +206,14 @@ could lead to version conflicts.
 
     git clone https://github.com/CityOfZion/neo-python.git
     cd neo-python
-    
+
     # if you want to use the development branch, switch now
     git checkout development
-    
+
     # create virtual environment using Python 3.7 and activate or skip to the next step for Python 3.6
     python3.7 -m venv venv
     source venv/bin/activate
-    
+
     # create virtual environment using Python 3.6 and activate
     python3.6 -m venv venv
     source venv/bin/activate
@@ -232,7 +232,7 @@ could lead to version conflicts.
     # create virtual environment using Python 3.7 and activate or skip to the next step for Python 3.6
     python3.7 -m venv venv
     source venv/bin/activate
-    
+
     # create virtual environment using Python 3.6 and activate
     python3.6 -m venv venv
     source venv/bin/activate
@@ -428,19 +428,19 @@ hair:
 -  Update the project dependencies (``pip install -e .``)
 -  If you encounter any problems, please take a look at the
    `installation
-   section <https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes>`__
+   section <https://neo-python.readthedocs.io/en/latest/install.html#further-install-notes>`_
    in the docs, and if that doesn't help open an issue. We'll try to
    help.
--  You can reach us on the `NEO Discord <https://discord.gg/R8v48YA>`__,
+-  You can reach us on the `NEO Discord <https://discord.gg/R8v48YA>`_,
    or simply file a `GitHub
-   issue <https://github.com/CityOfZion/neo-python/issues/new>`__.
+   issue <https://github.com/CityOfZion/neo-python/issues/new>`_.
 
 License
 -------
 
 -  Open-source
-   `MIT <https://github.com/CityOfZion/neo-python/blob/master/LICENSE.md>`__.
--  Contributors: [@localhuman](https://github.com/localhuman) (Creator), [@metachris](https://github.com/metachris), [@ixje](https://github.com/ixje), and [many more](https://github.com/CityOfZion/neo-python/graphs/contributors)
+   `MIT <https://github.com/CityOfZion/neo-python/blob/master/LICENSE.md>`_.
+-  Contributors: `@localhuman <https://github.com/localhuman>`_ (Creator), `@metachris <https://github.com/metachris>`_, `@ixje <https://github.com/ixje>`_, and `many more <https://github.com/CityOfZion/neo-python/graphs/contributors>`_
 
 Donations
 ---------
