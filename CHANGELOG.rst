@@ -7,6 +7,8 @@ All notable changes to this project are documented in this file.
 -------------------
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
 - Fix return types of ``claimGas`` function.
+- Add the option -u (unittest-net) to prompt.py
+- Add unittest guildeline and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 
 [0.8.1] 2018-10-06
 ------------------
