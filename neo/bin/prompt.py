@@ -142,7 +142,7 @@ class PromptInterface:
                 'wallet split {addr} {asset} {unspent index} {divide into number of vins}',
                 'wallet close',
                 'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee})',
-                'sendmany (--outgoing={number outgoing}) (--change-addr={addr}) (--from-addr={addr}) (--fee={priority_fee})',
+                'sendmany --outgoing={number of outgoing tx} (--change-addr={addr}) (--from-addr={addr}) (--fee={priority_fee})',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
