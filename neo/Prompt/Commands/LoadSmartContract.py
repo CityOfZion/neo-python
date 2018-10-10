@@ -82,7 +82,7 @@ def LoadContract(args):
         contract_properties += ContractPropertyState.HasDynamicInvoke
 
     if is_payable:
-        contract_properties += ContractPropertyState.Payable
+        contract_properties += ContractPropertyState.IsPayable
 
     script = None
 
@@ -140,7 +140,7 @@ def GatherLoadedContractParams(args, script):
         contract_properties += ContractPropertyState.HasDynamicInvoke
 
     if is_payable:
-        contract_properties += ContractPropertyState.Payable
+        contract_properties += ContractPropertyState.IsPayable
 
     out = generate_deploy_script(script, contract_properties=contract_properties, return_type=return_type, parameter_list=params)
 
