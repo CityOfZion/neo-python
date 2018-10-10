@@ -13,6 +13,7 @@ from neocore.Fixed8 import Fixed8
 import json
 from prompt_toolkit import prompt
 import traceback
+from logzero import logger
 
 
 def construct_send_basic(wallet, arguments):
@@ -38,14 +39,14 @@ def construct_send_basic(wallet, arguments):
 
     scripthash_to = lookup_addr_str(wallet, address_to)
     if scripthash_to is None:
-        print("invalid address")
+        logger.debug("invalid address")
         return False
 
     scripthash_from = None
     if from_address is not None:
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
-            print("invalid address")
+            logger.debug("invalid address")
             return False
 
     # if this is a token, we will use a different
@@ -55,7 +56,7 @@ def construct_send_basic(wallet, arguments):
 
     f8amount = get_asset_amount(amount, assetId)
     if f8amount is False:
-        print("invalid amount")
+        logger.debug("invalid amount")
         return False
     if float(amount) == 0:
         print("amount cannot be 0")
@@ -65,7 +66,7 @@ def construct_send_basic(wallet, arguments):
     if priority_fee is not None:
         fee = priority_fee
         if fee is False:
-            print("invalid fee")
+            logger.debug("invalid fee")
             return False
 
     output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
@@ -109,12 +110,12 @@ def construct_send_many(wallet, arguments):
         address_to = prompt("Address to: ")
         scripthash_to = lookup_addr_str(wallet, address_to)
         if scripthash_to is None:
-            print("invalid address")
+            logger.debug("invalid address")
             return False
         amount = prompt("Amount to send: ")
         f8amount = get_asset_amount(amount, assetId)
         if f8amount is False:
-            print("invalid amount")
+            logger.debug("invalid amount")
             return False
         if float(amount) == 0:
             print("amount cannot be 0")
@@ -128,7 +129,7 @@ def construct_send_many(wallet, arguments):
     if from_address is not None:
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
-            print("invalid address")
+            logger.debug("invalid address")
             return False
 
     scripthash_change = None
@@ -136,14 +137,14 @@ def construct_send_many(wallet, arguments):
     if change_address is not None:
         scripthash_change = lookup_addr_str(wallet, change_address)
         if scripthash_change is None:
-            print("invalid address")
+            logger.debug("invalid address")
             return False
 
     fee = Fixed8.Zero()
     if priority_fee is not None:
         fee = priority_fee
         if fee is False:
-            print("invalid fee")
+            logger.debug("invalid fee")
             return False
 
     print("sending with fee: %s " % fee.ToString())
@@ -158,7 +159,7 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
                                     from_addr=scripthash_from)
 
         if tx is None:
-            print("insufficient funds")
+            logger.debug("insufficient funds")
             return False
 
         # password prompt
