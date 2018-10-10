@@ -4,7 +4,9 @@ Changelog
 All notable changes to this project are documented in this file.
 
 [0.8.2] In Progress
-------------------
+-------------------
+- Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
+- Fix return types of ``claimGas`` function.
 - Added a test to check if a contract is payable. Renamed the original `PayableTest.avm` to `PayableTest_orig.avm`.
 
 [0.8.1] 2018-10-06

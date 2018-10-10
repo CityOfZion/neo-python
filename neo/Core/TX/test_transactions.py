@@ -27,7 +27,6 @@ class TransactionTestCase(NeoTestCase):
     tx_vout = []
 
     def test_tx_deserialize(self):
-
         ms = MemoryStream(self.tx_raw_hex)
 
         reader = BinaryReader(ms)
@@ -59,7 +58,6 @@ class TransactionTestCase(NeoTestCase):
     ctx_id = b'4feb0081f9425cab84269127bef0a871a84d4408f09923d17ebb257cd231b362'
 
     def test_contract_tx_deserialize(self):
-
         ms = MemoryStream(binascii.unhexlify(self.ctx_raw))
 
         reader = BinaryReader(ms)
@@ -74,7 +72,6 @@ class TransactionTestCase(NeoTestCase):
     pb_hash = b'5467a1fc8723ceffa8e5ee59399b02eea1df6fbaa53768c6704b90b960d223fa'
 
     def test_publish_tx_deserialize(self):
-
         ms = MemoryStream(binascii.unhexlify(self.pb_raw))
 
         reader = BinaryReader(ms)
@@ -111,7 +108,6 @@ class TransactionTestCase(NeoTestCase):
     mrh = b'4c68669a54fa247d02545cff9d78352cb4a5059de7b3cd6ba82efad13953c9b9'
 
     def test_miner_tx(self):
-
         ms = MemoryStream(binascii.unhexlify(self.mr))
 
         reader = BinaryReader(ms)
@@ -124,7 +120,6 @@ class TransactionTestCase(NeoTestCase):
     rrid = b'0c092117b4ba47b81001712425e6e7f760a637695eaf23741ba335925b195ecd'
 
     def test_register_tx(self):
-
         ms = MemoryStream(binascii.unhexlify(self.rr))
 
         reader = BinaryReader(ms)
@@ -137,7 +132,7 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(asset['admin'], 'ARFe4mTKRTETerRoMsyzBXoPt2EKBvBXFX')
         self.assertEqual(asset['name'], '[{"lang":"zh-CN","name":"TestCoin"}]')
         self.assertEqual(asset['precision'], 8)
-        self.assertEquals(Fixed8.FromDecimal(settings.ALL_FEES['RegisterTransaction']), tx.SystemFee())
+        self.assertEqual(Fixed8.FromDecimal(settings.ALL_FEES['RegisterTransaction']), tx.SystemFee())
 
     cr = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce490241400bd2e921cee90c8de1a192e61e33eb8980a3dc00c388ee9aac0712178cc8fceed8bb59788f7caf3c4dc082abcdaaa49772fda86db4ceea243bda31bcde9b8a0b3c21034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e1104182f145967cc4ee2f1c9f4e0782756dabf246d0a4fe60a035441402fe3e20c303e26c3817fed6fc7db8edde4ac62b16eee796c01c2b59e382b7ddfc82f0b36c7f7520821c7b72b9aff50ae27a016961f1ef1dade9cafa85655380f2321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
     cr2 = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce49'
@@ -145,7 +140,6 @@ class TransactionTestCase(NeoTestCase):
     crid = b'e4d2ea5df2adf77df91049beccbb16f98863b93a16439c60381eac1f23bff178'
 
     def test_contract_tx_again(self):
-
         ms = MemoryStream(binascii.unhexlify(self.cr))
 
         reader = BinaryReader(ms)
@@ -159,7 +153,6 @@ class TransactionTestCase(NeoTestCase):
     p2id = b'514157940a3e31b087891c5e8ed362721f0a7f3dda3f80b7a3fe618d02b7d3d3'
 
     def test_pub_two(self):
-
         ms = MemoryStream(binascii.unhexlify(self.p2))
 
         reader = BinaryReader(ms)
@@ -174,7 +167,6 @@ class TransactionTestCase(NeoTestCase):
     eid = b'988832f693785dcbcb8d5a0e9d5d22002adcbfb1eb6bbeebf8c494fff580e147'
 
     def test_enrollment_tx(self):
-
         ms = MemoryStream(binascii.unhexlify(self.eraw))
 
         reader = BinaryReader(ms)
@@ -201,7 +193,6 @@ class TransactionTestCase(NeoTestCase):
         path = '%s/fixtures/bigtx.txt' % os.getcwd()
 
         with open(path, 'rb') as f:
-
             blockraw = f.read().strip()
 
             unhex = binascii.unhexlify(blockraw)
