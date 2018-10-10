@@ -1,5 +1,5 @@
 """
-Run only thse tests:
+Run only these tests:
 
     $ python -m unittest neo.api.JSONRPC.test_json_rpc_api
 """
@@ -119,7 +119,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['balances']['0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'], '99989900.0')
-        self.assertEqual(res['result']['script_hash'], addr_str)
+        self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_not_existing_yet(self):
         addr_str = 'AHozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2'
@@ -127,7 +127,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['balances'], {})
-        self.assertEqual(res['result']['script_hash'], addr_str)
+        self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_failure(self):
         addr_str = 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp81'
@@ -768,7 +768,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
-        address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'
+        address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'  # "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX" is too short causing ToScriptHash to fail
 
         req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
@@ -894,6 +894,600 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             self.assertIn('type', res.get('result', {}).keys())
             self.assertIn('hex', res.get('result', {}).keys())
 
+            self.app.wallet.Close()
+            self.app.wallet = None
+            os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_no_wallet(self):
+        req = self._gen_rpc_req("sendfrom", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_send_from_wrong_arguments(self):
+        test_wallet_path = os.path.join(mkdtemp(), "sendfromaddress.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+        req = self._gen_rpc_req("sendfrom", params=["arg"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_send_from_simple(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+        self.assertEqual(address_to, res['result']['vout'][0]['address'])
+        self.assertEqual(address_from, res['result']['vout'][1]['address'])
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_complex(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        amount = 1
+        net_fee = 0.005
+        change_addr = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
+        address_from_account_state = GetBlockchain().GetAccountState(address_from).ToJson()
+        address_from_gas_bal = address_from_account_state['balances']['0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7']
+
+        req = self._gen_rpc_req("sendfrom", params=['gas', address_from, address_to, amount, net_fee, change_addr])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertEqual(address_to, res['result']['vout'][0]['address'])
+        self.assertEqual(change_addr, res['result']['vout'][1]['address'])
+        self.assertEqual(float(address_from_gas_bal) - amount - net_fee, float(res['result']['vout'][1]['value'])) 
+        self.assertEqual(res['result']['net_fee'], "0.005")
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_bad_assetid(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        req = self._gen_rpc_req("sendfrom", params=['nep', address_from, address_to, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_negative_amount(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, -1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_zero_amount(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 0])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_bad_from_addr(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc'  # "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc" is too short causing ToScriptHash to fail
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_bad_to_addr(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'  # "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX" is too short causing ToScriptHash to fail
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_negative_fee(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1, -0.005])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_bad_change_addr(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1, .005, 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE'])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_insufficient_funds(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 51])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -300)
+        self.assertEqual(error.get('message', None), "Insufficient funds")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_send_from_fails_to_sign_tx(self):
+        with patch('neo.api.JSONRPC.JsonRpcApi.Wallet.Sign', return_value='False'):
+            test_wallet_path = shutil.copyfile(
+                WalletFixtureTestCase.wallet_1_path(),
+                WalletFixtureTestCase.wallet_1_dest()
+            )
+            self.app.wallet = UserWallet.Open(
+                test_wallet_path,
+                to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+            )
+            address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+            address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+            req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+            mock_req = mock_request(json.dumps(req).encode("utf-8"))
+            res = json.loads(self.app.home(mock_req))
+
+            self.assertEqual(res.get('jsonrpc', None), '2.0')
+            self.assertIn('type', res.get('result', {}).keys())
+            self.assertIn('hex', res.get('result', {}).keys())
+
+            self.app.wallet.Close()
+            self.app.wallet = None
+            os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_no_wallet(self):
+        req = self._gen_rpc_req("sendmany", params=[])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -400)
+        self.assertEqual(error.get('message', None), "Access denied.")
+
+    def test_sendmany_complex(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+        self.assertEqual('1', res['result']['net_fee'])
+
+        # check for 2 transfers
+        transfers = 0
+        for info in res['result']['vout']:
+            if info['address'] == "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK":
+                transfers += 1
+        self.assertEqual(2, transfers)
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_min_params(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+        self.assertIn("AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3", res['result']['vout'][2]['address'])
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_not_list(self):
+        test_wallet_path = os.path.join(mkdtemp(), "sendfromaddress.db3")
+        self.app.wallet = UserWallet.Create(
+            test_wallet_path,
+            to_aes_key('awesomepassword')
+        )
+        req = self._gen_rpc_req("sendmany", params=["arg"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(test_wallet_path)
+
+    def test_sendmany_too_many_args(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx", "arg"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_bad_assetid(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'ne',
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_bad_address(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'  # "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX" is too short causing ToScriptHash to fail
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_negative_amount(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": -1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_zero_amount(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": 0,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_negative_fee(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output, -0.005, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_bad_change_address(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK"
+        change_addr = "APRgMZHZubii29UXF9uFa6sohrsYupNAv"  # "APRgMZHZubii29UXF9uFa6sohrsYupNAv" is too short causing ToScriptHash to fail
+        output = [{"asset": 'neo',
+                   "value": 1,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output, 0.005, change_addr])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_insufficient_funds(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+        output = [{"asset": 'neo',
+                   "value": 51,
+                   "address": address_to},
+                  {"asset": 'neo',
+                   "value": 1,
+                   "address": address_to}]
+        req = self._gen_rpc_req("sendmany", params=[output])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -300)
+        self.assertEqual(error.get('message', None), "Insufficient funds")
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_sendmany_fails_to_sign_tx(self):
+        with patch('neo.api.JSONRPC.JsonRpcApi.Wallet.Sign', return_value='False'):
+            test_wallet_path = shutil.copyfile(
+                WalletFixtureTestCase.wallet_1_path(),
+                WalletFixtureTestCase.wallet_1_dest()
+            )
+            self.app.wallet = UserWallet.Open(
+                test_wallet_path,
+                to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+            )
+            address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
+            output = [{"asset": 'neo',
+                       "value": 1,
+                       "address": address_to},
+                      {"asset": 'neo',
+                       "value": 1,
+                       "address": address_to}]
+            req = self._gen_rpc_req("sendmany", params=[output])
+            mock_req = mock_request(json.dumps(req).encode("utf-8"))
+            res = json.loads(self.app.home(mock_req))
+            self.assertEqual(res.get('jsonrpc', None), '2.0')
+            self.assertIn('type', res.get('result', {}).keys())
+            self.assertIn('hex', res.get('result', {}).keys())
             self.app.wallet.Close()
             self.app.wallet = None
             os.remove(WalletFixtureTestCase.wallet_1_dest())
