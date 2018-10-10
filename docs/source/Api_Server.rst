@@ -253,8 +253,8 @@ After running the script, you will receive the following response:
 GET Request Example
 -------------------
 
-Script Request Example
-""""""""""""""""""""""
+Using A Script
+""""""""""""""
 
 ::
 
