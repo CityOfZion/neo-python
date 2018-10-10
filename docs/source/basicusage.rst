@@ -51,7 +51,7 @@ See also the sections about "Settings and Logging" and "Interacting with Smart C
 API server (JSON and/or REST)
 -----------------------------
 
-Each neo-python node is capable of providing an API interface, which can be used to query the NEO Blockchain. The API interface is provided via JSON-RPC, and the underlying protocol uses HTTP/HTTPS for communication.
+Each neo-python node is capable of providing an API interface, which can be used to query the NEO Blockchain. The API interface is provided via JSON-RPC or REST, and the underlying protocol uses HTTP/HTTPS for communication. JSON-RPC and REST API servers may be run simultaneously.
 
 Start JSON and REST API Server on Mainnet:
 
