@@ -1,11 +1,14 @@
 Basic Usage
 ===========
 
-There are two main ways to use neo-python: ``np-prompt`` and running just the node with custom
+Introduction
+------------
+
+There are two main ways to interface with neo-python: ``np-prompt`` and running just the node with custom
 code.
 
 np-prompt
----------
+"""""""""
 
 Start np-prompt on TestNet:
 
@@ -39,14 +42,16 @@ Show help with all available arguments:
 
 
 Node with custom code
-----------------------
+"""""""""""""""""""""
 
 Take a look at the examples in the ``/examples`` directory: https://github.com/CityOfZion/neo-python/tree/development/examples
 
 See also the sections about "Settings and Logging" and "Interacting with Smart Contracts".
 
 API server (JSON and/or REST)
-=============================
+-----------------------------
+
+Each neo-python node is capable of providing an API interface, which can be used to query the NEO Blockchain. The API interface is provided via JSON-RPC, and the underlying protocol uses HTTP/HTTPS for communication.
 
 Start JSON and REST API Server on Mainnet:
 
@@ -109,12 +114,12 @@ View help with all available arguments:
       --disable-stderr      Disable stderr logger
 
 Running Extended Json-RPC Api Server
-------------------------------------
+""""""""""""""""""""""""""""""""""""
 
 Using the ``--extended-rpc`` arg will start your server with additional methods from ExtendedJsonRpcApi in addition to the normal JsonRpcApi methods. All original functionality is retained with the added functionality from ExtendedJsonRpcApi.
 
 Port Description
-----------------
+""""""""""""""""
 
 If you want an external program to access your API server, an open firewall port is required. The following is a port description that can be set to fully open or open-on-demand.
 
@@ -135,7 +140,7 @@ If you want an external program to access your API server, an open firewall port
 For P2P and WebSocket information see `NEO-Python Seedlist <https://neo-python.readthedocs.io/en/latest/Seedlist.html>`_.
 
 Running an API Server using Windows WSL (Ubuntu)
-------------------------------------------------
+""""""""""""""""""""""""""""""""""""""""""""""""
 
 If you are running neo-python on Windows WSL (Ubuntu), opening the respective ports on your router is not enough.
 You will need to add a new inbound rule to your Windows Firewall as described `here <https://www.nextofwindows.com/allow-server-running-inside-wsl-to-be-accessible-outside-windows-10-host>`_.
