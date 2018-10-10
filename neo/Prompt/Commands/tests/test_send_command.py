@@ -251,7 +251,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             res = process_transaction(wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             self.assertTrue(res)
-            self.assertEqual(2, len(res.Attributes))
+            self.assertEqual(2, len(res.Attributes))  # By default the script_hash of the transaction sender is added to the TransactionAttribute list, therefore the Attributes length is `count` + 1
 
     def test_multiple_attributes(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
