@@ -63,11 +63,11 @@ Default JSON-RPC Command List
      - Reference
      - Explanations
      - Comments
-   * - getaccountstate
+   * - `getaccountstate`_
      - <address>
      - Checks account asset information according to account address
      - 
-   * - getassetstate 
+   * - getassetstate
      - <asset_id>
      - Queries asset information according to the specified asset number
      -
@@ -275,3 +275,30 @@ After running the script, you will receive the following response:
         "id": 2,
         "result": 2829945
     }
+
+RPC Methods In Detail
+---------------------
+
+getaccountstate
+"""""""""""""""
+
+Queries the account asset information, according to the account address.
+
+Parameter Description
+#####################
+
+Account Address: A 34-bit length string, such as AJBENSwajTzQtwyJFkiJSv7MAaaMc7DsRz.
+
+Example
+#######
+
+Request body:
+
+::
+
+        {"jsonrpc": "2.0",
+        "id": 2,
+        "method": "getaccountstate", 
+        "params": ["AJBENSwajTzQtwyJFkiJSv7MAaaMc7DsRz"]
+        }
+
