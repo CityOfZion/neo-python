@@ -38,11 +38,11 @@ If you are adding tests or altering functionality, it might be faster to only ru
 
   
 
-Guideline
------
+Fixtures Guidelines
+-------------------
 
 The following guideline is relevant to all the ``unit-tests`` which are depending either on ``BlockChainFixtureTestCase`` or ``WalletFixtureTestCase``. 
-Such tests rely on fixtures which are produced by a ``neo-privnet-unittest`` image. The image is currently located here: `link <https://hub.docker.com/r/dautt/neo-privnet-unittest/>`_)
+Such tests rely on fixtures which are produced by a ``neo-python-privnet-unittest`` image. The image is currently located here: `link <https://hub.docker.com/r/cityofzion/neo-python-privnet-unittest/tags/>`_
 
 - The tests which depend directly on  ``BlockChainFixtureTestCase`` are generated using transactions between addresses contained in BC wallets: (``neo-test-bc.wallet``, ``neo-test2-bc.wallet``). 
   Occasionally we have also used, in few tests, the default address in ``neo-test-coz.wallet``. The coz wallet is special as it is the original coz privnet wallet with 100000000 NEO. 
@@ -67,11 +67,11 @@ e) Create new wallets only if absolutely necessary.
 
 **The last three points c), d), e) required updating the fixtures:**
 
-1) Pull the lastet ``neo-privnet-unittest`` image: (`link <https://hub.docker.com/r/dautt/neo-privnet-unittest/>`_)
+1) Pull the lastet `neo-python-privnet-unittest <https://hub.docker.com/r/cityofzion/neo-python-privnet-unittest/tags/>`_ image:
 
 .. code-block:: sh
 
-	docker pull dautt/neo-privnet-unittest:v0.0.xx
+	docker pull cityofzion/neo-python-privnet-unittest:v0.0.xx
 
 
 2) Run the image:
@@ -110,7 +110,7 @@ e) Create new wallets only if absolutely necessary.
 	neo-test2-w.wallet	(pwd = 1234567890) 
 	neo-test3-w.wallet	(pwd = 1234567890)
 	
-(If you want to add new tests (BC) then use BC wallets. Otherwise use W wallets for new tests (W))
+(If you want to add new tests (BC) then use the ``-bc.wallet`` wallets. Otherwise use ``-w.wallet`` wallets for new tests (W))
 
 7) If you need to create a new smart contract consider to re-use the existing one in:
 
@@ -120,7 +120,7 @@ e) Create new wallets only if absolutely necessary.
 
 (In case the source code of the new smart contract is not present in the above zip folder, please add it.)
 
-8) If you have deployed a new smart contract on the ``neo-privnet-unittest`` image, please use the word ``test`` as prefix while defining the ``contract name``. 
+8) If you have deployed a new smart contract on the ``neo-python-privnet-unittest`` image, please use the word ``test`` as prefix while defining the ``contract name``. 
 In that way we can easily find out all the contracts deploy on the image by running this command:
 
 .. code-block:: sh
