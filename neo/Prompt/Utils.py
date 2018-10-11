@@ -85,13 +85,14 @@ def get_asset_id(wallet, asset_str):
 
 
 def get_asset_amount(amount, assetId):
-    f8amount = Fixed8.TryParse(amount)
+    f8amount = Fixed8.TryParse(amount, require_positive=True)
     if f8amount is None:
         print("invalid amount format")
+        return False
 
     elif f8amount.value % pow(10, 8 - Blockchain.Default().GetAssetState(assetId.ToBytes()).Precision) != 0:
         print("incorrect amount precision")
-        return None
+        return False
 
     return f8amount
 
@@ -116,34 +117,29 @@ def get_withdraw_from_watch_only(wallet, scripthash_from):
 
 
 def get_from_addr(params):
-    to_remove = []
     from_addr = None
     for item in params:
-        if '--from-addr=' in item:
-            to_remove.append(item)
-            try:
-                from_addr = item.replace('--from-addr=', '')
-            except Exception as e:
-                pass
-    for item in to_remove:
-        params.remove(item)
-
+        if '--from-addr' in item:
+            params.remove(item)
+            from_addr = item.replace('--from-addr=', '')
     return params, from_addr
 
 
+def get_change_addr(params):
+    change_addr = None
+    for item in params:
+        if '--change-addr' in item:
+            params.remove(item)
+            change_addr = item.replace('--change-addr=', '')
+    return params, change_addr
+
+
 def get_fee(params):
-    to_remove = []
     fee = None
     for item in params:
         if '--fee=' in item:
-            to_remove.append(item)
-            try:
-                fee = get_asset_amount(item.replace('--fee=', ''), Blockchain.SystemCoin().Hash)
-            except Exception as e:
-                pass
-    for item in to_remove:
-        params.remove(item)
-
+            params.remove(item)
+            fee = get_asset_amount(item.replace('--fee=', ''), Blockchain.SystemCoin().Hash)
     return params, fee
 
 
