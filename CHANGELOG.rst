@@ -9,8 +9,9 @@ All notable changes to this project are documented in this file.
 - Fix return types of ``claimGas`` function.
 - Update compiler version ``v0.5.4``
 - Add the option -u (unittest-net) to prompt.py
-- Add unittest guildeline and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
-
+- Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
+- Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
+- Fix ``ExtendedJsonRpcApi``
 
 [0.8.1] 2018-10-06
 ------------------
