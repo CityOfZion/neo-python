@@ -8,13 +8,13 @@ from neo.Prompt.Commands.Wallet import ImportToken
 from neo.Prompt.Utils import get_tx_attr_from_args
 from neo.Prompt.Commands import Send
 import shutil
+from mock import MagicMock
 import json
 
 from mock import patch
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
-
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
 
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
@@ -41,7 +41,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_send_neo(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['neo', self.watch_addr_str, '50']
 
@@ -52,7 +51,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_send_gas_mimic_prompt(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['gas', self.watch_addr_str, '5']
             res = False
@@ -65,7 +63,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_send_with_fee_and_from_addr(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['neo', self.watch_addr_str, '1', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', '--fee=0.005']
 
@@ -120,7 +117,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1(recreate=True)
         address_from = '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc'  # address_from is too short causing ToScriptHash to fail
-        args = ['neo', self.watch_addr_str, '12', address_from]  
+        args = ['neo', self.watch_addr_str, '12', address_from]
 
         framework = construct_send_basic(wallet, args)
 
@@ -195,7 +192,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_send_token_ok(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
 
             token_hash = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
@@ -219,7 +215,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_bad_password(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=['blah']):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['neo', self.watch_addr_str, '50']
 
@@ -231,7 +226,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
     @patch.object(Send, 'gather_signatures')
     def test_owners(self, mock):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
 
             args = ['gas', self.wallet_1_addr, '2', "--owners=['AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK','APRgMZHZubii29UXF9uFa6sohrsYupNAvx']"]
@@ -243,7 +237,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_attributes(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['gas', self.watch_addr_str, '2', '--tx-attr={"usage":241,"data":"This is a remark"}']
 
@@ -255,7 +248,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_multiple_attributes(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['gas', self.watch_addr_str, '2', '--tx-attr=[{"usage":241,"data":"This is a remark"},{"usage":242,"data":"This is a remark 2"}]']
 
@@ -267,7 +259,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_bad_attributes(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['gas', self.watch_addr_str, '2', '--tx-attr=[{"usa:241"data":his is a remark"}]']
 
@@ -293,7 +284,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         args = ["--tx-attr=bytearray(b'\x00\x00')"]
 
         with self.assertRaises(Exception) as context:
-
             args, txattr = get_tx_attr_from_args(args)
             self.assertTrue('could not convert object' in context.exception)
             self.assertEqual(len(args), 0)
@@ -302,7 +292,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_fails_to_sign_tx(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             with patch('neo.Wallets.Wallet.Wallet.Sign', return_value=False):
-
                 wallet = self.GetWallet1(recreate=True)
                 args = ['gas', self.watch_addr_str, '2']
 
@@ -314,7 +303,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_fails_to_relay_tx(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             with patch('neo.Prompt.Commands.Send.NodeLeader.Relay', return_value=False):
-
                 wallet = self.GetWallet1(recreate=True)
                 args = ['gas', self.watch_addr_str, '2']
 
@@ -323,13 +311,19 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
                 self.assertFalse(res)
 
-    def test_could_not_send(self):
+    @patch('neo.Prompt.Commands.Send.traceback')
+    def test_could_not_send(self, mocked_tracback_module):
+        # mocking traceback module to avoid stacktrace printing during test run
 
         wallet = self.GetWallet1(recreate=True)
         args = ['gas', self.watch_addr_str, '2']
 
         contract_tx, scripthash_from, fee, owners, user_tx_attributes = construct_send_basic(wallet, args)
-        res = process_transaction(wallet, contract_tx, scripthash_from, fee, owners, user_tx_attributes)  # forces the 'try:' to fail
+        scripthash_change = scripthash_from
+        # mocking wallet to trigger the exception
+        wallet = MagicMock()
+        wallet.MakeTransaction.side_effect = Exception
+        res = process_transaction(wallet, contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes)  # forces the 'try:' to fail
 
         self.assertFalse(res)
 
@@ -356,7 +350,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_good_complex(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", "gas", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", UserWalletTestCase.wallet_1_pass()]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ["2", '--from-addr=%s' % self.wallet_1_addr, '--change-addr=%s' % self.watch_addr_str, '--fee=0.005']
 
@@ -412,7 +405,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_bad_assetid(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "blah", self.watch_addr_str, "1"]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['2']
 
@@ -422,7 +414,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_token(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "NXT4", self.watch_addr_str, "32"]):
-
             wallet = self.GetWallet1(recreate=True)
 
             token_hash = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
@@ -446,7 +437,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_negative_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "-1"]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['2']
 
@@ -456,7 +446,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_zero_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "0"]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['2']
 
@@ -466,7 +455,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_weird_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "5.abc3"]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['2']
 
@@ -476,7 +464,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_bad_precision_amount(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["gas", self.watch_addr_str, "1", "neo", self.watch_addr_str, "5.01"]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['2']
 
@@ -486,10 +473,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_bad_address_from(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
-
             wallet = self.GetWallet1(recreate=True)
             address_from = '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc'  # address_from is too short causing ToScriptHash to fail
-            args = ['2', address_from]  
+            args = ['2', address_from]
 
             framework = construct_send_many(wallet, args)
 
@@ -497,10 +483,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_bad_change_address(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
-
             wallet = self.GetWallet1(recreate=True)
             change_address = '--change-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE'  # change address is too short causing ToScriptHash to fail
-            args = ['2', change_address]  
+            args = ['2', change_address]
 
             framework = construct_send_many(wallet, args)
 
@@ -508,7 +493,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_sendmany_negative_fee(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
-
             wallet = self.GetWallet1(recreate=True)
             args = ['2', '--fee=-0.005']
 
