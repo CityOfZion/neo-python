@@ -70,7 +70,7 @@ How do we find out which nodes are alive? Use `NEO Network Status Monitor <http:
 If you would like more information visit the NEO Network Status Montior `repository <https://github.com/CityOfZion/neo-mon>`_.
 
 
-.. image:: ../seedlist.png
+.. image:: images/seedlist.png
   :width: 400
   :alt: seedlist
 
