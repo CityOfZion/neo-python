@@ -110,7 +110,7 @@ e) Create new wallets only if absolutely necessary.
 	neo-test2-w.wallet	(pwd = 1234567890) 
 	neo-test3-w.wallet	(pwd = 1234567890)
 	
-(If you want to add new tests (BC) then use the ``-bc.wallet`` wallets. Otherwise use ``-w.wallet`` wallets for new tests (W))
+(If you want to add new tests which depend directly on ``BlockchainFixtureTestCase`` then use any one of the ``-bc.wallet`` type of wallets. And if you want add new tests which depend directly on ``WalletFixtureTestCase`` then use any one of the ``-w.wallet`` type of wallets.)
 
 7) If you need to create a new smart contract consider to re-use the existing one in:
 
