@@ -1055,6 +1055,8 @@ def main():
                        help="Use a private net instead of the default TestNet, optionally using a custom host (default: 127.0.0.1)")
     group.add_argument("--coznet", action="store_true", default=False,
                        help="Use the CoZ network instead of the default TestNet")
+    group.add_argument("-u", "--unittest", nargs="?", metavar="host", const=True, default=False,
+                       help="Use a private net instead of the default TestNet, optionally using a custom host (default: 127.0.0.1)")
     group.add_argument("-c", "--config", action="store", help="Use a specific config file")
 
     # Theme
@@ -1097,6 +1099,8 @@ def main():
             return
     elif args.coznet:
         settings.setup_coznet()
+    elif args.unittest:
+        settings.setup_unittest_net()
 
     # Logfile settings & setup
     logfile_fn = os.path.join(settings.DATA_DIR_PATH, 'prompt.log')
