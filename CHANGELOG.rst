@@ -3,10 +3,15 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-
 [0.8.2] In Progress
 -------------------
 - Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
+- Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
+- Fix return types of ``claimGas`` function.
+- Update compiler version ``v0.5.4``
+- Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
+- Fix ``ExtendedJsonRpcApi``
+
 
 [0.8.1] 2018-10-06
 ------------------
@@ -19,6 +24,7 @@ All notable changes to this project are documented in this file.
 - Fix 'script_hash' output in ``ToJson`` in AccountState, Adds an 'address' key, Adds a test for ``ToJson`` in AccountState, Replaces the variable ``script_hash`` in ``GetAccountState`` in LevelDBBlockchain with ``address``, Adds a test for ``GetAccountState`` in LevelDBBlockchain
 - Add documentation support for Python 3.7
 - Change execution fail event payload to give more meaningful error messages
+
 
 [0.8.0] 2018-09-28
 ------------------
@@ -37,6 +43,7 @@ All notable changes to this project are documented in this file.
 - Add send-zero provision and improved test coverage to ``sendtoaddress``
 - Update Mainnet bootstrap files
 - Update to compiler version ``v0.5.3``
+
 
 [0.7.8] 2018-09-06
 ------------------

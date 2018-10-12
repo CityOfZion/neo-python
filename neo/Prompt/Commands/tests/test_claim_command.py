@@ -5,6 +5,7 @@ from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
 from neocore.Fixed8 import Fixed8
+from neo.Core.TX.ClaimTransaction import ClaimTransaction
 import shutil
 
 
@@ -69,7 +70,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.0002685), unavailable_bonus) 
+        self.assertEqual(Fixed8.FromDecimal(0.0002685), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -103,25 +104,26 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet3()
 
-        result = ClaimGas(wallet, require_password=False)
+        claim_tx, relayed = ClaimGas(wallet, require_password=False)
 
-        self.assertFalse(result)
+        self.assertFalse(relayed)
 
     def test_4_wallet_claim_ok(self):
 
         wallet = self.GetWallet1()
 
-        claim = ClaimGas(wallet, require_password=False, args=['1'])
-
-        self.assertTrue(claim)
+        claim_tx, relayed = ClaimGas(wallet, require_password=False, args=['1'])
+        self.assertIsInstance(claim_tx, ClaimTransaction)
+        self.assertTrue(relayed)
 
     def test_5_wallet_claim_ok(self):
 
         wallet = self.GetWallet2()
 
-        claim = ClaimGas(wallet, require_password=False)
+        claim_tx, relayed = ClaimGas(wallet, require_password=False)
 
-        self.assertTrue(claim)
+        self.assertIsInstance(claim_tx, ClaimTransaction)
+        self.assertTrue(relayed)
 
     def test_block_12248_sysfee(self):
 
