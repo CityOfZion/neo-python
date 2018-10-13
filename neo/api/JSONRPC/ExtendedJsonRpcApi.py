@@ -58,4 +58,31 @@ class ExtendedJsonRpcApi(JsonRpcApi):
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "searchcontracts":
+            contracts = Blockchain.Default().SearchContracts(params[0])
+            res = []
+
+            if len(params) >= 2 and params[1]:
+                for item in contracts:
+                    res.append(item.ToJson())
+                return res
+
+            for item in contracts:
+                res.append(str(item.Code.ScriptHash()))
+            return res
+
+        elif method == "showallassets":
+            assets = list(Blockchain.Default().ShowAllAssets())
+            res = []
+            for item in assets:
+                res.append(item.decode('utf-8'))
+            return res
+
+        elif method == "showallcontracts":
+            contracts = list(Blockchain.Default().ShowAllContracts())
+            res = []
+            for item in contracts:
+                res.append(item.decode('utf-8'))
+            return res
+
         return super(ExtendedJsonRpcApi, self).json_rpc_method_handler(method, params)  
