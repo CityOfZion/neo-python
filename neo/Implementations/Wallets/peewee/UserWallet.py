@@ -87,7 +87,7 @@ class UserWallet(Wallet):
         return UserWallet(path=path, passwordKey=password, create=False)
 
     @staticmethod
-    def Create(path, password):
+    def Create(path, password, generate_default_key=True):
         """
         Create a new user wallet.
 
@@ -99,7 +99,8 @@ class UserWallet(Wallet):
              UserWallet: a UserWallet instance.
         """
         wallet = UserWallet(path=path, passwordKey=password, create=True)
-        wallet.CreateKey()
+        if generate_default_key:
+            wallet.CreateKey()
         return wallet
 
     def CreateKey(self, prikey=None):
