@@ -97,8 +97,10 @@ class PromptInterface:
                 'tx {hash}',
                 'account {address} # returns account state',
                 'asset {assetId} # returns asset state',
+                'asset all # returns a list of all assets',
                 'asset search {query}',
                 'contract {contract hash} # returns contract state',
+                'contract all # returns a list of all contracts',
                 'contract search {query}',
                 'notifications {block_number or address}',
                 'mem # returns memory in use and number of buffers',
@@ -667,7 +669,13 @@ class PromptInterface:
 
         if item is not None:
 
-            if item == 'search':
+            if item.lower() == 'all':
+                assets = Blockchain.Default().ShowAllAssets()
+                print("Assets: %s" % assets)
+
+                return
+
+            elif item == 'search':
                 query = get_arg(args, 1)
                 results = Blockchain.Default().SearchAssetState(query)
                 print("Found %s results for %s" % (len(results), query))
