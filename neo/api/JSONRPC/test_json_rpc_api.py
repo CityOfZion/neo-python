@@ -146,7 +146,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['assetId'], '0x%s' % asset_str)
         self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
         self.assertEqual(res['result']['available'], 0)
-    
+
     def test_get_asset_state_str(self):
         asset_str = 'neo'
         req = self._gen_rpc_req("getassetstate", params=[asset_str])
