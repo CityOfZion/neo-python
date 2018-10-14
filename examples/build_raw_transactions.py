@@ -1,5 +1,5 @@
 """
-    This file contains 2 examples on how to build raw transactions that can be send via the 'sendrawtransactions' RPC endpoint.
+    This file contains 2 examples on how to build raw transactions that can be send via the 'sendrawtransaction' RPC endpoint.
 
     Note that the perspective taken in these examples is that you want a light wallet like approach. This means that you will
     not have a fully synced Blockchain via neo-python and that you get certain pieces of data from external sources like the API at NEOSCAN.io
@@ -139,11 +139,11 @@ def example2():
     source_script_hash = address_to_scripthash(source_address)
 
     # start by creating a base InvocationTransaction
-    # the inputs, outputs, type do not have to be set anymore.
+    # the inputs, outputs and Type do not have to be set anymore.
     invocation_tx = InvocationTransaction()
 
     # often times smart contract developers use the function ``CheckWitness`` to determine if the transaction is signed by somebody eligible of calling a certain method
-    # in order to pass that check you want to add the corresponding script_hash as a transaction attribute (i.e. this is generally the script_hash of the public key you use for signing)
+    # in order to pass that check you want to add the corresponding script_hash as a transaction attribute (this is generally the script_hash of the public key you use for signing)
     # Note that for public functions like the NEP-5 'getBalance' and alike this would not be needed, but it doesn't hurt either
     invocation_tx.Attributes.append(TransactionAttribute(usage=TransactionAttributeUsage.Script, data=source_script_hash))
 
