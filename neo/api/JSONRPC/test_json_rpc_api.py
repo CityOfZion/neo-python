@@ -147,7 +147,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
         self.assertEqual(res['result']['available'], 0)
 
-    def test_get_asset_state_str(self):
+    def test_get_asset_state_neo(self):
         asset_str = 'neo'
         req = self._gen_rpc_req("getassetstate", params=[asset_str])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
@@ -155,6 +155,15 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['assetId'], '0x%s' % str(GetBlockchain().SystemShare().Hash))
         self.assertEqual(res['result']['admin'], 'Abf2qMs1pzQb8kYk9RuxtUb9jtRKJVuBJt')
         self.assertEqual(res['result']['available'], 10000000000000000)
+
+    def test_get_asset_state_gas(self):
+        asset_str = 'GAS'
+        req = self._gen_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['assetId'], '0x%s' % str(GetBlockchain().SystemCoin().Hash))
+        self.assertEqual(res['result']['amount'], 10000000000000000)
+        self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
 
     def test_get_asset_state_0x(self):
         asset_str = '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
