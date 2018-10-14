@@ -13,6 +13,7 @@ All notable changes to this project are documented in this file.
 - Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 - Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
 - Fix ``ExtendedJsonRpcApi``
+- Add ``dumpprivkey`` RPC method
 
 
 [0.8.1] 2018-10-06
