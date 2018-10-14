@@ -60,4 +60,4 @@ class ExtendedJsonRpcApi(JsonRpcApi):
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
-        return super(ExtendedJsonRpcApi, self).json_rpc_method_handler(method, params)
+        return super(ExtendedJsonRpcApi, self).json_rpc_method_handler(method, params) 
