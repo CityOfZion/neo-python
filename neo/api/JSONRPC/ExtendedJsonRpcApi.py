@@ -60,8 +60,10 @@ class ExtendedJsonRpcApi(JsonRpcApi):
 
         elif method == "searchcontracts":
             contracts = Blockchain.Default().SearchContracts(params[0])
-            res = []
+            if len(contracts) == 0:
+                raise JsonRpcError(-100, "No known contracts")
 
+            res = []
             if len(params) >= 2 and params[1]:
                 for item in contracts:
                     res.append(item.ToJson())
