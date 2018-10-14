@@ -10,8 +10,10 @@ from klein.test.test_resource import requestMock
 from neo.api.JSONRPC.ExtendedJsonRpcApi import ExtendedJsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.utils import to_aes_key
 from neo.Blockchain import GetBlockchain
+from neo.Core.Blockchain import Blockchain
 from neo.Settings import settings
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
