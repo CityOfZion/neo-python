@@ -141,7 +141,7 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
             contract = Blockchain.Default().GetContract(item)
             contract = contract.ToJson()
             self.assertEqual("dauTT", contract['author'])
-    
+
     def test_searchcontracts_verbose(self):
         req = self._gen_rpc_req("searchcontracts", params=["dauTT", 1])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
