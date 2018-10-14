@@ -45,6 +45,9 @@ class ApplicationEngine(ExecutionEngine):
 
     maxItemSize = 1024 * 1024
     maxArraySize = 1024
+    max_shl_shr = 65535  # ushort.maxValue
+    min_shl_shr = -65535  # -ushort.maxValue
+    MaxSizeForBigInteger = 32
 
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
@@ -113,6 +116,83 @@ class ApplicationEngine(ExecutionEngine):
                 return False
 
             return True
+
+        return True
+
+    def _checkBigInteger(self, value):
+        return len(value.ToByteArray()) <= self.MaxSizeForBigInteger
+
+    def CheckBigIntegers(self):
+        cx = self.CurrentContext
+        opcode = cx.NextInstruction
+
+        if opcode == OpCode.SHL:
+            ishift = cx.EvaluationStack.Peek(0).GetBigInteger()
+
+            if ishift > self.max_shl_shr or ishift < self.min_shl_shr:
+                return False
+
+            x = cx.EvaluationStack.Peek(1).GetBigInteger()
+
+            if not self._checkBigInteger(x << ishift):
+                return False
+
+        if opcode == OpCode.SHR:
+            ishift = cx.EvaluationStack.Peek(0).GetBigInteger()
+
+            if ishift > self.max_shl_shr or ishift < self.min_shl_shr:
+                return False
+
+            x = cx.EvaluationStack.Peek(1).GetBigInteger()
+
+            if not self._checkBigInteger(x >> ishift):
+                return False
+
+        if opcode == OpCode.INC:
+            x = cx.EvaluationStack.Peek().GetBigInteger()
+            if not self._checkBigInteger(x) or not self._checkBigInteger(x + 1):
+                return False
+
+        if opcode == OpCode.DEC:
+            x = cx.EvaluationStack.Peek().GetBigInteger()
+            if not self._checkBigInteger(x) or (x.Sign <= 0 and not self._checkBigInteger(x - 1)):
+                return False
+
+        if opcode == OpCode.ADD:
+            x2 = cx.EvaluationStack.Peek().GetBigInteger()
+            x1 = cx.EvaluationStack.Peek(1).GetBigInteger()
+
+            if not self._checkBigInteger(x2) or not self._checkBigInteger(x1) or not self._checkBigInteger(x1 + x2):
+                return False
+
+        if opcode == OpCode.SUB:
+            x2 = cx.EvaluationStack.Peek().GetBigInteger()
+            x1 = cx.EvaluationStack.Peek(1).GetBigInteger()
+
+            if not self._checkBigInteger(x2) or not self._checkBigInteger(x1) or not self._checkBigInteger(x1 - x2):
+                return False
+
+        if opcode == OpCode.MUL:
+            x2 = cx.EvaluationStack.Peek().GetBigInteger()
+            x1 = cx.EvaluationStack.Peek(1).GetBigInteger()
+
+            length_x1 = len(x1.ToByteArray())
+            if length_x1 > self.MaxSizeForBigInteger:
+                return False
+
+            length_x2 = len(x2.ToByteArray())
+            if length_x2 > self.MaxSizeForBigInteger:
+                return False
+
+            if length_x1 + length_x2 > self.MaxSizeForBigInteger:
+                return False
+
+        if opcode in [OpCode.DIV, OpCode.MOD]:
+            x2 = cx.EvaluationStack.Peek().GetBigInteger()
+            x1 = cx.EvaluationStack.Peek(1).GetBigInteger()
+
+            if not self._checkBigInteger(x2) or not self._checkBigInteger(x1):
+                return False
 
         return True
 
@@ -307,7 +387,12 @@ class ApplicationEngine(ExecutionEngine):
                         return False
 
                     if not self.CheckInvocationStack():
-                        logger.debug("INVOCATION SIZE TO BIIG")
+                        logger.debug("INVOCATION SIZE TO BIG")
+                        self._VMState |= VMState.FAULT
+                        return False
+
+                    if not self.CheckBigIntegers():
+                        logger.debug("BigIntegers check failed")
                         self._VMState |= VMState.FAULT
                         return False
 
