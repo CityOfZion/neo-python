@@ -91,7 +91,7 @@ View help with all available arguments:
       --wallet WALLET       Open wallet. Will allow you to use methods that
                             require an open wallet
       --host HOST           Hostname ( for example 127.0.0.1)
-      --extended-rpc        Use extended json-rpc api
+      --extended-rpc        Enable unofficial RPC API methods
 
     Network options:
       --mainnet             Use MainNet
@@ -112,11 +112,6 @@ View help with all available arguments:
       --syslog-local [0-7]  Log to a local syslog facility instead of 'user'.
                             Value must be between 0 and 7 (e.g. 0 for 'local0').
       --disable-stderr      Disable stderr logger
-
-Running Extended Json-RPC Api Server
-""""""""""""""""""""""""""""""""""""
-
-Using the ``--extended-rpc`` arg will start your server with additional methods from ExtendedJsonRpcApi in addition to the normal JsonRpcApi methods. All original functionality is retained with the added functionality from ExtendedJsonRpcApi.
 
 Port Description
 """"""""""""""""
