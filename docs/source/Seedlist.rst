@@ -95,9 +95,6 @@ We follow this standard protocol for ports:
    * - P2P via TCP
      - 10333
      - 20333
-   * - P2P via WebSocket
-     - 10334
-     - 20334
 
 We will choose the first node over the third node, since *1* adheres the convention and *3* does not.
 
