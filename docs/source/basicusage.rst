@@ -132,7 +132,7 @@ If you want an external program to access your API server, an open firewall port
      - 10332 
      - 20332
 
-For P2P and WebSocket information see `NEO-Python Seedlist <https://neo-python.readthedocs.io/en/latest/Seedlist.html>`_.
+For P2P information see `NEO-Python Seedlist <https://neo-python.readthedocs.io/en/latest/Seedlist.html>`_.
 
 Running an API Server using Windows WSL (Ubuntu)
 """"""""""""""""""""""""""""""""""""""""""""""""
