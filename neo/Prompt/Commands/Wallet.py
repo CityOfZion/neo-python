@@ -15,29 +15,30 @@ import binascii
 import json
 import math
 from logzero import logger
+from neo.Implementations.Wallets.peewee.Models import Account
 
 
 def CreateAddress(prompter, wallet, args):
     try:
         int_args = int(args)
-    except Exception as e:
-        print('Enter the number of addresses to create <= 3.')
+    except (ValueError, TypeError) as error:  # for non integer args or Nonetype
+        print(error)
         return False
 
     if wallet is None:
         print("Please open a wallet.")
         return False
-    if int_args > 3:
-        print('Please create 3 or less addresses at a time.')
-        return False
+
     if int_args <= 0:
         print('Enter a number greater than 0.')
         return False
-    if int_args > 0 and int_args <= 3:
-        x = int_args + 1
-        while x > 1:
-            wallet.CreateKey()
-            x = x - 1
+
+    address_list = []
+    for i in list(range(int_args)):
+        keys = wallet.CreateKey()
+        account = Account.get(PublicKeyHash=keys.PublicKeyHash.ToBytes())
+        address_list.append(account.contract_set[0].Address.ToString())
+    print("Created %s new addresses: " % int_args, address_list)
     return wallet
 
 
