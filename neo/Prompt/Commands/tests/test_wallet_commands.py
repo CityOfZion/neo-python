@@ -36,7 +36,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_1_import_addr(self):
 
-        wallet = self.GetWallet1()
+        wallet = self.GetWallet1(recreate=True)
 
         self.assertEqual(len(wallet.LoadWatchOnly()), 0)
 
@@ -58,7 +58,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_3_import_token(self):
 
-        wallet = self.GetWallet1()
+        wallet = self.GetWallet1(recreate=True)
 
         self.assertEqual(len(wallet.GetTokens()), 1)
 
@@ -74,13 +74,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(token.Address, 'Ab61S1rk2VtCVd3NtGNphmBckWk4cfBdmB')
 
     def test_4_get_synced_balances(self):
-        wallet = self.GetWallet1()
+        wallet = self.GetWallet1(recreate=True)
         synced_balances = wallet.GetSyncedBalances()
         self.assertEqual(len(synced_balances), 2)
 
     def test_5_show_unspent(self):
 
-        wallet = self.GetWallet1(True)
+        wallet = self.GetWallet1(recreate=True)
         unspents = ShowUnspentCoins(wallet, [])
         self.assertEqual(len(unspents), 2)
 
@@ -101,7 +101,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_6_split_unspent(self):
 
-        wallet = self.GetWallet1(True)
+        wallet = self.GetWallet1(recreate=True)
 
         # test bad
         tx = SplitUnspentCoin(wallet, [])
@@ -133,7 +133,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = CreateAddress(None, None, 1)
         self.assertFalse(res)
 
-        wallet = self.GetWallet1(True)
+        wallet = self.GetWallet1(recreate=True)
 
         # not specifying a number of addresses
         res = CreateAddress(None, wallet, None)
