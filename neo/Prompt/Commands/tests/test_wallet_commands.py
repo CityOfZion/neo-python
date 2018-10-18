@@ -129,19 +129,25 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_7_create_address(self):
 
+        # no wallet
+        res = CreateAddress(None, None, 1)
+        self.assertFalse(res)
+
         wallet = self.GetWallet1(True)
 
         # not specifying a number of addresses
-        CreateAddress(None, wallet, None)
-        self.assertEqual(len(wallet.Addresses), 1)
+        res = CreateAddress(None, wallet, None)
+        self.assertFalse(res)
 
-        # trying to create too many addresses
-        CreateAddress(None, wallet, 5)
-        self.assertEqual(len(wallet.Addresses), 1)
+        # bad args
+        res = CreateAddress(None, wallet, "blah")
+        self.assertFalse(res)
+
+        # negative value
+        res = CreateAddress(None, wallet, -1)
+        self.assertFalse(res)
 
         # should pass
-        success = CreateAddress(None, wallet, 1)
-        self.assertTrue(success)
-
-        # check the number of addresses
-        self.assertEqual(len(wallet.Addresses), 2)
+        res = CreateAddress(None, wallet, 2)
+        self.assertTrue(res)
+        self.assertEqual(len(wallet.Addresses), 3)
