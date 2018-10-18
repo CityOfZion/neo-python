@@ -23,7 +23,7 @@ All notable changes to this project are documented in this file.
 - Change notification transfer event format to use string quoted integer
 - Fix Notification token list to include correct hash for contract and token
 - Removes all ``hold`` and ``withdraw`` related functionality from wallet and prompt
-- Fix 'script_hash' output in ``ToJson`` in AccountState, Adds an 'address' key, Adds a test for ``ToJson`` in AccountState, Replaces the variable ``script_hash`` in ``GetAccountState`` in LevelDBBlockchain with ``address``, Adds a test for ``GetAccountState`` in LevelDBBlockchain
+- Various updates to inaccuracies in ``ToJson`` output of ``AccountState``
 - Add documentation support for Python 3.7
 - Change execution fail event payload to give more meaningful error messages
 
