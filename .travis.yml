@@ -27,7 +27,7 @@ install:
 
 # command to run tests
 script:
-- ls /home/travis/virtualenv/python3.6.3/src/neocore/
+- cat /home/travis/virtualenv/python3.6.3/src/neocore/neocore/BigInteger.py
 - coverage run -m unittest discover neo
 - coverage run -m -a unittest discover boa_test
 - pycodestyle neo
