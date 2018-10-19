@@ -27,7 +27,7 @@ install:
 
 # command to run tests
 script:
-- ls /home/travis/virtualenv/python3.6.3/lib/python3.6/site-packages
+- cat /home/travis/virtualenv/python3.6.3/lib/python3.6/site-packages/neocore.egg-link
 - coverage run -m unittest discover neo
 - coverage run -m -a unittest discover boa_test
 - pycodestyle neo
