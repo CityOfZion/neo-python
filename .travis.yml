@@ -21,6 +21,7 @@ addons:
 install:
 - pip install -e .
 - pip install coveralls
+- pip uninstall neo-boa neo-python-core
 - pip install -e git+https://github.com/ixje/neo-boa.git@wallet_fixtures#egg=neo-boa
 - pip install -e git+https://github.com/ixje/neo-python-core.git@wallet_fixtures#egg=neo-python-core
 
