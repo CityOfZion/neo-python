@@ -23,7 +23,7 @@ install:
 - pip install coveralls
 - yes | pip uninstall neo-boa neocore
 - pip install -e git+https://github.com/ixje/neo-boa@wallet_fixtures#egg=neo-boa
-- pip install -e git+https://github.com/ixje/neo-python-core@wallet_fixtures#egg=neo-python-core
+- pip install -e git+https://github.com/ixje/neo-python-core@wallet_fixtures#egg=neocore
 
 # command to run tests
 script:
