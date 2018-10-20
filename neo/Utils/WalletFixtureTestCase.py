@@ -12,11 +12,11 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
 
     @classmethod
     def wallet_1_path(cls):
-        return cls.root_folder + '/fixtures/neo-test1-w.wallet'
+        return cls.wallets_folder + 'neo-test1-w.wallet'
 
     @classmethod
     def wallet_1_dest(cls):
-        return cls.root_folder + '/wallet1.wallet'
+        return cls.wallets_folder + 'wallet1.wallet'
 
     @classmethod
     def wallet_1_pass(cls):
@@ -24,11 +24,11 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
 
     @classmethod
     def wallet_2_path(cls):
-        return cls.root_folder + '/fixtures/neo-test2-w.wallet'
+        return cls.wallets_folder + 'neo-test2-w.wallet'
 
     @classmethod
     def wallet_2_dest(cls):
-        return cls.root_folder + '/wallet2.wallet'
+        return cls.wallets_folder + 'wallet2.wallet'
 
     @classmethod
     def wallet_2_pass(cls):
@@ -36,11 +36,11 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
 
     @classmethod
     def wallet_3_path(cls):
-        return cls.root_folder + '/fixtures/neo-test3-w.wallet'
+        return cls.wallets_folder + 'neo-test3-w.wallet'
 
     @classmethod
     def wallet_3_dest(cls):
-        return cls.root_folder + '/wallet3.wallet'
+        return cls.wallets_folder + 'wallet3.wallet'
 
     @classmethod
     def wallet_3_pass(cls):
@@ -48,7 +48,7 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
 
     @classmethod
     def new_wallet_dest(cls):
-        return cls.root_folder + '/newwallet.wallet'
+        return cls.wallets_folder + 'newwallet.wallet'
 
     @classmethod
     def new_wallet_pass(self):
