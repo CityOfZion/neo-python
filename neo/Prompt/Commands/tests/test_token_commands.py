@@ -23,6 +23,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     _wallet1 = None
 
+    wallet_2_addr = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
+
+    _wallet2 = None
+
     wallet_3_addr = 'AZiE7xfyJALW7KmADWtCJXGGcnduYhGiCX'
 
     _wallet3 = None
@@ -46,6 +50,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
                                            to_aes_key(UserWalletTestCase.wallet_1_pass()))
 
         return cls._wallet1
+
+    @classmethod
+    def GetWallet2(cls, recreate=False):
+
+        if cls._wallet2 is None or recreate:
+            shutil.copyfile(cls.wallet_2_path(), cls.wallet_2_dest())
+            cls._wallet2 = UserWallet.Open(UserWalletTestCase.wallet_2_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_2_pass()))
+
+        return cls._wallet2
 
     @classmethod
     def GetWallet3(cls, recreate=False):
@@ -370,11 +384,18 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(register)
 
     def test_token_history_correct(self):
-        wallet = self.GetWallet1(recreate=True)
         db = NotificationDB.instance()
-        token = self.get_tokens(wallet)
 
-        result = token_history(wallet, db, [token.symbol])
+        # test Send event history
+        wallet = self.GetWallet1(recreate=True)
+
+        result = token_history(wallet, db, ["NXT4"])
+        self.assertTrue(result)
+
+        # test Received event history
+        wallet = self.GetWallet2(recreate=True)
+
+        result = token_history(wallet, db, ["NXT4"])
         self.assertTrue(result)
 
         db.close()
@@ -393,7 +414,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet = self.GetWallet1(recreate=True)
         token = self.get_tokens(wallet)
 
-        result = token_history(wallet, None, [token.symbol])
+        result = token_history(wallet, None, ["NXT4"])
 
         self.assertFalse(result)
 
