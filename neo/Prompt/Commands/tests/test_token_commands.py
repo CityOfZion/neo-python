@@ -412,7 +412,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_token_history_no_db(self):
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
 
         result = token_history(wallet, None, ["NXT4"])
 
