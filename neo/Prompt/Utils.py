@@ -151,11 +151,10 @@ def get_parse_addresses(params):
 
 
 def get_tx_attr_from_args(params):
-    to_remove = []
     tx_attr_dict = []
     for item in params:
         if '--tx-attr=' in item:
-            to_remove.append(item)
+            params.remove(item)
             try:
                 attr_str = item.replace('--tx-attr=', '')
 
@@ -173,8 +172,6 @@ def get_tx_attr_from_args(params):
                     logger.error("Invalid transaction attribute specification: %s " % type(tx_attr_obj))
             except Exception as e:
                 logger.error("Could not parse json from tx attrs: %s " % e)
-    for item in to_remove:
-        params.remove(item)
 
     return params, tx_attr_dict
 
