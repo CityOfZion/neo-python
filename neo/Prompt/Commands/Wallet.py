@@ -34,7 +34,7 @@ def CreateAddress(prompter, wallet, args):
         return False
 
     address_list = []
-    for i in list(range(int_args)):
+    for i in range(int_args):
         keys = wallet.CreateKey()
         account = Account.get(PublicKeyHash=keys.PublicKeyHash.ToBytes())
         address_list.append(account.contract_set[0].Address.ToString())
