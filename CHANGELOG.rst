@@ -5,7 +5,6 @@ All notable changes to this project are documented in this file.
 
 [0.8.2] In Progress
 -------------------
-- Improve Tokens.py and increase test coverage
 - Add raw transaction building examples in ``\examples\`` folder
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
 - Fix return types of ``claimGas`` function.
