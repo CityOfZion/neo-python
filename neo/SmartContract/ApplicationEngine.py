@@ -134,7 +134,11 @@ class ApplicationEngine(ExecutionEngine):
 
             x = cx.EvaluationStack.Peek(1).GetBigInteger()
 
-            if not self._checkBigInteger(x << ishift):
+            try:
+                if not self._checkBigInteger(x << ishift):
+                    return False
+            except ValueError:
+                # negative ishift throws a value error
                 return False
 
         if opcode == OpCode.SHR:
@@ -145,7 +149,11 @@ class ApplicationEngine(ExecutionEngine):
 
             x = cx.EvaluationStack.Peek(1).GetBigInteger()
 
-            if not self._checkBigInteger(x >> ishift):
+            try:
+                if not self._checkBigInteger(x >> ishift):
+                    return False
+            except ValueError:
+                # negative ishift throws a value error
                 return False
 
         if opcode == OpCode.INC:
