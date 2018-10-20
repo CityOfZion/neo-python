@@ -23,7 +23,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
     _blockchain = None
 
-    root_folder = os.path.dirname(neo.__file__)[:-4]
+    wallets_folder = os.path.dirname(neo.__file__) + '/Utils/fixtures/'
 
     @classmethod
     def leveldb_testpath(cls):
