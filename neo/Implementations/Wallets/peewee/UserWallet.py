@@ -152,7 +152,7 @@ class UserWallet(Wallet):
             db_contract = Contract.get(ScriptHash=contract.ScriptHash.ToBytes())
             db_contract.delete_instance()
         except Exception as e:
-            logger.info("contract does not exist yet")
+            logger.debug("contract does not exist yet")
 
         sh = bytes(contract.ScriptHash.ToArray())
         address, created = Address.get_or_create(ScriptHash=sh)
