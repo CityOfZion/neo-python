@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.2] In Progress
 -------------------
+- Fix discrepancy between `getpeers` RPC call and the `maxpeers` setting
 - Update ``CreateAddress`` functionality and tests
 - Add VM sanity checks for operations on ``BigInteger``'s
 - Add raw transaction building examples in ``\examples\`` folder
