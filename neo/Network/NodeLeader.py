@@ -210,6 +210,9 @@ class NodeLeader:
         if peer in self.Peers:
             self.Peers.remove(peer)
 
+        if peer.Address in self.ADDRS:
+            self.ADDRS.remove(peer.Address)
+
     def onSetupConnectionErr(self, err):
         logger.debug("On setup connection error! %s" % err)
 
