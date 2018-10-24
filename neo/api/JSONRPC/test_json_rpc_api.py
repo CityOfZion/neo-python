@@ -16,13 +16,11 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from neo.IO.Helper import Helper
-from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Blockchain import GetBlockchain
-from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
-
+from copy import deepcopy
 from neo.Settings import ROOT_INSTALL_PATH, settings
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from mock import patch
@@ -170,12 +168,20 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result'], '0x62539bdf30ff2567355efb38b1911cc07258710cfab5b50d3e32751618969bcb')
 
     def test_get_connectioncount(self):
-        # @TODO
-        # Not sure if there's a great way to test this as it will always return 0 in tests
+        # make sure we have a predictable state
+        leader = NodeLeader.Instance()
+        old_leader = deepcopy(leader)
+        fake_obj = object()
+        leader.Peers = [fake_obj, fake_obj]
+        leader.ADDRS = [fake_obj, fake_obj]
+
         req = self._gen_rpc_req("getconnectioncount", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], 0)
+        self.assertEqual(res['result'], 2)
+
+        # restore whatever state the instance was in
+        NodeLeader._LEAD = old_leader
 
     def test_get_block_int(self):
         req = self._gen_rpc_req("getblock", params=[10, 1])
@@ -482,13 +488,15 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         test_node = NeoNode()
         test_node.host = "127.0.0.1"
         test_node.port = 20333
-        node.Peers.append(test_node)
+        node.Peers = [test_node]
 
         req = self._gen_rpc_req("getpeers", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(len(node.Peers), len(res['result']['connected']))
+        print("unconnected:{}".format(len(res['result']['unconnected'])))
+        print("addrs:{} peers:{}".format(len(node.ADDRS), len(node.Peers)))
         self.assertEqual(len(res['result']['unconnected']),
                          len(node.ADDRS) - len(node.Peers))
         # To avoid messing up the next tests
@@ -970,7 +978,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertIn('txid', res.get('result', {}).keys())
         self.assertEqual(address_to, res['result']['vout'][0]['address'])
         self.assertEqual(change_addr, res['result']['vout'][1]['address'])
-        self.assertEqual(float(address_from_gas_bal) - amount - net_fee, float(res['result']['vout'][1]['value'])) 
+        self.assertEqual(float(address_from_gas_bal) - amount - net_fee, float(res['result']['vout'][1]['value']))
         self.assertEqual(res['result']['net_fee'], "0.005")
 
         self.app.wallet.Close()

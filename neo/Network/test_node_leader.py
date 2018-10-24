@@ -25,6 +25,13 @@ class Endpoint:
 
 class NodeLeaderConnectionTest(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # clean up left over of other tests classes
+        leader = NodeLeader.Instance()
+        leader.Peers = []
+        leader.ADDRS = []
+
     def _add_new_node(self, host, port):
         self.tr.getPeer.side_effect = [IPv4Address('TCP', host, port)]
         node = self.factory.buildProtocol(('127.0.0.1', 0))
@@ -36,7 +43,6 @@ class NodeLeaderConnectionTest(unittest.TestCase):
         self.factory = NeoClientFactory()
         self.tr = proto_helpers.StringTransport()
         self.tr.getPeer = MagicMock()
-
         self.leader = NodeLeader.Instance()
 
     def test_getpeer_list_vs_maxpeer_list(self):
@@ -103,7 +109,6 @@ class LeaderTestCase(WalletFixtureTestCase):
             with patch('twisted.internet.reactor.callLater', mock_call_later):
                 with patch('neo.Network.NeoNode.NeoNode.Disconnect', mock_disconnect):
                     with patch('neo.Network.NeoNode.NeoNode.SendSerializedMessage', mock_send_msg):
-
                         leader.Start()
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
@@ -126,7 +131,7 @@ class LeaderTestCase(WalletFixtureTestCase):
                         leader.RemoveConnectedPeer(peer)
 
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
-                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST))
+                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST) - 1)
 
                         # now test adding another
                         leader.RemoteNodePeerReceived('hello.com', 1234, 6)
