@@ -123,6 +123,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertFalse(send)
 
+    def test_token_send_bad_token(self):
+        wallet = self.GetWallet1(recreate=True)
+        addr_from = wallet.GetDefaultContract().Address
+        addr_to = self.watch_addr_str
+
+        args = ["Blah", addr_from, addr_to, '1300']
+        send = token_send(wallet, args, prompt_passwd=False)
+
+        self.assertFalse(send)
+
     def test_token_send_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Transfer', return_value=(None, 0, None)):
             wallet = self.GetWallet1(recreate=True)
@@ -169,6 +179,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
         addr_to = self.watch_addr_str
 
         args = [token.symbol, addr_from, addr_to]
+        send = token_send_from(wallet, args, prompt_passwd=False)
+
+        self.assertFalse(send)
+
+    def test_transfer_from_bad_token(self):
+        wallet = self.GetWallet1(recreate=True)
+        addr_from = self.wallet_1_addr
+        addr_to = self.watch_addr_str
+
+        args = ["Blah", addr_from, addr_to, '123']
         send = token_send_from(wallet, args, prompt_passwd=False)
 
         self.assertFalse(send)
@@ -238,6 +258,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertFalse(send)
 
+    def test_token_approve_bad_token(self):
+        wallet = self.GetWallet1(recreate=True)
+        addr_from = wallet.GetDefaultContract().Address
+        addr_to = self.watch_addr_str
+
+        args = ["Blah", addr_from, addr_to, '123']
+        send = token_approve_allowance(wallet, args, prompt_passwd=False)
+
+        self.assertFalse(send)
+
     def test_token_approve_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Approve', return_value=(None, 0, None)):
             wallet = self.GetWallet1(recreate=True)
@@ -282,6 +312,15 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertFalse(allowance)
 
+    def test_token_allowance_bad_token(self):
+        wallet = self.GetWallet1(recreate=True)
+        addr_to = self.watch_addr_str
+
+        args = ["Blah", self.wallet_1_addr, addr_to]
+        allowance = token_get_allowance(wallet, args, verbose=True)
+
+        self.assertFalse(allowance)
+
     def test_token_allowance_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Allowance', return_value=(None, 0, None)):
 
@@ -315,6 +354,15 @@ class UserWalletTestCase(WalletFixtureTestCase):
         addr_to = self.wallet_1_addr
 
         args = [token.symbol, addr_to]
+        mint = token_mint(wallet, args, prompt_passwd=False)
+
+        self.assertFalse(mint)
+
+    def test_token_mint_bad_token(self):
+        wallet = self.GetWallet1(recreate=True)
+        addr_to = self.wallet_1_addr
+
+        args = ["Blah", addr_to]
         mint = token_mint(wallet, args, prompt_passwd=False)
 
         self.assertFalse(mint)
@@ -359,6 +407,14 @@ class UserWalletTestCase(WalletFixtureTestCase):
         token = self.get_tokens(wallet)
 
         args = [token.symbol]
+        register = token_crowdsale_register(wallet, args, prompt_passwd=False)
+
+        self.assertFalse(register)
+
+    def test_token_register_bad_token(self):
+        wallet = self.GetWallet1(recreate=True)
+
+        args = ["Blah"]
         register = token_crowdsale_register(wallet, args, prompt_passwd=False)
 
         self.assertFalse(register)
@@ -417,7 +473,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertFalse(result)
 
-    def test_token_history_no_token(self):
+    def test_token_history_bad_token(self):
         wallet = self.GetWallet1(recreate=True)
         db = NotificationDB.instance()
 
