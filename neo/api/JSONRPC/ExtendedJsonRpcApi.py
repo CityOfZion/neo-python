@@ -3,6 +3,7 @@ from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi, JsonRpcError
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.UInt256 import UInt256
 import datetime
+from neo.Prompt.Commands.Tokens import token_send
 
 
 class ExtendedJsonRpcApi(JsonRpcApi):
