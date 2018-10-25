@@ -14,6 +14,10 @@ def token_send(wallet, args, prompt_passwd=True):
         return False
 
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     send_from = args[1]
     send_to = args[2]
     amount = amount_from_string(token, args[3])
@@ -27,6 +31,10 @@ def token_send_from(wallet, args, prompt_passwd=True):
         return False
 
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     send_from = args[1]
     send_to = args[2]
     amount = amount_from_string(token, args[3])
@@ -66,6 +74,10 @@ def token_approve_allowance(wallet, args, prompt_passwd=True):
         return False
 
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     approve_from = args[1]
     approve_to = args[2]
     amount = amount_from_string(token, args[3])
@@ -98,6 +110,10 @@ def token_get_allowance(wallet, args, verbose=False):
         return False
 
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     allowance_from = args[1]
     allowance_to = args[2]
 
@@ -118,6 +134,10 @@ def token_get_allowance(wallet, args, verbose=False):
 
 def token_mint(wallet, args, prompt_passwd=True):
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     mint_to_addr = args[1]
     args, invoke_attrs = get_tx_attr_from_args(args)
     if len(args) < 3:
@@ -150,6 +170,9 @@ def token_mint(wallet, args, prompt_passwd=True):
 
 def token_crowdsale_register(wallet, args, prompt_passwd=True):
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
 
     args, from_addr = get_from_addr(args)
 
@@ -224,7 +247,6 @@ def token_history(wallet, db, args):
         return False
 
     token = get_asset_id(wallet, args[0])
-
     if not isinstance(token, NEP5Token):
         print("The given symbol does not represent a loaded NEP5 token")
         return False
