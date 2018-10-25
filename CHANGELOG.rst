@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.2] In Progress
 -------------------
+- Update ``process_transaction`` in ``JsonRpcApi.py``
 - Update ``CreateAddress`` functionality and tests
 - Add VM sanity checks for operations on ``BigInteger``'s
 - Add raw transaction building examples in ``\examples\`` folder
