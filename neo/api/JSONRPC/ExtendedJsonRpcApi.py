@@ -58,4 +58,13 @@ class ExtendedJsonRpcApi(JsonRpcApi):
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "transfertokens":
+            if self.wallet:
+                tx = token_send(self.wallet, params, prompt_passwd=False)
+                if not tx:
+                    raise JsonRpcError(-32602, "Invalid params")
+                return tx.ToJson()
+            else:
+                raise JsonRpcError(-400, "Access denied.")
+
         return super(ExtendedJsonRpcApi, self).json_rpc_method_handler(method, params)  
