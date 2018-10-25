@@ -127,7 +127,7 @@ class PromptInterface:
                 'wallet claim (max_coins_to_claim)',
                 'wallet migrate',
                 'wallet rebuild {start block}',
-                'wallet create_addr {number of addresses <= 3}',
+                'wallet create_addr {number of addresses}',
                 'wallet delete_addr {addr}',
                 'wallet delete_token {token_contract_hash}',
                 'wallet alias {addr} {title}',

@@ -24,6 +24,7 @@ from neocore.KeyPair import KeyPair
 from neo import Blockchain
 from base58 import b58decode
 from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.Wallets.utils import to_aes_key
 
 """
     Example 1
@@ -53,7 +54,7 @@ def example1():
     neo_asset_id = Blockchain.GetSystemShare().Hash
     gas_asset_id = Blockchain.GetSystemCoin().Hash
 
-    source_address = "D3u1UuDJkzUCixp9UUtSSza6Rgt4F9KJqv3mPSzWopgb"
+    source_address = "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"
     source_script_hash = address_to_scripthash(source_address)
 
     destination_address = "Ad9A1xPbuA5YBFr1XPznDwBwQzdckAjCev"
@@ -74,30 +75,31 @@ def example1():
     # You can get the required data by using e.g. the neoscan.io API: https://api.neoscan.io/docs/index.html#api-v1-get-3
     # The `PrevHash` field equals to neoscan's `balance.unspent[index].txid` key, and `PrevIndex` comes from `balance.unspent[index].n`
     # It is up to the transaction creator to make sure that the sum of all input ``value`` fields is equal to or bigger than the amount that's intended to be send
-    # The below values are fictuous and taken from the neoscan example
-    input1 = CoinReference(prev_hash=UInt256(data=binascii.unhexlify('19edc4159d2bcf4c538256b17336555b71a3a6a81ecb07493fc7fa218cbafdbd')), prev_index=787)
+    # The below values are taken from data out of the `neo-test1-w.wallet` fixture wallet (a wallet neo-python uses for internal testing)
+    input1 = CoinReference(prev_hash=UInt256(data=binascii.unhexlify('949354ea0a8b57dfee1e257a1aedd1e0eea2e5837de145e8da9c0f101bfccc8e')), prev_index=1)
     contract_tx.inputs = [input1]
 
     # Next we will create the outputs.
-    # The above input has a value of 5. We will create 2 outputs.
+    # The above input has a value of 50. We will create 2 outputs.
 
     # 1 output for sending 3 NEO to a specific destination address
     send_to_destination_output = TransactionOutput(AssetId=neo_asset_id, Value=Fixed8.FromDecimal(3), script_hash=destination_script_hash)
 
     # and a second output for sending the change back to ourselves
-    return_change_output = TransactionOutput(AssetId=neo_asset_id, Value=Fixed8.FromDecimal(2), script_hash=source_script_hash)
+    return_change_output = TransactionOutput(AssetId=neo_asset_id, Value=Fixed8.FromDecimal(47), script_hash=source_script_hash)
 
     contract_tx.outputs = [send_to_destination_output, return_change_output]
 
     # at this point we've build our unsigned transaction and it's time to sign it before we get the raw output that we can send to the network via RPC
     # we need to create a Wallet instance for helping us with signing
-    wallet = UserWallet.Create('path', generate_default_key=False)
+    wallet = UserWallet.Create('path', to_aes_key('mypassword'), generate_default_key=False)
 
-    # if you have a WIF use
-    private_key = KeyPair.PrivateKeyFromWIF("WIF_string")
+    # if you have a WIF use the following
+    # this WIF comes from the `neo-test1-w.wallet` fixture wallet
+    private_key = KeyPair.PrivateKeyFromWIF("Ky94Rq8rb1z8UzTthYmy1ApbZa9xsKTvQCiuGUZJZbaDJZdkvLRV")
 
     # if you have a NEP2 encrypted key use the following instead
-    private_key = KeyPair.PrivateKeyFromNEP2("NEP2 key string", "password string")
+    # private_key = KeyPair.PrivateKeyFromNEP2("NEP2 key string", "password string")
 
     # we add the key to our wallet
     wallet.CreateKey(private_key)
@@ -106,8 +108,23 @@ def example1():
     context = ContractParametersContext(contract_tx)
     wallet.Sign(context)
 
-    raw = contract_tx.ToArray()
-    raw_signed_transaction = raw.hex()
+    contract_tx.scripts = context.GetScripts()
+
+    print(contract_tx.Hash.ToString())
+
+    raw_tx = contract_tx.ToArray()
+
+    # you can confirm that this transaction is correct by running it against our docker testnet image using the following instructions
+    # docker pull cityofzion/neo-python-privnet-unittest:v0.0.1
+    # docker run --rm -d --name neo-python-privnet-unittest -p 20333-20336:20333-20336/tcp -p 30333-30336:30333-30336/tcp cityofzion/neo-python-privnet-unittest:v0.0.1
+    # curl -X POST http://localhost:30333 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 1, "method": "sendrawtransaction", "params": ["80000190274d792072617720636f6e7472616374207472616e73616374696f6e206465736372697074696f6e01949354ea0a8b57dfee1e257a1aedd1e0eea2e5837de145e8da9c0f101bfccc8e0100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500a3e11100000000ea610aa6db39bd8c8556c9569d94b5e5a5d0ad199b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5004f2418010000001cc9c05cefffe6cdd7b182816a9152ec218d2ec0014140dbd3cddac5cb2bd9bf6d93701f1a6f1c9dbe2d1b480c54628bbb2a4d536158c747a6af82698edf9f8af1cac3850bcb772bd9c8e4ac38f80704751cc4e0bd0e67232103cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6ac"] }'
+    #
+    # you should then get the following result
+    # {"jsonrpc":"2.0","id":1,"result":true}
+    #
+    # note that the `params` value comes from `raw_tx`
+    # if you want to validate that the transaction is actually persisted on the chain then you can connect to the private net with neo-python and use the cli-command:
+    # `tx 41b7b47aecf8573620ae28a844107f02ec14b69a6043b27138f38ae70e70f6b7` (were the TX id comes from calling: contract_tx.Hash.ToString())
 
 
 """
@@ -135,7 +152,7 @@ def example1():
 
 
 def example2():
-    source_address = "D3u1UuDJkzUCixp9UUtSSza6Rgt4F9KJqv3mPSzWopgb"
+    source_address = "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"
     source_script_hash = address_to_scripthash(source_address)
 
     # start by creating a base InvocationTransaction
@@ -149,7 +166,7 @@ def example2():
 
     # next we need to build a 'script' that gets executed against the smart contract.
     # this is basically the script that calls the entry point of the contract with the necessary parameters
-    smartcontract_scripthash = UInt160.ParseString("1578103c13e39df15d0d29826d957e85d770d8c9")
+    smartcontract_scripthash = UInt160.ParseString("31730cc9a1844891a3bafd1aa929a4142860d8d3")
     sb = ScriptBuilder()
     # call the NEP-5 `name` method on the contract (assumes contract address is a NEP-5 token)
     sb.EmitAppCallWithOperation(smartcontract_scripthash, 'name')
@@ -157,13 +174,14 @@ def example2():
 
     # at this point we've build our unsigned transaction and it's time to sign it before we get the raw output that we can send to the network via RPC
     # we need to create a Wallet instance for helping us with signing
-    wallet = UserWallet.Create('path', generate_default_key=False)
+    wallet = UserWallet.Create('path', to_aes_key('mypassword'), generate_default_key=False)
 
-    # if you have a WIF use
-    private_key = KeyPair.PrivateKeyFromWIF("WIF_string")
+    # if you have a WIF use the following
+    # this WIF comes from the `neo-test1-w.wallet` fixture wallet
+    private_key = KeyPair.PrivateKeyFromWIF("Ky94Rq8rb1z8UzTthYmy1ApbZa9xsKTvQCiuGUZJZbaDJZdkvLRV")
 
     # if you have a NEP2 encrypted key use the following instead
-    private_key = KeyPair.PrivateKeyFromNEP2("NEP2 key string", "password string")
+    # private_key = KeyPair.PrivateKeyFromNEP2("NEP2 key string", "password string")
 
     # we add the key to our wallet
     wallet.CreateKey(private_key)
@@ -172,8 +190,20 @@ def example2():
     context = ContractParametersContext(invocation_tx)
     wallet.Sign(context)
 
-    raw = invocation_tx.ToArray()
-    raw_signed_transaction = raw.hex()
+    invocation_tx.scripts = context.GetScripts()
+    raw_tx = invocation_tx.ToArray()
+
+    # you can confirm that this transaction is correct by running it against our docker testnet image using the following instructions
+    # docker pull cityofzion/neo-python-privnet-unittest:v0.0.1
+    # docker run --rm -d --name neo-python-privnet-unittest -p 20333-20336:20333-20336/tcp -p 30333-30336:30333-30336/tcp cityofzion/neo-python-privnet-unittest:v0.0.1
+    # curl -X POST http://localhost:30333 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 1, "method": "sendrawtransaction", "params": ["d1001b00046e616d6567d3d8602814a429a91afdbaa3914884a1c90c733101201cc9c05cefffe6cdd7b182816a9152ec218d2ec000000141403387ef7940a5764259621e655b3c621a6aafd869a611ad64adcc364d8dd1edf84e00a7f8b11b630a377eaef02791d1c289d711c08b7ad04ff0d6c9caca22cfe6232103cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6ac"] }'
+    #
+    # you should then get the following result
+    # {"jsonrpc":"2.0","id":1,"result":true}
+    #
+    # note that the `params` value comes from `raw_tx`
+    # if you want to validate that the transaction is actually persisted on the chain then you can connect to the private net with neo-python and use the cli-command:
+    # `tx 1672df78b7dd21f3516fb0759518dfab29cbe106715504a59a3e12a359850397` (were the TX id comes from calling: invocation_tx.Hash.ToString())
 
 
 def address_to_scripthash(address: str) -> UInt160:
