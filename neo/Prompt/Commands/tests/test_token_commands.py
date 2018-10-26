@@ -112,6 +112,37 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertEqual(res["vout"][0]["address"], "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3")
             self.assertEqual(res["net_fee"], "0.0001")
 
+    def test_token_send_with_user_attributes(self):
+        with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+            wallet = self.GetWallet1(recreate=True)
+            token = self.get_tokens(wallet)
+            addr_from = wallet.GetDefaultContract().Address
+            addr_to = self.watch_addr_str
+
+            args = [token.symbol, addr_from, addr_to, '1300', '--tx-attr=[{"usage":241,"data":"This is a remark"},{"usage":242,"data":"This is a remark 2"}]']
+            send = token_send(wallet, args, prompt_passwd=True)
+
+            self.assertTrue(send)
+            res = send.ToJson()
+            self.assertEqual(len(res['attributes']), 3)
+            self.assertEqual(res['attributes'][0]['usage'], 241)
+            self.assertEqual(res['attributes'][1]['usage'], 242)
+
+    def test_token_send_bad_user_attributes(self):
+        with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+            wallet = self.GetWallet1(recreate=True)
+            token = self.get_tokens(wallet)
+            addr_from = wallet.GetDefaultContract().Address
+            addr_to = self.watch_addr_str
+
+            args = [token.symbol, addr_from, addr_to, '100', '--tx-attr=[{"usa:241,"data":"This is a remark"}]']
+            send = token_send(wallet, args, prompt_passwd=True)
+
+            self.assertTrue(send)
+            res = send.ToJson()
+            self.assertEqual(1, len(res['attributes']))
+            self.assertNotEqual(241, res['attributes'][0]['usage'])
+
     def test_token_send_bad_args(self):  # too few args
         wallet = self.GetWallet1(recreate=True)
         token = self.get_tokens(wallet)
