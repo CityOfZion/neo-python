@@ -131,7 +131,7 @@ class PromptInterface:
                 'wallet delete_addr {addr}',
                 'wallet delete_token {token_contract_hash}',
                 'wallet alias {addr} {title}',
-                'wallet tkn_send {token symbol} {address_from} {address to} {amount} ',
+                'wallet tkn_send {token symbol} {address_from} {address to} {amount} (--tx-attr=[{"usage": <value>,"data":"<remark>"},{"usage":<value>,"data":"<remark>"}, ...])',
                 'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
