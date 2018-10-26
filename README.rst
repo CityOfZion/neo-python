@@ -285,37 +285,69 @@ Let's query for a block in the current server by hash or by block index:
     neo>
 
 Bootstrapping the Blockchain
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you use neo-python for the first time, you need to synchronize the
 blockchain, which may take a long time. Included in this project is the script
-``np-bootstrap`` to automatically download a chain directory for you. To
-bootstrap for testnet, run ``np-bootstrap``, get a cup of coffee
-and wait. To bootstrap for mainnet, use ``np-bootstrap -m`` and
-get 8 cups of coffee (3.3 GB file).
+``np-bootstrap`` to automatically download a chain directory for you.
 
-Important: do not use the chain files from
-https://github.com/CityOfZion/awesome-neo.git, they will not work with
-neo-python.
-
-Available Wallet commands
-~~~~~~~~~~~~~~~~~~~~~~~~~
+np-bootstrap Usage
+^^^^^^^^^^^^^^^^^^
 
 ::
 
-    np-prompt
-    NEO cli. Type 'help' to get started
+    $ np-bootstrap -h
+    usage: np-bootstrap [-h] [-m] [-c CONFIG] [-n] [-s] [--datadir DATADIR]
 
-    neo> help
+    optional arguments:
+      -h, --help            show this help message and exit
+      -m, --mainnet         use MainNet instead of the default TestNet
+      -c CONFIG, --config CONFIG
+                            Use a specific config file
+      -n, --notifications   Bootstrap notification database
+      -s, --skipconfirm     Bypass warning about overwritting data in Chains/SC234
+      --datadir DATADIR     Absolute path to use for database directories
+
+Bootrapping Testnet
+^^^^^^^^^^^^^^^^^^^
+
+To bootstrap the testnet blockchain, run ``np-bootstrap``, get a cup of coffee
+and wait. Then, bootstrap the testnet notifications database with ``np-bootstrap -n``.
+
+Bootstrapping Mainnet
+^^^^^^^^^^^^^^^^^^^^^
+
+To bootstrap the mainnet blockchain, run ``np-bootstrap -m`` and get 8 cups of coffee
+(9+ GB file). Then, bootstrap the mainnet notifications database with
+``np-bootstrap -m -n``.
+
+**Important:** do not use the chain files from
+https://github.com/CityOfZion/awesome-neo.git, they will not work with
+neo-python.
+
+Basic Wallet commands
+~~~~~~~~~~~~~~~~~~~~~
+
+::
 
     create wallet {wallet_path}
     open wallet {wallet_path}
+    wallet close
 
-    wallet { verbose } { rebuild } {rebuild BLOCK_HEIGHT}
-    export wif { ADDRESS }
-    import wif { WIF }
+    wallet {verbose}
+    wallet rebuild {start block}
+    wallet create_addr {number of addresses}
+    wallet delete_addr {addr}
+    
+    export wif {address}
+    import wif {wif}
+    
+    export nep2 {address}
+    import nep2 {nep2_encrypted_key}
+    
+    send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee})
 
-    send { ASSET_ID } { ADDRESS } { AMOUNT }
+For a complete list of commands use ``help``.
 
 Running on MainNet
 ~~~~~~~~~~~~~~~~~~
