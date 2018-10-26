@@ -334,8 +334,8 @@ Basic Wallet commands
     open wallet {wallet_path}
     wallet close
 
-    wallet {verbose}
-    wallet rebuild {start block}
+    wallet (verbose)
+    wallet rebuild (start block)
     wallet create_addr {number of addresses}
     wallet delete_addr {addr}
     
@@ -345,7 +345,7 @@ Basic Wallet commands
     export nep2 {address}
     import nep2 {nep2_encrypted_key}
     
-    send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee})
+    send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, {addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"},{"usage":<value>,"data":"<remark>"}, ...])
 
 For a complete list of commands use ``help``.
 
