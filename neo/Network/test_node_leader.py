@@ -1,5 +1,5 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
-from neo.Network.NodeLeader import NodeLeader
+from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
 from neo.Network.NeoNode import NeoNode
 from mock import patch
 from neo.Settings import settings
@@ -11,6 +11,10 @@ from neo.Wallets.utils import to_aes_key
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
 from neo.Core.TX.MinerTransaction import MinerTransaction
+from twisted.trial import unittest
+from twisted.test import proto_helpers
+from twisted.internet.address import IPv4Address
+from mock import MagicMock
 
 
 class Endpoint:
@@ -19,8 +23,41 @@ class Endpoint:
         self.port = port
 
 
-class LeaderTestCase(WalletFixtureTestCase):
+class NodeLeaderConnectionTest(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # clean up left over of other tests classes
+        leader = NodeLeader.Instance()
+        leader.Peers = []
+        leader.ADDRS = []
+
+    def _add_new_node(self, host, port):
+        self.tr.getPeer.side_effect = [IPv4Address('TCP', host, port)]
+        node = self.factory.buildProtocol(('127.0.0.1', 0))
+        node.makeConnection(self.tr)
+
+        return node
+
+    def setUp(self):
+        self.factory = NeoClientFactory()
+        self.tr = proto_helpers.StringTransport()
+        self.tr.getPeer = MagicMock()
+        self.leader = NodeLeader.Instance()
+
+    def test_getpeer_list_vs_maxpeer_list(self):
+        """https://github.com/CityOfZion/neo-python/issues/678"""
+        self._add_new_node('127.0.0.1', 1111)
+        bad_node = self._add_new_node('127.0.0.2', 2222)
+        self.assertEqual(2, len(self.leader.Peers))
+        self.assertEqual(2, len(self.leader.ADDRS))
+
+        self.factory.clientConnectionLost(bad_node, reason="unittest")
+        self.assertEqual(1, len(self.leader.Peers))
+        self.assertEqual(1, len(self.leader.ADDRS))
+
+
+class LeaderTestCase(WalletFixtureTestCase):
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
 
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
@@ -72,7 +109,6 @@ class LeaderTestCase(WalletFixtureTestCase):
             with patch('twisted.internet.reactor.callLater', mock_call_later):
                 with patch('neo.Network.NeoNode.NeoNode.Disconnect', mock_disconnect):
                     with patch('neo.Network.NeoNode.NeoNode.SendSerializedMessage', mock_send_msg):
-
                         leader.Start()
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
@@ -95,7 +131,7 @@ class LeaderTestCase(WalletFixtureTestCase):
                         leader.RemoveConnectedPeer(peer)
 
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
-                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST))
+                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST) - 1)
 
                         # now test adding another
                         leader.RemoteNodePeerReceived('hello.com', 1234, 6)
