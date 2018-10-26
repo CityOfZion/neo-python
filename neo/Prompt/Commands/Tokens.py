@@ -8,7 +8,7 @@ from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAt
 import binascii
 
 
-def token_send(wallet, args, prompt_passwd=True):
+def token_send(wallet, args, prompt_passwd=True, verbose=True):
     if len(args) != 4:
         print("please provide a token symbol, from address, to address, and amount")
         return False
@@ -18,7 +18,7 @@ def token_send(wallet, args, prompt_passwd=True):
     send_to = args[2]
     amount = amount_from_string(token, args[3])
 
-    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd)
+    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd, verbose=verbose)
 
 
 def token_send_from(wallet, args, prompt_passwd=True):
@@ -183,7 +183,7 @@ def token_crowdsale_register(wallet, args, prompt_passwd=True):
     return False
 
 
-def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True, tx_attributes=None):
+def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True, tx_attributes=None, verbose=True):
     if not tx_attributes:
         tx_attributes = []
 
@@ -202,10 +202,11 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
     if tx is not None and results is not None and len(results) > 0:
 
         if results[0].GetBigInteger() == 1:
-            print("\n-----------------------------------------------------------")
-            print("Will transfer %s %s from %s to %s" % (string_from_amount(token, amount), token.symbol, from_address, to_address))
-            print("Transfer fee: %s " % (fee.value / Fixed8.D))
-            print("-------------------------------------------------------------\n")
+            if verbose:
+                print("\n-----------------------------------------------------------")
+                print("Will transfer %s %s from %s to %s" % (string_from_amount(token, amount), token.symbol, from_address, to_address))
+                print("Transfer fee: %s " % (fee.value / Fixed8.D))
+                print("-------------------------------------------------------------\n")
 
             if prompt_passwd:
                 passwd = prompt("[Password]> ", is_password=True)
