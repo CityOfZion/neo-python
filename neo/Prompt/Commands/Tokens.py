@@ -9,9 +9,13 @@ import binascii
 
 
 def token_send(wallet, args, prompt_passwd=True):
-    if len(args) != 4:
+    if len(args) < 4:
         print("please provide a token symbol, from address, to address, and amount")
         return False
+
+    user_tx_attributes = None
+    if len(args) > 4:
+        args, user_tx_attributes = get_tx_attr_from_args(args)
 
     token = get_asset_id(wallet, args[0])
     if not isinstance(token, NEP5Token):
@@ -22,7 +26,7 @@ def token_send(wallet, args, prompt_passwd=True):
     send_to = args[2]
     amount = amount_from_string(token, args[3])
 
-    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd)
+    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd, tx_attributes=user_tx_attributes)
 
 
 def token_send_from(wallet, args, prompt_passwd=True):
