@@ -6,11 +6,13 @@ from prompt_toolkit import prompt
 from decimal import Decimal
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 import binascii
+from neo.api.JSONRPC.JsonRpcApi import JsonRpcError
 
 
-def token_send(wallet, args, prompt_passwd=True, verbose=True):
+def token_send(wallet, args, prompt_passwd=True, verbose=True, rpc=False):
     if len(args) != 4:
-        print("please provide a token symbol, from address, to address, and amount")
+        if verbose:
+            print("please provide a token symbol, from address, to address, and amount")
         return False
 
     token = get_asset_id(wallet, args[0])
@@ -18,7 +20,7 @@ def token_send(wallet, args, prompt_passwd=True, verbose=True):
     send_to = args[2]
     amount = amount_from_string(token, args[3])
 
-    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd, verbose=verbose)
+    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd, verbose=verbose, rpc=rpc)
 
 
 def token_send_from(wallet, args, prompt_passwd=True):
@@ -183,9 +185,18 @@ def token_crowdsale_register(wallet, args, prompt_passwd=True):
     return False
 
 
-def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True, tx_attributes=None, verbose=True):
+def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True, tx_attributes=None, verbose=True, rpc=False):
     if not tx_attributes:
         tx_attributes = []
+
+    balance = wallet.GetBalance(token)
+    balance = amount_from_string(token, str(balance))
+    if amount > balance:
+        if verbose:
+            print("Insufficient funds")
+        if rpc:
+            raise JsonRpcError(-300, "Insufficient funds")
+        return False
 
     if from_address is None:
         print("Please specify --from-addr={addr} to send NEP5 tokens")
@@ -215,9 +226,10 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
                     print("incorrect password")
                     return False
 
-            return InvokeContract(wallet, tx, fee)
+            return InvokeContract(wallet, tx, fee, verbose=verbose)
 
-    print("could not transfer tokens")
+    if verbose:
+        print("could not transfer tokens")
     return False
 
 
