@@ -107,6 +107,20 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertTrue(send)
 
+    def test_token_send_insufficient_funds(self):
+        wallet = self.GetWallet1(recreate=True)
+        token = self.get_tokens(wallet)
+        addr_from = wallet.GetDefaultContract().Address
+        addr_to = self.watch_addr_str
+
+        balance = wallet.GetBalance(token)
+        amount = int(balance) + 1
+
+        args = [token.symbol, addr_from, addr_to, amount]
+        send = token_send(wallet, args, prompt_passwd=False)
+
+        self.assertFalse(send)
+
     def test_5_token_approve(self):
 
         # we need to reset the wallet now
