@@ -43,7 +43,7 @@ from neo.VM.OpCode import PACK
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
 
-def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
+def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None, verbose=True):
     if from_addr is not None:
         from_addr = lookup_addr_str(wallet, from_addr)
 
@@ -73,20 +73,22 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
             relayed = NodeLeader.Instance().Relay(wallet_tx)
 
             if relayed:
-                print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
+                if verbose:
+                    print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
 
                 wallet.SaveTransaction(wallet_tx)
 
                 return wallet_tx
             else:
-                print("Could not relay tx %s " % wallet_tx.Hash.ToString())
+                if verbose:
+                    print("Could not relay tx %s " % wallet_tx.Hash.ToString())
         else:
-
-            print("Incomplete signature")
-
+            if verbose:
+                print("Incomplete signature")
     else:
-        print("Insufficient funds")
-
+        if verbose:
+            print("Insufficient funds")
+ 
     return False
 
 
