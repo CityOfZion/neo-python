@@ -61,7 +61,7 @@ class ExtendedJsonRpcApi(JsonRpcApi):
 
         elif method == "transfertokens":
             if self.wallet:
-                tx = token_send(self.wallet, params, prompt_passwd=False, verbose=False)
+                tx = token_send(self.wallet, params, prompt_passwd=False, verbose=False, rpc=True)
                 if not tx:
                     raise JsonRpcError(-32602, "Invalid params")
                 return tx.ToJson()
