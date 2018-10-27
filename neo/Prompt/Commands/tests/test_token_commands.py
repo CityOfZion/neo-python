@@ -109,7 +109,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_token_send_insufficient_funds(self):
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
         addr_from = wallet.GetDefaultContract().Address
         addr_to = self.watch_addr_str
 
@@ -239,3 +239,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         token.Serialize(writer)
 
         self.assertEqual(b'0f4e45582054656d706c617465205634044e58543408', stream.ToArray())
+
+    # utility function
+    def get_token(self, wallet):
+        return list(wallet.GetTokens().values())[0]
