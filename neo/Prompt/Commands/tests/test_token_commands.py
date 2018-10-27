@@ -71,9 +71,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         return cls._wallet3
 
-    def get_tokens(self, wallet):
-        return list(wallet.GetTokens().values())[0]
-
     def test_import_token(self):
         wallet = self.GetWallet3(recreate=True)
 
@@ -91,7 +88,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_balance(self):
         wallet = self.GetWallet1(recreate=True)
 
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
 
         balance = wallet.GetBalance(token)
 
@@ -100,7 +97,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_send_good(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
@@ -115,7 +112,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_send_with_user_attributes(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
@@ -131,7 +128,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_send_bad_user_attributes(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
@@ -145,7 +142,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_token_send_bad_args(self):  # too few args
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
         addr_from = wallet.GetDefaultContract().Address
         addr_to = self.watch_addr_str
 
@@ -167,7 +164,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_send_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Transfer', return_value=(None, 0, None)):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
@@ -179,7 +176,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_send_bad_password(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=["blah"]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
@@ -193,7 +190,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             with patch('neo.Wallets.NEP5Token.NEP5Token.TransferFrom', return_value=(self.Approve_Allowance())):
                 with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                     wallet = self.GetWallet1(recreate=True)
-                    token = self.get_tokens(wallet)
+                    token = self.get_token(wallet)
                     addr_from = self.wallet_1_addr
                     addr_to = self.watch_addr_str
 
@@ -205,7 +202,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_transfer_from_bad_args(self):  # too few args
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
         addr_from = self.wallet_1_addr
         addr_to = self.watch_addr_str
 
@@ -226,7 +223,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_transfer_from_small_allowance(self):
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
         addr_from = self.wallet_1_addr
         addr_to = self.watch_addr_str
 
@@ -239,7 +236,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_transfer_from_BigInteger_0(self):
         with patch('neo.Prompt.Commands.Tokens.token_get_allowance', return_value=12300000000):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = self.wallet_1_addr
             addr_to = self.watch_addr_str
 
@@ -254,7 +251,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             with patch('neo.Wallets.NEP5Token.NEP5Token.TransferFrom', return_value=(self.Approve_Allowance())):
                 with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=['blah']):
                     wallet = self.GetWallet1(recreate=True)
-                    token = self.get_tokens(wallet)
+                    token = self.get_token(wallet)
                     addr_from = self.wallet_1_addr
                     addr_to = self.watch_addr_str
 
@@ -266,7 +263,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_approve_good(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
@@ -280,7 +277,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_token_approve_bad_args(self):  # too few args
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
         addr_from = wallet.GetDefaultContract().Address
         addr_to = self.watch_addr_str
 
@@ -302,7 +299,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_approve_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Approve', return_value=(None, 0, None)):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
@@ -314,7 +311,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_approve_bad_password(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=["blah"]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_from = wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
@@ -326,7 +323,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_allowance_good(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Allowance', return_value=(self.Approve_Allowance())):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_to = self.watch_addr_str
 
             args = [token.symbol, self.wallet_1_addr, addr_to]
@@ -336,7 +333,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_token_allowance_bad_args(self):  # too few args
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
 
         args = [token.symbol, self.wallet_1_addr]
         allowance = token_get_allowance(wallet, args, verbose=True)
@@ -356,7 +353,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Allowance', return_value=(None, 0, None)):
 
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_to = self.watch_addr_str
 
             args = [token.symbol, self.wallet_1_addr, addr_to]
@@ -367,7 +364,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_mint_good(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_to = self.wallet_1_addr
 
             args = [token.symbol, addr_to, '--attach-neo=10', '--tx-attr={"usage":241,"data":"This is a remark"}']
@@ -381,7 +378,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_token_mint_bad_args(self):  # too few args
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
         addr_to = self.wallet_1_addr
 
         args = [token.symbol, addr_to]
@@ -401,7 +398,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_mint_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Mint', return_value=(None, 0, None)):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_to = self.wallet_1_addr
 
             args = [token.symbol, addr_to, '--attach-neo=10']
@@ -412,7 +409,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_mint_bad_password(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=["blah"]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
             addr_to = self.wallet_1_addr
 
             args = [token.symbol, addr_to, '--attach-neo=10']
@@ -423,7 +420,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_register_good(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
 
             args = [token.symbol, self.wallet_3_addr, self.watch_addr_str, "--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"]
             register = token_crowdsale_register(wallet, args, prompt_passwd=True)
@@ -435,7 +432,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_token_register_bad_args(self):  # too few args
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
 
         args = [token.symbol]
         register = token_crowdsale_register(wallet, args, prompt_passwd=False)
@@ -453,7 +450,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_register_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.CrowdsaleRegister', return_value=(None, 0, None)):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
 
             args = [token.symbol, self.wallet_3_addr]
             register = token_crowdsale_register(wallet, args, prompt_passwd=False)
@@ -463,7 +460,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_register_bad_password(self):
         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=["blah"]):
             wallet = self.GetWallet1(recreate=True)
-            token = self.get_tokens(wallet)
+            token = self.get_token(wallet)
 
             args = [token.symbol, self.wallet_3_addr]
             register = token_crowdsale_register(wallet, args, prompt_passwd=True)
@@ -517,7 +514,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_token_serialize(self):
 
         wallet = self.GetWallet1(recreate=True)
-        token = self.get_tokens(wallet)
+        token = self.get_token(wallet)
 
         stream = StreamManager.GetStream()
         writer = BinaryWriter(stream)
@@ -530,10 +527,14 @@ class UserWalletTestCase(WalletFixtureTestCase):
         wallet = self.GetWallet1(recreate=True)
         approve_from = self.wallet_1_addr
         approve_to = self.watch_addr_str
-        tokens = self.get_tokens(wallet)
+        tokens = self.get_token(wallet)
         token = get_asset_id(wallet, tokens.symbol)
         amount = amount_from_string(token, "123")
 
         tx, fee, results = token.Approve(wallet, approve_from, approve_to, amount)
 
         return tx, fee, results
+    
+    # utility function
+    def get_token(self, wallet):
+        return list(wallet.GetTokens().values())[0]
