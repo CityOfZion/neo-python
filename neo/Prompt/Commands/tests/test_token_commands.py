@@ -534,7 +534,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, fee, results = token.Approve(wallet, approve_from, approve_to, amount)
 
         return tx, fee, results
-    
+
     # utility function
     def get_token(self, wallet):
         return list(wallet.GetTokens().values())[0]
