@@ -88,7 +88,7 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None, v
     else:
         if verbose:
             print("Insufficient funds")
- 
+
     return False
 
 
