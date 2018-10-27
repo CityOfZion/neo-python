@@ -14,10 +14,80 @@ import binascii
 import json
 import math
 from neo.Implementations.Wallets.peewee.Models import Account
-
+from neo.Prompt.CommandBase import CommandBase, SubCommandBase, CommandDesc
+from neo.Prompt.PromptData import PromptData
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
+
+
+class CommandWallet(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+        self.register_sub_command(['v', '--v', 'verbose'], CommandWalletVerbose)
+        self.register_sub_command('migrate', CommandWalletMigrate)
+        self.register_sub_command('create_addr', CommandWalletCreateAddress)
+
+    def command_desc(self):
+        return CommandDesc('wallet')
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+        if not wallet:
+            print("Please open a wallet")
+            return
+
+        item = get_arg(arguments)
+
+        if not item:
+            print("Wallet %s " % json.dumps(wallet.ToJson(), indent=4))
+            return
+
+        try:
+            self.execute_sub_command(item, arguments[1:])
+        except KeyError:
+            print(f"Wallet: {item} is an invalid parameter")
+
+
+class CommandWalletVerbose(SubCommandBase):
+
+    @classmethod
+    def execute(cls, arguments):
+        print("Wallet %s " % json.dumps(PromptData.Wallet.ToJson(verbose=True), indent=4))
+
+    @classmethod
+    def command_desc(self):
+        return CommandDesc('verbose', 'wallet {verbose}')
+
+
+class CommandWalletMigrate(SubCommandBase):
+
+    @classmethod
+    def execute(cls, arguments):
+        if PromptData.Wallet is not None:
+            PromptData.Wallet.Migrate()
+            print("Migrated wallet")
+
+    @classmethod
+    def command_desc(self):
+        return CommandDesc('migrate', 'wallet migrate')
+
+
+class CommandWalletCreateAddress(SubCommandBase):
+
+    @classmethod
+    def execute(cls, arguments):
+        addresses_to_create = get_arg(arguments, 0)
+        CreateAddress(PromptData.Wallet, addresses_to_create)
+
+    @classmethod
+    def command_desc(self):
+        return CommandDesc('create_addr', 'wallet create_addr {number of addresses}')
+
+
+#########################################################################
+#########################################################################
 
 
 def CreateAddress(wallet, args):
