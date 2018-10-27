@@ -174,6 +174,27 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
 
+    def test_transfer_tokens_bad_token(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        req = self._gen_rpc_req("transfertokens", params=["Blah", self.wallet_1_addr, self.watch_addr_str, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
     def test_transfer_tokens_bad_from_addr(self):
         test_wallet_path = shutil.copyfile(
             WalletFixtureTestCase.wallet_1_path(),
@@ -234,8 +255,8 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
-        self.assertEqual(error.get('code', None), -32602)
-        self.assertEqual(error.get('message', None), "Invalid params")
+        self.assertEqual(error.get('code', None), -300)
+        self.assertEqual(error.get('message', None), "Insufficient funds")
 
         self.app.wallet.Close()
         self.app.wallet = None
