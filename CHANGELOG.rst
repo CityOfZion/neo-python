@@ -17,6 +17,8 @@ All notable changes to this project are documented in this file.
 - Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 - Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
 - Fix ``ExtendedJsonRpcApi``
+- Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
+- Fix duplicate task starting for requesting blocks
 
 
 [0.8.1] 2018-10-06
@@ -30,6 +32,7 @@ All notable changes to this project are documented in this file.
 - Various updates to inaccuracies in ``ToJson`` output of ``AccountState``
 - Add documentation support for Python 3.7
 - Change execution fail event payload to give more meaningful error messages
+
 
 [0.8.0] 2018-09-28
 ------------------
@@ -265,15 +268,15 @@ All notable changes to this project are documented in this file.
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
 - Changes for Pypi compatibility:
-  - move protocol.*.json to ``neo/data/``
-  - move ``prompt.py`` and other scripts to ``neo/bin``
-  - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
-  - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
-     - ``np-prompt``
-     - ``np-api-server``
-     - ``np-bootstrap``
-     - ``np-reencrypt-wallet``
-  - updated docs for Pypi changes
+   - move protocol.*.json to ``neo/data/``
+   - move ``prompt.py`` and other scripts to ``neo/bin``
+   - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
+   - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
+      - ``np-prompt``
+      - ``np-api-server``
+      - ``np-bootstrap``
+      - ``np-reencrypt-wallet``
+   - updated docs for Pypi changes
 
 
 [0.5.7] 2018-03-14

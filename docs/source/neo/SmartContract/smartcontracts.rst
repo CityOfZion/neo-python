@@ -162,19 +162,20 @@ Build and test is a much more useful command, since it allows you to not only co
 
 View ContractParameterType list :ref:`ContractParameterTypes`
 
-The general syntax goes like this: ``build path/to/file.py test {input_params} {return_type} {needs_storage} {needs_dynamic_invoke} param1 param2 etc..`` where ``{input_params}`` and ``{return_type}``
+The general syntax goes like this: ``build path/to/file.py test {input_params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable} param1 param2 etc..`` where ``{input_params}`` and ``{return_type}``
 
 - ``{input_params}`` is a single or series of ``ContractParameterType``, eg ``0710`` for an SC accepting a string and a list
 - ``{return_type}`` is a single ``ContractParameterType``, eg ``02`` for an SC returning an integer
 - ``{needs_storage}`` is a boolean, either ``True`` or ``False`` used to indicate whether or not the SC uses the ``Storage.Get/Put/Delete`` interop API
-- ``{needs_dynamic_invoke}`` is also a boolean, indicating whether or not the SC will be calling another contract whose address it will not know until runtime.  This will most always be ``False``
+- ``{needs_dynamic_invoke}`` is a boolean, indicating whether or not the SC will be calling another contract whose address it will not know until runtime.  This will most always be ``False``
+- ``{is_payable}`` is a boolean indicating whether the contract accepts NEO/GAS transfers to it (generally only  used for ICO's contracts)
 - ``params1 params2 etc...`` These are the parameters you are testing with.
 
 So for building and testing our ``sample1.py``, the syntax would be ``build docs/source/example/sample1.py test '' 01 False False``, where ``''`` indicates that no parameters are accepted and ``01`` indicates that it returns a boolean.  Lets try it out in the propmt
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample1.py test '' 01 False false
+  neo> build docs/source/example/sample1.py test '' 01 False False False
   Saved output to docs/source/example/sample1.avm
   please open a wallet to test built contract
   neo>
@@ -186,7 +187,7 @@ Ok, so it looks like we will need to open a wallet to test our contract! Note th
   neo> open wallet Wallets/awesome
   [password]> ***********
   Opened wallet at Wallets/awesome
-  neo> build docs/source/example/sample1.py test '' 01 False false
+  neo> build docs/source/example/sample1.py test '' 01 False False False
   Saved output to docs/source/example/sample1.avm
   [I 180302 22:22:58 Invoke:482] Used 0.016 Gas
 
@@ -204,7 +205,7 @@ And you have now built and tested your first SC.  If you would like to view the 
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample1.py test '' 02 False False
+  neo> build docs/source/example/sample1.py test '' 02 False False False
   Saved output to docs/source/example/sample1.avm
   [I 180302 22:25:09 Invoke:482] Used 0.016 Gas
 
@@ -218,14 +219,14 @@ And you have now built and tested your first SC.  If you would like to view the 
 
   neo>
 
-You may have noticed that even though there is a ``print`` command in the contract, you didn not see anything printed out.  Lets fix that by turning on smart contract events and running it again.
+You may have noticed that even though there is a ``print`` command in the contract, you did not see anything printed out.  Lets fix that by turning on smart contract events and running it again.
 
 .. code-block:: sh
 
   neo>
   neo> config sc-events on
   Smart contract event logging is now enabled
-  neo> build docs/source/example/sample1.py test '' 01 False False
+  neo> build docs/source/example/sample1.py test '' 01 False False False
   Saved output to docs/source/example/sample1.avm
   [I 180302 22:56:19 EventHub:71] [test_mode][SmartContract.Contract.Create] [09a129673c61917593cb4b57dce066688f539d15] ['{\n    "version": 0,\n    "code": {\n        "hash": "0x09a129673c61917593cb4b57dce066688f539d15",\n        "script": "54c56b0b48656c6c6f20576f726c64680f4e656f2e52756e74696d652e4c6f67516c7566",\n        "parameters": "",\n        "returntype": 1\n    },\n    "name": "test",\n    "code_version": "test",\n    "author": "test",\n    "email": "test",\n    "description": "test",\n    "properties": {\n        "storage": false,\n        "dynamic_invoke": false\n    }\n}']
   [I 180302 22:56:19 EventHub:71] [test_mode][SmartContract.Runtime.Log] [09a129673c61917593cb4b57dce066688f539d15] [b'Hello World']
@@ -275,7 +276,7 @@ We will build and run with a few paramaters:
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample2.py test 070202 02 False False
+  neo> build docs/source/example/sample2.py test 070202 02 False False False
   Saved output to docs/source/example/sample2.avm
   [E 180302 22:30:01 ExecutionEngine:825] COULD NOT EXECUTE OP: Invalid list operation b'z' ROLL
   [E 180302 22:30:01 ExecutionEngine:826] Invalid list operation
@@ -294,7 +295,7 @@ Oh no, what happened there!  Oh, it looks like we tried to test a contract that 
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample2.py test 070202 02 False False add 1 2
+  neo> build docs/source/example/sample2.py test 070202 02 False False False add 1 2
   Saved output to docs/source/example/sample2.avm
   [I 180302 22:32:06 Invoke:482] Used 0.033 Gas
 
@@ -307,7 +308,7 @@ Oh no, what happened there!  Oh, it looks like we tried to test a contract that 
   -------------------------------------------------------------
 
   neo>
-  neo> build docs/source/example/sample2.py test 070202 02 False False mul -1 20000
+  neo> build docs/source/example/sample2.py test 070202 02 False False False mul -1 20000
   Saved output to docs/source/example/sample2.avm
   [I 180302 22:33:36 Invoke:482] Used 0.041 Gas
 
@@ -365,7 +366,7 @@ You will also notice that we are using ``True`` to indicate that we are using th
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample3.py test 070502 02 True False add AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy 3
+  neo> build docs/source/example/sample3.py test 070502 02 True False False add AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy 3
   Saved output to docs/source/example/sample3.avm
   [I 180302 23:04:33 Invoke:482] Used 1.174 Gas
 
@@ -383,7 +384,7 @@ Invoke again and you will see that our test invokes persist the values in storag
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample3.py test 070502 02 True False add AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy 3
+  neo> build docs/source/example/sample3.py test 070502 02 True False False add AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy 3
   Saved output to docs/source/example/sample3.avm
   [I 180302 23:04:33 Invoke:482] Used 1.174 Gas
 
@@ -401,7 +402,7 @@ Now remove some value
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample3.py test 070502 02 True False remove AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy 2
+  neo> build docs/source/example/sample3.py test 070502 02 True False False remove AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy 2
   Saved output to docs/source/example/sample3.avm
   [I 180302 23:09:21 Invoke:482] Used 1.176 Gas
 
@@ -419,7 +420,7 @@ You can also pass in a ByteArray object for the address, and test that the ``is_
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample3.py test 070502 02 True False add bytearray(b'\x00\x01\x02\x03') 4
+  neo> build docs/source/example/sample3.py test 070502 02 True False False add bytearray(b'\x00\x01\x02\x03') 4
   Saved output to docs/source/example/sample3.avm
   [I 180302 23:12:43 Invoke:482] Used 0.041 Gas
 
@@ -437,7 +438,7 @@ Note that sending in the readable format of the address ( *AG4GfwjnvydAZodm4xEDi
 
 .. code-block:: sh
 
-  neo> build docs/source/example/sample3.py test 070502 02 True False balance bytearray(b'\x03\x19\xe0)\xb9%\x85w\x90\xe4\x17\x85\xbe\x9c\xce\xc6\xca\xb1\x98\x96') 0
+  neo> build docs/source/example/sample3.py test 070502 02 True False False balance bytearray(b'\x03\x19\xe0)\xb9%\x85w\x90\xe4\x17\x85\xbe\x9c\xce\xc6\xca\xb1\x98\x96') 0
   Saved output to docs/source/example/sample3.avm
   [I 180302 23:16:23 Invoke:482] Used 0.162 Gas
 
@@ -462,7 +463,7 @@ Smart Contract importing is somewhat similar to the ``build .. test`` notation, 
 .. code-block:: sh
 
   neo>
-  neo> import contract docs/source/example/sample2.avm 070202 02 False False
+  neo> import contract docs/source/example/sample2.avm 070202 02 False False False
   Please fill out the following contract details:
   [Contract Name] > Sample Calculator
   [Contract Version] > .01
