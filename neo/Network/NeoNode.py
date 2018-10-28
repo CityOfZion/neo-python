@@ -29,8 +29,10 @@ class NeoNode(Protocol):
 
     leader = None
 
+    block_loop = None
     block_loop_deferred = None
 
+    peer_loop = None
     peer_loop_deferred = None
 
     sync_mode = MODE_CATCHUP
@@ -128,7 +130,12 @@ class NeoNode(Protocol):
             if self.block_loop_deferred:
                 self.block_loop_deferred.cancel()
             if self.peer_loop_deferred:
-                self.block_loop_deferred.cancel()
+                self.peer_loop_deferred.cancel()
+
+            if self.block_loop:
+                self.block_loop.stop()
+            if self.peer_loop:
+                self.peer_loop.stop()
 
             self.ReleaseBlockRequests()
             self.leader.RemoveConnectedPeer(self)
@@ -270,13 +277,13 @@ class NeoNode(Protocol):
         logger.error("On Call from thread error %s " % err)
 
     def ProtocolReady(self):
-        block_loop = task.LoopingCall(self.AskForMoreBlocks)
-        self.block_loop_deferred = block_loop.start(self.sync_mode, now=False)
+        self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
+        self.block_loop_deferred = self.block_loop.start(self.sync_mode, now=False)
         self.block_loop_deferred.addErrback(self.OnLoopError)
 
-        # ask every 3 minutes for new peers
-        peer_loop = task.LoopingCall(self.RequestPeerInfo)
-        self.peer_loop_deferred = peer_loop.start(120, now=False)
+        # ask every 2 minutes for new peers
+        self.peer_loop = task.LoopingCall(self.RequestPeerInfo)
+        self.peer_loop_deferred = self.peer_loop.start(120, now=False)
         self.peer_loop_deferred.addErrback(self.OnLoopError)
 
         self.RequestPeerInfo()
@@ -299,8 +306,8 @@ class NeoNode(Protocol):
 
         if self.sync_mode != current_mode:
             self.block_loop_deferred.cancel()
-            block_loop = task.LoopingCall(self.AskForMoreBlocks)
-            self.block_loop_deferred = block_loop.start(self.sync_mode)
+            self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
+            self.block_loop_deferred = self.block_loop.start(self.sync_mode)
             self.block_loop_deferred.addErrback(self.OnLoopError)
 
         else:
