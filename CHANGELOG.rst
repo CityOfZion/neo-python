@@ -29,6 +29,7 @@ All notable changes to this project are documented in this file.
 - Various updates to inaccuracies in ``ToJson`` output of ``AccountState``
 - Add documentation support for Python 3.7
 - Change execution fail event payload to give more meaningful error messages
+- Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
 
 [0.8.0] 2018-09-28
 ------------------
