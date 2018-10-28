@@ -5,7 +5,8 @@ All notable changes to this project are documented in this file.
 
 [0.8.2] In Progress
 -------------------
-- Fix discrepancy between `getpeers` RPC call and the `maxpeers` setting
+- Update documentation to include new ``IsPayable`` contract flag in the examples
+- Fix discrepancy between ``getpeers`` RPC call and the ``maxpeers`` setting
 - Update ``CreateAddress`` functionality and tests
 - Add VM sanity checks for operations on ``BigInteger``'s
 - Add raw transaction building examples in ``\examples\`` folder
@@ -265,15 +266,15 @@ All notable changes to this project are documented in this file.
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
 - Changes for Pypi compatibility:
-  - move protocol.*.json to ``neo/data/``
-  - move ``prompt.py`` and other scripts to ``neo/bin``
-  - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
-  - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
-     - ``np-prompt``
-     - ``np-api-server``
-     - ``np-bootstrap``
-     - ``np-reencrypt-wallet``
-  - updated docs for Pypi changes
+   - move protocol.*.json to ``neo/data/``
+   - move ``prompt.py`` and other scripts to ``neo/bin``
+   - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
+   - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
+      - ``np-prompt``
+      - ``np-api-server``
+      - ``np-bootstrap``
+      - ``np-reencrypt-wallet``
+   - updated docs for Pypi changes
 
 
 [0.5.7] 2018-03-14
