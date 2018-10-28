@@ -17,6 +17,8 @@ All notable changes to this project are documented in this file.
 - Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 - Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
 - Fix ``ExtendedJsonRpcApi``
+- Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
+- Fix duplicate task starting for requesting blocks
 
 
 [0.8.1] 2018-10-06
@@ -30,7 +32,7 @@ All notable changes to this project are documented in this file.
 - Various updates to inaccuracies in ``ToJson`` output of ``AccountState``
 - Add documentation support for Python 3.7
 - Change execution fail event payload to give more meaningful error messages
-- Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
+
 
 [0.8.0] 2018-09-28
 ------------------

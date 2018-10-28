@@ -307,6 +307,8 @@ class NeoNode(Protocol):
             self.sync_mode = MODE_MAINTAIN
 
         if self.sync_mode != current_mode:
+            if self.block_loop and self.block_loop.running:
+                self.block_loop.stop()
             self.block_loop_deferred.cancel()
             self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
             self.block_loop_deferred = self.block_loop.start(self.sync_mode)
