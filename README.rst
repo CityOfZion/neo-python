@@ -345,7 +345,7 @@ Basic Wallet commands
     export nep2 {address}
     import nep2 {nep2_encrypted_key}
     
-    send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, {addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"},{"usage":<value>,"data":"<remark>"}, ...])
+    send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])
 
 For a complete list of commands use ``help``.
 
