@@ -141,8 +141,8 @@ class PromptInterface:
                 'wallet unspent (neo/gas)',
                 'wallet split {addr} {asset} {unspent index} {divide into number of vins}',
                 'wallet close',
-                'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, {addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"},{"usage":<value>,"data":"<remark>"}, ...])',
-                'sendmany {number of outgoing tx} (--change-addr={addr}) (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, {addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"},{"usage":<value>,"data":"<remark>"}, ...])',
+                'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',
+                'sendmany {number of outgoing tx} (--change-addr={addr}) (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
