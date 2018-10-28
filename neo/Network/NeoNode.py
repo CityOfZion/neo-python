@@ -134,7 +134,7 @@ class NeoNode(Protocol):
 
             if self.block_loop.running:
                 self.block_loop.stop()
-            if self.peer_loop:
+            if self.peer_loop.running:
                 self.peer_loop.stop()
 
             self.ReleaseBlockRequests()
