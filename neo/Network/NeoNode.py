@@ -132,10 +132,12 @@ class NeoNode(Protocol):
             if self.peer_loop_deferred:
                 self.peer_loop_deferred.cancel()
 
-            if self.block_loop.running:
-                self.block_loop.stop()
-            if self.peer_loop.running:
-                self.peer_loop.stop()
+            if self.block_loop:
+                if self.block_loop.running:
+                    self.block_loop.stop()
+            if self.peer_loop:
+                if self.peer_loop.running:
+                    self.peer_loop.stop()
 
             self.ReleaseBlockRequests()
             self.leader.RemoveConnectedPeer(self)
