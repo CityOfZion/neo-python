@@ -1,6 +1,5 @@
 import binascii
 import random
-from logzero import logger
 from twisted.internet.protocol import Protocol
 from twisted.internet import error as twisted_error
 from twisted.internet import reactor, task, threads
@@ -19,6 +18,9 @@ from .Payloads.HeadersPayload import HeadersPayload
 from .Payloads.AddrPayload import AddrPayload
 from .InventoryType import InventoryType
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('network')
 
 MODE_MAINTAIN = 7
 MODE_CATCHUP = 2

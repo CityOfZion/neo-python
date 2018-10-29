@@ -1,5 +1,4 @@
 import random
-from logzero import logger
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
@@ -9,6 +8,9 @@ from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet import reactor, task
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('network')
 
 
 class NeoClientFactory(ReconnectingClientFactory):

@@ -10,15 +10,17 @@ from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
-from neo.Implementations.Wallets.peewee import UserWallet
 import binascii
 import json
 import math
-from logzero import logger
 from neo.Implementations.Wallets.peewee.Models import Account
 
+from neo.logging import log_manager
 
-def CreateAddress(prompter, wallet, args):
+logger = log_manager.getLogger()
+
+
+def CreateAddress(wallet, args):
     try:
         int_args = int(args)
     except (ValueError, TypeError) as error:  # for non integer args or Nonetype
@@ -42,7 +44,7 @@ def CreateAddress(prompter, wallet, args):
     return wallet
 
 
-def DeleteAddress(prompter, wallet, addr):
+def DeleteAddress(wallet, addr):
     scripthash = wallet.ToScriptHash(addr)
 
     success, coins = wallet.DeleteAddress(scripthash)
@@ -143,7 +145,6 @@ def ClaimGas(wallet, require_password=True, args=None):
             if successful: (tx, True)
             if unsuccessful: (None, False)
     """
-
     if args:
         params, from_addr_str = get_from_addr(args)
     else:

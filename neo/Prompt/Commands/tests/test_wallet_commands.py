@@ -9,7 +9,6 @@ import shutil
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
-
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
 
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
@@ -35,7 +34,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         return cls._wallet1
 
     def test_1_import_addr(self):
-
         wallet = self.GetWallet1(recreate=True)
 
         self.assertEqual(len(wallet.LoadWatchOnly()), 0)
@@ -45,19 +43,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(len(wallet.LoadWatchOnly()), 1)
 
     def test_2_import_addr(self):
-
         wallet = self.GetWallet1()
 
         self.assertEqual(len(wallet.LoadWatchOnly()), 1)
 
-        success = DeleteAddress(None, wallet, self.watch_addr_str)
+        success = DeleteAddress(wallet, self.watch_addr_str)
 
         self.assertTrue(success)
 
         self.assertEqual(len(wallet.LoadWatchOnly()), 0)
 
     def test_3_import_token(self):
-
         wallet = self.GetWallet1(recreate=True)
 
         self.assertEqual(len(wallet.GetTokens()), 1)
@@ -79,7 +75,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(len(synced_balances), 2)
 
     def test_5_show_unspent(self):
-
         wallet = self.GetWallet1(recreate=True)
         unspents = ShowUnspentCoins(wallet, [])
         self.assertEqual(len(unspents), 2)
@@ -100,7 +95,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(len(unspents), 0)
 
     def test_6_split_unspent(self):
-
         wallet = self.GetWallet1(recreate=True)
 
         # test bad
@@ -128,26 +122,25 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertIsNotNone(tx)
 
     def test_7_create_address(self):
-
         # no wallet
-        res = CreateAddress(None, None, 1)
+        res = CreateAddress(None, 1)
         self.assertFalse(res)
 
         wallet = self.GetWallet1(recreate=True)
 
         # not specifying a number of addresses
-        res = CreateAddress(None, wallet, None)
+        res = CreateAddress(wallet, None)
         self.assertFalse(res)
 
         # bad args
-        res = CreateAddress(None, wallet, "blah")
+        res = CreateAddress(wallet, "blah")
         self.assertFalse(res)
 
         # negative value
-        res = CreateAddress(None, wallet, -1)
+        res = CreateAddress(wallet, -1)
         self.assertFalse(res)
 
         # should pass
-        res = CreateAddress(None, wallet, 2)
+        res = CreateAddress(wallet, 2)
         self.assertTrue(res)
         self.assertEqual(len(wallet.Addresses), 3)

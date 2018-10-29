@@ -3,8 +3,10 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+
 [0.8.2] In Progress
 -------------------
+- Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
 - Update Readme and Prompt.py ``help``
 - Update documentation to include new ``IsPayable`` contract flag in the examples
 - Fix discrepancy between ``getpeers`` RPC call and the ``maxpeers`` setting
