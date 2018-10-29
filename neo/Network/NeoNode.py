@@ -168,14 +168,12 @@ class NeoNode(Protocol):
         """ Called from Twisted whenever data is received. """
         self.bytes_in += (len(data))
         self.buffer_in = self.buffer_in + data
-        self.CheckDataReceived()
+
+        while len(self.buffer_in) >= 24:
+            self.CheckDataReceived()
 
     def CheckDataReceived(self):
         """Tries to extract a Message from the data buffer and process it."""
-        currentLength = len(self.buffer_in)
-        if currentLength < 24:
-            return
-
         # Extract the message header from the buffer, and return if not enough
         # buffer to fully deserialize the message object.
         try:
@@ -193,7 +191,7 @@ class NeoNode(Protocol):
 
             # Return if not enough buffer to fully deserialize object.
             messageExpectedLength = 24 + m.Length
-            if currentLength < messageExpectedLength:
+            if len(self.buffer_in) < messageExpectedLength:
                 return
 
         except Exception as e:
@@ -230,11 +228,6 @@ class NeoNode(Protocol):
 
         finally:
             StreamManager.ReleaseStream(stream)
-
-        # Finally, after a message has been fully deserialized and propagated,
-        # check if another message can be extracted with the current buffer:
-        if len(self.buffer_in) >= 24:
-            self.CheckDataReceived()
 
     def MessageReceived(self, m):
         """
