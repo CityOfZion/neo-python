@@ -233,14 +233,16 @@ class TestInputParser(TestCase):
             result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
 
             self.assertEqual(result, None)
+            self.assertEqual(abort, True)
 
         # test ContractParameterType.Array with no list
-        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='abc') as fake_prompt:
-            with self.assertRaises(Exception) as context:
+        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="b'abc'") as fake_prompt:
 
                 result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
 
-                self.assertTrue("Please provide a list" in str(context.exception))
+                self.assertRaises(Exception, "Please provide a list")
+                self.assertEqual(result, None)
+                self.assertEqual(abort, True)
 
         # test ContractParameterType.PublicKey
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6") as fake_prompt:
@@ -275,26 +277,19 @@ class TestInputParser(TestCase):
         self.assertTrue('Void is an unsupported input type' in str(context.exception))
 
         # test unknown ContractParameterType
-        with self.assertRaises(Exception) as context:
+        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="9698b1cac6ce9cbe8517e490778525b929e01903") as fake_prompt:
 
-            result, abort = Utils.gather_param(0, ContractParameterType.Blah)
+            result, abort = Utils.gather_param(0, ContractParameterType.Hash160, do_continue=False)
 
-        self.assertTrue('Blah' in str(context.exception))
+            self.assertRaises(Exception, "Unknown param type Hash160")
+            self.assertEqual(result, None)
+            self.assertEqual(abort, True)
 
         # test Exception with do_continue=True and KeyboardInterrupt
         with mock.patch('neo.Prompt.Utils.get_input_prompt') as fake_prompt:
             fake_prompt.side_effect = [Exception(-32602, "Invalid params"), KeyboardInterrupt]
 
             result, abort = Utils.gather_param(0, ContractParameterType.String)
-
-            self.assertEqual(result, None)
-            self.assertEqual(abort, True)
-
-        # test Exception with do_continue=False
-        with mock.patch('neo.Prompt.Utils.get_input_prompt') as fake_prompt:
-            fake_prompt.side_effect = Exception(-32603, "Invalid params")
-
-            result, abort = Utils.gather_param(0, ContractParameterType.String, do_continue=False)
 
             self.assertEqual(result, None)
             self.assertEqual(abort, True)
