@@ -272,14 +272,14 @@ class TestInputParser(TestCase):
 
             result, abort = Utils.gather_param(0, ContractParameterType.Void)
 
-            self.assertTrue('Void is an unsupported input type' in str(context.exception))
+        self.assertTrue('Void is an unsupported input type' in str(context.exception))
 
         # test unknown ContractParameterType
         with self.assertRaises(Exception) as context:
 
             result, abort = Utils.gather_param(0, ContractParameterType.Blah)
 
-            self.assertTrue('Unknown param type Blah' in str(context.exception))
+        self.assertTrue('Blah' in str(context.exception))
 
         # test Exception with do_continue=True and KeyboardInterrupt
         with mock.patch('neo.Prompt.Utils.get_input_prompt') as fake_prompt:
