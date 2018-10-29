@@ -46,7 +46,7 @@ class NeoClientFactory(ReconnectingClientFactory):
 
 
 class NodeLeader:
-    __LEAD = None
+    _LEAD = None
 
     Peers = []
 
@@ -81,9 +81,9 @@ class NodeLeader:
         Returns:
             NodeLeader: instance.
         """
-        if NodeLeader.__LEAD is None:
-            NodeLeader.__LEAD = NodeLeader()
-        return NodeLeader.__LEAD
+        if NodeLeader._LEAD is None:
+            NodeLeader._LEAD = NodeLeader()
+        return NodeLeader._LEAD
 
     def __init__(self):
         """
@@ -211,6 +211,9 @@ class NodeLeader:
         """
         if peer in self.Peers:
             self.Peers.remove(peer)
+
+        if peer.Address in self.ADDRS:
+            self.ADDRS.remove(peer.Address)
 
     def onSetupConnectionErr(self, err):
         logger.debug("On setup connection error! %s" % err)

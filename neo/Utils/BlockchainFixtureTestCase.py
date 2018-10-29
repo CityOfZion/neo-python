@@ -2,7 +2,7 @@ import tarfile
 import requests
 import shutil
 import os
-
+import neo
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
@@ -16,6 +16,8 @@ class BlockchainFixtureTestCase(NeoTestCase):
     FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v8.tar.gz'
     FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v8.tar.gz')
     _blockchain = None
+
+    wallets_folder = os.path.dirname(neo.__file__) + '/Utils/fixtures/'
 
     @classmethod
     def leveldb_testpath(cls):

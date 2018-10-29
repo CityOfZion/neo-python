@@ -87,7 +87,7 @@ class UserWallet(Wallet):
         return UserWallet(path=path, passwordKey=password, create=False)
 
     @staticmethod
-    def Create(path, password):
+    def Create(path, password, generate_default_key=True):
         """
         Create a new user wallet.
 
@@ -99,7 +99,8 @@ class UserWallet(Wallet):
              UserWallet: a UserWallet instance.
         """
         wallet = UserWallet(path=path, passwordKey=password, create=True)
-        wallet.CreateKey()
+        if generate_default_key:
+            wallet.CreateKey()
         return wallet
 
     def CreateKey(self, prikey=None):
@@ -151,7 +152,7 @@ class UserWallet(Wallet):
             db_contract = Contract.get(ScriptHash=contract.ScriptHash.ToBytes())
             db_contract.delete_instance()
         except Exception as e:
-            logger.info("contract does not exist yet")
+            logger.debug("contract does not exist yet")
 
         sh = bytes(contract.ScriptHash.ToArray())
         address, created = Address.get_or_create(ScriptHash=sh)
