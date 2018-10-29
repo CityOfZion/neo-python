@@ -200,7 +200,7 @@ class SettingsHolder:
         self.USE_DEBUG_STORAGE = config.get('DebugStorage', True)
         self.DEBUG_STORAGE_PATH = config.get('DebugStoragePath', 'Chains/debugstorage')
         self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
-        self.SERVICE_ENABLED = config.get('ServiceEnabled', True)
+        self.SERVICE_ENABLED = config.get('ServiceEnabled', False)
         self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
 
     def setup_mainnet(self):
