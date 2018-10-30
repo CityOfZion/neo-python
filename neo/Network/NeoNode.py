@@ -169,13 +169,17 @@ class NeoNode(Protocol):
         self.bytes_in += (len(data))
         self.buffer_in = self.buffer_in + data
 
-        while len(self.buffer_in) >= 24:
-            self.CheckDataReceived()
+        while self.CheckDataReceived():
+            pass
 
     def CheckDataReceived(self):
         """Tries to extract a Message from the data buffer and process it."""
+        currentLength = len(self.buffer_in)
+        if currentLength < 24:
+            return False
         # Extract the message header from the buffer, and return if not enough
         # buffer to fully deserialize the message object.
+
         try:
             # Construct message
             mstart = self.buffer_in[:24]
@@ -191,12 +195,12 @@ class NeoNode(Protocol):
 
             # Return if not enough buffer to fully deserialize object.
             messageExpectedLength = 24 + m.Length
-            if len(self.buffer_in) < messageExpectedLength:
-                return
+            if currentLength < messageExpectedLength:
+                return False
 
         except Exception as e:
             self.Log('Error: Could not read initial bytes %s ' % e)
-            return
+            return False
 
         finally:
             StreamManager.ReleaseStream(ms)
@@ -224,10 +228,12 @@ class NeoNode(Protocol):
 
         except Exception as e:
             self.Log('Error: Could not extract message: %s ' % e)
-            return
+            return False
 
         finally:
             StreamManager.ReleaseStream(stream)
+
+        return True
 
     def MessageReceived(self, m):
         """
