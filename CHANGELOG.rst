@@ -23,6 +23,8 @@ All notable changes to this project are documented in this file.
 - Fix ``ExtendedJsonRpcApi``
 - Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
 - Fix duplicate task starting for requesting blocks
+- Add ``getblockheader`` RPC method
+
 
 
 [0.8.1] 2018-10-06
