@@ -1,5 +1,5 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
-from neo.Network.NodeLeader import NodeLeader
+from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
 from neo.Network.NeoNode import NeoNode
 from mock import patch
 from neo.Settings import settings
@@ -11,6 +11,11 @@ from neo.Wallets.utils import to_aes_key
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
 from neo.Core.TX.MinerTransaction import MinerTransaction
+from twisted.trial import unittest
+from twisted.test import proto_helpers
+from twisted.internet.address import IPv4Address
+from mock import MagicMock
+from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 
 
 class Endpoint:
@@ -19,8 +24,61 @@ class Endpoint:
         self.port = port
 
 
-class LeaderTestCase(WalletFixtureTestCase):
+class NodeLeaderConnectionTest(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # clean up left over of other tests classes
+        leader = NodeLeader.Instance()
+        leader.Peers = []
+        leader.ADDRS = []
+
+    def _add_new_node(self, host, port):
+        self.tr.getPeer.side_effect = [IPv4Address('TCP', host, port)]
+        node = self.factory.buildProtocol(('127.0.0.1', 0))
+        node.makeConnection(self.tr)
+
+        return node
+
+    def setUp(self):
+        self.factory = NeoClientFactory()
+        self.tr = proto_helpers.StringTransport()
+        self.tr.getPeer = MagicMock()
+        self.leader = NodeLeader.Instance()
+
+    def test_getpeer_list_vs_maxpeer_list(self):
+        """https://github.com/CityOfZion/neo-python/issues/678"""
+        settings.set_max_peers(1)
+        api_server = JsonRpcApi(None, None)
+        # test we start with a clean state
+        peers = api_server.get_peers()
+        self.assertEqual(len(peers['connected']), 0)
+
+        # try connecting more nodes than allowed by the max peers settings
+        first_node = self._add_new_node('127.0.0.1', 1111)
+        second_node = self._add_new_node('127.0.0.2', 2222)
+        peers = api_server.get_peers()
+        # should respect max peer setting
+        self.assertEqual(1, len(peers['connected']))
+        self.assertEqual('127.0.0.1', peers['connected'][0]['address'])
+        self.assertEqual(1111, peers['connected'][0]['port'])
+
+        # now drop the existing node
+        self.factory.clientConnectionLost(first_node, reason="unittest")
+        # add a new one
+        second_node = self._add_new_node('127.0.0.2', 2222)
+        # and test if `first_node` we dropped can pass limit checks when it reconnects
+        self.leader.PeerCheckLoop()
+        peers = api_server.get_peers()
+        self.assertEqual(1, len(peers['connected']))
+        self.assertEqual('127.0.0.2', peers['connected'][0]['address'])
+        self.assertEqual(2222, peers['connected'][0]['port'])
+
+        # restore default settings
+        settings.set_max_peers(5)
+
+
+class LeaderTestCase(WalletFixtureTestCase):
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
 
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
@@ -41,7 +99,6 @@ class LeaderTestCase(WalletFixtureTestCase):
         NodeLeader.__LEAD = None
 
     def test_initialize(self):
-
         leader = NodeLeader.Instance()
         self.assertEqual(leader.Peers, [])
         self.assertEqual(leader.ADDRS, [])
@@ -72,7 +129,6 @@ class LeaderTestCase(WalletFixtureTestCase):
             with patch('twisted.internet.reactor.callLater', mock_call_later):
                 with patch('neo.Network.NeoNode.NeoNode.Disconnect', mock_disconnect):
                     with patch('neo.Network.NeoNode.NeoNode.SendSerializedMessage', mock_send_msg):
-
                         leader.Start()
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
@@ -94,7 +150,9 @@ class LeaderTestCase(WalletFixtureTestCase):
 
                         leader.RemoveConnectedPeer(peer)
 
+                        # the connect peers should be 1 less than the seed_list
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
+                        # the known addresses should be equal the seed_list
                         self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST))
 
                         # now test adding another

@@ -52,3 +52,25 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         addr = "AK2nJJpJr6o664CWJKi1QRXjqeic2zRp81"
         acct = Blockchain.Default().GetAccountState(addr)
         self.assertIsNone(acct)
+
+    def test_GetHeaderBy(self):
+        # test correct retrieval with hash
+        blockheader = self._blockchain.GetHeaderBy("2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f")
+        self.assertEqual(blockheader.GetHashCode().ToString(), self._blockchain.GetBlockHash(11).decode('utf-8'))
+
+        # test correct retrieval with 0x hash
+        blockheader = self._blockchain.GetHeaderBy("0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f")
+        self.assertEqual(blockheader.GetHashCode().ToString(), self._blockchain.GetBlockHash(11).decode('utf-8'))
+
+        # test correct retrieval with str height
+        blockheader = self._blockchain.GetHeaderBy("11")
+        self.assertEqual(blockheader.GetHashCode().ToString(), self._blockchain.GetBlockHash(11).decode('utf-8'))
+
+        # test correct retrieval with int height
+        blockheader = self._blockchain.GetHeaderBy(11)
+        self.assertEqual(blockheader.GetHashCode().ToString(), self._blockchain.GetBlockHash(11).decode('utf-8'))
+
+        # test incorrect retrieval
+        invalid_bc_height = self._blockchain.Height + 1
+        block = self._blockchain.GetHeaderBy(invalid_bc_height)
+        self.assertEqual(block, None)

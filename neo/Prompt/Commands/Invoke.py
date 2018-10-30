@@ -32,9 +32,11 @@ from neocore.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
-from logzero import logger
 from prompt_toolkit import prompt
 from copy import deepcopy
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 from neocore.Cryptography.ECCurve import ECDSA
 from neocore.UInt160 import UInt160

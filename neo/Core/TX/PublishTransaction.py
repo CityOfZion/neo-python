@@ -1,6 +1,8 @@
-from logzero import logger
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.FunctionCode import FunctionCode
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class PublishTransaction(Transaction):

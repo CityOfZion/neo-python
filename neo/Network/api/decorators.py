@@ -1,6 +1,7 @@
 import json
 
 from functools import wraps
+# don't change this to log_manager, only used in the rest server example that also relies on logging to a file
 from logzero import logger
 
 
@@ -15,11 +16,13 @@ def json_response(func):
         def test(request):
             return { "hello": "world" }
     """
+
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         res = func(request, *args, **kwargs)
         request.setHeader('Content-Type', 'application/json')
         return json.dumps(res)
+
     return wrapper
 
 
@@ -32,6 +35,7 @@ def catch_exceptions(func):
     This is especially useful for development, for production you might want to
     disable the messages.
     """
+
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         try:
@@ -42,6 +46,7 @@ def catch_exceptions(func):
             request.setHeader('Content-Type', 'application/json')
             return json.dumps({"error": str(e)})
         return res
+
     return wrapper
 
 
@@ -75,6 +80,7 @@ def gen_authenticated_decorator(api_tokens=[]):
         If no valid header is part of the request's HTTP headers, this decorator automatically
         returns the HTTP status code 403.
         """
+
         @wraps(func)
         def wrapper(request, *args, **kwargs):
             # Make sure Authorization header is present
@@ -98,6 +104,7 @@ def gen_authenticated_decorator(api_tokens=[]):
 
             # If all good, proceed to request handler
             return func(request, *args, **kwargs)
+
         return wrapper
 
     # Return the decorator itself

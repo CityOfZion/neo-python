@@ -319,6 +319,13 @@ class JsonRpcApi:
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "getblockheader":
+            # this should work for either str or int
+            blockheader = Blockchain.Default().GetHeaderBy(params[0])
+            if not blockheader:
+                raise JsonRpcError(-100, "Unknown block")
+            return self.get_blockheader_output(blockheader, params)
+
         raise JsonRpcError.methodNotFound()
 
     def get_custom_error_payload(self, request_id, code, message):
@@ -565,3 +572,15 @@ class JsonRpcApi:
             return tx.ToJson()
         else:
             return context.ToJson()
+
+    def get_blockheader_output(self, blockheader, params):
+
+        if len(params) >= 2 and params[1]:
+            jsn = blockheader.ToJson()
+            jsn['confirmations'] = Blockchain.Default().Height - blockheader.Index + 1
+            hash = Blockchain.Default().GetNextBlockHash(blockheader.Hash)
+            if hash:
+                jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
+            return jsn
+
+        return Helper.ToArray(blockheader).decode('utf-8')

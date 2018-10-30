@@ -1,9 +1,6 @@
 import binascii
 import traceback
-
 from decimal import Decimal
-from logzero import logger
-
 from neo.Core.VerificationCode import VerificationCode
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
@@ -13,6 +10,9 @@ from neocore.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.Core.Mixins import SerializableMixin
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class NEP5Token(VerificationCode, SerializableMixin):

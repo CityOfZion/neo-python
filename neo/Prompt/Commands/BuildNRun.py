@@ -5,7 +5,6 @@ from neo.SmartContract.ContractParameter import ContractParameter
 from neo.Prompt.Commands.Invoke import test_deploy_and_invoke, DEFAULT_MIN_FEE
 from neocore.Fixed8 import Fixed8
 from boa.compiler import Compiler
-from logzero import logger
 import binascii
 from neo.Core.State.ContractState import ContractPropertyState
 import os
@@ -13,6 +12,9 @@ import json
 import traceback
 from neocore.BigInteger import BigInteger
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 def LoadAndRun(arguments, wallet):

@@ -1,7 +1,4 @@
 import sys
-
-from logzero import logger
-
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.Blockchain import Blockchain
@@ -21,6 +18,9 @@ from neo.SmartContract.StorageContext import StorageContext
 from neo.SmartContract.StateReader import StateReader
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neo.EventHub import SmartContractEvent
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class StateMachine(StateReader):
