@@ -27,8 +27,6 @@ All notable changes to this project are documented in this file.
 - Add ``getblockheader`` RPC method
 
 
-
-
 [0.8.1] 2018-10-06
 ------------------
 - Add ``sendmany`` and ``sendfrom`` RPC methods & tests and integrate with ``sendtoaddress``
