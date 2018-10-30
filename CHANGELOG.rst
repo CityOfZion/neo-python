@@ -6,6 +6,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.2] In Progress
 -------------------
+- Update ``getassetstate`` RPC method, add ``showallcontracts`` and ``searchcontracts`` RPC methods, add ``showallassets`` RPC method & LevelDBBlockchain function, update prompt.py ``help`` and asset search
 - Fix max recursion depth exceeding when network data inflow exceeds processing speed
 - Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
 - Update Readme and Prompt.py ``help``
