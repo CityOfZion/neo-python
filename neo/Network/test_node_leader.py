@@ -78,7 +78,6 @@ class LeaderTestCase(WalletFixtureTestCase):
         NodeLeader.__LEAD = None
 
     def test_initialize(self):
-
         leader = NodeLeader.Instance()
         self.assertEqual(leader.Peers, [])
         self.assertEqual(leader.ADDRS, [])
