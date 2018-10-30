@@ -1,12 +1,13 @@
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Blockchain import GetBlockchain
 import plyvel
-from logzero import logger
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('db')
 
 
 class DebugStorage:
-
     __instance = None
 
     @property

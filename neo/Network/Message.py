@@ -1,11 +1,12 @@
-import ctypes
 import binascii
-from logzero import logger
 from neocore.IO.Mixins import SerializableMixin
 from neo.Settings import settings
 from neo.Core.Helper import Helper
 from neocore.Cryptography.Helper import bin_dbl_sha256
 from neo.Core.Size import Size as s
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class ChecksumException(Exception):

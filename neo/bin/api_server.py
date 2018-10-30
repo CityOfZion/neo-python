@@ -2,7 +2,7 @@
 """
 API server to run the JSON-RPC and REST API.
 
-Uses neo.api.JSONRPC.JsonRpcApi and neo.api.REST.RestApi
+Uses neo.api.JSONRPC.JsonRpcApi or neo.api.JSONRPC.ExtendedJsonRpcApi and neo.api.REST.RestApi
 
 Print the help and all possible arguments:
 
@@ -53,6 +53,7 @@ from twisted.web.server import Site
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
+from neo.api.JSONRPC.ExtendedJsonRpcApi import ExtendedJsonRpcApi
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.api.REST.RestApi import RestApi
 from neo.Wallets.utils import to_aes_key
@@ -126,6 +127,9 @@ def main():
 
     # host
     parser.add_argument("--host", action="store", type=str, help="Hostname ( for example 127.0.0.1)", default="0.0.0.0")
+
+    # extended json-rpc api
+    parser.add_argument("--extended-rpc", action="store_true", default=False, help="Use extended json-rpc api")
 
     # Now parse
     args = parser.parse_args()
@@ -245,7 +249,15 @@ def main():
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
 
-    if args.port_rpc:
+    if args.port_rpc and args.extended_rpc:
+        logger.info("Starting extended json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
+        api_server_rpc = ExtendedJsonRpcApi(args.port_rpc, wallet=wallet)
+        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
+        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+#        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
+#        api_server_rpc.app.run(args.host, args.port_rpc)
+
+    elif args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
         api_server_rpc = JsonRpcApi(args.port_rpc, wallet=wallet)
         endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)

@@ -1,4 +1,4 @@
-from unittest import TestCase
+from neo.Utils.NeoTestCase import NeoTestCase
 from neo.VM.InteropService import Struct, StackItem, Array, Boolean, Map
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
@@ -6,12 +6,10 @@ from neo.SmartContract.StateReader import StateReader
 from neocore.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Blockchain import Blockchain
-from mock import patch
-
-from neo.SmartContract.tests.test_vm_error_output import StringIn
+import logging
 
 
-class InteropSerializeDeserializeTestCase(TestCase):
+class InteropSerializeDeserializeTestCase(NeoTestCase):
     engine = None
     econtext = None
     state_reader = None
@@ -204,20 +202,23 @@ class InteropSerializeDeserializeTestCase(TestCase):
         deserialized = self.econtext.EvaluationStack.Pop()
         self.assertEqual(deserialized, map2)
 
-    @patch('logzero.logger.error')
-    def test_cant_serialize_iop_item(self, mocked_logger):
-        genesis = Blockchain.GenesisBlock()
-        self.econtext.EvaluationStack.PushT(StackItem.FromInterface(genesis))
-        self.engine.InvocationStack.PushT(self.econtext)
-        cant_do = self.state_reader.Runtime_Serialize(self.engine)
-        self.assertEqual(cant_do, False)
-        mocked_logger.assert_called_with(StringIn('Cannot serialize item IOp Interface: <neo.Core.Block.Block object'))
+    def test_cant_serialize_iop_item(self):
+        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
+            genesis = Blockchain.GenesisBlock()
+            self.econtext.EvaluationStack.PushT(StackItem.FromInterface(genesis))
+            self.engine.InvocationStack.PushT(self.econtext)
+            cant_do = self.state_reader.Runtime_Serialize(self.engine)
+            self.assertEqual(cant_do, False)
+            self.assertTrue(len(log_context.output) > 0)
+            expected_msg = 'Cannot serialize item IOp Interface: <neo.Core.Block.Block object'
+            self.assertTrue(expected_msg in log_context.output[0])
 
-    @patch('logzero.logger.error')
-    def test_cant_deserialize_item(self, mocked_logger):
-        self.econtext.EvaluationStack.PushT(StackItem.New(b'abc'))
-        self.engine.InvocationStack.PushT(self.econtext)
-        self.state_reader.Runtime_Deserialize(self.engine)
-        item = self.econtext.EvaluationStack.Pop()
-        self.assertIsNone(item)
-        mocked_logger.assert_called_with(StringIn('Could not deserialize stack item with type:'))
+    def test_cant_deserialize_item(self):
+        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
+            self.econtext.EvaluationStack.PushT(StackItem.New(b'abc'))
+            self.engine.InvocationStack.PushT(self.econtext)
+            success = self.state_reader.Runtime_Deserialize(self.engine)
+            self.assertFalse(success)
+            self.assertTrue(len(log_context.output) > 0)
+            expected_msg = 'Could not deserialize stack item with type:'
+            self.assertTrue(expected_msg in log_context.output[0])
