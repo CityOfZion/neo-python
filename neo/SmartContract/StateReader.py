@@ -1,7 +1,3 @@
-import binascii
-
-from logzero import logger
-
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.VM.InteropService import InteropService
 from neo.SmartContract.Contract import Contract
@@ -31,6 +27,9 @@ from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.StorageItem import StorageItem
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class StateReader(InteropService):
@@ -441,8 +440,9 @@ class StateReader(InteropService):
         try:
             stack_item = StackItem.DeserializeStackItem(reader)
             engine.CurrentContext.EvaluationStack.PushT(stack_item)
-        except Exception as e:
-            logger.error("Could not Deserialize stack item: %s " % e)
+        except ValueError as e:
+            # can't deserialize type
+            logger.error("%s " % e)
             return False
         return True
 

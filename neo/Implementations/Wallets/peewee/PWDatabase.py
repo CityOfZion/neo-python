@@ -1,13 +1,12 @@
 import logging
 from peewee import Proxy, SqliteDatabase
-from logzero import logger
+from neo.logging import log_manager
 
-logger = logging.getLogger('peewee')
-logger.setLevel(logging.ERROR)
+logger = log_manager.getLogger('peewee')
+log_manager.config_stdio([('peewee', logging.ERROR)])
 
 
 class PWDatabase:
-
     __proxy = None
 
     @staticmethod

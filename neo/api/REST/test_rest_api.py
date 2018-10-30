@@ -1,7 +1,5 @@
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Settings import settings
-from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
 import json
 import os
 import requests

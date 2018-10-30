@@ -15,6 +15,7 @@ from twisted.trial import unittest
 from twisted.test import proto_helpers
 from twisted.internet.address import IPv4Address
 from mock import MagicMock
+from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 
 
 class Endpoint:
@@ -47,14 +48,34 @@ class NodeLeaderConnectionTest(unittest.TestCase):
 
     def test_getpeer_list_vs_maxpeer_list(self):
         """https://github.com/CityOfZion/neo-python/issues/678"""
-        self._add_new_node('127.0.0.1', 1111)
-        bad_node = self._add_new_node('127.0.0.2', 2222)
-        self.assertEqual(2, len(self.leader.Peers))
-        self.assertEqual(2, len(self.leader.ADDRS))
+        settings.set_max_peers(1)
+        api_server = JsonRpcApi(None, None)
+        # test we start with a clean state
+        peers = api_server.get_peers()
+        self.assertEqual(len(peers['connected']), 0)
 
-        self.factory.clientConnectionLost(bad_node, reason="unittest")
-        self.assertEqual(1, len(self.leader.Peers))
-        self.assertEqual(1, len(self.leader.ADDRS))
+        # try connecting more nodes than allowed by the max peers settings
+        first_node = self._add_new_node('127.0.0.1', 1111)
+        second_node = self._add_new_node('127.0.0.2', 2222)
+        peers = api_server.get_peers()
+        # should respect max peer setting
+        self.assertEqual(1, len(peers['connected']))
+        self.assertEqual('127.0.0.1', peers['connected'][0]['address'])
+        self.assertEqual(1111, peers['connected'][0]['port'])
+
+        # now drop the existing node
+        self.factory.clientConnectionLost(first_node, reason="unittest")
+        # add a new one
+        second_node = self._add_new_node('127.0.0.2', 2222)
+        # and test if `first_node` we dropped can pass limit checks when it reconnects
+        self.leader.PeerCheckLoop()
+        peers = api_server.get_peers()
+        self.assertEqual(1, len(peers['connected']))
+        self.assertEqual('127.0.0.2', peers['connected'][0]['address'])
+        self.assertEqual(2222, peers['connected'][0]['port'])
+
+        # restore default settings
+        settings.set_max_peers(5)
 
 
 class LeaderTestCase(WalletFixtureTestCase):
@@ -78,7 +99,6 @@ class LeaderTestCase(WalletFixtureTestCase):
         NodeLeader.__LEAD = None
 
     def test_initialize(self):
-
         leader = NodeLeader.Instance()
         self.assertEqual(leader.Peers, [])
         self.assertEqual(leader.ADDRS, [])
@@ -130,8 +150,10 @@ class LeaderTestCase(WalletFixtureTestCase):
 
                         leader.RemoveConnectedPeer(peer)
 
+                        # the connect peers should be 1 less than the seed_list
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
-                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST) - 1)
+                        # the known addresses should be equal the seed_list
+                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST))
 
                         # now test adding another
                         leader.RemoteNodePeerReceived('hello.com', 1234, 6)

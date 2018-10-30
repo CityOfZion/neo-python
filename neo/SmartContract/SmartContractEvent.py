@@ -7,8 +7,10 @@ from neo.IO.MemoryStream import StreamManager
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neocore.IO.Mixins import SerializableMixin
 import binascii
-from logzero import logger
 from neo.Core.State.ContractState import ContractState
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class SmartContractEvent(SerializableMixin):
@@ -29,7 +31,7 @@ class SmartContractEvent(SerializableMixin):
     in the smart contract.
     """
     RUNTIME_NOTIFY = "SmartContract.Runtime.Notify"  # payload: object[]
-    RUNTIME_LOG = "SmartContract.Runtime.Log"        # payload: bytes
+    RUNTIME_LOG = "SmartContract.Runtime.Log"  # payload: bytes
 
     EXECUTION = "SmartContract.Execution.*"
     EXECUTION_INVOKE = "SmartContract.Execution.Invoke"
@@ -175,7 +177,6 @@ class NotifyType:
 
 
 class NotifyEvent(SmartContractEvent):
-
     notify_type = None
 
     addr_to = None
@@ -256,8 +257,9 @@ class NotifyEvent(SmartContractEvent):
 
         elif self.event_payload.Type == ContractParameterType.String:
             self.notify_type = self.event_payload.Value
-#        else:
-#            logger.debug("NOTIFY %s %s" % (self.event_payload.Type, self.event_payload.Value))
+
+    #        else:
+    #            logger.debug("NOTIFY %s %s" % (self.event_payload.Type, self.event_payload.Value))
 
     def SerializePayload(self, writer):
 
