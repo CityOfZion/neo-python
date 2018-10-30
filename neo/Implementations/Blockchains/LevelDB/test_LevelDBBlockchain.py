@@ -52,7 +52,3 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         addr = "AK2nJJpJr6o664CWJKi1QRXjqeic2zRp81"
         acct = Blockchain.Default().GetAccountState(addr)
         self.assertIsNone(acct)
-
-    def test_ShowAllAssets(self):
-        assets = Blockchain.Default().ShowAllAssets()
-        self.assertEqual(len(assets), 2)
