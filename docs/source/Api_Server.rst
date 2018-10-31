@@ -82,7 +82,7 @@ Default JSON-RPC Command List
    * - `getblock`_
      - | <index or hash>
        | [verbose=0]
-     - Returns the corresponding block information according to the specified idex or hash value
+     - Returns the corresponding block information according to the specified index or script hash
      -
    * - `getblockcount`_
      -
@@ -91,6 +91,11 @@ Default JSON-RPC Command List
    * - `getblockhash`_
      - <index>
      - Returns the hash value of the corresponding block based on the specified index
+     -
+   * - `getblockheader`_
+     - | <index or hash>
+       | [verbose=0]
+     - Returns the corresponding block header information according to the specified index or script hash
      -
    * - `getblocksysfee`_
      - <index>
@@ -599,7 +604,7 @@ Parameter Description
 
 Index: Block index (block height)
 
-**-or**
+**-or-**
 
 Hash: Block hash value
 
@@ -751,6 +756,90 @@ Response:
         "jsonrpc": "2.0",
         "id": 1,
         "result": "0xd782db8a38b0eea0d7394e0f007c61c71798867578c77c387c08113903946cc9"
+    }
+
+return to the `Default JSON-RPC Command List`_
+
+getblockheader
+""""""""""""""
+
+Returns the corresponding block header information according to the specified index or script hash.
+
+Parameter Description
+#####################
+
+Index: Block index (block height)
+
+**-or-**
+
+Hash: Block hash value
+
+Verbose: Optional, the default value of verbose is 0. When verbose is 0, the serialized information of the block is returned, represented by a hexadecimal string. If you need to get detailed information, you will need to use the SDK for deserialization. When verbose is 1, detailed information of the corresponding block in Json format string, is returned.
+
+Examples
+########
+
+**Example 1: Using a specified index, verbose=1**
+
+Request Body:
+
+::
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getblockheader", 
+        "params": [1, 1]
+    }
+
+
+Response:
+
+::
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "hash": "0x98f293d6146f7e24bd6784a83cd961d68f57632b88a12452b5252e1690c4fb76",
+            "size": 442,
+            "version": 0,
+            "previousblockhash": "0x996e37358dc369912041f966f8c5d8d3a8255ba5dcbd3447f8a82b55db869099",
+            "merkleroot": "0xb04bea99a361209159d15fe99a12947a12e7466bc4c80ef24208c410d2217198",
+            "time": 1539093502,
+            "index": 1,
+            "nonce": "c5bdd16b11ccd2f8",
+            "nextconsensus": "AZ81H31DMWzbSnFDLFkzh9vHwaDLayV7fU",
+            "script": {
+                "invocation": "407b5e93aa64214274663cc8c8974d257e84ef439baeb09e5929240ee15e1cda950951d6dea86a05448df474f7fad74ea16b02af3a70e5dd566739313d8956b76d40fc4186ba58acc9e81c5e91db82dc30280bef14f4d6d378905b0dddd599b2e626c9b3d79aa2ec6c55874c47dd397440531bfbb846f9ad2d6e87c22a26531253b740eac04bd534713a6b2fdfeaecdb970dead0419a1fc490e16909dab2a357ec8d874c0211b21f1b33ce184c09987915080761aa3a9947efe5352db3adaf92a2aad4",
+                "verification": "532102103a7f7dd016558597f7960d27c516a4394fd968b9e65155eb4b013e4040406e2102a7bc55fe8684e0119768d104ba30795bdcc86619e864add26156723ed185cd622102b3622bf4017bdfe317c58aed5f4c753f206b7db896046fa7d774bbc4bf7f8dc22103d90c07df63e690ce77912e10ab51acc944b66860237b608c4f8f8309e71ee69954ae"
+            },
+            "confirmations": 2026,
+            "nextblockhash": "0x8dc77652c9f40e8999b710e886f861971f25014ff108086414a96ecac41cf180"
+        }
+    }
+
+**Example 2: Using a specified hash, verbose=0**
+
+Request Body:
+
+::
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getblockheader", 
+        "params": ["98f293d6146f7e24bd6784a83cd961d68f57632b88a12452b5252e1690c4fb76"]
+    }
+
+Response:
+
+::
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "00000000999086db552ba8f84734bddca55b25a8d3d8c5f866f941209169c38d35376e99987121d210c40842f20ec8c46b46e7127a94129ae95fd159912061a399ea4bb0feb3bc5b01000000f8d2cc116bd1bdc5be48d3a3f5d10013ab9ffee489706078714f1ea201c3407b5e93aa64214274663cc8c8974d257e84ef439baeb09e5929240ee15e1cda950951d6dea86a05448df474f7fad74ea16b02af3a70e5dd566739313d8956b76d40fc4186ba58acc9e81c5e91db82dc30280bef14f4d6d378905b0dddd599b2e626c9b3d79aa2ec6c55874c47dd397440531bfbb846f9ad2d6e87c22a26531253b740eac04bd534713a6b2fdfeaecdb970dead0419a1fc490e16909dab2a357ec8d874c0211b21f1b33ce184c09987915080761aa3a9947efe5352db3adaf92a2aad48b532102103a7f7dd016558597f7960d27c516a4394fd968b9e65155eb4b013e4040406e2102a7bc55fe8684e0119768d104ba30795bdcc86619e864add26156723ed185cd622102b3622bf4017bdfe317c58aed5f4c753f206b7db896046fa7d774bbc4bf7f8dc22103d90c07df63e690ce77912e10ab51acc944b66860237b608c4f8f8309e71ee69954ae00"
     }
 
 return to the `Default JSON-RPC Command List`_
