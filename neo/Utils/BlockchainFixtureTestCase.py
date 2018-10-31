@@ -66,7 +66,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
         # setup Notification DB
         if not os.path.exists(cls.N_FIXTURE_FILENAME):
-            logzero.logger.info(
+            logger.info(
                 "downloading fixture notification database from %s. this may take a while" % cls.N_FIXTURE_REMOTE_LOC)
 
             response = requests.get(cls.N_FIXTURE_REMOTE_LOC, stream=True)
