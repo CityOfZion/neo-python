@@ -3,8 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.8.3-dev] in progress
+-----------------------
+-
 
-[0.8.2] In Progress
+
+[0.8.2] 2018-10-31
 -------------------
 - Fix max recursion depth exceeding when network data inflow exceeds processing speed
 - Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
