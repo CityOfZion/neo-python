@@ -2,7 +2,6 @@ import hashlib
 import datetime
 
 from neo.VM.OpCode import *
-from logzero import logger
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
@@ -12,6 +11,9 @@ from neo.Settings import settings
 from neo.VM.VMFault import VMFault
 from neo.Prompt.vm_debugger import VMDebugger
 from logging import DEBUG as LOGGING_LEVEL_DEBUG
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class ExecutionEngine:
@@ -1014,8 +1016,11 @@ class ExecutionEngine:
     def VM_FAULT_and_report(self, id, *args):
         self._VMState |= VMState.FAULT
 
-        if settings.log_level != LOGGING_LEVEL_DEBUG:
+        if not logger.hasHandlers() or logger.handlers[0].level != LOGGING_LEVEL_DEBUG:
             return
+
+        # if settings.log_level != LOGGING_LEVEL_DEBUG:
+        #     return
 
         if id == VMFault.INVALID_JUMP:
             error_msg = "Attemping to JMP/JMPIF/JMPIFNOT to an invalid location."

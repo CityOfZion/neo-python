@@ -1,7 +1,3 @@
-import binascii
-
-from logzero import logger
-
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.VM.InteropService import InteropService
 from neo.SmartContract.Contract import Contract
@@ -31,6 +27,9 @@ from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.StorageItem import StorageItem
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class StateReader(InteropService):
@@ -127,7 +126,6 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetUnspentCoins", self.Transaction_GetUnspentCoins)
         self.Register("Neo.Transaction.GetWitnesses", self.Transaction_GetWitnesses)
         self.Register("Neo.InvocationTransaction.GetScript", self.InvocationTransaction_GetScript)
-        self.Register("Neo.Witness.GetInvocationScript", self.Witness_GetInvocationScript)
         self.Register("Neo.Witness.GetVerificationScript", self.Witness_GetVerificationScript)
         self.Register("Neo.Attribute.GetUsage", self.Attribute_GetUsage)
         self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
@@ -441,8 +439,9 @@ class StateReader(InteropService):
         try:
             stack_item = StackItem.DeserializeStackItem(reader)
             engine.CurrentContext.EvaluationStack.PushT(stack_item)
-        except Exception as e:
-            logger.error("Could not Deserialize stack item: %s " % e)
+        except ValueError as e:
+            # can't deserialize type
+            logger.error("%s " % e)
             return False
         return True
 
@@ -772,13 +771,6 @@ class StateReader(InteropService):
         if tx is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(tx.Script)
-        return True
-
-    def Witness_GetInvocationScript(self, engine: ExecutionEngine):
-        witness = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
-        if witness is None:
-            return False
-        engine.CurrentContext.EvaluationStack.PushT(witness.InvocationScript)
         return True
 
     def Witness_GetVerificationScript(self, engine: ExecutionEngine):

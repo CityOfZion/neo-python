@@ -1,15 +1,15 @@
 import tarfile
 import requests
 import shutil
-
-from neo.Settings import settings
+import os
+import neo
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
 from neo.Settings import settings
-import logzero
-import os
-import neo
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class BlockchainFixtureTestCase(NeoTestCase):
@@ -31,7 +31,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
         super(BlockchainFixtureTestCase, cls).setUpClass()
 
         if not os.path.exists(cls.FIXTURE_FILENAME):
-            logzero.logger.info(
+            logger.info(
                 "downloading fixture block database from %s. this may take a while" % cls.FIXTURE_REMOTE_LOC)
 
             response = requests.get(cls.FIXTURE_REMOTE_LOC, stream=True)

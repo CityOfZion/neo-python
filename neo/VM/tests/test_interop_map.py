@@ -1,12 +1,10 @@
-from unittest import TestCase
+from neo.Utils.NeoTestCase import NeoTestCase
 from neo.VM.InteropService import Integer, BigInteger, ByteArray, StackItem, Map, Array
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import OpCode
 from neo.VM import VMState
-from mock import patch
-from neo.Settings import settings
-from logging import DEBUG
+import logging
 
 
 class StringIn(str):
@@ -14,14 +12,13 @@ class StringIn(str):
         return self in other
 
 
-class InteropTest(TestCase):
+class InteropTest(NeoTestCase):
     engine = None
     econtext = None
 
     @classmethod
     def setUpClass(cls):
         super(InteropTest, cls).setUpClass()
-        settings.set_loglevel(DEBUG)
 
     def setUp(self):
         self.engine = ExecutionEngine()
@@ -101,32 +98,34 @@ class InteropTest(TestCase):
         self.assertEqual(len(self.econtext.EvaluationStack.Items), 0)
         self.assertEqual(self.engine.State, VMState.BREAK)
 
-    @patch('logzero.logger.error')
-    def test_op_map4(self, mocked_logger):
-        # set item should fail if these are out of order
-        self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
-        self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
-        self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
-        self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
+    def test_op_map4(self):
+        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
+            # set item should fail if these are out of order
+            self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
+            self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
+            self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
+            self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
 
-        self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertTrue(len(log_context.output) > 0)
+            self.assertTrue('VMFault.KEY_IS_COLLECTION' in log_context.output[0])
 
-        mocked_logger.assert_called_with(StringIn('VMFault.KEY_IS_COLLECTION'))
+    def test_op_map5(self):
+        # need to set vm logging level to DEBUG or we will immediately exit `VM_FAULT_and_report()`
+        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
+            # set item should fail if these are out of order
+            self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
+            self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
+            self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
+            self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
 
-    @patch('logzero.logger.error')
-    def test_op_map5(self, mocked_logger):
-        # set item should fail if these are out of order
-        self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
-        self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
-        self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
-        self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
+            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
 
-        self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertTrue(len(log_context.output) > 0)
+            self.assertEqual(log_context.records[0].levelname, 'ERROR')
+            self.assertTrue('VMFault.SETITEM_INVALID_TYPE' in log_context.output[0])
 
-        mocked_logger.assert_called_with(StringIn('VMFault.SETITEM_INVALID_TYPE'))
-
-    @patch('logzero.logger.error')
-    def test_op_map6(self, mocked_logger):
+    def test_op_map6(self):
         # we can pick an item from a dict
         self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
         self.econtext.EvaluationStack.PushT(StackItem.New('a'))
@@ -135,38 +134,40 @@ class InteropTest(TestCase):
         self.assertEqual(len(self.econtext.EvaluationStack.Items), 1)
         self.assertEqual(self.econtext.EvaluationStack.Items[0].GetBigInteger(), 4)
 
-    @patch('logzero.logger.error')
-    def test_op_map7(self, mocked_logger):
-        # pick item with key is collection causes error
-        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
-        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
-        self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
+    def test_op_map7(self):
+        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
+            # pick item with key is collection causes error
+            self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
+            self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
+            self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
-        self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertTrue(len(log_context.output) > 0)
+            self.assertTrue('VMFault.KEY_IS_COLLECTION' in log_context.output[0])
 
-        mocked_logger.assert_called_with(StringIn('VMFault.KEY_IS_COLLECTION'))
+    def test_op_map8(self):
+        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
+            # pick item on non collection causes error
+            self.econtext.EvaluationStack.PushT(StackItem.New('a'))
+            self.econtext.EvaluationStack.PushT(StackItem.New('a'))
+            self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
-    @patch('logzero.logger.error')
-    def test_op_map8(self, mocked_logger):
-        # pick item on non collection causes error
-        self.econtext.EvaluationStack.PushT(StackItem.New('a'))
-        self.econtext.EvaluationStack.PushT(StackItem.New('a'))
-        self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
+            self.assertTrue(len(log_context.output) > 0)
+            log_msg = log_context.output[0]
+            self.assertTrue('Cannot access item at index' in log_msg and 'Item is not an array or dict' in log_msg)
 
-        self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
 
-        mocked_logger.assert_called_with(StringIn('Cannot access item at index') and StringIn('Item is not an array or dict'))
+    def test_op_map9(self):
+        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
+            # pick item key not found
+            self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
+            self.econtext.EvaluationStack.PushT(StackItem.New('b'))
+            self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
-    @patch('logzero.logger.error')
-    def test_op_map9(self, mocked_logger):
-        # pick item key not found
-        self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
-        self.econtext.EvaluationStack.PushT(StackItem.New('b'))
-        self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
-
-        self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
-
-        mocked_logger.assert_called_with(StringIn('VMFault.DICT_KEY_NOT_FOUND'))
+            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertTrue(len(log_context.output) > 0)
+            self.assertTrue('VMFault.DICT_KEY_NOT_FOUND' in log_context.output[0])
 
     def test_op_map10(self):
         # pick item key not found

@@ -1,9 +1,10 @@
 import binascii
-from logzero import logger
-
 from neo.VM.Mixins import EquatableMixin
 from neocore.BigInteger import BigInteger
 from neo.SmartContract import StackItemType
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class CollectionMixin:
@@ -108,8 +109,7 @@ class StackItem(EquatableMixin):
             return stack_item
 
         else:
-            logger.error("Could not deserialize stack item with type: %s " % stype)
-        return None
+            raise ValueError("Could not deserialize stack item with type: %s " % stype)
 
     @staticmethod
     def FromInterface(value):
@@ -556,6 +556,5 @@ class InteropService:
 
     @staticmethod
     def GetEntryScriptHash(engine):
-
         engine.CurrentContext.EvaluationStack.PushT(engine.EntryContext.ScriptHash())
         return True
