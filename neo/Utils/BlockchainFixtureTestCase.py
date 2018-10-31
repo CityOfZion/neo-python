@@ -84,7 +84,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
         except Exception as e:
             raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.N_FIXTURE_FILENAME))
         if not os.path.exists(cls.N_NOTIFICATION_DB_NAME):
-            raise Exception("Error downloading fixtures at %s" % cls.leveldb_testpath())
+            raise Exception("Error downloading fixtures at %s" % cls.N_NOTIFICATION_DB_NAME)
 
         settings.NOTIFICATION_DB_PATH = cls.N_NOTIFICATION_DB_NAME
         ndb = NotificationDB.instance()
