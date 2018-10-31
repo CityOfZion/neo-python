@@ -4,7 +4,6 @@ import json
 import os
 import requests
 import tarfile
-import logzero
 import shutil
 
 from neo.api.REST.RestApi import RestApi
