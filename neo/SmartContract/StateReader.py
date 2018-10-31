@@ -126,7 +126,6 @@ class StateReader(InteropService):
         self.Register("Neo.Transaction.GetUnspentCoins", self.Transaction_GetUnspentCoins)
         self.Register("Neo.Transaction.GetWitnesses", self.Transaction_GetWitnesses)
         self.Register("Neo.InvocationTransaction.GetScript", self.InvocationTransaction_GetScript)
-        self.Register("Neo.Witness.GetInvocationScript", self.Witness_GetInvocationScript)
         self.Register("Neo.Witness.GetVerificationScript", self.Witness_GetVerificationScript)
         self.Register("Neo.Attribute.GetUsage", self.Attribute_GetUsage)
         self.Register("Neo.Attribute.GetData", self.Attribute_GetData)
@@ -772,13 +771,6 @@ class StateReader(InteropService):
         if tx is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(tx.Script)
-        return True
-
-    def Witness_GetInvocationScript(self, engine: ExecutionEngine):
-        witness = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
-        if witness is None:
-            return False
-        engine.CurrentContext.EvaluationStack.PushT(witness.InvocationScript)
         return True
 
     def Witness_GetVerificationScript(self, engine: ExecutionEngine):

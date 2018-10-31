@@ -16,7 +16,7 @@ All notable changes to this project are documented in this file.
 - Add raw transaction building examples in ``\examples\`` folder
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
 - Fix return types of ``claimGas`` function.
-- Update compiler version ``v0.5.4``
+- Update compiler version ``v0.5.6``
 - Add the option -u (unittest-net) to prompt.py
 - Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 - Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
@@ -24,7 +24,8 @@ All notable changes to this project are documented in this file.
 - Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
 - Fix duplicate task starting for requesting blocks
 - Add ``getblockheader`` RPC method
-
+- Remove ``Neo.Witness.GetInvocationScript``
+- Allow wallets to sync past corrupt blocks
 
 
 [0.8.1] 2018-10-06
