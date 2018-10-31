@@ -20,14 +20,6 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
     def leveldb_testpath(self):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
-    @classmethod
-    def setUpClass(cls):
-        super(NotificationDBTestCase, cls).setUpClass()
-
-    @classmethod
-    def tearDownClass(cls):
-        super(NotificationDBTestCase, cls).tearDownClass()
-
     def setUp(self):
         self.app = RestApi()
 
