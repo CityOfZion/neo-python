@@ -269,13 +269,6 @@ class TestInputParser(TestCase):
             wallet = None
             os.remove(WalletFixtureTestCase.wallet_1_dest())
 
-        # test ContractParameterType.Void
-        with self.assertRaises(Exception) as context:
-
-            result, abort = Utils.gather_param(0, ContractParameterType.Void)
-
-        self.assertTrue('Void is an unsupported input type' in str(context.exception))
-
         # test unknown ContractParameterType
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="9698b1cac6ce9cbe8517e490778525b929e01903") as fake_prompt:
 
