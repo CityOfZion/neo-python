@@ -297,10 +297,6 @@ def get_input_prompt(message):
 
 def gather_param(index, param_type, do_continue=True):
     ptype = ContractParameterType(param_type)
-
-    if ptype == ContractParameterType.Void:
-        raise Exception("%s is an unsupported input type" % ptype.name)
-
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
 
     try:
