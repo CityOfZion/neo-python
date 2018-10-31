@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import binascii
 
-from logzero import logger
 from playhouse.migrate import SqliteMigrator, BooleanField, migrate
 from .PWDatabase import PWDatabase
 from neo.Wallets.Wallet import Wallet
@@ -20,11 +19,12 @@ from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neocore.UInt256 import UInt256
 from neo.Wallets.Coin import CoinState
-from neo.EventHub import SmartContractEvent, events
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
     TransactionInfo, NEP5Token, NamedAddress, VINHold
-import json
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class UserWallet(Wallet):
@@ -87,7 +87,7 @@ class UserWallet(Wallet):
         return UserWallet(path=path, passwordKey=password, create=False)
 
     @staticmethod
-    def Create(path, password):
+    def Create(path, password, generate_default_key=True):
         """
         Create a new user wallet.
 
@@ -99,7 +99,8 @@ class UserWallet(Wallet):
              UserWallet: a UserWallet instance.
         """
         wallet = UserWallet(path=path, passwordKey=password, create=True)
-        wallet.CreateKey()
+        if generate_default_key:
+            wallet.CreateKey()
         return wallet
 
     def CreateKey(self, prikey=None):
@@ -151,7 +152,7 @@ class UserWallet(Wallet):
             db_contract = Contract.get(ScriptHash=contract.ScriptHash.ToBytes())
             db_contract.delete_instance()
         except Exception as e:
-            logger.info("contract does not exist yet")
+            logger.debug("contract does not exist yet")
 
         sh = bytes(contract.ScriptHash.ToArray())
         address, created = Address.get_or_create(ScriptHash=sh)

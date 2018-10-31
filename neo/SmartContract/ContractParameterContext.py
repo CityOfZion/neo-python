@@ -1,8 +1,5 @@
 import json
 import binascii
-
-from logzero import logger
-
 from neo.Core.TX.Transaction import ContractTransaction
 from neo.SmartContract.Contract import Contract, ContractType
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
@@ -12,6 +9,9 @@ from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class ContractParamater:

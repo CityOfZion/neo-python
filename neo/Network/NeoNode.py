@@ -1,6 +1,5 @@
 import binascii
 import random
-from logzero import logger
 from twisted.internet.protocol import Protocol
 from twisted.internet import error as twisted_error
 from twisted.internet import reactor, task, threads
@@ -19,6 +18,9 @@ from .Payloads.HeadersPayload import HeadersPayload
 from .Payloads.AddrPayload import AddrPayload
 from .InventoryType import InventoryType
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('network')
 
 MODE_MAINTAIN = 7
 MODE_CATCHUP = 2
@@ -29,8 +31,10 @@ class NeoNode(Protocol):
 
     leader = None
 
+    block_loop = None
     block_loop_deferred = None
 
+    peer_loop = None
     peer_loop_deferred = None
 
     sync_mode = MODE_CATCHUP
@@ -128,7 +132,14 @@ class NeoNode(Protocol):
             if self.block_loop_deferred:
                 self.block_loop_deferred.cancel()
             if self.peer_loop_deferred:
-                self.block_loop_deferred.cancel()
+                self.peer_loop_deferred.cancel()
+
+            if self.block_loop:
+                if self.block_loop.running:
+                    self.block_loop.stop()
+            if self.peer_loop:
+                if self.peer_loop.running:
+                    self.peer_loop.stop()
 
             self.ReleaseBlockRequests()
             self.leader.RemoveConnectedPeer(self)
@@ -157,16 +168,18 @@ class NeoNode(Protocol):
         """ Called from Twisted whenever data is received. """
         self.bytes_in += (len(data))
         self.buffer_in = self.buffer_in + data
-        self.CheckDataReceived()
+
+        while self.CheckDataReceived():
+            pass
 
     def CheckDataReceived(self):
         """Tries to extract a Message from the data buffer and process it."""
         currentLength = len(self.buffer_in)
         if currentLength < 24:
-            return
-
+            return False
         # Extract the message header from the buffer, and return if not enough
         # buffer to fully deserialize the message object.
+
         try:
             # Construct message
             mstart = self.buffer_in[:24]
@@ -183,11 +196,11 @@ class NeoNode(Protocol):
             # Return if not enough buffer to fully deserialize object.
             messageExpectedLength = 24 + m.Length
             if currentLength < messageExpectedLength:
-                return
+                return False
 
         except Exception as e:
             self.Log('Error: Could not read initial bytes %s ' % e)
-            return
+            return False
 
         finally:
             StreamManager.ReleaseStream(ms)
@@ -215,15 +228,12 @@ class NeoNode(Protocol):
 
         except Exception as e:
             self.Log('Error: Could not extract message: %s ' % e)
-            return
+            return False
 
         finally:
             StreamManager.ReleaseStream(stream)
 
-        # Finally, after a message has been fully deserialized and propagated,
-        # check if another message can be extracted with the current buffer:
-        if len(self.buffer_in) >= 24:
-            self.CheckDataReceived()
+        return True
 
     def MessageReceived(self, m):
         """
@@ -270,13 +280,13 @@ class NeoNode(Protocol):
         logger.error("On Call from thread error %s " % err)
 
     def ProtocolReady(self):
-        block_loop = task.LoopingCall(self.AskForMoreBlocks)
-        self.block_loop_deferred = block_loop.start(self.sync_mode, now=False)
+        self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
+        self.block_loop_deferred = self.block_loop.start(self.sync_mode, now=False)
         self.block_loop_deferred.addErrback(self.OnLoopError)
 
-        # ask every 3 minutes for new peers
-        peer_loop = task.LoopingCall(self.RequestPeerInfo)
-        self.peer_loop_deferred = peer_loop.start(120, now=False)
+        # ask every 2 minutes for new peers
+        self.peer_loop = task.LoopingCall(self.RequestPeerInfo)
+        self.peer_loop_deferred = self.peer_loop.start(120, now=False)
         self.peer_loop_deferred.addErrback(self.OnLoopError)
 
         self.RequestPeerInfo()
@@ -298,9 +308,11 @@ class NeoNode(Protocol):
             self.sync_mode = MODE_MAINTAIN
 
         if self.sync_mode != current_mode:
+            if self.block_loop and self.block_loop.running:
+                self.block_loop.stop()
             self.block_loop_deferred.cancel()
-            block_loop = task.LoopingCall(self.AskForMoreBlocks)
-            self.block_loop_deferred = block_loop.start(self.sync_mode)
+            self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
+            self.block_loop_deferred = self.block_loop.start(self.sync_mode)
             self.block_loop_deferred.addErrback(self.OnLoopError)
 
         else:

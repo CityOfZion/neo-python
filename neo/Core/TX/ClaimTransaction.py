@@ -1,11 +1,12 @@
-import sys
 from itertools import groupby
-from logzero import logger
 from neo.Core.TX.Transaction import TransactionType, Transaction
 from neocore.Fixed8 import Fixed8
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.Size import GetVarSize
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class ClaimTransaction(Transaction):
@@ -134,7 +135,7 @@ class ClaimTransaction(Transaction):
             return False
 
         # wat does this do
-        # get all claim transactinos from mempool list
+        # get all claim transactions from mempool list
         # that are not this claim
         # and gather all the claims of those claim transactions
         # and see if they intersect the claims of this transaction

@@ -1,6 +1,8 @@
 import binascii
-from logzero import logger
 from neo.SmartContract.Iterable import EnumeratorBase
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('db')
 
 
 class DBCollection:

@@ -3,8 +3,17 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+
 [0.8.2] In Progress
 -------------------
+- Fix max recursion depth exceeding when network data inflow exceeds processing speed
+- Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
+- Update Readme and Prompt.py ``help``
+- Update documentation to include new ``IsPayable`` contract flag in the examples
+- Fix discrepancy between ``getpeers`` RPC call and the ``maxpeers`` setting
+- Update ``CreateAddress`` functionality and tests
+- Add VM sanity checks for operations on ``BigInteger``'s
+- Add raw transaction building examples in ``\examples\`` folder
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
 - Fix return types of ``claimGas`` function.
 - Update compiler version ``v0.5.4``
@@ -12,6 +21,11 @@ All notable changes to this project are documented in this file.
 - Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 - Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
 - Fix ``ExtendedJsonRpcApi``
+- Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
+- Fix duplicate task starting for requesting blocks
+- Add ``getblockheader`` RPC method
+
+
 
 [0.8.1] 2018-10-06
 ------------------
@@ -21,9 +35,10 @@ All notable changes to this project are documented in this file.
 - Change notification transfer event format to use string quoted integer
 - Fix Notification token list to include correct hash for contract and token
 - Removes all ``hold`` and ``withdraw`` related functionality from wallet and prompt
-- Fix 'script_hash' output in ``ToJson`` in AccountState, Adds an 'address' key, Adds a test for ``ToJson`` in AccountState, Replaces the variable ``script_hash`` in ``GetAccountState`` in LevelDBBlockchain with ``address``, Adds a test for ``GetAccountState`` in LevelDBBlockchain
+- Various updates to inaccuracies in ``ToJson`` output of ``AccountState``
 - Add documentation support for Python 3.7
 - Change execution fail event payload to give more meaningful error messages
+
 
 [0.8.0] 2018-09-28
 ------------------
@@ -259,15 +274,15 @@ All notable changes to this project are documented in this file.
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
 - Changes for Pypi compatibility:
-  - move protocol.*.json to ``neo/data/``
-  - move ``prompt.py`` and other scripts to ``neo/bin``
-  - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
-  - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
-     - ``np-prompt``
-     - ``np-api-server``
-     - ``np-bootstrap``
-     - ``np-reencrypt-wallet``
-  - updated docs for Pypi changes
+   - move protocol.*.json to ``neo/data/``
+   - move ``prompt.py`` and other scripts to ``neo/bin``
+   - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
+   - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
+      - ``np-prompt``
+      - ``np-api-server``
+      - ``np-bootstrap``
+      - ``np-reencrypt-wallet``
+   - updated docs for Pypi changes
 
 
 [0.5.7] 2018-03-14

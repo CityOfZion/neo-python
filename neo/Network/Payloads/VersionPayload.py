@@ -1,13 +1,12 @@
-import sys
-import ctypes
 import datetime
-from logzero import logger
-
 from neocore.IO.Mixins import SerializableMixin
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class VersionPayload(SerializableMixin):

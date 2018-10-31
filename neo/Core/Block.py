@@ -1,5 +1,3 @@
-import sys
-from logzero import logger
 from neo.Network.Mixins import InventoryMixin
 from neo.Network.InventoryType import InventoryType
 from neo.Core.BlockBase import BlockBase
@@ -13,6 +11,9 @@ from neo.Core.Witness import Witness
 from neocore.Fixed8 import Fixed8
 from neo.Blockchain import GetBlockchain
 from neo.Core.Size import GetVarSize
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class Block(BlockBase, InventoryMixin):

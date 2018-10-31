@@ -10,38 +10,41 @@ from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
-from neo.Implementations.Wallets.peewee import UserWallet
 import binascii
 import json
 import math
-from logzero import logger
+from neo.Implementations.Wallets.peewee.Models import Account
+
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
-def CreateAddress(prompter, wallet, args):
+def CreateAddress(wallet, args):
     try:
         int_args = int(args)
-    except Exception as e:
-        print('Enter the number of addresses to create <= 3.')
+    except (ValueError, TypeError) as error:  # for non integer args or Nonetype
+        print(error)
         return False
 
     if wallet is None:
         print("Please open a wallet.")
         return False
-    if int_args > 3:
-        print('Please create 3 or less addresses at a time.')
-        return False
+
     if int_args <= 0:
         print('Enter a number greater than 0.')
         return False
-    if int_args > 0 and int_args <= 3:
-        x = int_args + 1
-        while x > 1:
-            wallet.CreateKey()
-            x = x - 1
+
+    address_list = []
+    for i in range(int_args):
+        keys = wallet.CreateKey()
+        account = Account.get(PublicKeyHash=keys.PublicKeyHash.ToBytes())
+        address_list.append(account.contract_set[0].Address.ToString())
+    print("Created %s new addresses: " % int_args, address_list)
     return wallet
 
 
-def DeleteAddress(prompter, wallet, addr):
+def DeleteAddress(wallet, addr):
     scripthash = wallet.ToScriptHash(addr)
 
     success, coins = wallet.DeleteAddress(scripthash)
@@ -142,7 +145,6 @@ def ClaimGas(wallet, require_password=True, args=None):
             if successful: (tx, True)
             if unsuccessful: (None, False)
     """
-
     if args:
         params, from_addr_str = get_from_addr(args)
     else:

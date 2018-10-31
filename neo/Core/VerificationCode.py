@@ -1,12 +1,12 @@
-
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neocore.Cryptography.Crypto import Crypto
 import binascii
-from logzero import logger
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class VerificationCode:
-
     Script = None
 
     ParameterList = None
