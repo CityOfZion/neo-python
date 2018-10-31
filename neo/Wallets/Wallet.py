@@ -656,6 +656,8 @@ class Wallet:
 
                 if block is not None:
                     self.ProcessNewBlock(block)
+                else:
+                    self._current_height += 1
 
                 blockcount += 1
 
