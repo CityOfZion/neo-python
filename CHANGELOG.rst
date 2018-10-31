@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.3-dev] in progress
 -----------------------
--
+- Remove ``ContractParameterType.Void`` (``ff``) as an optional input; improve ``get_param`` test coverage; improve ``loadcontract`` and ``gatherloadedcontractparams`` test coverage
 
 
 [0.8.2] 2018-10-31
