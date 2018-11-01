@@ -32,7 +32,7 @@ class LoadSmartContractTestCase(TestCase):
         # test good contract
         with mock.patch("builtins.open", mock.mock_open(read_data="path.avm")):
 
-            args = ["path.avm", "070710", "01", "False", "False", "False"]
+            args = ["path.avm", "070710", "01", "True", "True", "True"]
 
             res = LoadContract(args)
 
