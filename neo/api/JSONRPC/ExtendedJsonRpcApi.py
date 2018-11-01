@@ -58,4 +58,19 @@ class ExtendedJsonRpcApi(JsonRpcApi):
             else:
                 raise JsonRpcError(-400, "Access denied.")
 
+        elif method == "showallaccounts":
+            accounts = Blockchain.Default().ShowAllAccounts()
+            res = []
+            for item in accounts:
+                res.append(item.decode('utf-8'))
+            return res
+
+        elif method == "showallaccountstates":
+            acct_states = Blockchain.Default().ShowAllAccountStates()
+            res = []
+            for entry in acct_states:
+                entry = entry.ToJson()
+                res.append(entry)
+            return res
+
         return super(ExtendedJsonRpcApi, self).json_rpc_method_handler(method, params)  
