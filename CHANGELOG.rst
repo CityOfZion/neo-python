@@ -3,8 +3,16 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.8.2] In Progress
+[0.8.3-dev] in progress
+-----------------------
+-
+
+
+[0.8.2] 2018-10-31
 -------------------
+- Fix max recursion depth exceeding when network data inflow exceeds processing speed
+- Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
+- Update Readme and Prompt.py ``help``
 - Update documentation to include new ``IsPayable`` contract flag in the examples
 - Fix discrepancy between ``getpeers`` RPC call and the ``maxpeers`` setting
 - Update ``CreateAddress`` functionality and tests
@@ -12,13 +20,16 @@ All notable changes to this project are documented in this file.
 - Add raw transaction building examples in ``\examples\`` folder
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
 - Fix return types of ``claimGas`` function.
-- Update compiler version ``v0.5.4``
+- Update compiler version ``v0.5.6``
 - Add the option -u (unittest-net) to prompt.py
 - Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 - Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
 - Fix ``ExtendedJsonRpcApi``
 - Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
 - Fix duplicate task starting for requesting blocks
+- Add ``getblockheader`` RPC method
+- Remove ``Neo.Witness.GetInvocationScript``
+- Allow wallets to sync past corrupt blocks
 
 
 [0.8.1] 2018-10-06

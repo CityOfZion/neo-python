@@ -1,7 +1,5 @@
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Settings import settings
-from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
 import json
 import os
 import requests
@@ -16,7 +14,6 @@ from klein.test.test_resource import requestMock
 
 
 class NotificationDBTestCase(BlockchainFixtureTestCase):
-
     N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixtures_v8.tar.gz'
     N_FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/notif_fixtures_v8.tar.gz')
     N_NOTIFICATION_DB_NAME = os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_notifications')

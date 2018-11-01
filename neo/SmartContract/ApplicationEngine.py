@@ -1,7 +1,5 @@
 import binascii
 import sys
-from logzero import logger
-
 from collections import deque
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM import OpCode
@@ -28,6 +26,9 @@ from neo.VM.InteropService import Array
 from neocore.UInt160 import UInt160
 import datetime
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class ApplicationEngine(ExecutionEngine):

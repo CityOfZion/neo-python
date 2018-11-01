@@ -1,12 +1,11 @@
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
-from neo.VM.InteropService import Integer, BigInteger, ByteArray, StackItem, Map, Array
+from neo.VM.InteropService import StackItem
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.SmartContract.StateReader import StateReader
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction
 from neo.Settings import settings
-from logging import DEBUG
 from neocore.UInt256 import UInt256
 import os
 
@@ -28,7 +27,6 @@ class BlockchainInteropTest(BlockchainFixtureTestCase):
     @classmethod
     def setUpClass(cls):
         super(BlockchainInteropTest, cls).setUpClass()
-        settings.set_loglevel(DEBUG)
 
     def setUp(self):
         self.engine = ExecutionEngine()
@@ -60,7 +58,6 @@ class BlockchainInteropTest(BlockchainFixtureTestCase):
         self.assertIsInstance(tx, Transaction)
 
     def test_interop_get_bad_transaction(self):
-
         u256 = UInt256.ParseString('8be9660512991d36e016b8ced6fda5d611d26a0f6e2faaaf1f379496edb33956')
 
         hash = StackItem.New(u256.Data)

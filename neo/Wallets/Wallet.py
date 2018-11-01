@@ -11,9 +11,7 @@ from base58 import b58decode
 from decimal import Decimal
 from Crypto import Random
 from Crypto.Cipher import AES
-from logzero import logger
 from threading import RLock
-
 from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
@@ -26,12 +24,14 @@ from neo.Wallets.Coin import Coin
 from neocore.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Settings import settings
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
 from neo.Wallets.utils import to_aes_key
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class Wallet:
@@ -656,6 +656,8 @@ class Wallet:
 
                 if block is not None:
                     self.ProcessNewBlock(block)
+                else:
+                    self._current_height += 1
 
                 blockcount += 1
 

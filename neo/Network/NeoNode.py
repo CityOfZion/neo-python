@@ -1,6 +1,5 @@
 import binascii
 import random
-from logzero import logger
 from twisted.internet.protocol import Protocol
 from twisted.internet import error as twisted_error
 from twisted.internet import reactor, task, threads
@@ -19,6 +18,9 @@ from .Payloads.HeadersPayload import HeadersPayload
 from .Payloads.AddrPayload import AddrPayload
 from .InventoryType import InventoryType
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('network')
 
 MODE_MAINTAIN = 7
 MODE_CATCHUP = 2
@@ -166,16 +168,18 @@ class NeoNode(Protocol):
         """ Called from Twisted whenever data is received. """
         self.bytes_in += (len(data))
         self.buffer_in = self.buffer_in + data
-        self.CheckDataReceived()
+
+        while self.CheckDataReceived():
+            pass
 
     def CheckDataReceived(self):
         """Tries to extract a Message from the data buffer and process it."""
         currentLength = len(self.buffer_in)
         if currentLength < 24:
-            return
-
+            return False
         # Extract the message header from the buffer, and return if not enough
         # buffer to fully deserialize the message object.
+
         try:
             # Construct message
             mstart = self.buffer_in[:24]
@@ -192,11 +196,11 @@ class NeoNode(Protocol):
             # Return if not enough buffer to fully deserialize object.
             messageExpectedLength = 24 + m.Length
             if currentLength < messageExpectedLength:
-                return
+                return False
 
         except Exception as e:
             self.Log('Error: Could not read initial bytes %s ' % e)
-            return
+            return False
 
         finally:
             StreamManager.ReleaseStream(ms)
@@ -224,15 +228,12 @@ class NeoNode(Protocol):
 
         except Exception as e:
             self.Log('Error: Could not extract message: %s ' % e)
-            return
+            return False
 
         finally:
             StreamManager.ReleaseStream(stream)
 
-        # Finally, after a message has been fully deserialized and propagated,
-        # check if another message can be extracted with the current buffer:
-        if len(self.buffer_in) >= 24:
-            self.CheckDataReceived()
+        return True
 
     def MessageReceived(self, m):
         """

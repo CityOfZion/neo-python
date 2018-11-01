@@ -12,12 +12,12 @@
 #
 from neo.Settings import settings
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
-# See https://logzero.readthedocs.io/en/latest/#example-usage
-from logzero import logger
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 # pymitter manages the event dispatching (https://github.com/riga/pymitter#examples)
 from pymitter import EventEmitter
-import json
 
 # `events` is can be imported and used from all parts of the code to dispatch or receive events
 events = EventEmitter(wildcard=True)

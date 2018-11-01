@@ -10,8 +10,10 @@ look at `Settings.py`. Use it like this example:
 import json
 
 from json.decoder import JSONDecodeError
-from logzero import logger
 from neo.Settings import FILENAME_PREFERENCES
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 PREFERENCES_DEFAULT = {
     "theme": "dark",
