@@ -295,6 +295,12 @@ class Blockchain:
     def GetStates(self, prefix, classref):
         pass
 
+    def ShowAllAccounts(self):
+        pass
+
+    def ShowAllAccountStates(self):
+        pass
+
     def GetAccountStateByIndex(self, index):
         pass
 
