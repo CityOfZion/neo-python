@@ -9,6 +9,7 @@ See also:
 import json
 import base58
 import binascii
+import datetime
 from json.decoder import JSONDecodeError
 
 from klein import Klein
@@ -83,6 +84,8 @@ class JsonRpcApi:
     def __init__(self, port, wallet=None):
         self.port = port
         self.wallet = wallet
+        self.start_height = Blockchain.Default().Height
+        self.start_dt = datetime.datetime.utcnow()
 
     def get_data(self, body: dict):
 

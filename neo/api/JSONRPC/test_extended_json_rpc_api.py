@@ -5,15 +5,11 @@ Run only these tests:
 """
 import json
 import os
-import shutil
 from klein.test.test_resource import requestMock
 from neo.api.JSONRPC.ExtendedJsonRpcApi import ExtendedJsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
-from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Wallets.utils import to_aes_key
 from neo.Blockchain import GetBlockchain
 from neo.Settings import settings
-from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
 
 def mock_request(body):
@@ -78,43 +74,3 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res["id"], "42")
         self.assertEqual(res["error"]["code"], -32601)
         self.assertEqual(res["error"]["message"], "Method not found")
-
-    def test_get_node_state(self):
-        req = self._gen_rpc_req("getnodestate")
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
-        res = json.loads(self.app.home(mock_req))
-        self.assertGreater(res['result']['Progress'][0], 0)
-        self.assertGreater(res['result']['Progress'][2], 0)
-        self.assertGreater(res['result']['Time elapsed (minutes)'], 0)
-
-    def test_gettxhistory_no_wallet(self):
-        req = self._gen_rpc_req("gettxhistory")
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
-        res = json.loads(self.app.home(mock_req))
-        error = res.get('error', {})
-        self.assertEqual(error.get('code', None), -400)
-        self.assertEqual(error.get('message', None), "Access denied.")
-
-    def test_gettxhistory(self):
-        test_wallet_path = shutil.copyfile(
-            WalletFixtureTestCase.wallet_1_path(),
-            WalletFixtureTestCase.wallet_1_dest()
-        )
-        self.app.wallet = UserWallet.Open(
-            test_wallet_path,
-            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
-        )
-        req = self._gen_rpc_req("gettxhistory")
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
-        res = json.loads(self.app.home(mock_req))
-        for tx in res['result']:
-            self.assertIn('txid', tx.keys())
-            self.assertIsNotNone(tx['txid'])
-            self.assertIn('block_index', tx.keys())
-            self.assertIsNotNone(tx['block_index'])
-            self.assertIn('blocktime', tx.keys())
-            self.assertIsNotNone(tx['blocktime'])
-        self.assertEqual(len(res['result']), 9)
-        self.app.wallet.Close()
-        self.app.wallet = None
-        os.remove(WalletFixtureTestCase.wallet_1_dest())
