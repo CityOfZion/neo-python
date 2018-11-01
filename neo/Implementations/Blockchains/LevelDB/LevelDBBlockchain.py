@@ -208,6 +208,24 @@ class LevelDBBlockchain(Blockchain):
     def GetStates(self, prefix, classref):
         return DBCollection(self._db, prefix, classref)
 
+    def ShowAllAccounts(self):
+
+        accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
+        keys = accounts.Keys
+        return keys
+
+    def ShowAllAccountStates(self):
+
+        accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
+        keys = accounts.Keys
+
+        acct_states = []
+        for address in list(keys):
+            acct = accounts.TryGet(keyval=address)
+            acct_states.append(acct)
+
+        return acct_states
+
     def GetAccountState(self, address, print_all_accounts=False):
 
         if type(address) is str:
