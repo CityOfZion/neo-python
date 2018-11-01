@@ -74,14 +74,14 @@ class ExtendedJsonRpcApi(JsonRpcApi):
             return res
 
         elif method == "showallassets":
-            assets = list(Blockchain.Default().ShowAllAssets())
+            assets = Blockchain.Default().ShowAllAssets()
             res = []
             for item in assets:
                 res.append(item.decode('utf-8'))
             return res
 
         elif method == "showallcontracts":
-            contracts = list(Blockchain.Default().ShowAllContracts())
+            contracts = Blockchain.Default().ShowAllContracts()
             res = []
             for item in contracts:
                 res.append(item.decode('utf-8'))
