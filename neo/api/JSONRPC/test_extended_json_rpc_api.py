@@ -118,3 +118,21 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_showallaccounts(self):
+        req = self._gen_rpc_req("showallaccounts")
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(len(res['result']), 9)
+        for entry in res['result']:
+            # test that each entry is an address
+            self.assertEqual("A", entry[0])
+            self.assertEqual(34, len(entry))
+
+    def test_showallaccountstates(self):
+        req = self._gen_rpc_req("showallaccountstates")
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(len(res['result']), 9)
+        for entry in res['result']:
+            self.assertTrue('balances' in entry)
