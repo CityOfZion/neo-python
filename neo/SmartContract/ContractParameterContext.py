@@ -37,12 +37,18 @@ class ContextItem:
     ContractParameters = None
     Signatures = None
 
+    IsCustomContract = False
+
     def __init__(self, contract):
         self.Script = contract.Script
         self.ContractParameters = []
         for b in bytearray(contract.ParameterList):
             p = ContractParamater(b)
             self.ContractParameters.append(p)
+        if not contract.IsMultiSigContract and not contract.IsStandard:
+            self.IsCustomContract = True
+        else:
+            self.IsCustomContract = False
 
     def ToJson(self):
         jsn = {}
@@ -236,11 +242,12 @@ class ContractParametersContext:
 
             vscript = bytearray(0)
 
-            if item.Script is not None:
+            if item.IsCustomContract:
+                print("adding empty vscript!")
+            elif item.Script is not None:
                 if type(item.Script) is str:
                     item.Script = item.Script.encode('utf-8')
                 vscript = item.Script
-            #                logger.info("SCRIPT IS %s " % item.Script)
 
             witness = Witness(
                 invocation_script=sb.ToArray(),

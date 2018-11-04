@@ -179,15 +179,21 @@ class Helper:
             return False
 
         blockchain = GetBlockchain()
+        dbgload_script = False
 
         for i in range(0, len(hashes)):
             verification = verifiable.Scripts[i].VerificationScript
 
             if len(verification) == 0:
+
+                # import pdb
+                # pdb.set_trace()
+                # print("ADDING VERIFICATION SCRIPT!!")
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
-                verification = sb.ToArray()
-
+                verification = sb.ms.getvalue()
+                print("ADDING VERIFICATION %s " % verification)
+                dbgload_script = True
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:
@@ -195,9 +201,11 @@ class Helper:
 
             state_reader = GetStateReader()
             engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
-            engine.LoadScript(verification)
+            engine.LoadScript(verification, dbg=dbgload_script)
             invocation = verifiable.Scripts[i].InvocationScript
-            engine.LoadScript(invocation)
+#            if dbgload_script:
+#                invocation = bytearray(b'\x00\x00')
+            engine.LoadScript(invocation, dbg=dbgload_script)
 
             try:
                 success = engine.Execute()
