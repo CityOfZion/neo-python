@@ -173,10 +173,10 @@ class LeaderTestCase(WalletFixtureTestCase):
                         leader.Shutdown()
                         self.assertEqual(len(leader.Peers), 0)
 
-    def _generate_tx(self):
+    def _generate_tx(self, amount):
         wallet = self.GetWallet1()
 
-        output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash, Value=Fixed8.One(),
+        output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash, Value=amount,
                                    script_hash=LeaderTestCase.wallet_1_script_hash)
         contract_tx = ContractTransaction(outputs=[output])
         wallet.MakeTransaction(contract_tx)
@@ -210,7 +210,7 @@ class LeaderTestCase(WalletFixtureTestCase):
                     res = leader.Relay(miner)
                     self.assertFalse(res)
 
-                    tx = self._generate_tx()
+                    tx = self._generate_tx(Fixed8.One())
 
                     res = leader.Relay(tx)
                     self.assertEqual(res, True)
@@ -235,14 +235,14 @@ class LeaderTestCase(WalletFixtureTestCase):
 
         self.assertFalse(res2)
 
-        tx = self._generate_tx()
+        tx = self._generate_tx(Fixed8.TryParse(15))
 
         res = leader.InventoryReceived(tx)
 
         self.assertIsNone(res)
 
-    def add_existing_tx(self):
-        wallet = self.GetWallet1(recreate=True)
+    def _add_existing_tx(self):
+        wallet = self.GetWallet1()
 
         res = []
         for tx in wallet.GetTransactions():
@@ -256,8 +256,11 @@ class LeaderTestCase(WalletFixtureTestCase):
         NodeLeader.Instance().MemPool[tx_bytes] = tx
 
     def test_mempool_check_loop(self):
-        self.add_existing_tx()
+        self._add_existing_tx()
+
+        tx = self._generate_tx(Fixed8.TryParse(20))
+        NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
 
         NodeLeader.Instance().MempoolCheckLoop()
 
-        self.assertEqual(len(list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))), 0)
+        self.assertEqual(len(list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))), 1)
