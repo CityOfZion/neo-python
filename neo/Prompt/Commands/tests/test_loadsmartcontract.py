@@ -15,12 +15,12 @@ class LoadSmartContractTestCase(TestCase):
         self.assertFalse(res)
 
         # test for void (ff) type in params
-        with self.assertRaises(Exception) as e:
+        with self.assertRaises(ValueError) as e:
             args = ["path", "07ff10", "01", "False", "False", "False"]
 
             LoadContract(args)
 
-        self.assertTrue("Void is an unsupported input type" in str(e.exception))
+        self.assertTrue("Void is not a valid input parameter type" in str(e.exception))
 
         # test for .py in path
         args = ["path.py", "070710", "01", "False", "False", "False"]
@@ -38,7 +38,7 @@ class LoadSmartContractTestCase(TestCase):
 
         self.assertTrue(res)
 
-        # test bad contract
+        # test if a file is not found
         with mock.patch("builtins.open", new_callable=mock.mock_open) as mo:
             mock_file = mo.return_value
             mock_file.read.side_effect = None
@@ -81,13 +81,13 @@ class LoadSmartContractTestCase(TestCase):
         self.assertTrue("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}" in str(e.exception))
 
         # test for void (ff) type in params
-        with self.assertRaises(Exception) as e:
+        with self.assertRaises(ValueError) as e:
             args = ["07ff10", "01", "False", "False", "False"]
             script = b"script"
 
             GatherLoadedContractParams(args, script)
 
-        self.assertTrue("Void is an unsupported input type" in str(e.exception))
+        self.assertTrue("Void is not a valid input parameter type" in str(e.exception))
 
         # test good params with needs_dynamic_invoke
         with mock.patch("neo.Prompt.Commands.LoadSmartContract.generate_deploy_script", return_value=True):
