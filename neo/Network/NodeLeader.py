@@ -397,4 +397,4 @@ class NodeLeader:
         for tx in txs:
             res = self.RemoveTransaction(tx)
             if res:
-                logger.info("found tx %s on the blockchain ...removed" % tx.Hash)
+                logger.info("found tx 0x%s on the blockchain ...removed" % tx.Hash)
