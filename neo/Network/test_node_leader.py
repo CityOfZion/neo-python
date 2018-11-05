@@ -169,6 +169,10 @@ class LeaderTestCase(WalletFixtureTestCase):
                         leader.ResetBlockRequestsAndCache()
                         self.assertEqual(Blockchain.Default()._block_cache, {})
 
+                        # test shutdown
+                        leader.Shutdown()
+                        self.assertEqual(len(leader.Peers), 0)
+
     def _generate_tx(self):
         wallet = self.GetWallet1()
 
@@ -236,3 +240,24 @@ class LeaderTestCase(WalletFixtureTestCase):
         res = leader.InventoryReceived(tx)
 
         self.assertIsNone(res)
+
+    def add_existing_tx(self):
+        wallet = self.GetWallet1(recreate=True)
+
+        res = []
+        for tx in wallet.GetTransactions():
+                json = tx.ToJson()
+                res.append(json)
+
+        txid = res[0]['txid']
+        tx, height = Blockchain.Default().GetTransaction(txid[2:])
+
+        tx_bytes = tx.Hash.ToBytes()
+        NodeLeader.Instance().MemPool[tx_bytes] = tx
+
+    def test_mempool_check_loop(self):
+        self.add_existing_tx()
+
+        NodeLeader.Instance().MempoolCheckLoop()
+
+        self.assertEqual(len(list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))), 0)
