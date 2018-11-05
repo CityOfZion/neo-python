@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.3-dev] in progress
 -----------------------
--
+- Add ``MempoolCheckLoop`` and ``RemoveTransaction`` to NodeLeader.py to resolve `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
 
 
 [0.8.2] 2018-10-31
