@@ -127,7 +127,7 @@ class NodeLeader:
             start_delay += 1
 
         # check in on peers every 4 mins
-        peer_check_loop = task.LoopingCall(self.PeerCheckLoop)
+        peer_check_loop = task.LoopingCall(self.PeerCheckLoop, self.MempoolCheckLoop)
         self.peer_loop_deferred = peer_check_loop.start(240, now=False)
         self.peer_loop_deferred.addErrback(self.OnPeerLoopError)
 
@@ -354,9 +354,47 @@ class NodeLeader:
             return False
 
         if not tx.Verify(self.MemPool.values()):
-            logger.error("Veryfiying tx result... failed")
+            logger.error("Verifying tx result... failed")
             return False
 
         self.MemPool[tx.Hash.ToBytes()] = tx
 
         return True
+
+    def RemoveTransaction(self, tx):
+        """
+        Remove a transaction from the memory pool if it is found on the blockchain.
+
+        Args:
+            tx (neo.Core.TX.Transaction): instance.
+
+        Returns:
+            bool: True if successfully removed. False otherwise.
+        """
+        if BC.Default() is None:
+            return False
+
+        if not BC.Default().ContainsTransaction(tx.Hash):
+            return False
+
+        if tx.Hash.ToBytes() in self.MemPool:
+            del self.MemPool[tx.Hash.ToBytes()]
+            return True
+
+        return False
+
+    def MempoolCheckLoop(self):
+        """
+        Checks the Mempool and removes any tx found on the Blockchain
+        Implemented to resolve https://github.com/CityOfZion/neo-python/issues/703
+        """
+        txs = []
+        keys = self.MemPool.keys()
+        for i in keys:
+            tx = self.GetTransaction(i)
+            txs.append(tx)
+
+        for tx in txs:
+            res = self.RemoveTransaction(tx)
+            if res:
+                logger.info("found tx %s on the blockchain ...removed" % tx.Hash)
