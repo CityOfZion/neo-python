@@ -389,12 +389,11 @@ class NodeLeader:
         Implemented to resolve https://github.com/CityOfZion/neo-python/issues/703
         """
         txs = []
-        keys = self.MemPool.keys()
-        for i in keys:
-            tx = self.GetTransaction(i)
+        values = self.MemPool.values()
+        for tx in values:
             txs.append(tx)
 
         for tx in txs:
             res = self.RemoveTransaction(tx)
             if res:
-                logger.info("found tx 0x%s on the blockchain ...removed" % tx.Hash)
+                logger.debug("found tx 0x%s on the blockchain ...removed from mempool" % tx.Hash)
