@@ -14,8 +14,6 @@ class CachedScriptTable(ScriptTableMixin):
 
         if contract is not None:
             return contract.Code.Script
-        else:
-            raise Exception("CONTRACT NOT FOUND?")
 
         return None
 

@@ -12,13 +12,11 @@ from neo.VM.VMFault import VMFault
 from neo.Prompt.vm_debugger import VMDebugger
 from logging import DEBUG as LOGGING_LEVEL_DEBUG
 from neo.logging import log_manager
-from neo.Core.State.ContractState import ContractState
 
 logger = log_manager.getLogger('vm')
 
 
 class ExecutionEngine:
-
     _Table = None
     _Service = None
 
@@ -45,8 +43,6 @@ class ExecutionEngine:
     _vm_debugger = None
 
     _breakpoints = None
-
-    _is_debug = False
 
     def write_log(self, message):
         """
@@ -114,7 +110,6 @@ class ExecutionEngine:
         self._debug_map = None
         self._is_write_log = settings.log_vm_instructions
         self._breakpoints = dict()
-        self._is_debug = False
 
     def AddBreakPoint(self, script_hash, position):
         ctx_breakpoints = self._breakpoints.get(script_hash, None)
@@ -226,11 +221,6 @@ class ExecutionEngine:
                     self._VMState |= VMState.HALT
 
             elif opcode == APPCALL or opcode == TAILCALL:
-                if self._is_debug:
-                    import pdb
-                    pdb.set_trace()
-
-
                 if self._Table is None:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN2)
 
@@ -245,15 +235,9 @@ class ExecutionEngine:
                     script_hash = estack.Pop().GetByteArray()
 
                 script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
-                # if isinstance(script, ContractState):
-                #
-                #     print("script %s " % script)
-                #     script = script.Code.Script
-                if script is None:
-                    print("VM FAUUUUUULTTTTTTT")
-                    return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
-                print("Script %s " % script)
+                if script is None:
+                    return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
                 context_new = self.LoadScript(script)
                 estack.CopyTo(context_new.EvaluationStack)
@@ -970,13 +954,11 @@ class ExecutionEngine:
                     self._vm_debugger = VMDebugger(self)
                     self._vm_debugger.start()
 
-    def LoadScript(self, script, rvcount=-1, dbg=False) -> ExecutionContext:
+    def LoadScript(self, script, rvcount=-1) -> ExecutionContext:
 
         context = ExecutionContext(self, script, rvcount)
         self._InvocationStack.PushT(context)
         self._ExecutedScriptHashes.append(context.ScriptHash())
-        if dbg:
-            self._is_debug = dbg
 
         # add break points for current script if available
         script_hash = context.ScriptHash()
@@ -1013,10 +995,6 @@ class ExecutionEngine:
 
         op = None
 
-        # if self._is_debug:
-        #     import pdb
-        #     pdb.set_trace()
-
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             op = RET
         else:
@@ -1024,11 +1002,9 @@ class ExecutionEngine:
 
         self.ops_processed += 1
 
-
         try:
             if self._is_write_log:
                 self.write_log("{} {}".format(self.ops_processed, ToName(op)))
-            print("executing op %s " % ToName(op))
             self.ExecuteOp(op, self.CurrentContext)
         except Exception as e:
             error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))

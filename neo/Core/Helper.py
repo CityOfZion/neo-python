@@ -1,6 +1,10 @@
 from base58 import b58decode
 import binascii
 from neo.Blockchain import GetBlockchain, GetStateReader
+from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Core.State.ContractState import ContractState
 from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.UInt160 import UInt160
@@ -179,33 +183,28 @@ class Helper:
             return False
 
         blockchain = GetBlockchain()
+
         dbgload_script = False
 
         for i in range(0, len(hashes)):
             verification = verifiable.Scripts[i].VerificationScript
 
             if len(verification) == 0:
-
-                # import pdb
-                # pdb.set_trace()
-                # print("ADDING VERIFICATION SCRIPT!!")
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
                 verification = sb.ms.getvalue()
-                print("ADDING VERIFICATION %s " % verification)
-                dbgload_script = True
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:
                     return False
 
             state_reader = GetStateReader()
-            engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
-            engine.LoadScript(verification, dbg=dbgload_script)
+            script_table = CachedScriptTable(DBCollection(blockchain._db, DBPrefix.ST_Contract, ContractState))
+
+            engine = ApplicationEngine(TriggerType.Verification, verifiable, script_table, state_reader, Fixed8.Zero())
+            engine.LoadScript(verification)
             invocation = verifiable.Scripts[i].InvocationScript
-#            if dbgload_script:
-#                invocation = bytearray(b'\x00\x00')
-            engine.LoadScript(invocation, dbg=dbgload_script)
+            engine.LoadScript(invocation)
 
             try:
                 success = engine.Execute()
