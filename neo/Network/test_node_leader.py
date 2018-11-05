@@ -256,11 +256,24 @@ class LeaderTestCase(WalletFixtureTestCase):
         NodeLeader.Instance().MemPool[tx_bytes] = tx
 
     def test_mempool_check_loop(self):
+        # delete any tx in the mempool
+        txs = []
+        keys = NodeLeader.Instance().MemPool.keys()
+        for i in keys:
+            tx = NodeLeader.Instance().GetTransaction(i)
+            txs.append(tx)
+
+        for tx in txs:
+            del NodeLeader.Instance().MemPool[tx.Hash.ToBytes()]
+
+        # add a tx which is already confirmed
         self._add_existing_tx()
 
+        # and add a tx which is not confirmed
         tx = self._generate_tx(Fixed8.TryParse(20))
         NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
 
+        # now remove the confirmed tx
         NodeLeader.Instance().MempoolCheckLoop()
 
         self.assertEqual(len(list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))), 1)
