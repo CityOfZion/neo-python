@@ -244,23 +244,21 @@ class LeaderTestCase(WalletFixtureTestCase):
     def _add_existing_tx(self):
         wallet = self.GetWallet1()
 
-        res = []
+        existing_tx = None
         for tx in wallet.GetTransactions():
-                json = tx.ToJson()
-                res.append(json)
+            existing_tx = tx
+            break
 
-        txid = res[0]['txid']
-        tx, height = Blockchain.Default().GetTransaction(txid[2:])
+        self.assertNotEqual(None, existing_tx)
 
-        tx_bytes = tx.Hash.ToBytes()
-        NodeLeader.Instance().MemPool[tx_bytes] = tx
+        # add the existing tx to the mempool
+        NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
 
     def test_mempool_check_loop(self):
         # delete any tx in the mempool
         txs = []
-        keys = NodeLeader.Instance().MemPool.keys()
-        for i in keys:
-            tx = NodeLeader.Instance().GetTransaction(i)
+        values = NodeLeader.Instance().MemPool.values()
+        for tx in values:
             txs.append(tx)
 
         for tx in txs:
