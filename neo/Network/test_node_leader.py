@@ -254,8 +254,7 @@ class LeaderTestCase(WalletFixtureTestCase):
         # add the existing tx to the mempool
         NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
 
-    def test_mempool_check_loop(self):
-        # delete any tx in the mempool
+    def _clear_mempool(self):
         txs = []
         values = NodeLeader.Instance().MemPool.values()
         for tx in values:
@@ -263,6 +262,28 @@ class LeaderTestCase(WalletFixtureTestCase):
 
         for tx in txs:
             del NodeLeader.Instance().MemPool[tx.Hash.ToBytes()]
+
+    def test_get_transaction(self):
+        # delete any tx in the mempool
+        self._clear_mempool()
+        
+        # generate a new tx
+        tx = self._generate_tx(Fixed8.TryParse(5))
+
+        # try to get it
+        res = NodeLeader.Instance().GetTransaction(tx.Hash.ToBytes())
+        self.assertIsNone(res)
+
+        # now add it to the mempool
+        NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
+
+        # and try to get it
+        res = NodeLeader.Instance().GetTransaction(tx.Hash.ToBytes())
+        self.assertTrue(res is tx)
+
+    def test_mempool_check_loop(self):
+        # delete any tx in the mempool
+        self._clear_mempool()
 
         # add a tx which is already confirmed
         self._add_existing_tx()
