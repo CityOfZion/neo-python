@@ -266,7 +266,7 @@ class LeaderTestCase(WalletFixtureTestCase):
     def test_get_transaction(self):
         # delete any tx in the mempool
         self._clear_mempool()
-        
+
         # generate a new tx
         tx = self._generate_tx(Fixed8.TryParse(5))
 
