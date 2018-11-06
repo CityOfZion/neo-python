@@ -67,6 +67,10 @@ def LoadContract(args):
     if type(params) is str:
         params = params.encode('utf-8')
 
+    for p in binascii.unhexlify(params):
+        if p == ContractParameterType.Void.value:
+            raise ValueError("Void is not a valid input parameter type")
+
     return_type = BigInteger(ContractParameterType.FromString(args[2]).value)
 
     needs_storage = bool(parse_param(args[3]))
@@ -124,6 +128,10 @@ def GatherLoadedContractParams(args, script):
 
     if type(params) is str:
         params = params.encode('utf-8')
+
+    for p in binascii.unhexlify(params):
+        if p == ContractParameterType.Void.value:
+            raise ValueError("Void is not a valid input parameter type")
 
     return_type = BigInteger(ContractParameterType.FromString(args[1]).value)
 
