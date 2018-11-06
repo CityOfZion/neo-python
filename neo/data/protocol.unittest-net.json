@@ -39,6 +39,8 @@
     "NotificationBootstrapFile": "",
     "DebugStorage": 1,
     "AcceptIncomingPeers": false,
-    "CompilerNep8":true
+    "CompilerNep8": true,
+    "BootstrapName": "fauxnet",
+    "BootstrapFiles": "this_does_not_exist_for_this_network"
   }
 }
