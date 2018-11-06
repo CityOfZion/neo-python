@@ -42,10 +42,11 @@ def main():
     elif args.mainnet:
         settings.setup_mainnet()
 
+    bootstrap_name = settings.BOOTSTRAP_NAME
     if args.notifications:
-        BootstrapBlockchainFile(settings.notification_leveldb_path, settings.NOTIF_BOOTSTRAP_FILE, require_confirm)
-    else:
-        BootstrapBlockchainFile(settings.chain_leveldb_path, settings.BOOTSTRAP_FILE, require_confirm)
+        bootstrap_name += "_notif"
+
+    BootstrapBlockchainFile(settings.notification_leveldb_path, settings.BOOTSTRAP_LOCATIONS, bootstrap_name, require_confirm)
 
 
 if __name__ == "__main__":

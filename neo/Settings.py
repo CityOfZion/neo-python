@@ -163,6 +163,15 @@ class SettingsHolder:
     # Setup methods
     def setup(self, config_file):
         """ Setup settings from a JSON config file """
+
+        def get_config_and_warn(key, default, abort=False):
+            value = config.get(key, default)
+            if value == default:
+                print(f"Cannot find {key} in settings, using default value: {default}")
+                if abort:
+                    sys.exit(-1)
+            return value
+
         if not self.DATA_DIR_PATH:
             # Setup default data dir
             self.set_data_dir(None)
@@ -192,9 +201,8 @@ class SettingsHolder:
         self.URI_PREFIX = config['UriPrefix']
         self.ACCEPT_INCOMING_PEERS = config.get('AcceptIncomingPeers', False)
 
-        self.BOOTSTRAP_FILE = config['BootstrapFile']
-        self.NOTIF_BOOTSTRAP_FILE = config['NotificationBootstrapFile']
-
+        self.BOOTSTRAP_NAME = get_config_and_warn('BootstrapName', "mainnet")
+        self.BOOTSTRAP_LOCATIONS = get_config_and_warn('BootstrapFiles', "abort", abort=True)
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
         self.USE_DEBUG_STORAGE = config.get('DebugStorage', True)
