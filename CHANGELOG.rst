@@ -5,7 +5,8 @@ All notable changes to this project are documented in this file.
 
 [0.8.3-dev] in progress
 -----------------------
-- Fix input exception for Void (``0xFF``) parameter; improve ``get_param`` test coverage; improve ``loadcontract`` and ``gatherloadedcontractparams`` test coverage
+- Disallow ``Void`` type input parameters for smart contracts and increase test coverage
+- Fix confirmed tx not being purged from mempool `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
 
 
 [0.8.2] 2018-10-31
