@@ -243,7 +243,7 @@ class ContractParametersContext:
             vscript = bytearray(0)
 
             if item.IsCustomContract:
-                print("adding empty vscript!")
+                pass
             elif item.Script is not None:
                 if type(item.Script) is str:
                     item.Script = item.Script.encode('utf-8')
