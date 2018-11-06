@@ -35,8 +35,8 @@
     ],
     "SslCert": "",
     "SslCertPassword": "",
-    "BootstrapFile": "",
-    "NotificationBootstrapFile": "",
+    "BootstrapName": "mainnet",
+    "BootstrapFiles": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_latest",
     "DebugStorage": 1,
     "AcceptIncomingPeers": false,
     "CompilerNep8":false
