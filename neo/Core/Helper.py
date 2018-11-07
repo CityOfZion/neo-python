@@ -1,6 +1,10 @@
 from base58 import b58decode
 import binascii
 from neo.Blockchain import GetBlockchain, GetStateReader
+from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Core.State.ContractState import ContractState
 from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.UInt160 import UInt160
@@ -186,15 +190,16 @@ class Helper:
             if len(verification) == 0:
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
-                verification = sb.ToArray()
-
+                verification = sb.ms.getvalue()
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:
                     return False
 
             state_reader = GetStateReader()
-            engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
+            script_table = CachedScriptTable(DBCollection(blockchain._db, DBPrefix.ST_Contract, ContractState))
+
+            engine = ApplicationEngine(TriggerType.Verification, verifiable, script_table, state_reader, Fixed8.Zero())
             engine.LoadScript(verification)
             invocation = verifiable.Scripts[i].InvocationScript
             engine.LoadScript(invocation)

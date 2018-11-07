@@ -10,6 +10,9 @@ All notable changes to this project are documented in this file.
 - Fix bootstrap thread joining failure on Ubuntu systems
 - Make bootstrap lookup dynamic such that users don't have to update their configs from here on forward
 - Fix various issues related to signing multi-signature transactions
+- Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
+- Empty VerificationScripts for deployed contracts now work as intended
+
 
 [0.8.2] 2018-10-31
 -------------------
