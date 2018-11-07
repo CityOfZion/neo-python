@@ -184,8 +184,6 @@ class Helper:
 
         blockchain = GetBlockchain()
 
-        dbgload_script = False
-
         for i in range(0, len(hashes)):
             verification = verifiable.Scripts[i].VerificationScript
 
