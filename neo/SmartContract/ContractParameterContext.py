@@ -10,6 +10,7 @@ from neocore.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
 from neo.logging import log_manager
+from neocore.Cryptography.ECCurve import ECDSA
 
 logger = log_manager.getLogger('vm')
 
@@ -152,26 +153,30 @@ class ContractParametersContext:
             elif pubkey.encode_point(True) in item.Signatures:
                 return False
 
+            ecdsa = ECDSA.secp256r1()
             points = []
             temp = binascii.unhexlify(contract.Script)
             ms = MemoryStream(binascii.unhexlify(contract.Script))
             reader = BinaryReader(ms)
             numr = reader.ReadUInt8()
             while reader.ReadUInt8() == 33:
-                points.append(binascii.hexlify(reader.ReadBytes(33)))
+                ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
+                points.append(ecpoint)
             ms.close()
 
-            if pubkey.encode_point(True) not in points:
+            if pubkey not in points:
                 return False
 
             item.Signatures[pubkey.encode_point(True).decode()] = binascii.hexlify(signature)
 
             if len(item.Signatures) == len(contract.ParameterList):
+
                 i = 0
                 points.sort(reverse=True)
                 for k in points:
-                    if k.decode() in item.Signatures:
-                        if self.Add(contract, i, item.Signatures[k.decode()]) is None:
+                    pubkey = k.encode_point(True).decode()
+                    if pubkey in item.Signatures:
+                        if self.Add(contract, i, item.Signatures[pubkey]) is None:
                             raise Exception("Invalid operation")
                         i += 1
                 item.Signatures = None
