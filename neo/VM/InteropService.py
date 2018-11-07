@@ -44,7 +44,7 @@ class StackItem(EquatableMixin):
         return False
 
     def GetArray(self):
-        logger.info("trying to get array:: %s " % self)
+        logger.debug("trying to get array:: %s " % self)
         raise Exception('Not supported')
 
     def GetMap(self):
@@ -187,14 +187,14 @@ class Array(StackItem, CollectionMixin):
         return self._array
 
     def GetBigInteger(self):
-        logger.info("Trying to get big integer %s " % self)
+        logger.debug("Trying to get big integer %s " % self)
         raise Exception("Not Supported")
 
     def GetBoolean(self):
         return len(self._array) > 0
 
     def GetByteArray(self):
-        logger.info("Trying to get bytearray integer %s " % self)
+        logger.debug("Trying to get bytearray integer %s " % self)
 
         raise Exception("Not supported")
 
@@ -534,9 +534,8 @@ class InteropService:
 
     def Invoke(self, method, engine):
         if method not in self._dictionary.keys():
-            logger.warn("method %s not found" % method)
+            logger.debug("method %s not found" % method)
         func = self._dictionary[method]
-        # logger.info("[InteropService Method] %s " % func)
         return func(engine)
 
     @staticmethod

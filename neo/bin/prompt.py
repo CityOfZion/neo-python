@@ -643,6 +643,8 @@ class PromptInterface:
                     tokens = [("class:command", json.dumps(jsn, indent=4))]
                     print_formatted_text(FormattedText(tokens), style=self.token_style)
                     print('\n')
+                else:
+                    print(f"Could not find transaction for hash {txid}")
             except Exception as e:
                 print("Could not find transaction from args: %s (%s)" % (e, args))
         else:
