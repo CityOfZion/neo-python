@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - Fix confirmed tx not being purged from mempool `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
 - Fix bootstrap thread joining failure on Ubuntu systems
 - Make bootstrap lookup dynamic such that users don't have to update their configs from here on forward
+- Empty VerificationScripts for deployed contracts now work as intended
 
 
 [0.8.2] 2018-10-31
