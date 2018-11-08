@@ -96,6 +96,15 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
     def test_initial_setup(self):
         self.assertTrue(GetBlockchain().GetBlock(0).Hash.To0xString(), '0x996e37358dc369912041f966f8c5d8d3a8255ba5dcbd3447f8a82b55db869099')
 
+    def test_GET_request_bad_params(self):
+        req = "/?jsonrpc=2.0&method=getblockcount&param=[]&id=2"  # "params" is misspelled
+        mock_req = mock_get_request(req)
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+
     def test_missing_fields(self):
         # test POST requests
         req = self._gen_post_rpc_req("foo")
