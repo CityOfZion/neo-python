@@ -36,6 +36,8 @@ from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.Utils import get_asset_id
 from neo.Wallets.Wallet import Wallet
+from furl import furl
+import ast
 
 
 class JsonRpcError(Exception):
@@ -120,27 +122,52 @@ class JsonRpcApi:
     @json_response
     @cors_header
     def home(self, request):
+        # POST Examples:
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         # or multiple requests in 1 transaction
         # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10], {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}
+        #
+        # GET Example:
+        # /?jsonrpc=2.0&method=getblockcount&params=[]&id=5
+        # NOTE: "params" must not be last
+        # NOTE: GET requests do not support multiple requests in 1 transaction
         request_id = None
 
-        try:
-            content = json.loads(request.content.read().decode("utf-8"))
+        if "POST" == request.method.decode("utf-8"):
 
-            # test if it's a multi-request message
-            if isinstance(content, list):
-                result = []
-                for body in content:
-                    result.append(self.get_data(body))
-                return result
+            try:
+                content = json.loads(request.content.read().decode("utf-8"))
 
-            # otherwise it's a single request
+                # test if it's a multi-request message
+                if isinstance(content, list):
+                    result = []
+                    for body in content:
+                        result.append(self.get_data(body))
+                    return result
+
+                # otherwise it's a single request
+                return self.get_data(content)
+
+            except JSONDecodeError as e:
+                error = JsonRpcError.parseError()
+                return self.get_custom_error_payload(request_id, error.code, error.message)
+
+        elif "GET" == request.method.decode("utf-8"):
+
+            content = furl(request.uri).args
+
+            if len(content.keys()) > 3:
+                try:
+                    params = content['params']
+                    l_params = ast.literal_eval(params)
+                    content['params'] = [l_params]
+                except KeyError:
+                    error = JsonRpcError(-32602, "Invalid params")
+                    return self.get_custom_error_payload(request_id, error.code, error.message)
+
             return self.get_data(content)
 
-        except JSONDecodeError as e:
-            error = JsonRpcError.parseError()
-            return self.get_custom_error_payload(request_id, error.code, error.message)
+        raise JsonRpcError.invalidRequest()
 
     def json_rpc_method_handler(self, method, params):
 
