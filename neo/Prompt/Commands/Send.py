@@ -176,7 +176,6 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
             signer_contract = wallet.GetContract(standard_contract)
 
         if not signer_contract.IsMultiSigContract and owners is None:
-
             data = standard_contract.Data
             tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                                   data=data)]
@@ -201,7 +200,7 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
 
             tx.scripts = context.GetScripts()
 
-#            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
+            #            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
 
             relayed = NodeLeader.Instance().Relay(tx)
 
@@ -228,7 +227,6 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
 
 
 def parse_and_sign(wallet, jsn):
-
     try:
         context = ContractParametersContext.FromJson(jsn)
         if context is None:
