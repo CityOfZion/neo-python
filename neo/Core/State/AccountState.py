@@ -272,9 +272,9 @@ class AccountState(StateBase):
         json['frozen'] = self.IsFrozen
         json['votes'] = [v.hex() for v in self.Votes]
 
-        balances = {}
+        balances = []
         for key, value in self.Balances.items():
-            balances[key.To0xString()] = value.ToString()
+            balances.append({'asset': key.To0xString(), 'value': value.ToString()})
 
         json['balances'] = balances
         return json
