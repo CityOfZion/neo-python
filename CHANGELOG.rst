@@ -9,8 +9,10 @@ All notable changes to this project are documented in this file.
 - Fix confirmed tx not being purged from mempool `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
 - Fix bootstrap thread joining failure on Ubuntu systems
 - Make bootstrap lookup dynamic such that users don't have to update their configs from here on forward
+- Fix various issues related to signing multi-signature transactions
 - Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
 - Empty VerificationScripts for deployed contracts now work as intended
+- Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`
 
 
 [0.8.2] 2018-10-31

@@ -321,6 +321,12 @@ class NodeLeader:
 
         elif type(inventory) is Transaction or issubclass(type(inventory), Transaction):
             if not self.AddTransaction(inventory):
+                # if we fail to add the transaction for whatever reason, remove it from the known hashes list or we cannot retry the same transaction again
+                try:
+                    self.KnownHashes.remove(inventory.Hash.ToBytes())
+                except ValueError:
+                    # it not found
+                    pass
                 return False
         else:
             # consensus

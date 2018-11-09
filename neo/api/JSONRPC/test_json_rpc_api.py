@@ -201,7 +201,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_post_rpc_req("getaccountstate", params=[addr_str])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['balances']['0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'], '99989900.0')
+        self.assertEqual(res['result']['balances'][0]['value'], '99989900.0')
+        self.assertEqual(res['result']['balances'][0]['asset'], '0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'),
         self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_not_existing_yet(self):
@@ -209,7 +210,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_post_rpc_req("getaccountstate", params=[addr_str])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['balances'], {})
+        self.assertEqual(res['result']['balances'], [])
         self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_failure(self):
@@ -1064,7 +1065,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         net_fee = 0.005
         change_addr = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
         address_from_account_state = GetBlockchain().GetAccountState(address_from).ToJson()
-        address_from_gas_bal = address_from_account_state['balances']['0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7']
+        address_from_gas = next(filter(lambda b: b['asset'] == '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7',
+                                       address_from_account_state['balances']))
+        address_from_gas_bal = address_from_gas['value']
 
         req = self._gen_post_rpc_req("sendfrom", params=['gas', address_from, address_to, amount, net_fee, change_addr])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
