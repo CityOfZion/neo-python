@@ -50,6 +50,13 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
     def setUp(self):
         self.app = JsonRpcApi(20332)
 
+    def test_HTTP_OPTIONS_request(self):
+        mock_req = mock_get_request(b'/?test', b"OPTIONS")
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertTrue("GET" in res['supported HTTP methods'])
+        self.assertTrue("POST" in res['supported HTTP methods'])
+
     def test_invalid_request_method(self):
         with self.assertRaises(Exception) as context:
             # test HEAD method
@@ -88,9 +95,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         return ret
 
     def _gen_get_rpc_req(self, method, params=None, request="2"):
-        ret = "/?jsonrpc=2.0&method=%s&params=[]&id=%s" % (method, request)
+        ret = "/?jsonrpc=2.0&id=%s&method=%s&params=[]" % (request, method)
         if params:
-            ret = "/?jsonrpc=2.0&method=%s&params=%s&id=%s" % (method, params, request)
+            ret = "/?jsonrpc=2.0&id=%s&method=%s&params=%s" % (request, method, params)
         return ret.encode('utf-8')
 
     def test_initial_setup(self):
