@@ -128,13 +128,11 @@ class JsonRpcApi:
         # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10], {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}
         #
         # GET Example:
-        # /?jsonrpc=2.0&method=getblockcount&params=[]&id=5
-        # NOTE: "params" must not be last
+        # /?jsonrpc=2.0&id=5&method=getblockcount&params=[]
         # NOTE: GET requests do not support multiple requests in 1 transaction
         request_id = None
 
         if "POST" == request.method.decode("utf-8"):
-
             try:
                 content = json.loads(request.content.read().decode("utf-8"))
 
@@ -153,8 +151,14 @@ class JsonRpcApi:
                 return self.get_custom_error_payload(request_id, error.code, error.message)
 
         elif "GET" == request.method.decode("utf-8"):
-
             content = furl(request.uri).args
+
+            # remove hanging ' or " from last value if value is not None to avoid SyntaxError
+            l_value = list(content.values())[-1]
+            if l_value is not None:
+                n_value = l_value[:-1]
+                l_key = list(content.keys())[-1]
+                content[l_key] = n_value
 
             if len(content.keys()) > 3:
                 try:
@@ -166,6 +170,9 @@ class JsonRpcApi:
                     return self.get_custom_error_payload(request_id, error.code, error.message)
 
             return self.get_data(content)
+
+        elif "OPTIONS" == request.method.decode("utf-8"):
+            return {'supported HTTP methods': ("GET", "POST")}
 
         raise JsonRpcError.invalidRequest()
 
