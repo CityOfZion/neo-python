@@ -40,6 +40,14 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
     def setUp(self):
         self.app = ExtendedJsonRpcApi(20332)
 
+    def test_HTTP_OPTIONS_request(self):
+        mock_req = mock_get_request(b'/?test', b"OPTIONS")
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertTrue("GET" in res['supported HTTP methods'])
+        self.assertTrue("POST" in res['supported HTTP methods'])
+        self.assertTrue("extended-rpc" in res['JSON-RPC server type'])
+
     def test_invalid_request_method(self):
         with self.assertRaises(Exception) as context:
             # test HEAD method
