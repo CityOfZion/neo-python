@@ -78,7 +78,7 @@ e) Create new wallets only if absolutely necessary.
 
 .. code-block:: sh
 	
-	docker run --rm -d --name neo-privnet-unittest -p 20333-20336:20333-20336/tcp -p 30333-30336:30333-30336/tcp dautt/neo-privnet-unittest:v0.0.xx``
+	docker run --rm -d --name neo-privnet-unittest -p 20333-20336:20333-20336/tcp -p 30333-30336:30333-30336/tcp cityofzion/neo-python-privnet-unittest:v0.0.xx
 
 3) Clean the current ``unittest`` chain:
 
@@ -97,7 +97,7 @@ e) Create new wallets only if absolutely necessary.
 
 .. code-block:: sh
 	
-	python prompt.py -u
+	np-prompt -u
 
 6) Use the following wallets for generating transactions:
 
@@ -131,7 +131,7 @@ In that way we can easily find out all the contracts deploy on the image by runn
 	
 .. code-block:: sh
 	
-	docker commit  neo-privnet-unittest dautt/neo-privnet-unittest:v0.0.xx+1
+	docker commit  neo-privnet-unittest cityofzion/neo-python-privnet-unittest:v0.0.xx+1
  
 The reason for this is that we need to keep the image as small as possible. It can inadvertently happen that your image has been accumulating new blocks for days or weeks e.g. while working on implementing the new tests in phases, which unnecessarily increases the image size. 
 Our test fixtures are reset and extracted 20+ times in our build system so any size increase will add a delay * 20 or more.
@@ -140,8 +140,8 @@ Our test fixtures are reset and extracted 20+ times in our build system so any s
 
 .. code-block:: sh
 
-	notif_fixtures_vx+1.tar.gz
-	fixtures_vx+1.tar.gz
+	tar -zxvf notif_fixtures_vx+1.tar.gz unittest_notif
+	tar -zxvf fixtures_vx+1.tar.gz unittest
 
 11) Update the fixture name in the static class variables in the following files
 
