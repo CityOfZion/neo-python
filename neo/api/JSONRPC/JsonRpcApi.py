@@ -175,7 +175,8 @@ class JsonRpcApi:
             return {'supported HTTP methods': ("GET", "POST"),
                     'JSON-RPC server type': "default"}
 
-        raise JsonRpcError.invalidRequest()
+        error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
+        return self.get_custom_error_payload(request_id, error.code, error.message)
 
     def json_rpc_method_handler(self, method, params):
 
