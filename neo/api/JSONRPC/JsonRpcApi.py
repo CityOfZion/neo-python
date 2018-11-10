@@ -172,7 +172,8 @@ class JsonRpcApi:
             return self.get_data(content)
 
         elif "OPTIONS" == request.method.decode("utf-8"):
-            return {'supported HTTP methods': ("GET", "POST")}
+            return {'supported HTTP methods': ("GET", "POST"),
+                    'JSON-RPC server type': "default"}
 
         raise JsonRpcError.invalidRequest()
 
