@@ -1183,6 +1183,7 @@ class Wallet:
 
             contract = self.GetContract(hash)
             if contract is None:
+                logger.info(f"Cannot find key belonging to script_hash {hash}. Make sure the source address you're trying to sign the transaction for is imported in the wallet.")
                 continue
 
             key = self.GetKeyByScriptHash(hash)
