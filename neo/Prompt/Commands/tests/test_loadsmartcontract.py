@@ -1,9 +1,27 @@
-from unittest import TestCase
-from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherLoadedContractParams
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
+from neo.Wallets.utils import to_aes_key
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+import shutil
+from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherLoadedContractParams, ImportMultiSigContractAddr
 import mock
 
 
-class LoadSmartContractTestCase(TestCase):
+class LoadSmartContractTestCase(WalletFixtureTestCase):
+
+    wallet_1_addr = "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"
+    wallet_1_pk = "03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6"
+
+    _wallet1 = None
+
+    wallet_2_pk = "03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034"
+
+    @classmethod
+    def GetWallet1(cls, recreate=False):
+        if cls._wallet1 is None or recreate:
+            shutil.copyfile(cls.wallet_1_path(), cls.wallet_1_dest())
+            cls._wallet1 = UserWallet.Open(LoadSmartContractTestCase.wallet_1_dest(),
+                                           to_aes_key(LoadSmartContractTestCase.wallet_1_pass()))
+        return cls._wallet1
 
     def test_loadcontract(self):
 
@@ -97,3 +115,48 @@ class LoadSmartContractTestCase(TestCase):
             res = GatherLoadedContractParams(args, script)
 
         self.assertTrue(res)
+
+    def test_importmultisigcontractaddr(self):
+
+        # good test
+        wallet = self.GetWallet1(recreate=True)
+        args = [self.wallet_1_pk, 2, self.wallet_1_pk, self.wallet_2_pk]
+
+        address = ImportMultiSigContractAddr(wallet, args)
+
+        self.assertEqual(address[0], "A")
+        self.assertEqual(len(address), 34)
+
+        # test too few args
+        wallet = self.GetWallet1()
+        args = [self.wallet_1_pk, 2, self.wallet_1_pk]  # need at least four args
+
+        res = ImportMultiSigContractAddr(wallet, args)
+
+        self.assertFalse(res)
+
+        # test no wallet
+        wallet = None
+        args = [self.wallet_1_pk, 2, self.wallet_1_pk, self.wallet_2_pk]
+
+        res = ImportMultiSigContractAddr(wallet, args)
+
+        self.assertFalse(res)
+
+        # test bad first pk
+        with self.assertRaises(Exception) as e:
+            wallet = self.GetWallet1(recreate=True)
+            args = [self.wallet_2_pk, 2, self.wallet_1_pk, self.wallet_2_pk]  # first pk needs to be from wallet
+
+            ImportMultiSigContractAddr(wallet, args)
+
+        self.assertTrue("Invalid operation - public key mismatch" in str(e.exception))
+
+        # test bad second pk
+        with self.assertRaises(Exception) as e:
+            wallet = self.GetWallet1(recreate=True)
+            args = [self.wallet_1_pk, 2, "03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c", self.wallet_2_pk]  # pk is too short
+
+            ImportMultiSigContractAddr(wallet, args)
+
+        self.assertTrue("Odd-length string" in str(e.exception))
