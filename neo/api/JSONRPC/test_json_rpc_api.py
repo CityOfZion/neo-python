@@ -59,12 +59,11 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertTrue("default" in res['JSON-RPC server type'])
 
     def test_invalid_request_method(self):
-        with self.assertRaises(Exception) as context:
-            # test HEAD method
-            mock_req = mock_get_request(b'/?test', b"HEAD")
-            json.loads(self.app.home(mock_req))
-
-        self.assertTrue("Invalid Request" in str(context.exception))
+        # test HEAD method
+        mock_req = mock_get_request(b'/?test', b"HEAD")
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["message"], 'HEAD is not a supported HTTP method')
 
     def test_invalid_json_payload(self):
         # test POST requests
