@@ -56,6 +56,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
         self.assertTrue("GET" in res['supported HTTP methods'])
         self.assertTrue("POST" in res['supported HTTP methods'])
+        self.assertTrue("default" in res['JSON-RPC server type'])
 
     def test_invalid_request_method(self):
         with self.assertRaises(Exception) as context:
