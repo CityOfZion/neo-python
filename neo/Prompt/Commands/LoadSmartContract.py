@@ -224,16 +224,10 @@ def ImportMultiSigContractAddr(wallet, args):
     m = get_arg(args, 1)
     publicKeys = args[2:]
 
-    if publicKeys[1]:
-        pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
+    pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
+    verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)
+    address = verification_contract.Address
+    wallet.AddContract(verification_contract)
 
-        verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)
-
-        address = verification_contract.Address
-
-        wallet.AddContract(verification_contract)
-
-        print("Added multi-sig contract address %s to wallet" % address)
-        return address
-
-    return 'Hello'
+    print("Added multi-sig contract address %s to wallet" % address)
+    return address
