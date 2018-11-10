@@ -13,6 +13,7 @@ All notable changes to this project are documented in this file.
 - Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
 - Empty VerificationScripts for deployed contracts now work as intended
 - Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`
+- Improve ``parse_and_sign`` and ``ImportMultiSigContractAddr`` and add tests
 
 
 [0.8.2] 2018-10-31
