@@ -383,7 +383,7 @@ Request body:
         "jsonrpc": "2.0",
         "id": 1,
         "method": "getaccountstate", 
-        "params": ["AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"]
+        "params": ["AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y"]
     }
 
 Response:
@@ -395,14 +395,20 @@ Response:
         "id": 1,
         "result": {
             "version": 0,
-            "address": "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3",
-            "script_hash": "c02e8d21ec52916a8182b1d7cde6ffef5cc0c91c",
+            "address": "AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y",
+            "script_hash": "e9eed8dc39332032dc22e5d6e86332c50327ba23",
             "frozen": false,
             "votes": [],
-            "balances": {
-                "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b": "50.0",
-                "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7": "13.9998"
-            }
+            "balances": [
+                {
+                    "asset": "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b",
+                    "value": "100000000.0"
+                },
+                {
+                    "asset": "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
+                    "value": "16024.0"
+                }
+            ]
         }
     }
 
