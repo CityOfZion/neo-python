@@ -555,11 +555,8 @@ class JsonRpcApi:
         self.wallet.Sign(context)
         if context.Completed:
             tx.scripts = context.GetScripts()
-            relayed = NodeLeader.Instance().Relay(tx)
-            if relayed:
-                self.wallet.SaveTransaction(tx)
-                return tx.ToJson()
-            else:
-                raise JsonRpcError(-32001, "Could not relay tx %s " % tx.Hash.ToString())
+            self.wallet.SaveTransaction(tx)
+            NodeLeader.Instance().Relay(tx)
+            return tx.ToJson()
         else:
             return context.ToJson()
