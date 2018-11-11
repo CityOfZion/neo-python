@@ -1,8 +1,10 @@
 import importlib
-from logzero import logger
 from .MemoryStream import MemoryStream, StreamManager
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Core.TX.Transaction import Transaction
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class Helper:

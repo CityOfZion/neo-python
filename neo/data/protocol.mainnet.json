@@ -53,11 +53,10 @@
     ],
     "SslCert": "",
     "SslCertPassword": "",
-    "BootstrapFile": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Main2784xxx.tar.gz",
-    "NotificationBootstrapFile": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/MainNotif2784xxx.tar.gz",
+    "BootstrapName": "mainnet",
+    "BootstrapFiles": "https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_latest",
     "DebugStorage": 1,
     "AcceptIncomingPeers": false,
-    "CompilerNep8":false
-
+    "CompilerNep8": false
   }
 }

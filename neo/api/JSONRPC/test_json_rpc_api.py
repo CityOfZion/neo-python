@@ -16,13 +16,11 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from neo.IO.Helper import Helper
-from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Blockchain import GetBlockchain
-from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
-
+from copy import deepcopy
 from neo.Settings import ROOT_INSTALL_PATH, settings
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from mock import patch
@@ -118,7 +116,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getaccountstate", params=[addr_str])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['balances']['0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'], '99989900.0')
+        self.assertEqual(res['result']['balances'][0]['value'], '99989900.0')
+        self.assertEqual(res['result']['balances'][0]['asset'], '0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'),
         self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_not_existing_yet(self):
@@ -126,7 +125,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_rpc_req("getaccountstate", params=[addr_str])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['balances'], {})
+        self.assertEqual(res['result']['balances'], [])
         self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_failure(self):
@@ -170,12 +169,20 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result'], '0x62539bdf30ff2567355efb38b1911cc07258710cfab5b50d3e32751618969bcb')
 
     def test_get_connectioncount(self):
-        # @TODO
-        # Not sure if there's a great way to test this as it will always return 0 in tests
+        # make sure we have a predictable state
+        leader = NodeLeader.Instance()
+        old_leader = deepcopy(leader)
+        fake_obj = object()
+        leader.Peers = [fake_obj, fake_obj]
+        leader.ADDRS = [fake_obj, fake_obj]
+
         req = self._gen_rpc_req("getconnectioncount", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result'], 0)
+        self.assertEqual(res['result'], 2)
+
+        # restore whatever state the instance was in
+        NodeLeader._LEAD = old_leader
 
     def test_get_block_int(self):
         req = self._gen_rpc_req("getblock", params=[10, 1])
@@ -482,13 +489,15 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         test_node = NeoNode()
         test_node.host = "127.0.0.1"
         test_node.port = 20333
-        node.Peers.append(test_node)
+        node.Peers = [test_node]
 
         req = self._gen_rpc_req("getpeers", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(len(node.Peers), len(res['result']['connected']))
+        print("unconnected:{}".format(len(res['result']['unconnected'])))
+        print("addrs:{} peers:{}".format(len(node.ADDRS), len(node.Peers)))
         self.assertEqual(len(res['result']['unconnected']),
                          len(node.ADDRS) - len(node.Peers))
         # To avoid messing up the next tests
@@ -960,7 +969,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         net_fee = 0.005
         change_addr = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
         address_from_account_state = GetBlockchain().GetAccountState(address_from).ToJson()
-        address_from_gas_bal = address_from_account_state['balances']['0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7']
+        address_from_gas = next(filter(lambda b: b['asset'] == '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7',
+                                       address_from_account_state['balances']))
+        address_from_gas_bal = address_from_gas['value']
 
         req = self._gen_rpc_req("sendfrom", params=['gas', address_from, address_to, amount, net_fee, change_addr])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
@@ -970,7 +981,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertIn('txid', res.get('result', {}).keys())
         self.assertEqual(address_to, res['result']['vout'][0]['address'])
         self.assertEqual(change_addr, res['result']['vout'][1]['address'])
-        self.assertEqual(float(address_from_gas_bal) - amount - net_fee, float(res['result']['vout'][1]['value'])) 
+        self.assertEqual(float(address_from_gas_bal) - amount - net_fee, float(res['result']['vout'][1]['value']))
         self.assertEqual(res['result']['net_fee'], "0.005")
 
         self.app.wallet.Close()
@@ -1491,3 +1502,46 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             self.app.wallet.Close()
             self.app.wallet = None
             os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+    def test_getblockheader_int(self):
+        req = self._gen_rpc_req("getblockheader", params=[10, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['index'], 10)
+        self.assertEqual(res['result']['hash'], '0xd69e7a1f62225a35fed91ca578f33447d93fa0fd2b2f662b957e19c38c1dab1e')
+        self.assertEqual(res['result']['confirmations'], GetBlockchain().Height - 10 + 1)
+        self.assertEqual(res['result']['nextblockhash'], '0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f')
+
+    def test_getblockheader_hash(self):
+        req = self._gen_rpc_req("getblockheader", params=['2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(res['result']['index'], 11)
+        self.assertEqual(res['result']['confirmations'], GetBlockchain().Height - 11 + 1)
+        self.assertEqual(res['result']['previousblockhash'], '0xd69e7a1f62225a35fed91ca578f33447d93fa0fd2b2f662b957e19c38c1dab1e')
+
+    def test_getblockheader_hash_0x(self):
+        req = self._gen_rpc_req("getblockheader", params=['0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['index'], 11)
+
+    def test_getblockheader_hash_failure(self):
+        req = self._gen_rpc_req("getblockheader", params=[GetBlockchain().Height + 1, 1])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown block')
+
+    def test_getblockheader_non_verbose(self):
+        req = self._gen_rpc_req("getblockheader", params=[11, 0])
+        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertIsNotNone(res['result'])
+
+        # we should be able to instantiate a matching block with the result
+        output = binascii.unhexlify(res['result'])
+        blockheader = Helper.AsSerializableWithType(output, 'neo.Core.Header.Header')
+        self.assertEqual(blockheader.Index, 11)
+        self.assertEqual(str(blockheader.Hash), GetBlockchain().GetBlockHash(11).decode('utf8'))

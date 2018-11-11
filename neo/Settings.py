@@ -10,14 +10,16 @@ import json
 import logging
 import os
 import sys
-
-import logzero
 import pip
 from neocore.Cryptography import Helper
 from neorpc.Client import RPCClient, NEORPCException
 from neorpc.Settings import settings as rpc_settings
-
 from neo import __version__
+from logging.handlers import RotatingFileHandler
+from logzero import LogFormatter
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 dir_current = os.path.dirname(os.path.abspath(__file__))
 
@@ -113,6 +115,8 @@ class SettingsHolder:
     # Emit Notify events when smart contract execution failed. Use for debugging purposes only.
     emit_notify_events_on_sc_execution_error = False
 
+    rotating_filehandler = None
+
     @property
     def chain_leveldb_path(self):
         self.check_chain_dir_exists(warn_migration=True)
@@ -159,6 +163,15 @@ class SettingsHolder:
     # Setup methods
     def setup(self, config_file):
         """ Setup settings from a JSON config file """
+
+        def get_config_and_warn(key, default, abort=False):
+            value = config.get(key, default)
+            if value == default:
+                print(f"Cannot find {key} in settings, using default value: {default}")
+                if abort:
+                    sys.exit(-1)
+            return value
+
         if not self.DATA_DIR_PATH:
             # Setup default data dir
             self.set_data_dir(None)
@@ -188,15 +201,14 @@ class SettingsHolder:
         self.URI_PREFIX = config['UriPrefix']
         self.ACCEPT_INCOMING_PEERS = config.get('AcceptIncomingPeers', False)
 
-        self.BOOTSTRAP_FILE = config['BootstrapFile']
-        self.NOTIF_BOOTSTRAP_FILE = config['NotificationBootstrapFile']
-
+        self.BOOTSTRAP_NAME = get_config_and_warn('BootstrapName', "mainnet")
+        self.BOOTSTRAP_LOCATIONS = get_config_and_warn('BootstrapFiles', "abort", abort=True)
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
         self.USE_DEBUG_STORAGE = config.get('DebugStorage', True)
         self.DEBUG_STORAGE_PATH = config.get('DebugStoragePath', 'Chains/debugstorage')
         self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
-        self.SERVICE_ENABLED = config.get('ServiceEnabled', True)
+        self.SERVICE_ENABLED = config.get('ServiceEnabled', False)
         self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
 
     def setup_mainnet(self):
@@ -250,7 +262,7 @@ class SettingsHolder:
         try:
             self.CONNECTED_PEER_MAX = int(num_peers)
         except Exception as e:
-            logzero.logger.error("Please supply an integer number for max peers")
+            logger.error("Please supply an integer number for max peers")
 
     def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled
@@ -261,27 +273,35 @@ class SettingsHolder:
     def set_emit_notify_events_on_sc_execution_error(self, is_enabled=False):
         self.emit_notify_events_on_sc_execution_error = is_enabled
 
-    def set_logfile(self, fn, max_bytes=0, backup_count=0):
+    def set_logfile(self, filename, max_bytes=0, backup_count=0):
         """
         Setup logging to a (rotating) logfile.
 
         Args:
-            fn (str): Logfile. If fn is None, disable file logging
+            filename (str): Logfile. If filename is None, disable file logging
             max_bytes (int): Maximum number of bytes per logfile. If used together with backup_count,
                              logfile will be rotated when it reaches this amount of bytes.
             backup_count (int): Number of rotated logfiles to keep
         """
-        logzero.logfile(fn, maxBytes=max_bytes, backupCount=backup_count)
+        _logger = logging.getLogger("neo-python")
+
+        if not filename and not self.rotating_filehandler:
+            _logger.removeHandler(self.rotating_filehandler)
+        else:
+            self.rotating_filehandler = RotatingFileHandler(filename, mode='a', maxBytes=max_bytes, backupCount=backup_count, encoding=None)
+            self.rotating_filehandler.setLevel(logging.DEBUG)
+            self.rotating_filehandler.setFormatter(LogFormatter(color=False))
+            _logger.addHandler(self.rotating_filehandler)
 
     def set_loglevel(self, level):
         """
-        Set the minimum loglevel for the default logger
+        Set the minimum loglevel for all components
 
         Args:
             level (int): eg. logging.DEBUG or logging.ERROR. See also https://docs.python.org/2/library/logging.html#logging-levels
         """
         self.log_level = level
-        logzero.loglevel(level)
+        log_manager.config_stdio(default_level=level)
 
     def check_chain_dir_exists(self, warn_migration=False):
         """
@@ -293,17 +313,17 @@ class SettingsHolder:
         if not os.path.exists(chain_path):
             try:
                 os.makedirs(chain_path)
-                logzero.logger.info("Created 'Chains' directory at %s " % chain_path)
+                logger.info("Created 'Chains' directory at %s " % chain_path)
             except Exception as e:
-                logzero.logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
+                logger.error("Could not create 'Chains' directory at %s %s" % (chain_path, e))
 
         warn_migration = False
         # Add a warning for migration purposes if we created a chain dir
         if warn_migration and ROOT_INSTALL_PATH != self.DATA_DIR_PATH:
             if os.path.exists(os.path.join(ROOT_INSTALL_PATH, 'Chains')):
-                logzero.logger.warning("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
-                logzero.logger.warning("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
-                logzero.logger.warning("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
+                logger.warning("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
+                logger.warning("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
+                logger.warning("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
 
     def check_privatenet(self):
         """

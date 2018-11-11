@@ -8,20 +8,20 @@ import shutil
 import os
 
 
-def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
-
-    if download_file is None:
-        print("no bootstrap file specified.  Please update your configuration file.")
+def BootstrapBlockchainFile(target_dir, download_location, bootstrap_name, require_confirm=True):
+    if download_location is None:
+        print("no bootstrap location file specified. Please update your configuration file.")
         sys.exit(0)
 
     if require_confirm:
         print("This will overwrite any data currently in %s.\nType 'confirm' to continue" % target_dir)
         confirm = prompt("[confirm]> ", is_password=False)
         if confirm == 'confirm':
-            return do_bootstrap(download_file, target_dir)
+            return do_bootstrap(download_location, bootstrap_name, target_dir)
     else:
 
-        return do_bootstrap(download_file,
+        return do_bootstrap(download_location,
+                            bootstrap_name,
                             target_dir,
                             tmp_file_name=os.path.join(settings.DATA_DIR_PATH, 'btest.tar.gz'),
                             tmp_chain_name='btestchain')
@@ -30,19 +30,21 @@ def BootstrapBlockchainFile(target_dir, download_file, require_confirm=True):
     sys.exit(0)
 
 
-def do_bootstrap(bootstrap_file, destination_dir, tmp_file_name=None, tmp_chain_name='tmpchain'):
-
+def do_bootstrap(download_location, bootstrap_name, destination_dir, tmp_file_name=None, tmp_chain_name='tmpchain'):
     if tmp_file_name is None:
         tmp_file_name = os.path.join(settings.DATA_DIR_PATH, 'bootstrap.tar.gz')
 
     success = False
 
-    print('will download file %s ' % bootstrap_file)
-    print('')
-
     try:
-        response = requests.get(bootstrap_file, stream=True)
+        source = requests.get(download_location)
+        source.raise_for_status()
+        source_json = source.json()
+        response = requests.get(source_json[bootstrap_name], stream=True)
         response.raise_for_status()
+
+        print('will download file %s ' % source_json[bootstrap_name])
+        print('')
 
         # Total size in bytes.
         total_size = int(response.headers.get('content-length', 0))

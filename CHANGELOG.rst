@@ -3,18 +3,40 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.8.2] In Progress
+[0.8.3-dev] in progress
+-----------------------
+- Disallow ``Void`` type input parameters for smart contracts and increase test coverage
+- Fix confirmed tx not being purged from mempool `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
+- Fix bootstrap thread joining failure on Ubuntu systems
+- Make bootstrap lookup dynamic such that users don't have to update their configs from here on forward
+- Fix various issues related to signing multi-signature transactions
+- Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
+- Empty VerificationScripts for deployed contracts now work as intended
+- Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`
+
+
+[0.8.2] 2018-10-31
 -------------------
+- Fix max recursion depth exceeding when network data inflow exceeds processing speed
+- Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
+- Update Readme and Prompt.py ``help``
+- Update documentation to include new ``IsPayable`` contract flag in the examples
+- Fix discrepancy between ``getpeers`` RPC call and the ``maxpeers`` setting
 - Update ``CreateAddress`` functionality and tests
 - Add VM sanity checks for operations on ``BigInteger``'s
 - Add raw transaction building examples in ``\examples\`` folder
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
 - Fix return types of ``claimGas`` function.
-- Update compiler version ``v0.5.4``
+- Update compiler version ``v0.5.6``
 - Add the option -u (unittest-net) to prompt.py
 - Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 - Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
 - Fix ``ExtendedJsonRpcApi``
+- Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
+- Fix duplicate task starting for requesting blocks
+- Add ``getblockheader`` RPC method
+- Remove ``Neo.Witness.GetInvocationScript``
+- Allow wallets to sync past corrupt blocks
 
 
 [0.8.1] 2018-10-06
@@ -28,6 +50,7 @@ All notable changes to this project are documented in this file.
 - Various updates to inaccuracies in ``ToJson`` output of ``AccountState``
 - Add documentation support for Python 3.7
 - Change execution fail event payload to give more meaningful error messages
+
 
 [0.8.0] 2018-09-28
 ------------------
@@ -263,15 +286,15 @@ All notable changes to this project are documented in this file.
 - Fixed README reference in ``MANIFEST.in``
 - Added additional error messages to ``ExecutionEngine.py`` to help with debugging smart contracts.
 - Changes for Pypi compatibility:
-  - move protocol.*.json to ``neo/data/``
-  - move ``prompt.py`` and other scripts to ``neo/bin``
-  - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
-  - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
-     - ``np-prompt``
-     - ``np-api-server``
-     - ``np-bootstrap``
-     - ``np-reencrypt-wallet``
-  - updated docs for Pypi changes
+   - move protocol.*.json to ``neo/data/``
+   - move ``prompt.py`` and other scripts to ``neo/bin``
+   - default chain data path is now in ``~/.neopython/Chains``.  ``prompt.log`` and ``prompt.history`` files are also stored there
+   - the following console scripts are now on the ``venv`` path after running ``pip install neo-python`` or ``pip install -e .`` for github based installs:
+      - ``np-prompt``
+      - ``np-api-server``
+      - ``np-bootstrap``
+      - ``np-reencrypt-wallet``
+   - updated docs for Pypi changes
 
 
 [0.5.7] 2018-03-14

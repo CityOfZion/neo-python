@@ -1,7 +1,5 @@
 import binascii
 import sys
-from logzero import logger
-
 from collections import deque
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM import OpCode
@@ -28,6 +26,9 @@ from neo.VM.InteropService import Array
 from neocore.UInt160 import UInt160
 import datetime
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class ApplicationEngine(ExecutionEngine):
@@ -112,7 +113,7 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == CALL or opcode == APPCALL:
             if self.InvocationStack.Count >= maxInvocationStackSize:
-                logger.error("INVOCATION STACK TOO BIG, RETURN FALSE")
+                logger.debug("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
 
             return True
@@ -221,7 +222,7 @@ class ApplicationEngine(ExecutionEngine):
             length = int.from_bytes(lengthpointer, 'little')
 
             if length > self.maxItemSize:
-                logger.error("ITEM IS GREATER THAN MAX ITEM SIZE!")
+                logger.debug("ITEM IS GREATER THAN MAX ITEM SIZE!")
                 return False
 
             return True
@@ -229,7 +230,7 @@ class ApplicationEngine(ExecutionEngine):
         elif opcode == CAT:
 
             if cx.EvaluationStack.Count < 2:
-                logger.error("NOT ENOUGH ITEMS TO CONCAT")
+                logger.debug("NOT ENOUGH ITEMS TO CONCAT")
                 return False
 
             length = 0
@@ -237,11 +238,11 @@ class ApplicationEngine(ExecutionEngine):
             try:
                 length = len(cx.EvaluationStack.Peek(0).GetByteArray()) + len(cx.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
-                logger.error("COULD NOT GET STR LENGTH!")
+                logger.debug("COULD NOT GET STR LENGTH!")
                 raise e
 
             if length > self.maxItemSize:
-                logger.error("ITEM IS GREATER THAN MAX SIZE!!!")
+                logger.debug("ITEM IS GREATER THAN MAX SIZE!!!")
                 return False
 
             return True

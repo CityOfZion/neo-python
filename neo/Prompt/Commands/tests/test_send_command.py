@@ -354,7 +354,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             args = ["2", '--from-addr=%s' % self.wallet_1_addr, '--change-addr=%s' % self.watch_addr_str, '--fee=0.005']
 
             address_from_account_state = Blockchain.Default().GetAccountState(self.wallet_1_addr).ToJson()
-            address_from_gas_bal = address_from_account_state['balances']['0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7']
+            address_from_gas = next(filter(lambda b: b['asset'] == '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7',
+                                           address_from_account_state['balances']))
+            address_from_gas_bal = address_from_gas['value']
 
             framework = construct_send_many(wallet, args)
             res = process_transaction(wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])

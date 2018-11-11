@@ -1,9 +1,5 @@
-import time
 import plyvel
 import binascii
-
-from logzero import logger
-
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
@@ -35,6 +31,9 @@ from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
 from prompt_toolkit import prompt
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('db')
 
 
 class LevelDBBlockchain(Blockchain):
@@ -381,7 +380,6 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Transaction.DeserializeFromBufer(outhex, 0), height
 
-        logger.info("Could not find transaction for hash %s " % hash)
         return None, -1
 
     def AddBlockDirectly(self, block, do_persist_complete=True):
@@ -446,13 +444,18 @@ class LevelDBBlockchain(Blockchain):
         except Exception as e:
             pass
 
-        if not type(height_or_hash) == BigInteger and len(height_or_hash) == 64:
+        if intval is None and len(height_or_hash) == 64:
             bhash = height_or_hash.encode('utf-8')
             if bhash in self._header_index:
                 hash = bhash
 
+        elif intval is None and len(height_or_hash) == 66:
+            bhash = height_or_hash[2:].encode('utf-8')
+            if bhash in self._header_index:
+                hash = bhash
+
         elif intval is not None and self.GetHeaderHash(intval) is not None:
-            hash = self.GetHeaderHash(int(height_or_hash))
+            hash = self.GetHeaderHash(intval)
 
         if hash is not None:
             return self.GetHeader(hash)

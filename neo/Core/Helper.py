@@ -1,7 +1,10 @@
 from base58 import b58decode
-from logzero import logger
 import binascii
 from neo.Blockchain import GetBlockchain, GetStateReader
+from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Core.State.ContractState import ContractState
 from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.UInt160 import UInt160
@@ -12,6 +15,9 @@ from neocore.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo.Settings import settings
 from neo.EventHub import events
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class Helper:
@@ -170,7 +176,7 @@ class Helper:
         try:
             hashes = verifiable.GetScriptHashesForVerifying()
         except Exception as e:
-            logger.error("couldn't get script hashes %s " % e)
+            logger.debug("couldn't get script hashes %s " % e)
             return False
 
         if len(hashes) != len(verifiable.Scripts):
@@ -184,15 +190,16 @@ class Helper:
             if len(verification) == 0:
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
-                verification = sb.ToArray()
-
+                verification = sb.ms.getvalue()
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:
                     return False
 
             state_reader = GetStateReader()
-            engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
+            script_table = CachedScriptTable(DBCollection(blockchain._db, DBPrefix.ST_Contract, ContractState))
+
+            engine = ApplicationEngine(TriggerType.Verification, verifiable, script_table, state_reader, Fixed8.Zero())
             engine.LoadScript(verification)
             invocation = verifiable.Scripts[i].InvocationScript
             engine.LoadScript(invocation)

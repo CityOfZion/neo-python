@@ -2,7 +2,6 @@ import hashlib
 import datetime
 
 from neo.VM.OpCode import *
-from logzero import logger
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
@@ -12,6 +11,9 @@ from neo.Settings import settings
 from neo.VM.VMFault import VMFault
 from neo.Prompt.vm_debugger import VMDebugger
 from logging import DEBUG as LOGGING_LEVEL_DEBUG
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('vm')
 
 
 class ExecutionEngine:
@@ -599,7 +601,7 @@ class ExecutionEngine:
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)
-                    logger.error("Could not checksig: %s " % e)
+                    logger.debug("Could not checksig: %s " % e)
 
             elif opcode == VERIFY:
                 pubkey = estack.Pop().GetByteArray()
@@ -610,7 +612,7 @@ class ExecutionEngine:
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)
-                    logger.error("Could not checksig: %s " % e)
+                    logger.debug("Could not verify: %s " % e)
 
             elif opcode == CHECKMULTISIG:
 
@@ -922,7 +924,7 @@ class ExecutionEngine:
                 script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
 
                 if script is None:
-                    logger.error("Could not find script from script table: %s " % script_hash)
+                    logger.debug("Could not find script from script table: %s " % script_hash)
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
                 context_new = self.LoadScript(script, rvcount)
@@ -1014,8 +1016,11 @@ class ExecutionEngine:
     def VM_FAULT_and_report(self, id, *args):
         self._VMState |= VMState.FAULT
 
-        if settings.log_level != LOGGING_LEVEL_DEBUG:
+        if not logger.hasHandlers() or logger.handlers[0].level != LOGGING_LEVEL_DEBUG:
             return
+
+        # if settings.log_level != LOGGING_LEVEL_DEBUG:
+        #     return
 
         if id == VMFault.INVALID_JUMP:
             error_msg = "Attemping to JMP/JMPIF/JMPIFNOT to an invalid location."
@@ -1088,6 +1093,6 @@ class ExecutionEngine:
         if id in [VMFault.THROW, VMFault.THROWIFNOT]:
             logger.debug("({}) {}".format(self.ops_processed, id))
         else:
-            logger.error("({}) {}".format(self.ops_processed, error_msg))
+            logger.debug("({}) {}".format(self.ops_processed, error_msg))
 
         return
