@@ -898,30 +898,6 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             self.app.wallet = None
             os.remove(WalletFixtureTestCase.wallet_1_dest())
 
-    def test_send_to_address_fails_to_relay_tx(self):
-        with patch('neo.api.JSONRPC.JsonRpcApi.NodeLeader.Relay', return_value=False):
-            test_wallet_path = shutil.copyfile(
-                WalletFixtureTestCase.wallet_1_path(),
-                WalletFixtureTestCase.wallet_1_dest()
-            )
-            self.app.wallet = UserWallet.Open(
-                test_wallet_path,
-                to_aes_key(WalletFixtureTestCase.wallet_1_pass())
-            )
-            address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
-
-            req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
-            mock_req = mock_request(json.dumps(req).encode("utf-8"))
-            res = json.loads(self.app.home(mock_req))
-
-            error = res.get('error', {})
-            self.assertEqual(error.get('code', None), -32001)
-            self.assertIn("Could not relay tx", error.get('message', None))
-
-            self.app.wallet.Close()
-            self.app.wallet = None
-            os.remove(WalletFixtureTestCase.wallet_1_dest())
-
     def test_send_from_no_wallet(self):
         req = self._gen_rpc_req("sendfrom", params=[])
         mock_req = mock_request(json.dumps(req).encode("utf-8"))
