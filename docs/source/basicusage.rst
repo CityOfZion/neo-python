@@ -131,6 +131,9 @@ If you want an external program to access your API server, an open firewall port
    * - JSON-RPC via HTTP 
      - 10332 
      - 20332
+   * - REST via HTTP
+     - 80
+     - 8080
 
 For P2P information see `NEO-Python Seedlist <https://neo-python.readthedocs.io/en/latest/Seedlist.html>`_.
 
