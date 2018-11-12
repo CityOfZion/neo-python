@@ -359,6 +359,113 @@ Response:
         }
     ]
 
+REST Command List
+-----------------
+
+Query the neo-python API server's REST port (i.e. 80 for mainnet or 8080 for testnet) to access the list of acceptable commands as shown below.
+
+REST API for NEO MainNet
+""""""""""""""""""""""""
+(see also `neo-python <https://github.com/CityOfZion/neo-python>`_ , `api-server.py <https://github.com/CityOfZion/neo-python/blob/development/api-server.py>`_ )
+
+endpoints:
+""""""""""
+* /v1/notifications/block/<height>
+
+  *notifications by block*
+
+* /v1/notifications/addr/<addr>
+
+  *notifications by address*
+
+* /v1/notifications/tx/<hash>
+
+  *notifications by tx*
+
+* /v1/notifications/contract/<hash>
+
+  *notifications by contract*
+
+* /v1/tokens
+
+  *lists all NEP5 Tokens*
+
+* /v1/token/<contract_hash>
+
+  *list an NEP5 Token*
+
+* /v1/status
+
+  *current block height and version*
+
+pagination
+""""""""""
+results are offered in page size of 500
+
+you may request a different page by specifying the ``page`` query string param, for example:
+
+::
+
+    /block/123456?page=3page
+
+page index starts at 0, so the 2nd page would be ``?page=1``
+
+sample output
+"""""""""""""
+
+::
+
+    {
+        "page_len": 1000,
+        "total_pages": 1,
+        "total": 4,
+        "page": 1,
+        "current_height": 982506,
+        "results": [
+            {
+                "type": "SmartContract.Runtime.Notify",
+                "contract": "400cbed5b41014788d939eaf6286e336e7140f8c",
+                "tx": "d0805fd7ec19a4a414374ae3720447d2576659053eb7588b85a0f9f1fd629791",
+                "block": 928119,
+                "addr_from": "AUYSKFEWPZxP57fo3TsK6Lwg22qxSFupKF",
+                "amount": 1,
+                "addr_to": "ALULT5WpeiHnEXYFe72Yq7nRB3ZBmsBypq",
+                "notify_type": "transfer"
+            },
+            {
+                "type": "SmartContract.Runtime.Notify",
+                "contract": "d3de84c166d93ad2581cb587bda8e02b12dc37ca",
+                "tx": "667df082eaa16ce2b07e48e214eb019b3e9450e76daea4f5b0450578a07836ef",
+                "block": 936352,
+                "addr_from": "ALULT5WpeiHnEXYFe72Yq7nRB3ZBmsBypq",
+                "amount": 1,
+                "addr_to": "AaD74SkQXsSE7UtSutQ4VV3mRdQUoMk98X",
+                "notify_type": "transfer"
+            },
+            {
+                "type": "SmartContract.Runtime.Notify",
+                "contract": "2c0fdfa9592814b0a938219e218e3a6b08615acd",
+                "tx": "eda792e7814e128eecda992f78a11577ee0604827de4aa91ffcda4616c889191",
+                "block": 939449,
+                "addr_from": "ALULT5WpeiHnEXYFe72Yq7nRB3ZBmsBypq",
+                "amount": 1,
+                "addr_to": "AaVgSU9vEPdwc49rPrCyj1LYkpsGFNgbjy",
+                "notify_type": "transfer"
+            },
+            {
+                "type": "SmartContract.Runtime.Notify",
+                "contract": "f9572c5b119a6b5775a6af07f1cef5d310038f55",
+                "tx": "6d0f1decbf3874d08d41f2cc9e8672cd3507c962668c15793e3dd3e01fc3551c",
+                "block": 942369,
+                "addr_from": "ALULT5WpeiHnEXYFe72Yq7nRB3ZBmsBypq",
+                "amount": 1,
+                "addr_to": "APaGQT4dx4gUDApVPnbtZvChJ8UKRsZBdt",
+                "notify_type": "transfer"
+            }
+        ],
+        "message": ""
+    }
+
 Default RPC Method Details
 --------------------------
 
