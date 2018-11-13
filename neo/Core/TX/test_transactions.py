@@ -8,6 +8,7 @@ from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
 import os
 from neo.Settings import settings
+from mock import patch
 
 
 class TransactionTestCase(NeoTestCase):
@@ -203,3 +204,16 @@ class TransactionTestCase(NeoTestCase):
             tx = Transaction.DeserializeFrom(reader)
 
             self.assertEqual(tx.Hash.ToString(), self.giant_tx_hash)
+
+    def test_GetScriptHashesForVerifying_invalid_operation(self):
+        with patch("neo.Core.Helper", return_value=None):
+            with patch("neo.Blockchain", return_value=None):
+                with self.assertRaises(Exception) as e:
+                    ms = MemoryStream(binascii.unhexlify(self.cr))
+
+                    reader = BinaryReader(ms)
+                    tx = Transaction.DeserializeFrom(reader)
+
+                    tx.GetScriptHashesForVerifying()
+
+        self.assertTrue("Invalid operation" in str(e.exception))
