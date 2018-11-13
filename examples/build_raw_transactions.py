@@ -114,6 +114,8 @@ def example1():
 
     raw_tx = contract_tx.ToArray()
 
+    return raw_tx
+
     # you can confirm that this transaction is correct by running it against our docker testnet image using the following instructions
     # docker pull cityofzion/neo-python-privnet-unittest:v0.0.1
     # docker run --rm -d --name neo-python-privnet-unittest -p 20333-20336:20333-20336/tcp -p 30333-30336:30333-30336/tcp cityofzion/neo-python-privnet-unittest:v0.0.1
@@ -192,6 +194,8 @@ def example2():
 
     invocation_tx.scripts = context.GetScripts()
     raw_tx = invocation_tx.ToArray()
+
+    return raw_tx
 
     # you can confirm that this transaction is correct by running it against our docker testnet image using the following instructions
     # docker pull cityofzion/neo-python-privnet-unittest:v0.0.1
