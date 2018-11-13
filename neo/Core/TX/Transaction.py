@@ -716,7 +716,9 @@ class Transaction(InventoryMixin):
                     hashes.add(UInt160(data=attr.Data))
 
         for key, group in groupby(self.outputs, lambda p: p.AssetId):
-            asset = GetBlockchain().GetAssetState(key.ToBytes())
+            asset = Helper.StaticAssetState(key)
+            if asset is None:
+                asset = GetBlockchain().GetAssetState(key.ToBytes())
             if asset is None:
                 raise Exception("Invalid operation")
 
