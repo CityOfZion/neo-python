@@ -486,6 +486,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # lets simulate that at least some addresses are known
         node = NodeLeader.Instance()
         node.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
+        node.DEAD_ADDRS = ["127.0.0.1:20335"]
         test_node = NeoNode()
         test_node.host = "127.0.0.1"
         test_node.port = 20333
@@ -500,9 +501,11 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         print("addrs:{} peers:{}".format(len(node.ADDRS), len(node.Peers)))
         self.assertEqual(len(res['result']['unconnected']),
                          len(node.ADDRS) - len(node.Peers))
+        self.assertEqual(len(res['result']['bad']), 1)
         # To avoid messing up the next tests
         node.Peers = []
         node.ADDRS = []
+        node.DEAD_ADDRS = []
 
     def test_getwalletheight_no_wallet(self):
         req = self._gen_rpc_req("getwalletheight", params=["some id here"])
