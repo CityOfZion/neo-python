@@ -18,6 +18,10 @@ from mock import patch
 
 class TransactionTestCase(BlockchainFixtureTestCase):
 
+    @classmethod
+    def leveldb_testpath(self):
+        return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
+
     def test_tx_types(self):
         self.assertEqual('ContractTransaction', TransactionType.ToName(TransactionType.ContractTransaction))
         self.assertEqual('MinerTransaction', TransactionType.ToName(0))
