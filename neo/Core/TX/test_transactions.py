@@ -8,6 +8,10 @@ from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
 import os
 from neo.Settings import settings
+import shutil
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Wallets.utils import to_aes_key
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from examples.build_raw_transactions import example1, example2
 from mock import patch
 
@@ -220,18 +224,29 @@ class TransactionTestCase(NeoTestCase):
         self.assertTrue("Invalid operation" in str(e.exception))
 
     def test_build_raw_transactions(self):
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
         # test example1
-        res = example1()
+        with patch("neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Create", return_value=wallet):
+            with patch("neo.Implementations.Wallets.peewee.UserWallet.UserWallet.CreateKey"):
+                res = example1()
 
-        self.assertTrue(res)
-        self.assertEqual(res.decode('utf-8'), "80000190274d792072617720636f6e7472616374207472616e73616374696f6e206465736372697074696f6e01949354ea0a8b57dfee1e257a1aedd1e0eea2e5837de145e8da9c0f101bfccc8e0100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500a3e11100000000ea610aa6db39bd8c8556c9569d94b5e5a5d0ad199b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5004f2418010000001cc9c05cefffe6cdd7b182816a9152ec218d2ec000")
-
-        os.remove("path")
+                self.assertTrue(res)
+                self.assertEqual(res.decode('utf-8'), "80000190274d792072617720636f6e7472616374207472616e73616374696f6e206465736372697074696f6e01949354ea0a8b57dfee1e257a1aedd1e0eea2e5837de145e8da9c0f101bfccc8e0100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500a3e11100000000ea610aa6db39bd8c8556c9569d94b5e5a5d0ad199b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5004f2418010000001cc9c05cefffe6cdd7b182816a9152ec218d2ec000")
 
         # test example2
-        res = example2()
+        with patch("neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Create", return_value=wallet):
+            with patch("neo.Implementations.Wallets.peewee.UserWallet.UserWallet.CreateKey"):
+                res = example2()
 
-        self.assertTrue(res)
-        self.assertEqual(res.decode('utf-8'), "d1001b00046e616d6567d3d8602814a429a91afdbaa3914884a1c90c73310290274d792072617720636f6e7472616374207472616e73616374696f6e206465736372697074696f6e201cc9c05cefffe6cdd7b182816a9152ec218d2ec000000141405bd8ba993473b51bfa338dd3f2d4a236b4e940572cf6f077c411cd3a5fa8ccce09d945159a3978e7697915620473da0e2189048d768ed2a70535a73a9cba3a33232103cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6ac")
+                self.assertTrue(res)
+                self.assertEqual(res.decode('utf-8'), "d1001b00046e616d6567d3d8602814a429a91afdbaa3914884a1c90c73310290274d792072617720636f6e7472616374207472616e73616374696f6e206465736372697074696f6e201cc9c05cefffe6cdd7b182816a9152ec218d2ec000000141405bd8ba993473b51bfa338dd3f2d4a236b4e940572cf6f077c411cd3a5fa8ccce09d945159a3978e7697915620473da0e2189048d768ed2a70535a73a9cba3a33232103cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6ac")
 
-        os.remove("path")
+        wallet.Close()
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
