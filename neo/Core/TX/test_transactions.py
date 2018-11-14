@@ -1,4 +1,4 @@
-from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neocore.IO.BinaryWriter import BinaryWriter
@@ -16,7 +16,7 @@ from examples.build_raw_transactions import example1, example2
 from mock import patch
 
 
-class TransactionTestCase(NeoTestCase):
+class TransactionTestCase(BlockchainFixtureTestCase):
 
     def test_tx_types(self):
         self.assertEqual('ContractTransaction', TransactionType.ToName(TransactionType.ContractTransaction))
