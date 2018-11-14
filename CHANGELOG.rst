@@ -17,6 +17,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.2] 2018-10-31
 -------------------
+- Improve Tokens.py and ``token_send``, increase test coverage
 - Fix max recursion depth exceeding when network data inflow exceeds processing speed
 - Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
 - Update Readme and Prompt.py ``help``
