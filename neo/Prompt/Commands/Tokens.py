@@ -9,16 +9,24 @@ import binascii
 
 
 def token_send(wallet, args, prompt_passwd=True):
-    if len(args) != 4:
+    if len(args) < 4:
         print("please provide a token symbol, from address, to address, and amount")
         return False
 
+    user_tx_attributes = None
+    if len(args) > 4:
+        args, user_tx_attributes = get_tx_attr_from_args(args)
+
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     send_from = args[1]
     send_to = args[2]
     amount = amount_from_string(token, args[3])
 
-    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd)
+    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd, tx_attributes=user_tx_attributes)
 
 
 def token_send_from(wallet, args, prompt_passwd=True):
@@ -27,6 +35,10 @@ def token_send_from(wallet, args, prompt_passwd=True):
         return False
 
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     send_from = args[1]
     send_to = args[2]
     amount = amount_from_string(token, args[3])
@@ -34,21 +46,17 @@ def token_send_from(wallet, args, prompt_passwd=True):
     allowance = token_get_allowance(wallet, args[:-1], verbose=False)
 
     if allowance and allowance >= amount:
-
         tx, fee, results = token.TransferFrom(wallet, send_from, send_to, amount)
 
         if tx is not None and results is not None and len(results) > 0:
-
             if results[0].GetBigInteger() == 1:
+                print("\n-----------------------------------------------------------")
+                print("Transfer of %s %s from %s to %s" % (
+                    string_from_amount(token, amount), token.symbol, send_from, send_to))
+                print("Transfer fee: %s " % (fee.value / Fixed8.D))
+                print("-------------------------------------------------------------\n")
 
                 if prompt_passwd:
-
-                    print("\n-----------------------------------------------------------")
-                    print("Transfer of %s %s from %s to %s" % (
-                        string_from_amount(token, amount), token.symbol, send_from, send_to))
-                    print("Transfer fee: %s " % (fee.value / Fixed8.D))
-                    print("-------------------------------------------------------------\n")
-
                     passwd = prompt("[Password]> ", is_password=True)
 
                     if not wallet.ValidatePassword(passwd):
@@ -57,8 +65,10 @@ def token_send_from(wallet, args, prompt_passwd=True):
 
                 return InvokeContract(wallet, tx, fee)
 
-    print("Requested transfer from is greater than allowance")
+        print("could not transfer tokens")
+        return False
 
+    print("Requested transfer from is greater than allowance")
     return False
 
 
@@ -68,6 +78,10 @@ def token_approve_allowance(wallet, args, prompt_passwd=True):
         return False
 
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     approve_from = args[1]
     approve_to = args[2]
     amount = amount_from_string(token, args[3])
@@ -75,7 +89,6 @@ def token_approve_allowance(wallet, args, prompt_passwd=True):
     tx, fee, results = token.Approve(wallet, approve_from, approve_to, amount)
 
     if tx is not None and results is not None and len(results) > 0:
-
         if results[0].GetBigInteger() == 1:
             print("\n-----------------------------------------------------------")
             print("Approve allowance of %s %s from %s to %s" % (string_from_amount(token, amount), token.symbol, approve_from, approve_to))
@@ -87,7 +100,7 @@ def token_approve_allowance(wallet, args, prompt_passwd=True):
 
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
-                    return
+                    return False
 
             return InvokeContract(wallet, tx, fee)
 
@@ -98,9 +111,13 @@ def token_approve_allowance(wallet, args, prompt_passwd=True):
 def token_get_allowance(wallet, args, verbose=False):
     if len(args) != 3:
         print("please provide a token symbol, from address, to address")
-        return
+        return False
 
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     allowance_from = args[1]
     allowance_to = args[2]
 
@@ -121,75 +138,79 @@ def token_get_allowance(wallet, args, verbose=False):
 
 def token_mint(wallet, args, prompt_passwd=True):
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
+
     mint_to_addr = args[1]
     args, invoke_attrs = get_tx_attr_from_args(args)
     if len(args) < 3:
-        raise Exception("please specify assets to attach")
+        print("please specify assets to attach")
+        return False
 
     asset_attachments = args[2:]
 
     tx, fee, results = token.Mint(wallet, mint_to_addr, asset_attachments, invoke_attrs=invoke_attrs)
 
-    if results[0] is not None:
-        print("\n-----------------------------------------------------------")
-        print("[%s] Will mint tokens to address: %s " % (token.symbol, mint_to_addr))
-        print("Fee: %s " % (fee.value / Fixed8.D))
-        print("-------------------------------------------------------------\n")
+    if tx is not None and results is not None and len(results) > 0:
+        if results[0] is not None:
+            print("\n-----------------------------------------------------------")
+            print("[%s] Will mint tokens to address: %s " % (token.symbol, mint_to_addr))
+            print("Fee: %s " % (fee.value / Fixed8.D))
+            print("-------------------------------------------------------------\n")
 
-        if prompt_passwd:
-            passwd = prompt("[Password]> ", is_password=True)
+            if prompt_passwd:
+                passwd = prompt("[Password]> ", is_password=True)
 
-            if not wallet.ValidatePassword(passwd):
-                print("incorrect password")
-                return
+                if not wallet.ValidatePassword(passwd):
+                    print("incorrect password")
+                    return False
 
-        return InvokeWithTokenVerificationScript(wallet, tx, token, fee, invoke_attrs=invoke_attrs)
+            return InvokeWithTokenVerificationScript(wallet, tx, token, fee, invoke_attrs=invoke_attrs)
 
-    else:
-        print("Could not register addresses: %s " % str(results[0]))
-
+    print("Could not register address")
     return False
 
 
 def token_crowdsale_register(wallet, args, prompt_passwd=True):
     token = get_asset_id(wallet, args[0])
+    if not isinstance(token, NEP5Token):
+        print("The given symbol does not represent a loaded NEP5 token")
+        return False
 
     args, from_addr = get_from_addr(args)
 
     if len(args) < 2:
-        raise Exception("Specify addr to register for crowdsale")
+        print("Specify addr to register for crowdsale")
+        return False
+
     register_addr = args[1:]
 
     tx, fee, results = token.CrowdsaleRegister(wallet, register_addr)
 
-    if results[0].GetBigInteger() > 0:
-        print("\n-----------------------------------------------------------")
-        print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
-        print("Fee: %s " % (fee.value / Fixed8.D))
-        print("-------------------------------------------------------------\n")
+    if tx is not None and results is not None and len(results) > 0:
+        if results[0].GetBigInteger() > 0:
+            print("\n-----------------------------------------------------------")
+            print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
+            print("Fee: %s " % (fee.value / Fixed8.D))
+            print("-------------------------------------------------------------\n")
 
-        if prompt_passwd:
-            passwd = prompt("[Password]> ", is_password=True)
+            if prompt_passwd:
+                passwd = prompt("[Password]> ", is_password=True)
 
-            if not wallet.ValidatePassword(passwd):
-                print("incorrect password")
-                return
+                if not wallet.ValidatePassword(passwd):
+                    print("incorrect password")
+                    return False
 
-        return InvokeContract(wallet, tx, fee, from_addr)
+            return InvokeContract(wallet, tx, fee, from_addr)
 
-    else:
-        print("Could not register addresses: %s " % str(results[0]))
-
+    print("Could not register address(es)")
     return False
 
 
 def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True, tx_attributes=None):
     if not tx_attributes:
         tx_attributes = []
-
-    if from_address is None:
-        print("Please specify --from-addr={addr} to send NEP5 tokens")
-        return False
 
     # because we cannot differentiate between a normal and multisig from_addr, and because we want to make
     # sending NEP5 tokens straight forward even when sending from multisig addresses, we include the script_hash
@@ -230,7 +251,6 @@ def token_history(wallet, db, args):
         return False
 
     token = get_asset_id(wallet, args[0])
-
     if not isinstance(token, NEP5Token):
         print("The given symbol does not represent a loaded NEP5 token")
         return False
