@@ -232,12 +232,12 @@ class Helper:
     @staticmethod
     def StaticAssetState(assetId):
         neo = AssetState()
-        neo.AssetId = UInt256.ParseString("c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b")
-        neo.AssetType = 0
+        neo.AssetId = UInt256.ParseString("0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b")
+        neo.AssetType = 0x00
 
         gas = AssetState()
-        gas.AssetId = UInt256.ParseString("602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7")
-        gas.AssetType = 1
+        gas.AssetId = UInt256.ParseString("0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7")
+        gas.AssetType = 0x01
 
         if assetId == neo.AssetId:
             return neo
