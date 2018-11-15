@@ -224,6 +224,10 @@ def ImportMultiSigContractAddr(wallet, args):
     m = get_arg(args, 1)
     publicKeys = args[2:]
 
+    if int(m) != len(publicKeys):
+        print("the minimum # of signatures required must equal the number of signing pubkeys")
+        return
+
     pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
     verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)
     address = verification_contract.Address
