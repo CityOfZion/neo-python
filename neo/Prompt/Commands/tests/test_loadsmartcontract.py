@@ -160,3 +160,11 @@ class LoadSmartContractTestCase(WalletFixtureTestCase):
             ImportMultiSigContractAddr(wallet, args)
 
         self.assertTrue("Odd-length string" in str(e.exception))
+
+        # test minimum # of signatures required != len(publicKeys)
+        wallet = self.GetWallet1(recreate=True)
+        args = [self.wallet_1_pk, 2, self.wallet_1_pk, self.wallet_2_pk, self.wallet_2_pk]
+
+        res = ImportMultiSigContractAddr(wallet, args)
+
+        self.assertFalse(res)
