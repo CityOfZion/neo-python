@@ -153,17 +153,22 @@ class LoadSmartContractTestCase(WalletFixtureTestCase):
         self.assertTrue("Invalid operation - public key mismatch" in str(e.exception))
 
         # test bad second pk
-        with self.assertRaises(Exception) as e:
-            wallet = self.GetWallet1(recreate=True)
-            args = [self.wallet_1_pk, 2, "03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c", self.wallet_2_pk]  # pk is too short
-
-            ImportMultiSigContractAddr(wallet, args)
-
-        self.assertTrue("Odd-length string" in str(e.exception))
-
-        # test minimum # of signatures required != len(publicKeys)
         wallet = self.GetWallet1(recreate=True)
-        args = [self.wallet_1_pk, 2, self.wallet_1_pk, self.wallet_2_pk, self.wallet_2_pk]
+        args = [self.wallet_1_pk, 2, "03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c", self.wallet_2_pk]  # pk is too short
+
+        res = ImportMultiSigContractAddr(wallet, args)
+
+        self.assertFalse(res)
+
+        # test minimum # of signatures required < 1
+        args = [self.wallet_1_pk, 0, self.wallet_1_pk, self.wallet_2_pk]
+
+        res = ImportMultiSigContractAddr(wallet, args)
+
+        self.assertFalse(res)
+
+        # test minimum # of signatures required > len(publicKeys)
+        args = [self.wallet_1_pk, 3, self.wallet_1_pk, self.wallet_2_pk]
 
         res = ImportMultiSigContractAddr(wallet, args)
 
