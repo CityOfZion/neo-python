@@ -33,6 +33,7 @@ to reuse our logzero logging setup. See also:
 * https://twistedmatrix.com/documents/17.9.0/api/twisted.logger.STDLibLogObserver.html
 """
 import os
+import sys
 import argparse
 import threading
 from time import sleep
@@ -246,7 +247,11 @@ def main():
 
     if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
-        rpc_class = load_class_from_path(neo.Settings.RPC_SERVER)
+        try:
+            rpc_class = load_class_from_path(neo.Settings.RPC_SERVER)
+        except ValueError as err:
+            logger.error(err)
+            sys.exit()
         api_server_rpc = rpc_class(args.port_rpc, wallet=wallet)
 
         endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
@@ -254,7 +259,11 @@ def main():
 
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
-        rest_api = load_class_from_path(neo.Settings.REST_SERVER)
+        try:
+            rest_api = load_class_from_path(neo.Settings.REST_SERVER)
+        except ValueError as err:
+            logger.error(err)
+            sys.exit()
         api_server_rest = rest_api()
         endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
