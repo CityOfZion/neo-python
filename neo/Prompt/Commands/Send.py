@@ -231,7 +231,7 @@ def parse_and_sign(wallet, jsn):
         context = ContractParametersContext.FromJson(jsn)
         if context is None:
             print("Failed to parse JSON")
-            return False
+            return
 
         wallet.Sign(context)
 
@@ -253,15 +253,15 @@ def parse_and_sign(wallet, jsn):
                 return tx
             else:
                 print("Could not relay tx %s " % tx.Hash.ToString())
-                return False
+                return
         else:
             print("Transaction initiated, but the signature is incomplete")
             print(json.dumps(context.ToJson(), separators=(',', ':')))
-            return False
+            return
 
     except Exception as e:
         print("could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
 
-    return False
+    return
