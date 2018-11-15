@@ -249,3 +249,27 @@ class TransactionTestCase(NeoTestCase):
 
         self.assertTrue(type(res), list)
         self.assertEqual(res[0], Helper.AddrStrToScriptHash("AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"))
+
+    ntx = b'80000190274d792072617720636f6e7472616374207472616e73616374696f6e206465736372697074696f6e01949354ea0a8b57dfee1e257a1aedd1e0eea2e5837de145e8da9c0f101bfccc8e0100029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500a3e11100000000ea610aa6db39bd8c8556c9569d94b5e5a5d0ad199b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc5004f2418010000001cc9c05cefffe6cdd7b182816a9152ec218d2ec000'
+    gtx = b'80000190274d792072617720636f6e7472616374207472616e73616374696f6e206465736372697074696f6e01949354ea0a8b57dfee1e257a1aedd1e0eea2e5837de145e8da9c0f101bfccc8e010002e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6000a3e11100000000ea610aa6db39bd8c8556c9569d94b5e5a5d0ad19e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60e05c9041000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec000'
+
+    def test_GetScriptHashesForVerifying_neo_gas(self):
+        # test a raw tx using neo
+        ms = MemoryStream(binascii.unhexlify(self.ntx))
+        reader = BinaryReader(ms)
+        tx = Transaction.DeserializeFrom(reader)
+        tx.raw_tx = True
+
+        res = tx.GetScriptHashesForVerifying()
+
+        self.assertTrue(type(res), list)
+
+        # test a raw tx using gas
+        ms = MemoryStream(binascii.unhexlify(self.gtx))
+        reader = BinaryReader(ms)
+        tx = Transaction.DeserializeFrom(reader)
+        tx.raw_tx = True
+
+        res = tx.GetScriptHashesForVerifying()
+
+        self.assertTrue(type(res), list)
