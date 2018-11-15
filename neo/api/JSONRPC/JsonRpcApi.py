@@ -385,11 +385,7 @@ class JsonRpcApi:
         return {"address": params[0], "isvalid": isValid}
 
     def get_peers(self):
-        """Get all known nodes and their "state"
-
-        In the current implementation of NodeLeader there is no way
-        to know which nodes are bad.
-        """
+        """Get all known nodes and their 'state' """
         node = NodeLeader.Instance()
         result = {"connected": [], "unconnected": [], "bad": []}
         connected_peers = []
@@ -399,12 +395,16 @@ class JsonRpcApi:
                                         "port": peer.port})
             connected_peers.append("{}:{}".format(peer.host, peer.port))
 
+        for addr in node.DEAD_ADDRS:
+            host, port = addr.rsplit(':', 1)
+            result['bad'].append({"address": host, "port": port})
+
         # "UnconnectedPeers" is never used. So a check is needed to
         # verify that a given address:port does not belong to a connected peer
-        for peer in node.ADDRS:
-            addr, port = peer.split(':')
-            if peer not in connected_peers:
-                result['unconnected'].append({"address": addr,
+        for addr in node.ADDRS:
+            host, port = addr.rsplit(':', 1)
+            if addr not in connected_peers:
+                result['unconnected'].append({"address": host,
                                               "port": int(port)})
 
         return result
@@ -562,6 +562,7 @@ class JsonRpcApi:
         self.wallet.Sign(context)
         if context.Completed:
             tx.scripts = context.GetScripts()
+            self.wallet.SaveTransaction(tx)
             NodeLeader.Instance().Relay(tx)
             return tx.ToJson()
         else:

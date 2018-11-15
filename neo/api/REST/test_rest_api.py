@@ -4,7 +4,6 @@ import json
 import os
 import requests
 import tarfile
-import logzero
 import shutil
 
 from neo.api.REST.RestApi import RestApi
@@ -19,44 +18,6 @@ class NotificationDBTestCase(BlockchainFixtureTestCase):
     @classmethod
     def leveldb_testpath(self):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
-
-    @classmethod
-    def setUpClass(cls):
-
-        super(NotificationDBTestCase, cls).setUpClass()
-
-        if not os.path.exists(cls.N_FIXTURE_FILENAME):
-            logzero.logger.info(
-                "downloading fixture notification database from %s. this may take a while" % cls.N_FIXTURE_REMOTE_LOC)
-
-            response = requests.get(cls.N_FIXTURE_REMOTE_LOC, stream=True)
-
-            response.raise_for_status()
-            with open(cls.N_FIXTURE_FILENAME, 'wb+') as handle:
-                for block in response.iter_content(1024):
-                    handle.write(block)
-
-        try:
-            tar = tarfile.open(cls.N_FIXTURE_FILENAME)
-            tar.extractall(path=settings.DATA_DIR_PATH)
-            tar.close()
-
-        except Exception as e:
-            raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.N_FIXTURE_FILENAME))
-        if not os.path.exists(cls.N_NOTIFICATION_DB_NAME):
-            raise Exception("Error downloading fixtures")
-
-        settings.NOTIFICATION_DB_PATH = cls.N_NOTIFICATION_DB_NAME
-        ndb = NotificationDB.instance()
-        ndb.start()
-
-    @classmethod
-    def tearDownClass(cls):
-
-        super(NotificationDBTestCase, cls).tearDownClass()
-
-        NotificationDB.instance().close()
-        shutil.rmtree(cls.N_NOTIFICATION_DB_NAME)
 
     def setUp(self):
         self.app = RestApi()
