@@ -15,6 +15,7 @@ All notable changes to this project are documented in this file.
 - Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`
 - Add fix to ensure tx is saved to wallet when sent using RPC
 - Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`
+- Improve ``parse_and_sign`` and ``ImportMultiSigContractAddr`` and add tests
 
 
 [0.8.2] 2018-10-31
