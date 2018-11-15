@@ -382,3 +382,6 @@ settings.set_loglevel(logging.INFO)
 if not os.getenv("SKIP_PY_CHECK"):
     if sys.version_info < (3, 6):
         raise SystemCheckError("Needs Python 3.6+. Currently used: %s" % sys.version)
+
+RPC_SERVER = 'neo.api.JSONRPC.JsonRpcApi.JsonRpcApi'
+REST_SERVER = 'neo.api.REST.RestApi.RestApi'
