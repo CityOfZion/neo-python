@@ -140,8 +140,8 @@ Our test fixtures are reset and extracted 20+ times in our build system so any s
 
 .. code-block:: sh
 
-	tar -zxvf notif_fixtures_vx+1.tar.gz unittest_notif
-	tar -zxvf fixtures_vx+1.tar.gz unittest
+	tar -zcvf notif_fixtures_vx+1.tar.gz unittest_notif
+	tar -zcvf fixtures_vx+1.tar.gz unittest
 
 11) Update the fixture name in the static class variables in the following files
 
