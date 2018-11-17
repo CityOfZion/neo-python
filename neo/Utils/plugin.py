@@ -9,6 +9,9 @@ def load_class_from_path(path_and_class: str):
         path_and_class: relative path where to find the module and its class name
         i.e. 'neo.<package>.<package>.<module>.<class name>'
 
+    Raises:
+        ValueError: if the Module or Class is not found.
+
     Returns:
         class object
     """
