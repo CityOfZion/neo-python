@@ -23,9 +23,15 @@ class UserWalletTestCase(WalletFixtureTestCase):
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     _wallet1 = None
 
+    wallet_2_addr = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
+
     _wallet2 = None
 
-    wallet_1_and_2_multisig_addr = "AY7cn9RRanTWtDTZ5AgcxoYMGBMcuqFZw5"
+    wallet_3_addr = 'AZiE7xfyJALW7KmADWtCJXGGcnduYhGiCX'
+
+    _wallet3 = None
+
+    wallet_2_and_3_multisig_addr = "Aau2M4UdXxwxLLizDw11eDZRDs5jpXduh8"
 
     @property
     def GAS(self):
@@ -50,6 +56,14 @@ class UserWalletTestCase(WalletFixtureTestCase):
             cls._wallet2 = UserWallet.Open(UserWalletTestCase.wallet_2_dest(),
                                            to_aes_key(UserWalletTestCase.wallet_2_pass()))
         return cls._wallet2
+
+    @classmethod
+    def GetWallet3(cls, recreate=False):
+        if cls._wallet3 is None or recreate:
+            shutil.copyfile(cls.wallet_3_path(), cls.wallet_3_dest())
+            cls._wallet3 = UserWallet.Open(UserWalletTestCase.wallet_3_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_3_pass()))
+        return cls._wallet3
 
     def test_send_neo(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
@@ -518,37 +532,37 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_2_pass()]):
             # start the tx from wallet2
             wallet2 = self.GetWallet2(recreate=True)
-            args = ['neo', self.wallet_1_addr, '1', '--from-addr=AY7cn9RRanTWtDTZ5AgcxoYMGBMcuqFZw5']
+            args = ['neo', self.wallet_3_addr, '1', '--from-addr=Aau2M4UdXxwxLLizDw11eDZRDs5jpXduh8']
 
             framework = construct_send_basic(wallet2, args)
             process_transaction(wallet2, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
-            # now sign the tx with wallet1
-            wallet1 = self.GetWallet1(recreate=True)
-            jsn = '{"type":"Neo.Core.ContractTransaction","hex":"8000000172da341d6ad36544d49d3387c5ae4485bc238fe1ee8fb6d0a179be7dfc7105160000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec09b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000b33deba441ce0ae39338575f6c6f7cb958e14007","items":{"0x0740e158b97c6f6c5f573893e30ace41a4eb3db3":{"script":"522103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e960342103cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c652ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"0a377e3a9c302f270f3eaf083119fbc60a17f7858975b6aa2c226be10626c50e47a5705fd079da9cc55c6c467015345c230ca13fed8d93555c7024f8663efe6c"}}}}'
+            # now sign the tx with wallet3
+            wallet3 = self.GetWallet3(recreate=True)
+            jsn = '{"type":"Neo.Core.ContractTransaction","hex":"800000014405fd5ae29ceeb20912776048c544109c8c67c4128c019863eca58cf677ad360000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000c4c1b0cfa87fcbac45985730166411035ddfed239b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000d1c4904014bfe7d34e9e97370f2cd3a633377cd6","items":{"0xd67c3733a6d32c0f37979e4ed3e7bf144090c4d1":{"script":"522103989f7417da540a8ce00195738249291cba058102a12d2df1b00e2a826d8bd0612103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e9603452ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"01bd36475e1b0d7e1fad096fb1e1a0a45e0fd4ca3f723547861b0ed34da6d2871b846abfd47ca117f007700669412d85727ba23004b07867c7ef68a498ce3a41"}}}}'
 
-            res = parse_and_sign(wallet1, jsn)
+            res = parse_and_sign(wallet3, jsn)
 
             res = res.ToJson()
             self.assertTrue(res)
             self.assertEqual(res['vout'][0]['value'], "1")  # verify the amount
-            self.assertEqual(res['vout'][0]['address'], "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3")  # verify to_address
-            self.assertEqual(res['vout'][1]['address'], "AY7cn9RRanTWtDTZ5AgcxoYMGBMcuqFZw5")  # verify from_address
+            self.assertEqual(res['vout'][0]['address'], self.wallet_3_addr)  # verify to_address
+            self.assertEqual(res['vout'][1]['address'], self.wallet_2_and_3_multisig_addr)  # verify from_address
 
     def test_parse_and_sign_bad_jsn(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_2_pass()]):
             # start the tx from wallet2
             wallet2 = self.GetWallet2(recreate=True)
-            args = ['neo', self.wallet_1_addr, '1', '--from-addr=AY7cn9RRanTWtDTZ5AgcxoYMGBMcuqFZw5']
+            args = ['neo', self.wallet_3_addr, '1', '--from-addr=Aau2M4UdXxwxLLizDw11eDZRDs5jpXduh8']
 
             framework = construct_send_basic(wallet2, args)
             process_transaction(wallet2, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
-            # now sign the tx with wallet1
-            wallet1 = self.GetWallet1(recreate=True)
+            # now sign the tx with wallet3
+            wallet3 = self.GetWallet3(recreate=True)
             jsn = 'blah'
 
-            res = parse_and_sign(wallet1, jsn)
+            res = parse_and_sign(wallet3, jsn)
 
             self.assertFalse(res)
 
@@ -557,16 +571,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
             with patch('neo.Prompt.Commands.Send.NodeLeader.Relay', return_value=False):
                 # start the tx from wallet2
                 wallet2 = self.GetWallet2(recreate=True)
-                args = ['neo', self.wallet_1_addr, '1', '--from-addr=AY7cn9RRanTWtDTZ5AgcxoYMGBMcuqFZw5']
+                args = ['neo', self.wallet_3_addr, '1', '--from-addr=Aau2M4UdXxwxLLizDw11eDZRDs5jpXduh8']
 
                 framework = construct_send_basic(wallet2, args)
                 process_transaction(wallet2, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
-                # now sign the tx with wallet1
-                wallet1 = self.GetWallet1(recreate=True)
-                jsn = '{"type":"Neo.Core.ContractTransaction","hex":"8000000172da341d6ad36544d49d3387c5ae4485bc238fe1ee8fb6d0a179be7dfc7105160000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec09b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000b33deba441ce0ae39338575f6c6f7cb958e14007","items":{"0x0740e158b97c6f6c5f573893e30ace41a4eb3db3":{"script":"522103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e960342103cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c652ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"0a377e3a9c302f270f3eaf083119fbc60a17f7858975b6aa2c226be10626c50e47a5705fd079da9cc55c6c467015345c230ca13fed8d93555c7024f8663efe6c"}}}}'
+                # now sign the tx with wallet3
+                wallet3 = self.GetWallet3(recreate=True)
+                jsn = '{"type":"Neo.Core.ContractTransaction","hex":"800000014405fd5ae29ceeb20912776048c544109c8c67c4128c019863eca58cf677ad360000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000c4c1b0cfa87fcbac45985730166411035ddfed239b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000d1c4904014bfe7d34e9e97370f2cd3a633377cd6","items":{"0xd67c3733a6d32c0f37979e4ed3e7bf144090c4d1":{"script":"522103989f7417da540a8ce00195738249291cba058102a12d2df1b00e2a826d8bd0612103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e9603452ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"01bd36475e1b0d7e1fad096fb1e1a0a45e0fd4ca3f723547861b0ed34da6d2871b846abfd47ca117f007700669412d85727ba23004b07867c7ef68a498ce3a41"}}}}'
 
-                res = parse_and_sign(wallet1, jsn)
+                res = parse_and_sign(wallet3, jsn)
 
                 self.assertFalse(res)
 
@@ -574,13 +588,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_2_pass()]):
             # start the tx from wallet2
             wallet2 = self.GetWallet2(recreate=True)
-            args = ['neo', self.wallet_1_addr, '1', '--from-addr=AY7cn9RRanTWtDTZ5AgcxoYMGBMcuqFZw5']
+            args = ['neo', self.wallet_3_addr, '1', '--from-addr=Aau2M4UdXxwxLLizDw11eDZRDs5jpXduh8']
 
             framework = construct_send_basic(wallet2, args)
             process_transaction(wallet2, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
             # now sign the tx with wallet2 again
-            jsn = '{"type":"Neo.Core.ContractTransaction","hex":"8000000172da341d6ad36544d49d3387c5ae4485bc238fe1ee8fb6d0a179be7dfc7105160000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec09b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000b33deba441ce0ae39338575f6c6f7cb958e14007","items":{"0x0740e158b97c6f6c5f573893e30ace41a4eb3db3":{"script":"522103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e960342103cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c652ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"0a377e3a9c302f270f3eaf083119fbc60a17f7858975b6aa2c226be10626c50e47a5705fd079da9cc55c6c467015345c230ca13fed8d93555c7024f8663efe6c"}}}}'
+            jsn = '{"type":"Neo.Core.ContractTransaction","hex":"800000014405fd5ae29ceeb20912776048c544109c8c67c4128c019863eca58cf677ad360000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000c4c1b0cfa87fcbac45985730166411035ddfed239b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000d1c4904014bfe7d34e9e97370f2cd3a633377cd6","items":{"0xd67c3733a6d32c0f37979e4ed3e7bf144090c4d1":{"script":"522103989f7417da540a8ce00195738249291cba058102a12d2df1b00e2a826d8bd0612103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e9603452ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"01bd36475e1b0d7e1fad096fb1e1a0a45e0fd4ca3f723547861b0ed34da6d2871b846abfd47ca117f007700669412d85727ba23004b07867c7ef68a498ce3a41"}}}}'
 
             res = parse_and_sign(wallet2, jsn)
 
@@ -591,16 +605,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
             with patch('neo.Prompt.Commands.Send.traceback'):  # mocking traceback module to avoid stacktrace printing during test run
                 # start the tx from wallet2
                 wallet2 = self.GetWallet2(recreate=True)
-                args = ['neo', self.wallet_1_addr, '1', '--from-addr=AY7cn9RRanTWtDTZ5AgcxoYMGBMcuqFZw5']
+                args = ['neo', self.wallet_3_addr, '1', '--from-addr=Aau2M4UdXxwxLLizDw11eDZRDs5jpXduh8']
 
                 framework = construct_send_basic(wallet2, args)
                 process_transaction(wallet2, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
 
                 # mocking wallet to trigger the exception
-                wallet1 = MagicMock()
-                wallet1.Sign.side_effect = Exception
-                jsn = '{"type":"Neo.Core.ContractTransaction","hex":"8000000172da341d6ad36544d49d3387c5ae4485bc238fe1ee8fb6d0a179be7dfc7105160000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec09b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000b33deba441ce0ae39338575f6c6f7cb958e14007","items":{"0x0740e158b97c6f6c5f573893e30ace41a4eb3db3":{"script":"522103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e960342103cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c652ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"0a377e3a9c302f270f3eaf083119fbc60a17f7858975b6aa2c226be10626c50e47a5705fd079da9cc55c6c467015345c230ca13fed8d93555c7024f8663efe6c"}}}}'
+                wallet3 = MagicMock()
+                wallet3.Sign.side_effect = Exception
+                jsn = '{"type":"Neo.Core.ContractTransaction","hex":"800000014405fd5ae29ceeb20912776048c544109c8c67c4128c019863eca58cf677ad360000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f50500000000c4c1b0cfa87fcbac45985730166411035ddfed239b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000d1c4904014bfe7d34e9e97370f2cd3a633377cd6","items":{"0xd67c3733a6d32c0f37979e4ed3e7bf144090c4d1":{"script":"522103989f7417da540a8ce00195738249291cba058102a12d2df1b00e2a826d8bd0612103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e9603452ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"01bd36475e1b0d7e1fad096fb1e1a0a45e0fd4ca3f723547861b0ed34da6d2871b846abfd47ca117f007700669412d85727ba23004b07867c7ef68a498ce3a41"}}}}'
 
-                res = parse_and_sign(wallet1, jsn)
+                res = parse_and_sign(wallet3, jsn)
 
                 self.assertFalse(res)
