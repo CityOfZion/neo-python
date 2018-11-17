@@ -153,10 +153,10 @@ Our test fixtures are reset and extracted 20+ times in our build system so any s
 	tar -zcvf notif_fixtures_vx+1.tar.gz unittest_notif
 	tar -zcvf fixtures_vx+1.tar.gz unittest
 
-11) Update the fixture name in the static class variables in the following files
+12) Update the fixture name in the static class variables in the following files
 
 .. code-block:: sh
 	
 	neo.Utils.BlockchainFixtureTestCase.py
 
-12) Create a new PR with the link to the new image and the newly created fixtures.
+13) Create a new PR with the link to the new image and the newly created fixtures.
