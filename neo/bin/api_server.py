@@ -248,7 +248,7 @@ def main():
     if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
         try:
-            rpc_class = load_class_from_path(neo.Settings.RPC_SERVER)
+            rpc_class = load_class_from_path(settings.RPC_SERVER)
         except ValueError as err:
             logger.error(err)
             sys.exit()
@@ -260,7 +260,7 @@ def main():
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
         try:
-            rest_api = load_class_from_path(neo.Settings.REST_SERVER)
+            rest_api = load_class_from_path(settings.REST_SERVER)
         except ValueError as err:
             logger.error(err)
             sys.exit()

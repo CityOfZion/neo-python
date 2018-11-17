@@ -41,6 +41,8 @@
     "AcceptIncomingPeers": false,
     "CompilerNep8": true,
     "BootstrapName": "fauxnet",
-    "BootstrapFiles": "this_does_not_exist_for_this_network"
+    "BootstrapFiles": "this_does_not_exist_for_this_network",
+    "RestServer": "neo.api.REST.RestApi.RestApi",
+    "RPCServer": "neo.api.JSONRPC.JsonRpcApi.JsonRpcApi"
   }
 }
