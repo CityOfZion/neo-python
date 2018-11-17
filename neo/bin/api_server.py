@@ -2,7 +2,7 @@
 """
 API server to run the JSON-RPC and REST API.
 
-Uses servers specified in neo.Settings.RPC_SERVER and neo.Settings.REST_SERVER
+Uses servers specified in protocol.xxx.json files
 
 Print the help and all possible arguments:
 
