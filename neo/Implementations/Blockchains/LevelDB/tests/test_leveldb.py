@@ -11,4 +11,4 @@ class LevelDBTest(BlockchainFixtureTestCase):
 
     # test need to be updated whenever we change the fixtures
     def test_a_initial_setup(self):
-        self.assertEqual(self._blockchain.Height, 12349)
+        self.assertEqual(self._blockchain.Height, 12362)
