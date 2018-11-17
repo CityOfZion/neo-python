@@ -145,13 +145,15 @@ Our test fixtures are reset and extracted 20+ times in our build system so any s
 11) Create the fixtures by incrementing the suffix number (x+1):
 
 **WARNING:** Ensure your fixtures include the following file structure:
+
 - For fixtures_vx+1.tar.gz: ``fixtures/test_chain``
+
 - For notif_fixtures_vx+1.tar.gz: ``fixtures/test_notifications``
 
 .. code-block:: sh
 
-	tar -zcvf notif_fixtures_vx+1.tar.gz unittest_notif
-	tar -zcvf fixtures_vx+1.tar.gz unittest
+	tar -zcvf notif_fixtures_vx+1.tar.gz fixtures
+	tar -zcvf fixtures_vx+1.tar.gz fixtures
 
 12) Update the fixture name in the static class variables in the following files
 
