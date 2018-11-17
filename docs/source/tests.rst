@@ -162,3 +162,20 @@ Our test fixtures are reset and extracted 20+ times in our build system so any s
 	neo.Utils.BlockchainFixtureTestCase.py
 
 13) Create a new PR with the link to the new image and the newly created fixtures.
+
+14) If you edited any of the fixture wallets, make sure you fully sync your wallet before uploading it to your PR's branch:
+
+- While the neo-privnet-unittest container is stopped, run ``np-prompt -u`` and open all affected fixture wallets
+
+- Check to ensure each wallet is 100% synced before closing
+
+- Update any affected tests
+
+**NOTE:** During ``make test`` or ``python -m unittest discover neo`` you should not see this warning, which indicates one or more fixture wallets is not fully synced:
+
+.. code-block:: sh
+	
+	[W 181116 16:13:07 Wallet:1063] Wait for your wallet to be synced before doing transactions.
+	To check enter 'wallet' and look at 'percent_synced', it should be 100.
+	Also the blockchain should be up to the latest blocks (see Progress).
+	Issuing 'wallet rebuild' restarts the syncing process.
