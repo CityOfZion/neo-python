@@ -136,7 +136,17 @@ In that way we can easily find out all the contracts deploy on the image by runn
 The reason for this is that we need to keep the image as small as possible. It can inadvertently happen that your image has been accumulating new blocks for days or weeks e.g. while working on implementing the new tests in phases, which unnecessarily increases the image size. 
 Our test fixtures are reset and extracted 20+ times in our build system so any size increase will add a delay * 20 or more.
 
-10) Create the fixtures by incrementing the suffix number (x+1):
+10) Stop your current docker container before creating the new fixtures:
+
+.. code-block:: sh
+
+	docker stop neo-privnet-unittest
+
+11) Create the fixtures by incrementing the suffix number (x+1):
+
+**WARNING:** Ensure your fixtures include the following file structure:
+- For fixtures_vx+1.tar.gz: ``fixtures/test_chain``
+- For notif_fixtures_vx+1.tar.gz: ``fixtures/test_notifications``
 
 .. code-block:: sh
 
@@ -148,6 +158,5 @@ Our test fixtures are reset and extracted 20+ times in our build system so any s
 .. code-block:: sh
 	
 	neo.Utils.BlockchainFixtureTestCase.py
- 	neo.api.REST.test_rest_api.py
 
 12) Create a new PR with the link to the new image and the newly created fixtures.
