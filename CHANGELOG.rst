@@ -16,6 +16,8 @@ All notable changes to this project are documented in this file.
 - Add fix to ensure tx is saved to wallet when sent using RPC
 - Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`
 - Introduce Django inspired component loading for REST and RPC server
+- Allow a raw tx to be build without an active blockchain db in the environment
+
 
 [0.8.2] 2018-10-31
 -------------------
