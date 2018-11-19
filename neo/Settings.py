@@ -107,6 +107,11 @@ class SettingsHolder:
 
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
+    RPC_SERVER = None
+    REST_SERVER = None
+    DEFAULT_RPC_SERVER = 'neo.api.JSONRPC.JsonRpcApi.JsonRpcApi'
+    DEFAULT_REST_SERVER = 'neo.api.REST.RestApi.RestApi'
+
     # Logging settings
     log_level = None
     log_smart_contract_events = False
@@ -211,6 +216,8 @@ class SettingsHolder:
         self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
         self.SERVICE_ENABLED = config.get('ServiceEnabled', False)
         self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
+        self.REST_SERVER = config.get('RestServer', self.DEFAULT_REST_SERVER)
+        self.RPC_SERVER = config.get('RPCServer', self.DEFAULT_RPC_SERVER)
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
