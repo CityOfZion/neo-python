@@ -15,7 +15,6 @@ All notable changes to this project are documented in this file.
 - Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`
 - Add fix to ensure tx is saved to wallet when sent using RPC
 - Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`
-- Improve user feedback on errors while working with multi-signature contracts and add increase test coverage
 - Allow a raw tx to be build without an active blockchain db in the environment
 
 
