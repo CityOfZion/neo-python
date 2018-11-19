@@ -18,6 +18,7 @@ All notable changes to this project are documented in this file.
 - Introduce Django inspired component loading for REST and RPC server
 - Allow a raw tx to be build without an active blockchain db in the environment
 - Fix unnecessary default bootstrap warning for mainnet showing.
+- Improve user feedback on errors while working with multi-signature contracts and add increase test coverage
 
 
 [0.8.2] 2018-10-31
