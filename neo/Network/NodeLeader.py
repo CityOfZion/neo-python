@@ -1,16 +1,20 @@
 import random
+import time
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
-from neo.Network.NeoNode import NeoNode
+from neo.Network.NeoNode import NeoNode, HEARTBEAT_BLOCKS
 from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet import reactor, task
+from twisted.internet.defer import CancelledError
 from neo.logging import log_manager
+from neo.Network.address import Address
 
 logger = log_manager.getLogger('network')
+log_manager.config_stdio([('network', 10)])
 
 
 class NeoClientFactory(ReconnectingClientFactory):
@@ -29,16 +33,25 @@ class NeoClientFactory(ReconnectingClientFactory):
         return NeoNode(self.incoming)
 
     def clientConnectionFailed(self, connector, reason):
-        address = "%s:%s" % (connector.host, connector.port)
+        address = Address("%s:%s" % (connector.host, connector.port), Address.Now())
         logger.debug("Failed connecting to %s " % address)
+        leader = NodeLeader.Instance()
         if "Connection refused" in str(reason) or "Operation timed out" in str(reason):
-            if address in NodeLeader.Instance().ADDRS:
-                NodeLeader.Instance().ADDRS.remove(address)
-                if address not in NodeLeader.Instance().DEAD_ADDRS:
-                    NodeLeader.Instance().DEAD_ADDRS.append(address)
+            try:
+                if address in leader.KNOWN_ADDRS:
+                    leader.KNOWN_ADDRS.remove(address)
+                if address in leader.connection_queue:
+                    leader.connection_queue.remove(address)
+                # if we failed to connect to new addresses, we should always add them to the DEAD_ADDRS list
+                if address not in leader.DEAD_ADDRS:
+                    logger.debug(f"Adding address {address:>21} to DEAD_ADDRS list")
+                    leader.DEAD_ADDRS.append(address)
+            except KeyError:
+                logger.error(
+                    f"clientConnectionFailed tried to remove something that wasn't there {address} {leader.ADDRS} {leader.connection_queue} {leader.DEAD_ADDRS}")
 
     def clientConnectionLost(self, connector, reason):
-        address = "%s:%s" % (connector.host, connector.port)
+        address = Address("%s:%s" % (connector.host, connector.port), Address.Now())
         logger.debug("Dropped connection from %s " % address)
         for peer in NodeLeader.Instance().Peers:
             if peer.Address == address:
@@ -52,7 +65,7 @@ class NodeLeader:
 
     UnconnectedPeers = []
 
-    ADDRS = []
+    KNOWN_ADDRS = []
     DEAD_ADDRS = []
 
     NodeId = None
@@ -71,7 +84,16 @@ class NodeLeader:
 
     ServiceEnabled = False
 
-    peer_loop_deferred = None
+    peer_check_loop = None
+    peer_check_loop_deferred = None
+
+    check_bcr_loop = None
+    check_bcr_loop_deferred = None
+
+    memcheck_loop = None
+    memcheck_loop_deferred = None
+
+    task_handles = {}
 
     @staticmethod
     def Instance():
@@ -92,6 +114,58 @@ class NodeLeader:
         """
         self.Setup()
         self.ServiceEnabled = settings.SERVICE_ENABLED
+        self.peer_zero_count = 0  # track the number of times PeerCheckLoop saw a Peer count of zero. Reset e.g. after 3 times
+        self.connection_queue = []
+
+    def start_peer_check_loop(self):
+        logger.debug(f"start_peer_check_loop")
+        if self.peer_check_loop and self.peer_check_loop.running:
+            logger.debug("start_peer_check_loop: still running -> stopping...")
+            self.stop_peer_check_loop()
+
+        self.peer_check_loop = task.LoopingCall(self.PeerCheckLoop)  # , self.MempoolCheckLoop)
+        self.peer_check_loop_deferred = self.peer_check_loop.start(10, now=False)
+        self.peer_check_loop_deferred.addErrback(self.OnPeerLoopError)
+
+    def start_memcheck_loop(self):
+        self.stop_memcheck_loop()
+        self.memcheck_loop = task.LoopingCall(self.MempoolCheck)
+        self.memcheck_loop_deferred = self.memcheck_loop.start(240, now=False)
+        self.memcheck_loop_deferred.addErrback(self.OnMemcheckError)
+
+    def stop_memcheck_loop(self, cancel=True):
+        if self.memcheck_loop and self.memcheck_loop.running:
+            self.memcheck_loop.stop()
+        if cancel and self.memcheck_loop_deferred:
+            self.memcheck_loop_deferred.cancel()
+
+    def stop_peer_check_loop(self, cancel=True):
+        logger.debug(f"stop_peer_check_loop, cancel: {cancel}")
+        if self.peer_check_loop and self.peer_check_loop.running:
+            logger.debug(f"stop_peer_check_loop, calling stop()")
+            self.peer_check_loop.stop()
+        if cancel and self.peer_check_loop_deferred:
+            logger.debug(f"stop_peer_check_loop, calling cancel()")
+            self.peer_check_loop_deferred.cancel()
+
+    def start_check_bcr_loop(self):
+        logger.debug(f"start_check_bcr_loop")
+        if self.check_bcr_loop and self.check_bcr_loop.running:
+            logger.debug("start_check_bcr_loop: still running -> stopping...")
+            self.stop_check_bcr_loop()
+
+        self.check_bcr_loop = task.LoopingCall(self.check_bcr_catchup)
+        self.check_bcr_loop_deferred = self.check_bcr_loop.start(5)
+        self.check_bcr_loop_deferred.addErrback(self.OnCheckBcrError)
+
+    def stop_check_bcr_loop(self, cancel=True):
+        logger.debug(f"stop_check_bcr_loop, cancel: {cancel}")
+        if self.check_bcr_loop and self.check_bcr_loop.running:
+            logger.debug(f"stop_check_bcr_loop, calling stop()")
+            self.check_bcr_loop.stop()
+        if cancel and self.check_bcr_loop_deferred:
+            logger.debug(f"stop_check_bcr_loop, calling cancel()")
+            self.check_bcr_loop_deferred.cancel()
 
     def Setup(self):
         """
@@ -100,47 +174,95 @@ class NodeLeader:
         Returns:
 
         """
-        self.Peers = []
+        self.Peers = []  # active nodes that we're connected to
         self.UnconnectedPeers = []
-        self.ADDRS = []
-        self.DEAD_ADDRS = []
+        self.KNOWN_ADDRS = []  # node addresses that we've learned about from other nodes
+        self.DEAD_ADDRS = []  # addresses that were performing poorly or we could not establish a connection to
         self.MissionsGlobal = []
         self.NodeId = random.randint(1294967200, 4294967200)
 
     def Restart(self):
-        if self.peer_loop_deferred:
-            self.peer_loop_deferred.cancel()
-            self.peer_loop_deferred = None
+        self.stop_peer_check_loop()
+        self.stop_check_bcr_loop()
+        self.stop_memcheck_loop()
+
+        self.peer_check_loop_deferred = None
+        self.check_bcr_loop_deferred = None
+        self.memcheck_loop_deferred = None
 
         if len(self.Peers) == 0:
-            self.ADDRS = []
+            # preserve any addresses we know because the peers in the seedlist might have gone bad and then we can't receive new addresses anymore
+            unique_addresses = list(set(self.KNOWN_ADDRS + self.DEAD_ADDRS))
+            self.KNOWN_ADDRS = unique_addresses
             self.DEAD_ADDRS = []
-            self.Start()
+            self.peer_zero_count = 0
+            self.connection_queue = []
 
-    def Start(self):
+            self.Start(skip_seeds=True)
+
+    def throttle_sync(self):
+        for peer in self.Peers:  # type: NeoNode
+            peer.stop_block_loop(cancel=False)
+            peer.stop_peerinfo_loop(cancel=False)
+            peer.stop_header_loop(cancel=False)
+
+        # start a loop to check if we've caught up on our requests
+        if not self.check_bcr_loop:
+            self.start_check_bcr_loop()
+
+    def check_bcr_catchup(self):
+        """we're exceeding data request speed vs receive + process"""
+        logger.debug(f"Checking if BlockRequests has caught up {len(BC.Default().BlockRequests)}")
+
+        # test, perhaps there's some race condition between slow startup and throttle sync, otherwise blocks will never go down
+        for peer in self.Peers:  # type: NeoNode
+            peer.stop_block_loop(cancel=False)
+            peer.stop_peerinfo_loop(cancel=False)
+            peer.stop_header_loop(cancel=False)
+
+        if len(BC.Default().BlockRequests) > 0:
+            for peer in self.Peers:
+                peer.health_check(HEARTBEAT_BLOCKS)
+        else:
+            # we're done catching up. Stop own loop and restart peers
+            self.stop_check_bcr_loop()
+            self.check_bcr_loop = None
+            logger.debug("BlockRequests have caught up...resuming sync")
+            for peer in self.Peers:
+                peer.ProtocolReady()  # this starts all loops again
+                # give a little bit of time between startup of peers
+                time.sleep(2)
+
+    def Start(self, skip_seeds=False):
         """Start connecting to the node list."""
+        logger.debug("Starting up nodeleader")
         start_delay = 0
-        for bootstrap in settings.SEED_LIST:
-            host, port = bootstrap.split(":")
-            setupConnDeferred = task.deferLater(reactor, start_delay, self.SetupConnection, host, port)
-            setupConnDeferred.addErrback(self.onSetupConnectionErr)
-            start_delay += 1
+        if not skip_seeds:
+            logger.debug("Attempting to connect to seed list...")
+            for bootstrap in settings.SEED_LIST:
+                host, port = bootstrap.split(":")
+                setupConnDeferred = task.deferLater(reactor, start_delay, self.SetupConnection, host, port)
+                setupConnDeferred.addErrback(self.OnSetupConnectionErr)
+                start_delay += 1
 
-        # check in on peers every 4 mins
-        peer_check_loop = task.LoopingCall(self.PeerCheckLoop, self.MempoolCheckLoop)
-        self.peer_loop_deferred = peer_check_loop.start(240, now=False)
-        self.peer_loop_deferred.addErrback(self.OnPeerLoopError)
+        logger.debug("Starting up nodeleader: starting peer and mempool check loops")
+        # check in on peers every 10 seconds
+        self.start_peer_check_loop()
+        self.start_memcheck_loop()
 
         if settings.ACCEPT_INCOMING_PEERS:
+            logger.debug(f"Starting up nodeleader: setting up listen server on port: '{settings.NODE_PORT}")
             reactor.listenTCP(settings.NODE_PORT, NeoClientFactory(incoming_client=True))
 
     def setBlockReqSizeAndMax(self, breqpart=0, breqmax=0):
         if breqpart > 0 and breqmax > 0 and breqmax > breqpart:
             self.BREQPART = breqpart
             self.BREQMAX = breqmax
-            logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
+            logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (
+                self.BREQPART, self.BREQMAX))
         else:
-            logger.info("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
+            logger.info(
+                "invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
 
     def setBlockReqSizeByName(self, name):
         if name.lower() == 'slow':
@@ -155,14 +277,15 @@ class NodeLeader:
         else:
             logger.info("configuration name %s not found. use 'slow', 'normal', or 'fast'" % name)
 
-        logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
+        logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (
+            self.BREQPART, self.BREQMAX))
 
-    def RemoteNodePeerReceived(self, host, port, index):
-        addr = '%s:%s' % (host, port)
-        if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX and addr not in self.DEAD_ADDRS:
-            self.ADDRS.append(addr)
-            setupConnDeferred = task.deferLater(reactor, index * 10, self.SetupConnection, host, port)
-            setupConnDeferred.addErrback(self.onSetupConnectionErr)
+    def RemoteNodePeerReceived(self, host, port, via_node_addr):
+        addr = Address("%s:%s" % (host, port))
+        if addr not in self.KNOWN_ADDRS and addr not in self.DEAD_ADDRS:
+            logger.debug(f"Adding new address {addr:>21} to known addresses list, received from {via_node_addr}")
+            # we always want to save new addresses in case we lose all active connections before we can request a new list
+            self.KNOWN_ADDRS.append(addr)
 
     def SetupConnection(self, host, port):
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
@@ -173,15 +296,18 @@ class NodeLeader:
 
     def Shutdown(self):
         """Disconnect all connected peers."""
-        if self.peer_loop_deferred:
-            self.peer_loop_deferred.cancel()
-            self.peer_loop_deferred = None
+
+        self.stop_peer_check_loop()
+        self.peer_check_loop_deferred = None
+
+        self.stop_check_bcr_loop()
+        self.check_bcr_loop_deferred = None
+
+        self.stop_memcheck_loop()
+        self.memcheck_loop_deferred = None
 
         for p in self.Peers:
             p.Disconnect()
-
-    def OnPeerLoopError(self, err):
-        logger.debug("Error on Peer check loop %s " % err)
 
     def AddConnectedPeer(self, peer):
         """
@@ -190,17 +316,20 @@ class NodeLeader:
         Args:
             peer (NeoNode): instance.
         """
+        if peer.Address in self.connection_queue:
+            self.connection_queue.remove(peer.Address)
 
-        if peer not in self.Peers:
-
-            if len(self.Peers) < settings.CONNECTED_PEER_MAX:
-                self.Peers.append(peer)
-                if peer.Address not in self.ADDRS:
-                    self.ADDRS.append(peer.Address)
-            else:
-                if peer.Address in self.ADDRS:
-                    self.ADDRS.remove(peer.Address)
-                peer.Disconnect()
+        if peer not in self.Peers and len(self.Peers) < settings.CONNECTED_PEER_MAX:
+            self.Peers.append(peer)
+            if peer.Address not in self.KNOWN_ADDRS:
+                self.KNOWN_ADDRS.append(peer.Address)
+        else:
+            # either peer is already in the list and it has reconnected before it timed out on our side
+            # or it's trying to connect multiple times
+            # or we hit the max connected peer count
+            if peer.Address in self.KNOWN_ADDRS:
+                self.KNOWN_ADDRS.remove(peer.Address)
+            peer.Disconnect()
 
     def RemoveConnectedPeer(self, peer):
         """
@@ -212,35 +341,70 @@ class NodeLeader:
         if peer in self.Peers:
             self.Peers.remove(peer)
 
-    def onSetupConnectionErr(self, err):
+    def OnSetupConnectionErr(self, err):
+        if type(err.value) == CancelledError:
+            return
         logger.debug("On setup connection error! %s" % err)
+
+    def OnCheckBcrError(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("On Check BlockRequest error! %s" % err)
+
+    def OnPeerLoopError(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("Error on Peer check loop %s " % err)
+
+    def OnMemcheckError(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("Error on Memcheck check %s " % err)
 
     def PeerCheckLoop(self):
         # often times things will get stuck on 1 peer so
         # every so often we will try to reconnect to peers
         # that were previously active but lost their connection
+        logger.debug(
+            f"Peer check loop...checking [A:{len(self.KNOWN_ADDRS)} D:{len(self.DEAD_ADDRS)} C:{len(self.Peers)} M:{settings.CONNECTED_PEER_MAX} Q:{len(self.connection_queue)}]")
+        if len(self.Peers) == 0:
+            if self.peer_zero_count > 2:
+                logger.debug("Peer count 0 exceeded max retries threshold, restarting...")
+                self.Restart()
+            else:
+                logger.debug(
+                    f"Peer count is 0, allow for retries or queued connections to be established {self.peer_zero_count}")
+                self.peer_zero_count += 1
 
         start_delay = 0
         connected = []
         for peer in self.Peers:
             connected.append(peer.Address)
-        for addr in self.ADDRS:
-            if addr not in connected and len(self.Peers) < settings.CONNECTED_PEER_MAX and addr not in self.DEAD_ADDRS:
+        # we sort addresses such that those that we recently disconnected from are last in the list
+        self.KNOWN_ADDRS.sort(key=lambda address: address.last_connection)
+        to_remove = []
+        for addr in self.KNOWN_ADDRS:
+            if addr in self.DEAD_ADDRS:
+                logger.debug(f"Address {addr} found in DEAD_ADDRS list...skipping")
+                to_remove.append(addr)
+                continue
+            if addr not in connected and len(self.Peers) + len(self.connection_queue) < settings.CONNECTED_PEER_MAX:
                 host, port = addr.split(":")
+                # TODO: think how this affects looping calls
                 setupConnDeferred = task.deferLater(reactor, start_delay, self.SetupConnection, host, port)
-                setupConnDeferred.addErrback(self.onSetupConnectionErr)
-
+                setupConnDeferred.addErrback(self.OnSetupConnectionErr)
+                self.connection_queue.append(addr)
                 start_delay += 1
+                logger.debug(
+                    f"Queuing {addr:>21} for new connection [in queue: {len(self.connection_queue)} connected: {len(self.Peers)} maxpeers:{settings.CONNECTED_PEER_MAX}]")
 
-    def ResetBlockRequestsAndCache(self):
-        """Reset the block request counter and its cache."""
-        logger.debug("Resetting Block requests")
-        self.MissionsGlobal = []
-        BC.Default().BlockSearchTries = 0
-        for p in self.Peers:
-            p.myblockrequests = set()
-        BC.Default().ResetBlockRequests()
-        BC.Default()._block_cache = {}
+        # we couldn't remove addresses found in the DEAD_ADDR list from ADDRS while looping over it
+        # so we do it now to clean up
+        for addr in to_remove:
+            try:
+                self.KNOWN_ADDRS.remove(addr)
+            except KeyError:
+                pass
 
     def InventoryReceived(self, inventory):
         """
@@ -389,7 +553,7 @@ class NodeLeader:
 
         return False
 
-    def MempoolCheckLoop(self):
+    def MempoolCheck(self):
         """
         Checks the Mempool and removes any tx found on the Blockchain
         Implemented to resolve https://github.com/CityOfZion/neo-python/issues/703

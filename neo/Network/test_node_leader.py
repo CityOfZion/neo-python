@@ -31,7 +31,7 @@ class NodeLeaderConnectionTest(unittest.TestCase):
         # clean up left over of other tests classes
         leader = NodeLeader.Instance()
         leader.Peers = []
-        leader.ADDRS = []
+        leader.KNOWN_ADDRS = []
 
     def _add_new_node(self, host, port):
         self.tr.getPeer.side_effect = [IPv4Address('TCP', host, port)]
@@ -101,7 +101,7 @@ class LeaderTestCase(WalletFixtureTestCase):
     def test_initialize(self):
         leader = NodeLeader.Instance()
         self.assertEqual(leader.Peers, [])
-        self.assertEqual(leader.ADDRS, [])
+        self.assertEqual(leader.KNOWN_ADDRS, [])
         self.assertEqual(leader.UnconnectedPeers, [])
 
     def test_peer_adding(self):
@@ -141,7 +141,7 @@ class LeaderTestCase(WalletFixtureTestCase):
                         # test adding peer
                         peer = NeoNode()
                         peer.endpoint = Endpoint('hellloo.com', 12344)
-                        leader.ADDRS.append('hellloo.com:12344')
+                        leader.KNOWN_ADDRS.append('hellloo.com:12344')
                         leader.AddConnectedPeer(peer)
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
@@ -153,7 +153,7 @@ class LeaderTestCase(WalletFixtureTestCase):
                         # the connect peers should be 1 less than the seed_list
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
                         # the known addresses should be equal the seed_list
-                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST))
+                        self.assertEqual(len(leader.KNOWN_ADDRS), len(settings.SEED_LIST))
 
                         # now test adding another
                         leader.RemoteNodePeerReceived('hello.com', 1234, 6)
@@ -293,6 +293,7 @@ class LeaderTestCase(WalletFixtureTestCase):
         NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
 
         # now remove the confirmed tx
-        NodeLeader.Instance().MempoolCheckLoop()
+        NodeLeader.Instance().MempoolCheck()
 
-        self.assertEqual(len(list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))), 1)
+        self.assertEqual(
+            len(list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))), 1)

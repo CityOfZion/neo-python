@@ -43,7 +43,7 @@ class NodeNetworkingTestCase(twisted_unittest.TestCase):
     def tearDown(self):
         leader = NodeLeader.Instance()
         leader.Peers = []
-        leader.ADDRS = []
+        leader.KNOWN_ADDRS = []
 
 
 class NodeTestCase(TestCase):

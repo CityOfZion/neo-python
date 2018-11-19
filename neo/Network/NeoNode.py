@@ -1,9 +1,11 @@
 import binascii
 import random
+import datetime
 from twisted.internet.protocol import Protocol
 from twisted.internet import error as twisted_error
 from twisted.internet import reactor, task, threads
-
+from twisted.internet.address import IPv4Address
+from twisted.internet.defer import CancelledError
 from neo.Core.Blockchain import Blockchain as BC
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Network.Message import Message
@@ -19,11 +21,17 @@ from .Payloads.AddrPayload import AddrPayload
 from .InventoryType import InventoryType
 from neo.Settings import settings
 from neo.logging import log_manager
+from neo.Network.address import Address
 
 logger = log_manager.getLogger('network')
-
+logger_verbose = log_manager.getLogger('network.verbose')
 MODE_MAINTAIN = 7
 MODE_CATCHUP = 2
+
+mode_to_name = {2: 'CATCHUP', 7: 'MAINTAIN'}
+
+HEARTBEAT_BLOCKS = 'B'
+HEARTBEAT_HEADERS = 'H'
 
 
 class NeoNode(Protocol):
@@ -31,15 +39,70 @@ class NeoNode(Protocol):
 
     leader = None
 
-    block_loop = None
-    block_loop_deferred = None
-
-    peer_loop = None
-    peer_loop_deferred = None
-
     sync_mode = MODE_CATCHUP
 
     identifier = None
+
+    def start_block_loop(self):
+        logger_verbose.debug(f"{self.prefix} start_block_loop")
+        if self.block_loop and self.block_loop.running:
+            logger_verbose.debug(f"start_block_loop: still running -> stopping...")
+            self.stop_block_loop()
+        self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
+        self.block_loop_deferred = self.block_loop.start(self.sync_mode, now=False)
+        self.block_loop_deferred.addErrback(self.OnLoopError)
+        # self.leader.task_handles[self.block_loop] = self.prefix + f"{'block_loop':>15}"
+
+    def stop_block_loop(self, cancel=True):
+        logger_verbose.debug(f"{self.prefix} stop_block_loop: cancel -> {cancel}")
+        if self.block_loop:
+            logger_verbose.debug(f"{self.prefix} self.block_loop true")
+            if self.block_loop.running:
+                logger_verbose.debug(f"{self.prefix} stop_block_loop, calling stop")
+                self.block_loop.stop()
+        if cancel and self.block_loop_deferred:
+            logger_verbose.debug(f"{self.prefix} stop_block_loop: trying to cancel")
+            self.block_loop_deferred.cancel()
+
+    def start_peerinfo_loop(self):
+        logger_verbose.debug(f"{self.prefix} start_peerinfo_loop")
+        if self.peer_loop and self.peer_loop.running:
+            logger_verbose.debug(f"start_peer_loop: still running -> stopping...")
+            self.stop_peerinfo_loop()
+        self.peer_loop = task.LoopingCall(self.RequestPeerInfo)
+        self.peer_loop_deferred = self.peer_loop.start(120, now=False)
+        self.peer_loop_deferred.addErrback(self.OnLoopError)
+        # self.leader.task_handles[self.peer_loop] = self.prefix + f"{'peerinfo_loop':>15}"
+
+    def stop_peerinfo_loop(self, cancel=True):
+        logger_verbose.debug(f"{self.prefix} stop_peerinfo_loop: cancel -> {cancel}")
+        if self.peer_loop and self.peer_loop.running:
+            logger_verbose.debug(f"{self.prefix} stop_peerinfo_loop, calling stop")
+            self.peer_loop.stop()
+        if cancel and self.peer_loop_deferred:
+            logger_verbose.debug(f"{self.prefix} stop_peerinfo_loop: trying to cancel")
+            self.peer_loop_deferred.cancel()
+
+    def start_header_loop(self):
+        logger_verbose.debug(f"{self.prefix} start_header_loop")
+        if self.header_loop and self.header_loop.running:
+            logger_verbose.debug(f"start_header_loop: still running -> stopping...")
+            self.stop_header_loop()
+        self.header_loop = task.LoopingCall(self.AskForMoreHeaders)
+        self.header_loop_deferred = self.header_loop.start(5, now=False)
+        self.header_loop_deferred.addErrback(self.OnLoopError)
+        # self.leader.task_handles[self.header_loop] = self.prefix + f"{'header_loop':>15}"
+
+    def stop_header_loop(self, cancel=True):
+        logger_verbose.debug(f"{self.prefix} stop_header_loop: cancel -> {cancel}")
+        if self.header_loop:
+            logger_verbose.debug(f"{self.prefix} self.header_loop true")
+            if self.header_loop.running:
+                logger_verbose.debug(f"{self.prefix} stop_header_loop, calling stop")
+                self.header_loop.stop()
+        if cancel and self.header_loop_deferred:
+            logger_verbose.debug(f"{self.prefix} stop_header_loop: trying to cancel")
+            self.header_loop_deferred.cancel()
 
     def __init__(self, incoming_client=False):
         """
@@ -55,6 +118,7 @@ class NeoNode(Protocol):
         self.nodeid = self.leader.NodeId
         self.remote_nodeid = random.randint(1294967200, 4294967200)
         self.endpoint = ''
+        self.address = Address("")
         self.buffer_in = bytearray()
         self.myblockrequests = set()
         self.bytes_in = 0
@@ -66,21 +130,40 @@ class NeoNode(Protocol):
         self.leader.NodeCount += 1
         self.incoming_client = incoming_client
         self.expect_verack_next = False
+        self.start_outstanding_data_request = {HEARTBEAT_BLOCKS: 0, HEARTBEAT_HEADERS: 0}
 
-        self.Log("New Node created %s " % self.identifier)
+        self.block_loop = None
+        self.block_loop_deferred = None
+
+        self.peer_loop = None
+        self.peer_loop_deferred = None
+
+        self.header_loop = None
+        self.header_loop_deferred = None
+
+        logger.debug(f"{self.prefix} new node created {self.identifier}, not yet connected")
 
     def Disconnect(self, reason=None):
         """Close the connection with the remote node client."""
         self.expect_verack_next = False
         if reason:
             logger.debug(reason)
-        self.transport.loseConnection()
+        self.stop_block_loop()
+        self.stop_header_loop()
+        self.stop_peerinfo_loop()
+        # force disconnection without waiting on the other side
+        self.transport.abortConnection()
 
     @property
     def Address(self):
-        if self.endpoint:
-            return "%s:%s" % (self.endpoint.host, self.endpoint.port)
-        return ""
+        return self.address
+
+    @property
+    def prefix(self):
+        if isinstance(self.endpoint, IPv4Address):
+            return f"[{self.identifier:03}][{mode_to_name[self.sync_mode]}][{self.address:>21}]"
+        else:
+            return f""
 
     def Name(self):
         """
@@ -89,7 +172,10 @@ class NeoNode(Protocol):
         Returns:
             str:
         """
-        return self.transport.getPeer()
+        name = ""
+        if self.Version:
+            name = self.Version.UserAgent
+        return name
 
     def GetNetworkAddressWithTime(self):
         """
@@ -113,15 +199,16 @@ class NeoNode(Protocol):
         biM = self.bytes_in / 1000000  # megabyes
         boM = self.bytes_out / 1000000
 
-        return "%s MB in / %s MB out" % (biM, boM)
+        return f"{biM:>10} MB in / {boM:>10} MB out"
 
     def connectionMade(self):
         """Callback handler from twisted when establishing a new connection."""
         self.endpoint = self.transport.getPeer()
+        self.address.address = "%s:%s" % (self.endpoint.host, self.endpoint.port)
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
         self.leader.AddConnectedPeer(self)
-        self.Log("Connection from %s" % self.endpoint)
+        logger.debug(f"{self.prefix} connection established")
         if self.incoming_client:
             # start protocol
             self.SendVersion()
@@ -129,25 +216,27 @@ class NeoNode(Protocol):
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
         try:
-            if self.block_loop_deferred:
-                self.block_loop_deferred.cancel()
-            if self.peer_loop_deferred:
-                self.peer_loop_deferred.cancel()
-
-            if self.block_loop:
-                if self.block_loop.running:
-                    self.block_loop.stop()
-            if self.peer_loop:
-                if self.peer_loop.running:
-                    self.peer_loop.stop()
+            self.stop_block_loop()
+            self.stop_peerinfo_loop()
+            self.stop_header_loop()
 
             self.ReleaseBlockRequests()
             self.leader.RemoveConnectedPeer(self)
 
+            now = datetime.datetime.utcnow().timestamp()
+            delta = now - self.start_outstanding_data_request[HEARTBEAT_BLOCKS]
+            # some NEO-cli versions have a 30s timeout to receive block/consensus or tx messages. By default neo-python doesn't respond to these requests
+            if delta > 20:
+                logger.debug(f"{self.prefix} Premature disconnect - adding {self.Address} to DEAD_ADDRS")
+                self.address.last_connection = Address.Now()
+                self.leader.DEAD_ADDRS.append(self.address)
+
             if reason and reason.check(twisted_error.ConnectionDone):
-                self.Log("client {} disconnected normally with reason:{}".format(self.remote_nodeid, reason))
+                logger.debug(f"{self.prefix} disconnected normally with reason:{reason.value}")
+            elif reason and reason.check(twisted_error.ConnectionLost):
+                logger.debug(f"{self.prefix} disconnected with reason: {reason.value}")
             else:
-                self.Log("%s disconnected %s" % (self.remote_nodeid, reason))
+                logger.debug(f"{self.prefix} disconnected with reason: {reason}")
         except Exception as e:
             logger.error("Error with connection lost: %s " % e)
 
@@ -160,7 +249,7 @@ class NeoNode(Protocol):
                 if req in bcr:
                     bcr.remove(req)
             except Exception as e:
-                self.Log("Could not remove request %s " % e)
+                logger.debug(f"{self.prefix} Could not remove request {e}")
 
         self.myblockrequests = set()
 
@@ -199,7 +288,8 @@ class NeoNode(Protocol):
                 return False
 
         except Exception as e:
-            self.Log('Error: Could not read initial bytes %s ' % e)
+            logger.debug(f"{self.prefix} Error: could not read message header from stream {e}")
+            # self.Log('Error: Could not read initial bytes %s ' % e)
             return False
 
         finally:
@@ -227,7 +317,8 @@ class NeoNode(Protocol):
             self.MessageReceived(message)
 
         except Exception as e:
-            self.Log('Error: Could not extract message: %s ' % e)
+            logger.debug(f"{self.prefix} Could not extract message {e}")
+            # self.Log('Error: Could not extract message: %s ' % e)
             return False
 
         finally:
@@ -271,28 +362,37 @@ class NeoNode(Protocol):
         elif m.Command == 'addr':
             self.HandlePeerInfoReceived(m.Payload)
         else:
-            self.Log("Command not implemented {} {} ".format(m.Command, self.endpoint))
+            logger.debug(f"{self.prefix} Command not implemented: {m.Command}")
 
     def OnLoopError(self, err):
-        self.Log("On neo Node loop error %s " % err)
+        # happens if we cancel the deferred before it is executed
+        # causes no harm
+        if type(err.value) == CancelledError:
+            logger_verbose.debug(f"{self.prefix} OnLoopError cancelled deferred")
+            return
+        logger.debug(f"{self.prefix} On neo Node loop error {err}")
 
     def onThreadDeferredErr(self, err):
-        logger.error("On Call from thread error %s " % err)
+        if type(err.value) == CancelledError:
+            logger_verbose.debug(f"{self.prefix} onThreadDeferredError cancelled deferred")
+            return
+        logger.debug(f"{self.prefix} On Call from thread error {err}")
 
     def ProtocolReady(self):
-        self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
-        self.block_loop_deferred = self.block_loop.start(self.sync_mode, now=False)
-        self.block_loop_deferred.addErrback(self.OnLoopError)
-
-        # ask every 2 minutes for new peers
-        self.peer_loop = task.LoopingCall(self.RequestPeerInfo)
-        self.peer_loop_deferred = self.peer_loop.start(120, now=False)
-        self.peer_loop_deferred.addErrback(self.OnLoopError)
+        # do not start the looping tasks if we're in the BlockRequests catchup task
+        # otherwise BCRLen will not drop because the new node will continue adding blocks
+        logger_verbose.debug(f"{self.prefix} ProtocolReady called")
+        if not self.leader.check_bcr_loop or (self.leader.check_bcr_loop and not self.leader.check_bcr_loop.running):
+            logger_verbose.debug(f"{self.prefix} Protocol ready -> starting loops")
+            self.start_block_loop()
+            self.start_peerinfo_loop()
+            self.start_header_loop()
 
         self.RequestPeerInfo()
-        self.AskForMoreHeaders()
 
     def AskForMoreHeaders(self):
+        logger.debug(f"{self.prefix} asking for more headers, starting from {BC.Default().HeaderHeight}")
+        self.health_check(HEARTBEAT_HEADERS)
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
         self.SendSerializedMessage(get_headers_message)
 
@@ -308,18 +408,16 @@ class NeoNode(Protocol):
             self.sync_mode = MODE_MAINTAIN
 
         if self.sync_mode != current_mode:
-            if self.block_loop and self.block_loop.running:
-                self.block_loop.stop()
-            self.block_loop_deferred.cancel()
-            self.block_loop = task.LoopingCall(self.AskForMoreBlocks)
-            self.block_loop_deferred = self.block_loop.start(self.sync_mode)
-            self.block_loop_deferred.addErrback(self.OnLoopError)
+            logger.debug(f"{self.prefix} changing sync_mode to {mode_to_name[self.sync_mode]}")
+            self.stop_block_loop()
+            self.start_block_loop()
 
         else:
             if len(BC.Default().BlockRequests) > self.leader.BREQMAX:
-                self.leader.ResetBlockRequestsAndCache()
-
-            self.DoAskForMoreBlocks()
+                logger.debug(f"{self.prefix} data request speed exceeding node response rate...pausing to catch up")
+                self.leader.throttle_sync()
+            else:
+                self.DoAskForMoreBlocks()
 
     def DoAskForMoreBlocks(self):
         hashes = []
@@ -331,7 +429,7 @@ class NeoNode(Protocol):
             do_go_ahead = True
 
         first = None
-        while hashstart < current_header_height and len(hashes) < self.leader.BREQPART:
+        while hashstart <= current_header_height and len(hashes) < self.leader.BREQPART:
             hash = BC.Default().GetHeaderHash(hashstart)
             if not do_go_ahead:
                 if hash is not None and hash not in BC.Default().BlockRequests \
@@ -351,15 +449,16 @@ class NeoNode(Protocol):
 
             hashstart += 1
 
-        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
-
         if len(hashes) > 0:
+            logger.debug(
+                f"{self.prefix} asking for more blocks {first} - {hashstart} ({len(hashes)}) stale count: {BC.Default().BlockSearchTries} BCRLen: {len(BC.Default().BlockRequests)}")
+            self.health_check(HEARTBEAT_BLOCKS)
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
-            sendDeferred = threads.deferToThread(self.SendSerializedMessage, message)
-            sendDeferred.addErrback(self.onThreadDeferredErr)
+            self.SendSerializedMessage(message)
 
     def RequestPeerInfo(self):
         """Request the peer address information from the remote client."""
+        logger.debug(f"{self.prefix} requesting peer info")
         self.SendSerializedMessage(Message('getaddr'))
 
     def HandlePeerInfoReceived(self, payload):
@@ -369,8 +468,8 @@ class NeoNode(Protocol):
         if not addrs:
             return
 
-        for index, nawt in enumerate(addrs.NetworkAddressesWithTime):
-            self.leader.RemoteNodePeerReceived(nawt.Address, nawt.Port, index)
+        for nawt in addrs.NetworkAddressesWithTime:
+            self.leader.RemoteNodePeerReceived(nawt.Address, nawt.Port, self.prefix)
 
     def SendPeerInfo(self):
         if not self.leader.ServiceEnabled:
@@ -381,7 +480,8 @@ class NeoNode(Protocol):
             addr = peer.GetNetworkAddressWithTime()
             if addr is not None:
                 peerlist.append(addr)
-        self.Log("Peer list %s " % list(map(lambda p: p.ToString(), peerlist)))
+        peer_str_list = list(map(lambda p: p.ToString(), peerlist))
+        logger.debug(f"{self.prefix} Sending Peer list {peer_str_list}")
 
         addrpayload = AddrPayload(addresses=peerlist)
         message = Message('addr', addrpayload)
@@ -449,7 +549,6 @@ class NeoNode(Protocol):
                     BC.Default().BlockRequests.add(hash)
                     self.myblockrequests.add(hash)
             if len(ok_hashes):
-                #                logger.info("OK HASHES, get data %s " % ok_hashes)
                 message = Message("getdata", InvPayload(InventoryType.Block, ok_hashes))
                 self.SendSerializedMessage(message)
 
@@ -458,6 +557,15 @@ class NeoNode(Protocol):
         elif inventory.Type == InventoryType.ConsensusInt:
             pass
 
+    def _send_serialized_message(self, message):
+        try:
+            ba = Helper.ToArray(message)
+            ba2 = binascii.unhexlify(ba)
+            self.bytes_out += len(ba2)
+            self.transport.write(ba2)
+        except Exception as e:
+            logger.debug(f"Could not send serialized message {e}")
+
     def SendSerializedMessage(self, message):
         """
         Send the `message` to the remote client.
@@ -465,13 +573,8 @@ class NeoNode(Protocol):
         Args:
             message (neo.Network.Message):
         """
-        try:
-            ba = Helper.ToArray(message)
-            ba2 = binascii.unhexlify(ba)
-            self.bytes_out += len(ba2)
-            self.transport.write(ba2)
-        except Exception as e:
-            self.Log("Could not send serialized message %s " % e)
+        # writing data to `transport` is not thread-safe, therefore we need to call it inside the reactor
+        reactor.callFromThread(self._send_serialized_message, message)
 
     def HandleBlockHeadersReceived(self, inventory):
         """
@@ -483,16 +586,12 @@ class NeoNode(Protocol):
         try:
             inventory = IOHelper.AsSerializableWithType(inventory, 'neo.Network.Payloads.HeadersPayload.HeadersPayload')
             if inventory is not None:
+                logger.debug(f"{self.prefix} received headers")
+                self.heart_beat(HEARTBEAT_HEADERS)
                 BC.Default().AddHeaders(inventory.Headers)
 
-            if BC.Default().HeaderHeight < self.Version.StartHeight:
-                self.AskForMoreHeaders()
-            else:
-                deferredCall = task.deferLater(reactor, 5, self.AskForMoreHeaders)
-                deferredCall.addErrback(self.onThreadDeferredErr)
-
         except Exception as e:
-            self.Log("Error handling Block headers %s " % e)
+            logger.debug(f"Error handling Block headers {e}")
 
     def HandleBlockReceived(self, inventory):
         """
@@ -506,12 +605,44 @@ class NeoNode(Protocol):
             return
 
         blockhash = block.Hash.ToBytes()
-        if blockhash in BC.Default().BlockRequests:
-            BC.Default().BlockRequests.remove(blockhash)
-        if blockhash in self.myblockrequests:
-            self.myblockrequests.remove(blockhash)
-
+        try:
+            if blockhash in BC.Default().BlockRequests:
+                BC.Default().BlockRequests.remove(blockhash)
+        except KeyError:
+            pass
+        try:
+            if blockhash in self.myblockrequests:
+                # logger.debug(f"{self.prefix} received block: {block.Index}")
+                self.heart_beat(HEARTBEAT_BLOCKS)
+                self.myblockrequests.remove(blockhash)
+        except KeyError:
+            pass
         self.leader.InventoryReceived(block)
+
+    def health_check(self, what):
+        now = datetime.datetime.utcnow().timestamp()
+        delta = now - self.start_outstanding_data_request.get(what)
+
+        if delta == now:
+            # startup scenario, just go
+            logger.debug(f"{self.prefix}[HEALTH][{what}] startup heart_beat")
+            self.heart_beat(what)
+        else:
+            if self.sync_mode == MODE_CATCHUP:
+                response_threshold = 45  # seconds
+            else:
+                response_threshold = 90  #
+            if delta > response_threshold:
+                logger.debug(
+                    f"{self.prefix}[HEALTH][{what}] FAILED - No response for {delta} seconds. Removing node...")
+                if self.Address not in self.leader.DEAD_ADDRS:
+                    self.leader.DEAD_ADDRS.append(self.Address)
+                self.Disconnect()
+            else:
+                logger.debug(f"{self.prefix}[HEALTH][{what}] OK - response time {delta}")
+
+    def heart_beat(self, what):
+        self.start_outstanding_data_request[what] = datetime.datetime.utcnow().timestamp()
 
     def HandleGetHeadersMessageReceived(self, payload):
 
@@ -528,7 +659,7 @@ class NeoNode(Protocol):
         hash = inventory.HashStart[0]
 
         if hash is None or hash == inventory.HashStop:
-            self.Log("getheaders: Hash {} not found or hashstop reached".format(inventory.HashStart))
+            logger.debug("getheaders: Hash {} not found or hashstop reached".format(inventory.HashStart))
             return
 
         headers = []
@@ -634,5 +765,8 @@ class NeoNode(Protocol):
 
         return True
 
-    def Log(self, msg):
-        logger.debug("[%s][mode %s] %s - %s" % (self.identifier, self.sync_mode, self.endpoint, msg))
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.Address == other.Address and self.identifier == other.identifier
+        else:
+            return False
