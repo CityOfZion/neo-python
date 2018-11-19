@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import argparse
 import datetime
 import json
@@ -25,6 +24,7 @@ from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
+from neo.Network.NeoNode import NeoNode
 from neo.Prompt.Commands.config import start_output_config
 from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
@@ -87,6 +87,9 @@ class PromptInterface:
     go_on = True
 
     wallet_loop_deferred = None
+
+    dbloop = None
+    dbloop_deferred = None
 
     Wallet = None
 
@@ -306,7 +309,7 @@ class PromptInterface:
             self.stop_wallet_loop()
         self.walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
         self.wallet_loop_deferred = self.walletdb_loop.start(1)
-        self.wallet_loop_deferred.addErrback(self.on_looperror)
+        self.wallet_loop_deferred.addErrback(self.on_wallet_looperror)
 
     def stop_wallet_loop(self):
         self.wallet_loop_deferred.cancel()
@@ -592,14 +595,58 @@ class PromptInterface:
         tokens = [("class:number", out)]
         print_formatted_text(FormattedText(tokens), style=self.token_style)
 
+    def disconnect_node(self, index):
+        try:
+            leader = NodeLeader.Instance()
+            peer = leader.Peers[index]
+            addr_idx = leader.KNOWN_ADDRS.index(peer.address)
+            peer.address.last_connection = datetime.datetime.utcnow().timestamp()
+            leader.KNOWN_ADDRS[addr_idx] = peer.Address
+            peer.Disconnect()
+        except IndexError:
+            print("Invalid peer number")
+
     def show_nodes(self):
         if len(NodeLeader.Instance().Peers) > 0:
             out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
-            for peer in NodeLeader.Instance().Peers:
-                out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
+            for i, peer in enumerate(NodeLeader.Instance().Peers):
+                out += f"Peer {i} {peer.Name():>12} - {peer.Address:>21} - IO {peer.IOStats()}\n"
             print_formatted_text(FormattedText([("class:number", out)]), style=self.token_style)
         else:
             print("Not connected yet\n")
+        leader = NodeLeader.Instance()
+        print(f"KNOWN_ADDRS: {len(leader.KNOWN_ADDRS)}")
+        print(f"DEAD_ADDRS: {len(leader.DEAD_ADDRS)}")
+        print(f"QUEUED_ADDRS: {len(leader.connection_queue)}")
+
+    def show_handles(self):
+        leader = NodeLeader.Instance()  #
+        for task, info in leader.task_handles.items():
+            run = False
+            if task.running:
+                run = True
+            print(f"{run:>5} {info} {task}")
+
+        print("-" * 20)
+        print("-" * 20)
+        for peer in leader.Peers:  # type: NeoNode
+            run = False
+            if peer.block_loop and peer.block_loop.running:
+                run = True
+            print(f"{run:>5} {peer.prefix} {'block_loop':>15} {peer.block_loop}")
+
+            run = False
+            if peer.header_loop and peer.header_loop.running:
+                run = True
+            print(f"{run:>5} {peer.prefix} {'header_loop':>15} {peer.header_loop}")
+
+            run = False
+            if peer.peer_loop and peer.peer_loop.running:
+                run = True
+            print(f"{run:>5} {peer.prefix} {'peerinfo_loop':>15} {peer.peer_loop}")
+        print("-" * 20)
+        print("-" * 20)
+        print(f"{self.dbloop.running} dbloop {self.dbloop}")
 
     def show_block(self, args):
         item = get_arg(args)
@@ -926,13 +973,30 @@ class PromptInterface:
             print(
                 "Cannot configure %s try 'config sc-events on|off', 'config output_levels', 'config sc-debug-notify on|off', 'config vm-log on|off', config compiler-nep8 on|off, or 'config maxpeers {num_peers}'" % what)
 
-    def on_looperror(self, err):
+    def on_wallet_looperror(self, err):
         logger.debug("On DB loop error! %s " % err)
+        # the looping call stops if an error occurs. We log it and restart
+        self.start_wallet_loop
+
+    def stop_db_loop(self, cancel=True):
+        if self.dbloop and self.dbloop.running:
+            self.dbloop.stop()
+            self.dbloop = None
+        if cancel and self.dbloop_deferred:
+            self.dbloop_deferred.cancel()
+            self.dbloop_deferred = None
+
+    def start_db_loop(self):
+        self.stop_db_loop()
+        self.dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        self.dbloop_deferred = self.dbloop.start(.1)
+        self.dbloop_deferred.addErrback(self.on_persistblocks_error)
+
+    def on_persistblocks_error(self, err):
+        logger.debug("On Persist blocks loop error! %s " % err)
 
     def run(self):
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop_deferred = dbloop.start(.1)
-        dbloop_deferred.addErrback(self.on_looperror)
+        self.start_db_loop()
 
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
@@ -1015,6 +1079,10 @@ class PromptInterface:
                         self.show_mem()
                     elif command == 'nodes' or command == 'node':
                         self.show_nodes()
+                    elif command == "disconnect_node":
+                        self.disconnect_node(int(arguments[0]))
+                    elif command == 'handles':
+                        self.show_handles()
                     elif command == 'state':
                         self.show_state()
                     elif command == 'debugstorage':
