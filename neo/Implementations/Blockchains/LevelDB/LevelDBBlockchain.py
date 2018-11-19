@@ -827,10 +827,15 @@ class LevelDBBlockchain(Blockchain):
 
                 try:
                     self.Persist(block)
-                    self.OnPersistCompleted(block)
                     del self._block_cache[hash]
                 except Exception as e:
-                    logger.info("Could not persist block %s " % e)
+                    logger.info(f"Could not persist block {block.Index} reason: {e}")
+                    raise e
+
+                try:
+                    self.OnPersistCompleted(block)
+                except Exception as e:
+                    logger.debug(f"Failed to broadcast OnPersistCompleted event, reason: {e}")
                     raise e
 
     def Resume(self):
