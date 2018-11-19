@@ -13,10 +13,16 @@ All notable changes to this project are documented in this file.
 - Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
 - Empty VerificationScripts for deployed contracts now work as intended
 - Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`
+- Add fix to ensure tx is saved to wallet when sent using RPC
+- Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`
+- Introduce Django inspired component loading for REST and RPC server
+- Allow a raw tx to be build without an active blockchain db in the environment
+- Fix unnecessary default bootstrap warning for mainnet showing.
 
 
 [0.8.2] 2018-10-31
 -------------------
+- Improve Tokens.py and ``token_send``, increase test coverage
 - Fix max recursion depth exceeding when network data inflow exceeds processing speed
 - Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
 - Update Readme and Prompt.py ``help``
