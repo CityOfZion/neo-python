@@ -165,9 +165,10 @@ class SettingsHolder:
         """ Setup settings from a JSON config file """
 
         def get_config_and_warn(key, default, abort=False):
-            value = config.get(key, default)
-            if value == default:
+            value = config.get(key, None)
+            if not value:
                 print(f"Cannot find {key} in settings, using default value: {default}")
+                value = default
                 if abort:
                     sys.exit(-1)
             return value
