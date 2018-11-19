@@ -127,18 +127,6 @@ class NodeLeader:
         self.peer_check_loop_deferred = self.peer_check_loop.start(10, now=False)
         self.peer_check_loop_deferred.addErrback(self.OnPeerLoopError)
 
-    def start_memcheck_loop(self):
-        self.stop_memcheck_loop()
-        self.memcheck_loop = task.LoopingCall(self.MempoolCheck)
-        self.memcheck_loop_deferred = self.memcheck_loop.start(240, now=False)
-        self.memcheck_loop_deferred.addErrback(self.OnMemcheckError)
-
-    def stop_memcheck_loop(self, cancel=True):
-        if self.memcheck_loop and self.memcheck_loop.running:
-            self.memcheck_loop.stop()
-        if cancel and self.memcheck_loop_deferred:
-            self.memcheck_loop_deferred.cancel()
-
     def stop_peer_check_loop(self, cancel=True):
         logger.debug(f"stop_peer_check_loop, cancel: {cancel}")
         if self.peer_check_loop and self.peer_check_loop.running:
@@ -166,6 +154,18 @@ class NodeLeader:
         if cancel and self.check_bcr_loop_deferred:
             logger.debug(f"stop_check_bcr_loop, calling cancel()")
             self.check_bcr_loop_deferred.cancel()
+
+    def start_memcheck_loop(self):
+        self.stop_memcheck_loop()
+        self.memcheck_loop = task.LoopingCall(self.MempoolCheck)
+        self.memcheck_loop_deferred = self.memcheck_loop.start(240, now=False)
+        self.memcheck_loop_deferred.addErrback(self.OnMemcheckError)
+
+    def stop_memcheck_loop(self, cancel=True):
+        if self.memcheck_loop and self.memcheck_loop.running:
+            self.memcheck_loop.stop()
+        if cancel and self.memcheck_loop_deferred:
+            self.memcheck_loop_deferred.cancel()
 
     def Setup(self):
         """

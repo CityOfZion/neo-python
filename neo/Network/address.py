@@ -8,7 +8,7 @@ class Address:
         else:
             self.last_connection = lastConnectionTo
 
-        self.address = address
+        self.address = address  # type: str
 
     @classmethod
     def Now(cls):
@@ -34,3 +34,6 @@ class Address:
 
     def split(self, on):
         return self.address.split(on)
+
+    def rsplit(self, on, maxsplit):
+        return self.address.rsplit(on, maxsplit)
