@@ -2,7 +2,7 @@
 """
 API server to run the JSON-RPC and REST API.
 
-Uses neo.api.JSONRPC.JsonRpcApi or neo.api.JSONRPC.ExtendedJsonRpcApi and neo.api.REST.RestApi
+Uses servers specified in protocol.xxx.json files
 
 Print the help and all possible arguments:
 
@@ -33,6 +33,7 @@ to reuse our logzero logging setup. See also:
 * https://twistedmatrix.com/documents/17.9.0/api/twisted.logger.STDLibLogObserver.html
 """
 import os
+import sys
 import argparse
 import threading
 from time import sleep
@@ -52,16 +53,14 @@ from twisted.web.server import Site
 # neo methods and modules
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
-from neo.api.JSONRPC.ExtendedJsonRpcApi import ExtendedJsonRpcApi
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.api.REST.RestApi import RestApi
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings
-
+from neo.Utils.plugin import load_class_from_path
+import neo.Settings
 
 # Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
@@ -246,28 +245,28 @@ def main():
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
 
-    if args.port_rpc and args.extended_rpc:
-        logger.info("Starting extended json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
-        api_server_rpc = ExtendedJsonRpcApi(args.port_rpc, wallet=wallet)
-        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
-        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
-#        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
-#        api_server_rpc.app.run(args.host, args.port_rpc)
-
-    elif args.port_rpc:
+    if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
-        api_server_rpc = JsonRpcApi(args.port_rpc, wallet=wallet)
+        try:
+            rpc_class = load_class_from_path(settings.RPC_SERVER)
+        except ValueError as err:
+            logger.error(err)
+            sys.exit()
+        api_server_rpc = rpc_class(args.port_rpc, wallet=wallet)
+
         endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
         endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
-#        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
-#        api_server_rpc.app.run(args.host, args.port_rpc)
 
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
-        api_server_rest = RestApi()
+        try:
+            rest_api = load_class_from_path(settings.REST_SERVER)
+        except ValueError as err:
+            logger.error(err)
+            sys.exit()
+        api_server_rest = rest_api()
         endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
-#        api_server_rest.app.run(args.host, args.port_rest)
 
     reactor.run()
 

@@ -3,9 +3,27 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.8.3-dev] in progress
+-----------------------
+- Disallow ``Void`` type input parameters for smart contracts and increase test coverage
+- Fix confirmed tx not being purged from mempool `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
+- Fix bootstrap thread joining failure on Ubuntu systems
+- Make bootstrap lookup dynamic such that users don't have to update their configs from here on forward
+- Fix various issues related to signing multi-signature transactions
+- Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
+- Empty VerificationScripts for deployed contracts now work as intended
+- Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`_
+- Add fix to ensure tx is saved to wallet when sent using RPC
+- Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`_
+- Introduce Django inspired component loading for REST and RPC server
+- Allow a raw tx to be build without an active blockchain db in the environment
+- Fix unnecessary default bootstrap warning for mainnet showing.
+- Add GET and OPTIONS request functionality for JSON-RPC servers
 
-[0.8.2] In Progress
+
+[0.8.2] 2018-10-31
 -------------------
+- Improve Tokens.py and ``token_send``, increase test coverage
 - Fix max recursion depth exceeding when network data inflow exceeds processing speed
 - Add log output control via the new ``config output_level`` command. The old ``config debug`` command is removed.
 - Update Readme and Prompt.py ``help``
@@ -16,7 +34,7 @@ All notable changes to this project are documented in this file.
 - Add raw transaction building examples in ``\examples\`` folder
 - Add ExtendedJsonRpcApi, Add ``getnodestate`` RPC extended method, Add ``gettxhistory`` RPC extended method
 - Fix return types of ``claimGas`` function.
-- Update compiler version ``v0.5.4``
+- Update compiler version ``v0.5.6``
 - Add the option -u (unittest-net) to prompt.py
 - Add fixtures guidelines and add the smart contract source codes (UnitTest-SM.zip) to the fixtures package
 - Adds ``sendmany`` feature to prompt.py, integrates with ``send`` feature, and adds provisions for sending with a negative fee and bad from_address
@@ -24,7 +42,8 @@ All notable changes to this project are documented in this file.
 - Fix cleaning up tasks for disconnected peers `#687 <https://github.com/CityOfZion/neo-python/issues/687>`_
 - Fix duplicate task starting for requesting blocks
 - Add ``getblockheader`` RPC method
-
+- Remove ``Neo.Witness.GetInvocationScript``
+- Allow wallets to sync past corrupt blocks
 
 [0.8.1] 2018-10-06
 ------------------

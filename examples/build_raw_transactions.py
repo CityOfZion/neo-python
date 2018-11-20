@@ -64,7 +64,9 @@ def example1():
     # The constructor already sets the correct `Type` and `Version` fields, so we do not have to worry about that
     contract_tx = ContractTransaction()
 
-    # the ContractTransaction type has no special data, so we do not have to do anything there
+    # Since we are building a raw transaction, we will add the raw_tx flag
+
+    contract_tx.raw_tx = True
 
     # Next we can add Attributes if we want. Again the various types are described in point 4. of the main link above
     # We will add a simple "description"
@@ -114,6 +116,8 @@ def example1():
 
     raw_tx = contract_tx.ToArray()
 
+    return raw_tx
+
     # you can confirm that this transaction is correct by running it against our docker testnet image using the following instructions
     # docker pull cityofzion/neo-python-privnet-unittest:v0.0.1
     # docker run --rm -d --name neo-python-privnet-unittest -p 20333-20336:20333-20336/tcp -p 30333-30336:30333-30336/tcp cityofzion/neo-python-privnet-unittest:v0.0.1
@@ -159,6 +163,10 @@ def example2():
     # the inputs, outputs and Type do not have to be set anymore.
     invocation_tx = InvocationTransaction()
 
+    # Since we are building a raw transaction, we will add the raw_tx flag
+
+    invocation_tx.raw_tx = True
+
     # often times smart contract developers use the function ``CheckWitness`` to determine if the transaction is signed by somebody eligible of calling a certain method
     # in order to pass that check you want to add the corresponding script_hash as a transaction attribute (this is generally the script_hash of the public key you use for signing)
     # Note that for public functions like the NEP-5 'getBalance' and alike this would not be needed, but it doesn't hurt either
@@ -192,6 +200,8 @@ def example2():
 
     invocation_tx.scripts = context.GetScripts()
     raw_tx = invocation_tx.ToArray()
+
+    return raw_tx
 
     # you can confirm that this transaction is correct by running it against our docker testnet image using the following instructions
     # docker pull cityofzion/neo-python-privnet-unittest:v0.0.1

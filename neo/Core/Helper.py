@@ -1,9 +1,15 @@
 from base58 import b58decode
 import binascii
 from neo.Blockchain import GetBlockchain, GetStateReader
+from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
+from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Core.State.ContractState import ContractState
+from neo.Core.State.AssetState import AssetState
 from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
 from neo.IO.MemoryStream import StreamManager
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
@@ -186,15 +192,16 @@ class Helper:
             if len(verification) == 0:
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
-                verification = sb.ToArray()
-
+                verification = sb.ms.getvalue()
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:
                     return False
 
             state_reader = GetStateReader()
-            engine = ApplicationEngine(TriggerType.Verification, verifiable, blockchain, state_reader, Fixed8.Zero())
+            script_table = CachedScriptTable(DBCollection(blockchain._db, DBPrefix.ST_Contract, ContractState))
+
+            engine = ApplicationEngine(TriggerType.Verification, verifiable, script_table, state_reader, Fixed8.Zero())
             engine.LoadScript(verification)
             invocation = verifiable.Scripts[i].InvocationScript
             engine.LoadScript(invocation)
@@ -221,3 +228,22 @@ class Helper:
     def EmitServiceEvents(state_reader):
         for event in state_reader.events_to_dispatch:
             events.emit(event.event_type, event)
+
+    @staticmethod
+    def StaticAssetState(assetId):
+        neo = AssetState()
+        neo.AssetId = UInt256.ParseString("0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b")
+        neo.AssetType = 0x00
+
+        gas = AssetState()
+        gas.AssetId = UInt256.ParseString("0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7")
+        gas.AssetType = 0x01
+
+        if assetId == neo.AssetId:
+            return neo
+
+        elif assetId == gas.AssetId:
+            return gas
+
+        else:
+            return None

@@ -169,10 +169,14 @@ class LeaderTestCase(WalletFixtureTestCase):
                         leader.ResetBlockRequestsAndCache()
                         self.assertEqual(Blockchain.Default()._block_cache, {})
 
-    def _generate_tx(self):
+                        # test shutdown
+                        leader.Shutdown()
+                        self.assertEqual(len(leader.Peers), 0)
+
+    def _generate_tx(self, amount):
         wallet = self.GetWallet1()
 
-        output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash, Value=Fixed8.One(),
+        output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash, Value=amount,
                                    script_hash=LeaderTestCase.wallet_1_script_hash)
         contract_tx = ContractTransaction(outputs=[output])
         wallet.MakeTransaction(contract_tx)
@@ -206,7 +210,7 @@ class LeaderTestCase(WalletFixtureTestCase):
                     res = leader.Relay(miner)
                     self.assertFalse(res)
 
-                    tx = self._generate_tx()
+                    tx = self._generate_tx(Fixed8.One())
 
                     res = leader.Relay(tx)
                     self.assertEqual(res, True)
@@ -231,8 +235,64 @@ class LeaderTestCase(WalletFixtureTestCase):
 
         self.assertFalse(res2)
 
-        tx = self._generate_tx()
+        tx = self._generate_tx(Fixed8.TryParse(15))
 
         res = leader.InventoryReceived(tx)
 
         self.assertIsNone(res)
+
+    def _add_existing_tx(self):
+        wallet = self.GetWallet1()
+
+        existing_tx = None
+        for tx in wallet.GetTransactions():
+            existing_tx = tx
+            break
+
+        self.assertNotEqual(None, existing_tx)
+
+        # add the existing tx to the mempool
+        NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
+
+    def _clear_mempool(self):
+        txs = []
+        values = NodeLeader.Instance().MemPool.values()
+        for tx in values:
+            txs.append(tx)
+
+        for tx in txs:
+            del NodeLeader.Instance().MemPool[tx.Hash.ToBytes()]
+
+    def test_get_transaction(self):
+        # delete any tx in the mempool
+        self._clear_mempool()
+
+        # generate a new tx
+        tx = self._generate_tx(Fixed8.TryParse(5))
+
+        # try to get it
+        res = NodeLeader.Instance().GetTransaction(tx.Hash.ToBytes())
+        self.assertIsNone(res)
+
+        # now add it to the mempool
+        NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
+
+        # and try to get it
+        res = NodeLeader.Instance().GetTransaction(tx.Hash.ToBytes())
+        self.assertTrue(res is tx)
+
+    def test_mempool_check_loop(self):
+        # delete any tx in the mempool
+        self._clear_mempool()
+
+        # add a tx which is already confirmed
+        self._add_existing_tx()
+
+        # and add a tx which is not confirmed
+        tx = self._generate_tx(Fixed8.TryParse(20))
+        NodeLeader.Instance().MemPool[tx.Hash.ToBytes()] = tx
+
+        # now remove the confirmed tx
+        NodeLeader.Instance().MempoolCheckLoop()
+
+        self.assertEqual(len(list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))), 1)
