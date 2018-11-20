@@ -21,7 +21,6 @@ Usage
                      [--logfile LOGFILE] [--syslog] [--syslog-local [0-7]]
                      [--disable-stderr] [--datadir DATADIR]
                      [--maxpeers MAXPEERS] [--wallet WALLET] [--host HOST]
-                     [--extended-rpc]
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -30,7 +29,6 @@ Usage
       --wallet WALLET       Open wallet. Will allow you to use methods that
                             require an open wallet
       --host HOST           Hostname ( for example 127.0.0.1)
-      --extended-rpc        Use extended json-rpc api
 
     Network options:
       --mainnet             Use MainNet
@@ -51,6 +49,17 @@ Usage
       --syslog-local [0-7]  Log to a local syslog facility instead of 'user'.
                             Value must be between 0 and 7 (e.g. 0 for 'local0').
       --disable-stderr      Disable stderr logger
+
+API Server Plugins
+""""""""""""""""""
+
+Default API server operation is defined in neo/Settings.py under ``DEFAULT_RPC_SERVER`` and ``DEFAULT_REST_SERVER``. Custom API server operation should be defined in the specific ``protocol.<title>.json`` being utilized. For example, to use the ExtendedJsonRpcApi update the "RPCServer" value in the corresponding ``protocol.<title>.json`` to
+
+::
+
+    "RPCServer": "neo.api.JSONRPC.ExtendedJsonRpcApi.ExtendedJsonRpcApi"
+
+**NOTE:** Remember to run ``python setup.py install`` after making any changes to a ``protocol.<title>.json``, so the changes take effect.
 
 Default JSON-RPC Command List
 -----------------------------
@@ -224,13 +233,13 @@ Request using ``curl``:
 
 ::
 
-    curl -X POST http://seed3.neo.org:10332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 1, "method": "getblockcount", "params": [] }'
+    curl -X POST http://108.252.121.18:10332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 1, "method": "getblockcount", "params": [] }'
 
 After sending the request, you will get the following response:
 
 ::
 
-    {"jsonrpc":"2.0","id":1,"result":2829911}
+    {"jsonrpc":"2.0","id":1,"result":2986181}
 
 Script Request Example
 """"""""""""""""""""""
@@ -241,7 +250,7 @@ Script Request Example
     import json
 
 
-    url = "http://seed3.neo.org:10332"
+    url = "http://108.252.121.18:10332"
     body = {"jsonrpc": "2.0", "id": 1, "method": "getblockcount", "params": []}
     res = requests.post(url, json=body)
     res = res.json()
@@ -255,21 +264,49 @@ After running the script, you will receive the following response:
     {
         "jsonrpc": "2.0",
         "id": 1,
-        "result": 2829945
+        "result": 2986181
     }
 
-GET Request Example
--------------------
+GET Request Examples
+--------------------
 
-Using A Script
-""""""""""""""
+Web Browser Request Example
+"""""""""""""""""""""""""""
+
+::
+
+    http://108.252.121.18:10332/?jsonrpc=2.0&id=1&method=getblockcount&params=[]
+    
+After executing the query in your address bar, you will receive the following  response:
+
+::
+
+    {"jsonrpc": "2.0", "id": "1", "result": 2986181}
+
+Bash Request Example
+""""""""""""""""""""
+
+Request using ``curl``:
+
+::
+
+    curl "http://108.252.121.18:10332/?jsonrpc=2.0&id=1&method=getblockcount&params=[]"
+
+After sending the request, you will get the following response:
+
+::
+
+    {"jsonrpc": "2.0", "id": "1", "result": 2986181}    
+
+Script Request Example
+""""""""""""""""""""""
 
 ::
 
     import requests
     import json
 
-    res = requests.get('http://seed3.neo.org:10332?jsonrpc=2.0&id=1&method=getblockcount&params=[]')
+    res = requests.get('http://108.252.121.18:10332/?jsonrpc=2.0&id=1&method=getblockcount&params=[]')
     res = res.json()
 
     print("{}".format(json.dumps(res, indent=4)))
@@ -281,13 +318,46 @@ After running the script, you will receive the following response:
     {
         "jsonrpc": "2.0",
         "id": 1,
-        "result": 2829945
+        "result": 2986181
     }
+
+OPTIONS Request Example
+-----------------------
+
+OPTIONS requests are useful for determining the supported HTTP methods and JSON-RPC server type.
+
+* Supported HTTP methods include "GET" and "POST"
+
+* JSON-RPC server types include "default" and "extended-rpc"
+
+
+Bash Request Example
+""""""""""""""""""""
+
+Request using ``curl``:
+
+::
+
+    curl -X OPTIONS 'http://108.252.121.18:10332'
+ 
+Depending on the type of server, you could receive
+
+::
+
+    {"supported HTTP methods": ["GET", "POST"], "JSON-RPC server type": "default"}
+
+or
+
+::
+
+    {"supported HTTP methods": ["GET", "POST"], "JSON-RPC server type": "extended-rpc"}
 
 Using Multi-Request in JSON-RPC
 -------------------------------
 
 neo-python supports multiple requests in one call by detecting list input.
+
+**NOTE:** "GET" requests do not support multiple requests in one call
 
 Example
 """""""
