@@ -46,6 +46,7 @@ All notable changes to this project are documented in this file.
 - Remove ``Neo.Witness.GetInvocationScript``
 - Allow wallets to sync past corrupt blocks
 
+
 [0.8.1] 2018-10-06
 ------------------
 - Add ``sendmany`` and ``sendfrom`` RPC methods & tests and integrate with ``sendtoaddress``
