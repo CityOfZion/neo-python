@@ -128,9 +128,6 @@ def main():
     # host
     parser.add_argument("--host", action="store", type=str, help="Hostname ( for example 127.0.0.1)", default="0.0.0.0")
 
-    # extended json-rpc api
-    parser.add_argument("--extended-rpc", action="store_true", default=False, help="Enable unofficial RPC API methods")
-
     # Now parse
     args = parser.parse_args()
     # print(args)
