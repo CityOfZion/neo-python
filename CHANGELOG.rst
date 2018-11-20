@@ -16,6 +16,11 @@ All notable changes to this project are documented in this file.
 - Add fix to ensure tx is saved to wallet when sent using RPC
 - Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`
 - Allow a raw tx to be build without an active blockchain db in the environment
+- Various updates to the network code to improve stability as well as inspection
+   - Added peer health checking to validate that we get the data we requested within a given treshold
+   - Added peer connection monitoring to keep queueing or reset if we have no more valid addresses to connect to.
+   - Changed some non-thread safe code to be thread safe
+   - Added extensive logging to improve inspection
 
 
 [0.8.2] 2018-10-31
