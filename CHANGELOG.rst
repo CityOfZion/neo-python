@@ -12,15 +12,18 @@ All notable changes to this project are documented in this file.
 - Fix various issues related to signing multi-signature transactions
 - Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
 - Empty VerificationScripts for deployed contracts now work as intended
-- Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`
+- Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`_
 - Add fix to ensure tx is saved to wallet when sent using RPC
-- Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`
+- Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`_
+- Introduce Django inspired component loading for REST and RPC server
 - Allow a raw tx to be build without an active blockchain db in the environment
 - Various updates to the network code to improve stability as well as inspection
    - Added peer health checking to validate that we get the data we requested within a given threshold
    - Added peer connection monitoring to keep queueing or reset if we have no more valid addresses to connect to.
    - Changed some non-thread safe code to be thread safe
    - Added extensive logging to improve inspection
+- Fix unnecessary default bootstrap warning for mainnet showing.
+- Add GET and OPTIONS request functionality for JSON-RPC servers
 
 
 [0.8.2] 2018-10-31
