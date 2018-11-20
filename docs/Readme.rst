@@ -7,7 +7,7 @@ Guidelines
 ----------
 When contributing please note the following:
 
-1.  NEO-Python Docs use the sphinx module to build https://neo-python.readthedocs.io/en/latest/. So, make sure every docucment you add uses reStructuredText (e.g. <yourfile>.rst).
+1.  NEO-Python Docs use the sphinx module to build https://neo-python.readthedocs.io/en/latest/. So, make sure every document you add uses reStructuredText (e.g. <yourfile>.rst).
 
 2.  After creating your document, be sure to update the ``toctree`` in index.rst. **Failing to do so will result in your document missing from the readthedocs website.**
 

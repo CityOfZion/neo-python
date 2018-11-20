@@ -70,7 +70,7 @@ How do we find out which nodes are alive? Use `NEO Network Status Monitor <http:
 If you would like more information visit the NEO Network Status Montior `repository <https://github.com/CityOfZion/neo-mon>`_.
 
 
-.. image:: ../seedlist.png
+.. image:: images/seedlist.png
   :width: 400
   :alt: seedlist
 
@@ -95,9 +95,6 @@ We follow this standard protocol for ports:
    * - P2P via TCP
      - 10333
      - 20333
-   * - P2P via WebSocket
-     - 10334
-     - 20334
 
 We will choose the first node over the third node, since *1* adheres the convention and *3* does not.
 

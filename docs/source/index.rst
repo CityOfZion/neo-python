@@ -37,6 +37,7 @@ neo-python - Python Node and SDK for the NEO blockchain
     Seedlist
     basicusage
     prompt
+    API_Server
     settings-and-logging
     neo/Core/TX/Transaction
     neo/SmartContract/smartcontracts

@@ -1,7 +1,10 @@
 Basic Usage
------------
+===========
 
-There are two main ways to use neo-python: ``np-prompt`` and running just the node with custom
+Introduction
+------------
+
+There are two main ways to interface with neo-python: ``np-prompt`` and running just the node with custom
 code.
 
 np-prompt
@@ -45,9 +48,10 @@ Take a look at the examples in the ``/examples`` directory: https://github.com/C
 
 See also the sections about "Settings and Logging" and "Interacting with Smart Contracts".
 
-
 API server (JSON and/or REST)
-""""""""""""""""""""""""""""""
+-----------------------------
+
+Each neo-python node is capable of providing an API interface, which can be used to query the NEO Blockchain. The API interface is provided via JSON-RPC or REST, and the underlying protocol uses HTTP/HTTPS for communication. JSON-RPC and REST API servers may be run simultaneously.
 
 Start JSON and REST API Server on Mainnet:
 
@@ -55,7 +59,7 @@ Start JSON and REST API Server on Mainnet:
 
     $ np-api-server --mainnet --port-rpc 10332 --port-rest 80
 
-Example notifications plus help with all available arguments:
+Example notifications:
 
 ::
 
@@ -67,9 +71,12 @@ Example notifications plus help with all available arguments:
   [I 180315 09:27:09 _observer:131] Starting factory <twisted.web.server.Site object at 0x110619828>
   [I 180315 09:27:09 np-api-server:11] Starting REST api server on http://0.0.0.0:8088
 
-  # view help
-  $ np-api-server -h
-  usage: np-api-server [-h]
+View help with all available arguments:
+
+::
+
+    $ np-api-server -h
+    usage: np-api-server [-h]
                      (--mainnet | --testnet | --privnet | --coznet | --config CONFIG)
                      [--port-rpc PORT_RPC] [--port-rest PORT_REST]
                      [--logfile LOGFILE] [--syslog] [--syslog-local [0-7]]
@@ -77,35 +84,35 @@ Example notifications plus help with all available arguments:
                      [--maxpeers MAXPEERS] [--wallet WALLET] [--host HOST]
 
     optional arguments:
-    -h, --help            show this help message and exit
-    --datadir DATADIR     Absolute path to use for database directories
-    --maxpeers MAXPEERS   Max peers to use for P2P Joining
-    --wallet WALLET       Open wallet. Will allow you to use methods that
-                          require an open wallet
-    --host HOST           Hostname ( for example 127.0.0.1)
+      -h, --help            show this help message and exit
+      --datadir DATADIR     Absolute path to use for database directories
+      --maxpeers MAXPEERS   Max peers to use for P2P Joining
+      --wallet WALLET       Open wallet. Will allow you to use methods that
+                            require an open wallet
+      --host HOST           Hostname ( for example 127.0.0.1)
 
     Network options:
-    --mainnet             Use MainNet
-    --testnet             Use TestNet
-    --privnet             Use PrivNet
-    --coznet              Use CozNet
-    --config CONFIG       Use a specific config file
+      --mainnet             Use MainNet
+      --testnet             Use TestNet
+      --privnet             Use PrivNet
+      --coznet              Use CozNet
+      --config CONFIG       Use a specific config file
 
     Mode(s):
-    --port-rpc PORT_RPC     port to use for the json-rpc api (eg. 10332)
-    --port-rest PORT_REST   port to use for the rest api (eg. 80)
+      --port-rpc PORT_RPC   port to use for the json-rpc api (eg. 10332)
+      --port-rest PORT_REST
+                            port to use for the rest api (eg. 80)
 
     Logging options:
-    --logfile LOGFILE     Logfile
-    --syslog              Log to syslog instead of to log file ('user' is the
-                          default facility)
-    --syslog-local [0-7]  Log to a local syslog facility instead of 'user'.
-                          Value must be between 0 and 7 (e.g. 0 for 'local0').
-    --disable-stderr      Disable stderr logger
-
+      --logfile LOGFILE     Logfile
+      --syslog              Log to syslog instead of to log file ('user' is the
+                            default facility)
+      --syslog-local [0-7]  Log to a local syslog facility instead of 'user'.
+                            Value must be between 0 and 7 (e.g. 0 for 'local0').
+      --disable-stderr      Disable stderr logger
 
 Port Description
-""""""""""""""""""""""""""""""
+""""""""""""""""
 
 If you want an external program to access your API server, an open firewall port is required. The following is a port description that can be set to fully open or open-on-demand.
 
@@ -122,7 +129,22 @@ If you want an external program to access your API server, an open firewall port
    * - JSON-RPC via HTTP 
      - 10332 
      - 20332
+   * - REST via HTTP
+     - 80
+     - 8080
 
+For P2P information see `NEO-Python Seedlist <https://neo-python.readthedocs.io/en/latest/Seedlist.html>`_.
+
+API Server Plugins
+""""""""""""""""""
+
+Default API server operation is defined in neo/Settings.py under ``DEFAULT_RPC_SERVER`` and ``DEFAULT_REST_SERVER``. Custom API server operation should be defined in the specific ``protocol.<title>.json`` being utilized. For example, to use the ExtendedJsonRpcApi update the "RPCServer" value in the corresponding ``protocol.<title>.json`` to
+
+::
+
+    "RPCServer": "neo.api.JSONRPC.ExtendedJsonRpcApi.ExtendedJsonRpcApi"
+
+**NOTE:** Remember to run ``python setup.py install`` after making any changes to a ``protocol.<title>.json``, so the changes take effect.
 
 Running an API Server using Windows WSL (Ubuntu)
 """"""""""""""""""""""""""""""""""""""""""""""""
