@@ -20,7 +20,7 @@ install:
 - pip install -e .
 - pip install coveralls
 - yes | pip uninstall neo-boa neocore
-- pip install -e git+https://github.com/CityOfZion/neo-boa@development#egg=neo-boa
+- pip install - pip install -e git+https://github.com/jseagrave21/neo-boa@patch-1#egg=neo-boa
 - pip install -e git+https://github.com/CityOfZion/neo-python-core@master#egg=neocore
 
 # command to run tests
