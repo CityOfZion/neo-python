@@ -1,6 +1,4 @@
-from klein import Klein
 from neo.Core.Blockchain import Blockchain
-from neo.api.utils import json_response, cors_header
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi, JsonRpcError
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.UInt256 import UInt256
@@ -11,9 +9,6 @@ class ExtendedJsonRpcApi(JsonRpcApi):
     """
     Extended JSON-RPC API Methods
     """
-    app = Klein()
-    port = None
-
     def __init__(self, port, wallet=None):
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
@@ -22,9 +17,6 @@ class ExtendedJsonRpcApi(JsonRpcApi):
     #
     # JSON-RPC Extended API Route
     #
-    @app.route('/')
-    @json_response
-    @cors_header
     def home(self, request):
 
         if "OPTIONS" == request.method.decode("utf-8"):
