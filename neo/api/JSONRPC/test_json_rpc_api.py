@@ -9,6 +9,8 @@ import os
 import shutil
 from tempfile import mkdtemp
 from klein.test.test_resource import requestMock
+from twisted.web import server
+from twisted.web.test.test_web import DummyChannel
 
 from neo import __version__
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
@@ -26,8 +28,16 @@ from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from mock import patch
 
 
-def mock_request(body):
-    return requestMock(path=b'/', method="POST", body=body)
+def mock_post_request(body):
+    return requestMock(path=b'/', method=b"POST", body=body)
+
+
+def mock_get_request(path, method=b"GET"):
+    request = server.Request(DummyChannel(), False)
+    request.uri = path
+    request.method = method
+    request.clientproto = b'HTTP/1.1'
+    return request
 
 
 class JsonRpcApiTestCase(BlockchainFixtureTestCase):
@@ -40,16 +50,41 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
     def setUp(self):
         self.app = JsonRpcApi(20332)
 
+    def test_HTTP_OPTIONS_request(self):
+        mock_req = mock_get_request(b'/?test', b"OPTIONS")
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertTrue("GET" in res['supported HTTP methods'])
+        self.assertTrue("POST" in res['supported HTTP methods'])
+        self.assertTrue("default" in res['JSON-RPC server type'])
+
+    def test_invalid_request_method(self):
+        # test HEAD method
+        mock_req = mock_get_request(b'/?test', b"HEAD")
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["message"], 'HEAD is not a supported HTTP method')
+
     def test_invalid_json_payload(self):
-        mock_req = mock_request(b"{ invalid")
+        # test POST requests
+        mock_req = mock_post_request(b"{ invalid")
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["error"]["code"], -32700)
 
-        mock_req = mock_request(json.dumps({"some": "stuff"}).encode("utf-8"))
+        mock_req = mock_post_request(json.dumps({"some": "stuff"}).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["error"]["code"], -32600)
 
-    def _gen_rpc_req(self, method, params=None, request_id="2"):
+        # test GET requests
+        mock_req = mock_get_request(b"/?%20invalid")  # equivalent to "/? invalid"
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res["error"]["code"], -32600)
+
+        mock_req = mock_get_request(b"/?some=stuff")
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res["error"]["code"], -32600)
+
+    def _gen_post_rpc_req(self, method, params=None, request_id="2"):
         ret = {
             "jsonrpc": "2.0",
             "id": request_id,
@@ -59,45 +94,95 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             ret["params"] = params
         return ret
 
+    def _gen_get_rpc_req(self, method, params=None, request="2"):
+        ret = "/?jsonrpc=2.0&id=%s&method=%s&params=[]" % (request, method)
+        if params:
+            ret = "/?jsonrpc=2.0&id=%s&method=%s&params=%s" % (request, method, params)
+        return ret.encode('utf-8')
+
     def test_initial_setup(self):
         self.assertTrue(GetBlockchain().GetBlock(0).Hash.To0xString(), '0x996e37358dc369912041f966f8c5d8d3a8255ba5dcbd3447f8a82b55db869099')
 
+    def test_GET_request_bad_params(self):
+        req = "/?jsonrpc=2.0&method=getblockcount&param=[]&id=2"  # "params" is misspelled
+        mock_req = mock_get_request(req)
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32602)
+        self.assertEqual(error.get('message', None), "Invalid params")
+
     def test_missing_fields(self):
-        req = self._gen_rpc_req("foo")
+        # test POST requests
+        req = self._gen_post_rpc_req("foo")
         del req["jsonrpc"]
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["message"], "Invalid value for 'jsonrpc'")
 
-        req = self._gen_rpc_req("foo")
+        req = self._gen_post_rpc_req("foo")
         del req["id"]
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["message"], "Field 'id' is missing")
 
-        req = self._gen_rpc_req("foo")
+        req = self._gen_post_rpc_req("foo")
         del req["method"]
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["message"], "Field 'method' is missing")
+
+        # test GET requests
+        mock_req = mock_get_request(b"/?method=foo&id=2")
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["message"], "Invalid value for 'jsonrpc'")
+
+        mock_req = mock_get_request(b"/?jsonrpc=2.0&method=foo")
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["message"], "Field 'id' is missing")
+
+        mock_req = mock_get_request(b"/?jsonrpc=2.0&id=2")
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["message"], "Field 'method' is missing")
 
     def test_invalid_method(self):
-        req = self._gen_rpc_req("invalid", request_id="42")
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        # test POST requests
+        req = self._gen_post_rpc_req("invalid", request_id="42")
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["id"], "42")
         self.assertEqual(res["error"]["code"], -32601)
         self.assertEqual(res["error"]["message"], "Method not found")
 
+        # test GET requests
+        req = self._gen_get_rpc_req("invalid")
+        mock_req = mock_get_request(req)
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res["error"]["code"], -32601)
+        self.assertEqual(res["error"]["message"], "Method not found")
+
     def test_getblockcount(self):
-        req = self._gen_rpc_req("getblockcount")
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        # test POST requests
+        req = self._gen_post_rpc_req("getblockcount")
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(GetBlockchain().Height + 1, res["result"])
+
+        # test GET requests ...next we will test a complex method; see test_sendmany_complex
+        req = self._gen_get_rpc_req("getblockcount")
+        mock_req = mock_get_request(req)
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(GetBlockchain().Height + 1, res["result"])
 
     def test_getblockhash(self):
-        req = self._gen_rpc_req("getblockhash", params=[2])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblockhash", params=[2])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         # taken from neoscan
@@ -105,16 +190,16 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(expected_blockhash, res["result"])
 
     def test_getblockhash_failure(self):
-        req = self._gen_rpc_req("getblockhash", params=[-1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblockhash", params=[-1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(-100, res["error"]["code"])
         self.assertEqual("Invalid Height", res["error"]["message"])
 
     def test_account_state(self):
         addr_str = 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y'
-        req = self._gen_rpc_req("getaccountstate", params=[addr_str])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getaccountstate", params=[addr_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['balances'][0]['value'], '99989900.0')
         self.assertEqual(res['result']['balances'][0]['asset'], '0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'),
@@ -122,16 +207,16 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_account_state_not_existing_yet(self):
         addr_str = 'AHozf8x8GmyLnNv8ikQcPKgRHQTbFi46u2'
-        req = self._gen_rpc_req("getaccountstate", params=[addr_str])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getaccountstate", params=[addr_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['balances'], [])
         self.assertEqual(res['result']['address'], addr_str)
 
     def test_account_state_failure(self):
         addr_str = 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp81'
-        req = self._gen_rpc_req("getaccountstate", params=[addr_str])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getaccountstate", params=[addr_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(-2146233033, res['error']['code'])
@@ -139,8 +224,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_get_asset_state(self):
         asset_str = '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
-        req = self._gen_rpc_req("getassetstate", params=[asset_str])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['assetId'], '0x%s' % asset_str)
         self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
@@ -148,23 +233,23 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_get_asset_state_0x(self):
         asset_str = '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
-        req = self._gen_rpc_req("getassetstate", params=[asset_str])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['assetId'], asset_str)
 
     def test_bad_asset_state(self):
         asset_str = '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282dee'
-        req = self._gen_rpc_req("getassetstate", params=[asset_str])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown asset')
 
     def test_get_bestblockhash(self):
-        req = self._gen_rpc_req("getbestblockhash", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getbestblockhash", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], '0x62539bdf30ff2567355efb38b1911cc07258710cfab5b50d3e32751618969bcb')
 
@@ -176,8 +261,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         leader.Peers = [fake_obj, fake_obj]
         leader.ADDRS = [fake_obj, fake_obj]
 
-        req = self._gen_rpc_req("getconnectioncount", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getconnectioncount", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], 2)
 
@@ -185,8 +270,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         NodeLeader._LEAD = old_leader
 
     def test_get_block_int(self):
-        req = self._gen_rpc_req("getblock", params=[10, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblock", params=[10, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res['result']['index'], 10)
@@ -195,8 +280,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['nextblockhash'], '0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f')
 
     def test_get_block_hash(self):
-        req = self._gen_rpc_req("getblock", params=['2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblock", params=['2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res['result']['index'], 11)
@@ -204,41 +289,41 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['previousblockhash'], '0xd69e7a1f62225a35fed91ca578f33447d93fa0fd2b2f662b957e19c38c1dab1e')
 
     def test_get_block_hash_0x(self):
-        req = self._gen_rpc_req("getblock", params=['0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblock", params=['0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['index'], 11)
 
     def test_get_block_hash_failure(self):
-        req = self._gen_rpc_req("getblock", params=['aad34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf', 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblock", params=['aad34f68cb7a04d625ae095fa509479ec7dcb4dc87ecd865ab059d0f8a42decf', 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown block')
 
     def test_get_block_sysfee(self):
-        req = self._gen_rpc_req("getblocksysfee", params=[9479])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblocksysfee", params=[9479])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], 1560)
 
         # test negative block
-        req = self._gen_rpc_req("getblocksysfee", params=[-1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblocksysfee", params=[-1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Invalid Height')
 
         # test block exceeding max block height
-        req = self._gen_rpc_req("getblocksysfee", params=[3000000000])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblocksysfee", params=[3000000000])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Invalid Height')
 
     def test_block_non_verbose(self):
-        req = self._gen_rpc_req("getblock", params=[2003, 0])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblock", params=[2003, 0])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertIsNotNone(res['result'])
 
@@ -250,8 +335,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_get_contract_state(self):
         contract_hash = "b9fbcff6e50fd381160b822207231233dd3c56c2"
-        req = self._gen_rpc_req("getcontractstate", params=[contract_hash])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getcontractstate", params=[contract_hash])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['code_version'], '')
         self.assertEqual(res['result']['properties']['storage'], True)
@@ -261,23 +346,23 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_get_contract_state_0x(self):
         contract_hash = "0xb9fbcff6e50fd381160b822207231233dd3c56c2"
-        req = self._gen_rpc_req("getcontractstate", params=[contract_hash])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getcontractstate", params=[contract_hash])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['code_version'], '')
 
     def test_get_contract_state_not_found(self):
         contract_hash = '0xb9fbcff6e50fd381160b822207231233dd3c56c1'
-        req = self._gen_rpc_req("getcontractstate", params=[contract_hash])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getcontractstate", params=[contract_hash])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown contract')
 
     def test_get_raw_mempool(self):
         # TODO: currently returns empty list. test with list would be great
-        req = self._gen_rpc_req("getrawmempool", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getrawmempool", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         mempool = res['result']
 
@@ -290,43 +375,43 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_get_version(self):
         # TODO: what's the nonce? on testnet live server response it's always 771199013
-        req = self._gen_rpc_req("getversion", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getversion", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["result"]["port"], 20332)
         self.assertEqual(res["result"]["useragent"], "/NEO-PYTHON:%s/" % __version__)
 
     def test_validate_address(self):
         # example from docs.neo.org
-        req = self._gen_rpc_req("validateaddress", params=["AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("validateaddress", params=["AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue(res["result"]["isvalid"])
 
         # example from docs.neo.org
-        req = self._gen_rpc_req("validateaddress", params=["152f1muMCNa7goXYhYAQC61hxEgGacmncB"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("validateaddress", params=["152f1muMCNa7goXYhYAQC61hxEgGacmncB"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertFalse(res["result"]["isvalid"])
 
         # catch completely invalid argument
-        req = self._gen_rpc_req("validateaddress", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("validateaddress", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual('Missing argument', res['error']['message'])
 
         # catch completely invalid argument
-        req = self._gen_rpc_req("validateaddress", params=[""])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("validateaddress", params=[""])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual('Missing argument', res['error']['message'])
 
     def test_getrawtx_1(self):
         txid = 'f999c36145a41306c846ea80290416143e8e856559818065be3f4e143c60e43a'
-        req = self._gen_rpc_req("getrawtransaction", params=[txid, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getrawtransaction", params=[txid, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))['result']
         self.assertEqual(res['blockhash'], '0x6088bf9d3b55c67184f60b00d2e380228f713b4028b24c1719796dcd2006e417')
         self.assertEqual(res['txid'], "0x%s" % txid)
@@ -335,16 +420,16 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_getrawtx_2(self):
         txid = 'f999c36145a41306c846ea80290416143e8e856559818065be3f4e143c60e43a'
-        req = self._gen_rpc_req("getrawtransaction", params=[txid, 0])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getrawtransaction", params=[txid, 0])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))['result']
         expected = '8000012023ba2703c53263e8d6e522dc32203339dcd8eee901ff6a846c115ef1fb88664b00aa67f2c95e9405286db1b56c9120c27c698490530000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50010a5d4e8000000affb37f5fdb9c6fec48d9f0eee85af82950f9b4a9b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500f01b9b0986230023ba2703c53263e8d6e522dc32203339dcd8eee9014140a88bd1fcfba334b06da0ce1a679f80711895dade50352074e79e438e142dc95528d04a00c579398cb96c7301428669a09286ae790459e05e907c61ab8a1191c62321031a6c6fbbdf02ca351745fa86b9ba5a9452d785ac4f7fc2b7548ca2a46c4fcf4aac'
         self.assertEqual(res, expected)
 
     def test_getrawtx_3(self):
         txid = 'f999c36145a41306c846ea80290416143e8e856559818065be3f4e143c60e43b'
-        req = self._gen_rpc_req("getrawtransaction", params=[txid, 0])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getrawtransaction", params=[txid, 0])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown Transaction')
@@ -352,8 +437,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
     def test_get_storage_item(self):
         contract_hash = 'b9fbcff6e50fd381160b822207231233dd3c56c2'
         storage_key = binascii.hexlify(b'in_circulation').decode('utf-8')
-        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], '00a031a95fe300')
         actual_val = int.from_bytes(binascii.unhexlify(res['result'].encode('utf-8')), 'little')
@@ -362,32 +447,32 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
     def test_get_storage_item2(self):
         contract_hash = '90ea0b9b8716cf0ceca5b24f6256adf204f444d9'
         storage_key = binascii.hexlify(b'in_circulation').decode('utf-8')
-        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], '00c06e31d91001')
 
     def test_get_storage_item_key_not_found(self):
         contract_hash = 'b9fbcff6e50fd381160b822207231233dd3c56c1'
         storage_key = binascii.hexlify(b'blah').decode('utf-8')
-        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], None)
 
     def test_get_storage_item_contract_not_found(self):
         contract_hash = 'b9fbcff6e50fd381160b822207231233dd3c56c1'
         storage_key = binascii.hexlify(b'blah').decode('utf-8')
-        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], None)
 
     def test_get_storage_item_bad_contract_hash(self):
         contract_hash = 'b9fbcff6e50f01160b822207231233dd3c56c1'
         storage_key = binascii.hexlify(b'blah').decode('utf-8')
-        req = self._gen_rpc_req("getstorage", params=[contract_hash, storage_key])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getstorage", params=[contract_hash, storage_key])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertIn('Invalid UInt', res['error']['message'])
@@ -400,8 +485,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
     def test_gettxout(self):
         txid = 'a2a37fd2ab7048d70d51eaa8af2815e0e542400329b05a34274771174180a7e8'
         output_index = 0
-        req = self._gen_rpc_req("gettxout", params=[txid, output_index])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("gettxout", params=[txid, output_index])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         # will return `null` if not found
         self.assertEqual(None, res["result"])
@@ -410,8 +495,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # The txid need to be updated whenever we spend NEO from the address: AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y (coz wallet)
         txid = '42978cd563e9e95550fb51281d9071e27ec94bd42116836f0d0141d57a346b3e'
         output_index = 1
-        req = self._gen_rpc_req("gettxout", params=[txid, output_index])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("gettxout", params=[txid, output_index])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         expected_asset = '0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'
@@ -426,8 +511,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # now test a different index
         txid = 'f999c36145a41306c846ea80290416143e8e856559818065be3f4e143c60e43a'
         output_index = 0
-        req = self._gen_rpc_req("gettxout", params=[txid, output_index])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("gettxout", params=[txid, output_index])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         expected_value = "10000"
@@ -436,32 +521,32 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_send_raw_tx(self):
         raw_tx = '8000000001e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6000ca9a3b0000000048033b58ef547cbf54c8ee2f72a42d5b603c00af'
-        req = self._gen_rpc_req("sendrawtransaction", params=[raw_tx])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendrawtransaction", params=[raw_tx])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], True)
 
     def test_send_raw_tx_bad(self):
         raw_tx = '80000001b10ad9ec660bf343c0eb411f9e05b4fa4ad8abed31d4e4dc5bb6ae416af0c4de000002e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60c8db571300000000af12a8687b14948bc4a008128a550a63695bc1a5e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c603808b44002000000eca8fcf94e7a2a7fc3fd54ae0ed3d34d52ec25900141404749ce868ed9588f604eeeb5c523db39fd57cd7f61d04393a1754c2d32f131d67e6b1ec561ac05012b7298eb5ff254487c76de0b2a0c4d097d17cec708c0a9802321025b5c8cdcb32f8e278e111a0bf58ebb463988024bb4e250aa4310b40252030b60ac'
-        req = self._gen_rpc_req("sendrawtransaction", params=[raw_tx])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendrawtransaction", params=[raw_tx])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result'], False)
 
     def test_send_raw_tx_bad_2(self):
         raw_tx = '80000001b10ad9ec660bf343c0eb411f9e05b4fa4ad8abed31d4e4dc5bb6ae416af0c4de000002e72d286979ee6cbb7e65dfddfb2e384100b8d148e7758de42e4168b71792c60c8db571300000000af12a8687b14948bc4a008128a550a63695bc1a5e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c603808b44002000000eca8fcf94e7a2a7fc3fd54ae0ed3d34d52ec25900141404749ce868ed9588f604eeeb5c523db39fd57cd7f61d04393a1754c2d32f131d67e6b1ec561ac05012b7298eb5ff254487c76de0b2a0c4d097d17cec708c0a9802321025b5c8cdcb32f8e278e111a0bf58ebb463988024bb4e250aa4310b40252030b60ac'
-        req = self._gen_rpc_req("sendrawtransaction", params=[raw_tx])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendrawtransaction", params=[raw_tx])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['code'], -32603)
 
     def test_gzip_compression(self):
-        req = self._gen_rpc_req("getblock", params=['307ed2cf8b8935dd38c534b10dceac55fcd0f60c68bf409627f6c155f8143b31', 1])
+        req = self._gen_post_rpc_req("getblock", params=['307ed2cf8b8935dd38c534b10dceac55fcd0f60c68bf409627f6c155f8143b31', 1])
         body = json.dumps(req).encode("utf-8")
 
         # first validate that we get a gzip response if we accept gzip encoding
-        mock_req = requestMock(path=b'/', method="POST", body=body, headers={'Accept-Encoding': ['deflate', 'gzip;q=1.0', '*;q=0.5']})
+        mock_req = requestMock(path=b'/', method=b"POST", body=body, headers={'Accept-Encoding': ['deflate', 'gzip;q=1.0', '*;q=0.5']})
         res = self.app.home(mock_req)
 
         GZIP_MAGIC = b'\x1f\x8b'
@@ -469,7 +554,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertTrue(res.startswith(GZIP_MAGIC))
 
         # then validate that we don't get a gzip response if we don't accept gzip encoding
-        mock_req = requestMock(path=b'/', method="POST", body=body, headers={})
+        mock_req = requestMock(path=b'/', method=b"POST", body=body, headers={})
         res = self.app.home(mock_req)
 
         self.assertIsInstance(res, str)
@@ -492,8 +577,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         test_node.port = 20333
         node.Peers = [test_node]
 
-        req = self._gen_rpc_req("getpeers", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getpeers", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(len(node.Peers), len(res['result']['connected']))
@@ -508,8 +593,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         node.DEAD_ADDRS = []
 
     def test_getwalletheight_no_wallet(self):
-        req = self._gen_rpc_req("getwalletheight", params=["some id here"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getwalletheight", params=["some id here"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -520,15 +605,15 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
     def test_getwalletheight(self):
         self.app.wallet = UserWallet.Open(os.path.join(ROOT_INSTALL_PATH, "neo/data/neo-privnet.sample.wallet"), to_aes_key("coz"))
 
-        req = self._gen_rpc_req("getwalletheight", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getwalletheight", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(1, res.get('result'))
 
     def test_getbalance_no_wallet(self):
-        req = self._gen_rpc_req("getbalance", params=["some id here"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getbalance", params=["some id here"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -544,8 +629,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
 
         neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
-        req = self._gen_rpc_req("getbalance", params=[neo_id])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getbalance", params=[neo_id])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertIn('Balance', res.get('result').keys())
@@ -563,8 +648,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
 
         fake_token_id = "fd941304d9cf36f31cd141c7c7029d81b1efa4f3"
-        req = self._gen_rpc_req("getbalance", params=[fake_token_id])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getbalance", params=[fake_token_id])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertIn('Balance', res.get('result').keys())
@@ -575,8 +660,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         os.remove(test_wallet_path)
 
     def test_listaddress_no_wallet(self):
-        req = self._gen_rpc_req("listaddress", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("listaddress", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -591,8 +676,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             to_aes_key('awesomepassword')
         )
 
-        req = self._gen_rpc_req("listaddress", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("listaddress", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         results = res.get('result', [])
         self.assertGreater(len(results), 0)
@@ -603,8 +688,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         os.remove(test_wallet_path)
 
     def test_getnewaddress_no_wallet(self):
-        req = self._gen_rpc_req("getnewaddress", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getnewaddress", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -621,8 +706,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
         old_addrs = self.app.wallet.Addresses
 
-        req = self._gen_rpc_req("getnewaddress", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getnewaddress", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         result = res.get('result')
 
@@ -634,11 +719,12 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         os.remove(test_wallet_path)
 
     def test_valid_multirequest(self):
+        # test POST requests ...should pass
         raw_block_request = {"jsonrpc": "2.0", "method": "getblock", "params": [1], "id": 1}
         verbose_block_request = {"jsonrpc": "2.0", "method": "getblock", "params": [1, 1], "id": 2}
 
         multi_request = json.dumps([raw_block_request, verbose_block_request])
-        mock_req = mock_request(multi_request.encode())
+        mock_req = mock_post_request(multi_request.encode())
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(type(res), list)
@@ -647,6 +733,16 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res[0]['result'], expected_raw_block)
         expected_verbose_hash = '0x55f745c9098d5d5bdaff9f8f32aad29c904c83d9832b48c16e677d30c7da4273'
         self.assertEqual(res[1]['result']['hash'], expected_verbose_hash)
+
+        # test GET requests ...should fail
+        raw_request = b"/?[jsonrpc=2.0&method=getblock&params=[1]&id=1,jsonrpc=2.0&method=getblock&params=[1,1]&id=2]"
+
+        mock_req = mock_get_request(raw_request)
+        res = json.loads(self.app.home(mock_req))
+
+        error = res.get('error', {})
+        self.assertEqual(error.get('code', None), -32600)
+        self.assertEqual(error.get('message', None), "Invalid value for 'jsonrpc'")
 
     def test_multirequest_with_1_invalid_request(self):
         """
@@ -657,7 +753,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         verbose_block_request = {"jsonrpc": "2.0", "method": "getblock", "params": [1, 1], "id": 2}
 
         multi_request = json.dumps([raw_block_request, verbose_block_request])
-        mock_req = mock_request(multi_request.encode())
+        mock_req = mock_post_request(multi_request.encode())
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(type(res), list)
@@ -673,8 +769,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res[1]['result']['hash'], expected_verbose_hash)
 
     def test_send_to_address_no_wallet(self):
-        req = self._gen_rpc_req("sendtoaddress", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -689,8 +785,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             to_aes_key('awesomepassword')
         )
 
-        req = self._gen_rpc_req("sendtoaddress", params=["arg"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=["arg"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -713,8 +809,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
@@ -736,8 +832,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_rpc_req("sendtoaddress", params=['neo', address, 1, 0.005])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=['neo', address, 1, 0.005])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
@@ -759,8 +855,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_rpc_req("sendtoaddress", params=['ga', address, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=['ga', address, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -782,8 +878,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'  # "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX" is too short causing ToScriptHash to fail
 
-        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -805,8 +901,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, -1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, -1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -828,8 +924,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 0])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, 0])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -851,8 +947,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1, -0.005])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, 1, -0.005])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -874,8 +970,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 51])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, 51])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         error = res.get('error', {})
@@ -898,8 +994,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             )
             address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-            req = self._gen_rpc_req("sendtoaddress", params=['gas', address, 1])
-            mock_req = mock_request(json.dumps(req).encode("utf-8"))
+            req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, 1])
+            mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
             res = json.loads(self.app.home(mock_req))
 
             self.assertEqual(res.get('jsonrpc', None), '2.0')
@@ -911,8 +1007,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             os.remove(WalletFixtureTestCase.wallet_1_dest())
 
     def test_send_from_no_wallet(self):
-        req = self._gen_rpc_req("sendfrom", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -400)
@@ -924,8 +1020,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key('awesomepassword')
         )
-        req = self._gen_rpc_req("sendfrom", params=["arg"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=["arg"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -945,8 +1041,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
@@ -976,8 +1072,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                                        address_from_account_state['balances']))
         address_from_gas_bal = address_from_gas['value']
 
-        req = self._gen_rpc_req("sendfrom", params=['gas', address_from, address_to, amount, net_fee, change_addr])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['gas', address_from, address_to, amount, net_fee, change_addr])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
@@ -1002,8 +1098,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['nep', address_from, address_to, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['nep', address_from, address_to, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1023,8 +1119,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, -1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, -1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1044,8 +1140,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 0])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 0])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1065,8 +1161,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc'  # "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc" is too short causing ToScriptHash to fail
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1086,8 +1182,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX'  # "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaX" is too short causing ToScriptHash to fail
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1107,8 +1203,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1, -0.005])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 1, -0.005])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1128,8 +1224,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1, .005, 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE'])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 1, .005, 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE'])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1149,8 +1245,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 51])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 51])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -300)
@@ -1171,8 +1267,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             )
             address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
             address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-            req = self._gen_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
-            mock_req = mock_request(json.dumps(req).encode("utf-8"))
+            req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+            mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
             res = json.loads(self.app.home(mock_req))
 
             self.assertEqual(res.get('jsonrpc', None), '2.0')
@@ -1184,14 +1280,15 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             os.remove(WalletFixtureTestCase.wallet_1_dest())
 
     def test_sendmany_no_wallet(self):
-        req = self._gen_rpc_req("sendmany", params=[])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -400)
         self.assertEqual(error.get('message', None), "Access denied.")
 
     def test_sendmany_complex(self):
+        # test POST requests
         test_wallet_path = shutil.copyfile(
             WalletFixtureTestCase.wallet_1_path(),
             WalletFixtureTestCase.wallet_1_dest()
@@ -1207,14 +1304,43 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
         self.assertIn('vin', res.get('result', {}).keys())
         self.assertEqual('1', res['result']['net_fee'])
+
+        # check for 2 transfers
+        transfers = 0
+        for info in res['result']['vout']:
+            if info['address'] == "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK":
+                transfers += 1
+        self.assertEqual(2, transfers)
+
+        self.app.wallet.Close()
+        self.app.wallet = None
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+        # test GET requests
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
+            test_wallet_path,
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+        )
+        req = self._gen_get_rpc_req("sendmany", params=[output, 0.005, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
+        mock_req = mock_get_request(req)
+        res = json.loads(self.app.home(mock_req))
+
+        self.assertEqual(res.get('jsonrpc', None), '2.0')
+        self.assertIn('txid', res.get('result', {}).keys())
+        self.assertIn('vin', res.get('result', {}).keys())
+        self.assertEqual('0.005', res['result']['net_fee'])
 
         # check for 2 transfers
         transfers = 0
@@ -1243,8 +1369,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
@@ -1260,8 +1386,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             test_wallet_path,
             to_aes_key('awesomepassword')
         )
-        req = self._gen_rpc_req("sendmany", params=["arg"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=["arg"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1286,8 +1412,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx", "arg"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx", "arg"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1312,8 +1438,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'ne',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1338,8 +1464,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1364,8 +1490,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": -1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1390,8 +1516,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": 0,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1416,8 +1542,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output, -0.005, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output, -0.005, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1443,8 +1569,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output, 0.005, change_addr])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output, 0.005, change_addr])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -32602)
@@ -1469,8 +1595,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_rpc_req("sendmany", params=[output])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("sendmany", params=[output])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         error = res.get('error', {})
         self.assertEqual(error.get('code', None), -300)
@@ -1496,8 +1622,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
                       {"asset": 'neo',
                        "value": 1,
                        "address": address_to}]
-            req = self._gen_rpc_req("sendmany", params=[output])
-            mock_req = mock_request(json.dumps(req).encode("utf-8"))
+            req = self._gen_post_rpc_req("sendmany", params=[output])
+            mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
             res = json.loads(self.app.home(mock_req))
             self.assertEqual(res.get('jsonrpc', None), '2.0')
             self.assertIn('type', res.get('result', {}).keys())
@@ -1507,8 +1633,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
             os.remove(WalletFixtureTestCase.wallet_1_dest())
 
     def test_getblockheader_int(self):
-        req = self._gen_rpc_req("getblockheader", params=[10, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblockheader", params=[10, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['index'], 10)
         self.assertEqual(res['result']['hash'], '0xd69e7a1f62225a35fed91ca578f33447d93fa0fd2b2f662b957e19c38c1dab1e')
@@ -1516,8 +1642,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['nextblockhash'], '0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f')
 
     def test_getblockheader_hash(self):
-        req = self._gen_rpc_req("getblockheader", params=['2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblockheader", params=['2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertEqual(res['result']['index'], 11)
@@ -1525,21 +1651,21 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['previousblockhash'], '0xd69e7a1f62225a35fed91ca578f33447d93fa0fd2b2f662b957e19c38c1dab1e')
 
     def test_getblockheader_hash_0x(self):
-        req = self._gen_rpc_req("getblockheader", params=['0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblockheader", params=['0x2b1c78633dae7ab81f64362e0828153079a17b018d779d0406491f84c27b086f', 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['index'], 11)
 
     def test_getblockheader_hash_failure(self):
-        req = self._gen_rpc_req("getblockheader", params=[GetBlockchain().Height + 1, 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblockheader", params=[GetBlockchain().Height + 1, 1])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown block')
 
     def test_getblockheader_non_verbose(self):
-        req = self._gen_rpc_req("getblockheader", params=[11, 0])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
+        req = self._gen_post_rpc_req("getblockheader", params=[11, 0])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
         self.assertIsNotNone(res['result'])
 
