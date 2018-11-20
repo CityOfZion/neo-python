@@ -82,7 +82,6 @@ View help with all available arguments:
                      [--logfile LOGFILE] [--syslog] [--syslog-local [0-7]]
                      [--disable-stderr] [--datadir DATADIR]
                      [--maxpeers MAXPEERS] [--wallet WALLET] [--host HOST]
-                     [--extended-rpc]
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -91,7 +90,6 @@ View help with all available arguments:
       --wallet WALLET       Open wallet. Will allow you to use methods that
                             require an open wallet
       --host HOST           Hostname ( for example 127.0.0.1)
-      --extended-rpc        Enable unofficial RPC API methods
 
     Network options:
       --mainnet             Use MainNet
