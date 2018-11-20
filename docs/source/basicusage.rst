@@ -135,6 +135,17 @@ If you want an external program to access your API server, an open firewall port
 
 For P2P information see `NEO-Python Seedlist <https://neo-python.readthedocs.io/en/latest/Seedlist.html>`_.
 
+API Server Plugins
+""""""""""""""""""
+
+Default API server operation is defined in neo/Settings.py under ``DEFAULT_RPC_SERVER`` and ``DEFAULT_REST_SERVER``. Custom API server operation should be defined in the specific ``protocol.<title>.json`` being utilized. For example, to use the ExtendedJsonRpcApi update the "RPCServer" value in the corresponding ``protocol.<title>.json`` to
+
+::
+
+    "RPCServer": "neo.api.JSONRPC.ExtendedJsonRpcApi.ExtendedJsonRpcApi"
+
+**NOTE:** Remember to run ``python setup.py install`` after making any changes to a ``protocol.<title>.json``, so the changes take effect.
+
 Running an API Server using Windows WSL (Ubuntu)
 """"""""""""""""""""""""""""""""""""""""""""""""
 
