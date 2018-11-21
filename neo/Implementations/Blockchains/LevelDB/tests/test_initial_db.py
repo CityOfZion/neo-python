@@ -23,14 +23,14 @@ class LevelDBTest(NeoTestCase):
     def setUpClass(cls):
         settings.setup_unittest_net()
         Blockchain.DeregisterBlockchain()
-        self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH, skip_version_check=True)
-        Blockchain.RegisterBlockchain(self._blockchain)
-        self._genesis = Blockchain.GenesisBlock()
+        cls._blockchain = LevelDBBlockchain(path=cls.LEVELDB_TESTPATH, skip_version_check=True)
+        Blockchain.RegisterBlockchain(cls._blockchain)
+        cls._genesis = Blockchain.GenesisBlock()
 
     @classmethod
     def tearDownClass(cls):
-        self._blockchain.Dispose()
-        shutil.rmtree(self.LEVELDB_TESTPATH)
+        cls._blockchain.Dispose()
+        shutil.rmtree(cls.LEVELDB_TESTPATH)
 
     def test__initial_state(self):
 
