@@ -82,10 +82,9 @@ class JsonRpcApi:
     app = Klein()
     port = None
 
-    def __init__(self, port, wallet=None, server_type="default"):
+    def __init__(self, port, wallet=None):
         self.port = port
         self.wallet = wallet
-        self.server_type = server_type
 
     def get_data(self, body: dict):
 
@@ -126,7 +125,7 @@ class JsonRpcApi:
         # POST Examples:
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         # or multiple requests in 1 transaction
-        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10], {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}
+        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10]}, {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}]
         #
         # GET Example:
         # /?jsonrpc=2.0&id=5&method=getblockcount&params=[]
@@ -173,15 +172,16 @@ class JsonRpcApi:
             return self.get_data(content)
 
         elif "OPTIONS" == request.method.decode("utf-8"):
-            if self.server_type == "default":
-                return {'supported HTTP methods': ("GET", "POST"),
-                        'JSON-RPC server type': "default"}
-            elif self.server_type == "extended":
-                return {'supported HTTP methods': ("GET", "POST"),
-                        'JSON-RPC server type': "extended-rpc"}
+            return self.options_response()
 
         error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
         return self.get_custom_error_payload(request_id, error.code, error.message)
+
+    @classmethod
+    def options_response(self):
+        # new plugins should update this response
+        return {'supported HTTP methods': ("GET", "POST"),
+                'JSON-RPC server type': "default"}
 
     def json_rpc_method_handler(self, method, params):
 
