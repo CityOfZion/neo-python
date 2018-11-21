@@ -178,7 +178,7 @@ class JsonRpcApi:
                         'JSON-RPC server type': "default"}
             elif self.server_type == "extended":
                 return {'supported HTTP methods': ("GET", "POST"),
-                    'JSON-RPC server type': "extended-rpc"}
+                        'JSON-RPC server type': "extended-rpc"}
 
         error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
         return self.get_custom_error_payload(request_id, error.code, error.message)
