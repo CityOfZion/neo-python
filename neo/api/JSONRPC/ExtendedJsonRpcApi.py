@@ -13,7 +13,12 @@ class ExtendedJsonRpcApi(JsonRpcApi):
     def __init__(self, port, wallet=None):
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
-        super(ExtendedJsonRpcApi, self).__init__(port, wallet, server_type="extended")
+        super(ExtendedJsonRpcApi, self).__init__(port, wallet)
+    
+    @classmethod
+    def options_response(self):
+        return {'supported HTTP methods': ("GET", "POST"),
+                'JSON-RPC server type': "extended-rpc"}
 
     def json_rpc_method_handler(self, method, params):
 
