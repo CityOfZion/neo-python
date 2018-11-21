@@ -13,7 +13,7 @@ class VerifiableTestCase(NeoTestCase):
     _blockchain = None
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
 
         Blockchain.DeregisterBlockchain()
 
