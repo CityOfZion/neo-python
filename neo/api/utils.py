@@ -24,7 +24,7 @@ def json_response(func):
                 use_gzip = any("gzip" in encoding for encoding in accepted_encodings)
 
                 if use_gzip:
-                    response_data = gzip.compress(bytes(str(response_data), 'utf-8'), compresslevel=COMPRESS_FASTEST)
+                    response_data = gzip.compress(bytes(response_data, 'utf-8'), compresslevel=COMPRESS_FASTEST)
                     request.setHeader('Content-Encoding', 'gzip')
                     request.setHeader('Content-Length', len(response_data))
 
