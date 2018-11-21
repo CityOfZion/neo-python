@@ -16,7 +16,7 @@ class ExtendedJsonRpcApi(JsonRpcApi):
         super(ExtendedJsonRpcApi, self).__init__(port, wallet)
 
     @classmethod
-    def options_response(self):
+    def options_response(cls):
         return {'supported HTTP methods': ("GET", "POST"),
                 'JSON-RPC server type': "extended-rpc"}
 
