@@ -178,7 +178,7 @@ class JsonRpcApi:
         return self.get_custom_error_payload(request_id, error.code, error.message)
 
     @classmethod
-    def options_response(self):
+    def options_response(cls):
         # new plugins should update this response
         return {'supported HTTP methods': ("GET", "POST"),
                 'JSON-RPC server type': "default"}
