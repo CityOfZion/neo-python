@@ -82,9 +82,10 @@ class JsonRpcApi:
     app = Klein()
     port = None
 
-    def __init__(self, port, wallet=None):
+    def __init__(self, port, wallet=None, server_type="default"):
         self.port = port
         self.wallet = wallet
+        self.server_type = server_type
 
     def get_data(self, body: dict):
 
@@ -172,8 +173,12 @@ class JsonRpcApi:
             return self.get_data(content)
 
         elif "OPTIONS" == request.method.decode("utf-8"):
-            return {'supported HTTP methods': ("GET", "POST"),
-                    'JSON-RPC server type': "default"}
+            if self.server_type == "default":
+                return {'supported HTTP methods': ("GET", "POST"),
+                        'JSON-RPC server type': "default"}
+            elif self.server_type == "extended":
+                return {'supported HTTP methods': ("GET", "POST"),
+                    'JSON-RPC server type': "extended-rpc"}
 
         error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
         return self.get_custom_error_payload(request_id, error.code, error.message)
