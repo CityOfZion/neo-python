@@ -5,6 +5,7 @@ import json
 import os
 import psutil
 import traceback
+import time
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
@@ -987,16 +988,20 @@ class PromptInterface:
             self.dbloop_deferred = None
 
     def start_db_loop(self):
-        self.stop_db_loop()
-        self.dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        self.dbloop_deferred = self.dbloop.start(.1)
-        self.dbloop_deferred.addErrback(self.on_persistblocks_error)
+        # self.stop_db_loop()
+        # self.dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        # self.dbloop_deferred = self.dbloop.start(.1)
+        # self.dbloop_deferred.addErrback(self.on_persistblocks_error)
+        while True:
+            Blockchain.Default().PersistBlocks(limit=5)
+            time.sleep(0.1)
 
     def on_persistblocks_error(self, err):
         logger.debug("On Persist blocks loop error! %s " % err)
 
     def run(self):
-        self.start_db_loop()
+        # self.start_db_loop()
+        reactor.callInThread(self.start_db_loop)
 
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
@@ -1192,7 +1197,7 @@ def main():
     cli = PromptInterface(fn_prompt_history)
 
     # Run things
-
+    reactor.suggestThreadPoolSize(30)
     reactor.callInThread(cli.run)
 
     NodeLeader.Instance().Start()

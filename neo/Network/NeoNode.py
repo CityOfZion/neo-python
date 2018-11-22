@@ -167,6 +167,10 @@ class NeoNode(Protocol):
         logger.debug(f"{self.prefix} new node created {self.identifier}, not yet connected")
 
     def Disconnect(self, reason=None):
+        # make 100% sure its in the reactor main thread
+        reactor.callFromThread(self._disconnect)
+
+    def _disconnect(self, reason=None):
         """Close the connection with the remote node client."""
         self.disconnecting = True
         self.expect_verack_next = False

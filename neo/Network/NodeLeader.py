@@ -422,8 +422,15 @@ class NodeLeader:
         self._monitor_for_zero_connected_peers()
 
         connected = []
+        peer_to_remove = []
+
         for peer in self.Peers:
-            connected.append(peer.Address)
+            if peer.endpoint == "":
+                peer_to_remove.append(peer)
+            else:
+                connected.append(peer.Address)
+        for p in peer_to_remove:
+            self.Peers.remove(p)
 
         self._ensure_peer_tasks_running(connected)
         self._check_for_queuing_possibilities(connected)
@@ -472,7 +479,7 @@ class NodeLeader:
         # unless we're data throttling
         # there has been a case where the connection was established, but ProtocolReady() never called nor disconnected.
         if not self.check_bcr_loop:
-            for peer in connected:
+            for peer in self.Peers:
                 if not peer.has_tasks_running:
                     peer.start_all_tasks()
 

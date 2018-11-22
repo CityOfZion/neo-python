@@ -808,8 +808,8 @@ class LevelDBBlockchain(Blockchain):
         for event in to_dispatch:
             events.emit(event.event_type, event)
 
-    def PersistBlocks(self):
-
+    def PersistBlocks(self, limit=None):
+        ctr = 0
         if not self._paused:
             while not self._disposed:
 
@@ -837,6 +837,11 @@ class LevelDBBlockchain(Blockchain):
                 except Exception as e:
                     logger.debug(f"Failed to broadcast OnPersistCompleted event, reason: {e}")
                     raise e
+
+                ctr += 1
+                # give the reactor the opportunity to preempt
+                if limit and ctr == limit:
+                    break
 
     def Resume(self):
         self._currently_persisting = False
