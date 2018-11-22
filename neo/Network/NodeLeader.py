@@ -82,6 +82,8 @@ class NodeLeader:
 
     NodeCount = 0
 
+    CurrentBlockheight = 0
+
     ServiceEnabled = False
 
     peer_check_loop = None
@@ -92,6 +94,9 @@ class NodeLeader:
 
     memcheck_loop = None
     memcheck_loop_deferred = None
+
+    blockheight_loop = None
+    blockheight_loop_deferred = None
 
     task_handles = {}
 
@@ -167,6 +172,19 @@ class NodeLeader:
         if cancel and self.memcheck_loop_deferred:
             self.memcheck_loop_deferred.cancel()
 
+    def start_blockheight_loop(self):
+        self.stop_blockheight_loop()
+        self.CurrentBlockheight = BC.Default().Height
+        self.blockheight_loop = task.LoopingCall(self.BlockheightCheck)
+        self.blockheight_loop_deferred = self.blockheight_loop.start(60, now=False)
+        self.blockheight_loop_deferred.addErrback(self.OnBlockheightcheckError)
+
+    def stop_blockheight_loop(self, cancel=True):
+        if self.blockheight_loop and self.blockheight_loop.running:
+            self.blockheight_loop.stop()
+        if cancel and self.blockheight_loop_deferred:
+            self.blockheight_loop_deferred.cancel()    
+
     def Setup(self):
         """
         Initialize the local node.
@@ -185,10 +203,12 @@ class NodeLeader:
         self.stop_peer_check_loop()
         self.stop_check_bcr_loop()
         self.stop_memcheck_loop()
+        self.stop_blockheight_loop()
 
         self.peer_check_loop_deferred = None
         self.check_bcr_loop_deferred = None
         self.memcheck_loop_deferred = None
+        self.blockheight_loop_deferred = None
 
         if len(self.Peers) == 0:
             # preserve any addresses we know because the peers in the seedlist might have gone bad and then we can't receive new addresses anymore
@@ -255,10 +275,11 @@ class NodeLeader:
                 setupConnDeferred.addErrback(self.OnSetupConnectionErr)
                 start_delay += 1
 
-        logger.debug("Starting up nodeleader: starting peer and mempool check loops")
+        logger.debug("Starting up nodeleader: starting peer, mempool, and blockheight check loops")
         # check in on peers every 10 seconds
         self.start_peer_check_loop()
         self.start_memcheck_loop()
+        self.start_blockheight_loop()
 
         if settings.ACCEPT_INCOMING_PEERS:
             logger.debug(f"Starting up nodeleader: setting up listen server on port: '{settings.NODE_PORT}")
@@ -315,6 +336,9 @@ class NodeLeader:
 
         self.stop_memcheck_loop()
         self.memcheck_loop_deferred = None
+
+        self.stop_blockheight_loop()
+        self.blockheight_loop_deferred = None
 
         for p in self.Peers:
             p.Disconnect()
@@ -382,6 +406,11 @@ class NodeLeader:
         if type(err.value) == CancelledError:
             return
         logger.debug("Error on Memcheck check %s " % err)
+
+    def OnBlockheightcheckError(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("Error on Blockheight check loop %s " % err)
 
     def PeerCheckLoop(self):
         # often times things will get stuck on 1 peer so
@@ -608,3 +637,13 @@ class NodeLeader:
             res = self.RemoveTransaction(tx)
             if res:
                 logger.debug("found tx 0x%s on the blockchain ...removed from mempool" % tx.Hash)
+
+    def BlockheightCheck(self):
+        """
+        Checks the current blockheight and restarts NodeLeader if not advancing
+        """
+        if self.CurrentBlockheight == BC.Default().Height:
+            logger.debug("Blockheight is not advancing ...restarting NodeLeader")
+            self.Restart()
+        else:
+            self.CurrentBlockheight = BC.Default().Height
