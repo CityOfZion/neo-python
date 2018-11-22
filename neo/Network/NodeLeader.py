@@ -604,3 +604,5 @@ class NodeLeader:
         if self.CurrentBlockheight == BC.Default().Height:
             logger.debug("Blockheight is not advancing ...restarting NodeLeader")
             self.Restart()
+        else:
+            self.CurrentBlockheight = BC.Default().Height
