@@ -7,7 +7,7 @@ import shutil
 class WalletFixtureTestCase(BlockchainFixtureTestCase):
 
     @classmethod
-    def leveldb_testpath(self):
+    def leveldb_testpath(cls):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     @classmethod
@@ -51,7 +51,7 @@ class WalletFixtureTestCase(BlockchainFixtureTestCase):
         return cls.wallets_folder + 'newwallet.wallet'
 
     @classmethod
-    def new_wallet_pass(self):
+    def new_wallet_pass(cls):
         return 'newwallet'
 
     @classmethod

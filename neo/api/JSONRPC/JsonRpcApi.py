@@ -125,7 +125,7 @@ class JsonRpcApi:
         # POST Examples:
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         # or multiple requests in 1 transaction
-        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10], {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}
+        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10]}, {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}]
         #
         # GET Example:
         # /?jsonrpc=2.0&id=5&method=getblockcount&params=[]
@@ -172,11 +172,16 @@ class JsonRpcApi:
             return self.get_data(content)
 
         elif "OPTIONS" == request.method.decode("utf-8"):
-            return {'supported HTTP methods': ("GET", "POST"),
-                    'JSON-RPC server type': "default"}
+            return self.options_response()
 
         error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
         return self.get_custom_error_payload(request_id, error.code, error.message)
+
+    @classmethod
+    def options_response(cls):
+        # new plugins should update this response
+        return {'supported HTTP methods': ("GET", "POST"),
+                'JSON-RPC server type': "default"}
 
     def json_rpc_method_handler(self, method, params):
 
