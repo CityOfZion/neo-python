@@ -34,7 +34,7 @@ class NeoClientFactory(ReconnectingClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         address = Address("%s:%s" % (connector.host, connector.port), Address.Now())
-        logger.debug("Failed connecting to %s " % address)
+        logger.debug(f"Failed connecting to {address} {reason}")
         leader = NodeLeader.Instance()
         if "Connection refused" in str(reason) or "Operation timed out" in str(reason):
             try:
@@ -261,7 +261,7 @@ class NodeLeader:
             setupConnDeferred.addErrback(self.OnSetupConnectionErr)
             start_delay += 1
 
-        self.connection_queue = []
+        # self.connection_queue = []
 
     def Start(self, skip_seeds=False):
         """Start connecting to the node list."""
