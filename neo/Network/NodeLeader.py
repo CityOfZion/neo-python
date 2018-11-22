@@ -176,14 +176,14 @@ class NodeLeader:
         self.stop_blockheight_loop()
         self.CurrentBlockheight = BC.Default().Height
         self.blockheight_loop = task.LoopingCall(self.BlockheightCheck)
-        self.blockheight_loop_deferred = self.blockheight_loop.start(60, now=False)
+        self.blockheight_loop_deferred = self.blockheight_loop.start(240, now=False)
         self.blockheight_loop_deferred.addErrback(self.OnBlockheightcheckError)
 
     def stop_blockheight_loop(self, cancel=True):
         if self.blockheight_loop and self.blockheight_loop.running:
             self.blockheight_loop.stop()
         if cancel and self.blockheight_loop_deferred:
-            self.blockheight_loop_deferred.cancel()    
+            self.blockheight_loop_deferred.cancel()
 
     def Setup(self):
         """
@@ -644,6 +644,7 @@ class NodeLeader:
         """
         if self.CurrentBlockheight == BC.Default().Height:
             logger.debug("Blockheight is not advancing ...restarting NodeLeader")
-            self.Restart()
+            for peer in self.Peers:
+                peer.Disconnect()
         else:
             self.CurrentBlockheight = BC.Default().Height
