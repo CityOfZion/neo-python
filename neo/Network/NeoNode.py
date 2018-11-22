@@ -43,6 +43,27 @@ class NeoNode(Protocol):
 
     identifier = None
 
+    def has_tasks_running(self):
+        block = False
+        header = False
+        peer = False
+        if self.block_loop and self.block_loop.running:
+            block = True
+
+        if self.peer_loop and self.peer_loop.running:
+            peer = True
+
+        if self.header_loop and self.header_loop.running:
+            header = True
+
+        return block and header and peer
+
+    def start_all_tasks(self):
+        if not self.disconnecting:
+            self.start_block_loop()
+            self.start_header_loop()
+            self.start_peerinfo_loop()
+
     def start_block_loop(self):
         logger_verbose.debug(f"{self.prefix} start_block_loop")
         if self.block_loop and self.block_loop.running:
@@ -141,10 +162,13 @@ class NeoNode(Protocol):
         self.header_loop = None
         self.header_loop_deferred = None
 
+        self.disconnecting = False
+
         logger.debug(f"{self.prefix} new node created {self.identifier}, not yet connected")
 
     def Disconnect(self, reason=None):
         """Close the connection with the remote node client."""
+        self.disconnecting = True
         self.expect_verack_next = False
         if reason:
             logger.debug(reason)
@@ -208,6 +232,7 @@ class NeoNode(Protocol):
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
         self.leader.AddConnectedPeer(self)
+        self.leader.RemoveFromQueue(self.address)
         logger.debug(f"{self.prefix} connection established")
         if self.incoming_client:
             # start protocol

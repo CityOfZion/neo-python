@@ -40,8 +40,8 @@ class NeoClientFactory(ReconnectingClientFactory):
             try:
                 if address in leader.KNOWN_ADDRS:
                     leader.KNOWN_ADDRS.remove(address)
-                if address in leader.connection_queue:
-                    leader.connection_queue.remove(address)
+                # try removing
+                leader.RemoveFromQueue(address)
                 # if we failed to connect to new addresses, we should always add them to the DEAD_ADDRS list
                 if address not in leader.DEAD_ADDRS:
                     logger.debug(f"Adding address {address:>21} to DEAD_ADDRS list")
@@ -233,6 +233,16 @@ class NodeLeader:
                 # give a little bit of time between startup of peers
                 time.sleep(2)
 
+    def _process_connection_queue(self):
+        start_delay = 0
+        for addr in self.connection_queue:
+            host, port = addr.split(":")
+            setupConnDeferred = task.deferLater(reactor, start_delay, self.SetupConnection, host, port)
+            setupConnDeferred.addErrback(self.OnSetupConnectionErr)
+            start_delay += 1
+
+        self.connection_queue = []
+
     def Start(self, skip_seeds=False):
         """Start connecting to the node list."""
         logger.debug("Starting up nodeleader")
@@ -341,6 +351,18 @@ class NodeLeader:
         if peer in self.Peers:
             self.Peers.remove(peer)
 
+    def RemoveFromQueue(self, addr):
+        """
+        Remove an address from the connection queue
+        Args:
+            addr:
+
+        Returns:
+
+        """
+        if addr in self.connection_queue:
+            self.connection_queue.remove(addr)
+
     def OnSetupConnectionErr(self, err):
         if type(err.value) == CancelledError:
             return
@@ -367,19 +389,18 @@ class NodeLeader:
         # that were previously active but lost their connection
         logger.debug(
             f"Peer check loop...checking [A:{len(self.KNOWN_ADDRS)} D:{len(self.DEAD_ADDRS)} C:{len(self.Peers)} M:{settings.CONNECTED_PEER_MAX} Q:{len(self.connection_queue)}]")
-        if len(self.Peers) == 0:
-            if self.peer_zero_count > 2:
-                logger.debug("Peer count 0 exceeded max retries threshold, restarting...")
-                self.Restart()
-            else:
-                logger.debug(
-                    f"Peer count is 0, allow for retries or queued connections to be established {self.peer_zero_count}")
-                self.peer_zero_count += 1
 
-        start_delay = 0
+        self._monitor_for_zero_connected_peers()
+
         connected = []
         for peer in self.Peers:
             connected.append(peer.Address)
+
+        self._ensure_peer_tasks_running(connected)
+        self._check_for_queuing_possibilities(connected)
+        self._process_connection_queue()
+
+    def _check_for_queuing_possibilities(self, connected):
         # we sort addresses such that those that we recently disconnected from are last in the list
         self.KNOWN_ADDRS.sort(key=lambda address: address.last_connection)
         to_remove = []
@@ -388,13 +409,9 @@ class NodeLeader:
                 logger.debug(f"Address {addr} found in DEAD_ADDRS list...skipping")
                 to_remove.append(addr)
                 continue
-            if addr not in connected and len(self.Peers) + len(self.connection_queue) < settings.CONNECTED_PEER_MAX:
-                host, port = addr.split(":")
-                # TODO: think how this affects looping calls
-                setupConnDeferred = task.deferLater(reactor, start_delay, self.SetupConnection, host, port)
-                setupConnDeferred.addErrback(self.OnSetupConnectionErr)
+            if addr not in connected and addr not in self.connection_queue and len(self.Peers) + len(
+                    self.connection_queue) < settings.CONNECTED_PEER_MAX:
                 self.connection_queue.append(addr)
-                start_delay += 1
                 logger.debug(
                     f"Queuing {addr:>21} for new connection [in queue: {len(self.connection_queue)} connected: {len(self.Peers)} maxpeers:{settings.CONNECTED_PEER_MAX}]")
 
@@ -405,6 +422,30 @@ class NodeLeader:
                 self.KNOWN_ADDRS.remove(addr)
             except KeyError:
                 pass
+
+    def _monitor_for_zero_connected_peers(self):
+        """
+        Track if we lost connection to all peers.
+        Give some retries threshold to allow peers that are in the process of connecting or in the queue to be connected to run
+
+        """
+        if len(self.Peers) == 0:
+            if self.peer_zero_count > 2:
+                logger.debug("Peer count 0 exceeded max retries threshold, restarting...")
+                self.Restart()
+            else:
+                logger.debug(
+                    f"Peer count is 0, allow for retries or queued connections to be established {self.peer_zero_count}")
+                self.peer_zero_count += 1
+
+    def _ensure_peer_tasks_running(self, connected):
+        # double check that the peers that are connected are running their tasks
+        # unless we're data throttling
+        # there has been a case where the connection was established, but ProtocolReady() never called nor disconnected.
+        if not self.check_bcr_loop:
+            for peer in connected:
+                if not peer.has_tasks_running:
+                    peer.start_all_tasks()
 
     def InventoryReceived(self, inventory):
         """
