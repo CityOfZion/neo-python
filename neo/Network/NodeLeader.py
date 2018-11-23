@@ -465,7 +465,7 @@ class NodeLeader:
         Give some retries threshold to allow peers that are in the process of connecting or in the queue to be connected to run
 
         """
-        if len(self.Peers) == 0:
+        if len(self.Peers) == 0 and len(self.connection_queue) == 0:
             if self.peer_zero_count > 2:
                 logger.debug("Peer count 0 exceeded max retries threshold, restarting...")
                 self.Restart()
