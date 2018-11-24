@@ -992,7 +992,7 @@ class PromptInterface:
         # self.dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
         # self.dbloop_deferred = self.dbloop.start(.1)
         # self.dbloop_deferred.addErrback(self.on_persistblocks_error)
-        while True:
+        while self.go_on:
             Blockchain.Default().PersistBlocks(limit=5)
             time.sleep(0.1)
 
