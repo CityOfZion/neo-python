@@ -232,12 +232,13 @@ class PromptInterface:
         reactor.stop()
 
     def help(self):
-        help_messages = [desc.short_help
-                         for cmd in self.commands.values()
-                         for desc in cmd.command_descs_with_sub_commands()
-                         if desc.short_help is not None]
 
-        tokens = list({("class:command", "%s\n" % msg) for msg in help_messages})  # Use set for unicity
+        help_messages = []
+        for command_group, command in self.commands.items():
+            help_messages.append((command_group, command.command_desc().short_help))
+
+        tokens = list({("class:command", f"{msg[0]} - {msg[1]}\n") for msg in help_messages})  # Use set for unicity
+        tokens.append(("class:command", f"\nRun 'COMMAND help' for more information on a command."))
         print_formatted_text(FormattedText(tokens), style=self.token_style)
 
     def do_open(self, arguments):

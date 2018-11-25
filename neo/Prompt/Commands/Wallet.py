@@ -14,7 +14,7 @@ import binascii
 import json
 import math
 from neo.Implementations.Wallets.peewee.Models import Account
-from neo.Prompt.CommandBase import CommandBase, SubCommandBase, CommandDesc
+from neo.Prompt.CommandBase import CommandBase, SubCommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.logging import log_manager
 
@@ -30,13 +30,17 @@ class CommandWallet(CommandBase):
         self.register_sub_command('create_addr', CommandWalletCreateAddress)
 
     def command_desc(self):
-        return CommandDesc('wallet')
+        return CommandDesc('wallet', 'manage wallets','long help text')
 
     def execute(self, arguments):
-        wallet = PromptData.Wallet
-        if not wallet:
-            print("Please open a wallet")
+        is_help_handled = super().handle_help(arguments)
+        if is_help_handled:
             return
+
+        wallet = PromptData.Wallet
+        # if not wallet:
+        #     print("Please open a wallet")
+        #     return
 
         item = get_arg(arguments)
 
@@ -58,7 +62,7 @@ class CommandWalletVerbose(SubCommandBase):
 
     @classmethod
     def command_desc(self):
-        return CommandDesc('verbose', 'wallet {verbose}')
+        return CommandDesc('verbose', 'show additional wallet details',"long verbose wallet text")
 
 
 class CommandWalletMigrate(SubCommandBase):
@@ -71,7 +75,11 @@ class CommandWalletMigrate(SubCommandBase):
 
     @classmethod
     def command_desc(self):
-        return CommandDesc('migrate', 'wallet migrate')
+        p1 = ParameterDesc('option1', 'description of params 1')
+        p2 = ParameterDesc('option2', 'description of params 2')
+        p3 = ParameterDesc('option3', 'description of params 3', optional=True)
+        params = [p1, p2, p3]
+        return CommandDesc('migrate', 'migrate a wallet from y to z','long help', params=params)
 
 
 class CommandWalletCreateAddress(SubCommandBase):
@@ -83,7 +91,7 @@ class CommandWalletCreateAddress(SubCommandBase):
 
     @classmethod
     def command_desc(self):
-        return CommandDesc('create_addr', 'wallet create_addr {number of addresses}')
+        return CommandDesc('create_addr', "create a wallet address",'wallet create_addr {number of addresses}')
 
 
 #########################################################################
@@ -204,12 +212,10 @@ def AddAlias(wallet, addr, title):
 
 def ClaimGas(wallet, require_password=True, args=None):
     """
-
     Args:
         wallet:
         require_password:
         args:
-
     Returns:
         (claim transaction, relayed status)
             if successful: (tx, True)
@@ -346,13 +352,10 @@ def ShowUnspentCoins(wallet, args):
 
 def SplitUnspentCoin(wallet, args, prompt_passwd=True):
     """
-
     example ``wallet split Ab8RGQEWetkhVqXjPHeGN9LJdbhaFLyUXz neo 1 100``
     this would split the second unspent neo vin into 100 vouts
-
     :param wallet:
     :param args (list): A list of arguments as [Address, asset type, unspent index, divisions]
-
     :return: bool
     """
 

@@ -5,20 +5,24 @@ from prompt_toolkit import prompt
 from neo.Wallets.utils import to_aes_key
 from neo.Prompt.Utils import get_arg
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Prompt.CommandBase import CommandBase, SubCommandBase, CommandDesc
+from neo.Prompt.CommandBase import CommandBase, SubCommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
-
 
 class CommandCreate(CommandBase):
     def __init__(self):
         super().__init__()
 
-        self.register_sub_command('wallet', CommandCreateWallet)
+        # self.register_sub_command('wallet', CommandCreateWallet)
 
     def command_desc(self):
-        return CommandDesc('create')
+        p1 = ParameterDesc('address','creates a new NEO wallet address')
+        return CommandDesc('create','create things',"parameter description if available", params=[p1])
 
     def execute(self, arguments):
+        is_handled = super().handle_help(arguments)
+        if is_handled:
+            return
+
         item = get_arg(arguments)
 
         try:
@@ -71,4 +75,4 @@ class CommandCreateWallet(SubCommandBase):
 
     @classmethod
     def command_desc(self):
-        return CommandDesc('wallet', 'create wallet {path}')
+        return CommandDesc('wallet', 'create wallet {path}', 'long wallet help text')
