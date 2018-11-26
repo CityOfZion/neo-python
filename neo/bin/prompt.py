@@ -37,7 +37,6 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
 # from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
 #     ShowUnspentCoins, SplitUnspentCoin
 from neo.Prompt.Commands.Wallet import CommandWallet
-from neo.Prompt.Commands.Create import CommandCreate
 from neo.Prompt.PromptData import PromptData
 
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
@@ -97,7 +96,6 @@ class PromptInterface:
 
     _commands = [
         CommandWallet(),
-        CommandCreate(),
     ]
 
     _command_descs = [desc for c in _commands for desc in c.command_descs_with_sub_commands()]
