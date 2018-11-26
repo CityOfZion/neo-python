@@ -985,7 +985,12 @@ class PromptInterface:
                     command = command.lower()
 
                     if command in self.commands:
-                        self.commands[command].execute(arguments)
+                        cmd = self.commands[command]
+
+                        if arguments[-1] == 'help':
+                            cmd.handle_help(arguments)
+                        else:
+                            cmd.execute(arguments)
                     else:
                         if command == 'quit' or command == 'exit':
                             self.quit()

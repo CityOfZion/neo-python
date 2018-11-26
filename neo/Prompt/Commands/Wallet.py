@@ -30,17 +30,13 @@ class CommandWallet(CommandBase):
         self.register_sub_command('create_addr', CommandWalletCreateAddress)
 
     def command_desc(self):
-        return CommandDesc('wallet', 'manage wallets','long help text')
+        return CommandDesc('wallet', 'manage wallets', 'long help text')
 
     def execute(self, arguments):
-        is_help_handled = super().handle_help(arguments)
-        if is_help_handled:
-            return
-
         wallet = PromptData.Wallet
-        # if not wallet:
-        #     print("Please open a wallet")
-        #     return
+        if not wallet:
+            print("Please open a wallet")
+            return
 
         item = get_arg(arguments)
 
@@ -62,7 +58,7 @@ class CommandWalletVerbose(SubCommandBase):
 
     @classmethod
     def command_desc(self):
-        return CommandDesc('verbose', 'show additional wallet details',"long verbose wallet text")
+        return CommandDesc('verbose', 'show additional wallet details', 'long verbose wallet text')
 
 
 class CommandWalletMigrate(SubCommandBase):
@@ -79,7 +75,7 @@ class CommandWalletMigrate(SubCommandBase):
         p2 = ParameterDesc('option2', 'description of params 2')
         p3 = ParameterDesc('option3', 'description of params 3', optional=True)
         params = [p1, p2, p3]
-        return CommandDesc('migrate', 'migrate a wallet from y to z','long help', params=params)
+        return CommandDesc('migrate', 'migrate a wallet from y to z', 'long help', params=params)
 
 
 class CommandWalletCreateAddress(SubCommandBase):
@@ -91,7 +87,7 @@ class CommandWalletCreateAddress(SubCommandBase):
 
     @classmethod
     def command_desc(self):
-        return CommandDesc('create_addr', "create a wallet address",'wallet create_addr {number of addresses}')
+        return CommandDesc('create_addr', 'create a wallet address', 'wallet create_addr {number of addresses}')
 
 
 #########################################################################

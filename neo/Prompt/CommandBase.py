@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from neo.Prompt.Utils import get_arg
 from typing import List
 
+
 class ParameterDesc():
     def __init__(self, name, description, optional=False):
         self.name = name
@@ -32,9 +33,9 @@ class CommandDesc():
             help: '???'
             params: list of parameter descriptions belonging to the command
         """
-        self.command = command # command string
-        self.short_help = short_help # Short description of the command
-        self.help = help # Complete help text with details
+        self.command = command  # command string
+        self.short_help = short_help  # Short description of the command
+        self.help = help  # Complete help text with details
         self.params = params if params else []
 
     def __repr__(self):
@@ -89,7 +90,6 @@ class CommandBase(ABC):
             print(p)
 
     def handle_help(self, arguments):
-        handled_help = False
         item = get_arg(arguments)
         if item == 'help':
             if len(self.__sub_commands) > 0:
@@ -97,20 +97,25 @@ class CommandBase(ABC):
                 print(f"\nUsage: {self.command_desc().command} COMMAND\n")
                 print(f"{self.command_desc().short_help.capitalize()}\n")
                 print("Commands:")
-                for sub_cmd in self.__sub_commands.values(): # type: SubCommandBase
-                    print(f"   {sub_cmd.command_desc().command:<15} - {sub_cmd.command_desc().short_help}")
+
+                # Use a set to avoid duplicated lines.
+                cmd_text = {
+                    f"   {sub_cmd.command_desc().command:<15} - {sub_cmd.command_desc().short_help}"
+                    for sub_cmd in self.__sub_commands.values()
+                }
+
+                for txt in cmd_text:
+                    print(txt)
                 print(f"\nRun '{self.command_desc().command} COMMAND help' for more information on the command.")
-                handled_help = True
             else:
                 self.__print_absolute_cmd_help(self)
-
-                handled_help = True
         else:
             if arguments[-1] == 'help':
-                sub_cmd = self.subcommands()[item] # type: SubCommandBase
-                self.__print_absolute_cmd_help(sub_cmd)
-
-        return handled_help
+                if item in self.__sub_commands:
+                    sub_cmd = self.__sub_commands[item]  # type: SubCommandBase
+                    self.__print_absolute_cmd_help(sub_cmd)
+                else:
+                    print('Unknown command')
 
 
 class SubCommandBase(CommandBase):
