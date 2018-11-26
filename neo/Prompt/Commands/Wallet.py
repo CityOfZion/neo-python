@@ -14,7 +14,7 @@ import binascii
 import json
 import math
 from neo.Implementations.Wallets.peewee.Models import Account
-from neo.Prompt.CommandBase import CommandBase, SubCommandBase, CommandDesc, ParameterDesc
+from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.logging import log_manager
 
@@ -25,12 +25,12 @@ class CommandWallet(CommandBase):
     def __init__(self):
         super().__init__()
 
-        self.register_sub_command(['v', '--v', 'verbose'], CommandWalletVerbose)
-        self.register_sub_command('migrate', CommandWalletMigrate)
-        self.register_sub_command('create_addr', CommandWalletCreateAddress)
+        self.register_sub_command(['v', '--v', 'verbose'], CommandWalletVerbose())
+        self.register_sub_command('migrate', CommandWalletMigrate())
+        self.register_sub_command('create_addr', CommandWalletCreateAddress())
 
     def command_desc(self):
-        return CommandDesc('wallet', 'manage wallets', 'long help text')
+        return CommandDesc('wallet', 'manage wallets')
 
     def execute(self, arguments):
         wallet = PromptData.Wallet
@@ -50,44 +50,47 @@ class CommandWallet(CommandBase):
             print(f"Wallet: {item} is an invalid parameter")
 
 
-class CommandWalletVerbose(SubCommandBase):
+class CommandWalletVerbose(CommandBase):
 
-    @classmethod
-    def execute(cls, arguments):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
         print("Wallet %s " % json.dumps(PromptData.Wallet.ToJson(verbose=True), indent=4))
 
-    @classmethod
     def command_desc(self):
-        return CommandDesc('verbose', 'show additional wallet details', 'long verbose wallet text')
+        return CommandDesc('verbose', 'show additional wallet details')
 
 
-class CommandWalletMigrate(SubCommandBase):
+class CommandWalletMigrate(CommandBase):
 
-    @classmethod
-    def execute(cls, arguments):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
         if PromptData.Wallet is not None:
             PromptData.Wallet.Migrate()
             print("Migrated wallet")
 
-    @classmethod
     def command_desc(self):
         p1 = ParameterDesc('option1', 'description of params 1')
         p2 = ParameterDesc('option2', 'description of params 2')
         p3 = ParameterDesc('option3', 'description of params 3', optional=True)
         params = [p1, p2, p3]
-        return CommandDesc('migrate', 'migrate a wallet from y to z', 'long help', params=params)
+        return CommandDesc('migrate', 'migrate a wallet from y to z', params=params)
 
 
-class CommandWalletCreateAddress(SubCommandBase):
+class CommandWalletCreateAddress(CommandBase):
 
-    @classmethod
-    def execute(cls, arguments):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
         addresses_to_create = get_arg(arguments, 0)
         CreateAddress(PromptData.Wallet, addresses_to_create)
 
-    @classmethod
     def command_desc(self):
-        return CommandDesc('create_addr', 'create a wallet address', 'wallet create_addr {number of addresses}')
+        return CommandDesc('create_addr', 'create a wallet address')
 
 
 #########################################################################
