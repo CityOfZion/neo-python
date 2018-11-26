@@ -69,15 +69,20 @@ class CommandBase(ABC):
     def execute_sub_command(self, id, arguments):
         self.__sub_commands[id].execute(arguments)
 
-    # ids: can be either a string or a list of strings.
-    def register_sub_command(self, ids, sub_command):
-        if isinstance(ids, list):
-            for id in ids:
-                self.__register_sub_command(id, sub_command)
-        else:
-            self.__register_sub_command(ids, sub_command)
+    def register_sub_command(self, sub_command, additional_ids=[]):
+        """
+        Register a command as a subcommand.
+        It will have it's CommandDesc.command string used as id. Additional ids can be provided.
 
-    def __register_sub_command(self, id, sub_command):
+        Args:
+            sub_command (CommandBase): Subcommand to register.
+            additional_ids (List[str]): List of additional ids. Can be empty.
+        """
+        self.__register_sub_command(sub_command, sub_command.command_desc().command)
+        for id in additional_ids:
+            self.__register_sub_command(sub_command, id)
+
+    def __register_sub_command(self, sub_command, id):
         if id in self.__sub_commands:
             raise ValueError(f"{id} is already a subcommand of {self.command_desc().command}.")
         if sub_command.__parent_command and sub_command.__parent_command != self:
