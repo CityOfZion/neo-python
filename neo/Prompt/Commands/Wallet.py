@@ -7,17 +7,155 @@ from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAt
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
+from neo.Wallets.utils import to_aes_key
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
 import binascii
 import json
+import os
 import math
 from neo.Implementations.Wallets.peewee.Models import Account
-
+from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
+from neo.Prompt.PromptData import PromptData
 from neo.logging import log_manager
 
+
 logger = log_manager.getLogger()
+
+
+class CommandWallet(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+        self.register_sub_command('create', CommandWalletCreate())
+        self.register_sub_command(['v', '--v', 'verbose'], CommandWalletVerbose())
+        self.register_sub_command('migrate', CommandWalletMigrate())
+        self.register_sub_command('create_addr', CommandWalletCreateAddress())
+
+    def command_desc(self):
+        return CommandDesc('wallet', 'manage wallets')
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+        item = get_arg(arguments)
+
+        # Create and Open must be handled specially.
+        if item == 'create':
+            self.execute_sub_command(item, arguments[1:])
+            return
+
+        if not wallet:
+            print("Please open a wallet")
+            return
+
+        if not item:
+            print("Wallet %s " % json.dumps(wallet.ToJson(), indent=4))
+            return
+
+        try:
+            self.execute_sub_command(item, arguments[1:])
+        except KeyError:
+            print(f"Wallet: {item} is an invalid parameter")
+
+
+class CommandWalletCreate(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    @classmethod
+    def execute(cls, arguments):
+        path = get_arg(arguments, 0)
+
+        if path:
+            if os.path.exists(path):
+                print("File already exists")
+                return
+
+            passwd1 = prompt("[password]> ", is_password=True)
+            passwd2 = prompt("[password again]> ", is_password=True)
+
+            if passwd1 != passwd2 or len(passwd1) < 10:
+                print("Please provide matching passwords that are at least 10 characters long")
+                return
+
+            password_key = to_aes_key(passwd1)
+
+            try:
+                PromptData.Wallet = UserWallet.Create(path=path, password=password_key)
+                contract = PromptData.Wallet.GetDefaultContract()
+                key = PromptData.Wallet.GetKey(contract.PublicKeyHash)
+                print("Wallet %s" % json.dumps(PromptData.Wallet.ToJson(), indent=4))
+                print("Pubkey %s" % key.PublicKey.encode_point(True))
+            except Exception as e:
+                print("Exception creating wallet: %s" % e)
+                PromptData.Wallet = None
+                if os.path.isfile(path):
+                    try:
+                        os.remove(path)
+                    except Exception as e:
+                        print("Could not remove {}: {}".format(path, e))
+                return
+
+            if PromptData.Wallet:
+                PromptData.Prompt.start_wallet_loop()
+
+        else:
+            print("Please specify a path")
+
+    @classmethod
+    def command_desc(self):
+        p1 = ParameterDesc('path', 'path to store the wallet file')
+        return CommandDesc('create', 'creates a new NEO wallet address', [p1])
+
+
+class CommandWalletVerbose(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        print("Wallet %s " % json.dumps(PromptData.Wallet.ToJson(verbose=True), indent=4))
+
+    def command_desc(self):
+        return CommandDesc('verbose', 'show additional wallet details')
+
+
+class CommandWalletMigrate(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if PromptData.Wallet is not None:
+            PromptData.Wallet.Migrate()
+            print("Migrated wallet")
+
+    def command_desc(self):
+        p1 = ParameterDesc('option1', 'description of params 1')
+        p2 = ParameterDesc('option2', 'description of params 2')
+        p3 = ParameterDesc('option3', 'description of params 3', optional=True)
+        params = [p1, p2, p3]
+        return CommandDesc('migrate', 'migrate a wallet from y to z', params=params)
+
+
+class CommandWalletCreateAddress(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        addresses_to_create = get_arg(arguments, 0)
+        CreateAddress(PromptData.Wallet, addresses_to_create)
+
+    def command_desc(self):
+        return CommandDesc('create_addr', 'create a wallet address')
+
+
+#########################################################################
+#########################################################################
 
 
 def CreateAddress(wallet, args):
@@ -134,12 +272,10 @@ def AddAlias(wallet, addr, title):
 
 def ClaimGas(wallet, require_password=True, args=None):
     """
-
     Args:
         wallet:
         require_password:
         args:
-
     Returns:
         (claim transaction, relayed status)
             if successful: (tx, True)
@@ -276,13 +412,10 @@ def ShowUnspentCoins(wallet, args):
 
 def SplitUnspentCoin(wallet, args, prompt_passwd=True):
     """
-
     example ``wallet split Ab8RGQEWetkhVqXjPHeGN9LJdbhaFLyUXz neo 1 100``
     this would split the second unspent neo vin into 100 vouts
-
     :param wallet:
     :param args (list): A list of arguments as [Address, asset type, unspent index, divisions]
-
     :return: bool
     """
 

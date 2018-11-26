@@ -1,0 +1,139 @@
+from abc import ABC, abstractmethod
+from neo.Prompt.Utils import get_arg
+from typing import List
+
+
+class ParameterDesc():
+    def __init__(self, name, description, optional=False):
+        """
+        Parameter descriptor
+
+        Args:
+            name: 1 word parameter identifier.
+            description: short description of the purpose of the parameter. What does it configure/do.
+            optional: flag indicating whether the parameter is optional. Defaults to mandatory (false).
+        """
+        self.name = name
+        self.description = description
+        self.optional = optional
+
+    def __repr__(self):
+        if self.optional:
+            return f"{self.name:<15} - (Optional) {self.description}"
+        else:
+            return f"{self.name:<15} - {self.description}"
+
+    def formatted_name(self):
+        if self.optional:
+            return f"({self.name})"
+        else:
+            return f"{{{self.name}}}"
+
+
+class CommandDesc():
+    def __init__(self, command, short_help, params: List[ParameterDesc] = None):
+        """
+        Command descriptor
+
+        Args:
+            command: 1 word command identifier
+            short_help: short description of the purpose of the command
+            params: list of parameter descriptions belonging to the command
+        """
+        self.command = command
+        self.short_help = short_help
+        self.params = params if params else []
+
+    def __repr__(self):
+        s = self.command
+        if self.short_help:
+            s += f" # {self.short_help}"
+        return s
+
+
+class CommandBase(ABC):
+    def __init__(self):
+        super().__init__()
+        self.__sub_commands = dict()
+        self.__parent_command = None
+
+    @abstractmethod
+    def execute(self, arguments):
+        pass
+
+    @abstractmethod
+    def command_desc(self):
+        pass
+
+    # Raise KeyError exception if the command does not exist
+    def execute_sub_command(self, id, arguments):
+        self.__sub_commands[id].execute(arguments)
+
+    # ids: can be either a string or a list of strings.
+    def register_sub_command(self, ids, sub_command):
+        if isinstance(ids, list):
+            for id in ids:
+                self.__register_sub_command(id, sub_command)
+        else:
+            self.__register_sub_command(ids, sub_command)
+
+    def __register_sub_command(self, id, sub_command):
+        if id in self.__sub_commands:
+            raise ValueError(f"{id} is already a subcommand of {self.command_desc().command}.")
+        if sub_command.__parent_command and sub_command.__parent_command != self:
+            raise ValueError(f"The given sub_command is already a subcommand of another command ({sub_command.__parent_command.command_desc().command}.")
+
+        self.__sub_commands[id] = sub_command
+        sub_command.__parent_command = self
+
+    # Include subcommands recursively.
+    def command_descs_with_sub_commands(self):
+        sub_descs = [
+            desc
+            for sub_cmd in self.__sub_commands.values()
+            for desc in sub_cmd.command_descs_with_sub_commands()
+        ]
+        return [self.command_desc()] + sub_descs
+
+    def __print_absolute_cmd_help(self):
+        print(f"\n{self.command_desc().short_help.capitalize()}")
+        params = ""
+        for p in self.command_desc().params:
+            params += f"{p.formatted_name()} "
+        print(f"\nUsage: {self.__command_with_parents()} {params}\n")
+
+        for p in self.command_desc().params:
+            print(p)
+
+    def __command_with_parents(self):
+        s = self.command_desc().command
+        if self.__parent_command:
+            s = self.__parent_command.__command_with_parents() + " " + s
+        return s
+
+    def handle_help(self, arguments):
+        item = get_arg(arguments)
+        if item == 'help':
+            if len(self.__sub_commands) > 0:
+                # show overview of subcommands and their purpose
+                print(f"\nUsage: {self.__command_with_parents()} COMMAND\n")
+                print(f"{self.command_desc().short_help.capitalize()}\n")
+                print("Commands:")
+
+                # Use a set to avoid duplicated lines.
+                cmd_text = {
+                    f"   {sub_cmd.command_desc().command:<15} - {sub_cmd.command_desc().short_help}"
+                    for sub_cmd in self.__sub_commands.values()
+                }
+
+                for txt in cmd_text:
+                    print(txt)
+                print(f"\nRun '{self.__command_with_parents()} COMMAND help' for more information on the command.")
+            else:
+                self.__print_absolute_cmd_help()
+        else:
+            if arguments[-1] == 'help':
+                if item in self.__sub_commands:
+                    self.__sub_commands[item].handle_help(arguments[1:])
+                else:
+                    print('Unknown command')
