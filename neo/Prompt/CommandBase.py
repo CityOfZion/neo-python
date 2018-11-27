@@ -67,7 +67,7 @@ class CommandBase(ABC):
 
     # Raise KeyError exception if the command does not exist
     def execute_sub_command(self, id, arguments):
-        self.__sub_commands[id].execute(arguments)
+        return self.__sub_commands[id].execute(arguments)
 
     def register_sub_command(self, sub_command, additional_ids=[]):
         """
