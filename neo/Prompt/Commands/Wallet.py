@@ -31,9 +31,14 @@ class CommandWallet(CommandBase):
         super().__init__()
 
         self.register_sub_command(CommandWalletCreate())
+        self.register_sub_command(CommandWalletOpen())
+        self.register_sub_command(CommandWalletClose())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
         self.register_sub_command(CommandWalletMigrate())
         self.register_sub_command(CommandWalletCreateAddress())
+        self.register_sub_command(CommandWalletSend())
+        self.register_sub_command(CommandWalletSendMany())
+        self.register_sub_command(CommandWalletSign())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -42,17 +47,9 @@ class CommandWallet(CommandBase):
         wallet = PromptData.Wallet
         item = get_arg(arguments)
 
-        # Create, Open, and Close must be handled specially.
-        if item == 'create':
+        # Create and Open must be handled specially.
+        if item in {'create', 'open'}:
             self.execute_sub_command(item, arguments[1:])
-            return
-
-        elif item == 'open':
-            self.execute_sub_command(item, arguments[1:])
-            return
-
-        elif item == 'close':
-            self.execute_sub_command(item)
             return
 
         if not wallet:
@@ -64,7 +61,10 @@ class CommandWallet(CommandBase):
             return
 
         try:
-            self.execute_sub_command(item, arguments[1:])
+            if len(arguments) > 1:
+                self.execute_sub_command(item, arguments[1:])
+            else:
+                self.execute_sub_command(item)
         except KeyError:
             print(f"Wallet: {item} is an invalid parameter")
 
@@ -75,6 +75,8 @@ class CommandWalletCreate(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
+        if PromptData.Wallet:
+            CommandWalletClose().execute()
         path = get_arg(arguments, 0)
 
         if path:
@@ -125,7 +127,7 @@ class CommandWalletOpen(CommandBase):
 
     def execute(self, arguments):
         if PromptData.Wallet:
-            CommandWalletClose.execute()
+            CommandWalletClose().execute()
 
         path = get_arg(arguments, 0)
 
@@ -160,8 +162,7 @@ class CommandWalletClose(CommandBase):
     def __init__(self):
         super().__init__()
 
-    @classmethod
-    def execute(cls):
+    def execute(self):
         if PromptData.Wallet:
             path = PromptData.Wallet._path
             PromptData.Prompt.stop_wallet_loop()
@@ -178,7 +179,7 @@ class CommandWalletVerbose(CommandBase):
     def __init__(self):
         super().__init__()
 
-    def execute(self, arguments):
+    def execute(self):
         print("Wallet %s " % json.dumps(PromptData.Wallet.ToJson(verbose=True), indent=4))
 
     def command_desc(self):
