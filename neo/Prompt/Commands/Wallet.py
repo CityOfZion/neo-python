@@ -50,7 +50,6 @@ class CommandWallet(CommandBase):
         # Create and Open must be handled specially.
         if item in {'create', 'open'}:
             return self.execute_sub_command(item, arguments[1:])
-            
 
         if not wallet:
             print("Please open a wallet")
