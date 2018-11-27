@@ -3,13 +3,12 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
-from neo.Prompt.Commands.Send import construct_send_basic, construct_send_many, process_transaction
 from neo.Prompt.Commands.Wallet import ImportToken
 from neo.Prompt.Utils import get_tx_attr_from_args
 from neo.Prompt.Commands import Send, Wallet
 from neo.Prompt.PromptData import PromptData
 import shutil
-from mock import MagicMock, patch
+from mock import patch
 import json
 from io import StringIO
 
