@@ -65,18 +65,15 @@ class CommandBase(ABC):
     def command_desc(self):
         pass
 
-    # Raise KeyError exception if the command does not exist
-    def execute_sub_command(self, id, arguments=None):
-        if arguments is not None:
-            self.__sub_commands[id].execute(arguments)
-        else:
-            self.__sub_commands[id].execute()
+    def execute_sub_command(self, id, arguments):
+        self.__sub_commands[id].execute(arguments)
 
     def register_sub_command(self, sub_command, additional_ids=[]):
         """
         Register a command as a subcommand.
         It will have it's CommandDesc.command string used as id. Additional ids can be provided.
-         Args:
+
+        Args:
             sub_command (CommandBase): Subcommand to register.
             additional_ids (List[str]): List of additional ids. Can be empty.
         """
