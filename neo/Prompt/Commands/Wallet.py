@@ -30,6 +30,7 @@ class CommandWallet(CommandBase):
     def __init__(self):
         super().__init__()
 
+        self.register_sub_command(CommandWalletCreate())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
         self.register_sub_command(CommandWalletMigrate())
         self.register_sub_command(CommandWalletCreateAddress())
