@@ -26,7 +26,9 @@ class CommandWalletSend(CommandBase):
     def execute(self, arguments):
         framework = construct_send_basic(PromptData.Wallet, arguments)
         if type(framework) is list:
-            process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
+            return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1],
+                                       fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
+        return framework
 
     def command_desc(self):
         p1 = ParameterDesc('assetId or name', 'the asset you wish to send')
@@ -48,7 +50,9 @@ class CommandWalletSendMany(CommandBase):
     def execute(self, arguments):
         framework = construct_send_many(PromptData.Wallet, arguments)
         if type(framework) is list:
-            process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
+            return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2],
+                                       fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
+        return framework
 
     def command_desc(self):
         p1 = ParameterDesc('number of outgoing tx', 'the number of tx you wish to send')
@@ -68,7 +72,7 @@ class CommandWalletSign(CommandBase):
 
     def execute(self, arguments):
         jsn = get_arg(arguments)
-        parse_and_sign(PromptData.Wallet, jsn)
+        return parse_and_sign(PromptData.Wallet, jsn)
 
     def command_desc(self):
         p1 = ParameterDesc('jsn', 'transaction in JSON format')
@@ -109,7 +113,8 @@ def construct_send_basic(wallet, arguments):
     # if this is a token, we will use a different
     # transfer mechanism
     if type(assetId) is NEP5Token:
-        return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), tx_attributes=user_tx_attributes)
+        return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount),
+                                 tx_attributes=user_tx_attributes)
 
     f8amount = get_asset_amount(amount, assetId)
     if f8amount is False:
