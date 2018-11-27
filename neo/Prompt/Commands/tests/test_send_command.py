@@ -399,7 +399,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             token_hash = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
             ImportToken(PromptData.Wallet, token_hash)
 
-            args = ["2", '--from-addr=%s' % self.wallet_1_addr]
+            args = ['sendmany', "2", '--from-addr=%s' % self.wallet_1_addr]
 
             res = Wallet.CommandWallet().execute(args)
 
@@ -409,7 +409,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", "AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE", "1"]):  # address is too short
 
             PromptData.Wallet = self.GetWallet1(recreate=True)
-            args = ['sendmany' '2']
+            args = ['sendmany', '2']
 
             res = Wallet.CommandWallet().execute(args)
 
