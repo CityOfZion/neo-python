@@ -6,12 +6,11 @@ from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Send import construct_send_basic, construct_send_many, process_transaction
 from neo.Prompt.Commands.Wallet import ImportToken
 from neo.Prompt.Utils import get_tx_attr_from_args
-from neo.Prompt.Commands import Send
+from neo.Prompt.Commands import Send, Wallet
 import shutil
-from mock import MagicMock
+from mock import MagicMock, patch
 import json
-
-from mock import patch
+from io import StringIO
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -40,26 +39,26 @@ class UserWalletTestCase(WalletFixtureTestCase):
         return cls._wallet1
 
     def test_send_neo(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            wallet = self.GetWallet1(recreate=True)
-            args = ['neo', self.watch_addr_str, '50']
+        wallet = self.GetWallet1(recreate=True)
+        with patch('neo.Prompt.PromptData.PromptData.Wallet', return_value=wallet):
+            with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    args = ['send', 'neo', self.watch_addr_str, '50']                    
+                    command_wallet = Wallet.CommandWallet()
+                    command_wallet.execute(args)
 
-            framework = construct_send_basic(wallet, args)
-            res = process_transaction(wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
+                    self.assertIn("Relayed Tx", mock_print.getvalue())
 
-            self.assertTrue(res)
+    def test_send_gas(self):
+        wallet = self.GetWallet1(recreate=True)
+        with patch('neo.Prompt.PromptData.PromptData.Wallet', return_value=wallet):
+            with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    args = ['send', 'gas', self.watch_addr_str, '5']
+                    command_wallet = Wallet.CommandWallet()
+                    command_wallet.execute(args)
 
-    def test_send_gas_mimic_prompt(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            wallet = self.GetWallet1(recreate=True)
-            args = ['gas', self.watch_addr_str, '5']
-            res = False
-
-            framework = construct_send_basic(wallet, args)
-            if type(framework) is list:
-                res = process_transaction(wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
-
-            self.assertTrue(res)
+                    self.assertIn("Relayed Tx", mock_print.getvalue())
 
     def test_send_with_fee_and_from_addr(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
@@ -77,13 +76,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertEqual(json_res['net_fee'], "0.005")  # verify correct fee
 
     def test_send_no_wallet(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ["send", "neo", self.wallet_1_addr, '5']
+            command_wallet = Wallet.CommandWallet()
+            command_wallet.execute(args)
 
-        wallet = None
-        args = ['neo', self.watch_addr_str, '50']
-
-        framework = construct_send_basic(wallet, args)
-
-        self.assertFalse(framework)
+            self.assertIn("Please open a wallet", mock_print.getvalue())
 
     def test_send_bad_args(self):
 
@@ -328,25 +326,15 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertFalse(res)
 
     def test_sendmany_good_simple(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
+        wallet = self.GetWallet1(recreate=True)
+        with patch('neo.Prompt.PromptData.PromptData.Wallet', return_value=wallet):
+            with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    args = ['sendmany', '2']
+                    command_wallet = Wallet.CommandWallet()
+                    command_wallet.execute(args)
 
-            wallet = self.GetWallet1(recreate=True)
-            args = ["2"]
-
-            framework = construct_send_many(wallet, args)
-            res = process_transaction(wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
-
-            self.assertTrue(res)  # verify successful tx
-
-            json_res = res.ToJson()
-            self.assertEqual(self.watch_addr_str, json_res['vout'][0]['address'])  # verify correct address_to
-
-            # check for 2 transfers
-            transfers = 0
-            for info in json_res['vout']:
-                if info['address'] == self.watch_addr_str:
-                    transfers += 1
-            self.assertEqual(2, transfers)
+                    self.assertIn("Relayed Tx", mock_print.getvalue())
 
     def test_sendmany_good_complex(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", "gas", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", UserWalletTestCase.wallet_1_pass()]):
@@ -365,18 +353,25 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             json_res = res.ToJson()
             self.assertEqual("AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", json_res['vout'][0]['address'])  # verify correct address_to
+
+            # check for 2 transfers
+            transfers = 0
+            for info in json_res['vout']:
+                if info['address'] == self.watch_addr_str:
+                    transfers += 1
+            self.assertEqual(2, transfers)
+
             self.assertEqual(self.watch_addr_str, json_res['vout'][2]['address'])  # verify correct change address
             self.assertEqual(float(address_from_gas_bal) - 1 - 0.005, float(json_res['vout'][3]['value']))
             self.assertEqual('0.005', json_res['net_fee'])
 
     def test_sendmany_no_wallet(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['sendmany', '2']
+            command_wallet = Wallet.CommandWallet()
+            command_wallet.execute(args)
 
-        wallet = None
-        args = ['2']
-
-        framework = construct_send_many(wallet, args)
-
-        self.assertFalse(framework)
+            self.assertIn("Please open a wallet", mock_print.getvalue())
 
     def test_sendmany_bad_args(self):
 
