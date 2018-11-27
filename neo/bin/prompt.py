@@ -12,7 +12,7 @@ from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
 from prompt_toolkit import prompt
-from twisted.internet import reactor, task
+from twisted.internet import reactor, task, threads
 
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
@@ -557,12 +557,14 @@ class PromptInterface:
     def do_send(self, arguments):
         framework = construct_send_basic(self.Wallet, arguments)
         if type(framework) is list:
-            process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
+            process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3],
+                                user_tx_attributes=framework[4])
 
     def do_send_many(self, arguments):
         framework = construct_send_many(self.Wallet, arguments)
         if type(framework) is list:
-            process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
+            process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3],
+                                owners=framework[4], user_tx_attributes=framework[5])
 
     def do_sign(self, arguments):
         if not self.Wallet:
@@ -988,20 +990,29 @@ class PromptInterface:
             self.dbloop_deferred = None
 
     def start_db_loop(self):
-        # self.stop_db_loop()
-        # self.dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        # self.dbloop_deferred = self.dbloop.start(.1)
-        # self.dbloop_deferred.addErrback(self.on_persistblocks_error)
-        while self.go_on:
-            Blockchain.Default().PersistBlocks(limit=5)
-            time.sleep(0.1)
+        self.stop_db_loop()
+        self.dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks, 5)
+        self.dbloop_deferred = self.dbloop.start(.1)
+        self.dbloop_deferred.addErrback(self.on_persistblocks_error)
+        # while self.go_on:
+        #     Blockchain.Default().PersistBlocks(limit=5)
+        #     time.sleep(0.1)
 
     def on_persistblocks_error(self, err):
         logger.debug("On Persist blocks loop error! %s " % err)
 
+    def _persist_done(self, value):
+        """persist callback. Value is unused"""
+        if self.go_on:
+            self._try_block_persisting()
+
+    def _try_block_persisting(self):
+        d1 = threads.deferToThread(Blockchain.Default().PersistBlocks)
+        d1.addCallback(self._persist_done)
+        d1.addErrback(self.on_persistblocks_error)
+
     def run(self):
-        # self.start_db_loop()
-        reactor.callInThread(self.start_db_loop)
+        self._try_block_persisting()
 
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
@@ -1197,7 +1208,7 @@ def main():
     cli = PromptInterface(fn_prompt_history)
 
     # Run things
-    reactor.suggestThreadPoolSize(30)
+    # reactor.suggestThreadPoolSize(30)
     reactor.callInThread(cli.run)
 
     NodeLeader.Instance().Start()
