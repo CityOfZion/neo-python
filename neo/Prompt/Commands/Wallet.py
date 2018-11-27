@@ -75,8 +75,6 @@ class CommandWalletCreate(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        if PromptData.Wallet:
-            CommandWalletClose.execute()
         path = get_arg(arguments, 0)
 
         if path:
