@@ -173,7 +173,6 @@ class CommandWalletClose(CommandBase):
             PromptData.Wallet = None
             print("Closed wallet %s" % path)
             return True
-        return False
 
     def command_desc(self):
         return CommandDesc('close', 'closes the open NEO wallet')
