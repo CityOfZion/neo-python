@@ -30,15 +30,15 @@ class CommandWallet(CommandBase):
     def __init__(self):
         super().__init__()
 
-        self.register_sub_command('create', CommandWalletCreate())
-        self.register_sub_command('open', CommandWalletOpen())
-        self.register_sub_command('close', CommandWalletClose())
-        self.register_sub_command(['v', '--v', 'verbose'], CommandWalletVerbose())
-        self.register_sub_command('migrate', CommandWalletMigrate())
-        self.register_sub_command('create_addr', CommandWalletCreateAddress())
-        self.register_sub_command('send', CommandWalletSend())
-        self.register_sub_command('sendmany', CommandWalletSendMany())
-        self.register_sub_command('sign', CommandWalletSign())
+        self.register_sub_command(CommandWalletCreate())
+        self.register_sub_command(CommandWalletOpen())
+        self.register_sub_command(CommandWalletClose())
+        self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
+        self.register_sub_command(CommandWalletMigrate())
+        self.register_sub_command(CommandWalletCreateAddress())
+        self.register_sub_command(CommandWalletSend())
+        self.register_sub_command(CommandWalletSendMany())
+        self.register_sub_command(CommandWalletSign())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -57,7 +57,7 @@ class CommandWallet(CommandBase):
             return
 
         elif item == 'close':
-            self.execute_sub_command(item, arguments=None)
+            self.execute_sub_command(item)
             return
 
         if not wallet:
@@ -79,10 +79,9 @@ class CommandWalletCreate(CommandBase):
     def __init__(self):
         super().__init__()
 
-    @classmethod
-    def execute(cls, arguments):
+    def execute(self, arguments):
         if PromptData.Wallet:
-            CommandWalletClose.execute(arguments=None)
+            CommandWalletClose.execute()
         path = get_arg(arguments, 0)
 
         if path:
@@ -121,8 +120,7 @@ class CommandWalletCreate(CommandBase):
         else:
             print("Please specify a path")
 
-    @classmethod
-    def command_desc(cls):
+    def command_desc(self):
         p1 = ParameterDesc('path', 'path to store the wallet file')
         return CommandDesc('create', 'creates a new NEO wallet address', [p1])
 
@@ -132,10 +130,9 @@ class CommandWalletOpen(CommandBase):
     def __init__(self):
         super().__init__()
 
-    @classmethod
-    def execute(cls, arguments):
+    def execute(self, arguments):
         if PromptData.Wallet:
-            CommandWalletClose.execute(arguments=None)
+            CommandWalletClose.execute()
 
         path = get_arg(arguments, 0)
 
@@ -160,8 +157,7 @@ class CommandWalletOpen(CommandBase):
         else:
             print("Please specify a path")
 
-    @classmethod
-    def command_desc(cls):
+    def command_desc(self):
         p1 = ParameterDesc('path', 'path to open the wallet file')
         return CommandDesc('open', 'opens a NEO wallet', [p1])
 
@@ -172,7 +168,7 @@ class CommandWalletClose(CommandBase):
         super().__init__()
 
     @classmethod
-    def execute(cls, arguments):
+    def execute(cls):
         if PromptData.Wallet:
             path = PromptData.Wallet._path
             PromptData.Prompt.stop_wallet_loop()
@@ -180,8 +176,7 @@ class CommandWalletClose(CommandBase):
             PromptData.Wallet = None
             print("Closed wallet %s" % path)
 
-    @classmethod
-    def command_desc(cls):
+    def command_desc(self):
         return CommandDesc('close', 'closes the open NEO wallet')
 
 
