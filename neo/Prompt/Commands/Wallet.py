@@ -29,10 +29,10 @@ class CommandWallet(CommandBase):
     def __init__(self):
         super().__init__()
 
-        self.register_sub_command('create', CommandWalletCreate())
-        self.register_sub_command(['v', '--v', 'verbose'], CommandWalletVerbose())
-        self.register_sub_command('migrate', CommandWalletMigrate())
-        self.register_sub_command('create_addr', CommandWalletCreateAddress())
+        self.register_sub_command(CommandWalletCreate())
+        self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
+        self.register_sub_command(CommandWalletMigrate())
+        self.register_sub_command(CommandWalletCreateAddress())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -65,8 +65,7 @@ class CommandWalletCreate(CommandBase):
     def __init__(self):
         super().__init__()
 
-    @classmethod
-    def execute(cls, arguments):
+    def execute(self, arguments):
         path = get_arg(arguments, 0)
 
         if path:
@@ -105,7 +104,6 @@ class CommandWalletCreate(CommandBase):
         else:
             print("Please specify a path")
 
-    @classmethod
     def command_desc(self):
         p1 = ParameterDesc('path', 'path to store the wallet file')
         return CommandDesc('create', 'creates a new NEO wallet address', [p1])
