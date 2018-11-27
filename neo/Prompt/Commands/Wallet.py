@@ -51,11 +51,11 @@ class CommandWallet(CommandBase):
         if item == 'create':
             self.execute_sub_command(item, arguments[1:])
             return
-        
+
         elif item == 'open':
             self.execute_sub_command(item, arguments[1:])
             return
-        
+
         elif item == 'close':
             self.execute_sub_command(item, arguments=None)
             return
@@ -131,7 +131,7 @@ class CommandWalletOpen(CommandBase):
 
     def __init__(self):
         super().__init__()
-    
+
     @classmethod
     def execute(cls, arguments):
         if PromptData.Wallet:
@@ -179,7 +179,7 @@ class CommandWalletClose(CommandBase):
             PromptData.Wallet.Close()
             PromptData.Wallet = None
             print("Closed wallet %s" % path)
-    
+
     @classmethod
     def command_desc(cls):
         return CommandDesc('close', 'closes the open NEO wallet')
