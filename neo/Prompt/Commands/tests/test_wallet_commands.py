@@ -36,15 +36,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     # Beginning with refactored tests
 
-    def test_wallet_open_and_close(self):
+    def test_wallet_open(self):
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
-            # test wallet close with no wallet
-            args = ['close']
-
-            res = CommandWallet().execute(args)
-
-            self.assertFalse(res)
-
             with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
                 # test wallet open successful
                 args = ['open', 'fixtures/testwallet.db3']
@@ -53,14 +46,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
                 self.assertEqual(str(type(res)), "<class 'neo.Implementations.Wallets.peewee.UserWallet.UserWallet'>")
 
-                # test wallet close with open wallet
-                args = ['close']
-
-                res = CommandWallet().execute(args)
-
-                self.assertTrue(res)
-
-            # test wallet open with no path
+            # test wallet open with no path; this will also close the open wallet
             args = ['open']
 
             res = CommandWallet().execute(args)
@@ -82,6 +68,30 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 res = CommandWallet().execute(args)
 
                 self.assertFalse(res)
+
+    def test_wallet_close(self):
+        with patch('neo.Prompt.PromptData.PromptData.Prompt'):
+            # test wallet close with no wallet
+            args = ['close']
+
+            res = CommandWallet().execute(args)
+
+            self.assertFalse(res)
+
+            # test wallet close with open wallet
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
+                args = ['open', 'fixtures/testwallet.db3']
+
+                res = CommandWallet().execute(args)
+
+                self.assertEqual(str(type(res)), "<class 'neo.Implementations.Wallets.peewee.UserWallet.UserWallet'>")
+
+                # now close the open wallet manually
+                args = ['close']
+
+                res = CommandWallet().execute(args)
+
+                self.assertTrue(res)
 
     ##########################################################
     ##########################################################
