@@ -226,7 +226,7 @@ class PromptInterface:
     def quit(self):
         print('Shutting down. This may take a bit...')
         self.go_on = False
-        CommandWalletClose.execute(arguments=None)
+        CommandWalletClose.execute()
         reactor.stop()
 
     def help(self):
