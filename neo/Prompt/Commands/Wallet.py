@@ -30,15 +30,9 @@ class CommandWallet(CommandBase):
     def __init__(self):
         super().__init__()
 
-        self.register_sub_command(CommandWalletCreate())
-        self.register_sub_command(CommandWalletOpen())
-        self.register_sub_command(CommandWalletClose())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
         self.register_sub_command(CommandWalletMigrate())
         self.register_sub_command(CommandWalletCreateAddress())
-        self.register_sub_command(CommandWalletSend())
-        self.register_sub_command(CommandWalletSendMany())
-        self.register_sub_command(CommandWalletSign())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
