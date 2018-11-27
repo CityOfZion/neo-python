@@ -39,6 +39,7 @@ class CommandWalletSend(CommandBase):
         params = [p1, p2, p3, p4, p5, p6, p7]
         return CommandDesc('send', 'send an asset', params=params)
 
+
 class CommandWalletSendMany(CommandBase):
 
     def __init__(self):
@@ -59,6 +60,7 @@ class CommandWalletSendMany(CommandBase):
         params = [p1, p2, p3, p4, p5, p6]
         return CommandDesc('sendmany', 'send multiple contract transactions', params=params)
 
+
 class CommandWalletSign(CommandBase):
 
     def __init__(self):
@@ -74,6 +76,7 @@ class CommandWalletSign(CommandBase):
         p1 = ParameterDesc('jsn', 'transaction in JSON format')
         params = [p1]
         return CommandDesc('sign', 'sign multi-sig tx', params=params)
+
 
 def construct_send_basic(wallet, arguments):
     if not wallet:
