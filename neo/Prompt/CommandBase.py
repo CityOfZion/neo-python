@@ -65,8 +65,11 @@ class CommandBase(ABC):
     def command_desc(self):
         pass
 
-    def execute_sub_command(self, id, arguments):
-        self.__sub_commands[id].execute(arguments)
+    def execute_sub_command(self, id, arguments=None):
+        if arguments is not None:
+            self.__sub_commands[id].execute(arguments)
+        else:
+            self.__sub_commands[id].execute()
 
     def register_sub_command(self, sub_command, additional_ids=[]):
         """
