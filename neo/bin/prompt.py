@@ -985,7 +985,7 @@ class PromptInterface:
                     if command in self.commands:
                         cmd = self.commands[command]
 
-                        if arguments[-1] == 'help':
+                        if len(arguments) > 0 and arguments[-1] == 'help':
                             cmd.handle_help(arguments)
                         else:
                             cmd.execute(arguments)
