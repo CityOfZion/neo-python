@@ -4,8 +4,9 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
-from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
+from neo.Prompt.Commands.Wallet import CommandWallet, CreateAddress, DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
 import shutil
+from mock import patch
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -33,6 +34,57 @@ class UserWalletTestCase(WalletFixtureTestCase):
                                            to_aes_key(UserWalletTestCase.wallet_1_pass()))
         return cls._wallet1
 
+    # Beginning with refactored tests
+
+    def test_wallet_open_and_close(self):
+        with patch('neo.Prompt.PromptData.PromptData.Prompt'):
+            # test wallet close with no wallet
+            args = ['close']
+
+            res = CommandWallet().execute(args)
+
+            self.assertFalse(res)
+
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
+                # test wallet open successful
+                args = ['open', 'fixtures/testwallet.db3']
+
+                res = CommandWallet().execute(args)
+
+                self.assertEqual(str(type(res)), "<class 'neo.Implementations.Wallets.peewee.UserWallet.UserWallet'>")
+
+                # test wallet close with open wallet
+                args = ['close']
+
+                res = CommandWallet().execute(args)
+
+                self.assertTrue(res)
+
+            # test wallet open with no path
+            args = ['open']
+
+            res = CommandWallet().execute(args)
+
+            self.assertFalse(res)
+
+            # test wallet open with bad path
+            args = ['open', 'badpath']
+
+            res = CommandWallet().execute(args)
+
+            self.assertFalse(res)
+
+        # test wallet open unsuccessful
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
+            with patch('neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Open', side_effect=[Exception('test exception')]):
+                args = ['open', 'fixtures/testwallet.db3']
+
+                res = CommandWallet().execute(args)
+
+                self.assertFalse(res)
+
+    ##########################################################
+    ##########################################################
     def test_1_import_addr(self):
         wallet = self.GetWallet1(recreate=True)
 
