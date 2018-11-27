@@ -65,6 +65,7 @@ class CommandBase(ABC):
     def command_desc(self):
         pass
 
+    # Raise KeyError exception if the command does not exist
     def execute_sub_command(self, id, arguments=None):
         if arguments is not None:
             self.__sub_commands[id].execute(arguments)
