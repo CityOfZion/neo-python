@@ -305,9 +305,6 @@ class ByteArray(StackItem):
         return self.GetString()
 
 
-#
-
-
 class Integer(StackItem):
     _value = None
 
