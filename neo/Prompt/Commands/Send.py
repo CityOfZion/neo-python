@@ -13,8 +13,67 @@ from neocore.Fixed8 import Fixed8
 import json
 from prompt_toolkit import prompt
 import traceback
+from neo.Prompt.PromptData import PromptData
+from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from logzero import logger
 
+
+class CommandWalletSend(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        framework = construct_send_basic(PromptData.Wallet, arguments)
+        if type(framework) is list:
+            process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
+
+    def command_desc(self):
+        p1 = ParameterDesc('assetId or name', 'the asset you wish to send')
+        p2 = ParameterDesc('address', 'the NEO address you will send to')
+        p3 = ParameterDesc('amount', 'the amount of the asset you wish to send')
+        p4 = ParameterDesc('--from-addr={addr}', 'specify the NEO address you wish to send from', optional=True)
+        p5 = ParameterDesc('--fee={priority_fee}', 'attach a fee to give your tx priority (> 0.001)', optional=True)
+        p6 = ParameterDesc('--owners=[{addr}, ...]', 'specify tx owners', optional=True)
+        p7 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique tx attributes', optional=True)
+        params = [p1, p2, p3, p4, p5, p6, p7]
+        return CommandDesc('send', 'send an asset', params=params)
+
+class CommandWalletSendMany(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        framework = construct_send_many(PromptData.Wallet, arguments)
+        if type(framework) is list:
+            process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
+
+    def command_desc(self):
+        p1 = ParameterDesc('number of outgoing tx', 'the number of tx you wish to send')
+        p2 = ParameterDesc('--change-addr={addr}', 'specify the change address', optional=True)
+        p3 = ParameterDesc('--from-addr={addr}', 'specify the NEO address you wish to send from', optional=True)
+        p4 = ParameterDesc('--fee={priority_fee}', 'attach a fee to give your tx priority (> 0.001)', optional=True)
+        p5 = ParameterDesc('--owners=[{addr}, ...]', 'specify tx owners', optional=True)
+        p6 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique tx attributes', optional=True)
+        params = [p1, p2, p3, p4, p5, p6]
+        return CommandDesc('sendmany', 'send multiple contract transactions', params=params)
+
+class CommandWalletSign(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if not PromptData.Wallet:
+            print("Please open a wallet before trying to sign")
+        jsn = get_arg(arguments)
+        parse_and_sign(PromptData.Wallet, jsn)
+
+    def command_desc(self):
+        p1 = ParameterDesc('jsn', 'transaction in JSON format')
+        params = [p1]
+        return CommandDesc('sign', 'sign multi-sig tx', params=params)
 
 def construct_send_basic(wallet, arguments):
     if not wallet:
