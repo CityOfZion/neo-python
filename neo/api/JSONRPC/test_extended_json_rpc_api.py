@@ -34,7 +34,7 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
     app = None  # type:JsonRpcApi
 
     @classmethod
-    def leveldb_testpath(self):
+    def leveldb_testpath(cls):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     def setUp(self):
@@ -147,6 +147,31 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res["error"]["code"], -32601)
         self.assertEqual(res["error"]["message"], "Method not found")
+
+    def test_gzip_compression(self):
+        req = self._gen_post_rpc_req("getblock", params=['307ed2cf8b8935dd38c534b10dceac55fcd0f60c68bf409627f6c155f8143b31', 1])
+        body = json.dumps(req).encode("utf-8")
+
+        # first validate that we get a gzip response if we accept gzip encoding
+        mock_req = requestMock(path=b'/', method=b"POST", body=body, headers={'Accept-Encoding': ['deflate', 'gzip;q=1.0', '*;q=0.5']})
+        res = self.app.home(mock_req)
+
+        GZIP_MAGIC = b'\x1f\x8b'
+        self.assertIsInstance(res, bytes)
+        self.assertTrue(res.startswith(GZIP_MAGIC))
+
+        # then validate that we don't get a gzip response if we don't accept gzip encoding
+        mock_req = requestMock(path=b'/', method=b"POST", body=body, headers={})
+        res = self.app.home(mock_req)
+
+        self.assertIsInstance(res, str)
+
+        try:
+            json.loads(res)
+            valid_json = True
+        except ValueError:
+            valid_json = False
+        self.assertTrue(valid_json)
 
     def test_get_node_state(self):
         # test POST requests
