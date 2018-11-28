@@ -135,14 +135,11 @@ class PromptInterface:
         reactor.stop()
 
     def help(self):
-
-        help_messages = []
-        for command_group, command in self.commands.items():
-            help_messages.append((command_group, command.command_desc().short_help))
-
-        tokens = list({("class:command", f"{msg[0]} - {msg[1]}\n") for msg in help_messages})  # Use set for unicity
-        tokens.append(("class:command", f"\nRun 'COMMAND help' for more information on a command."))
-        print_formatted_text(FormattedText(tokens), style=self.token_style)
+        print(f"\nCommands:")
+        for command_group in sorted(self.commands.keys()):
+            command = self.commands[command_group]
+            print(f"   {command_group:<15} - {command.command_desc().short_help}")
+        print(f"\nRun 'COMMAND help' for more information on a command.")
 
     def start_wallet_loop(self):
         if self.wallet_loop_deferred:
@@ -169,6 +166,7 @@ class PromptInterface:
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
 
         print_formatted_text(FormattedText(tokens), style=self.token_style)
+
         print('\n')
 
         while self.go_on:

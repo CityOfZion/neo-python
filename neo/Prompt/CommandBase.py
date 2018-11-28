@@ -56,6 +56,7 @@ class CommandBase(ABC):
         super().__init__()
         self.__sub_commands = dict()
         self.__parent_command = None
+        self.__additional_ids = []
 
     @abstractmethod
     def execute(self, arguments):
@@ -79,6 +80,7 @@ class CommandBase(ABC):
             additional_ids (List[str]): List of additional ids. Can be empty.
         """
         self.__register_sub_command(sub_command, sub_command.command_desc().command)
+        self.__additional_ids += additional_ids
         for id in additional_ids:
             self.__register_sub_command(sub_command, id)
 
@@ -125,14 +127,11 @@ class CommandBase(ABC):
                 print(f"{self.command_desc().short_help.capitalize()}\n")
                 print("Commands:")
 
-                # Use a set to avoid duplicated lines.
-                cmd_text = {
-                    f"   {sub_cmd.command_desc().command:<15} - {sub_cmd.command_desc().short_help}"
-                    for sub_cmd in self.__sub_commands.values()
-                }
+                # print commands in alphabetic order
+                for k in sorted(self.__sub_commands.keys()):
+                    if k not in self.__additional_ids:
+                        print(f"   {self.__sub_commands[k].command_desc().command:<15} - {self.__sub_commands[k].command_desc().short_help}")
 
-                for txt in cmd_text:
-                    print(txt)
                 print(f"\nRun '{self.__command_with_parents()} COMMAND help' for more information on the command.")
             else:
                 self.__print_absolute_cmd_help()
