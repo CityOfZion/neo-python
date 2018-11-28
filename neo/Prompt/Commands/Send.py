@@ -13,16 +13,77 @@ from neocore.Fixed8 import Fixed8
 import json
 from prompt_toolkit import prompt
 import traceback
+from neo.Prompt.PromptData import PromptData
+from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from logzero import logger
 
 
+class CommandWalletSend(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        framework = construct_send_basic(PromptData.Wallet, arguments)
+        if type(framework) is list:
+            return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1],
+                                       fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
+        return framework
+
+    def command_desc(self):
+        p1 = ParameterDesc('assetId or name', 'the asset you wish to send')
+        p2 = ParameterDesc('address', 'the NEO address you will send to')
+        p3 = ParameterDesc('amount', 'the amount of the asset you wish to send')
+        p4 = ParameterDesc('--from-addr={addr}', 'specify the NEO address you wish to send from', optional=True)
+        p5 = ParameterDesc('--fee={priority_fee}', 'attach a fee to give your tx priority (> 0.001)', optional=True)
+        p6 = ParameterDesc('--owners=[{addr}, ...]', 'specify tx owners', optional=True)
+        p7 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique tx attributes', optional=True)
+        params = [p1, p2, p3, p4, p5, p6, p7]
+        return CommandDesc('send', 'send an asset', params=params)
+
+
+class CommandWalletSendMany(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        framework = construct_send_many(PromptData.Wallet, arguments)
+        if type(framework) is list:
+            return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2],
+                                       fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
+        return framework
+
+    def command_desc(self):
+        p1 = ParameterDesc('number of outgoing tx', 'the number of tx you wish to send')
+        p2 = ParameterDesc('--change-addr={addr}', 'specify the change address', optional=True)
+        p3 = ParameterDesc('--from-addr={addr}', 'specify the NEO address you wish to send from', optional=True)
+        p4 = ParameterDesc('--fee={priority_fee}', 'attach a fee to give your tx priority (> 0.001)', optional=True)
+        p5 = ParameterDesc('--owners=[{addr}, ...]', 'specify tx owners', optional=True)
+        p6 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique tx attributes', optional=True)
+        params = [p1, p2, p3, p4, p5, p6]
+        return CommandDesc('sendmany', 'send multiple contract transactions', params=params)
+
+
+class CommandWalletSign(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        jsn = get_arg(arguments)
+        return parse_and_sign(PromptData.Wallet, jsn)
+
+    def command_desc(self):
+        p1 = ParameterDesc('jsn', 'transaction in JSON format')
+        params = [p1]
+        return CommandDesc('sign', 'sign multi-sig tx', params=params)
+
+
 def construct_send_basic(wallet, arguments):
-    if not wallet:
-        print("please open a wallet")
-        return False
     if len(arguments) < 3:
         print("Not enough arguments")
-        return False
+        return
 
     arguments, from_address = get_from_addr(arguments)
     arguments, priority_fee = get_fee(arguments)
@@ -35,39 +96,40 @@ def construct_send_basic(wallet, arguments):
     assetId = get_asset_id(wallet, to_send)
     if assetId is None:
         print("Asset id not found")
-        return False
+        return
 
     scripthash_to = lookup_addr_str(wallet, address_to)
     if scripthash_to is None:
         logger.debug("invalid address")
-        return False
+        return
 
     scripthash_from = None
     if from_address is not None:
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
             logger.debug("invalid address")
-            return False
+            return
 
     # if this is a token, we will use a different
     # transfer mechanism
     if type(assetId) is NEP5Token:
-        return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount), tx_attributes=user_tx_attributes)
+        return do_token_transfer(assetId, wallet, from_address, address_to, amount_from_string(assetId, amount),
+                                 tx_attributes=user_tx_attributes)
 
     f8amount = get_asset_amount(amount, assetId)
     if f8amount is False:
         logger.debug("invalid amount")
-        return False
+        return
     if float(amount) == 0:
         print("amount cannot be 0")
-        return False
+        return
 
     fee = Fixed8.Zero()
     if priority_fee is not None:
         fee = priority_fee
         if fee is False:
             logger.debug("invalid fee")
-            return False
+            return
 
     output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
     contract_tx = ContractTransaction(outputs=[output])
@@ -75,20 +137,17 @@ def construct_send_basic(wallet, arguments):
 
 
 def construct_send_many(wallet, arguments):
-    if not wallet:
-        print("please open a wallet")
-        return False
     if len(arguments) is 0:
         print("Not enough arguments")
-        return False
+        return
 
     outgoing = get_arg(arguments, convert_to_int=True)
     if outgoing is None:
         print("invalid outgoing number")
-        return False
+        return
     if outgoing < 1:
         print("outgoing number must be >= 1")
-        return False
+        return
 
     arguments, from_address = get_from_addr(arguments)
     arguments, change_address = get_change_addr(arguments)
@@ -103,23 +162,23 @@ def construct_send_many(wallet, arguments):
         assetId = get_asset_id(wallet, to_send)
         if assetId is None:
             print("Asset id not found")
-            return False
+            return
         if type(assetId) is NEP5Token:
             print('Sendmany does not support NEP5 tokens')
-            return False
+            return
         address_to = prompt("Address to: ")
         scripthash_to = lookup_addr_str(wallet, address_to)
         if scripthash_to is None:
             logger.debug("invalid address")
-            return False
+            return
         amount = prompt("Amount to send: ")
         f8amount = get_asset_amount(amount, assetId)
         if f8amount is False:
             logger.debug("invalid amount")
-            return False
+            return
         if float(amount) == 0:
             print("amount cannot be 0")
-            return False
+            return
         tx_output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         output.append(tx_output)
     contract_tx = ContractTransaction(outputs=output)
@@ -130,7 +189,7 @@ def construct_send_many(wallet, arguments):
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
             logger.debug("invalid address")
-            return False
+            return
 
     scripthash_change = None
 
@@ -138,14 +197,14 @@ def construct_send_many(wallet, arguments):
         scripthash_change = lookup_addr_str(wallet, change_address)
         if scripthash_change is None:
             logger.debug("invalid address")
-            return False
+            return
 
     fee = Fixed8.Zero()
     if priority_fee is not None:
         fee = priority_fee
         if fee is False:
             logger.debug("invalid fee")
-            return False
+            return
 
     print("sending with fee: %s " % fee.ToString())
     return [contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes]
@@ -160,13 +219,13 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
 
         if tx is None:
             logger.debug("insufficient funds")
-            return False
+            return
 
         # password prompt
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
-            return False
+            return
 
         standard_contract = wallet.GetStandardAddress()
 
@@ -216,14 +275,14 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         else:
             print("Transaction initiated, but the signature is incomplete")
             print(json.dumps(context.ToJson(), separators=(',', ':')))
-            return False
+            return
 
     except Exception as e:
         print("could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
 
-    return False
+    return
 
 
 def parse_and_sign(wallet, jsn):

@@ -30,7 +30,7 @@ from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
     ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_send_basic, construct_send_many, process_transaction, parse_and_sign
+# from neo.Prompt.Commands.Send import construct_send_basic, construct_send_many, process_transaction, parse_and_sign
 
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register, token_history
@@ -133,7 +133,7 @@ class PromptInterface:
     #             'import token {token_contract_hash}',
     #             'export wif {address}',
     #             'export nep2 {address}',
-    #             'open wallet {path}',
+    #             'open wallet {path}', #DONE
     #             'create wallet {path}',   #DONE
     #             'wallet (verbose)',       #DONE
     #             'wallet claim (max_coins_to_claim)',
@@ -152,10 +152,10 @@ class PromptInterface:
     #             'wallet tkn_history {token symbol}',
     #             'wallet unspent (neo/gas)',
     #             'wallet split {addr} {asset} {unspent index} {divide into number of vins}',
-    #             'wallet close',
-    #             'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',
-    #             'sendmany {number of outgoing tx} (--change-addr={addr}) (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',
-    #             'sign {transaction in JSON format}',
+    #             'wallet close',   #DONE
+    #             'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',     #DONE
+    #             'sendmany {number of outgoing tx} (--change-addr={addr}) (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',   #DONE
+    #             'sign {transaction in JSON format}',  #DONE
     #             'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
     #             'debugstorage {on/off/reset}'
     #             ]
@@ -206,14 +206,14 @@ class PromptInterface:
         #                         'withdraw_reqest', 'completed', 'cancel', 'cleanup',
         #                         'all', 'debugstorage', 'compiler-nep8', ]
 
-        if self.Wallet:
-            for addr in self.Wallet.Addresses:
+        if PromptData.Wallet:
+            for addr in PromptData.Wallet.Addresses:
                 if addr not in self._known_things:
                     self._known_things.append(addr)
-            for alias in self.Wallet.NamedAddr:
+            for alias in PromptData.Wallet.NamedAddr:
                 if alias.Title not in self._known_things:
                     self._known_things.append(alias.Title)
-            for tkn in self.Wallet.GetTokens().values():
+            for tkn in PromptData.Wallet.GetTokens().values():
                 if tkn.symbol not in self._known_things:
                     self._known_things.append(tkn.symbol)
 
@@ -226,7 +226,7 @@ class PromptInterface:
     def quit(self):
         print('Shutting down. This may take a bit...')
         self.go_on = False
-        self.do_close_wallet()
+        PromptData.close_wallet()
         reactor.stop()
 
     def help(self):
@@ -239,37 +239,37 @@ class PromptInterface:
         tokens.append(("class:command", f"\nRun 'COMMAND help' for more information on a command."))
         print_formatted_text(FormattedText(tokens), style=self.token_style)
 
-    def do_open(self, arguments):
-        if self.Wallet:
-            self.do_close_wallet()
+    # def do_open(self, arguments):
+    #     if self.Wallet:
+    #         self.do_close_wallet()
 
-        item = get_arg(arguments)
+    #     item = get_arg(arguments)
 
-        if item and item == 'wallet':
+    #     if item and item == 'wallet':
 
-            path = get_arg(arguments, 1)
+    #         path = get_arg(arguments, 1)
 
-            if path:
+    #         if path:
 
-                if not os.path.exists(path):
-                    print("Wallet file not found")
-                    return
+    #             if not os.path.exists(path):
+    #                print("Wallet file not found")
+    #                 return
 
-                passwd = prompt("[password]> ", is_password=True)
-                password_key = to_aes_key(passwd)
+    #             passwd = prompt("[password]> ", is_password=True)
+    #             password_key = to_aes_key(passwd)
 
-                try:
-                    self.Wallet = UserWallet.Open(path, password_key)
+    #             try:
+    #                 self.Wallet = UserWallet.Open(path, password_key)
 
-                    self.start_wallet_loop()
-                    print("Opened wallet at %s" % path)
-                except Exception as e:
-                    print("Could not open wallet: %s" % e)
+    #                 self.start_wallet_loop()
+    #                 print("Opened wallet at %s" % path)
+    #             except Exception as e:
+    #                 print("Could not open wallet: %s" % e)
 
-            else:
-                print("Please specify a path")
-        else:
-            print("Please specify something to open")
+    #         else:
+    #             print("Please specify a path")
+    #     else:
+    #         print("Please specify something to open")
 
     # def do_create(self, arguments):
     #     item = get_arg(arguments)
@@ -319,7 +319,7 @@ class PromptInterface:
     def start_wallet_loop(self):
         if self.wallet_loop_deferred:
             self.stop_wallet_loop()
-        self.walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+        self.walletdb_loop = task.LoopingCall(PromptData.Wallet.ProcessBlocks)
         self.wallet_loop_deferred = self.walletdb_loop.start(1)
         self.wallet_loop_deferred.addErrback(self.on_looperror)
 
@@ -329,13 +329,13 @@ class PromptInterface:
         if self.walletdb_loop and self.walletdb_loop.running:
             self.walletdb_loop.stop()
 
-    def do_close_wallet(self):
-        if self.Wallet:
-            path = self.Wallet._path
-            self.stop_wallet_loop()
-            self.Wallet.Close()
-            self.Wallet = None
-            print("Closed wallet %s" % path)
+    # def do_close_wallet(self):
+    #     if self.Wallet:
+    #         path = self.Wallet._path
+    #         self.stop_wallet_loop()
+    #         self.Wallet.Close()
+    #         self.Wallet = None
+    #         print("Closed wallet %s" % path)
 
     # def do_import(self, arguments):
     #     item = get_arg(arguments)
