@@ -19,7 +19,7 @@ from logzero import logger
 def construct_send_basic(wallet, arguments):
     if not wallet:
         print("please open a wallet")
-        return False
+        return None
     if len(arguments) < 3:
         print("Not enough arguments")
         return None
@@ -78,7 +78,7 @@ def construct_send_basic(wallet, arguments):
 def construct_send_many(wallet, arguments):
     if not wallet:
         print("please open a wallet")
-        return False
+        return None
     if len(arguments) is 0:
         print("Not enough arguments")
         return None
