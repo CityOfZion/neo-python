@@ -24,6 +24,7 @@ All notable changes to this project are documented in this file.
    - Added extensive logging to improve inspection
 - Fix unnecessary default bootstrap warning for mainnet showing.
 - Add GET and OPTIONS request functionality for JSON-RPC servers
+- Fix ``gzip`` failure in current implementation of ExtendedJsonRpcApi
 
 
 [0.8.2] 2018-10-31
