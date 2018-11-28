@@ -73,7 +73,7 @@ class CommandWalletCreate(CommandBase):
 
     def execute(self, arguments):
         if PromptData.Wallet:
-            CommandWalletClose.execute()
+            PromptData.close_wallet()
         path = get_arg(arguments, 0)
 
         if path:
@@ -127,7 +127,7 @@ class CommandWalletOpen(CommandBase):
 
     def execute(self, arguments):
         if PromptData.Wallet:
-            CommandWalletClose.execute()
+            PromptData.close_wallet()
 
         path = get_arg(arguments, 0)
 
@@ -164,15 +164,8 @@ class CommandWalletClose(CommandBase):
     def __init__(self):
         super().__init__()
 
-    @classmethod
-    def execute(cls, arguments=None):
-        if PromptData.Wallet:
-            path = PromptData.Wallet._path
-            PromptData.Prompt.stop_wallet_loop()
-            PromptData.Wallet.Close()
-            PromptData.Wallet = None
-            print("Closed wallet %s" % path)
-            return True
+    def execute(self, arguments=None):
+        return PromptData.close_wallet()
 
     def command_desc(self):
         return CommandDesc('close', 'closes the open NEO wallet')
