@@ -36,7 +36,7 @@ from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowa
     token_mint, token_crowdsale_register, token_history
 # from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
 #     ShowUnspentCoins, SplitUnspentCoin
-from neo.Prompt.Commands.Wallet import CommandWallet, CommandWalletClose
+from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.PromptData import PromptData
 
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
@@ -226,7 +226,7 @@ class PromptInterface:
     def quit(self):
         print('Shutting down. This may take a bit...')
         self.go_on = False
-        CommandWalletClose.execute()
+        PromptData.close_wallet()
         reactor.stop()
 
     def help(self):
