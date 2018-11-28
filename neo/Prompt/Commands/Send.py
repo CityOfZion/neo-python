@@ -38,11 +38,10 @@ class CommandWalletSend(CommandBase):
         p5 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) i.e. --fee=0.01', optional=True)
         p6 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners i.e. --owners=[address1,address2]', optional=True)
         p7 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
-        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
         f"{' ':>17} Example:\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n"
-                           , optional=True)
+        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7]
         return CommandDesc('send', 'send an asset (NEO/GAS)', params=params)
 
@@ -66,11 +65,10 @@ class CommandWalletSendMany(CommandBase):
         p4 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) i.e. --fee=0.01', optional=True)
         p5 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners i.e. --owners=[address1,address2]', optional=True)
         p6 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
-        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
         f"{' ':>17} Example:\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n"
-                           , optional=True)
+        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6]
         return CommandDesc('sendmany', 'send multiple NEO/GAS transactions', params=params)
 
