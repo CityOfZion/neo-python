@@ -31,15 +31,20 @@ class CommandWalletSend(CommandBase):
         return framework
 
     def command_desc(self):
-        p1 = ParameterDesc('assetId or name', 'the asset you wish to send')
-        p2 = ParameterDesc('address', 'the NEO address you will send to')
-        p3 = ParameterDesc('amount', 'the amount of the asset you wish to send')
-        p4 = ParameterDesc('--from-addr={addr}', 'specify the NEO address you wish to send from', optional=True)
-        p5 = ParameterDesc('--fee={priority_fee}', 'attach a fee to give your tx priority (> 0.001)', optional=True)
-        p6 = ParameterDesc('--owners=[{addr}, ...]', 'specify tx owners', optional=True)
-        p7 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique tx attributes', optional=True)
+        p1 = ParameterDesc('assetId or name', 'the asset (NEO/GAS) to send')
+        p2 = ParameterDesc('address', 'the destination address')
+        p3 = ParameterDesc('amount', 'the amount of the asset to send')
+        p4 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
+        p5 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) i.e. --fee=0.01', optional=True)
+        p6 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners i.e. --owners=[address1,address2]', optional=True)
+        p7 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
+        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+        f"{' ':>17} Example:\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n"
+                           , optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7]
-        return CommandDesc('send', 'send an asset', params=params)
+        return CommandDesc('send', 'send an asset (NEO/GAS)', params=params)
 
 
 class CommandWalletSendMany(CommandBase):
@@ -55,14 +60,19 @@ class CommandWalletSendMany(CommandBase):
         return framework
 
     def command_desc(self):
-        p1 = ParameterDesc('number of outgoing tx', 'the number of tx you wish to send')
-        p2 = ParameterDesc('--change-addr={addr}', 'specify the change address', optional=True)
-        p3 = ParameterDesc('--from-addr={addr}', 'specify the NEO address you wish to send from', optional=True)
-        p4 = ParameterDesc('--fee={priority_fee}', 'attach a fee to give your tx priority (> 0.001)', optional=True)
-        p5 = ParameterDesc('--owners=[{addr}, ...]', 'specify tx owners', optional=True)
-        p6 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique tx attributes', optional=True)
+        p1 = ParameterDesc('tx_count', 'the number of transactions to send')
+        p2 = ParameterDesc('--change-addr', 'an address to send remaining funds to', optional=True)
+        p3 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
+        p4 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) i.e. --fee=0.01', optional=True)
+        p5 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners i.e. --owners=[address1,address2]', optional=True)
+        p6 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
+        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+        f"{' ':>17} Example:\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n"
+                           , optional=True)
         params = [p1, p2, p3, p4, p5, p6]
-        return CommandDesc('sendmany', 'send multiple contract transactions', params=params)
+        return CommandDesc('sendmany', 'send multiple NEO/GAS transactions', params=params)
 
 
 class CommandWalletSign(CommandBase):
@@ -77,7 +87,7 @@ class CommandWalletSign(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('jsn', 'transaction in JSON format')
         params = [p1]
-        return CommandDesc('sign', 'sign multi-sig tx', params=params)
+        return CommandDesc('sign', 'sign a multi-signature transaction', params=params)
 
 
 def construct_send_basic(wallet, arguments):
@@ -100,14 +110,14 @@ def construct_send_basic(wallet, arguments):
 
     scripthash_to = lookup_addr_str(wallet, address_to)
     if scripthash_to is None:
-        logger.debug("invalid address")
+        logger.debug("invalid destination address")
         return
 
     scripthash_from = None
     if from_address is not None:
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
-            logger.debug("invalid address")
+            logger.debug("invalid source address")
             return
 
     # if this is a token, we will use a different
@@ -169,7 +179,7 @@ def construct_send_many(wallet, arguments):
         address_to = prompt("Address to: ")
         scripthash_to = lookup_addr_str(wallet, address_to)
         if scripthash_to is None:
-            logger.debug("invalid address")
+            logger.debug("invalid destination address")
             return
         amount = prompt("Amount to send: ")
         f8amount = get_asset_amount(amount, assetId)
@@ -188,7 +198,7 @@ def construct_send_many(wallet, arguments):
     if from_address is not None:
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
-            logger.debug("invalid address")
+            logger.debug("invalid source address")
             return
 
     scripthash_change = None
@@ -196,7 +206,7 @@ def construct_send_many(wallet, arguments):
     if change_address is not None:
         scripthash_change = lookup_addr_str(wallet, change_address)
         if scripthash_change is None:
-            logger.debug("invalid address")
+            logger.debug("invalid change address")
             return
 
     fee = Fixed8.Zero()
