@@ -19,7 +19,6 @@ All notable changes to this project are documented in this file.
 - Allow a raw tx to be build without an active blockchain db in the environment
 - Fix unnecessary default bootstrap warning for mainnet showing.
 - Add GET and OPTIONS request functionality for JSON-RPC servers
-- Improve user feedback on errors while working with multi-signature contracts and add increase test coverage
 
 
 [0.8.2] 2018-10-31
