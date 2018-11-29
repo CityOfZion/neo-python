@@ -1,7 +1,6 @@
 from unittest import TestCase, skip
-import neo.bin.tests.neo_cli_plugin_example as plugin_example_dir
-from .neo_cli_plugin_example.example_cmd import ExampleCmd
-from .neo_cli_plugin_example.example_cmd2 import ExampleCmd2
+from neo.bin.tests.neo_cli_plugin_example.example_cmd import ExampleCmd
+from neo.bin.tests.neo_cli_plugin_example.example_cmd2 import ExampleCmd2
 from neo.bin.prompt import get_cli_commands
 from mock import patch
 from io import StringIO
