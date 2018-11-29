@@ -28,7 +28,7 @@ logger = log_manager.getLogger()
 class CommandWallet(CommandBase):
     def __init__(self):
         super().__init__()
-
+        self._isGroupBaseCommand = True
         self.register_sub_command(CommandWalletCreate())
         self.register_sub_command(CommandWalletOpen())
         self.register_sub_command(CommandWalletClose())

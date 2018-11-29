@@ -4,12 +4,17 @@ import argparse
 import datetime
 import os
 import traceback
+import neo
+import inspect
+import importlib
+import pkgutil
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
 from twisted.internet import reactor, task
+from typing import List, Optional, Type
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
@@ -18,9 +23,10 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.InputParser import InputParser
-from neo.Settings import settings, PrivnetConnectionError
+from neo.Settings import settings, PrivnetConnectionError, PROMPT_COMMANDS
 from neo.UserPreferences import preferences
 from neo.logging import log_manager
+from neo.Prompt.CommandBase import CommandBase
 
 logger = log_manager.getLogger()
 
@@ -57,6 +63,73 @@ class PromptFileHistory(FileHistory):
         return string
 
 
+def _try_import_and_get_command(path_and_name: str) -> Optional[CommandBase]:
+    """
+    Load a CLI plugin and return an instance
+
+    Args:
+        path_and_name: full name to the module to load e.g. 'neo.bin.tests.neo_cli_plugin_example.example_cmd'
+    """
+    try:
+        # try to load the module
+        imported_module = importlib.import_module(path_and_name)
+    except ImportError as ie:
+        print(f"Could not load CLI command module: {ie}. Check your 'PROMPT_COMMANDS' entries in Settings.py")
+        return None
+
+    # cycle through the module attributes
+    for i in dir(imported_module):
+        attribute = getattr(imported_module, i)
+
+        # to find a class that extends CommandBase
+        if inspect.isclass(attribute) and issubclass(attribute, CommandBase) and not inspect.isabstract(attribute):
+            # and only if the CommandBase has the _isGroupBaseCommand instance attribute set to True, will we load it
+            cmd = attribute()
+            is_group_command = getattr(cmd, '_isGroupBaseCommand')
+            if is_group_command:
+                return cmd
+
+    return None
+
+
+def get_cli_commands(prompt_commands: List[str]) -> List[CommandBase]:
+    """Load all CLI command plugins"""
+    commands = []
+
+    for path in prompt_commands:
+        parts = path.split('.')
+
+        # try loading the module so that we can determine the file location
+        try:
+            mod = importlib.import_module(parts[0])
+            # create path minus the module name
+            root_folder = mod.__path__[0][:-len(parts[0])]
+        except ImportError:
+            print(f"Could not load CLI command package '{parts[0]}'. Check your 'PROMPT_COMMANDS' entries in Settings.py")
+            continue
+
+        # test if the path is indicating to search in a directory
+        if parts[-1] == "*":
+            # strip * off, and make it an absolute searchable path
+            full_path = root_folder + '/'.join(parts[:-1])
+            relative_prefix = '.'.join(parts[:-1]) + "."
+
+            # cycle through the modules in the path
+            for (_, _name, ispkg) in pkgutil.iter_modules([full_path], relative_prefix):
+                # we do not look in sub folders/packages
+                if not ispkg:
+                    result = _try_import_and_get_command(_name)
+                    if result:
+                        commands.append(result)
+        # or if we load module directly
+        else:
+            result = _try_import_and_get_command(path)
+            if result:
+                commands.append(result)
+
+    return commands
+
+
 class PromptInterface:
     prompt_completer = None
     history = None
@@ -68,14 +141,6 @@ class PromptInterface:
     Wallet = None
 
     _known_things = []
-
-    _commands = [
-        CommandWallet(),
-    ]
-
-    _command_descs = [desc for c in _commands for desc in c.command_descs_with_sub_commands()]
-
-    commands = {command.command_desc().command: command for command in _commands}
 
     token_style = None
     start_height = None
@@ -89,6 +154,10 @@ class PromptInterface:
         self.input_parser = InputParser()
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
+
+        self._plugin_command_list = get_cli_commands(PROMPT_COMMANDS)
+        self._command_descs = [desc for c in self._plugin_command_list for desc in c.command_descs_with_sub_commands()]
+        self.commands = {command.command_desc().command: command for command in self._plugin_command_list}
 
         self.token_style = Style.from_dict({
             "command": preferences.token_style['Command'],

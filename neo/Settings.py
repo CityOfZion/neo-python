@@ -363,6 +363,10 @@ class SettingsHolder:
                 f.write(nonce_container)
 
 
+PROMPT_COMMANDS = [
+    'neo.Prompt.Commands.*'
+]
+
 # Settings instance used by external modules
 settings = SettingsHolder()
 

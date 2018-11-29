@@ -52,11 +52,13 @@ class CommandDesc():
 
 
 class CommandBase(ABC):
+
     def __init__(self):
         super().__init__()
         self.__sub_commands = dict()
         self.__parent_command = None
         self.__additional_ids = set()
+        self._isGroupBaseCommand = False
 
     @abstractmethod
     def execute(self, arguments):
