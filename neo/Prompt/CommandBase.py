@@ -56,7 +56,7 @@ class CommandBase(ABC):
         super().__init__()
         self.__sub_commands = dict()
         self.__parent_command = None
-        self.__additional_ids = []
+        self.__additional_ids = set()
 
     @abstractmethod
     def execute(self, arguments):
@@ -80,7 +80,7 @@ class CommandBase(ABC):
             additional_ids (List[str]): List of additional ids. Can be empty.
         """
         self.__register_sub_command(sub_command, sub_command.command_desc().command)
-        self.__additional_ids += additional_ids
+        self.__additional_ids.update(additional_ids)
         for id in additional_ids:
             self.__register_sub_command(sub_command, id)
 

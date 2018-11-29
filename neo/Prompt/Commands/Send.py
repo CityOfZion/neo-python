@@ -36,7 +36,7 @@ class CommandWalletSend(CommandBase):
         p3 = ParameterDesc('amount', 'the amount of the asset to send')
         p4 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
         p5 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) i.e. --fee=0.01', optional=True)
-        p6 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners i.e. --owners=[address1,address2]', optional=True)
+        p6 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
         p7 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
         f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
         f"{' ':>17} Example:\n"
@@ -63,7 +63,7 @@ class CommandWalletSendMany(CommandBase):
         p2 = ParameterDesc('--change-addr', 'an address to send remaining funds to', optional=True)
         p3 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
         p4 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) i.e. --fee=0.01', optional=True)
-        p5 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners i.e. --owners=[address1,address2]', optional=True)
+        p5 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
         p6 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
         f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
         f"{' ':>17} Example:\n"
