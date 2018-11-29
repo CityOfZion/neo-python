@@ -31,15 +31,19 @@ class CommandWalletSend(CommandBase):
         return framework
 
     def command_desc(self):
-        p1 = ParameterDesc('assetId or name', 'the asset you wish to send')
-        p2 = ParameterDesc('address', 'the NEO address you will send to')
-        p3 = ParameterDesc('amount', 'the amount of the asset you wish to send')
-        p4 = ParameterDesc('--from-addr={addr}', 'specify the NEO address you wish to send from', optional=True)
-        p5 = ParameterDesc('--fee={priority_fee}', 'attach a fee to give your tx priority (> 0.001)', optional=True)
-        p6 = ParameterDesc('--owners=[{addr}, ...]', 'specify tx owners', optional=True)
-        p7 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique tx attributes', optional=True)
+        p1 = ParameterDesc('assetId or name', 'the asset (NEO/GAS) to send')
+        p2 = ParameterDesc('address', 'the destination address')
+        p3 = ParameterDesc('amount', 'the amount of the asset to send')
+        p4 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
+        p5 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) i.e. --fee=0.01', optional=True)
+        p6 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
+        p7 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
+        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
+        f"{' ':>17} Example:\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7]
-        return CommandDesc('send', 'send an asset', params=params)
+        return CommandDesc('send', 'send an asset (NEO/GAS)', params=params)
 
 
 class CommandWalletSendMany(CommandBase):
@@ -55,14 +59,18 @@ class CommandWalletSendMany(CommandBase):
         return framework
 
     def command_desc(self):
-        p1 = ParameterDesc('number of outgoing tx', 'the number of tx you wish to send')
-        p2 = ParameterDesc('--change-addr={addr}', 'specify the change address', optional=True)
-        p3 = ParameterDesc('--from-addr={addr}', 'specify the NEO address you wish to send from', optional=True)
-        p4 = ParameterDesc('--fee={priority_fee}', 'attach a fee to give your tx priority (> 0.001)', optional=True)
-        p5 = ParameterDesc('--owners=[{addr}, ...]', 'specify tx owners', optional=True)
-        p6 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique tx attributes', optional=True)
+        p1 = ParameterDesc('tx_count', 'the number of transactions to send')
+        p2 = ParameterDesc('--change-addr', 'an address to send remaining funds to', optional=True)
+        p3 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
+        p4 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) i.e. --fee=0.01', optional=True)
+        p5 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
+        p6 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
+        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
+        f"{' ':>17} Example:\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6]
-        return CommandDesc('sendmany', 'send multiple contract transactions', params=params)
+        return CommandDesc('sendmany', 'send multiple NEO/GAS transactions', params=params)
 
 
 class CommandWalletSign(CommandBase):
@@ -77,13 +85,13 @@ class CommandWalletSign(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('jsn', 'transaction in JSON format')
         params = [p1]
-        return CommandDesc('sign', 'sign multi-sig tx', params=params)
+        return CommandDesc('sign', 'sign a multi-signature transaction', params=params)
 
 
 def construct_send_basic(wallet, arguments):
     if len(arguments) < 3:
         print("Not enough arguments")
-        return
+        return None
 
     arguments, from_address = get_from_addr(arguments)
     arguments, priority_fee = get_fee(arguments)
@@ -96,19 +104,19 @@ def construct_send_basic(wallet, arguments):
     assetId = get_asset_id(wallet, to_send)
     if assetId is None:
         print("Asset id not found")
-        return
+        return None
 
     scripthash_to = lookup_addr_str(wallet, address_to)
     if scripthash_to is None:
-        logger.debug("invalid address")
-        return
+        logger.debug("invalid destination address")
+        return None
 
     scripthash_from = None
     if from_address is not None:
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
-            logger.debug("invalid address")
-            return
+            logger.debug("invalid source address")
+            return None
 
     # if this is a token, we will use a different
     # transfer mechanism
@@ -119,17 +127,17 @@ def construct_send_basic(wallet, arguments):
     f8amount = get_asset_amount(amount, assetId)
     if f8amount is False:
         logger.debug("invalid amount")
-        return
+        return None
     if float(amount) == 0:
         print("amount cannot be 0")
-        return
+        return None
 
     fee = Fixed8.Zero()
     if priority_fee is not None:
         fee = priority_fee
         if fee is False:
             logger.debug("invalid fee")
-            return
+            return None
 
     output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
     contract_tx = ContractTransaction(outputs=[output])
@@ -139,15 +147,15 @@ def construct_send_basic(wallet, arguments):
 def construct_send_many(wallet, arguments):
     if len(arguments) is 0:
         print("Not enough arguments")
-        return
+        return None
 
     outgoing = get_arg(arguments, convert_to_int=True)
     if outgoing is None:
         print("invalid outgoing number")
-        return
+        return None
     if outgoing < 1:
         print("outgoing number must be >= 1")
-        return
+        return None
 
     arguments, from_address = get_from_addr(arguments)
     arguments, change_address = get_change_addr(arguments)
@@ -162,23 +170,23 @@ def construct_send_many(wallet, arguments):
         assetId = get_asset_id(wallet, to_send)
         if assetId is None:
             print("Asset id not found")
-            return
+            return None
         if type(assetId) is NEP5Token:
             print('Sendmany does not support NEP5 tokens')
-            return
+            return None
         address_to = prompt("Address to: ")
         scripthash_to = lookup_addr_str(wallet, address_to)
         if scripthash_to is None:
-            logger.debug("invalid address")
-            return
+            logger.debug("invalid destination address")
+            return None
         amount = prompt("Amount to send: ")
         f8amount = get_asset_amount(amount, assetId)
         if f8amount is False:
             logger.debug("invalid amount")
-            return
+            return None
         if float(amount) == 0:
             print("amount cannot be 0")
-            return
+            return None
         tx_output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
         output.append(tx_output)
     contract_tx = ContractTransaction(outputs=output)
@@ -188,23 +196,23 @@ def construct_send_many(wallet, arguments):
     if from_address is not None:
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
-            logger.debug("invalid address")
-            return
+            logger.debug("invalid source address")
+            return None
 
     scripthash_change = None
 
     if change_address is not None:
         scripthash_change = lookup_addr_str(wallet, change_address)
         if scripthash_change is None:
-            logger.debug("invalid address")
-            return
+            logger.debug("invalid change address")
+            return None
 
     fee = Fixed8.Zero()
     if priority_fee is not None:
         fee = priority_fee
         if fee is False:
             logger.debug("invalid fee")
-            return
+            return None
 
     print("sending with fee: %s " % fee.ToString())
     return [contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes]
@@ -219,13 +227,13 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
 
         if tx is None:
             logger.debug("insufficient funds")
-            return
+            return None
 
         # password prompt
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
-            return
+            return None
 
         standard_contract = wallet.GetStandardAddress()
 
@@ -258,9 +266,6 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         if context.Completed:
 
             tx.scripts = context.GetScripts()
-
-            #            print("will send tx: %s " % json.dumps(tx.ToJson(),indent=4))
-
             relayed = NodeLeader.Instance().Relay(tx)
 
             if relayed:
@@ -273,16 +278,16 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
                 print("Could not relay tx %s " % tx.Hash.ToString())
 
         else:
-            print("Transaction initiated, but the signature is incomplete")
+            print("Transaction initiated, but the signature is incomplete. Use the `sign` command with the information below to complete signing.")
             print(json.dumps(context.ToJson(), separators=(',', ':')))
-            return
+            return None
 
     except Exception as e:
         print("could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
 
-    return
+    return None
 
 
 def parse_and_sign(wallet, jsn):
@@ -290,7 +295,7 @@ def parse_and_sign(wallet, jsn):
         context = ContractParametersContext.FromJson(jsn)
         if context is None:
             print("Failed to parse JSON")
-            return
+            return None
 
         wallet.Sign(context)
 
@@ -315,7 +320,7 @@ def parse_and_sign(wallet, jsn):
         else:
             print("Transaction initiated, but the signature is incomplete")
             print(json.dumps(context.ToJson(), separators=(',', ':')))
-            return
+            return None
 
     except Exception as e:
         print("could not send: %s " % e)

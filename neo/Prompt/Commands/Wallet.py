@@ -22,7 +22,6 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.Send import CommandWalletSend, CommandWalletSendMany, CommandWalletSign
 from neo.logging import log_manager
 
-
 logger = log_manager.getLogger()
 
 
@@ -117,7 +116,7 @@ class CommandWalletCreate(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('path', 'path to store the wallet file')
-        return CommandDesc('create', 'creates a new NEO wallet address', [p1])
+        return CommandDesc('create', 'create a new NEO wallet (with 1 address)', [p1])
 
 
 class CommandWalletOpen(CommandBase):
@@ -156,7 +155,7 @@ class CommandWalletOpen(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('path', 'path to open the wallet file')
-        return CommandDesc('open', 'opens a NEO wallet', [p1])
+        return CommandDesc('open', 'open a NEO wallet', [p1])
 
 
 class CommandWalletClose(CommandBase):
@@ -168,7 +167,7 @@ class CommandWalletClose(CommandBase):
         return PromptData.close_wallet()
 
     def command_desc(self):
-        return CommandDesc('close', 'closes the open NEO wallet')
+        return CommandDesc('close', 'close the open NEO wallet')
 
 
 class CommandWalletVerbose(CommandBase):
@@ -197,11 +196,7 @@ class CommandWalletMigrate(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('option1', 'description of params 1')
-        p2 = ParameterDesc('option2', 'description of params 2')
-        p3 = ParameterDesc('option3', 'description of params 3', optional=True)
-        params = [p1, p2, p3]
-        return CommandDesc('migrate', 'migrate a wallet from y to z', params=params)
+        return CommandDesc('migrate', 'migrate an old wallet to the new format', params=[])
 
 
 class CommandWalletCreateAddress(CommandBase):
@@ -214,7 +209,7 @@ class CommandWalletCreateAddress(CommandBase):
         return CreateAddress(PromptData.Wallet, addresses_to_create)
 
     def command_desc(self):
-        return CommandDesc('create_addr', 'create a wallet address')
+        return CommandDesc('create_addr', 'create a new wallet address')
 
 
 #########################################################################
