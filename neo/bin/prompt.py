@@ -2,49 +2,24 @@
 
 import argparse
 import datetime
-import json
 import os
-import psutil
 import traceback
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
-from prompt_toolkit import prompt
 from twisted.internet import reactor, task
-
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
-from neo.SmartContract.ContractParameter import ContractParameter
-from neocore.Fixed8 import Fixed8
-from neo.IO.MemoryStream import StreamManager
-from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
-from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
-from neo.Prompt.Commands.config import start_output_config
-from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
-from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_invoke
-from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
-    ImportMultiSigContractAddr
-from neo.Prompt.Commands.Send import construct_send_basic, construct_send_many, process_transaction, parse_and_sign
-
-from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
-    token_mint, token_crowdsale_register, token_history
-# from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportWatchAddr, ImportToken, ClaimGas, DeleteToken, AddAlias, \
-#     ShowUnspentCoins, SplitUnspentCoin
+from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.PromptData import PromptData
-
-from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
-from neocore.KeyPair import KeyPair
-from neocore.UInt256 import UInt256
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -102,64 +77,6 @@ class PromptInterface:
 
     commands = {command.command_desc().command: command for command in _commands}
 
-    # commands = ['quit',   #DONE
-    #             'help',   #DONE
-    #             'block {index/hash} (tx)',
-    #             'header {index/hash}',
-    #             'tx {hash}',
-    #             'account {address} # returns account state',
-    #             'asset {assetId} # returns asset state',
-    #             'asset search {query}',
-    #             'contract {contract hash} # returns contract state',
-    #             'contract search {query}',
-    #             'notifications {block_number or address}',
-    #             'mem # returns memory in use and number of buffers',
-    #             'nodes # returns connected peers',
-    #             'state',
-    #             'config output_levels (interactive)',
-    #             'config sc-events {on/off}',
-    #             'config maxpeers {num_peers}',
-    #             'config node-requests {reqsize} {queuesize}',
-    #             'config node-requests {slow/normal/fast}',
-    #             'config compiler-nep8 {on/off}',
-    #             'build {path/to/file.py} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {is_payable} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
-    #             'load_run {path/to/file.avm} (test {params} {returntype} {needs_storage} {needs_dynamic_invoke} {is_payable} [{test_params} or --i]) --no-parse-addr (parse address strings to script hash bytearray)',
-    #             'import wif {wif}',
-    #             'import nep2 {nep2_encrypted_key}',
-    #             'import contract {path/to/file.avm} {params} {returntype} {needs_storage} {needs_dynamic_invoke} {is_payable}',
-    #             'import contract_addr {contract_hash} {pubkey}',
-    #             'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...',
-    #             'import watch_addr {address}',
-    #             'import token {token_contract_hash}',
-    #             'export wif {address}',
-    #             'export nep2 {address}',
-    #             'open wallet {path}',
-    #             'create wallet {path}',   #DONE
-    #             'wallet (verbose)',       #DONE
-    #             'wallet claim (max_coins_to_claim)',
-    #             'wallet migrate',         #DONE
-    #             'wallet rebuild (start block)',
-    #             'wallet create_addr {number of addresses}',   #DONE
-    #             'wallet delete_addr {addr}',
-    #             'wallet delete_token {token_contract_hash}',
-    #             'wallet alias {addr} {title}',
-    #             'wallet tkn_send {token symbol} {address_from} {address to} {amount} (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',
-    #             'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
-    #             'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
-    #             'wallet tkn_allowance {token symbol} {address_from} {address to}',
-    #             'wallet tkn_mint {token symbol} {mint_to_addr} (--attach-neo={amount}, --attach-gas={amount})',
-    #             'wallet tkn_register {addr} ({addr}...) (--from-addr={addr})',
-    #             'wallet tkn_history {token symbol}',
-    #             'wallet unspent (neo/gas)',
-    #             'wallet split {addr} {asset} {unspent index} {divide into number of vins}',
-    #             'wallet close',
-    #             'send {assetId or name} {address} {amount} (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',
-    #             'sendmany {number of outgoing tx} (--change-addr={addr}) (--from-addr={addr}) (--fee={priority_fee}) (--owners=[{addr}, ...]) (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',
-    #             'sign {transaction in JSON format}',
-    #             'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
-    #             'debugstorage {on/off/reset}'
-    #             ]
-
     token_style = None
     start_height = None
     start_dt = None
@@ -193,27 +110,15 @@ class PromptInterface:
 
     def get_completer(self):
         standard_completions = list({word for d in self._command_descs for word in d.command.split()})  # Use a set to ensure unicity of words
-        # standard_completions = ['block', 'tx', 'header', 'mem', 'neo', 'gas',
-        #                         'help', 'state', 'nodes', 'exit', 'quit', 'node-requests',
-        #                         'config', 'import', 'export', 'open', 'maxpeers', 'sc-events',
-        #                         'wallet', 'contract', 'asset', 'account', 'wif', 'debug',
-        #                         'watch_addr', 'contract_addr', 'testinvoke', 'tkn_send',
-        #                         'tkn_mint', 'tkn_send_from', 'tkn_approve', 'tkn_allowance',
-        #                         'tkn_register', 'build', 'notifications', 'tkn_history',
-        #                         'sign', 'send', 'sendmany', 'withdraw', 'nep2', 'multisig_addr', 'token',
-        #                         'claim', 'migrate', 'rebuild', 'create_addr', 'delete_addr',
-        #                         'delete_token', 'alias', 'unspent', 'split', 'close',
-        #                         'withdraw_reqest', 'completed', 'cancel', 'cleanup',
-        #                         'all', 'debugstorage', 'compiler-nep8', ]
 
-        if self.Wallet:
-            for addr in self.Wallet.Addresses:
+        if PromptData.Wallet:
+            for addr in PromptData.Wallet.Addresses:
                 if addr not in self._known_things:
                     self._known_things.append(addr)
-            for alias in self.Wallet.NamedAddr:
+            for alias in PromptData.Wallet.NamedAddr:
                 if alias.Title not in self._known_things:
                     self._known_things.append(alias.Title)
-            for tkn in self.Wallet.GetTokens().values():
+            for tkn in PromptData.Wallet.GetTokens().values():
                 if tkn.symbol not in self._known_things:
                     self._known_things.append(tkn.symbol)
 
@@ -226,100 +131,20 @@ class PromptInterface:
     def quit(self):
         print('Shutting down. This may take a bit...')
         self.go_on = False
-        self.do_close_wallet()
+        PromptData.close_wallet()
         reactor.stop()
 
     def help(self):
-
-        help_messages = []
-        for command_group, command in self.commands.items():
-            help_messages.append((command_group, command.command_desc().short_help))
-
-        tokens = list({("class:command", f"{msg[0]} - {msg[1]}\n") for msg in help_messages})  # Use set for unicity
-        tokens.append(("class:command", f"\nRun 'COMMAND help' for more information on a command."))
-        print_formatted_text(FormattedText(tokens), style=self.token_style)
-
-    def do_open(self, arguments):
-        if self.Wallet:
-            self.do_close_wallet()
-
-        item = get_arg(arguments)
-
-        if item and item == 'wallet':
-
-            path = get_arg(arguments, 1)
-
-            if path:
-
-                if not os.path.exists(path):
-                    print("Wallet file not found")
-                    return
-
-                passwd = prompt("[password]> ", is_password=True)
-                password_key = to_aes_key(passwd)
-
-                try:
-                    self.Wallet = UserWallet.Open(path, password_key)
-
-                    self.start_wallet_loop()
-                    print("Opened wallet at %s" % path)
-                except Exception as e:
-                    print("Could not open wallet: %s" % e)
-
-            else:
-                print("Please specify a path")
-        else:
-            print("Please specify something to open")
-
-    # def do_create(self, arguments):
-    #     item = get_arg(arguments)
-
-    #     if item and item == 'wallet':
-
-    #         path = get_arg(arguments, 1)
-
-    #         if path:
-
-    #             if os.path.exists(path):
-    #                 print("File already exists")
-    #                 return
-
-    #             passwd1 = prompt("[password]> ", is_password=True)
-    #             passwd2 = prompt("[password again]> ", is_password=True)
-
-    #             if passwd1 != passwd2 or len(passwd1) < 10:
-    #                 print("Please provide matching passwords that are at least 10 characters long")
-    #                 return
-
-    #             password_key = to_aes_key(passwd1)
-
-    #             try:
-    #                 self.Wallet = UserWallet.Create(path=path,
-    #                                                 password=password_key)
-    #                 contract = self.Wallet.GetDefaultContract()
-    #                 key = self.Wallet.GetKey(contract.PublicKeyHash)
-    #                 print("Wallet %s" % json.dumps(self.Wallet.ToJson(), indent=4))
-    #                 print("Pubkey %s" % key.PublicKey.encode_point(True))
-    #             except Exception as e:
-    #                 print("Exception creating wallet: %s" % e)
-    #                 self.Wallet = None
-    #                 if os.path.isfile(path):
-    #                     try:
-    #                         os.remove(path)
-    #                     except Exception as e:
-    #                         print("Could not remove {}: {}".format(path, e))
-    #                 return
-
-    #             if self.Wallet:
-    #                 self.start_wallet_loop()
-
-    #         else:
-    #             print("Please specify a path")
+        print(f"\nCommands:")
+        for command_group in sorted(self.commands.keys()):
+            command = self.commands[command_group]
+            print(f"   {command_group:<15} - {command.command_desc().short_help}")
+        print(f"\nRun 'COMMAND help' for more information on a command.")
 
     def start_wallet_loop(self):
         if self.wallet_loop_deferred:
             self.stop_wallet_loop()
-        self.walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+        self.walletdb_loop = task.LoopingCall(PromptData.Wallet.ProcessBlocks)
         self.wallet_loop_deferred = self.walletdb_loop.start(1)
         self.wallet_loop_deferred.addErrback(self.on_looperror)
 
@@ -328,618 +153,6 @@ class PromptInterface:
         self.wallet_loop_deferred = None
         if self.walletdb_loop and self.walletdb_loop.running:
             self.walletdb_loop.stop()
-
-    def do_close_wallet(self):
-        if self.Wallet:
-            path = self.Wallet._path
-            self.stop_wallet_loop()
-            self.Wallet.Close()
-            self.Wallet = None
-            print("Closed wallet %s" % path)
-
-    # def do_import(self, arguments):
-    #     item = get_arg(arguments)
-
-    #     if not item:
-    #         print("Please specify something to import")
-    #         return
-
-    #     if item == 'wif':
-    #         if not self.Wallet:
-    #             print("Please open a wallet before importing WIF")
-    #             return
-
-    #         wif = get_arg(arguments, 1)
-    #         if not wif:
-    #             print("Please supply a valid WIF key")
-    #             return
-
-    #         try:
-    #             prikey = KeyPair.PrivateKeyFromWIF(wif)
-    #             key = self.Wallet.CreateKey(prikey)
-    #             print("Imported key: %s" % wif)
-    #             print("Pubkey: %s\n" % key.PublicKey.encode_point(True).hex())
-    #             print("Wallet: %s" % json.dumps(self.Wallet.ToJson(), indent=4))
-    #         except ValueError as e:
-    #             print(str(e))
-    #         except Exception as e:
-    #             print(str(e))
-
-    #         return
-
-    #     elif item == 'nep2':
-    #         if not self.Wallet:
-    #             print("Please open a wallet before importing a NEP2 key")
-    #             return
-
-    #         nep2_key = get_arg(arguments, 1)
-    #         if not nep2_key:
-    #             print("Please supply a valid NEP2 encrypted private key")
-    #             return
-
-    #         nep2_passwd = prompt("[key password]> ", is_password=True)
-
-    #         try:
-    #             prikey = KeyPair.PrivateKeyFromNEP2(nep2_key, nep2_passwd)
-    #             key = self.Wallet.CreateKey(prikey)
-    #             print("Imported NEP2 key: %s" % nep2_key)
-    #             print("Pubkey: %s\n" % key.PublicKey.encode_point(True).hex())
-    #             print("Wallet: %s" % json.dumps(self.Wallet.ToJson(), indent=4))
-    #         except ValueError as e:
-    #             print(str(e))
-    #         except Exception as e:
-    #             print(str(e))
-
-    #         return
-
-    #     elif item == 'contract':
-    #         return self.load_smart_contract(arguments)
-
-    #     elif item == 'contract_addr':
-    #         return ImportContractAddr(self.Wallet, arguments[1:])
-
-    #     elif item == 'watch_addr':
-    #         return ImportWatchAddr(self.Wallet, get_arg(arguments, 1))
-
-    #     elif item == 'multisig_addr':
-    #         return ImportMultiSigContractAddr(self.Wallet, arguments[1:])
-
-    #     elif item == 'token':
-    #         return ImportToken(self.Wallet, get_arg(arguments, 1))
-
-    #     else:
-    #         print("Import of '%s' not implemented" % item)
-
-    # def do_build(self, arguments):
-    #     Blockchain.Default().Pause()
-    #     BuildAndRun(arguments, self.Wallet)
-    #     Blockchain.Default().Resume()
-
-    # def do_load_n_run(self, arguments):
-    #     LoadAndRun(arguments, self.Wallet)
-
-    # def do_export(self, arguments):
-    #     item = get_arg(arguments)
-
-    #     if item == 'wif':
-    #         if not self.Wallet:
-    #             return print("Please open a wallet")
-
-    #         address = get_arg(arguments, 1)
-    #         if not address:
-    #             return print("Please specify an address")
-
-    #         passwd = prompt("[wallet password]> ", is_password=True)
-    #         if not self.Wallet.ValidatePassword(passwd):
-    #             return print("Incorrect password")
-
-    #         keys = self.Wallet.GetKeys()
-    #         for key in keys:
-    #             if key.GetAddress() == address:
-    #                 export = key.Export()
-    #                 print("WIF key export: %s" % export)
-    #         return
-
-    #     elif item == 'nep2':
-    #         if not self.Wallet:
-    #             return print("Please open a wallet")
-
-    #         address = get_arg(arguments, 1)
-    #         if not address:
-    #             return print("Please specify an address")
-
-    #         passwd = prompt("[wallet password]> ", is_password=True)
-    #         if not self.Wallet.ValidatePassword(passwd):
-    #             return print("Incorrect password")
-
-    #         nep2_passwd1 = prompt("[key password]> ", is_password=True)
-    #         if len(nep2_passwd1) < 10:
-    #             return print("Please provide a password with at least 10 characters")
-
-    #         nep2_passwd2 = prompt("[key password again]> ", is_password=True)
-    #         if nep2_passwd1 != nep2_passwd2:
-    #             return print("Passwords do not match")
-
-    #         keys = self.Wallet.GetKeys()
-    #         for key in keys:
-    #             export = key.ExportNEP2(nep2_passwd1)
-    #             print("NEP2 key export: %s" % export)
-    #         return
-
-    #     print("Command export %s not found" % item)
-
-    # def do_notifications(self, arguments):
-    #     if NotificationDB.instance() is None:
-    #         print("No notification DB Configured")
-    #         return
-
-    #     item = get_arg(arguments, 0)
-    #     events = []
-    #     if len(item) == 34:
-    #         addr = item
-    #         events = NotificationDB.instance().get_by_addr(addr)
-    #     else:
-    #         try:
-    #             block_height = int(item)
-    #             if block_height < Blockchain.Default().Height:
-    #                 events = NotificationDB.instance().get_by_block(block_height)
-    #             else:
-    #                 print("Block %s not found" % block_height)
-    #                 return
-    #         except Exception as e:
-    #             print("Could not parse block height %s" % e)
-    #             return
-
-    #     if len(events):
-    #         [print(json.dumps(e.ToJson(), indent=4)) for e in events]
-    #     else:
-    #         print("No events found for %s" % item)
-
-    # def show_wallet(self, arguments):
-    #     if not self.Wallet:
-    #         print("Please open a wallet")
-    #         return
-
-    #     item = get_arg(arguments)
-
-    #     if not item:
-    #         print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
-    #         return
-
-    #     if item in ['v', '--v', 'verbose']:
-    #         print("Wallet %s " % json.dumps(self.Wallet.ToJson(verbose=True), indent=4))
-    #         return
-    #     elif item == 'migrate' and self.Wallet is not None:
-    #         self.Wallet.Migrate()
-    #         print("Migrated wallet")
-    #     elif item == 'create_addr':
-    #         addresses_to_create = get_arg(arguments, 1)
-    #         CreateAddress(self.Wallet, addresses_to_create)
-    #     elif item == 'delete_addr':
-    #         addr_to_delete = get_arg(arguments, 1)
-    #         DeleteAddress(self.Wallet, addr_to_delete)
-    #     elif item == 'delete_token':
-    #         token_to_delete = get_arg(arguments, 1)
-    #         DeleteToken(self.Wallet, token_to_delete)
-    #     elif item == 'close':
-    #         self.do_close_wallet()
-    #     elif item == 'claim':
-    #         ClaimGas(self.Wallet, True, arguments[1:])
-    #     elif item == 'rebuild':
-    #         self.stop_wallet_loop()
-    #         try:
-    #             self.Wallet.Rebuild()
-    #         finally:
-    #             self.start_wallet_loop()
-    #         try:
-    #             item2 = int(get_arg(arguments, 1))
-    #             if item2 and item2 > 0:
-    #                 print("Restarting at %s" % item2)
-    #                 self.Wallet._current_height = item2
-    #         except Exception as e:
-    #             pass
-    #     elif item == 'tkn_send':
-    #         token_send(self.Wallet, arguments[1:])
-    #     elif item == 'tkn_send_from':
-    #         token_send_from(self.Wallet, arguments[1:])
-    #     elif item == 'tkn_approve':
-    #         token_approve_allowance(self.Wallet, arguments[1:])
-    #     elif item == 'tkn_allowance':
-    #         token_get_allowance(self.Wallet, arguments[1:], verbose=True)
-    #     elif item == 'tkn_mint':
-    #         token_mint(self.Wallet, arguments[1:])
-    #     elif item == 'tkn_register':
-    #         token_crowdsale_register(self.Wallet, arguments[1:])
-    #     elif item == 'tkn_history':
-    #         notification_db = NotificationDB.instance()
-    #         token_history(self.Wallet, notification_db, arguments[1:])
-    #     elif item == 'unspent':
-    #         ShowUnspentCoins(self.Wallet, arguments[1:])
-    #     elif item == 'split':
-    #         SplitUnspentCoin(self.Wallet, arguments[1:])
-    #     elif item == 'alias':
-    #         if len(arguments) == 3:
-    #             AddAlias(self.Wallet, arguments[1], arguments[2])
-    #         else:
-    #             print("Please supply an address and title")
-    #     else:
-    #         print("Wallet: '{}' is an invalid parameter".format(item))
-
-    # def do_send(self, arguments):
-    #     framework = construct_send_basic(self.Wallet, arguments)
-    #     if type(framework) is list:
-    #         process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
-
-    # def do_send_many(self, arguments):
-    #     framework = construct_send_many(self.Wallet, arguments)
-    #     if type(framework) is list:
-    #         process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
-
-    # def do_sign(self, arguments):
-    #     if not self.Wallet:
-    #         print("Please open a wallet before trying to sign")
-    #     jsn = get_arg(arguments)
-    #     parse_and_sign(self.Wallet, jsn)
-
-    # def show_state(self):
-    #     height = Blockchain.Default().Height
-    #     headers = Blockchain.Default().HeaderHeight
-
-    #     diff = height - self.start_height
-    #     now = datetime.datetime.utcnow()
-    #     difftime = now - self.start_dt
-
-    #     mins = difftime / datetime.timedelta(minutes=1)
-    #     secs = mins * 60
-
-    #     bpm = 0
-    #     tps = 0
-    #     if diff > 0 and mins > 0:
-    #         bpm = diff / mins
-    #         tps = Blockchain.Default().TXProcessed / secs
-
-    #     out = "Progress: %s / %s\n" % (height, headers)
-    #     out += "Block-cache length %s\n" % Blockchain.Default().BlockCacheCount
-    #     out += "Blocks since program start %s\n" % diff
-    #     out += "Time elapsed %s mins\n" % mins
-    #     out += "Blocks per min %s \n" % bpm
-    #     out += "TPS: %s \n" % tps
-    #     tokens = [("class:number", out)]
-    #     print_formatted_text(FormattedText(tokens), style=self.token_style)
-
-    # def show_nodes(self):
-    #     if len(NodeLeader.Instance().Peers) > 0:
-    #         out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
-    #         for peer in NodeLeader.Instance().Peers:
-    #             out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
-    #         print_formatted_text(FormattedText([("class:number", out)]), style=self.token_style)
-    #     else:
-    #         print("Not connected yet\n")
-
-    # def show_block(self, args):
-    #     item = get_arg(args)
-    #     txarg = get_arg(args, 1)
-    #     if item is not None:
-    #         block = Blockchain.Default().GetBlock(item)
-
-    #         if block is not None:
-    #             block.LoadTransactions()
-    #             bjson = json.dumps(block.ToJson(), indent=4)
-    #             tokens = [("class:number", bjson)]
-    #             print_formatted_text(FormattedText(tokens), style=self.token_style)
-    #             print('\n')
-    #             if txarg and 'tx' in txarg:
-
-    #                 for tx in block.FullTransactions:
-    #                     print(json.dumps(tx.ToJson(), indent=4))
-
-    #         else:
-    #             print("Could not locate block %s" % item)
-    #     else:
-    #         print("please specify a block")
-
-    # def show_header(self, args):
-    #     item = get_arg(args)
-    #     if item is not None:
-    #         header = Blockchain.Default().GetHeaderBy(item)
-    #         if header is not None:
-    #             print(json.dumps(header.ToJson(), indent=4))
-    #         else:
-    #             print("Could not locate header %s\n" % item)
-    #     else:
-    #         print("Please specify a header")
-
-    # def show_tx(self, args):
-    #     if len(args):
-    #         try:
-    #             txid = UInt256.ParseString(get_arg(args))
-    #             tx, height = Blockchain.Default().GetTransaction(txid)
-    #             if height > -1:
-    #                 jsn = tx.ToJson()
-    #                 jsn['height'] = height
-    #                 jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
-    #                                    Blockchain.Default().GetAllUnspent(txid)]
-    #                 tokens = [("class:command", json.dumps(jsn, indent=4))]
-    #                 print_formatted_text(FormattedText(tokens), style=self.token_style)
-    #                 print('\n')
-    #             else:
-    #                 print(f"Could not find transaction for hash {txid}")
-    #         except Exception as e:
-    #             print("Could not find transaction from args: %s (%s)" % (e, args))
-    #     else:
-    #         print("Please specify a TX hash")
-
-    # def show_account_state(self, args):
-    #     item = get_arg(args)
-
-    #     if item is not None:
-    #         account = Blockchain.Default().GetAccountState(item, print_all_accounts=True)
-
-    #         if account is not None:
-    #             bjson = json.dumps(account.ToJson(), indent=4)
-    #             tokens = [("class:number", bjson)]
-    #             print_formatted_text(FormattedText(tokens), style=self.token_style)
-    #             print('\n')
-    #         else:
-    #             print("Account %s not found" % item)
-    #     else:
-    #         print("Please specify an account address")
-
-    # def show_asset_state(self, args):
-    #     item = get_arg(args)
-
-    #     if item is not None:
-
-    #         if item == 'search':
-    #             query = get_arg(args, 1)
-    #             results = Blockchain.Default().SearchAssetState(query)
-    #             print("Found %s results for %s" % (len(results), query))
-    #             for asset in results:
-    #                 bjson = json.dumps(asset.ToJson(), indent=4)
-    #                 tokens = [("class:number", bjson)]
-    #                 print_formatted_text(FormattedText(tokens), style=self.token_style)
-    #                 print('\n')
-
-    #             return
-
-    #         asset = Blockchain.Default().GetAssetState(item)
-
-    #         if asset is not None:
-    #             bjson = json.dumps(asset.ToJson(), indent=4)
-    #             tokens = [("class:number", bjson)]
-    #             print_formatted_text(FormattedText(tokens), style=self.token_style)
-    #             print('\n')
-    #         else:
-    #             print("Asset %s not found" % item)
-    #     else:
-    #         print("Please specify an asset hash")
-
-    # def show_contract_state(self, args):
-    #     item = get_arg(args)
-
-    #     if item is not None:
-
-    #         if item.lower() == 'all':
-    #             contracts = Blockchain.Default().ShowAllContracts()
-    #             print("Contracts: %s" % contracts)
-    #         elif item.lower() == 'search':
-    #             query = get_arg(args, 1)
-    #             if query:
-
-    #                 contracts = Blockchain.Default().SearchContracts(query=query)
-    #                 print("Found %s results for %s" % (len(contracts), query))
-    #                 for contract in contracts:
-    #                     bjson = json.dumps(contract.ToJson(), indent=4)
-    #                     tokens = [("class:number", bjson)]
-    #                     print_formatted_text(FormattedText(tokens), style=self.token_style)
-    #                     print('\n')
-    #             else:
-    #                 print("Please specify a search query")
-    #         else:
-    #             contract = Blockchain.Default().GetContract(item)
-
-    #             if contract is not None:
-    #                 contract.DetermineIsNEP5()
-    #                 jsn = contract.ToJson()
-    #                 bjson = json.dumps(jsn, indent=4)
-    #                 tokens = [("class:number", bjson)]
-    #                 print_formatted_text(FormattedText(tokens), style=self.token_style)
-    #                 print('\n')
-    #     else:
-    #         print("Please specify a contract")
-
-    # def test_invoke_contract(self, args):
-    #     if not self.Wallet:
-    #         print("Please open a wallet")
-    #         return
-    #     args, from_addr = get_from_addr(args)
-    #     args, invoke_attrs = get_tx_attr_from_args(args)
-    #     args, owners = get_owners_from_params(args)
-    #     if args and len(args) > 0:
-    #         tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
-
-    #         if tx is not None and results is not None:
-
-    #             parameterized_results = [ContractParameter.ToParameter(item) for item in results]
-
-    #             print(
-    #                 "\n-------------------------------------------------------------------------------------------------------------------------------------")
-    #             print("Test invoke successful")
-    #             print("Total operations: %s" % num_ops)
-    #             print("Results %s" % [item.ToJson() for item in parameterized_results])
-    #             print("Invoke TX GAS cost: %s" % (tx.Gas.value / Fixed8.D))
-    #             print("Invoke TX fee: %s" % (fee.value / Fixed8.D))
-    #             print(
-    #                 "-------------------------------------------------------------------------------------------------------------------------------------\n")
-    #             print("Enter your password to continue and invoke on the network\n")
-
-    #             tx.Attributes = invoke_attrs
-
-    #             passwd = prompt("[password]> ", is_password=True)
-    #             if not self.Wallet.ValidatePassword(passwd):
-    #                 return print("Incorrect password")
-
-    #             InvokeContract(self.Wallet, tx, fee, from_addr=from_addr, owners=owners)
-    #             return
-    #         else:
-    #             print("Error testing contract invoke")
-    #             return
-
-    #     print("Please specify a contract to invoke")
-
-    # def load_smart_contract(self, args):
-    #     if not self.Wallet:
-    #         print("Please open a wallet")
-    #         return
-
-    #     args, from_addr = get_from_addr(args)
-
-    #     function_code = LoadContract(args[1:])
-
-    #     if function_code:
-
-    #         contract_script = GatherContractDetails(function_code)
-
-    #         if contract_script is not None:
-
-    #             tx, fee, results, num_ops = test_invoke(contract_script, self.Wallet, [], from_addr=from_addr)
-
-    #             if tx is not None and results is not None:
-    #                 print(
-    #                     "\n-------------------------------------------------------------------------------------------------------------------------------------")
-    #                 print("Test deploy invoke successful")
-    #                 print("Total operations executed: %s " % num_ops)
-    #                 print("Results:")
-    #                 print([item.GetInterface() for item in results])
-    #                 print("Deploy Invoke TX GAS cost: %s " % (tx.Gas.value / Fixed8.D))
-    #                 print("Deploy Invoke TX Fee: %s " % (fee.value / Fixed8.D))
-    #                 print(
-    #                     "-------------------------------------------------------------------------------------------------------------------------------------\n")
-    #                 print("Enter your password to continue and deploy this contract")
-
-    #                 passwd = prompt("[password]> ", is_password=True)
-    #                 if not self.Wallet.ValidatePassword(passwd):
-    #                     return print("Incorrect password")
-
-    #                 result = InvokeContract(self.Wallet, tx, Fixed8.Zero(), from_addr=from_addr)
-
-    #                 return
-    #             else:
-    #                 print("Test invoke failed")
-    #                 print("TX is %s, results are %s" % (tx, results))
-    #                 return
-
-    # def show_mem(self):
-    #     process = psutil.Process(os.getpid())
-    #     total = process.memory_info().rss
-    #     totalmb = total / (1024 * 1024)
-    #     out = "Total: %s MB\n" % totalmb
-    #     out += "Total buffers: %s\n" % StreamManager.TotalBuffers()
-    #     print_formatted_text(FormattedText([("class:number", out)]), style=self.token_style)
-
-    # def handle_debug_storage(self, args):
-    #     what = get_arg(args)
-
-    #     if what == 'on':
-    #         settings.USE_DEBUG_STORAGE = True
-    #         print("Debug storage on")
-    #     elif what == 'off':
-    #         settings.USE_DEBUG_STORAGE = False
-    #         print("Debug Storage off")
-    #     elif what == 'reset':
-    #         DebugStorage.instance().reset()
-    #         print("Reset debug storage")
-    #     else:
-    #         print("Please specify on|off|reset")
-
-    # def configure(self, args):
-    #     what = get_arg(args)
-
-    #     if what == 'output_levels':
-    #         start_output_config()
-    #     elif what == 'sc-events':
-    #         c1 = get_arg(args, 1)
-    #         if c1 is not None:
-    #             c1 = c1.lower()
-    #             if c1 == 'on' or c1 == '1':
-    #                 print("Smart contract event logging is now enabled")
-    #                 settings.set_log_smart_contract_events(True)
-    #             elif c1 == 'off' or c1 == '0':
-    #                 print("Smart contract event logging is now disabled")
-    #                 settings.set_log_smart_contract_events(False)
-    #             else:
-    #                 print("Cannot configure log. Please specify on|off")
-
-    #         else:
-    #             print("Cannot configure log. Please specify on|off")
-
-    #     elif what == 'sc-debug-notify':
-    #         c1 = get_arg(args, 1)
-    #         if c1 is not None:
-    #             c1 = c1.lower()
-    #             if c1 == 'on' or c1 == '1':
-    #                 print("Smart contract emit Notify events on execution failure is now enabled")
-    #                 settings.set_emit_notify_events_on_sc_execution_error(True)
-    #             elif c1 == 'off' or c1 == '0':
-    #                 print("Smart contract emit Notify events on execution failure is now disabled")
-    #                 settings.set_emit_notify_events_on_sc_execution_error(False)
-    #             else:
-    #                 print("Cannot configure log. Please specify on|off")
-
-    #         else:
-    #             print("Cannot configure log. Please specify on|off")
-
-    #     elif what == 'vm-log':
-    #         c1 = get_arg(args, 1)
-    #         if c1 is not None:
-    #             c1 = c1.lower()
-    #             if c1 == 'on' or c1 == '1':
-    #                 print("VM instruction execution logging is now enabled")
-    #                 settings.set_log_vm_instruction(True)
-    #             elif c1 == 'off' or c1 == '0':
-    #                 print("VM instruction execution logging is now disabled")
-    #                 settings.set_log_vm_instruction(False)
-    #             else:
-    #                 print("Cannot configure VM instruction logging. Please specify on|off")
-
-    #         else:
-    #             print("Cannot configure VM instruction logging. Please specify on|off")
-
-    #     elif what == 'node-requests':
-    #         if len(args) in [2, 3]:
-    #             if len(args) == 3:
-    #                 NodeLeader.Instance().setBlockReqSizeAndMax(int(args[1]), int(args[2]))
-    #             elif len(args) == 2:
-    #                 NodeLeader.Instance().setBlockReqSizeByName(args[1])
-    #         else:
-    #             print("Invalid number of arguments")
-
-    #     elif what == 'maxpeers':
-    #         c1 = get_arg(args, 1)
-    #         if c1 is not None:
-    #             print("Maxpeers set to ", c1)
-    #             settings.set_max_peers(c1)
-
-    #         else:
-    #             print("Maintaining current number of maxpeers")
-    #     elif what == 'compiler-nep8':
-    #         c1 = get_arg(args, 1)
-    #         if c1 is not None:
-    #             c1 = c1.lower()
-    #             if c1 == 'on' or c1 == '1':
-    #                 print("Compiler NEP8 instructions on")
-    #                 settings.COMPILER_NEP_8 = True
-    #             elif c1 == 'off' or c1 == '0':
-    #                 print("Compiler NEP8 instructions off")
-    #                 settings.COMPILER_NEP_8 = False
-    #             else:
-    #                 print("Cannot configure compiler NEP8 instructions. Please specify on|off")
-    #         else:
-    #             print("Cannot configure compiler NEP8 instructions. Please specify on|off")
-
-    #     else:
-    #         print(
-    #             "Cannot configure %s try 'config sc-events on|off', 'config output_levels', 'config sc-debug-notify on|off', 'config vm-log on|off', config compiler-nep8 on|off, or 'config maxpeers {num_peers}'" % what)
 
     def on_looperror(self, err):
         logger.debug("On DB loop error! %s " % err)
@@ -953,6 +166,7 @@ class PromptInterface:
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
 
         print_formatted_text(FormattedText(tokens), style=self.token_style)
+
         print('\n')
 
         while self.go_on:
@@ -985,7 +199,7 @@ class PromptInterface:
                     if command in self.commands:
                         cmd = self.commands[command]
 
-                        if arguments[-1] == 'help':
+                        if len(arguments) > 0 and arguments[-1] == 'help':
                             cmd.handle_help(arguments)
                         else:
                             cmd.execute(arguments)
@@ -998,61 +212,6 @@ class PromptInterface:
                             print("Please specify a command")
                         else:
                             print("Command '%s' not found" % command)
-
-                    # elif command == 'create':
-                    #     self.do_create(arguments)
-                    # elif command == 'open':
-                    #     self.do_open(arguments)
-                    # elif command == 'build':
-                    #     self.do_build(arguments)
-                    # elif command == 'load_run':
-                    #     self.do_load_n_run(arguments)
-                    # elif command == 'import':
-                    #     self.do_import(arguments)
-                    # elif command == 'export':
-                    #     self.do_export(arguments)
-                    # elif command == 'wallet':
-                    #     self.show_wallet(arguments)
-                    # elif command == 'send':
-                    #     self.do_send(arguments)
-                    # elif command == 'sendmany':
-                    #     self.do_send_many(arguments)
-                    # elif command == 'sign':
-                    #     self.do_sign(arguments)
-                    # elif command == 'block':
-                    #     self.show_block(arguments)
-                    # elif command == 'tx':
-                    #     self.show_tx(arguments)
-                    # elif command == 'header':
-                    #     self.show_header(arguments)
-                    # elif command == 'account':
-                    #     self.show_account_state(arguments)
-                    # elif command == 'asset':
-                    #     self.show_asset_state(arguments)
-                    # elif command == 'contract':
-                    #     self.show_contract_state(arguments)
-                    # elif command == 'testinvoke':
-                    #     self.test_invoke_contract(arguments)
-                    # elif command == 'withdraw_request':
-                    #     self.make_withdraw_request(arguments)
-                    # elif command == 'withdraw':
-                    #     self.do_withdraw(arguments)
-                    # elif command == 'notifications':
-                    #     self.do_notifications(arguments)
-                    # elif command == 'mem':
-                    #     self.show_mem()
-                    # elif command == 'nodes' or command == 'node':
-                    #     self.show_nodes()
-                    # elif command == 'state':
-                    #     self.show_state()
-                    # elif command == 'debugstorage':
-                    #     self.handle_debug_storage(arguments)
-                    # elif command == 'config':
-                    #     self.configure(arguments)
-                    # elif command == 'pause':
-                    #     Blockchain.Default().Pause()
-                    # elif command == 'resume':
-                    #     Blockchain.Default().Resume()
 
             except Exception as e:
 
