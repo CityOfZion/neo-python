@@ -196,7 +196,7 @@ class CommandWalletMigrate(CommandBase):
         return False
 
     def command_desc(self):
-        return CommandDesc('migrate', 'migrate an old wallet to the new format', params=[])
+        return CommandDesc('migrate', 'migrate an old wallet to the new format')
 
 
 class CommandWalletCreateAddress(CommandBase):
@@ -209,7 +209,8 @@ class CommandWalletCreateAddress(CommandBase):
         return CreateAddress(PromptData.Wallet, addresses_to_create)
 
     def command_desc(self):
-        return CommandDesc('create_addr', 'create a new wallet address')
+        p1 = ParameterDesc('number of addresses', 'number of addresses to create')
+        return CommandDesc('create_addr', 'create a new wallet address', params=[p1])
 
 
 #########################################################################
@@ -221,18 +222,18 @@ def CreateAddress(wallet, args):
         int_args = int(args)
     except (ValueError, TypeError) as error:  # for non integer args or Nonetype
         print(error)
-        return False
+        return None
 
     if wallet is None:
         print("Please open a wallet.")
-        return False
+        return None
 
     if int_args <= 0:
         print('Enter a number greater than 0.')
-        return False
+        return None
 
     address_list = []
-    for i in range(int_args):
+    for _ in range(int_args):
         keys = wallet.CreateKey()
         account = Account.get(PublicKeyHash=keys.PublicKeyHash.ToBytes())
         address_list.append(account.contract_set[0].Address.ToString())
@@ -247,7 +248,6 @@ def DeleteAddress(wallet, addr):
 
     if success:
         print("Deleted address %s " % addr)
-
     else:
         print("error deleting addr %s " % addr)
 
@@ -261,7 +261,6 @@ def DeleteToken(wallet, contract_hash):
 
     if success:
         print("Deleted token %s " % contract_hash)
-
     else:
         print("error deleting token %s " % contract_hash)
 
@@ -308,12 +307,9 @@ def ImportToken(wallet, contract_hash):
         result = token.Query()
 
         if result:
-
             wallet.AddNEP5Token(token)
             print("added token %s " % json.dumps(token.ToJson(), indent=4))
-
         else:
-
             print("Could not import token")
 
 
