@@ -110,6 +110,7 @@ class PromptInterface:
 
     def get_completer(self):
         standard_completions = list({word for d in self._command_descs for word in d.command.split()})  # Use a set to ensure unicity of words
+        standard_completions += ['quit', 'help', 'exit']
 
         if PromptData.Wallet:
             for addr in PromptData.Wallet.Addresses:
