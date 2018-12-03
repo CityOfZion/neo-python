@@ -56,7 +56,7 @@ class CommandWallet(CommandBase):
 
         if not item:
             print("Wallet %s " % json.dumps(wallet.ToJson(), indent=4))
-            return
+            return wallet
 
         try:
             return self.execute_sub_command(item, arguments[1:])
@@ -75,44 +75,42 @@ class CommandWalletCreate(CommandBase):
             PromptData.close_wallet()
         path = get_arg(arguments, 0)
 
-        if path:
-            if os.path.exists(path):
-                print("File already exists")
-                return
-
-            passwd1 = prompt("[password]> ", is_password=True)
-            passwd2 = prompt("[password again]> ", is_password=True)
-
-            if passwd1 != passwd2 or len(passwd1) < 10:
-                print("Please provide matching passwords that are at least 10 characters long")
-                return
-
-            password_key = to_aes_key(passwd1)
-
-            try:
-                PromptData.Wallet = UserWallet.Create(path=path, password=password_key)
-                contract = PromptData.Wallet.GetDefaultContract()
-                key = PromptData.Wallet.GetKey(contract.PublicKeyHash)
-                print("Wallet %s" % json.dumps(PromptData.Wallet.ToJson(), indent=4))
-                print("Pubkey %s" % key.PublicKey.encode_point(True))
-                return PromptData.Wallet
-            except Exception as e:
-                print("Exception creating wallet: %s" % e)
-                PromptData.Wallet = None
-                if os.path.isfile(path):
-                    try:
-                        os.remove(path)
-                    except Exception as e:
-                        print("Could not remove {}: {}".format(path, e))
-                return
-
-            if PromptData.Wallet:
-                PromptData.Prompt.start_wallet_loop()
-                return
-
-        else:
+        if not path:
             print("Please specify a path")
             return
+
+        if os.path.exists(path):
+            print("File already exists")
+            return
+
+        passwd1 = prompt("[password]> ", is_password=True)
+        passwd2 = prompt("[password again]> ", is_password=True)
+
+        if passwd1 != passwd2 or len(passwd1) < 10:
+            print("Please provide matching passwords that are at least 10 characters long")
+            return
+
+        password_key = to_aes_key(passwd1)
+
+        try:
+            PromptData.Wallet = UserWallet.Create(path=path, password=password_key)
+            contract = PromptData.Wallet.GetDefaultContract()
+            key = PromptData.Wallet.GetKey(contract.PublicKeyHash)
+            print("Wallet %s" % json.dumps(PromptData.Wallet.ToJson(), indent=4))
+            print("Pubkey %s" % key.PublicKey.encode_point(True))
+        except Exception as e:
+            print("Exception creating wallet: %s" % e)
+            PromptData.Wallet = None
+            if os.path.isfile(path):
+                try:
+                    os.remove(path)
+                except Exception as e:
+                    print("Could not remove {}: {}".format(path, e))
+            return
+
+        if PromptData.Wallet:
+            PromptData.Prompt.start_wallet_loop()
+            return PromptData.Wallet
 
     def command_desc(self):
         p1 = ParameterDesc('path', 'path to store the wallet file')
@@ -130,28 +128,25 @@ class CommandWalletOpen(CommandBase):
 
         path = get_arg(arguments, 0)
 
-        if path:
-
-            if not os.path.exists(path):
-                print("Wallet file not found")
-                return
-
-            passwd = prompt("[password]> ", is_password=True)
-            password_key = to_aes_key(passwd)
-
-            try:
-                PromptData.Wallet = UserWallet.Open(path, password_key)
-
-                PromptData.Prompt.start_wallet_loop()
-                print("Opened wallet at %s" % path)
-                return PromptData.Wallet
-            except Exception as e:
-                print("Could not open wallet: %s" % e)
-                return
-
-        else:
+        if not path:
             print("Please specify a path")
             return
+
+        if not os.path.exists(path):
+            print("Wallet file not found")
+            return
+
+        passwd = prompt("[password]> ", is_password=True)
+        password_key = to_aes_key(passwd)
+
+        try:
+            PromptData.Wallet = UserWallet.Open(path, password_key)
+
+            PromptData.Prompt.start_wallet_loop()
+            print("Opened wallet at %s" % path)
+            return PromptData.Wallet
+        except Exception as e:
+            print("Could not open wallet: %s" % e)
 
     def command_desc(self):
         p1 = ParameterDesc('path', 'path to open the wallet file')
@@ -175,7 +170,7 @@ class CommandWalletVerbose(CommandBase):
     def __init__(self):
         super().__init__()
 
-    def execute(self, arguments):
+    def execute(self, arguments=None):
         print("Wallet %s " % json.dumps(PromptData.Wallet.ToJson(verbose=True), indent=4))
         return True
 
@@ -188,12 +183,9 @@ class CommandWalletMigrate(CommandBase):
     def __init__(self):
         super().__init__()
 
-    def execute(self, arguments):
-        if PromptData.Wallet is not None:
-            PromptData.Wallet.Migrate()
-            print("Migrated wallet")
-            return True
-        return False
+    def execute(self, arguments=None):
+        PromptData.Wallet.Migrate()
+        return True
 
     def command_desc(self):
         return CommandDesc('migrate', 'migrate an old wallet to the new format')
@@ -206,6 +198,11 @@ class CommandWalletCreateAddress(CommandBase):
 
     def execute(self, arguments):
         addresses_to_create = get_arg(arguments, 0)
+
+        if not addresses_to_create:
+            print("Please specify a number of addresses to create.")
+            return
+
         return CreateAddress(PromptData.Wallet, addresses_to_create)
 
     def command_desc(self):
