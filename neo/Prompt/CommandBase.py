@@ -56,6 +56,7 @@ class CommandBase(ABC):
         super().__init__()
         self.__sub_commands = dict()
         self.__parent_command = None
+        self.__additional_ids = set()
 
     @abstractmethod
     def execute(self, arguments):
@@ -67,17 +68,23 @@ class CommandBase(ABC):
 
     # Raise KeyError exception if the command does not exist
     def execute_sub_command(self, id, arguments):
-        self.__sub_commands[id].execute(arguments)
+        return self.__sub_commands[id].execute(arguments)
 
-    # ids: can be either a string or a list of strings.
-    def register_sub_command(self, ids, sub_command):
-        if isinstance(ids, list):
-            for id in ids:
-                self.__register_sub_command(id, sub_command)
-        else:
-            self.__register_sub_command(ids, sub_command)
+    def register_sub_command(self, sub_command, additional_ids=[]):
+        """
+        Register a command as a subcommand.
+        It will have it's CommandDesc.command string used as id. Additional ids can be provided.
 
-    def __register_sub_command(self, id, sub_command):
+        Args:
+            sub_command (CommandBase): Subcommand to register.
+            additional_ids (List[str]): List of additional ids. Can be empty.
+        """
+        self.__register_sub_command(sub_command, sub_command.command_desc().command)
+        self.__additional_ids.update(additional_ids)
+        for id in additional_ids:
+            self.__register_sub_command(sub_command, id)
+
+    def __register_sub_command(self, sub_command, id):
         if id in self.__sub_commands:
             raise ValueError(f"{id} is already a subcommand of {self.command_desc().command}.")
         if sub_command.__parent_command and sub_command.__parent_command != self:
@@ -120,14 +127,11 @@ class CommandBase(ABC):
                 print(f"{self.command_desc().short_help.capitalize()}\n")
                 print("Commands:")
 
-                # Use a set to avoid duplicated lines.
-                cmd_text = {
-                    f"   {sub_cmd.command_desc().command:<15} - {sub_cmd.command_desc().short_help}"
-                    for sub_cmd in self.__sub_commands.values()
-                }
+                # print commands in alphabetic order
+                for k in sorted(self.__sub_commands.keys()):
+                    if k not in self.__additional_ids:
+                        print(f"   {self.__sub_commands[k].command_desc().command:<15} - {self.__sub_commands[k].command_desc().short_help}")
 
-                for txt in cmd_text:
-                    print(txt)
                 print(f"\nRun '{self.__command_with_parents()} COMMAND help' for more information on the command.")
             else:
                 self.__print_absolute_cmd_help()
