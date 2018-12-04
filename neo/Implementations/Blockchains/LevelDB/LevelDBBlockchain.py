@@ -365,6 +365,12 @@ class LevelDBBlockchain(Blockchain):
 
         return asset
 
+    def ShowAllAssets(self):
+
+        assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState)
+        keys = assets.Keys
+        return keys
+
     def GetTransaction(self, hash):
 
         if type(hash) is str:
