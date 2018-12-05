@@ -3,7 +3,6 @@ from neo.Settings import settings
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Prompt.Commands.Search import CommandSearch
 from neo.Prompt.PromptData import PromptData
-from neo.bin.prompt import PromptInterface
 
 
 class CommandShowTestCase(BlockchainFixtureTestCase):
@@ -11,10 +10,6 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
     @classmethod
     def leveldb_testpath(self):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
-
-    @classmethod
-    def tearDown(cls):
-        PromptData.Prompt = None
 
     def test_search(self):
         # with no subcommand
@@ -27,9 +22,6 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_search_asset(self):
-        # setup
-        PromptInterface()
-
         # successful search by name
         args = ['asset', "AntShare"]
         res = CommandSearch().execute(args)
@@ -46,9 +38,6 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_search_contract(self):
-        # setup
-        PromptInterface()
-
         # successful search by name
         args = ['contract', "test NEX Template V4"]
         res = CommandSearch().execute(args)
