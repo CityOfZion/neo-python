@@ -2,8 +2,6 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Core.Blockchain import Blockchain
-from prompt_toolkit.shortcuts import print_formatted_text
-from prompt_toolkit.formatted_text import FormattedText
 from neo.logging import log_manager
 import json
 
@@ -25,13 +23,13 @@ class CommandSearch(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `search help` to see supported queries")
+            print("run `%s help` to see supported queries" % CommandSearch().command_desc().command)
             return
 
         try:
             return self.execute_sub_command(item, arguments[1:])
         except KeyError:
-            print(f"search: {item} is an invalid parameter")
+            print(f"{item} is an invalid parameter")
             return
 
 
@@ -45,9 +43,7 @@ class CommandSearchAsset(CommandBase):
         results = Blockchain.Default().SearchAssetState(item)
         print("Found %s results for %s" % (len(results), item))
         for asset in results:
-            bjson = json.dumps(asset.ToJson(), indent=4)
-            tokens = [("class:number", bjson)]
-            print_formatted_text(FormattedText(tokens), style=PromptData.Prompt.token_style)
+            print(json.dumps(asset.ToJson(), indent=4))
         return results
 
     def command_desc(self):
@@ -65,9 +61,7 @@ class CommandSearchContract(CommandBase):
         contracts = Blockchain.Default().SearchContracts(query=item)
         print("Found %s results for %s" % (len(contracts), item))
         for contract in contracts:
-            bjson = json.dumps(contract.ToJson(), indent=4)
-            tokens = [("class:number", bjson)]
-            print_formatted_text(FormattedText(tokens), style=PromptData.Prompt.token_style)
+            print(json.dumps(contract.ToJson(), indent=4))
         return contracts
 
     def command_desc(self):
