@@ -71,7 +71,7 @@ class PromptInterface:
     _known_things = []
 
     _commands = [
-        CommandWallet(),  CommandShow()
+        CommandWallet(), CommandShow()
     ]
 
     _command_descs = [desc for c in _commands for desc in c.command_descs_with_sub_commands()]
