@@ -27,7 +27,7 @@ class CommandShow(CommandBase):
         self.register_sub_command(CommandShowNodes(), ['node'])
 
     def command_desc(self):
-        return CommandDesc('show', 'show data from the blockchain')
+        return CommandDesc('show', 'show useful data')
 
     def execute(self, arguments):
         item = get_arg(arguments)
@@ -50,24 +50,27 @@ class CommandShowBlock(CommandBase):
     def execute(self, arguments):
         item = get_arg(arguments)
         txarg = get_arg(arguments, 1)
+        if item is not None:
+            block = Blockchain.Default().GetBlock(item)
 
-        block = Blockchain.Default().GetBlock(item)
+            if block is not None:
+                block.LoadTransactions()
 
-        if block is not None:
-            block.LoadTransactions()
+                if txarg and 'tx' in txarg:
+                    txs = []
+                    for tx in block.FullTransactions:
+                        print(json.dumps(tx.ToJson(), indent=4))
+                        txs.append(tx.ToJson())
+                    return txs
 
-            if txarg and 'tx' in txarg:
-                txs = []
-                for tx in block.FullTransactions:
-                    print(json.dumps(tx.ToJson(), indent=4))
-                    txs.append(tx.ToJson())
-                return txs
+                print(json.dumps(block.ToJson(), indent=4))
+                return block.ToJson()
 
-            print(json.dumps(block.ToJson(), indent=4))
-            return block.ToJson()
-
+            else:
+                print("Could not locate block %s" % item)
+                return
         else:
-            print("Could not locate block %s" % item)
+            print("please specify a block")
             return
 
     def command_desc(self):
@@ -82,13 +85,16 @@ class CommandShowHeader(CommandBase):
 
     def execute(self, arguments):
         item = get_arg(arguments)
-
-        header = Blockchain.Default().GetHeaderBy(item)
-        if header is not None:
-            print(json.dumps(header.ToJson(), indent=4))
-            return header.ToJson()
+        if item is not None:
+            header = Blockchain.Default().GetHeaderBy(item)
+            if header is not None:
+                print(json.dumps(header.ToJson(), indent=4))
+                return header.ToJson()
+            else:
+                print("Could not locate header %s\n" % item)
+                return
         else:
-            print("Could not locate header %s\n" % item)
+            print("Please specify a header")
             return
 
     def command_desc(self):
@@ -101,21 +107,25 @@ class CommandShowTx(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        try:
-            txid = UInt256.ParseString(get_arg(arguments))
-            tx, height = Blockchain.Default().GetTransaction(txid)
-            if height > -1:
-                jsn = tx.ToJson()
-                jsn['height'] = height
-                jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
-                                   Blockchain.Default().GetAllUnspent(txid)]
-                print(json.dumps(jsn, indent=4))
-                return jsn
-            else:
-                print(f"Could not find transaction for hash {txid}")
+        if len(arguments):
+            try:
+                txid = UInt256.ParseString(get_arg(arguments))
+                tx, height = Blockchain.Default().GetTransaction(txid)
+                if height > -1:
+                    jsn = tx.ToJson()
+                    jsn['height'] = height
+                    jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
+                                    Blockchain.Default().GetAllUnspent(txid)]
+                    print(json.dumps(jsn, indent=4))
+                    return jsn
+                else:
+                    print(f"Could not find transaction for hash {txid}")
+                    return
+            except Exception:
+                print("Could not find transaction from args: %s" % arguments)
                 return
-        except Exception as e:
-            print("Could not find transaction from args: %s (%s)" % (e, arguments))
+        else:
+            print("Please specify a TX hash")
             return
 
     def command_desc(self):
