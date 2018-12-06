@@ -75,6 +75,6 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         block = self._blockchain.GetHeaderBy(invalid_bc_height)
         self.assertEqual(block, None)
 
-        def test_ShowAllAssets(self):
+    def test_ShowAllAssets(self):
         assets = Blockchain.Default().ShowAllAssets()
         self.assertEqual(len(assets), 2)
