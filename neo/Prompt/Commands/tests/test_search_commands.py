@@ -22,8 +22,28 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_search_asset(self):
-        # successful search by name
+        # successful search asset NEO
+        args = ['asset', "NEO"]
+        res = CommandSearch().execute(args)
+        self.assertTrue(res)
+
+        # successful search asset gas
+        args = ['asset', "gas"]
+        res = CommandSearch().execute(args)
+        self.assertTrue(res)
+
+        # successful search asset NEOGas
+        args = ['asset', "NEOGas"]
+        res = CommandSearch().execute(args)
+        self.assertTrue(res)
+
+        # successful search asset AntShare
         args = ['asset', "AntShare"]
+        res = CommandSearch().execute(args)
+        self.assertTrue(res)
+
+        # successful search asset AntShare
+        args = ['asset', "AntCoin"]
         res = CommandSearch().execute(args)
         self.assertTrue(res)
 
