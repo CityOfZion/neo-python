@@ -23,7 +23,7 @@ class CommandSearch(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `%s help` to see supported queries" % CommandSearch().command_desc().command)
+            print("run `%s help` to see supported queries" % self.command_desc().command)
             return
 
         try:
