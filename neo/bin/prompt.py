@@ -16,6 +16,7 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Wallet import CommandWallet
+from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Search import CommandSearch
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.InputParser import InputParser
@@ -71,7 +72,7 @@ class PromptInterface:
     _known_things = []
 
     _commands = [
-        CommandWallet(), CommandSearch()
+        CommandWallet(), CommandShow(), CommandSearch()
     ]
 
     _command_descs = [desc for c in _commands for desc in c.command_descs_with_sub_commands()]
