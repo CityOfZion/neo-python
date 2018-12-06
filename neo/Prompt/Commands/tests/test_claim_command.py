@@ -112,7 +112,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1()
 
-        claim_tx, relayed = ClaimGas(wallet, require_password=False, args=['1'])
+        claim_tx, relayed = ClaimGas(wallet, require_password=False, max_coins_to_claim=1)
         self.assertIsInstance(claim_tx, ClaimTransaction)
         self.assertTrue(relayed)
 
@@ -124,6 +124,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertIsInstance(claim_tx, ClaimTransaction)
         self.assertTrue(relayed)
+
+    def test_6_no_wallet(self):
+        claim_tx, relayed = ClaimGas(None, require_password=False)
+        self.assertEqual(claim_tx, None)
+        self.assertFalse(relayed)
 
     def test_block_12248_sysfee(self):
 

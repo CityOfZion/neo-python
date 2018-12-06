@@ -4,6 +4,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
+from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
 from neo.Prompt.PromptData import PromptData
@@ -14,12 +15,15 @@ from mock import patch
 
 class UserWalletTestCase(WalletFixtureTestCase):
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
-
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+    _wallet1 = None
+
+    wallet_2_script_hash = UInt160(data=b'\x08t/\\P5\xac-\x0b\x1c\xb4\x94tIyBu\x7f1*')
+    wallet_2_addr = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
+    _wallet2 = None
 
     import_watch_addr = UInt160(data=b'\x08t/\\P5\xac-\x0b\x1c\xb4\x94tIyBu\x7f1*')
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
-    _wallet1 = None
 
     @property
     def GAS(self):
@@ -38,8 +42,20 @@ class UserWalletTestCase(WalletFixtureTestCase):
         return cls._wallet1
 
     @classmethod
-    def OpenWallet(cls):
+    def GetWallet2(cls, recreate=False):
+        if cls._wallet2 is None or recreate:
+            shutil.copyfile(cls.wallet_2_path(), cls.wallet_2_dest())
+            cls._wallet2 = UserWallet.Open(UserWalletTestCase.wallet_2_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_2_pass()))
+        return cls._wallet2
+
+    @classmethod
+    def OpenWallet1(cls):
         PromptData.Wallet = cls.GetWallet1(recreate=True)
+
+    @classmethod
+    def OpenWallet2(cls):
+        PromptData.Wallet = cls.GetWallet2(recreate=True)
 
     @classmethod
     def tearDown(cls):
@@ -53,12 +69,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertFalse(res)
 
         # with wallet opened
-        self.OpenWallet()
+        self.OpenWallet1()
         res = CommandWallet().execute(None)
         self.assertEqual(type(res), UserWallet)
 
     def test_wallet_wrong_command(self):
-        self.OpenWallet()
+        self.OpenWallet1()
         args = ['badcommand']
         res = CommandWallet().execute(args)
         self.assertFalse(res)
@@ -203,8 +219,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = CommandWallet().execute(args)
         self.assertFalse(res)
 
+        self.OpenWallet1()
+
         # test wallet close with open wallet
-        self.OpenWallet()
         args = ['verbose']
         res = CommandWallet().execute(args)
         self.assertTrue(res)
@@ -215,7 +232,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = CommandWallet().execute(args)
         self.assertFalse(res)
 
-        self.OpenWallet()
+        self.OpenWallet1()
 
         # test wallet create address with no argument
         args = ['create_addr']
@@ -240,8 +257,60 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(type(res), UserWallet)
         self.assertEqual(len(res.Addresses), 9)
 
+    def test_wallet_claim_1(self):
+        # test with no wallet
+        args = ['claim']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        self.OpenWallet1()
+
+        # test with max_coins_to_claim non integer
+        args = ['claim', 'abc']
+        claim_tx, relayed = CommandWallet().execute(args)
+        self.assertEqual(claim_tx, None)
+        self.assertFalse(relayed)
+
+        # test with max_coins_to_claim <= 0
+        args = ['claim', '-1']
+        claim_tx, relayed = CommandWallet().execute(args)
+        self.assertEqual(claim_tx, None)
+        self.assertFalse(relayed)
+
+        # test wrong password
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["wrong"]):
+            args = ['claim']
+            claim_tx, relayed = CommandWallet().execute(args)
+            self.assertEqual(claim_tx, None)
+            self.assertFalse(relayed)
+
+        # test successfull
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
+            args = ['claim']
+            claim_tx, relayed = CommandWallet().execute(args)
+            self.assertIsInstance(claim_tx, ClaimTransaction)
+            self.assertTrue(relayed)
+
+        # test nothing to claim anymore
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
+            args = ['claim']
+            claim_tx, relayed = CommandWallet().execute(args)
+            self.assertEqual(claim_tx, None)
+            self.assertFalse(relayed)
+
+    def test_wallet_claim_2(self):
+        self.OpenWallet2()
+
+        # test with max_coins_to_claim
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
+            args = ['claim', '1']
+            claim_tx, relayed = CommandWallet().execute(args)
+            self.assertIsInstance(claim_tx, ClaimTransaction)
+            self.assertTrue(relayed)
+
     ##########################################################
     ##########################################################
+
     def test_1_import_addr(self):
         wallet = self.GetWallet1(recreate=True)
 
