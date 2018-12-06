@@ -34,6 +34,11 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_show_block(self):
+        # test no block input
+        args = ['block']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
         # show good block by index
         args = ['block', '9']
         res = CommandShow().execute(args)
@@ -62,6 +67,11 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_show_header(self):
+        # test no header input
+        args = ['header']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
         # show good header by index
         args = ['header', '9']
         res = CommandShow().execute(args)
@@ -82,6 +92,11 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_show_tx(self):
+        # test no tx input
+        args = ['tx']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
         # show good tx
         txid = '0x83df8bd085fcb60b2789f7d0a9f876e5f3908567f7877fcba835e899b9dea0b5'
         args = ['tx', txid]
