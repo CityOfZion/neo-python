@@ -5,8 +5,6 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Core.Blockchain import Blockchain
-from prompt_toolkit.shortcuts import print_formatted_text
-from prompt_toolkit.formatted_text import FormattedText
 from neocore.UInt256 import UInt256
 from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
@@ -35,13 +33,13 @@ class CommandShow(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `show help` to see supported queries")
+            print("run `%s help` to see supported queries" % CommandShow().command_desc().command)
             return
 
         try:
             return self.execute_sub_command(item, arguments[1:])
         except KeyError:
-            print(f"show: {item} is an invalid parameter")
+            print(f"{item} is an invalid parameter")
             return
 
 
@@ -57,18 +55,15 @@ class CommandShowBlock(CommandBase):
 
         if block is not None:
             block.LoadTransactions()
-            bjson = json.dumps(block.ToJson(), indent=4)
+
             if txarg and 'tx' in txarg:
                 txs = []
                 for tx in block.FullTransactions:
-                    tjson = json.dumps(tx.ToJson(), indent=4)
-                    tokens = [("class:number", tjson)]
-                    print_formatted_text(FormattedText(tokens), style=PromptData.Prompt.token_style)
+                    print(json.dumps(tx.ToJson(), indent=4))
                     txs.append(tx.ToJson())
                 return txs
 
-            tokens = [("class:number", bjson)] 
-            print_formatted_text(FormattedText(tokens), style=PromptData.Prompt.token_style)
+            print(json.dumps(block.ToJson(), indent=4))
             return block.ToJson()
 
         else:
@@ -90,9 +85,7 @@ class CommandShowHeader(CommandBase):
 
         header = Blockchain.Default().GetHeaderBy(item)
         if header is not None:
-            hjson = (json.dumps(header.ToJson(), indent=4))
-            tokens = [("class:number", hjson)]
-            print_formatted_text(FormattedText(tokens), style=PromptData.Prompt.token_style)
+            print(json.dumps(header.ToJson(), indent=4))
             return header.ToJson()
         else:
             print("Could not locate header %s\n" % item)
@@ -116,8 +109,7 @@ class CommandShowTx(CommandBase):
                 jsn['height'] = height
                 jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
                                    Blockchain.Default().GetAllUnspent(txid)]
-                tokens = [("class:command", json.dumps(jsn, indent=4))]
-                print_formatted_text(FormattedText(tokens), style=PromptData.Prompt.token_style)
+                print(json.dumps(jsn, indent=4))
                 return jsn
             else:
                 print(f"Could not find transaction for hash {txid}")
@@ -141,7 +133,7 @@ class CommandShowMem(CommandBase):
         totalmb = total / (1024 * 1024)
         out = "Total: %s MB\n" % totalmb
         out += "Total buffers: %s\n" % StreamManager.TotalBuffers()
-        print_formatted_text(FormattedText([("class:number", out)]), style=PromptData.Prompt.token_style)
+        print(out)
         return out
 
     def command_desc(self):
@@ -157,7 +149,7 @@ class CommandShowNodes(CommandBase):
             out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
             for peer in NodeLeader.Instance().Peers:
                 out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
-            print_formatted_text(FormattedText([("class:number", out)]), style=PromptData.Prompt.token_style)
+            print(out)
             return out
         else:
             print("Not connected yet\n")
