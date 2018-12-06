@@ -9,6 +9,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Settings import settings
 from neo.logging import log_manager
+from neo.Network.NodeLeader import NodeLeader
 
 logger = log_manager.getLogger()
 
@@ -35,6 +36,8 @@ class BlockchainFixtureTestCase(NeoTestCase):
         Blockchain.DeregisterBlockchain()
 
         super(BlockchainFixtureTestCase, cls).setUpClass()
+
+        NodeLeader.Instance().Setup()
 
         # setup Blockchain DB
         if not os.path.exists(cls.FIXTURE_FILENAME):
