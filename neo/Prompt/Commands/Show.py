@@ -115,7 +115,7 @@ class CommandShowTx(CommandBase):
                     jsn = tx.ToJson()
                     jsn['height'] = height
                     jsn['unspents'] = [uns.ToJson(tx.outputs.index(uns)) for uns in
-                                    Blockchain.Default().GetAllUnspent(txid)]
+                                       Blockchain.Default().GetAllUnspent(txid)]
                     print(json.dumps(jsn, indent=4))
                     return jsn
                 else:
