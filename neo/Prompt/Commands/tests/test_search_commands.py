@@ -41,7 +41,7 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         res = CommandSearch().execute(args)
         self.assertTrue(res)
 
-        # successful search asset AntShare
+        # successful search asset AntCoin
         args = ['asset', "AntCoin"]
         res = CommandSearch().execute(args)
         self.assertTrue(res)
