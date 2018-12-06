@@ -34,9 +34,6 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_show_block(self):
-        # setup
-        PromptInterface()
-
         # show good block by index
         args = ['block', '9']
         res = CommandShow().execute(args)
@@ -65,9 +62,6 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_show_header(self):
-        # setup
-        PromptInterface()
-
         # show good header by index
         args = ['header', '9']
         res = CommandShow().execute(args)
@@ -88,9 +82,6 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_show_tx(self):
-        # setup
-        PromptInterface()
-
         # show good tx
         txid = '0x83df8bd085fcb60b2789f7d0a9f876e5f3908567f7877fcba835e899b9dea0b5'
         args = ['tx', txid]
@@ -111,17 +102,11 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_show_mem(self):
-        # setup
-        PromptInterface()
-
         args = ['mem']
         res = CommandShow().execute(args)
         self.assertTrue(res)
 
     def test_show_nodes(self):
-        # setup
-        PromptInterface()
-
         # query nodes with no NodeLeader.Instance()
         with patch('neo.Network.NodeLeader.NodeLeader.Instance'):
             args = ['nodes']
