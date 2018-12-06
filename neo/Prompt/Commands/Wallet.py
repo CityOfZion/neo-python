@@ -61,7 +61,7 @@ class CommandWallet(CommandBase):
         try:
             return self.execute_sub_command(item, arguments[1:])
         except KeyError:
-            print(f"Wallet: {item} is an invalid parameter")
+            print(f"{item} is an invalid parameter")
             return
 
 
