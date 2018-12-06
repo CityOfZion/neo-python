@@ -16,7 +16,6 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Wallet import CommandWallet
-from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError
@@ -71,7 +70,7 @@ class PromptInterface:
     _known_things = []
 
     _commands = [
-        CommandWallet(), CommandShow()
+        CommandWallet(),
     ]
 
     _command_descs = [desc for c in _commands for desc in c.command_descs_with_sub_commands()]
