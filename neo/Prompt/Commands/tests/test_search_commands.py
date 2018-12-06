@@ -2,7 +2,6 @@ import os
 from neo.Settings import settings
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Prompt.Commands.Search import CommandSearch
-from neo.Prompt.PromptData import PromptData
 
 
 class CommandShowTestCase(BlockchainFixtureTestCase):
