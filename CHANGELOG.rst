@@ -20,6 +20,7 @@ All notable changes to this project are documented in this file.
 - Fix unnecessary default bootstrap warning for mainnet showing.
 - Add GET and OPTIONS request functionality for JSON-RPC servers
 - Fix ``gzip`` failure in current implementation of ExtendedJsonRpcApi
+- Gracefully handle balance query failures of NEP-5 tokens.
 
 
 [0.8.2] 2018-10-31

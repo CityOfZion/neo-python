@@ -167,7 +167,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
             for index, iarg in enumerate(contract.Code.ParameterList):
                 param, abort = gather_param(index, iarg)
                 if abort:
-                    return None, None, None, None
+                    return None, None, None, None, False
                 params.append(param)
             params.reverse()
 
@@ -225,7 +225,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
 
         print("Contract %s not found" % args[0])
 
-    return None, None, None, None
+    return None, None, None, None, False
 
 
 def make_unique_script_attr(attributes):
@@ -368,18 +368,18 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
 
-            return wallet_tx, net_fee, engine.ResultStack.Items, engine.ops_processed
+            return wallet_tx, net_fee, engine.ResultStack.Items, engine.ops_processed, success
 
         # this allows you to to test invocations that fail
         else:
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
-            return wallet_tx, min_fee, [], engine.ops_processed
+            return wallet_tx, min_fee, [], engine.ops_processed, success
 
     except Exception as e:
         service.ExecutionCompleted(engine, False, e)
 
-    return None, None, None, None
+    return None, None, None, None, False
 
 
 def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
