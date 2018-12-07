@@ -2,11 +2,17 @@ import datetime
 
 
 class Address:
-    def __init__(self, address, lastConnectionTo=None):
-        if not lastConnectionTo:
+    def __init__(self, address: str, last_connection_to: float = None):
+        """
+        Initialize
+        Args:
+            address: a host:port 
+            last_connection_to: timestamp since we were last connected. Default's to 0 indicating 'never'
+        """
+        if not last_connection_to:
             self.last_connection = 0
         else:
-            self.last_connection = lastConnectionTo
+            self.last_connection = last_connection_to
 
         self.address = address  # type: str
 
@@ -21,6 +27,9 @@ class Address:
             return False
 
     def __repr__(self):
+        return f"<{self.__class__.__name__} at {hex(id(self))}>  {self.address} ({self.last_connection:.2f})"
+
+    def __str__(self):
         return self.address
 
     def __call__(self, *args, **kwargs):

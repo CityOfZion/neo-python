@@ -220,6 +220,7 @@ class PromptInterface:
         print('Shutting down. This may take a bit...')
         self.go_on = False
         self.do_close_wallet()
+        self.stop_db_loop()
         reactor.stop()
 
     def help(self):
@@ -604,7 +605,7 @@ class PromptInterface:
             peer = leader.Peers[index]
             addr_idx = leader.KNOWN_ADDRS.index(peer.address)
             peer.address.last_connection = datetime.datetime.utcnow().timestamp()
-            leader.KNOWN_ADDRS[addr_idx] = peer.Address
+            leader.KNOWN_ADDRS[addr_idx] = peer.address
             peer.Disconnect()
         except IndexError:
             print("Invalid peer number")
@@ -613,7 +614,7 @@ class PromptInterface:
         if len(NodeLeader.Instance().Peers) > 0:
             out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
             for i, peer in enumerate(NodeLeader.Instance().Peers):
-                out += f"Peer {i} {peer.Name():>12} - {peer.Address:>21} - IO {peer.IOStats()}\n"
+                out += f"Peer {i} {peer.Name():>12} - {peer.address:>21} - IO {peer.IOStats()}\n"
             print_formatted_text(FormattedText([("class:number", out)]), style=self.token_style)
         else:
             print("Not connected yet\n")
@@ -1210,8 +1211,7 @@ def main():
     # Run things
     # reactor.suggestThreadPoolSize(30)
     reactor.callInThread(cli.run)
-
-    NodeLeader.Instance().Start()
+    reactor.callWhenRunning(NodeLeader.Instance().Start)
 
     # reactor.run() is blocking, until `quit()` is called which stops the reactor.
     reactor.run()
