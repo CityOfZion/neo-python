@@ -21,7 +21,7 @@ class BlockchainInteropTest(BlockchainFixtureTestCase):
     state_reader = None
 
     @classmethod
-    def leveldb_testpath(self):
+    def leveldb_testpath(cls):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     @classmethod
