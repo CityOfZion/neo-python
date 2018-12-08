@@ -603,8 +603,8 @@ class JsonRpcApi:
         self.wallet.Sign(context)
         if context.Completed:
             tx.scripts = context.GetScripts()
-            self.wallet.SaveTransaction(tx)
             NodeLeader.Instance().Relay(tx)
+            self.wallet.SaveTransaction(tx)
             return tx.ToJson()
         else:
             return context.ToJson()
