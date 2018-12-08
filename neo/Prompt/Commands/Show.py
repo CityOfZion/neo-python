@@ -6,6 +6,7 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt256 import UInt256
+from neocore.UInt160 import UInt160
 from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
@@ -217,32 +218,43 @@ class CommandShowNotifications(CommandBase):
             print("No notification DB Configured")
             return
 
-        item = get_arg(arguments, 0)
-        events = []
-        if len(item) == 34 and item[0] == 'A':
-            addr = item
-            events = NotificationDB.instance().get_by_addr(addr)
-        else:
-            try:
-                block_height = int(item)
-                if block_height < Blockchain.Default().Height:
-                    events = NotificationDB.instance().get_by_block(block_height)
-                else:
-                    print("Block %s not found" % block_height)
-                    return
-            except Exception as e:
-                print("Could not parse block height %s" % e)
-                return
+        item = get_arg(arguments)
+        if item is not None:
+            if item[0:2] == "0x":
+                item = item[2:]
 
-        if len(events):
-            [print(json.dumps(e.ToJson(), indent=4)) for e in events]
-            return events
+            events = []
+
+            if len(item) == 34 and item[0] == 'A':
+                events = NotificationDB.instance().get_by_addr(item)
+
+            elif len(item) == 40:
+                events = NotificationDB.instance().get_by_contract(item)
+
+            else:
+                try:
+                    block_height = int(item)
+                    if block_height < Blockchain.Default().Height:
+                        events = NotificationDB.instance().get_by_block(block_height)
+                    else:
+                        print("Block %s not found" % block_height)
+                        return
+                except Exception:
+                    print("Could not find notifications from args: %s" % arguments)
+                    return
+
+            if len(events):
+                [print(json.dumps(e.ToJson(), indent=4)) for e in events]
+                return events
+            else:
+                print("No events found for %s" % item)
+                return
         else:
-            print("No events found for %s" % item)
+            print("Please specify a block index, address, or contract hash")
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('block_index/address', 'the block or address to show notifications for')
+        p1 = ParameterDesc('block_index/address/contract_hash', 'the block, address, or contract to show notifications for')
         return CommandDesc('notifications', 'show specified contract execution notifications', [p1])
 
 
@@ -289,8 +301,8 @@ class CommandShowAsset(CommandBase):
             else:
                 try:
                     assetId = UInt256.ParseString(item)
-                except Exception as e:
-                    print("Could not find assetId from args: %s (%s)" % (e, arguments))
+                except Exception:
+                    print("Could not find asset from args: %s" % arguments)
                     return
 
             asset = Blockchain.Default().GetAssetState(assetId.ToBytes())
@@ -325,7 +337,13 @@ class CommandShowContract(CommandBase):
                 print("Contracts: %s" % contracts)
                 return contracts
 
-            contract = Blockchain.Default().GetContract(item)
+            try:
+                hash = UInt160.ParseString(item).ToBytes()
+            except Exception:
+                print("Could not find contract from args: %s" % arguments)
+                return
+
+            contract = Blockchain.Default().GetContract(hash)
 
             if contract is not None:
                 contract.DetermineIsNEP5()
@@ -336,6 +354,7 @@ class CommandShowContract(CommandBase):
                 return
         else:
             print("Please specify a contract")
+            return
 
     def command_desc(self):
         p1 = ParameterDesc('hash/all', 'the scripthash of the contract, or "all" shows all contracts')
