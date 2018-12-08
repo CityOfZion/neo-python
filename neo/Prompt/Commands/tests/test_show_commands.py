@@ -175,6 +175,11 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
             res = CommandShow().execute(args)
             self.assertFalse(res)
 
+        # test with no input
+        args = ['notifications']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
         # good test with address
         args = ['notifications', wallet_1_addr]
         res = CommandShow().execute(args)
@@ -189,6 +194,32 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         res = CommandShow().execute(args)
         self.assertFalse(res)
 
+        # good test with contract
+        contract_hash = "31730cc9a1844891a3bafd1aa929a4142860d8d3"
+        args = ['notifications', contract_hash]
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        jsn = res[0].ToJson()
+        self.assertEqual(jsn['notify_type'], 'transfer')
+        self.assertIn(contract_hash, jsn['contract'])
+
+        # good test with contract 0x hash
+        contract_hash = "0x31730cc9a1844891a3bafd1aa929a4142860d8d3"
+        args = ['notifications', contract_hash]
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        jsn = res[0].ToJson()
+        self.assertEqual(jsn['notify_type'], 'transfer')
+        self.assertEqual(contract_hash, jsn['contract'])
+
+        # test contract not on the blockchain
+        contract_hash = "3a4acd3647086e7c44398aac0349802e6a171129"  # NEX token hash
+        args = ['notifications', contract_hash]
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
         # good test with block index
         args = ['notifications', "12337"]
         res = CommandShow().execute(args)
@@ -198,13 +229,18 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertEqual(jsn['notify_type'], 'transfer')
         self.assertEqual(jsn['block'], 12337)
 
+        # test block with no notifications
+        args = ['notifications', "1"]
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
         # test bad block
         index = Blockchain.Default().Height + 1
         args = ['notifications', str(index)]
         res = CommandShow().execute(args)
         self.assertFalse(res)
 
-        # test invalid block input
+        # test invalid input
         args = ['notifications', "blah"]
         res = CommandShow().execute(args)
         self.assertFalse(res)
@@ -305,6 +341,11 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['name'], "test NEX Template V4")
         self.assertEqual(res['token']['name'], "NEX Template V4")
         self.assertEqual(res['token']['symbol'], "NXT4")
+
+        # query with a contract scripthash not on the blockchain
+        args = ['contract', '3a4acd3647086e7c44398aac0349802e6a171129']  # NEX token hash
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
 
         # query bad input
         args = ['contract', 'blah']
