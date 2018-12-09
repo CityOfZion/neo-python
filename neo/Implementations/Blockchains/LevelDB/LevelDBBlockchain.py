@@ -618,17 +618,17 @@ class LevelDBBlockchain(Blockchain):
         if hHash not in self._header_index:
             self._header_index.append(hHash)
 
-        while header.Index - 2000 >= self._stored_header_count:
-            ms = StreamManager.GetStream()
-            w = BinaryWriter(ms)
-            headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count + 2000]
-            w.Write2000256List(headers_to_write)
-            out = ms.ToArray()
-            StreamManager.ReleaseStream(ms)
-            with self._db.write_batch() as wb:
+        with self._db.write_batch() as wb:
+            while header.Index - 2000 >= self._stored_header_count:
+                ms = StreamManager.GetStream()
+                w = BinaryWriter(ms)
+                headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count + 2000]
+                w.Write2000256List(headers_to_write)
+                out = ms.ToArray()
+                StreamManager.ReleaseStream(ms)
                 wb.put(DBPrefix.IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), out)
 
-            self._stored_header_count += 2000
+                self._stored_header_count += 2000
 
         with self._db.write_batch() as wb:
             if self._db.get(DBPrefix.DATA_Block + hHash) is None:
