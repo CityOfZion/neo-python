@@ -6,6 +6,7 @@ from twisted.internet import error as twisted_error
 from twisted.internet import reactor, task, defer
 from twisted.internet.address import IPv4Address
 from twisted.internet.defer import CancelledError
+from twisted.internet import error
 from neo.Core.Blockchain import Blockchain as BC
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Network.Message import Message
@@ -147,8 +148,7 @@ class NeoNode(Protocol):
 
         self.host = None
         self.port = None
-        self.identifier = self.leader.NodeCount
-        self.leader.NodeCount += 1
+
         self.incoming_client = incoming_client
         self.expect_verack_next = False
         self.start_outstanding_data_request = {HEARTBEAT_BLOCKS: 0, HEARTBEAT_HEADERS: 0}
@@ -165,7 +165,7 @@ class NeoNode(Protocol):
         self.disconnect_deferred = None
         self.disconnecting = False
 
-        logger.debug(f"{self.prefix} new node created {self.identifier}, not yet connected")
+        logger.debug(f"{self.prefix} new node created, not yet connected")
 
     def Disconnect(self, reason=None):
         """Close the connection with the remote node client."""
@@ -179,17 +179,18 @@ class NeoNode(Protocol):
 
         self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} Forced disconnect by us")
 
+        self.leader.forced_disconnect_by_us += 1
+
         self.disconnect_deferred = defer.Deferred()
 
         # force disconnection without waiting on the other side
         # calling later to give func caller time to add callbacks to the deferred
         reactor.callLater(1, self.transport.abortConnection)
-        # self.transport.abortConnection
         return self.disconnect_deferred
 
     @property
     def prefix(self):
-        if isinstance(self.endpoint, IPv4Address):
+        if isinstance(self.endpoint, IPv4Address) and self.identifier is not None:
             return f"[{self.identifier:03}][{mode_to_name[self.sync_mode]}][{self.address:>21}]"
         else:
             return f""
@@ -238,7 +239,8 @@ class NeoNode(Protocol):
         self.port = int(self.endpoint.port)
         self.leader.AddConnectedPeer(self)
         self.leader.RemoveFromQueue(self.address)
-        logger.debug(f"{self.prefix} connection established")
+        # logger.debug(f"{self.prefix} connection established")
+        logger.debug(f"{self.address} connection established")
         if self.incoming_client:
             # start protocol
             self.SendVersion()
@@ -275,16 +277,21 @@ class NeoNode(Protocol):
                     self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} second connection lost within 5 minutes")
 
             else:
-                logger.debug(f"{self.prefix} disconnected with reason: {reason}")
+                logger.debug(f"{self.prefix} disconnected with reason: {reason.value}")
         except Exception as e:
             logger.error("Error with connection lost: %s " % e)
 
+        def try_me(err):
+            err.check(error.ConnectionAborted)
+            print("******* try me called!", err)
+
         if self.disconnect_deferred:
             d, self.disconnect_deferred = self.disconnect_deferred, None  # type: defer.Deferred
-            d.addErrback(lambda x: x)
+            d.addErrback(try_me)
             if len(d.callbacks) > 0:
                 d.callback(reason)
             else:
+                print("connLost, disconnect_deferred cancelling!")
                 d.cancel()
 
     def ReleaseBlockRequests(self):
@@ -425,6 +432,10 @@ class NeoNode(Protocol):
             logger_verbose.debug(f"{self.prefix} onThreadDeferredError cancelled deferred")
             return
         logger.debug(f"{self.prefix} On Call from thread error {err}")
+
+    def keep_alive(self):
+        ka = Message("ping")
+        self.SendSerializedMessage(ka)
 
     def ProtocolReady(self):
         # do not start the looping tasks if we're in the BlockRequests catchup task
@@ -571,6 +582,8 @@ class NeoNode(Protocol):
         """Handle the `verack` response."""
         m = Message('verack')
         self.SendSerializedMessage(m)
+        self.leader.NodeCount += 1
+        self.identifier = self.leader.NodeCount
         self.ProtocolReady()
 
     def HandleInvMessage(self, payload):
@@ -681,7 +694,7 @@ class NeoNode(Protocol):
 
         if time_expired == 0:
             # startup scenario, just go
-            logger.debug(f"{self.prefix}[HEALTH][{what}] startup heart_beat")
+            logger.debug(f"{self.prefix}[HEALTH][{what}] startup or bcr catchup heart_beat")
             self.heart_beat(what)
         else:
             if self.sync_mode == MODE_CATCHUP:
@@ -689,9 +702,25 @@ class NeoNode(Protocol):
             else:
                 response_threshold = 90  #
             if time_expired > response_threshold:
-                logger.debug(
-                    f"{self.prefix}[HEALTH][{what}] FAILED - No response for {time_expired:.2f} seconds. Removing node...")
-                self.Disconnect()
+                header_time = self.time_expired(HEARTBEAT_HEADERS)
+                header_bad = header_time > response_threshold
+                block_time = self.time_expired(HEARTBEAT_BLOCKS)
+                blocks_bad = block_time > response_threshold
+                if header_bad and blocks_bad:
+                    logger.debug(
+                        f"{self.prefix}[HEALTH] FAILED - No response for Headers {header_time:.2f} and Blocks {block_time:.2f} seconds. Removing node...")
+                    self.Disconnect()
+                else:
+                    if header_bad:
+                        logger.debug(
+                            f"{self.prefix}[HEALTH] Headers FAILED @ {header_time:.2f}s, but Blocks OK @ {block_time:.2f}s. Keeping node...")
+                    else:
+                        logger.debug(
+                            f"{self.prefix}[HEALTH] Headers OK @ {header_time:.2f}s, but Blocks FAILED @ {block_time:.2f}s. Keeping node...")
+
+                # logger.debug(
+                #     f"{self.prefix}[HEALTH][{what}] FAILED - No response for {time_expired:.2f} seconds. Removing node...")
+
             else:
                 logger.debug(f"{self.prefix}[HEALTH][{what}] OK - response time {time_expired:.2f}")
 
@@ -731,7 +760,7 @@ class NeoNode(Protocol):
 
     def HandleBlockReset(self, hash):
         """Process block reset request."""
-        self.myblockrequests = []
+        self.myblockrequests = set()
 
     def HandleGetDataMessageReceived(self, payload):
         """

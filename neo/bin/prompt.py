@@ -24,7 +24,7 @@ from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlo
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
+from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
 from neo.Prompt.Commands.config import start_output_config
 from neo.Prompt.Commands.BuildNRun import BuildAndRun, LoadAndRun
@@ -220,7 +220,8 @@ class PromptInterface:
         print('Shutting down. This may take a bit...')
         self.go_on = False
         self.do_close_wallet()
-        self.stop_db_loop()
+        Blockchain.Default().Dispose()
+        NodeLeader.Instance().Shutdown()
         reactor.stop()
 
     def help(self):
@@ -314,10 +315,11 @@ class PromptInterface:
         self.wallet_loop_deferred.addErrback(self.on_wallet_looperror)
 
     def stop_wallet_loop(self):
+        if self.walletdb_loop and self.walletdb_loop.running:
+            print("stopping wallet loop")
+            self.walletdb_loop.stop()
         self.wallet_loop_deferred.cancel()
         self.wallet_loop_deferred = None
-        if self.walletdb_loop and self.walletdb_loop.running:
-            self.walletdb_loop.stop()
 
     def do_close_wallet(self):
         if self.Wallet:
@@ -596,6 +598,7 @@ class PromptInterface:
         out += "Time elapsed %s mins\n" % mins
         out += "Blocks per min %s \n" % bpm
         out += "TPS: %s \n" % tps
+        out += "Forced disconnect: %s\n" % NodeLeader.Instance().forced_disconnect_by_us
         tokens = [("class:number", out)]
         print_formatted_text(FormattedText(tokens), style=self.token_style)
 
@@ -619,9 +622,9 @@ class PromptInterface:
         else:
             print("Not connected yet\n")
         leader = NodeLeader.Instance()
-        print(f"KNOWN_ADDRS: {len(leader.KNOWN_ADDRS)}")
-        print(f"DEAD_ADDRS: {len(leader.DEAD_ADDRS)}")
-        print(f"QUEUED_ADDRS: {len(leader.connection_queue)}")
+        print(f"KNOWN_ADDRS: {len(leader.KNOWN_ADDRS)} {leader.KNOWN_ADDRS}")
+        print(f"DEAD_ADDRS: {len(leader.DEAD_ADDRS)} {leader.DEAD_ADDRS}")
+        print(f"QUEUED_ADDRS: {len(leader.connection_queue)} {leader.connection_queue}")
 
     def show_handles(self):
         leader = NodeLeader.Instance()  #
@@ -982,23 +985,6 @@ class PromptInterface:
         # the looping call stops if an error occurs. We log it and restart
         self.start_wallet_loop
 
-    def stop_db_loop(self, cancel=True):
-        if self.dbloop and self.dbloop.running:
-            self.dbloop.stop()
-            self.dbloop = None
-        if cancel and self.dbloop_deferred:
-            self.dbloop_deferred.cancel()
-            self.dbloop_deferred = None
-
-    def start_db_loop(self):
-        self.stop_db_loop()
-        self.dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks, 5)
-        self.dbloop_deferred = self.dbloop.start(.1)
-        self.dbloop_deferred.addErrback(self.on_persistblocks_error)
-        # while self.go_on:
-        #     Blockchain.Default().PersistBlocks(limit=5)
-        #     time.sleep(0.1)
-
     def on_persistblocks_error(self, err):
         logger.debug("On Persist blocks loop error! %s " % err)
 
@@ -1006,11 +992,13 @@ class PromptInterface:
         """persist callback. Value is unused"""
         if self.go_on:
             self._try_block_persisting()
+        else:
+            self.d1.cancel()
 
     def _try_block_persisting(self):
-        d1 = threads.deferToThread(Blockchain.Default().PersistBlocks)
-        d1.addCallback(self._persist_done)
-        d1.addErrback(self.on_persistblocks_error)
+        self.d1 = threads.deferToThread(Blockchain.Default().PersistBlocks)
+        self.d1.addCallback(self._persist_done)
+        self.d1.addErrback(self.on_persistblocks_error)
 
     def run(self):
         self._try_block_persisting()

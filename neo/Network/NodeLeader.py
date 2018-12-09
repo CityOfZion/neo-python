@@ -9,6 +9,7 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode, HEARTBEAT_BLOCKS
 from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
+from twisted.internet import error
 from twisted.internet import task
 from twisted.internet import reactor as twisted_reactor
 from twisted.internet.defer import CancelledError, Deferred
@@ -18,49 +19,7 @@ from neo.Network.address import Address
 from neo.Network.Utils import LoopingCall
 
 logger = log_manager.getLogger('network')
-log_manager.config_stdio([('network', 20)])
-
-
-class NeoClientFactory(ReconnectingClientFactory):
-    maxRetries = 1
-
-    def __init__(self, incoming_client=False):
-        """
-
-        Args:
-            incoming_client (bool): true to create a NeoNode for an incoming client that initiates the P2P handshake.
-        """
-        self.incoming = incoming_client
-        super(NeoClientFactory, self).__init__()
-        # print(f"NeoClientFactory: {hex(id(self))}")
-
-    def buildProtocol(self, addr):
-        return NeoNode(self.incoming)
-
-    def clientConnectionFailed(self, connector, reason):
-        address = Address("%s:%s" % (connector.host, connector.port), Address.Now())
-        logger.debug(f"Failed connecting to {address} {reason}")
-        leader = NodeLeader.Instance()
-        if "Connection refused" in str(reason) or "Operation timed out" in str(reason):
-            try:
-                if address in leader.KNOWN_ADDRS:
-                    leader.KNOWN_ADDRS.remove(address)
-                # try removing
-                leader.RemoveFromQueue(address)
-                # if we failed to connect to new addresses, we should always add them to the DEAD_ADDRS list
-                if address not in leader.DEAD_ADDRS:
-                    logger.debug(f"Adding address {address:>21} to DEAD_ADDRS list")
-                    leader.DEAD_ADDRS.append(address)
-            except KeyError:
-                logger.error(
-                    f"clientConnectionFailed tried to remove something that wasn't there {address} {leader.ADDRS} {leader.connection_queue} {leader.DEAD_ADDRS}")
-
-    def clientConnectionLost(self, connector, reason):
-        address = Address("%s:%s" % (connector.host, connector.port), Address.Now())
-        logger.debug("Dropped connection from %s " % address)
-        for peer in NodeLeader.Instance().Peers:
-            if peer.address == address:
-                peer.connectionLost()
+log_manager.config_stdio([('network', 10)])
 
 
 class NodeLeader:
@@ -128,6 +87,8 @@ class NodeLeader:
         self.peer_zero_count = 0  # track the number of times PeerCheckLoop saw a Peer count of zero. Reset e.g. after 3 times
         self.connection_queue = []
         self.reactor = twisted_reactor
+
+        self.forced_disconnect_by_us = 0
 
         # for testability
         if reactor:
@@ -252,7 +213,17 @@ class NodeLeader:
 
         if len(BC.Default().BlockRequests) > 0:
             for peer in self.Peers:
+                peer.keep_alive()
                 peer.health_check(HEARTBEAT_BLOCKS)
+                peer_bcr_len = len(peer.myblockrequests)
+                # if a peer has cleared its queue then reset heartbeat status to avoid timing out when resuming from "check_bcr" if there's 1 or more really slow peer(s)
+                if peer_bcr_len == 0:
+                    peer.start_outstanding_data_request[HEARTBEAT_BLOCKS] = 0
+
+                print(f"{peer.prefix} request count: {peer_bcr_len}")
+                if peer_bcr_len == 1:
+                    next_hash = BC.Default().GetHeaderHash(self.CurrentBlockheight + 1)
+                    print(f"{peer.prefix} {peer.myblockrequests} {next_hash}")
         else:
             # we're done catching up. Stop own loop and restart peers
             self.stop_check_bcr_loop()
@@ -264,14 +235,8 @@ class NodeLeader:
                 time.sleep(2)
 
     def _process_connection_queue(self):
-        start_delay = 0
         for addr in self.connection_queue:
-            # host, port = addr.split(":")
-            setupConnDeferred = task.deferLater(self.reactor, start_delay, self.SetupConnection, addr)
-            setupConnDeferred.addErrback(self.OnSetupConnectionErr)
-            start_delay += 1
-
-        # self.connection_queue = []
+            self.SetupConnection(addr)
 
     def Start(self, seed_list: List[str] = None, skip_seeds: bool = False) -> None:
         """
@@ -300,10 +265,11 @@ class NodeLeader:
         self.start_memcheck_loop()
         self.start_blockheight_loop()
 
-        if settings.ACCEPT_INCOMING_PEERS:
-            logger.debug(f"Starting up nodeleader: setting up listen server on port: '{settings.NODE_PORT}")
-            # TODO: add address to known KNOWN_ADDR list, change to use endpoint instead
-            self.reactor.listenTCP(settings.NODE_PORT, NeoClientFactory(incoming_client=True))
+        # TODO: change to new endpoint api
+        # if settings.ACCEPT_INCOMING_PEERS:
+        #     logger.debug(f"Starting up nodeleader: setting up listen server on port: '{settings.NODE_PORT}")
+        #     # TODO: add address to known KNOWN_ADDR list, change to use endpoint instead
+        #     self.reactor.listenTCP(settings.NODE_PORT, NeoClientFactory(incoming_client=True))
 
     def setBlockReqSizeAndMax(self, breqpart=0, breqmax=0):
         if breqpart > 0 and breqmax > 0 and breqmax > breqpart:
@@ -351,23 +317,23 @@ class NodeLeader:
                 d.addErrback(self.clientConnectionFailed, addr)
                 return d
             except Exception as e:
-                logger.error("Could not connect TCP to %s:%s " % (host, port))
+                logger.error(f"Setup connection with with {e}")
 
     def Shutdown(self):
         """Disconnect all connected peers."""
         logger.debug("Nodeleader shutting down")
 
         self.stop_peer_check_loop()
-        # self.peer_check_loop_deferred = None
+        self.peer_check_loop_deferred = None
 
         self.stop_check_bcr_loop()
-        # self.check_bcr_loop_deferred = None
+        self.check_bcr_loop_deferred = None
 
         self.stop_memcheck_loop()
-        # self.memcheck_loop_deferred = None
+        self.memcheck_loop_deferred = None
 
         self.stop_blockheight_loop()
-        # self.blockheight_loop_deferred = None
+        self.blockheight_loop_deferred = None
 
         for p in self.Peers:
             p.Disconnect()
@@ -480,7 +446,7 @@ class NodeLeader:
         self._ensure_peer_tasks_running(connected)
         self._check_for_queuing_possibilities(connected)
         self._process_connection_queue()
-        # keep this last, so ensure we first try queueing.
+        # keep this last, to ensure we first try queueing.
         self._monitor_for_zero_connected_peers()
 
     def _check_for_queuing_possibilities(self, connected):
@@ -696,12 +662,15 @@ class NodeLeader:
 
     def BlockheightCheck(self):
         """
-        Checks the current blockheight and restarts NodeLeader if not advancing
+        Checks the current blockheight and finds the peer that prevents advancement
         """
         if self.CurrentBlockheight == BC.Default().Height:
-            logger.debug("Blockheight is not advancing ...restarting NodeLeader")
+            logger.debug("Blockheight is not advancing ...")
+            next_hash = BC.Default().GetHeaderHash(self.CurrentBlockheight + 1)
             for peer in self.Peers:
-                peer.Disconnect()
+                if next_hash in peer.myblockrequests:
+                    peer.Disconnect()
+                    break
         else:
             self.CurrentBlockheight = BC.Default().Height
 
@@ -712,14 +681,20 @@ class NodeLeader:
             err: Twisted Failure instance
             address: the address we failed to connect to
         """
-        logger.debug(f"Failed connecting to {address} {err.value}")
+        if type(err.value) == error.TimeoutError:
+            logger.debug(f"Failed connecting to {address} connection timed out")
+        elif type(err.value) == error.ConnectError:
+            ce = err.value
+            logger.debug(f"Failed connecting to {address} {ce.args[0].value}")
+        else:
+            logger.debug(f"Failed connecting to {address} {err.value}")
         self.RemoveKnownAddress(address)
         self.RemoveFromQueue(address)
         # if we failed to connect to new addresses, we should always add them to the DEAD_ADDRS list
         self.AddDeadAddress(address)
 
         # for testing
-        return err.type
+        # return err.type
 
     @staticmethod
     def Reset():

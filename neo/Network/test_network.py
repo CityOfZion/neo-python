@@ -137,7 +137,7 @@ class NetworkConnectionLostTests(twisted_unittest.TestCase, NeoTestCase):
                 node.connectionLost(failure.Failure(error.ConnectionLost()))
                 error.ConnectionClosed
 
-            self.assertIn("disconnected with reason", log.output[-1])
+            self.assertIn("disconnected with connectionlost reason", log.output[-1])
             self.assertIn(str(error.ConnectionLost()), log.output[-1])
             self.assertIn("non-clean fashion", log.output[-1])
 
