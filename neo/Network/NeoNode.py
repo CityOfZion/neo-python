@@ -182,7 +182,7 @@ class NeoNode(Protocol):
         self.leader.forced_disconnect_by_us += 1
 
         self.disconnect_deferred = defer.Deferred()
-
+        self.disconnect_deferred.debug = True
         # force disconnection without waiting on the other side
         # calling later to give func caller time to add callbacks to the deferred
         reactor.callLater(1, self.transport.abortConnection)
@@ -237,6 +237,7 @@ class NeoNode(Protocol):
         self.address.address = "%s:%s" % (self.endpoint.host, self.endpoint.port)
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
+        self.address.is_connecting = False
         self.leader.AddConnectedPeer(self)
         self.leader.RemoveFromQueue(self.address)
         # logger.debug(f"{self.prefix} connection established")
@@ -264,16 +265,17 @@ class NeoNode(Protocol):
 
             if reason and reason.check(twisted_error.ConnectionDone):
                 logger.debug(f"{self.prefix} disconnected normally with reason:{reason.value}")
+
             elif reason and reason.check(twisted_error.ConnectionLost):
                 # Can be due to a timeout. Only if this happened again within 5 minutes do we label the node as bad
                 # because then it clearly doesn't want to talk to us or we have a bad connection to them.
                 # Otherwise allow for the node to be queued again by NodeLeader.
                 logger.debug(f"{self.prefix} disconnected with connectionlost reason: {reason.value}")
+                self.address.last_connection = Address.Now()
 
                 now = datetime.datetime.utcnow().timestamp()
                 FIVE_MINUTES = 5 * 60
                 if self.address.last_connection != 0 and now - self.address.last_connection < FIVE_MINUTES:
-                    self.address.last_connection = Address.Now()
                     self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} second connection lost within 5 minutes")
 
             else:

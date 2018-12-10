@@ -236,7 +236,10 @@ class NodeLeader:
 
     def _process_connection_queue(self):
         for addr in self.connection_queue:
-            self.SetupConnection(addr)
+            # check that we're not already in the process of trying to connect (some connections take long to setup, we don't want to double queue)
+            if not addr.is_connecting:
+                addr.is_connecting = True
+                self.SetupConnection(addr)
 
     def Start(self, seed_list: List[str] = None, skip_seeds: bool = False) -> None:
         """
