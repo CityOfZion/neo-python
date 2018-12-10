@@ -238,7 +238,6 @@ class NodeLeader:
         for addr in self.connection_queue:
             # check that we're not already in the process of trying to connect (some connections take long to setup, we don't want to double queue)
             if not addr.is_connecting:
-                addr.is_connecting = True
                 self.SetupConnection(addr)
 
     def Start(self, seed_list: List[str] = None, skip_seeds: bool = False) -> None:
@@ -316,6 +315,8 @@ class NodeLeader:
                     point = endpoint
                 else:
                     point = TCP4ClientEndpoint(self.reactor, host, int(port))
+
+                addr.is_connecting = True
                 d = connectProtocol(point, NeoNode())  # type: Deferred
                 d.addErrback(self.clientConnectionFailed, addr)
                 return d
@@ -684,6 +685,7 @@ class NodeLeader:
             err: Twisted Failure instance
             address: the address we failed to connect to
         """
+        address.is_connecting = False
         if type(err.value) == error.TimeoutError:
             logger.debug(f"Failed connecting to {address} connection timed out")
         elif type(err.value) == error.ConnectError:
