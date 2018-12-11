@@ -7,17 +7,12 @@ Test handling of a node(s) disconnecting. Reasons can be:
 """
 
 from twisted.trial import unittest as twisted_unittest
-from twisted.internet import task, interfaces, defer
-from twisted.internet.defer import Deferred
 from twisted.internet.address import IPv4Address
-from twisted.internet import reactor as twisted_reactor
 from twisted.internet import error
-from twisted.internet.endpoints import _WrappingFactory
 from twisted.test import proto_helpers
 from twisted.python import failure
 
-from mock import patch, MagicMock
-from neo.Network.NodeLeader import NodeLeader, NeoClientFactory
+from neo.Network.NodeLeader import NodeLeader
 from neo.Network.address import Address
 from neo.Network.Utils import TestTransportEndpoint
 from neo.Network.NeoNode import NeoNode, HEARTBEAT_BLOCKS
@@ -135,7 +130,6 @@ class NetworkConnectionLostTests(twisted_unittest.TestCase, NeoTestCase):
             # at this point we should have a fully connected node, so lets try to simulate a connection lost by the other side
             with self.assertLogHandler('network', 10) as log:
                 node.connectionLost(failure.Failure(error.ConnectionLost()))
-                error.ConnectionClosed
 
             self.assertIn("disconnected with connectionlost reason", log.output[-1])
             self.assertIn(str(error.ConnectionLost()), log.output[-1])
@@ -222,21 +216,3 @@ class NetworkConnectionLostTests(twisted_unittest.TestCase, NeoTestCase):
         self.d.addCallback(conn_setup)
 
         return self.d
-
-# class NetworkConnectionTest(twisted_unittest.TestCase):
-#
-#     # def _add_new_node(self, host, port):
-#     #     self.tr.getPeer.side_effect = [IPv4Address('TCP', host, port)]
-#     #     node = self.factory.buildProtocol(('127.0.0.1', 0))
-#     #     node.makeConnection(self.tr)  # makeConnection also assigns tr to node.transport
-#     #
-#     #     return node
-#
-#     def setUp(self):
-#         #     self.factory = NeoClientFactory()
-#         #     self.tr = proto_helpers.StringTransport
-#         #     self.tr.getPeer = MagicMock()
-#         self.leader = NodeLeader.Instance()
-#
-#     def test_connection_handshake(self):
-#         pass

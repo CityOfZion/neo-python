@@ -269,12 +269,13 @@ class NeoNode(Protocol):
                 # because then it clearly doesn't want to talk to us or we have a bad connection to them.
                 # Otherwise allow for the node to be queued again by NodeLeader.
                 logger.debug(f"{self.prefix} disconnected with connectionlost reason: {reason.value}")
-                self.address.last_connection = Address.Now()
 
                 now = datetime.datetime.utcnow().timestamp()
                 FIVE_MINUTES = 5 * 60
                 if self.address.last_connection != 0 and now - self.address.last_connection < FIVE_MINUTES:
                     self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} second connection lost within 5 minutes")
+                else:
+                    self.address.last_connection = Address.Now()
 
             else:
                 logger.debug(f"{self.prefix} disconnected with reason: {reason.value}")

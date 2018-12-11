@@ -671,7 +671,7 @@ class NodeLeader:
         self.AddDeadAddress(address)
 
         # for testing
-        # return err.type
+        return err.type
 
     @staticmethod
     def Reset():
