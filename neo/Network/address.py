@@ -15,7 +15,6 @@ class Address:
             self.last_connection = last_connection_to
 
         self.address = address  # type: str
-        self.is_connecting = False
 
     @classmethod
     def Now(cls):

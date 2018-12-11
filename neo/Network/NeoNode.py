@@ -176,7 +176,6 @@ class NeoNode(Protocol):
         self.stop_block_loop()
         self.stop_header_loop()
         self.stop_peerinfo_loop()
-
         self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} Forced disconnect by us")
 
         self.leader.forced_disconnect_by_us += 1
@@ -237,10 +236,9 @@ class NeoNode(Protocol):
         self.address.address = "%s:%s" % (self.endpoint.host, self.endpoint.port)
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
-        self.address.is_connecting = False
         self.leader.AddConnectedPeer(self)
         self.leader.RemoveFromQueue(self.address)
-        # logger.debug(f"{self.prefix} connection established")
+        self.leader.peers_connecting -= 1
         logger.debug(f"{self.address} connection established")
         if self.incoming_client:
             # start protocol

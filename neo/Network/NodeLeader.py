@@ -89,6 +89,7 @@ class NodeLeader:
         self.reactor = twisted_reactor
 
         self.forced_disconnect_by_us = 0
+        self.peers_connecting = 0
 
         # for testability
         if reactor:
@@ -181,6 +182,8 @@ class NodeLeader:
         self.memcheck_loop_deferred = None
         self.blockheight_loop_deferred = None
 
+        self.peers_connecting = 0
+
         if len(self.Peers) == 0:
             # preserve any addresses we know because the peers in the seedlist might have gone bad and then we can't receive new addresses anymore
             unique_addresses = list(set(self.KNOWN_ADDRS + self.DEAD_ADDRS))
@@ -236,9 +239,7 @@ class NodeLeader:
 
     def _process_connection_queue(self):
         for addr in self.connection_queue:
-            # check that we're not already in the process of trying to connect (some connections take long to setup, we don't want to double queue)
-            if not addr.is_connecting:
-                self.SetupConnection(addr)
+            self.SetupConnection(addr)
 
     def Start(self, seed_list: List[str] = None, skip_seeds: bool = False) -> None:
         """
@@ -257,8 +258,6 @@ class NodeLeader:
             for bootstrap in seed_list:
                 addr = Address(bootstrap)
                 self.KNOWN_ADDRS.append(addr)
-                # host, port = bootstrap.split(":")
-                # self.SetupConnection(host, port)
                 self.SetupConnection(addr)
 
         logger.debug("Starting up nodeleader: starting peer, mempool, and blockheight check loops")
@@ -307,16 +306,14 @@ class NodeLeader:
             self.KNOWN_ADDRS.append(addr)
 
     def SetupConnection(self, addr, endpoint=None):
-        if len(self.Peers) < settings.CONNECTED_PEER_MAX:
+        if len(self.Peers) + self.peers_connecting < settings.CONNECTED_PEER_MAX:
             try:
                 host, port = addr.split(':')
-                # self.reactor.connectTCP(host, int(port), NeoClientFactory(), timeout=120)
                 if endpoint:
                     point = endpoint
                 else:
-                    point = TCP4ClientEndpoint(self.reactor, host, int(port))
-
-                addr.is_connecting = True
+                    point = TCP4ClientEndpoint(self.reactor, host, int(port), timeout=15)
+                self.peers_connecting += 1
                 d = connectProtocol(point, NeoNode())  # type: Deferred
                 d.addErrback(self.clientConnectionFailed, addr)
                 return d
@@ -403,35 +400,7 @@ class NodeLeader:
         # something in the dead_addrs list cannot be in the known_addrs list. Which holds either "tested and good" or "untested" addresses
         self.RemoveKnownAddress(addr)
 
-    def OnSetupConnectionErr(self, err):
-        if type(err.value) == CancelledError:
-            return
-        logger.debug("On setup connection error! %s" % err)
-
-    def OnCheckBcrError(self, err):
-        if type(err.value) == CancelledError:
-            return
-        logger.debug("On Check BlockRequest error! %s" % err)
-
-    def OnPeerLoopError(self, err):
-        if type(err.value) == CancelledError:
-            return
-        logger.debug("Error on Peer check loop %s " % err)
-
-    def OnMemcheckError(self, err):
-        if type(err.value) == CancelledError:
-            return
-        logger.debug("Error on Memcheck check %s " % err)
-
-    def OnBlockheightcheckError(self, err):
-        if type(err.value) == CancelledError:
-            return
-        logger.debug("Error on Blockheight check loop %s " % err)
-
     def PeerCheckLoop(self):
-        # often times things will get stuck on 1 peer so
-        # every so often we will try to reconnect to peers
-        # that were previously active but lost their connection
         logger.debug(
             f"Peer check loop...checking [A:{len(self.KNOWN_ADDRS)} D:{len(self.DEAD_ADDRS)} C:{len(self.Peers)} M:{settings.CONNECTED_PEER_MAX} "
             f"Q:{len(self.connection_queue)}]")
@@ -685,7 +654,6 @@ class NodeLeader:
             err: Twisted Failure instance
             address: the address we failed to connect to
         """
-        address.is_connecting = False
         if type(err.value) == error.TimeoutError:
             logger.debug(f"Failed connecting to {address} connection timed out")
         elif type(err.value) == error.ConnectError:
@@ -693,6 +661,7 @@ class NodeLeader:
             logger.debug(f"Failed connecting to {address} {ce.args[0].value}")
         else:
             logger.debug(f"Failed connecting to {address} {err.value}")
+        self.peers_connecting -= 1
         self.RemoveKnownAddress(address)
         self.RemoveFromQueue(address)
         # if we failed to connect to new addresses, we should always add them to the DEAD_ADDRS list
@@ -741,3 +710,28 @@ class NodeLeader:
         NodeLeader.blockheight_loop_deferred = None
 
         NodeLeader.task_handles = {}
+
+    def OnSetupConnectionErr(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("On setup connection error! %s" % err)
+
+    def OnCheckBcrError(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("On Check BlockRequest error! %s" % err)
+
+    def OnPeerLoopError(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("Error on Peer check loop %s " % err)
+
+    def OnMemcheckError(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("Error on Memcheck check %s " % err)
+
+    def OnBlockheightcheckError(self, err):
+        if type(err.value) == CancelledError:
+            return
+        logger.debug("Error on Blockheight check loop %s " % err)
