@@ -183,8 +183,6 @@ class ContractState(StateBase):
         Returns:
              dict:
         """
-        codejson = self.Code.ToJson()
-
         name = 'Contract'
 
         try:
@@ -192,10 +190,11 @@ class ContractState(StateBase):
         except Exception as e:
             pass
 
-        jsn = {
+        jsn_version = {'version': self.StateVersion}
 
-            'version': self.StateVersion,
-            'code': codejson,
+        jsn_code = self.Code.ToJson()
+
+        jsn_contract = {
             'name': name,
             'code_version': self.CodeVersion.decode('utf-8'),
             'author': self.Author.decode('utf-8'),
@@ -207,6 +206,11 @@ class ContractState(StateBase):
                 'payable': self.Payable
             }
         }
+
+        jsn = {}
+        jsn.update(jsn_version)
+        jsn.update(jsn_code)
+        jsn.update(jsn_contract)
 
         if self._nep_token:
             jsn['token'] = self._nep_token.ToJson()
