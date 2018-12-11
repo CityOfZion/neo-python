@@ -38,6 +38,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletSend())
         self.register_sub_command(CommandWalletSendMany())
         self.register_sub_command(CommandWalletSign())
+        self.register_sub_command(CommandWalletRebuild())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -208,6 +209,28 @@ class CommandWalletCreateAddress(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('number of addresses', 'number of addresses to create')
         return CommandDesc('create_addr', 'create a new wallet address', params=[p1])
+
+
+class CommandWalletRebuild(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        PromptData.Prompt.stop_wallet_loop()
+
+        start_block = get_arg(arguments, 0, convert_to_int=True)
+        if not start_block or start_block < 0:
+            start_block = 0
+        print(f"Restarting at block {start_block}")
+
+        PromptData.Wallet.Rebuild(start_block)
+
+        PromptData.Prompt.start_wallet_loop()
+
+    def command_desc(self):
+        p1 = ParameterDesc('start_block', 'block number to start the resync at', optional=True)
+        return CommandDesc('rebuild', 'rebuild the wallet index', params=[p1])
 
 
 #########################################################################

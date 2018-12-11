@@ -63,9 +63,9 @@ class UserWallet(Wallet):
     def DB(self):
         return self._db
 
-    def Rebuild(self):
+    def Rebuild(self, start_block=0):
         try:
-            super(UserWallet, self).Rebuild()
+            super(UserWallet, self).Rebuild(start_block)
 
             logger.debug("wallet rebuild: deleting %s coins and %s transactions" %
                          (Coin.select().count(), Transaction.select().count()))

@@ -749,13 +749,13 @@ class Wallet:
             traceback.print_exc()
             logger.error("could not process %s " % e)
 
-    def Rebuild(self):
+    def Rebuild(self, start_block=0):
         """
         Sets the current height to 0 and now `ProcessBlocks` will start from
         the beginning of the blockchain.
         """
         self._coins = {}
-        self._current_height = 0
+        self._current_height = start_block
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
         # abstract

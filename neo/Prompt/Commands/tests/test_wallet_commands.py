@@ -240,6 +240,26 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(type(res), UserWallet)
         self.assertEqual(len(res.Addresses), 9)
 
+    def test_wallet_rebuild(self):
+        with patch('neo.Prompt.PromptData.PromptData.Prompt'):
+            # test wallet rebuild with no wallet open
+            args = ['rebuild']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+
+            self.OpenWallet()
+            PromptData.Wallet._current_height = 12345
+
+            # test wallet rebuild with no argument
+            args = ['rebuild']
+            CommandWallet().execute(args)
+            self.assertEqual(PromptData.Wallet._current_height, 0)
+
+            # test wallet rebuild with start block
+            args = ['rebuild', '42']
+            CommandWallet().execute(args)
+            self.assertEqual(PromptData.Wallet._current_height, 42)
+
     ##########################################################
     ##########################################################
     def test_1_import_addr(self):
