@@ -190,7 +190,7 @@ class ContractState(StateBase):
         except Exception as e:
             pass
 
-        jsn_version = {'version': self.StateVersion}
+        jsn = {'version': self.StateVersion}
 
         jsn_code = self.Code.ToJson()
 
@@ -207,8 +207,6 @@ class ContractState(StateBase):
             }
         }
 
-        jsn = {}
-        jsn.update(jsn_version)
         jsn.update(jsn_code)
         jsn.update(jsn_contract)
 
