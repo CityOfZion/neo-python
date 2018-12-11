@@ -341,8 +341,8 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['code_version'], '')
         self.assertEqual(res['result']['properties']['storage'], True)
         self.assertEqual(res['result']['code']['hash'], '0xb9fbcff6e50fd381160b822207231233dd3c56c2')
-        self.assertEqual(res['result']['code']['returntype'], 5)
-        self.assertEqual(res['result']['code']['parameters'], '0710')
+        self.assertEqual(res['result']['returntype'], "ByteArray")
+        self.assertEqual(res['result']['parameters'], ["String", "Array"])
 
     def test_get_contract_state_0x(self):
         contract_hash = "0xb9fbcff6e50fd381160b822207231233dd3c56c2"
