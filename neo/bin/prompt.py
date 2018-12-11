@@ -741,7 +741,7 @@ class PromptInterface:
         args, invoke_attrs = get_tx_attr_from_args(args)
         args, owners = get_owners_from_params(args)
         if args and len(args) > 0:
-            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
+            tx, fee, results, num_ops, engine_success = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
 
             if tx is not None and results is not None:
 
@@ -787,7 +787,7 @@ class PromptInterface:
 
             if contract_script is not None:
 
-                tx, fee, results, num_ops = test_invoke(contract_script, self.Wallet, [], from_addr=from_addr)
+                tx, fee, results, num_ops, engine_success = test_invoke(contract_script, self.Wallet, [], from_addr=from_addr)
 
                 if tx is not None and results is not None:
                     print(
