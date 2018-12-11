@@ -16,7 +16,7 @@ from twisted.internet.defer import CancelledError, Deferred
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 from neo.logging import log_manager
 from neo.Network.address import Address
-from neo.Network.Utils import LoopingCall
+from neo.Network.Utils import LoopingCall, hostname_to_ip, is_ip_address
 
 logger = log_manager.getLogger('network')
 log_manager.config_stdio([('network', 10)])
@@ -256,6 +256,9 @@ class NodeLeader:
         if not skip_seeds:
             logger.debug("Attempting to connect to seed list...")
             for bootstrap in seed_list:
+                if not is_ip_address(bootstrap):
+                    host, port = bootstrap.split(':')
+                    bootstrap = f"{hostname_to_ip(host)}:{port}"
                 addr = Address(bootstrap)
                 self.KNOWN_ADDRS.append(addr)
                 self.SetupConnection(addr)

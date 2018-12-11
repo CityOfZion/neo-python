@@ -2,6 +2,8 @@ from twisted.internet import task, interfaces, defer
 from zope.interface import implementer
 from twisted.test import proto_helpers
 from twisted.internet.endpoints import _WrappingFactory
+import socket
+import ipaddress
 
 
 class LoopingCall(task.LoopingCall):
@@ -43,3 +45,16 @@ class TestTransportEndpoint(object):
             return defer.succeed(node)
         except:
             return defer.fail()
+
+
+def hostname_to_ip(hostname):
+    return socket.gethostbyname(hostname)
+
+
+def is_ip_address(hostname):
+    host = hostname.split(':')[0]
+    try:
+        ip = ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        return False
