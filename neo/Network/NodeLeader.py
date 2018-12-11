@@ -471,7 +471,7 @@ class NodeLeader:
         # there has been a case where the connection was established, but ProtocolReady() never called nor disconnected.
         if not self.check_bcr_loop:
             for peer in self.Peers:
-                if not peer.has_tasks_running:
+                if not peer.has_tasks_running():
                     peer.start_all_tasks()
 
     def InventoryReceived(self, inventory):
@@ -641,12 +641,13 @@ class NodeLeader:
         Checks the current blockheight and finds the peer that prevents advancement
         """
         if self.CurrentBlockheight == BC.Default().Height:
-            logger.debug("Blockheight is not advancing ...")
-            next_hash = BC.Default().GetHeaderHash(self.CurrentBlockheight + 1)
-            for peer in self.Peers:
-                if next_hash in peer.myblockrequests:
-                    peer.Disconnect()
-                    break
+            if len(self.Peers) > 0:
+                logger.debug("Blockheight is not advancing ...")
+                next_hash = BC.Default().GetHeaderHash(self.CurrentBlockheight + 1)
+                for peer in self.Peers:
+                    if next_hash in peer.myblockrequests:
+                        peer.Disconnect()
+                        break
         else:
             self.CurrentBlockheight = BC.Default().Height
 
