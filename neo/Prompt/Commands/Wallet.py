@@ -33,7 +33,6 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletOpen())
         self.register_sub_command(CommandWalletClose())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
-        self.register_sub_command(CommandWalletMigrate())
         self.register_sub_command(CommandWalletCreateAddress())
         self.register_sub_command(CommandWalletSend())
         self.register_sub_command(CommandWalletSendMany())
@@ -177,19 +176,6 @@ class CommandWalletVerbose(CommandBase):
 
     def command_desc(self):
         return CommandDesc('verbose', 'show additional wallet details')
-
-
-class CommandWalletMigrate(CommandBase):
-
-    def __init__(self):
-        super().__init__()
-
-    def execute(self, arguments=None):
-        PromptData.Wallet.Migrate()
-        return True
-
-    def command_desc(self):
-        return CommandDesc('migrate', 'migrate an old wallet to the new format')
 
 
 class CommandWalletCreateAddress(CommandBase):
