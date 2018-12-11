@@ -161,7 +161,7 @@ class SmartContractEvent(SerializableMixin):
 
         if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
             jsn['contract'] = self.contract.ToJson()
-            del jsn['contract']['code']['script']
+            del jsn['contract']['script']
 
         if self.token:
             jsn['token'] = self.token.ToJson()
