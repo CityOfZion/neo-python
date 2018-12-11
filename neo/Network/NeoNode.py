@@ -710,6 +710,11 @@ class NeoNode(Protocol):
                     logger.debug(
                         f"{self.prefix}[HEALTH] FAILED - No response for Headers {header_time:.2f} and Blocks {block_time:.2f} seconds. Removing node...")
                     self.Disconnect()
+                elif blocks_bad and self.leader.check_bcr_loop and self.leader.check_bcr_loop.running:
+                    # when we're in data throttling it is never acceptable if blocks don't come in. 
+                    logger.debug(
+                        f"{self.prefix}[HEALTH] FAILED - No Blocks for {block_time:.2f} seconds while throttling. Removing node...")
+                    self.Disconnect()
                 else:
                     if header_bad:
                         logger.debug(
