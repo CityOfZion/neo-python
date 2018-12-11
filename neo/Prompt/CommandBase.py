@@ -112,7 +112,8 @@ class CommandBase(ABC):
             params += f"{p.formatted_name()} "
         print(f"\nUsage: {self.__command_with_parents()} {params}\n")
 
-        longest_param_name = max(len(p.name) for p in self.command_desc().params)
+        min_indent = 15
+        longest_param_name = max(min_indent, max(len(p.name) for p in self.command_desc().params))
         for p in self.command_desc().params:
             print(p.to_str(longest_param_name))
 
