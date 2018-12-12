@@ -262,20 +262,16 @@ class NeoNode(Protocol):
                 self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} Premature disconnect")
 
             if reason and reason.check(twisted_error.ConnectionDone):
+                # this might happen if they close our connection because they've reached max peers or something similar
                 logger.debug(f"{self.prefix} disconnected normally with reason:{reason.value}")
+                self._check_for_consecutive_disconnects("connection done")
 
             elif reason and reason.check(twisted_error.ConnectionLost):
                 # Can be due to a timeout. Only if this happened again within 5 minutes do we label the node as bad
                 # because then it clearly doesn't want to talk to us or we have a bad connection to them.
                 # Otherwise allow for the node to be queued again by NodeLeader.
                 logger.debug(f"{self.prefix} disconnected with connectionlost reason: {reason.value}")
-
-                now = datetime.datetime.utcnow().timestamp()
-                FIVE_MINUTES = 5 * 60
-                if self.address.last_connection != 0 and now - self.address.last_connection < FIVE_MINUTES:
-                    self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} second connection lost within 5 minutes")
-                else:
-                    self.address.last_connection = Address.Now()
+                self._check_for_consecutive_disconnects("connection lost")
 
             else:
                 logger.debug(f"{self.prefix} disconnected with reason: {reason.value}")
@@ -294,6 +290,14 @@ class NeoNode(Protocol):
             else:
                 print("connLost, disconnect_deferred cancelling!")
                 d.cancel()
+
+    def _check_for_consecutive_disconnects(self, error_name):
+        now = datetime.datetime.utcnow().timestamp()
+        FIVE_MINUTES = 5 * 60
+        if self.address.last_connection != 0 and now - self.address.last_connection < FIVE_MINUTES:
+            self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} second {error_name} within 5 minutes")
+        else:
+            self.address.last_connection = Address.Now()
 
     def ReleaseBlockRequests(self):
         bcr = BC.Default().BlockRequests
