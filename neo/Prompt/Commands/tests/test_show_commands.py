@@ -287,8 +287,9 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         args = ['asset', 'all']
         res = CommandShow().execute(args)
         self.assertTrue(res)
-        self.assertIn("602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7", str(res))
-        self.assertIn("c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b", str(res))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[1]['NEO'], "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b")
+        self.assertEqual(res[0]['NEOGas'], "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7")
 
         # query with "neo"
         args = ['asset', 'neo']
@@ -331,8 +332,8 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         args = ['contract', 'all']
         res = CommandShow().execute(args)
         self.assertTrue(res)
-        res = list(res)
         self.assertEqual(len(res), 6)
+        self.assertEqual(res[0]["test NEX Template V4"], '0x31730cc9a1844891a3bafd1aa929a4142860d8d3')
 
         # query with contract scripthash
         args = ['contract', '31730cc9a1844891a3bafd1aa929a4142860d8d3']
