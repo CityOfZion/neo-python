@@ -342,7 +342,7 @@ class CommandShowContract(CommandBase):
                 contractlist = []
                 for contract in contracts:
                     state = Blockchain.Default().GetContract(contract.decode('utf-8')).ToJson()
-                    contract_dict = {state['name']: state['code']['hash']}
+                    contract_dict = {state['name']: state['hash']}
                     contractlist.append(contract_dict)
                 print(json.dumps(contractlist, indent=4))
                 return contractlist
