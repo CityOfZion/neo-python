@@ -76,11 +76,11 @@ class CommandShowBlock(CommandBase):
                 print("Could not locate block %s" % item)
                 return
         else:
-            print("please specify a block")
+            print("please specify a supported block attribute: index or scripthash")
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('index/hash', 'the index or scripthash of the block')
+        p1 = ParameterDesc('attribute', 'the block index or scripthash')
         p2 = ParameterDesc('tx', 'arg to only show block transactions', optional=True)
         return CommandDesc('block', 'show a specified block', [p1, p2])
 
@@ -100,11 +100,11 @@ class CommandShowHeader(CommandBase):
                 print("Could not locate header %s\n" % item)
                 return
         else:
-            print("Please specify a header")
+            print("Please specify a supported header attribute: index or scripthash")
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('index/hash', 'the index or scripthash of the block header')
+        p1 = ParameterDesc('attribute', 'the header index or scripthash')
         return CommandDesc('header', 'show the header of a specified block', [p1])
 
 
@@ -250,11 +250,11 @@ class CommandShowNotifications(CommandBase):
                 print("No events found for %s" % item)
                 return
         else:
-            print("Please specify a block index, address, or contract hash")
+            print("Please specify a supported attribute: a block index, an address, or contract scripthash")
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('block_index/address/contract_hash', 'the block, address, or contract to show notifications for')
+        p1 = ParameterDesc('attribute', 'the block index, an address, or contract scripthash to show notifications for')
         return CommandDesc('notifications', 'show specified contract execution notifications', [p1])
 
 
@@ -291,8 +291,13 @@ class CommandShowAsset(CommandBase):
         if item is not None:
             if item.lower() == "all":
                 assets = Blockchain.Default().ShowAllAssets()
-                print("Assets: %s" % assets)
-                return assets
+                assetlist = []
+                for asset in assets:
+                    state = Blockchain.Default().GetAssetState(asset.decode('utf-8')).ToJson()
+                    asset_dict = {state['name']: state['assetId']}
+                    assetlist.append(asset_dict)
+                print(json.dumps(assetlist, indent=4))
+                return assetlist
 
             if item.lower() == 'neo':
                 assetId = Blockchain.Default().SystemShare().Hash
@@ -314,14 +319,14 @@ class CommandShowAsset(CommandBase):
                 print("Asset %s not found" % item)
                 return
         else:
-            print("Please specify an asset hash or name")
+            print('Please specify a supported attribute: asset name, assetId, or "all" shows all assets')
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('name/assetId/all', 'the name or assetId of the asset, or "all" shows all assets\n\n')
-        f"{' ':>17} Example:\n"
-        f"{' ':>20} 'neo' or 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'\n"
-        f"{' ':>20} 'gas' or '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'\n"
+        p1 = ParameterDesc('attribute', 'the asset name, assetId, or "all" shows all assets\n\n'
+                           f"{' ':>17} Example:\n"
+                           f"{' ':>20} 'neo' or 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'\n"
+                           f"{' ':>20} 'gas' or '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'\n")
         return CommandDesc('asset', 'show a specified asset', [p1])
 
 
@@ -334,8 +339,13 @@ class CommandShowContract(CommandBase):
         if item is not None:
             if item.lower() == "all":
                 contracts = Blockchain.Default().ShowAllContracts()
-                print("Contracts: %s" % contracts)
-                return contracts
+                contractlist = []
+                for contract in contracts:
+                    state = Blockchain.Default().GetContract(contract.decode('utf-8')).ToJson()
+                    contract_dict = {state['name']: state['code']['hash']}
+                    contractlist.append(contract_dict)
+                print(json.dumps(contractlist, indent=4))
+                return contractlist
 
             try:
                 hash = UInt160.ParseString(item).ToBytes()
@@ -353,9 +363,9 @@ class CommandShowContract(CommandBase):
                 print("Contract %s not found" % item)
                 return
         else:
-            print("Please specify a contract")
+            print('Please specify a supported attribute: contract scripthash or "all"')
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('hash/all', 'the scripthash of the contract, or "all" shows all contracts')
+        p1 = ParameterDesc('attribute', 'the contract scripthash, or "all" shows all contracts')
         return CommandDesc('contract', 'show a specified smart contract', [p1])
