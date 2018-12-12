@@ -21,8 +21,8 @@ All notable changes to this project are documented in this file.
 - Add GET and OPTIONS request functionality for JSON-RPC servers
 - Fix ``gzip`` failure in current implementation of ExtendedJsonRpcApi
 - Gracefully handle balance query failures of NEP-5 tokens.
-- Fix ``getcontractstate`` to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_
-
+- Fix ``getcontractstate`` JSON output to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_
+- Fix ``getrawtransaction`` JSON output to match neo-cli 2.9.2 `#751 https://github.com/CityOfZion/neo-python/pull/751`_
 
 [0.8.2] 2018-10-31
 -------------------
