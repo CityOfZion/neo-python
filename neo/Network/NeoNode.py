@@ -138,7 +138,7 @@ class NeoNode(Protocol):
         self.nodeid = self.leader.NodeId
         self.remote_nodeid = random.randint(1294967200, 4294967200)
         self.endpoint = ''
-        self.address = Address("")
+        self.address = None
         self.buffer_in = bytearray()
         self.myblockrequests = set()
         self.bytes_in = 0
@@ -233,6 +233,10 @@ class NeoNode(Protocol):
     def connectionMade(self):
         """Callback handler from twisted when establishing a new connection."""
         self.endpoint = self.transport.getPeer()
+        # get the reference to the Address object in NodeLeader so we can manipulate it properly.
+        tmp_addr = Address(f"{self.endpoint.host}:{self.endpoint.port}")
+        known_idx = self.leader.KNOWN_ADDRS.index(tmp_addr)
+        self.address = self.leader.KNOWN_ADDRS[known_idx]
         self.address.address = "%s:%s" % (self.endpoint.host, self.endpoint.port)
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
