@@ -1,7 +1,7 @@
 from neocore.IO.Mixins import SerializableMixin
 from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
-from neo.SmartContract.ContractParameterType import ContractParameterType
+from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 
 
 class FunctionCode(SerializableMixin):
@@ -104,9 +104,11 @@ class FunctionCode(SerializableMixin):
         Returns:
              dict:
         """
+        parameters = self.ParameterList.hex()
+        paramlist = [ToName(ContractParameterType.FromString(parameters[i:i + 2]).value) for i in range(0, len(parameters), 2)]
         return {
             'hash': self.ScriptHash().To0xString(),
             'script': self.Script.hex(),
-            'parameters': self.ParameterList.hex(),
-            'returntype': self.ReturnType if type(self.ReturnType) is int else self.ReturnType.hex()
+            'parameters': paramlist,
+            'returntype': ToName(self.ReturnType) if type(self.ReturnType) is int else ToName(int(self.ReturnType))
         }
