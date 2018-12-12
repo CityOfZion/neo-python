@@ -53,19 +53,12 @@ class UserWallet(Wallet):
         except Exception as e:
             logger.error("Could not build database %s %s " % (e, self._path))
 
-    def Migrate(self):
-        migrator = SqliteMigrator(self._db)
-        migrate(
-            migrator.drop_not_null('Contract', 'Account_id'),
-            migrator.add_column('Address', 'IsWatchOnly', BooleanField(default=False)),
-        )
-
     def DB(self):
         return self._db
 
-    def Rebuild(self):
+    def Rebuild(self, start_block=0):
         try:
-            super(UserWallet, self).Rebuild()
+            super(UserWallet, self).Rebuild(start_block)
 
             logger.debug("wallet rebuild: deleting %s coins and %s transactions" %
                          (Coin.select().count(), Transaction.select().count()))

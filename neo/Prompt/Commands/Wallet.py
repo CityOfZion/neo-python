@@ -33,12 +33,12 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletOpen())
         self.register_sub_command(CommandWalletClose())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
-        self.register_sub_command(CommandWalletMigrate())
         self.register_sub_command(CommandWalletCreateAddress())
         self.register_sub_command(CommandWalletSend())
         self.register_sub_command(CommandWalletSendMany())
         self.register_sub_command(CommandWalletSign())
         self.register_sub_command(CommandWalletClaimGas())
+        self.register_sub_command(CommandWalletRebuild())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -179,19 +179,6 @@ class CommandWalletVerbose(CommandBase):
         return CommandDesc('verbose', 'show additional wallet details')
 
 
-class CommandWalletMigrate(CommandBase):
-
-    def __init__(self):
-        super().__init__()
-
-    def execute(self, arguments=None):
-        PromptData.Wallet.Migrate()
-        return True
-
-    def command_desc(self):
-        return CommandDesc('migrate', 'migrate an old wallet to the new format')
-
-
 class CommandWalletCreateAddress(CommandBase):
 
     def __init__(self):
@@ -236,6 +223,29 @@ class CommandWalletClaimGas(CommandBase):
         p1 = ParameterDesc('max_coins_to_claim', 'maximum number of coins to claim', optional=True)
         p2 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
         return CommandDesc('claim', 'claim gas', params=[p1, p2])
+
+
+class CommandWalletRebuild(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+
+        PromptData.Prompt.stop_wallet_loop()
+
+        start_block = get_arg(arguments, 0, convert_to_int=True)
+        if not start_block or start_block < 0:
+            start_block = 0
+        print(f"Restarting at block {start_block}")
+
+        PromptData.Wallet.Rebuild(start_block)
+
+        PromptData.Prompt.start_wallet_loop()
+
+    def command_desc(self):
+        p1 = ParameterDesc('start_block', 'block number to start the resync at', optional=True)
+        return CommandDesc('rebuild', 'rebuild the wallet index', params=[p1])
 
 
 #########################################################################

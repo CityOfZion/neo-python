@@ -311,6 +311,26 @@ class UserWalletTestCase(WalletFixtureTestCase):
             json_tx = claim_tx.ToJson()
             self.assertEqual(json_tx['vout'][0]['address'], 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3')
 
+    def test_wallet_rebuild(self):
+        with patch('neo.Prompt.PromptData.PromptData.Prompt'):
+            # test wallet rebuild with no wallet open
+            args = ['rebuild']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+
+            self.OpenWallet1()
+            PromptData.Wallet._current_height = 12345
+
+            # test wallet rebuild with no argument
+            args = ['rebuild']
+            CommandWallet().execute(args)
+            self.assertEqual(PromptData.Wallet._current_height, 0)
+
+            # test wallet rebuild with start block
+            args = ['rebuild', '42']
+            CommandWallet().execute(args)
+            self.assertEqual(PromptData.Wallet._current_height, 42)
+
     ##########################################################
     ##########################################################
 
