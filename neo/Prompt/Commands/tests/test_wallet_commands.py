@@ -301,12 +301,15 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_wallet_claim_2(self):
         self.OpenWallet2()
 
-        # test with max_coins_to_claim
+        # test with max_coins_to_claim and --from-addr
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
-            args = ['claim', '1']
+            args = ['claim', '1', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
             claim_tx, relayed = CommandWallet().execute(args)
             self.assertIsInstance(claim_tx, ClaimTransaction)
             self.assertTrue(relayed)
+
+            json_tx = claim_tx.ToJson()
+            self.assertEqual(json_tx['vout'][0]['address'], 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3')
 
     ##########################################################
     ##########################################################
