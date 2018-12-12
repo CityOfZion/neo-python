@@ -15,7 +15,7 @@ class InvocationTransaction(Transaction):
         Returns:
             Fixed8:
         """
-        return self.Gas // Fixed8.FD()
+        return self.Gas
 
     def __init__(self, *args, **kwargs):
         """
@@ -97,5 +97,5 @@ class InvocationTransaction(Transaction):
         """
         jsn = super(InvocationTransaction, self).ToJson()
         jsn['script'] = self.Script.hex()
-        jsn['gas'] = self.Gas.value
+        jsn['gas'] = self.Gas.ToNeoJsonString()
         return jsn
