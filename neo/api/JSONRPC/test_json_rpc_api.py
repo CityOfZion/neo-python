@@ -255,8 +255,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_get_connectioncount(self):
         # make sure we have a predictable state
+        NodeLeader.Reset()
         leader = NodeLeader.Instance()
-        old_leader = deepcopy(leader)
+        # old_leader = deepcopy(leader)
         fake_obj = object()
         leader.Peers = [fake_obj, fake_obj]
         leader.KNOWN_ADDRS = [fake_obj, fake_obj]
@@ -267,7 +268,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result'], 2)
 
         # restore whatever state the instance was in
-        NodeLeader._LEAD = old_leader
+        # NodeLeader._LEAD = old_leader
 
     def test_get_block_int(self):
         req = self._gen_post_rpc_req("getblock", params=[10, 1])
