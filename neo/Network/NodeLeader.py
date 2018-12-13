@@ -19,7 +19,6 @@ from neo.Network.address import Address
 from neo.Network.Utils import LoopingCall, hostname_to_ip, is_ip_address
 
 logger = log_manager.getLogger('network')
-log_manager.config_stdio([('network', 10)])
 
 
 class NodeLeader:

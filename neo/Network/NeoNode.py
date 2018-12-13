@@ -292,7 +292,6 @@ class NeoNode(Protocol):
 
         def try_me(err):
             err.check(error.ConnectionAborted)
-            print("******* try me called!", err)
 
         if self.disconnect_deferred:
             d, self.disconnect_deferred = self.disconnect_deferred, None  # type: defer.Deferred
