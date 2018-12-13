@@ -109,7 +109,7 @@ class NeoNode(Protocol):
             logger_verbose.debug(f"start_header_loop: still running -> stopping...")
             self.stop_header_loop()
         self.header_loop = task.LoopingCall(self.AskForMoreHeaders)
-        self.header_loop_deferred = self.header_loop.start(20, now=False)
+        self.header_loop_deferred = self.header_loop.start(5, now=False)
         self.header_loop_deferred.addErrback(self.OnLoopError)
         # self.leader.task_handles[self.header_loop] = self.prefix + f"{'header_loop':>15}"
 
