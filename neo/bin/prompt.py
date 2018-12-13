@@ -617,7 +617,7 @@ class PromptInterface:
         if len(NodeLeader.Instance().Peers) > 0:
             out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
             for i, peer in enumerate(NodeLeader.Instance().Peers):
-                out += f"Peer {i} {peer.Name():>12} - {peer.address:>21} - IO {peer.IOStats()}\n"
+                out += f"Peer {i} {int(peer.incoming_client)} {peer.Name():>12} - {peer.address:>21} - IO {peer.IOStats()}\n"
             print_formatted_text(FormattedText([("class:number", out)]), style=self.token_style)
         else:
             print("Not connected yet\n")

@@ -333,7 +333,7 @@ class NodeLeader:
                 if endpoint:
                     point = endpoint
                 else:
-                    point = TCP4ClientEndpoint(self.reactor, host, int(port), timeout=15)
+                    point = TCP4ClientEndpoint(self.reactor, host, int(port), timeout=5)
                 self.peers_connecting += 1
                 d = connectProtocol(point, NeoNode())  # type: Deferred
                 d.addErrback(self.clientConnectionFailed, addr)
@@ -369,10 +369,13 @@ class NodeLeader:
         """
         # if present
         self.RemoveFromQueue(peer.address)
+        self.AddKnownAddress(peer.address)
 
-        if peer not in self.Peers and len(self.Peers) < settings.CONNECTED_PEER_MAX:
+        if len(self.Peers) > settings.CONNECTED_PEER_MAX:
+            peer.Disconnect("Max connected peers reached", isDead=False)
+
+        if peer not in self.Peers:
             self.Peers.append(peer)
-            self.AddKnownAddress(peer.address)
         else:
             # either peer is already in the list and it has reconnected before it timed out on our side
             # or it's trying to connect multiple times

@@ -26,10 +26,10 @@ from neo.Network.address import Address
 
 logger = log_manager.getLogger('network')
 logger_verbose = log_manager.getLogger('network.verbose')
-MODE_MAINTAIN = 7
-MODE_CATCHUP = 2
+MODE_MAINTAIN = 12
+MODE_CATCHUP = 5
 
-mode_to_name = {2: 'CATCHUP', 7: 'MAINTAIN'}
+mode_to_name = {MODE_CATCHUP: 'CATCHUP', MODE_MAINTAIN: 'MAINTAIN'}
 
 HEARTBEAT_BLOCKS = 'B'
 HEARTBEAT_HEADERS = 'H'
@@ -109,7 +109,7 @@ class NeoNode(Protocol):
             logger_verbose.debug(f"start_header_loop: still running -> stopping...")
             self.stop_header_loop()
         self.header_loop = task.LoopingCall(self.AskForMoreHeaders)
-        self.header_loop_deferred = self.header_loop.start(5, now=False)
+        self.header_loop_deferred = self.header_loop.start(20, now=False)
         self.header_loop_deferred.addErrback(self.OnLoopError)
         # self.leader.task_handles[self.header_loop] = self.prefix + f"{'header_loop':>15}"
 
@@ -168,7 +168,7 @@ class NeoNode(Protocol):
 
         logger.debug(f"{self.prefix} new node created, not yet connected")
 
-    def Disconnect(self, reason=None):
+    def Disconnect(self, reason=None, isDead=True):
         """Close the connection with the remote node client."""
         self.disconnecting = True
         self.expect_verack_next = False
@@ -177,7 +177,8 @@ class NeoNode(Protocol):
         self.stop_block_loop()
         self.stop_header_loop()
         self.stop_peerinfo_loop()
-        self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} Forced disconnect by us")
+        if isDead:
+            self.leader.AddDeadAddress(self.address, reason=f"{self.prefix} Forced disconnect by us")
 
         self.leader.forced_disconnect_by_us += 1
 
@@ -236,8 +237,14 @@ class NeoNode(Protocol):
         self.endpoint = self.transport.getPeer()
         # get the reference to the Address object in NodeLeader so we can manipulate it properly.
         tmp_addr = Address(f"{self.endpoint.host}:{self.endpoint.port}")
-        known_idx = self.leader.KNOWN_ADDRS.index(tmp_addr)
-        self.address = self.leader.KNOWN_ADDRS[known_idx]
+        try:
+            known_idx = self.leader.KNOWN_ADDRS.index(tmp_addr)
+            self.address = self.leader.KNOWN_ADDRS[known_idx]
+        except ValueError:
+            # Not found.
+            self.leader.AddKnownAddress(tmp_addr)
+            self.address = tmp_addr
+
         self.address.address = "%s:%s" % (self.endpoint.host, self.endpoint.port)
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
@@ -397,7 +404,6 @@ class NeoNode(Protocol):
         Args:
             m (neo.Network.Message):
         """
-
         if m.Command == 'verack':
             # only respond with a verack when we connect to another client, not when a client connected to us or
             # we might end up in a verack loop

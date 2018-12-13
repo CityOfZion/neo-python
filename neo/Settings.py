@@ -214,7 +214,7 @@ class SettingsHolder:
         self.USE_DEBUG_STORAGE = config.get('DebugStorage', True)
         self.DEBUG_STORAGE_PATH = config.get('DebugStoragePath', 'Chains/debugstorage')
         self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
-        self.SERVICE_ENABLED = config.get('ServiceEnabled', True)
+        self.SERVICE_ENABLED = config.get('ServiceEnabled', self.ACCEPT_INCOMING_PEERS)
         self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
         self.REST_SERVER = config.get('RestServer', self.DEFAULT_REST_SERVER)
         self.RPC_SERVER = config.get('RPCServer', self.DEFAULT_RPC_SERVER)
