@@ -150,6 +150,7 @@ class NeoNode(Protocol):
         self.port = None
 
         self.incoming_client = incoming_client
+        self.handshake_complete = False
         self.expect_verack_next = False
         self.start_outstanding_data_request = {HEARTBEAT_BLOCKS: 0, HEARTBEAT_HEADERS: 0}
 
@@ -420,9 +421,7 @@ class NeoNode(Protocol):
         elif m.Command == 'getheaders':
             self.HandleGetHeadersMessageReceived(m.Payload)
         elif m.Command == 'headers':
-            # TODO: this is called in the reactor thread, could block if Addheaders actually commits to the db. check if need to switch to callInTHread
-            reactor.callFromThread(self.HandleBlockHeadersReceived, m.Payload)
-
+            self.HandleBlockHeadersReceived(m.Payload)
         elif m.Command == 'addr':
             self.HandlePeerInfoReceived(m.Payload)
         else:
@@ -593,6 +592,8 @@ class NeoNode(Protocol):
         self.SendSerializedMessage(m)
         self.leader.NodeCount += 1
         self.identifier = self.leader.NodeCount
+        logger.debug(f"{self.prefix} Handshake complete!")
+        self.handshake_complete = True
         self.ProtocolReady()
 
     def HandleInvMessage(self, payload):

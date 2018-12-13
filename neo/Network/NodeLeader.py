@@ -8,12 +8,12 @@ from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode, HEARTBEAT_BLOCKS
 from neo.Settings import settings
-from twisted.internet.protocol import ReconnectingClientFactory
+from twisted.internet.protocol import ReconnectingClientFactory, Factory
 from twisted.internet import error
 from twisted.internet import task
 from twisted.internet import reactor as twisted_reactor
 from twisted.internet.defer import CancelledError, Deferred
-from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
+from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol, TCP4ServerEndpoint
 from neo.logging import log_manager
 from neo.Network.address import Address
 from neo.Network.Utils import LoopingCall, hostname_to_ip, is_ip_address
@@ -87,7 +87,7 @@ class NodeLeader:
         self.peer_zero_count = 0  # track the number of times PeerCheckLoop saw a Peer count of zero. Reset e.g. after 3 times
         self.connection_queue = []
         self.reactor = twisted_reactor
-
+        self.incoming_server_running = False
         self.forced_disconnect_by_us = 0
         self.peers_connecting = 0
 
@@ -269,11 +269,29 @@ class NodeLeader:
         self.start_memcheck_loop()
         self.start_blockheight_loop()
 
-        # TODO: change to new endpoint api
-        # if settings.ACCEPT_INCOMING_PEERS:
-        #     logger.debug(f"Starting up nodeleader: setting up listen server on port: '{settings.NODE_PORT}")
-        #     # TODO: add address to known KNOWN_ADDR list, change to use endpoint instead
-        #     self.reactor.listenTCP(settings.NODE_PORT, NeoClientFactory(incoming_client=True))
+        if settings.ACCEPT_INCOMING_PEERS and not self.incoming_server_running:
+            class OneShotFactory(Factory):
+                def __init__(self, leader):
+                    self.leader = leader
+
+                def buildProtocol(self, addr):
+                    print(f"building new protocol for addr: {addr}")
+                    self.leader.AddKnownAddress(Address(f"{addr.host}:{addr.port}"))
+                    p = NeoNode(incoming_client=True)
+                    p.factory = self
+                    return p
+
+            def listen_err(err):
+                print(f"Failed start listening server for reason: {err.value}")
+
+            def listen_ok(value):
+                self.incoming_server_running = True
+
+            logger.debug(f"Starting up nodeleader: setting up listen server on port: {settings.NODE_PORT}")
+            server_endpoint = TCP4ServerEndpoint(self.reactor, settings.NODE_PORT)
+            listenport_deferred = server_endpoint.listen(OneShotFactory(leader=self))
+            listenport_deferred.addCallback(listen_ok)
+            listenport_deferred.addErrback(listen_err)
 
     def setBlockReqSizeAndMax(self, breqpart=0, breqmax=0):
         if breqpart > 0 and breqmax > 0 and breqmax > breqpart:
@@ -471,7 +489,7 @@ class NodeLeader:
         # there has been a case where the connection was established, but ProtocolReady() never called nor disconnected.
         if not self.check_bcr_loop:
             for peer in self.Peers:
-                if not peer.has_tasks_running():
+                if not peer.has_tasks_running() and peer.handshake_complete:
                     peer.start_all_tasks()
 
     def InventoryReceived(self, inventory):
@@ -644,10 +662,17 @@ class NodeLeader:
             if len(self.Peers) > 0:
                 logger.debug("Blockheight is not advancing ...")
                 next_hash = BC.Default().GetHeaderHash(self.CurrentBlockheight + 1)
+                culprit_found = False
                 for peer in self.Peers:
                     if next_hash in peer.myblockrequests:
+                        culprit_found = True
                         peer.Disconnect()
                         break
+
+                # this happens when we're connecting to other nodes that are stuck themselves
+                if not culprit_found:
+                    for peer in self.Peers:
+                        peer.Disconnect()
         else:
             self.CurrentBlockheight = BC.Default().Height
 

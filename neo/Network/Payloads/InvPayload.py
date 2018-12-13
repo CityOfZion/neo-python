@@ -59,7 +59,7 @@ class InvPayload(SerializableMixin):
             writer.WriteByte(self.Type)
             writer.WriteHashes(self.Hashes)
         except Exception as e:
-            logger.error("COULD NOT WRITE INVENTORY HASHES %s " % e)
+            logger.error(f"COULD NOT WRITE INVENTORY HASHES ({self.Type} {self.Hashes}) {e}")
 
     def ToString(self):
         """
