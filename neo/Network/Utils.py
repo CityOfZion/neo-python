@@ -43,7 +43,7 @@ class TestTransportEndpoint(object):
             # because the Twisted `StringTransportWithDisconnection` helper class tries to weirdly enough access `protocol` on a transport
             self.tr.protocol = node
             return defer.succeed(node)
-        except:
+        except Exception:
             return defer.fail()
 
 
