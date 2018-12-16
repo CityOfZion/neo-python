@@ -38,6 +38,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletSendMany())
         self.register_sub_command(CommandWalletSign())
         self.register_sub_command(CommandWalletRebuild())
+        self.register_sub_command(CommandWalletAlias())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -219,6 +220,24 @@ class CommandWalletRebuild(CommandBase):
         return CommandDesc('rebuild', 'rebuild the wallet index', params=[p1])
 
 
+class CommandWalletAlias(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if len(arguments) < 2:
+            print("Please supply an address and an alias")
+            return False
+
+        return AddAlias(PromptData.Wallet, arguments[0], arguments[1])
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'address to create an alias for')
+        p2 = ParameterDesc('alias', 'alias to associate with the address')
+        return CommandDesc('alias', 'create an alias for an address', params=[p1, p2])
+
+
 #########################################################################
 #########################################################################
 
@@ -323,11 +342,14 @@ def AddAlias(wallet, addr, title):
     if wallet is None:
         print("Please open a wallet")
         return False
+
     try:
         script_hash = wallet.ToScriptHash(addr)
         wallet.AddNamedAddress(script_hash, title)
+        return True
     except Exception as e:
         print(e)
+        return False
 
 
 def ClaimGas(wallet, require_password=True, args=None):

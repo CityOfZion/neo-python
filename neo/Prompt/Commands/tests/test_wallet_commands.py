@@ -227,7 +227,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = CommandWallet().execute(args)
         self.assertFalse(res)
 
-        # test wallet create successful
+        # test wallet create address successful
         args = ['create_addr', 1]
         res = CommandWallet().execute(args)
         self.assertTrue(res)
@@ -259,6 +259,32 @@ class UserWalletTestCase(WalletFixtureTestCase):
             args = ['rebuild', '42']
             CommandWallet().execute(args)
             self.assertEqual(PromptData.Wallet._current_height, 42)
+
+    def test_wallet_alias(self):
+        # test wallet alias with no wallet open
+        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'mine']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        self.OpenWallet()
+
+        # test wallet alias with no argument
+        args = ['alias']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet alias with 1 argument
+        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet alias successful
+        self.assertNotIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
+
+        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'mine']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
 
     ##########################################################
     ##########################################################
