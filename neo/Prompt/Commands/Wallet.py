@@ -205,24 +205,16 @@ class CommandWalletClaimGas(CommandBase):
 
     def execute(self, arguments):
         from_addr_str = None
-        max_coins_to_claim = None
 
         args = arguments
         if args:
             args, from_addr_str = get_from_addr(args)
 
-        if args:
-            max_coins_to_claim = get_arg(args, 0, convert_to_int=True)
-            if not max_coins_to_claim:
-                print("max_coins_to_claim must be an integer")
-                return None, False  # return same as failure in ClaimGas().
-
-        return ClaimGas(PromptData.Wallet, True, from_addr_str, max_coins_to_claim)
+        return ClaimGas(PromptData.Wallet, True, from_addr_str)
 
     def command_desc(self):
-        p1 = ParameterDesc('max_coins_to_claim', 'maximum number of coins to claim', optional=True)
-        p2 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
-        return CommandDesc('claim', 'claim gas', params=[p1, p2])
+        p1 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
+        return CommandDesc('claim', 'claim gas', params=[p1])
 
 
 class CommandWalletRebuild(CommandBase):
@@ -359,13 +351,12 @@ def AddAlias(wallet, addr, title):
         print(e)
 
 
-def ClaimGas(wallet, require_password=True, from_addr_str=None, max_coins_to_claim=None):
+def ClaimGas(wallet, require_password=True, from_addr_str=None):
     """
     Args:
         wallet:
         require_password:
         from_addr_str:
-        max_coins_to_claim:
     Returns:
         (claim transaction, relayed status)
             if successful: (tx, True)
@@ -374,9 +365,6 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, max_coins_to_cla
     if not wallet:
         print("Please open a wallet")
         return None, False
-    if max_coins_to_claim and max_coins_to_claim <= 0:
-        print("max_coins_to_claim must be greater than zero")
-        return None, False
 
     unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -384,9 +372,6 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, max_coins_to_cla
     if unclaimed_count == 0:
         print("no claims to process")
         return None, False
-
-    if max_coins_to_claim and unclaimed_count > max_coins_to_claim:
-        unclaimed_coins = unclaimed_coins[:max_coins_to_claim]
 
     unclaimed_coin_refs = [coin.Reference for coin in unclaimed_coins]
 
@@ -420,8 +405,6 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, max_coins_to_cla
 
     print("\n---------------------------------------------------------------")
     print(f"Will make claim for {available_bonus.ToString()} GAS")
-    if max_coins_to_claim and unclaimed_count > max_coins_to_claim:
-        print(f"NOTE: You are claiming GAS on {max_coins_to_claim} unclaimed coins. {math.floor(unclaimed_count / max_coins_to_claim)} additional claim transactions will be required to claim all available GAS.")
     print("------------------------------------------------------------------\n")
 
     if require_password:

@@ -265,18 +265,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.OpenWallet1()
 
-        # test with max_coins_to_claim non integer
-        args = ['claim', 'abc']
-        claim_tx, relayed = CommandWallet().execute(args)
-        self.assertEqual(claim_tx, None)
-        self.assertFalse(relayed)
-
-        # test with max_coins_to_claim <= 0
-        args = ['claim', '-1']
-        claim_tx, relayed = CommandWallet().execute(args)
-        self.assertEqual(claim_tx, None)
-        self.assertFalse(relayed)
-
         # test wrong password
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["wrong"]):
             args = ['claim']
@@ -301,9 +289,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_wallet_claim_2(self):
         self.OpenWallet2()
 
-        # test with max_coins_to_claim and --from-addr
+        # test with --from-addr
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
-            args = ['claim', '1', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
+            args = ['claim', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
             claim_tx, relayed = CommandWallet().execute(args)
             self.assertIsInstance(claim_tx, ClaimTransaction)
             self.assertTrue(relayed)
