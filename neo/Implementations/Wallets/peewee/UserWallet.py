@@ -445,7 +445,6 @@ class UserWallet(Wallet):
         todelete = bytes(script_hash.ToArray())
 
         for c in Contract.select():
-
             address = c.Address
             if address.ScriptHash == todelete:
                 c.delete_instance()

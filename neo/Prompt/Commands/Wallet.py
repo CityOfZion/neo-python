@@ -34,6 +34,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletClose())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
         self.register_sub_command(CommandWalletCreateAddress())
+        self.register_sub_command(CommandWalletDeleteAddress())
         self.register_sub_command(CommandWalletSend())
         self.register_sub_command(CommandWalletSendMany())
         self.register_sub_command(CommandWalletSign())
@@ -195,6 +196,25 @@ class CommandWalletCreateAddress(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('number of addresses', 'number of addresses to create')
         return CommandDesc('create_addr', 'create a new wallet address', params=[p1])
+
+
+class CommandWalletDeleteAddress(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        addr_to_delete = get_arg(arguments, 0)
+
+        if not addr_to_delete:
+            print("Please specify an address to delete.")
+            return False
+
+        return DeleteAddress(PromptData.Wallet, addr_to_delete)
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'address to delete')
+        return CommandDesc('delete_addr', 'delete a wallet address', params=[p1])
 
 
 class CommandWalletRebuild(CommandBase):
