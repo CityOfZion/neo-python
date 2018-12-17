@@ -87,8 +87,7 @@ class AccountState(StateBase):
         Returns:
             int: size.
         """
-        return super(AccountState, self).Size() + s.uint160 + s.uint8 + GetVarSize(self.Votes) + GetVarSize(len(self.Balances)) + (
-                len(self.Balances) * (32 + 8))
+        return super(AccountState, self).Size() + s.uint160 + s.uint8 + GetVarSize(self.Votes) + GetVarSize(len(self.Balances)) + (len(self.Balances) * (32 + 8))
 
     @staticmethod
     def DeserializeFromDB(buffer):
