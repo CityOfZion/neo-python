@@ -3,7 +3,7 @@ from neocore.IO.BinaryReader import BinaryReader
 from neocore.UInt160 import UInt160
 from neocore.BigInteger import BigInteger
 from neocore.Cryptography.Crypto import Crypto
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neocore.IO.Mixins import SerializableMixin
 import binascii
@@ -122,28 +122,26 @@ class SmartContractEvent(SerializableMixin):
                % (self.event_type, self.event_payload, self.contract_hash, self.block_number, self.tx_hash, self.execution_success, self.test_mode)
 
     def ToByteArray(self):
-        stream = StreamManager.GetStream()
-        writer = BinaryWriter(stream)
-        self.Serialize(writer)
-        out = stream.getvalue()
-        StreamManager.ReleaseStream(stream)
+        with MemoryStream() as stream:
+            writer = BinaryWriter(stream)
+            self.Serialize(writer)
+            out = stream.getvalue()
         return out
 
     @staticmethod
     def FromByteArray(data):
-        stream = StreamManager.GetStream(data=data)
-        reader = BinaryReader(stream)
+        with MemoryStream(data) as stream:
+            reader = BinaryReader(stream)
 
-        etype = reader.ReadVarString().decode('utf-8')
-        reader.stream.seek(0)
+            etype = reader.ReadVarString().decode('utf-8')
+            reader.stream.seek(0)
 
-        if etype == SmartContractEvent.RUNTIME_NOTIFY:
-            event = NotifyEvent(None, None, None, None, None)
-        else:
-            event = SmartContractEvent(None, None, None, None, None)
+            if etype == SmartContractEvent.RUNTIME_NOTIFY:
+                event = NotifyEvent(None, None, None, None, None)
+            else:
+                event = SmartContractEvent(None, None, None, None, None)
 
-        event.Deserialize(reader)
-        StreamManager.ReleaseStream(stream)
+            event.Deserialize(reader)
         return event
 
     def CheckIsNEP5(self):

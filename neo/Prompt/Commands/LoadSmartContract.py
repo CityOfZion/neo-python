@@ -156,7 +156,6 @@ def GatherLoadedContractParams(args, script):
 
 
 def GatherContractDetails(function_code):
-
     print("Please fill out the following contract details:")
 
     from neo.bin.prompt import PromptInterface
@@ -188,32 +187,32 @@ def GatherContractDetails(function_code):
 
 def generate_deploy_script(script, name='test', version='test', author='test', email='test',
                            description='test', contract_properties=0, return_type=BigInteger(255), parameter_list=[]):
-    sb = ScriptBuilder()
+    with ScriptBuilder() as sb:
+        plist = parameter_list
+        try:
+            plist = bytearray(binascii.unhexlify(parameter_list))
+        except Exception as e:
+            pass
 
-    plist = parameter_list
-    try:
-        plist = bytearray(binascii.unhexlify(parameter_list))
-    except Exception as e:
-        pass
-
-    sb.push(binascii.hexlify(description.encode('utf-8')))
-    sb.push(binascii.hexlify(email.encode('utf-8')))
-    sb.push(binascii.hexlify(author.encode('utf-8')))
-    sb.push(binascii.hexlify(version.encode('utf-8')))
-    sb.push(binascii.hexlify(name.encode('utf-8')))
-    sb.push(contract_properties)
-    sb.push(return_type)
-    sb.push(plist)
-    sb.WriteVarData(script)
-    sb.EmitSysCall("Neo.Contract.Create")
-    script = sb.ToArray()
+        sb.push(binascii.hexlify(description.encode('utf-8')))
+        sb.push(binascii.hexlify(email.encode('utf-8')))
+        sb.push(binascii.hexlify(author.encode('utf-8')))
+        sb.push(binascii.hexlify(version.encode('utf-8')))
+        sb.push(binascii.hexlify(name.encode('utf-8')))
+        sb.push(contract_properties)
+        sb.push(return_type)
+        sb.push(plist)
+        sb.WriteVarData(script)
+        sb.EmitSysCall("Neo.Contract.Create")
+        script = sb.ToArray()
 
     return script
 
 
 def ImportMultiSigContractAddr(wallet, args):
     if len(args) < 4:
-        print("please specify multisig contract like such: 'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
+        print(
+            "please specify multisig contract like such: 'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
         return
 
     if wallet is None:

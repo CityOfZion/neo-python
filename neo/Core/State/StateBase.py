@@ -1,6 +1,6 @@
 from neocore.IO.Mixins import SerializableMixin
 from neocore.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.Core.Size import Size as s
 
 
@@ -56,12 +56,10 @@ class StateBase(SerializableMixin):
         Returns:
             bytes: serialized object.
         """
-        ms = StreamManager.GetStream()
-        writer = BinaryWriter(ms)
-        self.Serialize(writer)
-
-        retval = ms.ToArray()
-        StreamManager.ReleaseStream(ms)
+        with MemoryStream() as ms:
+            writer = BinaryWriter(ms)
+            self.Serialize(writer)
+            retval = ms.ToArray()
 
         return retval
 

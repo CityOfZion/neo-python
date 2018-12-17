@@ -2,7 +2,7 @@ import sys
 from .StateBase import StateBase
 from .CoinState import CoinState
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
 from neo.Core.State.CoinState import CoinState
@@ -97,12 +97,10 @@ class UnspentCoinState(StateBase):
         Returns:
             UnspentCoinState:
         """
-        m = StreamManager.GetStream(buffer)
-        reader = BinaryReader(m)
-        uns = UnspentCoinState()
-        uns.Deserialize(reader)
-
-        StreamManager.ReleaseStream(m)
+        with MemoryStream(buffer) as ms:
+            reader = BinaryReader(ms)
+            uns = UnspentCoinState()
+            uns.Deserialize(reader)
 
         return uns
 

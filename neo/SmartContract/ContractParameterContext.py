@@ -162,13 +162,12 @@ class ContractParametersContext:
             ecdsa = ECDSA.secp256r1()
             points = []
             temp = binascii.unhexlify(contract.Script)
-            ms = MemoryStream(binascii.unhexlify(contract.Script))
-            reader = BinaryReader(ms)
-            numr = reader.ReadUInt8()
-            while reader.ReadUInt8() == 33:
-                ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
-                points.append(ecpoint)
-            ms.close()
+            with MemoryStream(binascii.unhexlify(contract.Script)) as ms:
+                reader = BinaryReader(ms)
+                numr = reader.ReadUInt8()
+                while reader.ReadUInt8() == 33:
+                    ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
+                    points.append(ecpoint)
 
             if pubkey not in points:
                 return False
@@ -228,22 +227,22 @@ class ContractParametersContext:
 
             item = self.ContextItems[self.ScriptHashes[i].ToBytes()]
 
-            sb = ScriptBuilder()
-
             plist = list(item.ContractParameters)
             plist.reverse()
 
-            for p in plist:
-                if type(p.Value) is list:
-                    pa = p.Value
-                    pa.reverse()
-                    listlength = len(pa)
-                    for listitem in pa:
-                        sb.push(listitem)
-                    sb.push(listlength)
-                    sb.Emit(OpCode.PACK)
-                else:
-                    sb.push(p.Value)
+            with ScriptBuilder() as sb:
+                for p in plist:
+                    if type(p.Value) is list:
+                        pa = p.Value
+                        pa.reverse()
+                        listlength = len(pa)
+                        for listitem in pa:
+                            sb.push(listitem)
+                        sb.push(listlength)
+                        sb.Emit(OpCode.PACK)
+                    else:
+                        sb.push(p.Value)
+                invoc_script = sb.ToArray()
 
             vscript = bytearray(0)
 
@@ -255,7 +254,7 @@ class ContractParametersContext:
                 vscript = item.Script
 
             witness = Witness(
-                invocation_script=sb.ToArray(),
+                invocation_script=invoc_script,
                 verification_script=vscript
             )
 
@@ -266,11 +265,12 @@ class ContractParametersContext:
     def ToJson(self):
         jsn = {}
         jsn['type'] = 'Neo.Core.ContractTransaction'  # Verifiable.GetType().FullName
-        ms = MemoryStream()
-        w = BinaryWriter(ms)
-        self.Verifiable.SerializeUnsigned(w)
-        ms.flush()
-        jsn['hex'] = ms.ToArray().decode()
+        with MemoryStream() as ms:
+            w = BinaryWriter(ms)
+            self.Verifiable.SerializeUnsigned(w)
+            ms.flush()
+            jsn['hex'] = ms.ToArray().decode()
+
         jsn['items'] = {}
         for key, value in self.ContextItems.items():
             if type(key) == str:
@@ -286,22 +286,22 @@ class ContractParametersContext:
             parsed = json.loads(jsn)
             if parsed['type'] == 'Neo.Core.ContractTransaction':
                 verifiable = ContractTransaction()
-                ms = MemoryStream(binascii.unhexlify(parsed['hex']))
-                r = BinaryReader(ms)
-                verifiable.DeserializeUnsigned(r)
-                context = ContractParametersContext(verifiable, isMultiSig=isMultiSig)
-                for key, value in parsed['items'].items():
-                    if "0x" in key:
-                        key = key[2:]
-                    key = key.encode()
-                    parameterbytes = []
-                    for pt in value['parameters']:
-                        if pt['type'] == 'Signature':
-                            parameterbytes.append(0)
-                    contract = Contract.Create(value['script'], parameterbytes, key)
-                    context.ContextItems[key] = ContextItem(contract)
-                    if 'signatures' in value:
-                        context.ContextItems[key].Signatures = value['signatures']
+                with MemoryStream(binascii.unhexlify(parsed['hex'])) as ms:
+                    r = BinaryReader(ms)
+                    verifiable.DeserializeUnsigned(r)
+                    context = ContractParametersContext(verifiable, isMultiSig=isMultiSig)
+                    for key, value in parsed['items'].items():
+                        if "0x" in key:
+                            key = key[2:]
+                        key = key.encode()
+                        parameterbytes = []
+                        for pt in value['parameters']:
+                            if pt['type'] == 'Signature':
+                                parameterbytes.append(0)
+                        contract = Contract.Create(value['script'], parameterbytes, key)
+                        context.ContextItems[key] = ContextItem(contract)
+                        if 'signatures' in value:
+                            context.ContextItems[key].Signatures = value['signatures']
 
                 return context
             else:

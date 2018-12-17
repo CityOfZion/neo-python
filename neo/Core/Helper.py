@@ -10,7 +10,7 @@ from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neocore.Fixed8 import Fixed8
@@ -43,12 +43,11 @@ class Helper:
         Returns:
             bytes:
         """
-        ms = StreamManager.GetStream()
-        writer = BinaryWriter(ms)
-        hashable.SerializeUnsigned(writer)
-        ms.flush()
-        retVal = ms.ToArray()
-        StreamManager.ReleaseStream(ms)
+        with MemoryStream() as ms:
+            writer = BinaryWriter(ms)
+            hashable.SerializeUnsigned(writer)
+            ms.flush()
+            retVal = ms.ToArray()
         return retVal
 
     @staticmethod
@@ -79,13 +78,10 @@ class Helper:
         Returns:
             bytes: hex formatted bytes
         """
-        ms = StreamManager.GetStream()
-        writer = BinaryWriter(ms)
-
-        value.Serialize(writer)
-
-        retVal = ms.ToArray()
-        StreamManager.ReleaseStream(ms)
+        with MemoryStream() as ms:
+            writer = BinaryWriter(ms)
+            value.Serialize(writer)
+            retVal = ms.ToArray()
 
         return retVal
 
@@ -100,13 +96,10 @@ class Helper:
         Returns:
             bytes: not hexlified
         """
-        ms = StreamManager.GetStream()
-        writer = BinaryWriter(ms)
-
-        value.Serialize(writer)
-
-        retVal = ms.getvalue()
-        StreamManager.ReleaseStream(ms)
+        with MemoryStream() as ms:
+            writer = BinaryWriter(ms)
+            value.Serialize(writer)
+            retVal = ms.getvalue()
 
         return retVal
 
@@ -193,6 +186,10 @@ class Helper:
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
                 verification = sb.ms.getvalue()
+                # cleanup stream
+                sb.ms.Cleanup()
+                sb.ms.close()
+
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:
@@ -210,6 +207,7 @@ class Helper:
                 success = engine.Execute()
                 state_reader.ExecutionCompleted(engine, success)
             except Exception as e:
+                engine.Dispose()
                 state_reader.ExecutionCompleted(engine, False, e)
 
             if engine.ResultStack.Count != 1 or not engine.ResultStack.Pop().GetBoolean():

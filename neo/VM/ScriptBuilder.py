@@ -19,6 +19,14 @@ class ScriptBuilder:
         super(ScriptBuilder, self).__init__()
         self.ms = MemoryStream()  # MemoryStream
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.ms:
+            self.ms.Cleanup()
+            self.ms.close()
+
     def WriteUInt16(self, value, endian="<"):
         return self.pack('%sH' % endian, value)
 
@@ -229,8 +237,5 @@ class ScriptBuilder:
 
     def ToArray(self, cleanup=True):
         retval = self.ms.ToArray()
-        if cleanup:
-            self.ms.Cleanup()
-            self.ms = None
 
         return retval

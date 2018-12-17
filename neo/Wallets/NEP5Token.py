@@ -89,14 +89,15 @@ class NEP5Token(VerificationCode, SerializableMixin):
             # don't query twice
             return
 
-        sb = ScriptBuilder()
-        sb.EmitAppCallWithOperation(self.ScriptHash, 'name')
-        sb.EmitAppCallWithOperation(self.ScriptHash, 'symbol')
-        sb.EmitAppCallWithOperation(self.ScriptHash, 'decimals')
+        with ScriptBuilder() as sb:
+            sb.EmitAppCallWithOperation(self.ScriptHash, 'name')
+            sb.EmitAppCallWithOperation(self.ScriptHash, 'symbol')
+            sb.EmitAppCallWithOperation(self.ScriptHash, 'decimals')
+            script = sb.ToArray()
 
         engine = None
         try:
-            engine = ApplicationEngine.Run(sb.ToArray(), exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
+            engine = ApplicationEngine.Run(script, exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
         except Exception as e:
             pass
 
@@ -130,10 +131,12 @@ class NEP5Token(VerificationCode, SerializableMixin):
         addr = parse_param(address, wallet)
         if isinstance(addr, UInt160):
             addr = addr.Data
-        sb = ScriptBuilder()
-        sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'balanceOf', [addr])
 
-        tx, fee, results, num_ops, engine_success = test_invoke(sb.ToArray(), wallet, [])
+        with ScriptBuilder() as sb:
+            sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'balanceOf', [addr])
+            script = sb.ToArray()
+
+        tx, fee, results, num_ops, engine_success = test_invoke(script, wallet, [])
         if engine_success:
             try:
                 val = results[0].GetBigInteger()
@@ -174,12 +177,13 @@ class NEP5Token(VerificationCode, SerializableMixin):
         if not tx_attributes:
             tx_attributes = []
 
-        sb = ScriptBuilder()
-        sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'transfer',
-                                           [parse_param(from_addr, wallet), parse_param(to_addr, wallet),
-                                            parse_param(amount)])
+        with ScriptBuilder() as sb:
+            sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'transfer',
+                                               [parse_param(from_addr, wallet), parse_param(to_addr, wallet),
+                                                parse_param(amount)])
+            script = sb.ToArray()
 
-        tx, fee, results, num_ops, engine_success = test_invoke(sb.ToArray(), wallet, [], from_addr=from_addr, invoke_attrs=tx_attributes)
+        tx, fee, results, num_ops, engine_success = test_invoke(script, wallet, [], from_addr=from_addr, invoke_attrs=tx_attributes)
 
         return tx, fee, results
 

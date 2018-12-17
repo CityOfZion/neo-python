@@ -2,7 +2,7 @@ import sys
 from .StateBase import StateBase
 from neocore.Fixed8 import Fixed8
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.BinaryWriter import BinaryWriter
 
@@ -87,7 +87,8 @@ class AccountState(StateBase):
         Returns:
             int: size.
         """
-        return super(AccountState, self).Size() + s.uint160 + s.uint8 + GetVarSize(self.Votes) + GetVarSize(len(self.Balances)) + (len(self.Balances) * (32 + 8))
+        return super(AccountState, self).Size() + s.uint160 + s.uint8 + GetVarSize(self.Votes) + GetVarSize(len(self.Balances)) + (
+                len(self.Balances) * (32 + 8))
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -100,12 +101,10 @@ class AccountState(StateBase):
         Returns:
             AccountState:
         """
-        m = StreamManager.GetStream(buffer)
-        reader = BinaryReader(m)
-        account = AccountState()
-        account.Deserialize(reader)
-
-        StreamManager.ReleaseStream(m)
+        with MemoryStream(buffer) as ms:
+            reader = BinaryReader(ms)
+            account = AccountState()
+            account.Deserialize(reader)
 
         return account
 
@@ -248,12 +247,11 @@ class AccountState(StateBase):
         Returns:
             bytes: serialized object.
         """
-        ms = StreamManager.GetStream()
-        writer = BinaryWriter(ms)
-        self.Serialize(writer)
+        with MemoryStream() as ms:
+            writer = BinaryWriter(ms)
+            self.Serialize(writer)
 
-        retval = ms.ToArray()
-        StreamManager.ReleaseStream(ms)
+            retval = ms.ToArray()
 
         return retval
 

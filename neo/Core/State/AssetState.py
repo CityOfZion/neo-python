@@ -1,7 +1,7 @@
 from .StateBase import StateBase
 from neocore.Fixed8 import Fixed8
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.Core.AssetType import AssetType
 from neocore.UInt160 import UInt160
 from neocore.Cryptography.Crypto import Crypto
@@ -27,7 +27,8 @@ class AssetState(StateBase):
     IsFrozen = False
 
     def Size(self):
-        return super(AssetState, self).Size() + s.uint256 + s.uint8 + GetVarSize(self.Name) + self.Amount.Size() + self.Available.Size() + s.uint8 + s.uint8 + self.Fee.Size() + s.uint160 + self.Owner.Size() + s.uint160 + s.uint160 + s.uint32 + s.uint8
+        return super(AssetState, self).Size() + s.uint256 + s.uint8 + GetVarSize(
+            self.Name) + self.Amount.Size() + self.Available.Size() + s.uint8 + s.uint8 + self.Fee.Size() + s.uint160 + self.Owner.Size() + s.uint160 + s.uint160 + s.uint32 + s.uint8
 
     def __init__(self, asset_id=None, asset_type=None, name=None, amount=Fixed8(0), available=Fixed8(0),
                  precision=0, fee_mode=0, fee=Fixed8(0), fee_addr=UInt160(data=bytearray(20)), owner=None,
@@ -85,12 +86,10 @@ class AssetState(StateBase):
         Returns:
             AssetState:
         """
-        m = StreamManager.GetStream(buffer)
-        reader = BinaryReader(m)
-        account = AssetState()
-        account.Deserialize(reader)
-
-        StreamManager.ReleaseStream(m)
+        with MemoryStream(buffer) as ms:
+            reader = BinaryReader(ms)
+            account = AssetState()
+            account.Deserialize(reader)
 
         return account
 

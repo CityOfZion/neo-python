@@ -1,7 +1,7 @@
 from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.Core.Mixins import SerializableMixin
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neocore.Fixed8 import Fixed8
 
 from enum import Enum
@@ -67,12 +67,10 @@ class StateDescriptor(SerializableMixin):
         Returns:
             ValidatorState:
         """
-        m = StreamManager.GetStream(buffer)
-        reader = BinaryReader(m)
-        v = StateDescriptor()
-        v.Deserialize(reader)
-
-        StreamManager.ReleaseStream(m)
+        with MemoryStream(buffer) as ms:
+            reader = BinaryReader(ms)
+            v = StateDescriptor()
+            v.Deserialize(reader)
 
         return v
 

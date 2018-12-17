@@ -7,7 +7,7 @@ from twisted.internet import reactor, task, threads
 from neo.Core.Blockchain import Blockchain as BC
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Network.Message import Message
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.IO.Helper import Helper as IOHelper
 from neo.Core.Helper import Helper
 from .Payloads.GetBlocksPayload import GetBlocksPayload
@@ -183,27 +183,27 @@ class NeoNode(Protocol):
         try:
             # Construct message
             mstart = self.buffer_in[:24]
-            ms = StreamManager.GetStream(mstart)
-            reader = BinaryReader(ms)
-            m = Message()
 
-            # Extract message metadata
-            m.Magic = reader.ReadUInt32()
-            m.Command = reader.ReadFixedString(12).decode('utf-8')
-            m.Length = reader.ReadUInt32()
-            m.Checksum = reader.ReadUInt32()
+            with MemoryStream(mstart) as ms:
+                reader = BinaryReader(ms)
+                m = Message()
 
-            # Return if not enough buffer to fully deserialize object.
-            messageExpectedLength = 24 + m.Length
-            if currentLength < messageExpectedLength:
-                return False
+                # Extract message metadata
+                m.Magic = reader.ReadUInt32()
+                m.Command = reader.ReadFixedString(12).decode('utf-8')
+                m.Length = reader.ReadUInt32()
+                m.Checksum = reader.ReadUInt32()
+
+                # Return if not enough buffer to fully deserialize object.
+                messageExpectedLength = 24 + m.Length
+                if currentLength < messageExpectedLength:
+                    return False
 
         except Exception as e:
             self.Log('Error: Could not read initial bytes %s ' % e)
             return False
 
         finally:
-            StreamManager.ReleaseStream(ms)
             del reader
 
         # The message header was successfully extracted, and we have enough enough buffer
@@ -214,10 +214,10 @@ class NeoNode(Protocol):
             self.buffer_in = self.buffer_in[messageExpectedLength:]
 
             # Deserialize message with payload
-            stream = StreamManager.GetStream(mdata)
-            reader = BinaryReader(stream)
-            message = Message()
-            message.Deserialize(reader)
+            with MemoryStream(mdata) as stream:
+                reader = BinaryReader(stream)
+                message = Message()
+                message.Deserialize(reader)
 
             if self.incoming_client and self.expect_verack_next:
                 if message.Command != 'verack':
@@ -229,9 +229,6 @@ class NeoNode(Protocol):
         except Exception as e:
             self.Log('Error: Could not extract message: %s ' % e)
             return False
-
-        finally:
-            StreamManager.ReleaseStream(stream)
 
         return True
 
@@ -351,7 +348,8 @@ class NeoNode(Protocol):
 
             hashstart += 1
 
-        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
+        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (
+            first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))

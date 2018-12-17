@@ -6,7 +6,7 @@ from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neocore.Fixed8 import Fixed8
@@ -133,12 +133,11 @@ class LevelDBBlockchain(Blockchain):
                 hashes = []
                 try:
                     for key, value in self._db.iterator(prefix=DBPrefix.IX_HeaderHashList):
-                        ms = StreamManager.GetStream(value)
-                        reader = BinaryReader(ms)
-                        hlist = reader.Read2000256List()
-                        key = int.from_bytes(key[-4:], 'little')
-                        hashes.append({'k': key, 'v': hlist})
-                        StreamManager.ReleaseStream(ms)
+                        with MemoryStream(value) as ms:
+                            reader = BinaryReader(ms)
+                            hlist = reader.Read2000256List()
+                            key = int.from_bytes(key[-4:], 'little')
+                            hashes.append({'k': key, 'v': hlist})
                 except Exception as e:
                     logger.info("Could not get stored header hash list: %s " % e)
 
@@ -619,12 +618,11 @@ class LevelDBBlockchain(Blockchain):
             self._header_index.append(hHash)
 
         while header.Index - 2000 >= self._stored_header_count:
-            ms = StreamManager.GetStream()
-            w = BinaryWriter(ms)
-            headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count + 2000]
-            w.Write2000256List(headers_to_write)
-            out = ms.ToArray()
-            StreamManager.ReleaseStream(ms)
+            with MemoryStream() as ms:
+                w = BinaryWriter(ms)
+                headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count + 2000]
+                w.Write2000256List(headers_to_write)
+                out = ms.ToArray()
             with self._db.write_batch() as wb:
                 wb.put(DBPrefix.IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), out)
 

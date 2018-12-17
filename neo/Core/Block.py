@@ -4,7 +4,7 @@ from neo.Core.BlockBase import BlockBase
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neocore.Cryptography.MerkleTree import MerkleTree
 from neo.Core.Header import Header
 from neo.Core.Witness import Witness
@@ -218,29 +218,28 @@ class Block(BlockBase, InventoryMixin):
         """
         block = Block()
         block.__is_trimmed = True
-        ms = StreamManager.GetStream(byts)
-        reader = BinaryReader(ms)
+        with MemoryStream(byts) as ms:
+            reader = BinaryReader(ms)
 
-        block.DeserializeUnsigned(reader)
-        reader.ReadByte()
-        witness = Witness()
-        witness.Deserialize(reader)
-        block.Script = witness
+            block.DeserializeUnsigned(reader)
+            reader.ReadByte()
+            witness = Witness()
+            witness.Deserialize(reader)
+            block.Script = witness
 
-        bc = GetBlockchain()
-        tx_list = []
-        for tx_hash in reader.ReadHashes():
-            tx = bc.GetTransaction(tx_hash)[0]
-            if not tx:
-                raise Exception("Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
-            tx_list.append(tx)
+            bc = GetBlockchain()
+            tx_list = []
+            for tx_hash in reader.ReadHashes():
+                tx = bc.GetTransaction(tx_hash)[0]
+                if not tx:
+                    raise Exception(
+                        "Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
+                tx_list.append(tx)
 
-        if len(tx_list) < 1:
-            raise Exception("Invalid block, no transactions found for block %s " % block.Index)
+            if len(tx_list) < 1:
+                raise Exception("Invalid block, no transactions found for block %s " % block.Index)
 
-        block.Transactions = tx_list
-
-        StreamManager.ReleaseStream(ms)
+            block.Transactions = tx_list
 
         return block
 
@@ -292,15 +291,15 @@ class Block(BlockBase, InventoryMixin):
         Returns:
             bytes:
         """
-        ms = StreamManager.GetStream()
-        writer = BinaryWriter(ms)
-        self.SerializeUnsigned(writer)
-        writer.WriteByte(1)
-        self.Script.Serialize(writer)
+        with MemoryStream() as ms:
+            writer = BinaryWriter(ms)
+            self.SerializeUnsigned(writer)
+            writer.WriteByte(1)
+            self.Script.Serialize(writer)
 
-        writer.WriteHashes([tx.Hash.ToBytes() for tx in self.Transactions])
-        retVal = ms.ToArray()
-        StreamManager.ReleaseStream(ms)
+            writer.WriteHashes([tx.Hash.ToBytes() for tx in self.Transactions])
+            retVal = ms.ToArray()
+
         return retVal
 
     def Verify(self, completely=False):

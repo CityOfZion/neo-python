@@ -1,7 +1,7 @@
 from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
@@ -60,12 +60,10 @@ class ValidatorState(StateBase):
         Returns:
             ValidatorState:
         """
-        m = StreamManager.GetStream(buffer)
-        reader = BinaryReader(m)
-        v = ValidatorState()
-        v.Deserialize(reader)
-
-        StreamManager.ReleaseStream(m)
+        with MemoryStream(buffer) as ms:
+            reader = BinaryReader(ms)
+            v = ValidatorState()
+            v.Deserialize(reader)
 
         return v
 

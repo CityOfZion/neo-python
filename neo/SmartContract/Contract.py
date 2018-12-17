@@ -97,20 +97,22 @@ class Contract(SerializableMixin, VerificationCode):
         if len(publicKeys) > 1024:
             raise Exception("Supplied public key count ({}) exceeds maximum of 1024.".format(len(publicKeys)))
 
-        sb = ScriptBuilder()
-        sb.push(m)
+        with ScriptBuilder() as sb:
+            sb.push(m)
 
-        pkeys = [point for point in publicKeys]
-        pkeys.sort()
-        keys = [p.encode_point().decode() for p in pkeys]
+            pkeys = [point for point in publicKeys]
+            pkeys.sort()
+            keys = [p.encode_point().decode() for p in pkeys]
 
-        for key in keys:
-            sb.push(key)
+            for key in keys:
+                sb.push(key)
 
-        sb.push(len(publicKeys))
-        sb.add(CHECKMULTISIG)
+            sb.push(len(publicKeys))
+            sb.add(CHECKMULTISIG)
 
-        return sb.ToArray()
+            result = sb.ToArray()
+
+        return result
 
     @staticmethod
     def CreateMultiSigContract(publicKeyHash, m, publicKeys):
@@ -140,10 +142,11 @@ class Contract(SerializableMixin, VerificationCode):
 
     @staticmethod
     def CreateSignatureRedeemScript(publicKey):
-        sb = ScriptBuilder()
-        sb.push(publicKey.encode_point(compressed=True))
-        sb.add(CHECKSIG)
-        return sb.ToArray()
+        with ScriptBuilder() as sb:
+            sb.push(publicKey.encode_point(compressed=True))
+            sb.add(CHECKSIG)
+            result = sb.ToArray()
+        return result
 
     def Equals(self, other):
         if id(self) == id(other):

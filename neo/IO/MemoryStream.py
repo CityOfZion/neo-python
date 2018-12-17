@@ -68,7 +68,7 @@ class StreamManager:
 class MemoryStream(BytesIO):
     """docstring for MemoryStream"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, data=None):
         """
         Create an instance.
 
@@ -76,7 +76,15 @@ class MemoryStream(BytesIO):
             *args:
             **kwargs:
         """
-        super(MemoryStream, self).__init__(*args, **kwargs)
+        super(MemoryStream, self).__init__(data)
+        self.seek(0)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.truncate(0)
+        self.close()
 
     def canRead(self):
         """

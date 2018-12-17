@@ -1,6 +1,6 @@
 from neo.Core.BlockBase import BlockBase
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.Core.Witness import Witness
 
 
@@ -69,17 +69,14 @@ class Header(BlockBase):
         """
         header = Header()
 
-        ms = StreamManager.GetStream(data)
+        with MemoryStream(data) as ms:
+            reader = BinaryReader(ms)
+            header.DeserializeUnsigned(reader)
+            reader.ReadByte()
 
-        reader = BinaryReader(ms)
-        header.DeserializeUnsigned(reader)
-        reader.ReadByte()
-
-        witness = Witness()
-        witness.Deserialize(reader)
-        header.Script = witness
-
-        StreamManager.ReleaseStream(ms)
+            witness = Witness()
+            witness.Deserialize(reader)
+            header.Script = witness
 
         return header
 

@@ -1,5 +1,5 @@
 import importlib
-from .MemoryStream import MemoryStream, StreamManager
+from .MemoryStream import MemoryStream
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Core.TX.Transaction import Transaction
 from neo.logging import log_manager
@@ -24,17 +24,15 @@ class Helper:
         module = '.'.join(class_name.split('.')[:-1])
         klassname = class_name.split('.')[-1]
         klass = getattr(importlib.import_module(module), klassname)
-        mstream = StreamManager.GetStream(buffer)
-        reader = BinaryReader(mstream)
+        with MemoryStream(buffer) as mstream:
+            reader = BinaryReader(mstream)
 
-        try:
-            serializable = klass()
-            serializable.Deserialize(reader)
-            return serializable
-        except Exception as e:
-            logger.error("Could not deserialize: %s %s" % (e, class_name))
-        finally:
-            StreamManager.ReleaseStream(mstream)
+            try:
+                serializable = klass()
+                serializable.Deserialize(reader)
+                return serializable
+            except Exception as e:
+                logger.error("Could not deserialize: %s %s" % (e, class_name))
 
         return None
 
@@ -49,9 +47,8 @@ class Helper:
         Returns:
             neo.Core.TX.Transaction:
         """
-        mstream = MemoryStream(buffer)
-        reader = BinaryReader(mstream)
-
-        tx = Transaction.DeserializeFrom(reader)
+        with MemoryStream(buffer) as mstream:
+            reader = BinaryReader(mstream)
+            tx = Transaction.DeserializeFrom(reader)
 
         return tx

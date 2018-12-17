@@ -171,37 +171,36 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
                 params.append(param)
             params.reverse()
 
-        sb = ScriptBuilder()
+        with ScriptBuilder() as sb:
+            for p in params:
 
-        for p in params:
+                if parse_params:
+                    item = parse_param(p, wallet, parse_addr=parse_addresses)
+                else:
+                    item = p
+                if type(item) is list:
+                    item.reverse()
+                    listlength = len(item)
+                    for listitem in item:
+                        subitem = parse_param(listitem, wallet, parse_addr=parse_addresses)
+                        if type(subitem) is list:
+                            subitem.reverse()
+                            for listitem2 in subitem:
+                                subsub = parse_param(listitem2, wallet, parse_addr=parse_addresses)
+                                sb.push(subsub)
+                            sb.push(len(subitem))
+                            sb.Emit(PACK)
+                        else:
+                            sb.push(subitem)
 
-            if parse_params:
-                item = parse_param(p, wallet, parse_addr=parse_addresses)
-            else:
-                item = p
-            if type(item) is list:
-                item.reverse()
-                listlength = len(item)
-                for listitem in item:
-                    subitem = parse_param(listitem, wallet, parse_addr=parse_addresses)
-                    if type(subitem) is list:
-                        subitem.reverse()
-                        for listitem2 in subitem:
-                            subsub = parse_param(listitem2, wallet, parse_addr=parse_addresses)
-                            sb.push(subsub)
-                        sb.push(len(subitem))
-                        sb.Emit(PACK)
-                    else:
-                        sb.push(subitem)
+                    sb.push(listlength)
+                    sb.Emit(PACK)
+                else:
+                    sb.push(item)
 
-                sb.push(listlength)
-                sb.Emit(PACK)
-            else:
-                sb.push(item)
+            sb.EmitAppCall(contract.Code.ScriptHash().Data)
 
-        sb.EmitAppCall(contract.Code.ScriptHash().Data)
-
-        out = sb.ToArray()
+            out = sb.ToArray()
 
         outputs = []
 

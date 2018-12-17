@@ -1011,6 +1011,7 @@ class ExecutionEngine:
             self.write_log(error_msg)
 
             if self._exit_on_error:
+                self.Dispose()  # make sure to cleanup MemoryStreams in the ExecutionContexts'
                 self._VMState |= VMState.FAULT
 
     def VM_FAULT_and_report(self, id, *args):

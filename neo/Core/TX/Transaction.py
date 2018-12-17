@@ -17,7 +17,7 @@ from neo.Network.InventoryType import InventoryType
 from neo.Network.Mixins import InventoryMixin
 from neocore.Cryptography.Crypto import Crypto
 from neocore.IO.Mixins import SerializableMixin
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neocore.IO.BinaryReader import BinaryReader
 from neo.Core.Mixins import EquatableMixin
 from neo.Core.Helper import Helper
@@ -443,11 +443,10 @@ class Transaction(InventoryMixin):
         Returns:
             Transaction:
         """
-        mstream = StreamManager.GetStream(buffer)
-        reader = BinaryReader(mstream)
-        tx = Transaction.DeserializeFrom(reader)
+        with MemoryStream(buffer) as mstream:
+            reader = BinaryReader(mstream)
+            tx = Transaction.DeserializeFrom(reader)
 
-        StreamManager.ReleaseStream(mstream)
         return tx
 
     @staticmethod

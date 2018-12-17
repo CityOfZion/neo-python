@@ -1,6 +1,6 @@
 from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.Core.Size import GetVarSize
 
 
@@ -69,11 +69,10 @@ class StorageItem(StateBase):
         Returns:
             StorageItem:
         """
-        m = StreamManager.GetStream(buffer)
-        reader = BinaryReader(m)
-        v = StorageItem()
-        v.Deserialize(reader)
-        StreamManager.ReleaseStream(m)
+        with MemoryStream(buffer) as ms:
+            reader = BinaryReader(ms)
+            v = StorageItem()
+            v.Deserialize(reader)
         return v
 
     def Serialize(self, writer):

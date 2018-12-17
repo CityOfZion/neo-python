@@ -1,6 +1,6 @@
 from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.Core.FunctionCode import FunctionCode
 from enum import IntEnum
 import binascii
@@ -102,7 +102,8 @@ class ContractState(StateBase):
         parameterlist_size = GetVarSize(self.Code.ParameterList)
         parameterreturntype_size = s.uint8
 
-        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
+        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(
+            self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
 
     def Deserialize(self, reader):
         """
@@ -135,12 +136,10 @@ class ContractState(StateBase):
         Returns:
             ContractState:
         """
-        m = StreamManager.GetStream(buffer)
-        reader = BinaryReader(m)
-        c = ContractState()
-        c.Deserialize(reader)
-
-        StreamManager.ReleaseStream(m)
+        with MemoryStream(buffer) as ms:
+            reader = BinaryReader(ms)
+            c = ContractState()
+            c.Deserialize(reader)
 
         return c
 

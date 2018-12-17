@@ -18,7 +18,7 @@ from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.Settings import settings
 from neocore.IO.BinaryReader import BinaryReader
 from neocore.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 from neo.SmartContract.Iterable.Wrapper import ArrayWrapper, MapWrapper
 from neo.SmartContract.Iterable import KeysWrapper, ValuesWrapper
 from neo.SmartContract.Iterable.ConcatenatedEnumerator import ConcatenatedEnumerator
@@ -412,21 +412,20 @@ class StateReader(InteropService):
     def Runtime_Serialize(self, engine: ExecutionEngine):
         stack_item = engine.CurrentContext.EvaluationStack.Pop()
 
-        ms = StreamManager.GetStream()
-        writer = BinaryWriter(ms)
-        try:
-            stack_item.Serialize(writer)
-        except Exception as e:
-            logger.error("Cannot serialize item %s: %s " % (stack_item, e))
-            return False
+        with MemoryStream() as ms:
+            writer = BinaryWriter(ms)
+            try:
+                stack_item.Serialize(writer)
+            except Exception as e:
+                logger.error("Cannot serialize item %s: %s " % (stack_item, e))
+                return False
 
-        ms.flush()
+            ms.flush()
 
-        if ms.tell() > ApplicationEngine.maxItemSize:
-            return False
+            if ms.tell() > ApplicationEngine.maxItemSize:
+                return False
 
-        retVal = ByteArray(ms.getvalue())
-        StreamManager.ReleaseStream(ms)
+            retVal = ByteArray(ms.getvalue())
         engine.CurrentContext.EvaluationStack.PushT(retVal)
 
         return True
@@ -434,15 +433,15 @@ class StateReader(InteropService):
     def Runtime_Deserialize(self, engine: ExecutionEngine):
         data = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
-        ms = StreamManager.GetStream(data=data)
-        reader = BinaryReader(ms)
-        try:
-            stack_item = StackItem.DeserializeStackItem(reader)
-            engine.CurrentContext.EvaluationStack.PushT(stack_item)
-        except ValueError as e:
-            # can't deserialize type
-            logger.error("%s " % e)
-            return False
+        with MemoryStream(data) as ms:
+            reader = BinaryReader(ms)
+            try:
+                stack_item = StackItem.DeserializeStackItem(reader)
+                engine.CurrentContext.EvaluationStack.PushT(stack_item)
+            except ValueError as e:
+                # can't deserialize type
+                logger.error("%s " % e)
+                return False
         return True
 
     def Blockchain_GetHeight(self, engine: ExecutionEngine):
@@ -1000,8 +999,9 @@ class StateReader(InteropService):
         if engine.ScriptContainer:
             tx_hash = engine.ScriptContainer.Hash
 
-        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_GET, ContractParameter(ContractParameterType.String, value='%s -> %s' % (keystr, valStr)),
-                                                          context.ScriptHash, Blockchain.Default().Height + 1, tx_hash, test_mode=engine.testMode))
+        self.events_to_dispatch.append(
+            SmartContractEvent(SmartContractEvent.STORAGE_GET, ContractParameter(ContractParameterType.String, value='%s -> %s' % (keystr, valStr)),
+                               context.ScriptHash, Blockchain.Default().Height + 1, tx_hash, test_mode=engine.testMode))
 
         return True
 

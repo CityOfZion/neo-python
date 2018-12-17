@@ -1,7 +1,7 @@
 from collections import namedtuple
 from .StateBase import StateBase
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import MemoryStream
 
 
 class SpentCoinItem:
@@ -138,12 +138,10 @@ class SpentCoinState(StateBase):
         Returns:
             SpentCoinState:
         """
-        m = StreamManager.GetStream(buffer)
-        reader = BinaryReader(m)
-        spentcoin = SpentCoinState()
-        spentcoin.Deserialize(reader)
-
-        StreamManager.ReleaseStream(m)
+        with MemoryStream(buffer) as ms:
+            reader = BinaryReader(ms)
+            spentcoin = SpentCoinState()
+            spentcoin.Deserialize(reader)
 
         return spentcoin
 
