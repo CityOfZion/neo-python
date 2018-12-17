@@ -23,6 +23,7 @@ All notable changes to this project are documented in this file.
 - Gracefully handle balance query failures of NEP-5 tokens.
 - Fix ``getcontractstate`` JSON output to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_
 - Fix ``getrawtransaction`` JSON output to match neo-cli 2.9.2 `#751 https://github.com/CityOfZion/neo-python/pull/751`_
+- Fix memory leaks `#754 https://github.com/CityOfZion/neo-python/pull/754`_
 
 [0.8.2] 2018-10-31
 -------------------
