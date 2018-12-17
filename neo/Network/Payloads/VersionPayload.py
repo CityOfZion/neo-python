@@ -65,6 +65,7 @@ class VersionPayload(SerializableMixin):
         self.UserAgent = reader.ReadVarString().decode('utf-8')
         self.StartHeight = reader.ReadUInt32()
         logger.debug("Version start height: T %s " % self.StartHeight)
+        print("Version start height: T %s " % self.StartHeight)
         self.Relay = reader.ReadBool()
 
     def Serialize(self, writer):

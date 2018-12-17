@@ -26,8 +26,8 @@ from neo.Network.address import Address
 
 logger = log_manager.getLogger('network')
 logger_verbose = log_manager.getLogger('network.verbose')
-MODE_MAINTAIN = 12
-MODE_CATCHUP = 5
+MODE_MAINTAIN = 7
+MODE_CATCHUP = 2
 
 mode_to_name = {MODE_CATCHUP: 'CATCHUP', MODE_MAINTAIN: 'MAINTAIN'}
 
@@ -513,11 +513,12 @@ class NeoNode(Protocol):
                     self.myblockrequests.add(hash)
                     hashes.append(hash)
             else:
-                if not first:
-                    first = hashstart
-                BC.Default().BlockRequests.add(hash)
-                self.myblockrequests.add(hash)
-                hashes.append(hash)
+                if hash is not None:
+                    if not first:
+                        first = hashstart
+                    BC.Default().BlockRequests.add(hash)
+                    self.myblockrequests.add(hash)
+                    hashes.append(hash)
 
             hashstart += 1
 
