@@ -158,9 +158,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_wallet_open(self):
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+                if self._wallet1 is None:
+                    shutil.copyfile(self.wallet_1_path(), self.wallet_1_dest())
+
                 # test wallet open successful
-                args = ['open', 'fixtures/testwallet.db3']
+                args = ['open', self.wallet_1_dest()]
 
                 res = CommandWallet().execute(args)
 
@@ -199,8 +202,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
 
             # test wallet close with open wallet
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
-                args = ['open', 'fixtures/testwallet.db3']
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+                if self._wallet1 is None:
+                    shutil.copyfile(self.wallet_1_path(), self.wallet_1_dest())
+
+                args = ['open', self.wallet_1_dest()]
 
                 res = CommandWallet().execute(args)
 
@@ -244,7 +250,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = CommandWallet().execute(args)
         self.assertFalse(res)
 
-        # test wallet create successful
+        # test wallet create address successful
         args = ['create_addr', 1]
         res = CommandWallet().execute(args)
         self.assertTrue(res)
@@ -256,6 +262,37 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertTrue(res)
         self.assertEqual(type(res), UserWallet)
         self.assertEqual(len(res.Addresses), 9)
+
+    def test_wallet_delete_address(self):
+        # test wallet delete address with no wallet open
+        args = ['delete_addr']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        self.OpenWallet1()
+
+        # test wallet delete address with no argument
+        args = ['delete_addr']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet delete address with invalid address
+        args = ['delete_addr', '1234']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet delete address with unknown address
+        args = ['delete_addr', self.watch_addr_str]
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet delete successful
+        self.assertTrue(len(PromptData.Wallet.Addresses), 1)
+        args = ['delete_addr', PromptData.Wallet.Addresses[0]]
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(type(res), bool)
+        self.assertEqual(len(PromptData.Wallet.Addresses), 0)
 
     def test_wallet_claim_1(self):
         # test with no wallet
@@ -318,6 +355,32 @@ class UserWalletTestCase(WalletFixtureTestCase):
             args = ['rebuild', '42']
             CommandWallet().execute(args)
             self.assertEqual(PromptData.Wallet._current_height, 42)
+
+    def test_wallet_alias(self):
+        # test wallet alias with no wallet open
+        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'mine']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        self.OpenWallet1()
+
+        # test wallet alias with no argument
+        args = ['alias']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet alias with 1 argument
+        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet alias successful
+        self.assertNotIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
+
+        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'mine']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
 
     ##########################################################
     ##########################################################

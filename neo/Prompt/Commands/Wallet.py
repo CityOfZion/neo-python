@@ -20,6 +20,7 @@ from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.Send import CommandWalletSend, CommandWalletSendMany, CommandWalletSign
+from neo.Prompt.Commands.Tokens import CommandWalletToken
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -34,11 +35,14 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletClose())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
         self.register_sub_command(CommandWalletCreateAddress())
+        self.register_sub_command(CommandWalletDeleteAddress())
         self.register_sub_command(CommandWalletSend())
         self.register_sub_command(CommandWalletSendMany())
         self.register_sub_command(CommandWalletSign())
         self.register_sub_command(CommandWalletClaimGas())
         self.register_sub_command(CommandWalletRebuild())
+        self.register_sub_command(CommandWalletAlias())
+        self.register_sub_command(CommandWalletToken())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -198,6 +202,24 @@ class CommandWalletCreateAddress(CommandBase):
         return CommandDesc('create_addr', 'create a new wallet address', params=[p1])
 
 
+class CommandWalletDeleteAddress(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        addr_to_delete = get_arg(arguments, 0)
+
+        if not addr_to_delete:
+            print("Please specify an address to delete.")
+            return False
+
+        return DeleteAddress(PromptData.Wallet, addr_to_delete)
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'address to delete')
+        return CommandDesc('delete_addr', 'delete a wallet address', params=[p1])
+
+
 class CommandWalletClaimGas(CommandBase):
 
     def __init__(self):
@@ -223,7 +245,6 @@ class CommandWalletRebuild(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-
         PromptData.Prompt.stop_wallet_loop()
 
         start_block = get_arg(arguments, 0, convert_to_int=True)
@@ -238,6 +259,24 @@ class CommandWalletRebuild(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('start_block', 'block number to start the resync at', optional=True)
         return CommandDesc('rebuild', 'rebuild the wallet index', params=[p1])
+
+
+class CommandWalletAlias(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if len(arguments) < 2:
+            print("Please supply an address and an alias")
+            return False
+
+        return AddAlias(PromptData.Wallet, arguments[0], arguments[1])
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'address to create an alias for')
+        p2 = ParameterDesc('alias', 'alias to associate with the address')
+        return CommandDesc('alias', 'create an alias for an address', params=[p1, p2])
 
 
 #########################################################################
@@ -269,29 +308,21 @@ def CreateAddress(wallet, args):
 
 
 def DeleteAddress(wallet, addr):
-    scripthash = wallet.ToScriptHash(addr)
+    try:
+        scripthash = wallet.ToScriptHash(addr)
+        error_str = ""
 
-    success, coins = wallet.DeleteAddress(scripthash)
+        success, _ = wallet.DeleteAddress(scripthash)
+    except ValueError as e:
+        success = False
+        error_str = f" with error: {e}"
 
     if success:
-        print("Deleted address %s " % addr)
+        print(f"Deleted address {addr}")
     else:
-        print("error deleting addr %s " % addr)
+        print(f"Error deleting addr {addr}{error_str}")
 
     return success
-
-
-def DeleteToken(wallet, contract_hash):
-    hash = UInt160.ParseString(contract_hash)
-
-    success = wallet.DeleteNEP5Token(hash)
-
-    if success:
-        print("Deleted token %s " % contract_hash)
-    else:
-        print("error deleting token %s " % contract_hash)
-
-    return False
 
 
 def ImportWatchAddr(wallet, addr):
@@ -344,11 +375,14 @@ def AddAlias(wallet, addr, title):
     if wallet is None:
         print("Please open a wallet")
         return False
+
     try:
         script_hash = wallet.ToScriptHash(addr)
         wallet.AddNamedAddress(script_hash, title)
+        return True
     except Exception as e:
         print(e)
+        return False
 
 
 def ClaimGas(wallet, require_password=True, from_addr_str=None):
