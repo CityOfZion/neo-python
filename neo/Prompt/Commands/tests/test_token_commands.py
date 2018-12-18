@@ -4,19 +4,20 @@ from neo.Prompt.Utils import get_asset_id
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
-from neo.Prompt.Commands.Wallet import ImportToken
+from neo.Prompt.Commands.Wallet import ImportToken, CommandWallet
 from neo.Prompt.Commands.Tokens import token_get_allowance, token_approve_allowance, \
     token_send, token_send_from, token_history, token_mint, token_crowdsale_register, amount_from_string
 import shutil
 from neocore.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
 from mock import patch
-import json
+from neo.Prompt.PromptData import PromptData
+from contextlib import contextmanager
+from io import StringIO
+import os
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
-
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
 
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
@@ -48,8 +49,21 @@ class UserWalletTestCase(WalletFixtureTestCase):
             shutil.copyfile(cls.wallet_1_path(), cls.wallet_1_dest())
             cls._wallet1 = UserWallet.Open(UserWalletTestCase.wallet_1_dest(),
                                            to_aes_key(UserWalletTestCase.wallet_1_pass()))
-
         return cls._wallet1
+
+    @contextmanager
+    def OpenWallet1(self):
+        PromptData.Wallet = UserWalletTestCase.GetWallet1(recreate=True)
+
+        yield
+
+        filename = UserWalletTestCase.wallet_1_dest()
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except OSError:
+                pass
+        PromptData.Wallet = None
 
     @classmethod
     def GetWallet2(cls, recreate=False):
@@ -351,7 +365,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_token_allowance_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Allowance', return_value=(None, 0, None)):
-
             wallet = self.GetWallet1(recreate=True)
             token = self.get_token(wallet)
             addr_to = self.watch_addr_str
@@ -521,6 +534,88 @@ class UserWalletTestCase(WalletFixtureTestCase):
         token.Serialize(writer)
 
         self.assertEqual(b'0f4e45582054656d706c617465205634044e58543408', stream.ToArray())
+
+    def test_wallet_token(self):
+        """
+        Generic tests for the Token subcommand of the Wallet group
+        """
+        # test token no wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['token']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("open a wallet", mock_print.getvalue())
+
+        with self.OpenWallet1():
+            # test token with insufficient args
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Please specify an action", mock_print.getvalue())
+
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', None]
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Please specify an action", mock_print.getvalue())
+
+            # test token with invalid subcommands
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', -1]
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("invalid parameter", mock_print.getvalue())
+
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'nope']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("invalid parameter", mock_print.getvalue())
+
+    def test_wallet_token_delete(self):
+        # test wallet token with no wallet open
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['token', 'delete', 'no_wallet']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("open a wallet", mock_print.getvalue())
+
+        with self.OpenWallet1():
+            # test token delete with no parameter
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'delete']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("specify the required parameter", mock_print.getvalue())
+
+            # test with invalid script_hash (too short)
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'delete', 'aaa']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Invalid script hash", mock_print.getvalue())
+
+            # test with invalid script_hash (too long)
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'delete', 20 * 'aaa']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Invalid script hash", mock_print.getvalue())
+
+            # test with non-existing script_hash
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'delete', '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Could not find a token", mock_print.getvalue())
+
+            # finally test with a valid script_hash
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'delete', '0x31730cc9a1844891a3bafd1aa929a4142860d8d3']
+                res = CommandWallet().execute(args)
+                self.assertTrue(res)
+                self.assertIn("deleted", mock_print.getvalue())
 
     # utility function
     def Approve_Allowance(self):

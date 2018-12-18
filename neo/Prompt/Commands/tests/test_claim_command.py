@@ -112,18 +112,14 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1()
 
-        claim_tx, relayed = ClaimGas(wallet, require_password=False, args=['1'])
-        self.assertIsInstance(claim_tx, ClaimTransaction)
-        self.assertTrue(relayed)
-
-    def test_5_wallet_claim_ok(self):
-
-        wallet = self.GetWallet2()
-
         claim_tx, relayed = ClaimGas(wallet, require_password=False)
-
         self.assertIsInstance(claim_tx, ClaimTransaction)
         self.assertTrue(relayed)
+
+    def test_5_no_wallet(self):
+        claim_tx, relayed = ClaimGas(None, require_password=False)
+        self.assertEqual(claim_tx, None)
+        self.assertFalse(relayed)
 
     def test_block_12248_sysfee(self):
 
