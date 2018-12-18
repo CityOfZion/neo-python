@@ -288,14 +288,19 @@ def CreateAddress(wallet, args):
 
 
 def DeleteAddress(wallet, addr):
-    scripthash = wallet.ToScriptHash(addr)
+    try:
+        scripthash = wallet.ToScriptHash(addr)
+        error_str = ""
 
-    success, coins = wallet.DeleteAddress(scripthash)
+        success, _ = wallet.DeleteAddress(scripthash)
+    except ValueError as e:
+        success = False
+        error_str = f" with error: {e}"
 
     if success:
-        print("Deleted address %s " % addr)
+        print(f"Deleted address {addr}")
     else:
-        print("error deleting addr %s " % addr)
+        print(f"Error deleting addr {addr}{error_str}")
 
     return success
 

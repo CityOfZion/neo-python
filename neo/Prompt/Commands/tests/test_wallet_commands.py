@@ -270,10 +270,15 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = CommandWallet().execute(args)
         self.assertFalse(res)
 
+        # test wallet delete address with invalid address
+        args = ['delete_addr', '1234']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
         # test wallet delete address with unknown address
         args = ['delete_addr', self.watch_addr_str]
         res = CommandWallet().execute(args)
-        self.assertTrue(res)  # Current specs.
+        self.assertFalse(res)
 
         # test wallet delete successful
         self.assertTrue(len(PromptData.Wallet.Addresses), 1)

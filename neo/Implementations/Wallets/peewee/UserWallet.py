@@ -456,7 +456,7 @@ class UserWallet(Wallet):
         except Exception as e:
             pass
 
-        return True, coins_toremove
+        return success, coins_toremove
 
     def ToJson(self, verbose=False):
         assets = self.GetCoinAssets()
