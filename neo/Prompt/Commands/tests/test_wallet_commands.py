@@ -262,6 +262,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     ##########################################################
     ##########################################################
+
     def test_1_import_addr(self):
         wallet = self.GetWallet1(recreate=True)
 
@@ -305,22 +306,22 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_5_show_unspent(self):
         wallet = self.GetWallet1(recreate=True)
-        unspents = ShowUnspentCoins(wallet, [])
+        unspents = ShowUnspentCoins(wallet)
         self.assertEqual(len(unspents), 2)
 
-        unspents = ShowUnspentCoins(wallet, ['neo'])
+        unspents = ShowUnspentCoins(wallet, asset_type=self.NEO)
         self.assertEqual(len(unspents), 1)
 
-        unspents = ShowUnspentCoins(wallet, ['gas'])
+        unspents = ShowUnspentCoins(wallet, asset_type=self.GAS)
         self.assertEqual(len(unspents), 1)
 
-        unspents = ShowUnspentCoins(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'])
+        unspents = ShowUnspentCoins(wallet, from_addr=wallet.ToScriptHash('AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'))
         self.assertEqual(len(unspents), 2)
 
-        unspents = ShowUnspentCoins(wallet, ['AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg'])
+        unspents = ShowUnspentCoins(wallet, from_addr=wallet.ToScriptHash('AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg'))
         self.assertEqual(len(unspents), 0)
 
-        unspents = ShowUnspentCoins(wallet, ['--watch'])
+        unspents = ShowUnspentCoins(wallet, watch_only=True)
         self.assertEqual(len(unspents), 0)
 
     def test_6_split_unspent(self):
