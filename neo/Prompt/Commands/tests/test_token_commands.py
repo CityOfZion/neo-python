@@ -574,7 +574,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 self.assertIn("invalid parameter", mock_print.getvalue())
 
     def test_wallet_token_delete(self):
-        # test wallet alias with no wallet open
+        # test wallet token with no wallet open
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['token', 'delete', 'no_wallet']
             res = CommandWallet().execute(args)

@@ -46,7 +46,7 @@ class CommandTokenDelete(CommandBase):
 
         if len(arguments) != 1:
             print("Please specify the required parameter")
-            return
+            return False
 
         hash_string = arguments[0]
         try:
@@ -54,14 +54,14 @@ class CommandTokenDelete(CommandBase):
         except Exception:
             # because UInt160 throws a generic exception. Should be fixed in the future
             print("Invalid script hash")
-            return
+            return False
 
         # try to find token and collect some data
         try:
             token = ModelNEP5Token.get(ContractHash=script_hash)
         except peewee.DoesNotExist:
             print(f"Could not find a token with script_hash {arguments[0]}")
-            return
+            return False
 
         success = wallet.DeleteNEP5Token(script_hash)
         if success:
