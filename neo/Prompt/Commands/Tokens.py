@@ -11,13 +11,32 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Token
+from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
 import peewee
+import base58
+
+
+# TODO: remove this once neo-python-core is merged
+def isValidPublicAddress(address: str) -> bool:
+    """Check if address is a valid NEO address"""
+    valid = False
+
+    if len(address) == 34 and address[0] == 'A':
+        try:
+            base58.b58decode_check(address.encode())
+            valid = True
+        except ValueError:
+            # checksum mismatch
+            valid = False
+
+    return valid
 
 
 class CommandWalletToken(CommandBase):
     def __init__(self):
         super().__init__()
         self.register_sub_command(CommandTokenDelete())
+        self.register_sub_command(CommandTokenSend())
 
     def command_desc(self):
         return CommandDesc('token', 'various token operations')
@@ -77,23 +96,102 @@ class CommandTokenDelete(CommandBase):
         return CommandDesc('delete', 'remove a token from the wallet', [p1])
 
 
-def token_send(wallet, args, prompt_passwd=True):
-    if len(args) < 4:
-        print("please provide a token symbol, from address, to address, and amount")
-        return False
+class CommandTokenSend(CommandBase):
 
-    user_tx_attributes = None
-    if len(args) > 4:
-        args, user_tx_attributes = get_tx_attr_from_args(args)
+    def __init__(self):
+        super().__init__()
 
-    token = get_asset_id(wallet, args[0])
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) < 4:
+            print("Please specify the required parameters")
+            return False
+
+        if len(arguments) > 5:
+            # the 5th argument is the optional attributes,
+            print("Too many parameters supplied. Please check your command")
+            return False
+
+        _, user_tx_attributes = get_tx_attr_from_args(arguments)
+
+        token = arguments[0]
+        send_from = arguments[1]
+        send_to = arguments[2]
+        try:
+            amount = float(arguments[3])
+        except ValueError:
+            print(f"{arguments[3]} is not a valid amount")
+            return
+
+        try:
+            success = token_send(wallet, token, send_from, send_to, amount, user_tx_attributes)
+        except ValueError as e:
+            # occurs if arguments are invalid
+            print(str(e))
+            success = False
+
+        return success
+
+    def command_desc(self):
+        p1 = ParameterDesc('token', 'token symbol name or script_hash')
+        p2 = ParameterDesc('from_addr', 'address to send token from')
+        p3 = ParameterDesc('to_addr', 'address to send token to')
+        p4 = ParameterDesc('amount', 'number of tokens to send')
+        p5 = ParameterDesc('--tx-attr', f"a list of transaction attributes to attach to the transaction\n\n"
+        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
+        f"{' ':>17} Example:\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
+
+        return CommandDesc('send', 'remove a token from the wallet', [p1, p2, p3, p4, p5])
+
+
+def token_send(wallet, token_str, send_from, send_to, amount, prompt_passwd=True, user_tx_attributes=None):
+    """
+
+    Args:
+        wallet (Wallet): a UserWallet instance
+        token_str (str): symbol name or script_hash
+        send_from (str): a wallet address
+        send_to (str): a wallet address
+        amount (float): the number of tokens to send
+        prompt_passwd (str): (optional) whether to prompt for a password before sending it to the network
+        user_tx_attributes (list): a list of ``TransactionAttribute``s.
+
+    Returns:
+        a Transaction object if successful, False otherwise.
+    """
+    if not user_tx_attributes:
+        user_tx_attributes = []
+
+    token = None
+    for t in wallet.GetTokens().values():
+        if token_str == t.symbol:
+            token = t
+            break
+        elif token_str == t.ScriptHash.ToString():
+            token = t
+
     if not isinstance(token, NEP5Token):
-        print("The given symbol does not represent a loaded NEP5 token")
-        return False
+        raise ValueError("The given token argument does not represent a known NEP5 token")
 
-    send_from = args[1]
-    send_to = args[2]
-    amount = amount_from_string(token, args[3])
+    if not isValidPublicAddress(send_from):
+        raise ValueError("send_from is not a valid address")
+
+    if not isValidPublicAddress(send_to):
+        raise ValueError("send_to is not a valid address")
+
+    try:
+        # internally this function uses the `Decimal` class which will parse the float amount to its required format.
+        # the name is a bit misleading /shrug
+        amount = amount_from_string(token, amount)
+    except Exception:
+        raise ValueError(f"{amount} is not a valid amount")
+
+    for attr in user_tx_attributes:
+        if not isinstance(attr, TransactionAttribute):
+            raise ValueError(f"{attr} is not a valid transaction attribute")
 
     return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd, tx_attributes=user_tx_attributes)
 
