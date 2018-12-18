@@ -1,5 +1,5 @@
 from neo.logging import log_manager
-from neo.Prompt.Commands.config import start_output_config
+from neo.Prompt.Commands.Config import start_output_config
 from mock import patch
 from neo.Utils.NeoTestCase import NeoTestCase
 import logging
