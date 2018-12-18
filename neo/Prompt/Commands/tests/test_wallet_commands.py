@@ -263,6 +263,37 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(type(res), UserWallet)
         self.assertEqual(len(res.Addresses), 9)
 
+    def test_wallet_delete_address(self):
+        # test wallet delete address with no wallet open
+        args = ['delete_addr']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        self.OpenWallet1()
+
+        # test wallet delete address with no argument
+        args = ['delete_addr']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet delete address with invalid address
+        args = ['delete_addr', '1234']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet delete address with unknown address
+        args = ['delete_addr', self.watch_addr_str]
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
+
+        # test wallet delete successful
+        self.assertTrue(len(PromptData.Wallet.Addresses), 1)
+        args = ['delete_addr', PromptData.Wallet.Addresses[0]]
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(type(res), bool)
+        self.assertEqual(len(PromptData.Wallet.Addresses), 0)
+
     def test_wallet_claim_1(self):
         # test with no wallet
         args = ['claim']

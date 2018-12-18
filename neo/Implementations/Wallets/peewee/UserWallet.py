@@ -448,7 +448,6 @@ class UserWallet(Wallet):
         todelete = bytes(script_hash.ToArray())
 
         for c in Contract.select():
-
             address = c.Address
             if address.ScriptHash == todelete:
                 c.delete_instance()
@@ -460,7 +459,7 @@ class UserWallet(Wallet):
         except Exception as e:
             pass
 
-        return True, coins_toremove
+        return success, coins_toremove
 
     def ToJson(self, verbose=False):
         assets = self.GetCoinAssets()
