@@ -18,10 +18,13 @@ class ParameterDesc():
         self.optional = optional
 
     def __repr__(self):
+        return self.to_str()
+
+    def to_str(self, ljust_len=15):
         if self.optional:
-            return f"{self.name:<15} - (Optional) {self.description}"
+            return f"{self.name.ljust(ljust_len)} - (Optional) {self.description}"
         else:
-            return f"{self.name:<15} - {self.description}"
+            return f"{self.name.ljust(ljust_len)} - {self.description}"
 
     def formatted_name(self):
         if self.optional:
@@ -109,8 +112,10 @@ class CommandBase(ABC):
             params += f"{p.formatted_name()} "
         print(f"\nUsage: {self.__command_with_parents()} {params}\n")
 
+        min_indent = 15
+        longest_param_name = max(min_indent, max(len(p.name) for p in self.command_desc().params))
         for p in self.command_desc().params:
-            print(p)
+            print(p.to_str(longest_param_name))
 
     def __command_with_parents(self):
         s = self.command_desc().command

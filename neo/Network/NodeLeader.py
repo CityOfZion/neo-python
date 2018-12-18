@@ -63,7 +63,6 @@ class NodeLeader:
     BREQMAX = 10000
 
     KnownHashes = []
-    MissionsGlobal = []
     MemPool = {}
     RelayCache = {}
 
@@ -104,7 +103,10 @@ class NodeLeader:
         self.UnconnectedPeers = []
         self.ADDRS = []
         self.DEAD_ADDRS = []
-        self.MissionsGlobal = []
+        self._MissedBlocks = []
+        self.KnownHashes = []
+        self.MemPool = {}
+        self.RelayCache = {}
         self.NodeId = random.randint(1294967200, 4294967200)
 
     def Restart(self):
@@ -235,7 +237,6 @@ class NodeLeader:
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""
         logger.debug("Resetting Block requests")
-        self.MissionsGlobal = []
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
             p.myblockrequests = set()

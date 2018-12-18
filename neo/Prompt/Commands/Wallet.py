@@ -20,6 +20,7 @@ from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.Send import CommandWalletSend, CommandWalletSendMany, CommandWalletSign
+from neo.Prompt.Commands.Tokens import CommandWalletToken
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -33,11 +34,15 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletOpen())
         self.register_sub_command(CommandWalletClose())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
-        self.register_sub_command(CommandWalletMigrate())
         self.register_sub_command(CommandWalletCreateAddress())
+        self.register_sub_command(CommandWalletDeleteAddress())
         self.register_sub_command(CommandWalletSend())
         self.register_sub_command(CommandWalletSendMany())
         self.register_sub_command(CommandWalletSign())
+        self.register_sub_command(CommandWalletClaimGas())
+        self.register_sub_command(CommandWalletRebuild())
+        self.register_sub_command(CommandWalletAlias())
+        self.register_sub_command(CommandWalletToken())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -178,19 +183,6 @@ class CommandWalletVerbose(CommandBase):
         return CommandDesc('verbose', 'show additional wallet details')
 
 
-class CommandWalletMigrate(CommandBase):
-
-    def __init__(self):
-        super().__init__()
-
-    def execute(self, arguments=None):
-        PromptData.Wallet.Migrate()
-        return True
-
-    def command_desc(self):
-        return CommandDesc('migrate', 'migrate an old wallet to the new format')
-
-
 class CommandWalletCreateAddress(CommandBase):
 
     def __init__(self):
@@ -208,6 +200,83 @@ class CommandWalletCreateAddress(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('number of addresses', 'number of addresses to create')
         return CommandDesc('create_addr', 'create a new wallet address', params=[p1])
+
+
+class CommandWalletDeleteAddress(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        addr_to_delete = get_arg(arguments, 0)
+
+        if not addr_to_delete:
+            print("Please specify an address to delete.")
+            return False
+
+        return DeleteAddress(PromptData.Wallet, addr_to_delete)
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'address to delete')
+        return CommandDesc('delete_addr', 'delete a wallet address', params=[p1])
+
+
+class CommandWalletClaimGas(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        from_addr_str = None
+
+        args = arguments
+        if args:
+            args, from_addr_str = get_from_addr(args)
+
+        return ClaimGas(PromptData.Wallet, True, from_addr_str)
+
+    def command_desc(self):
+        p1 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
+        return CommandDesc('claim', 'claim gas', params=[p1])
+
+
+class CommandWalletRebuild(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        PromptData.Prompt.stop_wallet_loop()
+
+        start_block = get_arg(arguments, 0, convert_to_int=True)
+        if not start_block or start_block < 0:
+            start_block = 0
+        print(f"Restarting at block {start_block}")
+
+        PromptData.Wallet.Rebuild(start_block)
+
+        PromptData.Prompt.start_wallet_loop()
+
+    def command_desc(self):
+        p1 = ParameterDesc('start_block', 'block number to start the resync at', optional=True)
+        return CommandDesc('rebuild', 'rebuild the wallet index', params=[p1])
+
+
+class CommandWalletAlias(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if len(arguments) < 2:
+            print("Please supply an address and an alias")
+            return False
+
+        return AddAlias(PromptData.Wallet, arguments[0], arguments[1])
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'address to create an alias for')
+        p2 = ParameterDesc('alias', 'alias to associate with the address')
+        return CommandDesc('alias', 'create an alias for an address', params=[p1, p2])
 
 
 #########################################################################
@@ -239,29 +308,21 @@ def CreateAddress(wallet, args):
 
 
 def DeleteAddress(wallet, addr):
-    scripthash = wallet.ToScriptHash(addr)
+    try:
+        scripthash = wallet.ToScriptHash(addr)
+        error_str = ""
 
-    success, coins = wallet.DeleteAddress(scripthash)
+        success, _ = wallet.DeleteAddress(scripthash)
+    except ValueError as e:
+        success = False
+        error_str = f" with error: {e}"
 
     if success:
-        print("Deleted address %s " % addr)
+        print(f"Deleted address {addr}")
     else:
-        print("error deleting addr %s " % addr)
+        print(f"Error deleting addr {addr}{error_str}")
 
     return success
-
-
-def DeleteToken(wallet, contract_hash):
-    hash = UInt160.ParseString(contract_hash)
-
-    success = wallet.DeleteNEP5Token(hash)
-
-    if success:
-        print("Deleted token %s " % contract_hash)
-    else:
-        print("error deleting token %s " % contract_hash)
-
-    return False
 
 
 def ImportWatchAddr(wallet, addr):
@@ -314,29 +375,30 @@ def AddAlias(wallet, addr, title):
     if wallet is None:
         print("Please open a wallet")
         return False
+
     try:
         script_hash = wallet.ToScriptHash(addr)
         wallet.AddNamedAddress(script_hash, title)
+        return True
     except Exception as e:
         print(e)
+        return False
 
 
-def ClaimGas(wallet, require_password=True, args=None):
+def ClaimGas(wallet, require_password=True, from_addr_str=None):
     """
     Args:
         wallet:
         require_password:
-        args:
+        from_addr_str:
     Returns:
         (claim transaction, relayed status)
             if successful: (tx, True)
             if unsuccessful: (None, False)
     """
-    if args:
-        params, from_addr_str = get_from_addr(args)
-    else:
-        params = None
-        from_addr_str = None
+    if not wallet:
+        print("Please open a wallet")
+        return None, False
 
     unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -344,18 +406,6 @@ def ClaimGas(wallet, require_password=True, args=None):
     if unclaimed_count == 0:
         print("no claims to process")
         return None, False
-
-    max_coins_per_claim = None
-    if params:
-        max_coins_per_claim = get_arg(params, 0, convert_to_int=True)
-        if not max_coins_per_claim:
-            print("max_coins_to_claim must be an integer")
-            return None, False
-        if max_coins_per_claim <= 0:
-            print("max_coins_to_claim must be greater than zero")
-            return None, False
-    if max_coins_per_claim and unclaimed_count > max_coins_per_claim:
-        unclaimed_coins = unclaimed_coins[:max_coins_per_claim]
 
     unclaimed_coin_refs = [coin.Reference for coin in unclaimed_coins]
 
@@ -388,9 +438,7 @@ def ClaimGas(wallet, require_password=True, args=None):
     wallet.Sign(context)
 
     print("\n---------------------------------------------------------------")
-    print("Will make claim for %s GAS" % available_bonus.ToString())
-    if max_coins_per_claim and unclaimed_count > max_coins_per_claim:
-        print("NOTE: You are claiming GAS on %s unclaimed coins. %s additional claim transactions will be required to claim all available GAS." % (max_coins_per_claim, math.floor(unclaimed_count / max_coins_per_claim)))
+    print(f"Will make claim for {available_bonus.ToString()} GAS")
     print("------------------------------------------------------------------\n")
 
     if require_password:
@@ -414,12 +462,10 @@ def ClaimGas(wallet, require_password=True, args=None):
             print("Relayed Tx: %s " % claim_tx.Hash.ToString())
             wallet.SaveTransaction(claim_tx)
         else:
-
             print("Could not relay tx %s " % claim_tx.Hash.ToString())
         return claim_tx, relayed
 
     else:
-
         print("could not sign tx")
 
     return None, False

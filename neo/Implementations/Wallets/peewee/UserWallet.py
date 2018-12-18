@@ -53,19 +53,12 @@ class UserWallet(Wallet):
         except Exception as e:
             logger.error("Could not build database %s %s " % (e, self._path))
 
-    def Migrate(self):
-        migrator = SqliteMigrator(self._db)
-        migrate(
-            migrator.drop_not_null('Contract', 'Account_id'),
-            migrator.add_column('Address', 'IsWatchOnly', BooleanField(default=False)),
-        )
-
     def DB(self):
         return self._db
 
-    def Rebuild(self):
+    def Rebuild(self, start_block=0):
         try:
-            super(UserWallet, self).Rebuild()
+            super(UserWallet, self).Rebuild(start_block)
 
             logger.debug("wallet rebuild: deleting %s coins and %s transactions" %
                          (Coin.select().count(), Transaction.select().count()))
@@ -429,7 +422,10 @@ class UserWallet(Wallet):
 
     def DeleteNEP5Token(self, script_hash):
 
-        token = super(UserWallet, self).DeleteNEP5Token(script_hash)
+        try:
+            token = super(UserWallet, self).DeleteNEP5Token(script_hash)
+        except KeyError:
+            return False
 
         try:
             db_token = NEP5Token.get(ContractHash=token.ScriptHash.ToBytes())
@@ -452,7 +448,6 @@ class UserWallet(Wallet):
         todelete = bytes(script_hash.ToArray())
 
         for c in Contract.select():
-
             address = c.Address
             if address.ScriptHash == todelete:
                 c.delete_instance()
@@ -464,7 +459,7 @@ class UserWallet(Wallet):
         except Exception as e:
             pass
 
-        return True, coins_toremove
+        return success, coins_toremove
 
     def ToJson(self, verbose=False):
         assets = self.GetCoinAssets()
