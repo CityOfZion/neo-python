@@ -38,6 +38,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletSend())
         self.register_sub_command(CommandWalletSendMany())
         self.register_sub_command(CommandWalletSign())
+        self.register_sub_command(CommandWalletClaimGas())
         self.register_sub_command(CommandWalletRebuild())
 
     def command_desc(self):
@@ -199,7 +200,6 @@ class CommandWalletCreateAddress(CommandBase):
 
 
 class CommandWalletDeleteAddress(CommandBase):
-
     def __init__(self):
         super().__init__()
 
@@ -217,12 +217,32 @@ class CommandWalletDeleteAddress(CommandBase):
         return CommandDesc('delete_addr', 'delete a wallet address', params=[p1])
 
 
+class CommandWalletClaimGas(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        from_addr_str = None
+
+        args = arguments
+        if args:
+            args, from_addr_str = get_from_addr(args)
+
+        return ClaimGas(PromptData.Wallet, True, from_addr_str)
+
+    def command_desc(self):
+        p1 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
+        return CommandDesc('claim', 'claim gas', params=[p1])
+
+
 class CommandWalletRebuild(CommandBase):
 
     def __init__(self):
         super().__init__()
 
     def execute(self, arguments):
+
         PromptData.Prompt.stop_wallet_loop()
 
         start_block = get_arg(arguments, 0, convert_to_int=True)
@@ -350,22 +370,20 @@ def AddAlias(wallet, addr, title):
         print(e)
 
 
-def ClaimGas(wallet, require_password=True, args=None):
+def ClaimGas(wallet, require_password=True, from_addr_str=None):
     """
     Args:
         wallet:
         require_password:
-        args:
+        from_addr_str:
     Returns:
         (claim transaction, relayed status)
             if successful: (tx, True)
             if unsuccessful: (None, False)
     """
-    if args:
-        params, from_addr_str = get_from_addr(args)
-    else:
-        params = None
-        from_addr_str = None
+    if not wallet:
+        print("Please open a wallet")
+        return None, False
 
     unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -373,18 +391,6 @@ def ClaimGas(wallet, require_password=True, args=None):
     if unclaimed_count == 0:
         print("no claims to process")
         return None, False
-
-    max_coins_per_claim = None
-    if params:
-        max_coins_per_claim = get_arg(params, 0, convert_to_int=True)
-        if not max_coins_per_claim:
-            print("max_coins_to_claim must be an integer")
-            return None, False
-        if max_coins_per_claim <= 0:
-            print("max_coins_to_claim must be greater than zero")
-            return None, False
-    if max_coins_per_claim and unclaimed_count > max_coins_per_claim:
-        unclaimed_coins = unclaimed_coins[:max_coins_per_claim]
 
     unclaimed_coin_refs = [coin.Reference for coin in unclaimed_coins]
 
@@ -417,9 +423,7 @@ def ClaimGas(wallet, require_password=True, args=None):
     wallet.Sign(context)
 
     print("\n---------------------------------------------------------------")
-    print("Will make claim for %s GAS" % available_bonus.ToString())
-    if max_coins_per_claim and unclaimed_count > max_coins_per_claim:
-        print("NOTE: You are claiming GAS on %s unclaimed coins. %s additional claim transactions will be required to claim all available GAS." % (max_coins_per_claim, math.floor(unclaimed_count / max_coins_per_claim)))
+    print(f"Will make claim for {available_bonus.ToString()} GAS")
     print("------------------------------------------------------------------\n")
 
     if require_password:
@@ -443,12 +447,10 @@ def ClaimGas(wallet, require_password=True, args=None):
             print("Relayed Tx: %s " % claim_tx.Hash.ToString())
             wallet.SaveTransaction(claim_tx)
         else:
-
             print("Could not relay tx %s " % claim_tx.Hash.ToString())
         return claim_tx, relayed
 
     else:
-
         print("could not sign tx")
 
     return None, False
