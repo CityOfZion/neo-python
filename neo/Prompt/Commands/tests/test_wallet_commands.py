@@ -158,9 +158,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_wallet_open(self):
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+                if self._wallet1 is None:
+                    shutil.copyfile(self.wallet_1_path(), self.wallet_1_dest())
+
                 # test wallet open successful
-                args = ['open', 'fixtures/testwallet.db3']
+                args = ['open', self.wallet_1_dest()]
 
                 res = CommandWallet().execute(args)
 
@@ -199,8 +202,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
 
             # test wallet close with open wallet
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
-                args = ['open', 'fixtures/testwallet.db3']
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+                if self._wallet1 is None:
+                    shutil.copyfile(self.wallet_1_path(), self.wallet_1_dest())
+
+                args = ['open', self.wallet_1_dest()]
 
                 res = CommandWallet().execute(args)
 
