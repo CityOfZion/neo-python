@@ -308,6 +308,9 @@ class Blockchain:
     def SearchAssetState(self, query):
         pass
 
+    def ShowAllAssets(self):
+        pass
+
     def GetHeaderHash(self, height):
         pass
 

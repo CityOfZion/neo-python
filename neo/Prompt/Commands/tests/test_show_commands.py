@@ -156,3 +156,199 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
 
         # restore whatever state the instance was in
         NodeLeader._LEAD = old_leader
+
+    def test_show_state(self):
+        # setup
+        PromptInterface()
+
+        args = ['state']
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+
+    def test_show_notifications(self):
+        # setup
+        wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+
+        # test with no NotificationDB
+        with patch('neo.Implementations.Notifications.LevelDB.NotificationDB.NotificationDB.instance', return_value=None):
+            args = ['notifications', wallet_1_addr]
+            res = CommandShow().execute(args)
+            self.assertFalse(res)
+
+        # test with no input
+        args = ['notifications']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # good test with address
+        args = ['notifications', wallet_1_addr]
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        jsn = res[0].ToJson()
+        self.assertEqual(jsn['notify_type'], 'transfer')
+        self.assertEqual(jsn['addr_from'], wallet_1_addr)
+
+        # test an address with no notifications
+        args = ['notifications', 'AZiE7xfyJALW7KmADWtCJXGGcnduYhGiCX']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # good test with contract
+        contract_hash = "31730cc9a1844891a3bafd1aa929a4142860d8d3"
+        args = ['notifications', contract_hash]
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        jsn = res[0].ToJson()
+        self.assertEqual(jsn['notify_type'], 'transfer')
+        self.assertIn(contract_hash, jsn['contract'])
+
+        # good test with contract 0x hash
+        contract_hash = "0x31730cc9a1844891a3bafd1aa929a4142860d8d3"
+        args = ['notifications', contract_hash]
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        jsn = res[0].ToJson()
+        self.assertEqual(jsn['notify_type'], 'transfer')
+        self.assertEqual(contract_hash, jsn['contract'])
+
+        # test contract not on the blockchain
+        contract_hash = "3a4acd3647086e7c44398aac0349802e6a171129"  # NEX token hash
+        args = ['notifications', contract_hash]
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # good test with block index
+        args = ['notifications', "12337"]
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        jsn = res[0].ToJson()
+        self.assertEqual(jsn['notify_type'], 'transfer')
+        self.assertEqual(jsn['block'], 12337)
+
+        # test block with no notifications
+        args = ['notifications', "1"]
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # test bad block
+        index = Blockchain.Default().Height + 1
+        args = ['notifications', str(index)]
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # test invalid input
+        args = ['notifications', "blah"]
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+    def test_show_account(self):
+        # setup
+        wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+
+        # test no account address entered
+        args = ['account']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # test good account
+        args = ['account', wallet_1_addr]
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(res['address'], wallet_1_addr)
+        self.assertIn('balances', res)
+
+        # test empty account
+        with patch('neo.Prompt.PromptData.PromptData.Prompt'):
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
+                args = ['create', 'testwallet.wallet']
+                res = CommandWallet().execute(args)
+                self.assertTrue(res)
+                self.assertIsInstance(res, UserWallet)
+
+        addr = res.Addresses[0]
+        args = ['account', addr]
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # remove test wallet
+        os.remove("testwallet.wallet")
+
+    def test_show_asset(self):
+        # test no asset entered
+        args = ['asset']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # show all assets
+        args = ['asset', 'all']
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[1]['NEO'], "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b")
+        self.assertEqual(res[0]['NEOGas'], "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7")
+
+        # query with "neo"
+        args = ['asset', 'neo']
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(res['assetId'], "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b")
+        self.assertEqual(res['name'], "NEO")
+
+        # query with "gas"
+        args = ['asset', 'gas']
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(res['assetId'], "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7")
+        self.assertEqual(res['name'], "NEOGas")
+
+        # query with scripthash
+        args = ['asset', 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b']
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(res['assetId'], "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b")
+        self.assertEqual(res['name'], "NEO")
+
+        # query with bad asset
+        args = ['asset', 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9e']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # query with bad input
+        args = ['asset', 'blah']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+    def test_show_contract(self):
+        # test no contract entered
+        args = ['contract']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # show all contracts
+        args = ['contract', 'all']
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 6)
+        self.assertEqual(res[0]["test NEX Template V4"], '0x31730cc9a1844891a3bafd1aa929a4142860d8d3')
+
+        # query with contract scripthash
+        args = ['contract', '31730cc9a1844891a3bafd1aa929a4142860d8d3']
+        res = CommandShow().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(res['name'], "test NEX Template V4")
+        self.assertEqual(res['token']['name'], "NEX Template V4")
+        self.assertEqual(res['token']['symbol'], "NXT4")
+
+        # query with a contract scripthash not on the blockchain
+        args = ['contract', '3a4acd3647086e7c44398aac0349802e6a171129']  # NEX token hash
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
+
+        # query bad input
+        args = ['contract', 'blah']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
