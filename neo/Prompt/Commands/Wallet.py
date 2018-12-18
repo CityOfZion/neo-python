@@ -282,19 +282,6 @@ def DeleteAddress(wallet, addr):
     return success
 
 
-def DeleteToken(wallet, contract_hash):
-    hash = UInt160.ParseString(contract_hash)
-
-    success = wallet.DeleteNEP5Token(hash)
-
-    if success:
-        print("Deleted token %s " % contract_hash)
-    else:
-        print("error deleting token %s " % contract_hash)
-
-    return False
-
-
 def ImportWatchAddr(wallet, addr):
     if wallet is None:
         print("Please open a wallet")
