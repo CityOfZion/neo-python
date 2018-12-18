@@ -141,8 +141,10 @@ class NodeLeader:
             self.BREQPART = breqpart
             self.BREQMAX = breqmax
             logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
+            return True
         else:
             logger.info("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
+            return False
 
     def setBlockReqSizeByName(self, name):
         if name.lower() == 'slow':
@@ -156,8 +158,10 @@ class NodeLeader:
             self.BREQMAX = 15000
         else:
             logger.info("configuration name %s not found. use 'slow', 'normal', or 'fast'" % name)
+            return False
 
         logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
+        return True
 
     def RemoteNodePeerReceived(self, host, port, index):
         addr = '%s:%s' % (host, port)
