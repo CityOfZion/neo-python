@@ -20,6 +20,7 @@ from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.Send import CommandWalletSend, CommandWalletSendMany, CommandWalletSign
+from neo.Prompt.Commands.Tokens import CommandWalletToken
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -39,6 +40,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletSign())
         self.register_sub_command(CommandWalletClaimGas())
         self.register_sub_command(CommandWalletRebuild())
+        self.register_sub_command(CommandWalletToken())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -223,7 +225,6 @@ class CommandWalletRebuild(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-
         PromptData.Prompt.stop_wallet_loop()
 
         start_block = get_arg(arguments, 0, convert_to_int=True)

@@ -422,7 +422,10 @@ class UserWallet(Wallet):
 
     def DeleteNEP5Token(self, script_hash):
 
-        token = super(UserWallet, self).DeleteNEP5Token(script_hash)
+        try:
+            token = super(UserWallet, self).DeleteNEP5Token(script_hash)
+        except KeyError:
+            return False
 
         try:
             db_token = NEP5Token.get(ContractHash=token.ScriptHash.ToBytes())

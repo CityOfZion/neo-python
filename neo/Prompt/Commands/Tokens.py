@@ -2,10 +2,79 @@ from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificati
 from neo.Prompt.Utils import get_asset_id, get_from_addr, get_tx_attr_from_args
 from neo.Wallets.NEP5Token import NEP5Token
 from neocore.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
 from decimal import Decimal
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 import binascii
+from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
+from neo.Prompt.PromptData import PromptData
+from neo.Prompt.Utils import get_arg
+from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Token
+import peewee
+
+
+class CommandWalletToken(CommandBase):
+    def __init__(self):
+        super().__init__()
+        self.register_sub_command(CommandTokenDelete())
+
+    def command_desc(self):
+        return CommandDesc('token', 'various token operations')
+
+    def execute(self, arguments):
+        item = get_arg(arguments)
+
+        if not item:
+            print(f"Please specify an action. See help for available actions")
+            return
+
+        try:
+            return self.execute_sub_command(item, arguments[1:])
+        except KeyError:
+            print(f"{item} is an invalid parameter")
+            return
+
+
+class CommandTokenDelete(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return
+
+        hash_string = arguments[0]
+        try:
+            script_hash = UInt160.ParseString(hash_string)
+        except Exception:
+            # because UInt160 throws a generic exception. Should be fixed in the future
+            print("Invalid script hash")
+            return
+
+        # try to find token and collect some data
+        try:
+            token = ModelNEP5Token.get(ContractHash=script_hash)
+        except peewee.DoesNotExist:
+            print(f"Could not find a token with script_hash {arguments[0]}")
+            return
+
+        success = wallet.DeleteNEP5Token(script_hash)
+        if success:
+            print(f"Token {token.Symbol} with script_hash {arguments[0]} deleted")
+        else:
+            # probably unreachable to due token check earlier. Better safe than sorrow
+            print(f"Could not find a token with script_hash {arguments[0]}")
+
+        return success
+
+    def command_desc(self):
+        p1 = ParameterDesc('contract', 'token contract hash (script_hash)')
+        return CommandDesc('delete', 'remove a token from the wallet', [p1])
 
 
 def token_send(wallet, args, prompt_passwd=True):
