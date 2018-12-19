@@ -5,31 +5,15 @@ from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
 from decimal import Decimal
-from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
+from neo.Core.TX.TransactionAttribute import TransactionAttribute
 import binascii
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Token
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
+from neocore.Utils import isValidPublicAddress
 import peewee
-import base58
-
-
-# TODO: remove this once neo-python-core is merged
-def isValidPublicAddress(address: str) -> bool:
-    """Check if address is a valid NEO address"""
-    valid = False
-
-    if len(address) == 34 and address[0] == 'A':
-        try:
-            base58.b58decode_check(address.encode())
-            valid = True
-        except ValueError:
-            # checksum mismatch
-            valid = False
-
-    return valid
 
 
 class CommandWalletToken(CommandBase):
