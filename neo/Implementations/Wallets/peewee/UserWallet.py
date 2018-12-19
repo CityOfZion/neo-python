@@ -422,7 +422,10 @@ class UserWallet(Wallet):
 
     def DeleteNEP5Token(self, script_hash):
 
-        token = super(UserWallet, self).DeleteNEP5Token(script_hash)
+        try:
+            token = super(UserWallet, self).DeleteNEP5Token(script_hash)
+        except KeyError:
+            return False
 
         try:
             db_token = NEP5Token.get(ContractHash=token.ScriptHash.ToBytes())
@@ -445,7 +448,6 @@ class UserWallet(Wallet):
         todelete = bytes(script_hash.ToArray())
 
         for c in Contract.select():
-
             address = c.Address
             if address.ScriptHash == todelete:
                 c.delete_instance()
@@ -457,7 +459,7 @@ class UserWallet(Wallet):
         except Exception as e:
             pass
 
-        return True, coins_toremove
+        return success, coins_toremove
 
     def ToJson(self, verbose=False):
         assets = self.GetCoinAssets()
