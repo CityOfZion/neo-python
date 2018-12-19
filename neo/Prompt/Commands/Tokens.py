@@ -140,7 +140,7 @@ def token_send(wallet, token_str, send_from, send_to, amount, prompt_passwd=True
         send_from (str): a wallet address
         send_to (str): a wallet address
         amount (float): the number of tokens to send
-        prompt_passwd (str): (optional) whether to prompt for a password before sending it to the network
+        prompt_passwd (bool): (optional) whether to prompt for a password before sending it to the network
         user_tx_attributes (list): a list of ``TransactionAttribute``s.
 
     Returns:
