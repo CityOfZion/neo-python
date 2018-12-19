@@ -299,6 +299,7 @@ class CommandWalletUnspent(CommandBase):
         p4 = ParameterDesc('--count', 'only count the unspent assets', optional=True)
         return CommandDesc('unspent', 'show unspent assets', params=[p1, p2, p3, p4])
 
+
 class CommandWalletAlias(CommandBase):
 
     def __init__(self):

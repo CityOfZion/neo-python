@@ -11,6 +11,7 @@ from neo.Prompt.PromptData import PromptData
 import os
 import shutil
 from mock import patch
+from io import StringIO
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -355,6 +356,85 @@ class UserWalletTestCase(WalletFixtureTestCase):
             args = ['rebuild', '42']
             CommandWallet().execute(args)
             self.assertEqual(PromptData.Wallet._current_height, 42)
+
+    def test_wallet_unspent(self):
+        # test wallet unspent with no wallet open
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("open a wallet", mock_print.getvalue())
+
+        self.OpenWallet1()
+
+        # test wallet unspent with invalid address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--from-addr=123']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid arguments specified", mock_print.getvalue())
+
+        # test wallet unspent successful
+        args = ['unspent']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with unknown asset shows all
+        args = ['unspent', 'unknownasset']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with asset
+        args = ['unspent', 'neo']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+
+        # test wallet unspent with asset
+        args = ['unspent', 'gas']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].Output.AssetId, self.GAS)
+
+        # test wallet unspent with unrelated address
+        args = ['unspent', '--from-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm']
+        res = CommandWallet().execute(args)
+        self.assertEqual(res, [])
+
+        # test wallet unspent with address
+        args = ['unspent', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with --watch
+        args = ['unspent', '--watch']
+        res = CommandWallet().execute(args)
+        self.assertEqual(res, [])
+
+        # test wallet unspent with --count
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--count']
+            res = CommandWallet().execute(args)
+            self.assertEqual(len(res), 2)
+            self.assertIn("Total Unspent: 2", mock_print.getvalue())
+
+        # test wallet unspent with --count
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', 'gas', '--count']
+            res = CommandWallet().execute(args)
+            self.assertEqual(len(res), 1)
+            self.assertIn("Total Unspent: 1", mock_print.getvalue())
 
     def test_wallet_alias(self):
         # test wallet alias with no wallet open
