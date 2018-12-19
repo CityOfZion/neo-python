@@ -106,7 +106,7 @@ class CommandTokenSend(CommandBase):
             amount = float(arguments[3])
         except ValueError:
             print(f"{arguments[3]} is not a valid amount")
-            return
+            return False
 
         try:
             success = token_send(wallet, token, send_from, send_to, amount, user_tx_attributes)
@@ -128,7 +128,7 @@ class CommandTokenSend(CommandBase):
         f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
 
-        return CommandDesc('send', 'remove a token from the wallet', [p1, p2, p3, p4, p5])
+        return CommandDesc('send', 'send a token from the wallet', [p1, p2, p3, p4, p5])
 
 
 def token_send(wallet, token_str, send_from, send_to, amount, prompt_passwd=True, user_tx_attributes=None):
@@ -156,6 +156,7 @@ def token_send(wallet, token_str, send_from, send_to, amount, prompt_passwd=True
             break
         elif token_str == t.ScriptHash.ToString():
             token = t
+            break
 
     if not isinstance(token, NEP5Token):
         raise ValueError("The given token argument does not represent a known NEP5 token")
