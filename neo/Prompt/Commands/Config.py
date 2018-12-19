@@ -152,6 +152,10 @@ class CommandConfigNodeRequests(CommandBase):
         p2 = ParameterDesc('queue-size', 'the maximum number of outstanding block requests')
         return CommandDesc('node-requests', 'configure block request settings', [p1, p2])
 
+    def handle_help(self, arguments):
+        super().handle_help(arguments)
+        print(f"\nCurrent settings {self.command_desc().params[0].name}: {NodeLeader.Instance().BREQPART}  {self.command_desc().params[1].name}: {NodeLeader.Instance().BREQMAX}")
+
 
 def start_output_config():
     # temporarily mute stdout while we try to reconfigure our settings
@@ -194,8 +198,7 @@ def start_output_config():
     log_manager.unmute_stdio()
 
     # provide confirmation of new settings
-    print("\n")
-    print("New Output Levels:")
+    print("\nNew Output Levels:")
     new_settings = {}
     for component, logger in log_manager.loggers.items():
         component_name = component.replace(log_manager.root, "")
