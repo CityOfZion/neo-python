@@ -268,7 +268,7 @@ class CommandWalletUnspent(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        asset_type = None
+        asset_id = None
         from_addr = None
         watch_only = False
         do_count = False
@@ -285,12 +285,12 @@ class CommandWalletUnspent(CommandBase):
                 elif item == '--count':
                     do_count = True
                 else:
-                    asset_type = get_asset_id(PromptData.Wallet, item)
+                    asset_id = get_asset_id(PromptData.Wallet, item)
         except Exception as e:
             print("Invalid arguments specified")
             return None
 
-        return ShowUnspentCoins(PromptData.Wallet, asset_type, from_addr, watch_only, do_count)
+        return ShowUnspentCoins(PromptData.Wallet, asset_id, from_addr, watch_only, do_count)
 
     def command_desc(self):
         p1 = ParameterDesc('asset', 'type of asset to query (NEO/GAS)', optional=True)
@@ -510,11 +510,12 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None):
     return None, False
 
 
-def ShowUnspentCoins(wallet, asset_type=None, from_addr=None, watch_only=False, do_count=False):
+def ShowUnspentCoins(wallet, asset_id=None, from_addr=None, watch_only=False, do_count=False):
     """
     Show unspent coin objects in the wallet.
 
     Args:
+        wallet (neo.Wallet): wallet to show unspent coins from.
         asset_id (UInt256): a bytearray (len 32) representing an asset on the blockchain.
         from_addr (UInt160): a bytearray (len 20) representing an address.
         watch_only (bool): indicate if this shows coins that are in 'watch only' addresses.
@@ -529,8 +530,8 @@ def ShowUnspentCoins(wallet, asset_type=None, from_addr=None, watch_only=False, 
         return None
 
     watch_only_flag = 64 if watch_only else 0
-    if asset_type:
-        unspents = wallet.FindUnspentCoinsByAsset(asset_type, from_addr=from_addr, watch_only_val=watch_only_flag)
+    if asset_id:
+        unspents = wallet.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr, watch_only_val=watch_only_flag)
     else:
         unspents = wallet.FindUnspentCoins(from_addr=from_addr, watch_only_val=watch_only)
 

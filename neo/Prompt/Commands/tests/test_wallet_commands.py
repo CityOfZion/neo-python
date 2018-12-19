@@ -511,10 +511,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
         unspents = ShowUnspentCoins(wallet)
         self.assertEqual(len(unspents), 2)
 
-        unspents = ShowUnspentCoins(wallet, asset_type=self.NEO)
+        unspents = ShowUnspentCoins(wallet, asset_id=self.NEO)
         self.assertEqual(len(unspents), 1)
 
-        unspents = ShowUnspentCoins(wallet, asset_type=self.GAS)
+        unspents = ShowUnspentCoins(wallet, asset_id=self.GAS)
         self.assertEqual(len(unspents), 1)
 
         unspents = ShowUnspentCoins(wallet, from_addr=wallet.ToScriptHash('AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'))
