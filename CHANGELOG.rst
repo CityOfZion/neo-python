@@ -16,6 +16,7 @@ All notable changes to this project are documented in this file.
 - Add fix to ensure tx is saved to wallet when sent using RPC
 - Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`_
 - Introduce Django inspired component loading for REST and RPC server
+- Remove ``ExtendedJsonRpc`` server from base repo (still available as extension)
 - Allow a raw tx to be build without an active blockchain db in the environment
 - Fix unnecessary default bootstrap warning for mainnet showing.
 - Add GET and OPTIONS request functionality for JSON-RPC servers
@@ -23,6 +24,7 @@ All notable changes to this project are documented in this file.
 - Gracefully handle balance query failures of NEP-5 tokens.
 - Fix ``getcontractstate`` JSON output to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_
 - Fix ``getrawtransaction`` JSON output to match neo-cli 2.9.2 `#751 https://github.com/CityOfZion/neo-python/pull/751`_
+
 
 [0.8.2] 2018-10-31
 -------------------
