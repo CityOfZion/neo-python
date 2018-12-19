@@ -42,7 +42,7 @@ class CommandConfigOutput(CommandBase):
         return start_output_config()
 
     def command_desc(self):
-        return CommandDesc('output', 'configure the output level settings')
+        return CommandDesc('output', 'configure the log output level settings')
 
 
 class CommandConfigSCEvents(CommandBase):
@@ -62,15 +62,15 @@ class CommandConfigSCEvents(CommandBase):
                 print("Smart contract event logging is now disabled")
                 return c1
             else:
-                print("Cannot configure log. Please specify on|off")
+                print("Cannot configure log. Please specify on|off or 1|0")
                 return
         else:
-            print("Cannot configure log. Please specify on|off")
+            print("Cannot configure log. Please specify on|off or 1|0")
             return
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
-        return CommandDesc('sc-events', 'toggle smart contract events on or off', [p1])
+        return CommandDesc('sc-events', 'toggle printing smart contract events', [p1])
 
 
 class CommandConfigDebugNotify(CommandBase):
@@ -90,15 +90,15 @@ class CommandConfigDebugNotify(CommandBase):
                 print("Smart contract emit Notify events on execution failure is now disabled")
                 return c1
             else:
-                print("Cannot configure log. Please specify on|off")
+                print("Cannot configure log. Please specify on|off or 1|0")
                 return
         else:
-            print("Cannot configure log. Please specify on|off")
+            print("Cannot configure log. Please specify on|off or 1|0")
             return
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
-        return CommandDesc('sc-debug-notify', 'toggle Notify events on execution failure on or off', [p1])
+        return CommandDesc('sc-debug-notify', 'toggle printing Notify events on execution failure', [p1])
 
 
 class CommandConfigVMLog(CommandBase):
@@ -118,15 +118,15 @@ class CommandConfigVMLog(CommandBase):
                 print("VM instruction execution logging is now disabled")
                 return c1
             else:
-                print("Cannot configure VM instruction logging. Please specify on|off")
+                print("Cannot configure VM instruction logging. Please specify on|off or 1|0")
                 return
         else:
-            print("Cannot configure VM instruction logging. Please specify on|off")
+            print("Cannot configure VM instruction logging. Please specify on|off or 1|0")
             return
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
-        return CommandDesc('vm-log', 'toggle VM instruction execution logging on or off', [p1])
+        return CommandDesc('vm-log', 'toggle VM instruction execution logging to file', [p1])
 
 
 class CommandConfigNodeRequests(CommandBase):
@@ -139,7 +139,7 @@ class CommandConfigNodeRequests(CommandBase):
                 try:
                     return NodeLeader.Instance().setBlockReqSizeAndMax(int(arguments[0]), int(arguments[1]))
                 except ValueError:
-                    print("Please specify a block request part and max size for each node, like 30 and 1000")
+                    print("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
                     return False
             elif len(arguments) == 1:
                 return NodeLeader.Instance().setBlockReqSizeByName(arguments[0])
@@ -148,9 +148,9 @@ class CommandConfigNodeRequests(CommandBase):
             return False
 
     def command_desc(self):
-        p1 = ParameterDesc('attribute', 'specify "slow"/"normal"/"fast" preset block request sizes, or specific block request size')
-        p2 = ParameterDesc('queue-size', 'specific max queue size. Required if custom block request size is specified', optional=True)
-        return CommandDesc('node-requests', 'configure the block request size', [p1, p2])
+        p1 = ParameterDesc('block-size', 'a preset of "slow"/"normal"/"fast", or a specific block request size (max. 500) e.g. 250 ')
+        p2 = ParameterDesc('queue-size', 'the maximum number of outstanding block requests')
+        return CommandDesc('node-requests', 'configure block request settings', [p1, p2])
 
 
 def start_output_config():
