@@ -5,6 +5,7 @@ from neo.Prompt.Commands.Config import CommandConfig
 from copy import deepcopy
 from neo.Network.NodeLeader import NodeLeader
 from mock import patch
+from io import StringIO
 
 
 class CommandConfigTestCase(BlockchainFixtureTestCase):
@@ -152,3 +153,27 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
 
         # restore whatever state the instance was in
         NodeLeader._LEAD = old_leader
+
+    def test_config_maxpeers(self):
+        # test no input
+        args = ['maxpeers']
+        res = CommandConfig().execute(args)
+        self.assertFalse(res)
+
+        # test changing the number of maxpeers
+        args = ['maxpeers', "6"]
+        res = CommandConfig().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(int(res), settings.CONNECTED_PEER_MAX)
+
+        # test bad input and verify the new number of maxpeers is maintained
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['maxpeers', "blah"]
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Maintaining maxpeers at 6", mock_print.getvalue())
+
+        # test negative number
+        args = ['maxpeers', "-1"]
+        res = CommandConfig().execute(args)
+        self.assertFalse(res)
