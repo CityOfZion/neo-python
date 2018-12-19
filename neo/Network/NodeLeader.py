@@ -136,15 +136,14 @@ class NodeLeader:
         if settings.ACCEPT_INCOMING_PEERS:
             reactor.listenTCP(settings.NODE_PORT, NeoClientFactory(incoming_client=True))
 
-    def setBlockReqSizeAndMax(self, breqpart=0, breqmax=0):
-        if breqpart > 0 and breqmax > 0 and breqmax > breqpart:
+    def setBlockReqSizeAndMax(self, breqpart=100, breqmax=10000):
+        if breqpart > 0 and breqpart <= 500 and breqmax > 0 and breqmax > breqpart:
             self.BREQPART = breqpart
             self.BREQMAX = breqmax
             logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
             return True
         else:
-            logger.info("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
-            return False
+            raise ValueError("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
 
     def setBlockReqSizeByName(self, name):
         if name.lower() == 'slow':
