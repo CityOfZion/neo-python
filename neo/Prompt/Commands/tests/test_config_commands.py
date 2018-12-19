@@ -140,8 +140,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         res = CommandConfig().execute(args)
         self.assertFalse(res)
 
-        # test bad custom setting
+        # test bad custom setting: breqmax should be greater than breqpart
         args = ['node-requests', '20', '10']
+        res = CommandConfig().execute(args)
+        self.assertFalse(res)
+
+        # test another bad custom setting: breqpart should not exceed 500
+        args = ['node-requests', '600', '5000']
         res = CommandConfig().execute(args)
         self.assertFalse(res)
 
