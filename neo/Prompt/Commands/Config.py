@@ -16,6 +16,7 @@ class CommandConfig(CommandBase):
         self.register_sub_command(CommandConfigDebugNotify())
         self.register_sub_command(CommandConfigVMLog())
         self.register_sub_command(CommandConfigNodeRequests())
+        self.register_sub_command(CommandConfigMaxpeers())
 
     def command_desc(self):
         return CommandDesc('config', 'configure internal settings')
@@ -155,6 +156,25 @@ class CommandConfigNodeRequests(CommandBase):
     def handle_help(self, arguments):
         super().handle_help(arguments)
         print(f"\nCurrent settings {self.command_desc().params[0].name}: {NodeLeader.Instance().BREQPART}  {self.command_desc().params[1].name}: {NodeLeader.Instance().BREQMAX}")
+
+
+class CommandConfigMaxpeers(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        c1 = get_arg(arguments)
+        if c1 is not None:
+            peers = settings.set_max_peers(c1)
+            if peers is not None:
+                print("Maxpeers set to ", c1)
+                return c1
+        print(f"Maintaining maxpeers at {settings.CONNECTED_PEER_MAX}")
+        return
+
+    def command_desc(self):
+        p1 = ParameterDesc('number', 'maximum number of nodes to connect to')
+        return CommandDesc('maxpeers', 'configure number of max peers', [p1])
 
 
 def start_output_config():
