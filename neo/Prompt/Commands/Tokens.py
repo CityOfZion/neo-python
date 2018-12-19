@@ -276,7 +276,7 @@ def token_send(wallet, token_str, from_addr, to_addr, amount, prompt_passwd=True
         from_addr (str): a wallet address
         to_addr (str): a wallet address
         amount (float): the number of tokens to send
-        prompt_passwd (str): (optional) whether to prompt for a password before sending it to the network. Defaults to True
+        prompt_passwd (boolean): (optional) whether to prompt for a password before sending it to the network. Defaults to True
         user_tx_attributes (list): a list of ``TransactionAttribute``s.
 
     Raises:
