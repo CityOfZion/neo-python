@@ -317,7 +317,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
     if context.Completed:
         wallet_tx.scripts = context.GetScripts()
     else:
-        logger.warn("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
+        logger.warning("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
     #        if not gather_signatures(context, wallet_tx, owners):
     #            return None, [], 0, None
 
