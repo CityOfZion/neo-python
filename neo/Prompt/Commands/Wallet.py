@@ -337,16 +337,22 @@ class CommandWalletExportNEP2(CommandBase):
     def execute(self, arguments):
         wallet = PromptData.Wallet
 
-        if len(arguments) != 2:
+        if len(arguments) != 1:
             print("Please specify the required parameters")
             return False
 
         address = arguments[0]
-        passphrase = arguments[1]
 
+        passphrase = prompt("[key password] ", is_password=True)
         len_pass = len(passphrase)
         if len_pass < 10:
             print(f"Passphrase is too short, length: {len_pass}. Mininum length is 10")
+            return False
+
+        passphrase_confirm = prompt("[key password again] ", is_password=True)
+
+        if passphrase != passphrase_confirm:
+            print("Please provide matching passwords")
             return False
 
         keys = PromptData.Wallet.GetKeys()
@@ -360,8 +366,7 @@ class CommandWalletExportNEP2(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('address', 'public address in the wallet')
-        p2 = ParameterDesc('passphrase', 'secret to encrypt the private key with (min len: 10)')
-        return CommandDesc('nep2', 'export a passphrase protected private key record of an address (NEP-2 format)', [p1, p2])
+        return CommandDesc('nep2', 'export a passphrase protected private key record of an address (NEP-2 format)', [p1])
 
 
 #########################################################################
