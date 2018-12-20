@@ -411,7 +411,6 @@ class CommandWalletImportWatchAddr(CommandBase):
         p1 = ParameterDesc('address', 'a public NEO address to watch')
         return CommandDesc('watch_addr', 'import a public address as watch only', [p1])
 
-
 #########################################################################
 #########################################################################
 
