@@ -2,7 +2,6 @@ from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.Prompt.Utils import get_asset_id, get_tx_attr_from_args
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.Blockchain import Blockchain
 from neo.Prompt.Commands.Wallet import ImportToken, CommandWallet
 from neo.Prompt.Commands.Tokens import token_get_allowance, token_approve_allowance, \
@@ -58,6 +57,20 @@ class UserWalletTestCase(WalletFixtureTestCase):
         yield
 
         filename = UserWalletTestCase.wallet_1_dest()
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except OSError:
+                pass
+        PromptData.Wallet = None
+
+    @contextmanager
+    def OpenWallet2(self):
+        PromptData.Wallet = UserWalletTestCase.GetWallet2(recreate=True)
+
+        yield
+
+        filename = UserWalletTestCase.wallet_2_dest()
         if os.path.exists(filename):
             try:
                 os.remove(filename)
@@ -478,48 +491,27 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(register)
 
     def test_token_history_correct(self):
-        db = NotificationDB.instance()
-
         # test Send event history
         wallet = self.GetWallet1(recreate=True)
 
-        result = token_history(wallet, db, ["NXT4"])
-        self.assertTrue(result)
+        token, events = token_history(wallet, "NXT4")
+        self.assertTrue(token)
+        self.assertEqual(1, len(events))
 
         # test Received event history
         wallet = self.GetWallet2(recreate=True)
 
-        result = token_history(wallet, db, ["NXT4"])
-        self.assertTrue(result)
-
-        db.close()
-
-    def test_token_history_no_args(self):
-        wallet = self.GetWallet1(recreate=True)
-        db = NotificationDB.instance()
-
-        result = token_history(wallet, db, [])
-
-        self.assertFalse(result)
-
-        db.close()
-
-    def test_token_history_no_db(self):
-        wallet = self.GetWallet1(recreate=True)
-
-        result = token_history(wallet, None, ["NXT4"])
-
-        self.assertFalse(result)
+        token, events = token_history(wallet, "NXT4")
+        self.assertTrue(token)
+        self.assertEqual(1, len(events))
 
     def test_token_history_bad_token(self):
         wallet = self.GetWallet1(recreate=True)
-        db = NotificationDB.instance()
 
-        result = token_history(wallet, db, ["BAD"])
+        with self.assertRaises(ValueError) as context:
+            token, events = token_history(wallet, "BAD")
 
-        self.assertFalse(result)
-
-        db.close()
+        self.assertIn("not represent a known NEP5 token", str(context.exception))
 
     def test_token_serialize(self):
 
@@ -678,6 +670,36 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
                 send = token_send(PromptData.Wallet, token.symbol, addr_from, addr_to, 13, prompt_passwd=False)
                 self.assertTrue(send)
+
+    def test_token_history(self):
+        with self.OpenWallet1():
+            # test with no parameters
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'history']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("specify the required parameter", mock_print.getvalue())
+
+            # test with unknown token
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'history', 'bad_token']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("does not represent a known NEP5 token", mock_print.getvalue())
+
+            # test with known token (has sent event)
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'history', 'NXT4']
+                res = CommandWallet().execute(args)
+                self.assertTrue(res)
+                self.assertIn("Sent 1000.00000000 NXT4 to AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm", mock_print.getvalue())
+
+        with self.OpenWallet2():
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['token', 'history', 'NXT4']
+                res = CommandWallet().execute(args)
+                self.assertTrue(res)
+                self.assertIn("Received 1000.00000000 NXT4 from AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3", mock_print.getvalue())
 
     # utility function
     def Approve_Allowance(self):

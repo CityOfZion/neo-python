@@ -1,12 +1,12 @@
 from neo.Core.Blockchain import Blockchain
-from neo.Wallets.NEP5Token import NEP5Token
+from neo.Wallets import NEP5Token
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Core.TX.Transaction import ContractTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
+from neo.Prompt import Utils as PromptUtils
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.Fixed8 import Fixed8
@@ -15,7 +15,6 @@ from prompt_toolkit import prompt
 import binascii
 import json
 import os
-import math
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
@@ -49,7 +48,7 @@ class CommandWallet(CommandBase):
 
     def execute(self, arguments):
         wallet = PromptData.Wallet
-        item = get_arg(arguments)
+        item = PromptUtils.get_arg(arguments)
 
         # Create and Open must be handled specially.
         if item in {'create', 'open'}:
@@ -78,7 +77,7 @@ class CommandWalletCreate(CommandBase):
     def execute(self, arguments):
         if PromptData.Wallet:
             PromptData.close_wallet()
-        path = get_arg(arguments, 0)
+        path = PromptUtils.get_arg(arguments, 0)
 
         if not path:
             print("Please specify a path")
@@ -131,7 +130,7 @@ class CommandWalletOpen(CommandBase):
         if PromptData.Wallet:
             PromptData.close_wallet()
 
-        path = get_arg(arguments, 0)
+        path = PromptUtils.get_arg(arguments, 0)
 
         if not path:
             print("Please specify a path")
@@ -189,7 +188,7 @@ class CommandWalletCreateAddress(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        addresses_to_create = get_arg(arguments, 0)
+        addresses_to_create = PromptUtils.get_arg(arguments, 0)
 
         if not addresses_to_create:
             print("Please specify a number of addresses to create.")
@@ -207,7 +206,7 @@ class CommandWalletDeleteAddress(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        addr_to_delete = get_arg(arguments, 0)
+        addr_to_delete = PromptUtils.get_arg(arguments, 0)
 
         if not addr_to_delete:
             print("Please specify an address to delete.")
@@ -230,7 +229,7 @@ class CommandWalletClaimGas(CommandBase):
 
         args = arguments
         if args:
-            args, from_addr_str = get_from_addr(args)
+            args, from_addr_str = PromptUtils.get_from_addr(args)
 
         return ClaimGas(PromptData.Wallet, True, from_addr_str)
 
@@ -247,7 +246,7 @@ class CommandWalletRebuild(CommandBase):
     def execute(self, arguments):
         PromptData.Prompt.stop_wallet_loop()
 
-        start_block = get_arg(arguments, 0, convert_to_int=True)
+        start_block = PromptUtils.get_arg(arguments, 0, convert_to_int=True)
         if not start_block or start_block < 0:
             start_block = 0
         print(f"Restarting at block {start_block}")
@@ -360,7 +359,7 @@ def ImportToken(wallet, contract_hash):
 
     if contract:
         hex_script = binascii.hexlify(contract.Code.Script)
-        token = NEP5Token(script=hex_script)
+        token = NEP5Token.NEP5Token(script=hex_script)
 
         result = token.Query()
 
@@ -481,7 +480,7 @@ def ShowUnspentCoins(wallet, args):
             if len(item) == 34:
                 addr = wallet.ToScriptHash(item)
             elif len(item) > 1:
-                asset_type = get_asset_id(wallet, item)
+                asset_type = PromptUtils.get_asset_id(wallet, item)
             if item == '--watch':
                 watch_only = 64
             elif item == '--count':
@@ -520,7 +519,7 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
 
     try:
         addr = wallet.ToScriptHash(args[0])
-        asset = get_asset_id(wallet, args[1])
+        asset = PromptUtils.get_asset_id(wallet, args[1])
         index = int(args[2])
         divisions = int(args[3])
 
