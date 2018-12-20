@@ -11,6 +11,7 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
+from neocore.KeyPair import KeyPair
 from prompt_toolkit import prompt
 import binascii
 import json
@@ -42,6 +43,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletRebuild())
         self.register_sub_command(CommandWalletAlias())
         self.register_sub_command(CommandWalletToken())
+        self.register_sub_command(CommandWalletImport())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -276,6 +278,104 @@ class CommandWalletAlias(CommandBase):
         p1 = ParameterDesc('address', 'address to create an alias for')
         p2 = ParameterDesc('alias', 'alias to associate with the address')
         return CommandDesc('alias', 'create an alias for an address', params=[p1, p2])
+
+
+class CommandWalletImport(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+        self.register_sub_command(CommandWalletImportWIF())
+        self.register_sub_command(CommandWalletImportNEP2())
+
+    def command_desc(self):
+        return CommandDesc('import', 'import wallet items')
+
+    def execute(self, arguments):
+        item = get_arg(arguments)
+
+        if not item:
+            print(f"Please specify an action. See help for available actions")
+            return False
+
+        try:
+            return self.execute_sub_command(item, arguments[1:])
+        except KeyError:
+            print(f"{item} is an invalid parameter")
+            return False
+
+
+class CommandWalletImportWIF(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return False
+
+        wif = arguments[0]
+        try:
+            kp = KeyPair.PrivateKeyFromWIF(wif)
+        except ValueError as e:
+            print(f"WIF Error: {str(e)}")
+            return False
+
+        try:
+            key = wallet.CreateKey(kp)
+            print(f"Imported key: {wif}")
+            pub_key = key.PublicKey.encode_point(True).decode('utf-8')
+            print(f"Pubkey: {pub_key}")
+            print(f"Address: {key.GetAddress()}")
+
+        except Exception as e:
+            # couldn't find an exact call that throws this but it was in the old code. Leaving it in for now.
+            print(f"Key creation error: {str(e)}")
+            return False
+
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('key', 'private key record in WIF format')
+        return CommandDesc('wif', 'import an unprotected private key record of an address', [p1])
+
+
+class CommandWalletImportNEP2(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 1:
+            print("Please specify the required parameters")
+            return False
+
+        nep2_key = arguments[0]
+        passphrase = prompt("[key password] ", is_password=True)
+
+        try:
+            kp = KeyPair.PrivateKeyFromNEP2(nep2_key, passphrase)
+        except ValueError as e:
+            print(str(e))
+            return False
+
+        try:
+            key = wallet.CreateKey(kp)
+            print(f"Imported key: {nep2_key}")
+            pub_key = key.PublicKey.encode_point(True).decode('utf-8')
+            print(f"Pubkey: {pub_key}")
+            print(f"Address: {key.GetAddress()}")
+
+        except Exception as e:
+            # couldn't find an exact call that throws this but it was in the old code. Leaving it in for now.
+            print(f"Key creation error: {str(e)}")
+            return False
+
+    def command_desc(self):
+        p1 = ParameterDesc('private key', 'a NEP-2 protected private key')
+        return CommandDesc('nep2', 'import a passphrase protected private key record (NEP-2 format)', [p1])
 
 
 #########################################################################
