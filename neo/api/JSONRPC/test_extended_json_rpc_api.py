@@ -10,10 +10,8 @@ from klein.test.test_resource import requestMock
 from neo.api.JSONRPC.ExtendedJsonRpcApi import ExtendedJsonRpcApi
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Wallets.utils import to_aes_key
 from neo.Blockchain import GetBlockchain
-from neo.Core.Blockchain import Blockchain
 from neo.Settings import settings
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 
@@ -120,42 +118,3 @@ class ExtendedJsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.app.wallet.Close()
         self.app.wallet = None
         os.remove(WalletFixtureTestCase.wallet_1_dest())
-
-    def test_showallassets(self):
-        req = self._gen_rpc_req("showallassets")
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
-        res = json.loads(self.app.home(mock_req))
-        self.assertEqual(len(res['result']), 2)
-
-    def test_showallcontracts(self):
-        req = self._gen_rpc_req("showallcontracts")
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
-        res = json.loads(self.app.home(mock_req))
-        self.assertEqual(len(res['result']), 6)
-
-    def test_searchcontracts_basic(self):
-        req = self._gen_rpc_req("searchcontracts", params=["dauTT"])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
-        res = json.loads(self.app.home(mock_req))
-        self.assertEqual(len(res['result']), 3)
-        self.assertFalse(type(res['result'][0]) is dict)
-        for item in res['result']:
-            contract = Blockchain.Default().GetContract(item)
-            contract = contract.ToJson()
-            self.assertEqual("dauTT", contract['author'])
-
-    def test_searchcontracts_verbose(self):
-        req = self._gen_rpc_req("searchcontracts", params=["dauTT", 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
-        res = json.loads(self.app.home(mock_req))
-        self.assertEqual(len(res['result']), 3)
-        self.assertTrue(type(res['result'][0]) is dict)
-        for item in res['result']:
-            self.assertEqual("dauTT", item['author'])
-
-    def test_searchcontracts_no_known_contracts(self):
-        req = self._gen_rpc_req("searchcontracts", params=["Bob", 1])
-        mock_req = mock_request(json.dumps(req).encode("utf-8"))
-        res = json.loads(self.app.home(mock_req))
-        self.assertTrue('error' in res)
-        self.assertEqual(res['error']['message'], 'No known contracts')
