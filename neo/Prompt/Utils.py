@@ -359,10 +359,7 @@ def get_token(wallet: 'Wallet', token_str: str) -> 'NEP5Token.NEP5Token':
 
     token = None
     for t in wallet.GetTokens().values():
-        if token_str == t.symbol:
-            token = t
-            break
-        elif token_str == t.ScriptHash.ToString():
+        if token_str in [t.symbol, t.ScriptHash.ToString()]:
             token = t
             break
 
