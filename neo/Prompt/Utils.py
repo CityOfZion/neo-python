@@ -10,6 +10,11 @@ from neocore.Cryptography.ECCurve import ECDSA
 from decimal import Decimal
 from prompt_toolkit.shortcuts import PromptSession
 from neo.logging import log_manager
+from neo.Wallets import NEP5Token
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from neo.Wallets.Wallet import Wallet
 
 logger = log_manager.getLogger()
 
@@ -334,3 +339,30 @@ def gather_param(index, param_type, do_continue=True):
             return gather_param(index, param_type, do_continue)
 
     return None, True
+
+
+def get_token(wallet: 'Wallet', token_str: str) -> 'NEP5Token.NEP5Token':
+    """
+    Try to get a NEP-5 token based on the symbol or script_hash
+
+    Args:
+        wallet: wallet instance
+        token_str: symbol or script_hash (accepts script hash with or without 0x prefix)
+    Raises:
+        ValueError: if token is not found
+
+    Returns:
+        NEP5Token instance if found.
+    """
+    if token_str.startswith('0x'):
+        token_str = token_str[2:]
+
+    token = None
+    for t in wallet.GetTokens().values():
+        if token_str in [t.symbol, t.ScriptHash.ToString()]:
+            token = t
+            break
+
+    if not isinstance(token, NEP5Token.NEP5Token):
+        raise ValueError("The given token argument does not represent a known NEP5 token")
+    return token
