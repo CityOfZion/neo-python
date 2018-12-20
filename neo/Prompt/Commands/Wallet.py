@@ -316,7 +316,7 @@ class CommandWalletExportWIF(CommandBase):
             return False
 
         address = arguments[0]
-        keys = PromptData.Wallet.GetKeys()
+        keys = wallet.GetKeys()
         for key in keys:
             if key.GetAddress() == address:
                 print(f"WIF: {key.Export()}")
@@ -355,7 +355,7 @@ class CommandWalletExportNEP2(CommandBase):
             print("Please provide matching passwords")
             return False
 
-        keys = PromptData.Wallet.GetKeys()
+        keys = wallet.GetKeys()
         for key in keys:
             if key.GetAddress() == address:
                 print(f"NEP2: {key.ExportNEP2(passphrase)}")
