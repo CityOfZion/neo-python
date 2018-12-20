@@ -291,7 +291,7 @@ class CommandWalletImport(CommandBase):
         return CommandDesc('import', 'import wallet items')
 
     def execute(self, arguments):
-        item = get_arg(arguments)
+        item = PromptUtils.get_arg(arguments)
 
         if not item:
             print(f"Please specify an action. See help for available actions")
