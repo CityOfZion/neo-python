@@ -43,6 +43,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletRebuild())
         self.register_sub_command(CommandWalletAlias())
         self.register_sub_command(CommandWalletToken())
+        self.register_sub_command(CommandWalletExport())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
@@ -277,6 +278,90 @@ class CommandWalletAlias(CommandBase):
         p1 = ParameterDesc('address', 'address to create an alias for')
         p2 = ParameterDesc('alias', 'alias to associate with the address')
         return CommandDesc('alias', 'create an alias for an address', params=[p1, p2])
+
+
+class CommandWalletExport(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+        self.register_sub_command(CommandWalletExportWIF())
+        self.register_sub_command(CommandWalletExportNEP2())
+
+    def command_desc(self):
+        return CommandDesc('export', 'export wallet items')
+
+    def execute(self, arguments):
+        item = get_arg(arguments)
+
+        if not item:
+            print(f"Please specify an action. See help for available actions")
+            return False
+
+        try:
+            return self.execute_sub_command(item, arguments[1:])
+        except KeyError:
+            print(f"{item} is an invalid parameter")
+            return False
+
+
+class CommandWalletExportWIF(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return False
+
+        address = arguments[0]
+        keys = PromptData.Wallet.GetKeys()
+        for key in keys:
+            if key.GetAddress() == address:
+                print(f"WIF: {key.Export()}")
+                return True
+        else:
+            print(f"Could not find address {address} in wallet")
+            return False
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'public address in the wallet')
+        return CommandDesc('wif', 'export an unprotected private key record of an address', [p1])
+
+
+class CommandWalletExportNEP2(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 2:
+            print("Please specify the required parameters")
+            return False
+
+        address = arguments[0]
+        passphrase = arguments[1]
+
+        len_pass = len(passphrase)
+        if len_pass < 10:
+            print(f"Passphrase is too short, length: {len_pass}. Mininum length is 10")
+            return False
+
+        keys = PromptData.Wallet.GetKeys()
+        for key in keys:
+            if key.GetAddress() == address:
+                print(f"NEP2: {key.ExportNEP2(passphrase)}")
+                return True
+        else:
+            print(f"Could not find address {address} in wallet")
+            return False
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'public address in the wallet')
+        p2 = ParameterDesc('passphrase', 'secret to encrypt the private key with (min len: 10)')
+        return CommandDesc('nep2', 'export a passphrase protected private key record of an address (NEP-2 format)', [p1, p2])
 
 
 #########################################################################
