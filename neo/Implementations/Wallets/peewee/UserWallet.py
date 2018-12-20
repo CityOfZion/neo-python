@@ -178,7 +178,7 @@ class UserWallet(Wallet):
             address.save()
             return address
         else:
-            raise Exception("Address already exists in wallet")
+            raise ValueError("Address already exists in wallet")
 
     def AddNEP5Token(self, token):
 

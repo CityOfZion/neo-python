@@ -23,6 +23,7 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.Send import CommandWalletSend, CommandWalletSendMany, CommandWalletSign
 from neo.Prompt.Commands.Tokens import CommandWalletToken
 from neo.logging import log_manager
+from neocore.Utils import isValidPublicAddress
 
 logger = log_manager.getLogger()
 
@@ -287,6 +288,7 @@ class CommandWalletImport(CommandBase):
         super().__init__()
         self.register_sub_command(CommandWalletImportWIF())
         self.register_sub_command(CommandWalletImportNEP2())
+        self.register_sub_command(CommandWalletImportWatchAddr())
 
     def command_desc(self):
         return CommandDesc('import', 'import wallet items')
@@ -379,6 +381,37 @@ class CommandWalletImportNEP2(CommandBase):
         return CommandDesc('nep2', 'import a passphrase protected private key record (NEP-2 format)', [p1])
 
 
+class CommandWalletImportWatchAddr(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 1:
+            print("Please specify the required parameters")
+            return False
+
+        addr = arguments[0]
+        if not isValidPublicAddress(addr):
+            print("Invalid address specified")
+            return False
+
+        try:
+            addr_script_hash = wallet.ToScriptHash(addr)
+            wallet.AddWatchOnly(addr_script_hash)
+        except ValueError as e:
+            print(str(e))
+            return False
+
+        print(f"Added address {addr} as watch-only")
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', 'a public NEO address to watch')
+        return CommandDesc('watch_addr', 'import a public address as watch only', [p1])
+
+
 #########################################################################
 #########################################################################
 
@@ -423,32 +456,6 @@ def DeleteAddress(wallet, addr):
         print(f"Error deleting addr {addr}{error_str}")
 
     return success
-
-
-def ImportWatchAddr(wallet, addr):
-    if wallet is None:
-        print("Please open a wallet")
-        return False
-
-    script_hash = None
-    try:
-        script_hash = wallet.ToScriptHash(addr)
-    except Exception as e:
-        pass
-
-    if not script_hash:
-        try:
-            data = bytearray(binascii.unhexlify(addr.encode('utf-8')))
-            data.reverse()
-            script_hash = UInt160(data=data)
-        except Exception as e:
-            pass
-
-    if script_hash:
-        wallet.AddWatchOnly(script_hash)
-        print("added watch address")
-    else:
-        print("incorrect format for watch address")
 
 
 def ImportToken(wallet, contract_hash):
