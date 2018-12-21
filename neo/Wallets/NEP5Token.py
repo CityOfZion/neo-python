@@ -5,7 +5,7 @@ from neo.Core.VerificationCode import VerificationCode
 from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
 from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
-from neo.Prompt.Utils import parse_param
+from neo.Prompt import Utils as PromptUtils
 from neocore.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
@@ -127,7 +127,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         Returns:
             int/str: token balance value as int (default), token balanace as string if `as_string` is set to True. 0 if balance retrieval failed.
         """
-        addr = parse_param(address, wallet)
+        addr = PromptUtils.parse_param(address, wallet)
         if isinstance(addr, UInt160):
             addr = addr.Data
         sb = ScriptBuilder()
@@ -172,8 +172,8 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         sb = ScriptBuilder()
         sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'transfer',
-                                           [parse_param(from_addr, wallet), parse_param(to_addr, wallet),
-                                            parse_param(amount)])
+                                           [PromptUtils.parse_param(from_addr, wallet), PromptUtils.parse_param(to_addr, wallet),
+                                            PromptUtils.parse_param(amount)])
 
         tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [], from_addr=from_addr, invoke_attrs=tx_attributes)
 
@@ -197,7 +197,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
                 list: the neo VM evaluation stack results.
         """
         invoke_args = [self.ScriptHash.ToString(), 'transferFrom',
-                       [parse_param(from_addr, wallet), parse_param(to_addr, wallet), parse_param(amount)]]
+                       [PromptUtils.parse_param(from_addr, wallet), PromptUtils.parse_param(to_addr, wallet), PromptUtils.parse_param(amount)]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
@@ -219,7 +219,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
                 list: the neo VM evaluation stack results.
         """
         invoke_args = [self.ScriptHash.ToString(), 'allowance',
-                       [parse_param(owner_addr, wallet), parse_param(requestor_addr, wallet)]]
+                       [PromptUtils.parse_param(owner_addr, wallet), PromptUtils.parse_param(requestor_addr, wallet)]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
@@ -242,7 +242,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
                 list: the neo VM evaluation stack results.
         """
         invoke_args = [self.ScriptHash.ToString(), 'approve',
-                       [parse_param(owner_addr, wallet), parse_param(requestor_addr, wallet), parse_param(amount)]]
+                       [PromptUtils.parse_param(owner_addr, wallet), PromptUtils.parse_param(requestor_addr, wallet), PromptUtils.parse_param(amount)]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
 
@@ -286,7 +286,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
                 list: the neo VM evaluation stack results.
         """
         invoke_args = [self.ScriptHash.ToString(), 'crowdsale_register',
-                       [parse_param(p, wallet) for p in register_addresses]]
+                       [PromptUtils.parse_param(p, wallet) for p in register_addresses]]
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True, from_addr)
 
