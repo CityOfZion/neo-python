@@ -711,3 +711,84 @@ class UserWalletTestCase(WalletFixtureTestCase):
             res = CommandWallet().execute(args)
             self.assertFalse(res)
             self.assertIn("Address already exists in wallet", mock_print.getvalue())
+
+    def test_wallet_import_multisig_address(self):
+        self.OpenWallet1()
+
+        # test missing all arguments
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'multisig_addr']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the minimum required parameters", mock_print.getvalue())
+
+        # test invalid public key format
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'multisig_addr', 'not_a_public_key', 'arg2', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid public key format", mock_print.getvalue())
+
+        # test invalid public key format 2 (fail to convert to UIn160)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'multisig_addr', 'Å' * 66, 'arg2', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid public key format", mock_print.getvalue())
+
+        # test with a public key not present in our own wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'multisig_addr', '031a6c6fbbdf02ca351745fa86b9ba5a9452d785ac4f7fc2b7548ca2a46c4fcf4a', 'arg2', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Supplied first public key does not exist in own wallet", mock_print.getvalue())
+
+        # test with bad minimum signature value 1
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '0', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Minimum signatures count cannot be lower than 1", mock_print.getvalue())
+
+        # test with bad minimum signature value 2
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 'bla' is not a valid int
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', 'bla', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid minimum signature count value", mock_print.getvalue())
+
+        # test with insufficient remaining signing keys
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '2', 'key1']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Minimum required: 2 given: 1", mock_print.getvalue())
+
+        # test with bad remaining signing key 1
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '1', 'too_short_signing_key']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid signing key", mock_print.getvalue())
+
+        # test with non unique signing keys
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '1',
+                    '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Provided signing keys are not unique", mock_print.getvalue())
+
+        # test with all good \o/
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '1',
+                    '031a6c6fbbdf02ca351745fa86b9ba5a9452d785ac4f7fc2b7548ca2a46c4fcf4a']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Added multi-sig contract address", mock_print.getvalue())
