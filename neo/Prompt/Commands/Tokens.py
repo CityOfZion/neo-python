@@ -558,6 +558,7 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
     print("could not transfer tokens")
     return False
 
+
 def token_history(wallet, token_str):
     notification_db = NotificationDB.instance()
 
@@ -568,6 +569,7 @@ def token_history(wallet, token_str):
 
     events = notification_db.get_by_contract(token.ScriptHash)
     return token, events
+
 
 def amount_from_string(token, amount_str):
     precision_mult = pow(10, token.decimals)
