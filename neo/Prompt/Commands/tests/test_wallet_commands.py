@@ -6,7 +6,7 @@ from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
-from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
+from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ShowUnspentCoins, SplitUnspentCoin
 from neo.Prompt.PromptData import PromptData
 from contextlib import contextmanager
 import os
@@ -387,26 +387,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
     ##########################################################
     ##########################################################
 
-    def test_1_import_addr(self):
-        wallet = self.GetWallet1(recreate=True)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 0)
-
-        result = ImportWatchAddr(wallet, self.watch_addr_str)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 1)
-
-    def test_2_import_addr(self):
-        wallet = self.GetWallet1()
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 1)
-
-        success = DeleteAddress(wallet, self.watch_addr_str)
-
-        self.assertTrue(success)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 0)
-
     def test_3_import_token(self):
         wallet = self.GetWallet1(recreate=True)
 
@@ -696,3 +676,38 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 self.assertFalse(res)
                 # if we imported successfully we get the wallet1 address
                 self.assertIn(self.wallet_1_addr, mock_print.getvalue())
+
+    def test_wallet_import_watchaddr(self):
+        self.OpenWallet1()
+
+        # test missing wif key argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'watch_addr']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("specify the required parameter", mock_print.getvalue())
+
+        # test with bad address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'watch_addr', 'too_short_addr']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid address specified", mock_print.getvalue())
+
+        # test with good address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            address = 'AZfFBeBqtJvaTK9JqG8uk6N7FppQY6byEg'
+            args = ['import', 'watch_addr', address]
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Added address", mock_print.getvalue())
+            self.assertIn("watch-only", mock_print.getvalue())
+            self.assertIn(PromptData.Wallet.ToScriptHash(address), PromptData.Wallet.LoadWatchOnly())
+
+        # test address already exists
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            address = 'AZfFBeBqtJvaTK9JqG8uk6N7FppQY6byEg'
+            args = ['import', 'watch_addr', address]
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Address already exists in wallet", mock_print.getvalue())
