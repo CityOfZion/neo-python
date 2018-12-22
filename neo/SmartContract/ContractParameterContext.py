@@ -10,6 +10,7 @@ from neocore.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
 from neo.logging import log_manager
+from neocore.Cryptography.ECCurve import ECDSA
 
 logger = log_manager.getLogger('vm')
 
@@ -37,12 +38,18 @@ class ContextItem:
     ContractParameters = None
     Signatures = None
 
+    IsCustomContract = False
+
     def __init__(self, contract):
         self.Script = contract.Script
         self.ContractParameters = []
         for b in bytearray(contract.ParameterList):
             p = ContractParamater(b)
             self.ContractParameters.append(p)
+        if not contract.IsMultiSigContract and not contract.IsStandard:
+            self.IsCustomContract = True
+        else:
+            self.IsCustomContract = False
 
     def ToJson(self):
         jsn = {}
@@ -152,26 +159,30 @@ class ContractParametersContext:
             elif pubkey.encode_point(True) in item.Signatures:
                 return False
 
+            ecdsa = ECDSA.secp256r1()
             points = []
             temp = binascii.unhexlify(contract.Script)
             ms = MemoryStream(binascii.unhexlify(contract.Script))
             reader = BinaryReader(ms)
             numr = reader.ReadUInt8()
             while reader.ReadUInt8() == 33:
-                points.append(binascii.hexlify(reader.ReadBytes(33)))
+                ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
+                points.append(ecpoint)
             ms.close()
 
-            if pubkey.encode_point(True) not in points:
+            if pubkey not in points:
                 return False
 
             item.Signatures[pubkey.encode_point(True).decode()] = binascii.hexlify(signature)
 
             if len(item.Signatures) == len(contract.ParameterList):
+
                 i = 0
                 points.sort(reverse=True)
                 for k in points:
-                    if k.decode() in item.Signatures:
-                        if self.Add(contract, i, item.Signatures[k.decode()]) is None:
+                    pubkey = k.encode_point(True).decode()
+                    if pubkey in item.Signatures:
+                        if self.Add(contract, i, item.Signatures[pubkey]) is None:
                             raise Exception("Invalid operation")
                         i += 1
                 item.Signatures = None
@@ -236,11 +247,12 @@ class ContractParametersContext:
 
             vscript = bytearray(0)
 
-            if item.Script is not None:
+            if item.IsCustomContract:
+                pass
+            elif item.Script is not None:
                 if type(item.Script) is str:
                     item.Script = item.Script.encode('utf-8')
                 vscript = item.Script
-            #                logger.info("SCRIPT IS %s " % item.Script)
 
             witness = Witness(
                 invocation_script=sb.ToArray(),

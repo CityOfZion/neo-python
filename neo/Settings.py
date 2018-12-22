@@ -107,6 +107,11 @@ class SettingsHolder:
 
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
+    RPC_SERVER = None
+    REST_SERVER = None
+    DEFAULT_RPC_SERVER = 'neo.api.JSONRPC.JsonRpcApi.JsonRpcApi'
+    DEFAULT_REST_SERVER = 'neo.api.REST.RestApi.RestApi'
+
     # Logging settings
     log_level = None
     log_smart_contract_events = False
@@ -163,6 +168,16 @@ class SettingsHolder:
     # Setup methods
     def setup(self, config_file):
         """ Setup settings from a JSON config file """
+
+        def get_config_and_warn(key, default, abort=False):
+            value = config.get(key, None)
+            if not value:
+                print(f"Cannot find {key} in settings, using default value: {default}")
+                value = default
+                if abort:
+                    sys.exit(-1)
+            return value
+
         if not self.DATA_DIR_PATH:
             # Setup default data dir
             self.set_data_dir(None)
@@ -192,9 +207,8 @@ class SettingsHolder:
         self.URI_PREFIX = config['UriPrefix']
         self.ACCEPT_INCOMING_PEERS = config.get('AcceptIncomingPeers', False)
 
-        self.BOOTSTRAP_FILE = config['BootstrapFile']
-        self.NOTIF_BOOTSTRAP_FILE = config['NotificationBootstrapFile']
-
+        self.BOOTSTRAP_NAME = get_config_and_warn('BootstrapName', "mainnet")
+        self.BOOTSTRAP_LOCATIONS = get_config_and_warn('BootstrapFiles', "abort", abort=True)
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
         self.USE_DEBUG_STORAGE = config.get('DebugStorage', True)
@@ -202,6 +216,8 @@ class SettingsHolder:
         self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
         self.SERVICE_ENABLED = config.get('ServiceEnabled', False)
         self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
+        self.REST_SERVER = config.get('RestServer', self.DEFAULT_REST_SERVER)
+        self.RPC_SERVER = config.get('RPCServer', self.DEFAULT_RPC_SERVER)
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """

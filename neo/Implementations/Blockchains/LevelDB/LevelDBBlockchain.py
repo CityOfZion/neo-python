@@ -386,7 +386,6 @@ class LevelDBBlockchain(Blockchain):
             outhex = binascii.unhexlify(out)
             return Transaction.DeserializeFromBufer(outhex, 0), height
 
-        logger.info("Could not find transaction for hash %s " % hash)
         return None, -1
 
     def AddBlockDirectly(self, block, do_persist_complete=True):

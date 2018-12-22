@@ -13,13 +13,13 @@ class VerifiableTestCase(NeoTestCase):
     _blockchain = None
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
 
         Blockchain.DeregisterBlockchain()
 
-        os.makedirs(self.LEVELDB_TESTPATH, exist_ok=True)
-        self._blockchain = LevelDBBlockchain(path=self.LEVELDB_TESTPATH, skip_version_check=True)
-        Blockchain.RegisterBlockchain(self._blockchain)
+        os.makedirs(cls.LEVELDB_TESTPATH, exist_ok=True)
+        cls._blockchain = LevelDBBlockchain(path=cls.LEVELDB_TESTPATH, skip_version_check=True)
+        Blockchain.RegisterBlockchain(cls._blockchain)
 
     @classmethod
     def tearDownClass(cls):

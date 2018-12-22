@@ -4,6 +4,12 @@ from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 import mock
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
+import os
+import shutil
+from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from neo.Wallets.utils import to_aes_key
+from neocore.Cryptography.Crypto import Crypto
 
 
 class TestInputParser(TestCase):
@@ -190,7 +196,7 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, bytearray(b'abc'))
 
-        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="abc'") as fake_prompt:
+        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="abc") as fake_prompt:
 
             result, abort = Utils.gather_param(0, ContractParameterType.Boolean)
 
@@ -202,12 +208,7 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, False)
 
-        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value=0) as fake_prompt:
-
-            result, abort = Utils.gather_param(0, ContractParameterType.Boolean)
-
-            self.assertEqual(result, False)
-
+        # test ContractParameterType.ByteArray for address input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='AeV59NyZtgj5AMQ7vY6yhr2MRvcfFeLWSb') as fake_prompt:
 
             result, abort = Utils.gather_param(0, ContractParameterType.ByteArray)
@@ -226,7 +227,62 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, ['a', 'b', 'c', [1, 3, 4], 'e'])
 
+        # test ContractParameterType.Array without a closed list
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c", [1, 3, 4], "e"') as fake_prompt:
+
             result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
 
             self.assertEqual(result, None)
+            self.assertEqual(abort, True)
+
+        # test ContractParameterType.Array with no list
+        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="b'abc'") as fake_prompt:
+
+                result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
+
+                self.assertRaises(Exception, "Please provide a list")
+                self.assertEqual(result, None)
+                self.assertEqual(abort, True)
+
+        # test ContractParameterType.PublicKey
+        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6") as fake_prompt:
+
+            test_wallet_path = shutil.copyfile(
+                WalletFixtureTestCase.wallet_1_path(),
+                WalletFixtureTestCase.wallet_1_dest()
+            )
+            wallet = UserWallet.Open(
+                test_wallet_path,
+                to_aes_key(WalletFixtureTestCase.wallet_1_pass())
+            )
+
+            addr_scripthash = wallet.GetStandardAddress()
+
+            result, abort = Utils.gather_param(0, ContractParameterType.PublicKey)
+
+            script = b'21' + result.encode_point(True) + b'ac'
+            pk_script_hash = Crypto.ToScriptHash(script)
+
+            self.assertEqual(addr_scripthash, pk_script_hash)  # verifies the functionality of ContractParameterType.PublicKey
+
+            wallet.Close()
+            wallet = None
+            os.remove(WalletFixtureTestCase.wallet_1_dest())
+
+        # test unknown ContractParameterType
+        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="9698b1cac6ce9cbe8517e490778525b929e01903") as fake_prompt:
+
+            result, abort = Utils.gather_param(0, ContractParameterType.Hash160, do_continue=False)
+
+            self.assertRaises(Exception, "Unknown param type Hash160")
+            self.assertEqual(result, None)
+            self.assertEqual(abort, True)
+
+        # test Exception with do_continue=True and KeyboardInterrupt
+        with mock.patch('neo.Prompt.Utils.get_input_prompt') as fake_prompt:
+            fake_prompt.side_effect = [Exception(-32602, "Invalid params"), KeyboardInterrupt]
+
+            result, abort = Utils.gather_param(0, ContractParameterType.String)
+
+            self.assertEqual(result, None)
+            self.assertEqual(abort, True)

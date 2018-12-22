@@ -136,7 +136,7 @@ class PromptInterface:
                 'wallet delete_addr {addr}',
                 'wallet delete_token {token_contract_hash}',
                 'wallet alias {addr} {title}',
-                'wallet tkn_send {token symbol} {address_from} {address to} {amount}',
+                'wallet tkn_send {token symbol} {address_from} {address to} {amount} (--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...])',
                 'wallet tkn_send_from {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_approve {token symbol} {address_from} {address to} {amount}',
                 'wallet tkn_allowance {token symbol} {address_from} {address to}',
@@ -307,13 +307,15 @@ class PromptInterface:
     def start_wallet_loop(self):
         if self.wallet_loop_deferred:
             self.stop_wallet_loop()
-        walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-        self.wallet_loop_deferred = walletdb_loop.start(1)
+        self.walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+        self.wallet_loop_deferred = self.walletdb_loop.start(1)
         self.wallet_loop_deferred.addErrback(self.on_looperror)
 
     def stop_wallet_loop(self):
         self.wallet_loop_deferred.cancel()
         self.wallet_loop_deferred = None
+        if self.walletdb_loop and self.walletdb_loop.running:
+            self.walletdb_loop.stop()
 
     def do_close_wallet(self):
         if self.Wallet:
@@ -562,6 +564,8 @@ class PromptInterface:
             process_transaction(self.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2], fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
 
     def do_sign(self, arguments):
+        if not self.Wallet:
+            print("Please open a wallet before trying to sign")
         jsn = get_arg(arguments)
         parse_and_sign(self.Wallet, jsn)
 
@@ -646,6 +650,8 @@ class PromptInterface:
                     tokens = [("class:command", json.dumps(jsn, indent=4))]
                     print_formatted_text(FormattedText(tokens), style=self.token_style)
                     print('\n')
+                else:
+                    print(f"Could not find transaction for hash {txid}")
             except Exception as e:
                 print("Could not find transaction from args: %s (%s)" % (e, args))
         else:
@@ -777,7 +783,7 @@ class PromptInterface:
         args, invoke_attrs = get_tx_attr_from_args(args)
         args, owners = get_owners_from_params(args)
         if args and len(args) > 0:
-            tx, fee, results, num_ops = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
+            tx, fee, results, num_ops, engine_success = TestInvokeContract(self.Wallet, args, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
 
             if tx is not None and results is not None:
 
@@ -823,7 +829,7 @@ class PromptInterface:
 
             if contract_script is not None:
 
-                tx, fee, results, num_ops = test_invoke(contract_script, self.Wallet, [], from_addr=from_addr)
+                tx, fee, results, num_ops, engine_success = test_invoke(contract_script, self.Wallet, [], from_addr=from_addr)
 
                 if tx is not None and results is not None:
                     print(

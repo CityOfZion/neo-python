@@ -115,7 +115,7 @@ class SmartContractEvent(SerializableMixin):
                 token.Deserialize(reader)
                 self.token = token
             except Exception as e:
-                logger.error("Couldnt deserialize token %s " % e)
+                logger.debug("Couldnt deserialize token %s " % e)
 
     def __str__(self):
         return "SmartContractEvent(event_type=%s, event_payload=%s, contract_hash=%s, block_number=%s, tx_hash=%s, execution_success=%s, test_mode=%s)" \
@@ -161,7 +161,7 @@ class SmartContractEvent(SerializableMixin):
 
         if self.event_type in [SmartContractEvent.CONTRACT_CREATED, SmartContractEvent.CONTRACT_MIGRATED]:
             jsn['contract'] = self.contract.ToJson()
-            del jsn['contract']['code']['script']
+            del jsn['contract']['script']
 
         if self.token:
             jsn['token'] = self.token.ToJson()
@@ -230,9 +230,9 @@ class NotifyEvent(SmartContractEvent):
                 if plen == 4 and self.notify_type in [NotifyType.TRANSFER, NotifyType.APPROVE]:
                     if payload[1].Value is None:
                         self.addr_from = empty
-                        logger.info("Using contract addr from address %s " % self.event_payload)
+                        logger.debug("Using contract addr from address %s " % self.event_payload)
                     elif payload[1].Value is False:
-                        logger.info("Using contract addr from address %s " % self.event_payload)
+                        logger.debug("Using contract addr from address %s " % self.event_payload)
                         self.addr_from = empty
                     else:
                         self.addr_from = UInt160(data=payload[1].Value) if len(payload[1].Value) == 20 else empty
@@ -253,7 +253,7 @@ class NotifyEvent(SmartContractEvent):
                     self.is_standard_notify = True
 
             except Exception as e:
-                logger.info("Could not determine notify event: %s %s" % (e, self.event_payload))
+                logger.debug("Could not determine notify event: %s %s" % (e, self.event_payload))
 
         elif self.event_payload.Type == ContractParameterType.String:
             self.notify_type = self.event_payload.Value
@@ -270,19 +270,19 @@ class NotifyEvent(SmartContractEvent):
             writer.WriteUInt160(self.addr_to)
 
             if self.Amount < 0:
-                logger.warn("Transfer Amount less than 0")
+                logger.debug("Transfer Amount less than 0")
                 writer.WriteVarInt(0)
             elif self.Amount < 0xffffffffffffffff:
                 writer.WriteVarInt(self.amount)
             else:
-                logger.warn("Writing Payload value amount greater than ulong long is not allowed.  Setting to ulong long max")
+                logger.debug("Writing Payload value amount greater than ulong long is not allowed.  Setting to ulong long max")
                 writer.WriteVarInt(0xffffffffffffffff)
 
     def DeserializePayload(self, reader):
         try:
             self.notify_type = reader.ReadVarString()
         except Exception as e:
-            logger.info("Could not read notify type")
+            logger.debug("Could not read notify type")
 
         if self.notify_type in [NotifyType.REFUND, NotifyType.APPROVE, NotifyType.TRANSFER]:
             try:
@@ -291,7 +291,7 @@ class NotifyEvent(SmartContractEvent):
                 self.amount = reader.ReadVarInt()
                 self.is_standard_notify = True
             except Exception as e:
-                logger.info("Could not transfer notification data")
+                logger.debug("Could not transfer notification data")
 
     def ToJson(self):
         jsn = super(NotifyEvent, self).ToJson()
