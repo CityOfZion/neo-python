@@ -38,13 +38,13 @@ class CommandWalletToken(CommandBase):
 
         if not item:
             print(f"Please specify an action. See help for available actions")
-            return
+            return False
 
         try:
             return self.execute_sub_command(item, arguments[1:])
         except KeyError:
             print(f"{item} is an invalid parameter")
-            return
+            return False
 
 
 class CommandTokenDelete(CommandBase):
@@ -114,7 +114,7 @@ class CommandTokenSend(CommandBase):
             amount = float(arguments[3])
         except ValueError:
             print(f"{arguments[3]} is not a valid amount")
-            return
+            return False
 
         try:
             success = token_send(wallet, token, from_addr, to_addr, amount, user_tx_attributes)
@@ -143,6 +143,7 @@ class CommandTokenSendFrom(CommandBase):
     """
     This command is for old style NEP-5 tokens before the proposal got amended to remove this optional command.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -188,7 +189,7 @@ class CommandTokenSendFrom(CommandBase):
             logger.error(traceback.format_exc())
             return False
 
-        if tx is not None and results is not None and len(results) > 0:
+        if tx and results and len(results) > 0:
             vm_result = results[0].GetBigInteger()
             if vm_result == 1:
                 print("\n-----------------------------------------------------------")
@@ -262,7 +263,7 @@ class CommandTokenHistory(CommandBase):
         return CommandDesc('history', 'show transaction history', [p1])
 
 
-def _validate_nep5_args(wallet, token_str, send_from, send_to, amount):
+def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
     """
     A helper function to validate common arguments used in NEP-5 functions
 
@@ -290,10 +291,10 @@ def _validate_nep5_args(wallet, token_str, send_from, send_to, amount):
     if not isinstance(token, NEP5Token):
         raise ValueError("The given token argument does not represent a known NEP5 token")
 
-    if not isValidPublicAddress(send_from):
+    if not isValidPublicAddress(from_addr):
         raise ValueError("send_from is not a valid address")
 
-    if not isValidPublicAddress(send_to):
+    if not isValidPublicAddress(to_addr):
         raise ValueError("send_to is not a valid address")
 
     try:
@@ -341,7 +342,7 @@ def token_send(wallet, token_str, from_addr, to_addr, amount, prompt_passwd=True
     return do_token_transfer(token, wallet, from_addr, to_addr, amount, prompt_passwd=prompt_passwd, tx_attributes=user_tx_attributes)
 
 
-def test_token_send_from(wallet, token_str, addr_from, addr_to, amount):
+def test_token_send_from(wallet, token_str, from_addr, to_addr, amount):
     """
     Test sending funds from `addr_from` to `addr_to` without commiting to the network.
 
@@ -365,8 +366,8 @@ def test_token_send_from(wallet, token_str, addr_from, addr_to, amount):
             list: the neo VM evaluation stack results.
     """
     try:
-        token = _validate_nep5_args(wallet, token_str, addr_from, addr_to, amount)
-        allowance = token_get_allowance(wallet, token_str, addr_from, addr_to, verbose=False)
+        token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount)
+        allowance = token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False)
 
         if allowance < amount:
             raise ValueError(f"Insufficient allowance: {allowance}")
@@ -374,7 +375,7 @@ def test_token_send_from(wallet, token_str, addr_from, addr_to, amount):
         # bad args or allowance
         raise
 
-    tx, fees, results = token.TransferFrom(wallet, addr_from, addr_to, amount)
+    tx, fees, results = token.TransferFrom(wallet, from_addr, to_addr, amount)
     return token, tx, fees, results
 
 
@@ -425,7 +426,6 @@ def token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False):
         token_str (str): symbol name or script_hash
         from_addr (str): a wallet address
         to_addr (str): a wallet address
-        amount (float): the number of tokens to send
         verbose (bool): flag indicating whether to print VM results
 
     Raises:
@@ -435,14 +435,13 @@ def token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False):
         int: allowance
     """
     try:
-        placeholder_amount = 0
-        token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, placeholder_amount)
+        token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount=0)
     except ValueError:
         raise
 
     tx, fee, results = token.Allowance(wallet, from_addr, to_addr)
 
-    if tx is not None and results is not None and len(results) > 0:
+    if tx and results and len(results) > 0:
         allowance = results[0].GetBigInteger()
         if verbose:
             print("%s allowance for %s from %s : %s " % (token.symbol, from_addr, to_addr, allowance))
