@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.3-dev] in progress
 -----------------------
+- Update ``getassetstate`` RPC method;  add ``showallassets`` LevelDBBlockchain function; update prompt.py ``help``, ``show_asset_state``, and ``show_contract_state``
 - Disallow ``Void`` type input parameters for smart contracts and increase test coverage
 - Fix confirmed tx not being purged from mempool `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
 - Fix bootstrap thread joining failure on Ubuntu systems
@@ -49,6 +50,7 @@ All notable changes to this project are documented in this file.
 - Add ``getblockheader`` RPC method
 - Remove ``Neo.Witness.GetInvocationScript``
 - Allow wallets to sync past corrupt blocks
+
 
 [0.8.1] 2018-10-06
 ------------------
