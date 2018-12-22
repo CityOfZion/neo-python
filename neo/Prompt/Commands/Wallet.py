@@ -11,6 +11,8 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
+from neo.SmartContract.Contract import Contract
+from neocore.Cryptography.Crypto import Crypto
 from neocore.KeyPair import KeyPair
 from prompt_toolkit import prompt
 import binascii
@@ -313,6 +315,7 @@ class CommandWalletImport(CommandBase):
         self.register_sub_command(CommandWalletImportWIF())
         self.register_sub_command(CommandWalletImportNEP2())
         self.register_sub_command(CommandWalletImportWatchAddr())
+        self.register_sub_command(CommandWalletImportMultisigAddr())
 
     def command_desc(self):
         return CommandDesc('import', 'import wallet items')
@@ -499,6 +502,84 @@ class CommandWalletImportWatchAddr(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('address', 'a public NEO address to watch')
         return CommandDesc('watch_addr', 'import a public address as watch only', [p1])
+
+
+class CommandWalletImportMultisigAddr(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def _is_valid_public_key(self, key):
+        if len(key) != 66:
+            return False
+        try:
+            Crypto.ToScriptHash(key, unhex=True)
+        except Exception:
+            # the UINT160 inside ToScriptHash can throw Exception
+            return False
+        else:
+            return True
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) < 3:
+            print("Please specify the minimum required parameters")
+            return False
+
+        pubkey_in_wallet = arguments[0]
+        if not self._is_valid_public_key(pubkey_in_wallet):
+            print("Invalid public key format")
+            return False
+
+        key_script_hash = Crypto.ToScriptHash(pubkey_in_wallet, unhex=True)
+        if not wallet.ContainsKeyHash(key_script_hash):
+            print("Supplied first public key does not exist in own wallet.")
+            return False
+
+        try:
+            min_signature_cnt = int(arguments[1])
+        except ValueError:
+            print(f"Invalid minimum signature count value: {arguments[1]}")
+            return False
+
+        if min_signature_cnt < 1:
+            print("Minimum signatures count cannot be lower than 1")
+            return False
+
+        # validate minimum required signing key count
+        signing_keys = arguments[2:]
+        len_signing_keys = len(signing_keys)
+        if len_signing_keys < min_signature_cnt:
+            # we need at least 2 public keys in total otherwise it's just a regular address.
+            # 1 pub key is from an address in our own wallet, a secondary key can come from any place.
+            print(f"Missing remaining signing keys. Minimum required: {min_signature_cnt} given: {len_signing_keys}")
+            return False
+
+        # validate remaining pub keys
+        for key in signing_keys:
+            if not self._is_valid_public_key(key):
+                print(f"Invalid signing key {key}")
+                return False
+
+        signing_keys.append(pubkey_in_wallet)
+
+        # validate that all signing keys are unique
+        if len(signing_keys) > len(set(signing_keys)):
+            print("Provided signing keys are not unique")
+            return False
+
+        verification_contract = Contract.CreateMultiSigContract(key_script_hash, min_signature_cnt, signing_keys)
+        address = verification_contract.Address
+        wallet.AddContract(verification_contract)
+        print(f"Added multi-sig contract address {address} to wallet")
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('own pub key', 'public key in your own wallet (use `wallet` to find the information)')
+        p2 = ParameterDesc('sign_cnt', 'the minimum number of signatures required for using the address (min is: 1)')
+        p3 = ParameterDesc('signing key n', 'all remaining signing public keys')
+        return CommandDesc('multisig_addr', 'import a multi-signature address', [p1, p2, p3])
+
 
 #########################################################################
 #########################################################################
