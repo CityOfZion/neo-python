@@ -189,7 +189,7 @@ class CommandTokenSendFrom(CommandBase):
             logger.error(traceback.format_exc())
             return False
 
-        if tx and results and len(results) > 0:
+        if tx and results:
             vm_result = results[0].GetBigInteger()
             if vm_result == 1:
                 print("\n-----------------------------------------------------------")
@@ -441,7 +441,7 @@ def token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False):
 
     tx, fee, results = token.Allowance(wallet, from_addr, to_addr)
 
-    if tx and results and len(results) > 0:
+    if tx and results:
         allowance = results[0].GetBigInteger()
         if verbose:
             print("%s allowance for %s from %s : %s " % (token.symbol, from_addr, to_addr, allowance))
