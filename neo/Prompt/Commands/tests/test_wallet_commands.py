@@ -373,7 +373,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             args = ['unspent', '--from-addr=123']
             res = CommandWallet().execute(args)
             self.assertIsNone(res)
-            self.assertIn("Invalid arguments specified", mock_print.getvalue())
+            self.assertIn("Invalid address specified", mock_print.getvalue())
 
         # test wallet unspent successful
         args = ['unspent']
@@ -406,9 +406,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(res[0].Output.AssetId, self.GAS)
 
         # test wallet unspent with unrelated address
-        args = ['unspent', '--from-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm']
-        res = CommandWallet().execute(args)
-        self.assertEqual(res, [])
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--from-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm']
+            res = CommandWallet().execute(args)
+            self.assertEqual(res, [])
+            self.assertIn("No unspent assets matching the arguments", mock_print.getvalue())
 
         # test wallet unspent with address
         args = ['unspent', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
@@ -419,9 +421,11 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(res[1].Output.AssetId, self.GAS)
 
         # test wallet unspent with --watch
-        args = ['unspent', '--watch']
-        res = CommandWallet().execute(args)
-        self.assertEqual(res, [])
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--watch']
+            res = CommandWallet().execute(args)
+            self.assertEqual(res, [])
+            self.assertIn("No unspent assets matching the arguments", mock_print.getvalue())
 
         # test wallet unspent with --count
         with patch('sys.stdout', new=StringIO()) as mock_print:

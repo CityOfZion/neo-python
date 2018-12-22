@@ -275,25 +275,25 @@ class CommandWalletUnspent(CommandBase):
         from_addr = None
         watch_only = False
         do_count = False
+        wallet = PromptData.Wallet
 
-        try:
-            if arguments:
-                arguments, from_addr_str = get_from_addr(arguments)
-                if from_addr_str:
-                    from_addr = PromptData.Wallet.ToScriptHash(from_addr_str)
+        arguments, from_addr_str = PromptUtils.get_from_addr(arguments)
+        if from_addr_str:
+            if not isValidPublicAddress(from_addr_str):
+                print("Invalid address specified")
+                return None
 
-            for item in arguments:
-                if item == '--watch':
-                    watch_only = True
-                elif item == '--count':
-                    do_count = True
-                else:
-                    asset_id = get_asset_id(PromptData.Wallet, item)
-        except Exception as e:
-            print("Invalid arguments specified")
-            return None
+            from_addr = wallet.ToScriptHash(from_addr_str)
 
-        return ShowUnspentCoins(PromptData.Wallet, asset_id, from_addr, watch_only, do_count)
+        for item in arguments:
+            if item == '--watch':
+                watch_only = True
+            elif item == '--count':
+                do_count = True
+            else:
+                asset_id = PromptUtils.get_asset_id(wallet, item)
+
+        return ShowUnspentCoins(wallet, asset_id, from_addr, watch_only, do_count)
 
     def command_desc(self):
         p1 = ParameterDesc('asset', 'type of asset to query (NEO/GAS)', optional=True)
@@ -738,6 +738,9 @@ def ShowUnspentCoins(wallet, asset_id=None, from_addr=None, watch_only=False, do
     for unspent in unspents:
         print('\n-----------------------------------------------')
         print(json.dumps(unspent.ToJson(), indent=4))
+
+    if not unspents:
+        print("No unspent assets matching the arguments.")
 
     return unspents
 
