@@ -44,6 +44,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletSign())
         self.register_sub_command(CommandWalletClaimGas())
         self.register_sub_command(CommandWalletRebuild())
+        self.register_sub_command(CommandWalletUnspent())
         self.register_sub_command(CommandWalletAlias())
         self.register_sub_command(CommandWalletToken())
         self.register_sub_command(CommandWalletExport())
@@ -264,6 +265,44 @@ class CommandWalletRebuild(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('start_block', 'block number to start the resync at', optional=True)
         return CommandDesc('rebuild', 'rebuild the wallet index', params=[p1])
+
+
+class CommandWalletUnspent(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        asset_id = None
+        from_addr = None
+        watch_only = False
+        do_count = False
+        wallet = PromptData.Wallet
+
+        arguments, from_addr_str = PromptUtils.get_from_addr(arguments)
+        if from_addr_str:
+            if not isValidPublicAddress(from_addr_str):
+                print("Invalid address specified")
+                return None
+
+            from_addr = wallet.ToScriptHash(from_addr_str)
+
+        for item in arguments:
+            if item == '--watch':
+                watch_only = True
+            elif item == '--count':
+                do_count = True
+            else:
+                asset_id = PromptUtils.get_asset_id(wallet, item)
+
+        return ShowUnspentCoins(wallet, asset_id, from_addr, watch_only, do_count)
+
+    def command_desc(self):
+        p1 = ParameterDesc('asset', 'type of asset to query (NEO/GAS)', optional=True)
+        p2 = ParameterDesc('--from-addr', 'address to check the unspent assets from (if not specified, checks for all addresses)', optional=True)
+        p3 = ParameterDesc('--watch', 'show assets that are in watch only addresses', optional=True)
+        p4 = ParameterDesc('--count', 'only count the unspent assets', optional=True)
+        return CommandDesc('unspent', 'show unspent assets', params=[p1, p2, p3, p4])
 
 
 class CommandWalletAlias(CommandBase):
@@ -747,29 +786,30 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None):
     return None, False
 
 
-def ShowUnspentCoins(wallet, args):
-    addr = None
-    asset_type = None
-    watch_only = 0
-    do_count = False
-    try:
-        for item in args:
-            if len(item) == 34:
-                addr = wallet.ToScriptHash(item)
-            elif len(item) > 1:
-                asset_type = PromptUtils.get_asset_id(wallet, item)
-            if item == '--watch':
-                watch_only = 64
-            elif item == '--count':
-                do_count = True
+def ShowUnspentCoins(wallet, asset_id=None, from_addr=None, watch_only=False, do_count=False):
+    """
+    Show unspent coin objects in the wallet.
 
-    except Exception as e:
-        print("Invalid arguments specified")
+    Args:
+        wallet (neo.Wallet): wallet to show unspent coins from.
+        asset_id (UInt256): a bytearray (len 32) representing an asset on the blockchain.
+        from_addr (UInt160): a bytearray (len 20) representing an address.
+        watch_only (bool): indicate if this shows coins that are in 'watch only' addresses.
+        do_count (bool): if True only show a count of unspent assets.
 
-    if asset_type:
-        unspents = wallet.FindUnspentCoinsByAsset(asset_type, from_addr=addr, watch_only_val=watch_only)
+    Returns:
+        list: a list of unspent ``neo.Wallet.Coin`` in the wallet
+    """
+
+    if wallet is None:
+        print("Please open a wallet.")
+        return None
+
+    watch_only_flag = 64 if watch_only else 0
+    if asset_id:
+        unspents = wallet.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr, watch_only_val=watch_only_flag)
     else:
-        unspents = wallet.FindUnspentCoins(from_addr=addr, watch_only_val=watch_only)
+        unspents = wallet.FindUnspentCoins(from_addr=from_addr, watch_only_val=watch_only)
 
     if do_count:
         print('\n-----------------------------------------------')
@@ -779,6 +819,9 @@ def ShowUnspentCoins(wallet, args):
     for unspent in unspents:
         print('\n-----------------------------------------------')
         print(json.dumps(unspent.ToJson(), indent=4))
+
+    if not unspents:
+        print("No unspent assets matching the arguments.")
 
     return unspents
 
