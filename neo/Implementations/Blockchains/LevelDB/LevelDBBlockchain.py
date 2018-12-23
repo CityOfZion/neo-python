@@ -340,6 +340,12 @@ class LevelDBBlockchain(Blockchain):
         assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState)
         keys = assets.Keys
 
+        if query.lower() == "neo":
+            query = "AntShare"
+
+        if query.lower() in {"gas", "neogas"}:
+            query = "AntCoin"
+
         for item in keys:
             asset = assets.TryGet(keyval=item)
             if query in asset.Name.decode('utf-8'):
@@ -364,6 +370,12 @@ class LevelDBBlockchain(Blockchain):
         asset = assets.TryGet(assetId)
 
         return asset
+
+    def ShowAllAssets(self):
+
+        assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState)
+        keys = assets.Keys
+        return keys
 
     def GetTransaction(self, hash):
 

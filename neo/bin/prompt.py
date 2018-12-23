@@ -43,6 +43,7 @@ from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
+from neocore.UInt160 import UInt160
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -99,8 +100,10 @@ class PromptInterface:
                 'tx {hash}',
                 'account {address} # returns account state',
                 'asset {assetId} # returns asset state',
+                'asset all # returns a list of all assets',
                 'asset search {query}',
                 'contract {contract hash} # returns contract state',
+                'contract all # returns a list of all contracts',
                 'contract search {query}',
                 'notifications {block_number or address}',
                 'mem # returns memory in use and number of buffers',
@@ -675,7 +678,20 @@ class PromptInterface:
 
         if item is not None:
 
-            if item == 'search':
+            if item.lower() == 'all':
+                assets = Blockchain.Default().ShowAllAssets()
+                assetlist = []
+                for asset in assets:
+                    state = Blockchain.Default().GetAssetState(asset.decode('utf-8')).ToJson()
+                    asset_dict = {state['name']: state['assetId']}
+                    assetlist.append(asset_dict)
+                bjson = json.dumps(assetlist, indent=4)
+                tokens = [("class:number", bjson)]
+                print_formatted_text(FormattedText(tokens), style=self.token_style)
+                print('\n')
+                return
+
+            elif item.lower() == 'search':
                 query = get_arg(args, 1)
                 results = Blockchain.Default().SearchAssetState(query)
                 print("Found %s results for %s" % (len(results), query))
@@ -684,10 +700,20 @@ class PromptInterface:
                     tokens = [("class:number", bjson)]
                     print_formatted_text(FormattedText(tokens), style=self.token_style)
                     print('\n')
-
                 return
 
-            asset = Blockchain.Default().GetAssetState(item)
+            if item.lower() == 'neo':
+                assetId = Blockchain.Default().SystemShare().Hash
+            elif item.lower() == 'gas':
+                assetId = Blockchain.Default().SystemCoin().Hash
+            else:
+                try:
+                    assetId = UInt256.ParseString(item)
+                except Exception:
+                    print("Could not find asset from args: %s" % args)
+                    return
+
+            asset = Blockchain.Default().GetAssetState(assetId.ToBytes())
 
             if asset is not None:
                 bjson = json.dumps(asset.ToJson(), indent=4)
@@ -706,7 +732,17 @@ class PromptInterface:
 
             if item.lower() == 'all':
                 contracts = Blockchain.Default().ShowAllContracts()
-                print("Contracts: %s" % contracts)
+                contractlist = []
+                for contract in contracts:
+                    state = Blockchain.Default().GetContract(contract.decode('utf-8')).ToJson()
+                    contract_dict = {state['name']: state['hash']}
+                    contractlist.append(contract_dict)
+                bjson = json.dumps(contractlist, indent=4)
+                tokens = [("class:number", bjson)]
+                print_formatted_text(FormattedText(tokens), style=self.token_style)
+                print('\n')
+                return
+
             elif item.lower() == 'search':
                 query = get_arg(args, 1)
                 if query:
@@ -721,7 +757,13 @@ class PromptInterface:
                 else:
                     print("Please specify a search query")
             else:
-                contract = Blockchain.Default().GetContract(item)
+                try:
+                    hash = UInt160.ParseString(item).ToBytes()
+                except Exception:
+                    print("Could not find contract from args: %s" % args)
+                    return
+
+                contract = Blockchain.Default().GetContract(hash)
 
                 if contract is not None:
                     contract.DetermineIsNEP5()

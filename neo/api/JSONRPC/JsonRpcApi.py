@@ -196,8 +196,14 @@ class JsonRpcApi:
             return acct.ToJson()
 
         elif method == "getassetstate":
-            asset_id = UInt256.ParseString(params[0])
-            asset = Blockchain.Default().GetAssetState(asset_id.ToBytes())
+            asset_str = params[0]
+            if asset_str.lower() == 'neo':
+                assetId = Blockchain.Default().SystemShare().Hash
+            elif asset_str.lower() == 'gas':
+                assetId = Blockchain.Default().SystemCoin().Hash
+            else:
+                assetId = UInt256.ParseString(params[0])
+            asset = Blockchain.Default().GetAssetState(assetId.ToBytes())
             if asset:
                 return asset.ToJson()
             raise JsonRpcError(-100, "Unknown asset")
