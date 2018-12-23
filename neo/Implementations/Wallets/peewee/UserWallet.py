@@ -85,7 +85,7 @@ class UserWallet(Wallet):
         Create a new user wallet.
 
         Args:
-            path (str): A path indicating where to create or open the wallet i.e. "/Wallets/mywallet".
+            path (str): A path indicating where to create or open the wallet e.g. "/Wallets/mywallet".
             password (str): a 10 characters minimum password to secure the wallet with.
 
         Returns:
