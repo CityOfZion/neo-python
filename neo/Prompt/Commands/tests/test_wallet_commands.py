@@ -513,29 +513,25 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_6_split_unspent(self):
         wallet = self.GetWallet1(recreate=True)
-
-        # test bad
-        tx = SplitUnspentCoin(wallet, [])
-        self.assertEqual(tx, None)
+        addr = wallet.ToScriptHash('AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3')
 
         # bad inputs
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 3, 2])
+        tx = SplitUnspentCoin(wallet, self.NEO, addr, 3, 2)
         self.assertEqual(tx, None)
 
         # should be ok
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 0, 2], prompt_passwd=False)
+        tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 2, prompt_passwd=False)
         self.assertIsNotNone(tx)
 
         # rebuild wallet and try with non-even amount of neo, should be split into integer values of NEO
         wallet = self.GetWallet1(True)
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 0, 3], prompt_passwd=False)
+        tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 3, prompt_passwd=False)
         self.assertIsNotNone(tx)
-
         self.assertEqual([Fixed8.FromDecimal(17), Fixed8.FromDecimal(17), Fixed8.FromDecimal(16)], [item.Value for item in tx.outputs])
 
         # try with gas
         wallet = self.GetWallet1(True)
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'gas', 0, 3], prompt_passwd=False)
+        tx = SplitUnspentCoin(wallet, self.GAS, addr, 0, 3, prompt_passwd=False)
         self.assertIsNotNone(tx)
 
     def test_7_create_address(self):

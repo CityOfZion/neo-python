@@ -45,6 +45,7 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletClaimGas())
         self.register_sub_command(CommandWalletRebuild())
         self.register_sub_command(CommandWalletUnspent())
+        self.register_sub_command(CommandWalletSplit())
         self.register_sub_command(CommandWalletAlias())
         self.register_sub_command(CommandWalletToken())
         self.register_sub_command(CommandWalletExport())
@@ -303,6 +304,66 @@ class CommandWalletUnspent(CommandBase):
         p3 = ParameterDesc('--watch', 'show assets that are in watch only addresses', optional=True)
         p4 = ParameterDesc('--count', 'only count the unspent assets', optional=True)
         return CommandDesc('unspent', 'show unspent assets', params=[p1, p2, p3, p4])
+
+
+class CommandWalletSplit(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) < 4:
+            print("Please specify the required parameters")
+            return None
+
+        if len(arguments) > 5:
+            # the 5th argument is the optional attributes,
+            print("Too many parameters supplied. Please check your command")
+            return None
+
+        try:
+            from_addr = wallet.ToScriptHash(arguments[0])
+        except ValueError as e:
+            print(str(e))
+            return None
+
+        asset_id = PromptUtils.get_asset_id(wallet, arguments[1])
+
+        try:
+            index = int(arguments[2])
+        except ValueError:
+            print(f"Invalid unspent index value: {arguments[2]}")
+            return None
+
+        try:
+            divisions = int(arguments[3])
+        except ValueError:
+            print(f"Invalid unspent index value: {arguments[3]}")
+            return None
+
+        if divisions < 1:
+            print("Divisions cannot be lower than 1")
+            return None
+
+        if len(arguments) == 5:
+            fee = Fixed8.TryParse(arguments[4])
+            if not fee:
+                print(f"Invalid fee value: {arguments[4]}")
+                return None
+        else:
+            fee = Fixed8.Zero()
+
+        return SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee)
+
+    def command_desc(self):
+        p1 = ParameterDesc('address', '')
+        p2 = ParameterDesc('asset', 'type of asset to query (NEO/GAS)')
+        p3 = ParameterDesc('unspent_index', '')
+        p4 = ParameterDesc('nb_vins', 'divide into number of vins')
+        p5 = ParameterDesc('fee', 'optional fee', optional=True)
+        return CommandDesc('split', 'show unspent assets', params=[p1, p2, p3, p4, p5])
 
 
 class CommandWalletAlias(CommandBase):
@@ -826,45 +887,53 @@ def ShowUnspentCoins(wallet, asset_id=None, from_addr=None, watch_only=False, do
     return unspents
 
 
-def SplitUnspentCoin(wallet, args, prompt_passwd=True):
+def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Zero(), prompt_passwd=True):
     """
-    example ``wallet split Ab8RGQEWetkhVqXjPHeGN9LJdbhaFLyUXz neo 1 100``
-    this would split the second unspent neo vin into 100 vouts
-    :param wallet:
-    :param args (list): A list of arguments as [Address, asset type, unspent index, divisions]
-    :return: bool
+    Split unspent asset vins into several vouts
+
+    Args:
+        wallet (neo.Wallet): wallet to show unspent coins from.
+        asset_id (UInt256): a bytearray (len 32) representing an asset on the blockchain.
+        from_addr (UInt160): a bytearray (len 20) representing an address.
+        index (int): index of the unspent vin to split
+        divisions (int): number of vouts to create
+        fee (Fixed8): A fee to be attached to the Transaction for network processing purposes.
+        prompt_passwd (bool): prompt password before processing the transaction
+
+    Returns:
+        neo.Core.TX.Transaction.ContractTransaction: contract transaction created
     """
+    print(wallet, asset_id, from_addr, index, divisions, fee)
 
-    fee = Fixed8.Zero()
-
-    try:
-        addr = wallet.ToScriptHash(args[0])
-        asset = PromptUtils.get_asset_id(wallet, args[1])
-        index = int(args[2])
-        divisions = int(args[3])
-
-        if len(args) == 5:
-            fee = Fixed8.TryParse(args[4])
-
-    except Exception as e:
-        logger.info("Invalid arguments specified: %s " % e)
+    if wallet is None:
+        print("Please open a wallet.")
         return None
 
-    try:
-        unspentItem = wallet.FindUnspentCoinsByAsset(asset, from_addr=addr)[index]
-    except Exception as e:
-        logger.info("Could not find unspent item for asset with index %s %s :  %s" % (asset, index, e))
+    unspent_items = wallet.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr)
+    if not unspent_items:
+        print(f"No unspent assets matching the arguments.")
         return None
 
-    outputs = split_to_vouts(asset, addr, unspentItem.Output.Value, divisions)
+    print("len(unspent_items): ", len(unspent_items))
+
+    if index < len(unspent_items):
+        unspent_item = unspent_items[index]
+    else:
+        print(f"Could not find unspent item for asset {asset_id} with index {index}")
+        return None
+
+    print(unspent_item.ToJson())
+    outputs = split_to_vouts(asset_id, from_addr, unspent_item.Output.Value, divisions)
+    print(outputs[0].ToJson(0))
 
     # subtract a fee from the first vout
     if outputs[0].Value > fee:
         outputs[0].Value -= fee
     else:
-        raise Exception("Fee could not be subtracted from outputs.")
+        print("Fee could not be subtracted from outputs.")
+        return None
 
-    contract_tx = ContractTransaction(outputs=outputs, inputs=[unspentItem.Reference])
+    contract_tx = ContractTransaction(outputs=outputs, inputs=[unspent_item.Reference])
 
     ctx = ContractParametersContext(contract_tx)
     wallet.Sign(ctx)
@@ -877,7 +946,6 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
             return None
 
     if ctx.Completed:
-
         contract_tx.scripts = ctx.GetScripts()
 
         relayed = NodeLeader.Instance().Relay(contract_tx)
