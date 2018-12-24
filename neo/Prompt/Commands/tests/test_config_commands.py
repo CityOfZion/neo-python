@@ -155,10 +155,12 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         NodeLeader._LEAD = old_leader
 
     def test_config_maxpeers(self):
-        # test no input
-        args = ['maxpeers']
-        res = CommandConfig().execute(args)
-        self.assertFalse(res)
+        # test no input and verify output confirming current maxpeers
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['maxpeers']
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Maintaining maxpeers at 5", mock_print.getvalue())
 
         # test changing the number of maxpeers
         args = ['maxpeers', "6"]
@@ -166,12 +168,10 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         self.assertTrue(res)
         self.assertEqual(int(res), settings.CONNECTED_PEER_MAX)
 
-        # test bad input and verify the new number of maxpeers is maintained
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['maxpeers', "blah"]
-            res = CommandConfig().execute(args)
-            self.assertFalse(res)
-            self.assertIn("Maintaining maxpeers at 6", mock_print.getvalue())
+        # test bad input
+        args = ['maxpeers', "blah"]
+        res = CommandConfig().execute(args)
+        self.assertFalse(res)
 
         # test negative number
         args = ['maxpeers', "-1"]
