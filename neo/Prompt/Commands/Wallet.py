@@ -316,42 +316,50 @@ class CommandWalletSplit(CommandBase):
 
         if len(arguments) < 4:
             print("Please specify the required parameters")
-            return None
+            return
 
         if len(arguments) > 5:
             # the 5th argument is the optional attributes,
             print("Too many parameters supplied. Please check your command")
-            return None
+            return
+
+        addr = arguments[0]
+        if not isValidPublicAddress(addr):
+            print("Invalid address specified")
+            return
 
         try:
-            from_addr = wallet.ToScriptHash(arguments[0])
+            from_addr = wallet.ToScriptHash(addr)
         except ValueError as e:
             print(str(e))
-            return None
+            return
 
         asset_id = PromptUtils.get_asset_id(wallet, arguments[1])
+        if not asset_id:
+            print(f"Unknown asset id: {arguments[1]}")
+            return
 
         try:
             index = int(arguments[2])
         except ValueError:
             print(f"Invalid unspent index value: {arguments[2]}")
-            return None
+            return
 
         try:
             divisions = int(arguments[3])
         except ValueError:
             print(f"Invalid divisions value: {arguments[3]}")
-            return None
+            return
 
-        if divisions < 1:
-            print("Divisions cannot be lower than 1")
-            return None
+        if divisions < 2:
+            print("Divisions cannot be lower than 2")
+            return
 
         if len(arguments) == 5:
-            fee = Fixed8.TryParse(arguments[4])
+            fee = Fixed8.TryParse(arguments[4], require_positive=True)
             if not fee:
                 print(f"Invalid fee value: {arguments[4]}")
-                return None
+                return
         else:
             fee = Fixed8.Zero()
 
@@ -906,18 +914,18 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
 
     if wallet is None:
         print("Please open a wallet.")
-        return None
+        return
 
     unspent_items = wallet.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr)
     if not unspent_items:
         print(f"No unspent assets matching the arguments.")
-        return None
+        return
 
     if index < len(unspent_items):
         unspent_item = unspent_items[index]
     else:
         print(f"Could not find unspent item for asset {asset_id} with index {index}")
-        return None
+        return
 
     outputs = split_to_vouts(asset_id, from_addr, unspent_item.Output.Value, divisions)
 
@@ -926,7 +934,7 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
         outputs[0].Value -= fee
     else:
         print("Fee could not be subtracted from outputs.")
-        return None
+        return
 
     contract_tx = ContractTransaction(outputs=outputs, inputs=[unspent_item.Reference])
 
@@ -938,7 +946,7 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
-            return None
+            return
 
     if ctx.Completed:
         contract_tx.scripts = ctx.GetScripts()
@@ -951,8 +959,6 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
             return contract_tx
         else:
             print("Could not relay tx %s " % contract_tx.Hash.ToString())
-
-    return None
 
 
 def split_to_vouts(asset, addr, input_val, divisions):

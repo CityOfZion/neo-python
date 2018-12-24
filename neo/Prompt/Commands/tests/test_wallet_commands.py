@@ -907,14 +907,14 @@ class UserWalletSplitTestCase(UserWalletTestCaseBase):
             args = ['split', '123', 'neo', '0', '2']
             res = CommandWallet().execute(args)
             self.assertIsNone(res)
-            self.assertIn("Not correct Address, wrong length", mock_print.getvalue())
+            self.assertIn("Invalid address specified", mock_print.getvalue())
 
         # test wallet split with unknown asset
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['split', self.wallet_1_addr, 'unknownasset', '0', '2']
             res = CommandWallet().execute(args)
             self.assertIsNone(res)
-            self.assertIn("No unspent assets matching the arguments", mock_print.getvalue())
+            self.assertIn("Unknown asset id", mock_print.getvalue())
 
         # test wallet split with invalid index
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -935,11 +935,18 @@ class UserWalletSplitTestCase(UserWalletTestCaseBase):
             args = ['split', self.wallet_1_addr, 'neo', '0', '-3']
             res = CommandWallet().execute(args)
             self.assertIsNone(res)
-            self.assertIn("Divisions cannot be lower than 1", mock_print.getvalue())
+            self.assertIn("Divisions cannot be lower than 2", mock_print.getvalue())
 
         # test wallet split with invalid fee
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['split', self.wallet_1_addr, 'neo', '0', '2', 'abc']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid fee value", mock_print.getvalue())
+
+        # test wallet split with negative fee
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', '0', '2', '-0.01']
             res = CommandWallet().execute(args)
             self.assertIsNone(res)
             self.assertIn("Invalid fee value", mock_print.getvalue())
