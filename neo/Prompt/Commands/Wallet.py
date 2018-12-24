@@ -340,7 +340,7 @@ class CommandWalletSplit(CommandBase):
         try:
             divisions = int(arguments[3])
         except ValueError:
-            print(f"Invalid unspent index value: {arguments[3]}")
+            print(f"Invalid divisions value: {arguments[3]}")
             return None
 
         if divisions < 1:
@@ -358,12 +358,12 @@ class CommandWalletSplit(CommandBase):
         return SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee)
 
     def command_desc(self):
-        p1 = ParameterDesc('address', '')
-        p2 = ParameterDesc('asset', 'type of asset to query (NEO/GAS)')
-        p3 = ParameterDesc('unspent_index', '')
-        p4 = ParameterDesc('nb_vins', 'divide into number of vins')
+        p1 = ParameterDesc('address', 'address to split from')
+        p2 = ParameterDesc('asset', 'type of asset to split (NEO/GAS)')
+        p3 = ParameterDesc('unspent_index', 'index of the vin to split')
+        p4 = ParameterDesc('divisions', 'divide into number of vouts')
         p5 = ParameterDesc('fee', 'optional fee', optional=True)
-        return CommandDesc('split', 'show unspent assets', params=[p1, p2, p3, p4, p5])
+        return CommandDesc('split', 'split an asset unspent output into N outputs', params=[p1, p2, p3, p4, p5])
 
 
 class CommandWalletAlias(CommandBase):
@@ -903,7 +903,6 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
     Returns:
         neo.Core.TX.Transaction.ContractTransaction: contract transaction created
     """
-    print(wallet, asset_id, from_addr, index, divisions, fee)
 
     if wallet is None:
         print("Please open a wallet.")
@@ -914,17 +913,13 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
         print(f"No unspent assets matching the arguments.")
         return None
 
-    print("len(unspent_items): ", len(unspent_items))
-
     if index < len(unspent_items):
         unspent_item = unspent_items[index]
     else:
         print(f"Could not find unspent item for asset {asset_id} with index {index}")
         return None
 
-    print(unspent_item.ToJson())
     outputs = split_to_vouts(asset_id, from_addr, unspent_item.Output.Value, divisions)
-    print(outputs[0].ToJson(0))
 
     # subtract a fee from the first vout
     if outputs[0].Value > fee:
