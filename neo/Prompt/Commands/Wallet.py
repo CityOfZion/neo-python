@@ -355,6 +355,7 @@ class CommandWalletImport(CommandBase):
         self.register_sub_command(CommandWalletImportNEP2())
         self.register_sub_command(CommandWalletImportWatchAddr())
         self.register_sub_command(CommandWalletImportMultisigAddr())
+        self.register_sub_command(CommandWalletImportToken())
 
     def command_desc(self):
         return CommandDesc('import', 'import wallet items')
@@ -620,6 +621,23 @@ class CommandWalletImportMultisigAddr(CommandBase):
         return CommandDesc('multisig_addr', 'import a multi-signature address', [p1, p2, p3])
 
 
+class CommandWalletImportToken(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return None
+
+        contract_hash = arguments[0]
+        return ImportToken(PromptData.Wallet, contract_hash)
+
+    def command_desc(self):
+        p1 = ParameterDesc('contract_hash', 'the token contract hash')
+        return CommandDesc('token', 'import a token', [p1])
+
+
 #########################################################################
 #########################################################################
 
@@ -669,7 +687,7 @@ def DeleteAddress(wallet, addr):
 def ImportToken(wallet, contract_hash):
     if wallet is None:
         print("please open a wallet")
-        return False
+        return None
 
     contract = Blockchain.Default().GetContract(contract_hash)
 
@@ -682,8 +700,13 @@ def ImportToken(wallet, contract_hash):
         if result:
             wallet.AddNEP5Token(token)
             print("added token %s " % json.dumps(token.ToJson(), indent=4))
+            return token
         else:
             print("Could not import token")
+    else:
+        print("Could not find the contract hash")
+
+    return None
 
 
 def AddAlias(wallet, addr, title):

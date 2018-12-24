@@ -1,5 +1,6 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
+from neo.Wallets.NEP5Token import NEP5Token
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
@@ -781,24 +782,44 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertTrue(res)
             self.assertIn("Added multi-sig contract address", mock_print.getvalue())
 
-    ##########################################################
-    ##########################################################
-
-    def test_3_import_token(self):
-        wallet = self.GetWallet1(recreate=True)
-
-        self.assertEqual(len(wallet.GetTokens()), 1)
-
+    def test_wallet_import_token(self):
         token_hash = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
 
-        ImportToken(wallet, token_hash)
+        self.OpenWallet1()
 
-        token = list(wallet.GetTokens().values())[0]
+        # test missing contract hash
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'token']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("specify the required parameter", mock_print.getvalue())
 
+        # test with unknown contract hash
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'token', 'does_not_exist']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Could not find the contract hash", mock_print.getvalue())
+
+        # Test with impossibility to import the token
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Wallets.NEP5Token.NEP5Token.Query', side_effect=[None]):
+                args = ['import', 'token', token_hash]
+                res = CommandWallet().execute(args)
+                self.assertIsNone(res)
+                self.assertIn("Could not import token", mock_print.getvalue())
+
+        # test with good hash
+        args = ['import', 'token', token_hash]
+        token = CommandWallet().execute(args)
+        self.assertIsInstance(token, NEP5Token)
         self.assertEqual(token.name, 'NEX Template V4')
         self.assertEqual(token.symbol, 'NXT4')
         self.assertEqual(token.decimals, 8)
         self.assertEqual(token.Address, 'Ab61S1rk2VtCVd3NtGNphmBckWk4cfBdmB')
+
+    ##########################################################
+    ##########################################################
 
     def test_4_get_synced_balances(self):
         wallet = self.GetWallet1(recreate=True)
