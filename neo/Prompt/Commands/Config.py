@@ -165,12 +165,16 @@ class CommandConfigMaxpeers(CommandBase):
     def execute(self, arguments):
         c1 = get_arg(arguments)
         if c1 is not None:
-            peers = settings.set_max_peers(c1)
-            if peers is not None:
+            try:
+                settings.set_max_peers(c1)
                 print("Maxpeers set to ", c1)
                 return c1
-        print(f"Maintaining maxpeers at {settings.CONNECTED_PEER_MAX}")
-        return
+            except ValueError:
+                print("Please supply a positive integer for maxpeers")
+                return                
+        else:
+            print(f"Maintaining maxpeers at {settings.CONNECTED_PEER_MAX}")
+            return
 
     def command_desc(self):
         p1 = ParameterDesc('number', 'maximum number of nodes to connect to')
