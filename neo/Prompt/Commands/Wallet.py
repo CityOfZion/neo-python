@@ -283,7 +283,7 @@ class CommandWalletUnspent(CommandBase):
         if from_addr_str:
             if not isValidPublicAddress(from_addr_str):
                 print("Invalid address specified")
-                return None
+                return
 
             from_addr = wallet.ToScriptHash(from_addr_str)
 
@@ -628,7 +628,7 @@ class CommandWalletImportToken(CommandBase):
     def execute(self, arguments):
         if len(arguments) != 1:
             print("Please specify the required parameter")
-            return None
+            return
 
         contract_hash = arguments[0]
         return ImportToken(PromptData.Wallet, contract_hash)
@@ -647,15 +647,15 @@ def CreateAddress(wallet, args):
         int_args = int(args)
     except (ValueError, TypeError) as error:  # for non integer args or Nonetype
         print(error)
-        return None
+        return
 
     if wallet is None:
         print("Please open a wallet.")
-        return None
+        return
 
     if int_args <= 0:
         print('Enter a number greater than 0.')
-        return None
+        return
 
     address_list = []
     for _ in range(int_args):
@@ -687,7 +687,7 @@ def DeleteAddress(wallet, addr):
 def ImportToken(wallet, contract_hash):
     if wallet is None:
         print("please open a wallet")
-        return None
+        return
 
     contract = Blockchain.Default().GetContract(contract_hash)
 
@@ -705,8 +705,6 @@ def ImportToken(wallet, contract_hash):
             print("Could not import token")
     else:
         print("Could not find the contract hash")
-
-    return None
 
 
 def AddAlias(wallet, addr, title):
@@ -826,7 +824,7 @@ def ShowUnspentCoins(wallet, asset_id=None, from_addr=None, watch_only=False, do
 
     if wallet is None:
         print("Please open a wallet.")
-        return None
+        return
 
     watch_only_flag = 64 if watch_only else 0
     if asset_id:
@@ -871,13 +869,13 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
 
     except Exception as e:
         logger.info("Invalid arguments specified: %s " % e)
-        return None
+        return
 
     try:
         unspentItem = wallet.FindUnspentCoinsByAsset(asset, from_addr=addr)[index]
     except Exception as e:
         logger.info("Could not find unspent item for asset with index %s %s :  %s" % (asset, index, e))
-        return None
+        return
 
     outputs = split_to_vouts(asset, addr, unspentItem.Output.Value, divisions)
 
@@ -897,7 +895,7 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):
             print("incorrect password")
-            return None
+            return
 
     if ctx.Completed:
 
@@ -911,8 +909,6 @@ def SplitUnspentCoin(wallet, args, prompt_passwd=True):
             return contract_tx
         else:
             print("Could not relay tx %s " % contract_tx.Hash.ToString())
-
-    return None
 
 
 def split_to_vouts(asset, addr, input_val, divisions):
