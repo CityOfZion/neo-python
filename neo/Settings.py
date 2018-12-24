@@ -260,11 +260,11 @@ class SettingsHolder:
             os.makedirs(self.DATA_DIR_PATH)
 
      def set_max_peers(self, num_peers):
-        maxpeers = int(num_peers)
-        if maxpeers > 0:
-            self.CONNECTED_PEER_MAX = maxpeers
-        else:
-            raise ValueError
+         maxpeers = int(num_peers)
+         if maxpeers > 0:
+             self.CONNECTED_PEER_MAX = maxpeers
+         else:
+             raise ValueError
 
     def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled
