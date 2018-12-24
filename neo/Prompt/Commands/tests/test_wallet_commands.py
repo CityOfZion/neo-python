@@ -5,6 +5,7 @@ from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
+from neo.Core.TX.Transaction import ContractTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ShowUnspentCoins, SplitUnspentCoin
 from neo.Prompt.PromptData import PromptData
@@ -15,7 +16,7 @@ from mock import patch
 from io import StringIO
 
 
-class UserWalletTestCase(WalletFixtureTestCase):
+class UserWalletTestCaseBase(WalletFixtureTestCase):
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
     _wallet1 = None
@@ -63,8 +64,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def tearDown(cls):
         PromptData.Wallet = None
 
-    # Beginning with refactored tests
 
+class UserWalletTestCase(UserWalletTestCaseBase):
+
+    # Beginning with refactored tests
     def test_wallet(self):
         # without wallet opened
         res = CommandWallet().execute(None)
@@ -871,3 +874,113 @@ class UserWalletTestCase(WalletFixtureTestCase):
             res = CommandWallet().execute(args)
             self.assertTrue(res)
             self.assertIn("Added multi-sig contract address", mock_print.getvalue())
+
+
+class UserWalletSplitTestCase(UserWalletTestCaseBase):
+
+    def test_wallet_split(self):
+        # test wallet split with no wallet open
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("open a wallet", mock_print.getvalue())
+
+        self.OpenWallet1()
+
+        # test wallet split with not enough arguments
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr]
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("specify the required parameters", mock_print.getvalue())
+
+        # test wallet split with too much arguments
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', 0, 2, 'too', 'much']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Too many parameters supplied", mock_print.getvalue())
+
+        # test wallet split with invalid address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', '123', 'neo', 0, 2]
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Not correct Address, wrong length", mock_print.getvalue())
+
+        # test wallet split with unknown asset
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'unknownasset', 0, 2]
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("No unspent assets matching the arguments", mock_print.getvalue())
+
+        # test wallet split with invalid index
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', 'abc', 2]
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid unspent index value", mock_print.getvalue())
+
+        # test wallet split with invalid divisions
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', 0, 'abc']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid divisions value", mock_print.getvalue())
+
+        # test wallet split with invalid divisions (negative)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', 0, -3]
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Divisions cannot be lower than 1", mock_print.getvalue())
+
+        # test wallet split with invalid fee
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', 0, 2, 'abc']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid fee value", mock_print.getvalue())
+
+        # test wallet split with wrong password
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["wrong_password"]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['split', self.wallet_1_addr, 'neo', 0, 2]
+                res = CommandWallet().execute(args)
+                self.assertIsNone(res)
+                self.assertIn("incorrect password", mock_print.getvalue())
+
+        # test wallet split with fee bigger than the outputs
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['split', self.wallet_1_addr, 'neo', 0, 2, 100]
+                res = CommandWallet().execute(args)
+                self.assertIsNone(res)
+                self.assertIn("Fee could not be subtracted from outputs", mock_print.getvalue())
+
+        # test wallet split with error during tx relay
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            with patch('neo.Network.NodeLeader.NodeLeader.Relay', side_effect=[None]):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    args = ['split', self.wallet_1_addr, 'neo', 0, 2]
+                    res = CommandWallet().execute(args)
+                    self.assertIsNone(res)
+                    self.assertIn("Could not relay tx", mock_print.getvalue())
+
+        # test wallet split neo successful
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            args = ['split', self.wallet_1_addr, 'neo', 0, 2]
+            tx = CommandWallet().execute(args)
+            self.assertTrue(tx)
+            self.assertIsInstance(tx, ContractTransaction)
+            self.assertEqual([Fixed8.FromDecimal(25), Fixed8.FromDecimal(25)], [item.Value for item in tx.outputs])
+
+        # test wallet split gas successful
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            args = ['split', self.wallet_1_addr, 'gas', 0, 3]
+            tx = CommandWallet().execute(args)
+            self.assertTrue(tx)
+            self.assertIsInstance(tx, ContractTransaction)
+            self.assertEqual(len(tx.outputs), 3)
