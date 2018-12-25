@@ -699,7 +699,12 @@ class CommandWalletImportToken(CommandBase):
             print("Please specify the required parameter")
             return
 
-        contract_hash = arguments[0]
+        try:
+            contract_hash = UInt160.ParseString(arguments[0]).ToBytes()
+        except Exception:
+            print(f"Invalid contract hash: {arguments[0]}")
+            return
+
         return ImportToken(PromptData.Wallet, contract_hash)
 
     def command_desc(self):

@@ -797,9 +797,16 @@ class UserWalletTestCase(UserWalletTestCaseBase):
             self.assertIsNone(res)
             self.assertIn("specify the required parameter", mock_print.getvalue())
 
-        # test with unknown contract hash
+        # test with invalid contract hash
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['import', 'token', 'does_not_exist']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid contract hash", mock_print.getvalue())
+
+        # test with valid but unknown contract hash
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'token', '31730cc9a1844891a3bafd1aa929a41000000000']
             res = CommandWallet().execute(args)
             self.assertIsNone(res)
             self.assertIn("Could not find the contract hash", mock_print.getvalue())
