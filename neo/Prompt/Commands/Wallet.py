@@ -284,7 +284,7 @@ class CommandWalletUnspent(CommandBase):
         if from_addr_str:
             if not isValidPublicAddress(from_addr_str):
                 print("Invalid address specified")
-                return None
+                return
 
             from_addr = wallet.ToScriptHash(from_addr_str)
 
@@ -424,6 +424,7 @@ class CommandWalletImport(CommandBase):
         self.register_sub_command(CommandWalletImportNEP2())
         self.register_sub_command(CommandWalletImportWatchAddr())
         self.register_sub_command(CommandWalletImportMultisigAddr())
+        self.register_sub_command(CommandWalletImportToken())
 
     def command_desc(self):
         return CommandDesc('import', 'import wallet items')
@@ -689,6 +690,28 @@ class CommandWalletImportMultisigAddr(CommandBase):
         return CommandDesc('multisig_addr', 'import a multi-signature address', [p1, p2, p3])
 
 
+class CommandWalletImportToken(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return
+
+        try:
+            contract_hash = UInt160.ParseString(arguments[0]).ToBytes()
+        except Exception:
+            print(f"Invalid contract hash: {arguments[0]}")
+            return
+
+        return ImportToken(PromptData.Wallet, contract_hash)
+
+    def command_desc(self):
+        p1 = ParameterDesc('contract_hash', 'the token contract hash')
+        return CommandDesc('token', 'import a token', [p1])
+
+
 #########################################################################
 #########################################################################
 
@@ -698,15 +721,15 @@ def CreateAddress(wallet, args):
         int_args = int(args)
     except (ValueError, TypeError) as error:  # for non integer args or Nonetype
         print(error)
-        return None
+        return
 
     if wallet is None:
         print("Please open a wallet.")
-        return None
+        return
 
     if int_args <= 0:
         print('Enter a number greater than 0.')
-        return None
+        return
 
     address_list = []
     for _ in range(int_args):
@@ -738,7 +761,7 @@ def DeleteAddress(wallet, addr):
 def ImportToken(wallet, contract_hash):
     if wallet is None:
         print("please open a wallet")
-        return False
+        return
 
     contract = Blockchain.Default().GetContract(contract_hash)
 
@@ -751,8 +774,11 @@ def ImportToken(wallet, contract_hash):
         if result:
             wallet.AddNEP5Token(token)
             print("added token %s " % json.dumps(token.ToJson(), indent=4))
+            return token
         else:
             print("Could not import token")
+    else:
+        print("Could not find the contract hash")
 
 
 def AddAlias(wallet, addr, title):
@@ -872,7 +898,7 @@ def ShowUnspentCoins(wallet, asset_id=None, from_addr=None, watch_only=False, do
 
     if wallet is None:
         print("Please open a wallet.")
-        return None
+        return
 
     watch_only_flag = 64 if watch_only else 0
     if asset_id:
