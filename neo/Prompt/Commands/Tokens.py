@@ -32,6 +32,7 @@ class CommandWalletToken(CommandBase):
         self.register_sub_command(CommandTokenApprove())
         self.register_sub_command(CommandTokenAllowance())
         self.register_sub_command(CommandTokenMint())
+        self.register_sub_command(CommandTokenRegister())
 
     def command_desc(self):
         return CommandDesc('token', 'various token operations')
@@ -457,6 +458,53 @@ class CommandTokenMint(CommandBase):
         return CommandDesc('mint', 'mint tokens from a contract', [p1, p2, p3, p4, p5])
 
 
+class CommandTokenRegister(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) < 2:
+            print("Please specify the required parameters")
+            return False
+
+        token_str = arguments[0]
+        try:
+            token = PromptUtils.get_token(wallet, token_str)
+        except ValueError as e:
+            print(str(e))
+            return False
+
+        register_addr = arguments[1:]
+        addr_list = []
+        for addr in register_addr:
+            if isValidPublicAddress(addr):
+                addr_list.append(addr)
+            else:
+                print(f"{addr} is not a valid address")
+                return False
+
+        tx, fee, results = token.CrowdsaleRegister(wallet, addr_list)
+
+        if tx and results:
+            if results[0].GetBigInteger() > 0:
+                print("\n-----------------------------------------------------------")
+                print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
+                print("Fee: %s " % (fee.value / Fixed8.D))
+                print("-------------------------------------------------------------\n")
+
+                return InvokeContract(wallet, tx, fee)
+
+        print("Could not register address(es)")
+        return False
+
+    def command_desc(self):
+        p1 = ParameterDesc('symbol', 'token symbol')
+        p2 = ParameterDesc('addresses', 'space seperated list of addresses')
+        return CommandDesc('register', 'register for a crowdsale', [p1, p2])
+
+
 def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
     """
     A helper function to validate common arguments used in NEP-5 functions
@@ -644,42 +692,6 @@ def token_mint(wallet, args, prompt_passwd=True):
             return InvokeWithTokenVerificationScript(wallet, tx, token, fee, invoke_attrs=invoke_attrs)
 
     print("Could not register address")
-    return False
-
-
-def token_crowdsale_register(wallet, args, prompt_passwd=True):
-    token = PromptUtils.get_asset_id(wallet, args[0])
-    if not isinstance(token, NEP5Token):
-        print("The given symbol does not represent a loaded NEP5 token")
-        return False
-
-    args, from_addr = PromptUtils.get_from_addr(args)
-
-    if len(args) < 2:
-        print("Specify addr to register for crowdsale")
-        return False
-
-    register_addr = args[1:]
-
-    tx, fee, results = token.CrowdsaleRegister(wallet, register_addr)
-
-    if tx is not None and results is not None and len(results) > 0:
-        if results[0].GetBigInteger() > 0:
-            print("\n-----------------------------------------------------------")
-            print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
-            print("Fee: %s " % (fee.value / Fixed8.D))
-            print("-------------------------------------------------------------\n")
-
-            if prompt_passwd:
-                passwd = prompt("[Password]> ", is_password=True)
-
-                if not wallet.ValidatePassword(passwd):
-                    print("incorrect password")
-                    return False
-
-            return InvokeContract(wallet, tx, fee, from_addr)
-
-    print("Could not register address(es)")
     return False
 
 
