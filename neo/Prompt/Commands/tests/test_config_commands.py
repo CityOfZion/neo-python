@@ -5,6 +5,7 @@ from neo.Prompt.Commands.Config import CommandConfig
 from copy import deepcopy
 from neo.Network.NodeLeader import NodeLeader
 from mock import patch
+from io import StringIO
 
 
 class CommandConfigTestCase(BlockchainFixtureTestCase):
@@ -152,3 +153,73 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
 
         # restore whatever state the instance was in
         NodeLeader._LEAD = old_leader
+
+    def test_config_maxpeers(self):
+        # test no input and verify output confirming current maxpeers
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['maxpeers']
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Maintaining maxpeers at 5", mock_print.getvalue())
+
+        # test changing the number of maxpeers
+        args = ['maxpeers', "6"]
+        res = CommandConfig().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(int(res), settings.CONNECTED_PEER_MAX)
+
+        # test bad input
+        args = ['maxpeers', "blah"]
+        res = CommandConfig().execute(args)
+        self.assertFalse(res)
+
+        # test negative number
+        args = ['maxpeers', "-1"]
+        res = CommandConfig().execute(args)
+        self.assertFalse(res)
+
+    def test_config_nep8(self):
+        # test with missing flag argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['nep8']
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the required parameter", mock_print.getvalue())
+
+        # test with invalid option
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['nep8', 'blah']
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid option", mock_print.getvalue())
+
+        # ideally for the next tests we should compile some SC and validate if NEP-8 instructions are used or not
+        # for now the effort required to do so does not seem justified and we'll just rely on applying the setting
+
+        # test turning on - 1
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['nep8', 'on']
+            res = CommandConfig().execute(args)
+            self.assertTrue(res)
+            self.assertIn("NEP-8 compiler instruction usage is ON", mock_print.getvalue())
+
+        # test turning on - 2
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['nep8', '1']
+            res = CommandConfig().execute(args)
+            self.assertTrue(res)
+            self.assertIn("NEP-8 compiler instruction usage is ON", mock_print.getvalue())
+
+        # test turning off - 1
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['nep8', 'off']
+            res = CommandConfig().execute(args)
+            self.assertTrue(res)
+            self.assertIn("NEP-8 compiler instruction usage is OFF", mock_print.getvalue())
+
+        # test turning off - 2
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['nep8', '0']
+            res = CommandConfig().execute(args)
+            self.assertTrue(res)
+            self.assertIn("NEP-8 compiler instruction usage is OFF", mock_print.getvalue())

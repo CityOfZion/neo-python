@@ -5,15 +5,18 @@ from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
+from neo.Core.TX.Transaction import ContractTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
-from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
+from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ShowUnspentCoins, SplitUnspentCoin
 from neo.Prompt.PromptData import PromptData
+from contextlib import contextmanager
 import os
 import shutil
 from mock import patch
+from io import StringIO
 
 
-class UserWalletTestCase(WalletFixtureTestCase):
+class UserWalletTestCaseBase(WalletFixtureTestCase):
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
     _wallet1 = None
@@ -61,8 +64,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def tearDown(cls):
         PromptData.Wallet = None
 
-    # Beginning with refactored tests
 
+class UserWalletTestCase(UserWalletTestCaseBase):
+
+    # Beginning with refactored tests
     def test_wallet(self):
         # without wallet opened
         res = CommandWallet().execute(None)
@@ -356,6 +361,89 @@ class UserWalletTestCase(WalletFixtureTestCase):
             CommandWallet().execute(args)
             self.assertEqual(PromptData.Wallet._current_height, 42)
 
+    def test_wallet_unspent(self):
+        # test wallet unspent with no wallet open
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("open a wallet", mock_print.getvalue())
+
+        self.OpenWallet1()
+
+        # test wallet unspent with invalid address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--from-addr=123']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid address specified", mock_print.getvalue())
+
+        # test wallet unspent successful
+        args = ['unspent']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with unknown asset shows all
+        args = ['unspent', 'unknownasset']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with asset
+        args = ['unspent', 'neo']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+
+        # test wallet unspent with asset
+        args = ['unspent', 'gas']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].Output.AssetId, self.GAS)
+
+        # test wallet unspent with unrelated address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--from-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm']
+            res = CommandWallet().execute(args)
+            self.assertEqual(res, [])
+            self.assertIn("No unspent assets matching the arguments", mock_print.getvalue())
+
+        # test wallet unspent with address
+        args = ['unspent', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with --watch
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--watch']
+            res = CommandWallet().execute(args)
+            self.assertEqual(res, [])
+            self.assertIn("No unspent assets matching the arguments", mock_print.getvalue())
+
+        # test wallet unspent with --count
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--count']
+            res = CommandWallet().execute(args)
+            self.assertEqual(len(res), 2)
+            self.assertIn("Total Unspent: 2", mock_print.getvalue())
+
+        # test wallet unspent with --count
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', 'gas', '--count']
+            res = CommandWallet().execute(args)
+            self.assertEqual(len(res), 1)
+            self.assertIn("Total Unspent: 1", mock_print.getvalue())
+
     def test_wallet_alias(self):
         # test wallet alias with no wallet open
         args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'mine']
@@ -385,26 +473,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
     ##########################################################
     ##########################################################
 
-    def test_1_import_addr(self):
-        wallet = self.GetWallet1(recreate=True)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 0)
-
-        result = ImportWatchAddr(wallet, self.watch_addr_str)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 1)
-
-    def test_2_import_addr(self):
-        wallet = self.GetWallet1()
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 1)
-
-        success = DeleteAddress(wallet, self.watch_addr_str)
-
-        self.assertTrue(success)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 0)
-
     def test_3_import_token(self):
         wallet = self.GetWallet1(recreate=True)
 
@@ -428,49 +496,45 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_5_show_unspent(self):
         wallet = self.GetWallet1(recreate=True)
-        unspents = ShowUnspentCoins(wallet, [])
+        unspents = ShowUnspentCoins(wallet)
         self.assertEqual(len(unspents), 2)
 
-        unspents = ShowUnspentCoins(wallet, ['neo'])
+        unspents = ShowUnspentCoins(wallet, asset_id=self.NEO)
         self.assertEqual(len(unspents), 1)
 
-        unspents = ShowUnspentCoins(wallet, ['gas'])
+        unspents = ShowUnspentCoins(wallet, asset_id=self.GAS)
         self.assertEqual(len(unspents), 1)
 
-        unspents = ShowUnspentCoins(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'])
+        unspents = ShowUnspentCoins(wallet, from_addr=wallet.ToScriptHash('AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'))
         self.assertEqual(len(unspents), 2)
 
-        unspents = ShowUnspentCoins(wallet, ['AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg'])
+        unspents = ShowUnspentCoins(wallet, from_addr=wallet.ToScriptHash('AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg'))
         self.assertEqual(len(unspents), 0)
 
-        unspents = ShowUnspentCoins(wallet, ['--watch'])
+        unspents = ShowUnspentCoins(wallet, watch_only=True)
         self.assertEqual(len(unspents), 0)
 
     def test_6_split_unspent(self):
         wallet = self.GetWallet1(recreate=True)
-
-        # test bad
-        tx = SplitUnspentCoin(wallet, [])
-        self.assertEqual(tx, None)
+        addr = wallet.ToScriptHash('AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3')
 
         # bad inputs
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 3, 2])
+        tx = SplitUnspentCoin(wallet, self.NEO, addr, 3, 2)
         self.assertEqual(tx, None)
 
         # should be ok
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 0, 2], prompt_passwd=False)
+        tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 2, prompt_passwd=False)
         self.assertIsNotNone(tx)
 
         # rebuild wallet and try with non-even amount of neo, should be split into integer values of NEO
         wallet = self.GetWallet1(True)
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 0, 3], prompt_passwd=False)
+        tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 3, prompt_passwd=False)
         self.assertIsNotNone(tx)
-
         self.assertEqual([Fixed8.FromDecimal(17), Fixed8.FromDecimal(17), Fixed8.FromDecimal(16)], [item.Value for item in tx.outputs])
 
         # try with gas
         wallet = self.GetWallet1(True)
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'gas', 0, 3], prompt_passwd=False)
+        tx = SplitUnspentCoin(wallet, self.GAS, addr, 0, 3, prompt_passwd=False)
         self.assertIsNotNone(tx)
 
     def test_7_create_address(self):
@@ -496,3 +560,434 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = CreateAddress(wallet, 2)
         self.assertTrue(res)
         self.assertEqual(len(wallet.Addresses), 3)
+
+    def test_wallet_export_baseclass(self):
+        self.OpenWallet1()
+
+        # test with no argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['export']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify an action", mock_print.getvalue())
+
+        # test with an invalid action
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['export', 'bad_action']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("is an invalid parameter", mock_print.getvalue())
+
+        # test with a good action
+        with patch('neo.Prompt.Commands.Wallet.CommandWalletExport.execute_sub_command', side_effect=[True]):
+            args = ['export', 'mocked_action']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+
+    def test_wallet_export_wif(self):
+        self.OpenWallet1()
+        # test missing address argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['export', 'wif']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("specify the required parameter", mock_print.getvalue())
+
+        # test with an address that's not part of the wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['export', 'wif', 'bad_address']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Could not find address", mock_print.getvalue())
+
+        # test with good address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['export', 'wif', self.wallet_1_addr]
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Ky94Rq8rb1z8UzTthYmy1ApbZa9xsKTvQCiuGUZJZbaDJZdkvLRV", mock_print.getvalue())
+
+    def test_wallet_export_nep2(self):
+        self.OpenWallet1()
+        # test missing address argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['export', 'nep2']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("specify the required parameter", mock_print.getvalue())
+
+        # test with non matching passwords
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=['random_passw', 'random_wrong_second_passw']):
+                args = ['export', 'nep2', 'bad_address']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Please provide matching passwords", mock_print.getvalue())
+
+        # test with an address that's not part of the wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=['random_passw', 'random_passw']):
+                args = ['export', 'nep2', 'bad_address']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Could not find address", mock_print.getvalue())
+
+        # test with good address and but too short passphrase
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            pw_too_short = 'too_short'
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[pw_too_short, pw_too_short]):
+                args = ['export', 'nep2', self.wallet_1_addr]
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Passphrase is too short", mock_print.getvalue())
+
+        # test with good address and good passphrase len
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            pw = UserWalletTestCase.wallet_1_pass()
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[pw, pw]):
+                args = ['export', 'nep2', self.wallet_1_addr]
+                res = CommandWallet().execute(args)
+                self.assertTrue(res)
+                self.assertIn("6PYK1E3skTFLgtsnVNKDCEdUQxeKbRmKBnbkPFxvGGggfeB2JacnMpqkcH", mock_print.getvalue())
+
+    def test_wallet_import_baseclass(self):
+        self.OpenWallet1()
+
+        # test with no argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify an action", mock_print.getvalue())
+
+        # test with an invalid action
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'bad_action']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("is an invalid parameter", mock_print.getvalue())
+
+        # test with a good action
+        with patch('neo.Prompt.Commands.Wallet.CommandWalletImport.execute_sub_command', side_effect=[True]):
+            args = ['import', 'mocked_action']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+
+    def test_wallet_import_wif(self):
+        self.OpenWallet1()
+
+        # test missing wif key argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'wif']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("specify the required parameter", mock_print.getvalue())
+
+        # test with bad wif length
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'wif', 'too_short']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please provide a wif with a length of 52 bytes", mock_print.getvalue())
+
+        # test with invalid wif
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'wif', 'a' * 52]
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid format", mock_print.getvalue())
+
+        # test with exception in key creation
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.PromptData.Wallet.CreateKey', side_effect=[Exception("unittest_error")]):
+                with self.assertRaises(Exception) as context:
+                    args = ['import', 'wif', 'Ky94Rq8rb1z8UzTthYmy1ApbZa9xsKTvQCiuGUZJZbaDJZdkvLRV']
+                    res = CommandWallet().execute(args)
+                    self.assertFalse(res)
+                    self.assertIn("unittest_error", str(context.exception))
+                    self.assertIn("unittest_error", mock_print.getvalue())
+
+        # test with valid wif
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'wif', 'Ky94Rq8rb1z8UzTthYmy1ApbZa9xsKTvQCiuGUZJZbaDJZdkvLRV']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn(self.wallet_1_addr, mock_print.getvalue())
+
+    def test_wallet_import_nep2(self):
+        self.OpenWallet1()
+
+        # test missing nep2 key argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'nep2']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("specify the required parameter", mock_print.getvalue())
+
+        # test with bad nep2 length
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=['random_passw']):
+                args = ['import', 'nep2', 'too_short_nep2_key']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Please provide a nep2_key with a length of 58 bytes", mock_print.getvalue())
+
+        # test with ok NEP2, bad password
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=['wrong_password']):
+                args = ['import', 'nep2', '6PYK1E3skTFLgtsnVNKDCEdUQxeKbRmKBnbkPFxvGGggfeB2JacnMpqkcH']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Wrong passphrase", mock_print.getvalue())
+
+        # test with exception in key creation
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                with patch('neo.Prompt.Commands.Wallet.PromptData.Wallet.CreateKey', side_effect=[Exception("unittest_error")]):
+                    args = ['import', 'nep2', '6PYK1E3skTFLgtsnVNKDCEdUQxeKbRmKBnbkPFxvGGggfeB2JacnMpqkcH']
+                    res = CommandWallet().execute(args)
+                    self.assertFalse(res)
+                    self.assertIn("Key creation error", mock_print.getvalue())
+                    self.assertIn("unittest_error", mock_print.getvalue())
+
+        # test with ok
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                args = ['import', 'nep2', '6PYK1E3skTFLgtsnVNKDCEdUQxeKbRmKBnbkPFxvGGggfeB2JacnMpqkcH']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                # if we imported successfully we get the wallet1 address
+                self.assertIn(self.wallet_1_addr, mock_print.getvalue())
+
+    def test_wallet_import_watchaddr(self):
+        self.OpenWallet1()
+
+        # test missing wif key argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'watch_addr']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("specify the required parameter", mock_print.getvalue())
+
+        # test with bad address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'watch_addr', 'too_short_addr']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid address specified", mock_print.getvalue())
+
+        # test with good address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            address = 'AZfFBeBqtJvaTK9JqG8uk6N7FppQY6byEg'
+            args = ['import', 'watch_addr', address]
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Added address", mock_print.getvalue())
+            self.assertIn("watch-only", mock_print.getvalue())
+            self.assertIn(PromptData.Wallet.ToScriptHash(address), PromptData.Wallet.LoadWatchOnly())
+
+        # test address already exists
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            address = 'AZfFBeBqtJvaTK9JqG8uk6N7FppQY6byEg'
+            args = ['import', 'watch_addr', address]
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Address already exists in wallet", mock_print.getvalue())
+
+    def test_wallet_import_multisig_address(self):
+        self.OpenWallet1()
+
+        # test missing all arguments
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'multisig_addr']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the minimum required parameters", mock_print.getvalue())
+
+        # test invalid public key format
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'multisig_addr', 'not_a_public_key', 'arg2', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid public key format", mock_print.getvalue())
+
+        # test invalid public key format 2 (fail to convert to UIn160)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'multisig_addr', 'Å' * 66, 'arg2', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid public key format", mock_print.getvalue())
+
+        # test with a public key not present in our own wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'multisig_addr', '031a6c6fbbdf02ca351745fa86b9ba5a9452d785ac4f7fc2b7548ca2a46c4fcf4a', 'arg2', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Supplied first public key does not exist in own wallet", mock_print.getvalue())
+
+        # test with bad minimum signature value 1
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '0', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Minimum signatures count cannot be lower than 1", mock_print.getvalue())
+
+        # test with bad minimum signature value 2
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 'bla' is not a valid int
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', 'bla', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid minimum signature count value", mock_print.getvalue())
+
+        # test with insufficient remaining signing keys
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '2', 'key1']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Minimum required: 2 given: 1", mock_print.getvalue())
+
+        # test with bad remaining signing key 1
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '1', 'too_short_signing_key']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid signing key", mock_print.getvalue())
+
+        # test with non unique signing keys
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '1',
+                    '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Provided signing keys are not unique", mock_print.getvalue())
+
+        # test with all good \o/
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            # 0 not allowed
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '1',
+                    '031a6c6fbbdf02ca351745fa86b9ba5a9452d785ac4f7fc2b7548ca2a46c4fcf4a']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Added multi-sig contract address", mock_print.getvalue())
+
+
+class UserWalletSplitTestCase(UserWalletTestCaseBase):
+
+    def test_wallet_split(self):
+        # test wallet split with no wallet open
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("open a wallet", mock_print.getvalue())
+
+        self.OpenWallet1()
+
+        # test wallet split with not enough arguments
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr]
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("specify the required parameters", mock_print.getvalue())
+
+        # test wallet split with too much arguments
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', '0', '2', 'too', 'much']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Too many parameters supplied", mock_print.getvalue())
+
+        # test wallet split with invalid address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', '123', 'neo', '0', '2']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid address specified", mock_print.getvalue())
+
+        # test wallet split with unknown asset
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'unknownasset', '0', '2']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Unknown asset id", mock_print.getvalue())
+
+        # test wallet split with invalid index
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', 'abc', '2']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid unspent index value", mock_print.getvalue())
+
+        # test wallet split with invalid divisions
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', '0', 'abc']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid divisions value", mock_print.getvalue())
+
+        # test wallet split with invalid divisions (negative)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', '0', '-3']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Divisions cannot be lower than 2", mock_print.getvalue())
+
+        # test wallet split with invalid fee
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', '0', '2', 'abc']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid fee value", mock_print.getvalue())
+
+        # test wallet split with negative fee
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['split', self.wallet_1_addr, 'neo', '0', '2', '-0.01']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid fee value", mock_print.getvalue())
+
+        # test wallet split with wrong password
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["wrong_password"]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['split', self.wallet_1_addr, 'neo', '0', '2']
+                res = CommandWallet().execute(args)
+                self.assertIsNone(res)
+                self.assertIn("incorrect password", mock_print.getvalue())
+
+        # test wallet split with fee bigger than the outputs
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['split', self.wallet_1_addr, 'neo', '0', '2', '100']
+                res = CommandWallet().execute(args)
+                self.assertIsNone(res)
+                self.assertIn("Fee could not be subtracted from outputs", mock_print.getvalue())
+
+        # test wallet split with error during tx relay
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            with patch('neo.Network.NodeLeader.NodeLeader.Relay', side_effect=[None]):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    args = ['split', self.wallet_1_addr, 'neo', '0', '2']
+                    res = CommandWallet().execute(args)
+                    self.assertIsNone(res)
+                    self.assertIn("Could not relay tx", mock_print.getvalue())
+
+        # test wallet split neo successful
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            args = ['split', self.wallet_1_addr, 'neo', '0', '2']
+            tx = CommandWallet().execute(args)
+            self.assertTrue(tx)
+            self.assertIsInstance(tx, ContractTransaction)
+            self.assertEqual([Fixed8.FromDecimal(25), Fixed8.FromDecimal(25)], [item.Value for item in tx.outputs])
+
+        # test wallet split gas successful
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            args = ['split', self.wallet_1_addr, 'gas', '0', '3']
+            tx = CommandWallet().execute(args)
+            self.assertTrue(tx)
+            self.assertIsInstance(tx, ContractTransaction)
+            self.assertEqual(len(tx.outputs), 3)

@@ -1,5 +1,4 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
-from neo.Prompt.Utils import get_asset_id, get_from_addr, get_tx_attr_from_args
 from neo.Wallets.NEP5Token import NEP5Token
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
@@ -9,11 +8,18 @@ from neo.Core.TX.TransactionAttribute import TransactionAttribute
 import binascii
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
-from neo.Prompt.Utils import get_arg
+from neo.Prompt import Utils as PromptUtils
 from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Token
+from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
 from neocore.Utils import isValidPublicAddress
+from distutils.util import strtobool
 import peewee
+import traceback
+
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class CommandWalletToken(CommandBase):
@@ -21,22 +27,26 @@ class CommandWalletToken(CommandBase):
         super().__init__()
         self.register_sub_command(CommandTokenDelete())
         self.register_sub_command(CommandTokenSend())
+        self.register_sub_command(CommandTokenSendFrom())
+        self.register_sub_command(CommandTokenHistory())
+        self.register_sub_command(CommandTokenApprove())
+        self.register_sub_command(CommandTokenAllowance())
 
     def command_desc(self):
         return CommandDesc('token', 'various token operations')
 
     def execute(self, arguments):
-        item = get_arg(arguments)
+        item = PromptUtils.get_arg(arguments)
 
         if not item:
             print(f"Please specify an action. See help for available actions")
-            return
+            return False
 
         try:
             return self.execute_sub_command(item, arguments[1:])
         except KeyError:
             print(f"{item} is an invalid parameter")
-            return
+            return False
 
 
 class CommandTokenDelete(CommandBase):
@@ -97,11 +107,11 @@ class CommandTokenSend(CommandBase):
             print("Too many parameters supplied. Please check your command")
             return False
 
-        _, user_tx_attributes = get_tx_attr_from_args(arguments)
+        _, user_tx_attributes = PromptUtils.get_tx_attr_from_args(arguments)
 
         token = arguments[0]
-        send_from = arguments[1]
-        send_to = arguments[2]
+        from_addr = arguments[1]
+        to_addr = arguments[2]
         try:
             amount = float(arguments[3])
         except ValueError:
@@ -109,7 +119,7 @@ class CommandTokenSend(CommandBase):
             return False
 
         try:
-            success = token_send(wallet, token, send_from, send_to, amount, user_tx_attributes)
+            success = token_send(wallet, token, from_addr, to_addr, amount, user_tx_attributes)
         except ValueError as e:
             # occurs if arguments are invalid
             print(str(e))
@@ -131,80 +141,62 @@ class CommandTokenSend(CommandBase):
         return CommandDesc('send', 'send a token from the wallet', [p1, p2, p3, p4, p5])
 
 
-def token_send(wallet, token_str, send_from, send_to, amount, prompt_passwd=True, user_tx_attributes=None):
+class CommandTokenSendFrom(CommandBase):
+    """
+    This command is for old style NEP-5 tokens before the proposal got amended to remove this optional command.
     """
 
-    Args:
-        wallet (Wallet): a UserWallet instance
-        token_str (str): symbol name or script_hash
-        send_from (str): a wallet address
-        send_to (str): a wallet address
-        amount (float): the number of tokens to send
-        prompt_passwd (bool): (optional) whether to prompt for a password before sending it to the network
-        user_tx_attributes (list): a list of ``TransactionAttribute``s.
+    def __init__(self):
+        super().__init__()
 
-    Returns:
-        a Transaction object if successful, False otherwise.
-    """
-    if not user_tx_attributes:
-        user_tx_attributes = []
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
 
-    token = None
-    for t in wallet.GetTokens().values():
-        if token_str == t.symbol:
-            token = t
-            break
-        elif token_str == t.ScriptHash.ToString():
-            token = t
-            break
+        if len(arguments) < 4:
+            print("Please specify the required parameters")
+            return False
 
-    if not isinstance(token, NEP5Token):
-        raise ValueError("The given token argument does not represent a known NEP5 token")
+        if len(arguments) > 5:
+            # the 5th argument is prompting for a password before sending,
+            print("Too many parameters supplied. Please check your command")
+            return False
 
-    if not isValidPublicAddress(send_from):
-        raise ValueError("send_from is not a valid address")
+        token_str = arguments[0]
+        from_addr = arguments[1]
+        to_addr = arguments[2]
 
-    if not isValidPublicAddress(send_to):
-        raise ValueError("send_to is not a valid address")
+        try:
+            amount = float(arguments[3])
+        except ValueError:
+            print(f"{arguments[3]} is not a valid amount")
+            return False
 
-    try:
-        # internally this function uses the `Decimal` class which will parse the float amount to its required format.
-        # the name is a bit misleading /shrug
-        amount = amount_from_string(token, amount)
-    except Exception:
-        raise ValueError(f"{amount} is not a valid amount")
+        prompt_passwd = True
+        if len(arguments) == 5:
+            try:
+                prompt_passwd = bool(strtobool(arguments[4]))
+            except ValueError:
+                print("Invalid value for showing prompt parameter. Must be True or False if supplied")
+                return False
 
-    for attr in user_tx_attributes:
-        if not isinstance(attr, TransactionAttribute):
-            raise ValueError(f"{attr} is not a valid transaction attribute")
+        try:
+            token, tx, fee, results = test_token_send_from(wallet, token_str, from_addr, to_addr, amount)
+        except ValueError as e:
+            # invalid arguments or bad allowance
+            print(str(e))
+            return False
+        except Exception as e:
+            # we act as the final capturing place
+            print("Something really unexpected happened")
+            logger.error(traceback.format_exc())
+            return False
 
-    return do_token_transfer(token, wallet, send_from, send_to, amount, prompt_passwd=prompt_passwd, tx_attributes=user_tx_attributes)
-
-
-def token_send_from(wallet, args, prompt_passwd=True):
-    if len(args) != 4:
-        print("please provide a token symbol, from address, to address, and amount")
-        return False
-
-    token = get_asset_id(wallet, args[0])
-    if not isinstance(token, NEP5Token):
-        print("The given symbol does not represent a loaded NEP5 token")
-        return False
-
-    send_from = args[1]
-    send_to = args[2]
-    amount = amount_from_string(token, args[3])
-
-    allowance = token_get_allowance(wallet, args[:-1], verbose=False)
-
-    if allowance and allowance >= amount:
-        tx, fee, results = token.TransferFrom(wallet, send_from, send_to, amount)
-
-        if tx is not None and results is not None and len(results) > 0:
-            if results[0].GetBigInteger() == 1:
+        if tx and results:
+            vm_result = results[0].GetBigInteger()
+            if vm_result == 1:
                 print("\n-----------------------------------------------------------")
                 print("Transfer of %s %s from %s to %s" % (
-                    string_from_amount(token, amount), token.symbol, send_from, send_to))
+                    string_from_amount(token, amount), token.symbol, from_addr, to_addr))
                 print("Transfer fee: %s " % (fee.value / Fixed8.D))
                 print("-------------------------------------------------------------\n")
 
@@ -217,85 +209,331 @@ def token_send_from(wallet, args, prompt_passwd=True):
 
                 return InvokeContract(wallet, tx, fee)
 
-        print("could not transfer tokens")
+            print(f"Could not transfer tokens. Virtual machine returned: {vm_result}")
+            return False
+
+        print(f"Could not transfer tokens. An unknown error occurred resulting in no Transaction object or VM output.")
         return False
 
-    print("Requested transfer from is greater than allowance")
-    return False
+    def command_desc(self):
+        p1 = ParameterDesc('token', 'token symbol name or script_hash')
+        p2 = ParameterDesc('from_addr', 'address to send token from')
+        p3 = ParameterDesc('to_addr', 'address to send token to')
+        p4 = ParameterDesc('amount', 'number of tokens to send')
+        p5 = ParameterDesc('ask_for_passw', 'prompt for a password before sending to the actual network. Default is True', optional=True)
+
+        return CommandDesc('sendfrom', 'send a token on behalf of another account (requires approval)', [p1, p2, p3, p4, p5])
 
 
-def token_approve_allowance(wallet, args, prompt_passwd=True):
-    if len(args) != 4:
-        print("please provide a token symbol, from address, to address, and amount")
+class CommandTokenHistory(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            token, events = token_history(wallet, arguments[0])
+        except ValueError as e:
+            print(str(e))
+            return False
+
+        if events:
+            addresses = wallet.Addresses
+            print("-----------------------------------------------------------")
+            print("Recent transaction history (last = more recent):")
+            for event in events:
+                if event.Type != 'transfer':
+                    continue
+                if event.AddressFrom in addresses:
+                    print(f"[{event.AddressFrom}]: Sent {string_from_amount(token, event.Amount)}"
+                          f" {token.symbol} to {event.AddressTo}")
+                if event.AddressTo in addresses:
+                    print(f"[{event.AddressTo}]: Received {string_from_amount(token, event.Amount)}"
+                          f" {token.symbol} from {event.AddressFrom}")
+            print("-----------------------------------------------------------")
+        else:
+            print("History contains no transactions")
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('symbol', 'token symbol')
+        return CommandDesc('history', 'show transaction history', [p1])
+
+
+class CommandTokenApprove(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if not len(arguments) in [4, 5]:
+            print("Please specify the required parameters")
+            return False
+
+        token_str = arguments[0]
+        from_addr = arguments[1]
+        to_addr = arguments[2]
+        amount = arguments[3]
+
+        prompt_passwd = True
+        if len(arguments) == 5:
+            try:
+                prompt_passwd = bool(strtobool(arguments[4]))
+            except ValueError:
+                print("Invalid value for showing prompt parameter. Must be True or False if supplied")
+                return False
+
+        try:
+            token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount)
+        except ValueError as e:
+            print(str(e))
+            return False
+
+        decimal_amount = amount_from_string(token, amount)
+
+        tx, fee, results = token.Approve(wallet, from_addr, to_addr, decimal_amount)
+
+        if tx and results:
+            if results[0].GetBigInteger() == 1:
+                print("\n-----------------------------------------------------------")
+                print(f"Approve allowance of {amount} {token.symbol} from {from_addr} to {to_addr}")
+                print(f"Transfer fee: {fee.value / Fixed8.D}")
+                print("-------------------------------------------------------------\n")
+
+                if prompt_passwd:
+                    passwd = prompt("[Password]> ", is_password=True)
+
+                    if not wallet.ValidatePassword(passwd):
+                        print("incorrect password")
+                        return False
+
+                return InvokeContract(wallet, tx, fee)
+
+        print("Failed to approve tokens. Make sure you are entitled for approving.")
         return False
 
-    token = get_asset_id(wallet, args[0])
+    def command_desc(self):
+        p1 = ParameterDesc('symbol', 'token symbol')
+        p2 = ParameterDesc('from_addr', 'address to send token from')
+        p3 = ParameterDesc('to_addr', 'address to send token to')
+        p4 = ParameterDesc('amount', 'number of tokens to send')
+        p5 = ParameterDesc('ask_for_passw', 'prompt for a password before sending to the actual network. Default is True', optional=True)
+
+        return CommandDesc('approve', 'approve an allowance', [p1, p2, p3, p4, p5])
+
+    def handle_help(self, arguments):
+        super().handle_help(arguments)
+        print(
+            "\nThis is an optional NEP-5 command (now legacy).\nFor more information see https://github.com/neo-project/proposals/blob/c357f5965afc2155615b6b96c7d15da688f81982/nep-5.mediawiki#approve_optional")
+
+
+class CommandTokenAllowance(CommandBase):
+
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 3:
+            print("Please specify the required parameters")
+            return False
+
+        token_str = arguments[0]
+        from_addr = arguments[1]
+        to_addr = arguments[2]
+
+        try:
+            token = PromptUtils.get_token(wallet, token_str)
+        except ValueError as e:
+            print(str(e))
+            return False
+
+        try:
+            allowance = token_get_allowance(wallet, token_str, from_addr, to_addr)
+            print(f"{token.symbol} allowance for {from_addr} from {to_addr} : {allowance} ")
+            return True
+        except ValueError as e:
+            print(str(e))
+            return False
+
+    def command_desc(self):
+        p1 = ParameterDesc('symbol', 'token symbol')
+        p2 = ParameterDesc('from_addr', 'address to send token from')
+        p3 = ParameterDesc('to_addr', 'address to send token to')
+
+        return CommandDesc('allowance', 'get the amount an account can transfer from another acount', [p1, p2, p3])
+
+
+def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
+    """
+    A helper function to validate common arguments used in NEP-5 functions
+
+    Args:
+        wallet (Wallet): a UserWallet instance
+        token_str (str): symbol name or script_hash
+        from_addr (str): a wallet address
+        to_addr (str): a wallet address
+        amount (float): the number of tokens to send
+
+    Raises:
+        ValueError: for invalid arguments
+
+    Returns:
+        token (NEP5Token): instance
+    """
+    token = None
+    for t in wallet.GetTokens().values():
+        if token_str == t.symbol:
+            token = t
+            break
+        elif token_str == t.ScriptHash.ToString():
+            token = t
+
     if not isinstance(token, NEP5Token):
-        print("The given symbol does not represent a loaded NEP5 token")
-        return False
+        raise ValueError("The given token argument does not represent a known NEP5 token")
 
-    approve_from = args[1]
-    approve_to = args[2]
-    amount = amount_from_string(token, args[3])
+    if not isValidPublicAddress(from_addr):
+        raise ValueError("send_from is not a valid address")
 
-    tx, fee, results = token.Approve(wallet, approve_from, approve_to, amount)
+    if not isValidPublicAddress(to_addr):
+        raise ValueError("send_to is not a valid address")
 
-    if tx is not None and results is not None and len(results) > 0:
-        if results[0].GetBigInteger() == 1:
-            print("\n-----------------------------------------------------------")
-            print("Approve allowance of %s %s from %s to %s" % (string_from_amount(token, amount), token.symbol, approve_from, approve_to))
-            print("Transfer fee: %s " % (fee.value / Fixed8.D))
-            print("-------------------------------------------------------------\n")
+    try:
+        # internally this function uses the `Decimal` class which will parse the float amount to its required format.
+        # the name is a bit misleading /shrug
+        amount = amount_from_string(token, amount)
+    except Exception:
+        raise ValueError(f"{amount} is not a valid amount")
 
-            if prompt_passwd:
-                passwd = prompt("[Password]> ", is_password=True)
-
-                if not wallet.ValidatePassword(passwd):
-                    print("incorrect password")
-                    return False
-
-            return InvokeContract(wallet, tx, fee)
-
-    print("could not transfer tokens")
-    return False
+    return token
 
 
-def token_get_allowance(wallet, args, verbose=False):
-    if len(args) != 3:
-        print("please provide a token symbol, from address, to address")
-        return False
+def token_send(wallet, token_str, from_addr, to_addr, amount, prompt_passwd=True, user_tx_attributes=None):
+    """
+    Send `amount` of tokens from `from_addr` to `to_addr`
 
-    token = get_asset_id(wallet, args[0])
-    if not isinstance(token, NEP5Token):
-        print("The given symbol does not represent a loaded NEP5 token")
-        return False
+    Args:
+        wallet (Wallet): a UserWallet instance
+        token_str (str): symbol name or script_hash
+        from_addr (str): a wallet address
+        to_addr (str): a wallet address
+        amount (float): the number of tokens to send
+        prompt_passwd (boolean): (optional) whether to prompt for a password before sending it to the network. Defaults to True
+        user_tx_attributes (list): a list of ``TransactionAttribute``s.
 
-    allowance_from = args[1]
-    allowance_to = args[2]
+    Raises:
+        ValueError: for invalid arguments
 
-    tx, fee, results = token.Allowance(wallet, allowance_from, allowance_to)
+    Returns:
+        a Transaction object if successful, False otherwise.
+    """
+    if not user_tx_attributes:
+        user_tx_attributes = []
 
-    if tx is not None and results is not None and len(results) > 0:
+    try:
+        token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount)
+    except ValueError:
+        # just making it explicit for the reader
+        raise
+
+    for attr in user_tx_attributes:
+        if not isinstance(attr, TransactionAttribute):
+            raise ValueError(f"{attr} is not a valid transaction attribute")
+
+    return do_token_transfer(token, wallet, from_addr, to_addr, amount, prompt_passwd=prompt_passwd, tx_attributes=user_tx_attributes)
+
+
+def test_token_send_from(wallet, token_str, from_addr, to_addr, amount):
+    """
+    Test sending funds from `addr_from` to `addr_to` without commiting to the network.
+
+    This does a local test to validate all supplied arguments and if the blockchain state allows for the transfer.
+
+    Args:
+        wallet (Wallet): a UserWallet instance
+        token_str (str): symbol name or script_hash
+        from_addr (str): a wallet address
+        to_addr (str): a wallet address
+        amount (float): the number of tokens to send
+
+    Raises:
+        ValueError: for invalid arguments or if allowance is insufficient.
+
+    Returns:
+        tuple:
+            token (NEP5Token): instance
+            InvocationTransaction: the transaction.
+            int: the transaction fee.
+            list: the neo VM evaluation stack results.
+    """
+    try:
+        token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount)
+        allowance = token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False)
+
+        if allowance < amount:
+            raise ValueError(f"Insufficient allowance: {allowance}")
+    except ValueError:
+        # bad args or allowance
+        raise
+
+    tx, fees, results = token.TransferFrom(wallet, from_addr, to_addr, amount)
+    return token, tx, fees, results
+
+
+def token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False):
+    """
+    Query the smart contract for the amount from_addr is allowed to send to to_addr
+
+    Requires amount to be `approved`.
+
+    Args:
+        wallet (Wallet): a UserWallet instance
+        token_str (str): symbol name or script_hash
+        from_addr (str): a wallet address
+        to_addr (str): a wallet address
+        verbose (bool): flag indicating whether to print VM results
+
+    Raises:
+        ValueError: for invalid arguments or if allowance could not be queried
+
+    Returns:
+        int: allowance
+    """
+    try:
+        token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount=0)
+    except ValueError:
+        raise
+
+    tx, fee, results = token.Allowance(wallet, from_addr, to_addr)
+
+    if tx and results:
         allowance = results[0].GetBigInteger()
         if verbose:
-            print("%s allowance for %s from %s : %s " % (token.symbol, allowance_to, allowance_from, allowance))
+            print("%s allowance for %s from %s : %s " % (token.symbol, from_addr, to_addr, allowance))
 
         return allowance
     else:
         if verbose:
             print("Could not get allowance for token %s " % token.symbol)
-
-    return 0
+        raise ValueError(f"Could not get allowance for token {token.symbol}")
 
 
 def token_mint(wallet, args, prompt_passwd=True):
-    token = get_asset_id(wallet, args[0])
+    token = PromptUtils.get_asset_id(wallet, args[0])
     if not isinstance(token, NEP5Token):
         print("The given symbol does not represent a loaded NEP5 token")
         return False
 
     mint_to_addr = args[1]
-    args, invoke_attrs = get_tx_attr_from_args(args)
+    args, invoke_attrs = PromptUtils.get_tx_attr_from_args(args)
     if len(args) < 3:
         print("please specify assets to attach")
         return False
@@ -325,12 +563,12 @@ def token_mint(wallet, args, prompt_passwd=True):
 
 
 def token_crowdsale_register(wallet, args, prompt_passwd=True):
-    token = get_asset_id(wallet, args[0])
+    token = PromptUtils.get_asset_id(wallet, args[0])
     if not isinstance(token, NEP5Token):
         print("The given symbol does not represent a loaded NEP5 token")
         return False
 
-    args, from_addr = get_from_addr(args)
+    args, from_addr = PromptUtils.get_from_addr(args)
 
     if len(args) < 2:
         print("Specify addr to register for crowdsale")
@@ -393,36 +631,16 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
     return False
 
 
-def token_history(wallet, db, args):
-    if len(args) < 1:
-        print("Please provide the token symbol of the token you wish consult")
-        return False
+def token_history(wallet, token_str):
+    notification_db = NotificationDB.instance()
 
-    if not db:
-        print("Unable to fetch history, notification database not enabled")
-        return False
+    try:
+        token = PromptUtils.get_token(wallet, token_str)
+    except ValueError:
+        raise
 
-    token = get_asset_id(wallet, args[0])
-    if not isinstance(token, NEP5Token):
-        print("The given symbol does not represent a loaded NEP5 token")
-        return False
-
-    events = db.get_by_contract(token.ScriptHash)
-
-    addresses = wallet.Addresses
-    print("-----------------------------------------------------------")
-    print("Recent transaction history (last = more recent):")
-    for event in events:
-        if event.Type != 'transfer':
-            continue
-        if event.AddressFrom in addresses:
-            print(f"[{event.AddressFrom}]: Sent {string_from_amount(token, event.Amount)}"
-                  f" {args[0]} to {event.AddressTo}")
-        if event.AddressTo in addresses:
-            print(f"[{event.AddressTo}]: Received {string_from_amount(token, event.Amount)}"
-                  f" {args[0]} from {event.AddressFrom}")
-    print("-----------------------------------------------------------")
-    return True
+    events = notification_db.get_by_contract(token.ScriptHash)
+    return token, events
 
 
 def amount_from_string(token, amount_str):

@@ -4,6 +4,7 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
+from distutils import util
 import logging
 
 
@@ -16,6 +17,8 @@ class CommandConfig(CommandBase):
         self.register_sub_command(CommandConfigDebugNotify())
         self.register_sub_command(CommandConfigVMLog())
         self.register_sub_command(CommandConfigNodeRequests())
+        self.register_sub_command(CommandConfigMaxpeers())
+        self.register_sub_command(CommandConfigNEP8())
 
     def command_desc(self):
         return CommandDesc('config', 'configure internal settings')
@@ -154,7 +157,59 @@ class CommandConfigNodeRequests(CommandBase):
 
     def handle_help(self, arguments):
         super().handle_help(arguments)
-        print(f"\nCurrent settings {self.command_desc().params[0].name}: {NodeLeader.Instance().BREQPART}  {self.command_desc().params[1].name}: {NodeLeader.Instance().BREQMAX}")
+        print(f"\nCurrent settings {self.command_desc().params[0].name}:"
+              f" {NodeLeader.Instance().BREQPART} {self.command_desc().params[1].name}: {NodeLeader.Instance().BREQMAX}")
+
+
+class CommandConfigNEP8(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            flag = bool(util.strtobool(arguments[0]))
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        settings.COMPILER_NEP_8 = flag
+        if flag:
+            print("NEP-8 compiler instruction usage is ON")
+        else:
+            print("NEP-8 compiler instruction usage is OFF")
+
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
+        return CommandDesc('nep8', 'toggle using NEP-8 compiler instructions', [p1])
+
+
+class CommandConfigMaxpeers(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        c1 = get_arg(arguments)
+        if c1 is not None:
+            try:
+                settings.set_max_peers(c1)
+                print("Maxpeers set to ", c1)
+                return c1
+            except ValueError:
+                print("Please supply a positive integer for maxpeers")
+                return
+        else:
+            print(f"Maintaining maxpeers at {settings.CONNECTED_PEER_MAX}")
+            return
+
+    def command_desc(self):
+        p1 = ParameterDesc('number', 'maximum number of nodes to connect to')
+        return CommandDesc('maxpeers', 'configure number of max peers', [p1])
 
 
 def start_output_config():
