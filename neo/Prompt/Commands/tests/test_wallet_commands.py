@@ -6,7 +6,9 @@ from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neocore.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
+from neo.SmartContract.Contract import Contract
 from neo.Core.TX.Transaction import ContractTransaction
+from neo.Prompt.Commands.BuildNRun import BuildAndRun
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ShowUnspentCoins, SplitUnspentCoin
 from neo.Prompt.PromptData import PromptData
@@ -827,6 +829,63 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         self.assertEqual(token.symbol, 'NXT4')
         self.assertEqual(token.decimals, 8)
         self.assertEqual(token.Address, 'Ab61S1rk2VtCVd3NtGNphmBckWk4cfBdmB')
+
+    def test_wallet_import_contract_addr(self):
+        # test with no wallet open
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'contract_addr', 'contract_hash', 'pubkey']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("open a wallet", mock_print.getvalue())
+
+        self.OpenWallet1()
+
+        # test with not enough arguments (must have 2 arguments)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'contract_addr']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("specify the required parameters", mock_print.getvalue())
+
+        # test with too many arguments (must have 2 arguments)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'contract_addr', 'arg1', 'arg2', 'arg3']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("specify the required parameters", mock_print.getvalue())
+
+        # test with invalid contract hash
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'contract_addr', 'invalid_contract_hash', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid contract hash", mock_print.getvalue())
+
+        # test with valid contract hash but that doesn't exist
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'contract_addr', '31730cc9a1844891a3bafd1aa929000000000000', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Could not find contract", mock_print.getvalue())
+
+        # test with invalid pubkey
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['import', 'contract_addr', '31730cc9a1844891a3bafd1aa929a4142860d8d3', 'invalid_pubkey']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid pubkey", mock_print.getvalue())
+
+        # test with valid arguments
+        contract_hash = UInt160.ParseString('31730cc9a1844891a3bafd1aa929a4142860d8d3')
+
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            self.assertIsNone(PromptData.Wallet.GetContract(contract_hash))
+
+            args = ['import', 'contract_addr', '31730cc9a1844891a3bafd1aa929a4142860d8d3', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6']
+            res = CommandWallet().execute(args)
+            self.assertIsInstance(res, Contract)
+            self.assertTrue(PromptData.Wallet.GetContract(contract_hash))
+            self.assertIn("Added contract address", mock_print.getvalue())
 
     ##########################################################
     ##########################################################
