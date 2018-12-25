@@ -2,6 +2,8 @@ import os
 from neo.Settings import settings
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Prompt.Commands.Search import CommandSearch
+from mock import patch
+from io import StringIO
 
 
 class CommandShowTestCase(BlockchainFixtureTestCase):
@@ -12,8 +14,10 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
 
     def test_search(self):
         # with no subcommand
-        res = CommandSearch().execute(None)
-        self.assertFalse(res)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            res = CommandSearch().execute(None)
+            self.assertFalse(res)
+            self.assertIn("run `search help` to see supported queries", mock_print.getvalue())
 
         # with invalid command
         args = ['badcommand']
@@ -21,6 +25,13 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_search_asset(self):
+        # test no search parameter
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['asset']
+            res = CommandSearch().execute(args)
+            self.assertFalse(res)
+            self.assertIn("run `search asset help` to see supported queries", mock_print.getvalue())
+
         # successful search asset NEO
         args = ['asset', "NEO"]
         res = CommandSearch().execute(args)
@@ -57,6 +68,13 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_search_contract(self):
+        # test no search parameter
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['contract']
+            res = CommandSearch().execute(args)
+            self.assertFalse(res)
+            self.assertIn("run `search contract help` to see supported queries", mock_print.getvalue())
+
         # successful search by name
         args = ['contract', "test NEX Template V4"]
         res = CommandSearch().execute(args)
