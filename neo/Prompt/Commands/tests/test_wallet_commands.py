@@ -854,11 +854,13 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         addr = wallet.ToScriptHash('AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3')
 
         # bad inputs
+        tx = SplitUnspentCoin(None, self.NEO, addr, 0, 2)
+        self.assertEqual(tx, None)
+
         tx = SplitUnspentCoin(wallet, self.NEO, addr, 3, 2)
         self.assertEqual(tx, None)
 
-        # bad inputs
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 3, 2])
+        tx = SplitUnspentCoin(wallet, 'bla', addr, 0, 2)
         self.assertEqual(tx, None)
 
         # should be ok
