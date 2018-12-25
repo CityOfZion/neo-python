@@ -220,7 +220,7 @@ class Wallet:
         Test if the wallet contains the supplied public key.
 
         Args:
-            public_key (edcsa.Curve.point): a public key to test for its existance. i.e. KeyPair.PublicKey
+            public_key (edcsa.Curve.point): a public key to test for its existance. e.g. KeyPair.PublicKey
 
         Returns:
             bool: True if exists, False otherwise.

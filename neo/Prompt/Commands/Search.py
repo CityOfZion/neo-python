@@ -39,12 +39,15 @@ class CommandSearchAsset(CommandBase):
 
     def execute(self, arguments):
         item = get_arg(arguments)
-
-        results = Blockchain.Default().SearchAssetState(item)
-        print("Found %s results for %s" % (len(results), item))
-        for asset in results:
-            print(json.dumps(asset.ToJson(), indent=4))
-        return results
+        if item is not None:
+            results = Blockchain.Default().SearchAssetState(item)
+            print("Found %s results for %s" % (len(results), item))
+            for asset in results:
+                print(json.dumps(asset.ToJson(), indent=4))
+            return results
+        else:
+            print("run `%s %s help` to see supported queries" % (CommandSearch().command_desc().command, self.command_desc().command))
+            return
 
     def command_desc(self):
         p1 = ParameterDesc('query', 'supports name, issuer, or admin searches')
@@ -57,12 +60,15 @@ class CommandSearchContract(CommandBase):
 
     def execute(self, arguments):
         item = get_arg(arguments)
-
-        contracts = Blockchain.Default().SearchContracts(query=item)
-        print("Found %s results for %s" % (len(contracts), item))
-        for contract in contracts:
-            print(json.dumps(contract.ToJson(), indent=4))
-        return contracts
+        if item is not None:
+            contracts = Blockchain.Default().SearchContracts(query=item)
+            print("Found %s results for %s" % (len(contracts), item))
+            for contract in contracts:
+                print(json.dumps(contract.ToJson(), indent=4))
+            return contracts
+        else:
+            print("run `%s %s help` to see supported queries" % (CommandSearch().command_desc().command, self.command_desc().command))
+            return
 
     def command_desc(self):
         p1 = ParameterDesc('query', 'supports name, author, description, or email searches')
