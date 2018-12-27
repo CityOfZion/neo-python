@@ -171,7 +171,7 @@ The general syntax goes like this: ``build path/to/file.py test {input_params} {
 - ``{is_payable}`` is a boolean indicating whether the contract accepts NEO/GAS transfers to it (generally only  used for ICO's contracts)
 - ``params1 params2 etc...`` These are the parameters you are testing with.
 
-So for building and testing our ``sample1.py``, the syntax would be ``build docs/source/example/sample1.py test '' 01 False False``, where ``''`` indicates that no parameters are accepted and ``01`` indicates that it returns a boolean.  Lets try it out in the propmt
+So for building and testing our ``sample1.py``, the syntax would be ``build docs/source/example/sample1.py test '' 01 False False``, where ``''`` indicates that no parameters are accepted and ``01`` indicates that it returns a boolean.  Let's try it out in the prompt
 
 .. code-block:: sh
 
@@ -219,7 +219,7 @@ And you have now built and tested your first SC.  If you would like to view the 
 
   neo>
 
-You may have noticed that even though there is a ``print`` command in the contract, you did not see anything printed out.  Lets fix that by turning on smart contract events and running it again.
+You may have noticed that even though there is a ``print`` command in the contract, you did not see anything printed out.  Let's fix that by turning on smart contract events and running it again.
 
 .. code-block:: sh
 
@@ -251,7 +251,7 @@ So what happened there?  We turned on SmartContractEvent logging in the prompt w
 - **SmartContract.Execution.Success** indicates that the execution of the SC finished in a successful state
 
 
-Ok now lets try a little more complex contract, detailed here as `sample2.py`
+Ok now let's try a little more complex contract, detailed here as `sample2.py`
 
 .. code-block:: python3
 
@@ -291,7 +291,7 @@ We will build and run with a few paramaters:
   [I 180302 22:30:01 InteropService:93] Trying to get big integer Array: ['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None']
 
 
-Oh no, what happened there!  Oh, it looks like we tried to test a contract that wanted some parameters but didn't supply them.  Note than if you're building and testing contracts and you see an error similar to this, that is probably the issue you are running into.  Lets try that again with some parameters.
+Oh no, what happened there!  Oh, it looks like we tried to test a contract that wanted some parameters but didn't supply them.  Note than if you're building and testing contracts and you see an error similar to this, that is probably the issue you are running into.  Let's try that again with some parameters.
 
 .. code-block:: sh
 
@@ -323,7 +323,7 @@ Oh no, what happened there!  Oh, it looks like we tried to test a contract that 
   neo>
 
 
-Ok much better. Now lets do something a bit more useful.  We will do a simple address balance tracker.
+Ok much better. Now let's do something a bit more useful.  We will do a simple address balance tracker.
 
 .. code-block:: python3
 
@@ -570,7 +570,7 @@ Now that we have deployed the *Calculator Contract* we can interact with it with
   [password]>
 
 
-Once again, this invoke is only done locally.  It will not be run on the network until you input your password.   If you do not want to invoke on the network, you can simply input an incorrect password and it will cancel. Lets cancel the invoke, and then set ``config sc-events on`` to see exactly what is happening when you test invoke and then send it to the network:
+Once again, this invoke is only done locally.  It will not be run on the network until you input your password.   If you do not want to invoke on the network, you can simply input an incorrect password and it will cancel. Let's cancel the invoke, and then set ``config sc-events on`` to see exactly what is happening when you test invoke and then send it to the network:
 
 .. code-block:: sh
 

@@ -586,7 +586,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_getpeers(self):
         # Given this is an isolated environment and there is no peers
-        # lets simulate that at least some addresses are known
+        # let's simulate that at least some addresses are known
         node = NodeLeader.Instance()
         node.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
         node.DEAD_ADDRS = ["127.0.0.1:20335"]
