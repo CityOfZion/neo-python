@@ -23,7 +23,7 @@ class SmartContractPayable(WalletFixtureTestCase):
 
         wallet = self.GetWallet1()
 
-        arguments = [self._path, "test", "07", "01", "False", "False", "True", "payable"]
+        arguments = [self._path, "07", "01", "False", "False", "True", "payable"]
 
         with open(self._path, 'rb') as f:
 
@@ -47,7 +47,7 @@ class SmartContractPayable(WalletFixtureTestCase):
 
         wallet = self.GetWallet1()
 
-        arguments = [self._path, "test", "07", "01", "False", "False", "False", "payable"]
+        arguments = [self._path, "07", "01", "False", "False", "False", "payable"]
 
         with open(self._path, 'rb') as f:
 
