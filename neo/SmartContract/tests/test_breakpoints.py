@@ -41,7 +41,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/BreakpointTest.py", "test", "02", "01", "True", "False", "True", "1", ]
+        arguments = ["neo/SmartContract/tests/BreakpointTest.py", "02", "01", "True", "False", "True", "1", ]
         dbg = VMDebugger
 #        dbg.end = MagicMock(return_value=None)
         dbg.start = MagicMock(return_value=None)
@@ -60,7 +60,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_debug_contract_2(self):
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/BreakpointTest.py", "test", "02", "01", "True", "False", "True", "4", ]
+        arguments = ["neo/SmartContract/tests/BreakpointTest.py", "02", "01", "True", "False", "True", "4", ]
         dbg = VMDebugger
         #        dbg.end = MagicMock(return_value=None)
         dbg.start = MagicMock(return_value=None)
