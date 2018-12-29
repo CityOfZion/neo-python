@@ -19,6 +19,7 @@ from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Search import CommandSearch
 from neo.Prompt.Commands.Config import CommandConfig
+from neo.Prompt.Commands.SC import CommandSC
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError
@@ -73,7 +74,7 @@ class PromptInterface:
     _known_things = []
 
     _commands = [
-        CommandWallet(), CommandShow(), CommandSearch(), CommandConfig()
+        CommandWallet(), CommandShow(), CommandSearch(), CommandConfig(), CommandSC()
     ]
 
     _command_descs = [desc for c in _commands for desc in c.command_descs_with_sub_commands()]
