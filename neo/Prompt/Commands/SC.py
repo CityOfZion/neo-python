@@ -82,7 +82,7 @@ class CommandSCBuildRun(CommandBase):
         p10 = ParameterDesc('--owners=[{addr}, ...]', 'specify invocation owners', optional=True)
         p11 = ParameterDesc('--tx-attr=[{"usage": <value>,"data":"<remark>"}, ...]', 'specify unique invocation attributes\n\n'
                             f"{' ':>17} Examples:\n"
-                            f"{' ':>20} build_run path.py 0710 05 True False False input1, input2\n"
+                            f"{' ':>20} build_run path.py 0710 05 True False False input1 input2\n"
                             f"{' ':>20} build_run path.py 0710 05 True False False --i\n\n"
                             f"{' ':>17} For more information about parameter types see\n"
                             f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes", optional=True)
@@ -115,7 +115,7 @@ class CommandSCLoadRun(CommandBase):
         p8 = ParameterDesc('--no-parse-addr', 'a flag to turn off address parsing when input into the smart contract', optional=True)
         p9 = ParameterDesc('--from-addr={addr}', 'address to send invocation fee from\n\n'
                            f"{' ':>17} Examples:\n"
-                           f"{' ':>20} load_run path.py 0710 05 True False False input1, input2\n"
+                           f"{' ':>20} load_run path.py 0710 05 True False False input1 input2\n"
                            f"{' ':>20} load_run path.py 0710 05 True False False --i\n\n"
                            f"{' ':>17} For more information about parameter types see\n"
                            f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes", optional=True)
