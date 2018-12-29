@@ -23,14 +23,6 @@ class CommandSCTestCase(WalletFixtureTestCase):
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     _wallet1 = None
 
-    @property
-    def GAS(self):
-        return Blockchain.Default().SystemCoin().Hash
-
-    @property
-    def NEO(self):
-        return Blockchain.Default().SystemShare().Hash
-
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
