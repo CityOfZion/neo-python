@@ -277,7 +277,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         Args:
             wallet (neo.Wallets.Wallet): a wallet instance.
-            register_addresses (str): public address of the account that wants to register for the sale.
+            register_addresses (list): list of public addresses to register for the sale.
 
         Returns:
             tuple:

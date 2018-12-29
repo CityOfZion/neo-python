@@ -31,6 +31,8 @@ class CommandWalletToken(CommandBase):
         self.register_sub_command(CommandTokenHistory())
         self.register_sub_command(CommandTokenApprove())
         self.register_sub_command(CommandTokenAllowance())
+        self.register_sub_command(CommandTokenMint())
+        self.register_sub_command(CommandTokenRegister())
 
     def command_desc(self):
         return CommandDesc('token', 'various token operations')
@@ -372,6 +374,137 @@ class CommandTokenAllowance(CommandBase):
         return CommandDesc('allowance', 'get the amount an account can transfer from another acount', [p1, p2, p3])
 
 
+class CommandTokenMint(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) < 2:
+            print("Please specify the required parameters")
+            return False
+
+        if len(arguments) > 5:
+            # the 3rd and 4th argument are for attaching neo/gas, 5th for prompting for password
+            print("Too many parameters supplied. Please check your command")
+            return False
+
+        token_str = arguments[0]
+        try:
+            token = PromptUtils.get_token(wallet, token_str)
+        except ValueError as e:
+            print(str(e))
+            return False
+
+        to_addr = arguments[1]
+        if not isValidPublicAddress(to_addr):
+            print(f"{to_addr} is not a valid address")
+            return False
+
+        remaining_args = arguments[2:]
+        asset_attachments = []
+        prompt_passwd = True
+        for optional in remaining_args:
+            _, neo_to_attach, gas_to_attach = PromptUtils.get_asset_attachments([optional])
+
+            if "attach-neo" in optional:
+                if not neo_to_attach:
+                    print(f"Could not parse value from --attach-neo. Value must be an integer")
+                    return False
+                else:
+                    asset_attachments.append(optional)
+
+            if "attach-gas" in optional:
+                if not gas_to_attach:
+                    print(f"Could not parse value from --attach-gas")
+                    return False
+                else:
+                    asset_attachments.append(optional)
+
+            # finally assume optional is "prompt pw"
+            try:
+                prompt_passwd = bool(strtobool(optional))
+            except ValueError:
+                pass
+
+        tx, fee, results = token.Mint(wallet, to_addr, asset_attachments)
+
+        if tx and results:
+            if results[0] is not None:
+                print("\n-----------------------------------------------------------")
+                print(f"[{token.symbol}] Will mint tokens to address: {to_addr}")
+                print(f"Fee: {fee.value / Fixed8.D}")
+                print("-------------------------------------------------------------\n")
+
+                if prompt_passwd:
+                    passwd = prompt("[Password]> ", is_password=True)
+
+                    if not wallet.ValidatePassword(passwd):
+                        print("incorrect password")
+                        return False
+
+                return InvokeWithTokenVerificationScript(wallet, tx, token, fee)
+
+        print("Failed to mint tokens")
+        return False
+
+    def command_desc(self):
+        p1 = ParameterDesc('symbol', 'token symbol')
+        p2 = ParameterDesc('to_addr', 'address to mint tokens to')
+        p3 = ParameterDesc('--attach-neo', 'amount of neo to attach to the transaction', optional=True)
+        p4 = ParameterDesc('--attach-gas', 'amount of gas to attach to the transaction', optional=True)
+        p5 = ParameterDesc('ask_for_passw', 'prompt for a password before sending to the actual network. Default is True', optional=True)
+        return CommandDesc('mint', 'mint tokens from a contract', [p1, p2, p3, p4, p5])
+
+
+class CommandTokenRegister(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) < 2:
+            print("Please specify the required parameters")
+            return False
+
+        token_str = arguments[0]
+        try:
+            token = PromptUtils.get_token(wallet, token_str)
+        except ValueError as e:
+            print(str(e))
+            return False
+
+        register_addr = arguments[1:]
+        addr_list = []
+        for addr in register_addr:
+            if isValidPublicAddress(addr):
+                addr_list.append(addr)
+            else:
+                print(f"{addr} is not a valid address")
+                return False
+
+        tx, fee, results = token.CrowdsaleRegister(wallet, addr_list)
+
+        if tx and results:
+            if results[0].GetBigInteger() > 0:
+                print("\n-----------------------------------------------------------")
+                print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
+                print("Fee: %s " % (fee.value / Fixed8.D))
+                print("-------------------------------------------------------------\n")
+
+                return InvokeContract(wallet, tx, fee)
+
+        print("Could not register address(es)")
+        return False
+
+    def command_desc(self):
+        p1 = ParameterDesc('symbol', 'token symbol')
+        p2 = ParameterDesc('addresses', 'space seperated list of addresses')
+        return CommandDesc('register', 'register for a crowdsale', [p1, p2])
+
+
 def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
     """
     A helper function to validate common arguments used in NEP-5 functions
@@ -559,42 +692,6 @@ def token_mint(wallet, args, prompt_passwd=True):
             return InvokeWithTokenVerificationScript(wallet, tx, token, fee, invoke_attrs=invoke_attrs)
 
     print("Could not register address")
-    return False
-
-
-def token_crowdsale_register(wallet, args, prompt_passwd=True):
-    token = PromptUtils.get_asset_id(wallet, args[0])
-    if not isinstance(token, NEP5Token):
-        print("The given symbol does not represent a loaded NEP5 token")
-        return False
-
-    args, from_addr = PromptUtils.get_from_addr(args)
-
-    if len(args) < 2:
-        print("Specify addr to register for crowdsale")
-        return False
-
-    register_addr = args[1:]
-
-    tx, fee, results = token.CrowdsaleRegister(wallet, register_addr)
-
-    if tx is not None and results is not None and len(results) > 0:
-        if results[0].GetBigInteger() > 0:
-            print("\n-----------------------------------------------------------")
-            print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
-            print("Fee: %s " % (fee.value / Fixed8.D))
-            print("-------------------------------------------------------------\n")
-
-            if prompt_passwd:
-                passwd = prompt("[Password]> ", is_password=True)
-
-                if not wallet.ValidatePassword(passwd):
-                    print("incorrect password")
-                    return False
-
-            return InvokeContract(wallet, tx, fee, from_addr)
-
-    print("Could not register address(es)")
     return False
 
 
