@@ -147,6 +147,13 @@ def get_fee(params):
     return params, fee
 
 
+def get_password_prompt(params):
+    if '--no-passwd-prompt' in params:
+        params.remove('--no-passwd-prompt')
+        return params, False
+    return params, True
+
+
 def get_parse_addresses(params):
     if '--no-parse-addr' in params:
         params.remove('--no-parse-addr')
