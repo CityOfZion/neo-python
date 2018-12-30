@@ -51,14 +51,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
             self.assertTrue(res)
 
-    def test_send_gas(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            PromptData.Wallet = self.GetWallet1(recreate=True)
-            args = ['send', 'gas', self.watch_addr_str, '5']
+    def test_send_gas_no_passwd_prompt(self):
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+        args = ['send', 'gas', self.watch_addr_str, '5', '--no-passwd-prompt']
 
-            res = Wallet.CommandWallet().execute(args)
+        res = Wallet.CommandWallet().execute(args)
 
-            self.assertTrue(res)
+        self.assertTrue(res)
 
     def test_send_with_fee_and_from_addr(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
@@ -311,10 +310,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
                 self.assertFalse(res)
 
-    def test_sendmany_good_simple(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
+    def test_sendmany_no_passwd_prompt(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1"]):
             PromptData.Wallet = self.GetWallet1(recreate=True)
-            args = ['sendmany', '2']
+            args = ['sendmany', '2', '--no-passwd-prompt']
 
             res = Wallet.CommandWallet().execute(args)
 
