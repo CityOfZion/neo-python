@@ -25,7 +25,7 @@ class CommandWalletSend(CommandBase):
         framework = construct_send_basic(PromptData.Wallet, arguments)
         if type(framework) is list:
             return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1],
-                                       fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
+                                       fee=framework[2], owners=framework[3], user_tx_attributes=framework[4], prompt_passwd=framework[5])
         return framework
 
     def command_desc(self):
@@ -40,7 +40,8 @@ class CommandWalletSend(CommandBase):
         f"{' ':>17} Example:\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
-        params = [p1, p2, p3, p4, p5, p6, p7]
+        p8 = ParameterDesc('--no-passwd-prompt', 'a flag to turn off the password prompt', optional=True)
+        params = [p1, p2, p3, p4, p5, p6, p7, p8]
         return CommandDesc('send', 'send an asset (NEO/GAS)', params=params)
 
 
@@ -53,7 +54,7 @@ class CommandWalletSendMany(CommandBase):
         framework = construct_send_many(PromptData.Wallet, arguments)
         if type(framework) is list:
             return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2],
-                                       fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
+                                       fee=framework[3], owners=framework[4], user_tx_attributes=framework[5], prompt_passwd=framework[6])
         return framework
 
     def command_desc(self):
@@ -67,7 +68,8 @@ class CommandWalletSendMany(CommandBase):
         f"{' ':>17} Example:\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
-        params = [p1, p2, p3, p4, p5, p6]
+        p7 = ParameterDesc('--no-passwd-prompt', 'a flag to turn off the password prompt', optional=True)
+        params = [p1, p2, p3, p4, p5, p6, p7]
         return CommandDesc('sendmany', 'send multiple NEO/GAS transactions', params=params)
 
 
@@ -95,6 +97,7 @@ def construct_send_basic(wallet, arguments):
     arguments, priority_fee = get_fee(arguments)
     arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
     arguments, owners = get_owners_from_params(arguments)
+    arguments, prompt_passwd = get_password_prompt(arguments)  # default is True
     to_send = get_arg(arguments)
     address_to = get_arg(arguments, 1)
     amount = get_arg(arguments, 2)
@@ -139,7 +142,7 @@ def construct_send_basic(wallet, arguments):
 
     output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
     contract_tx = ContractTransaction(outputs=[output])
-    return [contract_tx, scripthash_from, fee, owners, user_tx_attributes]
+    return [contract_tx, scripthash_from, fee, owners, user_tx_attributes, prompt_passwd]
 
 
 def construct_send_many(wallet, arguments):
@@ -160,6 +163,7 @@ def construct_send_many(wallet, arguments):
     arguments, priority_fee = get_fee(arguments)
     arguments, owners = get_owners_from_params(arguments)
     arguments, user_tx_attributes = get_tx_attr_from_args(arguments)
+    arguments, prompt_passwd = get_password_prompt(arguments)  # default is True
 
     output = []
     for i in range(outgoing):
@@ -213,10 +217,10 @@ def construct_send_many(wallet, arguments):
             return None
 
     print("sending with fee: %s " % fee.ToString())
-    return [contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes]
+    return [contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes, prompt_passwd]
 
 
-def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_change=None, fee=None, owners=None, user_tx_attributes=None):
+def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_change=None, fee=None, owners=None, user_tx_attributes=None, prompt_passwd=True):
     try:
         tx = wallet.MakeTransaction(tx=contract_tx,
                                     change_address=scripthash_change,
@@ -228,10 +232,11 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
             return None
 
         # password prompt
-        passwd = prompt("[Password]> ", is_password=True)
-        if not wallet.ValidatePassword(passwd):
-            print("incorrect password")
-            return None
+        if prompt_passwd:
+            passwd = prompt("[Password]> ", is_password=True)
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return None
 
         standard_contract = wallet.GetStandardAddress()
 
