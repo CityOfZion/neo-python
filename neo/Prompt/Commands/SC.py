@@ -26,7 +26,7 @@ class CommandSC(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `%s help` to see supported queries" % self.command_desc().command)
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return
 
         try:
@@ -68,7 +68,7 @@ class CommandSCBuildRun(CommandBase):
         try:
             tx, result, total_ops, engine = BuildAndRun(arguments, PromptData.Wallet)
         except TypeError:
-            print('run `%s %s help` to see command usage' % (CommandSC().command_desc().command, self.command_desc().command))
+            print(f'run `{CommandSC().command_desc().command} {self.command_desc().command} help` to see supported queries')
             Blockchain.Default().Resume()
             return
         Blockchain.Default().Resume()
@@ -112,7 +112,7 @@ class CommandSCLoadRun(CommandBase):
         try:
             tx, result, total_ops, engine = LoadAndRun(arguments, PromptData.Wallet)
         except TypeError:
-            print('run `%s %s help` to see command usage' % (CommandSC().command_desc().command, self.command_desc().command))
+            print(f'run `{CommandSC().command_desc().command} {self.command_desc().command} help` to see supported queries')
             Blockchain.Default().Resume()
             return
         Blockchain.Default().Resume()
