@@ -86,8 +86,8 @@ class CommandSCBuildRun(CommandBase):
                             f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
                             f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n\n"
                             f"{' ':>17} Usage Examples:\n"
-                            f"{' ':>20} build_run path.py 0710 05 True False False input1, input2\n"
-                            f"{' ':>20} build_run path.py 0710 05 True False False --i\n\n"
+                            f"{' ':>20} build_run path.py True False False 0710 05 input1 input2\n"
+                            f"{' ':>20} build_run path.py True False False 0710 05 --i\n\n"
                             f"{' ':>17} For more information about parameter types see\n"
                             f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11]
@@ -119,8 +119,8 @@ class CommandSCLoadRun(CommandBase):
         p8 = ParameterDesc('--no-parse-addr', 'a flag to turn off address parsing when input into the smart contract', optional=True)
         p9 = ParameterDesc('--from-addr', 'source address to take fee funds from (if not specified, take first address in wallet)\n\n'
                            f"{' ':>17} Usage Examples:\n"
-                           f"{' ':>20} load_run path.py 0710 05 True False False input1, input2\n"
-                           f"{' ':>20} load_run path.py 0710 05 True False False --i\n\n"
+                           f"{' ':>20} load_run path.py True False False 0710 05 input1 input2\n"
+                           f"{' ':>20} load_run path.py True False False 0710 05 --i\n\n"
                            f"{' ':>17} For more information about parameter types see\n"
                            f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7, p8, p9]
