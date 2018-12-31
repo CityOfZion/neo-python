@@ -4,7 +4,8 @@ from neo.Wallets.utils import to_aes_key
 from neo.Prompt.Utils import get_asset_id, get_tx_attr_from_args
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neo.Prompt.Commands.Wallet import ImportToken, CommandWallet
+from neo.Prompt.Commands.Wallet import CommandWallet
+from neo.Prompt.Commands.WalletImport import ImportToken
 from neo.Prompt.Commands.Tokens import token_get_allowance, token_send, token_history, token_mint, amount_from_string
 import shutil
 from neocore.IO.BinaryWriter import BinaryWriter
