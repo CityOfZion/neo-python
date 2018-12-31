@@ -18,7 +18,7 @@ class CommandWalletExport(CommandBase):
         item = PromptUtils.get_arg(arguments)
 
         if not item:
-            print(f"Please specify an action. See help for available actions")
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return False
 
         try:

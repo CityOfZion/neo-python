@@ -13,7 +13,6 @@ from neo.Implementations.Notifications.LevelDB.NotificationDB import Notificatio
 from neo.logging import log_manager
 import json
 
-
 logger = log_manager.getLogger()
 
 
@@ -39,7 +38,7 @@ class CommandShow(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `%s help` to see supported queries" % self.command_desc().command)
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return
 
         try:
@@ -324,9 +323,9 @@ class CommandShowAsset(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'the asset name, assetId, or "all" shows all assets\n\n'
-                           f"{' ':>17} Example:\n"
-                           f"{' ':>20} 'neo' or 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'\n"
-                           f"{' ':>20} 'gas' or '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'\n")
+        f"{' ':>17} Example:\n"
+        f"{' ':>20} 'neo' or 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'\n"
+        f"{' ':>20} 'gas' or '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'\n")
         return CommandDesc('asset', 'show a specified asset', [p1])
 
 

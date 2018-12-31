@@ -27,7 +27,7 @@ class CommandConfig(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `%s help` to see supported queries" % self.command_desc().command)
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return
 
         try:
@@ -101,7 +101,7 @@ class CommandConfigDebugNotify(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
-        return CommandDesc('sc-debug-notify', 'toggle printing Notify events on execution failure', [p1])
+        return CommandDesc('sc-debug-notify', 'toggle printing smart contract Notify events on execution failure', [p1])
 
 
 class CommandConfigVMLog(CommandBase):
