@@ -102,6 +102,14 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertEqual(total_ops, None)
             self.assertEqual(engine, None)
             self.assertIn("Please open a wallet to test build contract", mock_print.getvalue())
+        
+        # test bad args
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']  # missing payable flag
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("run `sc build_run help` to see command usage", mock_print.getvalue())
 
         # test successful build and run
         PromptData.Wallet = self.GetWallet1(recreate=True)
@@ -143,12 +151,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
             res = CommandSC().execute(args)
-            tx, result, total_ops, engine = CommandSC().execute(args)
-            self.assertEqual(tx, None)
-            self.assertEqual(result, None)
-            self.assertEqual(total_ops, None)
-            self.assertEqual(engine, None)
-            self.assertIn("Could not load script", mock_print.getvalue())
+            self.assertFalse(res)
+            self.assertIn("run `sc load_run help` to see command usage", mock_print.getvalue())
 
         # build the .avm file
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -166,6 +170,14 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertEqual(total_ops, None)
             self.assertEqual(engine, None)
             self.assertIn("Please open a wallet to test build contract", mock_print.getvalue())
+
+        # test bad args
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', '070502', '02', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '0']  # missing payable flag
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("run `sc load_run help` to see command usage", mock_print.getvalue())
 
         # test successful load and run with from-addr
         PromptData.Wallet = self.GetWallet1(recreate=True)
