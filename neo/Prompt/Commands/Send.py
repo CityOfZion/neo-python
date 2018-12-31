@@ -78,6 +78,10 @@ class CommandWalletSign(CommandBase):
 
     def execute(self, arguments):
         jsn = get_arg(arguments)
+        if not jsn:
+            print("Please specify the required parameter")
+            return False
+
         return parse_and_sign(PromptData.Wallet, jsn)
 
     def command_desc(self):
@@ -88,7 +92,7 @@ class CommandWalletSign(CommandBase):
 
 def construct_send_basic(wallet, arguments):
     if len(arguments) < 3:
-        print("Not enough arguments")
+        print("Please specify the requred parameters")
         return None
 
     arguments, from_address = get_from_addr(arguments)

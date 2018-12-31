@@ -13,7 +13,7 @@ class UserWalletTestCase(UserWalletTestCaseBase):
             args = ['export']
             res = CommandWallet().execute(args)
             self.assertFalse(res)
-            self.assertIn("Please specify an action", mock_print.getvalue())
+            self.assertIn("run `export help` to see supported queries", mock_print.getvalue())
 
         # test with an invalid action
         with patch('sys.stdout', new=StringIO()) as mock_print:

@@ -47,7 +47,7 @@ class CommandWalletCreateAddress(CommandBase):
         addresses_to_create = PromptUtils.get_arg(arguments, 0)
 
         if not addresses_to_create:
-            print("Please specify a number of addresses to create.")
+            print("Please specify the required parameter")
             return
 
         return CreateAddress(PromptData.Wallet, addresses_to_create)
@@ -65,7 +65,7 @@ class CommandWalletDeleteAddress(CommandBase):
         addr_to_delete = PromptUtils.get_arg(arguments, 0)
 
         if not addr_to_delete:
-            print("Please specify an address to delete.")
+            print("Please specify the required parameter")
             return False
 
         return DeleteAddress(PromptData.Wallet, addr_to_delete)
@@ -148,7 +148,7 @@ class CommandWalletAlias(CommandBase):
 
     def execute(self, arguments):
         if len(arguments) < 2:
-            print("Please supply an address and an alias")
+            print("Please specify the required parameters")
             return False
 
         return AddAlias(PromptData.Wallet, arguments[0], arguments[1])

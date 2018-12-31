@@ -49,7 +49,7 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         # test turning them off
         args = ['sc-events', '0']
         res = CommandConfig().execute(args)
-        self.assertTrue(res)
+        self.assertFalse(settings.log_smart_contract_events)
 
         # test bad input
         args = ['sc-events', 'blah']

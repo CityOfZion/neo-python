@@ -53,23 +53,23 @@ class CommandConfigSCEvents(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        c1 = get_arg(arguments)
-        if c1 is not None:
-            c1 = c1.lower()
-            if c1 == 'on' or c1 == '1':
-                settings.set_log_smart_contract_events(True)
-                print("Smart contract event logging is now enabled")
-                return c1
-            elif c1 == 'off' or c1 == '0':
-                settings.set_log_smart_contract_events(False)
-                print("Smart contract event logging is now disabled")
-                return c1
-            else:
-                print("Cannot configure log. Please specify on|off or 1|0")
-                return
+        if len(arguments) == 0:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            flag = bool(util.strtobool(arguments[0]))
+            settings.set_log_smart_contract_events(flag)
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        if flag:
+            print("Smart contract event logging is now enabled")
+            return True
         else:
-            print("Cannot configure log. Please specify on|off or 1|0")
-            return
+            print("Smart contract event logging is now disabled")
+            return False
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
@@ -81,23 +81,23 @@ class CommandConfigDebugNotify(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        c1 = get_arg(arguments)
-        if c1 is not None:
-            c1 = c1.lower()
-            if c1 == 'on' or c1 == '1':
-                settings.set_emit_notify_events_on_sc_execution_error(True)
-                print("Smart contract emit Notify events on execution failure is now enabled")
-                return c1
-            elif c1 == 'off' or c1 == '0':
-                settings.set_emit_notify_events_on_sc_execution_error(False)
-                print("Smart contract emit Notify events on execution failure is now disabled")
-                return c1
-            else:
-                print("Cannot configure log. Please specify on|off or 1|0")
-                return
+        if len(arguments) == 0:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            flag = bool(util.strtobool(arguments[0]))
+            settings.set_emit_notify_events_on_sc_execution_error(flag)
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        if flag:
+            print("Smart contract emit Notify events on execution failure is now enabled")
+            return True
         else:
-            print("Cannot configure log. Please specify on|off or 1|0")
-            return
+            print("Smart contract emit Notify events on execution failure is now disabled")
+            return True
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
@@ -109,23 +109,23 @@ class CommandConfigVMLog(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        c1 = get_arg(arguments)
-        if c1 is not None:
-            c1 = c1.lower()
-            if c1 == 'on' or c1 == '1':
-                settings.set_log_vm_instruction(True)
-                print("VM instruction execution logging is now enabled")
-                return c1
-            elif c1 == 'off' or c1 == '0':
-                settings.set_log_vm_instruction(False)
-                print("VM instruction execution logging is now disabled")
-                return c1
-            else:
-                print("Cannot configure VM instruction logging. Please specify on|off or 1|0")
-                return
+        if len(arguments) == 0:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            flag = bool(util.strtobool(arguments[0]))
+            settings.set_log_vm_instruction(flag)
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        if flag:
+            print("VM instruction execution logging is now enabled")
+            return True
         else:
-            print("Cannot configure VM instruction logging. Please specify on|off or 1|0")
-            return
+            print("VM instruction execution logging is now disabled")
+            return True
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
@@ -142,12 +142,12 @@ class CommandConfigNodeRequests(CommandBase):
                 try:
                     return NodeLeader.Instance().setBlockReqSizeAndMax(int(arguments[0]), int(arguments[1]))
                 except ValueError:
-                    print("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
+                    print("Invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
                     return False
             elif len(arguments) == 1:
                 return NodeLeader.Instance().setBlockReqSizeByName(arguments[0])
         else:
-            print("Invalid number of arguments")
+            print("Please specify the required parameter")
             return False
 
     def command_desc(self):

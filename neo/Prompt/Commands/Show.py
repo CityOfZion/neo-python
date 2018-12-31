@@ -75,7 +75,7 @@ class CommandShowBlock(CommandBase):
                 print("Could not locate block %s" % item)
                 return
         else:
-            print("please specify a supported block attribute: index or scripthash")
+            print("Please specify the required parameter")
             return
 
     def command_desc(self):
@@ -99,7 +99,7 @@ class CommandShowHeader(CommandBase):
                 print("Could not locate header %s\n" % item)
                 return
         else:
-            print("Please specify a supported header attribute: index or scripthash")
+            print("Please specify the required parameter")
             return
 
     def command_desc(self):
@@ -130,7 +130,7 @@ class CommandShowTx(CommandBase):
                 print("Could not find transaction from args: %s" % arguments)
                 return
         else:
-            print("Please specify a TX hash")
+            print("Please specify the required parameter")
             return
 
     def command_desc(self):
@@ -222,8 +222,6 @@ class CommandShowNotifications(CommandBase):
             if item[0:2] == "0x":
                 item = item[2:]
 
-            events = []
-
             if len(item) == 34 and item[0] == 'A':
                 events = NotificationDB.instance().get_by_addr(item)
 
@@ -249,7 +247,7 @@ class CommandShowNotifications(CommandBase):
                 print("No events found for %s" % item)
                 return
         else:
-            print("Please specify a supported attribute: a block index, an address, or contract scripthash")
+            print("Please specify the required parameter")
             return
 
     def command_desc(self):
@@ -273,7 +271,7 @@ class CommandShowAccount(CommandBase):
                 print("Account %s not found" % item)
                 return
         else:
-            print("Please specify an account address")
+            print("Please specify the required parameter")
             return
 
     def command_desc(self):
@@ -318,14 +316,15 @@ class CommandShowAsset(CommandBase):
                 print("Asset %s not found" % item)
                 return
         else:
-            print('Please specify a supported attribute: asset name, assetId, or "all" shows all assets')
+            print('Please specify the required parameter')
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('attribute', 'the asset name, assetId, or "all" shows all assets\n\n'
-        f"{' ':>17} Example:\n"
-        f"{' ':>20} 'neo' or 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'\n"
-        f"{' ':>20} 'gas' or '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'\n")
+        p1 = ParameterDesc('attribute',
+                           'the asset name, assetId, or "all" shows all assets\n\n'
+                           f"{' ':>17} Example:\n"
+                           f"{' ':>20} 'neo' or 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'\n"
+                           f"{' ':>20} 'gas' or '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'\n")
         return CommandDesc('asset', 'show a specified asset', [p1])
 
 
@@ -362,7 +361,7 @@ class CommandShowContract(CommandBase):
                 print("Contract %s not found" % item)
                 return
         else:
-            print('Please specify a supported attribute: contract scripthash or "all"')
+            print('Please specify the required parameter')
             return
 
     def command_desc(self):

@@ -347,13 +347,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 args = ['token']
                 res = CommandWallet().execute(args)
                 self.assertFalse(res)
-                self.assertIn("Please specify an action", mock_print.getvalue())
+                self.assertIn("run `token help` to see supported queries", mock_print.getvalue())
 
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 args = ['token', None]
                 res = CommandWallet().execute(args)
                 self.assertFalse(res)
-                self.assertIn("Please specify an action", mock_print.getvalue())
+                self.assertIn("run `token help` to see supported queries", mock_print.getvalue())
 
             # test token with invalid subcommands
             with patch('sys.stdout', new=StringIO()) as mock_print:

@@ -135,7 +135,7 @@ class CommandWalletOpen(CommandBase):
         path = PromptUtils.get_arg(arguments, 0)
 
         if not path:
-            print("Please specify a path")
+            print("Please specify the required parameter")
             return
 
         if not os.path.exists(path):
