@@ -62,7 +62,7 @@ class CommandWalletExportNEP2(CommandBase):
         wallet = PromptData.Wallet
 
         if len(arguments) != 1:
-            print("Please specify the required parameters")
+            print("Please specify the required parameter")
             return False
 
         address = arguments[0]
