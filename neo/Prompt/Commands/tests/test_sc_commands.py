@@ -7,7 +7,6 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
-from neo.Prompt.Commands.Wallet import ImportToken
 from neo.Prompt.Commands.SC import CommandSC
 from neo.Prompt.PromptData import PromptData
 from mock import patch
