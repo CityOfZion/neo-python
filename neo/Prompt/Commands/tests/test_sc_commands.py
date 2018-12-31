@@ -109,7 +109,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
             args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']  # missing payable flag
             res = CommandSC().execute(args)
             self.assertFalse(res)
-            self.assertIn("run `sc build_run help` to see command usage", mock_print.getvalue())
+            self.assertIn("run `sc build_run help` to see supported queries", mock_print.getvalue())
 
         # test successful build and run
         PromptData.Wallet = self.GetWallet1(recreate=True)
@@ -152,7 +152,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
             args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
             res = CommandSC().execute(args)
             self.assertFalse(res)
-            self.assertIn("run `sc load_run help` to see command usage", mock_print.getvalue())
+            self.assertIn("run `sc load_run help` to see supported queries", mock_print.getvalue())
 
         # build the .avm file
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -177,7 +177,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
             args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', '070502', '02', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '0']  # missing payable flag
             res = CommandSC().execute(args)
             self.assertFalse(res)
-            self.assertIn("run `sc load_run help` to see command usage", mock_print.getvalue())
+            self.assertIn("run `sc load_run help` to see supported queries", mock_print.getvalue())
 
         # test successful load and run with from-addr
         PromptData.Wallet = self.GetWallet1(recreate=True)
