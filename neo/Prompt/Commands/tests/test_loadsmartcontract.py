@@ -16,14 +16,14 @@ class LoadSmartContractTestCase(TestCase):
 
         # test for void (ff) type in params
         with self.assertRaises(ValueError) as e:
-            args = ["path", "07ff10", "01", "False", "False", "False"]
+            args = ["path", "False", "False", "False", "07ff10", "01"]
 
             LoadContract(args)
 
         self.assertTrue("Void is not a valid input parameter type" in str(e.exception))
 
         # test for .py in path
-        args = ["path.py", "070710", "01", "False", "False", "False"]
+        args = ["path.py", "False", "False", "False", "070710", "01"]
 
         res = LoadContract(args)
 
@@ -32,7 +32,7 @@ class LoadSmartContractTestCase(TestCase):
         # test good contract
         with mock.patch("builtins.open", mock.mock_open(read_data="path.avm")):
 
-            args = ["path.avm", "070710", "01", "True", "True", "True"]
+            args = ["path.avm", "True", "True", "True", "070710", "01"]
 
             res = LoadContract(args)
 
@@ -43,7 +43,7 @@ class LoadSmartContractTestCase(TestCase):
             mock_file = mo.return_value
             mock_file.read.side_effect = None
 
-            args = ["path.avm", "070710", "01", "False", "False", "False"]
+            args = ["path.avm", "False", "False", "False", "070710", "01"]
 
             res = LoadContract(args)
 
@@ -53,7 +53,7 @@ class LoadSmartContractTestCase(TestCase):
         with mock.patch("builtins.open", mock.mock_open(read_data="path.avm")):
             with mock.patch("neo.Prompt.Commands.LoadSmartContract.binascii", return_value=TypeError):
 
-                args = ["path.avm", "070710", "01", "False", "False", "False"]
+                args = ["path.avm", "False", "False", "False", "070710", "01"]
 
                 res = LoadContract(args)
 
@@ -63,7 +63,7 @@ class LoadSmartContractTestCase(TestCase):
         with mock.patch("builtins.open", mock.mock_open(read_data="path.avm")):
             with mock.patch("builtins.bytearray", return_value=TypeError):
 
-                args = ["path.avm", "070710", "01", "False", "False", "False"]
+                args = ["path.avm", "False", "False", "False", "070710", "01"]
 
                 res = LoadContract(args)
 
@@ -78,11 +78,11 @@ class LoadSmartContractTestCase(TestCase):
 
             GatherLoadedContractParams(args, script)
 
-        self.assertTrue("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}" in str(e.exception))
+        self.assertTrue("please specify contract properties like {needs_storage} {needs_dynamic_invoke} {is_payable} {params} {return_type}" in str(e.exception))
 
         # test for void (ff) type in params
         with self.assertRaises(ValueError) as e:
-            args = ["07ff10", "01", "False", "False", "False"]
+            args = ["False", "False", "False", "07ff10", "01"]
             script = b"script"
 
             GatherLoadedContractParams(args, script)
@@ -91,7 +91,7 @@ class LoadSmartContractTestCase(TestCase):
 
         # test good params with needs_dynamic_invoke
         with mock.patch("neo.Prompt.Commands.LoadSmartContract.generate_deploy_script", return_value=True):
-            args = ["070710", "01", "False", "True", "False"]
+            args = ["False", "True", "False", "070710", "01"]
             script = "script"
 
             res = GatherLoadedContractParams(args, script)
