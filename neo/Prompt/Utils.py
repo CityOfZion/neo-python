@@ -12,6 +12,7 @@ from prompt_toolkit.shortcuts import PromptSession
 from neo.logging import log_manager
 from neo.Wallets import NEP5Token
 from typing import TYPE_CHECKING
+from neocore.Cryptography.Crypto import Crypto
 
 if TYPE_CHECKING:
     from neo.Wallets.Wallet import Wallet
@@ -366,3 +367,15 @@ def get_token(wallet: 'Wallet', token_str: str) -> 'NEP5Token.NEP5Token':
     if not isinstance(token, NEP5Token.NEP5Token):
         raise ValueError("The given token argument does not represent a known NEP5 token")
     return token
+
+
+def is_valid_public_key(key):
+    if len(key) != 66:
+        return False
+    try:
+        Crypto.ToScriptHash(key, unhex=True)
+    except Exception:
+        # the UINT160 inside ToScriptHash can throw Exception
+        return False
+    else:
+        return True
