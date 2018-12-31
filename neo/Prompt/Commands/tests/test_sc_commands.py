@@ -102,7 +102,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertEqual(total_ops, None)
             self.assertEqual(engine, None)
             self.assertIn("Please open a wallet to test build contract", mock_print.getvalue())
-        
+
         # test bad args
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
