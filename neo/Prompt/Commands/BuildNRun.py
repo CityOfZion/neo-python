@@ -99,7 +99,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
 
     return_type_results = []
     try:
-        rtype = ContractParameterType.FromString(f_args[1])
+        rtype = ContractParameterType.FromString(f_args[4])
         for r in result:
             cp = ContractParameter.AsParameterType(rtype, r)
             return_type_results.append(cp.ToJson())
