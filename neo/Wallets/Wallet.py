@@ -691,7 +691,7 @@ class Wallet:
 
                     if state & AddressState.InWallet > 0:
 
-                        # if its in the wallet, check to see if the coin exists yet
+                        # if it's in the wallet, check to see if the coin exists yet
                         key = CoinReference(tx.Hash, index)
 
                         # if it exists, update it, otherwise create a new one

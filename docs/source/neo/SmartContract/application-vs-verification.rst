@@ -75,7 +75,7 @@ Lets start out with our example from before of tracking a balance, and restrict 
     return False
 
 
-You will notice that the ``OWNER`` is the same ByteArray that we used before, as it is the address that is in the wallet I am using.  This example will use the ``boa.interop.Neo.Runtime.CheckWitness`` method to verify that the wallet that has signed the InvocationTransaction is the same as ``OWNER``.  First, lets build and test to make sure its working.
+You will notice that the ``OWNER`` is the same ByteArray that we used before, as it is the address that is in the wallet I am using.  This example will use the ``boa.interop.Neo.Runtime.CheckWitness`` method to verify that the wallet that has signed the InvocationTransaction is the same as ``OWNER``.  First, let's build and test to make sure it's working.
 We will turn on ``sc-events`` to make sure we can see exactly what is going on.
 
 .. code-block:: sh
@@ -103,7 +103,7 @@ We will turn on ``sc-events`` to make sure we can see exactly what is going on.
 
 Ok, it works pretty much as before.  You will notice theres a few new ``print`` statements that we added in, and according to those statements, we can see that the ``Verification`` portion of the Smart Contract was never executed.
 One other thing you will notice is that you can see the *SmartContract.Storage.** events, which are useful for debugging!
-Currently, in order to interact with the ``Verification`` stage of the Smart Contract, you will need to deploy and use ``testinvoke``, so lets do that. Lets assume you have built and imported the contract, you will have something like this:
+Currently, in order to interact with the ``Verification`` stage of the Smart Contract, you will need to deploy and use ``testinvoke``, so let's do that. Let's assume you have built and imported the contract, you will have something like this:
 
 .. code-block:: sh
 
