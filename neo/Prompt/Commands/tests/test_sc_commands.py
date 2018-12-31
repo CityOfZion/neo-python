@@ -85,7 +85,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
 
         # test bad path
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'SampleSC.py', '070502', '02', 'True', 'False', 'False', '--i']
+            args = ['build_run', 'SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertEqual(tx, None)
             self.assertEqual(result, None)
@@ -95,7 +95,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
 
         # test no open wallet
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', '070502', '02', 'True', 'False', 'False', 'add' 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy' '3']
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', 'add' 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy' '3']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertEqual(tx, None)
             self.assertEqual(result, None)
@@ -106,7 +106,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test successful build and run
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', '070502', '02', 'True', 'False', 'False', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertTrue(tx)
             self.assertEqual(str(result[0]), '3')
@@ -116,7 +116,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('prompt_toolkit.shortcuts.PromptSession.prompt', side_effect=['remove', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']):
-                args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', '070502', '02', 'True', 'False', 'False', '--i']
+                args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
                 tx, result, total_ops, engine = CommandSC().execute(args)
                 self.assertTrue(tx)
                 self.assertEqual(str(result[0]), '0')
@@ -125,7 +125,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test invoke failure (SampleSC requires three inputs)
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', '0705', '02', 'True', 'False', 'False', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy']
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '0705', '02', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertIsNone(tx)
             self.assertIn("Test invoke failed", mock_print.getvalue())
@@ -141,7 +141,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
 
         # test bad path
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.py', '070502', '02', 'True', 'False', 'False', '--i']
+            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
             res = CommandSC().execute(args)
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertEqual(tx, None)
@@ -159,7 +159,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
 
         # test no open wallet
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', '070502', '02', 'True', 'False', 'False', 'add' 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy' '3']
+            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', 'False', '070502', '02', 'add' 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy' '3']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertEqual(tx, None)
             self.assertEqual(result, None)
@@ -170,7 +170,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test successful load and run with from-addr
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', '070502', '02', 'True', 'False', 'False', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '0', '--from-addr=' + self.wallet_1_addr]
+            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', 'False', '070502', '02', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '0', '--from-addr=' + self.wallet_1_addr]
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertTrue(tx)
             self.assertIn("Test deploy invoke successful", mock_print.getvalue())
