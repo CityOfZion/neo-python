@@ -65,7 +65,12 @@ class CommandSCBuildRun(CommandBase):
             return
 
         Blockchain.Default().Pause()
-        tx, result, total_ops, engine = BuildAndRun(arguments, PromptData.Wallet)
+        try:
+            tx, result, total_ops, engine = BuildAndRun(arguments, PromptData.Wallet)
+        except TypeError:
+            print('run `%s %s help` to see command usage' % (CommandSC().command_desc().command, self.command_desc().command))
+            Blockchain.Default().Resume()
+            return
         Blockchain.Default().Resume()
         return tx, result, total_ops, engine
 
@@ -104,12 +109,17 @@ class CommandSCLoadRun(CommandBase):
             return
 
         Blockchain.Default().Pause()
-        tx, result, total_ops, engine = LoadAndRun(arguments, PromptData.Wallet)
+        try:
+            tx, result, total_ops, engine = LoadAndRun(arguments, PromptData.Wallet)
+        except TypeError:
+            print('run `%s %s help` to see command usage' % (CommandSC().command_desc().command, self.command_desc().command))
+            Blockchain.Default().Resume()
+            return
         Blockchain.Default().Resume()
         return tx, result, total_ops, engine
 
     def command_desc(self):
-        p1 = ParameterDesc('path', 'the path to the desired Python (.py) file')
+        p1 = ParameterDesc('path', 'the path to the desired smart contract (.avm) file')
         p2 = ParameterDesc('storage', 'boolean input to determine if smart contract requires storage')
         p3 = ParameterDesc('dynamic_invoke', 'boolean input to determine if smart contract requires dynamic invoke')
         p4 = ParameterDesc('payable', 'boolean input to determine if smart contract is payable')
