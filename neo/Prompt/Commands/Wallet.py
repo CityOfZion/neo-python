@@ -76,8 +76,6 @@ class CommandWalletCreate(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        if PromptData.Wallet:
-            PromptData.close_wallet()
         path = PromptUtils.get_arg(arguments, 0)
 
         if not path:
@@ -87,6 +85,9 @@ class CommandWalletCreate(CommandBase):
         if os.path.exists(path):
             print("File already exists")
             return
+
+        if PromptData.Wallet:
+            PromptData.close_wallet()
 
         passwd1 = prompt("[password]> ", is_password=True)
         passwd2 = prompt("[password again]> ", is_password=True)
