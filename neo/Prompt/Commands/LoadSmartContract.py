@@ -13,47 +13,41 @@ from neo.SmartContract.Contract import Contract
 from neocore.BigInteger import BigInteger
 
 
-def ImportContractAddr(wallet, args):
-    if wallet is None:
-        print("please open a wallet")
+def ImportContractAddr(wallet, contract_hash, pubkey_script_hash):
+    """
+    Args:
+        wallet (Wallet): a UserWallet instance
+        contract_hash (UInt160): hash of the contract to import
+        pubkey_script_hash (UInt160):
+
+    Returns:
+        neo.SmartContract.Contract.Contract
+    """
+
+    contract = Blockchain.Default().GetContract(contract_hash)
+    if not contract or not pubkey_script_hash:
+        print("Could not find contract")
         return
 
-    contract_hash = get_arg(args, 0)
-    pubkey = get_arg(args, 1)
+    reedeem_script = contract.Code.Script.hex()
 
-    if contract_hash and pubkey:
+    # there has to be at least 1 param, and the first one needs to be a signature param
+    param_list = bytearray(b'\x00')
 
-        if len(pubkey) != 66:
-            print("invalid public key format")
+    # if there's more than one param
+    # we set the first parameter to be the signature param
+    if len(contract.Code.ParameterList) > 1:
+        param_list = bytearray(contract.Code.ParameterList)
+        param_list[0] = 0
 
-        pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
+    verification_contract = Contract.Create(reedeem_script, param_list, pubkey_script_hash)
 
-        contract = Blockchain.Default().GetContract(contract_hash)
+    address = verification_contract.Address
 
-        if contract is not None:
+    wallet.AddContract(verification_contract)
 
-            reedeem_script = contract.Code.Script.hex()
-
-            # there has to be at least 1 param, and the first
-            # one needs to be a signature param
-            param_list = bytearray(b'\x00')
-
-            # if there's more than one param
-            # we set the first parameter to be the signature param
-            if len(contract.Code.ParameterList) > 1:
-                param_list = bytearray(contract.Code.ParameterList)
-                param_list[0] = 0
-
-            verification_contract = Contract.Create(reedeem_script, param_list, pubkey_script_hash)
-
-            address = verification_contract.Address
-
-            wallet.AddContract(verification_contract)
-
-            print("Added contract addres %s to wallet" % address)
-            return
-
-    print("Could not add contract.  Invalid public key or contract address")
+    print(f"Added contract address {address} to wallet")
+    return verification_contract
 
 
 def LoadContract(args):

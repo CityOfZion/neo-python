@@ -3,7 +3,7 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
-from neo.Prompt.Commands.Wallet import ImportToken
+from neo.Prompt.Commands.WalletImport import ImportToken
 from neo.Prompt.Utils import get_tx_attr_from_args
 from neo.Prompt.Commands import Send, Wallet
 from neo.Prompt.PromptData import PromptData
@@ -45,7 +45,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_send_neo(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
             PromptData.Wallet = self.GetWallet1(recreate=True)
-            args = ['send', 'neo', self.watch_addr_str, '50']                    
+            args = ['send', 'neo', self.watch_addr_str, '50']
 
             res = Wallet.CommandWallet().execute(args)
 
@@ -237,7 +237,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             res = Wallet.CommandWallet().execute(args)
 
             self.assertTrue(res)
-            self.assertEqual(2, len(res.Attributes))  # By default the script_hash of the transaction sender is added to the TransactionAttribute list, therefore the Attributes length is `count` + 1
+            self.assertEqual(2, len(
+                res.Attributes))  # By default the script_hash of the transaction sender is added to the TransactionAttribute list, therefore the Attributes length is `count` + 1
 
     def test_multiple_attributes(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
@@ -312,7 +313,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 self.assertFalse(res)
 
     def test_sendmany_good_simple(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
+        with patch('neo.Prompt.Commands.Send.prompt',
+                   side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
             PromptData.Wallet = self.GetWallet1(recreate=True)
             args = ['sendmany', '2']
 
@@ -329,7 +331,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertEqual(2, transfers)
 
     def test_sendmany_good_complex(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", "gas", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", UserWalletTestCase.wallet_1_pass()]):
+        with patch('neo.Prompt.Commands.Send.prompt',
+                   side_effect=["neo", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", "gas", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1",
+                                UserWalletTestCase.wallet_1_pass()]):
             PromptData.Wallet = self.GetWallet1(recreate=True)
             args = ['sendmany', '2', '--from-addr=%s' % self.wallet_1_addr, '--change-addr=%s' % self.watch_addr_str, '--fee=0.005']
 
@@ -406,7 +410,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
 
     def test_sendmany_bad_address_to(self):
-        with patch('neo.Prompt.Commands.Send.prompt', side_effect=["neo", self.watch_addr_str, "1", "gas", "AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE", "1"]):  # address is too short
+        with patch('neo.Prompt.Commands.Send.prompt',
+                   side_effect=["neo", self.watch_addr_str, "1", "gas", "AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkE", "1"]):  # address is too short
 
             PromptData.Wallet = self.GetWallet1(recreate=True)
             args = ['sendmany', '2']
