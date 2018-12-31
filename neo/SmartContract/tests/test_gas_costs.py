@@ -174,4 +174,3 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
 #           expected_cost = Fixed8(1046600000)
 #           expected_gas = Fixed8.FromDecimal(1.0)
-            self.assertEqual(engine, None)
