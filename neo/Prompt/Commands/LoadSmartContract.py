@@ -52,11 +52,11 @@ def ImportContractAddr(wallet, contract_hash, pubkey_script_hash):
 
 def LoadContract(args):
     if len(args) < 6:
-        print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}'")
+        print("please specify contract to load like such: 'import contract {path} {needs_storage} {needs_dynamic_invoke} {is_payable} {params} {return_type}'")
         return
 
     path = args[0]
-    params = parse_param(args[1], ignore_int=True, prefer_hex=False)
+    params = parse_param(args[4], ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
         params = params.encode('utf-8')
@@ -65,11 +65,11 @@ def LoadContract(args):
         if p == ContractParameterType.Void.value:
             raise ValueError("Void is not a valid input parameter type")
 
-    return_type = BigInteger(ContractParameterType.FromString(args[2]).value)
+    return_type = BigInteger(ContractParameterType.FromString(args[5]).value)
 
-    needs_storage = bool(parse_param(args[3]))
-    needs_dynamic_invoke = bool(parse_param(args[4]))
-    is_payable = bool(parse_param(args[5]))
+    needs_storage = bool(parse_param(args[1]))
+    needs_dynamic_invoke = bool(parse_param(args[2]))
+    is_payable = bool(parse_param(args[3]))
 
     contract_properties = 0
 
@@ -117,8 +117,8 @@ def LoadContract(args):
 
 def GatherLoadedContractParams(args, script):
     if len(args) < 5:
-        raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}")
-    params = parse_param(args[0], ignore_int=True, prefer_hex=False)
+        raise Exception("please specify contract properties like {needs_storage} {needs_dynamic_invoke} {is_payable} {params} {return_type}")
+    params = parse_param(args[3], ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
         params = params.encode('utf-8')
@@ -127,11 +127,11 @@ def GatherLoadedContractParams(args, script):
         if p == ContractParameterType.Void.value:
             raise ValueError("Void is not a valid input parameter type")
 
-    return_type = BigInteger(ContractParameterType.FromString(args[1]).value)
+    return_type = BigInteger(ContractParameterType.FromString(args[4]).value)
 
-    needs_storage = bool(parse_param(args[2]))
-    needs_dynamic_invoke = bool(parse_param(args[3]))
-    is_payable = bool(parse_param(args[4]))
+    needs_storage = bool(parse_param(args[0]))
+    needs_dynamic_invoke = bool(parse_param(args[1]))
+    is_payable = bool(parse_param(args[2]))
 
     contract_properties = 0
 
