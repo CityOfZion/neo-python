@@ -23,10 +23,23 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.Send import CommandWalletSend, CommandWalletSendMany, CommandWalletSign
 from neo.Prompt.Commands.Tokens import CommandWalletToken
+from neo.Prompt.Commands.LoadSmartContract import ImportContractAddr
 from neo.logging import log_manager
 from neocore.Utils import isValidPublicAddress
 
 logger = log_manager.getLogger()
+
+
+def _is_valid_public_key(key):
+    if len(key) != 66:
+        return False
+    try:
+        Crypto.ToScriptHash(key, unhex=True)
+    except Exception:
+        # the UINT160 inside ToScriptHash can throw Exception
+        return False
+    else:
+        return True
 
 
 class CommandWallet(CommandBase):
@@ -425,6 +438,7 @@ class CommandWalletImport(CommandBase):
         self.register_sub_command(CommandWalletImportWatchAddr())
         self.register_sub_command(CommandWalletImportMultisigAddr())
         self.register_sub_command(CommandWalletImportToken())
+        self.register_sub_command(CommandWalletImportContractAddr())
 
     def command_desc(self):
         return CommandDesc('import', 'import wallet items')
@@ -617,17 +631,6 @@ class CommandWalletImportMultisigAddr(CommandBase):
     def __init__(self):
         super().__init__()
 
-    def _is_valid_public_key(self, key):
-        if len(key) != 66:
-            return False
-        try:
-            Crypto.ToScriptHash(key, unhex=True)
-        except Exception:
-            # the UINT160 inside ToScriptHash can throw Exception
-            return False
-        else:
-            return True
-
     def execute(self, arguments):
         wallet = PromptData.Wallet
 
@@ -636,7 +639,7 @@ class CommandWalletImportMultisigAddr(CommandBase):
             return False
 
         pubkey_in_wallet = arguments[0]
-        if not self._is_valid_public_key(pubkey_in_wallet):
+        if not _is_valid_public_key(pubkey_in_wallet):
             print("Invalid public key format")
             return False
 
@@ -666,7 +669,7 @@ class CommandWalletImportMultisigAddr(CommandBase):
 
         # validate remaining pub keys
         for key in signing_keys:
-            if not self._is_valid_public_key(key):
+            if not _is_valid_public_key(key):
                 print(f"Invalid signing key {key}")
                 return False
 
@@ -710,6 +713,38 @@ class CommandWalletImportToken(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('contract_hash', 'the token contract hash')
         return CommandDesc('token', 'import a token', [p1])
+
+
+class CommandWalletImportContractAddr(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+
+        if len(arguments) != 2:
+            print("Please specify the required parameters")
+            return
+
+        try:
+            contract_hash = UInt160.ParseString(arguments[0]).ToBytes()
+        except Exception:
+            print(f"Invalid contract hash: {arguments[0]}")
+            return
+
+        pubkey = arguments[1]
+        if not _is_valid_public_key(pubkey):
+            print(f"Invalid pubkey: {arguments[1]}")
+            return
+
+        pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
+
+        return ImportContractAddr(wallet, contract_hash, pubkey_script_hash)
+
+    def command_desc(self):
+        p1 = ParameterDesc('contract_hash', 'hash of the contract')
+        p2 = ParameterDesc('pubkey', 'pubkey of the contract')
+        return CommandDesc('contract_addr', 'import a contract address', [p1, p2])
 
 
 #########################################################################
