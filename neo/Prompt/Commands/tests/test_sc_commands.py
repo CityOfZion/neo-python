@@ -34,6 +34,11 @@ class CommandSCTestCase(WalletFixtureTestCase):
     @classmethod
     def tearDown(cls):
         PromptData.Wallet = None
+        try:
+            os.remove("neo/Prompt/Commands/tests/SampleSC.avm")
+            os.remove("neo/Prompt/Commands/tests/SampleSC.debug.json")
+        except FileNotFoundError:  # expected during test_sc
+            pass
 
     def test_sc(self):
         # with no subcommand
@@ -59,11 +64,9 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertIn("Please specify the required parameter", mock_print.getvalue())
 
         # test bad path
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build', 'SampleSC.py']
-            res = CommandSC().execute(args)
-            self.assertFalse(res)
-            self.assertIn("Please check the path to your Python (.py) file to compile", mock_print.getvalue())
+        args = ['build', 'SampleSC.py']
+        res = CommandSC().execute(args)
+        self.assertFalse(res)
 
         # test successful compilation
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -71,8 +74,6 @@ class CommandSCTestCase(WalletFixtureTestCase):
             res = CommandSC().execute(args)
             self.assertTrue(res)
             self.assertIn("Saved output to neo/Prompt/Commands/tests/SampleSC.avm", mock_print.getvalue())
-        os.remove("neo/Prompt/Commands/tests/SampleSC.avm")
-        os.remove("neo/Prompt/Commands/tests/SampleSC.debug.json")
 
     def test_sc_buildrun(self):
         warnings.filterwarnings('ignore', category=ResourceWarning)  # filters warnings about unclosed files
@@ -130,9 +131,6 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertIsNone(tx)
             self.assertIn("Test invoke failed", mock_print.getvalue())
 
-        os.remove("neo/Prompt/Commands/tests/SampleSC.avm")
-        os.remove("neo/Prompt/Commands/tests/SampleSC.debug.json")
-
     def test_sc_loadrun(self):
         warnings.filterwarnings('ignore', category=ResourceWarning)  # filters warnings about unclosed files
         # test no input
@@ -177,6 +175,3 @@ class CommandSCTestCase(WalletFixtureTestCase):
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertTrue(tx)
             self.assertIn("Test deploy invoke successful", mock_print.getvalue())
-
-        os.remove("neo/Prompt/Commands/tests/SampleSC.avm")
-        os.remove("neo/Prompt/Commands/tests/SampleSC.debug.json")
