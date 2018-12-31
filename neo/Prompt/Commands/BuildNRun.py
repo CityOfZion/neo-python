@@ -22,26 +22,21 @@ def LoadAndRun(arguments, wallet):
 
     path = get_arg(arguments)
 
-    try:
-        if '.avm' not in path:
-            raise TypeError
+    if '.avm' not in path:
+        raise TypeError
 
-        with open(path, 'rb') as f:
+    with open(path, 'rb') as f:
 
-            content = f.read()
+        content = f.read()
 
-            try:
-                content = binascii.unhexlify(content)
-            except Exception as e:
-                pass
+        try:
+            content = binascii.unhexlify(content)
+        except Exception:
+            pass
 
-            script = content
+        script = content
 
-            return DoRun(script, arguments, wallet, path, from_addr=from_addr)
-
-    except Exception as e:
-        print("Could not load script %s " % e)
-        return None, None, None, None
+        return DoRun(script, arguments, wallet, path, from_addr=from_addr)
 
 
 def Build(arguments):
@@ -90,7 +85,10 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
     f_args = arguments[1:]
     i_args = arguments[6:]
 
-    script = GatherLoadedContractParams(f_args, contract_script)
+    try:
+        script = GatherLoadedContractParams(f_args, contract_script)
+    except Exception:
+        raise TypeError
 
     tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr,
                                                            min_fee, invocation_test_mode, debug_map=debug_map,
