@@ -34,7 +34,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "070705", "05", "True", "False", "True", "put", "key1", "b'ab'", "--from-addr=" + self.wallet_1_addr]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "True", "070705", "05", "put", "key1", "b'ab'", "--from-addr=" + self.wallet_1_addr]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, min_fee=Fixed8.FromDecimal(.0004))
 
@@ -54,7 +54,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "070705", "05", "True", "False", "True", "put_5", "key1", "b'abababababab'"]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "True", "070705", "05", "put_5", "key1", "b'abababababab'"]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
@@ -74,7 +74,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         """
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "070705", "05", "True", "False", "True", "put_and_get", "key1", "b'abababababab'"]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "True", "070705", "05", "put_and_get", "key1", "b'abababababab'"]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
@@ -94,7 +94,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         """
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "070705", "05", "True", "False", "True", "put_and_get", "key1", self.big_str]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "True", "070705", "05", "put_and_get", "key1", self.big_str]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
@@ -122,7 +122,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         """
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "070705", "05", "True", "False", "True", "put_5", "key1", self.big_str]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "True", "070705", "05", "put_5", "key1", self.big_str]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
@@ -139,7 +139,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         """
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "070705", "05", "True", "False", "True", "put_9", "key1", "b'ababababab'"]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "True", "070705", "05", "put_9", "key1", "b'ababababab'"]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
@@ -165,12 +165,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
         babababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab046b657931057075745f356780a1a5b87921dda4603b502ada749890cb
         ca3434', 'stack': [{'type': 'Integer', 'value': '1'}], 'gas_consumed': '11.151'}
         """
-        wallet = self.GetWallet1()
+        with self.assertRaises(TypeError):
+            wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "070705", "05", "True", "False", "put_5", "key1", self.big_str]
+            arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "070705", "05", "put_5", "key1", self.big_str]
 
-        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, invocation_test_mode=False)
+            tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, invocation_test_mode=False)
 
-#       expected_cost = Fixed8(1046600000)
-#        expected_gas = Fixed8.FromDecimal(1.0)
-        self.assertEqual(engine, None)
+#           expected_cost = Fixed8(1046600000)
+#           expected_gas = Fixed8.FromDecimal(1.0)
+            self.assertEqual(engine, None)
