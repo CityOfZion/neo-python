@@ -104,7 +104,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
     except Exception:
         raise TypeError
 
-    if tx is not None and result is not None:
+    if tx and result:
         if verbose:
             print("\n-----------------------------------------------------------")
             print("Calling %s with arguments %s " % (path, [item for item in reversed(engine.invocation_args)]))
@@ -118,7 +118,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
     else:
         if verbose:
             print("Test invoke failed")
-            print("tx is, results are %s %s " % (tx, result))
+            print(f"tx is {tx}, results are {result}")
         return tx, result, None, None
 
 
