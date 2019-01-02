@@ -215,13 +215,13 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertTrue(res)
             self.assertIn("Reset debug storage", mock_print.getvalue())
 
-        # test with reset parameter
+        # test turning on
         args = ['debugstorage', 'on']
         res = CommandSC().execute(args)
         self.assertTrue(res)
         self.assertTrue(settings.USE_DEBUG_STORAGE)
 
-        # test with reset parameter
+        # test turning off
         args = ['debugstorage', 'off']
         res = CommandSC().execute(args)
         self.assertTrue(res)
