@@ -69,7 +69,7 @@ class CommandConfigSCEvents(CommandBase):
             return True
         else:
             print("Smart contract event logging is now disabled")
-            return False
+            return True
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
