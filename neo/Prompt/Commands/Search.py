@@ -5,7 +5,6 @@ from neo.Core.Blockchain import Blockchain
 from neo.logging import log_manager
 import json
 
-
 logger = log_manager.getLogger()
 
 
@@ -23,7 +22,7 @@ class CommandSearch(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `%s help` to see supported queries" % self.command_desc().command)
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return
 
         try:
