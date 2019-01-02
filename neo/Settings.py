@@ -206,7 +206,7 @@ class SettingsHolder:
         self.BOOTSTRAP_LOCATIONS = get_config_and_warn('BootstrapFiles', "abort", abort=True)
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
-        self.USE_DEBUG_STORAGE = config.get('DebugStorage', True)
+        self.USE_DEBUG_STORAGE = config.get('DebugStorage', False)
         self.DEBUG_STORAGE_PATH = config.get('DebugStoragePath', 'Chains/debugstorage')
         self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
         self.SERVICE_ENABLED = config.get('ServiceEnabled', False)
@@ -323,8 +323,10 @@ class SettingsHolder:
         # Add a warning for migration purposes if we created a chain dir
         if warn_migration and ROOT_INSTALL_PATH != self.DATA_DIR_PATH:
             if os.path.exists(os.path.join(ROOT_INSTALL_PATH, 'Chains')):
-                logger.warning("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (chain_path, ROOT_INSTALL_PATH))
-                logger.warning("[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
+                logger.warning("[MIGRATION] You are now using the blockchain data at %s, but it appears you have existing data at %s/Chains" % (
+                    chain_path, ROOT_INSTALL_PATH))
+                logger.warning(
+                    "[MIGRATION] If you would like to use your existing data, please move any data at %s/Chains to %s " % (ROOT_INSTALL_PATH, chain_path))
                 logger.warning("[MIGRATION] Or you can continue using your existing data by starting your script with the `--datadir=.` flag")
 
     def check_privatenet(self):

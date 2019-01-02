@@ -302,8 +302,13 @@ def gather_param(index, param_type, do_continue=True):
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
 
     try:
-
         result = get_input_prompt(prompt_message)
+    except Exception as e:
+        print(str(e))
+        # no results, abort True
+        return None, True
+
+    try:
 
         if ptype == ContractParameterType.String:
             return str(result), False
