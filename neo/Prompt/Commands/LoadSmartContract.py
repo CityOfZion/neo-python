@@ -3,11 +3,9 @@ from neo.Prompt.Utils import parse_param
 from neo.Core.FunctionCode import FunctionCode
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from prompt_toolkit.shortcuts import PromptSession
+from prompt_toolkit import prompt
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.Prompt.Utils import get_arg
-from neocore.Cryptography.Crypto import Crypto
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
 from neocore.BigInteger import BigInteger
@@ -50,13 +48,8 @@ def ImportContractAddr(wallet, contract_hash, pubkey_script_hash):
     return verification_contract
 
 
-def LoadContract(args):
-    if len(args) < 6:
-        print("please specify contract to load like such: 'import contract {path} {needs_storage} {needs_dynamic_invoke} {is_payable} {params} {return_type}'")
-        return
-
-    path = args[0]
-    params = parse_param(args[4], ignore_int=True, prefer_hex=False)
+def LoadContract(path, needs_storage, needs_dynamic_invoke, is_payable, params_str, return_type):
+    params = parse_param(params_str, ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
         params = params.encode('utf-8')
@@ -65,11 +58,7 @@ def LoadContract(args):
         if p == ContractParameterType.Void.value:
             raise ValueError("Void is not a valid input parameter type")
 
-    return_type = BigInteger(ContractParameterType.FromString(args[5]).value)
-
-    needs_storage = bool(parse_param(args[1]))
-    needs_dynamic_invoke = bool(parse_param(args[2]))
-    is_payable = bool(parse_param(args[3]))
+    rtype = BigInteger(ContractParameterType.FromString(return_type).value)
 
     contract_properties = 0
 
@@ -82,12 +71,10 @@ def LoadContract(args):
     if is_payable:
         contract_properties += ContractPropertyState.Payable
 
+    if '.avm' not in path:
+        raise ValueError("Please load a compiled .avm file")
+
     script = None
-
-    if '.py' in path:
-        print("Please load a compiled .avm file")
-        return False
-
     with open(path, 'rb') as f:
 
         content = f.read()
@@ -99,20 +86,16 @@ def LoadContract(args):
 
         script = content
 
-    if script is not None:
-
-        plist = params
-
+    if script:
         try:
             plist = bytearray(binascii.unhexlify(params))
         except Exception as e:
             plist = bytearray(b'\x10')
-        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=return_type, contract_properties=contract_properties)
+        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=rtype, contract_properties=contract_properties)
 
         return function_code
-
-    print("error loading contract for path %s" % path)
-    return None
+    else:
+        raise Exception(f"Error loading contract for path {path}")
 
 
 def GatherLoadedContractParams(args, script):
@@ -150,19 +133,13 @@ def GatherLoadedContractParams(args, script):
 
 
 def GatherContractDetails(function_code):
-
     print("Please fill out the following contract details:")
 
-    from neo.bin.prompt import PromptInterface
-
-    session = PromptSession(completer=PromptInterface.prompt_completer,
-                            history=PromptInterface.history)
-
-    name = session.prompt("[Contract Name] > ")
-    version = session.prompt("[Contract Version] > ")
-    author = session.prompt("[Contract Author] > ")
-    email = session.prompt("[Contract Email] > ")
-    description = session.prompt("[Contract Description] > ")
+    name = prompt("[Contract Name] > ")
+    version = prompt("[Contract Version] > ")
+    author = prompt("[Contract Author] > ")
+    email = prompt("[Contract Email] > ")
+    description = prompt("[Contract Description] > ")
 
     print("Creating smart contract....")
     print("                 Name: %s " % name)
