@@ -170,15 +170,15 @@ class CommandSCTestInvoke(CommandBase):
             return False
 
         tx, fee, results, num_ops = TestInvokeContract(wallet, arguments, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
-        if tx is not None and results is not None:
+        if tx and results:
 
-            parameterized_results = [ContractParameter.ToParameter(item) for item in results]
+            parameterized_results = [ContractParameter.ToParameter(item).ToJson() for item in results]
 
             print(
                 "\n-------------------------------------------------------------------------------------------------------------------------------------")
             print("Test invoke successful")
             print(f"Total operations: {num_ops}")
-            print(f"Results {str([item.ToJson() for item in parameterized_results])}")
+            print(f"Results {str(parameterized_results)}")
             print(f"Invoke TX GAS cost: {tx.Gas.value / Fixed8.D}")
             print(f"Invoke TX fee: {fee.value / Fixed8.D}")
             print(
