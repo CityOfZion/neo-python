@@ -1,13 +1,18 @@
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
+from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails
+from neo.Prompt.Commands.Invoke import test_invoke, InvokeContract
 from neo.Prompt import Utils as PromptUtils
 from neo.Prompt.Commands.BuildNRun import Build, BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import TestInvokeContract, InvokeContract
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
-from neocore.Fixed8 import Fixed8
-from prompt_toolkit import prompt
 from neo.SmartContract.ContractParameter import ContractParameter
+from prompt_toolkit import prompt
+from neocore.Fixed8 import Fixed8
+from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
+from distutils import util
+from neo.Settings import settings
 
 from neo.logging import log_manager
 
@@ -22,6 +27,8 @@ class CommandSC(CommandBase):
         self.register_sub_command(CommandSCBuildRun())
         self.register_sub_command(CommandSCLoadRun())
         self.register_sub_command(CommandSCTestInvoke())
+        self.register_sub_command(CommandSCDeploy())
+        self.register_sub_command(CommandSCDebugStorage())
 
     def command_desc(self):
         return CommandDesc('sc', 'develop smart contracts')
@@ -212,3 +219,116 @@ class CommandSCTestInvoke(CommandBase):
                            f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7, p8]
         return CommandDesc('invoke', 'Call functions on the smart contract. Will prompt before sending to the network', params=params)
+
+
+class CommandSCDeploy(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        wallet = PromptData.Wallet
+        if not wallet:
+            print("Please open a wallet")
+            return False
+
+        if len(arguments) < 6:
+            print("Please specify the required parameters")
+            return False
+
+        args, from_addr = PromptUtils.get_from_addr(arguments)
+
+        path = args[0]
+
+        try:
+            needs_storage = bool(util.strtobool(args[1]))
+            needs_dynamic_invoke = bool(util.strtobool(args[2]))
+            is_payable = bool(util.strtobool(args[3]))
+
+        except ValueError:
+            print("Invalid boolean option")
+            return False
+
+        params = args[4]
+        return_type = args[5]
+
+        try:
+            function_code = LoadContract(path, needs_storage, needs_dynamic_invoke, is_payable, params, return_type)
+        except (ValueError, Exception) as e:
+            print(str(e))
+            return False
+
+        contract_script = GatherContractDetails(function_code)
+        if not contract_script:
+            print("Failed to generate deploy script")
+            return False
+
+        tx, fee, results, num_ops = test_invoke(contract_script, wallet, [], from_addr=from_addr)
+        if tx and results:
+            print(
+                "\n-------------------------------------------------------------------------------------------------------------------------------------")
+            print("Test deploy invoke successful")
+            print(f"Total operations executed: {num_ops}")
+            print("Results:")
+            print([item.GetInterface() for item in results])
+            print(f"Deploy Invoke TX GAS cost: {tx.Gas.value / Fixed8.D}")
+            print(f"Deploy Invoke TX Fee: {fee.value / Fixed8.D}")
+            print(
+                "-------------------------------------------------------------------------------------------------------------------------------------\n")
+            print("Enter your password to continue and deploy this contract")
+
+            passwd = prompt("[password]> ", is_password=True)
+            if not wallet.ValidatePassword(passwd):
+                print("Incorrect password")
+                return False
+
+            return InvokeContract(wallet, tx, Fixed8.Zero(), from_addr=from_addr)
+        else:
+            print("Test invoke failed")
+            print(f"TX is {tx}, results are {results}")
+            return False
+
+    def command_desc(self):
+        p1 = ParameterDesc('path', 'the path to the desired Python (.py) file')
+        p2 = ParameterDesc('storage', 'boolean input to determine if smart contract requires storage')
+        p3 = ParameterDesc('dynamic_invoke', 'boolean input to determine if smart contract requires dynamic invoke')
+        p4 = ParameterDesc('payable', 'boolean input to determine if smart contract is payable')
+        p5 = ParameterDesc('params', 'the input parameter types of the smart contract')
+        p6 = ParameterDesc('returntype', 'the returntype of the smart contract output')
+
+        params = [p1, p2, p3, p4, p5, p6]
+        return CommandDesc('deploy', 'Deploy a smart contract (.avm) file to the blockchain', params=params)
+
+
+class CommandSCDebugStorage(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return False
+
+        what = arguments[0]
+        if what == 'reset':
+            DebugStorage.instance().reset()
+            print("Reset debug storage")
+            return True
+
+        try:
+            flag = bool(util.strtobool(what))
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        settings.USE_DEBUG_STORAGE = flag
+        if flag:
+            print("Debug storage ON")
+        else:
+            print("Debug storage OFF")
+
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0, or "reset"')
+        return CommandDesc('debugstorage', 'use a separate database for smart contract storage item debugging', params=[p1])

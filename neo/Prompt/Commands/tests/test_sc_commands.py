@@ -1,16 +1,16 @@
 import os
 import shutil
-import json
 import warnings
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.SC import CommandSC
 from neo.Prompt.PromptData import PromptData
 from mock import patch
 from io import StringIO
+from boa.compiler import Compiler
+from neo.Settings import settings
 
 
 class CommandSCTestCase(WalletFixtureTestCase):
@@ -137,7 +137,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test successful build and run with prompted input
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('prompt_toolkit.shortcuts.PromptSession.prompt', side_effect=['remove', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']):
+            with patch('neo.Prompt.Utils.PromptSession.prompt', side_effect=['remove', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']):
                 args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
                 tx, result, total_ops, engine = CommandSC().execute(args)
                 self.assertTrue(tx)
@@ -205,6 +205,93 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertTrue(tx)
             self.assertIn("Test deploy invoke successful", mock_print.getvalue())
 
+    def test_sc_deploy(self):
+        # test no wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['deploy']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please open a wallet", mock_print.getvalue())
+
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+
+        # test no input
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['deploy']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the required parameters", mock_print.getvalue())
+
+        # test bad path (.py instead of .avm)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['deploy', 'neo/Prompt/Commands/tests/SampleSC.py', 'False', 'False', 'False', '070502', '02']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please load a compiled .avm file", mock_print.getvalue())
+
+        # test with invalid boolean option(s) for contract
+        path_dir = 'neo/Prompt/Commands/tests/'
+        Compiler.instance().load_and_save(path_dir + 'SampleSC.py', use_nep8=False)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['deploy', path_dir + 'SampleSC.avm', 'Blah', 'False', 'False', '070502', '02']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid boolean option", mock_print.getvalue())
+
+        # test with invalid input parameter type (void)
+        path_dir = 'neo/Prompt/Commands/tests/'
+        Compiler.instance().load_and_save(path_dir + 'SampleSC.py', use_nep8=False)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '0705ff', '02']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Void is not a valid input parameter type", mock_print.getvalue())
+
+        # with failing to gather contract details
+        path_dir = 'neo/Prompt/Commands/tests/'
+        Compiler.instance().load_and_save(path_dir + 'SampleSC.py', use_nep8=False)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.GatherContractDetails', side_effect=[(None)]):
+                args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Failed to generate deploy script", mock_print.getvalue())
+
+        # test ok contract parameter gathering, but bad passw
+        path_dir = 'neo/Prompt/Commands/tests/'
+        Compiler.instance().load_and_save(path_dir + 'SampleSC.py', use_nep8=False)
+
+        prompt_entries = ['test_name', 'test_version', 'test_author', 'test_email', 'test_description', 'False', 'False', 'False', 'bad_pw']
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
+                with patch('neo.Prompt.Commands.SC.prompt', side_effect=['bad_passw']):
+                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
+                    res = CommandSC().execute(args)
+                    self.assertFalse(res)
+                    self.assertTrue(mock_print.getvalue().endswith('Incorrect password\n'))
+
+        # test ok contract parameter gathering, but test_invoke failure
+        path_dir = 'neo/Prompt/Commands/tests/'
+        Compiler.instance().load_and_save(path_dir + 'SampleSC.py', use_nep8=False)
+
+        prompt_entries = ['test_name', 'test_version', 'test_author', 'test_email', 'test_description', 'False', 'False', 'False', 'bad_pw']
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
+                with patch('neo.Prompt.Commands.SC.test_invoke', side_effect=[(None, None, None, None)]):
+                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
+                    res = CommandSC().execute(args)
+                    self.assertFalse(res)
+                    self.assertIn("Test invoke failed", mock_print.getvalue())
+
+        # test with ok contract parameter gathering and ok passw (just insufficient funds to deploy)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
+                with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
+                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
+                    res = CommandSC().execute(args)
+                    self.assertFalse(res)
+                    self.assertTrue(mock_print.getvalue().endswith('Insufficient funds\n'))
+
     def test_sc_invoke(self):
         token_hash_str = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
 
@@ -254,3 +341,37 @@ class CommandSCTestCase(WalletFixtureTestCase):
                 res = CommandSC().execute(args)
                 # not the best check, but will do for now
                 self.assertTrue(res)
+
+    def test_sc_debugstorage(self):
+        # test with insufficient parameters
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['debugstorage']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the required parameter", mock_print.getvalue())
+
+        # test with bad parameter
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['debugstorage', 'blah']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid option", mock_print.getvalue())
+
+        # test with reset parameter
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['debugstorage', 'reset']
+            res = CommandSC().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Reset debug storage", mock_print.getvalue())
+
+        # test turning on
+        args = ['debugstorage', 'on']
+        res = CommandSC().execute(args)
+        self.assertTrue(res)
+        self.assertTrue(settings.USE_DEBUG_STORAGE)
+
+        # test turning off
+        args = ['debugstorage', 'off']
+        res = CommandSC().execute(args)
+        self.assertTrue(res)
+        self.assertFalse(settings.USE_DEBUG_STORAGE)
