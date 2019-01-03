@@ -3,10 +3,12 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Prompt.Commands.BuildNRun import Build, BuildAndRun, LoadAndRun
 from neo.Core.Blockchain import Blockchain
+from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
+from distutils import util
+from neo.Settings import settings
 
 from neo.logging import log_manager
 import json
-
 
 logger = log_manager.getLogger()
 
@@ -18,6 +20,7 @@ class CommandSC(CommandBase):
         self.register_sub_command(CommandSCBuild())
         self.register_sub_command(CommandSCBuildRun())
         self.register_sub_command(CommandSCLoadRun())
+        self.register_sub_command(CommandSCDebugStorage())
 
     def command_desc(self):
         return CommandDesc('sc', 'develop smart contracts')
@@ -85,7 +88,8 @@ class CommandSCBuildRun(CommandBase):
         p8 = ParameterDesc('--no-parse-addr', 'a flag to turn off address parsing when input into the smart contract', optional=True)
         p9 = ParameterDesc('--from-addr', 'source address to take fee funds from (if not specified, take first address in wallet)', optional=True)
         p10 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
-        p11 = ParameterDesc('--tx-attr', 'a list of transaction attributes to attach to the transaction\n\n'
+        p11 = ParameterDesc('--tx-attr',
+                            'a list of transaction attributes to attach to the transaction\n\n'
                             f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
                             f"{' ':>17} Example\n"
                             f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
@@ -127,7 +131,8 @@ class CommandSCLoadRun(CommandBase):
         p6 = ParameterDesc('returntype', 'the returntype of the smart contract output')
         p7 = ParameterDesc('inputs', 'the test parameters fed to the smart contract, or use "--i" for prompted parameter input')
         p8 = ParameterDesc('--no-parse-addr', 'a flag to turn off address parsing when input into the smart contract', optional=True)
-        p9 = ParameterDesc('--from-addr', 'source address to take fee funds from (if not specified, take first address in wallet)\n\n'
+        p9 = ParameterDesc('--from-addr',
+                           'source address to take fee funds from (if not specified, take first address in wallet)\n\n'
                            f"{' ':>17} Usage Examples:\n"
                            f"{' ':>20} load_run path.py True False False 0710 05 input1 input2\n"
                            f"{' ':>20} load_run path.py True False False 0710 05 --i\n\n"
@@ -135,3 +140,37 @@ class CommandSCLoadRun(CommandBase):
                            f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7, p8, p9]
         return CommandDesc('load_run', 'load a specified smart contract (.avm) file and test it', params=params)
+
+
+class CommandSCDebugStorage(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return False
+
+        what = arguments[0]
+        if what == 'reset':
+            DebugStorage.instance().reset()
+            print("Reset debug storage")
+            return True
+
+        try:
+            flag = bool(util.strtobool(what))
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        settings.USE_DEBUG_STORAGE = flag
+        if flag:
+            print("Debug storage ON")
+        else:
+            print("Debug storage OFF")
+
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0, or "reset"')
+        return CommandDesc('debugstorage', 'use a separate database for smart contract storage item debugging', params=[p1])
