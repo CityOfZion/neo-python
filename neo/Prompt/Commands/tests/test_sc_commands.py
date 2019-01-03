@@ -21,6 +21,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
     import_watch_addr = UInt160(data=b'\x08t/\\P5\xac-\x0b\x1c\xb4\x94tIyBu\x7f1*')
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     _wallet1 = None
+    _wallet3 = None
 
     @classmethod
     def GetWallet1(cls, recreate=False):
@@ -29,6 +30,16 @@ class CommandSCTestCase(WalletFixtureTestCase):
             cls._wallet1 = UserWallet.Open(CommandSCTestCase.wallet_1_dest(),
                                            to_aes_key(CommandSCTestCase.wallet_1_pass()))
         return cls._wallet1
+
+    @classmethod
+    def GetWallet3(cls, recreate=False):
+
+        if cls._wallet3 is None or recreate:
+            shutil.copyfile(cls.wallet_3_path(), cls.wallet_3_dest())
+            cls._wallet3 = UserWallet.Open(cls.wallet_3_dest(),
+                                           to_aes_key(cls.wallet_3_pass()))
+
+        return cls._wallet3
 
     @classmethod
     def tearDown(cls):
@@ -95,7 +106,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
 
         # test no open wallet
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', 'add' 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy' '3']
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02',
+                    'add' 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy' '3']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertEqual(tx, None)
             self.assertEqual(result, None)
@@ -106,7 +118,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test bad args
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']  # missing payable flag
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy',
+                    '3']  # missing payable flag
             res = CommandSC().execute(args)
             self.assertFalse(res)
             self.assertIn("run `sc build_run help` to see supported queries", mock_print.getvalue())
@@ -114,7 +127,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test successful build and run
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy',
+                    '3']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertTrue(tx)
             self.assertEqual(str(result[0]), '3')
@@ -133,7 +147,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test invoke failure (SampleSC requires three inputs)
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '0705', '02', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy']
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '0705', '02', 'balance',
+                    'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertIsNone(tx)
             self.assertIn("Test invoke failed", mock_print.getvalue())
@@ -163,7 +178,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
 
         # test no open wallet
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', 'False', '070502', '02', 'add' 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy' '3']
+            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', 'False', '070502', '02',
+                    'add' 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy' '3']
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertEqual(tx, None)
             self.assertEqual(result, None)
@@ -174,7 +190,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test bad args
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', '070502', '02', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '0']  # missing payable flag
+            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', '070502', '02', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy',
+                    '0']  # missing payable flag
             res = CommandSC().execute(args)
             self.assertFalse(res)
             self.assertIn("run `sc load_run help` to see supported queries", mock_print.getvalue())
@@ -182,7 +199,58 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test successful load and run with from-addr
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', 'False', '070502', '02', 'balance', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '0', '--from-addr=' + self.wallet_1_addr]
+            args = ['load_run', 'neo/Prompt/Commands/tests/SampleSC.avm', 'True', 'False', 'False', '070502', '02', 'balance',
+                    'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '0', '--from-addr=' + self.wallet_1_addr]
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertTrue(tx)
             self.assertIn("Test deploy invoke successful", mock_print.getvalue())
+
+    def test_sc_invoke(self):
+        token_hash_str = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
+
+        # test no open wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['invoke', token_hash_str, 'symbol', '[]']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please open a wallet", mock_print.getvalue())
+
+        PromptData.Wallet = self.GetWallet3(recreate=True)
+
+        # test invalid contract script hash
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['invoke', 'invalid_hash', 'invalid_params']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid script hash", mock_print.getvalue())
+
+        # test invalid parameter count (missing required `params`)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['invoke', token_hash_str, '--from-addr=bla']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the required parameters", mock_print.getvalue())
+
+        # test with an script_hash that cannot be found
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            bad_contract = 'a' * 40  # passes basic script_hash length check, but won't find actual contract
+            args = ['invoke', bad_contract, 'name', '[]']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Error testing contract invoke", mock_print.getvalue())
+
+        # test ok, but bad passw to send to network
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=["blah"]):
+                args = ['invoke', token_hash_str, 'symbol', '[]']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Incorrect password", mock_print.getvalue())
+
+        # test ok
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
+                args = ['invoke', token_hash_str, 'symbol', '[]']
+                res = CommandSC().execute(args)
+                # not the best check, but will do for now
+                self.assertTrue(res)
