@@ -180,34 +180,33 @@ class CommandSCDeploy(CommandBase):
             return False
 
         contract_script = GatherContractDetails(function_code)
-        if contract_script:
-
-            tx, fee, results, num_ops = test_invoke(contract_script, wallet, [], from_addr=from_addr)
-            if tx and results:
-                print(
-                    "\n-------------------------------------------------------------------------------------------------------------------------------------")
-                print("Test deploy invoke successful")
-                print(f"Total operations executed: {num_ops}")
-                print("Results:")
-                print([item.GetInterface() for item in results])
-                print(f"Deploy Invoke TX GAS cost: {tx.Gas.value / Fixed8.D}")
-                print(f"Deploy Invoke TX Fee: {fee.value / Fixed8.D}")
-                print(
-                    "-------------------------------------------------------------------------------------------------------------------------------------\n")
-                print("Enter your password to continue and deploy this contract")
-
-                passwd = prompt("[password]> ", is_password=True)
-                if not wallet.ValidatePassword(passwd):
-                    print("Incorrect password")
-                    return False
-
-                return InvokeContract(wallet, tx, Fixed8.Zero(), from_addr=from_addr)
-            else:
-                print("Test invoke failed")
-                print(f"TX is {tx}, results are {results}")
-                return False
-        else:
+        if not contract_script:
             print("Failed to generate deploy script")
+            return False
+
+        tx, fee, results, num_ops = test_invoke(contract_script, wallet, [], from_addr=from_addr)
+        if tx and results:
+            print(
+                "\n-------------------------------------------------------------------------------------------------------------------------------------")
+            print("Test deploy invoke successful")
+            print(f"Total operations executed: {num_ops}")
+            print("Results:")
+            print([item.GetInterface() for item in results])
+            print(f"Deploy Invoke TX GAS cost: {tx.Gas.value / Fixed8.D}")
+            print(f"Deploy Invoke TX Fee: {fee.value / Fixed8.D}")
+            print(
+                "-------------------------------------------------------------------------------------------------------------------------------------\n")
+            print("Enter your password to continue and deploy this contract")
+
+            passwd = prompt("[password]> ", is_password=True)
+            if not wallet.ValidatePassword(passwd):
+                print("Incorrect password")
+                return False
+
+            return InvokeContract(wallet, tx, Fixed8.Zero(), from_addr=from_addr)
+        else:
+            print("Test invoke failed")
+            print(f"TX is {tx}, results are {results}")
             return False
 
     def command_desc(self):

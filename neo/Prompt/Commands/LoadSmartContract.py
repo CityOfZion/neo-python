@@ -71,7 +71,7 @@ def LoadContract(path, needs_storage, needs_dynamic_invoke, is_payable, params_s
     if is_payable:
         contract_properties += ContractPropertyState.Payable
 
-    if '.py' in path:
+    if '.avm' not in path:
         raise ValueError("Please load a compiled .avm file")
 
     script = None
