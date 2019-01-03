@@ -21,6 +21,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
     import_watch_addr = UInt160(data=b'\x08t/\\P5\xac-\x0b\x1c\xb4\x94tIyBu\x7f1*')
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     _wallet1 = None
+    _wallet3 = None
 
     @classmethod
     def GetWallet1(cls, recreate=False):
@@ -29,6 +30,16 @@ class CommandSCTestCase(WalletFixtureTestCase):
             cls._wallet1 = UserWallet.Open(CommandSCTestCase.wallet_1_dest(),
                                            to_aes_key(CommandSCTestCase.wallet_1_pass()))
         return cls._wallet1
+
+    @classmethod
+    def GetWallet3(cls, recreate=False):
+
+        if cls._wallet3 is None or recreate:
+            shutil.copyfile(cls.wallet_3_path(), cls.wallet_3_dest())
+            cls._wallet3 = UserWallet.Open(cls.wallet_3_dest(),
+                                           to_aes_key(cls.wallet_3_pass()))
+
+        return cls._wallet3
 
     @classmethod
     def tearDown(cls):
@@ -280,6 +291,56 @@ class CommandSCTestCase(WalletFixtureTestCase):
                     res = CommandSC().execute(args)
                     self.assertFalse(res)
                     self.assertTrue(mock_print.getvalue().endswith('Insufficient funds\n'))
+
+    def test_sc_invoke(self):
+        token_hash_str = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
+
+        # test no open wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['invoke', token_hash_str, 'symbol', '[]']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please open a wallet", mock_print.getvalue())
+
+        PromptData.Wallet = self.GetWallet3(recreate=True)
+
+        # test invalid contract script hash
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['invoke', 'invalid_hash', 'invalid_params']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid script hash", mock_print.getvalue())
+
+        # test invalid parameter count (missing required `params`)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['invoke', token_hash_str, '--from-addr=bla']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the required parameters", mock_print.getvalue())
+
+        # test with an script_hash that cannot be found
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            bad_contract = 'a' * 40  # passes basic script_hash length check, but won't find actual contract
+            args = ['invoke', bad_contract, 'name', '[]']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Error testing contract invoke", mock_print.getvalue())
+
+        # test ok, but bad passw to send to network
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=["blah"]):
+                args = ['invoke', token_hash_str, 'symbol', '[]']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Incorrect password", mock_print.getvalue())
+
+        # test ok
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
+                args = ['invoke', token_hash_str, 'symbol', '[]']
+                res = CommandSC().execute(args)
+                # not the best check, but will do for now
+                self.assertTrue(res)
 
     def test_sc_debugstorage(self):
         # test with insufficient parameters
