@@ -7,7 +7,9 @@ from neo.Prompt.Commands.BuildNRun import Build, BuildAndRun, LoadAndRun
 from neo.Core.Blockchain import Blockchain
 from prompt_toolkit import prompt
 from neocore.Fixed8 import Fixed8
+from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from distutils import util
+from neo.Settings import settings
 
 from neo.logging import log_manager
 
@@ -22,6 +24,7 @@ class CommandSC(CommandBase):
         self.register_sub_command(CommandSCBuildRun())
         self.register_sub_command(CommandSCLoadRun())
         self.register_sub_command(CommandSCDeploy())
+        self.register_sub_command(CommandSCDebugStorage())
 
     def command_desc(self):
         return CommandDesc('sc', 'develop smart contracts')
@@ -219,3 +222,38 @@ class CommandSCDeploy(CommandBase):
 
         params = [p1, p2, p3, p4, p5, p6]
         return CommandDesc('deploy', 'Deploy a smart contract (.avm) file to the blockchain', params=params)
+
+
+class CommandSCDebugStorage(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return False
+
+        what = arguments[0]
+        if what == 'reset':
+            DebugStorage.instance().reset()
+            print("Reset debug storage")
+            return True
+
+        try:
+            flag = bool(util.strtobool(what))
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        settings.USE_DEBUG_STORAGE = flag
+        if flag:
+            print("Debug storage ON")
+        else:
+            print("Debug storage OFF")
+
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0, or "reset"')
+        return CommandDesc('debugstorage', 'use a separate database for smart contract storage item debugging', params=[p1])

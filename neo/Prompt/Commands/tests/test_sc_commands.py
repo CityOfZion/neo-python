@@ -280,3 +280,37 @@ class CommandSCTestCase(WalletFixtureTestCase):
                     res = CommandSC().execute(args)
                     self.assertFalse(res)
                     self.assertTrue(mock_print.getvalue().endswith('Insufficient funds\n'))
+
+    def test_sc_debugstorage(self):
+        # test with insufficient parameters
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['debugstorage']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the required parameter", mock_print.getvalue())
+
+        # test with bad parameter
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['debugstorage', 'blah']
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid option", mock_print.getvalue())
+
+        # test with reset parameter
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['debugstorage', 'reset']
+            res = CommandSC().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Reset debug storage", mock_print.getvalue())
+
+        # test turning on
+        args = ['debugstorage', 'on']
+        res = CommandSC().execute(args)
+        self.assertTrue(res)
+        self.assertTrue(settings.USE_DEBUG_STORAGE)
+
+        # test turning off
+        args = ['debugstorage', 'off']
+        res = CommandSC().execute(args)
+        self.assertTrue(res)
+        self.assertFalse(settings.USE_DEBUG_STORAGE)

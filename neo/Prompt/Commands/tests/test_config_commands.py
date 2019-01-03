@@ -45,11 +45,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         args = ['sc-events', 'on']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertTrue(settings.log_smart_contract_events)
 
         # test turning them off
         args = ['sc-events', '0']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertFalse(settings.log_smart_contract_events)
 
         # test bad input
         args = ['sc-events', 'blah']
@@ -66,11 +68,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         args = ['sc-debug-notify', 'on']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertTrue(settings.emit_notify_events_on_sc_execution_error)
 
         # test turning them off
         args = ['sc-debug-notify', '0']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertFalse(settings.emit_notify_events_on_sc_execution_error)
 
         # test bad input
         args = ['sc-debug-notify', 'blah']
@@ -87,11 +91,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         args = ['vm-log', 'on']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertTrue(settings.log_vm_instructions)
 
         # test turning them off
         args = ['vm-log', '0']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertFalse(settings.log_vm_instructions)
 
         # test bad input
         args = ['vm-log', 'blah']

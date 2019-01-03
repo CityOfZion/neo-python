@@ -32,7 +32,7 @@ class CommandWalletImport(CommandBase):
         item = PromptUtils.get_arg(arguments)
 
         if not item:
-            print(f"Please specify an action. See help for available actions")
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return False
 
         try:
@@ -87,7 +87,7 @@ class CommandWalletImportNEP2(CommandBase):
         wallet = PromptData.Wallet
 
         if len(arguments) != 1:
-            print("Please specify the required parameters")
+            print("Please specify the required parameter")
             return False
 
         nep2_key = arguments[0]
@@ -124,7 +124,7 @@ class CommandWalletImportWatchAddr(CommandBase):
         wallet = PromptData.Wallet
 
         if len(arguments) != 1:
-            print("Please specify the required parameters")
+            print("Please specify the required parameter")
             return False
 
         addr = arguments[0]
