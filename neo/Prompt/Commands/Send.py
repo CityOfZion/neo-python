@@ -29,17 +29,18 @@ class CommandWalletSend(CommandBase):
         return framework
 
     def command_desc(self):
-        p1 = ParameterDesc('assetId or name', 'the asset (NEO/GAS) to send')
-        p2 = ParameterDesc('address', 'the destination address')
-        p3 = ParameterDesc('amount', 'the amount of the asset to send')
+        p1 = ParameterDesc('asset', 'assetId or name (NEO/GAS) to send')
+        p2 = ParameterDesc('address', 'destination address')
+        p3 = ParameterDesc('amount', 'amount of the asset to send')
         p4 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
-        p5 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
-        p6 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
-        p7 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
-        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
-        f"{' ':>17} Example:\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
+        p5 = ParameterDesc('--fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p6 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
+        p7 = ParameterDesc('--tx-attr',
+                           f"list of transaction attributes to attach to the transaction\n\n"
+                           f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+                           f"{' ':>17} Example:\n"
+                           f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+                           f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7]
         return CommandDesc('send', 'send an asset (NEO/GAS)', params=params)
 
@@ -57,16 +58,17 @@ class CommandWalletSendMany(CommandBase):
         return framework
 
     def command_desc(self):
-        p1 = ParameterDesc('tx_count', 'the number of transactions to send')
-        p2 = ParameterDesc('--change-addr', 'an address to send remaining funds to', optional=True)
+        p1 = ParameterDesc('tx_count', 'number of transactions to send')
+        p2 = ParameterDesc('--change-addr', 'address to send remaining funds to', optional=True)
         p3 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
-        p4 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
-        p5 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
-        p6 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
-        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
-        f"{' ':>17} Example:\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
+        p4 = ParameterDesc('--fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p5 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
+        p6 = ParameterDesc('--tx-attr',
+                           f"a list of transaction attributes to attach to the transaction\n\n"
+                           f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+                           f"{' ':>17} Example:\n"
+                           f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+                           f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6]
         return CommandDesc('sendmany', 'send multiple NEO/GAS transactions', params=params)
 
@@ -92,7 +94,7 @@ class CommandWalletSign(CommandBase):
 
 def construct_send_basic(wallet, arguments):
     if len(arguments) < 3:
-        print("Please specify the requred parameters")
+        print("Please specify the required parameters")
         return None
 
     arguments, from_address = get_from_addr(arguments)

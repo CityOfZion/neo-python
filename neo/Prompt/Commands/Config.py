@@ -151,8 +151,8 @@ class CommandConfigNodeRequests(CommandBase):
             return False
 
     def command_desc(self):
-        p1 = ParameterDesc('block-size', 'a preset of "slow"/"normal"/"fast", or a specific block request size (max. 500) e.g. 250 ')
-        p2 = ParameterDesc('queue-size', 'the maximum number of outstanding block requests')
+        p1 = ParameterDesc('block-size', 'preset of "slow"/"normal"/"fast", or a specific block request size (max. 500) e.g. 250 ')
+        p2 = ParameterDesc('queue-size', 'maximum number of outstanding block requests')
         return CommandDesc('node-requests', 'configure block request settings', [p1, p2])
 
     def handle_help(self, arguments):

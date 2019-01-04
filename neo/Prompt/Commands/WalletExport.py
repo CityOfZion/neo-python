@@ -70,7 +70,7 @@ class CommandWalletExportNEP2(CommandBase):
         passphrase = prompt("[key password] ", is_password=True)
         len_pass = len(passphrase)
         if len_pass < 10:
-            print(f"Passphrase is too short, length: {len_pass}. Mininum length is 10")
+            print(f"Passphrase is too short, length: {len_pass}. Minimum length is 10")
             return False
 
         passphrase_confirm = prompt("[key password again] ", is_password=True)
