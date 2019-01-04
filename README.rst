@@ -31,7 +31,7 @@ What does it currently do
    project <https://github.com/neo-project>`_
 -  Run a Python based P2P node
 -  Interactive CLI for configuring node and inspecting blockchain
--  Build, deploy, and run smart contracts
+-  Compile, test, deploy and run Smart Contracts written in python or any Smart Contract in the ``.avm`` format
 -  Runs smart contracts on the blockchain in a Python virtual machine
 -  Very basic Wallet functionality (not fully tested, please do not use
    on mainnet)

@@ -22,7 +22,7 @@ Create a wallet
 
 .. code-block:: sh
 
-    neo> create wallet path/to/walletfile
+    neo> wallet create path/to/walletfile
     [Password 1]> **********
     [Password 2]> **********
     Wallet {
@@ -52,7 +52,7 @@ Open a wallet
 
 .. code-block:: sh
 
-    neo> open wallet path/to/walletfile
+    neo> wallet open path/to/walletfile
     [Password]> ***********
     Opened wallet at path/to/walletfile
     neo>
@@ -95,16 +95,6 @@ If your wallet is behaving unexepectedly or you have imported a new address into
     restarting at 700000
     neo>
 
-Migrate your wallet
-^^^^^^^^^^^^^^^^^^^
-If there have been changes to the wallet data model, you may need to migrate your wallet
-
-.. code-block:: sh
-
-    neo> wallet migrated
-    migrated wallet
-    neo>
-
 
 Reencrypt your wallet
 ^^^^^^^^^^^^^^^^^^^^^
@@ -128,7 +118,7 @@ You may want to import a `WIF <https://en.bitcoin.it/wiki/Wallet_import_format>`
 
 .. code-block:: sh
 
-    neo> import wif KxP97gujib35PBEnTq78e5NmYVbeaosU4AdguDzZ4tyf6a7W32UM
+    neo> wallet import wif KxP97gujib35PBEnTq78e5NmYVbeaosU4AdguDzZ4tyf6a7W32UM
     Imported key KxP97gujib35PBEnTq78e5NmYVbeaosU4AdguDzZ4tyf6a7W32UM
     Pubkey: 303263383231666338336465373331313039633435653034346136353863386631313337623730303461396232323237613335653262353566613061313630323731
     neo>
@@ -139,7 +129,7 @@ You may want to export a `WIF <https://en.bitcoin.it/wiki/Wallet_import_format>`
 
 .. code-block:: sh
 
-    neo> export wif AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK
+    neo> wallet export wif AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK
     [Wallet Password]> ***********
     WIF key export: KxP97gujib35PBEnTq78e5NmYVbeaosU4AdguDzZ4tyf6a7W32UM
     neo>
@@ -151,7 +141,7 @@ You can import a `NEP2 <https://github.com/neo-project/proposals/blob/master/nep
 
 .. code-block:: sh
 
-    neo> import nep2 6PYVPVe1fQznphjbUxXP9KZJqPMVnVwCx5s5pr5axRJ8uHkMtZg97eT5kL
+    neo> wallet import nep2 6PYVPVe1fQznphjbUxXP9KZJqPMVnVwCx5s5pr5axRJ8uHkMtZg97eT5kL
     [Key Password]> ******************
     Imported nep2 key: 6PYVPVe1fQznphjbUxXP9KZJqPMVnVwCx5s5pr5axRJ8uHkMtZg97eT5kL
     Pubkey: 303236323431653765323662333862623731353462386164343934353862393766623163343739373434336463393231633563613537373466353131613262626663
@@ -163,7 +153,7 @@ You can export an address as `NEP2 <https://github.com/neo-project/proposals/blo
 
 .. code-block:: sh
 
-    neo> export nep2 AStZHy8E6StCqYQbzMqi4poH7YNDHQKxvt
+    neo> wallet export nep2 AStZHy8E6StCqYQbzMqi4poH7YNDHQKxvt
     [Wallet Password]> ***********
     [Key Password 1]> ******************
     [Key Password 2]> ******************
@@ -176,7 +166,7 @@ Delete address
 
 .. code-block:: sh
 
-    neo> wallet delete_addr AStZHy8E6StCqYQbzMqi4poH7YNDHQKxvt
+    neo> wallet address delete AStZHy8E6StCqYQbzMqi4poH7YNDHQKxvt
     Deleted address AStZHy8E6StCqYQbzMqi4poH7YNDHQKxvt
     neo>
 
@@ -187,7 +177,7 @@ A **watch only** address is any address that you do not have the public key for 
 
 .. code-block:: sh
 
-    neo> import watch_addr AStZHy8E6StCqYQbzMqi4poH7YNDHQKxvt
+    neo> wallet import watch_addr AStZHy8E6StCqYQbzMqi4poH7YNDHQKxvt
     neo>
 
 
@@ -200,7 +190,7 @@ You may have a smart contract which has been deployed that you want to use funds
 .. code-block:: sh
 
     # import contract_addr {script_hash} {pubkey}
-    neo> import contract_addr 3c62006802d895974069a1d96398a04b4703f0f8 027973267230b7cba0724589653e667ddea7aa8479c01a82bf8dd398cec93508ef
+    neo> wallet import contract_addr 3c62006802d895974069a1d96398a04b4703f0f8 027973267230b7cba0724589653e667ddea7aa8479c01a82bf8dd398cec93508ef
     Added contract addres AeU8kTJxynwkT3q9ao8aDFuaRJBkU3AfFG to wallet
     neo>
 
@@ -217,10 +207,12 @@ You may send assets from your wallet using the following command.  Note that wit
 .. code-block:: sh
 
     # syntax send {asset_name} {address to} {amount} ( optional: --from-addr={from_addr})
-    neo> send gas AeU8kTJxynwkT3q9ao8aDFuaRJBkU3AfFG 11
+    neo> wallet send gas AeU8kTJxynwkT3q9ao8aDFuaRJBkU3AfFG 11
     [Password]> ***********
     Relayed Tx: 468e294b11a9f65cc5e2c372124877472eebf121befb77ceed23a84862a606d3
     neo>
+
+Use ``wallet send help`` to view all required arguments and their descriptions.
 
 
 Send From
@@ -231,12 +223,12 @@ You may also specify a particular address to send assets from. This is especiall
 .. code-block:: sh
 
     # syntax send {asset_name} {address to} {amount} ( optional: --from-addr={from_addr})
-    neo> send gas AeU8kTJxynwkT3q9ao8aDFuaRJBkU3AfFG 11 --from-addr=AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK
+    neo> wallet sendfrom gas AeU8kTJxynwkT3q9ao8aDFuaRJBkU3AfFG 11 --from-addr=AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK
     [Password]> ***********
     Relayed Tx: a43dfb30af63bd0e5a510b05f02b3d40932af26d4564e040e3812ce78e76ce71
     neo>
 
-
+Use ``wallet sendfrom help`` to view all required arguments and their descriptions.
 
 
 -----------
@@ -250,7 +242,7 @@ You may want to observe or interact with ``NEP5`` Tokens with your wallet.  To d
 
 .. code-block:: sh
 
-    neo> import token f8d448b227991cf07cb96a6f9c0322437f1599b9
+    neo> wallet import token f8d448b227991cf07cb96a6f9c0322437f1599b9
     added token {
         "name": "NEP5 Standard",
         "script_hash": "f8d448b227991cf07cb96a6f9c0322437f1599b9",
@@ -329,10 +321,17 @@ Next we create the multi signature address as follows.
 
 .. code-block:: sh
 
-    neo> import multisig_addr
-    please specify multisig contract like such: 'import multisig {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'
+    neo> wallet import multisig_addr help
 
-    neo> import multisig_addr 037b8992e8384212f82e05c8836816c0f14dff9528397138731638b17d6357021e 1 037b8992e8384212f82e05c8836816c0f14dff9528397138731638b17d6357021e 02883118351f8f47107c83ab634dc7e4
+    Import a multi-signature address
+
+    Usage: wallet import multisig_addr {own pub key} {sign_cnt} {signing key n}
+
+    own pub key     - public key in your own wallet (use `wallet` to find the information)
+    sign_cnt        - minimum number of signatures required for using the address (min is: 1)
+    signing key n   - all remaining signing public keys
+
+    neo> wallet import multisig_addr 037b8992e8384212f82e05c8836816c0f14dff9528397138731638b17d6357021e 1 02883118351f8f47107c83ab634dc7e4
     ffe29d274e7d3dcf70159c8935ff769beb
     [I 180310 16:49:19 UserWallet:191] contract does not exist yet
     Added multi-sig contract address ALXEKioZntX73QawcnfcHUDvTVm8qXjAxf to wallet
@@ -389,7 +388,7 @@ Now that we can access the funds we can send them to our own address as follows
 
 .. code-block:: sh
 
-    neo> send NEO ANFLgwKG8Eni9gJmKfM7yFXEaWwoGkSUid 5 --from-addr=ALXEKioZntX73QawcnfcHUDvTVm8qXjAxf
+    neo> wallet send NEO ANFLgwKG8Eni9gJmKfM7yFXEaWwoGkSUid 5 --from-addr=ALXEKioZntX73QawcnfcHUDvTVm8qXjAxf
     [Password]> **********
     [I 180310 17:02:42 Transaction:611] Verifying transaction: b'c32b0e3d9adbef6720abfad5106dcd2dacb17b31d4f9d32cbcf8ed6e7f566ef3'
     Relayed Tx: c32b0e3d9adbef6720abfad5106dcd2dacb17b31d4f9d32cbcf8ed6e7f566ef3
