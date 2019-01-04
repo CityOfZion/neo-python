@@ -44,12 +44,21 @@ class UserWalletTestCase(UserWalletTestCaseBase):
             self.assertFalse(res)
             self.assertIn("Could not find address", mock_print.getvalue())
 
+        # test with good address but bad passw
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=['random_passw']):
+                args = ['export', 'wif', self.wallet_1_addr]
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Incorrect password", mock_print.getvalue())
+
         # test with good address
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['export', 'wif', self.wallet_1_addr]
-            res = CommandWallet().execute(args)
-            self.assertTrue(res)
-            self.assertIn("Ky94Rq8rb1z8UzTthYmy1ApbZa9xsKTvQCiuGUZJZbaDJZdkvLRV", mock_print.getvalue())
+            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[self.wallet_1_pass()]):
+                args = ['export', 'wif', self.wallet_1_addr]
+                res = CommandWallet().execute(args)
+                self.assertTrue(res)
+                self.assertIn("Ky94Rq8rb1z8UzTthYmy1ApbZa9xsKTvQCiuGUZJZbaDJZdkvLRV", mock_print.getvalue())
 
     def test_wallet_export_nep2(self):
         self.OpenWallet1()
@@ -79,16 +88,24 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         # test with good address and but too short passphrase
         with patch('sys.stdout', new=StringIO()) as mock_print:
             pw_too_short = 'too_short'
-            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[pw_too_short, pw_too_short]):
+            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[pw_too_short, pw_too_short, self.wallet_1_pass()]):
                 args = ['export', 'nep2', self.wallet_1_addr]
                 res = CommandWallet().execute(args)
                 self.assertFalse(res)
                 self.assertIn("Passphrase is too short", mock_print.getvalue())
 
+        # test with good address but incorrect wallet password
+        pw = UserWalletTestCase.wallet_1_pass()
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[pw, pw, 'incorrect_wallet_pw']):
+                args = ['export', 'nep2', self.wallet_1_addr]
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Incorrect password", mock_print.getvalue())
+
         # test with good address and good passphrase len
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            pw = UserWalletTestCase.wallet_1_pass()
-            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[pw, pw]):
+            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[pw, pw, self.wallet_1_pass()]):
                 args = ['export', 'nep2', self.wallet_1_addr]
                 res = CommandWallet().execute(args)
                 self.assertTrue(res)
