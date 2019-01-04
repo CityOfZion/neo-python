@@ -3,6 +3,7 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Core.Blockchain import Blockchain
 from neo.logging import log_manager
+from neo.Prompt.PromptPrinter import prompt_print as print
 import json
 
 logger = log_manager.getLogger()

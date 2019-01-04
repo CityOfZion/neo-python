@@ -15,6 +15,7 @@ from neo.Prompt.PromptData import PromptData
 from contextlib import contextmanager
 from io import StringIO
 from neo.VM.InteropService import StackItem
+from neo.Prompt.PromptPrinter import pp
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -33,6 +34,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
     _wallet3 = None
 
     token_hash_str = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     @property
     def GAS(self):
@@ -783,6 +795,17 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
     """
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     @contextmanager
     def OpenWallet1(self):

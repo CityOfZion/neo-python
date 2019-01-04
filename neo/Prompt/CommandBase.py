@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from neo.Prompt.Utils import get_arg
 from typing import List
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
 class ParameterDesc():

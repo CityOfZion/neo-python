@@ -16,7 +16,7 @@ from neocore.Utils import isValidPublicAddress
 from distutils.util import strtobool
 import peewee
 import traceback
-
+from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()

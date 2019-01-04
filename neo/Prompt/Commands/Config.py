@@ -4,6 +4,7 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
+from neo.Prompt.PromptPrinter import prompt_print as print
 from distutils import util
 import logging
 

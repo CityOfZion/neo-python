@@ -12,6 +12,7 @@ from neocore.Cryptography.Crypto import Crypto
 from neo.SmartContract.Contract import Contract
 from neo.Core.Blockchain import Blockchain
 from neo.Wallets import NEP5Token
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
 class CommandWalletImport(CommandBase):

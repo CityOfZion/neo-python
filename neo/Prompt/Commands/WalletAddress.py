@@ -11,6 +11,7 @@ from prompt_toolkit import prompt
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import ContractTransaction
 from neo.Core.TX.Transaction import TransactionOutput
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
 class CommandWalletAddress(CommandBase):

@@ -11,8 +11,8 @@ from decimal import Decimal
 from prompt_toolkit.shortcuts import PromptSession
 from neo.logging import log_manager
 from neo.Wallets import NEP5Token
-from typing import TYPE_CHECKING
 from neocore.Cryptography.Crypto import Crypto
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from neo.Wallets.Wallet import Wallet

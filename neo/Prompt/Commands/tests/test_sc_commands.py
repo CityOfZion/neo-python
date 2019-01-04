@@ -11,6 +11,7 @@ from mock import patch
 from io import StringIO
 from boa.compiler import Compiler
 from neo.Settings import settings
+from neo.Prompt.PromptPrinter import pp
 
 
 class CommandSCTestCase(WalletFixtureTestCase):
@@ -22,6 +23,17 @@ class CommandSCTestCase(WalletFixtureTestCase):
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     _wallet1 = None
     _wallet3 = None
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     @classmethod
     def GetWallet1(cls, recreate=False):

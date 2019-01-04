@@ -2,6 +2,7 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt import Utils as PromptUtils
 from neo.Prompt.PromptData import PromptData
 from prompt_toolkit import prompt
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
 class CommandWalletExport(CommandBase):
