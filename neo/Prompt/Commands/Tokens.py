@@ -13,7 +13,6 @@ from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Toke
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
 from neocore.Utils import isValidPublicAddress
-from distutils.util import strtobool
 import peewee
 import traceback
 
