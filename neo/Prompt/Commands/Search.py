@@ -49,7 +49,7 @@ class CommandSearchAsset(CommandBase):
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('query', 'supports name, issuer, or admin searches')
+        p1 = ParameterDesc('query', 'name, issuer, or admin')
         return CommandDesc('asset', 'perform an asset search', [p1])
 
 
@@ -70,5 +70,5 @@ class CommandSearchContract(CommandBase):
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('query', 'supports name, author, description, or email searches')
+        p1 = ParameterDesc('query', 'name, author, description, or email')
         return CommandDesc('contract', 'perform a contract search', [p1])

@@ -32,7 +32,7 @@ class CommandShow(CommandBase):
         self.register_sub_command(CommandShowContract())
 
     def command_desc(self):
-        return CommandDesc('show', 'show useful data')
+        return CommandDesc('show', 'show various node and blockchain data')
 
     def execute(self, arguments):
         item = get_arg(arguments)
@@ -79,8 +79,8 @@ class CommandShowBlock(CommandBase):
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('attribute', 'the block index or scripthash')
-        p2 = ParameterDesc('tx', 'arg to only show block transactions', optional=True)
+        p1 = ParameterDesc('attribute', 'block index or script hash')
+        p2 = ParameterDesc('tx', 'flag to only show block transactions', optional=True)
         return CommandDesc('block', 'show a specified block', [p1, p2])
 
 
@@ -103,7 +103,7 @@ class CommandShowHeader(CommandBase):
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('attribute', 'the header index or scripthash')
+        p1 = ParameterDesc('attribute', 'header index or script hash')
         return CommandDesc('header', 'show the header of a specified block', [p1])
 
 
@@ -134,7 +134,7 @@ class CommandShowTx(CommandBase):
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('hash', 'the scripthash of the transaction')
+        p1 = ParameterDesc('hash', 'transaction script hash')
         return CommandDesc('tx', 'show a specified transaction', [p1])
 
 
@@ -251,7 +251,7 @@ class CommandShowNotifications(CommandBase):
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('attribute', 'the block index, an address, or contract scripthash to show notifications for')
+        p1 = ParameterDesc('attribute', 'block index, an address, or contract script hash to show notifications for')
         return CommandDesc('notifications', 'show specified contract execution notifications', [p1])
 
 
@@ -275,7 +275,7 @@ class CommandShowAccount(CommandBase):
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('address', 'the address to show')
+        p1 = ParameterDesc('address', 'public NEO address')
         return CommandDesc('account', 'show the assets (NEO/GAS) held by a specified address', [p1])
 
 
@@ -321,7 +321,7 @@ class CommandShowAsset(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('attribute',
-                           'the asset name, assetId, or "all" shows all assets\n\n'
+                           'asset name, assetId, or "all"\n\n'
                            f"{' ':>17} Example:\n"
                            f"{' ':>20} 'neo' or 'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'\n"
                            f"{' ':>20} 'gas' or '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'\n")
@@ -365,5 +365,5 @@ class CommandShowContract(CommandBase):
             return
 
     def command_desc(self):
-        p1 = ParameterDesc('attribute', 'the contract scripthash, or "all" shows all contracts')
+        p1 = ParameterDesc('attribute', 'contract script hash, or "all"')
         return CommandDesc('contract', 'show a specified smart contract', [p1])

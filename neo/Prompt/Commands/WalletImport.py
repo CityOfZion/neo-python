@@ -112,7 +112,7 @@ class CommandWalletImportNEP2(CommandBase):
             return False
 
     def command_desc(self):
-        p1 = ParameterDesc('private key', 'a NEP-2 protected private key')
+        p1 = ParameterDesc('private key', 'NEP-2 protected private key')
         return CommandDesc('nep2', 'import a passphrase protected private key record (NEP-2 format)', [p1])
 
 
@@ -143,7 +143,7 @@ class CommandWalletImportWatchAddr(CommandBase):
         return True
 
     def command_desc(self):
-        p1 = ParameterDesc('address', 'a public NEO address to watch')
+        p1 = ParameterDesc('address', 'public NEO address to watch')
         return CommandDesc('watch_addr', 'import a public address as watch only', [p1])
 
 
@@ -208,7 +208,7 @@ class CommandWalletImportMultisigAddr(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('own pub key', 'public key in your own wallet (use `wallet` to find the information)')
-        p2 = ParameterDesc('sign_cnt', 'the minimum number of signatures required for using the address (min is: 1)')
+        p2 = ParameterDesc('sign_cnt', 'minimum number of signatures required for using the address (min is: 1)')
         p3 = ParameterDesc('signing key n', 'all remaining signing public keys')
         return CommandDesc('multisig_addr', 'import a multi-signature address', [p1, p2, p3])
 
@@ -231,7 +231,7 @@ class CommandWalletImportToken(CommandBase):
         return ImportToken(PromptData.Wallet, contract_hash)
 
     def command_desc(self):
-        p1 = ParameterDesc('contract_hash', 'the token contract hash')
+        p1 = ParameterDesc('contract_hash', 'token script hash')
         return CommandDesc('token', 'import a token', [p1])
 
 
@@ -262,7 +262,7 @@ class CommandWalletImportContractAddr(CommandBase):
         return ImportContractAddr(wallet, contract_hash, pubkey_script_hash)
 
     def command_desc(self):
-        p1 = ParameterDesc('contract_hash', 'hash of the contract')
+        p1 = ParameterDesc('contract_hash', 'contract script hash')
         p2 = ParameterDesc('pubkey', 'pubkey of the contract')
         return CommandDesc('contract_addr', 'import a contract address', [p1, p2])
 

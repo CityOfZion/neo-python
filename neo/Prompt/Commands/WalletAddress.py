@@ -53,7 +53,7 @@ class CommandWalletCreateAddress(CommandBase):
         return CreateAddress(PromptData.Wallet, addresses_to_create)
 
     def command_desc(self):
-        p1 = ParameterDesc('number of addresses', 'number of addresses to create')
+        p1 = ParameterDesc('count', 'number of addresses to create')
         return CommandDesc('create', 'add an address to the wallet', params=[p1])
 
 
@@ -137,8 +137,8 @@ class CommandWalletSplit(CommandBase):
         p1 = ParameterDesc('address', 'address to split from')
         p2 = ParameterDesc('asset', 'type of asset to split (NEO/GAS)')
         p3 = ParameterDesc('unspent_index', 'index of the vin to split')
-        p4 = ParameterDesc('divisions', 'divide into number of vouts')
-        p5 = ParameterDesc('fee', 'optional fee', optional=True)
+        p4 = ParameterDesc('divisions', 'number of vouts to divide into ')
+        p5 = ParameterDesc('fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
         return CommandDesc('split', 'split an asset unspent output into N outputs', params=[p1, p2, p3, p4, p5])
 
 
@@ -155,7 +155,7 @@ class CommandWalletAlias(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('address', 'address to create an alias for')
-        p2 = ParameterDesc('alias', 'alias to associate with the address')
+        p2 = ParameterDesc('alias', 'custom name to associate with the address')
         return CommandDesc('alias', 'create an alias for an address', params=[p1, p2])
 
 

@@ -88,7 +88,7 @@ class CommandTokenDelete(CommandBase):
         return success
 
     def command_desc(self):
-        p1 = ParameterDesc('contract', 'token contract hash (script_hash)')
+        p1 = ParameterDesc('contract', 'token contract hash (script hash)')
         return CommandDesc('delete', 'remove a token from the wallet', [p1])
 
 
@@ -130,7 +130,7 @@ class CommandTokenSend(CommandBase):
         return success
 
     def command_desc(self):
-        p1 = ParameterDesc('token', 'token symbol name or script_hash')
+        p1 = ParameterDesc('token', 'token symbol or script hash')
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
@@ -218,7 +218,7 @@ class CommandTokenSendFrom(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('token', 'token symbol name or script_hash')
+        p1 = ParameterDesc('token', 'token symbol or script hash')
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
@@ -263,7 +263,7 @@ class CommandTokenHistory(CommandBase):
         return True
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
+        p1 = ParameterDesc('symbol', 'token symbol or script hash')
         return CommandDesc('history', 'show transaction history', [p1])
 
 
@@ -322,7 +322,7 @@ class CommandTokenApprove(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
+        p1 = ParameterDesc('symbol', 'token symbol or script hash')
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
@@ -367,7 +367,7 @@ class CommandTokenAllowance(CommandBase):
             return False
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
+        p1 = ParameterDesc('symbol', 'token symbol or script hash')
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
 
@@ -450,7 +450,7 @@ class CommandTokenMint(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
+        p1 = ParameterDesc('symbol', 'token symbol or script hash')
         p2 = ParameterDesc('to_addr', 'address to mint tokens to')
         p3 = ParameterDesc('--attach-neo', 'amount of neo to attach to the transaction', optional=True)
         p4 = ParameterDesc('--attach-gas', 'amount of gas to attach to the transaction', optional=True)
@@ -500,9 +500,9 @@ class CommandTokenRegister(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
-        p2 = ParameterDesc('addresses', 'space seperated list of addresses')
-        return CommandDesc('register', 'register for a crowdsale', [p1, p2])
+        p1 = ParameterDesc('symbol', 'token symbol  or script hash')
+        p2 = ParameterDesc('addresses', 'space separated list of NEO addresses')
+        return CommandDesc('register', 'register for a crowd sale', [p1, p2])
 
 
 def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
@@ -522,16 +522,10 @@ def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
     Returns:
         token (NEP5Token): instance
     """
-    token = None
-    for t in wallet.GetTokens().values():
-        if token_str == t.symbol:
-            token = t
-            break
-        elif token_str == t.ScriptHash.ToString():
-            token = t
-
-    if not isinstance(token, NEP5Token):
-        raise ValueError("The given token argument does not represent a known NEP5 token")
+    try:
+        token = PromptUtils.get_token(wallet, token_str)
+    except ValueError:
+        raise
 
     if not isValidPublicAddress(from_addr):
         raise ValueError("send_from is not a valid address")
