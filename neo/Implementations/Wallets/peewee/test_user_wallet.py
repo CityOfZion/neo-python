@@ -193,7 +193,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx = ContractTransaction()
         tx.outputs = [TransactionOutput(Blockchain.SystemShare().Hash, Fixed8.FromDecimal(10.0), self.import_watch_addr)]
 
-        tx = wallet.MakeTransaction(tx)
+        try:
+            tx = wallet.MakeTransaction(tx)
+        except ValueError:
+            pass
 
         cpc = ContractParametersContext(tx)
         wallet.Sign(cpc)

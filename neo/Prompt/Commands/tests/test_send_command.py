@@ -304,13 +304,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_could_not_send(self):
         # mocking traceback module to avoid stacktrace printing during test run
         with patch('neo.Prompt.Commands.Send.traceback'):
-            PromptData.Wallet = self.GetWallet1(recreate=True)
-            args = ['send', 'gas', self.watch_addr_str, '2']
+            with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                with patch('neo.Wallets.Wallet.Wallet.GetStandardAddress', side_effect=[Exception]):
+                    PromptData.Wallet = self.GetWallet1(recreate=True)
+                    args = ['send', 'gas', self.watch_addr_str, '2']
+                    res = Wallet.CommandWallet().execute(args)
 
-            with patch('neo.Wallets.Wallet.Wallet.MakeTransaction', side_effect=[Exception]):
-                res = Wallet.CommandWallet().execute(args)
-
-                self.assertFalse(res)
+                    self.assertFalse(res)
 
     def test_sendmany_good_simple(self):
         with patch('neo.Prompt.Commands.Send.prompt',

@@ -228,11 +228,17 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
                                     change_address=scripthash_change,
                                     fee=fee,
                                     from_addr=scripthash_from)
+    except ValueError:
+        print("Insufficient funds. No unspent outputs available for building the transaction.\n"
+              "If you are trying to sent multiple transactions in 1 block, then make sure you have enough 'vouts'\n."
+              "Use `wallet unspent` and `wallet address split`, or wait until the first transaction is processed before sending another.")
+        return None
 
-        if tx is None:
-            logger.debug("insufficient funds")
-            return None
+    if tx is None:
+        logger.debug("insufficient funds")
+        return None
 
+    try:
         # password prompt
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):
