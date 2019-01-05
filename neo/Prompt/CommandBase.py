@@ -125,12 +125,15 @@ class CommandBase(ABC):
             s = self.__parent_command.__command_with_parents() + " " + s
         return s
 
+    def _usage_str(self):
+        return f"Usage: {self.__command_with_parents()} COMMAND"
+
     def handle_help(self, arguments):
         item = get_arg(arguments)
         if item == 'help':
             if len(self.__sub_commands) > 0:
                 # show overview of subcommands and their purpose
-                print(f"\nUsage: {self.__command_with_parents()} COMMAND\n")
+                print(f"\n{self._usage_str()}\n")
                 print(f"{self.command_desc().short_help.capitalize()}\n")
                 print("Commands:")
 
