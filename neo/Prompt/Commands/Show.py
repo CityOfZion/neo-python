@@ -11,6 +11,7 @@ from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.logging import log_manager
+from neo.Prompt.PromptPrinter import prompt_print as print
 import json
 
 logger = log_manager.getLogger()

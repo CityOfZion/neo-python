@@ -21,6 +21,7 @@ from neo.Prompt.Commands.WalletImport import CommandWalletImport
 from neo.Prompt.Commands.WalletExport import CommandWalletExport
 from neo.logging import log_manager
 from neocore.Utils import isValidPublicAddress
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 logger = log_manager.getLogger()
 

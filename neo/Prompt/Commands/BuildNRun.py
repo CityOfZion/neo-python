@@ -13,6 +13,7 @@ import traceback
 from neocore.BigInteger import BigInteger
 from neo.Settings import settings
 from neo.logging import log_manager
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 logger = log_manager.getLogger()
 
@@ -77,7 +78,6 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invoca
 def DoRun(contract_script, arguments, wallet, path, verbose=True,
           from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
           debug_map=None, invoke_attrs=None, owners=None):
-
     if not wallet:
         print("Please open a wallet to test build contract")
         return None, None, None, None

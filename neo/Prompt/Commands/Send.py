@@ -14,6 +14,7 @@ import traceback
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from logzero import logger
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
 class CommandWalletSend(CommandBase):

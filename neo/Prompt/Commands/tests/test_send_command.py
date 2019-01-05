@@ -11,6 +11,7 @@ import shutil
 from mock import patch
 import json
 from io import StringIO
+from neo.Prompt.PromptPrinter import pp
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -41,6 +42,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
     @classmethod
     def tearDown(cls):
         PromptData.Wallet = None
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     def test_send_neo(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):

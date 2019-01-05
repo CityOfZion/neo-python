@@ -2,11 +2,22 @@ from neo.logging import log_manager
 from neo.Prompt.Commands.Config import start_output_config
 from mock import patch
 from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Prompt.PromptPrinter import pp
 import logging
 import io
 
 
 class TestOutputConfig(NeoTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily by patching sys.stdout
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('neo.Prompt.Commands.Config.log_manager.config_stdio')

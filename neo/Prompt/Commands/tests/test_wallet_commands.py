@@ -7,6 +7,7 @@ from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Wallet import ShowUnspentCoins
 from neo.Prompt.PromptData import PromptData
+from neo.Prompt.PromptPrinter import pp
 import os
 import shutil
 from mock import patch
@@ -61,9 +62,19 @@ class UserWalletTestCaseBase(WalletFixtureTestCase):
     def tearDown(cls):
         PromptData.Wallet = None
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
+
 
 class UserWalletTestCase(UserWalletTestCaseBase):
-
     # Beginning with refactored tests
     def test_wallet(self):
         # without wallet opened

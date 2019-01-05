@@ -9,6 +9,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
 from neocore.BigInteger import BigInteger
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
 def ImportContractAddr(wallet, contract_hash, pubkey_script_hash):

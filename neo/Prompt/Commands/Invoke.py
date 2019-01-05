@@ -34,6 +34,7 @@ from neo.EventHub import events
 from prompt_toolkit import prompt
 from copy import deepcopy
 from neo.logging import log_manager
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 logger = log_manager.getLogger()
 

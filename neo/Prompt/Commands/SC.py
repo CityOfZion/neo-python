@@ -12,7 +12,7 @@ from neocore.Fixed8 import Fixed8
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from distutils import util
 from neo.Settings import settings
-
+from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
