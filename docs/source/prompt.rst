@@ -96,8 +96,8 @@ If your wallet is behaving unexepectedly or you have imported a new address into
     neo>
 
 
-Reencrypt your wallet
-^^^^^^^^^^^^^^^^^^^^^
+Re-encrypt your wallet
+^^^^^^^^^^^^^^^^^^^^^^
 If you get a message like this when opening your wallet, you must reencrypt in order to secure against previous wallet vulnerabilities.
 
 .. code-block:: sh
@@ -223,12 +223,12 @@ You may also specify a particular address to send assets from. This is especiall
 .. code-block:: sh
 
     # syntax send {asset_name} {address to} {amount} ( optional: --from-addr={from_addr})
-    neo> wallet sendfrom gas AeU8kTJxynwkT3q9ao8aDFuaRJBkU3AfFG 11 --from-addr=AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK
+    neo> wallet send gas AeU8kTJxynwkT3q9ao8aDFuaRJBkU3AfFG 11 --from-addr=AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK
     [Password]> ***********
     Relayed Tx: a43dfb30af63bd0e5a510b05f02b3d40932af26d4564e040e3812ce78e76ce71
     neo>
 
-Use ``wallet sendfrom help`` to view all required arguments and their descriptions.
+Use ``wallet send help`` to view all required arguments and their descriptions.
 
 
 -----------

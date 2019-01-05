@@ -165,9 +165,9 @@ View ContractParameterType list :ref:`ContractParameterTypes`
 The general syntax goes like this: ``sc build_run {path} {storage} {dynamic_invoke} {payable} {params} {return type} {inputs} (--no-parse-addr) (--from-addr) (--owners) (--tx-attr)``
 
 - ``{storage}`` is a boolean, either ``True`` or ``False`` used to indicate whether or not the SC uses the ``Storage.Get/Put/Delete`` interop API
-- ``{dynamic_invoke}`` is a boolean, indicating whether or not the SC will be calling another contract whose address it will not know until runtime.  This will most always be ``False``
-- ``{payable}`` is a boolean indicating whether the contract accepts NEO/GAS transfers to it (generally only  used for ICO's contracts)
-- ``{params}``  define the argument types of the smart contract entry point. Tis is a single or series of ``ContractParameterType``'s, eg ``0710`` for an SC accepting a string and a list
+- ``{dynamic_invoke}`` is a boolean, indicating whether or not the SC will be calling another contract whose address it will not know until runtime.  This will almost always be ``False``
+- ``{payable}`` is a boolean indicating whether the contract accepts NEO/GAS transfers to it (generally only  used for ICO contracts)
+- ``{params}``  define the argument types of the smart contract entry point. This is a single or series of ``ContractParameterType``'s, eg ``0710`` for an SC accepting a string and a list
 - ``{return_type}`` is a single ``ContractParameterType``, eg ``02`` for an SC returning an integer
 - ``inputs`` These are the actual parameters fed to the smart contract.
 
