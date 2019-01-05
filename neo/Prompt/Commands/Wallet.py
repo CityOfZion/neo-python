@@ -69,6 +69,10 @@ class CommandWallet(CommandBase):
             print(f"{item} is an invalid parameter")
             return
 
+    def _usage_str(self):
+        base = super()._usage_str()
+        return base + " (or \"wallet\" to show the wallet contents)"
+
 
 class CommandWalletCreate(CommandBase):
 
