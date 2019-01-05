@@ -43,6 +43,10 @@ class CommandWalletExportWIF(CommandBase):
         keys = wallet.GetKeys()
         for key in keys:
             if key.GetAddress() == address:
+                passwd = prompt("[wallet password]> ", is_password=True)
+                if not wallet.ValidatePassword(passwd):
+                    return print("Incorrect password")
+
                 print(f"WIF: {key.Export()}")
                 return True
         else:
@@ -82,6 +86,10 @@ class CommandWalletExportNEP2(CommandBase):
         keys = wallet.GetKeys()
         for key in keys:
             if key.GetAddress() == address:
+                passwd = prompt("[wallet password]> ", is_password=True)
+                if not wallet.ValidatePassword(passwd):
+                    return print("Incorrect password")
+
                 print(f"NEP2: {key.ExportNEP2(passphrase)}")
                 return True
         else:
