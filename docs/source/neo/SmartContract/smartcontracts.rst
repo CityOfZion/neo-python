@@ -521,9 +521,13 @@ Now you have deployed your contract to the network. If all goes well, it will so
       "code": {
           "hash": "0x86d58778c8d29e03182f38369f0d97782d303cc0",
           "script": "5ec56b6a00527ac46a51527ac46a52527ac46a00c3036164649c640d006a51c36a52c3936c7566616a00c3037375629c640d006a51c36a52c3946c7566616a00c3036d756c9c640d006a51c36a52c3956c7566616a00c3036469769c640d006a51c36a52c3966c7566614f6c7566006c7566",
-          "parameters": "070202",
-          "returntype": 2
-      },
+      }
+      "parameters": [
+          "String",
+          "Integer",
+          "Integer"
+      ],
+      "returntype": "Integer",
       "name": "A test calculator contract",
       "code_version": ".01",
       "author": "tom@cityofzion.io",
