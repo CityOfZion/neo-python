@@ -36,7 +36,7 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_config_output(self):
-        # importing because it setups `peewee` logging, which is checked at the test below
+        # importing because it sets up `peewee` logging, which is checked at the test below
         from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
         args = ['output']
