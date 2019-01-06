@@ -23,14 +23,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     _wallet1 = None
 
-    @property
-    def GAS(self):
-        return Blockchain.Default().SystemCoin().Hash
-
-    @property
-    def NEO(self):
-        return Blockchain.Default().SystemShare().Hash
-
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
@@ -303,8 +295,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
             args, txattrs = get_tx_attr_from_args(args)
 
             self.assertTrue('could not convert object' in context.exception)
-            self.assertEqual(len(args), 0)
-            self.assertEqual(len(txattrs), 0)
+        self.assertEqual(len(args), 0)
+        self.assertEqual(len(txattrs), 0)
 
     def test_utilst_bad_type(self):
 
@@ -313,8 +305,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with self.assertRaises(Exception) as context:
             args, txattr = get_tx_attr_from_args(args)
             self.assertTrue('could not convert object' in context.exception)
-            self.assertEqual(len(args), 0)
-            self.assertEqual(len(txattr), 0)
+        self.assertEqual(len(args), 0)
+        self.assertEqual(len(txattr), 0)
 
     def test_fails_to_sign_tx(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
