@@ -1,7 +1,7 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
-from neo.Prompt.Commands.Wallet import AddAlias
+from neo.Prompt.Commands.WalletAddress import AddAlias
 from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
@@ -193,7 +193,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx = ContractTransaction()
         tx.outputs = [TransactionOutput(Blockchain.SystemShare().Hash, Fixed8.FromDecimal(10.0), self.import_watch_addr)]
 
-        tx = wallet.MakeTransaction(tx)
+        try:
+            tx = wallet.MakeTransaction(tx)
+        except ValueError:
+            pass
 
         cpc = ContractParametersContext(tx)
         wallet.Sign(cpc)

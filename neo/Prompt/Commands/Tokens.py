@@ -13,10 +13,9 @@ from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Toke
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
 from neocore.Utils import isValidPublicAddress
-from distutils.util import strtobool
 import peewee
 import traceback
-
+from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -41,7 +40,7 @@ class CommandWalletToken(CommandBase):
         item = PromptUtils.get_arg(arguments)
 
         if not item:
-            print(f"Please specify an action. See help for available actions")
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return False
 
         try:
@@ -88,7 +87,7 @@ class CommandTokenDelete(CommandBase):
         return success
 
     def command_desc(self):
-        p1 = ParameterDesc('contract', 'token contract hash (script_hash)')
+        p1 = ParameterDesc('contract', 'token contract hash (script hash)')
         return CommandDesc('delete', 'remove a token from the wallet', [p1])
 
 
@@ -130,7 +129,7 @@ class CommandTokenSend(CommandBase):
         return success
 
     def command_desc(self):
-        p1 = ParameterDesc('token', 'token symbol name or script_hash')
+        p1 = ParameterDesc('token', 'token symbol or script hash')
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
@@ -154,13 +153,8 @@ class CommandTokenSendFrom(CommandBase):
     def execute(self, arguments):
         wallet = PromptData.Wallet
 
-        if len(arguments) < 4:
+        if len(arguments) != 4:
             print("Please specify the required parameters")
-            return False
-
-        if len(arguments) > 5:
-            # the 5th argument is prompting for a password before sending,
-            print("Too many parameters supplied. Please check your command")
             return False
 
         token_str = arguments[0]
@@ -172,14 +166,6 @@ class CommandTokenSendFrom(CommandBase):
         except ValueError:
             print(f"{arguments[3]} is not a valid amount")
             return False
-
-        prompt_passwd = True
-        if len(arguments) == 5:
-            try:
-                prompt_passwd = bool(strtobool(arguments[4]))
-            except ValueError:
-                print("Invalid value for showing prompt parameter. Must be True or False if supplied")
-                return False
 
         try:
             token, tx, fee, results = test_token_send_from(wallet, token_str, from_addr, to_addr, amount)
@@ -202,12 +188,10 @@ class CommandTokenSendFrom(CommandBase):
                 print("Transfer fee: %s " % (fee.value / Fixed8.D))
                 print("-------------------------------------------------------------\n")
 
-                if prompt_passwd:
-                    passwd = prompt("[Password]> ", is_password=True)
-
-                    if not wallet.ValidatePassword(passwd):
-                        print("incorrect password")
-                        return False
+                passwd = prompt("[Password]> ", is_password=True)
+                if not wallet.ValidatePassword(passwd):
+                    print("incorrect password")
+                    return False
 
                 return InvokeContract(wallet, tx, fee)
 
@@ -218,13 +202,12 @@ class CommandTokenSendFrom(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('token', 'token symbol name or script_hash')
+        p1 = ParameterDesc('token', 'token symbol or script hash')
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
-        p5 = ParameterDesc('ask_for_passw', 'prompt for a password before sending to the actual network. Default is True', optional=True)
 
-        return CommandDesc('sendfrom', 'send a token on behalf of another account (requires approval)', [p1, p2, p3, p4, p5])
+        return CommandDesc('sendfrom', 'send a token on behalf of another account (requires approval)', [p1, p2, p3, p4])
 
 
 class CommandTokenHistory(CommandBase):
@@ -263,7 +246,7 @@ class CommandTokenHistory(CommandBase):
         return True
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
+        p1 = ParameterDesc('symbol', 'token symbol or script hash')
         return CommandDesc('history', 'show transaction history', [p1])
 
 
@@ -275,7 +258,7 @@ class CommandTokenApprove(CommandBase):
     def execute(self, arguments):
         wallet = PromptData.Wallet
 
-        if not len(arguments) in [4, 5]:
+        if len(arguments) != 4:
             print("Please specify the required parameters")
             return False
 
@@ -283,14 +266,6 @@ class CommandTokenApprove(CommandBase):
         from_addr = arguments[1]
         to_addr = arguments[2]
         amount = arguments[3]
-
-        prompt_passwd = True
-        if len(arguments) == 5:
-            try:
-                prompt_passwd = bool(strtobool(arguments[4]))
-            except ValueError:
-                print("Invalid value for showing prompt parameter. Must be True or False if supplied")
-                return False
 
         try:
             token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount)
@@ -309,12 +284,11 @@ class CommandTokenApprove(CommandBase):
                 print(f"Transfer fee: {fee.value / Fixed8.D}")
                 print("-------------------------------------------------------------\n")
 
-                if prompt_passwd:
-                    passwd = prompt("[Password]> ", is_password=True)
+                passwd = prompt("[Password]> ", is_password=True)
 
-                    if not wallet.ValidatePassword(passwd):
-                        print("incorrect password")
-                        return False
+                if not wallet.ValidatePassword(passwd):
+                    print("incorrect password")
+                    return False
 
                 return InvokeContract(wallet, tx, fee)
 
@@ -322,13 +296,12 @@ class CommandTokenApprove(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
+        p1 = ParameterDesc('symbol', 'token symbol or script hash')
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
-        p5 = ParameterDesc('ask_for_passw', 'prompt for a password before sending to the actual network. Default is True', optional=True)
 
-        return CommandDesc('approve', 'approve an allowance', [p1, p2, p3, p4, p5])
+        return CommandDesc('approve', 'approve an allowance', [p1, p2, p3, p4])
 
     def handle_help(self, arguments):
         super().handle_help(arguments)
@@ -367,7 +340,7 @@ class CommandTokenAllowance(CommandBase):
             return False
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
+        p1 = ParameterDesc('symbol', 'token symbol or script hash')
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
 
@@ -404,7 +377,6 @@ class CommandTokenMint(CommandBase):
 
         remaining_args = arguments[2:]
         asset_attachments = []
-        prompt_passwd = True
         for optional in remaining_args:
             _, neo_to_attach, gas_to_attach = PromptUtils.get_asset_attachments([optional])
 
@@ -422,12 +394,6 @@ class CommandTokenMint(CommandBase):
                 else:
                     asset_attachments.append(optional)
 
-            # finally assume optional is "prompt pw"
-            try:
-                prompt_passwd = bool(strtobool(optional))
-            except ValueError:
-                pass
-
         tx, fee, results = token.Mint(wallet, to_addr, asset_attachments)
 
         if tx and results:
@@ -437,12 +403,11 @@ class CommandTokenMint(CommandBase):
                 print(f"Fee: {fee.value / Fixed8.D}")
                 print("-------------------------------------------------------------\n")
 
-                if prompt_passwd:
-                    passwd = prompt("[Password]> ", is_password=True)
+                passwd = prompt("[Password]> ", is_password=True)
 
-                    if not wallet.ValidatePassword(passwd):
-                        print("incorrect password")
-                        return False
+                if not wallet.ValidatePassword(passwd):
+                    print("incorrect password")
+                    return False
 
                 return InvokeWithTokenVerificationScript(wallet, tx, token, fee)
 
@@ -450,12 +415,11 @@ class CommandTokenMint(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
+        p1 = ParameterDesc('symbol', 'token symbol or script hash')
         p2 = ParameterDesc('to_addr', 'address to mint tokens to')
         p3 = ParameterDesc('--attach-neo', 'amount of neo to attach to the transaction', optional=True)
         p4 = ParameterDesc('--attach-gas', 'amount of gas to attach to the transaction', optional=True)
-        p5 = ParameterDesc('ask_for_passw', 'prompt for a password before sending to the actual network. Default is True', optional=True)
-        return CommandDesc('mint', 'mint tokens from a contract', [p1, p2, p3, p4, p5])
+        return CommandDesc('mint', 'mint tokens from a contract', [p1, p2, p3, p4])
 
 
 class CommandTokenRegister(CommandBase):
@@ -500,9 +464,9 @@ class CommandTokenRegister(CommandBase):
         return False
 
     def command_desc(self):
-        p1 = ParameterDesc('symbol', 'token symbol')
-        p2 = ParameterDesc('addresses', 'space seperated list of addresses')
-        return CommandDesc('register', 'register for a crowdsale', [p1, p2])
+        p1 = ParameterDesc('symbol', 'token symbol  or script hash')
+        p2 = ParameterDesc('addresses', 'space separated list of NEO addresses')
+        return CommandDesc('register', 'register for a crowd sale', [p1, p2])
 
 
 def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
@@ -522,16 +486,10 @@ def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
     Returns:
         token (NEP5Token): instance
     """
-    token = None
-    for t in wallet.GetTokens().values():
-        if token_str == t.symbol:
-            token = t
-            break
-        elif token_str == t.ScriptHash.ToString():
-            token = t
-
-    if not isinstance(token, NEP5Token):
-        raise ValueError("The given token argument does not represent a known NEP5 token")
+    try:
+        token = PromptUtils.get_token(wallet, token_str)
+    except ValueError:
+        raise
 
     if not isValidPublicAddress(from_addr):
         raise ValueError("send_from is not a valid address")

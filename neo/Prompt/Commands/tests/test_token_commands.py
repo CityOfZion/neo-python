@@ -4,7 +4,8 @@ from neo.Wallets.utils import to_aes_key
 from neo.Prompt.Utils import get_asset_id, get_tx_attr_from_args
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neo.Prompt.Commands.Wallet import ImportToken, CommandWallet
+from neo.Prompt.Commands.Wallet import CommandWallet
+from neo.Prompt.Commands.WalletImport import ImportToken
 from neo.Prompt.Commands.Tokens import token_get_allowance, token_send, token_history, token_mint, amount_from_string
 import shutil
 from neocore.IO.BinaryWriter import BinaryWriter
@@ -14,6 +15,7 @@ from neo.Prompt.PromptData import PromptData
 from contextlib import contextmanager
 from io import StringIO
 from neo.VM.InteropService import StackItem
+from neo.Prompt.PromptPrinter import pp
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -32,6 +34,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
     _wallet3 = None
 
     token_hash_str = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     @property
     def GAS(self):
@@ -346,13 +359,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 args = ['token']
                 res = CommandWallet().execute(args)
                 self.assertFalse(res)
-                self.assertIn("Please specify an action", mock_print.getvalue())
+                self.assertIn("run `token help` to see supported queries", mock_print.getvalue())
 
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 args = ['token', None]
                 res = CommandWallet().execute(args)
                 self.assertFalse(res)
-                self.assertIn("Please specify an action", mock_print.getvalue())
+                self.assertIn("run `token help` to see supported queries", mock_print.getvalue())
 
             # test token with invalid subcommands
             with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -556,18 +569,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
             addr_from = PromptData.Wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
-            # test for invalid prompt argument. Must true/false
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                res = CommandWallet().execute(['token', 'approve', token.symbol, addr_from, addr_to, 10000000, 'invalid_prompt_bool'])
-                self.assertFalse(res)
-                self.assertIn("Invalid value for showing prompt parameter", mock_print.getvalue())
-
             # test approving with invalid password
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Tokens.token_get_allowance', return_value=12300000000):
                     with patch('neo.Wallets.NEP5Token.NEP5Token.TransferFrom', return_value=(self.Approve_Allowance())):
                         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=['blah']):
-                            args = ['token', 'approve', 'NXT4', addr_from, addr_to, '123', 'True']
+                            args = ['token', 'approve', 'NXT4', addr_from, addr_to, '123']
                             res = CommandWallet().execute(args)
                             self.assertFalse(res)
                             self.assertIn("incorrect password", mock_print.getvalue())
@@ -575,15 +582,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
             # test failed to approve
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Wallets.NEP5Token.NEP5Token.Approve', return_value=(None, None, None)):
-                    args = ['token', 'approve', 'NXT4', addr_from, addr_to, '123', 'True']
+                    args = ['token', 'approve', 'NXT4', addr_from, addr_to, '123']
                     res = CommandWallet().execute(args)
                     self.assertFalse(res)
                     self.assertIn("Failed to approve tokens", mock_print.getvalue())
 
             # test successful approval
-            args = ['token', 'approve', 'NXT4', addr_from, addr_to, '123', 'False']
-            res = CommandWallet().execute(args)
-            self.assertTrue(res)
+            with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
+                args = ['token', 'approve', 'NXT4', addr_from, addr_to, '123']
+                res = CommandWallet().execute(args)
+                self.assertTrue(res)
 
     def test_wallet_token_allowance(self):
         with self.OpenWallet1():
@@ -691,7 +699,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
             with patch('neo.Wallets.NEP5Token.NEP5Token.Mint') as mocked_mint:
                 with patch('sys.stdout', new=StringIO()) as mock_print:
                     mocked_mint.return_value = (object(), 0, [])  # tx, fee, results
-                    args = ['token', 'mint', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y', 'False']
+                    args = ['token', 'mint', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y']
                     res = CommandWallet().execute(args)
                     self.assertFalse(res)
                     self.assertIn("Failed to mint tokens", mock_print.getvalue())
@@ -700,16 +708,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
             # test working minting no password
             with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=['blah']):
                 with patch('sys.stdout', new=StringIO()) as mock_print:
-                    args = ['token', 'mint', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y', 'True']
+                    args = ['token', 'mint', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y']
                     res = CommandWallet().execute(args)
                     self.assertIn("incorrect password", mock_print.getvalue())
 
-            # test working minting no password
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                args = ['token', 'mint', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y', 'False']
-                res = CommandWallet().execute(args)
-                self.assertTrue(res)
-                self.assertIn("[NXT4] Will mint tokens to address", mock_print.getvalue())
+            # test working minting
+            with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    args = ['token', 'mint', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y']
+                    res = CommandWallet().execute(args)
+                    self.assertTrue(res)
+                    self.assertIn("[NXT4] Will mint tokens to address", mock_print.getvalue())
 
     def test_token_register(self):
         with self.OpenWallet1():
@@ -783,6 +792,17 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
+
     @contextmanager
     def OpenWallet1(self):
         PromptData.Wallet = UserWalletTestCase.GetWallet1(recreate=True)
@@ -812,13 +832,6 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
                 res = CommandWallet().execute(args)
                 self.assertFalse(res)
                 self.assertIn("specify the required parameter", mock_print.getvalue())
-
-            # test with too many parameters (max is 4 mandatory + 1 optional)
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                args = ['token', 'sendfrom', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6']
-                res = CommandWallet().execute(args)
-                self.assertFalse(res)
-                self.assertIn("Too many parameters supplied", mock_print.getvalue())
 
             # test with invalid token argument
             with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -853,18 +866,12 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
             addr_from = PromptData.Wallet.GetDefaultContract().Address
             addr_to = self.watch_addr_str
 
-            # test for invalid prompt argument. Must true/false
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                res = CommandWallet().execute(['token', 'sendfrom', token.symbol, addr_from, addr_to, 10000000, 'invalid_prompt_bool'])
-                self.assertFalse(res)
-                self.assertIn("Invalid value for showing prompt parameter", mock_print.getvalue())
-
             # test sending with invalid password
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Tokens.token_get_allowance', return_value=12300000000):
                     with patch('neo.Wallets.NEP5Token.NEP5Token.TransferFrom', return_value=(self.Approve_Allowance(PromptData.Wallet, token))):
                         with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=['blah']):
-                            args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123', 'True']
+                            args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123']
                             res = CommandWallet().execute(args)
                             self.assertFalse(res)
                             self.assertIn("incorrect password", mock_print.getvalue())
@@ -876,7 +883,7 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
                     error_level = 30
                     with self.assertLogHandler('generic', error_level) as logs:
                         # the args don't really matter, except for the first 2
-                        args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123', 'True']
+                        args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123']
                         res = CommandWallet().execute(args)
                         self.assertFalse(res)
                         self.assertIn("Something really unexpected happened", mock_print.getvalue())
@@ -886,7 +893,7 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Tokens.test_token_send_from', side_effect=[(None, None, None, None)]):
                     # the args don't really matter, except for the first 2
-                    args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123', 'True']
+                    args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123']
                     res = CommandWallet().execute(args)
                     self.assertFalse(res)
                     self.assertIn("no Transaction object or VM output", mock_print.getvalue())
@@ -898,7 +905,7 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
                 fake_fee = 111
                 with patch('neo.Prompt.Commands.Tokens.test_token_send_from', side_effect=[(None, fake_tx, fake_fee, bad_vm_result)]):
                     # the args don't really matter, except for the first 2
-                    args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123', 'True']
+                    args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123']
                     res = CommandWallet().execute(args)
                     self.assertFalse(res)
                     self.assertIn("Virtual machine returned: 0", mock_print.getvalue())
@@ -911,9 +918,10 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
 
             with patch('neo.Prompt.Commands.Tokens.token_get_allowance', return_value=12300000000):
                 with patch('neo.Wallets.NEP5Token.NEP5Token.TransferFrom', return_value=self.Approve_Allowance(PromptData.Wallet, token)):
-                    args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123', 'False']
-                    res = CommandWallet().execute(args)
-                    self.assertTrue(res)
+                    with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
+                        args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123']
+                        res = CommandWallet().execute(args)
+                        self.assertTrue(res)
 
     def Approve_Allowance(self, wallet, token):
         approve_from = self.wallet_1_addr

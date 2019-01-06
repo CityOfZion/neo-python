@@ -14,6 +14,7 @@ import traceback
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from logzero import logger
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
 class CommandWalletSend(CommandBase):
@@ -29,17 +30,18 @@ class CommandWalletSend(CommandBase):
         return framework
 
     def command_desc(self):
-        p1 = ParameterDesc('assetId or name', 'the asset (NEO/GAS) to send')
-        p2 = ParameterDesc('address', 'the destination address')
-        p3 = ParameterDesc('amount', 'the amount of the asset to send')
+        p1 = ParameterDesc('asset', 'assetId or name (NEO/GAS) to send')
+        p2 = ParameterDesc('address', 'destination address')
+        p3 = ParameterDesc('amount', 'amount of the asset to send')
         p4 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
-        p5 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
-        p6 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
-        p7 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
-        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
-        f"{' ':>17} Example:\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
+        p5 = ParameterDesc('--fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p6 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
+        p7 = ParameterDesc('--tx-attr',
+                           f"list of transaction attributes to attach to the transaction\n\n"
+                           f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+                           f"{' ':>17} Example:\n"
+                           f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+                           f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6, p7]
         return CommandDesc('send', 'send an asset (NEO/GAS)', params=params)
 
@@ -57,16 +59,17 @@ class CommandWalletSendMany(CommandBase):
         return framework
 
     def command_desc(self):
-        p1 = ParameterDesc('tx_count', 'the number of transactions to send')
-        p2 = ParameterDesc('--change-addr', 'an address to send remaining funds to', optional=True)
+        p1 = ParameterDesc('tx_count', 'number of transactions to send')
+        p2 = ParameterDesc('--change-addr', 'address to send remaining funds to', optional=True)
         p3 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
-        p4 = ParameterDesc('--fee', 'a fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
-        p5 = ParameterDesc('--owners', 'a list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
-        p6 = ParameterDesc('--tx-attr', f'a list of transaction attributes to attach to the transaction\n\n'
-        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
-        f"{' ':>17} Example:\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
-        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
+        p4 = ParameterDesc('--fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p5 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
+        p6 = ParameterDesc('--tx-attr',
+                           f"a list of transaction attributes to attach to the transaction\n\n"
+                           f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+                           f"{' ':>17} Example:\n"
+                           f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+                           f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
         params = [p1, p2, p3, p4, p5, p6]
         return CommandDesc('sendmany', 'send multiple NEO/GAS transactions', params=params)
 
@@ -78,6 +81,10 @@ class CommandWalletSign(CommandBase):
 
     def execute(self, arguments):
         jsn = get_arg(arguments)
+        if not jsn:
+            print("Please specify the required parameter")
+            return False
+
         return parse_and_sign(PromptData.Wallet, jsn)
 
     def command_desc(self):
@@ -88,7 +95,7 @@ class CommandWalletSign(CommandBase):
 
 def construct_send_basic(wallet, arguments):
     if len(arguments) < 3:
-        print("Not enough arguments")
+        print("Please specify the required parameters")
         return None
 
     arguments, from_address = get_from_addr(arguments)
@@ -222,11 +229,17 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
                                     change_address=scripthash_change,
                                     fee=fee,
                                     from_addr=scripthash_from)
+    except ValueError:
+        print("Insufficient funds. No unspent outputs available for building the transaction.\n"
+              "If you are trying to sent multiple transactions in 1 block, then make sure you have enough 'vouts'\n."
+              "Use `wallet unspent` and `wallet address split`, or wait until the first transaction is processed before sending another.")
+        return None
 
-        if tx is None:
-            logger.debug("insufficient funds")
-            return None
+    if tx is None:
+        logger.debug("insufficient funds")
+        return None
 
+    try:
         # password prompt
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):

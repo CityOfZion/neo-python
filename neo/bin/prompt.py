@@ -8,7 +8,6 @@ from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
 from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.styles import Style
 from twisted.internet import reactor, task
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
@@ -19,11 +18,13 @@ from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Search import CommandSearch
 from neo.Prompt.Commands.Config import CommandConfig
+from neo.Prompt.Commands.SC import CommandSC
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.InputParser import InputParser
 from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neo.logging import log_manager
+from neo.Prompt.PromptPrinter import prompt_print, token_style
 
 logger = log_manager.getLogger()
 
@@ -73,14 +74,13 @@ class PromptInterface:
     _known_things = []
 
     _commands = [
-        CommandWallet(), CommandShow(), CommandSearch(), CommandConfig()
+        CommandWallet(), CommandShow(), CommandSearch(), CommandConfig(), CommandSC()
     ]
 
     _command_descs = [desc for c in _commands for desc in c.command_descs_with_sub_commands()]
 
     commands = {command.command_desc().command: command for command in _commands}
 
-    token_style = None
     start_height = None
     start_dt = None
 
@@ -92,13 +92,6 @@ class PromptInterface:
         self.input_parser = InputParser()
         self.start_height = Blockchain.Default().Height
         self.start_dt = datetime.datetime.utcnow()
-
-        self.token_style = Style.from_dict({
-            "command": preferences.token_style['Command'],
-            "neo": preferences.token_style['Neo'],
-            "default": preferences.token_style['Default'],
-            "number": preferences.token_style['Number'],
-        })
 
     def get_bottom_toolbar(self, cli=None):
         out = []
@@ -139,11 +132,11 @@ class PromptInterface:
         reactor.stop()
 
     def help(self):
-        print(f"\nCommands:")
+        prompt_print(f"\nCommands:")
         for command_group in sorted(self.commands.keys()):
             command = self.commands[command_group]
-            print(f"   {command_group:<15} - {command.command_desc().short_help}")
-        print(f"\nRun 'COMMAND help' for more information on a command.")
+            prompt_print(f"   {command_group:<15} - {command.command_desc().short_help}")
+        prompt_print(f"\nRun 'COMMAND help' for more information on a command.")
 
     def start_wallet_loop(self):
         if self.wallet_loop_deferred:
@@ -169,7 +162,7 @@ class PromptInterface:
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
 
-        print_formatted_text(FormattedText(tokens), style=self.token_style)
+        print_formatted_text(FormattedText(tokens), style=token_style)
 
         print('\n')
 
@@ -179,7 +172,7 @@ class PromptInterface:
                                     completer=self.get_completer(),
                                     history=self.history,
                                     bottom_toolbar=self.get_bottom_toolbar,
-                                    style=self.token_style,
+                                    style=token_style,
                                     refresh_interval=3,
                                     )
 

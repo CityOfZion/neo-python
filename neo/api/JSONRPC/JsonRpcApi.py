@@ -545,11 +545,17 @@ class JsonRpcApi:
         standard_contract = self.wallet.GetStandardAddress()
         signer_contract = self.wallet.GetContract(standard_contract)
 
-        tx = self.wallet.MakeTransaction(tx=contract_tx,
-                                         change_address=change_addr,
-                                         fee=fee,
-                                         from_addr=address_from)
+        try:
+            tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                             change_address=change_addr,
+                                             fee=fee,
+                                             from_addr=address_from)
+        except ValueError:
+            # if not enough unspents while fully synced
+            raise JsonRpcError(-300, "Insufficient funds")
+
         if tx is None:
+            # if not enough unspents while not being fully synced
             raise JsonRpcError(-300, "Insufficient funds")
         data = standard_contract.Data
         tx.Attributes = [

@@ -11,6 +11,7 @@ from decimal import Decimal
 from prompt_toolkit.shortcuts import PromptSession
 from neo.logging import log_manager
 from neo.Wallets import NEP5Token
+from neocore.Cryptography.Crypto import Crypto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -301,8 +302,13 @@ def gather_param(index, param_type, do_continue=True):
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
 
     try:
-
         result = get_input_prompt(prompt_message)
+    except Exception as e:
+        print(str(e))
+        # no results, abort True
+        return None, True
+
+    try:
 
         if ptype == ContractParameterType.String:
             return str(result), False
@@ -366,3 +372,15 @@ def get_token(wallet: 'Wallet', token_str: str) -> 'NEP5Token.NEP5Token':
     if not isinstance(token, NEP5Token.NEP5Token):
         raise ValueError("The given token argument does not represent a known NEP5 token")
     return token
+
+
+def is_valid_public_key(key):
+    if len(key) != 66:
+        return False
+    try:
+        Crypto.ToScriptHash(key, unhex=True)
+    except Exception:
+        # the UINT160 inside ToScriptHash can throw Exception
+        return False
+    else:
+        return True

@@ -34,6 +34,7 @@ from neo.EventHub import events
 from prompt_toolkit import prompt
 from copy import deepcopy
 from neo.logging import log_manager
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 logger = log_manager.getLogger()
 
@@ -48,7 +49,11 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
     if from_addr is not None:
         from_addr = PromptUtils.lookup_addr_str(wallet, from_addr)
 
-    wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True, from_addr=from_addr)
+    try:
+        wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True, from_addr=from_addr)
+    except ValueError:
+        print("Insufficient funds")
+        return False
 
     if wallet_tx:
 
@@ -92,7 +97,11 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
 
 def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invoke_attrs=None):
-    wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
+    try:
+        wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
+    except ValueError:
+        print("Insufficient funds")
+        return False
 
     if wallet_tx:
 
@@ -299,7 +308,10 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
     if withdrawal_tx is not None:
         wallet_tx = tx
     else:
-        wallet_tx = wallet.MakeTransaction(tx=tx, from_addr=from_addr)
+        try:
+            wallet_tx = wallet.MakeTransaction(tx=tx, from_addr=from_addr)
+        except ValueError:
+            pass
 
     context = ContractParametersContext(wallet_tx)
     wallet.Sign(context)
@@ -407,7 +419,11 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
     if from_addr is not None:
         from_addr = PromptUtils.lookup_addr_str(wallet, from_addr)
 
-    dtx = wallet.MakeTransaction(tx=dtx, from_addr=from_addr)
+    try:
+        dtx = wallet.MakeTransaction(tx=dtx, from_addr=from_addr)
+    except ValueError:
+        pass
+
     context = ContractParametersContext(dtx)
     wallet.Sign(context)
     dtx.scripts = context.GetScripts()
@@ -526,7 +542,10 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                                                        data=contract.ScriptHash))
             itx.Attributes = make_unique_script_attr(itx.Attributes)
 
-        itx = wallet.MakeTransaction(tx=itx, from_addr=from_addr)
+        try:
+            itx = wallet.MakeTransaction(tx=itx, from_addr=from_addr)
+        except ValueError:
+            pass
 
         context = ContractParametersContext(itx)
         wallet.Sign(context)

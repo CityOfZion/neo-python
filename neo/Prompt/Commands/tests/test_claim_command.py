@@ -6,6 +6,7 @@ from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
 from neocore.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
+from neo.Prompt.PromptPrinter import pp
 import shutil
 
 
@@ -27,6 +28,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
     _wallet2 = None
 
     _wallet3 = None
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     @property
     def GAS(self):

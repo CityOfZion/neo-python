@@ -6,9 +6,20 @@ from copy import deepcopy
 from neo.Network.NodeLeader import NodeLeader
 from mock import patch
 from io import StringIO
+from neo.Prompt.PromptPrinter import pp
 
 
 class CommandConfigTestCase(BlockchainFixtureTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     @classmethod
     def leveldb_testpath(self):
@@ -25,6 +36,9 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_config_output(self):
+        # importing because it sets up `peewee` logging, which is checked at the test below
+        from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+
         args = ['output']
         with patch('neo.Prompt.Commands.Config.prompt', side_effect=[1, 1, 1, "\n", "\n"]):  # tests changing the level and keeping the current level
             res = CommandConfig().execute(args)
@@ -45,11 +59,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         args = ['sc-events', 'on']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertTrue(settings.log_smart_contract_events)
 
         # test turning them off
         args = ['sc-events', '0']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertFalse(settings.log_smart_contract_events)
 
         # test bad input
         args = ['sc-events', 'blah']
@@ -66,11 +82,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         args = ['sc-debug-notify', 'on']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertTrue(settings.emit_notify_events_on_sc_execution_error)
 
         # test turning them off
         args = ['sc-debug-notify', '0']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertFalse(settings.emit_notify_events_on_sc_execution_error)
 
         # test bad input
         args = ['sc-debug-notify', 'blah']
@@ -87,11 +105,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         args = ['vm-log', 'on']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertTrue(settings.log_vm_instructions)
 
         # test turning them off
         args = ['vm-log', '0']
         res = CommandConfig().execute(args)
         self.assertTrue(res)
+        self.assertFalse(settings.log_vm_instructions)
 
         # test bad input
         args = ['vm-log', 'blah']

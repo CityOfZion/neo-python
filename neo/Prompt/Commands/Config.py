@@ -4,6 +4,7 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
+from neo.Prompt.PromptPrinter import prompt_print as print
 from distutils import util
 import logging
 
@@ -27,7 +28,7 @@ class CommandConfig(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `%s help` to see supported queries" % self.command_desc().command)
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return
 
         try:
@@ -53,23 +54,23 @@ class CommandConfigSCEvents(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        c1 = get_arg(arguments)
-        if c1 is not None:
-            c1 = c1.lower()
-            if c1 == 'on' or c1 == '1':
-                settings.set_log_smart_contract_events(True)
-                print("Smart contract event logging is now enabled")
-                return c1
-            elif c1 == 'off' or c1 == '0':
-                settings.set_log_smart_contract_events(False)
-                print("Smart contract event logging is now disabled")
-                return c1
-            else:
-                print("Cannot configure log. Please specify on|off or 1|0")
-                return
+        if len(arguments) == 0:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            flag = bool(util.strtobool(arguments[0]))
+            settings.set_log_smart_contract_events(flag)
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        if flag:
+            print("Smart contract event logging is now enabled")
+            return True
         else:
-            print("Cannot configure log. Please specify on|off or 1|0")
-            return
+            print("Smart contract event logging is now disabled")
+            return True
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
@@ -81,27 +82,27 @@ class CommandConfigDebugNotify(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        c1 = get_arg(arguments)
-        if c1 is not None:
-            c1 = c1.lower()
-            if c1 == 'on' or c1 == '1':
-                settings.set_emit_notify_events_on_sc_execution_error(True)
-                print("Smart contract emit Notify events on execution failure is now enabled")
-                return c1
-            elif c1 == 'off' or c1 == '0':
-                settings.set_emit_notify_events_on_sc_execution_error(False)
-                print("Smart contract emit Notify events on execution failure is now disabled")
-                return c1
-            else:
-                print("Cannot configure log. Please specify on|off or 1|0")
-                return
+        if len(arguments) == 0:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            flag = bool(util.strtobool(arguments[0]))
+            settings.set_emit_notify_events_on_sc_execution_error(flag)
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        if flag:
+            print("Smart contract emit Notify events on execution failure is now enabled")
+            return True
         else:
-            print("Cannot configure log. Please specify on|off or 1|0")
-            return
+            print("Smart contract emit Notify events on execution failure is now disabled")
+            return True
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
-        return CommandDesc('sc-debug-notify', 'toggle printing Notify events on execution failure', [p1])
+        return CommandDesc('sc-debug-notify', 'toggle printing smart contract Notify events on execution failure', [p1])
 
 
 class CommandConfigVMLog(CommandBase):
@@ -109,23 +110,23 @@ class CommandConfigVMLog(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        c1 = get_arg(arguments)
-        if c1 is not None:
-            c1 = c1.lower()
-            if c1 == 'on' or c1 == '1':
-                settings.set_log_vm_instruction(True)
-                print("VM instruction execution logging is now enabled")
-                return c1
-            elif c1 == 'off' or c1 == '0':
-                settings.set_log_vm_instruction(False)
-                print("VM instruction execution logging is now disabled")
-                return c1
-            else:
-                print("Cannot configure VM instruction logging. Please specify on|off or 1|0")
-                return
+        if len(arguments) == 0:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            flag = bool(util.strtobool(arguments[0]))
+            settings.set_log_vm_instruction(flag)
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        if flag:
+            print("VM instruction execution logging is now enabled")
+            return True
         else:
-            print("Cannot configure VM instruction logging. Please specify on|off or 1|0")
-            return
+            print("VM instruction execution logging is now disabled")
+            return True
 
     def command_desc(self):
         p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
@@ -142,17 +143,17 @@ class CommandConfigNodeRequests(CommandBase):
                 try:
                     return NodeLeader.Instance().setBlockReqSizeAndMax(int(arguments[0]), int(arguments[1]))
                 except ValueError:
-                    print("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
+                    print("Invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
                     return False
             elif len(arguments) == 1:
                 return NodeLeader.Instance().setBlockReqSizeByName(arguments[0])
         else:
-            print("Invalid number of arguments")
+            print("Please specify the required parameter")
             return False
 
     def command_desc(self):
-        p1 = ParameterDesc('block-size', 'a preset of "slow"/"normal"/"fast", or a specific block request size (max. 500) e.g. 250 ')
-        p2 = ParameterDesc('queue-size', 'the maximum number of outstanding block requests')
+        p1 = ParameterDesc('block-size', 'preset of "slow"/"normal"/"fast", or a specific block request size (max. 500) e.g. 250 ')
+        p2 = ParameterDesc('queue-size', 'maximum number of outstanding block requests')
         return CommandDesc('node-requests', 'configure block request settings', [p1, p2])
 
     def handle_help(self, arguments):
