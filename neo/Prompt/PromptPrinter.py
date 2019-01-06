@@ -25,7 +25,7 @@ class PromptPrinter():
             if isinstance(a, FormattedText):
                 frags.append(a)
             else:
-                frags.append(FormattedText([("class:command", a)]))
+                frags.append(FormattedText([("class:command", str(a))]))
 
         print_formatted_text(*frags, **kwargs)
 
