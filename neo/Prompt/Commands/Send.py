@@ -96,7 +96,7 @@ class CommandWalletSign(CommandBase):
 def construct_send_basic(wallet, arguments):
     if len(arguments) < 3:
         print("Please specify the required parameters")
-        return None
+        return
 
     arguments, from_address = get_from_addr(arguments)
     arguments, priority_fee = get_fee(arguments)
@@ -109,19 +109,19 @@ def construct_send_basic(wallet, arguments):
     assetId = get_asset_id(wallet, to_send)
     if assetId is None:
         print("Asset id not found")
-        return None
+        return
 
     scripthash_to = lookup_addr_str(wallet, address_to)
     if scripthash_to is None:
         logger.debug("invalid destination address")
-        return None
+        return
 
     scripthash_from = None
     if from_address is not None:
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
             logger.debug("invalid source address")
-            return None
+            return
 
     # if this is a token, we will use a different
     # transfer mechanism
@@ -132,17 +132,18 @@ def construct_send_basic(wallet, arguments):
     f8amount = get_asset_amount(amount, assetId)
     if f8amount is False:
         logger.debug("invalid amount")
-        return None
+        return
     if float(amount) == 0:
-        print("amount cannot be 0")
-        return None
+        print("Amount cannot be 0")
+        return
 
     fee = Fixed8.Zero()
     if priority_fee is not None:
         fee = priority_fee
         if fee is False:
             logger.debug("invalid fee")
-            return None
+            return
+    print(f"Sending with fee: {fee.ToString()}")
 
     output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
     contract_tx = ContractTransaction(outputs=[output])
@@ -151,16 +152,16 @@ def construct_send_basic(wallet, arguments):
 
 def construct_send_many(wallet, arguments):
     if len(arguments) is 0:
-        print("Not enough arguments")
-        return None
+        print("Please specify the required parameter")
+        return
 
     outgoing = get_arg(arguments, convert_to_int=True)
     if outgoing is None:
-        print("invalid outgoing number")
-        return None
+        print("Invalid outgoing number")
+        return
     if outgoing < 1:
-        print("outgoing number must be >= 1")
-        return None
+        print("Outgoing number must be >= 1")
+        return
 
     arguments, from_address = get_from_addr(arguments)
     arguments, change_address = get_change_addr(arguments)
@@ -170,30 +171,34 @@ def construct_send_many(wallet, arguments):
 
     output = []
     for i in range(outgoing):
-        print('Outgoing Number ', i + 1)
-        to_send = prompt("Asset to send: ")
-        assetId = get_asset_id(wallet, to_send)
-        if assetId is None:
-            print("Asset id not found")
-            return None
-        if type(assetId) is NEP5Token:
-            print('Sendmany does not support NEP5 tokens')
-            return None
-        address_to = prompt("Address to: ")
-        scripthash_to = lookup_addr_str(wallet, address_to)
-        if scripthash_to is None:
-            logger.debug("invalid destination address")
-            return None
-        amount = prompt("Amount to send: ")
-        f8amount = get_asset_amount(amount, assetId)
-        if f8amount is False:
-            logger.debug("invalid amount")
-            return None
-        if float(amount) == 0:
-            print("amount cannot be 0")
-            return None
-        tx_output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
-        output.append(tx_output)
+        try:
+            print('Outgoing Number ', i + 1)
+            to_send = prompt("Asset to send: ")
+            assetId = get_asset_id(wallet, to_send)
+            if assetId is None:
+                print("Asset id not found")
+                return
+            if type(assetId) is NEP5Token:
+                print('sendmany does not support NEP5 tokens')
+                return
+            address_to = prompt("Address to: ")
+            scripthash_to = lookup_addr_str(wallet, address_to)
+            if scripthash_to is None:
+                logger.debug("invalid destination address")
+                return
+            amount = prompt("Amount to send: ")
+            f8amount = get_asset_amount(amount, assetId)
+            if f8amount is False:
+                logger.debug("invalid amount")
+                return
+            if float(amount) == 0:
+                print("Amount cannot be 0")
+                return
+            tx_output = TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=scripthash_to)
+            output.append(tx_output)
+        except KeyboardInterrupt:
+            print('Transaction cancelled')
+            return
     contract_tx = ContractTransaction(outputs=output)
 
     scripthash_from = None
@@ -202,7 +207,7 @@ def construct_send_many(wallet, arguments):
         scripthash_from = lookup_addr_str(wallet, from_address)
         if scripthash_from is None:
             logger.debug("invalid source address")
-            return None
+            return
 
     scripthash_change = None
 
@@ -210,16 +215,16 @@ def construct_send_many(wallet, arguments):
         scripthash_change = lookup_addr_str(wallet, change_address)
         if scripthash_change is None:
             logger.debug("invalid change address")
-            return None
+            return
 
     fee = Fixed8.Zero()
     if priority_fee is not None:
         fee = priority_fee
         if fee is False:
             logger.debug("invalid fee")
-            return None
+            return
 
-    print("sending with fee: %s " % fee.ToString())
+    print(f"Sending with fee: {fee.ToString()}")
     return [contract_tx, scripthash_from, scripthash_change, fee, owners, user_tx_attributes]
 
 
@@ -233,18 +238,18 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         print("Insufficient funds. No unspent outputs available for building the transaction.\n"
               "If you are trying to sent multiple transactions in 1 block, then make sure you have enough 'vouts'\n."
               "Use `wallet unspent` and `wallet address split`, or wait until the first transaction is processed before sending another.")
-        return None
+        return
 
     if tx is None:
         logger.debug("insufficient funds")
-        return None
+        return
 
     try:
         # password prompt
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):
-            print("incorrect password")
-            return None
+            print("Incorrect password")
+            return
 
         standard_contract = wallet.GetStandardAddress()
 
@@ -291,14 +296,14 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         else:
             print("Transaction initiated, but the signature is incomplete. Use the `sign` command with the information below to complete signing.")
             print(json.dumps(context.ToJson(), separators=(',', ':')))
-            return None
+            return
 
     except Exception as e:
-        print("could not send: %s " % e)
+        print("Could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
 
-    return None
+    return
 
 
 def parse_and_sign(wallet, jsn):
@@ -306,7 +311,7 @@ def parse_and_sign(wallet, jsn):
         context = ContractParametersContext.FromJson(jsn)
         if context is None:
             print("Failed to parse JSON")
-            return None
+            return
 
         wallet.Sign(context)
 
@@ -331,9 +336,9 @@ def parse_and_sign(wallet, jsn):
         else:
             print("Transaction initiated, but the signature is incomplete")
             print(json.dumps(context.ToJson(), separators=(',', ':')))
-            return None
+            return
 
     except Exception as e:
-        print("could not send: %s " % e)
+        print("Could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
