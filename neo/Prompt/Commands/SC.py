@@ -70,7 +70,7 @@ class CommandSCBuildRun(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        if len(arguments) < 7:
+        if len(arguments) < 6:
             print("Please specify the required parameters")
             return
 
@@ -91,7 +91,7 @@ class CommandSCBuildRun(CommandBase):
         p4 = ParameterDesc('payable', 'boolean input to determine if smart contract is payable')
         p5 = ParameterDesc('params', 'input parameter types of the smart contract')
         p6 = ParameterDesc('returntype', 'return type of the smart contract output')
-        p7 = ParameterDesc('inputs', 'test parameters fed to the smart contract, or use "--i" for prompted parameter input')
+        p7 = ParameterDesc('inputs', 'test parameters fed to the smart contract, or use "--i" for prompted parameter input', optional=True)
         p8 = ParameterDesc('--no-parse-addr', 'flag to turn off address parsing when input into the smart contract', optional=True)
         p9 = ParameterDesc('--from-addr', 'source address to take fee funds from (if not specified, take first address in wallet)', optional=True)
         p10 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
@@ -115,7 +115,7 @@ class CommandSCLoadRun(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        if len(arguments) < 7:
+        if len(arguments) < 6:
             print("Please specify the required parameters")
             return
 
@@ -136,7 +136,7 @@ class CommandSCLoadRun(CommandBase):
         p4 = ParameterDesc('payable', 'boolean input to determine if smart contract is payable')
         p5 = ParameterDesc('params', 'input parameter types of the smart contract')
         p6 = ParameterDesc('returntype', 'the return type of the smart contract output')
-        p7 = ParameterDesc('inputs', 'test parameters fed to the smart contract, or use "--i" for prompted parameter input')
+        p7 = ParameterDesc('inputs', 'test parameters fed to the smart contract, or use "--i" for prompted parameter input', optional=True)
         p8 = ParameterDesc('--no-parse-addr', 'flag to turn off address parsing when input into the smart contract', optional=True)
         p9 = ParameterDesc('--from-addr',
                            'source address to take fee funds from (if not specified, take first address in wallet)\n\n'
@@ -163,7 +163,7 @@ class CommandSCTestInvoke(CommandBase):
         arguments, invoke_attrs = PromptUtils.get_tx_attr_from_args(arguments)
         arguments, owners = PromptUtils.get_owners_from_params(arguments)
 
-        if len(arguments) < 2:
+        if len(arguments) < 1:
             print("Please specify the required parameters")
             return False
 
@@ -204,7 +204,7 @@ class CommandSCTestInvoke(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('contract', 'token contract hash (script hash)')
-        p2 = ParameterDesc('inputs', 'test parameters fed to the smart contract, or use "--i" for prompted parameter input')
+        p2 = ParameterDesc('inputs', 'test parameters fed to the smart contract, or use "--i" for prompted parameter input', optional=True)
         p3 = ParameterDesc('--attach-neo', 'amount of neo to attach to the transaction. Required if --attach-gas is not specified', optional=True)
         p4 = ParameterDesc('--attach-gas', 'amount of gas to attach to the transaction. Required if --attach-neo is not specified', optional=True)
         p5 = ParameterDesc('--no-parse-addr', 'flag to turn off address parsing when input into the smart contract', optional=True)

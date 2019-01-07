@@ -55,9 +55,12 @@ def LoadContract(path, needs_storage, needs_dynamic_invoke, is_payable, params_s
     if type(params) is str:
         params = params.encode('utf-8')
 
-    for p in binascii.unhexlify(params):
-        if p == ContractParameterType.Void.value:
-            raise ValueError("Void is not a valid input parameter type")
+    try:
+        for p in binascii.unhexlify(params):
+            if p == ContractParameterType.Void.value:
+                raise ValueError("Void is not a valid input parameter type")
+    except binascii.Error:
+        pass
 
     rtype = BigInteger(ContractParameterType.FromString(return_type).value)
 
@@ -107,9 +110,12 @@ def GatherLoadedContractParams(args, script):
     if type(params) is str:
         params = params.encode('utf-8')
 
-    for p in binascii.unhexlify(params):
-        if p == ContractParameterType.Void.value:
-            raise ValueError("Void is not a valid input parameter type")
+    try:
+        for p in binascii.unhexlify(params):
+            if p == ContractParameterType.Void.value:
+                raise ValueError("Void is not a valid input parameter type")
+    except binascii.Error:
+        pass
 
     return_type = BigInteger(ContractParameterType.FromString(args[4]).value)
 
