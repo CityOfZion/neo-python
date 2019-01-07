@@ -15,6 +15,7 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from logzero import logger
 from neo.Prompt.PromptPrinter import prompt_print as print
+from neo.Core.Blockchain import Blockchain
 
 
 class CommandWalletSend(CommandBase):
@@ -24,8 +25,14 @@ class CommandWalletSend(CommandBase):
 
     def execute(self, arguments):
         framework = construct_send_basic(PromptData.Wallet, arguments)
+
         if type(framework) is list:
-            return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1],
+            # if no `--from-addr` is specified, then make sure we take the first address that is shown when using `wallet`
+            funds_source_script_hash = framework[1]
+            if not funds_source_script_hash:
+                funds_source_script_hash = PromptData.Wallet.ToScriptHash(PromptData.Wallet.Addresses[0])
+
+            return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=funds_source_script_hash,
                                        fee=framework[2], owners=framework[3], user_tx_attributes=framework[4])
         return framework
 
@@ -53,8 +60,14 @@ class CommandWalletSendMany(CommandBase):
 
     def execute(self, arguments):
         framework = construct_send_many(PromptData.Wallet, arguments)
+
         if type(framework) is list:
-            return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=framework[1], scripthash_change=framework[2],
+            # if no `--from-addr` is specified, then make sure we take the first address that is shown when using `wallet`
+            funds_source_script_hash = framework[1]
+            if not funds_source_script_hash:
+                funds_source_script_hash = PromptData.Wallet.ToScriptHash(PromptData.Wallet.Addresses[0])
+
+            return process_transaction(PromptData.Wallet, contract_tx=framework[0], scripthash_from=funds_source_script_hash, scripthash_change=framework[2],
                                        fee=framework[3], owners=framework[4], user_tx_attributes=framework[5])
         return framework
 
@@ -240,6 +253,25 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         return None
 
     try:
+        print("Validate your transaction details")
+        print("-" * 33)
+        input_coinref = wallet.FindCoinsByVins(tx.inputs)[0]
+        source_addr = input_coinref.Address
+        for order in tx.outputs:
+            dest_addr = order.Address
+            value = order.Value.ToString()  # fixed8
+            if order.AssetId == Blockchain.Default().SystemShare().Hash:
+                asset_name = 'NEO'
+            else:
+                asset_name = 'GAS'
+
+            if source_addr != dest_addr:
+                print(f"Sending {value} {asset_name} from {source_addr} to {dest_addr}")
+            else:
+                print(f"Returning {value} {asset_name} as change to {dest_addr}")
+        print(" ")
+        print("Enter your password to send to the network")
+
         # password prompt
         passwd = prompt("[Password]> ", is_password=True)
         if not wallet.ValidatePassword(passwd):
