@@ -12,7 +12,7 @@
 
 
     By default getting a logger `log_manager.getLogger()` will give you a `logging.Logger` class of name `neo-python.generic`.
-    When specifying a component name i.e. `getLogger('db')` you'll get `neo-python.db`. This allows you to integrate neo-python and process
+    When specifying a component name e.g. `getLogger('db')` you'll get `neo-python.db`. This allows you to integrate neo-python and process
     its logs via the parent id `neo-python`.
 
 
@@ -111,7 +111,7 @@ class LogManager(object):
         Get the logger instance matching ``component_name`` or create a new one if non-existent.
 
         Args:
-            component_name: a neo-python component name. i.e. network, vm, db
+            component_name: a neo-python component name. e.g. network, vm, db
 
         Returns:
             a logger for the specified component.

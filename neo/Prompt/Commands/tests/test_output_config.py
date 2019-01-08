@@ -1,16 +1,27 @@
 from neo.logging import log_manager
-from neo.Prompt.Commands.config import start_output_config
+from neo.Prompt.Commands.Config import start_output_config
 from mock import patch
 from neo.Utils.NeoTestCase import NeoTestCase
+from neo.Prompt.PromptPrinter import pp
 import logging
 import io
 
 
 class TestOutputConfig(NeoTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily by patching sys.stdout
+        pp.printer = print
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
 
     @patch('sys.stdout', new_callable=io.StringIO)
-    @patch('neo.Prompt.Commands.config.log_manager.config_stdio')
-    @patch('neo.Prompt.Commands.config.prompt')
+    @patch('neo.Prompt.Commands.Config.log_manager.config_stdio')
+    @patch('neo.Prompt.Commands.Config.prompt')
     def test_setting_levels(self, mocked_prompt, mocked_config_stdio, mocked_stdout):
         # we mocked stdout such that we can mute the print statements. We don't need to see them in the tests
 

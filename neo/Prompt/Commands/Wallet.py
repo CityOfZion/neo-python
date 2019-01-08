@@ -1,27 +1,27 @@
 from neo.Core.Blockchain import Blockchain
-from neo.Wallets.NEP5Token import NEP5Token
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
-from neo.Core.TX.Transaction import ContractTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
-from neo.Prompt.Utils import get_asset_id, get_from_addr, get_arg
+from neo.Prompt import Utils as PromptUtils
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
-import binascii
 import json
 import os
-import math
-from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.Send import CommandWalletSend, CommandWalletSendMany, CommandWalletSign
 from neo.Prompt.Commands.Tokens import CommandWalletToken
+from neo.Prompt.Commands.WalletAddress import CommandWalletAddress
+from neo.Prompt.Commands.WalletImport import CommandWalletImport
+from neo.Prompt.Commands.WalletExport import CommandWalletExport
 from neo.logging import log_manager
+from neocore.Utils import isValidPublicAddress
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 logger = log_manager.getLogger()
 
@@ -34,22 +34,23 @@ class CommandWallet(CommandBase):
         self.register_sub_command(CommandWalletOpen())
         self.register_sub_command(CommandWalletClose())
         self.register_sub_command(CommandWalletVerbose(), ['v', '--v'])
-        self.register_sub_command(CommandWalletCreateAddress())
-        self.register_sub_command(CommandWalletDeleteAddress())
         self.register_sub_command(CommandWalletSend())
         self.register_sub_command(CommandWalletSendMany())
         self.register_sub_command(CommandWalletSign())
         self.register_sub_command(CommandWalletClaimGas())
         self.register_sub_command(CommandWalletRebuild())
-        self.register_sub_command(CommandWalletAlias())
+        self.register_sub_command(CommandWalletUnspent())
         self.register_sub_command(CommandWalletToken())
+        self.register_sub_command(CommandWalletExport())
+        self.register_sub_command(CommandWalletImport())
+        self.register_sub_command(CommandWalletAddress())
 
     def command_desc(self):
         return CommandDesc('wallet', 'manage wallets')
 
     def execute(self, arguments):
         wallet = PromptData.Wallet
-        item = get_arg(arguments)
+        item = PromptUtils.get_arg(arguments)
 
         # Create and Open must be handled specially.
         if item in {'create', 'open'}:
@@ -69,6 +70,10 @@ class CommandWallet(CommandBase):
             print(f"{item} is an invalid parameter")
             return
 
+    def _usage_str(self):
+        base = super()._usage_str()
+        return base + " (or \"wallet\" to show the wallet contents)"
+
 
 class CommandWalletCreate(CommandBase):
 
@@ -76,9 +81,7 @@ class CommandWalletCreate(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        if PromptData.Wallet:
-            PromptData.close_wallet()
-        path = get_arg(arguments, 0)
+        path = PromptUtils.get_arg(arguments, 0)
 
         if not path:
             print("Please specify a path")
@@ -87,6 +90,9 @@ class CommandWalletCreate(CommandBase):
         if os.path.exists(path):
             print("File already exists")
             return
+
+        if PromptData.Wallet:
+            PromptData.close_wallet()
 
         passwd1 = prompt("[password]> ", is_password=True)
         passwd2 = prompt("[password again]> ", is_password=True)
@@ -131,10 +137,10 @@ class CommandWalletOpen(CommandBase):
         if PromptData.Wallet:
             PromptData.close_wallet()
 
-        path = get_arg(arguments, 0)
+        path = PromptUtils.get_arg(arguments, 0)
 
         if not path:
-            print("Please specify a path")
+            print("Please specify the required parameter")
             return
 
         if not os.path.exists(path):
@@ -183,43 +189,6 @@ class CommandWalletVerbose(CommandBase):
         return CommandDesc('verbose', 'show additional wallet details')
 
 
-class CommandWalletCreateAddress(CommandBase):
-
-    def __init__(self):
-        super().__init__()
-
-    def execute(self, arguments):
-        addresses_to_create = get_arg(arguments, 0)
-
-        if not addresses_to_create:
-            print("Please specify a number of addresses to create.")
-            return
-
-        return CreateAddress(PromptData.Wallet, addresses_to_create)
-
-    def command_desc(self):
-        p1 = ParameterDesc('number of addresses', 'number of addresses to create')
-        return CommandDesc('create_addr', 'create a new wallet address', params=[p1])
-
-
-class CommandWalletDeleteAddress(CommandBase):
-    def __init__(self):
-        super().__init__()
-
-    def execute(self, arguments):
-        addr_to_delete = get_arg(arguments, 0)
-
-        if not addr_to_delete:
-            print("Please specify an address to delete.")
-            return False
-
-        return DeleteAddress(PromptData.Wallet, addr_to_delete)
-
-    def command_desc(self):
-        p1 = ParameterDesc('address', 'address to delete')
-        return CommandDesc('delete_addr', 'delete a wallet address', params=[p1])
-
-
 class CommandWalletClaimGas(CommandBase):
 
     def __init__(self):
@@ -230,7 +199,7 @@ class CommandWalletClaimGas(CommandBase):
 
         args = arguments
         if args:
-            args, from_addr_str = get_from_addr(args)
+            args, from_addr_str = PromptUtils.get_from_addr(args)
 
         return ClaimGas(PromptData.Wallet, True, from_addr_str)
 
@@ -247,7 +216,7 @@ class CommandWalletRebuild(CommandBase):
     def execute(self, arguments):
         PromptData.Prompt.stop_wallet_loop()
 
-        start_block = get_arg(arguments, 0, convert_to_int=True)
+        start_block = PromptUtils.get_arg(arguments, 0, convert_to_int=True)
         if not start_block or start_block < 0:
             start_block = 0
         print(f"Restarting at block {start_block}")
@@ -261,128 +230,46 @@ class CommandWalletRebuild(CommandBase):
         return CommandDesc('rebuild', 'rebuild the wallet index', params=[p1])
 
 
-class CommandWalletAlias(CommandBase):
+class CommandWalletUnspent(CommandBase):
 
     def __init__(self):
         super().__init__()
 
     def execute(self, arguments):
-        if len(arguments) < 2:
-            print("Please supply an address and an alias")
-            return False
+        asset_id = None
+        from_addr = None
+        watch_only = False
+        do_count = False
+        wallet = PromptData.Wallet
 
-        return AddAlias(PromptData.Wallet, arguments[0], arguments[1])
+        arguments, from_addr_str = PromptUtils.get_from_addr(arguments)
+        if from_addr_str:
+            if not isValidPublicAddress(from_addr_str):
+                print("Invalid address specified")
+                return
+
+            from_addr = wallet.ToScriptHash(from_addr_str)
+
+        for item in arguments:
+            if item == '--watch':
+                watch_only = True
+            elif item == '--count':
+                do_count = True
+            else:
+                asset_id = PromptUtils.get_asset_id(wallet, item)
+
+        return ShowUnspentCoins(wallet, asset_id, from_addr, watch_only, do_count)
 
     def command_desc(self):
-        p1 = ParameterDesc('address', 'address to create an alias for')
-        p2 = ParameterDesc('alias', 'alias to associate with the address')
-        return CommandDesc('alias', 'create an alias for an address', params=[p1, p2])
+        p1 = ParameterDesc('asset', 'type of asset to query (NEO/GAS)', optional=True)
+        p2 = ParameterDesc('--from-addr', 'address to check the unspent assets from (if not specified, checks for all addresses)', optional=True)
+        p3 = ParameterDesc('--watch', 'show assets that are in watch only addresses', optional=True)
+        p4 = ParameterDesc('--count', 'only count the unspent assets', optional=True)
+        return CommandDesc('unspent', 'show unspent assets', params=[p1, p2, p3, p4])
 
 
 #########################################################################
 #########################################################################
-
-
-def CreateAddress(wallet, args):
-    try:
-        int_args = int(args)
-    except (ValueError, TypeError) as error:  # for non integer args or Nonetype
-        print(error)
-        return None
-
-    if wallet is None:
-        print("Please open a wallet.")
-        return None
-
-    if int_args <= 0:
-        print('Enter a number greater than 0.')
-        return None
-
-    address_list = []
-    for _ in range(int_args):
-        keys = wallet.CreateKey()
-        account = Account.get(PublicKeyHash=keys.PublicKeyHash.ToBytes())
-        address_list.append(account.contract_set[0].Address.ToString())
-    print("Created %s new addresses: " % int_args, address_list)
-    return wallet
-
-
-def DeleteAddress(wallet, addr):
-    try:
-        scripthash = wallet.ToScriptHash(addr)
-        error_str = ""
-
-        success, _ = wallet.DeleteAddress(scripthash)
-    except ValueError as e:
-        success = False
-        error_str = f" with error: {e}"
-
-    if success:
-        print(f"Deleted address {addr}")
-    else:
-        print(f"Error deleting addr {addr}{error_str}")
-
-    return success
-
-
-def ImportWatchAddr(wallet, addr):
-    if wallet is None:
-        print("Please open a wallet")
-        return False
-
-    script_hash = None
-    try:
-        script_hash = wallet.ToScriptHash(addr)
-    except Exception as e:
-        pass
-
-    if not script_hash:
-        try:
-            data = bytearray(binascii.unhexlify(addr.encode('utf-8')))
-            data.reverse()
-            script_hash = UInt160(data=data)
-        except Exception as e:
-            pass
-
-    if script_hash:
-        wallet.AddWatchOnly(script_hash)
-        print("added watch address")
-    else:
-        print("incorrect format for watch address")
-
-
-def ImportToken(wallet, contract_hash):
-    if wallet is None:
-        print("please open a wallet")
-        return False
-
-    contract = Blockchain.Default().GetContract(contract_hash)
-
-    if contract:
-        hex_script = binascii.hexlify(contract.Code.Script)
-        token = NEP5Token(script=hex_script)
-
-        result = token.Query()
-
-        if result:
-            wallet.AddNEP5Token(token)
-            print("added token %s " % json.dumps(token.ToJson(), indent=4))
-        else:
-            print("Could not import token")
-
-
-def AddAlias(wallet, addr, title):
-    if wallet is None:
-        print("Please open a wallet")
-        return False
-
-    try:
-        script_hash = wallet.ToScriptHash(addr)
-        wallet.AddNamedAddress(script_hash, title)
-        return True
-    except Exception as e:
-        print(e)
-        return False
 
 
 def ClaimGas(wallet, require_password=True, from_addr_str=None):
@@ -471,29 +358,30 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None):
     return None, False
 
 
-def ShowUnspentCoins(wallet, args):
-    addr = None
-    asset_type = None
-    watch_only = 0
-    do_count = False
-    try:
-        for item in args:
-            if len(item) == 34:
-                addr = wallet.ToScriptHash(item)
-            elif len(item) > 1:
-                asset_type = get_asset_id(wallet, item)
-            if item == '--watch':
-                watch_only = 64
-            elif item == '--count':
-                do_count = True
+def ShowUnspentCoins(wallet, asset_id=None, from_addr=None, watch_only=False, do_count=False):
+    """
+    Show unspent coin objects in the wallet.
 
-    except Exception as e:
-        print("Invalid arguments specified")
+    Args:
+        wallet (neo.Wallet): wallet to show unspent coins from.
+        asset_id (UInt256): a bytearray (len 32) representing an asset on the blockchain.
+        from_addr (UInt160): a bytearray (len 20) representing an address.
+        watch_only (bool): indicate if this shows coins that are in 'watch only' addresses.
+        do_count (bool): if True only show a count of unspent assets.
 
-    if asset_type:
-        unspents = wallet.FindUnspentCoinsByAsset(asset_type, from_addr=addr, watch_only_val=watch_only)
+    Returns:
+        list: a list of unspent ``neo.Wallet.Coin`` in the wallet
+    """
+
+    if wallet is None:
+        print("Please open a wallet.")
+        return
+
+    watch_only_flag = 64 if watch_only else 0
+    if asset_id:
+        unspents = wallet.FindUnspentCoinsByAsset(asset_id, from_addr=from_addr, watch_only_val=watch_only_flag)
     else:
-        unspents = wallet.FindUnspentCoins(from_addr=addr, watch_only_val=watch_only)
+        unspents = wallet.FindUnspentCoins(from_addr=from_addr, watch_only_val=watch_only)
 
     if do_count:
         print('\n-----------------------------------------------')
@@ -504,93 +392,7 @@ def ShowUnspentCoins(wallet, args):
         print('\n-----------------------------------------------')
         print(json.dumps(unspent.ToJson(), indent=4))
 
+    if not unspents:
+        print("No unspent assets matching the arguments.")
+
     return unspents
-
-
-def SplitUnspentCoin(wallet, args, prompt_passwd=True):
-    """
-    example ``wallet split Ab8RGQEWetkhVqXjPHeGN9LJdbhaFLyUXz neo 1 100``
-    this would split the second unspent neo vin into 100 vouts
-    :param wallet:
-    :param args (list): A list of arguments as [Address, asset type, unspent index, divisions]
-    :return: bool
-    """
-
-    fee = Fixed8.Zero()
-
-    try:
-        addr = wallet.ToScriptHash(args[0])
-        asset = get_asset_id(wallet, args[1])
-        index = int(args[2])
-        divisions = int(args[3])
-
-        if len(args) == 5:
-            fee = Fixed8.TryParse(args[4])
-
-    except Exception as e:
-        logger.info("Invalid arguments specified: %s " % e)
-        return None
-
-    try:
-        unspentItem = wallet.FindUnspentCoinsByAsset(asset, from_addr=addr)[index]
-    except Exception as e:
-        logger.info("Could not find unspent item for asset with index %s %s :  %s" % (asset, index, e))
-        return None
-
-    outputs = split_to_vouts(asset, addr, unspentItem.Output.Value, divisions)
-
-    # subtract a fee from the first vout
-    if outputs[0].Value > fee:
-        outputs[0].Value -= fee
-    else:
-        raise Exception("Fee could not be subtracted from outputs.")
-
-    contract_tx = ContractTransaction(outputs=outputs, inputs=[unspentItem.Reference])
-
-    ctx = ContractParametersContext(contract_tx)
-    wallet.Sign(ctx)
-
-    print("Splitting: %s " % json.dumps(contract_tx.ToJson(), indent=4))
-    if prompt_passwd:
-        passwd = prompt("[Password]> ", is_password=True)
-        if not wallet.ValidatePassword(passwd):
-            print("incorrect password")
-            return None
-
-    if ctx.Completed:
-
-        contract_tx.scripts = ctx.GetScripts()
-
-        relayed = NodeLeader.Instance().Relay(contract_tx)
-
-        if relayed:
-            wallet.SaveTransaction(contract_tx)
-            print("Relayed Tx: %s " % contract_tx.Hash.ToString())
-            return contract_tx
-        else:
-            print("Could not relay tx %s " % contract_tx.Hash.ToString())
-
-    return None
-
-
-def split_to_vouts(asset, addr, input_val, divisions):
-    divisor = Fixed8(divisions)
-
-    new_amounts = input_val / divisor
-    outputs = []
-    total = Fixed8.Zero()
-
-    if asset == Blockchain.Default().SystemShare().Hash:
-        if new_amounts % Fixed8.FD() > Fixed8.Zero():
-            new_amounts = new_amounts.Ceil()
-
-    while total < input_val:
-        if total + new_amounts < input_val:
-            outputs.append(TransactionOutput(asset, new_amounts, addr))
-            total += new_amounts
-        else:
-            diff = input_val - total
-            outputs.append(TransactionOutput(asset, diff, addr))
-            total += diff
-
-    return outputs

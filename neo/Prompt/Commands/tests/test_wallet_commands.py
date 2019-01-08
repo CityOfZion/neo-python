@@ -3,17 +3,18 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
-from neocore.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
-from neo.Prompt.Commands.Wallet import CreateAddress, DeleteAddress, ImportToken, ImportWatchAddr, ShowUnspentCoins, SplitUnspentCoin
+from neo.Prompt.Commands.Wallet import ShowUnspentCoins
 from neo.Prompt.PromptData import PromptData
+from neo.Prompt.PromptPrinter import pp
 import os
 import shutil
 from mock import patch
+from io import StringIO
 
 
-class UserWalletTestCase(WalletFixtureTestCase):
+class UserWalletTestCaseBase(WalletFixtureTestCase):
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
     _wallet1 = None
@@ -61,8 +62,20 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def tearDown(cls):
         PromptData.Wallet = None
 
-    # Beginning with refactored tests
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # replace the prompt_toolkit formatted print function with the default such that we can test easily
+        pp.printer = print
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        pp.reset_printer()
+
+
+class UserWalletTestCase(UserWalletTestCaseBase):
+    # Beginning with refactored tests
     def test_wallet(self):
         # without wallet opened
         res = CommandWallet().execute(None)
@@ -232,68 +245,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
         res = CommandWallet().execute(args)
         self.assertTrue(res)
 
-    def test_wallet_create_address(self):
-        # test wallet create address with no wallet open
-        args = ['create_addr', 1]
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
-
-        self.OpenWallet1()
-
-        # test wallet create address with no argument
-        args = ['create_addr']
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
-
-        # test wallet create address with negative number
-        args = ['create_addr', -1]
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
-
-        # test wallet create address successful
-        args = ['create_addr', 1]
-        res = CommandWallet().execute(args)
-        self.assertTrue(res)
-        self.assertEqual(type(res), UserWallet)
-        self.assertEqual(len(res.Addresses), 2)  # Has one address when created.
-
-        args = ['create_addr', 7]
-        res = CommandWallet().execute(args)
-        self.assertTrue(res)
-        self.assertEqual(type(res), UserWallet)
-        self.assertEqual(len(res.Addresses), 9)
-
-    def test_wallet_delete_address(self):
-        # test wallet delete address with no wallet open
-        args = ['delete_addr']
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
-
-        self.OpenWallet1()
-
-        # test wallet delete address with no argument
-        args = ['delete_addr']
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
-
-        # test wallet delete address with invalid address
-        args = ['delete_addr', '1234']
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
-
-        # test wallet delete address with unknown address
-        args = ['delete_addr', self.watch_addr_str]
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
-
-        # test wallet delete successful
-        self.assertTrue(len(PromptData.Wallet.Addresses), 1)
-        args = ['delete_addr', PromptData.Wallet.Addresses[0]]
-        res = CommandWallet().execute(args)
-        self.assertTrue(res)
-        self.assertEqual(type(res), bool)
-        self.assertEqual(len(PromptData.Wallet.Addresses), 0)
-
     def test_wallet_claim_1(self):
         # test with no wallet
         args = ['claim']
@@ -356,70 +307,91 @@ class UserWalletTestCase(WalletFixtureTestCase):
             CommandWallet().execute(args)
             self.assertEqual(PromptData.Wallet._current_height, 42)
 
-    def test_wallet_alias(self):
-        # test wallet alias with no wallet open
-        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'mine']
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
+    def test_wallet_unspent(self):
+        # test wallet unspent with no wallet open
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("open a wallet", mock_print.getvalue())
 
         self.OpenWallet1()
 
-        # test wallet alias with no argument
-        args = ['alias']
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
+        # test wallet unspent with invalid address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--from-addr=123']
+            res = CommandWallet().execute(args)
+            self.assertIsNone(res)
+            self.assertIn("Invalid address specified", mock_print.getvalue())
 
-        # test wallet alias with 1 argument
-        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
-
-        # test wallet alias successful
-        self.assertNotIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
-
-        args = ['alias', 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'mine']
+        # test wallet unspent successful
+        args = ['unspent']
         res = CommandWallet().execute(args)
         self.assertTrue(res)
-        self.assertIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with unknown asset shows all
+        args = ['unspent', 'unknownasset']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with asset
+        args = ['unspent', 'neo']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+
+        # test wallet unspent with asset
+        args = ['unspent', 'gas']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].Output.AssetId, self.GAS)
+
+        # test wallet unspent with unrelated address
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--from-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm']
+            res = CommandWallet().execute(args)
+            self.assertEqual(res, [])
+            self.assertIn("No unspent assets matching the arguments", mock_print.getvalue())
+
+        # test wallet unspent with address
+        args = ['unspent', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
+        res = CommandWallet().execute(args)
+        self.assertTrue(res)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].Output.AssetId, self.NEO)
+        self.assertEqual(res[1].Output.AssetId, self.GAS)
+
+        # test wallet unspent with --watch
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--watch']
+            res = CommandWallet().execute(args)
+            self.assertEqual(res, [])
+            self.assertIn("No unspent assets matching the arguments", mock_print.getvalue())
+
+        # test wallet unspent with --count
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', '--count']
+            res = CommandWallet().execute(args)
+            self.assertEqual(len(res), 2)
+            self.assertIn("Total Unspent: 2", mock_print.getvalue())
+
+        # test wallet unspent with --count
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['unspent', 'gas', '--count']
+            res = CommandWallet().execute(args)
+            self.assertEqual(len(res), 1)
+            self.assertIn("Total Unspent: 1", mock_print.getvalue())
 
     ##########################################################
     ##########################################################
-
-    def test_1_import_addr(self):
-        wallet = self.GetWallet1(recreate=True)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 0)
-
-        result = ImportWatchAddr(wallet, self.watch_addr_str)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 1)
-
-    def test_2_import_addr(self):
-        wallet = self.GetWallet1()
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 1)
-
-        success = DeleteAddress(wallet, self.watch_addr_str)
-
-        self.assertTrue(success)
-
-        self.assertEqual(len(wallet.LoadWatchOnly()), 0)
-
-    def test_3_import_token(self):
-        wallet = self.GetWallet1(recreate=True)
-
-        self.assertEqual(len(wallet.GetTokens()), 1)
-
-        token_hash = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
-
-        ImportToken(wallet, token_hash)
-
-        token = list(wallet.GetTokens().values())[0]
-
-        self.assertEqual(token.name, 'NEX Template V4')
-        self.assertEqual(token.symbol, 'NXT4')
-        self.assertEqual(token.decimals, 8)
-        self.assertEqual(token.Address, 'Ab61S1rk2VtCVd3NtGNphmBckWk4cfBdmB')
 
     def test_4_get_synced_balances(self):
         wallet = self.GetWallet1(recreate=True)
@@ -428,71 +400,20 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     def test_5_show_unspent(self):
         wallet = self.GetWallet1(recreate=True)
-        unspents = ShowUnspentCoins(wallet, [])
+        unspents = ShowUnspentCoins(wallet)
         self.assertEqual(len(unspents), 2)
 
-        unspents = ShowUnspentCoins(wallet, ['neo'])
+        unspents = ShowUnspentCoins(wallet, asset_id=self.NEO)
         self.assertEqual(len(unspents), 1)
 
-        unspents = ShowUnspentCoins(wallet, ['gas'])
+        unspents = ShowUnspentCoins(wallet, asset_id=self.GAS)
         self.assertEqual(len(unspents), 1)
 
-        unspents = ShowUnspentCoins(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'])
+        unspents = ShowUnspentCoins(wallet, from_addr=wallet.ToScriptHash('AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'))
         self.assertEqual(len(unspents), 2)
 
-        unspents = ShowUnspentCoins(wallet, ['AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg'])
+        unspents = ShowUnspentCoins(wallet, from_addr=wallet.ToScriptHash('AYhE3Svuqdfh1RtzvE8hUhNR7HSpaSDFQg'))
         self.assertEqual(len(unspents), 0)
 
-        unspents = ShowUnspentCoins(wallet, ['--watch'])
+        unspents = ShowUnspentCoins(wallet, watch_only=True)
         self.assertEqual(len(unspents), 0)
-
-    def test_6_split_unspent(self):
-        wallet = self.GetWallet1(recreate=True)
-
-        # test bad
-        tx = SplitUnspentCoin(wallet, [])
-        self.assertEqual(tx, None)
-
-        # bad inputs
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 3, 2])
-        self.assertEqual(tx, None)
-
-        # should be ok
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 0, 2], prompt_passwd=False)
-        self.assertIsNotNone(tx)
-
-        # rebuild wallet and try with non-even amount of neo, should be split into integer values of NEO
-        wallet = self.GetWallet1(True)
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'neo', 0, 3], prompt_passwd=False)
-        self.assertIsNotNone(tx)
-
-        self.assertEqual([Fixed8.FromDecimal(17), Fixed8.FromDecimal(17), Fixed8.FromDecimal(16)], [item.Value for item in tx.outputs])
-
-        # try with gas
-        wallet = self.GetWallet1(True)
-        tx = SplitUnspentCoin(wallet, ['AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3', 'gas', 0, 3], prompt_passwd=False)
-        self.assertIsNotNone(tx)
-
-    def test_7_create_address(self):
-        # no wallet
-        res = CreateAddress(None, 1)
-        self.assertFalse(res)
-
-        wallet = self.GetWallet1(recreate=True)
-
-        # not specifying a number of addresses
-        res = CreateAddress(wallet, None)
-        self.assertFalse(res)
-
-        # bad args
-        res = CreateAddress(wallet, "blah")
-        self.assertFalse(res)
-
-        # negative value
-        res = CreateAddress(wallet, -1)
-        self.assertFalse(res)
-
-        # should pass
-        res = CreateAddress(wallet, 2)
-        self.assertTrue(res)
-        self.assertEqual(len(wallet.Addresses), 3)

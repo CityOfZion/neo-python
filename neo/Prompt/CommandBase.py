@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from neo.Prompt.Utils import get_arg
 from typing import List
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
 class ParameterDesc():
@@ -112,10 +113,11 @@ class CommandBase(ABC):
             params += f"{p.formatted_name()} "
         print(f"\nUsage: {self.__command_with_parents()} {params}\n")
 
-        min_indent = 15
-        longest_param_name = max(min_indent, max(len(p.name) for p in self.command_desc().params))
-        for p in self.command_desc().params:
-            print(p.to_str(longest_param_name))
+        if len(self.command_desc().params) > 0:
+            min_indent = 15
+            longest_param_name = max(min_indent, max(len(p.name) for p in self.command_desc().params))
+            for p in self.command_desc().params:
+                print(p.to_str(longest_param_name))
 
     def __command_with_parents(self):
         s = self.command_desc().command
@@ -123,12 +125,15 @@ class CommandBase(ABC):
             s = self.__parent_command.__command_with_parents() + " " + s
         return s
 
+    def _usage_str(self):
+        return f"Usage: {self.__command_with_parents()} COMMAND"
+
     def handle_help(self, arguments):
         item = get_arg(arguments)
         if item == 'help':
             if len(self.__sub_commands) > 0:
                 # show overview of subcommands and their purpose
-                print(f"\nUsage: {self.__command_with_parents()} COMMAND\n")
+                print(f"\n{self._usage_str()}\n")
                 print(f"{self.command_desc().short_help.capitalize()}\n")
                 print("Commands:")
 

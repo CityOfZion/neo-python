@@ -3,8 +3,8 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Core.Blockchain import Blockchain
 from neo.logging import log_manager
+from neo.Prompt.PromptPrinter import prompt_print as print
 import json
-
 
 logger = log_manager.getLogger()
 
@@ -23,7 +23,7 @@ class CommandSearch(CommandBase):
         item = get_arg(arguments)
 
         if not item:
-            print("run `%s help` to see supported queries" % self.command_desc().command)
+            print(f"run `{self.command_desc().command} help` to see supported queries")
             return
 
         try:
@@ -39,15 +39,18 @@ class CommandSearchAsset(CommandBase):
 
     def execute(self, arguments):
         item = get_arg(arguments)
-
-        results = Blockchain.Default().SearchAssetState(item)
-        print("Found %s results for %s" % (len(results), item))
-        for asset in results:
-            print(json.dumps(asset.ToJson(), indent=4))
-        return results
+        if item is not None:
+            results = Blockchain.Default().SearchAssetState(item)
+            print("Found %s results for %s" % (len(results), item))
+            for asset in results:
+                print(json.dumps(asset.ToJson(), indent=4))
+            return results
+        else:
+            print("run `%s %s help` to see supported queries" % (CommandSearch().command_desc().command, self.command_desc().command))
+            return
 
     def command_desc(self):
-        p1 = ParameterDesc('query', 'supports name, issuer, or admin searches')
+        p1 = ParameterDesc('query', 'name, issuer, or admin')
         return CommandDesc('asset', 'perform an asset search', [p1])
 
 
@@ -57,13 +60,16 @@ class CommandSearchContract(CommandBase):
 
     def execute(self, arguments):
         item = get_arg(arguments)
-
-        contracts = Blockchain.Default().SearchContracts(query=item)
-        print("Found %s results for %s" % (len(contracts), item))
-        for contract in contracts:
-            print(json.dumps(contract.ToJson(), indent=4))
-        return contracts
+        if item is not None:
+            contracts = Blockchain.Default().SearchContracts(query=item)
+            print("Found %s results for %s" % (len(contracts), item))
+            for contract in contracts:
+                print(json.dumps(contract.ToJson(), indent=4))
+            return contracts
+        else:
+            print("run `%s %s help` to see supported queries" % (CommandSearch().command_desc().command, self.command_desc().command))
+            return
 
     def command_desc(self):
-        p1 = ParameterDesc('query', 'supports name, author, description, or email searches')
+        p1 = ParameterDesc('query', 'name, author, description, or email')
         return CommandDesc('contract', 'perform a contract search', [p1])

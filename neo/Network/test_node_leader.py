@@ -179,7 +179,10 @@ class LeaderTestCase(WalletFixtureTestCase):
         output = TransactionOutput(AssetId=Blockchain.SystemShare().Hash, Value=amount,
                                    script_hash=LeaderTestCase.wallet_1_script_hash)
         contract_tx = ContractTransaction(outputs=[output])
-        wallet.MakeTransaction(contract_tx)
+        try:
+            wallet.MakeTransaction(contract_tx)
+        except ValueError:
+            pass
         ctx = ContractParametersContext(contract_tx)
         wallet.Sign(ctx)
         contract_tx.scripts = ctx.GetScripts()
