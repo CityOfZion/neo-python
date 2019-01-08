@@ -1032,7 +1032,8 @@ class Wallet:
                 sum = Fixed8(0)
                 for item in group:
                     sum = sum + item.Value
-                paytotal[key] = sum
+                cur_val = paytotal.get(key, Fixed8.Zero())
+                paytotal[key] = cur_val + sum
         else:
             paytotal = {}
 
