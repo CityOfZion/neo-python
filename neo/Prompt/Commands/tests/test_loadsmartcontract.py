@@ -49,6 +49,12 @@ class LoadSmartContractTestCase(TestCase):
 
         self.assertTrue(res)
 
+        # test a contract with no params
+        with mock.patch("builtins.open", mock.mock_open(read_data="path.avm")):
+            res = LoadContract("path.avm", False, False, False, "", "01")
+
+        self.assertTrue(res)
+
     def test_gatherloadedcontractparams(self):
         # test too few args
         with self.assertRaises(Exception) as e:
@@ -72,6 +78,15 @@ class LoadSmartContractTestCase(TestCase):
         # test good params with needs_dynamic_invoke
         with mock.patch("neo.Prompt.Commands.LoadSmartContract.generate_deploy_script", return_value=True):
             args = ["False", "True", "False", "070710", "01"]
+            script = "script"
+
+            res = GatherLoadedContractParams(args, script)
+
+        self.assertTrue(res)
+
+        # test no required params
+        with mock.patch("neo.Prompt.Commands.LoadSmartContract.generate_deploy_script", return_value=True):
+            args = ["False", "False", "False", "", "01"]
             script = "script"
 
             res = GatherLoadedContractParams(args, script)

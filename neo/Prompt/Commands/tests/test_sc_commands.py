@@ -323,9 +323,9 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
             self.assertIn("Invalid script hash", mock_print.getvalue())
 
-        # test invalid parameter count (missing required `params`)
+        # test invalid parameter count (missing required `contract`)
         with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['invoke', token_hash_str, '--from-addr=bla']
+            args = ['invoke', '--from-addr=bla']
             res = CommandSC().execute(args)
             self.assertFalse(res)
             self.assertIn("Please specify the required parameters", mock_print.getvalue())
