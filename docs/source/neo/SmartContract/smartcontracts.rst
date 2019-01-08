@@ -219,7 +219,7 @@ And you have now built and tested your first SC.  If you would like to view the 
 
   neo>
 
-You may have noticed that even though there is a ``print`` command in the contract, you did not see anything printed out.  Lets fix that by turning on smart contract events and running it again.
+You may have noticed that even though there is a ``print`` command in the contract, you did not see anything printed out.  Let's fix that by turning on smart contract events and running it again.
 
 .. code-block:: sh
 
@@ -251,7 +251,7 @@ So what happened there?  We turned on SmartContractEvent logging in the prompt w
 - **SmartContract.Execution.Success** indicates that the execution of the SC finished in a successful state
 
 
-Ok now lets try a little more complex contract, detailed here as `sample2.py`
+Ok now let's try a little more complex contract, detailed here as `sample2.py`
 
 .. code-block:: python3
 
@@ -304,7 +304,7 @@ We will build and run with a few parameters:
   neo>
 
 
-Ok much better. Now lets do something a bit more useful.  We will do a simple address balance tracker.
+Ok much better. Now let's do something a bit more useful.  We will do a simple address balance tracker.
 
 .. code-block:: python3
 
@@ -569,7 +569,7 @@ Now that we have deployed the *Calculator Contract* we can interact with it with
   [password]>
 
 
-Once again, this invoke is only done locally.  It will not be run on the network until you input your password.   If you do not want to invoke on the network, you can simply input an incorrect password and it will cancel. Lets cancel the invoke, and then set ``config sc-events on`` to see exactly what is happening when you test invoke and then send it to the network:
+Once again, this invoke is only done locally.  It will not be run on the network until you input your password.   If you do not want to invoke on the network, you can simply input an incorrect password and it will cancel. Let's cancel the invoke, and then set ``config sc-events on`` to see exactly what is happening when you test invoke and then send it to the network:
 
 .. code-block:: sh
 

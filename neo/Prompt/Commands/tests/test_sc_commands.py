@@ -102,8 +102,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test no input
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['build_run']
-            res = CommandSC().execute(args)
-            self.assertFalse(res)
+            tx, result, total_ops, engine = CommandSC().execute(args)
+            self.assertFalse(tx)
             self.assertIn("Please specify the required parameters", mock_print.getvalue())
 
         # test bad path
@@ -132,8 +132,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy',
                     '3']  # missing payable flag
-            res = CommandSC().execute(args)
-            self.assertFalse(res)
+            tx, result, total_ops, engine = CommandSC().execute(args)
+            self.assertFalse(tx)
             self.assertIn("run `sc build_run help` to see supported queries", mock_print.getvalue())
 
         # test successful build and run
@@ -289,7 +289,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         prompt_entries = ['test_name', 'test_version', 'test_author', 'test_email', 'test_description', 'False', 'False', 'False', 'bad_pw']
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
-                with patch('neo.Prompt.Commands.SC.test_invoke', side_effect=[(None, None, None, None)]):
+                with patch('neo.Prompt.Commands.SC.test_invoke', side_effect=[(None, None, None, None, None)]):
                     args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
                     res = CommandSC().execute(args)
                     self.assertFalse(res)

@@ -219,7 +219,7 @@ could lead to version conflicts.
     source venv/bin/activate
 
     # install the package in an editable form
-    (venv) pip install -e .
+    (venv) pip install wheel -e .
 
 2. Install from PyPi
 
@@ -237,7 +237,7 @@ could lead to version conflicts.
     python3.6 -m venv venv
     source venv/bin/activate
 
-    (venv) pip install neo-python
+    (venv) pip install wheel neo-python
 
 
 Running

@@ -94,7 +94,7 @@ class LeaderTestCase(WalletFixtureTestCase):
         return cls._wallet1
 
     @classmethod
-    def tearDown(self):
+    def tearDown(cls):
         NodeLeader.Instance().Peers = []
         NodeLeader.__LEAD = None
 

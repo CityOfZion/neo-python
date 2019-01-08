@@ -36,6 +36,8 @@ from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.Utils import get_asset_id
 from neo.Wallets.Wallet import Wallet
+from furl import furl
+import ast
 
 
 class JsonRpcError(Exception):
@@ -120,27 +122,66 @@ class JsonRpcApi:
     @json_response
     @cors_header
     def home(self, request):
+        # POST Examples:
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         # or multiple requests in 1 transaction
-        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10], {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}
+        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10]}, {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}]
+        #
+        # GET Example:
+        # /?jsonrpc=2.0&id=5&method=getblockcount&params=[]
+        # NOTE: GET requests do not support multiple requests in 1 transaction
         request_id = None
 
-        try:
-            content = json.loads(request.content.read().decode("utf-8"))
+        if "POST" == request.method.decode("utf-8"):
+            try:
+                content = json.loads(request.content.read().decode("utf-8"))
 
-            # test if it's a multi-request message
-            if isinstance(content, list):
-                result = []
-                for body in content:
-                    result.append(self.get_data(body))
-                return result
+                # test if it's a multi-request message
+                if isinstance(content, list):
+                    result = []
+                    for body in content:
+                        result.append(self.get_data(body))
+                    return result
 
-            # otherwise it's a single request
+                # otherwise it's a single request
+                return self.get_data(content)
+
+            except JSONDecodeError as e:
+                error = JsonRpcError.parseError()
+                return self.get_custom_error_payload(request_id, error.code, error.message)
+
+        elif "GET" == request.method.decode("utf-8"):
+            content = furl(request.uri).args
+
+            # remove hanging ' or " from last value if value is not None to avoid SyntaxError
+            l_value = list(content.values())[-1]
+            if l_value is not None:
+                n_value = l_value[:-1]
+                l_key = list(content.keys())[-1]
+                content[l_key] = n_value
+
+            if len(content.keys()) > 3:
+                try:
+                    params = content['params']
+                    l_params = ast.literal_eval(params)
+                    content['params'] = [l_params]
+                except KeyError:
+                    error = JsonRpcError(-32602, "Invalid params")
+                    return self.get_custom_error_payload(request_id, error.code, error.message)
+
             return self.get_data(content)
 
-        except JSONDecodeError as e:
-            error = JsonRpcError.parseError()
-            return self.get_custom_error_payload(request_id, error.code, error.message)
+        elif "OPTIONS" == request.method.decode("utf-8"):
+            return self.options_response()
+
+        error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
+        return self.get_custom_error_payload(request_id, error.code, error.message)
+
+    @classmethod
+    def options_response(cls):
+        # new plugins should update this response
+        return {'supported HTTP methods': ("GET", "POST"),
+                'JSON-RPC server type': "default"}
 
     def json_rpc_method_handler(self, method, params):
 
@@ -155,8 +196,14 @@ class JsonRpcApi:
             return acct.ToJson()
 
         elif method == "getassetstate":
-            asset_id = UInt256.ParseString(params[0])
-            asset = Blockchain.Default().GetAssetState(asset_id.ToBytes())
+            asset_str = params[0]
+            if asset_str.lower() == 'neo':
+                assetId = Blockchain.Default().SystemShare().Hash
+            elif asset_str.lower() == 'gas':
+                assetId = Blockchain.Default().SystemCoin().Hash
+            else:
+                assetId = UInt256.ParseString(params[0])
+            asset = Blockchain.Default().GetAssetState(assetId.ToBytes())
             if asset:
                 return asset.ToJson()
             raise JsonRpcError(-100, "Unknown asset")

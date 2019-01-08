@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.3-dev] in progress
 -----------------------
+- Update ``getassetstate`` RPC method;  add ``showallassets`` LevelDBBlockchain function; update prompt.py ``help``, ``show_asset_state``, and ``show_contract_state``
 - Disallow ``Void`` type input parameters for smart contracts and increase test coverage
 - Fix confirmed tx not being purged from mempool `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
 - Fix bootstrap thread joining failure on Ubuntu systems
@@ -12,11 +13,20 @@ All notable changes to this project are documented in this file.
 - Fix various issues related to signing multi-signature transactions
 - Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
 - Empty VerificationScripts for deployed contracts now work as intended
-- Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`
+- Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`_
 - Add fix to ensure tx is saved to wallet when sent using RPC
-- Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`
+- Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`_
+- Introduce Django inspired component loading for REST and RPC server
+- Remove ``ExtendedJsonRpc`` server from base repo (still available as extension)
 - Allow a raw tx to be build without an active blockchain db in the environment
 - Fix calculation of asset change value when using multiple alternating asset inputs
+- Fix unnecessary default bootstrap warning for mainnet showing.
+- Add GET and OPTIONS request functionality for JSON-RPC servers
+- Fix ``gzip`` failure in current implementation of ExtendedJsonRpcApi
+- Gracefully handle balance query failures of NEP-5 tokens.
+- Fix ``getcontractstate`` JSON output to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_
+- Fix ``getrawtransaction`` JSON output to match neo-cli 2.9.2 `#751 https://github.com/CityOfZion/neo-python/pull/751`_
+- Refactor CLI to be more user friendly and support better future extensibility
 
 
 [0.8.2] 2018-10-31

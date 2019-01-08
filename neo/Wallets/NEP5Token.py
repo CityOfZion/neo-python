@@ -133,20 +133,24 @@ class NEP5Token(VerificationCode, SerializableMixin):
         sb = ScriptBuilder()
         sb.EmitAppCallWithOperationAndArgs(self.ScriptHash, 'balanceOf', [addr])
 
-        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [])
-
-        try:
-            val = results[0].GetBigInteger()
-            precision_divisor = pow(10, self.decimals)
-            balance = Decimal(val) / Decimal(precision_divisor)
-            if as_string:
-                formatter_str = '.%sf' % self.decimals
-                balance_str = format(balance, formatter_str)
-                return balance_str
-            return balance
-        except Exception as e:
-            logger.error("could not get balance: %s " % e)
-            traceback.print_stack()
+        tx, fee, results, num_ops, engine_success = test_invoke(sb.ToArray(), wallet, [])
+        if engine_success:
+            try:
+                val = results[0].GetBigInteger()
+                precision_divisor = pow(10, self.decimals)
+                balance = Decimal(val) / Decimal(precision_divisor)
+                if as_string:
+                    formatter_str = '.%sf' % self.decimals
+                    balance_str = format(balance, formatter_str)
+                    return balance_str
+                return balance
+            except Exception as e:
+                logger.error("could not get balance: %s " % e)
+                traceback.print_stack()
+        else:
+            addr_str = Crypto.ToAddress(UInt160(data=addr))
+            logger.error(
+                f"Could not get balance of address {addr_str} for token contract {self.ScriptHash}. VM execution failed. Make sure the contract exists on the network and that it adheres to the NEP-5 standard")
 
         return 0
 
@@ -175,7 +179,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
                                            [PromptUtils.parse_param(from_addr, wallet), PromptUtils.parse_param(to_addr, wallet),
                                             PromptUtils.parse_param(amount)])
 
-        tx, fee, results, num_ops = test_invoke(sb.ToArray(), wallet, [], from_addr=from_addr, invoke_attrs=tx_attributes)
+        tx, fee, results, num_ops, engine_success = test_invoke(sb.ToArray(), wallet, [], from_addr=from_addr, invoke_attrs=tx_attributes)
 
         return tx, fee, results
 
@@ -199,7 +203,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'transferFrom',
                        [PromptUtils.parse_param(from_addr, wallet), PromptUtils.parse_param(to_addr, wallet), PromptUtils.parse_param(amount)]]
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True)
 
         return tx, fee, results
 
@@ -221,7 +225,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'allowance',
                        [PromptUtils.parse_param(owner_addr, wallet), PromptUtils.parse_param(requestor_addr, wallet)]]
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True)
 
         return tx, fee, results
 
@@ -244,7 +248,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'approve',
                        [PromptUtils.parse_param(owner_addr, wallet), PromptUtils.parse_param(requestor_addr, wallet), PromptUtils.parse_param(amount)]]
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True)
 
         return tx, fee, results
 
@@ -267,7 +271,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         invoke_args = invoke_args + attachment_args
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True, from_addr=mint_to_addr, invoke_attrs=invoke_attrs)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True, from_addr=mint_to_addr, invoke_attrs=invoke_attrs)
 
         return tx, fee, results
 
@@ -288,7 +292,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'crowdsale_register',
                        [PromptUtils.parse_param(p, wallet) for p in register_addresses]]
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, invoke_args, None, True, from_addr)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True, from_addr)
 
         return tx, fee, results
 

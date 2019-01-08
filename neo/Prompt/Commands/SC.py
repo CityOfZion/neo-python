@@ -72,7 +72,7 @@ class CommandSCBuildRun(CommandBase):
     def execute(self, arguments):
         if len(arguments) < 6:
             print("Please specify the required parameters")
-            return
+            return None, None, None, None
 
         Blockchain.Default().Pause()
         try:
@@ -80,7 +80,7 @@ class CommandSCBuildRun(CommandBase):
         except TypeError:
             print(f'run `{CommandSC().command_desc().command} {self.command_desc().command} help` to see supported queries')
             Blockchain.Default().Resume()
-            return
+            return None, None, None, None
         Blockchain.Default().Resume()
         return tx, result, total_ops, engine
 
@@ -175,7 +175,7 @@ class CommandSCTestInvoke(CommandBase):
             print("Invalid script hash")
             return False
 
-        tx, fee, results, num_ops = TestInvokeContract(wallet, arguments, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, arguments, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
         if tx and results:
 
             parameterized_results = [ContractParameter.ToParameter(item).ToJson() for item in results]
@@ -264,7 +264,7 @@ class CommandSCDeploy(CommandBase):
             print("Failed to generate deploy script")
             return False
 
-        tx, fee, results, num_ops = test_invoke(contract_script, wallet, [], from_addr=from_addr)
+        tx, fee, results, num_ops, engine_success = test_invoke(contract_script, wallet, [], from_addr=from_addr)
         if tx and results:
             print(
                 "\n-------------------------------------------------------------------------------------------------------------------------------------")
