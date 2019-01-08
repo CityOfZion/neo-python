@@ -2,6 +2,7 @@ from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
 from neo.UserPreferences import preferences
+import os
 
 token_style = Style.from_dict({
     "command": preferences.token_style['Command'],
@@ -34,6 +35,9 @@ class PromptPrinter():
 
 
 pp = PromptPrinter()
+
+if 'NEOPYTHON_UNITTEST' in os.environ:
+    pp = print
 
 
 def prompt_print(*args, **kwargs):
