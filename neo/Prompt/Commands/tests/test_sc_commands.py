@@ -25,17 +25,6 @@ class CommandSCTestCase(WalletFixtureTestCase):
     _wallet3 = None
 
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # replace the prompt_toolkit formatted print function with the default such that we can test easily
-        pp.printer = print
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        pp.reset_printer()
-
-    @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
             shutil.copyfile(cls.wallet_1_path(), cls.wallet_1_dest())
