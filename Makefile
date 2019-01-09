@@ -51,16 +51,14 @@ lint: ## check style with flake8
 
 test: ## run tests quickly with the default Python
 	export NEOPYTHON_UNITTEST=1; python3 -m unittest discover neo
-	python3 -m unittest discover boa_test
+	export NEOPYTHON_UNITTEST=1; python3 -m unittest discover boa_test
 
 
 coverage: ## check code coverage quickly with the default Python
-	export NEOPYTHON_UNITTEST=1
-	coverage run -m unittest discover neo
-	coverage run -m -a unittest discover boa_test
+	export NEOPYTHON_UNITTEST=1; coverage run -m unittest discover neo
+	export NEOPYTHON_UNITTEST=1; coverage run -m -a unittest discover boa_test
 	coverage report -m --omit=venv/*
 	coverage html
-	unset NEOPYTHON_UNITTEST
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
