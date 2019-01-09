@@ -35,7 +35,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def tearDown(cls):
         PromptData.Wallet = None
 
-
     def test_send_neo(self):
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
