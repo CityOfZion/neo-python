@@ -12,6 +12,9 @@ token_style = Style.from_dict({
     "number": preferences.token_style['Number'],
 })
 
+if 'NEOPYTHON_UNITTEST' in os.environ:
+    print("*** UNITTESTING")
+
 
 class PromptPrinter():
     def __init__(self):
