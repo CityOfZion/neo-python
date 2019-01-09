@@ -35,16 +35,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def tearDown(cls):
         PromptData.Wallet = None
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # replace the prompt_toolkit formatted print function with the default such that we can test easily
-        pp.printer = print
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        pp.reset_printer()
+    # @classmethod
+    # def setUpClass(cls):
+    #     super().setUpClass()
+    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily
+    #     pp.printer = print
+    #
+    # @classmethod
+    # def tearDownClass(cls):
+    #     super().tearDownClass()
+    #     pp.reset_printer()
 
     def test_send_neo(self):
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -318,7 +318,9 @@ class UserWalletTestCase(WalletFixtureTestCase):
                     res = Wallet.CommandWallet().execute(args)
 
                     self.assertFalse(res)
-                    self.assertIn("Transaction initiated, but the signature is incomplete. Use the `sign` command with the information below to complete signing", mock_print.getvalue())
+                    self.assertIn(
+                        "Transaction initiated, but the signature is incomplete. Use the `sign` command with the information below to complete signing",
+                        mock_print.getvalue())
 
     def test_fails_to_relay_tx(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
@@ -375,7 +377,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
                 address_from_account_state = Blockchain.Default().GetAccountState(self.wallet_1_addr).ToJson()
                 address_from_gas = next(filter(lambda b: b['asset'] == '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7',
-                                        address_from_account_state['balances']))
+                                               address_from_account_state['balances']))
                 address_from_gas_bal = address_from_gas['value']
 
                 res = Wallet.CommandWallet().execute(args)

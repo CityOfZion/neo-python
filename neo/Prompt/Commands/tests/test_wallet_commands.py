@@ -62,16 +62,16 @@ class UserWalletTestCaseBase(WalletFixtureTestCase):
     def tearDown(cls):
         PromptData.Wallet = None
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # replace the prompt_toolkit formatted print function with the default such that we can test easily
-        pp.printer = print
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        pp.reset_printer()
+    # @classmethod
+    # def setUpClass(cls):
+    #     super().setUpClass()
+    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily
+    #     pp.printer = print
+    #
+    # @classmethod
+    # def tearDownClass(cls):
+    #     super().tearDownClass()
+    #     pp.reset_printer()
 
 
 class UserWalletTestCase(UserWalletTestCaseBase):

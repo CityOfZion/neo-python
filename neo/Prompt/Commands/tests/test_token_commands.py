@@ -13,7 +13,7 @@ from neo.IO.MemoryStream import StreamManager
 from mock import patch
 from neo.Prompt.PromptData import PromptData
 from contextlib import contextmanager
-from io import StringIO
+from io import StringIO, TextIOWrapper
 from neo.VM.InteropService import StackItem
 from neo.Prompt.PromptPrinter import pp
 
@@ -35,16 +35,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     token_hash_str = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # replace the prompt_toolkit formatted print function with the default such that we can test easily
-        pp.printer = print
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        pp.reset_printer()
+    # @classmethod
+    # def setUpClass(cls):
+    #     super().setUpClass()
+    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily
+    #     pp.printer = print
+    #
+    # @classmethod
+    # def tearDownClass(cls):
+    #     super().tearDownClass()
+    #     pp.reset_printer()
 
     @property
     def GAS(self):
