@@ -37,7 +37,7 @@ class PromptPrinter():
 pp = PromptPrinter()
 
 if 'NEOPYTHON_UNITTEST' in os.environ:
-    pp = print
+    pp.printer = print
 
 
 def prompt_print(*args, **kwargs):
