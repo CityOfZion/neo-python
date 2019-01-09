@@ -135,6 +135,16 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertEqual(str(result[0]), '3')
             self.assertIn("Test deploy invoke successful", mock_print.getvalue())
 
+        # test invoke failure (SampleSC requires three inputs)
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '0705', '02', 'balance',
+                    'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy']
+            tx, result, total_ops, engine = CommandSC().execute(args)
+            self.assertIsNone(tx)
+            self.assertIn("Test invoke failed", mock_print.getvalue())
+
+    def test_sc_buildrun2(self):
         # test successful build and run with prompted input
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -144,15 +154,6 @@ class CommandSCTestCase(WalletFixtureTestCase):
                 self.assertTrue(tx)
                 self.assertEqual(str(result[0]), '0')
                 self.assertIn("Test deploy invoke successful", mock_print.getvalue())
-
-        # test invoke failure (SampleSC requires three inputs)
-        PromptData.Wallet = self.GetWallet1(recreate=True)
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '0705', '02', 'balance',
-                    'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy']
-            tx, result, total_ops, engine = CommandSC().execute(args)
-            self.assertIsNone(tx)
-            self.assertIn("Test invoke failed", mock_print.getvalue())
 
     def test_sc_loadrun(self):
         warnings.filterwarnings('ignore', category=ResourceWarning)  # filters warnings about unclosed files
