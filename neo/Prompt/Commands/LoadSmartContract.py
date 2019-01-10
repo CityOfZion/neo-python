@@ -3,79 +3,66 @@ from neo.Prompt.Utils import parse_param
 from neo.Core.FunctionCode import FunctionCode
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from prompt_toolkit.shortcuts import PromptSession
+from prompt_toolkit import prompt
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.Prompt.Utils import get_arg
-from neocore.Cryptography.Crypto import Crypto
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
 from neocore.BigInteger import BigInteger
+from neo.Prompt.PromptPrinter import prompt_print as print
 
 
-def ImportContractAddr(wallet, args):
-    if wallet is None:
-        print("please open a wallet")
+def ImportContractAddr(wallet, contract_hash, pubkey_script_hash):
+    """
+    Args:
+        wallet (Wallet): a UserWallet instance
+        contract_hash (UInt160): hash of the contract to import
+        pubkey_script_hash (UInt160):
+
+    Returns:
+        neo.SmartContract.Contract.Contract
+    """
+
+    contract = Blockchain.Default().GetContract(contract_hash)
+    if not contract or not pubkey_script_hash:
+        print("Could not find contract")
         return
 
-    contract_hash = get_arg(args, 0)
-    pubkey = get_arg(args, 1)
+    reedeem_script = contract.Code.Script.hex()
 
-    if contract_hash and pubkey:
+    # there has to be at least 1 param, and the first one needs to be a signature param
+    param_list = bytearray(b'\x00')
 
-        if len(pubkey) != 66:
-            print("invalid public key format")
+    # if there's more than one param
+    # we set the first parameter to be the signature param
+    if len(contract.Code.ParameterList) > 1:
+        param_list = bytearray(contract.Code.ParameterList)
+        param_list[0] = 0
 
-        pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
+    verification_contract = Contract.Create(reedeem_script, param_list, pubkey_script_hash)
 
-        contract = Blockchain.Default().GetContract(contract_hash)
+    address = verification_contract.Address
 
-        if contract is not None:
+    wallet.AddContract(verification_contract)
 
-            reedeem_script = contract.Code.Script.hex()
-
-            # there has to be at least 1 param, and the first
-            # one needs to be a signature param
-            param_list = bytearray(b'\x00')
-
-            # if there's more than one param
-            # we set the first parameter to be the signature param
-            if len(contract.Code.ParameterList) > 1:
-                param_list = bytearray(contract.Code.ParameterList)
-                param_list[0] = 0
-
-            verification_contract = Contract.Create(reedeem_script, param_list, pubkey_script_hash)
-
-            address = verification_contract.Address
-
-            wallet.AddContract(verification_contract)
-
-            print("Added contract addres %s to wallet" % address)
-            return
-
-    print("Could not add contract.  Invalid public key or contract address")
+    print(f"Added contract address {address} to wallet")
+    return verification_contract
 
 
-def LoadContract(args):
-    if len(args) < 6:
-        print("please specify contract to load like such: 'import contract {path} {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}'")
-        return
-
-    path = args[0]
-    params = parse_param(args[1], ignore_int=True, prefer_hex=False)
+def LoadContract(path, needs_storage, needs_dynamic_invoke, is_payable, params_str, return_type):
+    params = parse_param(params_str, ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
         params = params.encode('utf-8')
 
-    for p in binascii.unhexlify(params):
-        if p == ContractParameterType.Void.value:
-            raise ValueError("Void is not a valid input parameter type")
+    try:
+        for p in binascii.unhexlify(params):
+            if p == ContractParameterType.Void.value:
+                raise ValueError("Void is not a valid input parameter type")
+    except binascii.Error:
+        pass
 
-    return_type = BigInteger(ContractParameterType.FromString(args[2]).value)
-
-    needs_storage = bool(parse_param(args[3]))
-    needs_dynamic_invoke = bool(parse_param(args[4]))
-    is_payable = bool(parse_param(args[5]))
+    rtype = BigInteger(ContractParameterType.FromString(return_type).value)
 
     contract_properties = 0
 
@@ -88,12 +75,10 @@ def LoadContract(args):
     if is_payable:
         contract_properties += ContractPropertyState.Payable
 
+    if '.avm' not in path:
+        raise ValueError("Please load a compiled .avm file")
+
     script = None
-
-    if '.py' in path:
-        print("Please load a compiled .avm file")
-        return False
-
     with open(path, 'rb') as f:
 
         content = f.read()
@@ -105,39 +90,38 @@ def LoadContract(args):
 
         script = content
 
-    if script is not None:
-
-        plist = params
-
+    if script:
         try:
             plist = bytearray(binascii.unhexlify(params))
         except Exception as e:
             plist = bytearray(b'\x10')
-        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=return_type, contract_properties=contract_properties)
+        function_code = FunctionCode(script=script, param_list=bytearray(plist), return_type=rtype, contract_properties=contract_properties)
 
         return function_code
-
-    print("error loading contract for path %s" % path)
-    return None
+    else:
+        raise Exception(f"Error loading contract for path {path}")
 
 
 def GatherLoadedContractParams(args, script):
     if len(args) < 5:
-        raise Exception("please specify contract properties like {params} {return_type} {needs_storage} {needs_dynamic_invoke} {is_payable}")
-    params = parse_param(args[0], ignore_int=True, prefer_hex=False)
+        raise Exception("please specify contract properties like {needs_storage} {needs_dynamic_invoke} {is_payable} {params} {return_type}")
+    params = parse_param(args[3], ignore_int=True, prefer_hex=False)
 
     if type(params) is str:
         params = params.encode('utf-8')
 
-    for p in binascii.unhexlify(params):
-        if p == ContractParameterType.Void.value:
-            raise ValueError("Void is not a valid input parameter type")
+    try:
+        for p in binascii.unhexlify(params):
+            if p == ContractParameterType.Void.value:
+                raise ValueError("Void is not a valid input parameter type")
+    except binascii.Error:
+        pass
 
-    return_type = BigInteger(ContractParameterType.FromString(args[1]).value)
+    return_type = BigInteger(ContractParameterType.FromString(args[4]).value)
 
-    needs_storage = bool(parse_param(args[2]))
-    needs_dynamic_invoke = bool(parse_param(args[3]))
-    is_payable = bool(parse_param(args[4]))
+    needs_storage = bool(parse_param(args[0]))
+    needs_dynamic_invoke = bool(parse_param(args[1]))
+    is_payable = bool(parse_param(args[2]))
 
     contract_properties = 0
 
@@ -156,19 +140,13 @@ def GatherLoadedContractParams(args, script):
 
 
 def GatherContractDetails(function_code):
-
     print("Please fill out the following contract details:")
 
-    from neo.bin.prompt import PromptInterface
-
-    session = PromptSession(completer=PromptInterface.prompt_completer,
-                            history=PromptInterface.history)
-
-    name = session.prompt("[Contract Name] > ")
-    version = session.prompt("[Contract Version] > ")
-    author = session.prompt("[Contract Author] > ")
-    email = session.prompt("[Contract Email] > ")
-    description = session.prompt("[Contract Description] > ")
+    name = prompt("[Contract Name] > ")
+    version = prompt("[Contract Version] > ")
+    author = prompt("[Contract Author] > ")
+    email = prompt("[Contract Email] > ")
+    description = prompt("[Contract Description] > ")
 
     print("Creating smart contract....")
     print("                 Name: %s " % name)
@@ -209,31 +187,3 @@ def generate_deploy_script(script, name='test', version='test', author='test', e
     script = sb.ToArray()
 
     return script
-
-
-def ImportMultiSigContractAddr(wallet, args):
-    if len(args) < 4:
-        print("please specify multisig contract like such: 'import multisig_addr {pubkey in wallet} {minimum # of signatures required} {signing pubkey 1} {signing pubkey 2}...'")
-        return
-
-    if wallet is None:
-        print("please open a wallet")
-        return
-
-    pubkey = get_arg(args, 0)
-    m = get_arg(args, 1)
-    publicKeys = args[2:]
-
-    if publicKeys[1]:
-        pubkey_script_hash = Crypto.ToScriptHash(pubkey, unhex=True)
-
-        verification_contract = Contract.CreateMultiSigContract(pubkey_script_hash, int(m), publicKeys)
-
-        address = verification_contract.Address
-
-        wallet.AddContract(verification_contract)
-
-        print("Added multi-sig contract address %s to wallet" % address)
-        return address
-
-    return 'Hello'

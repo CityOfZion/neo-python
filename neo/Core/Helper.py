@@ -155,7 +155,7 @@ class Helper:
         Get a hash of the provided raw bytes using the ripemd160 algorithm.
 
         Args:
-            raw (bytes): byte array of raw bytes. i.e. b'\xAA\xBB\xCC'
+            raw (bytes): byte array of raw bytes. e.g. b'\xAA\xBB\xCC'
 
         Returns:
             UInt160:

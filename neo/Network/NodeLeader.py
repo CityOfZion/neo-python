@@ -63,7 +63,6 @@ class NodeLeader:
     BREQMAX = 10000
 
     KnownHashes = []
-    MissionsGlobal = []
     MemPool = {}
     RelayCache = {}
 
@@ -104,7 +103,10 @@ class NodeLeader:
         self.UnconnectedPeers = []
         self.ADDRS = []
         self.DEAD_ADDRS = []
-        self.MissionsGlobal = []
+        self._MissedBlocks = []
+        self.KnownHashes = []
+        self.MemPool = {}
+        self.RelayCache = {}
         self.NodeId = random.randint(1294967200, 4294967200)
 
     def Restart(self):
@@ -134,13 +136,14 @@ class NodeLeader:
         if settings.ACCEPT_INCOMING_PEERS:
             reactor.listenTCP(settings.NODE_PORT, NeoClientFactory(incoming_client=True))
 
-    def setBlockReqSizeAndMax(self, breqpart=0, breqmax=0):
-        if breqpart > 0 and breqmax > 0 and breqmax > breqpart:
+    def setBlockReqSizeAndMax(self, breqpart=100, breqmax=10000):
+        if breqpart > 0 and breqpart <= 500 and breqmax > 0 and breqmax > breqpart:
             self.BREQPART = breqpart
             self.BREQMAX = breqmax
             logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
+            return True
         else:
-            logger.info("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
+            raise ValueError("invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
 
     def setBlockReqSizeByName(self, name):
         if name.lower() == 'slow':
@@ -154,8 +157,10 @@ class NodeLeader:
             self.BREQMAX = 15000
         else:
             logger.info("configuration name %s not found. use 'slow', 'normal', or 'fast'" % name)
+            return False
 
         logger.info("Set each node to request %s blocks per request with a total of %s in queue" % (self.BREQPART, self.BREQMAX))
+        return True
 
     def RemoteNodePeerReceived(self, host, port, index):
         addr = '%s:%s' % (host, port)
@@ -235,7 +240,6 @@ class NodeLeader:
     def ResetBlockRequestsAndCache(self):
         """Reset the block request counter and its cache."""
         logger.debug("Resetting Block requests")
-        self.MissionsGlobal = []
         BC.Default().BlockSearchTries = 0
         for p in self.Peers:
             p.myblockrequests = set()

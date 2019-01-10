@@ -196,8 +196,14 @@ class JsonRpcApi:
             return acct.ToJson()
 
         elif method == "getassetstate":
-            asset_id = UInt256.ParseString(params[0])
-            asset = Blockchain.Default().GetAssetState(asset_id.ToBytes())
+            asset_str = params[0]
+            if asset_str.lower() == 'neo':
+                assetId = Blockchain.Default().SystemShare().Hash
+            elif asset_str.lower() == 'gas':
+                assetId = Blockchain.Default().SystemCoin().Hash
+            else:
+                assetId = UInt256.ParseString(params[0])
+            asset = Blockchain.Default().GetAssetState(assetId.ToBytes())
             if asset:
                 return asset.ToJson()
             raise JsonRpcError(-100, "Unknown asset")
@@ -586,11 +592,17 @@ class JsonRpcApi:
         standard_contract = self.wallet.GetStandardAddress()
         signer_contract = self.wallet.GetContract(standard_contract)
 
-        tx = self.wallet.MakeTransaction(tx=contract_tx,
-                                         change_address=change_addr,
-                                         fee=fee,
-                                         from_addr=address_from)
+        try:
+            tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                             change_address=change_addr,
+                                             fee=fee,
+                                             from_addr=address_from)
+        except ValueError:
+            # if not enough unspents while fully synced
+            raise JsonRpcError(-300, "Insufficient funds")
+
         if tx is None:
+            # if not enough unspents while not being fully synced
             raise JsonRpcError(-300, "Insufficient funds")
         data = standard_contract.Data
         tx.Attributes = [

@@ -32,7 +32,7 @@ class Message(SerializableMixin):
         Create an instance.
 
         Args:
-            command (str): payload command i.e. "inv", "getdata". See NeoNode.MessageReceived() for more commands.
+            command (str): payload command e.g. "inv", "getdata". See NeoNode.MessageReceived() for more commands.
             payload (bytes): raw bytes of the payload.
             print_payload: UNUSED
         """
