@@ -8,7 +8,7 @@ What does it currently do
 - This project aims to be a full port of the original C# `NEO project <https://github.com/neo-project>`_
 - Run a Python based P2P node
 - Interactive CLI for configuring node and inspecting blockchain
-- Compile, test, deploy and run Smart Contracts written in python or any Smart Contract in the ``.avm format``
+- Compile, test, deploy and run Smart Contracts written in python or any Smart Contract in the ``.avm`` format
 - `NEP2 <https://github.com/neo-project/proposals/blob/master/nep-2.mediawiki>`_ and `NEP5 <https://github.com/neo-project/proposals/blob/master/nep-5.mediawiki>`_ compliant wallet functionality
 - RPC Client
 - RPC server

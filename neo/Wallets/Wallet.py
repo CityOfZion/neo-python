@@ -22,7 +22,7 @@ from neocore.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
 from neocore.KeyPair import KeyPair
-from neo.Wallets.NEP5Token import NEP5Token
+from neo.Wallets import NEP5Token
 from neo.Settings import settings
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
@@ -220,7 +220,7 @@ class Wallet:
         Test if the wallet contains the supplied public key.
 
         Args:
-            public_key (edcsa.Curve.point): a public key to test for its existance. i.e. KeyPair.PublicKey
+            public_key (edcsa.Curve.point): a public key to test for its existance. e.g. KeyPair.PublicKey
 
         Returns:
             bool: True if exists, False otherwise.
@@ -593,7 +593,7 @@ class Wallet:
         """
         total = Fixed8(0)
 
-        if type(asset_id) is NEP5Token:
+        if type(asset_id) is NEP5Token.NEP5Token:
             return self.GetTokenBalance(asset_id, watch_only)
 
         for coin in self.GetCoins():
@@ -749,13 +749,13 @@ class Wallet:
             traceback.print_exc()
             logger.error("could not process %s " % e)
 
-    def Rebuild(self):
+    def Rebuild(self, start_block=0):
         """
         Sets the current height to 0 and now `ProcessBlocks` will start from
         the beginning of the blockchain.
         """
         self._coins = {}
-        self._current_height = 0
+        self._current_height = start_block
 
     def OnProcessNewBlock(self, block, added, changed, deleted):
         # abstract
@@ -1032,7 +1032,8 @@ class Wallet:
                 sum = Fixed8(0)
                 for item in group:
                     sum = sum + item.Value
-                paytotal[key] = sum
+                cur_val = paytotal.get(key, Fixed8.Zero())
+                paytotal[key] = cur_val + sum
         else:
             paytotal = {}
 
@@ -1068,8 +1069,7 @@ class Wallet:
                     return None
 
                 else:
-                    logger.error("insufficient funds for asset id: %s " % key)
-                    return None
+                    raise ValueError(f"insufficient funds for asset id: {key}")
 
         input_sums = {}
 
@@ -1183,7 +1183,8 @@ class Wallet:
 
             contract = self.GetContract(hash)
             if contract is None:
-                logger.info(f"Cannot find key belonging to script_hash {hash}. Make sure the source address you're trying to sign the transaction for is imported in the wallet.")
+                logger.info(
+                    f"Cannot find key belonging to script_hash {hash}. Make sure the source address you're trying to sign the transaction for is imported in the wallet.")
                 continue
 
             key = self.GetKeyByScriptHash(hash)
@@ -1231,7 +1232,7 @@ class Wallet:
                 bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
                 total = self.GetBalance(asset).value / Fixed8.D
                 balances.append((bc_asset.GetName(), total))
-            elif type(asset) is NEP5Token:
+            elif type(asset) is NEP5Token.NEP5Token:
                 balances.append((asset.symbol, self.GetBalance(asset)))
         return balances
 

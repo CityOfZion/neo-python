@@ -42,8 +42,8 @@ class AssetState(StateBase):
             amount (Fixed8):
             available (Fixed8):
             precision (int): number of decimals the asset has.
-            fee_mode (Fixed8):
-            fee (int):
+            fee_mode (int):
+            fee (Fixed8):
             fee_addr (UInt160): where the fee will be send to.
             owner (EllipticCurve.ECPoint):
             admin (UInt160): the administrator of the asset.

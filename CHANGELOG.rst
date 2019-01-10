@@ -19,12 +19,14 @@ All notable changes to this project are documented in this file.
 - Introduce Django inspired component loading for REST and RPC server
 - Remove ``ExtendedJsonRpc`` server from base repo (still available as extension)
 - Allow a raw tx to be build without an active blockchain db in the environment
+- Fix calculation of asset change value when using multiple alternating asset inputs
 - Fix unnecessary default bootstrap warning for mainnet showing.
 - Add GET and OPTIONS request functionality for JSON-RPC servers
 - Fix ``gzip`` failure in current implementation of ExtendedJsonRpcApi
 - Gracefully handle balance query failures of NEP-5 tokens.
 - Fix ``getcontractstate`` JSON output to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_
-- Fix ``getrawtransaction`` JSON output to match neo-cli 2.9.2 `#751 https://github.com/CityOfZion/neo-python/pull/751`_
+- Fix ``getrawtransaction`` JSON output to match neo-cli 2.9.2 `#751 <https://github.com/CityOfZion/neo-python/pull/751>`_
+- Refactor CLI to be more user friendly and support better future extensibility `#805 <https://github.com/CityOfZion/neo-python/pull/805`_
 
 
 [0.8.2] 2018-10-31
