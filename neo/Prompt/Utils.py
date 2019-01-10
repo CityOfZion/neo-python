@@ -139,6 +139,15 @@ def get_change_addr(params):
     return params, change_addr
 
 
+def get_to_addr(params):
+    to_addr = None
+    for item in params:
+        if '--to-addr' in item:
+            params.remove(item)
+            to_addr = item.replace('--to-addr=', '')
+    return params, to_addr
+
+
 def get_fee(params):
     fee = None
     for item in params:

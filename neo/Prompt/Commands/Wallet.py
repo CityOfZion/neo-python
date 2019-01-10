@@ -196,16 +196,19 @@ class CommandWalletClaimGas(CommandBase):
 
     def execute(self, arguments):
         from_addr_str = None
+        to_addr_str = None
 
         args = arguments
         if args:
             args, from_addr_str = PromptUtils.get_from_addr(args)
+            args, to_addr_str = PromptUtils.get_to_addr(args)
 
-        return ClaimGas(PromptData.Wallet, True, from_addr_str)
+        return ClaimGas(PromptData.Wallet, True, from_addr_str, to_addr_str)
 
     def command_desc(self):
         p1 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
-        return CommandDesc('claim', 'claim gas', params=[p1])
+        p2 = ParameterDesc('--to-addr', 'destination address for claimed gas (if not specified, use the default change address; or, use the from address, if specified)', optional=True)
+        return CommandDesc('claim', 'claim gas', params=[p1, p2])
 
 
 class CommandWalletRebuild(CommandBase):
@@ -272,7 +275,7 @@ class CommandWalletUnspent(CommandBase):
 #########################################################################
 
 
-def ClaimGas(wallet, require_password=True, from_addr_str=None):
+def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None):
     """
     Args:
         wallet:
@@ -316,6 +319,9 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None):
         standard_contract = wallet.GetStandardAddress()
         claim_tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                                     data=standard_contract.Data)]
+
+    if to_addr_str:
+        script_hash = wallet.ToScriptHash(to_addr_str)
 
     claim_tx.outputs = [
         TransactionOutput(AssetId=Blockchain.SystemCoin().Hash, Value=available_bonus, script_hash=script_hash)

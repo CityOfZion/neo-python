@@ -260,12 +260,15 @@ class UserWalletTestCase(UserWalletTestCaseBase):
             self.assertEqual(claim_tx, None)
             self.assertFalse(relayed)
 
-        # test successfull
+        # test successful
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
             args = ['claim']
             claim_tx, relayed = CommandWallet().execute(args)
             self.assertIsInstance(claim_tx, ClaimTransaction)
             self.assertTrue(relayed)
+
+            json_tx = claim_tx.ToJson()
+            self.assertEqual(json_tx['vout'][0]['address'], self.wallet_1_addr)
 
         # test nothing to claim anymore
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
@@ -279,13 +282,39 @@ class UserWalletTestCase(UserWalletTestCaseBase):
 
         # test with --from-addr
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
-            args = ['claim', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']
+            args = ['claim', '--from-addr=' + self.wallet_1_addr]
             claim_tx, relayed = CommandWallet().execute(args)
             self.assertIsInstance(claim_tx, ClaimTransaction)
             self.assertTrue(relayed)
 
             json_tx = claim_tx.ToJson()
-            self.assertEqual(json_tx['vout'][0]['address'], 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3')
+            self.assertEqual(json_tx['vout'][0]['address'], self.wallet_1_addr)
+
+    def test_wallet_claim_3(self):
+        self.OpenWallet1()
+
+        # test with --to-addr
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
+            args = ['claim', '--to-addr=' + self.watch_addr_str]
+            claim_tx, relayed = CommandWallet().execute(args)
+            self.assertIsInstance(claim_tx, ClaimTransaction)
+            self.assertTrue(relayed)
+
+            json_tx = claim_tx.ToJson()
+            self.assertEqual(json_tx['vout'][0]['address'], self.watch_addr_str)  # note how the --to-addr supercedes the default change address
+
+    def test_wallet_claim_4(self):
+        self.OpenWallet2()
+
+        # test with --from-addr and --to-addr
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
+            args = ['claim', '--from-addr=' + self.wallet_1_addr, '--to-addr=' + self.wallet_2_addr]
+            claim_tx, relayed = CommandWallet().execute(args)
+            self.assertIsInstance(claim_tx, ClaimTransaction)
+            self.assertTrue(relayed)
+
+            json_tx = claim_tx.ToJson()
+            self.assertEqual(json_tx['vout'][0]['address'], self.wallet_2_addr)  # note how the --to-addr also supercedes the from address if both are specified
 
     def test_wallet_rebuild(self):
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
