@@ -27,7 +27,7 @@ All notable changes to this project are documented in this file.
 - Fix ``getcontractstate`` JSON output to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_
 - Fix ``getrawtransaction`` JSON output to match neo-cli 2.9.2 `#751 <https://github.com/CityOfZion/neo-python/pull/751>`_
 - Refactor CLI to be more user friendly and support better future extensibility `#805 <https://github.com/CityOfZion/neo-python/pull/805`_
-
+- Update TestNet seeds
 
 [0.8.2] 2018-10-31
 -------------------
