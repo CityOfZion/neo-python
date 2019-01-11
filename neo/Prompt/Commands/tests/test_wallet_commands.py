@@ -295,6 +295,15 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                 self.assertFalse(relayed)
                 self.assertIn("Not correct Address, wrong length.", mock_print.getvalue())
 
+        # test with invalid --from-addr
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
+                args = ['claim', '--from-addr=VJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3']  # address does not start with 'A'
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertEqual(claim_tx, None)
+                self.assertFalse(relayed)
+                self.assertIn("Address format error", mock_print.getvalue())
+
         # successful test with --from-addr
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
             args = ['claim', '--from-addr=' + self.wallet_1_addr]
@@ -311,11 +320,20 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         # test with bad --to-addr
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
-                args = ['claim', '--to-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEn']  # bad address
+                args = ['claim', '--to-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEn']  # bad address checksum
                 claim_tx, relayed = CommandWallet().execute(args)
                 self.assertEqual(claim_tx, None)
                 self.assertFalse(relayed)
                 self.assertIn("Address format error", mock_print.getvalue())
+
+        # test with an invalid --to-addr
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
+                args = ['claim', '--to-addr=blah']  # completely wrong address format
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertEqual(claim_tx, None)
+                self.assertFalse(relayed)
+                self.assertIn("Not correct Address, wrong length", mock_print.getvalue())
 
         # test with --to-addr
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
