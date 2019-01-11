@@ -207,7 +207,7 @@ class CommandWalletClaimGas(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
-        p2 = ParameterDesc('--to-addr', 'destination address for claimed gas (if not specified, use the default change address; or, use the from address, if specified)', optional=True)
+        p2 = ParameterDesc('--to-addr', 'destination address for claimed gas (if not specified, take first address in wallet; or, use the from address, if specified)', optional=True)
         return CommandDesc('claim', 'claim gas', params=[p1, p2])
 
 
@@ -294,7 +294,7 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None
 
     unclaimed_count = len(unclaimed_coins)
     if unclaimed_count == 0:
-        print("no claims to process")
+        print("No claims to process")
         return None, False
 
     unclaimed_coin_refs = [coin.Reference for coin in unclaimed_coins]
@@ -315,13 +315,21 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None
     # the following can be used to claim gas that is in an imported contract_addr
     # example, wallet claim --from-addr={smart contract addr}
     if from_addr_str:
-        script_hash = wallet.ToScriptHash(from_addr_str)
+        script_hash = None
+        script_hash = PromptUtils.lookup_addr_str(wallet, from_addr_str)
+        if script_hash is None:
+            logger.debug("invalid source address")
+            return None, False
         standard_contract = wallet.GetStandardAddress()
         claim_tx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                                     data=standard_contract.Data)]
 
     if to_addr_str:
-        script_hash = wallet.ToScriptHash(to_addr_str)
+        script_hash = None
+        script_hash = PromptUtils.lookup_addr_str(wallet, to_addr_str)
+        if script_hash is None:
+            logger.debug("invalid destination address")
+            return None, False
 
     claim_tx.outputs = [
         TransactionOutput(AssetId=Blockchain.SystemCoin().Hash, Value=available_bonus, script_hash=script_hash)
@@ -340,7 +348,7 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None
         passwd = prompt("[Password]> ", is_password=True)
 
         if not wallet.ValidatePassword(passwd):
-            print("incorrect password")
+            print("Incorrect password")
             return None, False
 
     if context.Completed:

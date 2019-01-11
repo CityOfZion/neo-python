@@ -247,18 +247,22 @@ class UserWalletTestCase(UserWalletTestCaseBase):
 
     def test_wallet_claim_1(self):
         # test with no wallet
-        args = ['claim']
-        res = CommandWallet().execute(args)
-        self.assertFalse(res)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['claim']
+            res = CommandWallet().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please open a wallet", mock_print.getvalue())
 
         self.OpenWallet1()
 
         # test wrong password
-        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["wrong"]):
-            args = ['claim']
-            claim_tx, relayed = CommandWallet().execute(args)
-            self.assertEqual(claim_tx, None)
-            self.assertFalse(relayed)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["wrong"]):
+                args = ['claim']
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertEqual(claim_tx, None)
+                self.assertFalse(relayed)
+                self.assertIn("Incorrect password", mock_print.getvalue())
 
         # test successful
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
@@ -271,16 +275,27 @@ class UserWalletTestCase(UserWalletTestCaseBase):
             self.assertEqual(json_tx['vout'][0]['address'], self.wallet_1_addr)
 
         # test nothing to claim anymore
-        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
-            args = ['claim']
-            claim_tx, relayed = CommandWallet().execute(args)
-            self.assertEqual(claim_tx, None)
-            self.assertFalse(relayed)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
+                args = ['claim']
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertEqual(claim_tx, None)
+                self.assertFalse(relayed)
+                self.assertIn("No claims to process", mock_print.getvalue())
 
     def test_wallet_claim_2(self):
         self.OpenWallet2()
 
-        # test with --from-addr
+        # test with bad --from-addr
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
+                args = ['claim', '--from-addr=AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc']  # address is too short
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertEqual(claim_tx, None)
+                self.assertFalse(relayed)
+                self.assertIn("Not correct Address, wrong length.", mock_print.getvalue())
+
+        # successful test with --from-addr
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
             args = ['claim', '--from-addr=' + self.wallet_1_addr]
             claim_tx, relayed = CommandWallet().execute(args)
@@ -292,6 +307,15 @@ class UserWalletTestCase(UserWalletTestCaseBase):
 
     def test_wallet_claim_3(self):
         self.OpenWallet1()
+
+        # test with bad --to-addr
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
+                args = ['claim', '--to-addr=AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEn']  # bad address
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertEqual(claim_tx, None)
+                self.assertFalse(relayed)
+                self.assertIn("Address format error", mock_print.getvalue())
 
         # test with --to-addr
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
