@@ -9,6 +9,7 @@ from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet import reactor, task
 from neo.logging import log_manager
+from neo.Network.utils import is_ip_address, hostname_to_ip
 
 logger = log_manager.getLogger('network')
 
@@ -124,6 +125,8 @@ class NodeLeader:
         start_delay = 0
         for bootstrap in settings.SEED_LIST:
             host, port = bootstrap.split(":")
+            if not is_ip_address(host):
+                host = hostname_to_ip(host)
             setupConnDeferred = task.deferLater(reactor, start_delay, self.SetupConnection, host, port)
             setupConnDeferred.addErrback(self.onSetupConnectionErr)
             start_delay += 1
