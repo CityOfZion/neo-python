@@ -29,7 +29,9 @@ All notable changes to this project are documented in this file.
 - Refactor CLI to be more user friendly and support better future extensibility `#805 <https://github.com/CityOfZion/neo-python/pull/805>`_
 - Update TestNet seeds
 - Add ``--to-addr`` option when claiming gas `#755 <https://github.com/CityOfZion/neo-python/issues/755>`_
+- Resolve peewee DeprecationWarning `#810 <https://github.com/CityOfZion/neo-python/pull/810>`_
 - Add Reset logic to NodeLeader such that Blockchain fixture testcases reset properly `#809 <https://github.com/CityOfZion/neo-python/pull/809>`_
+
 
 [0.8.2] 2018-10-31
 -------------------
