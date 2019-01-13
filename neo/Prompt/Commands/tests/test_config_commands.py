@@ -127,8 +127,8 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
 
         # test updating block request size
         # first make sure we have a predictable state
+        NodeLeader.Instance().Reset()
         leader = NodeLeader.Instance()
-        old_leader = deepcopy(leader)
         leader.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
         leader.DEAD_ADDRS = ["127.0.0.1:20335"]
 
@@ -171,9 +171,6 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         args = ['node-requests', '600', '5000']
         res = CommandConfig().execute(args)
         self.assertFalse(res)
-
-        # restore whatever state the instance was in
-        NodeLeader._LEAD = old_leader
 
     def test_config_maxpeers(self):
         # test no input and verify output confirming current maxpeers

@@ -141,8 +141,8 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
 
         # query nodes with connected peers
         # first make sure we have a predictable state
+        NodeLeader.Instance().Reset()
         leader = NodeLeader.Instance()
-        old_leader = deepcopy(leader)
         leader.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
         leader.DEAD_ADDRS = ["127.0.0.1:20335"]
         test_node = NeoNode()
@@ -164,9 +164,6 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
             self.assertTrue(res)
             self.assertIn('Total Connected: 1', res)
             self.assertIn('Peer test name - IO:', res)
-
-        # restore whatever state the instance was in
-        NodeLeader._LEAD = old_leader
 
     def test_show_state(self):
         # setup
