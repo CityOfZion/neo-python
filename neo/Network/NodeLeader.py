@@ -410,3 +410,44 @@ class NodeLeader:
             res = self.RemoveTransaction(tx)
             if res:
                 logger.debug("found tx 0x%s on the blockchain ...removed from mempool" % tx.Hash)
+
+    @staticmethod
+    def Reset():
+        NodeLeader._LEAD = None
+
+        NodeLeader.Peers = []
+
+        NodeLeader.KNOWN_ADDRS = []
+        NodeLeader.DEAD_ADDRS = []
+
+        NodeLeader.NodeId = None
+
+        NodeLeader._MissedBlocks = []
+
+        NodeLeader.BREQPART = 100
+        NodeLeader.BREQMAX = 10000
+
+        NodeLeader.KnownHashes = []
+        NodeLeader.MissionsGlobal = []
+        NodeLeader.MemPool = {}
+        NodeLeader.RelayCache = {}
+
+        NodeLeader.NodeCount = 0
+
+        NodeLeader.CurrentBlockheight = 0
+
+        NodeLeader.ServiceEnabled = False
+
+        NodeLeader.peer_check_loop = None
+        NodeLeader.peer_check_loop_deferred = None
+
+        NodeLeader.check_bcr_loop = None
+        NodeLeader.check_bcr_loop_deferred = None
+
+        NodeLeader.memcheck_loop = None
+        NodeLeader.memcheck_loop_deferred = None
+
+        NodeLeader.blockheight_loop = None
+        NodeLeader.blockheight_loop_deferred = None
+
+        NodeLeader.task_handles = {}
