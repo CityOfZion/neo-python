@@ -222,7 +222,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(-2146233033, res['error']['code'])
         self.assertEqual('One of the identified items was in an invalid format.', res['error']['message'])
 
-    def test_get_asset_state(self):
+    def test_get_asset_state_hash(self):
         asset_str = '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
         req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
@@ -230,6 +230,24 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['assetId'], '0x%s' % asset_str)
         self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
         self.assertEqual(res['result']['available'], 0)
+
+    def test_get_asset_state_neo(self):
+        asset_str = 'neo'
+        req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['assetId'], '0x%s' % str(GetBlockchain().SystemShare().Hash))
+        self.assertEqual(res['result']['admin'], 'Abf2qMs1pzQb8kYk9RuxtUb9jtRKJVuBJt')
+        self.assertEqual(res['result']['available'], 10000000000000000)
+
+    def test_get_asset_state_gas(self):
+        asset_str = 'GAS'
+        req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['assetId'], '0x%s' % str(GetBlockchain().SystemCoin().Hash))
+        self.assertEqual(res['result']['amount'], 10000000000000000)
+        self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
 
     def test_get_asset_state_0x(self):
         asset_str = '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
@@ -341,9 +359,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['code_version'], '')
         self.assertEqual(res['result']['properties']['storage'], True)
-        self.assertEqual(res['result']['code']['hash'], '0xb9fbcff6e50fd381160b822207231233dd3c56c2')
-        self.assertEqual(res['result']['code']['returntype'], 5)
-        self.assertEqual(res['result']['code']['parameters'], '0710')
+        self.assertEqual(res['result']['hash'], '0xb9fbcff6e50fd381160b822207231233dd3c56c2')
+        self.assertEqual(res['result']['returntype'], "ByteArray")
+        self.assertEqual(res['result']['parameters'], ["String", "Array"])
 
     def test_get_contract_state_0x(self):
         contract_hash = "0xb9fbcff6e50fd381160b822207231233dd3c56c2"
@@ -569,7 +587,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_getpeers(self):
         # Given this is an isolated environment and there is no peers
-        # lets simulate that at least some addresses are known
+        # let's simulate that at least some addresses are known
         node = NodeLeader.Instance()
         node.KNOWN_ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
         node.DEAD_ADDRS = ["127.0.0.1:20335"]

@@ -340,6 +340,12 @@ class LevelDBBlockchain(Blockchain):
         assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState)
         keys = assets.Keys
 
+        if query.lower() == "neo":
+            query = "AntShare"
+
+        if query.lower() in {"gas", "neogas"}:
+            query = "AntCoin"
+
         for item in keys:
             asset = assets.TryGet(keyval=item)
             if query in asset.Name.decode('utf-8'):
@@ -364,6 +370,12 @@ class LevelDBBlockchain(Blockchain):
         asset = assets.TryGet(assetId)
 
         return asset
+
+    def ShowAllAssets(self):
+
+        assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState)
+        keys = assets.Keys
+        return keys
 
     def GetTransaction(self, hash):
 
@@ -483,7 +495,7 @@ class LevelDBBlockchain(Blockchain):
             height(int): height of the block to retrieve hash from.
 
         Returns:
-            bytes: a non-raw block hash (i.e. b'6dd83ed8a3fc02e322f91f30431bf3662a8c8e8ebe976c3565f0d21c70620991', but not b'\x6d\xd8...etc'
+            bytes: a non-raw block hash (e.g. b'6dd83ed8a3fc02e322f91f30431bf3662a8c8e8ebe976c3565f0d21c70620991', but not b'\x6d\xd8...etc'
         """
         if self._current_block_height < height:
             return

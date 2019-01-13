@@ -191,7 +191,12 @@ def main():
         settings.setup_coznet()
 
     if args.maxpeers:
-        settings.set_max_peers(args.maxpeers)
+        try:
+            settings.set_max_peers(args.maxpeers)
+            print("Maxpeers set to ", args.maxpeers)
+        except ValueError:
+            print("Please supply a positive integer for maxpeers")
+            return  
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
