@@ -259,12 +259,15 @@ class ApplicationEngine(ExecutionEngine):
         if opcode <= PUSH16:
             size += 1
         else:
-            if opcode in [OpCode.JMPIF, OpCode.JMPIFNOT, OpCode.DROP, OpCode.NIP, OpCode.EQUAL, OpCode.BOOLAND, OpCode.BOOLOR, OpCode.CHECKMULTISIG, OpCode.REVERSE, OpCode.HASKEY, OpCode.THROWIFNOT]:
+            if opcode in [OpCode.JMPIF, OpCode.JMPIFNOT, OpCode.DROP, OpCode.NIP, OpCode.EQUAL, OpCode.BOOLAND, OpCode.BOOLOR, OpCode.CHECKMULTISIG,
+                          OpCode.REVERSE, OpCode.HASKEY, OpCode.THROWIFNOT]:
                 size -= 1
                 self._is_stackitem_count_strict = False
-            elif opcode in [OpCode.XSWAP, OpCode.ROLL, OpCode.CAT, OpCode.LEFT, OpCode.RIGHT, OpCode.AND, OpCode.OR, OpCode.XOR, OpCode.ADD, OpCode.SUB, OpCode.MUL, OpCode.DIV, OpCode.SHL, OpCode.SHR, OpCode.NUMEQUAL, OpCode.NUMNOTEQUAL, OpCode.LT, OpCode.GT, OpCode.LTE, OpCode.GTE, OpCode.MIN, OpCode.MAX, OpCode.CHECKSIG, OpCode.CALL_ED, OpCode.CALL_EDT]:
+            elif opcode in [OpCode.XSWAP, OpCode.ROLL, OpCode.CAT, OpCode.LEFT, OpCode.RIGHT, OpCode.AND, OpCode.OR, OpCode.XOR, OpCode.ADD, OpCode.SUB,
+                            OpCode.MUL, OpCode.DIV, OpCode.SHL, OpCode.SHR, OpCode.NUMEQUAL, OpCode.NUMNOTEQUAL, OpCode.LT, OpCode.GT, OpCode.LTE, OpCode.GTE,
+                            OpCode.MIN, OpCode.MAX, OpCode.CHECKSIG, OpCode.CALL_ED, OpCode.CALL_EDT]:
                 size -= 1
-            elif opcode in [OpCode.APPCALL, OpCode.TAILCALL, OpCode.NOT, OpCode.ARRAYSIZE]:
+            elif opcode in [OpCode.RET, OpCode.APPCALL, OpCode.TAILCALL, OpCode.NOT, OpCode.ARRAYSIZE]:
                 self._is_stackitem_count_strict = False
             elif opcode in [OpCode.SYSCALL, OpCode.PICKITEM, OpCode.SETITEM, OpCode.APPEND, OpCode.VALUES]:
                 size = sys.maxsize
@@ -425,11 +428,9 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = self.CurrentContext.NextInstruction
 
-        if opcode <= PUSH16:
+        if opcode <= NOP:
             return 0
 
-        if opcode == NOP:
-            return 0
         elif opcode in [APPCALL, TAILCALL]:
             return 10
         elif opcode == SYSCALL:
