@@ -4,7 +4,7 @@ astor==0.7.1
 attrs==18.2.0
 Automat==0.7.0
 autopep8==1.4
-base58==1.0.2
+base58==1.0.3
 bitcoin==1.1.42
 blessings==1.7
 bpython==0.17.1
