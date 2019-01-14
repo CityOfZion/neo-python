@@ -163,8 +163,8 @@ class CommandShowNodes(CommandBase):
     def execute(self, arguments=None):
         if len(NodeLeader.Instance().Peers) > 0:
             out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
-            for peer in NodeLeader.Instance().Peers:
-                out += "Peer %s - IO: %s\n" % (peer.Name(), peer.IOStats())
+            for i, peer in enumerate(NodeLeader.Instance().Peers):
+                out += f"Peer {i} {peer.Name():>12} - {peer.Address:>21} - IO {peer.IOStats()}\n"
             print(out)
             return out
         else:

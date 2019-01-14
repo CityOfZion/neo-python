@@ -5,35 +5,40 @@ All notable changes to this project are documented in this file.
 
 [0.8.3-dev] in progress
 -----------------------
-- Update ``getassetstate`` RPC method;  add ``showallassets`` LevelDBBlockchain function; update prompt.py ``help``, ``show_asset_state``, and ``show_contract_state``
-- Disallow ``Void`` type input parameters for smart contracts and increase test coverage
+- Update ``getassetstate`` RPC method to support `neo` and `gas` aliases; Cleanup ``show_contract_state`` `#667 <https://github.com/CityOfZion/neo-python/pull/667>`_
+- Add fix to ensure tx is saved to wallet when sent using RPC `#680 <https://github.com/CityOfZion/neo-python/pull/680>`_
+- Disallow ``Void`` type input parameters for smart contracts and increase test coverage `#690 <https://github.com/CityOfZion/neo-python/pull/690>`_
 - Fix confirmed tx not being purged from mempool `#703 <https://github.com/CityOfZion/neo-python/issues/703>`_
-- Fix bootstrap thread joining failure on Ubuntu systems
-- Make bootstrap lookup dynamic such that users don't have to update their configs from here on forward
-- Fix various issues related to signing multi-signature transactions
-- Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default
-- Empty VerificationScripts for deployed contracts now work as intended
+- Fix bootstrap thread joining failure on Ubuntu systems `#705 <https://github.com/CityOfZion/neo-python/pull/705>`_
+- Make bootstrap lookup dynamic such that users don't have to update their configs from here on forward `#705 <https://github.com/CityOfZion/neo-python/pull/705>`_
+- Move some warnings and 'expected' errors to `DEBUG` level to avoid logging to console by default `#708 <https://github.com/CityOfZion/neo-python/pull/708>`_
+- Empty VerificationScripts for deployed contracts now work as intended `#709 <https://github.com/CityOfZion/neo-python/pull/709>`_
+- Fix various issues related to signing multi-signature transactions `#710 <https://github.com/CityOfZion/neo-python/pull/710>`_
+- Add GET and OPTIONS request functionality for JSON-RPC servers `#712 <https://github.com/CityOfZion/neo-python/pull/712>`_
 - Fix RPC's ``getaccountstate`` response schema to match ``neo-cli`` `#714 <https://github.com/CityOfZion/neo-python/issues/714>`_
-- Add fix to ensure tx is saved to wallet when sent using RPC
 - Add bad peers to the ``getpeers`` RPC method `#715 <https://github.com/CityOfZion/neo-python/pull/715>`_
-- Introduce Django inspired component loading for REST and RPC server
-- Remove ``ExtendedJsonRpc`` server from base repo (still available as extension)
-- Allow a raw tx to be build without an active blockchain db in the environment
-- Fix calculation of asset change value when using multiple alternating asset inputs
-- Fix unnecessary default bootstrap warning for mainnet showing.
-- Add GET and OPTIONS request functionality for JSON-RPC servers
-- Fix ``gzip`` failure in current implementation of ExtendedJsonRpcApi
-- Gracefully handle balance query failures of NEP-5 tokens.
+- Allow a raw tx to be build without an active blockchain db in the environment `#718 <https://github.com/CityOfZion/neo-python/pull/718>`_
+- Introduce Django inspired component loading for REST and RPC server `#719 <https://github.com/CityOfZion/neo-python/pull/719>`_
+- Fix unnecessary default bootstrap warning for mainnet showing. `#722 <https://github.com/CityOfZion/neo-python/pull/722>`_
+- Various updates to the network code to improve stability as well as inspection `#723 <https://github.com/CityOfZion/neo-python/pull/723/>`_
+   - Added peer health checking to validate that we get the data we requested within a given time threshold
+   - Added peer connection monitoring to keep queueing or reset if we have no more valid addresses to connect to.
+   - Added extensive logging to improve inspection
+- Fix ``gzip`` failure in current implementation of ExtendedJsonRpcApi `#724 <https://github.com/CityOfZion/neo-python/pull/724>`_
+- Gracefully handle balance query failures of NEP-5 tokens. `#744 <https://github.com/CityOfZion/neo-python/pull/744>`_
 - Fix ``getcontractstate`` JSON output to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_
 - Fix ``getrawtransaction`` JSON output to match neo-cli 2.9.2 `#751 <https://github.com/CityOfZion/neo-python/pull/751>`_
-- Refactor CLI to be more user friendly and support better future extensibility `#805 <https://github.com/CityOfZion/neo-python/pull/805>`_
-- Update TestNet seeds
 - Add ``--to-addr`` option when claiming gas `#755 <https://github.com/CityOfZion/neo-python/issues/755>`_
-- Various updates to the network code to improve stability as well as inspection
-   - Added peer health checking to validate that we get the data we requested within a given threshold
-   - Added peer connection monitoring to keep queueing or reset if we have no more valid addresses to connect to.
-   - Changed some non-thread safe code to be thread safe
-   - Added extensive logging to improve inspection
+- Remove ``ExtendedJsonRpc`` server from base repo (still available as extension) `#756 <https://github.com/CityOfZion/neo-python/pull/756>`_
+- Fix calculation of asset change value when using multiple alternating asset inputs `#803 <https://github.com/CityOfZion/neo-python/pull/803>`_
+- Refactor CLI to be more user friendly and support better future extensibility `#805 <https://github.com/CityOfZion/neo-python/pull/805>`_
+- Update TestNet seeds `#807 <https://github.com/CityOfZion/neo-python/pull/807>`_
+- Add Reset logic to NodeLeader such that Blockchain fixture testcases reset properly `#809 <https://github.com/CityOfZion/neo-python/pull/809>`_
+- Resolve peewee DeprecationWarning `#810 <https://github.com/CityOfZion/neo-python/pull/810>`_
+- Add VM SafeReadBytes `#812 <https://github.com/CityOfZion/neo-python/pull/812>`_
+- Add gettransactionheight RPC method `#813 <https://github.com/CityOfZion/neo-python/pull/813>`_
+- Update ``ApplicationEngine`` methods ``CheckStackSize`` and ``GetPrice`` `#814 <https://github.com/CityOfZion/neo-python/pull/814/>`_
+- Cleanup ``show nodes`` output `#815 <https://github.com/CityOfZion/neo-python/pull/815>`_
 
 
 [0.8.2] 2018-10-31

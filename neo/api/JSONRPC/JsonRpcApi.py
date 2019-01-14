@@ -271,6 +271,19 @@ class JsonRpcApi:
                 return storage_item.Value.hex()
             return None
 
+        elif method == "gettransactionheight":
+            try:
+                hash = UInt256.ParseString(params[0])
+            except Exception:
+                # throws exception, not anything more specific
+                raise JsonRpcError(-100, "Unknown transaction")
+
+            tx, height = Blockchain.Default().GetTransaction(hash)
+            if tx:
+                return height
+            else:
+                raise JsonRpcError(-100, "Unknown transaction")
+
         elif method == "gettxout":
             hash = params[0].encode('utf-8')
             index = params[1]

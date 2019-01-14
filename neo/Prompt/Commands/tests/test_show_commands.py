@@ -156,14 +156,17 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
             res = CommandShow().execute(args)
             self.assertTrue(res)
             self.assertIn('Total Connected: 1', res)
-            self.assertIn('Peer test name - IO:', res)
+            self.assertIn('Peer 0', res)
 
             # now use "node"
             args = ['node']
             res = CommandShow().execute(args)
             self.assertTrue(res)
             self.assertIn('Total Connected: 1', res)
-            self.assertIn('Peer test name - IO:', res)
+            self.assertIn('Peer 0', res)
+
+        # restore whatever state the instance was in
+        NodeLeader._LEAD = old_leader
 
     def test_show_state(self):
         # setup

@@ -1693,3 +1693,26 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         blockheader = Helper.AsSerializableWithType(output, 'neo.Core.Header.Header')
         self.assertEqual(blockheader.Index, 11)
         self.assertEqual(str(blockheader.Hash), GetBlockchain().GetBlockHash(11).decode('utf8'))
+
+    def test_gettransactionheight(self):
+        txid = 'f999c36145a41306c846ea80290416143e8e856559818065be3f4e143c60e43a'
+        req = self._gen_post_rpc_req("gettransactionheight", params=[txid])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(9448, res['result'])
+
+    def test_gettransactionheight_invalid_hash(self):
+        txid = 'invalid_tx_id'
+        req = self._gen_post_rpc_req("gettransactionheight", params=[txid])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown transaction')
+
+    def test_gettransactionheight_invalid_hash2(self):
+        txid = 'a' * 64  # something the right length but unknown
+        req = self._gen_post_rpc_req("gettransactionheight", params=[txid])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown transaction')
