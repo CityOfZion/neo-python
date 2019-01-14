@@ -89,7 +89,9 @@ class NeoNode(Protocol):
         Returns:
             str:
         """
-        return self.transport.getPeer()
+        if self.Version:
+            name = self.Version.UserAgent
+        return name
 
     def GetNetworkAddressWithTime(self):
         """
@@ -113,7 +115,7 @@ class NeoNode(Protocol):
         biM = self.bytes_in / 1000000  # megabyes
         boM = self.bytes_out / 1000000
 
-        return "%s MB in / %s MB out" % (biM, boM)
+        return f"{biM:>10} MB in / {boM:>10} MB out"
 
     def connectionMade(self):
         """Callback handler from twisted when establishing a new connection."""
@@ -351,7 +353,8 @@ class NeoNode(Protocol):
 
             hashstart += 1
 
-        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
+        self.Log("asked for more blocks ... %s thru %s (%s blocks) stale count %s BCRLen: %s " % (
+            first, hashstart, len(hashes), BC.Default().BlockSearchTries, len(BC.Default().BlockRequests)))
 
         if len(hashes) > 0:
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
