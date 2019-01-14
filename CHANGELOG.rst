@@ -32,6 +32,7 @@ All notable changes to this project are documented in this file.
 - Add Reset logic to NodeLeader such that Blockchain fixture testcases reset properly `#809 <https://github.com/CityOfZion/neo-python/pull/809>`_
 - Resolve peewee DeprecationWarning `#810 <https://github.com/CityOfZion/neo-python/pull/810>`_
 - Add VM SafeReadBytes `#812 <https://github.com/CityOfZion/neo-python/pull/812>`_
+- Add gettransactionheight RPC method `#813 <https://github.com/CityOfZion/neo-python/pull/813>`_
 - Update ``ApplicationEngine`` methods ``CheckStackSize`` and ``GetPrice`` `#814 <https://github.com/CityOfZion/neo-python/pull/814/>`_
 
 
