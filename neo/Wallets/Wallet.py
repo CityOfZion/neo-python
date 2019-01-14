@@ -1025,7 +1025,7 @@ class Wallet:
         if not tx.inputs:
             tx.inputs = []
 
-        fee = fee + (tx.SystemFee() * Fixed8.FD())
+        fee = fee + tx.SystemFee()
 
         #        pdb.set_trace()
 

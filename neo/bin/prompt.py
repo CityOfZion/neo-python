@@ -97,8 +97,8 @@ class PromptInterface:
         out = []
         try:
             return "[%s] Progress: %s/%s" % (settings.net_name,
-                                             str(Blockchain.Default().Height + 1),
-                                             str(Blockchain.Default().HeaderHeight + 1))
+                                             str(Blockchain.Default().Height),
+                                             str(Blockchain.Default().HeaderHeight))
         except Exception as e:
             pass
 
