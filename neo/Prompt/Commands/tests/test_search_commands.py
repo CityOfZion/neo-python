@@ -4,21 +4,9 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Prompt.Commands.Search import CommandSearch
 from mock import patch
 from io import StringIO
-from neo.Prompt.PromptPrinter import pp
 
 
 class CommandShowTestCase(BlockchainFixtureTestCase):
-
-    # @classmethod
-    # def setUpClass(cls):
-    #     super().setUpClass()
-    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily
-    #     pp.printer = print
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     super().tearDownClass()
-    #     pp.reset_printer()
 
     @classmethod
     def leveldb_testpath(self):

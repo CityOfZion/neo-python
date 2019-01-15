@@ -35,17 +35,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     token_hash_str = '31730cc9a1844891a3bafd1aa929a4142860d8d3'
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     super().setUpClass()
-    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily
-    #     pp.printer = print
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     super().tearDownClass()
-    #     pp.reset_printer()
-
     @property
     def GAS(self):
         return Blockchain.Default().SystemCoin().Hash

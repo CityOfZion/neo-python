@@ -29,17 +29,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
     _wallet3 = None
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     super().setUpClass()
-    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily
-    #     pp.printer = print
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     super().tearDownClass()
-    #     pp.reset_printer()
-
     @property
     def GAS(self):
         return Blockchain.Default().SystemCoin().Hash
