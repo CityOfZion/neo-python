@@ -20,6 +20,10 @@ All notable changes to this project are documented in this file.
 - Allow a raw tx to be build without an active blockchain db in the environment `#718 <https://github.com/CityOfZion/neo-python/pull/718>`_
 - Introduce Django inspired component loading for REST and RPC server `#719 <https://github.com/CityOfZion/neo-python/pull/719>`_
 - Fix unnecessary default bootstrap warning for mainnet showing. `#722 <https://github.com/CityOfZion/neo-python/pull/722>`_
+- Various updates to the network code to improve stability as well as inspection `#723 <https://github.com/CityOfZion/neo-python/pull/723/>`_
+   - Added peer health checking to validate that we get the data we requested within a given time threshold
+   - Added peer connection monitoring to keep queueing or reset if we have no more valid addresses to connect to.
+   - Added extensive logging to improve inspection
 - Fix ``gzip`` failure in current implementation of ExtendedJsonRpcApi `#724 <https://github.com/CityOfZion/neo-python/pull/724>`_
 - Gracefully handle balance query failures of NEP-5 tokens. `#744 <https://github.com/CityOfZion/neo-python/pull/744>`_
 - Fix ``getcontractstate`` JSON output to match neo-cli 2.9.2 `#746 <https://github.com/CityOfZion/neo-python/issues/746>`_

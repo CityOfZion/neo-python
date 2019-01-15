@@ -461,7 +461,7 @@ class JsonRpcApi:
 
         # "UnconnectedPeers" is never used. So a check is needed to
         # verify that a given address:port does not belong to a connected peer
-        for addr in node.ADDRS:
+        for addr in node.KNOWN_ADDRS:
             host, port = addr.rsplit(':', 1)
             if addr not in connected_peers:
                 result['unconnected'].append({"address": host,

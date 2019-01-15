@@ -129,6 +129,8 @@ class PromptInterface:
         print('Shutting down. This may take a bit...')
         self.go_on = False
         PromptData.close_wallet()
+        Blockchain.Default().Dispose()
+        NodeLeader.Instance().Shutdown()
         reactor.stop()
 
     def help(self):

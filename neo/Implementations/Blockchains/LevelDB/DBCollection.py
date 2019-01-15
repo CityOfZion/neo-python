@@ -69,9 +69,15 @@ class DBCollection:
         for keyval in self.Changed:
             item = self.Collection[keyval]
             if item:
-                self.DB.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+                if not wb:
+                    self.DB.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+                else:
+                    wb.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
         for keyval in self.Deleted:
-            self.DB.delete(self.Prefix + keyval)
+            if not wb:
+                self.DB.delete(self.Prefix + keyval)
+            else:
+                wb.delete(self.Prefix + keyval)
             self.Collection[keyval] = None
         if destroy:
             self.Destroy()

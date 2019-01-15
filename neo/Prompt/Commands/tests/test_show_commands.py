@@ -4,13 +4,12 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.PromptData import PromptData
-from neo.Prompt.PromptPrinter import pp
 from neo.bin.prompt import PromptInterface
-from copy import deepcopy
 from neo.Network.NodeLeader import NodeLeader, NeoNode
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from mock import patch
+from neo.Network.address import Address
 
 
 class CommandShowTestCase(BlockchainFixtureTestCase):
@@ -131,13 +130,16 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
 
         # query nodes with connected peers
         # first make sure we have a predictable state
+        NodeLeader.Instance().Reset()
         leader = NodeLeader.Instance()
-        old_leader = deepcopy(leader)
-        leader.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
-        leader.DEAD_ADDRS = ["127.0.0.1:20335"]
+        addr1 = Address("127.0.0.1:20333")
+        addr2 = Address("127.0.0.1:20334")
+        leader.ADDRS = [addr1, addr2]
+        leader.DEAD_ADDRS = [Address("127.0.0.1:20335")]
         test_node = NeoNode()
         test_node.host = "127.0.0.1"
         test_node.port = 20333
+        test_node.address = Address("127.0.0.1:20333")
         leader.Peers = [test_node]
 
         # now show nodes
@@ -154,9 +156,6 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
             self.assertTrue(res)
             self.assertIn('Total Connected: 1', res)
             self.assertIn('Peer 0', res)
-
-        # restore whatever state the instance was in
-        NodeLeader._LEAD = old_leader
 
     def test_show_state(self):
         # setup

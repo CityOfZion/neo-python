@@ -164,7 +164,7 @@ class CommandShowNodes(CommandBase):
         if len(NodeLeader.Instance().Peers) > 0:
             out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
             for i, peer in enumerate(NodeLeader.Instance().Peers):
-                out += f"Peer {i} {peer.Name():>12} - {peer.Address:>21} - IO {peer.IOStats()}\n"
+                out += f"Peer {i} {peer.Name():>12} - {peer.address:>21} - IO {peer.IOStats()}\n"
             print(out)
             return out
         else:

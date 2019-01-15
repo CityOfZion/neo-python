@@ -273,11 +273,12 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_get_connectioncount(self):
         # make sure we have a predictable state
+        NodeLeader.Reset()
         leader = NodeLeader.Instance()
-        old_leader = deepcopy(leader)
+        # old_leader = deepcopy(leader)
         fake_obj = object()
         leader.Peers = [fake_obj, fake_obj]
-        leader.ADDRS = [fake_obj, fake_obj]
+        leader.KNOWN_ADDRS = [fake_obj, fake_obj]
 
         req = self._gen_post_rpc_req("getconnectioncount", params=[])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
@@ -285,7 +286,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result'], 2)
 
         # restore whatever state the instance was in
-        NodeLeader._LEAD = old_leader
+        # NodeLeader._LEAD = old_leader
 
     def test_get_block_int(self):
         req = self._gen_post_rpc_req("getblock", params=[10, 1])
@@ -588,7 +589,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # Given this is an isolated environment and there is no peers
         # let's simulate that at least some addresses are known
         node = NodeLeader.Instance()
-        node.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
+        node.KNOWN_ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
         node.DEAD_ADDRS = ["127.0.0.1:20335"]
         test_node = NeoNode()
         test_node.host = "127.0.0.1"
@@ -601,13 +602,13 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
         self.assertEqual(len(node.Peers), len(res['result']['connected']))
         print("unconnected:{}".format(len(res['result']['unconnected'])))
-        print("addrs:{} peers:{}".format(len(node.ADDRS), len(node.Peers)))
+        print("addrs:{} peers:{}".format(len(node.KNOWN_ADDRS), len(node.Peers)))
         self.assertEqual(len(res['result']['unconnected']),
-                         len(node.ADDRS) - len(node.Peers))
+                         len(node.KNOWN_ADDRS) - len(node.Peers))
         self.assertEqual(len(res['result']['bad']), 1)
         # To avoid messing up the next tests
         node.Peers = []
-        node.ADDRS = []
+        node.KNOWN_ADDRS = []
         node.DEAD_ADDRS = []
 
     def test_getwalletheight_no_wallet(self):
