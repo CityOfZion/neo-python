@@ -2,7 +2,7 @@
 """
 API server to run the JSON-RPC and REST API.
 
-Uses neo.api.JSONRPC.JsonRpcApi or neo.api.JSONRPC.ExtendedJsonRpcApi and neo.api.REST.RestApi
+Uses servers specified in protocol.xxx.json files
 
 Print the help and all possible arguments:
 
@@ -33,6 +33,7 @@ to reuse our logzero logging setup. See also:
 * https://twistedmatrix.com/documents/17.9.0/api/twisted.logger.STDLibLogObserver.html
 """
 import os
+import sys
 import argparse
 import threading
 from time import sleep
@@ -46,22 +47,20 @@ from prompt_toolkit import prompt
 from twisted.logger import STDLibLogObserver, globalLogPublisher
 
 # Twisted and Klein methods and modules
-from twisted.internet import reactor, task, endpoints
+from twisted.internet import reactor, task, endpoints, threads
 from twisted.web.server import Site
 
 # neo methods and modules
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
-from neo.api.JSONRPC.ExtendedJsonRpcApi import ExtendedJsonRpcApi
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.api.REST.RestApi import RestApi
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
 from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings
-
+from neo.Utils.plugin import load_class_from_path
+import neo.Settings
 
 # Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
@@ -69,6 +68,9 @@ LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 
 # Set the PID file, possible to override with env var PID_FILE
 PID_FILE = os.getenv("PID_FILE", "/tmp/neopython-api-server.pid")
+
+continue_persisting = True
+block_deferred = None
 
 
 def write_pid_file():
@@ -87,6 +89,30 @@ def custom_background_code():
     while True:
         logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height + 1), str(Blockchain.Default().HeaderHeight + 1))
         sleep(15)
+
+
+def on_persistblocks_error(err):
+    logger.debug("On Persist blocks loop error! %s " % err)
+
+
+def stop_block_persisting():
+    global continue_persisting
+    continue_persisting = False
+
+
+def persist_done(value):
+    """persist callback. Value is unused"""
+    if continue_persisting:
+        start_block_persisting()
+    else:
+        block_deferred.cancel()
+
+
+def start_block_persisting():
+    global block_deferred
+    block_deferred = threads.deferToThread(Blockchain.Default().PersistBlocks)
+    block_deferred.addCallback(persist_done)
+    block_deferred.addErrback(on_persistblocks_error)
 
 
 def main():
@@ -110,7 +136,8 @@ def main():
     group_logging = parser.add_argument_group(title="Logging options")
     group_logging.add_argument("--logfile", action="store", type=str, help="Logfile")
     group_logging.add_argument("--syslog", action="store_true", help="Log to syslog instead of to log file ('user' is the default facility)")
-    group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7), metavar="[0-7]", help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
+    group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7), metavar="[0-7]",
+                               help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
     group_logging.add_argument("--disable-stderr", action="store_true", help="Disable stderr logger")
 
     # Where to store stuff
@@ -127,9 +154,6 @@ def main():
 
     # host
     parser.add_argument("--host", action="store", type=str, help="Hostname ( for example 127.0.0.1)", default="0.0.0.0")
-
-    # extended json-rpc api
-    parser.add_argument("--extended-rpc", action="store_true", default=False, help="Use extended json-rpc api")
 
     # Now parse
     args = parser.parse_args()
@@ -167,7 +191,12 @@ def main():
         settings.setup_coznet()
 
     if args.maxpeers:
-        settings.set_max_peers(args.maxpeers)
+        try:
+            settings.set_max_peers(args.maxpeers)
+            print("Maxpeers set to ", args.maxpeers)
+        except ValueError:
+            print("Please supply a positive integer for maxpeers")
+            return  
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -229,9 +258,7 @@ def main():
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
 
-    dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-    db_loop_deferred = dbloop.start(.1)
-    db_loop_deferred.addErrback(loopingCallErrorHandler)
+    start_block_persisting()
 
     # If a wallet is open, make sure it processes blocks
     if wallet:
@@ -249,29 +276,30 @@ def main():
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
     d.start()
 
-    if args.port_rpc and args.extended_rpc:
-        logger.info("Starting extended json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
-        api_server_rpc = ExtendedJsonRpcApi(args.port_rpc, wallet=wallet)
-        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
-        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
-#        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
-#        api_server_rpc.app.run(args.host, args.port_rpc)
-
-    elif args.port_rpc:
+    if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
-        api_server_rpc = JsonRpcApi(args.port_rpc, wallet=wallet)
+        try:
+            rpc_class = load_class_from_path(settings.RPC_SERVER)
+        except ValueError as err:
+            logger.error(err)
+            sys.exit()
+        api_server_rpc = rpc_class(args.port_rpc, wallet=wallet)
+
         endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
         endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
-#        reactor.listenTCP(int(args.port_rpc), server.Site(api_server_rpc))
-#        api_server_rpc.app.run(args.host, args.port_rpc)
 
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
-        api_server_rest = RestApi()
+        try:
+            rest_api = load_class_from_path(settings.REST_SERVER)
+        except ValueError as err:
+            logger.error(err)
+            sys.exit()
+        api_server_rest = rest_api()
         endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
-#        api_server_rest.app.run(args.host, args.port_rest)
 
+    reactor.addSystemEventTrigger('before', 'shutdown', stop_block_persisting)
     reactor.run()
 
     # After the reactor is stopped, gracefully shutdown the database.

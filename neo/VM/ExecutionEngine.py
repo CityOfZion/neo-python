@@ -148,7 +148,7 @@ class ExecutionEngine:
         astack = context._AltStack
 
         if opcode >= PUSHBYTES1 and opcode <= PUSHBYTES75:
-            bytestoread = context.OpReader.ReadBytes(int.from_bytes(opcode, 'little'))
+            bytestoread = context.OpReader.SafeReadBytes(int.from_bytes(opcode, 'little'))
             estack.PushT(bytestoread)
         else:
 
@@ -161,11 +161,11 @@ class ExecutionEngine:
 
             elif opcode == PUSHDATA1:
                 lenngth = context.OpReader.ReadByte()
-                estack.PushT(bytearray(context.OpReader.ReadBytes(lenngth)))
+                estack.PushT(bytearray(context.OpReader.SafeReadBytes(lenngth)))
             elif opcode == PUSHDATA2:
-                estack.PushT(context.OpReader.ReadBytes(context.OpReader.ReadUInt16()))
+                estack.PushT(context.OpReader.SafeReadBytes(context.OpReader.ReadUInt16()))
             elif opcode == PUSHDATA4:
-                estack.PushT(context.OpReader.ReadBytes(context.OpReader.ReadUInt32()))
+                estack.PushT(context.OpReader.SafeReadBytes(context.OpReader.ReadUInt32()))
             elif opcode in pushops:
                 topush = int.from_bytes(opcode, 'little') - int.from_bytes(PUSH1, 'little') + 1
                 estack.PushT(topush)
@@ -224,7 +224,7 @@ class ExecutionEngine:
                 if self._Table is None:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN2)
 
-                script_hash = context.OpReader.ReadBytes(20)
+                script_hash = context.OpReader.SafeReadBytes(20)
 
                 is_normal_call = False
                 for b in script_hash:
@@ -601,7 +601,7 @@ class ExecutionEngine:
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)
-                    logger.error("Could not checksig: %s " % e)
+                    logger.debug("Could not checksig: %s " % e)
 
             elif opcode == VERIFY:
                 pubkey = estack.Pop().GetByteArray()
@@ -612,7 +612,7 @@ class ExecutionEngine:
                     estack.PushT(res)
                 except Exception as e:
                     estack.PushT(False)
-                    logger.error("Could not checksig: %s " % e)
+                    logger.debug("Could not verify: %s " % e)
 
             elif opcode == CHECKMULTISIG:
 
@@ -919,12 +919,12 @@ class ExecutionEngine:
                 if opcode in [CALL_ED, CALL_EDT]:
                     script_hash = estack.Pop().GetByteArray()
                 else:
-                    script_hash = context.OpReader.ReadBytes(20)
+                    script_hash = context.OpReader.SafeReadBytes(20)
 
                 script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
 
                 if script is None:
-                    logger.error("Could not find script from script table: %s " % script_hash)
+                    logger.debug("Could not find script from script table: %s " % script_hash)
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
                 context_new = self.LoadScript(script, rvcount)
@@ -1093,6 +1093,6 @@ class ExecutionEngine:
         if id in [VMFault.THROW, VMFault.THROWIFNOT]:
             logger.debug("({}) {}".format(self.ops_processed, id))
         else:
-            logger.error("({}) {}".format(self.ops_processed, error_msg))
+            logger.debug("({}) {}".format(self.ops_processed, error_msg))
 
         return

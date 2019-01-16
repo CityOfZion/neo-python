@@ -122,7 +122,7 @@ class InteropTest(NeoTestCase):
             self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
 
             self.assertTrue(len(log_context.output) > 0)
-            self.assertEqual(log_context.records[0].levelname, 'ERROR')
+            self.assertEqual(log_context.records[0].levelname, 'DEBUG')
             self.assertTrue('VMFault.SETITEM_INVALID_TYPE' in log_context.output[0])
 
     def test_op_map6(self):

@@ -113,7 +113,7 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == CALL or opcode == APPCALL:
             if self.InvocationStack.Count >= maxInvocationStackSize:
-                logger.error("INVOCATION STACK TOO BIG, RETURN FALSE")
+                logger.debug("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
 
             return True
@@ -222,7 +222,7 @@ class ApplicationEngine(ExecutionEngine):
             length = int.from_bytes(lengthpointer, 'little')
 
             if length > self.maxItemSize:
-                logger.error("ITEM IS GREATER THAN MAX ITEM SIZE!")
+                logger.debug("ITEM IS GREATER THAN MAX ITEM SIZE!")
                 return False
 
             return True
@@ -230,7 +230,7 @@ class ApplicationEngine(ExecutionEngine):
         elif opcode == CAT:
 
             if cx.EvaluationStack.Count < 2:
-                logger.error("NOT ENOUGH ITEMS TO CONCAT")
+                logger.debug("NOT ENOUGH ITEMS TO CONCAT")
                 return False
 
             length = 0
@@ -238,11 +238,11 @@ class ApplicationEngine(ExecutionEngine):
             try:
                 length = len(cx.EvaluationStack.Peek(0).GetByteArray()) + len(cx.EvaluationStack.Peek(1).GetByteArray())
             except Exception as e:
-                logger.error("COULD NOT GET STR LENGTH!")
+                logger.debug("COULD NOT GET STR LENGTH!")
                 raise e
 
             if length > self.maxItemSize:
-                logger.error("ITEM IS GREATER THAN MAX SIZE!!!")
+                logger.debug("ITEM IS GREATER THAN MAX SIZE!!!")
                 return False
 
             return True
@@ -259,12 +259,15 @@ class ApplicationEngine(ExecutionEngine):
         if opcode <= PUSH16:
             size += 1
         else:
-            if opcode in [OpCode.JMPIF, OpCode.JMPIFNOT, OpCode.DROP, OpCode.NIP, OpCode.EQUAL, OpCode.BOOLAND, OpCode.BOOLOR, OpCode.CHECKMULTISIG, OpCode.REVERSE, OpCode.HASKEY, OpCode.THROWIFNOT]:
+            if opcode in [OpCode.JMPIF, OpCode.JMPIFNOT, OpCode.DROP, OpCode.NIP, OpCode.EQUAL, OpCode.BOOLAND, OpCode.BOOLOR, OpCode.CHECKMULTISIG,
+                          OpCode.REVERSE, OpCode.HASKEY, OpCode.THROWIFNOT]:
                 size -= 1
                 self._is_stackitem_count_strict = False
-            elif opcode in [OpCode.XSWAP, OpCode.ROLL, OpCode.CAT, OpCode.LEFT, OpCode.RIGHT, OpCode.AND, OpCode.OR, OpCode.XOR, OpCode.ADD, OpCode.SUB, OpCode.MUL, OpCode.DIV, OpCode.SHL, OpCode.SHR, OpCode.NUMEQUAL, OpCode.NUMNOTEQUAL, OpCode.LT, OpCode.GT, OpCode.LTE, OpCode.GTE, OpCode.MIN, OpCode.MAX, OpCode.CHECKSIG, OpCode.CALL_ED, OpCode.CALL_EDT]:
+            elif opcode in [OpCode.XSWAP, OpCode.ROLL, OpCode.CAT, OpCode.LEFT, OpCode.RIGHT, OpCode.AND, OpCode.OR, OpCode.XOR, OpCode.ADD, OpCode.SUB,
+                            OpCode.MUL, OpCode.DIV, OpCode.SHL, OpCode.SHR, OpCode.NUMEQUAL, OpCode.NUMNOTEQUAL, OpCode.LT, OpCode.GT, OpCode.LTE, OpCode.GTE,
+                            OpCode.MIN, OpCode.MAX, OpCode.CHECKSIG, OpCode.CALL_ED, OpCode.CALL_EDT]:
                 size -= 1
-            elif opcode in [OpCode.APPCALL, OpCode.TAILCALL, OpCode.NOT, OpCode.ARRAYSIZE]:
+            elif opcode in [OpCode.RET, OpCode.APPCALL, OpCode.TAILCALL, OpCode.NOT, OpCode.ARRAYSIZE]:
                 self._is_stackitem_count_strict = False
             elif opcode in [OpCode.SYSCALL, OpCode.PICKITEM, OpCode.SETITEM, OpCode.APPEND, OpCode.VALUES]:
                 size = sys.maxsize
@@ -425,11 +428,9 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = self.CurrentContext.NextInstruction
 
-        if opcode <= PUSH16:
+        if opcode <= NOP:
             return 0
 
-        if opcode == NOP:
-            return 0
         elif opcode in [APPCALL, TAILCALL]:
             return 10
         elif opcode == SYSCALL:

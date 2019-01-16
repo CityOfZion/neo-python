@@ -6,7 +6,7 @@ import os
 
 class LevelDBBlockchainTest(BlockchainFixtureTestCase):
     @classmethod
-    def leveldb_testpath(self):
+    def leveldb_testpath(cls):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
 
     # test need to be updated whenever we change the fixtures
@@ -74,3 +74,7 @@ class LevelDBBlockchainTest(BlockchainFixtureTestCase):
         invalid_bc_height = self._blockchain.Height + 1
         block = self._blockchain.GetHeaderBy(invalid_bc_height)
         self.assertEqual(block, None)
+
+    def test_ShowAllAssets(self):
+        assets = Blockchain.Default().ShowAllAssets()
+        self.assertEqual(len(assets), 2)

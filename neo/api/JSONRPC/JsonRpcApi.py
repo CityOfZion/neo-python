@@ -36,6 +36,8 @@ from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.Utils import get_asset_id
 from neo.Wallets.Wallet import Wallet
+from furl import furl
+import ast
 
 
 class JsonRpcError(Exception):
@@ -120,27 +122,66 @@ class JsonRpcApi:
     @json_response
     @cors_header
     def home(self, request):
+        # POST Examples:
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         # or multiple requests in 1 transaction
-        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10], {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}
+        # [{"jsonrpc": "2.0", "id": 1, "method": "getblock", "params": [10]}, {"jsonrpc": "2.0", "id": 2, "method": "getblock", "params": [10,1]}]
+        #
+        # GET Example:
+        # /?jsonrpc=2.0&id=5&method=getblockcount&params=[]
+        # NOTE: GET requests do not support multiple requests in 1 transaction
         request_id = None
 
-        try:
-            content = json.loads(request.content.read().decode("utf-8"))
+        if "POST" == request.method.decode("utf-8"):
+            try:
+                content = json.loads(request.content.read().decode("utf-8"))
 
-            # test if it's a multi-request message
-            if isinstance(content, list):
-                result = []
-                for body in content:
-                    result.append(self.get_data(body))
-                return result
+                # test if it's a multi-request message
+                if isinstance(content, list):
+                    result = []
+                    for body in content:
+                        result.append(self.get_data(body))
+                    return result
 
-            # otherwise it's a single request
+                # otherwise it's a single request
+                return self.get_data(content)
+
+            except JSONDecodeError as e:
+                error = JsonRpcError.parseError()
+                return self.get_custom_error_payload(request_id, error.code, error.message)
+
+        elif "GET" == request.method.decode("utf-8"):
+            content = furl(request.uri).args
+
+            # remove hanging ' or " from last value if value is not None to avoid SyntaxError
+            l_value = list(content.values())[-1]
+            if l_value is not None:
+                n_value = l_value[:-1]
+                l_key = list(content.keys())[-1]
+                content[l_key] = n_value
+
+            if len(content.keys()) > 3:
+                try:
+                    params = content['params']
+                    l_params = ast.literal_eval(params)
+                    content['params'] = [l_params]
+                except KeyError:
+                    error = JsonRpcError(-32602, "Invalid params")
+                    return self.get_custom_error_payload(request_id, error.code, error.message)
+
             return self.get_data(content)
 
-        except JSONDecodeError as e:
-            error = JsonRpcError.parseError()
-            return self.get_custom_error_payload(request_id, error.code, error.message)
+        elif "OPTIONS" == request.method.decode("utf-8"):
+            return self.options_response()
+
+        error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
+        return self.get_custom_error_payload(request_id, error.code, error.message)
+
+    @classmethod
+    def options_response(cls):
+        # new plugins should update this response
+        return {'supported HTTP methods': ("GET", "POST"),
+                'JSON-RPC server type': "default"}
 
     def json_rpc_method_handler(self, method, params):
 
@@ -155,8 +196,14 @@ class JsonRpcApi:
             return acct.ToJson()
 
         elif method == "getassetstate":
-            asset_id = UInt256.ParseString(params[0])
-            asset = Blockchain.Default().GetAssetState(asset_id.ToBytes())
+            asset_str = params[0]
+            if asset_str.lower() == 'neo':
+                assetId = Blockchain.Default().SystemShare().Hash
+            elif asset_str.lower() == 'gas':
+                assetId = Blockchain.Default().SystemCoin().Hash
+            else:
+                assetId = UInt256.ParseString(params[0])
+            asset = Blockchain.Default().GetAssetState(assetId.ToBytes())
             if asset:
                 return asset.ToJson()
             raise JsonRpcError(-100, "Unknown asset")
@@ -223,6 +270,19 @@ class JsonRpcApi:
             if storage_item:
                 return storage_item.Value.hex()
             return None
+
+        elif method == "gettransactionheight":
+            try:
+                hash = UInt256.ParseString(params[0])
+            except Exception:
+                # throws exception, not anything more specific
+                raise JsonRpcError(-100, "Unknown transaction")
+
+            tx, height = Blockchain.Default().GetTransaction(hash)
+            if tx:
+                return height
+            else:
+                raise JsonRpcError(-100, "Unknown transaction")
 
         elif method == "gettxout":
             hash = params[0].encode('utf-8')
@@ -385,11 +445,7 @@ class JsonRpcApi:
         return {"address": params[0], "isvalid": isValid}
 
     def get_peers(self):
-        """Get all known nodes and their "state"
-
-        In the current implementation of NodeLeader there is no way
-        to know which nodes are bad.
-        """
+        """Get all known nodes and their 'state' """
         node = NodeLeader.Instance()
         result = {"connected": [], "unconnected": [], "bad": []}
         connected_peers = []
@@ -399,12 +455,16 @@ class JsonRpcApi:
                                         "port": peer.port})
             connected_peers.append("{}:{}".format(peer.host, peer.port))
 
+        for addr in node.DEAD_ADDRS:
+            host, port = addr.rsplit(':', 1)
+            result['bad'].append({"address": host, "port": port})
+
         # "UnconnectedPeers" is never used. So a check is needed to
         # verify that a given address:port does not belong to a connected peer
-        for peer in node.ADDRS:
-            addr, port = peer.split(':')
-            if peer not in connected_peers:
-                result['unconnected'].append({"address": addr,
+        for addr in node.KNOWN_ADDRS:
+            host, port = addr.rsplit(':', 1)
+            if addr not in connected_peers:
+                result['unconnected'].append({"address": host,
                                               "port": int(port)})
 
         return result
@@ -545,11 +605,17 @@ class JsonRpcApi:
         standard_contract = self.wallet.GetStandardAddress()
         signer_contract = self.wallet.GetContract(standard_contract)
 
-        tx = self.wallet.MakeTransaction(tx=contract_tx,
-                                         change_address=change_addr,
-                                         fee=fee,
-                                         from_addr=address_from)
+        try:
+            tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                             change_address=change_addr,
+                                             fee=fee,
+                                             from_addr=address_from)
+        except ValueError:
+            # if not enough unspents while fully synced
+            raise JsonRpcError(-300, "Insufficient funds")
+
         if tx is None:
+            # if not enough unspents while not being fully synced
             raise JsonRpcError(-300, "Insufficient funds")
         data = standard_contract.Data
         tx.Attributes = [
@@ -562,6 +628,7 @@ class JsonRpcApi:
         self.wallet.Sign(context)
         if context.Completed:
             tx.scripts = context.GetScripts()
+            self.wallet.SaveTransaction(tx)
             NodeLeader.Instance().Relay(tx)
             return tx.ToJson()
         else:

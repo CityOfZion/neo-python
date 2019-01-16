@@ -2,8 +2,8 @@
 Application vs. Verification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now that you have built, tested, and testinvoked your SC, you may be asking, what is this ``Verification`` step, and how do I programatically interact with it?
-Lets start out with our example from before of tracking a balance, and restrict it so that only an 'owner' address can perform operations on it. Heres the Smart Contract code:
+Now that you have built, tested, and test invoked your SC, you may be asking, what is this ``Verification`` step, and how do I programmatically interact with it?
+Lets start out with our example from before of tracking a balance, and restrict it so that only an 'owner' address can perform operations on it. Here's the Smart Contract code:
 
 .. code-block:: python
 
@@ -18,7 +18,7 @@ Lets start out with our example from before of tracking a balance, and restrict 
       print("Running Sample v4")
       trigger = GetTrigger()
 
-      # This determines that the SC is runnning in Verification mode
+      # This determines that the SC is running in Verification mode
       # This determines whether the TX will be relayed to the rest of the network
       # The `Verification` portion of SC is *read-only*, so calls to `Storage.Put` will fail.
       # You can, however, use `Storage.Get`
@@ -75,13 +75,13 @@ Lets start out with our example from before of tracking a balance, and restrict 
     return False
 
 
-You will notice that the ``OWNER`` is the same ByteArray that we used before, as it is the address that is in the wallet I am using.  This example will use the ``boa.interop.Neo.Runtime.CheckWitness`` method to verify that the wallet that has signed the InvocationTransaction is the same as ``OWNER``.  First, lets build and test to make sure its working.
+You will notice that the ``OWNER`` is the same ByteArray that we used before, as it is the address that is in the wallet I am using.  This example will use the ``boa.interop.Neo.Runtime.CheckWitness`` method to verify that the wallet that has signed the InvocationTransaction is the same as ``OWNER``.  First, let's build and test to make sure it's working.
 We will turn on ``sc-events`` to make sure we can see exactly what is going on.
 
 .. code-block:: sh
 
   neo>
-  neo> build docs/source/neo/example/sample4.py test 070202 02 True False add AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy 7
+  neo> sc build_run docs/source/neo/example/sample4.py True False False 070202 02 add AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy 7
   Saved output to docs/source/neo/example/sample4.avm
   [I 180303 08:25:12 EventHub:71] [test_mode][SmartContract.Contract.Create] [562d6c29209dc96432c6868621fe489cedd05222] ['{\n    "version": 0,\n    "code": {\n        "hash": "0x562d6c29209dc96432c6868621fe489cedd05222",\n        "script": "0122c56b6a00527ac46a51527ac46a52527ac4140319e029b925857790e41785be9ccec6cab198966a53527ac41152756e6e696e672053616d706c65207634680f4e656f2e52756e74696d652e4c6f6768164e656f2e52756e74696d652e47657454726967676572616a54527ac46a54c301009c6492001552756e6e696e6720566572696669636174696f6e21680f4e656f2e52756e74696d652e4c6f676a53c368184e656f2e52756e74696d652e436865636b5769746e657373616a55527ac46a55c3642200094973204f776e657221680f4e656f2e52756e74696d652e4c6f67516c756661094e6f74204f776e6572680f4e656f2e52756e74696d652e4c6f67006c7566616a54c301109c6454011452756e6e696e67204170706c69636174696f6e21680f4e656f2e52756e74696d652e4c6f676a51c3652d01632a00114e6f742056616c69642041646472657373680f4e656f2e52756e74696d652e4c6f67006c75666168164e656f2e53746f726167652e476574436f6e74657874616a56527ac46a00c3036164649c6450006a56c36a51c37c680f4e656f2e53746f726167652e476574616a57527ac46a57c36a52c3936a58527ac46a56c36a51c36a58c35272680f4e656f2e53746f726167652e507574616a58c36c7566616a00c30672656d6f76659c644c006a56c36a51c37c680f4e656f2e53746f726167652e476574616a57527ac46a56c36a51c36a57c36a52c3945272680f4e656f2e53746f726167652e507574616a57c36a52c3946c7566616a00c30762616c616e63659c641f006a56c36a51c37c680f4e656f2e53746f726167652e476574616c756661006c756656c56b6a00527ac46a00c3c001149c640700516c756661006c7566",\n        "parameters": "070202",\n        "returntype": 2\n    },\n    "name": "test",\n    "code_version": "test",\n    "author": "test",\n    "email": "test",\n    "description": "test",\n    "properties": {\n        "storage": true,\n        "dynamic_invoke": false\n    }\n}']
   [I 180303 08:25:12 EventHub:71] [test_mode][SmartContract.Runtime.Log] [562d6c29209dc96432c6868621fe489cedd05222] [b'Running Sample v4']
@@ -103,11 +103,11 @@ We will turn on ``sc-events`` to make sure we can see exactly what is going on.
 
 Ok, it works pretty much as before.  You will notice theres a few new ``print`` statements that we added in, and according to those statements, we can see that the ``Verification`` portion of the Smart Contract was never executed.
 One other thing you will notice is that you can see the *SmartContract.Storage.** events, which are useful for debugging!
-Currently, in order to interact with the ``Verification`` stage of the Smart Contract, you will need to deploy and use ``testinvoke``, so lets do that. Lets assume you have built and imported the contract, you will have something like this:
+Currently, in order to interact with the ``Verification`` stage of the Smart Contract, you will need to deploy and use ``testinvoke``, so let's do that. Let's assume you have built and imported the contract, you will have something like this:
 
 .. code-block:: sh
 
-  neo> contract 2e80ee491a0a54c9bbb0f791672050f9ab367767
+  neo> show contract 2e80ee491a0a54c9bbb0f791672050f9ab367767
   {
       "version": 0,
       "code": {
@@ -133,7 +133,7 @@ Lets test invoke again.
 
 .. code-block:: sh
 
-  neo> testinvoke 0x2e80ee491a0a54c9bbb0f791672050f9ab367767 add AMUUgxnLhGxNSATinNp8gKmndqM1BxDZHR 42
+  neo> sc invoke 0x2e80ee491a0a54c9bbb0f791672050f9ab367767 add AMUUgxnLhGxNSATinNp8gKmndqM1BxDZHR 42
   [I 180303 09:08:14 EventHub:71] [test_mode][SmartContract.Runtime.Log] [2e80ee491a0a54c9bbb0f791672050f9ab367767] [b'Running Sample v4']
   [I 180303 09:08:14 EventHub:71] [test_mode][SmartContract.Runtime.Log] [2e80ee491a0a54c9bbb0f791672050f9ab367767] [b'\x10']
   [I 180303 09:08:14 EventHub:71] [test_mode][SmartContract.Runtime.Log] [2e80ee491a0a54c9bbb0f791672050f9ab367767] [b'Running Application!']

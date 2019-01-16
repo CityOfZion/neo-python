@@ -10,6 +10,12 @@ from neocore.Cryptography.ECCurve import ECDSA
 from decimal import Decimal
 from prompt_toolkit.shortcuts import PromptSession
 from neo.logging import log_manager
+from neo.Wallets import NEP5Token
+from neocore.Cryptography.Crypto import Crypto
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from neo.Wallets.Wallet import Wallet
 
 logger = log_manager.getLogger()
 
@@ -133,6 +139,15 @@ def get_change_addr(params):
     return params, change_addr
 
 
+def get_to_addr(params):
+    to_addr = None
+    for item in params:
+        if '--to-addr' in item:
+            params.remove(item)
+            to_addr = item.replace('--to-addr=', '')
+    return params, to_addr
+
+
 def get_fee(params):
     fee = None
     for item in params:
@@ -150,11 +165,10 @@ def get_parse_addresses(params):
 
 
 def get_tx_attr_from_args(params):
-    to_remove = []
     tx_attr_dict = []
     for item in params:
         if '--tx-attr=' in item:
-            to_remove.append(item)
+            params.remove(item)
             try:
                 attr_str = item.replace('--tx-attr=', '')
 
@@ -172,8 +186,6 @@ def get_tx_attr_from_args(params):
                     logger.error("Invalid transaction attribute specification: %s " % type(tx_attr_obj))
             except Exception as e:
                 logger.error("Could not parse json from tx attrs: %s " % e)
-    for item in to_remove:
-        params.remove(item)
 
     return params, tx_attr_dict
 
@@ -299,8 +311,13 @@ def gather_param(index, param_type, do_continue=True):
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
 
     try:
-
         result = get_input_prompt(prompt_message)
+    except Exception as e:
+        print(str(e))
+        # no results, abort True
+        return None, True
+
+    try:
 
         if ptype == ContractParameterType.String:
             return str(result), False
@@ -337,3 +354,42 @@ def gather_param(index, param_type, do_continue=True):
             return gather_param(index, param_type, do_continue)
 
     return None, True
+
+
+def get_token(wallet: 'Wallet', token_str: str) -> 'NEP5Token.NEP5Token':
+    """
+    Try to get a NEP-5 token based on the symbol or script_hash
+
+    Args:
+        wallet: wallet instance
+        token_str: symbol or script_hash (accepts script hash with or without 0x prefix)
+    Raises:
+        ValueError: if token is not found
+
+    Returns:
+        NEP5Token instance if found.
+    """
+    if token_str.startswith('0x'):
+        token_str = token_str[2:]
+
+    token = None
+    for t in wallet.GetTokens().values():
+        if token_str in [t.symbol, t.ScriptHash.ToString()]:
+            token = t
+            break
+
+    if not isinstance(token, NEP5Token.NEP5Token):
+        raise ValueError("The given token argument does not represent a known NEP5 token")
+    return token
+
+
+def is_valid_public_key(key):
+    if len(key) != 66:
+        return False
+    try:
+        Crypto.ToScriptHash(key, unhex=True)
+    except Exception:
+        # the UINT160 inside ToScriptHash can throw Exception
+        return False
+    else:
+        return True
