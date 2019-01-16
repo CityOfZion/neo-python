@@ -24,7 +24,7 @@ pycryptodome==3.6.3
 Pygments==2.3.1
 pymitter==0.2.3
 pyparsing==2.3.1
-pytz==2018.5
+pytz==2018.9
 requests==2.20.0
 scrypt==0.8.6
 six==1.11.0
