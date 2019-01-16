@@ -4,7 +4,7 @@ astor==0.7.1
 Babel==2.6.0
 base58==1.0.0
 bitcoin==1.1.42
-certifi==2018.4.16
+certifi==2018.11.29
 chardet==3.0.4
 coz-bytecode==0.5.1
 docutils==0.14
