@@ -3,7 +3,7 @@ asn1crypto==0.24.0
 astor==0.7.1
 attrs==18.2.0
 Automat==0.7.0
-autopep8==1.4
+autopep8==1.4.3
 base58==1.0.3
 bitcoin==1.1.42
 blessings==1.7
