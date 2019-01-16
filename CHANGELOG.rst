@@ -3,7 +3,7 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.8.3-dev] in progress
+[0.8.3] 2019-01-16
 -----------------------
 - Update ``getassetstate`` RPC method to support `neo` and `gas` aliases; Cleanup ``show_contract_state`` `#667 <https://github.com/CityOfZion/neo-python/pull/667>`_
 - Add fix to ensure tx is saved to wallet when sent using RPC `#680 <https://github.com/CityOfZion/neo-python/pull/680>`_
