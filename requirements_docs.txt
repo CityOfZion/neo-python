@@ -4,12 +4,12 @@ astor==0.7.1
 Babel==2.6.0
 base58==1.0.0
 bitcoin==1.1.42
-certifi==2018.4.16
+certifi==2018.11.29
 chardet==3.0.4
 coz-bytecode==0.5.1
 docutils==0.14
 ecdsa==0.13
-idna==2.7
+idna==2.8
 imagesize==1.0.0
 Jinja2==2.10
 logzero==1.5.0
@@ -18,9 +18,9 @@ mpmath==1.0.0
 neo-boa==0.4.8
 neo-python-rpc==0.2.1
 neocore==0.4.11
-packaging==17.1
+packaging==18.0
 prompt-toolkit==2.0.4
-pycryptodome==3.6.3
+pycryptodome==3.7.2
 Pygments==2.2.0
 pymitter==0.2.3
 pyparsing==2.2.0
@@ -29,7 +29,7 @@ requests==2.20.0
 scrypt==0.8.6
 six==1.11.0
 snowballstemmer==1.2.1
-Sphinx==1.7.6
+Sphinx==1.8.3
 sphinx-rtd-theme==0.4.1
 sphinxcontrib-websupport==1.1.0
 urllib3==1.23
