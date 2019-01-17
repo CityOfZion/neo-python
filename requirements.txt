@@ -54,7 +54,7 @@ Pympler==0.6
 pyparsing==2.2.2
 python-dateutil==2.7.3
 pytz==2018.5
-requests==2.20.0
+requests==2.21.0
 scrypt==0.8.6
 six==1.11.0
 tqdm==4.23.4
