@@ -12,7 +12,7 @@ bumpversion==0.5.3
 certifi==2018.8.24
 cffi==1.11.5
 chardet==3.0.4
-colorlog==3.1.4
+colorlog==4.0.2
 constantly==15.1.0
 coverage==4.5.1
 coveralls==1.5.1
