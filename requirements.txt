@@ -14,7 +14,7 @@ cffi==1.11.5
 chardet==3.0.4
 colorlog==3.1.4
 constantly==15.1.0
-coverage==4.5.1
+coverage==4.5.2
 coveralls==1.5.1
 coz-bytecode==0.5.1
 cryptography==2.3.1
