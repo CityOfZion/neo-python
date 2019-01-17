@@ -14,7 +14,7 @@ imagesize==1.0.0
 Jinja2==2.10
 logzero==1.5.0
 MarkupSafe==1.0
-mpmath==1.0.0
+mpmath==1.1.0
 neo-boa==0.4.8
 neo-python-rpc==0.2.1
 neocore==0.4.11
