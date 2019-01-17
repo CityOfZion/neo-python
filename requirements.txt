@@ -51,7 +51,7 @@ pycparser==2.19
 Pygments==2.2.0
 pymitter==0.2.3
 Pympler==0.6
-pyparsing==2.2.2
+pyparsing==2.3.1
 python-dateutil==2.7.3
 pytz==2018.5
 requests==2.20.0
