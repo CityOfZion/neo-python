@@ -29,7 +29,7 @@ requests==2.20.0
 scrypt==0.8.6
 six==1.11.0
 snowballstemmer==1.2.1
-Sphinx==1.7.6
+Sphinx==1.8.3
 sphinx-rtd-theme==0.4.1
 sphinxcontrib-websupport==1.1.0
 urllib3==1.23
