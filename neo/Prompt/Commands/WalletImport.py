@@ -181,7 +181,7 @@ class CommandWalletImportMultisigAddr(CommandBase):
 
         # validate minimum required signing key count
         signing_keys = arguments[2:]
-        len_signing_keys = len(signing_keys)
+        len_signing_keys = len(signing_keys) + 1  # since own pub key will be a signing key
         if len_signing_keys < min_signature_cnt:
             # we need at least 2 public keys in total otherwise it's just a regular address.
             # 1 pub key is from an address in our own wallet, a secondary key can come from any place.
