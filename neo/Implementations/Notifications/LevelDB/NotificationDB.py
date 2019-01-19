@@ -201,10 +201,12 @@ class NotificationDB:
             token_write_batch = token_db.write_batch()
 
             for token_event in self._new_contracts_to_write:
-                hash_data = token_event.ToByteArray()
-                hash_key = token_event.contract.Code.ScriptHash().ToBytes()
-                #                logger.info("persist new NEP5 contract: %s " % (hash_key))
-                token_write_batch.put(hash_key, hash_data)
+                try:
+                    hash_data = token_event.ToByteArray()  # used to fail here
+                    hash_key = token_event.contract.Code.ScriptHash().ToBytes()
+                    token_write_batch.put(hash_key, hash_data)
+                except Exception as e:
+                    logger.debug(f"Failed to write new contract, reason: {e}")
 
             token_write_batch.write()
 

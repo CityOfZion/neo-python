@@ -13,6 +13,8 @@ from neo.Core.TX.Transaction import ContractTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Prompt.PromptPrinter import prompt_print as print
 
+import sys
+
 
 class CommandWalletAddress(CommandBase):
     def __init__(self):
@@ -245,6 +247,7 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
     if index < len(unspent_items):
         unspent_item = unspent_items[index]
     else:
+        print(f"unspent-items: {unspent_items}")
         print(f"Could not find unspent item for asset {asset_id} with index {index}")
         return
 

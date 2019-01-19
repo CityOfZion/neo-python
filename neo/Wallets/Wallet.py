@@ -840,22 +840,26 @@ class Wallet:
             address (str): a base58 encoded address.
 
         Raises:
-            ValuesError: if an invalid address is supplied or the coin version is incorrect.
-            Exception: if the address checksum fails.
+            ValuesError: if an invalid address is supplied or the coin version is incorrect
+            Exception: if the address string does not start with 'A' or the checksum fails
 
         Returns:
             UInt160: script hash.
         """
-        data = b58decode(address)
-        if len(data) != 25:
-            raise ValueError('Not correct Address, wrong length.')
-        if data[0] != self.AddressVersion:
-            raise ValueError('Not correct Coin Version')
+        if len(address) == 34:
+            if address[0] == 'A':
+                data = b58decode(address)
+                if data[0] != self.AddressVersion:
+                    raise ValueError('Not correct Coin Version')
 
-        checksum = Crypto.Default().Hash256(data[:21])[:4]
-        if checksum != data[21:]:
-            raise Exception('Address format error')
-        return UInt160(data=data[1:21])
+                checksum = Crypto.Default().Hash256(data[:21])[:4]
+                if checksum != data[21:]:
+                    raise Exception('Address format error')
+                return UInt160(data=data[1:21])
+            else:
+                raise Exception('Address format error')
+        else:
+            raise ValueError('Not correct Address, wrong length.')
 
     def ValidatePassword(self, password):
         """
@@ -1021,7 +1025,7 @@ class Wallet:
         if not tx.inputs:
             tx.inputs = []
 
-        fee = fee + (tx.SystemFee() * Fixed8.FD())
+        fee = fee + tx.SystemFee()
 
         #        pdb.set_trace()
 
