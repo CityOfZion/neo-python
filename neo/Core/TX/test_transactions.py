@@ -90,8 +90,8 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(contract['description'], 'Lock your assets until a timestamp.')
 
         self.assertEqual(contract['code']['hash'], '0xffbd1a7ad1e2348b6b3822426f364bfb4bcce3b9')
-        self.assertEqual(contract['code']['returntype'], 1)
-        self.assertEqual(contract['code']['parameters'], '020500')
+        self.assertEqual(contract['code']['returntype'], "Boolean")
+        self.assertEqual(contract['code']['parameters'], ['Integer', 'ByteArray', 'Signature'])
         self.assertEqual(Fixed8.FromDecimal(settings.ALL_FEES['PublishTransaction']), tx.SystemFee())
 
     ir = b'd100644011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111081234567890abcdef0415cd5b0769cc4ee2f1c9f4e0782756dabf246d0a4fe60a035400000000'

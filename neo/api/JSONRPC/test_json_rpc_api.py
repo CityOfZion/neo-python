@@ -222,7 +222,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(-2146233033, res['error']['code'])
         self.assertEqual('One of the identified items was in an invalid format.', res['error']['message'])
 
-    def test_get_asset_state(self):
+    def test_get_asset_state_hash(self):
         asset_str = '602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
         req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
@@ -230,6 +230,24 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result']['assetId'], '0x%s' % asset_str)
         self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
         self.assertEqual(res['result']['available'], 0)
+
+    def test_get_asset_state_neo(self):
+        asset_str = 'neo'
+        req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['assetId'], '0x%s' % str(GetBlockchain().SystemShare().Hash))
+        self.assertEqual(res['result']['admin'], 'Abf2qMs1pzQb8kYk9RuxtUb9jtRKJVuBJt')
+        self.assertEqual(res['result']['available'], 10000000000000000)
+
+    def test_get_asset_state_gas(self):
+        asset_str = 'GAS'
+        req = self._gen_post_rpc_req("getassetstate", params=[asset_str])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(res['result']['assetId'], '0x%s' % str(GetBlockchain().SystemCoin().Hash))
+        self.assertEqual(res['result']['amount'], 10000000000000000)
+        self.assertEqual(res['result']['admin'], 'AWKECj9RD8rS8RPcpCgYVjk1DeYyHwxZm3')
 
     def test_get_asset_state_0x(self):
         asset_str = '0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7'
@@ -255,11 +273,12 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_get_connectioncount(self):
         # make sure we have a predictable state
+        NodeLeader.Reset()
         leader = NodeLeader.Instance()
-        old_leader = deepcopy(leader)
+        # old_leader = deepcopy(leader)
         fake_obj = object()
         leader.Peers = [fake_obj, fake_obj]
-        leader.ADDRS = [fake_obj, fake_obj]
+        leader.KNOWN_ADDRS = [fake_obj, fake_obj]
 
         req = self._gen_post_rpc_req("getconnectioncount", params=[])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
@@ -267,7 +286,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(res['result'], 2)
 
         # restore whatever state the instance was in
-        NodeLeader._LEAD = old_leader
+        # NodeLeader._LEAD = old_leader
 
     def test_get_block_int(self):
         req = self._gen_post_rpc_req("getblock", params=[10, 1])
@@ -340,9 +359,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
         self.assertEqual(res['result']['code_version'], '')
         self.assertEqual(res['result']['properties']['storage'], True)
-        self.assertEqual(res['result']['code']['hash'], '0xb9fbcff6e50fd381160b822207231233dd3c56c2')
-        self.assertEqual(res['result']['code']['returntype'], 5)
-        self.assertEqual(res['result']['code']['parameters'], '0710')
+        self.assertEqual(res['result']['hash'], '0xb9fbcff6e50fd381160b822207231233dd3c56c2')
+        self.assertEqual(res['result']['returntype'], "ByteArray")
+        self.assertEqual(res['result']['parameters'], ["String", "Array"])
 
     def test_get_contract_state_0x(self):
         contract_hash = "0xb9fbcff6e50fd381160b822207231233dd3c56c2"
@@ -568,9 +587,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
     def test_getpeers(self):
         # Given this is an isolated environment and there is no peers
-        # lets simulate that at least some addresses are known
+        # let's simulate that at least some addresses are known
         node = NodeLeader.Instance()
-        node.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
+        node.KNOWN_ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
         node.DEAD_ADDRS = ["127.0.0.1:20335"]
         test_node = NeoNode()
         test_node.host = "127.0.0.1"
@@ -583,13 +602,13 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
 
         self.assertEqual(len(node.Peers), len(res['result']['connected']))
         print("unconnected:{}".format(len(res['result']['unconnected'])))
-        print("addrs:{} peers:{}".format(len(node.ADDRS), len(node.Peers)))
+        print("addrs:{} peers:{}".format(len(node.KNOWN_ADDRS), len(node.Peers)))
         self.assertEqual(len(res['result']['unconnected']),
-                         len(node.ADDRS) - len(node.Peers))
+                         len(node.KNOWN_ADDRS) - len(node.Peers))
         self.assertEqual(len(res['result']['bad']), 1)
         # To avoid messing up the next tests
         node.Peers = []
-        node.ADDRS = []
+        node.KNOWN_ADDRS = []
         node.DEAD_ADDRS = []
 
     def test_getwalletheight_no_wallet(self):
@@ -1674,3 +1693,26 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         blockheader = Helper.AsSerializableWithType(output, 'neo.Core.Header.Header')
         self.assertEqual(blockheader.Index, 11)
         self.assertEqual(str(blockheader.Hash), GetBlockchain().GetBlockHash(11).decode('utf8'))
+
+    def test_gettransactionheight(self):
+        txid = 'f999c36145a41306c846ea80290416143e8e856559818065be3f4e143c60e43a'
+        req = self._gen_post_rpc_req("gettransactionheight", params=[txid])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertEqual(9448, res['result'])
+
+    def test_gettransactionheight_invalid_hash(self):
+        txid = 'invalid_tx_id'
+        req = self._gen_post_rpc_req("gettransactionheight", params=[txid])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown transaction')
+
+    def test_gettransactionheight_invalid_hash2(self):
+        txid = 'a' * 64  # something the right length but unknown
+        req = self._gen_post_rpc_req("gettransactionheight", params=[txid])
+        mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
+        res = json.loads(self.app.home(mock_req))
+        self.assertTrue('error' in res)
+        self.assertEqual(res['error']['message'], 'Unknown transaction')

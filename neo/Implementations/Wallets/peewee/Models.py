@@ -1,5 +1,4 @@
-
-from peewee import Model, PrimaryKeyField, CharField, BooleanField, ForeignKeyField, IntegerField, DateTimeField, BlobField
+from peewee import Model, CharField, BooleanField, ForeignKeyField, IntegerField, DateTimeField, BlobField, AutoField
 from .PWDatabase import PWDatabase
 from neocore.Cryptography.Crypto import Crypto
 from neocore.UInt256 import UInt256
@@ -15,13 +14,13 @@ class ModelBase(Model):
 
 
 class Account(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     PrivateKeyEncrypted = BlobField(unique=True)
     PublicKeyHash = CharField()
 
 
 class Address(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     ScriptHash = BlobField(unique=True)
     IsWatchOnly = BooleanField(default=False)
 
@@ -30,7 +29,7 @@ class Address(ModelBase):
 
 
 class NamedAddress(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     ScriptHash = BlobField(unique=True)
     Title = CharField()
 
@@ -42,7 +41,7 @@ class NamedAddress(ModelBase):
 
 
 class Coin(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     TxId = BlobField()
     Index = IntegerField()
     AssetId = BlobField()
@@ -53,7 +52,7 @@ class Coin(ModelBase):
 
 
 class Contract(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     RawData = CharField()
     ScriptHash = BlobField()
     PublicKeyHash = CharField()
@@ -62,7 +61,7 @@ class Contract(ModelBase):
 
 
 class Key(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     Name = CharField(unique=True)
     Value = BlobField()
 
@@ -75,7 +74,7 @@ class NEP5Token(ModelBase):
 
 
 class Transaction(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     Hash = CharField(unique=True)
     TransactionType = IntegerField()
     RawData = CharField()
@@ -84,14 +83,14 @@ class Transaction(ModelBase):
 
 
 class TransactionInfo(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     CoreTransaction = ForeignKeyField(Transaction)
     Height = IntegerField()
     DateTime = DateTimeField()
 
 
 class VINHold(ModelBase):
-    Id = PrimaryKeyField()
+    Id = AutoField()
     Index = IntegerField()
     Hash = CharField()
     FromAddress = CharField()

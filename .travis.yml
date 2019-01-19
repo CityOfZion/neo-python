@@ -1,10 +1,10 @@
 language: python
 python:
-- "3.6"
+  - "3.6"
 
 sudo: required
 services:
-- docker
+  - docker
 
 cache:
   pip: true
@@ -12,40 +12,43 @@ cache:
 addons:
   apt:
     packages:
-    - libleveldb-dev
-    - libsqlite3-dev
+      - libleveldb-dev
+      - libsqlite3-dev
 
 # command to install dependencies
 install:
-- pip install -e .
-- pip install coveralls
-- yes | pip uninstall neo-boa neocore
-- pip install -e git+https://github.com/jseagrave21/neo-boa@patch-1#egg=neo-boa
-- pip install -e git+https://github.com/CityOfZion/neo-python-core@master#egg=neocore
+  - pip install -e .
+  - pip install coveralls
+  - yes | pip uninstall neo-boa neocore
+  - pip install -e git+https://github.com/jseagrave21/neo-boa@development#egg=neo-boa
+  - pip install -e git+https://github.com/CityOfZion/neo-python-core@master#egg=neocore
+
+env:
+  - NEOPYTHON_UNITTEST=1
 
 # command to run tests
 script:
-- coverage run -m unittest discover neo
-- coverage run -m -a unittest discover boa_test
-- pycodestyle neo
-- pycodestyle examples
-- python neo/bin/prompt.py --version
+  - coverage run -m unittest discover neo
+  - coverage run -m -a unittest discover boa_test
+  - pycodestyle neo
+  - pycodestyle examples
+  - python neo/bin/prompt.py --version
 
 after_success:
   coveralls
 
 deploy:
-# Deploy to PyPI
-- provider: pypi
-  user: CityOfZion
-  password:
-    secure: NVvbRCt5JwHE6MhQjj0O0Lui/USEr/fnTHdYRKfPi75p+7rqVPJ47uE0fx/3GCZf1cp+fHQB0oTm+NU+asqAlIJ6HOq3HwwbDFtwvzBiIPc9eq14jqAhplRF4rV8nYHm1HcvJuJyfre+3qqFlu86x9/j5RdWC6RrNpbFnqyrYkpK1vWZwZFeMgdxJ4yCd8u8Cuh+uFjF80BWKSOLXrPLcJHKkrprN8GJRxt+dh6LAfdsQ1mHnn2JqT4FDiR6cLHZKLC+b5F61rjk1OYdw9hnA/XZtCz2qEQn4Sct+jSLxNmcX+hGqvTH86N2gEjRasU11Slu/bDgyUQkELyWjnHpRsNYTvZyT3ilG7mrmN2JIxUcPaVQ3SgTqsPBeE058OCTHA0zvkNkR5838wfIfeSv5Q+Obn3wsceK4m2LOrlRElxRckjIcQtDzoOihEV5yU3Kqym6yX67AsB1m2JsBRZMCztsf29RgtsLLXzID76rAuc1KmLq6jL5Uo7RieoeSKY2Gy/TLwh6+g/hC8P6L8Sq7NJCvd1+keRiWYQw7bq3MKVBBnI59riZaz82s+a/qYo72UMTfb+VLZ1Dv+V1Bllj2chILWGuCd/tylF+tIGaA4Z70govsJ4Arsz0u37fL+4Qx98sWWAtS9JRv+X8XhR4xtAKzKBGihJ5Tc42y+6z5yM=
-  distributions: sdist bdist_wheel
-  on:
-    tags: true
+  # Deploy to PyPI
+  - provider: pypi
+    user: CityOfZion
+    password:
+      secure: NVvbRCt5JwHE6MhQjj0O0Lui/USEr/fnTHdYRKfPi75p+7rqVPJ47uE0fx/3GCZf1cp+fHQB0oTm+NU+asqAlIJ6HOq3HwwbDFtwvzBiIPc9eq14jqAhplRF4rV8nYHm1HcvJuJyfre+3qqFlu86x9/j5RdWC6RrNpbFnqyrYkpK1vWZwZFeMgdxJ4yCd8u8Cuh+uFjF80BWKSOLXrPLcJHKkrprN8GJRxt+dh6LAfdsQ1mHnn2JqT4FDiR6cLHZKLC+b5F61rjk1OYdw9hnA/XZtCz2qEQn4Sct+jSLxNmcX+hGqvTH86N2gEjRasU11Slu/bDgyUQkELyWjnHpRsNYTvZyT3ilG7mrmN2JIxUcPaVQ3SgTqsPBeE058OCTHA0zvkNkR5838wfIfeSv5Q+Obn3wsceK4m2LOrlRElxRckjIcQtDzoOihEV5yU3Kqym6yX67AsB1m2JsBRZMCztsf29RgtsLLXzID76rAuc1KmLq6jL5Uo7RieoeSKY2Gy/TLwh6+g/hC8P6L8Sq7NJCvd1+keRiWYQw7bq3MKVBBnI59riZaz82s+a/qYo72UMTfb+VLZ1Dv+V1Bllj2chILWGuCd/tylF+tIGaA4Z70govsJ4Arsz0u37fL+4Qx98sWWAtS9JRv+X8XhR4xtAKzKBGihJ5Tc42y+6z5yM=
+    distributions: sdist bdist_wheel
+    on:
+      tags: true
 
-# Deploy to Docker Hub
-- provider: script
-  script: bash docker/travis-deploy-to-docker-hub.sh
-  on:
-    tags: true
+  # Deploy to Docker Hub
+  - provider: script
+    script: bash docker/travis-deploy-to-docker-hub.sh
+    on:
+      tags: true

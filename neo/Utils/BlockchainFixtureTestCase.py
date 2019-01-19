@@ -9,6 +9,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Settings import settings
 from neo.logging import log_manager
+from neo.Network.NodeLeader import NodeLeader
 
 logger = log_manager.getLogger()
 
@@ -36,6 +37,9 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
         super(BlockchainFixtureTestCase, cls).setUpClass()
 
+        NodeLeader.Instance().Reset()
+        NodeLeader.Instance().Setup()
+
         # setup Blockchain DB
         if not os.path.exists(cls.FIXTURE_FILENAME):
             logger.info(
@@ -54,7 +58,8 @@ class BlockchainFixtureTestCase(NeoTestCase):
             tar.extractall(path=settings.DATA_DIR_PATH)
             tar.close()
         except Exception as e:
-            raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.FIXTURE_FILENAME))
+            raise Exception(
+                "Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.FIXTURE_FILENAME))
 
         if not os.path.exists(cls.leveldb_testpath()):
             raise Exception("Error downloading fixtures at %s" % cls.leveldb_testpath())
@@ -82,7 +87,8 @@ class BlockchainFixtureTestCase(NeoTestCase):
             tar.close()
 
         except Exception as e:
-            raise Exception("Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.N_FIXTURE_FILENAME))
+            raise Exception(
+                "Could not extract tar file - %s. You may want need to remove the fixtures file %s manually to fix this." % (e, cls.N_FIXTURE_FILENAME))
         if not os.path.exists(cls.N_NOTIFICATION_DB_NAME):
             raise Exception("Error downloading fixtures at %s" % cls.N_NOTIFICATION_DB_NAME)
 

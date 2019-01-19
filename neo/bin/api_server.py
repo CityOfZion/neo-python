@@ -47,7 +47,7 @@ from prompt_toolkit import prompt
 from twisted.logger import STDLibLogObserver, globalLogPublisher
 
 # Twisted and Klein methods and modules
-from twisted.internet import reactor, task, endpoints
+from twisted.internet import reactor, task, endpoints, threads
 from twisted.web.server import Site
 
 # neo methods and modules
@@ -69,6 +69,9 @@ LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 # Set the PID file, possible to override with env var PID_FILE
 PID_FILE = os.getenv("PID_FILE", "/tmp/neopython-api-server.pid")
 
+continue_persisting = True
+block_deferred = None
+
 
 def write_pid_file():
     """ Write a pid file, to easily kill the service """
@@ -86,6 +89,30 @@ def custom_background_code():
     while True:
         logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height + 1), str(Blockchain.Default().HeaderHeight + 1))
         sleep(15)
+
+
+def on_persistblocks_error(err):
+    logger.debug("On Persist blocks loop error! %s " % err)
+
+
+def stop_block_persisting():
+    global continue_persisting
+    continue_persisting = False
+
+
+def persist_done(value):
+    """persist callback. Value is unused"""
+    if continue_persisting:
+        start_block_persisting()
+    else:
+        block_deferred.cancel()
+
+
+def start_block_persisting():
+    global block_deferred
+    block_deferred = threads.deferToThread(Blockchain.Default().PersistBlocks)
+    block_deferred.addCallback(persist_done)
+    block_deferred.addErrback(on_persistblocks_error)
 
 
 def main():
@@ -109,7 +136,8 @@ def main():
     group_logging = parser.add_argument_group(title="Logging options")
     group_logging.add_argument("--logfile", action="store", type=str, help="Logfile")
     group_logging.add_argument("--syslog", action="store_true", help="Log to syslog instead of to log file ('user' is the default facility)")
-    group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7), metavar="[0-7]", help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
+    group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7), metavar="[0-7]",
+                               help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
     group_logging.add_argument("--disable-stderr", action="store_true", help="Disable stderr logger")
 
     # Where to store stuff
@@ -163,7 +191,12 @@ def main():
         settings.setup_coznet()
 
     if args.maxpeers:
-        settings.set_max_peers(args.maxpeers)
+        try:
+            settings.set_max_peers(args.maxpeers)
+            print("Maxpeers set to ", args.maxpeers)
+        except ValueError:
+            print("Please supply a positive integer for maxpeers")
+            return  
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -225,9 +258,7 @@ def main():
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
 
-    dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-    db_loop_deferred = dbloop.start(.1)
-    db_loop_deferred.addErrback(loopingCallErrorHandler)
+    start_block_persisting()
 
     # If a wallet is open, make sure it processes blocks
     if wallet:
@@ -268,6 +299,7 @@ def main():
         endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
         endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
 
+    reactor.addSystemEventTrigger('before', 'shutdown', stop_block_persisting)
     reactor.run()
 
     # After the reactor is stopped, gracefully shutdown the database.

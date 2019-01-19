@@ -22,11 +22,21 @@
     "AddressVersion": 23,
     "Magic": 1953787457,
     "SeedList": [
-      "13.58.169.218:20333",
-      "13.58.33.157:20333",
-      "18.222.161.128:20333",
-      "18.191.171.240:20333",
-      "18.222.168.189:20333"
+      "seed1.ngd.network:20333",
+      "seed2.ngd.network:20333",
+      "seed3.ngd.network:20333",
+      "seed4.ngd.network:20333",
+      "seed5.ngd.network:20333",
+      "seed6.ngd.network:20333",
+      "seed7.ngd.network:20333",
+      "seed8.ngd.network:20333",
+      "seed9.ngd.network:20333",
+      "seed10.ngd.network:20333",
+      "seed1.neo.org:20333",
+      "seed2.neo.org:20333",
+      "seed3.neo.org:20333",
+      "seed4.neo.org:20333",
+      "seed5.neo.org:20333"
     ],
     "RPCList": [
       "http://18.221.221.195:8880",

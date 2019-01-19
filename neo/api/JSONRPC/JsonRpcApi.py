@@ -196,8 +196,14 @@ class JsonRpcApi:
             return acct.ToJson()
 
         elif method == "getassetstate":
-            asset_id = UInt256.ParseString(params[0])
-            asset = Blockchain.Default().GetAssetState(asset_id.ToBytes())
+            asset_str = params[0]
+            if asset_str.lower() == 'neo':
+                assetId = Blockchain.Default().SystemShare().Hash
+            elif asset_str.lower() == 'gas':
+                assetId = Blockchain.Default().SystemCoin().Hash
+            else:
+                assetId = UInt256.ParseString(params[0])
+            asset = Blockchain.Default().GetAssetState(assetId.ToBytes())
             if asset:
                 return asset.ToJson()
             raise JsonRpcError(-100, "Unknown asset")
@@ -264,6 +270,19 @@ class JsonRpcApi:
             if storage_item:
                 return storage_item.Value.hex()
             return None
+
+        elif method == "gettransactionheight":
+            try:
+                hash = UInt256.ParseString(params[0])
+            except Exception:
+                # throws exception, not anything more specific
+                raise JsonRpcError(-100, "Unknown transaction")
+
+            tx, height = Blockchain.Default().GetTransaction(hash)
+            if tx:
+                return height
+            else:
+                raise JsonRpcError(-100, "Unknown transaction")
 
         elif method == "gettxout":
             hash = params[0].encode('utf-8')
@@ -442,7 +461,7 @@ class JsonRpcApi:
 
         # "UnconnectedPeers" is never used. So a check is needed to
         # verify that a given address:port does not belong to a connected peer
-        for addr in node.ADDRS:
+        for addr in node.KNOWN_ADDRS:
             host, port = addr.rsplit(':', 1)
             if addr not in connected_peers:
                 result['unconnected'].append({"address": host,
@@ -586,11 +605,17 @@ class JsonRpcApi:
         standard_contract = self.wallet.GetStandardAddress()
         signer_contract = self.wallet.GetContract(standard_contract)
 
-        tx = self.wallet.MakeTransaction(tx=contract_tx,
-                                         change_address=change_addr,
-                                         fee=fee,
-                                         from_addr=address_from)
+        try:
+            tx = self.wallet.MakeTransaction(tx=contract_tx,
+                                             change_address=change_addr,
+                                             fee=fee,
+                                             from_addr=address_from)
+        except ValueError:
+            # if not enough unspents while fully synced
+            raise JsonRpcError(-300, "Insufficient funds")
+
         if tx is None:
+            # if not enough unspents while not being fully synced
             raise JsonRpcError(-300, "Insufficient funds")
         data = standard_contract.Data
         tx.Attributes = [

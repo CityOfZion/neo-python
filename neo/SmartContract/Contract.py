@@ -126,7 +126,7 @@ class Contract(SerializableMixin, VerificationCode):
         Create a signature contract.
 
         Args:
-            publicKey (edcsa.Curve.point): i.e. KeyPair.PublicKey.
+            publicKey (edcsa.Curve.point): e.g. KeyPair.PublicKey.
 
         Returns:
             neo.SmartContract.Contract: a Contract instance.

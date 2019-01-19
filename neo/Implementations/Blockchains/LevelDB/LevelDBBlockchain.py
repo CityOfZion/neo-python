@@ -340,6 +340,12 @@ class LevelDBBlockchain(Blockchain):
         assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState)
         keys = assets.Keys
 
+        if query.lower() == "neo":
+            query = "AntShare"
+
+        if query.lower() in {"gas", "neogas"}:
+            query = "AntCoin"
+
         for item in keys:
             asset = assets.TryGet(keyval=item)
             if query in asset.Name.decode('utf-8'):
@@ -364,6 +370,12 @@ class LevelDBBlockchain(Blockchain):
         asset = assets.TryGet(assetId)
 
         return asset
+
+    def ShowAllAssets(self):
+
+        assets = DBCollection(self._db, DBPrefix.ST_Asset, AssetState)
+        keys = assets.Keys
+        return keys
 
     def GetTransaction(self, hash):
 
@@ -483,7 +495,7 @@ class LevelDBBlockchain(Blockchain):
             height(int): height of the block to retrieve hash from.
 
         Returns:
-            bytes: a non-raw block hash (i.e. b'6dd83ed8a3fc02e322f91f30431bf3662a8c8e8ebe976c3565f0d21c70620991', but not b'\x6d\xd8...etc'
+            bytes: a non-raw block hash (e.g. b'6dd83ed8a3fc02e322f91f30431bf3662a8c8e8ebe976c3565f0d21c70620991', but not b'\x6d\xd8...etc'
         """
         if self._current_block_height < height:
             return
@@ -618,17 +630,17 @@ class LevelDBBlockchain(Blockchain):
         if hHash not in self._header_index:
             self._header_index.append(hHash)
 
-        while header.Index - 2000 >= self._stored_header_count:
-            ms = StreamManager.GetStream()
-            w = BinaryWriter(ms)
-            headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count + 2000]
-            w.Write2000256List(headers_to_write)
-            out = ms.ToArray()
-            StreamManager.ReleaseStream(ms)
-            with self._db.write_batch() as wb:
+        with self._db.write_batch() as wb:
+            while header.Index - 2000 >= self._stored_header_count:
+                ms = StreamManager.GetStream()
+                w = BinaryWriter(ms)
+                headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count + 2000]
+                w.Write2000256List(headers_to_write)
+                out = ms.ToArray()
+                StreamManager.ReleaseStream(ms)
                 wb.put(DBPrefix.IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), out)
 
-            self._stored_header_count += 2000
+                self._stored_header_count += 2000
 
         with self._db.write_batch() as wb:
             if self._db.get(DBPrefix.DATA_Block + hHash) is None:
@@ -808,8 +820,8 @@ class LevelDBBlockchain(Blockchain):
         for event in to_dispatch:
             events.emit(event.event_type, event)
 
-    def PersistBlocks(self):
-
+    def PersistBlocks(self, limit=None):
+        ctr = 0
         if not self._paused:
             while not self._disposed:
 
@@ -827,11 +839,21 @@ class LevelDBBlockchain(Blockchain):
 
                 try:
                     self.Persist(block)
-                    self.OnPersistCompleted(block)
                     del self._block_cache[hash]
                 except Exception as e:
-                    logger.info("Could not persist block %s " % e)
+                    logger.info(f"Could not persist block {block.Index} reason: {e}")
                     raise e
+
+                try:
+                    self.OnPersistCompleted(block)
+                except Exception as e:
+                    logger.debug(f"Failed to broadcast OnPersistCompleted event, reason: {e}")
+                    raise e
+
+                ctr += 1
+                # give the reactor the opportunity to preempt
+                if limit and ctr == limit:
+                    break
 
     def Resume(self):
         self._currently_persisting = False

@@ -1,7 +1,7 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
-from neo.Prompt.Commands.Wallet import AddAlias
+from neo.Prompt.Commands.WalletAddress import AddAlias
 from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
@@ -16,7 +16,6 @@ import binascii
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
-
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
 
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
@@ -100,7 +99,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         # now add it again
 
-        self.assertRaises(Exception, wallet.AddWatchOnly, self.import_watch_addr)
+        self.assertRaises(ValueError, wallet.AddWatchOnly, self.import_watch_addr)
 
     def test_4_get_change_address(self):
 
@@ -194,7 +193,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx = ContractTransaction()
         tx.outputs = [TransactionOutput(Blockchain.SystemShare().Hash, Fixed8.FromDecimal(10.0), self.import_watch_addr)]
 
-        tx = wallet.MakeTransaction(tx)
+        try:
+            tx = wallet.MakeTransaction(tx)
+        except ValueError:
+            pass
 
         cpc = ContractParametersContext(tx)
         wallet.Sign(cpc)
