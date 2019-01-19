@@ -1,27 +1,9 @@
-from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
-from neo.Wallets.utils import to_aes_key
-from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-import shutil
-from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherLoadedContractParams, ImportMultiSigContractAddr
+from unittest import TestCase
+from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherLoadedContractParams
 import mock
 
 
-class LoadSmartContractTestCase(WalletFixtureTestCase):
-
-    wallet_1_addr = "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"
-    wallet_1_pk = "03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6"
-
-    _wallet1 = None
-
-    wallet_2_pk = "03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034"
-
-    @classmethod
-    def GetWallet1(cls, recreate=False):
-        if cls._wallet1 is None or recreate:
-            shutil.copyfile(cls.wallet_1_path(), cls.wallet_1_dest())
-            cls._wallet1 = UserWallet.Open(LoadSmartContractTestCase.wallet_1_dest(),
-                                           to_aes_key(LoadSmartContractTestCase.wallet_1_pass()))
-        return cls._wallet1
+class LoadSmartContractTestCase(TestCase):
 
     def test_loadcontract(self):
         # test for void (ff) type in params
