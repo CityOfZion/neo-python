@@ -10,17 +10,6 @@ from neo.Prompt.PromptPrinter import pp
 
 
 class CommandConfigTestCase(BlockchainFixtureTestCase):
-    # @classmethod
-    # def setUpClass(cls):
-    #     super().setUpClass()
-    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily
-    #     pp.printer = print
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     super().tearDownClass()
-    #     pp.reset_printer()
-
     @classmethod
     def leveldb_testpath(self):
         return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
@@ -40,7 +29,7 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
         args = ['output']
-        with patch('neo.Prompt.Commands.Config.prompt', side_effect=[1, 1, 1, "\n", "\n"]):  # tests changing the level and keeping the current level
+        with patch('neo.Prompt.Commands.Config.prompt', side_effect=[1, 1, 1, "\n", "\n", "\n"]):  # tests changing the level and keeping the current level
             res = CommandConfig().execute(args)
             self.assertTrue(res)
             self.assertEqual(res['generic'], "DEBUG")
@@ -48,6 +37,7 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             self.assertEqual(res['db'], "DEBUG")
             self.assertEqual(res['peewee'], "ERROR")
             self.assertEqual(res['network'], "INFO")
+            self.assertEqual(res['network.verbose'], "INFO")
 
     def test_config_sc_events(self):
         # test no input
@@ -126,8 +116,8 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
 
         # test updating block request size
         # first make sure we have a predictable state
+        NodeLeader.Instance().Reset()
         leader = NodeLeader.Instance()
-        old_leader = deepcopy(leader)
         leader.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
         leader.DEAD_ADDRS = ["127.0.0.1:20335"]
 
@@ -171,16 +161,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         res = CommandConfig().execute(args)
         self.assertFalse(res)
 
-        # restore whatever state the instance was in
-        NodeLeader._LEAD = old_leader
-
     def test_config_maxpeers(self):
         # test no input and verify output confirming current maxpeers
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['maxpeers']
             res = CommandConfig().execute(args)
             self.assertFalse(res)
-            self.assertIn("Maintaining maxpeers at 5", mock_print.getvalue())
+            self.assertIn(f"Maintaining maxpeers at {settings.CONNECTED_PEER_MAX}", mock_print.getvalue())
 
         # test changing the number of maxpeers
         args = ['maxpeers', "6"]

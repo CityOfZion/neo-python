@@ -11,7 +11,6 @@ from mock import patch
 from io import StringIO
 from boa.compiler import Compiler
 from neo.Settings import settings
-from neo.Prompt.PromptPrinter import pp
 
 
 class CommandSCTestCase(WalletFixtureTestCase):
@@ -23,17 +22,6 @@ class CommandSCTestCase(WalletFixtureTestCase):
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     _wallet1 = None
     _wallet3 = None
-
-    # @classmethod
-    # def setUpClass(cls):
-    #     super().setUpClass()
-    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily
-    #     pp.printer = print
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     super().tearDownClass()
-    #     pp.reset_printer()
 
     @classmethod
     def GetWallet1(cls, recreate=False):
@@ -147,14 +135,14 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertIn("Test deploy invoke successful", mock_print.getvalue())
 
         # test successful build and run with prompted input
-        PromptData.Wallet = self.GetWallet1(recreate=True)
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Utils.PromptSession.prompt', side_effect=['remove', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']):
-                args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
-                tx, result, total_ops, engine = CommandSC().execute(args)
-                self.assertTrue(tx)
-                self.assertEqual(str(result[0]), '0')
-                self.assertIn("Test deploy invoke successful", mock_print.getvalue())
+        # PromptData.Wallet = self.GetWallet1(recreate=True)
+        # with patch('sys.stdout', new=StringIO()) as mock_print:
+        #     with patch('neo.Prompt.Utils.PromptSession.prompt', side_effect=['remove', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy', '3']):
+        #         args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
+        #         tx, result, total_ops, engine = CommandSC().execute(args)
+        #         self.assertTrue(tx)
+        #         self.assertEqual(str(result[0]), '0')
+        #         self.assertIn("Test deploy invoke successful", mock_print.getvalue())
 
         # test invoke failure (SampleSC requires three inputs)
         PromptData.Wallet = self.GetWallet1(recreate=True)

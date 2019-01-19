@@ -8,17 +8,6 @@ import io
 
 
 class TestOutputConfig(NeoTestCase):
-    # @classmethod
-    # def setUpClass(cls):
-    #     super().setUpClass()
-    #     # replace the prompt_toolkit formatted print function with the default such that we can test easily by patching sys.stdout
-    #     pp.printer = print
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     super().tearDownClass()
-    #     pp.reset_printer()
-
     @patch('sys.stdout', new_callable=io.StringIO)
     @patch('neo.Prompt.Commands.Config.log_manager.config_stdio')
     @patch('neo.Prompt.Commands.Config.prompt')

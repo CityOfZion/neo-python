@@ -97,8 +97,8 @@ class PromptInterface:
         out = []
         try:
             return "[%s] Progress: %s/%s" % (settings.net_name,
-                                             str(Blockchain.Default().Height + 1),
-                                             str(Blockchain.Default().HeaderHeight + 1))
+                                             str(Blockchain.Default().Height),
+                                             str(Blockchain.Default().HeaderHeight))
         except Exception as e:
             pass
 
@@ -129,6 +129,8 @@ class PromptInterface:
         print('Shutting down. This may take a bit...')
         self.go_on = False
         PromptData.close_wallet()
+        Blockchain.Default().Dispose()
+        NodeLeader.Instance().Shutdown()
         reactor.stop()
 
     def help(self):
