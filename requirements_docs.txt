@@ -20,7 +20,7 @@ neo-python-rpc==0.2.1
 neocore==0.4.11
 packaging==17.1
 prompt-toolkit==2.0.4
-pycryptodome==3.6.3
+pycryptodome==3.7.3
 Pygments==2.2.0
 pymitter==0.2.3
 pyparsing==2.2.0
