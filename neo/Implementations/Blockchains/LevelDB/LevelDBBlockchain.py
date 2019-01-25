@@ -630,17 +630,17 @@ class LevelDBBlockchain(Blockchain):
         if hHash not in self._header_index:
             self._header_index.append(hHash)
 
-        while header.Index - 2000 >= self._stored_header_count:
-            ms = StreamManager.GetStream()
-            w = BinaryWriter(ms)
-            headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count + 2000]
-            w.Write2000256List(headers_to_write)
-            out = ms.ToArray()
-            StreamManager.ReleaseStream(ms)
-            with self._db.write_batch() as wb:
+        with self._db.write_batch() as wb:
+            while header.Index - 2000 >= self._stored_header_count:
+                ms = StreamManager.GetStream()
+                w = BinaryWriter(ms)
+                headers_to_write = self._header_index[self._stored_header_count:self._stored_header_count + 2000]
+                w.Write2000256List(headers_to_write)
+                out = ms.ToArray()
+                StreamManager.ReleaseStream(ms)
                 wb.put(DBPrefix.IX_HeaderHashList + self._stored_header_count.to_bytes(4, 'little'), out)
 
-            self._stored_header_count += 2000
+                self._stored_header_count += 2000
 
         with self._db.write_batch() as wb:
             if self._db.get(DBPrefix.DATA_Block + hHash) is None:
@@ -820,8 +820,8 @@ class LevelDBBlockchain(Blockchain):
         for event in to_dispatch:
             events.emit(event.event_type, event)
 
-    def PersistBlocks(self):
-
+    def PersistBlocks(self, limit=None):
+        ctr = 0
         if not self._paused:
             while not self._disposed:
 
@@ -839,11 +839,21 @@ class LevelDBBlockchain(Blockchain):
 
                 try:
                     self.Persist(block)
-                    self.OnPersistCompleted(block)
                     del self._block_cache[hash]
                 except Exception as e:
-                    logger.info("Could not persist block %s " % e)
+                    logger.info(f"Could not persist block {block.Index} reason: {e}")
                     raise e
+
+                try:
+                    self.OnPersistCompleted(block)
+                except Exception as e:
+                    logger.debug(f"Failed to broadcast OnPersistCompleted event, reason: {e}")
+                    raise e
+
+                ctr += 1
+                # give the reactor the opportunity to preempt
+                if limit and ctr == limit:
+                    break
 
     def Resume(self):
         self._currently_persisting = False

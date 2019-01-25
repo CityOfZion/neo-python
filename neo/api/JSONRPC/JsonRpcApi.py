@@ -271,6 +271,19 @@ class JsonRpcApi:
                 return storage_item.Value.hex()
             return None
 
+        elif method == "gettransactionheight":
+            try:
+                hash = UInt256.ParseString(params[0])
+            except Exception:
+                # throws exception, not anything more specific
+                raise JsonRpcError(-100, "Unknown transaction")
+
+            tx, height = Blockchain.Default().GetTransaction(hash)
+            if tx:
+                return height
+            else:
+                raise JsonRpcError(-100, "Unknown transaction")
+
         elif method == "gettxout":
             hash = params[0].encode('utf-8')
             index = params[1]
@@ -448,7 +461,7 @@ class JsonRpcApi:
 
         # "UnconnectedPeers" is never used. So a check is needed to
         # verify that a given address:port does not belong to a connected peer
-        for addr in node.ADDRS:
+        for addr in node.KNOWN_ADDRS:
             host, port = addr.rsplit(':', 1)
             if addr not in connected_peers:
                 result['unconnected'].append({"address": host,
