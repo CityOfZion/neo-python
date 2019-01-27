@@ -19,7 +19,7 @@ neo-boa==0.4.8
 neo-python-rpc==0.2.1
 neocore==0.4.11
 packaging==17.1
-prompt-toolkit==2.0.4
+prompt-toolkit==2.0.8
 pycryptodome==3.6.3
 Pygments==2.2.0
 pymitter==0.2.3
