@@ -20,6 +20,7 @@ class CommandConfig(CommandBase):
         self.register_sub_command(CommandConfigNodeRequests())
         self.register_sub_command(CommandConfigMaxpeers())
         self.register_sub_command(CommandConfigNEP8())
+        self.register_sub_command(CommandConfigSafemode())
 
     def command_desc(self):
         return CommandDesc('config', 'configure internal settings')
@@ -211,6 +212,35 @@ class CommandConfigMaxpeers(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('number', 'maximum number of nodes to connect to')
         return CommandDesc('maxpeers', 'configure number of max peers', [p1])
+
+
+class CommandConfigSafemode(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        if len(arguments) != 1:
+            print("Please specify the required parameter")
+            return False
+
+        try:
+            flag = bool(util.strtobool(arguments[0]))
+            settings.set_safemode(flag)
+        except ValueError:
+            print("Invalid option")
+            return False
+
+        if flag:
+            NodeLeader.Instance().Restart()
+            print("Safemode is ON")
+        else:
+            print("Safemode is OFF")
+
+        return True
+
+    def command_desc(self):
+        p1 = ParameterDesc('attribute', 'either "on"|"off" or 1|0')
+        return CommandDesc('safemode', 'toggle restricting peers to SEED_LIST only', [p1])
 
 
 def start_output_config():

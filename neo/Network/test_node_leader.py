@@ -304,3 +304,100 @@ class LeaderTestCase(WalletFixtureTestCase):
 
         self.assertEqual(
             len(list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))), 1)
+
+    def test_safemode(self):
+        # test turning on safemode with connected peers (i.e. via config safemode on | 1)
+        # first make sure we have a predictable state
+        NodeLeader.Instance().Reset()
+        leader = NodeLeader.Instance()
+        addr1 = Address("127.0.0.1:20333")
+        addr2 = Address("127.0.0.1:20334")
+        leader.ADDRS = [addr1, addr2]
+        leader.DEAD_ADDRS = [Address("127.0.0.1:20335")]
+        test_node = NeoNode()
+        test_node.host = "127.0.0.1"
+        test_node.port = 20333
+        test_node.address = Address("127.0.0.1:20333")
+        test_node2 = NeoNode()
+        test_node2.host = "127.0.0.1"
+        test_node2.port = 20333
+        test_node2.address = Address("127.0.0.1:20334")
+        leader.Peers = [test_node, test_node2]
+
+        # turn safemode on
+        settings.set_safemode(True)
+
+        with patch('neo.Network.NeoNode.NeoNode.Disconnect') as mock_disconnect:
+            with patch('neo.Network.NodeLeader.NodeLeader.SetupConnection') as mock_setupconnection:
+                NodeLeader.Instance().Restart()
+
+                self.assertTrue(mock_disconnect.called)
+                self.assertTrue(mock_setupconnection.called)
+
+        # now test if connected peers goes to zero with safemode on
+        # first make sure we have a predictable state
+        NodeLeader.Instance().Reset()
+        leader = NodeLeader.Instance()
+        addr1 = Address("127.0.0.1:20333")
+        addr2 = Address("127.0.0.1:20334")
+        leader.ADDRS = [addr1, addr2]
+        leader.DEAD_ADDRS = [Address("127.0.0.1:20335")]
+        leader.Peers = []
+
+        # turn safemode on
+        settings.set_safemode(True)
+
+        with patch('neo.Network.NeoNode.NeoNode.Disconnect') as mock_disconnect:
+            with patch('neo.Network.NodeLeader.NodeLeader.SetupConnection') as mock_setupconnection:
+                NodeLeader.Instance().Restart()
+
+                self.assertFalse(mock_disconnect.called)
+                self.assertTrue(mock_setupconnection.called)
+
+        # now test normal functionality without safemode with connected peers
+        # first make sure we have a predictable state
+        NodeLeader.Instance().Reset()
+        leader = NodeLeader.Instance()
+        addr1 = Address("127.0.0.1:20333")
+        addr2 = Address("127.0.0.1:20334")
+        leader.ADDRS = [addr1, addr2]
+        leader.DEAD_ADDRS = [Address("127.0.0.1:20335")]
+        test_node = NeoNode()
+        test_node.host = "127.0.0.1"
+        test_node.port = 20333
+        test_node.address = Address("127.0.0.1:20333")
+        test_node2 = NeoNode()
+        test_node2.host = "127.0.0.1"
+        test_node2.port = 20333
+        test_node2.address = Address("127.0.0.1:20334")
+        leader.Peers = [test_node, test_node2]
+
+        # ensure safemode is off
+        settings.set_safemode(False)
+
+        with patch('neo.Network.NeoNode.NeoNode.Disconnect') as mock_disconnect:
+            with patch('neo.Network.NodeLeader.NodeLeader.Start') as mock_start:
+                NodeLeader.Instance().Restart()
+
+                self.assertFalse(mock_disconnect.called)
+                self.assertFalse(mock_start.called)
+
+        # and test normal functionality without safemode with no connected peers
+        # first make sure we have a predictable state
+        NodeLeader.Instance().Reset()
+        leader = NodeLeader.Instance()
+        addr1 = Address("127.0.0.1:20333")
+        addr2 = Address("127.0.0.1:20334")
+        leader.ADDRS = [addr1, addr2]
+        leader.DEAD_ADDRS = [Address("127.0.0.1:20335")]
+        leader.Peers = []
+
+        # ensure safemode is off
+        settings.set_safemode(False)
+
+        with patch('neo.Network.NeoNode.NeoNode.Disconnect') as mock_disconnect:
+            with patch('neo.Network.NodeLeader.NodeLeader.SetupConnection') as mock_setupconnection:
+                NodeLeader.Instance().Restart()
+
+                self.assertFalse(mock_disconnect.called)
+                self.assertFalse(mock_setupconnection.called)          

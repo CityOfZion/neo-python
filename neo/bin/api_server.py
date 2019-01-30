@@ -147,6 +147,10 @@ def main():
     parser.add_argument("--maxpeers", action="store", default=5,
                         help="Max peers to use for P2P Joining")
 
+    # Safemode
+    parser.add_argument("--safemode", action="store_true", default=False,
+                        help="Connect to SEED_LIST addrs only by default")
+
     # If a wallet should be opened
     parser.add_argument("--wallet",
                         action="store",
@@ -196,7 +200,10 @@ def main():
             print("Maxpeers set to ", args.maxpeers)
         except ValueError:
             print("Please supply a positive integer for maxpeers")
-            return  
+            return
+
+    if args.safemode:
+        settings.set_safemode(True)
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility

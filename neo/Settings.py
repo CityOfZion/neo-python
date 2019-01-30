@@ -100,6 +100,7 @@ class SettingsHolder:
 
     ACCEPT_INCOMING_PEERS = False
     CONNECTED_PEER_MAX = 20
+    SAFEMODE = False
 
     SERVICE_ENABLED = True
 
@@ -272,6 +273,9 @@ class SettingsHolder:
             self.CONNECTED_PEER_MAX = maxpeers
         else:
             raise ValueError
+
+    def set_safemode(self, is_enabled=True):
+        self.SAFEMODE = is_enabled
 
     def set_log_smart_contract_events(self, is_enabled=True):
         self.log_smart_contract_events = is_enabled

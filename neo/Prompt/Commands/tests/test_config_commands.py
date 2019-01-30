@@ -230,3 +230,50 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             res = CommandConfig().execute(args)
             self.assertTrue(res)
             self.assertIn("NEP-8 compiler instruction usage is OFF", mock_print.getvalue())
+
+    def test_config_safemode(self):
+        # test with missing flag argument
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['safemode']
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please specify the required parameter", mock_print.getvalue())
+
+        # test with invalid option
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['safemode', 'blah']
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Invalid option", mock_print.getvalue())
+
+        # test turning on - 1
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Network.NodeLeader.NodeLeader.Restart') as mock_restart:
+                args = ['safemode', 'on']
+                res = CommandConfig().execute(args)
+                self.assertTrue(res)
+                self.assertIn("Safemode is ON", mock_print.getvalue())
+                self.assertTrue(mock_restart.called)
+
+        # test turning on - 2
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Network.NodeLeader.NodeLeader.Restart') as mock_restart:
+                args = ['safemode', '1']
+                res = CommandConfig().execute(args)
+                self.assertTrue(res)
+                self.assertIn("Safemode is ON", mock_print.getvalue())
+                self.assertTrue(mock_restart.called)
+
+        # test turning off - 1
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['safemode', 'off']
+            res = CommandConfig().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Safemode is OFF", mock_print.getvalue())
+
+        # test turning off - 2
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['safemode', '0']
+            res = CommandConfig().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Safemode is OFF", mock_print.getvalue())

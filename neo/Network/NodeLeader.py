@@ -29,6 +29,8 @@ class NodeLeader:
     KNOWN_ADDRS = []
     DEAD_ADDRS = []
 
+    SEED_LIST_ADDRS = []
+
     NodeId = None
 
     _MissedBlocks = []
@@ -183,6 +185,12 @@ class NodeLeader:
 
         self.peers_connecting = 0
 
+        # if switching to safemode from np-prompt, ensure we disconnect all peers and start with the seedlist
+        if settings.SAFEMODE and len(self.Peers) > 0:
+            for peer in self.Peers:
+                peer.Disconnect()
+            self.Peers = []
+
         if len(self.Peers) == 0:
             # preserve any addresses we know because the peers in the seedlist might have gone bad and then we can't receive new addresses anymore
             unique_addresses = list(set(self.KNOWN_ADDRS + self.DEAD_ADDRS))
@@ -191,7 +199,12 @@ class NodeLeader:
             self.peer_zero_count = 0
             self.connection_queue = []
 
-            self.Start(skip_seeds=True)
+            # if in safemode, ensure connection to the seedlist every time and eliminate the possibility of addr duplication in SEED_LIST_ADDRS
+            if settings.SAFEMODE:
+                self.SEED_LIST_ADDRS = []
+                self.Start(skip_seeds=False)
+            else:
+                self.Start(skip_seeds=True)
 
     def throttle_sync(self):
         for peer in self.Peers:  # type: NeoNode
@@ -259,6 +272,7 @@ class NodeLeader:
                     host, port = bootstrap.split(':')
                     bootstrap = f"{hostname_to_ip(host)}:{port}"
                 addr = Address(bootstrap)
+                self.SEED_LIST_ADDRS.append(addr)
                 self.KNOWN_ADDRS.append(addr)
                 self.SetupConnection(addr)
 
@@ -456,12 +470,23 @@ class NodeLeader:
                 continue
             if addr not in connected and addr not in self.connection_queue and len(self.Peers) + len(
                     self.connection_queue) < settings.CONNECTED_PEER_MAX:
-                self.connection_queue.append(addr)
-                logger.debug(
-                    f"Queuing {addr:>21} for new connection [in queue: {len(self.connection_queue)} "
-                    f"connected: {len(self.Peers)} maxpeers:{settings.CONNECTED_PEER_MAX}]")
+                # if SAFEMODE is enabled, connections will only be made with addrs from the seedlist
+                if settings.SAFEMODE:
+                    if addr in self.SEED_LIST_ADDRS:
+                        self.connection_queue.append(addr)
+                        logger.debug(
+                            f"Queuing {addr:>21} for new connection [in queue: {len(self.connection_queue)} "
+                            f"connected: {len(self.Peers)} maxpeers:{settings.CONNECTED_PEER_MAX}]")
+                    else:
+                        logger.debug(f"Address {addr} not found in SEED_LIST_ADDRS...skipping")
+                        to_remove.append(addr)
+                else:    
+                    self.connection_queue.append(addr)
+                    logger.debug(
+                        f"Queuing {addr:>21} for new connection [in queue: {len(self.connection_queue)} "
+                        f"connected: {len(self.Peers)} maxpeers:{settings.CONNECTED_PEER_MAX}]")
 
-        # we couldn't remove addresses found in the DEAD_ADDR list from ADDRS while looping over it
+        # we couldn't remove addresses found in the DEAD_ADDR list (or not found in SEED_LIST_ADDRS) from ADDRS while looping over it
         # so we do it now to clean up
         for addr in to_remove:
             # TODO: might be able to remove. Check if this scenario is still possible since the refactor
