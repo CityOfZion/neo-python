@@ -26,7 +26,7 @@ pymitter==0.2.3
 pyparsing==2.2.0
 pytz==2018.5
 requests==2.20.0
-scrypt==0.8.6
+scrypt==0.8.7
 six==1.11.0
 snowballstemmer==1.2.1
 Sphinx==1.7.6
