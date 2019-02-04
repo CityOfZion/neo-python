@@ -78,7 +78,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # test GET requests
         mock_req = mock_get_request(b"/")  # equivalent to "/"
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res["error"]["code"], -32600)
+        self.assertEqual(res["error"]["code"], -32700)
 
         mock_req = mock_get_request(b"/?%20invalid")  # equivalent to "/? invalid"
         res = json.loads(self.app.home(mock_req))

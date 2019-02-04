@@ -157,7 +157,7 @@ class JsonRpcApi:
             try:
                 l_value = list(content.values())[-1]
             except IndexError:
-                error = JsonRpcError.invalidRequest()
+                error = JsonRpcError.parseError()
                 return self.get_custom_error_payload(request_id, error.code, error.message)
 
             if l_value is not None:

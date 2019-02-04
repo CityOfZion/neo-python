@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 [0.8.4] in progress
 ----------------------
-- Fix invalid ``GET`` request
+- Gracefully handle invalid ``GET`` request
 
 [0.8.3] 2019-01-16
 -----------------------
