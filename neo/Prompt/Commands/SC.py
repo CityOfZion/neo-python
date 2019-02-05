@@ -233,12 +233,11 @@ class CommandSCDeploy(CommandBase):
             print("Please open a wallet")
             return False
 
-        if len(arguments) < 6:
+        if len(arguments) < 5:
             print("Please specify the required parameters")
             return False
 
         args, from_addr = PromptUtils.get_from_addr(arguments)
-        arguments, priority_fee = PromptUtils.get_fee(arguments)
 
         path = args[0]
 
@@ -284,25 +283,7 @@ class CommandSCDeploy(CommandBase):
                 print("Incorrect password")
                 return False
 
-            n_fee = Fixed8.Zero()
-            if priority_fee is not None:
-                n_fee = priority_fee
-                if n_fee is False:
-                    logger.debug("invalid fee")
-                    return False
-            print(f"Deploying with fee: {n_fee.ToString()}")
-
-            # calculate the required network fee for the tx and compare to n_fee
-            if tx.Size() > settings.MAX_FREE_TX_SIZE:
-                req_fee = Fixed8.FromDecimal(settings.FEE_PER_EXTRA_BYTE * (tx.Size() - settings.MAX_FREE_TX_SIZE))
-                if req_fee < settings.LOW_PRIORITY_THRESHOLD:
-                    req_fee = settings.LOW_PRIORITY_THRESHOLD
-                if n_fee < req_fee:
-                    print(f'Transaction cancelled. The tx size ({tx.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).')
-                    print(f'A network fee of {req_fee.ToString()} GAS is required.')
-                    return False
-
-            return InvokeContract(wallet, tx, n_fee, from_addr=from_addr)
+            return InvokeContract(wallet, tx, fee, from_addr=from_addr)
         else:
             print("Test invoke failed")
             print(f"TX is {tx}, results are {results}")
@@ -318,8 +299,7 @@ class CommandSCDeploy(CommandBase):
                            f"the return type of the smart contract output\n\n"
                            f"{' ':>17} For more information about parameter types see\n"
                            f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes\n", optional=True)
-        p7 = ParameterDesc('--fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
-        params = [p1, p2, p3, p4, p5, p6, p7]
+        params = [p1, p2, p3, p4, p5, p6]
         return CommandDesc('deploy', 'Deploy a smart contract (.avm) file to the blockchain', params=params)
 
 

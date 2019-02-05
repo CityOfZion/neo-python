@@ -223,6 +223,28 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
             self.assertIn("Insufficient funds", mock_print.getvalue())
 
+    def test_transaction_size_1(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=1026):  # returns a size of 1026
+                PromptData.Wallet = self.GetWallet1(recreate=True)
+                args = ['send', 'gas', self.watch_addr_str, '5']
+
+                res = Wallet.CommandWallet().execute(args)
+
+                self.assertFalse(res)
+                self.assertIn('Transaction cancelled. The tx size (1026) exceeds the max free tx size (1024).\nA network fee of 0.001 GAS is required.', mock_print.getvalue())
+
+    def test_transaction_size_2(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=1411):  # returns a size of 1411
+                PromptData.Wallet = self.GetWallet1(recreate=True)
+                args = ['send', 'gas', self.watch_addr_str, '5', '--fee=0.001']
+
+                res = Wallet.CommandWallet().execute(args)
+
+                self.assertFalse(res)
+                self.assertIn('Transaction cancelled. The tx size (1411) exceeds the max free tx size (1024).\nA network fee of 0.00387 GAS is required.', mock_print.getvalue())
+
     def test_bad_password(self):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=['blah']):
             with patch('sys.stdout', new=StringIO()) as mock_print:

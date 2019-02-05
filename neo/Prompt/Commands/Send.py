@@ -1,4 +1,4 @@
-from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
+from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction, TransactionError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
@@ -251,6 +251,9 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         print("Insufficient funds. No unspent outputs available for building the transaction.\n"
               "If you are trying to sent multiple transactions in 1 block, then make sure you have enough 'vouts'\n."
               "Use `wallet unspent` and `wallet address split`, or wait until the first transaction is processed before sending another.")
+        return
+    except TransactionError as e:
+        print(e.message)
         return
 
     if tx is None:

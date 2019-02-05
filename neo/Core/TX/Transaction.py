@@ -774,3 +774,19 @@ class ContractTransaction(Transaction):
         """
         super(ContractTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.ContractTransaction
+
+
+class TransactionError(Exception):
+    """
+    Provide user-friendly feedback for specific transaction exceptions.
+    """
+
+    message = None
+
+    def __init__(self, message):
+        super(TransactionError, self).__init__(message)
+        self.message = message
+
+    @staticmethod
+    def FeeError(message=None):
+        return TransactionError(message or "Fee error")

@@ -18,7 +18,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response, cors_header
 from neo.Core.State.AccountState import AccountState
 from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
-    ContractTransaction
+    ContractTransaction, TransactionError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
     TransactionAttributeUsage
 from neo.Core.State.CoinState import CoinState
@@ -613,6 +613,8 @@ class JsonRpcApi:
         except ValueError:
             # if not enough unspents while fully synced
             raise JsonRpcError(-300, "Insufficient funds")
+        except TransactionError as e:
+            raise JsonRpcError(-300, e.message)
 
         if tx is None:
             # if not enough unspents while not being fully synced

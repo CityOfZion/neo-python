@@ -283,24 +283,6 @@ class CommandSCTestCase(WalletFixtureTestCase):
                     self.assertFalse(res)
                     self.assertIn("Test invoke failed", mock_print.getvalue())
 
-        # test with ok contract parameter gathering, but bad fee
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
-                with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
-                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02', '--fee=0.001!']
-                    res = CommandSC().execute(args)
-                    self.assertFalse(res)
-                    self.assertIn("invalid amount format", mock_print.getvalue())
-
-        # test with ok contract parameter gathering, but negative fee
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
-                with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
-                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02', '--fee=-0.001']
-                    res = CommandSC().execute(args)
-                    self.assertFalse(res)
-                    self.assertIn("invalid amount format", mock_print.getvalue())
-
         # test with ok contract parameter gathering and ok passw (just insufficient funds to deploy)
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
@@ -310,37 +292,26 @@ class CommandSCTestCase(WalletFixtureTestCase):
                     self.assertFalse(res)
                     self.assertTrue(mock_print.getvalue().endswith('Insufficient funds\n'))
 
-        # test with ok contract parameter gathering, but tx is too large for low priority (e.g. >1024)
+        # test with ok contract parameter gathering, and tx is too large for low priority (e.g. >1024), just insufficient funds to deploy
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
                 with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
                     with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=615):  # returns a size of 1026
-                        args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02', '--fee=0.0005']
+                        args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
                         res = CommandSC().execute(args)
                         self.assertFalse(res)
-                        self.assertIn("Transaction cancelled. The tx size (1026) exceeds the max free tx size (1024).", mock_print.getvalue())
-                        self.assertIn("A network fee of 0.001 GAS is required.", mock_print.getvalue())  # notice the required fee is equal to the low priority threshold
+                        self.assertIn("Deploy Invoke TX Fee: 0.001", mock_print.getvalue())  # notice the required fee is equal to the low priority threshold
+                        self.assertTrue(mock_print.getvalue().endswith('Insufficient funds\n'))
 
-        # test with ok contract parameter gathering, but tx size exceeds the size covered by the high priority fee (e.g. >1124)
+        # test with ok contract parameter gathering, but tx size exceeds the size covered by the high priority fee (e.g. >1124), just insufficient funds to deploy
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
                 with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
                     with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=1000):  # returns a size of 1411
-                        args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02', '--fee=0.001']
+                        args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
                         res = CommandSC().execute(args)
                         self.assertFalse(res)
-                        self.assertIn("Transaction cancelled. The tx size (1411) exceeds the max free tx size (1024).", mock_print.getvalue())
-                        self.assertIn("A network fee of 0.00387 GAS is required.", mock_print.getvalue())  # notice the required fee is now greater than the low priority threshold
-
-        # test with ok contract parameter gathering, ok passw, and ok fee (just insufficient funds to deploy)
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
-                with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
-                    with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=615):  # returns a size of 1026
-                        args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02', '--fee=0.001']
-                        res = CommandSC().execute(args)
-                        self.assertFalse(res)
-                        self.assertIn("Deploying with fee:", mock_print.getvalue())
+                        self.assertIn("Deploy Invoke TX Fee: 0.00387", mock_print.getvalue())  # notice the required fee is now greater than the low priority threshold
                         self.assertTrue(mock_print.getvalue().endswith('Insufficient funds\n'))
 
     def test_sc_invoke(self):

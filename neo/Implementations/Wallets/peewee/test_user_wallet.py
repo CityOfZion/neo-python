@@ -10,7 +10,7 @@ from neocore.Fixed8 import Fixed8
 from neocore.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
+from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput, TransactionError
 from neo.Network.NodeLeader import NodeLeader
 import binascii
 
@@ -195,7 +195,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         try:
             tx = wallet.MakeTransaction(tx)
-        except ValueError:
+        except (ValueError, TransactionError):
             pass
 
         cpc = ContractParametersContext(tx)
