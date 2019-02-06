@@ -238,6 +238,14 @@ class CommandSCDeploy(CommandBase):
             return False
 
         args, from_addr = PromptUtils.get_from_addr(arguments)
+        arguments, priority_fee = PromptUtils.get_fee(arguments)
+
+        p_fee = Fixed8.Zero()
+        if priority_fee is not None:
+            p_fee = priority_fee
+            if p_fee is False:
+                logger.debug("invalid fee")
+                return False
 
         path = args[0]
 
@@ -276,6 +284,9 @@ class CommandSCDeploy(CommandBase):
             print(f"Deploy Invoke TX Fee: {fee.value / Fixed8.D}")
             print(
                 "-------------------------------------------------------------------------------------------------------------------------------------\n")
+            comb_fee = p_fee + fee
+            if comb_fee != fee:
+                print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Deploy Invoke TX Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
             print("Enter your password to continue and deploy this contract")
 
             passwd = prompt("[password]> ", is_password=True)
@@ -283,7 +294,7 @@ class CommandSCDeploy(CommandBase):
                 print("Incorrect password")
                 return False
 
-            return InvokeContract(wallet, tx, fee, from_addr=from_addr)
+            return InvokeContract(wallet, tx, comb_fee, from_addr=from_addr)
         else:
             print("Test invoke failed")
             print(f"TX is {tx}, results are {results}")
@@ -299,7 +310,8 @@ class CommandSCDeploy(CommandBase):
                            f"the return type of the smart contract output\n\n"
                            f"{' ':>17} For more information about parameter types see\n"
                            f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes\n", optional=True)
-        params = [p1, p2, p3, p4, p5, p6]
+        p7 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        params = [p1, p2, p3, p4, p5, p6, p7]
         return CommandDesc('deploy', 'Deploy a smart contract (.avm) file to the blockchain', params=params)
 
 

@@ -283,13 +283,32 @@ class CommandSCTestCase(WalletFixtureTestCase):
                     self.assertFalse(res)
                     self.assertIn("Test invoke failed", mock_print.getvalue())
 
-        # test with ok contract parameter gathering and ok passw (just insufficient funds to deploy)
+        # test with ok contract parameter gathering, but bad fee
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
                 with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
-                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
+                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02', '--fee=0.001!']
                     res = CommandSC().execute(args)
                     self.assertFalse(res)
+                    self.assertIn("invalid amount format", mock_print.getvalue())
+
+        # test with ok contract parameter gathering, but negative fee
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
+                with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
+                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02', '--fee=-0.001']
+                    res = CommandSC().execute(args)
+                    self.assertFalse(res)
+                    self.assertIn("invalid amount format", mock_print.getvalue())
+
+        # test with ok contract parameter gathering, ok passw, and priority fee (just insufficient funds to deploy)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
+                with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
+                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02', '--fee=0.001']
+                    res = CommandSC().execute(args)
+                    self.assertFalse(res)
+                    self.assertIn("Priority Fee (0.001) + Deploy Invoke TX Fee (0.0) = 0.001", mock_print.getvalue())
                     self.assertTrue(mock_print.getvalue().endswith('Insufficient funds\n'))
 
         # test with ok contract parameter gathering, and tx is too large for low priority (e.g. >1024), just insufficient funds to deploy

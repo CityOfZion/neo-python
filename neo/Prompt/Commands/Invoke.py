@@ -18,7 +18,7 @@ from neo.Core.State.StorageItem import StorageItem
 
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
-from neo.Core.TX.Transaction import TransactionOutput, TransactionError
+from neo.Core.TX.Transaction import TransactionOutput, TXFeeError
 
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
@@ -54,8 +54,8 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
     except ValueError:
         print("Insufficient funds")
         return False
-    except TransactionError as e:
-        print(e.message)
+    except TXFeeError as e:
+        print(e)
         return False
 
     if wallet_tx:
@@ -105,8 +105,8 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
     except ValueError:
         print("Insufficient funds")
         return False
-    except TransactionError as e:
-        print(e.message)
+    except TXFeeError as e:
+        print(e)
         return False
 
     if wallet_tx:
@@ -435,7 +435,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
     try:
         dtx = wallet.MakeTransaction(tx=dtx, from_addr=from_addr)
-    except (ValueError, TransactionError):
+    except (ValueError, TXFeeError):
         pass
 
     context = ContractParametersContext(dtx)
@@ -558,7 +558,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
         try:
             itx = wallet.MakeTransaction(tx=itx, from_addr=from_addr)
-        except (ValueError, TransactionError):
+        except (ValueError, TXFeeError):
             pass
 
         context = ContractParametersContext(itx)

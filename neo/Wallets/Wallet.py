@@ -12,7 +12,7 @@ from decimal import Decimal
 from Crypto import Random
 from Crypto.Cipher import AES
 from threading import RLock
-from neo.Core.TX.Transaction import TransactionType, TransactionOutput, TransactionError
+from neo.Core.TX.Transaction import TransactionType, TransactionOutput, TXFeeError
 from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
@@ -1111,7 +1111,7 @@ class Wallet:
             if req_fee < settings.LOW_PRIORITY_THRESHOLD:
                 req_fee = settings.LOW_PRIORITY_THRESHOLD
             if fee < req_fee:
-                raise TransactionError.FeeError(f'Transaction cancelled. The tx size ({tx.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
+                raise TXFeeError(f'Transaction cancelled. The tx size ({tx.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
 
         return tx
 

@@ -1,4 +1,4 @@
-from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction, TransactionError
+from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction, TXFeeError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
@@ -41,7 +41,7 @@ class CommandWalletSend(CommandBase):
         p2 = ParameterDesc('address', 'destination address')
         p3 = ParameterDesc('amount', 'amount of the asset to send')
         p4 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
-        p5 = ParameterDesc('--fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p5 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
         p6 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
         p7 = ParameterDesc('--tx-attr',
                            f"list of transaction attributes to attach to the transaction\n\n"
@@ -75,7 +75,7 @@ class CommandWalletSendMany(CommandBase):
         p1 = ParameterDesc('tx_count', 'number of transactions to send')
         p2 = ParameterDesc('--change-addr', 'address to send remaining funds to', optional=True)
         p3 = ParameterDesc('--from-addr', 'source address to take funds from (if not specified, take first address in wallet)', optional=True)
-        p4 = ParameterDesc('--fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p4 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
         p5 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
         p6 = ParameterDesc('--tx-attr',
                            f"a list of transaction attributes to attach to the transaction\n\n"
@@ -252,8 +252,8 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
               "If you are trying to sent multiple transactions in 1 block, then make sure you have enough 'vouts'\n."
               "Use `wallet unspent` and `wallet address split`, or wait until the first transaction is processed before sending another.")
         return
-    except TransactionError as e:
-        print(e.message)
+    except TXFeeError as e:
+        print(e)
         return
 
     if tx is None:

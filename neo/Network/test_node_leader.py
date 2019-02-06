@@ -9,7 +9,7 @@ from neocore.Fixed8 import Fixed8
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput, TransactionError
+from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput, TXFeeError
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from twisted.trial import unittest as twisted_unittest
 from twisted.test import proto_helpers
@@ -184,7 +184,7 @@ class LeaderTestCase(WalletFixtureTestCase):
         contract_tx = ContractTransaction(outputs=[output])
         try:
             wallet.MakeTransaction(contract_tx)
-        except (ValueError, TransactionError):
+        except (ValueError, TXFeeError):
             pass
         ctx = ContractParametersContext(contract_tx)
         wallet.Sign(ctx)
