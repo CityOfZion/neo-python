@@ -3,9 +3,12 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.8.4] in progress
+[0.8.4-dev] in progress
 ----------------------
-- Fix ``ImportMultiSigAddr``
+- Fix ``config maxpeers`` to disconnect peers if limited is lower than before
+- Gracefully handle invalid ``GET`` request
+- Fix incorrect error handling when importing a 1 out of 2 multi-signature address
+
 
 [0.8.3] 2019-01-16
 -----------------------
