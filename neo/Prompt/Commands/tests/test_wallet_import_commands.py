@@ -203,10 +203,10 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         # test with insufficient remaining signing keys
         with patch('sys.stdout', new=StringIO()) as mock_print:
             # 0 not allowed
-            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '2', 'key1']
+            args = ['import', 'multisig_addr', '03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6', '3', 'key1']
             res = CommandWallet().execute(args)
             self.assertFalse(res)
-            self.assertIn("Minimum required: 2 given: 1", mock_print.getvalue())
+            self.assertIn("Minimum required: 3 given: 2", mock_print.getvalue())
 
         # test with bad remaining signing key 1
         with patch('sys.stdout', new=StringIO()) as mock_print:

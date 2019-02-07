@@ -7,6 +7,7 @@ All notable changes to this project are documented in this file.
 ----------------------
 - Fix ``config maxpeers`` to disconnect peers if limited is lower than before
 - Gracefully handle invalid ``GET`` request
+- Fix incorrect error handling when importing a 1 out of 2 multi-signature address
 - Implement tx size network fee calc
 
 
