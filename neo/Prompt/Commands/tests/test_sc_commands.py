@@ -315,7 +315,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
                 with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
-                    with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=615):  # returns a size of 1026
+                    with patch('neo.Core.TX.InvocationTransaction.InvocationTransaction.Size', return_value=1026):  # returns a size of 1026
                         args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
                         res = CommandSC().execute(args)
                         self.assertFalse(res)
@@ -326,7 +326,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
                 with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_1_pass()]):
-                    with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=1000):  # returns a size of 1411
+                    with patch('neo.Core.TX.InvocationTransaction.InvocationTransaction.Size', return_value=1411):  # returns a size of 1411
                         args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
                         res = CommandSC().execute(args)
                         self.assertFalse(res)
