@@ -199,8 +199,19 @@ class CommandConfigMaxpeers(CommandBase):
         c1 = get_arg(arguments)
         if c1 is not None:
             try:
+                current_max = settings.CONNECTED_PEER_MAX
                 settings.set_max_peers(c1)
-                print("Maxpeers set to ", c1)
+                c1 = int(c1)
+                p_len = len(NodeLeader.Instance().Peers)
+                if c1 < current_max and c1 < p_len:
+                    to_remove = p_len - c1
+                    peers = NodeLeader.Instance().Peers
+                    for i in range(to_remove):
+                        peer = peers[-1]  # disconnect last peer added first
+                        peer.Disconnect("Max connected peers reached", isDead=False)
+                        peers.pop()
+
+                print(f"Maxpeers set to {c1}")
                 return c1
             except ValueError:
                 print("Please supply a positive integer for maxpeers")

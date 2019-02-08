@@ -12,6 +12,7 @@ import os
 import sys
 import pip
 from neocore.Cryptography import Helper
+from neocore.Fixed8 import Fixed8
 from neorpc.Client import RPCClient, NEORPCException
 from neorpc.Settings import settings as rpc_settings
 from neo import __version__
@@ -82,6 +83,11 @@ class SettingsHolder:
     ISSUE_TX_FEE = None
     PUBLISH_TX_FEE = None
     REGISTER_TX_FEE = None
+
+    MAX_FREE_TX_SIZE = 1024
+    FEE_PER_EXTRA_BYTE = 0.00001
+
+    LOW_PRIORITY_THRESHOLD = Fixed8.FromDecimal(0.001)
 
     DATA_DIR_PATH = None
     LEVELDB_PATH = None
