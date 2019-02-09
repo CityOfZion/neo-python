@@ -3,6 +3,14 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.8.4-dev] in progress
+----------------------
+- Fix ``config maxpeers`` to disconnect peers if limited is lower than before
+- Gracefully handle invalid ``GET`` request
+- Fix incorrect error handling when importing a 1 out of 2 multi-signature address
+- Implement tx size network fee calc
+
+
 [0.8.3] 2019-01-16
 -----------------------
 - Update ``getassetstate`` RPC method to support `neo` and `gas` aliases; Cleanup ``show_contract_state`` `#667 <https://github.com/CityOfZion/neo-python/pull/667>`_

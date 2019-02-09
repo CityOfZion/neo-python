@@ -141,7 +141,7 @@ class CommandWalletSplit(CommandBase):
         p2 = ParameterDesc('asset', 'type of asset to split (NEO/GAS)')
         p3 = ParameterDesc('unspent_index', 'index of the vin to split')
         p4 = ParameterDesc('divisions', 'number of vouts to divide into ')
-        p5 = ParameterDesc('fee', 'fee to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p5 = ParameterDesc('fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
         return CommandDesc('split', 'split an asset unspent output into N outputs', params=[p1, p2, p3, p4, p5])
 
 
