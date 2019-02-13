@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - Gracefully handle invalid ``GET`` request
 - Fix incorrect error handling when importing a 1 out of 2 multi-signature address
 - Implement tx size network fee calc
+- Fix an invalid list access error during client connection error edge case
 
 
 [0.8.3] 2019-01-16
