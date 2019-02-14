@@ -182,6 +182,7 @@ class Helper:
             return False
 
         if len(hashes) != len(verifiable.Scripts):
+            logger.debug(f"hash - verification script length mismatch ({len(hashes)}/{len(verifiable.Scripts)})")
             return False
 
         blockchain = GetBlockchain()
@@ -196,6 +197,7 @@ class Helper:
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:
+                    logger.debug(f"hash {hashes[i]} does not match verification hash {verification_hash}")
                     return False
 
             state_reader = GetStateReader()
@@ -214,6 +216,10 @@ class Helper:
 
             if engine.ResultStack.Count != 1 or not engine.ResultStack.Pop().GetBoolean():
                 Helper.EmitServiceEvents(state_reader)
+                if engine.ResultStack.Count > 0:
+                    logger.debug(f"Result stack failure! Count: {engine.ResultStack.Count} bool value: {engine.ResultStack.Pop().GetBoolean()}")
+                else:
+                    logger.debug(f"Result stack failure! Count: {engine.ResultStack.Count}")
                 return False
 
             Helper.EmitServiceEvents(state_reader)

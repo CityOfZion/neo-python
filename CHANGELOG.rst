@@ -13,6 +13,7 @@ All notable changes to this project are documented in this file.
 - Implement the ability to attach a priority fee to applicable transactions
 - Fix an invalid list access error during client connection error edge case
 - Fix `NetworkAddressWithTime` address serialization
+- Add additional debug logging to help investigate transaction verification failures
 
 
 [0.8.3] 2019-01-16
