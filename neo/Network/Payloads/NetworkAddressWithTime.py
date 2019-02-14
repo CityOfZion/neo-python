@@ -65,7 +65,12 @@ class NetworkAddressWithTime(SerializableMixin):
         """
         writer.WriteUInt32(self.Timestamp)
         writer.WriteUInt64(self.Services)
-        writer.WriteFixedString(self.Address, 16)
+        # turn ip address into bytes
+        octets = bytearray(map(lambda oct: int(oct), self.Address.split('.')))
+        # pad to fixed length 16
+        octets += bytearray(12)
+        # and finally write to stream
+        writer.WriteBytes(octets)
         writer.WriteUInt16(self.Port, endian='>')
 
     def ToString(self):

@@ -18,7 +18,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response, cors_header
 from neo.Core.State.AccountState import AccountState
 from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
-    ContractTransaction
+    ContractTransaction, TXFeeError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
     TransactionAttributeUsage
 from neo.Core.State.CoinState import CoinState
@@ -154,7 +154,12 @@ class JsonRpcApi:
             content = furl(request.uri).args
 
             # remove hanging ' or " from last value if value is not None to avoid SyntaxError
-            l_value = list(content.values())[-1]
+            try:
+                l_value = list(content.values())[-1]
+            except IndexError:
+                error = JsonRpcError.parseError()
+                return self.get_custom_error_payload(request_id, error.code, error.message)
+
             if l_value is not None:
                 n_value = l_value[:-1]
                 l_key = list(content.keys())[-1]
@@ -613,6 +618,8 @@ class JsonRpcApi:
         except ValueError:
             # if not enough unspents while fully synced
             raise JsonRpcError(-300, "Insufficient funds")
+        except TXFeeError as e:
+            raise JsonRpcError(-300, e)
 
         if tx is None:
             # if not enough unspents while not being fully synced
