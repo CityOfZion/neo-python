@@ -12,7 +12,9 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
+from neo.Network.p2pservice import NetworkService
 import json
+import asyncio
 
 logger = log_manager.getLogger()
 
@@ -161,15 +163,24 @@ class CommandShowNodes(CommandBase):
         super().__init__()
 
     def execute(self, arguments=None):
-        if len(NodeLeader.Instance().Peers) > 0:
-            out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
-            for i, peer in enumerate(NodeLeader.Instance().Peers):
-                out += f"Peer {i} {peer.Name():>12} - {peer.address:>21} - IO {peer.IOStats()}\n"
-            print(out)
-            return out
-        else:
-            print("Not connected yet\n")
-            return
+        n = NetworkService()
+
+        def _print_result(result):
+            print(result)
+
+        task = asyncio.ensure_future(n.get_nodes())  # because < 3.7 has no create task :(
+        task.add_done_callback(_print_result)
+        print("test added")
+
+        # if len(NodeLeader.Instance().Peers) > 0:
+        #     out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
+        #     for i, peer in enumerate(NodeLeader.Instance().Peers):
+        #         out += f"Peer {i} {peer.Name():>12} - {peer.address:>21} - IO {peer.IOStats()}\n"
+        #     print(out)
+        #     return out
+        # else:
+        #     print("Not connected yet\n")
+        #     return
 
     def command_desc(self):
         return CommandDesc('nodes', 'show connected peers')

@@ -38,6 +38,7 @@ import argparse
 import threading
 from time import sleep
 from logging.handlers import SysLogHandler
+from neo.Network.p2pservice import NetworkService
 
 import logzero
 from logzero import logger
@@ -47,7 +48,8 @@ from prompt_toolkit import prompt
 from twisted.logger import STDLibLogObserver, globalLogPublisher
 
 # Twisted and Klein methods and modules
-from twisted.internet import reactor, task, endpoints, threads
+from twisted.internet import task, endpoints, threads
+# from twisted.internet import reactor, task, endpoints, threads
 from twisted.web.server import Site
 
 # neo methods and modules
@@ -57,10 +59,16 @@ from neo.Implementations.Notifications.LevelDB.NotificationDB import Notificatio
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
-from neo.Network.NodeLeader import NodeLeader
+# from neo.Network.NodeLeader import NodeLeader
 from neo.Settings import settings
 from neo.Utils.plugin import load_class_from_path
 import neo.Settings
+import asyncio
+from twisted.internet import asyncioreactor
+
+loop = asyncio.get_event_loop()
+asyncio.set_event_loop(loop)
+asyncioreactor.install(eventloop=loop)
 
 # Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
@@ -79,7 +87,7 @@ def write_pid_file():
         f.write(str(os.getpid()))
 
 
-def custom_background_code():
+async def custom_background_code():
     """ Custom code run in a background thread.
 
     This function is run in a daemonized thread, which means it can be instantly killed at any
@@ -88,7 +96,7 @@ def custom_background_code():
     """
     while True:
         logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height + 1), str(Blockchain.Default().HeaderHeight + 1))
-        sleep(15)
+        await asyncio.sleep(15)
 
 
 def on_persistblocks_error(err):
@@ -196,7 +204,7 @@ def main():
             print("Maxpeers set to ", args.maxpeers)
         except ValueError:
             print("Please supply a positive integer for maxpeers")
-            return  
+            return
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -258,23 +266,30 @@ def main():
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
 
-    start_block_persisting()
+    # start_block_persisting()
 
     # If a wallet is open, make sure it processes blocks
     if wallet:
-        walletdb_loop = task.LoopingCall(wallet.ProcessBlocks)
-        wallet_loop_deferred = walletdb_loop.start(1)
-        wallet_loop_deferred.addErrback(loopingCallErrorHandler)
+        Blockchain.Default().PersistCompleted += wallet.ProcessNewBlock
+        # walletdb_loop = task.LoopingCall(wallet.ProcessBlocks)
+        # wallet_loop_deferred = walletdb_loop.start(1)
+        # wallet_loop_deferred.addErrback(loopingCallErrorHandler)
+
+    p2p = NetworkService()
+    loop.create_task(p2p.start())
+    loop.create_task(custom_background_code())
+
+    # asyncioreactor.install(eventloop=loop)
 
     # Setup twisted reactor, NodeLeader and start the NotificationDB
-    reactor.suggestThreadPoolSize(15)
-    NodeLeader.Instance().Start()
-    NotificationDB.instance().start()
-
-    # Start a thread with custom code
-    d = threading.Thread(target=custom_background_code)
-    d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
-    d.start()
+    # reactor.suggestThreadPoolSize(15)
+    # NodeLeader.Instance().Start()
+    # NotificationDB.instance().start()
+    #
+    # # Start a thread with custom code
+    # d = threading.Thread(target=custom_background_code)
+    # d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
+    # d.start()
 
     if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
@@ -284,29 +299,30 @@ def main():
             logger.error(err)
             sys.exit()
         api_server_rpc = rpc_class(args.port_rpc, wallet=wallet)
+        api_server_rpc.app.run('0.0.0.0', 8000)
 
-        endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
-        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+        # endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
+        # endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
-    if args.port_rest:
-        logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
-        try:
-            rest_api = load_class_from_path(settings.REST_SERVER)
-        except ValueError as err:
-            logger.error(err)
-            sys.exit()
-        api_server_rest = rest_api()
-        endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
-        endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
-
-    reactor.addSystemEventTrigger('before', 'shutdown', stop_block_persisting)
-    reactor.run()
+    # if args.port_rest:
+    #     logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
+    #     try:
+    #         rest_api = load_class_from_path(settings.REST_SERVER)
+    #     except ValueError as err:
+    #         logger.error(err)
+    #         sys.exit()
+    #     api_server_rest = rest_api()
+    #     endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
+    #     endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
+    #
+    # reactor.addSystemEventTrigger('before', 'shutdown', stop_block_persisting)
+    # reactor.run()
 
     # After the reactor is stopped, gracefully shutdown the database.
     logger.info("Closing databases...")
     NotificationDB.close()
     Blockchain.Default().Dispose()
-    NodeLeader.Instance().Shutdown()
+    # NodeLeader.Instance().Shutdown()
     if wallet:
         wallet.Close()
 
