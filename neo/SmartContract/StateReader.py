@@ -303,7 +303,8 @@ class StateReader(InteropService):
 
             # If we do not add the eval stack, then exceptions that are raised in a contract
             # are not displayed to the event consumer
-            [payload.Value.append(ContractParameter.ToParameter(item)) for item in engine.CurrentContext.EvaluationStack.Items]
+            if engine._InvocationStack.Count > 1:
+                [payload.Value.append(ContractParameter.ToParameter(item)) for item in engine.CurrentContext.EvaluationStack.Items]
 
             if engine.Trigger == Application:
                 self.events_to_dispatch.append(

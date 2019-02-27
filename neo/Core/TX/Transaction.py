@@ -405,7 +405,7 @@ class Transaction(InventoryMixin):
         """
         self.DeserializeUnsigned(reader)
 
-        self.scripts = reader.ReadSerializableArray()
+        self.scripts = reader.ReadSerializableArray('neo.Core.Witness.Witness')
         self.OnDeserialized()
 
     def DeserializeExclusiveData(self, reader):
@@ -596,7 +596,7 @@ class Transaction(InventoryMixin):
         Returns:
             bool: True if verified. False otherwise.
         """
-        logger.info("Verifying transaction: %s " % self.Hash.ToBytes())
+        logger.debug("Verifying transaction: %s " % self.Hash.ToBytes())
 
         return Helper.VerifyScripts(self)
 

@@ -22,10 +22,10 @@ class StateDescriptor(SerializableMixin):
 
     @property
     def SystemFee(self):
-        if self.Type == StateType.Account:
-            return Fixed8.Zero()
-        elif self.Type == StateType.Validator:
+        if self.Type == StateType.Validator:
             return self.GetSystemFee_Validator()
+        else:
+            return Fixed8.Zero()
 
     def Size(self):
         """
@@ -145,8 +145,8 @@ class StateDescriptor(SerializableMixin):
         raise Exception("Invalid State Descriptor")
 
     def VerifyAccountState(self):
-        # @TODO
-        # Implement VerifyAccount State
+        # TODO
+        #  Implement VerifyAccount State
         raise NotImplementedError()
 
     def VerifyValidatorState(self):

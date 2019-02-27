@@ -1,5 +1,7 @@
 import plyvel
 import binascii
+import struct
+import traceback
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
@@ -29,8 +31,9 @@ from neo.SmartContract import TriggerType
 from neo.Core.Cryptography.Crypto import Crypto
 from neo.Core.BigInteger import BigInteger
 from neo.EventHub import events
+from typing import Tuple
 
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('db')
@@ -52,7 +55,7 @@ class LevelDBBlockchain(Blockchain):
 
     # this is the version of the database
     # should not be updated for network version changes
-    _sysversion = b'schema v.0.6.9'
+    _sysversion = b'schema v.0.8.5'
 
     _persisting_block = None
 
@@ -514,7 +517,7 @@ class LevelDBBlockchain(Blockchain):
             hash = hash.ToBytes()
         try:
             value = self._db.get(DBPrefix.DATA_Block + hash)[0:8]
-            amount = int.from_bytes(value, 'little', signed=False)
+            amount = struct.unpack("<d", value)[0]
             return amount
         except Exception as e:
             logger.debug("Could not get sys fee: %s " % e)
@@ -588,7 +591,7 @@ class LevelDBBlockchain(Blockchain):
         return None
 
     def AddHeader(self, header):
-        self.AddHeaders([header])
+        return self.AddHeaders([header])
 
     def AddHeaders(self, headers):
 
@@ -666,9 +669,8 @@ class LevelDBBlockchain(Blockchain):
         contracts = DBCollection(self._db, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, DBPrefix.ST_Storage, StorageItem)
 
-        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
-        amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
-
+        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + (block.TotalFees().value / Fixed8.D)
+        amount_sysfee_bytes = struct.pack("<d", amount_sysfee)
         to_dispatch = []
 
         with self._db.write_batch() as wb:
@@ -822,6 +824,23 @@ class LevelDBBlockchain(Blockchain):
 
         for event in to_dispatch:
             events.emit(event.event_type, event)
+
+    def TryPersist(self, block: 'Block') -> Tuple[bool, str]:
+        distance = self._current_block_height - block.Index
+
+        if distance >= 0:
+            return False, "Block already exists"
+
+        if distance < -1:
+            return False, f"Trying to persist block {block.Index} but expecting next block to be {self._current_block_height + 1}"
+
+        try:
+            self.Persist(block)
+        except Exception as e:
+            traceback.print_exc()
+            return False, f"{e}"
+
+        return True, ""
 
     def PersistBlocks(self, limit=None):
         ctr = 0

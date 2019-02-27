@@ -6,6 +6,9 @@ from neo.Core.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
 from neo.Core.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
+from neo.Network.neonetwork.network.node import NeoNode
+from neo.Network.neonetwork.network.nodemanager import NodeManager
+from mock import patch
 from neo.Prompt.PromptPrinter import pp
 import shutil
 from mock import patch
@@ -73,7 +76,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.0002685), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.00028250).value, unavailable_bonus.value)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -93,7 +96,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.000601), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.000629).value, unavailable_bonus.value)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -101,7 +104,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         available_bonus = wallet.GetAvailableClaimTotal()
 
-        self.assertEqual(Fixed8.FromDecimal(0.000288), available_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.000288).value, available_bonus.value)
 
     def test_3_wallet_no_claimable_gas(self):
 
@@ -111,23 +114,23 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertFalse(relayed)
 
-    def test_4_keyboard_interupt(self):
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[KeyboardInterrupt]):
-                wallet = self.GetWallet1()
+    def test_4_wallet_claim_ok(self):
 
+        wallet = self.GetWallet1()
+        nodemgr = NodeManager()
+        nodemgr.nodes = [NeoNode(object, object)]
+
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Prompt.Commands.Wallet.prompt', return_value=self.wallet_1_pass()):
                 claim_tx, relayed = ClaimGas(wallet)
-                self.assertEqual(claim_tx, None)
-                self.assertFalse(relayed)
-                self.assertIn("Claim transaction cancelled", mock_print.getvalue())
+                self.assertIsInstance(claim_tx, ClaimTransaction)
+                self.assertTrue(relayed)
 
-    def test_5_wallet_claim_ok(self):
-        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            wallet = self.GetWallet1()
-
-            claim_tx, relayed = ClaimGas(wallet)
-            self.assertIsInstance(claim_tx, ClaimTransaction)
-            self.assertTrue(relayed)
+    def test_5_no_wallet(self):
+        with patch('neo.Prompt.Commands.Wallet.prompt', return_value=self.wallet_1_pass()):
+            claim_tx, relayed = ClaimGas(None)
+            self.assertEqual(claim_tx, None)
+            self.assertFalse(relayed)
 
     def test_6_no_wallet(self):
         claim_tx, relayed = ClaimGas(None)

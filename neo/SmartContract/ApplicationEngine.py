@@ -22,7 +22,7 @@ from neo.VM import VMState
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.InteropService import Array
 from neo.VM.OpCode import APPCALL, TAILCALL, \
-    SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG
+    SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG, VERIFY
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('vm')
@@ -88,7 +88,7 @@ class ApplicationEngine(ExecutionEngine):
         else:
             return True
 
-    def PreStepInto(self, opcode):
+    def PreExecuteInstruction(self, opcode):
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             return True
         self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
@@ -103,35 +103,6 @@ class ApplicationEngine(ExecutionEngine):
         except Exception:
             pass
         return True
-
-    # @profile_it
-    def Execute(self):
-        try:
-            if settings.log_vm_instructions:
-                self.log_file = open(self.log_file_name, 'w')
-                self.write_log(str(datetime.datetime.now()))
-
-            while True:
-                if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
-                    nextOpcode = OpCode.RET
-                else:
-                    nextOpcode = self.CurrentContext.NextInstruction
-
-                if not self.PreStepInto(nextOpcode):
-                    # TODO: check with NEO is this should now be changed to not use |=
-                    self._VMState |= VMState.FAULT
-                    return False
-                self.StepInto()
-                if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-                    break
-        except Exception:
-            self._VMState |= VMState.FAULT
-            return False
-        finally:
-            if self.log_file:
-                self.log_file.close()
-
-        return not self._VMState & VMState.FAULT > 0
 
     def GetPrice(self):
 
@@ -148,7 +119,7 @@ class ApplicationEngine(ExecutionEngine):
             return 10
         elif opcode in [HASH160, HASH256]:
             return 20
-        elif opcode == CHECKSIG:
+        elif opcode in [CHECKSIG, VERIFY]:
             return 100
         elif opcode == CHECKMULTISIG:
             if self.CurrentContext.EvaluationStack.Count == 0:

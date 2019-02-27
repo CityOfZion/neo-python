@@ -2,7 +2,7 @@ from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificati
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Core.Fixed8 import Fixed8
 from neo.Core.UInt160 import UInt160
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 from decimal import Decimal
 from neo.Core.TX.TransactionAttribute import TransactionAttribute
 import binascii
@@ -453,7 +453,7 @@ class CommandTokenMint(CommandBase):
                 logger.debug("invalid fee")
                 return False
 
-        return token_mint(token, wallet, to_addr, asset_attachments=asset_attachments, fee=fee, invoke_attrs=invoke_attrs)        
+        return token_mint(token, wallet, to_addr, asset_attachments=asset_attachments, fee=fee, invoke_attrs=invoke_attrs)
 
     def command_desc(self):
         p1 = ParameterDesc('symbol', 'token symbol or script hash')

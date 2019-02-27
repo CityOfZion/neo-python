@@ -1,43 +1,41 @@
 """
-The JSON-RPC API is using the Python package 'klein', which makes it possible to
-create HTTP routes and handlers with Twisted in a similar style to Flask:
-https://github.com/twisted/klein
+The JSON-RPC API is using the Python package 'aioHttp'
 
 See also:
 * http://www.jsonrpc.org/specification
 """
-import json
-import base58
+import ast
 import binascii
+import logging
 from json.decoder import JSONDecodeError
 
-from klein import Klein
+import aiohttp_cors
+import base58
+from aiohttp import web
+from aiohttp.helpers import MultiDict
 
-from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
-from neo.api.utils import json_response, cors_header
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.Helper import Helper
 from neo.Core.State.AccountState import AccountState
+from neo.Core.State.CoinState import CoinState
+from neo.Core.State.StorageKey import StorageKey
 from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
     ContractTransaction, TXFeeError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
     TransactionAttributeUsage
-from neo.Core.State.CoinState import CoinState
 from neo.Core.UInt160 import UInt160
 from neo.Core.UInt256 import UInt256
-from neo.Core.Fixed8 import Fixed8
-from neo.Core.Helper import Helper
-from neo.Network.NodeLeader import NodeLeader
-from neo.Core.State.StorageKey import StorageKey
+from neo.Implementations.Wallets.peewee.Models import Account
+from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Prompt.Utils import get_asset_id
+from neo.Settings import settings
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
-from neo.Implementations.Wallets.peewee.Models import Account
-from neo.Prompt.Utils import get_asset_id
-from neo.Wallets.Wallet import Wallet
-from furl import furl
-import ast
+from neo.api.utils import json_response
 
 
 class JsonRpcError(Exception):
@@ -79,12 +77,33 @@ class JsonRpcError(Exception):
 
 
 class JsonRpcApi:
-    app = Klein()
-    port = None
 
-    def __init__(self, port, wallet=None):
-        self.port = port
+    def __init__(self, wallet=None):
+        stdio_handler = logging.StreamHandler()
+        stdio_handler.setLevel(logging.INFO)
+        _logger = logging.getLogger('aiohttp.access')
+        _logger.addHandler(stdio_handler)
+        _logger.setLevel(logging.DEBUG)
+
+        self.app = web.Application(logger=_logger)
+        self.port = settings.RPC_PORT
         self.wallet = wallet
+        self.nodemgr = NodeManager()
+
+        cors = aiohttp_cors.setup(self.app, defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_headers=('Content-Type', 'Access-Control-Allow-Headers', 'Authorization', 'X-Requested-With')
+            )
+        })
+
+        self.app.router.add_post("/", self.home)
+        # TODO: find a fix for adding an OPTIONS route in combination with CORS. It works fine without CORS
+        # self.app.router.add_options("/", self.home)
+        self.app.router.add_get("/", self.home)
+
+        for route in list(self.app.router.routes()):
+            if not isinstance(route.resource, web.StaticResource):  # <<< WORKAROUND
+                cors.add(route)
 
     def get_data(self, body: dict):
 
@@ -117,11 +136,12 @@ class JsonRpcApi:
 
     #
     # JSON-RPC API Route
-    #
-    @app.route('/')
+    # TODO: re-enable corse_header support
+    #  fix tests
+    #  someday rewrite to allow async methods, have another look at https://github.com/bcb/jsonrpcserver/tree/master/jsonrpcserver
+    #  the only downside of that plugin is that it does not support custom errors. Either patch or request
     @json_response
-    @cors_header
-    def home(self, request):
+    async def home(self, request):
         # POST Examples:
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         # or multiple requests in 1 transaction
@@ -132,9 +152,10 @@ class JsonRpcApi:
         # NOTE: GET requests do not support multiple requests in 1 transaction
         request_id = None
 
-        if "POST" == request.method.decode("utf-8"):
+        if "POST" == request.method:
             try:
-                content = json.loads(request.content.read().decode("utf-8"))
+                content = await request.json()
+                # content = json.loads(content.decode('utf-8'))
 
                 # test if it's a multi-request message
                 if isinstance(content, list):
@@ -150,36 +171,19 @@ class JsonRpcApi:
                 error = JsonRpcError.parseError()
                 return self.get_custom_error_payload(request_id, error.code, error.message)
 
-        elif "GET" == request.method.decode("utf-8"):
-            content = furl(request.uri).args
-
-            # remove hanging ' or " from last value if value is not None to avoid SyntaxError
-            try:
-                l_value = list(content.values())[-1]
-            except IndexError:
-                error = JsonRpcError.parseError()
-                return self.get_custom_error_payload(request_id, error.code, error.message)
-
-            if l_value is not None:
-                n_value = l_value[:-1]
-                l_key = list(content.keys())[-1]
-                content[l_key] = n_value
-
-            if len(content.keys()) > 3:
-                try:
-                    params = content['params']
-                    l_params = ast.literal_eval(params)
-                    content['params'] = [l_params]
-                except KeyError:
-                    error = JsonRpcError(-32602, "Invalid params")
-                    return self.get_custom_error_payload(request_id, error.code, error.message)
+        elif "GET" == request.method:
+            content = MultiDict(request.query)
+            params = content.get("params", None)
+            if params and not isinstance(params, list):
+                new_params = ast.literal_eval(params)
+                content.update({'params': new_params})
 
             return self.get_data(content)
 
-        elif "OPTIONS" == request.method.decode("utf-8"):
+        elif "OPTIONS" == request.method:
             return self.options_response()
 
-        error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
+        error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method)
         return self.get_custom_error_payload(request_id, error.code, error.message)
 
     @classmethod
@@ -241,7 +245,7 @@ class JsonRpcApi:
                 raise JsonRpcError(-100, "Invalid Height")
 
         elif method == "getconnectioncount":
-            return len(NodeLeader.Instance().Peers)
+            return len(self.nodemgr.nodes)
 
         elif method == "getcontractstate":
             script_hash = UInt160.ParseString(params[0])
@@ -251,12 +255,12 @@ class JsonRpcApi:
             return contract.ToJson()
 
         elif method == "getrawmempool":
-            return list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
+            return list(map(lambda hash: f"{hash.To0xString()}", self.nodemgr.mempool.pool.keys()))
 
         elif method == "getversion":
             return {
                 "port": self.port,
-                "nonce": NodeLeader.Instance().NodeId,
+                "nonce": self.nodemgr.id,
                 "useragent": settings.VERSION_NAME
             }
 
@@ -320,7 +324,8 @@ class JsonRpcApi:
         elif method == "sendrawtransaction":
             tx_script = binascii.unhexlify(params[0].encode('utf-8'))
             transaction = Transaction.DeserializeFromBufer(tx_script)
-            result = NodeLeader.Instance().Relay(transaction)
+            # TODO: relay blocks, change to await in the future
+            result = self.nodemgr.relay(transaction)
             return result
 
         elif method == "validateaddress":
@@ -451,26 +456,20 @@ class JsonRpcApi:
 
     def get_peers(self):
         """Get all known nodes and their 'state' """
-        node = NodeLeader.Instance()
+
         result = {"connected": [], "unconnected": [], "bad": []}
-        connected_peers = []
 
-        for peer in node.Peers:
-            result['connected'].append({"address": peer.host,
-                                        "port": peer.port})
-            connected_peers.append("{}:{}".format(peer.host, peer.port))
+        for peer in self.nodemgr.nodes:
+            host, port = peer.address.rsplit(":")
+            result['connected'].append({"address": host, "port": int(port)})
 
-        for addr in node.DEAD_ADDRS:
+        for addr in self.nodemgr.bad_addresses:
             host, port = addr.rsplit(':', 1)
-            result['bad'].append({"address": host, "port": port})
+            result['bad'].append({"address": host, "port": int(port)})
 
-        # "UnconnectedPeers" is never used. So a check is needed to
-        # verify that a given address:port does not belong to a connected peer
-        for addr in node.KNOWN_ADDRS:
+        for addr in self.nodemgr.known_addresses:
             host, port = addr.rsplit(':', 1)
-            if addr not in connected_peers:
-                result['unconnected'].append({"address": host,
-                                              "port": int(port)})
+            result['unconnected'].append({"address": host, "port": int(port)})
 
         return result
 
@@ -636,7 +635,7 @@ class JsonRpcApi:
         if context.Completed:
             tx.scripts = context.GetScripts()
             self.wallet.SaveTransaction(tx)
-            NodeLeader.Instance().Relay(tx)
+            self.nodemgr.relay(tx)
             return tx.ToJson()
         else:
             return context.ToJson()

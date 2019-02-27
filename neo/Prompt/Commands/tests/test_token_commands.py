@@ -18,6 +18,8 @@ from contextlib import contextmanager
 from io import StringIO, TextIOWrapper
 from neo.VM.InteropService import StackItem
 from neo.Prompt.PromptPrinter import pp
+from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.neonetwork.network.node import NeoNode
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -126,50 +128,65 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(balance, 2499000)
 
     def test_token_send_good(self):
-        with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            wallet = self.GetWallet1(recreate=True)
-            token = self.get_token(wallet)
-            addr_from = wallet.GetDefaultContract().Address
-            addr_to = self.watch_addr_str
-            fee = Fixed8.FromDecimal(0.001)
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-            send = token_send(wallet, token.symbol, addr_from, addr_to, 1300, fee)
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                wallet = self.GetWallet1(recreate=True)
+                token = self.get_token(wallet)
+                addr_from = wallet.GetDefaultContract().Address
+                addr_to = self.watch_addr_str
+                fee = Fixed8.FromDecimal(0.001)
 
-            self.assertTrue(send)
-            res = send.ToJson()
-            self.assertEqual(res["vout"][0]["address"], "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3")
-            self.assertEqual(res["net_fee"], "0.0011")
+                send = token_send(wallet, token.symbol, addr_from, addr_to, 1300, fee)
+
+                self.assertTrue(send)
+                res = send.ToJson()
+                self.assertEqual(res["vout"][0]["address"], "AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3")
+                self.assertEqual(res["net_fee"], "0.0011")
 
     def test_token_send_with_user_attributes(self):
-        with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            wallet = self.GetWallet1(recreate=True)
-            token = self.get_token(wallet)
-            addr_from = wallet.GetDefaultContract().Address
-            addr_to = self.watch_addr_str
-            _, attributes = get_tx_attr_from_args(['--tx-attr=[{"usage":241,"data":"This is a remark"},{"usage":242,"data":"This is a remark 2"}]'])
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-            send = token_send(wallet, token.symbol, addr_from, addr_to, 1300, user_tx_attributes=attributes)
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                wallet = self.GetWallet1(recreate=True)
+                token = self.get_token(wallet)
+                addr_from = wallet.GetDefaultContract().Address
+                addr_to = self.watch_addr_str
+                _, attributes = get_tx_attr_from_args(['--tx-attr=[{"usage":241,"data":"This is a remark"},{"usage":242,"data":"This is a remark 2"}]'])
 
-            self.assertTrue(send)
-            res = send.ToJson()
-            self.assertEqual(len(res['attributes']), 3)
-            self.assertEqual(res['attributes'][0]['usage'], 241)
-            self.assertEqual(res['attributes'][1]['usage'], 242)
+                send = token_send(wallet, token.symbol, addr_from, addr_to, 1300, user_tx_attributes=attributes)
+
+                self.assertTrue(send)
+                res = send.ToJson()
+                self.assertEqual(len(res['attributes']), 3)
+                self.assertEqual(res['attributes'][0]['usage'], 241)
+                self.assertEqual(res['attributes'][1]['usage'], 242)
 
     def test_token_send_bad_user_attributes(self):
-        with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            wallet = self.GetWallet1(recreate=True)
-            token = self.get_token(wallet)
-            addr_from = wallet.GetDefaultContract().Address
-            addr_to = self.watch_addr_str
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-            _, attributes = get_tx_attr_from_args(['--tx-attr=[{"usa:241,"data":"This is a remark"}]'])
-            send = token_send(wallet, token.symbol, addr_from, addr_to, 100, user_tx_attributes=attributes)
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                wallet = self.GetWallet1(recreate=True)
+                token = self.get_token(wallet)
+                addr_from = wallet.GetDefaultContract().Address
+                addr_to = self.watch_addr_str
 
-            self.assertTrue(send)
-            res = send.ToJson()
-            self.assertEqual(1, len(res['attributes']))
-            self.assertNotEqual(241, res['attributes'][0]['usage'])
+                _, attributes = get_tx_attr_from_args(['--tx-attr=[{"usa:241,"data":"This is a remark"}]'])
+                send = token_send(wallet, token.symbol, addr_from, addr_to, 100, user_tx_attributes=attributes)
+
+                self.assertTrue(send)
+                res = send.ToJson()
+                self.assertEqual(1, len(res['attributes']))
+                self.assertNotEqual(241, res['attributes'][0]['usage'])
 
     def test_token_send_bad_args(self):  # too few args
         wallet = self.GetWallet1(recreate=True)
@@ -260,20 +277,25 @@ class UserWalletTestCase(WalletFixtureTestCase):
             self.assertIn("Could not get allowance", str(context.exception))
 
     def test_token_mint_good(self):
-        with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            wallet = self.GetWallet1(recreate=True)
-            token = self.get_token(wallet)
-            addr_to = self.wallet_1_addr
-            asset_attachments = ['--attach-neo=10']
-            _, tx_attr = PromptUtils.get_tx_attr_from_args(['--tx-attr={"usage":241,"data":"This is a remark"}'])
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-            mint = token_mint(token, wallet, addr_to, asset_attachments=asset_attachments, invoke_attrs=tx_attr)
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+                wallet = self.GetWallet1(recreate=True)
+                token = self.get_token(wallet)
+                addr_to = self.wallet_1_addr
+                asset_attachments = ['--attach-neo=10']
+                _, tx_attr = PromptUtils.get_tx_attr_from_args(['--tx-attr={"usage":241,"data":"This is a remark"}'])
 
-            self.assertTrue(mint)
-            res = mint.ToJson()
-            self.assertEqual(res['attributes'][1]['usage'], 241)  # verifies attached attribute
-            self.assertEqual(res['vout'][0]['value'], "10")  # verifies attached neo
-            self.assertEqual(res['vout'][0]['address'], "Ab61S1rk2VtCVd3NtGNphmBckWk4cfBdmB")  # verifies attached neo sent to token contract owner
+                mint = token_mint(token, wallet, addr_to, asset_attachments=asset_attachments, invoke_attrs=tx_attr)
+
+                self.assertTrue(mint)
+                res = mint.ToJson()
+                self.assertEqual(res['attributes'][1]['usage'], 241)  # verifies attached attribute
+                self.assertEqual(res['vout'][0]['value'], "10")  # verifies attached neo
+                self.assertEqual(res['vout'][0]['address'], "Ab61S1rk2VtCVd3NtGNphmBckWk4cfBdmB")  # verifies attached neo sent to token contract owner
 
     def test_token_mint_no_tx(self):
         with patch('neo.Wallets.NEP5Token.NEP5Token.Mint', return_value=(None, 0, None)):
@@ -614,12 +636,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
                     self.assertIn("Failed to approve tokens", mock_print.getvalue())
 
             # test successful approval
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
-                    args = ['token', 'approve', 'NXT4', addr_from, addr_to, '123', '--fee=0.001']
-                    res = CommandWallet().execute(args)
-                    self.assertTrue(res)
-                    self.assertIn("Priority Fee (0.001) + Invocation Fee (0.0001) = 0.0011", mock_print.getvalue())
+            nodemgr = NodeManager()
+            nodemgr.reset_for_test()
+            nodemgr.nodes = [NeoNode(object, object)]
+
+            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
+                        args = ['token', 'approve', 'NXT4', addr_from, addr_to, '123', '--fee=0.001']
+                        res = CommandWallet().execute(args)
+                        self.assertTrue(res)
+                        self.assertIn("Priority Fee (0.001) + Invocation Fee (0.0001) = 0.0011", mock_print.getvalue())
 
     def test_wallet_token_allowance(self):
         with self.OpenWallet1():
@@ -766,13 +793,19 @@ class UserWalletTestCase(WalletFixtureTestCase):
                     self.assertIn("Token mint cancelled", mock_print.getvalue())
 
             # test working minting
-            with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
-                with patch('sys.stdout', new=StringIO()) as mock_print:
-                    args = ['token', 'mint', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y', '--fee=0.001', '--tx-attr={"usage":241,"data":"This is a remark"}']
-                    res = CommandWallet().execute(args)
-                    self.assertTrue(res)
-                    self.assertIn("[NXT4] Will mint tokens to address", mock_print.getvalue())
-                    self.assertIn("Priority Fee (0.001) + Invocation Fee (0.0001) = 0.0011", mock_print.getvalue())
+            nodemgr = NodeManager()
+            nodemgr.reset_for_test()
+            nodemgr.nodes = [NeoNode(object, object)]
+
+            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+                with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
+                    with patch('sys.stdout', new=StringIO()) as mock_print:
+                        args = ['token', 'mint', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y', '--fee=0.001',
+                                '--tx-attr={"usage":241,"data":"This is a remark"}']
+                        res = CommandWallet().execute(args)
+                        self.assertTrue(res)
+                        self.assertIn("[NXT4] Will mint tokens to address", mock_print.getvalue())
+                        self.assertIn("Priority Fee (0.001) + Invocation Fee (0.0001) = 0.0011", mock_print.getvalue())
 
     def test_token_register(self):
         with self.OpenWallet1():
@@ -844,13 +877,18 @@ class UserWalletTestCase(WalletFixtureTestCase):
                     self.assertIn("Registration cancelled", mock_print.getvalue())
 
             # test with valid address
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
-                    args = ['token', 'register', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y', '--fee=0.001']
-                    res = CommandWallet().execute(args)
-                    self.assertTrue(res)
-                    self.assertIn("[NXT4] Will register addresses", mock_print.getvalue())
-                    self.assertIn("Priority Fee (0.001) + Invocation Fee (0.0001) = 0.0011", mock_print.getvalue())
+            nodemgr = NodeManager()
+            nodemgr.reset_for_test()
+            nodemgr.nodes = [NeoNode(object, object)]
+
+            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
+                        args = ['token', 'register', 'NXT4', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y', '--fee=0.001']
+                        res = CommandWallet().execute(args)
+                        self.assertTrue(res)
+                        self.assertIn("[NXT4] Will register addresses", mock_print.getvalue())
+                        self.assertIn("Priority Fee (0.001) + Invocation Fee (0.0001) = 0.0011", mock_print.getvalue())
 
     # utility function
     def Approve_Allowance(self):
@@ -1027,14 +1065,19 @@ class TokenSendFromTestCase(WalletFixtureTestCase):
                 self.assertIn("Insufficient allowance", mock_print.getvalue())
 
             # successful test
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                with patch('neo.Prompt.Commands.Tokens.token_get_allowance', return_value=12300000000):
-                    with patch('neo.Wallets.NEP5Token.NEP5Token.TransferFrom', return_value=self.Approve_Allowance(PromptData.Wallet, token)):
-                        with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
-                            args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123', '--fee=0.001']
-                            res = CommandWallet().execute(args)
-                            self.assertTrue(res)
-                            self.assertIn("Priority Fee (0.001) + Transfer Fee (0.0001) = 0.0011", mock_print.getvalue())
+            nodemgr = NodeManager()
+            nodemgr.reset_for_test()
+            nodemgr.nodes = [NeoNode(object, object)]
+
+            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+                with patch('sys.stdout', new=StringIO()) as mock_print:
+                    with patch('neo.Prompt.Commands.Tokens.token_get_allowance', return_value=12300000000):
+                        with patch('neo.Wallets.NEP5Token.NEP5Token.TransferFrom', return_value=self.Approve_Allowance(PromptData.Wallet, token)):
+                            with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[self.wallet_1_pass()]):
+                                args = ['token', 'sendfrom', 'NXT4', addr_from, addr_to, '123', '--fee=0.001']
+                                res = CommandWallet().execute(args)
+                                self.assertTrue(res)
+                                self.assertIn("Priority Fee (0.001) + Transfer Fee (0.0001) = 0.0011", mock_print.getvalue())
 
     def Approve_Allowance(self, wallet, token):
         approve_from = self.wallet_1_addr

@@ -139,6 +139,24 @@ The solution probably is
 
     brew reinstall openssl
 
+-----
+
+If you encounter an issue installing the ``scrypt`` module (possibly after updating OSX) with an error like this:
+
+.. code-block:: sh
+
+    ld: library not found for -lcrypto
+    clang: error: linker command failed with exit code 1 (use -v to see invocation)
+    error: command 'gcc' failed with exit status 1
+
+The solution probably is
+
+.. code-block:: sh
+
+    $ brew install openssl
+    $ export CFLAGS="-I$(brew --prefix openssl)/include $CFLAGS"
+    $ export LDFLAGS="-L$(brew --prefix openssl)/lib $LDFLAGS"
+
 
 Install from PyPi
 =================

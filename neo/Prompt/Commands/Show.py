@@ -8,11 +8,13 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.UInt256 import UInt256
 from neo.Core.UInt160 import UInt160
 from neo.IO.MemoryStream import StreamManager
-from neo.Network.NodeLeader import NodeLeader
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
+from neo.Network.p2pservice import NetworkService
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 import json
+import asyncio
 
 logger = log_manager.getLogger()
 
@@ -161,15 +163,55 @@ class CommandShowNodes(CommandBase):
         super().__init__()
 
     def execute(self, arguments=None):
-        if len(NodeLeader.Instance().Peers) > 0:
-            out = "Total Connected: %s\n" % len(NodeLeader.Instance().Peers)
-            for i, peer in enumerate(NodeLeader.Instance().Peers):
-                out += f"Peer {i} {peer.Name():>12} - {peer.address:>21} - IO {peer.IOStats()}\n"
-            print(out)
-            return out
+        show_verbose = get_arg(arguments) == 'verbose'
+        show_queued = get_arg(arguments) == 'queued'
+        show_known = get_arg(arguments) == 'known'
+        show_bad = get_arg(arguments) == 'bad'
+
+        nodemgr = NodeManager()
+        len_nodes = len(nodemgr.nodes)
+        out = ""
+        if len_nodes > 0:
+            out = f"Connected: {len_nodes} of max {nodemgr.max_clients}\n"
+            for i, node in enumerate(nodemgr.nodes):
+                out += f"Peer {i} {node.version.user_agent:>12} {node.address:>21} height: {node.best_height:>8}\n"
         else:
-            print("Not connected yet\n")
-            return
+            print("No nodes connected yet\n")
+
+        if show_verbose:
+            out += f"\n"
+            out += f"Addresses in queue: {len(nodemgr.queued_addresses)}\n"
+            out += f"Known addresses: {len(nodemgr.known_addresses)}\n"
+            out += f"Bad addresses: {len(nodemgr.bad_addresses)}\n"
+
+        if show_queued:
+            out += f"\n"
+            if len(nodemgr.queued_addresses) == 0:
+                out += "No queued addresses"
+            else:
+                out += f"Queued addresses:\n"
+                for addr in nodemgr.queued_addresses:
+                    out += f"{addr}\n"
+
+        if show_known:
+            out += f"\n"
+            if len(nodemgr.known_addresses) == 0:
+                out += "No known addresses other than connect peers"
+            else:
+                out += f"Known addresses:\n"
+                for addr in nodemgr.known_addresses:
+                    out += f"{addr}\n"
+
+        if show_bad:
+            out += f"\n"
+            if len(nodemgr.bad_addresses) == 0:
+                out += "No bad addresses"
+            else:
+                out += f"Bad addresses:\n"
+                for addr in nodemgr.bad_addresses:
+                    out += f"{addr}\n"
+        print(out)
+        return out
 
     def command_desc(self):
         return CommandDesc('nodes', 'show connected peers')

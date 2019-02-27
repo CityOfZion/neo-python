@@ -258,6 +258,9 @@ class Boolean(StackItem):
     def GetByteArray(self):
         return self.TRUE if self._value else self.FALSE
 
+    def GetByteLength(self):
+        return len(self.GetByteArray())
+
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.Boolean)
         writer.WriteByte(self.GetBigInteger())

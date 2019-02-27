@@ -1322,6 +1322,14 @@ class ExecutionEngine:
 
         return True
 
+    def PreExecuteInstruction(self, opcode):
+        # allow overriding
+        return True
+
+    def PostExecuteInstruction(self, opcode):
+        # allow overriding
+        return True
+
     def ExecuteNext(self):
         if self._InvocationStack.Count == 0:
             self._VMState = VMState.HALT
@@ -1338,7 +1346,14 @@ class ExecutionEngine:
             try:
                 if self._is_write_log:
                     self.write_log("{} {}".format(self.ops_processed, ToName(op)))
-                self.ExecuteOp(op, self.CurrentContext)
+
+                if not self.PreExecuteInstruction(op):
+                    self._VMState = VMState.FAULT
+                else:
+                    self.ExecuteOp(op, self.CurrentContext)
+
+                if not self.PostExecuteInstruction(op):
+                    self._VMState = VMState.FAULT
             except Exception as e:
                 error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))
                 self.write_log(error_msg)
