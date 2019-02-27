@@ -11,6 +11,8 @@ from mock import patch
 from io import StringIO
 from boa.compiler import Compiler
 from neo.Settings import settings
+from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.neonetwork.network.node import NeoNode
 
 
 class CommandSCTestCase(WalletFixtureTestCase):
@@ -351,7 +353,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
                         args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
                         res = CommandSC().execute(args)
                         self.assertFalse(res)
-                        self.assertIn("Deploy Invoke TX Fee: 0.00387", mock_print.getvalue())  # notice the required fee is now greater than the low priority threshold
+                        self.assertIn("Deploy Invoke TX Fee: 0.00387",
+                                      mock_print.getvalue())  # notice the required fee is now greater than the low priority threshold
                         self.assertTrue(mock_print.getvalue().endswith('Insufficient funds\n'))
 
     def test_sc_invoke(self):
@@ -450,13 +453,17 @@ class CommandSCTestCase(WalletFixtureTestCase):
                 self.assertIn("Integer", mock_print.getvalue())
 
         # test ok
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
-                args = ['invoke', token_hash_str, 'symbol', '[]', '--fee=0.001']
-                res = CommandSC().execute(args)
-                # not the best check, but will do for now
-                self.assertTrue(res)
-                self.assertIn("Priority Fee (0.001) + Invoke TX Fee (0.0001) = 0.0011", mock_print.getvalue())
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+        nodemgr.nodes = [NeoNode(object, object)]
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
+                    args = ['invoke', token_hash_str, 'symbol', '[]', '--fee=0.001']
+                    res = CommandSC().execute(args)
+                    # not the best check, but will do for now
+                    self.assertTrue(res)
+                    self.assertIn("Priority Fee (0.001) + Invoke TX Fee (0.0001) = 0.0011", mock_print.getvalue())
 
     def test_sc_debugstorage(self):
         # test with insufficient parameters

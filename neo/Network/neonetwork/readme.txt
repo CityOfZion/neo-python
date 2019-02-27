@@ -1,0 +1,3 @@
+This package was once a standalone component, therefore you'll find some code here that also exists in neo-python(-core).
+This code is mostly typed and applies Python naming conventions whereas the original code does not. At some point we should migrate and merge it all together.
+At that time we have to make sure that the neo-python-core updates to e.g. BinaryReader are also applied here. Now they have no real effect.

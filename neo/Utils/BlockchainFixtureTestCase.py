@@ -3,28 +3,32 @@ import requests
 import shutil
 import os
 import neo
+import asyncio
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Settings import settings
 from neo.logging import log_manager
-from neo.Network.NodeLeader import NodeLeader
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 
 
 class BlockchainFixtureTestCase(NeoTestCase):
-    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v8.tar.gz'
-    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v8.tar.gz')
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v10.tar.gz'
+    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v10.tar.gz')
 
-    N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixtures_v8.tar.gz'
-    N_FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/notif_fixtures_v8.tar.gz')
+    N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixtures_v10.tar.gz'
+    N_FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/notif_fixtures_v10.tar.gz')
     N_NOTIFICATION_DB_NAME = os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_notifications')
 
     _blockchain = None
 
     wallets_folder = os.path.dirname(neo.__file__) + '/Utils/fixtures/'
+
+    def __init__(self, *args, **kwargs):
+        super(BlockchainFixtureTestCase, self).__init__(*args, **kwargs)
 
     @classmethod
     def leveldb_testpath(cls):
@@ -37,8 +41,14 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
         super(BlockchainFixtureTestCase, cls).setUpClass()
 
-        NodeLeader.Instance().Reset()
-        NodeLeader.Instance().Setup()
+        # for some reason during testing asyncio.get_event_loop() fails and does not create a new one if needed. This is the workaround
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
 
         # setup Blockchain DB
         if not os.path.exists(cls.FIXTURE_FILENAME):

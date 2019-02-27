@@ -8,8 +8,8 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.UInt160 import UInt160
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from prompt_toolkit import prompt
-from neo.Core.Fixed8 import Fixed8
+from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neocore.Fixed8 import Fixed8
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from distutils import util
 from neo.Settings import settings
@@ -190,7 +190,8 @@ class CommandSCTestInvoke(CommandBase):
 
             if return_type is not None:
                 try:
-                    parameterized_results = [ContractParameter.AsParameterType(ContractParameterType.FromString(return_type), item).ToJson() for item in results]
+                    parameterized_results = [ContractParameter.AsParameterType(ContractParameterType.FromString(return_type), item).ToJson() for item in
+                                             results]
                 except ValueError:
                     logger.debug("invalid return type")
                     return False
@@ -235,7 +236,7 @@ class CommandSCTestInvoke(CommandBase):
         p6 = ParameterDesc('--from-addr', 'source address to take fee funds from (if not specified, take first address in wallet)', optional=True)
         p7 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
         p8 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
-        p9 = ParameterDesc('--return-type', 'override the return parameter type e.g. --return-type=02', optional=True) 
+        p9 = ParameterDesc('--return-type', 'override the return parameter type e.g. --return-type=02', optional=True)
         p10 = ParameterDesc('--tx-attr',
                             'a list of transaction attributes to attach to the transaction\n\n'
                             f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"

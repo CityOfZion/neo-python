@@ -1,12 +1,13 @@
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 from neo.logging import log_manager
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings
-from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.PromptPrinter import prompt_print as print
 from distutils import util
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 import logging
+from neo.Network.neonetwork.common import wait_for
 
 
 class CommandConfig(CommandBase):
@@ -17,7 +18,6 @@ class CommandConfig(CommandBase):
         self.register_sub_command(CommandConfigSCEvents())
         self.register_sub_command(CommandConfigDebugNotify())
         self.register_sub_command(CommandConfigVMLog())
-        self.register_sub_command(CommandConfigNodeRequests())
         self.register_sub_command(CommandConfigMaxpeers())
         self.register_sub_command(CommandConfigNEP8())
 
@@ -138,35 +138,6 @@ class CommandConfigVMLog(CommandBase):
         return CommandDesc('vm-log', 'toggle VM instruction execution logging to file', [p1])
 
 
-class CommandConfigNodeRequests(CommandBase):
-    def __init__(self):
-        super().__init__()
-
-    def execute(self, arguments):
-        if len(arguments) in [1, 2]:
-            if len(arguments) == 2:
-                try:
-                    return NodeLeader.Instance().setBlockReqSizeAndMax(int(arguments[0]), int(arguments[1]))
-                except ValueError:
-                    print("Invalid values. Please specify a block request part and max size for each node, like 30 and 1000")
-                    return False
-            elif len(arguments) == 1:
-                return NodeLeader.Instance().setBlockReqSizeByName(arguments[0])
-        else:
-            print("Please specify the required parameter")
-            return False
-
-    def command_desc(self):
-        p1 = ParameterDesc('block-size', 'preset of "slow"/"normal"/"fast", or a specific block request size (max. 500) e.g. 250 ')
-        p2 = ParameterDesc('queue-size', 'maximum number of outstanding block requests')
-        return CommandDesc('node-requests', 'configure block request settings', [p1, p2])
-
-    def handle_help(self, arguments):
-        super().handle_help(arguments)
-        print(f"\nCurrent settings {self.command_desc().params[0].name}:"
-              f" {NodeLeader.Instance().BREQPART} {self.command_desc().params[1].name}: {NodeLeader.Instance().BREQMAX}")
-
-
 class CommandConfigNEP8(CommandBase):
     def __init__(self):
         super().__init__()
@@ -205,21 +176,24 @@ class CommandConfigMaxpeers(CommandBase):
             try:
                 current_max = settings.CONNECTED_PEER_MAX
                 settings.set_max_peers(c1)
-                c1 = int(c1)
-                p_len = len(NodeLeader.Instance().Peers)
-                if c1 < current_max and c1 < p_len:
-                    to_remove = p_len - c1
-                    peers = NodeLeader.Instance().Peers
-                    for i in range(to_remove):
-                        peer = peers[-1]  # disconnect last peer added first
-                        peer.Disconnect("Max connected peers reached", isDead=False)
-                        peers.pop()
-
-                print(f"Maxpeers set to {c1}")
-                return c1
             except ValueError:
                 print("Please supply a positive integer for maxpeers")
                 return
+
+            c1 = int(c1)
+
+            nodemgr = NodeManager()
+            nodemgr.max_clients = c1
+
+            connected_count = len(nodemgr.nodes)
+            if c1 < current_max and c1 < connected_count:
+                to_remove = connected_count - c1
+                for _ in range(to_remove):
+                    last_connected_node = nodemgr.nodes[-1]
+                    wait_for(last_connected_node.disconnect())  # need to avoid it being labelled as dead/bad
+
+            print(f"Maxpeers set to {c1}")
+            return c1
         else:
             print(f"Maintaining maxpeers at {settings.CONNECTED_PEER_MAX}")
             return

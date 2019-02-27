@@ -5,11 +5,11 @@ from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.PromptData import PromptData
 from neo.bin.prompt import PromptInterface
-from neo.Network.NodeLeader import NodeLeader, NeoNode
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from mock import patch
-from neo.Network.address import Address
+from mock import patch, MagicMock
+from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.neonetwork.network.node import NeoNode
 
 
 class CommandShowTestCase(BlockchainFixtureTestCase):
@@ -122,40 +122,35 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertTrue(res)
 
     def test_show_nodes(self):
-        # query nodes with no NodeLeader.Instance()
-        with patch('neo.Network.NodeLeader.NodeLeader.Instance'):
-            args = ['nodes']
-            res = CommandShow().execute(args)
-            self.assertFalse(res)
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+
+        args = ['nodes']
+        res = CommandShow().execute(args)
+        self.assertFalse(res)
 
         # query nodes with connected peers
         # first make sure we have a predictable state
-        NodeLeader.Instance().Reset()
-        leader = NodeLeader.Instance()
-        addr1 = Address("127.0.0.1:20333")
-        addr2 = Address("127.0.0.1:20334")
-        leader.ADDRS = [addr1, addr2]
-        leader.DEAD_ADDRS = [Address("127.0.0.1:20335")]
-        test_node = NeoNode()
-        test_node.host = "127.0.0.1"
-        test_node.port = 20333
-        test_node.address = Address("127.0.0.1:20333")
-        leader.Peers = [test_node]
+        node1 = NeoNode(object, object)
+        node2 = NeoNode(object, object)
+        node1.address = "127.0.0.1:20333"
+        node2.address = "127.0.0.1:20334"
+        node1.best_height = 1025
+        node2.best_height = 1026
+        node1.version = MagicMock()
+        node2.version = MagicMock()
+        node1.version.user_agent = "test_user_agent"
+        node2.version.user_agent = "test_user_agent"
 
-        # now show nodes
-        with patch('neo.Network.NeoNode.NeoNode.Name', return_value="test name"):
-            args = ['nodes']
-            res = CommandShow().execute(args)
-            self.assertTrue(res)
-            self.assertIn('Total Connected: 1', res)
-            self.assertIn('Peer 0', res)
+        nodemgr.nodes = [node1, node2]
 
-            # now use "node"
-            args = ['node']
-            res = CommandShow().execute(args)
-            self.assertTrue(res)
-            self.assertIn('Total Connected: 1', res)
-            self.assertIn('Peer 0', res)
+        # now use "node"
+        args = ['node']
+        res = CommandShow().execute(args)
+        self.assertIn("Connected: 2", res)
+        self.assertIn("Peer 1", res)
+        self.assertIn("1025", res)
+        nodemgr.reset_for_test()
 
     def test_show_state(self):
         # setup
