@@ -3,17 +3,26 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.8.4-dev] in progress
-----------------------
-- Fix ``config maxpeers`` to disconnect peers if limited is lower than before
-- Gracefully handle invalid ``GET`` request
-- Fix incorrect error handling when importing a 1 out of 2 multi-signature address
-- Implement tx size network fee calc
+[0.8.5-dev] in progress
+-----------------------
+- Change class attributes of ``Transaction`` into instance attributes and fix constructor
 - Add ``Safemode`` which restricts peers to ``SEED_LIST`` addrs only
 
 
+[0.8.4] 2019-02-14
+------------------
+- Fix incorrect error handling when importing a 1 out of 2 multi-signature address `#860 <https://github.com/CityOfZion/neo-python/pull/860>`_
+- Gracefully handle invalid ``GET`` request `#863 <https://github.com/CityOfZion/neo-python/pull/863>`_
+- Implement tx size network fee calc `#869 <https://github.com/CityOfZion/neo-python/pull/869>`_
+- Fix ``config maxpeers`` to disconnect peers if limited is lower than before `#878 <https://github.com/CityOfZion/neo-python/pull/878>`_
+- Implement the ability to attach a priority fee to applicable transactions `#880 <https://github.com/CityOfZion/neo-python/pull/880>`_
+- Fix an invalid list access error during client connection error edge case `#882 <https://github.com/CityOfZion/neo-python/pull/882>`_
+- Fix `NetworkAddressWithTime` address serialization `#897 <https://github.com/CityOfZion/neo-python/pull/897>`_
+- Add additional debug logging to help investigate transaction verification failures `#898 <https://github.com/CityOfZion/neo-python/pull/898>`_
+
+
 [0.8.3] 2019-01-16
------------------------
+------------------
 - Update ``getassetstate`` RPC method to support `neo` and `gas` aliases; Cleanup ``show_contract_state`` `#667 <https://github.com/CityOfZion/neo-python/pull/667>`_
 - Add fix to ensure tx is saved to wallet when sent using RPC `#680 <https://github.com/CityOfZion/neo-python/pull/680>`_
 - Disallow ``Void`` type input parameters for smart contracts and increase test coverage `#690 <https://github.com/CityOfZion/neo-python/pull/690>`_

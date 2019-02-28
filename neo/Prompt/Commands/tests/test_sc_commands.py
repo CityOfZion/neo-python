@@ -367,6 +367,22 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
             self.assertIn("Error testing contract invoke", mock_print.getvalue())
 
+        # test with negative fee
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
+                args = ['invoke', token_hash_str, 'symbol', '[]', '--fee=-0.001']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+                self.assertIn("invalid amount format", mock_print.getvalue())
+
+        # test with weird fee
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
+                args = ['invoke', token_hash_str, 'symbol', '[]', '--fee=0.0abc']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+                self.assertIn("invalid amount format", mock_print.getvalue())
+
         # test ok, but bad passw to send to network
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.SC.prompt', side_effect=["blah"]):
@@ -378,10 +394,11 @@ class CommandSCTestCase(WalletFixtureTestCase):
         # test ok
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
-                args = ['invoke', token_hash_str, 'symbol', '[]']
+                args = ['invoke', token_hash_str, 'symbol', '[]', '--fee=0.001']
                 res = CommandSC().execute(args)
                 # not the best check, but will do for now
                 self.assertTrue(res)
+                self.assertIn("Priority Fee (0.001) + Invoke TX Fee (0.0001) = 0.0011", mock_print.getvalue())
 
     def test_sc_debugstorage(self):
         # test with insufficient parameters

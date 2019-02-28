@@ -103,12 +103,13 @@ class CommandTokenSend(CommandBase):
             print("Please specify the required parameters")
             return False
 
-        if len(arguments) > 5:
-            # the 5th argument is the optional attributes,
+        if len(arguments) > 6:
+            # the 5th and 6th arguments are optional
             print("Too many parameters supplied. Please check your command")
             return False
 
-        _, user_tx_attributes = PromptUtils.get_tx_attr_from_args(arguments)
+        arguments, priority_fee = PromptUtils.get_fee(arguments)
+        arguments, user_tx_attributes = PromptUtils.get_tx_attr_from_args(arguments)
 
         token = arguments[0]
         from_addr = arguments[1]
@@ -119,8 +120,15 @@ class CommandTokenSend(CommandBase):
             print(f"{arguments[3]} is not a valid amount")
             return False
 
+        fee = Fixed8.Zero()
+        if priority_fee is not None:
+            fee = priority_fee
+            if fee is False:
+                logger.debug("invalid fee")
+                return False
+
         try:
-            success = token_send(wallet, token, from_addr, to_addr, amount, user_tx_attributes)
+            success = token_send(wallet, token, from_addr, to_addr, amount, fee=fee, user_tx_attributes=user_tx_attributes)
         except ValueError as e:
             # occurs if arguments are invalid
             print(str(e))
@@ -133,13 +141,14 @@ class CommandTokenSend(CommandBase):
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
-        p5 = ParameterDesc('--tx-attr', f"a list of transaction attributes to attach to the transaction\n\n"
+        p5 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p6 = ParameterDesc('--tx-attr', f"a list of transaction attributes to attach to the transaction\n\n"
         f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
         f"{' ':>17} Example:\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
         f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
 
-        return CommandDesc('send', 'send a token from the wallet', [p1, p2, p3, p4, p5])
+        return CommandDesc('send', 'send a token from the wallet', [p1, p2, p3, p4, p5, p6])
 
 
 class CommandTokenSendFrom(CommandBase):
@@ -153,9 +162,11 @@ class CommandTokenSendFrom(CommandBase):
     def execute(self, arguments):
         wallet = PromptData.Wallet
 
-        if len(arguments) != 4:
+        if len(arguments) < 4:
             print("Please specify the required parameters")
             return False
+
+        arguments, priority_fee = PromptUtils.get_fee(arguments)
 
         token_str = arguments[0]
         from_addr = arguments[1]
@@ -166,6 +177,13 @@ class CommandTokenSendFrom(CommandBase):
         except ValueError:
             print(f"{arguments[3]} is not a valid amount")
             return False
+
+        p_fee = Fixed8.Zero()
+        if priority_fee is not None:
+            p_fee = priority_fee
+            if p_fee is False:
+                logger.debug("invalid fee")
+                return False
 
         try:
             token, tx, fee, results = test_token_send_from(wallet, token_str, from_addr, to_addr, amount)
@@ -187,13 +205,17 @@ class CommandTokenSendFrom(CommandBase):
                     string_from_amount(token, amount), token.symbol, from_addr, to_addr))
                 print("Transfer fee: %s " % (fee.value / Fixed8.D))
                 print("-------------------------------------------------------------\n")
+                comb_fee = p_fee + fee
+                if comb_fee != fee:
+                    print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Transfer Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
+                print("Enter your password to send to the network")
 
                 passwd = prompt("[Password]> ", is_password=True)
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
                     return False
 
-                return InvokeContract(wallet, tx, fee)
+                return InvokeContract(wallet, tx, comb_fee)
 
             print(f"Could not transfer tokens. Virtual machine returned: {vm_result}")
             return False
@@ -206,8 +228,9 @@ class CommandTokenSendFrom(CommandBase):
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
+        p5 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
 
-        return CommandDesc('sendfrom', 'send a token on behalf of another account (requires approval)', [p1, p2, p3, p4])
+        return CommandDesc('sendfrom', 'send a token on behalf of another account (requires approval)', [p1, p2, p3, p4, p5])
 
 
 class CommandTokenHistory(CommandBase):
@@ -258,14 +281,28 @@ class CommandTokenApprove(CommandBase):
     def execute(self, arguments):
         wallet = PromptData.Wallet
 
-        if len(arguments) != 4:
+        if len(arguments) < 4:
             print("Please specify the required parameters")
             return False
+
+        arguments, priority_fee = PromptUtils.get_fee(arguments)
 
         token_str = arguments[0]
         from_addr = arguments[1]
         to_addr = arguments[2]
-        amount = arguments[3]
+
+        try:
+            amount = float(arguments[3])
+        except ValueError:
+            print(f"{arguments[3]} is not a valid amount")
+            return False
+
+        p_fee = Fixed8.Zero()
+        if priority_fee is not None:
+            p_fee = priority_fee
+            if p_fee is False:
+                logger.debug("invalid fee")
+                return False
 
         try:
             token = _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount)
@@ -281,16 +318,19 @@ class CommandTokenApprove(CommandBase):
             if results[0].GetBigInteger() == 1:
                 print("\n-----------------------------------------------------------")
                 print(f"Approve allowance of {amount} {token.symbol} from {from_addr} to {to_addr}")
-                print(f"Transfer fee: {fee.value / Fixed8.D}")
+                print(f"Invocation fee: {fee.value / Fixed8.D}")
                 print("-------------------------------------------------------------\n")
+                comb_fee = p_fee + fee
+                if comb_fee != fee:
+                    print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
+                print("Enter your password to send to the network")
 
                 passwd = prompt("[Password]> ", is_password=True)
-
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
                     return False
 
-                return InvokeContract(wallet, tx, fee)
+                return InvokeContract(wallet, tx, comb_fee)
 
         print("Failed to approve tokens. Make sure you are entitled for approving.")
         return False
@@ -300,8 +340,9 @@ class CommandTokenApprove(CommandBase):
         p2 = ParameterDesc('from_addr', 'address to send token from')
         p3 = ParameterDesc('to_addr', 'address to send token to')
         p4 = ParameterDesc('amount', 'number of tokens to send')
+        p5 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
 
-        return CommandDesc('approve', 'approve an allowance', [p1, p2, p3, p4])
+        return CommandDesc('approve', 'approve an allowance', [p1, p2, p3, p4, p5])
 
     def handle_help(self, arguments):
         super().handle_help(arguments)
@@ -358,10 +399,13 @@ class CommandTokenMint(CommandBase):
             print("Please specify the required parameters")
             return False
 
-        if len(arguments) > 5:
-            # the 3rd and 4th argument are for attaching neo/gas, 5th for prompting for password
+        if len(arguments) > 6:
+            # the 3rd and 4th argument are for attaching neo/gas, 5th for attaching a fee, 6th for attaching attributes
             print("Too many parameters supplied. Please check your command")
             return False
+
+        arguments, priority_fee = PromptUtils.get_fee(arguments)
+        arguments, invoke_attrs = PromptUtils.get_tx_attr_from_args(arguments)
 
         token_str = arguments[0]
         try:
@@ -394,32 +438,28 @@ class CommandTokenMint(CommandBase):
                 else:
                     asset_attachments.append(optional)
 
-        tx, fee, results = token.Mint(wallet, to_addr, asset_attachments)
+        fee = Fixed8.Zero()
+        if priority_fee is not None:
+            fee = priority_fee
+            if fee is False:
+                logger.debug("invalid fee")
+                return False
 
-        if tx and results:
-            if results[0] is not None:
-                print("\n-----------------------------------------------------------")
-                print(f"[{token.symbol}] Will mint tokens to address: {to_addr}")
-                print(f"Fee: {fee.value / Fixed8.D}")
-                print("-------------------------------------------------------------\n")
-
-                passwd = prompt("[Password]> ", is_password=True)
-
-                if not wallet.ValidatePassword(passwd):
-                    print("incorrect password")
-                    return False
-
-                return InvokeWithTokenVerificationScript(wallet, tx, token, fee)
-
-        print("Failed to mint tokens")
-        return False
+        return token_mint(token, wallet, to_addr, asset_attachments=asset_attachments, fee=fee, invoke_attrs=invoke_attrs)        
 
     def command_desc(self):
         p1 = ParameterDesc('symbol', 'token symbol or script hash')
         p2 = ParameterDesc('to_addr', 'address to mint tokens to')
         p3 = ParameterDesc('--attach-neo', 'amount of neo to attach to the transaction', optional=True)
         p4 = ParameterDesc('--attach-gas', 'amount of gas to attach to the transaction', optional=True)
-        return CommandDesc('mint', 'mint tokens from a contract', [p1, p2, p3, p4])
+        p5 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        p6 = ParameterDesc('--tx-attr', f"a list of transaction attributes to attach to the transaction\n\n"
+        f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"  # noqa: E128 ignore indentation
+        f"{' ':>17} Example:\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+        f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n", optional=True)
+
+        return CommandDesc('mint', 'mint tokens from a contract', [p1, p2, p3, p4, p5, p6])
 
 
 class CommandTokenRegister(CommandBase):
@@ -432,6 +472,8 @@ class CommandTokenRegister(CommandBase):
         if len(arguments) < 2:
             print("Please specify the required parameters")
             return False
+
+        arguments, priority_fee = PromptUtils.get_fee(arguments)
 
         token_str = arguments[0]
         try:
@@ -449,16 +491,32 @@ class CommandTokenRegister(CommandBase):
                 print(f"{addr} is not a valid address")
                 return False
 
+        p_fee = Fixed8.Zero()
+        if priority_fee is not None:
+            p_fee = priority_fee
+            if p_fee is False:
+                logger.debug("invalid fee")
+                return False
+
         tx, fee, results = token.CrowdsaleRegister(wallet, addr_list)
 
         if tx and results:
             if results[0].GetBigInteger() > 0:
                 print("\n-----------------------------------------------------------")
                 print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
-                print("Fee: %s " % (fee.value / Fixed8.D))
+                print("Invocation Fee: %s " % (fee.value / Fixed8.D))
                 print("-------------------------------------------------------------\n")
+                comb_fee = p_fee + fee
+                if comb_fee != fee:
+                    print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
+                print("Enter your password to send to the network")
 
-                return InvokeContract(wallet, tx, fee)
+                passwd = prompt("[Password]> ", is_password=True)
+                if not wallet.ValidatePassword(passwd):
+                    print("incorrect password")
+                    return False
+
+                return InvokeContract(wallet, tx, comb_fee)
 
         print("Could not register address(es)")
         return False
@@ -466,7 +524,8 @@ class CommandTokenRegister(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('symbol', 'token symbol  or script hash')
         p2 = ParameterDesc('addresses', 'space separated list of NEO addresses')
-        return CommandDesc('register', 'register for a crowd sale', [p1, p2])
+        p3 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
+        return CommandDesc('register', 'register for a crowd sale', [p1, p2, p3])
 
 
 def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
@@ -507,7 +566,7 @@ def _validate_nep5_args(wallet, token_str, from_addr, to_addr, amount):
     return token
 
 
-def token_send(wallet, token_str, from_addr, to_addr, amount, prompt_passwd=True, user_tx_attributes=None):
+def token_send(wallet, token_str, from_addr, to_addr, amount, fee=Fixed8.Zero(), user_tx_attributes=None):
     """
     Send `amount` of tokens from `from_addr` to `to_addr`
 
@@ -517,7 +576,7 @@ def token_send(wallet, token_str, from_addr, to_addr, amount, prompt_passwd=True
         from_addr (str): a wallet address
         to_addr (str): a wallet address
         amount (float): the number of tokens to send
-        prompt_passwd (boolean): (optional) whether to prompt for a password before sending it to the network. Defaults to True
+        fee (Fixed8): (optional) a fee to give the transaction priority (> 0.001) 
         user_tx_attributes (list): a list of ``TransactionAttribute``s.
 
     Raises:
@@ -539,7 +598,7 @@ def token_send(wallet, token_str, from_addr, to_addr, amount, prompt_passwd=True
         if not isinstance(attr, TransactionAttribute):
             raise ValueError(f"{attr} is not a valid transaction attribute")
 
-    return do_token_transfer(token, wallet, from_addr, to_addr, amount, prompt_passwd=prompt_passwd, tx_attributes=user_tx_attributes)
+    return do_token_transfer(token, wallet, from_addr, to_addr, amount, fee=fee, tx_attributes=user_tx_attributes)
 
 
 def test_token_send_from(wallet, token_str, from_addr, to_addr, amount):
@@ -617,45 +676,41 @@ def token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False):
         raise ValueError(f"Could not get allowance for token {token.symbol}")
 
 
-def token_mint(wallet, args, prompt_passwd=True):
-    token = PromptUtils.get_asset_id(wallet, args[0])
-    if not isinstance(token, NEP5Token):
-        print("The given symbol does not represent a loaded NEP5 token")
-        return False
+def token_mint(token, wallet, to_addr, asset_attachments=[], fee=Fixed8.Zero(), invoke_attrs=None):
+    if not invoke_attrs:
+        invoke_attrs = []
 
-    mint_to_addr = args[1]
-    args, invoke_attrs = PromptUtils.get_tx_attr_from_args(args)
-    if len(args) < 3:
-        print("please specify assets to attach")
-        return False
+    p_fee = fee
 
-    asset_attachments = args[2:]
+    tx, fee, results = token.Mint(wallet, to_addr, asset_attachments, invoke_attrs=invoke_attrs)
 
-    tx, fee, results = token.Mint(wallet, mint_to_addr, asset_attachments, invoke_attrs=invoke_attrs)
-
-    if tx is not None and results is not None and len(results) > 0:
+    if tx and results:
         if results[0] is not None:
             print("\n-----------------------------------------------------------")
-            print("[%s] Will mint tokens to address: %s " % (token.symbol, mint_to_addr))
-            print("Fee: %s " % (fee.value / Fixed8.D))
+            print(f"[{token.symbol}] Will mint tokens to address: {to_addr}")
+            print(f"Invocation Fee: {fee.value / Fixed8.D}")
             print("-------------------------------------------------------------\n")
+            comb_fee = p_fee + fee
+            if comb_fee != fee:
+                print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
+            print("Enter your password to send to the network")
 
-            if prompt_passwd:
-                passwd = prompt("[Password]> ", is_password=True)
+            passwd = prompt("[Password]> ", is_password=True)
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return False
 
-                if not wallet.ValidatePassword(passwd):
-                    print("incorrect password")
-                    return False
+            return InvokeWithTokenVerificationScript(wallet, tx, token, comb_fee, invoke_attrs=invoke_attrs)
 
-            return InvokeWithTokenVerificationScript(wallet, tx, token, fee, invoke_attrs=invoke_attrs)
-
-    print("Could not register address")
+    print("Failed to mint tokens")
     return False
 
 
-def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_passwd=True, tx_attributes=None):
+def do_token_transfer(token, wallet, from_address, to_address, amount, fee=Fixed8.Zero(), tx_attributes=None):
     if not tx_attributes:
         tx_attributes = []
+
+    p_fee = fee
 
     # because we cannot differentiate between a normal and multisig from_addr, and because we want to make
     # sending NEP5 tokens straight forward even when sending from multisig addresses, we include the script_hash
@@ -672,15 +727,17 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, prompt_pa
             print("Will transfer %s %s from %s to %s" % (string_from_amount(token, amount), token.symbol, from_address, to_address))
             print("Transfer fee: %s " % (fee.value / Fixed8.D))
             print("-------------------------------------------------------------\n")
+            comb_fee = p_fee + fee
+            if comb_fee != fee:
+                print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Transfer Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
+            print("Enter your password to send to the network")
 
-            if prompt_passwd:
-                passwd = prompt("[Password]> ", is_password=True)
+            passwd = prompt("[Password]> ", is_password=True)
+            if not wallet.ValidatePassword(passwd):
+                print("incorrect password")
+                return False
 
-                if not wallet.ValidatePassword(passwd):
-                    print("incorrect password")
-                    return False
-
-            return InvokeContract(wallet, tx, fee)
+            return InvokeContract(wallet, tx, comb_fee)
 
     print("could not transfer tokens")
     return False

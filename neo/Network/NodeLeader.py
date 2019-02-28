@@ -714,7 +714,10 @@ class NodeLeader:
             logger.debug(f"Failed connecting to {address} connection timed out")
         elif type(err.value) == error.ConnectError:
             ce = err.value
-            logger.debug(f"Failed connecting to {address} {ce.args[0].value}")
+            if len(ce.args) > 0:
+                logger.debug(f"Failed connecting to {address} {ce.args[0].value}")
+            else:
+                logger.debug(f"Failed connecting to {address}")
         else:
             logger.debug(f"Failed connecting to {address} {err.value}")
         self.peers_connecting -= 1
