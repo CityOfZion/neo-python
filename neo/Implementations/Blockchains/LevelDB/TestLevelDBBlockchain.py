@@ -19,6 +19,7 @@ from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
+import struct
 
 
 class TestLevelDBBlockchain(LevelDBBlockchain):
@@ -33,8 +34,8 @@ class TestLevelDBBlockchain(LevelDBBlockchain):
         contracts = DBCollection(self._db, DBPrefix.ST_Contract, ContractState)
         storages = DBCollection(self._db, DBPrefix.ST_Storage, StorageItem)
 
-        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
-        amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
+        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + (block.TotalFees().value / Fixed8.D)
+        amount_sysfee_bytes = struct.pack("<d", amount_sysfee)
 
         with self._db.write_batch() as wb:
             for tx in block.Transactions:
