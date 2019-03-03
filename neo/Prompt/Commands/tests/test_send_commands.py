@@ -256,6 +256,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 self.assertFalse(res)
                 self.assertIn("Incorrect password", mock_print.getvalue())
 
+    def test_keyboard_interrupt(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=[KeyboardInterrupt]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                PromptData.Wallet = self.GetWallet1(recreate=True)
+                args = ['send', 'neo', self.watch_addr_str, '50']
+
+                res = Wallet.CommandWallet().execute(args)
+
+                self.assertFalse(res)
+                self.assertIn("Transaction cancelled", mock_print.getvalue())
+
     @patch.object(Send, 'gather_signatures')
     def test_owners(self, mock):
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):

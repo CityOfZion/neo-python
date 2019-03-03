@@ -280,8 +280,11 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         print(" ")
         print("Enter your password to send to the network")
 
-        # password prompt
-        passwd = prompt("[Password]> ", is_password=True)
+        try:
+            passwd = prompt("[Password]> ", is_password=True)
+        except KeyboardInterrupt:
+            print("Transaction cancelled")
+            return
         if not wallet.ValidatePassword(passwd):
             print("Incorrect password")
             return

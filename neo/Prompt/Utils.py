@@ -312,6 +312,9 @@ def gather_param(index, param_type, do_continue=True):
 
     try:
         result = get_input_prompt(prompt_message)
+    except KeyboardInterrupt:
+        print("Input cancelled")
+        return None, True
     except Exception as e:
         print(str(e))
         # no results, abort True
