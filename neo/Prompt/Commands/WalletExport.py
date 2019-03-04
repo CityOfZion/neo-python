@@ -44,9 +44,12 @@ class CommandWalletExportWIF(CommandBase):
         keys = wallet.GetKeys()
         for key in keys:
             if key.GetAddress() == address:
-                passwd = prompt("[wallet password]> ", is_password=True)
-                if not wallet.ValidatePassword(passwd):
-                    return print("Incorrect password")
+                try:
+                    passwd = prompt("[wallet password]> ", is_password=True)
+                    if not wallet.ValidatePassword(passwd):
+                        return print("Incorrect password")
+                except KeyboardInterrupt:
+                    return print("Export cancelled.")
 
                 print(f"WIF: {key.Export()}")
                 return True
@@ -72,27 +75,30 @@ class CommandWalletExportNEP2(CommandBase):
 
         address = arguments[0]
 
-        passphrase = prompt("[key password] ", is_password=True)
-        len_pass = len(passphrase)
-        if len_pass < 10:
-            print(f"Passphrase is too short, length: {len_pass}. Minimum length is 10")
-            return False
+        try:
+            passphrase = prompt("[key password] ", is_password=True)
+            len_pass = len(passphrase)
+            if len_pass < 10:
+                print(f"Passphrase is too short, length: {len_pass}. Minimum length is 10")
+                return False
 
-        passphrase_confirm = prompt("[key password again] ", is_password=True)
+            passphrase_confirm = prompt("[key password again] ", is_password=True)
 
-        if passphrase != passphrase_confirm:
-            print("Please provide matching passwords")
-            return False
+            if passphrase != passphrase_confirm:
+                print("Please provide matching passwords")
+                return False
 
-        keys = wallet.GetKeys()
-        for key in keys:
-            if key.GetAddress() == address:
-                passwd = prompt("[wallet password]> ", is_password=True)
-                if not wallet.ValidatePassword(passwd):
-                    return print("Incorrect password")
+            keys = wallet.GetKeys()
+            for key in keys:
+                if key.GetAddress() == address:
+                    passwd = prompt("[wallet password]> ", is_password=True)
+                    if not wallet.ValidatePassword(passwd):
+                        return print("Incorrect password")
+                    print(f"NEP2: {key.ExportNEP2(passphrase)}")
+                    return True
+        except KeyboardInterrupt:
+            return print("Export cancelled")
 
-                print(f"NEP2: {key.ExportNEP2(passphrase)}")
-                return True
         else:
             print(f"Could not find address {address} in wallet")
             return False
