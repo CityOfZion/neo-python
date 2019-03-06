@@ -3,6 +3,11 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.8.5-dev] in progress
+-----------------------
+- Change class attributes of ``Transaction`` into instance attributes and fix constructor
+- Fix sys_fee calculation in block persist.
+
 
 [0.8.4] 2019-02-14
 ------------------

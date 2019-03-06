@@ -71,7 +71,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.0002685), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.00028250).value, unavailable_bonus.value)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -91,7 +91,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.000601), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.000629).value, unavailable_bonus.value)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -99,7 +99,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         available_bonus = wallet.GetAvailableClaimTotal()
 
-        self.assertEqual(Fixed8.FromDecimal(0.000288), available_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.000288).value, available_bonus.value)
 
     def test_3_wallet_no_claimable_gas(self):
 
