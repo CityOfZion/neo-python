@@ -97,7 +97,10 @@ def main():
             print("Will import %s of %s blocks to %s" % (total_blocks, total_blocks_available, target_dir))
             print("This will overwrite any data currently in %s and %s.\nType 'confirm' to continue" % (target_dir, notif_target_dir))
 
-            confirm = prompt("[confirm]> ", is_password=False)
+            try:
+                confirm = prompt("[confirm]> ", is_password=False)
+            except KeyboardInterrupt:
+                confirm = False
             if not confirm == 'confirm':
                 print("Cancelled operation")
                 return False
