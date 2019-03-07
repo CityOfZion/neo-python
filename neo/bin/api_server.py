@@ -229,7 +229,11 @@ def main():
 
         passwd = os.environ.get('NEO_PYTHON_JSONRPC_WALLET_PASSWORD', None)
         if not passwd:
-            passwd = prompt("[password]> ", is_password=True)
+            try:
+                passwd = prompt("[password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Wallet opening cancelled")
+                return
 
         password_key = to_aes_key(passwd)
         try:

@@ -200,11 +200,15 @@ class CommandSCTestInvoke(CommandBase):
             comb_fee = p_fee + fee
             if comb_fee != fee:
                 print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invoke TX Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
-            print("Enter your password to continue and deploy this contract")
+            print("Enter your password to send this invocation to the network")
 
             tx.Attributes = invoke_attrs
 
-            passwd = prompt("[password]> ", is_password=True)
+            try:
+                passwd = prompt("[password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Invocation cancelled")
+                return False
             if not wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
@@ -279,7 +283,11 @@ class CommandSCDeploy(CommandBase):
             print(str(e))
             return False
 
-        contract_script = GatherContractDetails(function_code)
+        try:
+            contract_script = GatherContractDetails(function_code)
+        except KeyboardInterrupt:
+            print("Deployment cancelled")
+            return False
         if not contract_script:
             print("Failed to generate deploy script")
             return False
@@ -299,9 +307,13 @@ class CommandSCDeploy(CommandBase):
             comb_fee = p_fee + fee
             if comb_fee != fee:
                 print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Deploy Invoke TX Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
-            print("Enter your password to continue and deploy this contract")
+            print("Enter your password to deploy this contract on the blockchain")
 
-            passwd = prompt("[password]> ", is_password=True)
+            try:
+                passwd = prompt("[password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Deployment cancelled")
+                return False
             if not wallet.ValidatePassword(passwd):
                 print("Incorrect password")
                 return False
@@ -313,7 +325,7 @@ class CommandSCDeploy(CommandBase):
             return False
 
     def command_desc(self):
-        p1 = ParameterDesc('path', 'path to the desired Python (.py) file')
+        p1 = ParameterDesc('path', 'path to the desired smart contract (.avm) file')
         p2 = ParameterDesc('storage', 'boolean input to determine if smart contract requires storage')
         p3 = ParameterDesc('dynamic_invoke', 'boolean input to determine if smart contract requires dynamic invoke')
         p4 = ParameterDesc('payable', 'boolean input to determine if smart contract is payable')
