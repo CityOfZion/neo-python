@@ -36,7 +36,7 @@ class StateBase(SerializableMixin):
         Raises:
             Exception: if the state version is incorrect.
         """
-        sv = reader.ReadByte()
+        sv = ord(reader.ReadByte())
         if sv != self.StateVersion:
             raise Exception("Incorrect State format")
 

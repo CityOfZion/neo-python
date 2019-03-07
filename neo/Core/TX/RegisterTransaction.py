@@ -102,10 +102,10 @@ In English:
             reader (neo.IO.BinaryReader):
         """
         self.Type = TransactionType.RegisterTransaction
-        self.AssetType = reader.ReadByte()
+        self.AssetType = ord(reader.ReadByte())
         self.Name = reader.ReadVarString()
         self.Amount = reader.ReadFixed8()
-        self.Precision = reader.ReadByte()
+        self.Precision = ord(reader.ReadByte())
         self.Owner = ECDSA.Deserialize_Secp256r1(reader)
         #        self.Owner = ecdsa.G
         self.Admin = reader.ReadUInt160()
