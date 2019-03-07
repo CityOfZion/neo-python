@@ -8,7 +8,7 @@ Usage:
 import binascii
 from neo.VM.OpCode import CHECKMULTISIG, CHECKSIG
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neocore.Cryptography.Crypto import bin_hash160, from_int_to_byte, Crypto
+from neocore.Cryptography.Crypto import bin_hash160, Crypto
 from neocore.IO.Mixins import SerializableMixin
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
@@ -170,7 +170,7 @@ class Contract(SerializableMixin, VerificationCode):
 
     @staticmethod
     def PubkeyToRedeem(pubkey):
-        return binascii.unhexlify('21' + pubkey) + from_int_to_byte(int('ac', 16))
+        return binascii.unhexlify('21' + pubkey + 'ac')
 
     @staticmethod
     def RedeemToScripthash(redeem):
