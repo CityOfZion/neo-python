@@ -364,7 +364,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
                 for n in service.notifications:
                     Blockchain.Default().OnNotify(n)
 
-            print("Used %s Gas " % engine.GasConsumed().ToString())
+            # print("Used %s Gas " % engine.GasConsumed().ToString())
 
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed = consumed.Ceil()
