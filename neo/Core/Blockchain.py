@@ -20,6 +20,11 @@ from neocore.Cryptography.ECCurve import ECDSA
 from neocore.UInt256 import UInt256
 from functools import lru_cache
 
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from neo.Core.State import AssetState
+
 
 class Blockchain:
     SECONDS_PER_BLOCK = 15
@@ -301,7 +306,7 @@ class Blockchain:
     def GetAccountState(self, address):
         pass
 
-    def GetAssetState(self, assetId):
+    def GetAssetState(self, assetId) -> Optional['AssetState']:
         # abstract
         pass
 
