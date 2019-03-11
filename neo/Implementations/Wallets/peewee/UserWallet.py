@@ -538,13 +538,19 @@ class UserWallet(Wallet):
                 human_readable_scripthash = binascii.hexlify(data['script_hash']).decode()
                 print(f"{human_readable_scripthash: >53}")
                 print(f"Public key : {data['public_key']}")
-                print(" ")
+            has_balances = False
             for asset_name, value in data['assets'].items():
-                symbol = f"[{asset_name}]"
-                print(f"{symbol:<11}: {value}")
+                if value > 0:
+                    symbol = f"[{asset_name}]"
+                    print(f"{symbol:<11}: {value}")
+                    has_balances = True
             for token_name, value in data['tokens'].items():
-                symbol = f"[{token_name}]"
-                print(f"{symbol:<11}: {value}")
+                if value > 0:
+                    symbol = f"[{token_name}]"
+                    print(f"{symbol:<11}: {value}")
+                    has_balances = True
+            if not has_balances:
+                print(f"{'Balances':<11}: only zero")
             print(" ")
 
         print("Claims:")
