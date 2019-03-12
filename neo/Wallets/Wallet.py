@@ -1267,6 +1267,9 @@ class Wallet:
         else:
             return True
 
+    def pretty_print(self, verbose=False):
+        pass
+
     def ToJson(self, verbose=False):
         # abstract
         pass
