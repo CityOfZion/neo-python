@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - Improve testing of "getbalance" RPC method
 - Support cancelling actions with ``KeyboardInterrupt``
 - Enhance output of `wallet` cli command
+- Support updating np-core to throw exceptions instead of logging errors `#888 <https://github.com/CityOfZion/neo-python/issues/888>`_
 
 
 [0.8.4] 2019-02-14
