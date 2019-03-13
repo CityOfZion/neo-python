@@ -9,12 +9,10 @@ from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
 from prompt_toolkit.formatted_text import FormattedText
-from twisted.internet import reactor, task
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Search import CommandSearch
@@ -30,7 +28,6 @@ from neo.Prompt.PromptPrinter import prompt_print, token_style
 logger = log_manager.getLogger()
 
 from prompt_toolkit.eventloop import use_asyncio_event_loop
-from prompt_toolkit.patch_stdout import patch_stdout
 from neo.Network.p2pservice import NetworkService
 from contextlib import suppress
 
@@ -90,6 +87,8 @@ class PromptInterface:
     start_height = None
     start_dt = None
 
+    prompt_session = None
+
     def __init__(self, history_filename=None):
         PromptData.Prompt = self
         if history_filename:
@@ -135,10 +134,6 @@ class PromptInterface:
         print('Shutting down. This may take a bit...')
         self.go_on = False
         raise KeyboardInterrupt
-        # PromptData.close_wallet()
-        # Blockchain.Default().Dispose()
-        # NodeLeader.Instance().Shutdown()
-        # reactor.stop()
 
     def help(self):
         prompt_print(f"\nCommands:")
@@ -147,29 +142,10 @@ class PromptInterface:
             prompt_print(f"   {command_group:<15} - {command.command_desc().short_help}")
         prompt_print(f"\nRun 'COMMAND help' for more information on a command.")
 
-    def start_wallet_loop(self):
-        # TODO: replace this with an event handler to OnBlockPersist and set then when wallet is opened, remove it when wallet is closed
-        # if self.wallet_loop_deferred:
-        #     self.stop_wallet_loop()
-        # self.walletdb_loop = task.LoopingCall(PromptData.Wallet.ProcessBlocks)
-        # self.wallet_loop_deferred = self.walletdb_loop.start(1)
-        # self.wallet_loop_deferred.addErrback(self.on_looperror)
-        Blockchain.Default().PersistCompleted += PromptData.Wallet.ProcessNewBlock
-
-    def stop_wallet_loop(self):
-        Blockchain.Default().PersistCompleted -= PromptData.Wallet.ProcessNewBlock
-        # self.wallet_loop_deferred.cancel()
-        # self.wallet_loop_deferred = None
-        # if self.walletdb_loop and self.walletdb_loop.running:
-        #     self.walletdb_loop.stop()
-
     def on_looperror(self, err):
         logger.debug("On DB loop error! %s " % err)
 
     async def run(self):
-        # dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        # dbloop_deferred = dbloop.start(.1)
-        # dbloop_deferred.addErrback(self.on_looperror)
 
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
@@ -185,6 +161,7 @@ class PromptInterface:
                                 style=token_style,
                                 refresh_interval=3,
                                 )
+        self.prompt_session = session
 
         while self.go_on:
             # with patch_stdout():
@@ -320,7 +297,7 @@ def main():
     use_asyncio_event_loop()
     loop.create_task(cli.run())
     p2p = NetworkService()
-    loop.create_task(p2p.start())
+    loop.create_task(p2p.start2())
 
     async def shutdown():
         for task in asyncio.Task.all_tasks():
@@ -337,12 +314,9 @@ def main():
 
     # Run things
 
-    # NodeLeader.Instance().Start()
-
     # After the reactor is stopped, gracefully shutdown the database.
     NotificationDB.close()
     Blockchain.Default().Dispose()
-    # NodeLeader.Instance().Shutdown()
 
 
 if __name__ == "__main__":

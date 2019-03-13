@@ -586,7 +586,7 @@ class LevelDBBlockchain(Blockchain):
         return None
 
     def AddHeader(self, header):
-        self.AddHeaders([header])
+        return self.AddHeaders([header])
 
     def AddHeaders(self, headers):
 

@@ -3,7 +3,6 @@ from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt import Utils as PromptUtils
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
@@ -12,6 +11,7 @@ from neocore.UInt160 import UInt160
 from prompt_toolkit import prompt
 import json
 import os
+import asyncio
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.Send import CommandWalletSend, CommandWalletSendMany, CommandWalletSign
@@ -22,6 +22,8 @@ from neo.Prompt.Commands.WalletExport import CommandWalletExport
 from neo.logging import log_manager
 from neocore.Utils import isValidPublicAddress
 from neo.Prompt.PromptPrinter import prompt_print as print
+from neo.Network.neonetwork.common import wait_for, blocking_prompt
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 
@@ -147,14 +149,13 @@ class CommandWalletOpen(CommandBase):
             print("Wallet file not found")
             return
 
-        passwd = prompt("[password]> ", is_password=True)
+        passwd = blocking_prompt("[password]> ", is_password=True)
         password_key = to_aes_key(passwd)
 
         try:
             PromptData.Wallet = UserWallet.Open(path, password_key)
-
-            PromptData.Prompt.start_wallet_loop()
             print("Opened wallet at %s" % path)
+            asyncio.create_task(sync_wallet(start_block=PromptData.Wallet._current_height))
             return PromptData.Wallet
         except Exception as e:
             print("Could not open wallet: %s" % e)
@@ -207,7 +208,9 @@ class CommandWalletClaimGas(CommandBase):
 
     def command_desc(self):
         p1 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
-        p2 = ParameterDesc('--to-addr', 'destination address for claimed gas (if not specified, take first address in wallet; or, use the from address, if specified)', optional=True)
+        p2 = ParameterDesc('--to-addr',
+                           'destination address for claimed gas (if not specified, take first address in wallet; or, use the from address, if specified)',
+                           optional=True)
         return CommandDesc('claim', 'claim gas', params=[p1, p2])
 
 
@@ -217,16 +220,11 @@ class CommandWalletRebuild(CommandBase):
         super().__init__()
 
     def execute(self, arguments):
-        PromptData.Prompt.stop_wallet_loop()
-
         start_block = PromptUtils.get_arg(arguments, 0, convert_to_int=True)
         if not start_block or start_block < 0:
             start_block = 0
         print(f"Restarting at block {start_block}")
-
-        PromptData.Wallet.Rebuild(start_block)
-
-        PromptData.Prompt.start_wallet_loop()
+        asyncio.create_task(sync_wallet(start_block, rebuild=True))
 
     def command_desc(self):
         p1 = ParameterDesc('start_block', 'block number to start the resync at', optional=True)
@@ -273,6 +271,22 @@ class CommandWalletUnspent(CommandBase):
 
 #########################################################################
 #########################################################################
+
+async def sync_wallet(start_block, rebuild=False):
+    Blockchain.Default().PersistCompleted.on_change -= PromptData.Wallet.ProcessNewBlock
+
+    if rebuild:
+        PromptData.Wallet.Rebuild(start_block)
+    while True:
+        # trying with 100, might need to lower if processing takes too long
+        PromptData.Wallet.ProcessBlocks(block_limit=100)
+
+        if PromptData.Wallet.IsSynced:
+            break
+        # give some time to other tasks
+        await asyncio.sleep(0.05)
+
+    Blockchain.Default().PersistCompleted.on_change += PromptData.Wallet.ProcessNewBlock
 
 
 def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None):
@@ -357,7 +371,9 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None
 
         print("claim tx: %s " % json.dumps(claim_tx.ToJson(), indent=4))
 
-        relayed = NodeLeader.Instance().Relay(claim_tx)
+        nodemgr = NodeManager()
+        # this blocks, consider moving this wallet function to async instead
+        relayed = wait_for(nodemgr.relay_directly(claim_tx))
 
         if relayed:
             print("Relayed Tx: %s " % claim_tx.Hash.ToString())
@@ -365,6 +381,7 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None
         else:
             print("Could not relay tx %s " % claim_tx.Hash.ToString())
         return claim_tx, relayed
+
 
     else:
         print("could not sign tx")

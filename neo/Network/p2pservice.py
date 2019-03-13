@@ -1,5 +1,6 @@
 import asyncio
 import binascii
+import logging
 from asyncio.streams import StreamWriter, StreamReader
 from socket import AF_INET as IPV4_FAMILY
 import struct
@@ -8,6 +9,12 @@ from neo.Settings import settings
 from neo.Blockchain import GetBlockchain
 from neo.Core.Header import Header
 from neocore.UInt256 import UInt256
+
+from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.neonetwork.network.syncmanager import SyncManager
+from neo.Network.neonetwork.network.controller import TCPController
+from neo.Network.neonetwork.ledger import Ledger
+from neo.Network.neonetwork.network.message import Message
 
 # TODO: get constants from neonetwork package
 CMD_HEADER_HASH_BY_HEIGHT = 'headerhash'
@@ -130,3 +137,18 @@ class NetworkService(Singleton):
                             self.writer.write(b'\x01')
                         else:
                             self.writer.write(b'\x00')
+
+    async def start2(self):
+        Message._magic = settings.MAGIC
+        nodemgr = NodeManager()
+        syncmgr = SyncManager(nodemgr)
+        # controller = TCPController(syncmgr)
+        ledger = Ledger()
+        syncmgr.ledger = ledger
+
+        logging.getLogger("asyncio").setLevel(logging.DEBUG)
+        loop = asyncio.get_event_loop()
+        loop.set_debug(False)
+        task = loop.create_task(nodemgr.start())
+        task.add_done_callback(lambda _: asyncio.create_task(syncmgr.start()))
+        # task.add_done_callback(lambda _: asyncio.create_task(controller.start()))

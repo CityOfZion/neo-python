@@ -650,14 +650,14 @@ class Wallet:
         self._lock.acquire()
         try:
             blockcount = 0
-            while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
+            while self._current_height < Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
 
                 block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
                 if block is not None:
                     self.ProcessNewBlock(block)
                 else:
-                    self._current_height += 1
+                    break
 
                 blockcount += 1
 
@@ -1111,7 +1111,8 @@ class Wallet:
             if req_fee < settings.LOW_PRIORITY_THRESHOLD:
                 req_fee = settings.LOW_PRIORITY_THRESHOLD
             if fee < req_fee:
-                raise TXFeeError(f'Transaction cancelled. The tx size ({tx.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
+                raise TXFeeError(
+                    f'Transaction cancelled. The tx size ({tx.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
 
         return tx
 

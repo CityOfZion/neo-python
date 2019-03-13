@@ -3,7 +3,6 @@ import json
 from neo.Blockchain import GetBlockchain
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
-from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt import Utils as PromptUtils
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -79,7 +78,9 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
             #            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
 
-            relayed = NodeLeader.Instance().Relay(wallet_tx)
+            # TODO: fix relay
+            # relayed = NodeLeader.Instance().Relay(wallet_tx)
+            relayed = False
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())

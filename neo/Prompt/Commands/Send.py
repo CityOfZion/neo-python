@@ -1,7 +1,6 @@
 from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction, TXFeeError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args, \
     get_owners_from_params, get_fee, get_change_addr, get_asset_amount
 from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
@@ -317,8 +316,9 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         if context.Completed:
 
             tx.scripts = context.GetScripts()
-            relayed = NodeLeader.Instance().Relay(tx)
-
+            # TODO: fix relay
+            # relayed = NodeLeader.Instance().Relay(tx)
+            relayed = False
             if relayed:
                 wallet.SaveTransaction(tx)
 
