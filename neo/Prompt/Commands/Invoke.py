@@ -34,6 +34,7 @@ from prompt_toolkit import prompt
 from copy import deepcopy
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 
@@ -76,11 +77,8 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
             relayed = False
 
-            #            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
-
-            # TODO: fix relay
-            # relayed = NodeLeader.Instance().Relay(wallet_tx)
-            relayed = False
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())

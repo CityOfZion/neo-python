@@ -15,6 +15,7 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from logzero import logger
 from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.Core.Blockchain import Blockchain
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 
 
 class CommandWalletSend(CommandBase):
@@ -316,9 +317,8 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         if context.Completed:
 
             tx.scripts = context.GetScripts()
-            # TODO: fix relay
-            # relayed = NodeLeader.Instance().Relay(tx)
-            relayed = False
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(tx)
             if relayed:
                 wallet.SaveTransaction(tx)
 

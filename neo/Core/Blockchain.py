@@ -19,6 +19,7 @@ from neocore.Fixed8 import Fixed8
 from neocore.Cryptography.ECCurve import ECDSA
 from neocore.UInt256 import UInt256
 from functools import lru_cache
+from neo.Network.neonetwork.common import msgrouter
 
 
 class Blockchain:
@@ -449,6 +450,7 @@ class Blockchain:
 
     def OnPersistCompleted(self, block):
         self.PersistCompleted.on_change(block)
+        msgrouter.on_block_persisted(block)
 
     def BlockCacheCount(self):
         pass

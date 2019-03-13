@@ -6,6 +6,7 @@ Usage:
 """
 import traceback
 import hashlib
+import asyncio
 from itertools import groupby
 from base58 import b58decode
 from decimal import Decimal
@@ -1267,6 +1268,22 @@ class Wallet:
             return False
         else:
             return True
+
+    async def sync_wallet(self, start_block, rebuild=False):
+        Blockchain.Default().PersistCompleted.on_change -= self.ProcessNewBlock
+
+        if rebuild:
+            self.Rebuild(start_block)
+        while True:
+            # trying with 100, might need to lower if processing takes too long
+            self.ProcessBlocks(block_limit=100)
+
+            if self.IsSynced:
+                break
+            # give some time to other tasks
+            await asyncio.sleep(0.05)
+
+        Blockchain.Default().PersistCompleted.on_change += self.ProcessNewBlock
 
     def ToJson(self, verbose=False):
         # abstract

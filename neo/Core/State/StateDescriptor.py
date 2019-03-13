@@ -145,8 +145,8 @@ class StateDescriptor(SerializableMixin):
         raise Exception("Invalid State Descriptor")
 
     def VerifyAccountState(self):
-        # @TODO
-        # Implement VerifyAccount State
+        # TODO
+        #  Implement VerifyAccount State
         raise NotImplementedError()
 
     def VerifyValidatorState(self):

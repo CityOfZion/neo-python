@@ -155,7 +155,7 @@ class CommandWalletOpen(CommandBase):
         try:
             PromptData.Wallet = UserWallet.Open(path, password_key)
             print("Opened wallet at %s" % path)
-            asyncio.create_task(sync_wallet(start_block=PromptData.Wallet._current_height))
+            asyncio.create_task(PromptData.Wallet.sync_wallet(start_block=PromptData.Wallet._current_height))
             return PromptData.Wallet
         except Exception as e:
             print("Could not open wallet: %s" % e)
@@ -224,7 +224,7 @@ class CommandWalletRebuild(CommandBase):
         if not start_block or start_block < 0:
             start_block = 0
         print(f"Restarting at block {start_block}")
-        asyncio.create_task(sync_wallet(start_block, rebuild=True))
+        asyncio.create_task(PromptData.Wallet.sync_wallet(start_block, rebuild=True))
 
     def command_desc(self):
         p1 = ParameterDesc('start_block', 'block number to start the resync at', optional=True)
@@ -271,23 +271,6 @@ class CommandWalletUnspent(CommandBase):
 
 #########################################################################
 #########################################################################
-
-async def sync_wallet(start_block, rebuild=False):
-    Blockchain.Default().PersistCompleted.on_change -= PromptData.Wallet.ProcessNewBlock
-
-    if rebuild:
-        PromptData.Wallet.Rebuild(start_block)
-    while True:
-        # trying with 100, might need to lower if processing takes too long
-        PromptData.Wallet.ProcessBlocks(block_limit=100)
-
-        if PromptData.Wallet.IsSynced:
-            break
-        # give some time to other tasks
-        await asyncio.sleep(0.05)
-
-    Blockchain.Default().PersistCompleted.on_change += PromptData.Wallet.ProcessNewBlock
-
 
 def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None):
     """
@@ -372,8 +355,7 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None
         print("claim tx: %s " % json.dumps(claim_tx.ToJson(), indent=4))
 
         nodemgr = NodeManager()
-        # this blocks, consider moving this wallet function to async instead
-        relayed = wait_for(nodemgr.relay_directly(claim_tx))
+        relayed = nodemgr.relay(claim_tx)
 
         if relayed:
             print("Relayed Tx: %s " % claim_tx.Hash.ToString())

@@ -26,7 +26,6 @@ from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neocore.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
-from neo.Network.NodeLeader import NodeLeader
 from neo.Core.State.StorageKey import StorageKey
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
@@ -35,6 +34,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.Utils import get_asset_id
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 from neo.Wallets.Wallet import Wallet
 from furl import furl
 import ast
@@ -85,6 +85,7 @@ class JsonRpcApi:
     def __init__(self, port, wallet=None):
         self.port = port
         self.wallet = wallet
+        self.nodemgr = NodeManager()
 
     def get_data(self, body: dict):
 
@@ -241,7 +242,7 @@ class JsonRpcApi:
                 raise JsonRpcError(-100, "Invalid Height")
 
         elif method == "getconnectioncount":
-            return len(NodeLeader.Instance().Peers)
+            return len(self.nodemgr.nodes)
 
         elif method == "getcontractstate":
             script_hash = UInt160.ParseString(params[0])
@@ -251,12 +252,12 @@ class JsonRpcApi:
             return contract.ToJson()
 
         elif method == "getrawmempool":
-            return list(map(lambda hash: "0x%s" % hash.decode('utf-8'), NodeLeader.Instance().MemPool.keys()))
+            return list(map(lambda hash: f"{hash.To0xString()}", self.nodemgr.mempool.keys()))
 
         elif method == "getversion":
             return {
                 "port": self.port,
-                "nonce": NodeLeader.Instance().NodeId,
+                "nonce": self.nodemgr.id,
                 "useragent": settings.VERSION_NAME
             }
 
@@ -320,7 +321,8 @@ class JsonRpcApi:
         elif method == "sendrawtransaction":
             tx_script = binascii.unhexlify(params[0].encode('utf-8'))
             transaction = Transaction.DeserializeFromBufer(tx_script)
-            result = NodeLeader.Instance().Relay(transaction)
+            # TODO: relay blocks, change to await in the future
+            result = self.nodemgr.relay(transaction)
             return result
 
         elif method == "validateaddress":
@@ -451,26 +453,20 @@ class JsonRpcApi:
 
     def get_peers(self):
         """Get all known nodes and their 'state' """
-        node = NodeLeader.Instance()
+
         result = {"connected": [], "unconnected": [], "bad": []}
-        connected_peers = []
 
-        for peer in node.Peers:
-            result['connected'].append({"address": peer.host,
-                                        "port": peer.port})
-            connected_peers.append("{}:{}".format(peer.host, peer.port))
+        for peer in self.nodemgr.nodes:
+            host, port = peer.address.rplit(":")
+            result['connected'].append({"address": host, "port": int(port)})
 
-        for addr in node.DEAD_ADDRS:
+        for addr in self.nodemgr.bad_addresses:
             host, port = addr.rsplit(':', 1)
-            result['bad'].append({"address": host, "port": port})
+            result['bad'].append({"address": host, "port": int(port)})
 
-        # "UnconnectedPeers" is never used. So a check is needed to
-        # verify that a given address:port does not belong to a connected peer
-        for addr in node.KNOWN_ADDRS:
+        for addr in self.nodemgr.known_addresses:
             host, port = addr.rsplit(':', 1)
-            if addr not in connected_peers:
-                result['unconnected'].append({"address": host,
-                                              "port": int(port)})
+            result['unconnected'].append({"address": host, "port": int(port)})
 
         return result
 
@@ -636,7 +632,7 @@ class JsonRpcApi:
         if context.Completed:
             tx.scripts = context.GetScripts()
             self.wallet.SaveTransaction(tx)
-            NodeLeader.Instance().Relay(tx)
+            self.nodemgr.relay(tx)
             return tx.ToJson()
         else:
             return context.ToJson()

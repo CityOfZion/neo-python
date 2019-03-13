@@ -20,6 +20,8 @@ import math
 API_URL_PREFIX = "/v1"
 
 
+# TODO: fix to work with asyncio. Ultimately move away from klein to get rid of Twisted dependency. Consider aiohttp
+
 class RestApi:
     app = Klein()
     notif = None

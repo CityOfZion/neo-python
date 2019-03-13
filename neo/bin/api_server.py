@@ -95,7 +95,7 @@ async def custom_background_code():
     thread and handle exiting this thread in another way (eg. with signals and events).
     """
     while True:
-        logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height + 1), str(Blockchain.Default().HeaderHeight + 1))
+        logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
         await asyncio.sleep(15)
 
 
@@ -242,6 +242,7 @@ def main():
         password_key = to_aes_key(passwd)
         try:
             wallet = UserWallet.Open(args.wallet, password_key)
+            wallet.sync_wallet(start_block=wallet._current_height)
 
         except Exception as e:
             print(f"Could not open wallet {e}")
@@ -259,37 +260,15 @@ def main():
     observer = STDLibLogObserver(name=logzero.LOGZERO_DEFAULT_LOGGER)
     globalLogPublisher.addObserver(observer)
 
-    def loopingCallErrorHandler(error):
-        logger.info("Error in loop: %s " % error)
-
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
 
-    # start_block_persisting()
-
-    # If a wallet is open, make sure it processes blocks
-    if wallet:
-        Blockchain.Default().PersistCompleted += wallet.ProcessNewBlock
-        # walletdb_loop = task.LoopingCall(wallet.ProcessBlocks)
-        # wallet_loop_deferred = walletdb_loop.start(1)
-        # wallet_loop_deferred.addErrback(loopingCallErrorHandler)
-
     p2p = NetworkService()
-    loop.create_task(p2p.start())
+    loop.create_task(p2p.start2())
     loop.create_task(custom_background_code())
 
-    # asyncioreactor.install(eventloop=loop)
-
-    # Setup twisted reactor, NodeLeader and start the NotificationDB
-    # reactor.suggestThreadPoolSize(15)
-    # NodeLeader.Instance().Start()
-    # NotificationDB.instance().start()
-    #
-    # # Start a thread with custom code
-    # d = threading.Thread(target=custom_background_code)
-    # d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
-    # d.start()
+    NotificationDB.instance().start()
 
     if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (args.host, args.port_rpc))
@@ -300,9 +279,6 @@ def main():
             sys.exit()
         api_server_rpc = rpc_class(args.port_rpc, wallet=wallet)
         api_server_rpc.app.run('0.0.0.0', 8000)
-
-        # endpoint_rpc = "tcp:port={0}:interface={1}".format(args.port_rpc, args.host)
-        # endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
     # if args.port_rest:
     #     logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
@@ -322,7 +298,6 @@ def main():
     logger.info("Closing databases...")
     NotificationDB.close()
     Blockchain.Default().Dispose()
-    # NodeLeader.Instance().Shutdown()
     if wallet:
         wallet.Close()
 

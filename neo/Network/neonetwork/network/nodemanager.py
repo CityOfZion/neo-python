@@ -7,6 +7,9 @@ from neo.Network.neonetwork.common import msgrouter, wait_for
 from neo.Network.neonetwork.network.node import NeoNode
 from neo.Network.neonetwork.network.protocol import NeoProtocol
 from neo.Network.neonetwork.network import utils as networkutils
+from neo.Core.TX.Transaction import Transaction as OrigTransaction
+from neo.Core.Blockchain import Blockchain as BC
+from neo.Core.Block import Block as OrigBlock
 from socket import AF_INET as IP4_FAMILY
 from datetime import datetime
 from functools import partial
@@ -14,6 +17,9 @@ from typing import Optional, List
 from neo.Network.neonetwork.network.requestinfo import RequestInfo
 from contextlib import suppress
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger('network')
 
 
 class NodeManager(Singleton):
@@ -30,6 +36,8 @@ class NodeManager(Singleton):
         self.loop = asyncio.get_event_loop()
         self.max_clients = 10
         self.min_clients = 4
+        self.id = id(self)
+        self.mempool = dict()
 
         # a list of nodes that we're actively using to request data from
         self.nodes = []  # type: List[NeoNode]
@@ -44,6 +52,7 @@ class NodeManager(Singleton):
         self.connection_queue = asyncio.Queue()
 
         msgrouter.on_addr += self.on_addr_received
+        msgrouter.on_block_persisted += self.update_mempool_for_block_persist
 
     async def start(self):
         host = 'localhost'
@@ -283,6 +292,32 @@ class NodeManager(Singleton):
             self.queued_addresses.remove(addr)
         self.bad_addresses.append(addr)
 
+    def relay(self, inventory):
+        if type(inventory) is OrigTransaction or issubclass(type(inventory), OrigTransaction):
+            success = self.add_transaction(inventory)
+            if not success:
+                return False
+
+            return wait_for(self.relay_directly(inventory))
+
+    def add_transaction(self, tx) -> bool:
+        if BC.Default() is None:
+            return False
+
+        if tx.Hash in self.mempool.keys():
+            return False
+
+        if BC.Default().ContainsTransaction(tx.Hash):
+            return False
+
+        if not tx.Verify(self.mempool.values()):
+            logger.error("Verifying tx result... failed")
+            return False
+
+        self.mempool[tx.Hash] = tx
+
+        return True
+
     async def relay_directly(self, inventory) -> bool:
         relayed = False
 
@@ -290,3 +325,8 @@ class NodeManager(Singleton):
             relayed |= await node.relay(inventory)
 
         return relayed
+
+    def update_mempool_for_block_persist(self, orig_block: OrigBlock):
+        for tx in orig_block.Transactions:
+            with suppress(KeyError):
+                self.mempool.pop(tx.Hash)
