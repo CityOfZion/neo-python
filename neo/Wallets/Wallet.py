@@ -650,14 +650,14 @@ class Wallet:
         self._lock.acquire()
         try:
             blockcount = 0
-            while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
+            while self._current_height < Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
 
                 block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
                 if block is not None:
                     self.ProcessNewBlock(block)
                 else:
-                    self._current_height += 1
+                    break
 
                 blockcount += 1
 
