@@ -277,8 +277,8 @@ def main():
         except ValueError as err:
             logger.error(err)
             sys.exit()
-        api_server_rpc = rpc_class(args.port_rpc, wallet=wallet)
-        api_server_rpc.app.run('0.0.0.0', 8000)
+        api_server_rpc = rpc_class(wallet=wallet)
+        api_server_rpc.run('0.0.0.0', args.port_rpc)
 
     # if args.port_rest:
     #     logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))

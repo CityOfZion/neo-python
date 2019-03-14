@@ -10,8 +10,7 @@ import json
 import base58
 import binascii
 from json.decoder import JSONDecodeError
-
-from klein import Klein
+from aiohttp import web
 
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
@@ -36,8 +35,6 @@ from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Prompt.Utils import get_asset_id
 from neo.Network.neonetwork.network.nodemanager import NodeManager
 from neo.Wallets.Wallet import Wallet
-from furl import furl
-import ast
 
 
 class JsonRpcError(Exception):
@@ -79,13 +76,20 @@ class JsonRpcError(Exception):
 
 
 class JsonRpcApi:
-    app = Klein()
-    port = None
 
-    def __init__(self, port, wallet=None):
-        self.port = port
+    def __init__(self, wallet=None):
+        self.app = web.Application()
+        self.port = None
         self.wallet = wallet
         self.nodemgr = NodeManager()
+
+        self.app.router.add_post("/", self.home)
+        self.app.router.add_options("/", self.home)
+        self.app.router.add_get("/", self.home)
+
+    def run(self, host, port):
+        self.port = port
+        web.run_app(self.app, host=host, port=port)
 
     def get_data(self, body: dict):
 
@@ -118,11 +122,13 @@ class JsonRpcApi:
 
     #
     # JSON-RPC API Route
-    #
-    @app.route('/')
+    # TODO: re-enable corse_header support
+    #  fix tests
+    #  someday rewrite to allow async methods, have another look at https://github.com/bcb/jsonrpcserver/tree/master/jsonrpcserver
+    #  the only downside of that plugin is that it does not support custom errors. Either patch or request
     @json_response
-    @cors_header
-    def home(self, request):
+    # @cors_header
+    async def home(self, request):
         # POST Examples:
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
         # or multiple requests in 1 transaction
@@ -133,9 +139,10 @@ class JsonRpcApi:
         # NOTE: GET requests do not support multiple requests in 1 transaction
         request_id = None
 
-        if "POST" == request.method.decode("utf-8"):
+        if "POST" == request.method:
             try:
-                content = json.loads(request.content.read().decode("utf-8"))
+                content = await request.content.read()
+                content = json.loads(content.decode('utf-8'))
 
                 # test if it's a multi-request message
                 if isinstance(content, list):
@@ -151,33 +158,10 @@ class JsonRpcApi:
                 error = JsonRpcError.parseError()
                 return self.get_custom_error_payload(request_id, error.code, error.message)
 
-        elif "GET" == request.method.decode("utf-8"):
-            content = furl(request.uri).args
+        elif "GET" == request.method:
+            return self.get_data(request.query)
 
-            # remove hanging ' or " from last value if value is not None to avoid SyntaxError
-            try:
-                l_value = list(content.values())[-1]
-            except IndexError:
-                error = JsonRpcError.parseError()
-                return self.get_custom_error_payload(request_id, error.code, error.message)
-
-            if l_value is not None:
-                n_value = l_value[:-1]
-                l_key = list(content.keys())[-1]
-                content[l_key] = n_value
-
-            if len(content.keys()) > 3:
-                try:
-                    params = content['params']
-                    l_params = ast.literal_eval(params)
-                    content['params'] = [l_params]
-                except KeyError:
-                    error = JsonRpcError(-32602, "Invalid params")
-                    return self.get_custom_error_payload(request_id, error.code, error.message)
-
-            return self.get_data(content)
-
-        elif "OPTIONS" == request.method.decode("utf-8"):
+        elif "OPTIONS" == request.method:
             return self.options_response()
 
         error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))

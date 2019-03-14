@@ -20,8 +20,6 @@ from neo.Wallets.utils import to_aes_key
 from neo.IO.Helper import Helper
 from neocore.UInt256 import UInt256
 from neo.Blockchain import GetBlockchain
-from neo.Network.NodeLeader import NodeLeader
-from neo.Network.NeoNode import NeoNode
 from copy import deepcopy
 from neo.Settings import ROOT_INSTALL_PATH, settings
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
@@ -42,6 +40,8 @@ def mock_get_request(path, method=b"GET"):
 
 class JsonRpcApiTestCase(BlockchainFixtureTestCase):
     app = None  # type:JsonRpcApi
+
+    # TODO: update tests to remove Klein dependency and use https://docs.aiohttp.org/en/stable/testing.html
 
     @classmethod
     def leveldb_testpath(cls):

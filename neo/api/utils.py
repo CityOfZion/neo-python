@@ -1,6 +1,8 @@
 import json
 import gzip
 from functools import wraps
+from aiohttp import web
+from aiohttp.web_response import ContentCoding
 
 COMPRESS_FASTEST = 1
 BASE_STRING_SIZE = 49
@@ -13,22 +15,12 @@ def json_response(func):
     """ @json_response decorator adds header and dumps response object """
 
     @wraps(func)
-    def wrapper(self, request, *args, **kwargs):
-        res = func(self, request, *args, **kwargs)
-        response_data = json.dumps(res) if isinstance(res, (dict, list)) else res
-        request.setHeader('Content-Type', 'application/json')
-
-        if len(response_data) > COMPRESS_THRESHOLD:
-            accepted_encodings = request.requestHeaders.getRawHeaders('Accept-Encoding')
-            if accepted_encodings:
-                use_gzip = any("gzip" in encoding for encoding in accepted_encodings)
-
-                if use_gzip:
-                    response_data = gzip.compress(bytes(response_data, 'utf-8'), compresslevel=COMPRESS_FASTEST)
-                    request.setHeader('Content-Encoding', 'gzip')
-                    request.setHeader('Content-Length', len(response_data))
-
-        return response_data
+    async def wrapper(self, request, *args, **kwargs):
+        res = await func(self, request, *args, **kwargs)
+        response = web.json_response(data=res)
+        if response.content_length > COMPRESS_THRESHOLD:
+            response.enable_compress(force=ContentCoding.gzip)
+        return response
 
     return wrapper
 
@@ -37,6 +29,7 @@ def json_response(func):
 def cors_header(func):
     """ @cors_header decorator adds CORS headers """
 
+    # TODO: update to work with aiohttp or use a cors header plugin
     @wraps(func)
     def wrapper(self, request, *args, **kwargs):
         res = func(self, request, *args, **kwargs)
