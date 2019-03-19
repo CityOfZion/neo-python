@@ -75,6 +75,8 @@ class UserWallet(Wallet):
             self._db.close()
             self._db = None
 
+        Blockchain.Default().PersistCompleted.on_change -= self.ProcessNewBlock
+
     @staticmethod
     def Open(path, password):
         return UserWallet(path=path, passwordKey=password, create=False)

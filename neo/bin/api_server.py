@@ -14,7 +14,6 @@ Run using TestNet with JSON-RPC API at port 10332 and REST API at port 8080:
 
 See also:
 
-* If you encounter any issues, please report them here: https://github.com/CityOfZion/neo-python/issues/273
 * Server setup
   * Guide for Ubuntu server setup: https://gist.github.com/metachris/2be27cdff9503ebe7db1c27bfc60e435
   * Systemd service config: https://gist.github.com/metachris/03d1cc47df7cddfbc4009d5249bdfc6c
@@ -25,50 +24,29 @@ Logging
 
 This api-server can log to stdout/stderr, logfile and syslog.
 Check `api-server.py -h` for more details.
-
-Twisted uses a quite custom logging setup. Here we simply setup the Twisted logger
-to reuse our logzero logging setup. See also:
-
-* http://twisted.readthedocs.io/en/twisted-17.9.0/core/howto/logger.html
-* https://twistedmatrix.com/documents/17.9.0/api/twisted.logger.STDLibLogObserver.html
 """
+import argparse
+import asyncio
 import os
 import sys
-import argparse
-import threading
-from time import sleep
 from logging.handlers import SysLogHandler
-from neo.Network.p2pservice import NetworkService
 
 import logzero
 from logzero import logger
 from prompt_toolkit import prompt
 
-# Twisted logging
-from twisted.logger import STDLibLogObserver, globalLogPublisher
-
-# Twisted and Klein methods and modules
-from twisted.internet import task, endpoints, threads
-# from twisted.internet import reactor, task, endpoints, threads
-from twisted.web.server import Site
-
 # neo methods and modules
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-
-# from neo.Network.NodeLeader import NodeLeader
+from neo.Network.p2pservice import NetworkService
 from neo.Settings import settings
 from neo.Utils.plugin import load_class_from_path
-import neo.Settings
-import asyncio
-from twisted.internet import asyncioreactor
+from neo.Wallets.utils import to_aes_key
 
 loop = asyncio.get_event_loop()
 asyncio.set_event_loop(loop)
-asyncioreactor.install(eventloop=loop)
 
 # Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
@@ -97,30 +75,6 @@ async def custom_background_code():
     while True:
         logger.info("[%s] Block %s / %s", settings.net_name, str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
         await asyncio.sleep(15)
-
-
-def on_persistblocks_error(err):
-    logger.debug("On Persist blocks loop error! %s " % err)
-
-
-def stop_block_persisting():
-    global continue_persisting
-    continue_persisting = False
-
-
-def persist_done(value):
-    """persist callback. Value is unused"""
-    if continue_persisting:
-        start_block_persisting()
-    else:
-        block_deferred.cancel()
-
-
-def start_block_persisting():
-    global block_deferred
-    block_deferred = threads.deferToThread(Blockchain.Default().PersistBlocks)
-    block_deferred.addCallback(persist_done)
-    block_deferred.addErrback(on_persistblocks_error)
 
 
 def main():
@@ -152,7 +106,10 @@ def main():
     parser.add_argument("--datadir", action="store",
                         help="Absolute path to use for database directories")
     # peers
-    parser.add_argument("--maxpeers", action="store", default=5,
+    parser.add_argument("--minpeers", action="store", type=int,
+                        help="Min peers to use for P2P Joining")
+
+    parser.add_argument("--maxpeers", action="store", type=int,
                         help="Max peers to use for P2P Joining")
 
     # If a wallet should be opened
@@ -198,13 +155,45 @@ def main():
     elif args.coznet:
         settings.setup_coznet()
 
-    if args.maxpeers:
+    def set_min_peers(num_peers) -> bool:
         try:
-            settings.set_max_peers(args.maxpeers)
-            print("Maxpeers set to ", args.maxpeers)
+            settings.set_min_peers(num_peers)
+            print("Minpeers set to ", num_peers)
+            return True
+        except ValueError:
+            print("Please supply a positive integer for minpeers")
+            return False
+
+    def set_max_peers(num_peers) -> bool:
+        try:
+            settings.set_max_peers(num_peers)
+            print("Maxpeers set to ", num_peers)
+            return True
         except ValueError:
             print("Please supply a positive integer for maxpeers")
+            return False
+
+    minpeers = args.minpeers
+    maxpeers = args.maxpeers
+
+    if minpeers and maxpeers:
+        if minpeers > maxpeers:
+            print("minpeers setting cannot be bigger than maxpeers setting")
             return
+        if not set_min_peers(minpeers) or not set_max_peers(maxpeers):
+            return
+    elif minpeers:
+        if not set_min_peers(minpeers):
+            return
+        if minpeers > settings.CONNECTED_PEER_MAX:
+            if not set_max_peers(minpeers):
+                return
+    elif maxpeers:
+        if not set_max_peers(maxpeers):
+            return
+        if maxpeers < settings.CONNECTED_PEER_MIN:
+            if not set_min_peers(maxpeers):
+                return
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -256,10 +245,6 @@ def main():
     # Write a PID file to easily quit the service
     write_pid_file()
 
-    # Setup Twisted and Klein logging to use the logzero setup
-    observer = STDLibLogObserver(name=logzero.LOGZERO_DEFAULT_LOGGER)
-    globalLogPublisher.addObserver(observer)
-
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
@@ -278,23 +263,18 @@ def main():
             logger.error(err)
             sys.exit()
         api_server_rpc = rpc_class(wallet=wallet)
-        api_server_rpc.run('0.0.0.0', args.port_rpc)
+        api_server_rpc.run(args.host, args.port_rpc)
 
-    # if args.port_rest:
-    #     logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
-    #     try:
-    #         rest_api = load_class_from_path(settings.REST_SERVER)
-    #     except ValueError as err:
-    #         logger.error(err)
-    #         sys.exit()
-    #     api_server_rest = rest_api()
-    #     endpoint_rest = "tcp:port={0}:interface={1}".format(args.port_rest, args.host)
-    #     endpoints.serverFromString(reactor, endpoint_rest).listen(Site(api_server_rest.app.resource()))
-    #
-    # reactor.addSystemEventTrigger('before', 'shutdown', stop_block_persisting)
-    # reactor.run()
+    if args.port_rest:
+        logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
+        try:
+            rest_api = load_class_from_path(settings.REST_SERVER)
+        except ValueError as err:
+            logger.error(err)
+            sys.exit()
+        api_server_rest = rest_api()
+        api_server_rest.run(args.host, args.port_rest)
 
-    # After the reactor is stopped, gracefully shutdown the database.
     logger.info("Closing databases...")
     NotificationDB.close()
     Blockchain.Default().Dispose()

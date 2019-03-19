@@ -34,8 +34,8 @@ class NodeManager(Singleton):
     # we override init instead of __init__ due to the Singleton (read class documentation)
     def init(self):
         self.loop = asyncio.get_event_loop()
-        self.max_clients = 10
-        self.min_clients = 4
+        self.max_clients = settings.CONNECTED_PEER_MAX
+        self.min_clients = settings.CONNECTED_PEER_MIN
         self.id = id(self)
         self.mempool = dict()
 

@@ -34,6 +34,11 @@ class RestApi:
             web.get("/v1/status", self.get_status)
         ])
 
+    def run(self, host, port=None):
+        if port:
+            self.port = port
+        web.run_app(self.app, host=host, port=port)
+
     #
     # REST API Routes
     #
@@ -124,7 +129,7 @@ class RestApi:
                         </div>
                     </body>
                 </html>""" % (settings.net_name, endpoints_html)
-        return web.Response(body=out)
+        return web.Response(text=out, content_type="text/html")
 
     @json_response
     async def get_by_block(self, request):
