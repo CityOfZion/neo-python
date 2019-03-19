@@ -1,7 +1,5 @@
 """
-The JSON-RPC API is using the Python package 'klein', which makes it possible to
-create HTTP routes and handlers with Twisted in a similar style to Flask:
-https://github.com/twisted/klein
+The JSON-RPC API is using the Python package 'aioHttp'
 
 See also:
 * http://www.jsonrpc.org/specification
