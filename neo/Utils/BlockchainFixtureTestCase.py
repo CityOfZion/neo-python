@@ -27,6 +27,9 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
     wallets_folder = os.path.dirname(neo.__file__) + '/Utils/fixtures/'
 
+    def __init__(self, *args, **kwargs):
+        super(BlockchainFixtureTestCase, self).__init__(*args, **kwargs)
+
     @classmethod
     def leveldb_testpath(cls):
         return 'Override Me!'

@@ -58,6 +58,10 @@ class _AssertLogHandlerContext(_BaseTestCaseContext):
 
 
 class NeoTestCase(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super(NeoTestCase, self).__init__(*args, **kwargs)
+
     def assertLogHandler(self, component_name: str, level: int):
         """
         This method must be used as a context manager, and will yield

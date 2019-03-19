@@ -330,3 +330,14 @@ class NodeManager(Singleton):
         for tx in orig_block.Transactions:
             with suppress(KeyError):
                 self.mempool.pop(tx.Hash)
+
+    def reset_for_test(self):
+        self.max_clients = 10
+        self.min_clients = 4
+        self.id = id(self)
+        self.mempool = dict()
+        self.nodes = []  # type: List[NeoNode]
+        self.queued_addresses = []
+        self.bad_addresses = []
+        self.known_addresses = []
+        self.connection_queue = asyncio.Queue()

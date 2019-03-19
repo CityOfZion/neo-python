@@ -6,35 +6,37 @@ https://github.com/twisted/klein
 See also:
 * http://www.jsonrpc.org/specification
 """
-import json
-import base58
+import ast
 import binascii
 from json.decoder import JSONDecodeError
-from aiohttp import web
 
-from neo.Settings import settings
+import aiohttp_cors
+import base58
+from aiohttp import web
+from aiohttp.helpers import MultiDict
+from neocore.Fixed8 import Fixed8
+from neocore.UInt160 import UInt160
+from neocore.UInt256 import UInt256
+
 from neo.Core.Blockchain import Blockchain
-from neo.api.utils import json_response, cors_header
+from neo.Core.Helper import Helper
 from neo.Core.State.AccountState import AccountState
+from neo.Core.State.CoinState import CoinState
+from neo.Core.State.StorageKey import StorageKey
 from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
     ContractTransaction, TXFeeError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
     TransactionAttributeUsage
-from neo.Core.State.CoinState import CoinState
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
-from neocore.Fixed8 import Fixed8
-from neo.Core.Helper import Helper
-from neo.Core.State.StorageKey import StorageKey
+from neo.Implementations.Wallets.peewee.Models import Account
+from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Prompt.Utils import get_asset_id
+from neo.Settings import settings
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
-from neo.Implementations.Wallets.peewee.Models import Account
-from neo.Prompt.Utils import get_asset_id
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-from neo.Wallets.Wallet import Wallet
+from neo.api.utils import json_response
 
 
 class JsonRpcError(Exception):
@@ -79,16 +81,28 @@ class JsonRpcApi:
 
     def __init__(self, wallet=None):
         self.app = web.Application()
-        self.port = None
+        self.port = settings.RPC_PORT
         self.wallet = wallet
         self.nodemgr = NodeManager()
 
+        cors = aiohttp_cors.setup(self.app, defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_headers=('Content-Type', 'Access-Control-Allow-Headers', 'Authorization', 'X-Requested-With')
+            )
+        })
+
         self.app.router.add_post("/", self.home)
-        self.app.router.add_options("/", self.home)
+        # TODO: find a fix for adding an OPTIONS route in combination with CORS. It works fine without CORS
+        # self.app.router.add_options("/", self.home)
         self.app.router.add_get("/", self.home)
 
-    def run(self, host, port):
-        self.port = port
+        for route in list(self.app.router.routes()):
+            if not isinstance(route.resource, web.StaticResource):  # <<< WORKAROUND
+                cors.add(route)
+
+    def run(self, host, port=None):
+        if port:
+            self.port = port
         web.run_app(self.app, host=host, port=port)
 
     def get_data(self, body: dict):
@@ -127,7 +141,6 @@ class JsonRpcApi:
     #  someday rewrite to allow async methods, have another look at https://github.com/bcb/jsonrpcserver/tree/master/jsonrpcserver
     #  the only downside of that plugin is that it does not support custom errors. Either patch or request
     @json_response
-    # @cors_header
     async def home(self, request):
         # POST Examples:
         # {"jsonrpc": "2.0", "id": 5, "method": "getblockcount", "params": []}
@@ -141,8 +154,8 @@ class JsonRpcApi:
 
         if "POST" == request.method:
             try:
-                content = await request.content.read()
-                content = json.loads(content.decode('utf-8'))
+                content = await request.json()
+                # content = json.loads(content.decode('utf-8'))
 
                 # test if it's a multi-request message
                 if isinstance(content, list):
@@ -159,12 +172,18 @@ class JsonRpcApi:
                 return self.get_custom_error_payload(request_id, error.code, error.message)
 
         elif "GET" == request.method:
-            return self.get_data(request.query)
+            content = MultiDict(request.query)
+            params = content.get("params", None)
+            if params and not isinstance(params, list):
+                new_params = ast.literal_eval(params)
+                content.update({'params': new_params})
+
+            return self.get_data(content)
 
         elif "OPTIONS" == request.method:
             return self.options_response()
 
-        error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method.decode("utf-8"))
+        error = JsonRpcError.invalidRequest("%s is not a supported HTTP method" % request.method)
         return self.get_custom_error_payload(request_id, error.code, error.message)
 
     @classmethod
@@ -441,7 +460,7 @@ class JsonRpcApi:
         result = {"connected": [], "unconnected": [], "bad": []}
 
         for peer in self.nodemgr.nodes:
-            host, port = peer.address.rplit(":")
+            host, port = peer.address.rsplit(":")
             result['connected'].append({"address": host, "port": int(port)})
 
         for addr in self.nodemgr.bad_addresses:

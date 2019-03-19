@@ -1,8 +1,6 @@
-import json
-import gzip
-from functools import wraps
 from aiohttp import web
 from aiohttp.web_response import ContentCoding
+from functools import wraps
 
 COMPRESS_FASTEST = 1
 BASE_STRING_SIZE = 49
@@ -19,22 +17,7 @@ def json_response(func):
         res = await func(self, request, *args, **kwargs)
         response = web.json_response(data=res)
         if response.content_length > COMPRESS_THRESHOLD:
-            response.enable_compress(force=ContentCoding.gzip)
+            response.enable_compression(force=ContentCoding.gzip)
         return response
-
-    return wrapper
-
-
-# @cors_header decorator to add the CORS headers
-def cors_header(func):
-    """ @cors_header decorator adds CORS headers """
-
-    # TODO: update to work with aiohttp or use a cors header plugin
-    @wraps(func)
-    def wrapper(self, request, *args, **kwargs):
-        res = func(self, request, *args, **kwargs)
-        request.setHeader('Access-Control-Allow-Origin', '*')
-        request.setHeader('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With')
-        return res
 
     return wrapper
