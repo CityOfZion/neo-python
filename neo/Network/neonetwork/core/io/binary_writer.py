@@ -49,7 +49,6 @@ class BinaryWriter(object):
         """
         return self.write_bytes(struct.pack(fmt, data), unhex=False)
 
-
     def write_bool(self, value: bool) -> int:
         """
         Pack the value as a bool and write 1 byte to the stream.
@@ -115,7 +114,7 @@ class BinaryWriter(object):
 
         length = len(data)
         self.write_var_int(length)
-        written =self.write_bytes(data)
+        written = self.write_bytes(data)
         return written
 
     def write_var_int(self, value: int, endian: str = "<") -> int:

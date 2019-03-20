@@ -1,10 +1,11 @@
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 from neo.logging import log_manager
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings
 from neo.Prompt.PromptPrinter import prompt_print as print
 from distutils import util
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 import logging
 
 
@@ -169,23 +170,22 @@ class CommandConfigMaxpeers(CommandBase):
             try:
                 current_max = settings.CONNECTED_PEER_MAX
                 settings.set_max_peers(c1)
-                c1 = int(c1)
-
-                # TODO: fix setting max peers
-                # p_len = len(NodeLeader.Instance().Peers)
-                # if c1 < current_max and c1 < p_len:
-                #     to_remove = p_len - c1
-                #     peers = NodeLeader.Instance().Peers
-                #     for i in range(to_remove):
-                #         peer = peers[-1]  # disconnect last peer added first
-                #         peer.Disconnect("Max connected peers reached", isDead=False)
-                #         peers.pop()
-
-                print(f"Maxpeers set to {c1}")
-                return c1
             except ValueError:
                 print("Please supply a positive integer for maxpeers")
                 return
+
+            c1 = int(c1)
+
+            nodemgr = NodeManager()
+            connected_count = len(nodemgr.nodes)
+            if c1 < current_max and c1 < connected_count:
+                to_remove = connected_count - c1
+                for _ in range(to_remove):
+                    last_connected_node = nodemgr.nodes[-1]
+                    last_connected_node.disconnect()  # need to avoid it being labelled as dead/bad
+
+            print(f"Maxpeers set to {c1}")
+            return c1
         else:
             print(f"Maintaining maxpeers at {settings.CONNECTED_PEER_MAX}")
             return

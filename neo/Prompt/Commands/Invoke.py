@@ -30,7 +30,7 @@ from neocore.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 from copy import deepcopy
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
@@ -139,7 +139,8 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
 
             wallet_tx.scripts = context.GetScripts()
 
-            relayed = NodeLeader.Instance().Relay(wallet_tx)
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())

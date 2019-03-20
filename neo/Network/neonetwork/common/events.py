@@ -1,4 +1,5 @@
 import asyncio
+
 """
     Events
     ~~~~~~
@@ -10,7 +11,7 @@ import asyncio
 
     :copyright: (c) 2014-2017 by Nicola Iarocci.
     :license: BSD, see LICENSE for more details.
-    
+
     Expanded to support async event calling by Erik van den Brink
 """
 
@@ -36,6 +37,7 @@ class Events:
 
             xxx.OnChange = event('OnChange')
     """
+
     def __init__(self, events=None):
 
         if events is not None:
@@ -43,7 +45,7 @@ class Events:
             try:
                 for _ in events:
                     break
-            except:
+            except Exception:
                 raise AttributeError("type object %s is not iterable" %
                                      (type(events)))
             else:
@@ -80,6 +82,7 @@ class Events:
             for attr, val in dictitems:
                 if isinstance(val, _EventSlot):
                     yield val
+
         return gen()
 
 
@@ -118,6 +121,7 @@ class _EventSlot:
         def gen():
             for target in self.targets:
                 yield target
+
         return gen()
 
     def __getitem__(self, key):

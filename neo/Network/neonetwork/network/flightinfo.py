@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 class FlightInfo:
     def __init__(self, node_id, height):
         self.node_id: int = node_id

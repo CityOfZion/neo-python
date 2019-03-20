@@ -6,6 +6,9 @@ from neocore.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
 from neocore.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
+from neo.Network.neonetwork.network.node import NeoNode
+from neo.Network.neonetwork.network.nodemanager import NodeManager
+from mock import patch
 from neo.Prompt.PromptPrinter import pp
 import shutil
 
@@ -112,10 +115,13 @@ class UserWalletTestCase(WalletFixtureTestCase):
     def test_4_wallet_claim_ok(self):
 
         wallet = self.GetWallet1()
+        nodemgr = NodeManager()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-        claim_tx, relayed = ClaimGas(wallet, require_password=False)
-        self.assertIsInstance(claim_tx, ClaimTransaction)
-        self.assertTrue(relayed)
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            claim_tx, relayed = ClaimGas(wallet, require_password=False)
+            self.assertIsInstance(claim_tx, ClaimTransaction)
+            self.assertTrue(relayed)
 
     def test_5_no_wallet(self):
         claim_tx, relayed = ClaimGas(None, require_password=False)

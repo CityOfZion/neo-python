@@ -1,6 +1,6 @@
 import unittest
 import io
-from neo.Network.neonetwork.core.io import BinaryReader
+from neo.Network.neonetwork.core.io.binary_reader import BinaryReader
 
 
 class BinaryReaderTest(unittest.TestCase):

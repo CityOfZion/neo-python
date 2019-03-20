@@ -8,7 +8,7 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 import json
 import os
 import asyncio
@@ -22,7 +22,6 @@ from neo.Prompt.Commands.WalletExport import CommandWalletExport
 from neo.logging import log_manager
 from neocore.Utils import isValidPublicAddress
 from neo.Prompt.PromptPrinter import prompt_print as print
-from neo.Network.neonetwork.common import wait_for, blocking_prompt
 from neo.Network.neonetwork.network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
@@ -149,7 +148,7 @@ class CommandWalletOpen(CommandBase):
             print("Wallet file not found")
             return
 
-        passwd = blocking_prompt("[password]> ", is_password=True)
+        passwd = prompt("[password]> ", is_password=True)
         password_key = to_aes_key(passwd)
 
         try:
@@ -224,7 +223,8 @@ class CommandWalletRebuild(CommandBase):
         if not start_block or start_block < 0:
             start_block = 0
         print(f"Restarting at block {start_block}")
-        asyncio.create_task(PromptData.Wallet.sync_wallet(start_block, rebuild=True))
+        task = asyncio.create_task(PromptData.Wallet.sync_wallet(start_block, rebuild=True))
+        return task
 
     def command_desc(self):
         p1 = ParameterDesc('start_block', 'block number to start the resync at', optional=True)
@@ -363,7 +363,6 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None
         else:
             print("Could not relay tx %s " % claim_tx.Hash.ToString())
         return claim_tx, relayed
-
 
     else:
         print("could not sign tx")

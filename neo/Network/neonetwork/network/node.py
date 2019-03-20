@@ -212,11 +212,12 @@ class NeoNode:
 
     async def relay(self, inventory) -> bool:
         """
-        
+        Try to relay the inventory to the network
+
         Args:
             inventory: should be of type Block, Transaction or ConsensusPayload (see: InventoryType) 
 
-        Returns:
+        Returns: False if inventory is already in the mempool, or if relaying to nodes failed (e.g. because we have no nodes connected)
 
         """
         # TODO: this is based on the current/old neo-python Block, Transaction and ConsensusPlayload classes

@@ -7,7 +7,7 @@ from neo.Prompt.Commands.Invoke import TestInvokeContract, InvokeContract, test_
 from neo.Core.Blockchain import Blockchain
 from neocore.UInt160 import UInt160
 from neo.SmartContract.ContractParameter import ContractParameter
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 from neocore.Fixed8 import Fixed8
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from distutils import util

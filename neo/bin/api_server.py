@@ -33,7 +33,8 @@ from logging.handlers import SysLogHandler
 
 import logzero
 from logzero import logger
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
+from aiohttp import web
 
 # neo methods and modules
 from neo.Core.Blockchain import Blockchain
@@ -44,9 +45,7 @@ from neo.Network.p2pservice import NetworkService
 from neo.Settings import settings
 from neo.Utils.plugin import load_class_from_path
 from neo.Wallets.utils import to_aes_key
-
-loop = asyncio.get_event_loop()
-asyncio.set_event_loop(loop)
+from contextlib import suppress
 
 # Logfile default settings (only used if --logfile arg is used)
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
@@ -77,7 +76,7 @@ async def custom_background_code():
         await asyncio.sleep(15)
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser()
 
     # Network options
@@ -231,7 +230,7 @@ def main():
         password_key = to_aes_key(passwd)
         try:
             wallet = UserWallet.Open(args.wallet, password_key)
-            wallet.sync_wallet(start_block=wallet._current_height)
+            asyncio.create_task(wallet.sync_wallet(start_block=wallet._current_height))
 
         except Exception as e:
             print(f"Could not open wallet {e}")
@@ -250,7 +249,7 @@ def main():
     Blockchain.RegisterBlockchain(blockchain)
 
     p2p = NetworkService()
-    loop.create_task(p2p.start2())
+    p2p_task = loop.create_task(p2p.start2())
     loop.create_task(custom_background_code())
 
     NotificationDB.instance().start()
@@ -263,7 +262,11 @@ def main():
             logger.error(err)
             sys.exit()
         api_server_rpc = rpc_class(wallet=wallet)
-        api_server_rpc.run(args.host, args.port_rpc)
+
+        runner = web.AppRunner(api_server_rpc.app)
+        await runner.setup()
+        site = web.TCPSite(runner, args.host, args.port_rpc)
+        await site.start()
 
     if args.port_rest:
         logger.info("Starting REST api server on http://%s:%s" % (args.host, args.port_rest))
@@ -273,14 +276,36 @@ def main():
             logger.error(err)
             sys.exit()
         api_server_rest = rest_api()
-        api_server_rest.run(args.host, args.port_rest)
+        runner = web.AppRunner(api_server_rest.app)
+        await runner.setup()
+        site = web.TCPSite(runner, args.host, args.port_rpc)
+        await site.start()
+
+    return wallet
+
+
+async def shutdown():
+    for task in asyncio.Task.all_tasks():
+        task.cancel()
+
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    main_task = loop.create_task(main())
+
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        with suppress(asyncio.CancelledError):
+            loop.run_until_complete(asyncio.gather(shutdown()))
+            loop.stop()
+    finally:
+        loop.close()
 
     logger.info("Closing databases...")
     NotificationDB.close()
     Blockchain.Default().Dispose()
+
+    wallet = main_task.result()
     if wallet:
         wallet.Close()
-
-
-if __name__ == "__main__":
-    main()

@@ -5,7 +5,7 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.LoadSmartContract import ImportContractAddr
 from neo.Prompt import Utils as PromptUtils
 from neocore.KeyPair import KeyPair
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 from neocore.Utils import isValidPublicAddress
 from neocore.UInt160 import UInt160
 from neocore.Cryptography.Crypto import Crypto

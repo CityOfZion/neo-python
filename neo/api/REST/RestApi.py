@@ -34,11 +34,6 @@ class RestApi:
             web.get("/v1/status", self.get_status)
         ])
 
-    def run(self, host, port=None):
-        if port:
-            self.port = port
-        web.run_app(self.app, host=host, port=port)
-
     #
     # REST API Routes
     #

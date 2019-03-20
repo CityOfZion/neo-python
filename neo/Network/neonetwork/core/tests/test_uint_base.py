@@ -74,7 +74,7 @@ class UIntBaseTest(TestCase):
         y = UIntBase(num_bytes=2, data=bytearray.fromhex('1122'))
         z = UIntBase(num_bytes=2, data=bytearray.fromhex('2211'))
 
-        self.assertFalse(x == None)
+        self.assertFalse(x is None)
         self.assertFalse(x == int(1122))
         self.assertTrue(x == x)
         self.assertTrue(x == y)

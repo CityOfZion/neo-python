@@ -2,7 +2,9 @@ from unittest import TestCase
 from unittest.case import _BaseTestCaseContext
 import logging
 import collections
+import asyncio
 from neo.logging import log_manager
+from mock import MagicMock
 
 
 class _CapturingHandler(logging.Handler):
@@ -57,6 +59,11 @@ class _AssertLogHandlerContext(_BaseTestCaseContext):
         self._logger.handlers[0] = self.stdio_handler
 
 
+class AsyncMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super(AsyncMock, self).__call__(*args, **kwargs)
+
+
 class NeoTestCase(TestCase):
 
     def __init__(self, *args, **kwargs):
@@ -79,3 +86,11 @@ class NeoTestCase(TestCase):
             context manager
         """
         return _AssertLogHandlerContext(self, component_name, level)
+
+    def async_return(self, result):
+        f = asyncio.Future()
+        f.set_result(result)
+        return f
+
+    def new_async_mock(self):
+        return AsyncMock()

@@ -31,7 +31,7 @@ from neocore.Cryptography.Crypto import Crypto
 from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
-from prompt_toolkit import prompt
+from neo.Network.neonetwork.common import blocking_prompt as prompt
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('db')

@@ -98,11 +98,6 @@ class JsonRpcApi:
             if not isinstance(route.resource, web.StaticResource):  # <<< WORKAROUND
                 cors.add(route)
 
-    def run(self, host, port=None):
-        if port:
-            self.port = port
-        web.run_app(self.app, host=host, port=port)
-
     def get_data(self, body: dict):
 
         try:

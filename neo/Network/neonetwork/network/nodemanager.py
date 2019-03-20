@@ -238,7 +238,7 @@ class NodeManager(Singleton):
             print("***************** WARNING QUALITY CHECK ADDR IS NONE!")
             print("*****************")
         print(f"quality check {healthy} {addr}")
-        if healthy and not addr in self.known_addresses:
+        if healthy and addr not in self.known_addresses:
             self.known_addresses.append(addr)
         else:
             if addr not in self.bad_addresses:
@@ -298,6 +298,7 @@ class NodeManager(Singleton):
             if not success:
                 return False
 
+            # TODO: should we keep the tx in the mempool is relaying failed? There is currently no mechanism that retries sending failed tx's
             return wait_for(self.relay_directly(inventory))
 
     def add_transaction(self, tx) -> bool:

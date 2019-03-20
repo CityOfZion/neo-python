@@ -170,7 +170,7 @@ class SettingsHolder:
             return 'TestNet'
         if self.is_coznet:
             return 'CozNet'
-        return 'PrivateNetttt'
+        return 'PrivateNet'
 
     # Setup methods
     def setup(self, config_file):

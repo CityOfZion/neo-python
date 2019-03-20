@@ -1,9 +1,9 @@
 from datetime import datetime
 
-class NodeWeight:
 
+class NodeWeight:
     SPEED_RECORD_COUNT = 3
-    SPEED_INIT_VALUE = 100*1024^2 # Start with a big speed of 100 MB/s
+    SPEED_INIT_VALUE = 100 * 1024 ^ 2  # Start with a big speed of 100 MB/s
 
     REQUEST_TIME_RECORD_COUNT = 3
 
@@ -12,7 +12,7 @@ class NodeWeight:
         self.speed = [self.SPEED_INIT_VALUE] * self.SPEED_RECORD_COUNT
         self.timeout_count = 0
         self.error_response_count = 0
-        now = datetime.utcnow().timestamp() * 1000 # milliseconds
+        now = datetime.utcnow().timestamp() * 1000  # milliseconds
         self.request_time = [now] * self.REQUEST_TIME_RECORD_COUNT
 
     def append_new_speed(self, speed) -> None:
@@ -35,7 +35,7 @@ class NodeWeight:
         now = datetime.utcnow().timestamp() * 1000  # milliseconds
 
         for t in self.request_time:
-            avg_request_time += now-t
+            avg_request_time += now - t
 
         avg_request_time = avg_request_time / self.REQUEST_TIME_RECORD_COUNT
         return avg_request_time
@@ -47,7 +47,7 @@ class NodeWeight:
 
         # punish errors and timeouts harder than slower speeds and more recent access
         if self.error_response_count:
-            weight /= self.error_response_count + 1 # make sure we at least always divide by 2
+            weight /= self.error_response_count + 1  # make sure we at least always divide by 2
 
         if self.timeout_count:
             weight /= self.timeout_count + 1

@@ -1,6 +1,7 @@
 import socket
 import ipaddress
 
+
 def hostname_to_ip(hostname: str) -> str:
     """
     Args:
@@ -12,6 +13,7 @@ def hostname_to_ip(hostname: str) -> str:
 
     """
     return socket.gethostbyname(hostname)
+
 
 def is_ip_address(hostname: str) -> bool:
     host = hostname.split(':')[0]

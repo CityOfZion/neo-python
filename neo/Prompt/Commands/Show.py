@@ -211,7 +211,7 @@ class CommandShowNodes(CommandBase):
             print(out)
             return out
         else:
-            print("Not yet connected yet\n")
+            print("No nodes connected yet\n")
             return
 
     def command_desc(self):

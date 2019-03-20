@@ -26,12 +26,6 @@ from neo.Wallets.utils import to_aes_key
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
 
 
-def async_return(result):
-    f = asyncio.Future()
-    f.set_result(result)
-    return f
-
-
 class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
 
     def __init__(self, *args, **kwargs):
@@ -507,7 +501,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
 
     def test_send_raw_tx(self):
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=async_return(True)):
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
             nodemgr = self.api_server.nodemgr
             nodemgr.reset_for_test()
             nodemgr.nodes = [NeoNode(object(), object())]
@@ -519,7 +513,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
             nodemgr.reset_for_test()
 
     def test_send_raw_tx_bad(self):
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=async_return(True)):
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
             nodemgr = self.api_server.nodemgr
             nodemgr.reset_for_test()
             nodemgr.nodes = [NeoNode(object(), object())]
@@ -531,7 +525,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
             nodemgr.reset_for_test()
 
     def test_send_raw_tx_bad_2(self):
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=async_return(True)):
+        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
             nodemgr = self.api_server.nodemgr
             nodemgr.reset_for_test()
             nodemgr.nodes = [NeoNode(object(), object())]

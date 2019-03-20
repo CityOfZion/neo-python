@@ -8,7 +8,6 @@ from neo.Prompt.Commands.Invoke import gather_signatures
 from neo.Wallets.NEP5Token import NEP5Token
 from neocore.Fixed8 import Fixed8
 import json
-from prompt_toolkit import prompt
 import traceback
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
@@ -16,6 +15,7 @@ from logzero import logger
 from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.Core.Blockchain import Blockchain
 from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.neonetwork.common import wait_for, blocking_prompt as prompt
 
 
 class CommandWalletSend(CommandBase):
@@ -361,7 +361,8 @@ def parse_and_sign(wallet, jsn):
 
             print("will send tx: %s " % json.dumps(tx.ToJson(), indent=4))
 
-            relayed = NodeLeader.Instance().Relay(tx)
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(tx)
 
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())
