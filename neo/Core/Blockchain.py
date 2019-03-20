@@ -1,7 +1,7 @@
 import pytz
 from itertools import groupby
 from datetime import datetime
-from events import Events
+from neo.Network.neonetwork.common import Events
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.AssetType import AssetType
