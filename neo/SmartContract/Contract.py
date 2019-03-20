@@ -89,13 +89,13 @@ class Contract(SerializableMixin, VerificationCode):
     def CreateMultiSigRedeemScript(m, publicKeys):
 
         if m < 1:
-            raise Exception("Minimum required signature count is 1, specified {}.".format(m))
+            raise ValueError("Minimum required signature count is 1, specified {}.".format(m))
 
         if m > len(publicKeys):
-            raise Exception("Invalid public key count. Minimum required signatures is bigger than supplied public keys count.")
+            raise ValueError("Invalid public key count. Minimum required signatures is bigger than supplied public keys count.")
 
         if len(publicKeys) > 1024:
-            raise Exception("Supplied public key count ({}) exceeds maximum of 1024.".format(len(publicKeys)))
+            raise ValueError("Supplied public key count ({}) exceeds maximum of 1024.".format(len(publicKeys)))
 
         sb = ScriptBuilder()
         sb.push(m)

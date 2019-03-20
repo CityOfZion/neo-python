@@ -67,13 +67,18 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet3()
 
+        # claim gas
+        claim_tx, relayed = ClaimGas(wallet, require_password=False)
+
+        self.assertTrue(relayed)
+
         unspents = wallet.FindUnspentCoinsByAsset(self.NEO)
 
-        self.assertEqual(1, len(unspents))
+        self.assertEqual(2, len(unspents))
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.0002685), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.000008), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 
@@ -93,7 +98,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         unavailable_bonus = wallet.GetUnavailableBonus()
 
-        self.assertEqual(Fixed8.FromDecimal(0.000601), unavailable_bonus)
+        self.assertEqual(Fixed8.FromDecimal(0.000653), unavailable_bonus)
 
         unclaimed_coins = wallet.GetUnclaimedCoins()
 

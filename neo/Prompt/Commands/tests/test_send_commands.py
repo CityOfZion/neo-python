@@ -8,7 +8,7 @@ from neo.Prompt.Utils import get_tx_attr_from_args
 from neo.Prompt.Commands import Send, Wallet
 from neo.Prompt.PromptData import PromptData
 import shutil
-from mock import patch
+from mock import patch, MagicMock
 import json
 from io import StringIO
 from neo.Prompt.PromptPrinter import pp
@@ -23,6 +23,14 @@ class UserWalletTestCase(WalletFixtureTestCase):
     watch_addr_str = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
     _wallet1 = None
 
+    wallet_2_addr = 'AGYaEi3W6ndHPUmW7T12FFfsbQ6DWymkEm'
+    _wallet2 = None
+
+    wallet_3_addr = 'AZiE7xfyJALW7KmADWtCJXGGcnduYhGiCX'
+    _wallet3 = None
+
+    wallet_2_and_3_multisig_addr = "Aau2M4UdXxwxLLizDw11eDZRDs5jpXduh8"
+
     @classmethod
     def GetWallet1(cls, recreate=False):
         if cls._wallet1 is None or recreate:
@@ -32,6 +40,22 @@ class UserWalletTestCase(WalletFixtureTestCase):
         return cls._wallet1
 
     @classmethod
+    def GetWallet2(cls, recreate=False):
+        if cls._wallet2 is None or recreate:
+            shutil.copyfile(cls.wallet_2_path(), cls.wallet_2_dest())
+            cls._wallet2 = UserWallet.Open(UserWalletTestCase.wallet_2_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_2_pass()))
+        return cls._wallet2
+
+    @classmethod
+    def GetWallet3(cls, recreate=False):
+        if cls._wallet3 is None or recreate:
+            shutil.copyfile(cls.wallet_3_path(), cls.wallet_3_dest())
+            cls._wallet3 = UserWallet.Open(UserWalletTestCase.wallet_3_dest(),
+                                           to_aes_key(UserWalletTestCase.wallet_3_pass()))
+        return cls._wallet3
+
+    @classmethod
     def tearDown(cls):
         PromptData.Wallet = None
 
@@ -39,7 +63,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                 PromptData.Wallet = self.GetWallet1(recreate=True)
-                args = ['send', 'neo', self.watch_addr_str, '50']
+                args = ['send', 'neo', self.watch_addr_str, '1']
 
                 res = Wallet.CommandWallet().execute(args)
 
@@ -50,7 +74,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                 PromptData.Wallet = self.GetWallet1(recreate=True)
-                args = ['send', 'gas', self.watch_addr_str, '5']
+                args = ['send', 'gas', self.watch_addr_str, '1']
 
                 res = Wallet.CommandWallet().execute(args)
 
@@ -579,3 +603,112 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
                 self.assertFalse(res)
                 self.assertIn("Transaction cancelled", mock_print.getvalue())
+
+    def test_parse_and_sign_good(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_2_pass()]):
+            # start the tx from wallet2
+            PromptData.Wallet = self.GetWallet2(recreate=True)
+            args = ['send', 'neo', self.wallet_1_addr, '1', '--from-addr=' + self.wallet_2_and_3_multisig_addr]
+
+            Wallet.CommandWallet().execute(args)
+
+            # now sign the tx with wallet3
+            PromptData.Wallet = self.GetWallet3(recreate=True)
+            jsn = '{"type":"Neo.Core.ContractTransaction","hex":"800000014405fd5ae29ceeb20912776048c544109c8c67c4128c019863eca58cf677ad360000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec09b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000d1c4904014bfe7d34e9e97370f2cd3a633377cd6","items":{"0xd67c3733a6d32c0f37979e4ed3e7bf144090c4d1":{"script":"522103989f7417da540a8ce00195738249291cba058102a12d2df1b00e2a826d8bd0612103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e9603452ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"b5b32d6b56f3729747380072c722c50b0ee91e930f58a58d49c98c5543e335b70f6a400c8e1f9fa9653f7605ad229974cacfac3143cd355ca900c328b3db6018"}}}}'
+            args = ['sign', jsn]
+
+            res = Wallet.CommandWallet().execute(args)
+
+            res = res.ToJson()
+            self.assertTrue(res)
+            self.assertEqual(res['vout'][0]['value'], "1")  # verify the amount
+            self.assertEqual(res['vout'][0]['address'], self.wallet_1_addr)  # verify to_address
+            self.assertEqual(res['vout'][1]['address'], self.wallet_2_and_3_multisig_addr)  # verify from_address
+
+    def test_parse_and_sign_bad_jsn(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_2_pass()]):
+                # start the tx from wallet2
+                PromptData.Wallet = self.GetWallet2(recreate=True)
+                args = ['send', 'neo', self.wallet_1_addr, '1', '--from-addr=' + self.wallet_2_and_3_multisig_addr]
+
+                Wallet.CommandWallet().execute(args)
+
+                # now sign the tx with wallet3
+                PromptData.Wallet = self.GetWallet3(recreate=True)
+                jsn = 'blah'
+                args = ['sign', jsn]
+
+                res = Wallet.CommandWallet().execute(args)
+
+                self.assertFalse(res)
+                self.assertIn("Failed to parse JSON", mock_print.getvalue())
+
+    def test_parse_and_sign_fails_to_relay(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_2_pass()]):
+                with patch('neo.Prompt.Commands.Send.NodeLeader.Relay', return_value=False):
+                    # start the tx from wallet2
+                    PromptData.Wallet = self.GetWallet2(recreate=True)
+                    args = ['send', 'neo', self.wallet_1_addr, '1', '--from-addr=' + self.wallet_2_and_3_multisig_addr]
+
+                    Wallet.CommandWallet().execute(args)
+
+                    # now sign the tx with wallet3
+                    PromptData.Wallet = self.GetWallet3(recreate=True)
+                    jsn = '{"type":"Neo.Core.ContractTransaction","hex":"800000014405fd5ae29ceeb20912776048c544109c8c67c4128c019863eca58cf677ad360000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec09b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000d1c4904014bfe7d34e9e97370f2cd3a633377cd6","items":{"0xd67c3733a6d32c0f37979e4ed3e7bf144090c4d1":{"script":"522103989f7417da540a8ce00195738249291cba058102a12d2df1b00e2a826d8bd0612103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e9603452ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"b5b32d6b56f3729747380072c722c50b0ee91e930f58a58d49c98c5543e335b70f6a400c8e1f9fa9653f7605ad229974cacfac3143cd355ca900c328b3db6018"}}}}'
+                    args = ['sign', jsn]
+
+                    res = Wallet.CommandWallet().execute(args)
+
+                    self.assertFalse(res)
+                    self.assertIn("Could not relay tx", mock_print.getvalue())
+
+    def test_parse_and_sign_twice(self):  # this test implies there are more signatures needed
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_2_pass()]):
+                # start the tx from wallet2
+                PromptData.Wallet = self.GetWallet2(recreate=True)
+                args = ['send', 'neo', self.wallet_1_addr, '1', '--from-addr=' + self.wallet_2_and_3_multisig_addr]
+
+                Wallet.CommandWallet().execute(args)
+
+                # now sign the tx with wallet2 again
+                jsn = '{"type":"Neo.Core.ContractTransaction","hex":"800000014405fd5ae29ceeb20912776048c544109c8c67c4128c019863eca58cf677ad360000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec09b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000d1c4904014bfe7d34e9e97370f2cd3a633377cd6","items":{"0xd67c3733a6d32c0f37979e4ed3e7bf144090c4d1":{"script":"522103989f7417da540a8ce00195738249291cba058102a12d2df1b00e2a826d8bd0612103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e9603452ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"b5b32d6b56f3729747380072c722c50b0ee91e930f58a58d49c98c5543e335b70f6a400c8e1f9fa9653f7605ad229974cacfac3143cd355ca900c328b3db6018"}}}}'
+                args = ['sign', jsn]
+
+                res = Wallet.CommandWallet().execute(args)
+
+                self.assertFalse(res)
+                self.assertIn("Transaction initiated, but the signature is incomplete", mock_print.getvalue())
+
+    def test_parse_and_sign_exception(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_2_pass()]):
+                with patch('neo.Prompt.Commands.Send.traceback'):  # mocking traceback module to avoid stacktrace printing during test run
+                    # start the tx from wallet2
+                    PromptData.Wallet = self.GetWallet2(recreate=True)
+                    args = ['send', 'neo', self.wallet_1_addr, '1', '--from-addr=' + self.wallet_2_and_3_multisig_addr]
+
+                    Wallet.CommandWallet().execute(args)
+
+                    # mocking wallet to trigger the exception
+                    PromptData.Wallet = MagicMock()
+                    PromptData.Wallet.Sign.side_effect = Exception
+                    jsn = '{"type":"Neo.Core.ContractTransaction","hex":"800000014405fd5ae29ceeb20912776048c544109c8c67c4128c019863eca58cf677ad360000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000001cc9c05cefffe6cdd7b182816a9152ec218d2ec09b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc50084d71700000000d1c4904014bfe7d34e9e97370f2cd3a633377cd6","items":{"0xd67c3733a6d32c0f37979e4ed3e7bf144090c4d1":{"script":"522103989f7417da540a8ce00195738249291cba058102a12d2df1b00e2a826d8bd0612103c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e9603452ae","parameters":[{"type":"Signature"},{"type":"Signature"}],"signatures":{"03c46aec8d1ac8cb58fe74764de223d15e7045de67a51d1a4bcecd396918e96034":"b5b32d6b56f3729747380072c722c50b0ee91e930f58a58d49c98c5543e335b70f6a400c8e1f9fa9653f7605ad229974cacfac3143cd355ca900c328b3db6018"}}}}'
+                    args = ['sign', jsn]
+
+                    res = Wallet.CommandWallet().execute(args)
+
+                    self.assertFalse(res)
+                    self.assertIn("Could not send:", mock_print.getvalue())
+
+    def test_parse_and_sign_no_args(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            PromptData.Wallet = self.GetWallet2(recreate=True)
+            args = ['sign']
+
+            res = Wallet.CommandWallet().execute(args)
+
+            self.assertFalse(res)
+            self.assertIn("Please specify the required parameter", mock_print.getvalue())

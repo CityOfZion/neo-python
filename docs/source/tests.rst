@@ -78,7 +78,7 @@ e) Create new wallets only if absolutely necessary.
 
 .. code-block:: sh
 	
-	docker run --rm -d --name neo-privnet-unittest -p 20333-20336:20333-20336/tcp -p 30333-30336:30333-30336/tcp dautt/neo-privnet-unittest:v0.0.xx``
+	docker run --rm -d --name neo-privnet-unittest -p 20333-20336:20333-20336/tcp -p 30333-30336:30333-30336/tcp cityofzion/neo-python-privnet-unittest:v0.0.xx
 
 3) Clean the current ``unittest`` chain:
 
@@ -97,7 +97,7 @@ e) Create new wallets only if absolutely necessary.
 
 .. code-block:: sh
 	
-	python prompt.py -u
+	np-prompt -u
 
 6) Use the following wallets for generating transactions:
 
@@ -131,23 +131,51 @@ In that way we can easily find out all the contracts deploy on the image by runn
 	
 .. code-block:: sh
 	
-	docker commit  neo-privnet-unittest dautt/neo-privnet-unittest:v0.0.xx+1
+	docker commit  neo-privnet-unittest cityofzion/neo-python-privnet-unittest:v0.0.xx+1
  
 The reason for this is that we need to keep the image as small as possible. It can inadvertently happen that your image has been accumulating new blocks for days or weeks e.g. while working on implementing the new tests in phases, which unnecessarily increases the image size. 
 Our test fixtures are reset and extracted 20+ times in our build system so any size increase will add a delay * 20 or more.
 
-10) Create the fixtures by incrementing the suffix number (x+1):
+10) Stop your current docker container before creating the new fixtures:
 
 .. code-block:: sh
 
-	notif_fixtures_vx+1.tar.gz
-	fixtures_vx+1.tar.gz
+	docker stop neo-privnet-unittest
 
-11) Update the fixture name in the static class variables in the following files
+11) Create the fixtures by incrementing the suffix number (x+1):
+
+**WARNING:** Ensure your fixtures include the following file structure:
+
+- For fixtures_vx+1.tar.gz: ``fixtures/test_chain``
+
+- For notif_fixtures_vx+1.tar.gz: ``fixtures/test_notifications``
+
+.. code-block:: sh
+
+	tar -zcvf notif_fixtures_vx+1.tar.gz fixtures
+	tar -zcvf fixtures_vx+1.tar.gz fixtures
+
+12) Update the fixture name in the static class variables in the following files
 
 .. code-block:: sh
 	
 	neo.Utils.BlockchainFixtureTestCase.py
- 	neo.api.REST.test_rest_api.py
 
-12) Create a new PR with the link to the new image and the newly created fixtures.
+13) Create a new PR with the link to the new image and the newly created fixtures.
+
+14) If you edited any of the fixture wallets, make sure you fully sync your wallet before uploading it to your PR's branch:
+
+- While the neo-privnet-unittest container is stopped, run ``np-prompt -u`` and open all affected fixture wallets
+
+- Check to ensure each wallet is 100% synced before closing
+
+- Update any affected tests
+
+**NOTE:** During ``make test`` or ``python -m unittest discover neo`` you should not see this warning, which indicates one or more fixture wallets is not fully synced:
+
+.. code-block:: sh
+	
+	[W 181116 16:13:07 Wallet:1063] Wait for your wallet to be synced before doing transactions.
+	To check enter 'wallet' and look at 'percent_synced', it should be 100.
+	Also the blockchain should be up to the latest blocks (see Progress).
+	Issuing 'wallet rebuild' restarts the syncing process.

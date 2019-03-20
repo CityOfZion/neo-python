@@ -368,9 +368,10 @@ def parse_and_sign(wallet, jsn):
 
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())
+                return tx
             else:
                 print("Could not relay tx %s " % tx.Hash.ToString())
-            return
+                return
         else:
             print("Transaction initiated, but the signature is incomplete")
             print(json.dumps(context.ToJson(), separators=(',', ':')))
@@ -380,3 +381,5 @@ def parse_and_sign(wallet, jsn):
         print("Could not send: %s " % e)
         traceback.print_stack()
         traceback.print_exc()
+
+    return
