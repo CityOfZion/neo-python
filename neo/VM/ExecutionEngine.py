@@ -160,7 +160,7 @@ class ExecutionEngine:
                 estack.PushT(bytearray(0))
 
             elif opcode == PUSHDATA1:
-                lenngth = context.OpReader.ReadByte()
+                lenngth = ord(context.OpReader.ReadByte())
                 estack.PushT(bytearray(context.OpReader.SafeReadBytes(lenngth)))
             elif opcode == PUSHDATA2:
                 estack.PushT(context.OpReader.SafeReadBytes(context.OpReader.ReadUInt16()))
@@ -887,8 +887,8 @@ class ExecutionEngine:
 
             # stack isolation
             elif opcode == CALL_I:
-                rvcount = context.OpReader.ReadByte()
-                pcount = context.OpReader.ReadByte()
+                rvcount = ord(context.OpReader.ReadByte())
+                pcount = ord(context.OpReader.ReadByte())
 
                 if estack.Count < pcount:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION)
@@ -906,8 +906,8 @@ class ExecutionEngine:
                 if self._Table is None:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION2)
 
-                rvcount = context.OpReader.ReadByte()
-                pcount = context.OpReader.ReadByte()
+                rvcount = ord(context.OpReader.ReadByte())
+                pcount = ord(context.OpReader.ReadByte())
 
                 if estack.Count < pcount:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION)
@@ -998,7 +998,7 @@ class ExecutionEngine:
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             op = RET
         else:
-            op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
+            op = self.CurrentContext.OpReader.ReadByte()
 
         self.ops_processed += 1
 

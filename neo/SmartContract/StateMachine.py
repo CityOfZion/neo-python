@@ -146,7 +146,10 @@ class StateMachine(StateReader):
 
         ownerData = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
-        owner = ECDSA.decode_secp256r1(ownerData, unhex=False).G
+        try:
+            owner = ECDSA.decode_secp256r1(ownerData, unhex=False).G
+        except ValueError:
+            return False
 
         if owner.IsInfinity:
             return False

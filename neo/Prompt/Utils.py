@@ -329,7 +329,10 @@ def gather_param(index, param_type, do_continue=True):
         elif ptype == ContractParameterType.Boolean:
             return bool(result), False
         elif ptype == ContractParameterType.PublicKey:
-            return ECDSA.decode_secp256r1(result).G, False
+            try:
+                return ECDSA.decode_secp256r1(result).G, False
+            except ValueError:
+                return None, True
         elif ptype == ContractParameterType.ByteArray:
             if isinstance(result, str) and len(result) == 34 and result[0] == 'A':
                 return Helper.AddrStrToScriptHash(result).Data, False

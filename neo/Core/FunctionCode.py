@@ -84,7 +84,7 @@ class FunctionCode(SerializableMixin):
         """
         self.Script = reader.ReadVarBytes()
         self.ParameterList = reader.ReadVarBytes()
-        self.ReturnType = reader.ReadByte()
+        self.ReturnType = ord(reader.ReadByte())
 
     def Serialize(self, writer):
         """

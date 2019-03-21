@@ -346,7 +346,10 @@ class StateReader(InteropService):
             result = self.CheckWitnessHash(engine, UInt160(data=hashOrPubkey))
 
         elif len(hashOrPubkey) == 33:
-            point = ECDSA.decode_secp256r1(hashOrPubkey, unhex=False).G
+            try:
+                point = ECDSA.decode_secp256r1(hashOrPubkey, unhex=False).G
+            except ValueError:
+                return False
             result = self.CheckWitnessPubkey(engine, point)
         else:
             return False

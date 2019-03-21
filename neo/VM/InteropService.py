@@ -81,7 +81,7 @@ class StackItem(EquatableMixin):
         if stype == StackItemType.ByteArray:
             return ByteArray(reader.ReadVarBytes())
         elif stype == StackItemType.Boolean:
-            return Boolean(reader.ReadByte())
+            return Boolean(ord(reader.ReadByte()))
         elif stype == StackItemType.Integer:
             return Integer(BigInteger.FromBytes(reader.ReadVarBytes(), signed=True))
         elif stype == StackItemType.Array:
