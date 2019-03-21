@@ -4,6 +4,8 @@ from neocore.BigInteger import BigInteger
 from neo.SmartContract import StackItemType
 from neo.logging import log_manager
 
+# from neo.VM.ExecutionEngine import ExecutionEngine
+
 logger = log_manager.getLogger('vm')
 
 
@@ -296,6 +298,17 @@ class ByteArray(StackItem):
         except Exception as e:
             pass
         return self._value.hex()
+
+    def GetBoolean(self):
+        # Hardcoded due to circular imports
+        # if self._value > ExecutionEngine.MaxSizeForBigInteger:
+        if self._value > 32:  # MaxSizeForBigInteger = 32
+            return True
+        else:
+            for b in self._value:
+                if b > 0:
+                    return True
+            return False
 
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.ByteArray)
