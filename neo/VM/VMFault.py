@@ -8,6 +8,7 @@ class VMFault(Enum):
     UNKNOWN2 = auto()
     INVALID_CONTRACT = auto()
     SYSCALL_ERROR = auto()
+    SYSCALL_INSUFFICIENT_DATA = auto()
     UNKNOWN3 = auto()
     UNKNOWN4 = auto()
     UNKNOWN5 = auto()
@@ -49,7 +50,9 @@ class VMFault(Enum):
 
     SETITEM_INVALID_MAP = auto()
     NEWARRAY_EXCEED_ARRAYLIMIT = auto()
+    NEWARRAY_NEGATIVE_COUNT = auto()
     NEWSTRUCT_EXCEED_ARRAYLIMIT = auto()
+    NEWSTRUCT_NEGATIVE_COUNT = auto()
     APPEND_EXCEED_ARRAYLIMIT = auto()
     PUSHDATA_EXCEED_MAXITEMSIZE = auto()
     CAT_EXCEED_MAXITEMSIZE = auto()

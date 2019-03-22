@@ -95,8 +95,8 @@ class ExecutionEngine:
         for execution_context in self.InvocationStack.Items:  # type: ExecutionContext
             stack_item_list += execution_context.EvaluationStack.Items + execution_context.AltStack.Items
 
-        stackitem_count = self.GetItemCount(stack_item_list)
-        if stackitem_count > self.maxStackSize:
+        self._stackitem_count = self.GetItemCount(stack_item_list)
+        if self._stackitem_count > self.maxStackSize:
             return False
 
         self._is_stackitem_count_strict = True
@@ -209,7 +209,7 @@ class ExecutionEngine:
 
         def loop_stepinto():
             while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0 and self._VMState & VMState.BREAK == 0:
-                self.StepInto()
+                self.ExecuteNext()
 
         if settings.log_vm_instructions:
             with open(self.log_file_name, 'w') as self.log_file:
@@ -258,7 +258,7 @@ class ExecutionEngine:
                 if not self.CheckMaxItemSize(length):
                     return self.VM_FAULT_and_report(VMFault.PUSHDATA_EXCEED_MAXITEMSIZE)
 
-                estack.PushT(context.OpReader.SafeReadBytes())
+                estack.PushT(context.OpReader.SafeReadBytes(length))
 
                 if not self.CheckStackSize(True):
                     return self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
@@ -325,7 +325,7 @@ class ExecutionEngine:
                 self.CheckStackSize(False, 0)
 
                 if istack.Count == 0:
-                    self._VMState |= VMState.HALT
+                    self._VMState = VMState.HALT
 
             elif opcode == APPCALL or opcode == TAILCALL:
                 if self._Table is None:
@@ -360,7 +360,12 @@ class ExecutionEngine:
                 self.CheckStackSize(False, 0)
 
             elif opcode == SYSCALL:
-                call = context.OpReader.ReadVarBytes(252).decode('ascii')
+                try:
+                    call = context.OpReader.ReadVarBytes(252).decode('ascii')
+                except ValueError:
+                    # probably failed to read enough bytes
+                    return self.VM_FAULT_and_report(VMFault.SYSCALL_INSUFFICIENT_DATA)
+
                 self.write_log(call)
                 if not self._Service.Invoke(call, self):
                     return self.VM_FAULT_and_report(VMFault.SYSCALL_ERROR, call)
@@ -386,7 +391,7 @@ class ExecutionEngine:
             elif opcode == XDROP:
                 n = estack.Pop().GetBigInteger()
                 if n < 0:
-                    self._VMState |= VMState.FAULT
+                    self._VMState = VMState.FAULT
                     return
                 estack.Remove(n)
                 self.CheckStackSize(False, -2)
@@ -1002,6 +1007,9 @@ class ExecutionEngine:
             elif opcode == NEWARRAY:
 
                 count = estack.Pop().GetBigInteger()
+                if count < 0:
+                    return self.VM_FAULT_and_report(VMFault.NEWARRAY_NEGATIVE_COUNT)
+
                 if not self.CheckArraySize(count):
                     return self.VM_FAULT_and_report(VMFault.NEWARRAY_EXCEED_ARRAYLIMIT)
                 items = [Boolean(False) for i in range(0, count)]
@@ -1013,6 +1021,9 @@ class ExecutionEngine:
             elif opcode == NEWSTRUCT:
 
                 count = estack.Pop().GetBigInteger()
+                if count < 0:
+                    return self.VM_FAULT_and_report(VMFault.NEWSTRUCT_NEGATIVE_COUNT)
+
                 if not self.CheckArraySize(count):
                     return self.VM_FAULT_and_report(VMFault.NEWSTRUCT_EXCEED_ARRAYLIMIT)
 
@@ -1218,14 +1229,6 @@ class ExecutionEngine:
             else:
                 return self.VM_FAULT_and_report(VMFault.UNKNOWN_OPCODE, opcode)
 
-        if self._VMState & VMState.FAULT == 0 and self.InvocationStack.Count > 0:
-            script_hash = self.CurrentContext.ScriptHash()
-            bps = self._breakpoints.get(self.CurrentContext.ScriptHash(), None)
-            if bps is not None:
-                if self.CurrentContext.InstructionPointer in bps:
-                    self._vm_debugger = VMDebugger(self)
-                    self._vm_debugger.start()
-
     def LoadScript(self, script, rvcount=-1) -> ExecutionContext:
 
         context = ExecutionContext(self, script, rvcount)
@@ -1257,36 +1260,50 @@ class ExecutionEngine:
 
         return True
 
-    def StepInto(self):
+    def ExecuteNext(self):
         if self._InvocationStack.Count == 0:
-            self._VMState |= VMState.HALT
+            self._VMState = VMState.HALT
+        else:
+            op = None
+
+            if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+                op = RET
+            else:
+                op = self.CurrentContext.OpReader.ReadByte()
+
+            self.ops_processed += 1
+
+            try:
+                if self._is_write_log:
+                    self.write_log("{} {}".format(self.ops_processed, ToName(op)))
+                self.ExecuteOp(op, self.CurrentContext)
+            except Exception as e:
+                error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))
+                self.write_log(error_msg)
+
+                if self._exit_on_error:
+                    self._VMState = VMState.FAULT
+
+            if self._VMState == VMState.NONE and self._InvocationStack.Count > 0:
+                script_hash = self.CurrentContext.ScriptHash()
+                bps = self._breakpoints.get(self.CurrentContext.ScriptHash(), None)
+                if bps is not None:
+                    if self.CurrentContext.InstructionPointer in bps:
+                        self._VMState = VMState.BREAK
+                        self._vm_debugger = VMDebugger(self)
+                        self._vm_debugger.start()
+
+    def StepInto(self):
 
         if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-            logger.info("stopping because vm state is %s " % self._VMState)
+            logger.debug("stopping because vm state is %s " % self._VMState)
             return
-
-        op = None
-
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
-            op = RET
-        else:
-            op = self.CurrentContext.OpReader.ReadByte()
-
-        self.ops_processed += 1
-
-        try:
-            if self._is_write_log:
-                self.write_log("{} {}".format(self.ops_processed, ToName(op)))
-            self.ExecuteOp(op, self.CurrentContext)
-        except Exception as e:
-            error_msg = "COULD NOT EXECUTE OP (%s): %s %s %s" % (self.ops_processed, e, op, ToName(op))
-            self.write_log(error_msg)
-
-            if self._exit_on_error:
-                self._VMState |= VMState.FAULT
+        self.ExecuteNext()
+        if self._VMState == VMState.NONE:
+            self._VMState = VMState.BREAK
 
     def VM_FAULT_and_report(self, id, *args):
-        self._VMState |= VMState.FAULT
+        self._VMState = VMState.FAULT
 
         if not logger.hasHandlers() or logger.handlers[0].level != LOGGING_LEVEL_DEBUG:
             return
