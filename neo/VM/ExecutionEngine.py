@@ -241,7 +241,7 @@ class ExecutionEngine:
                     return self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
 
             elif opcode == PUSHDATA1:
-                lenngth = context.OpReader.ReadByte()
+                lenngth = ord(context.OpReader.ReadByte())
                 estack.PushT(bytearray(context.OpReader.SafeReadBytes(lenngth)))
 
                 if not self.CheckStackSize(True):
@@ -1154,8 +1154,8 @@ class ExecutionEngine:
             elif opcode == CALL_I:
                 if not self.CheckMaxInvocationStack():
                     return self.VM_FAULT_and_report(VMFault.CALL__I_EXCEED_MAX_INVOCATIONSTACK_SIZE)
-                rvcount = context.OpReader.ReadByte()
-                pcount = context.OpReader.ReadByte()
+                rvcount = ord(context.OpReader.ReadByte())
+                pcount = ord(context.OpReader.ReadByte())
 
                 if estack.Count < pcount:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION)
@@ -1173,8 +1173,8 @@ class ExecutionEngine:
                 if self._Table is None:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION2)
 
-                rvcount = context.OpReader.ReadByte()
-                pcount = context.OpReader.ReadByte()
+                rvcount = ord(context.OpReader.ReadByte())
+                pcount = ord(context.OpReader.ReadByte())
 
                 if estack.Count < pcount:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION)
@@ -1270,7 +1270,7 @@ class ExecutionEngine:
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             op = RET
         else:
-            op = self.CurrentContext.OpReader.ReadByte(do_ord=False)
+            op = self.CurrentContext.OpReader.ReadByte()
 
         self.ops_processed += 1
 

@@ -42,7 +42,7 @@ class InvPayload(SerializableMixin):
         Args:
             reader (neo.IO.BinaryReader):
         """
-        self.Type = reader.ReadByte()
+        self.Type = ord(reader.ReadByte())
         self.Hashes = reader.ReadHashes()
 
     def Serialize(self, writer):
