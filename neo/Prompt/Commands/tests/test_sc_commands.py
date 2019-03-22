@@ -420,6 +420,35 @@ class CommandSCTestCase(WalletFixtureTestCase):
                 self.assertFalse(res)
                 self.assertIn("Incorrect password", mock_print.getvalue())
 
+        # test with no return-type override
+        with patch ('sys.stdout', new=StringIO()) as mock_print:
+            with patch ('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'totalSupply', '[]', '']
+                res = CommandSC().execute(args)
+                a = mock_print.getvalue()
+                self.assertIn ("ByteArray", mock_print.getvalue())
+
+        # test with bad return-type override
+        with patch ('sys.stdout', new=StringIO()) as mock_print:
+            with patch ('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'totalSupply', '[]', '--return-type=99']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+
+        # test with hex return-type override
+        with patch ('sys.stdout', new=StringIO()) as mock_print:
+            with patch ('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'totalSupply', '[]', '--return-type=02']
+                res = CommandSC().execute(args)
+                self.assertIn("Integer", mock_print.getvalue())
+
+        # test with named return-type override
+        with patch ('sys.stdout', new=StringIO()) as mock_print:
+            with patch ('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'totalSupply', '[]', '--return-type=Integer']
+                res = CommandSC().execute (args)
+                self.assertIn("Integer", mock_print.getvalue())
+
         # test ok
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
