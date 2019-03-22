@@ -191,7 +191,7 @@ class CommandSCTestInvoke(CommandBase):
             if return_type is not None:
                 try:
                     parameterized_results = [ContractParameter.AsParameterType(ContractParameterType.FromString(return_type), item).ToJson() for item in results]
-                except:
+                except ValueError:
                     logger.debug("invalid return type")
                     return False
             else:
