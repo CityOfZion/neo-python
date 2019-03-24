@@ -13,7 +13,7 @@ All notable changes to this project are documented in this file.
 - Enhance output of `wallet` cli command
 - Fixed size calculation for `RegisterTransaction`
 - Support updating np-core to throw exceptions instead of logging errors `#888 <https://github.com/CityOfZion/neo-python/issues/888>`_
-
+- Fixed size calculation for `InvocationTransaction`
 
 [0.8.4] 2019-02-14
 ------------------
