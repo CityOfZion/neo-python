@@ -13,6 +13,7 @@ import os
 from neo.Settings import settings
 from mock import patch
 
+
 class TransactionTestCase(NeoTestCase):
 
     def test_tx_types(self):
