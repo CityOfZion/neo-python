@@ -2,6 +2,7 @@ import json
 import io
 import binascii
 import glob
+import traceback
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
 from neo.VM.RandomAccessStack import RandomAccessStack
@@ -48,7 +49,12 @@ def main():
         file_count += 1
         with io.open(filename, 'r', encoding='utf-8-sig') as f:
             data = json.load(f)  # uses dirty UTF-8 BOM header *sigh*
-            execute_test(data)
+            try:
+                execute_test(data)
+            except Exception:
+                # should never happen, but in case it does
+                traceback.print_exc()
+                break
     print(f"Executed {test_count} test(s) from {file_count} file(s). Skipped {skipped_test_count} test(s)")
 
 
@@ -208,4 +214,6 @@ def prepare_stackitem(item):
 
 
 if __name__ == "__main__":
+    # Note: running from main requires manually downloading the tests from the neo-vm project
+    # and storing them in a folder in the root directory
     main()

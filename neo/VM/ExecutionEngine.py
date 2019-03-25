@@ -24,32 +24,10 @@ int_MaxValue = 2147483647
 
 
 class ExecutionEngine:
-    _Table = None
-    _Service = None
-
-    _ScriptContainer = None
-    _Crypto = None
-
-    _VMState = None
-
-    _InvocationStack = None
-    _ResultStack = None
-
-    _ExecutedScriptHashes = None
-
-    ops_processed = 0
-
-    _exit_on_error = False
-
     log_file_name = 'vm_instructions.log'
     # file descriptor
     log_file = None
-    _is_write_log = False
-
-    _debug_map = None
     _vm_debugger = None
-
-    _breakpoints = None
 
     MaxSizeForBigInteger = 32
     max_shl_shr = 65535  # ushort.maxValue
@@ -58,6 +36,23 @@ class ExecutionEngine:
     maxArraySize = 1024
     maxStackSize = 2048
     maxInvocationStackSize = 1024
+
+    def __init__(self, container=None, crypto=None, table=None, service=None, exit_on_error=False):
+        self._VMState = VMState.BREAK
+        self._ScriptContainer = container
+        self._Crypto = crypto
+        self._Table = table
+        self._Service = service
+        self._exit_on_error = exit_on_error
+        self._InvocationStack = RandomAccessStack(name='Invocation')
+        self._ResultStack = RandomAccessStack(name='Result')
+        self._ExecutedScriptHashes = []
+        self.ops_processed = 0
+        self._debug_map = None
+        self._is_write_log = settings.log_vm_instructions
+        self._breakpoints = dict()
+        self._is_stackitem_count_strict = True
+        self._stackitem_count = 0
 
     def CheckArraySize(self, length: int) -> bool:
         return length <= self.maxArraySize
@@ -170,23 +165,6 @@ class ExecutionEngine:
     def ExecutedScriptHashes(self):
         return self._ExecutedScriptHashes
 
-    def __init__(self, container=None, crypto=None, table=None, service=None, exit_on_error=False):
-        self._VMState = VMState.BREAK
-        self._ScriptContainer = container
-        self._Crypto = crypto
-        self._Table = table
-        self._Service = service
-        self._exit_on_error = exit_on_error
-        self._InvocationStack = RandomAccessStack(name='Invocation')
-        self._ResultStack = RandomAccessStack(name='Result')
-        self._ExecutedScriptHashes = []
-        self.ops_processed = 0
-        self._debug_map = None
-        self._is_write_log = settings.log_vm_instructions
-        self._breakpoints = dict()
-        self._is_stackitem_count_strict = True
-        self._stackitem_count = 0
-
     def AddBreakPoint(self, script_hash, position):
         ctx_breakpoints = self._breakpoints.get(script_hash, None)
         if ctx_breakpoints is None:
@@ -269,7 +247,6 @@ class ExecutionEngine:
 
                 if not self.CheckStackSize(True):
                     return self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
-
 
             # control
             elif opcode == NOP:
@@ -373,14 +350,12 @@ class ExecutionEngine:
                 if not self.CheckStackSize(False, int_MaxValue):
                     return self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
 
-
             # stack operations
             elif opcode == DUPFROMALTSTACK:
                 estack.PushT(astack.Peek())
 
                 if not self.CheckStackSize(True):
                     return self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
-
 
             elif opcode == TOALTSTACK:
                 astack.PushT(estack.Pop())
@@ -395,7 +370,6 @@ class ExecutionEngine:
                     return
                 estack.Remove(n)
                 self.CheckStackSize(False, -2)
-
 
             elif opcode == XSWAP:
                 n = estack.Pop().GetBigInteger()
@@ -470,7 +444,6 @@ class ExecutionEngine:
                 estack.Insert(2, estack.Peek())
                 if not self.CheckStackSize(True):
                     return self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
-
 
             elif opcode == CAT:
 
@@ -559,7 +532,6 @@ class ExecutionEngine:
                 self.CheckStackSize(False, -1)
 
             # numeric
-
             elif opcode == INC:
 
                 x = estack.Pop().GetBigInteger()
@@ -673,7 +645,6 @@ class ExecutionEngine:
 
                 estack.PushT(x)
                 self.CheckStackSize(True, -1)
-
 
             elif opcode == SHR:
 
@@ -1038,7 +1009,6 @@ class ExecutionEngine:
                 if not self.CheckStackSize(True):
                     self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
 
-
             elif opcode == APPEND:
                 newItem = estack.Pop()
 
@@ -1057,7 +1027,6 @@ class ExecutionEngine:
 
                 if not self.CheckStackSize(False, int_MaxValue):
                     self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
-
 
             elif opcode == REVERSE:
 
@@ -1159,7 +1128,6 @@ class ExecutionEngine:
                 estack.PushT(newArray)
                 if not self.CheckStackSize(False, int_MaxValue):
                     self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
-
 
             # stack isolation
             elif opcode == CALL_I:
@@ -1284,7 +1252,12 @@ class ExecutionEngine:
                 if self._exit_on_error:
                     self._VMState = VMState.FAULT
 
-            if self._VMState == VMState.NONE and self._InvocationStack.Count > 0:
+            # This is how C# does it now (2019-03-25) according to
+            # https://github.com/neo-project/neo-vm/blob/0e5cb856021e288915623fe994084d97a0417373/src/neo-vm/ExecutionEngine.cs#L234
+            # but that doesn't help us set a breakpoint, so we use the old logic
+            # TODO: revisit at some point
+            # if self._VMState == VMState.NONE and self._InvocationStack.Count > 0:
+            if self._VMState & VMState.FAULT == 0 and self._InvocationStack.Count > 0:
                 script_hash = self.CurrentContext.ScriptHash()
                 bps = self._breakpoints.get(self.CurrentContext.ScriptHash(), None)
                 if bps is not None:

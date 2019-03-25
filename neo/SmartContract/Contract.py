@@ -158,7 +158,17 @@ class Contract(SerializableMixin, VerificationCode):
     def Deserialize(self, reader):
         self.PublicKeyHash = reader.ReadUInt160()
         self.ParameterList = reader.ReadVarBytes()
-        script = bytearray(reader.ReadVarBytes())
+
+        # TODO: fix this. This is supposed to be `reader.ReadVarBytes`,
+        #  however that no longer works after the internal implementation changed to verify the length of data to read.
+        #  There has always been a bug that went unnoticed because previously we'd ask e.g. 70 bytes and it could return 35 without problems.
+        #  Now that will fail. The test `neo.Wallets.test_wallet.test_privnet_wallet` thinks it should read 70 bytes because it expects b'AABB' data
+        #  while in reality it gets b'\xAA\xBB` data and is thus only half the size. It's spread in so many places that I don't want to fix it in this already
+        #  huge VM update PR. We work around it by manually reconstructing the old `ReadVarBytes``
+        length = reader.ReadVarInt()
+        script = bytearray(reader.ReadBytes(length))
+
+        # script = bytearray(reader.ReadVarBytes())
         self.Script = script
 
     def Serialize(self, writer):

@@ -53,13 +53,8 @@ class ApplicationEngine(ExecutionEngine):
         self.testMode = testMode
         self._is_stackitem_count_strict = True
 
-    def CheckDynamicInvoke(self):
+    def CheckDynamicInvoke(self, opcode):
         cx = self.CurrentContext
-
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
-
-        opcode = cx.NextInstruction
 
         if opcode in [OpCode.APPCALL, OpCode.TAILCALL]:
             opreader = cx.OpReader
@@ -93,41 +88,48 @@ class ApplicationEngine(ExecutionEngine):
         else:
             return True
 
+    def PreStepInto(self, opcode):
+        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+            return True
+        self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
+        if not self.testMode and self.gas_consumed > self.gas_consumed:
+            return False
+        if self.testMode and self.ops_processed > self.max_free_ops:
+            logger.debug("Too many free operations processed")
+            return False
+        try:
+            if not self.CheckDynamicInvoke(opcode):
+                return False
+        except Exception:
+            pass
+        return True
+
     # @profile_it
     def Execute(self):
-        def loop_validation_and_stepinto():
-            while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
-                if self.CurrentContext.InstructionPointer < len(self.CurrentContext.Script):
-                    try:
-                        self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
-                    except Exception as e:
-                        logger.debug("Exception calculating gas consumed %s " % e)
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.testMode and self.gas_consumed > self.gas_amount:
-                        logger.debug("NOT ENOUGH GAS")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if self.testMode and self.ops_processed > self.max_free_ops:
-                        logger.debug("Too many free operations processed")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.CheckDynamicInvoke():
-                        logger.debug("Dynamic invoke without proper contract")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                self.StepInto()
-
-        if settings.log_vm_instructions:
-            with open(self.log_file_name, 'w') as self.log_file:
+        try:
+            if settings.log_vm_instructions:
+                self.log_file = open(self.log_file_name, 'w')
                 self.write_log(str(datetime.datetime.now()))
-                loop_validation_and_stepinto()
-        else:
-            loop_validation_and_stepinto()
+
+            while True:
+                if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+                    nextOpcode = OpCode.RET
+                else:
+                    nextOpcode = self.CurrentContext.NextInstruction
+
+                if not self.PreStepInto(nextOpcode):
+                    # TODO: check with NEO is this should now be changed to not use |=
+                    self._VMState |= VMState.FAULT
+                    return False
+                self.StepInto()
+                if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
+                    break
+        except Exception:
+            self._VMState |= VMState.FAULT
+            return False
+        finally:
+            if self.log_file:
+                self.log_file.close()
 
         return not self._VMState & VMState.FAULT > 0
 

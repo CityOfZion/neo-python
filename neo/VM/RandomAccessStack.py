@@ -88,6 +88,7 @@ class RandomAccessStack:
         return item
 
     def Set(self, index, item):
+        from neo.VM.InteropService import StackItem
         index = int(index)
 
         if index >= self._size:

@@ -302,7 +302,7 @@ class ByteArray(StackItem):
     def GetBoolean(self):
         # Hardcoded due to circular imports
         # if self._value > ExecutionEngine.MaxSizeForBigInteger:
-        if self._value > 32:  # MaxSizeForBigInteger = 32
+        if int.from_bytes(self._value, 'little') > 32:  # MaxSizeForBigInteger = 32
             return True
         else:
             for b in self._value:
