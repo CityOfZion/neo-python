@@ -148,6 +148,15 @@ def get_to_addr(params):
     return params, to_addr
 
 
+def get_return_type_from_args(params):
+    return_type = None
+    for item in params:
+        if '--return-type' in item:
+            params.remove(item)
+            return_type = item.replace('--return-type=', '')
+    return params, return_type
+
+
 def get_fee(params):
     fee = None
     for item in params:

@@ -158,7 +158,6 @@ class Contract(SerializableMixin, VerificationCode):
     def Deserialize(self, reader):
         self.PublicKeyHash = reader.ReadUInt160()
         self.ParameterList = reader.ReadVarBytes()
-
         # TODO: fix this. This is supposed to be `reader.ReadVarBytes`,
         #  however that no longer works after the internal implementation changed to verify the length of data to read.
         #  There has always been a bug that went unnoticed because previously we'd ask e.g. 70 bytes and it could return 35 without problems.
@@ -167,8 +166,6 @@ class Contract(SerializableMixin, VerificationCode):
         #  huge VM update PR. We work around it by manually reconstructing the old `ReadVarBytes``
         length = reader.ReadVarInt()
         script = bytearray(reader.ReadBytes(length))
-
-        # script = bytearray(reader.ReadVarBytes())
         self.Script = script
 
     def Serialize(self, writer):
