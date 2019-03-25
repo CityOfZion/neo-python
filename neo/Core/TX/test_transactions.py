@@ -5,7 +5,7 @@ from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.State.AssetState import AssetState
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.IO.BinaryReader import BinaryReader
-from neo.IO.Helper import Helper
+from neo.IO.Helper import Helper as IOHelper
 from neocore.Fixed8 import Fixed8
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
@@ -280,7 +280,7 @@ class TransactionTestCase(NeoTestCase):
             https://github.com/neo-project/neo/issues/652
         """
         raw_tx = b"d1015904802b530b14d5a682e81b8a840cc44b3b360cbd0f1ee6f50efd14235a717ed7ed18a43de47499c3d05b8d4a4bcf3a53c1087472616e7366657267fb1c540417067c270dee32f21023aa8b9b71abcef166fc47646b02d3f92300000000000000000120235a717ed7ed18a43de47499c3d05b8d4a4bcf3a0000014140b9234cad658c4d512bca453908a0df1c2beda49c544ec735bb492b81b4d0974ac8d66046061b3d0ce823e27c71fef1ee6a8f2fa369198ac74acedd045901d7222321030ab39b99d8675cd9bd90aaec37cba964297cc817078d33e508ab11f1d245c068ac"
-        tx = Helper.DeserializeTX(binascii.unhexlify(raw_tx))
+        tx = IOHelper.DeserializeTX(binascii.unhexlify(raw_tx))
 
         txjson = tx.ToJson()
         self.assertEqual(227, txjson['size'])
