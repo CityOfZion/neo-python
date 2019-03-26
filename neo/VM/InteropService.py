@@ -147,7 +147,10 @@ class Array(StackItem, CollectionMixin):
 
     def __init__(self, value=None):
         if value:
-            self._array = value
+            if isinstance(value, (Array, Struct)):
+                self._array = value._array
+            else:
+                self._array = value
         else:
             self._array = []
 
