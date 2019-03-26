@@ -98,6 +98,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         try:
             engine = ApplicationEngine.Run(sb.ToArray(), exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
         except Exception as e:
+            traceback.print_exc()
             pass
 
         if engine and len(engine.ResultStack.Items) == 3:
