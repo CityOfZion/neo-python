@@ -975,34 +975,38 @@ class ExecutionEngine:
                 if not self.CheckStackSize(False, int_MaxValue):
                     self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
 
-            elif opcode == NEWARRAY:
+            elif opcode in [NEWARRAY, NEWSTRUCT]:
+                item = estack.Pop()
+                if isinstance(item, Array):
+                    result = None
+                    if isinstance(item, Struct):
+                        if opcode == NEWSTRUCT:
+                            result = item
+                    else:
+                        if opcode == NEWARRAY:
+                            result = item
 
-                count = estack.Pop().GetBigInteger()
-                if count < 0:
-                    return self.VM_FAULT_and_report(VMFault.NEWARRAY_NEGATIVE_COUNT)
+                    if result is None:
+                        result = Array(item) if opcode == NEWARRAY else Struct(item)
 
-                if not self.CheckArraySize(count):
-                    return self.VM_FAULT_and_report(VMFault.NEWARRAY_EXCEED_ARRAYLIMIT)
-                items = [Boolean(False) for i in range(0, count)]
-                estack.PushT(Array(items))
+                    estack.PushT(result)
 
-                if not self.CheckStackSize(True, count):
-                    self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
+                else:
+                    count = item.GetBigInteger()
+                    if count < 0:
+                        return self.VM_FAULT_and_report(VMFault.NEWARRAY_NEGATIVE_COUNT)
 
-            elif opcode == NEWSTRUCT:
+                    if not self.CheckArraySize(count):
+                        return self.VM_FAULT_and_report(VMFault.NEWARRAY_EXCEED_ARRAYLIMIT)
 
-                count = estack.Pop().GetBigInteger()
-                if count < 0:
-                    return self.VM_FAULT_and_report(VMFault.NEWSTRUCT_NEGATIVE_COUNT)
+                    items = [Boolean(False) for i in range(0, count)]
 
-                if not self.CheckArraySize(count):
-                    return self.VM_FAULT_and_report(VMFault.NEWSTRUCT_EXCEED_ARRAYLIMIT)
+                    result = Array(items) if opcode == NEWARRAY else Struct(items)
 
-                items = [Boolean(False) for i in range(0, count)]
+                    estack.PushT(result)
 
-                estack.PushT(Struct(items))
-                if not self.CheckStackSize(True, count):
-                    self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
+                    if not self.CheckStackSize(True, count):
+                        self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
 
             elif opcode == NEWMAP:
                 estack.PushT(Map())
