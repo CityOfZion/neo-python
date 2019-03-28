@@ -15,6 +15,7 @@ All notable changes to this project are documented in this file.
 - Support updating np-core to throw exceptions instead of logging errors `#888 <https://github.com/CityOfZion/neo-python/issues/888>`_
 - Fixed size calculation for `InvocationTransaction` `#919 <https://github.com/CityOfZion/neo-python/pull/919>`_
 - Update Virtual Machine to latest implementation, Add support for running official JSON test vectors `#921 <https://github.com/CityOfZion/neo-python/pull/921>`_
+- Add PICKITEM for ByteArray into VM
 
 
 [0.8.4] 2019-02-14

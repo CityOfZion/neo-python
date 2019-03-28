@@ -926,19 +926,28 @@ class ExecutionEngine:
                     to_pick = items[index]
                     estack.PushT(to_pick)
 
+                    if not self.CheckStackSize(False, int_MaxValue):
+                        self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
+
                 elif isinstance(collection, Map):
                     success, value = collection.TryGetValue(key)
 
                     if success:
                         estack.PushT(value)
+
+                        if not self.CheckStackSize(False, int_MaxValue):
+                            self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
+
                     else:
                         return self.VM_FAULT_and_report(VMFault.DICT_KEY_NOT_FOUND, key, collection.Keys)
-
                 else:
-                    return self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_TYPE, key, collection)
-
-                if not self.CheckStackSize(False, int_MaxValue):
-                    self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
+                    byte_array = collection.GetByteArray()
+                    index = key.GetBigInteger()
+                    if index < 0 or index >= len(byte_array):
+                        self._VMState = VMState.FAULT
+                        return
+                    estack.PushT(byte_array[index])
+                    self.CheckStackSize(False, -1)
 
             elif opcode == SETITEM:
                 value = estack.Pop()
