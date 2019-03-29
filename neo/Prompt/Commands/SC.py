@@ -204,7 +204,11 @@ class CommandSCTestInvoke(CommandBase):
 
             tx.Attributes = invoke_attrs
 
-            passwd = prompt("[password]> ", is_password=True)
+            try:
+                passwd = prompt("[password]> ", is_password=True)
+            except KeyboardInterrupt:
+                return False
+                           
             if not wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
