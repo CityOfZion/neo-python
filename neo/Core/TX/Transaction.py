@@ -225,39 +225,12 @@ class TransactionInput(SerializableMixin, EquatableMixin):
 
 
 class Transaction(InventoryMixin):
-    Type = None
-
     Version = 0
-
-    Attributes = []
-
-    inputs = []
-
-    outputs = []
-
-    scripts = []
-
     __system_fee = None
-    _network_fee = None
-
     InventoryType = InventoryType.TX
-
-    __hash = None
-    __htbs = None
-
-    __height = 0
-
-    __references = None
-
     MAX_TX_ATTRIBUTES = 16
 
-    withdraw_hold = None
-
-    raw_tx = False
-
-    """docstring for Transaction"""
-
-    def __init__(self, inputs=[], outputs=[], attributes=[], scripts=[]):
+    def __init__(self, inputs=None, outputs=None, attributes=None, scripts=None):
         """
         Create an instance.
         Args:
@@ -267,12 +240,19 @@ class Transaction(InventoryMixin):
             scripts:
         """
         super(Transaction, self).__init__()
-        self.inputs = inputs
-        self.outputs = outputs
-        self.Attributes = attributes
-        self.scripts = scripts
+        self.inputs = [] if inputs is None else inputs
+        self.outputs = [] if outputs is None else outputs
+        self.Attributes = [] if attributes is None else attributes
+        self.scripts = [] if scripts is None else scripts
         self.InventoryType = 0x01  # InventoryType TX 0x01
         self.__references = None
+        self.Type = None
+        self.raw_tx = False
+        self.withdraw_hold = None
+        self._network_fee = None
+        self.__hash = None
+        self.__htbs = None
+        self.__height = 0
 
     @property
     def Hash(self):
@@ -461,7 +441,7 @@ class Transaction(InventoryMixin):
         Returns:
             Transaction:
         """
-        ttype = reader.ReadByte()
+        ttype = ord(reader.ReadByte())
         tx = None
 
         from neo.Core.TX.RegisterTransaction import RegisterTransaction
@@ -519,7 +499,7 @@ class Transaction(InventoryMixin):
         Raises:
             Exception: if transaction type is incorrect.
         """
-        txtype = reader.ReadByte()
+        txtype = ord(reader.ReadByte())
         if txtype != int.from_bytes(self.Type, 'little'):
             raise Exception('incorrect type {}, wanted {}'.format(txtype, int.from_bytes(self.Type, 'little')))
         self.DeserializeUnsignedWithoutType(reader)
@@ -531,7 +511,7 @@ class Transaction(InventoryMixin):
         Args:
             reader (neo.IO.BinaryReader):
         """
-        self.Version = reader.ReadByte()
+        self.Version = ord(reader.ReadByte())
         self.DeserializeExclusiveData(reader)
         self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute',
                                                        max=self.MAX_TX_ATTRIBUTES)

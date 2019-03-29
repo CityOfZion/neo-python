@@ -148,6 +148,15 @@ def get_to_addr(params):
     return params, to_addr
 
 
+def get_return_type_from_args(params):
+    return_type = None
+    for item in params:
+        if '--return-type' in item:
+            params.remove(item)
+            return_type = item.replace('--return-type=', '')
+    return params, return_type
+
+
 def get_fee(params):
     fee = None
     for item in params:
@@ -312,6 +321,9 @@ def gather_param(index, param_type, do_continue=True):
 
     try:
         result = get_input_prompt(prompt_message)
+    except KeyboardInterrupt:
+        print("Input cancelled")
+        return None, True
     except Exception as e:
         print(str(e))
         # no results, abort True
@@ -326,7 +338,10 @@ def gather_param(index, param_type, do_continue=True):
         elif ptype == ContractParameterType.Boolean:
             return bool(result), False
         elif ptype == ContractParameterType.PublicKey:
-            return ECDSA.decode_secp256r1(result).G, False
+            try:
+                return ECDSA.decode_secp256r1(result).G, False
+            except ValueError:
+                return None, True
         elif ptype == ContractParameterType.ByteArray:
             if isinstance(result, str) and len(result) == 34 and result[0] == 'A':
                 return Helper.AddrStrToScriptHash(result).Data, False

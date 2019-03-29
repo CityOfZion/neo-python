@@ -120,18 +120,19 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         # self.assertEqual(tx, None)
 
         # should be ok
-        tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 2, prompt_passwd=False)
+        with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+            tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 2)
         self.assertIsNotNone(tx)
 
         # # rebuild wallet and try with non-even amount of neo, should be split into integer values of NEO
         # wallet = self.GetWallet1(True)
-        # tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 3, prompt_passwd=False)
+        # tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 3)
         # self.assertIsNotNone(tx)
         # self.assertEqual([Fixed8.FromDecimal(17), Fixed8.FromDecimal(17), Fixed8.FromDecimal(16)], [item.Value for item in tx.outputs])
         #
         # # try with gas
         # wallet = self.GetWallet1(True)
-        # tx = SplitUnspentCoin(wallet, self.GAS, addr, 0, 3, prompt_passwd=False)
+        # tx = SplitUnspentCoin(wallet, self.GAS, addr, 0, 3)
         # self.assertIsNotNone(tx)
 
     def test_7_create_address(self):
@@ -244,6 +245,14 @@ class UserWalletSplitTestCase(UserWalletTestCaseBase):
                 res = CommandWallet().execute(args)
                 self.assertIsNone(res)
                 self.assertIn("incorrect password", mock_print.getvalue())
+
+        # test wallet split with keyboard interrupt
+        with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[KeyboardInterrupt]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['address', 'split', self.wallet_1_addr, 'neo', '0', '2']
+                res = CommandWallet().execute(args)
+                self.assertIsNone(res)
+                self.assertIn("Splitting cancelled", mock_print.getvalue())
 
         # test wallet split with fee bigger than the outputs
         with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[self.wallet_1_pass()]):

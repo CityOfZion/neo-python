@@ -10,6 +10,7 @@ from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from neocore.Cryptography.Crypto import Crypto
+from io import StringIO
 
 
 class TestInputParser(TestCase):
@@ -269,6 +270,13 @@ class TestInputParser(TestCase):
             wallet = None
             os.remove(WalletFixtureTestCase.wallet_1_dest())
 
+        # test ContractParameterType.PublicKey with bad public key
+        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="blah") as fake_prompt:
+
+            result, abort = Utils.gather_param(0, ContractParameterType.PublicKey)
+            self.assertIsNone(result)
+            self.assertTrue(abort)
+
         # test unknown ContractParameterType
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="9698b1cac6ce9cbe8517e490778525b929e01903") as fake_prompt:
 
@@ -278,11 +286,24 @@ class TestInputParser(TestCase):
             self.assertEqual(result, None)
             self.assertEqual(abort, True)
 
-        # test Exception with do_continue=True and KeyboardInterrupt
-        with mock.patch('neo.Prompt.Utils.get_input_prompt') as fake_prompt:
-            fake_prompt.side_effect = [Exception(-32602, "Invalid params"), KeyboardInterrupt]
+        # test Exception
+        with mock.patch('sys.stdout', new=StringIO()) as mock_print:
+            with mock.patch('neo.Prompt.Utils.get_input_prompt') as fake_prompt:
+                fake_prompt.side_effect = [Exception(-32602, "Invalid params"), KeyboardInterrupt]
 
-            result, abort = Utils.gather_param(0, ContractParameterType.String)
+                result, abort = Utils.gather_param(0, ContractParameterType.String)
 
-            self.assertEqual(result, None)
-            self.assertEqual(abort, True)
+                self.assertEqual(result, None)
+                self.assertEqual(abort, True)
+                self.assertIn("Invalid params", mock_print.getvalue())
+
+        # test KeyboardInterrupt
+        with mock.patch('sys.stdout', new=StringIO()) as mock_print:
+            with mock.patch('neo.Prompt.Utils.get_input_prompt') as fake_prompt:
+                fake_prompt.side_effect = [KeyboardInterrupt]
+
+                result, abort = Utils.gather_param(0, ContractParameterType.String)
+
+                self.assertEqual(result, None)
+                self.assertEqual(abort, True)
+                self.assertIn("Input cancelled", mock_print.getvalue())

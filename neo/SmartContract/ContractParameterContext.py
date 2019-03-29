@@ -165,10 +165,14 @@ class ContractParametersContext:
             ms = MemoryStream(binascii.unhexlify(contract.Script))
             reader = BinaryReader(ms)
             numr = reader.ReadUInt8()
-            while reader.ReadUInt8() == 33:
-                ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
-                points.append(ecpoint)
-            ms.close()
+            try:
+                while reader.ReadUInt8() == 33:
+                    ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
+                    points.append(ecpoint)
+            except ValueError:
+                return False
+            finally:
+                ms.close()
 
             if pubkey not in points:
                 return False

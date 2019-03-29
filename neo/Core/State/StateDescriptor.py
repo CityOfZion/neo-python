@@ -45,7 +45,7 @@ class StateDescriptor(SerializableMixin):
             reader (neocore.IO.BinaryReader):
         """
 
-        self.Type = StateType(reader.ReadByte())
+        self.Type = StateType(ord(reader.ReadByte()))
 
         self.Key = reader.ReadVarBytes(max=100)
         self.Field = reader.ReadVarString(max=32).decode('utf-8')

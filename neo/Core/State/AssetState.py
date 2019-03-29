@@ -103,19 +103,19 @@ class AssetState(StateBase):
         """
         super(AssetState, self).Deserialize(reader)
         self.AssetId = reader.ReadUInt256()
-        self.AssetType = reader.ReadByte()
+        self.AssetType = ord(reader.ReadByte())
         self.Name = reader.ReadVarString()
 
         position = reader.stream.tell()
 
         try:
             self.Amount = reader.ReadFixed8()
-        except Exception as e:
+        except Exception:
             reader.stream.seek(position)
             self.Amount = reader.ReadFixed8()
 
         self.Available = reader.ReadFixed8()
-        self.Precision = reader.ReadByte()
+        self.Precision = ord(reader.ReadByte())
 
         # fee mode
         reader.ReadByte()

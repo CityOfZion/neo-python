@@ -119,7 +119,7 @@ class BlockBase(VerifiableMixin):
         """
         self.__hash = None
         self.DeserializeUnsigned(reader)
-        byt = reader.ReadByte()
+        byt = ord(reader.ReadByte())
         if int(byt) != 1:
             raise Exception('Incorrect format')
 
