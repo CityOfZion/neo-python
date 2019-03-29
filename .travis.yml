@@ -6,9 +6,6 @@ sudo: required
 services:
   - docker
 
-cache:
-  pip: true
-
 addons:
   apt:
     packages:
