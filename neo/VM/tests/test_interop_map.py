@@ -147,14 +147,15 @@ class InteropTest(NeoTestCase):
 
     def test_op_map8(self):
         with self.assertLogHandler('vm', logging.DEBUG) as log_context:
-            # pick item on non collection causes error
+            # pick item out of bounds
             self.econtext.EvaluationStack.PushT(StackItem.New('a'))
             self.econtext.EvaluationStack.PushT(StackItem.New('a'))
             self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
             self.assertTrue(len(log_context.output) > 0)
             log_msg = log_context.output[0]
-            self.assertTrue('Cannot access item at index' in log_msg and 'Item is not an array or dict' in log_msg)
+            expected_msg = "Array index is less than zero or 97 exceeds list length 1"
+            self.assertTrue(expected_msg in log_msg)
 
             self.assertEqual(self.engine.State, VMState.FAULT)
 

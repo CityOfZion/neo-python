@@ -944,7 +944,7 @@ class ExecutionEngine:
                     byte_array = collection.GetByteArray()
                     index = key.GetBigInteger()
                     if index < 0 or index >= len(byte_array):
-                        self._VMState = VMState.FAULT
+                        self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_INDEX, index, len(byte_array))
                         return
                     estack.PushT(byte_array[index])
                     self.CheckStackSize(False, -1)

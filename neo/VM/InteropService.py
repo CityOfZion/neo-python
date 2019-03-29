@@ -133,8 +133,9 @@ class StackItem(EquatableMixin):
             return ByteArray(value)
         elif typ is list:
             return Array(value)
-
-        #        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
+        elif typ is str:
+            return ByteArray(bytearray(value.encode()))
+        # raise TypeError(f"{typ} is an invalid StackItem type")
         return value
 
 
