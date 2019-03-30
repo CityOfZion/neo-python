@@ -4,6 +4,7 @@ import subprocess
 import warnings
 import neo
 
+
 class CliTestCase(TestCase):
     def test_address_to_scripthash(self):
         address = "AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y"
@@ -41,7 +42,9 @@ class CliTestCase(TestCase):
         self.assertIn(neo.__version__, version.stdout.read().decode('utf-8'))
 
         address_to_scripthash = subprocess.Popen(['np-utils', '--address-to-scripthash', 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y'], stdout=subprocess.PIPE)
-        self.assertEqual(b'Scripthash big endian:  0xe9eed8dc39332032dc22e5d6e86332c50327ba23\nScripthash little endian: 23ba2703c53263e8d6e522dc32203339dcd8eee9\nScripthash neo-python format: b\'#\\xba\\\'\\x03\\xc52c\\xe8\\xd6\\xe5"\\xdc2 39\\xdc\\xd8\\xee\\xe9\'\n', address_to_scripthash.stdout.read())
+        self.assertEqual(
+            b'Scripthash big endian:  0xe9eed8dc39332032dc22e5d6e86332c50327ba23\nScripthash little endian: 23ba2703c53263e8d6e522dc32203339dcd8eee9\nScripthash neo-python format: b\'#\\xba\\\'\\x03\\xc52c\\xe8\\xd6\\xe5"\\xdc2 39\\xdc\\xd8\\xee\\xe9\'\n',
+            address_to_scripthash.stdout.read())
 
         scripthash_to_address = subprocess.Popen(['np-utils', '--scripthash-to-address', "0xe9eed8dc39332032dc22e5d6e86332c50327ba23"], stdout=subprocess.PIPE)
         self.assertIn("AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y", scripthash_to_address.stdout.read().decode('utf-8'))
