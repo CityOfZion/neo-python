@@ -1,10 +1,10 @@
 import sys
 from .StateBase import StateBase
-from neocore.Fixed8 import Fixed8
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
-from neocore.Cryptography.Crypto import Crypto
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.IO.BinaryWriter import BinaryWriter
 
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
@@ -87,7 +87,8 @@ class AccountState(StateBase):
         Returns:
             int: size.
         """
-        return super(AccountState, self).Size() + s.uint160 + s.uint8 + GetVarSize(self.Votes) + GetVarSize(len(self.Balances)) + (len(self.Balances) * (32 + 8))
+        return super(AccountState, self).Size() + s.uint160 + s.uint8 + GetVarSize(self.Votes) + GetVarSize(len(self.Balances)) + (
+                    len(self.Balances) * (32 + 8))
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -114,7 +115,7 @@ class AccountState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(AccountState, self).Deserialize(reader)
         self.ScriptHash = reader.ReadUInt160()

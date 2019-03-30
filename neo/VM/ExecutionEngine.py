@@ -6,7 +6,7 @@ from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import VMState
 from neo.VM.InteropService import Array, Struct, CollectionMixin, Map, Boolean
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.Settings import settings
 from neo.VM.VMFault import VMFault
 from neo.Prompt.vm_debugger import VMDebugger

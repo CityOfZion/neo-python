@@ -7,9 +7,9 @@ Usage:
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.AssetType import AssetType
 from neo.Core.Size import GetVarSize, Size
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
-from neocore.Fixed8 import Fixed8
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neo.Core.Fixed8 import Fixed8
 
 
 class RegisterTransaction(Transaction):

@@ -6,7 +6,7 @@ import traceback
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
 from neo.VM.RandomAccessStack import RandomAccessStack
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 from typing import Optional
 from neo.VM.VMState import VMStateStr
 from neo.VM.OpCode import ToName as OpcodeToName

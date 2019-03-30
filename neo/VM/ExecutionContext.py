@@ -1,5 +1,5 @@
 from neo.IO.MemoryStream import StreamManager
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.OpCode import RET
 

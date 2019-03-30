@@ -3,9 +3,9 @@ import os
 import binascii
 from neo.IO.Helper import Helper
 from neo.Core.Block import Block
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Cryptography.MerkleTree import MerkleTree
-from neocore.Fixed8 import Fixed8
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.MerkleTree import MerkleTree
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.TX.StateTransaction import StateTransaction
 from neo.Core.State.StateDescriptor import StateDescriptor, StateType
 

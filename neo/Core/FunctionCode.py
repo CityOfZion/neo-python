@@ -1,6 +1,6 @@
-from neocore.IO.Mixins import SerializableMixin
-from neocore.Cryptography.Crypto import Crypto
-from neocore.BigInteger import BigInteger
+from neo.Core.IO.Mixins import SerializableMixin
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.BigInteger import BigInteger
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 
 

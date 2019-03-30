@@ -4,19 +4,19 @@ from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
 from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.Blockchain import Blockchain
-from neocore.Cryptography.Crypto import Crypto
-from neocore.BigInteger import BigInteger
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.BigInteger import BigInteger
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
 from neo.VM.InteropService import StackItem, ByteArray, Array, Map
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.Settings import settings
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
 from neo.SmartContract.Iterable.Wrapper import ArrayWrapper, MapWrapper
 from neo.SmartContract.Iterable import KeysWrapper, ValuesWrapper

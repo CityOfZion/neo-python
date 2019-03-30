@@ -2,7 +2,7 @@ from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.Prompt.Commands.WalletImport import ImportToken
 from neo.Prompt.Utils import get_tx_attr_from_args
 from neo.Prompt.Commands import Send, Wallet

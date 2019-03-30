@@ -1,6 +1,6 @@
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 import mmh3
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 
 
 class StorageKey():

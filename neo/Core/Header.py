@@ -1,5 +1,5 @@
 from neo.Core.BlockBase import BlockBase
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Witness import Witness
 

@@ -8,21 +8,21 @@ import sys
 from itertools import groupby
 import binascii
 from logzero import logger
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.Blockchain import GetBlockchain
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 
 from neo.Network.InventoryType import InventoryType
 from neo.Network.Mixins import InventoryMixin
-from neocore.Cryptography.Crypto import Crypto
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.IO.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.Core.Mixins import EquatableMixin
 from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize

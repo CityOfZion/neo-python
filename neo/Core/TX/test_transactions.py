@@ -3,10 +3,10 @@ from neo.Core.Helper import Helper
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.State.AssetState import AssetState
-from neocore.IO.BinaryWriter import BinaryWriter
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.Helper import Helper as IOHelper
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
 import os

@@ -1,17 +1,17 @@
 import binascii
-from neocore.BigInteger import BigInteger
-from neocore.Fixed8 import Fixed8
+from neo.Core.BigInteger import BigInteger
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Wallets.Coin import CoinState
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameter import ContractParameterType
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
 from decimal import Decimal
 from prompt_toolkit.shortcuts import PromptSession
 from neo.logging import log_manager
 from neo.Wallets import NEP5Token
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

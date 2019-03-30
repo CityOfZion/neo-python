@@ -1,7 +1,7 @@
 import sys
 from .StateBase import StateBase
 from .CoinState import CoinState
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
@@ -77,7 +77,7 @@ class UnspentCoinState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(UnspentCoinState, self).Deserialize(reader)
 
