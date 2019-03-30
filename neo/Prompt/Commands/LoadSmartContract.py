@@ -8,7 +8,7 @@ import json
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 from neo.Prompt.PromptPrinter import prompt_print as print
 
 

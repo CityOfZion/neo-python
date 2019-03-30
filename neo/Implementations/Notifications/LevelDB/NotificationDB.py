@@ -5,7 +5,7 @@ from neo.Core.State.ContractState import ContractState
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('db')

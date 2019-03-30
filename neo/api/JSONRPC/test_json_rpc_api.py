@@ -18,7 +18,7 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from neo.IO.Helper import Helper
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
 from neo.Blockchain import GetBlockchain
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode

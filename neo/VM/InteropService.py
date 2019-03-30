@@ -1,6 +1,6 @@
 import binascii
 from neo.VM.Mixins import EquatableMixin
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 from neo.SmartContract import StackItemType
 from neo.logging import log_manager
 

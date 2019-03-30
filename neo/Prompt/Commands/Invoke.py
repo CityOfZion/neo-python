@@ -25,9 +25,9 @@ from neo.SmartContract import TriggerType
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.SmartContract.Contract import Contract
-from neocore.Cryptography.Helper import scripthash_to_address
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Fixed8 import Fixed8
+from neo.Core.Cryptography.Helper import scripthash_to_address
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
@@ -38,8 +38,8 @@ from neo.Prompt.PromptPrinter import prompt_print as print
 
 logger = log_manager.getLogger()
 
-from neocore.Cryptography.ECCurve import ECDSA
-from neocore.UInt160 import UInt160
+from neo.Core.Cryptography.ECCurve import ECDSA
+from neo.Core.UInt160 import UInt160
 from neo.VM.OpCode import PACK
 
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)

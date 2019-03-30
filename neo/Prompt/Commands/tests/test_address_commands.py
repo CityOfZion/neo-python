@@ -4,7 +4,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.WalletAddress import SplitUnspentCoin, CreateAddress
 from neo.Core.TX.Transaction import ContractTransaction
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from mock import patch
 from io import StringIO
 import os

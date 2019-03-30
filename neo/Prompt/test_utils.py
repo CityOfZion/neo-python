@@ -1,7 +1,7 @@
 from unittest import TestCase
 from neo.Prompt import Utils
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
 import mock
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 import os
@@ -9,7 +9,7 @@ import shutil
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 from io import StringIO
 
 

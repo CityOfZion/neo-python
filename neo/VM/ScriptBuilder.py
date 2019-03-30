@@ -9,7 +9,7 @@ import binascii
 from neo.VM.OpCode import PUSHDATA1, PUSHDATA2, PUSHDATA4, PUSHF, PUSHT, PACK, PUSH0, PUSH1, PUSHM1, PUSHBYTES75, \
     APPCALL, TAILCALL, SYSCALL
 from neo.IO.MemoryStream import MemoryStream
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 
 
 class ScriptBuilder:

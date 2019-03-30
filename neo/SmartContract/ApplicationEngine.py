@@ -1,9 +1,9 @@
 import binascii
 import datetime
 
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
 
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState

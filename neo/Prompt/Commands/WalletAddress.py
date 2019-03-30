@@ -3,8 +3,8 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt import Utils as PromptUtils
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Implementations.Wallets.peewee.Models import Account
-from neocore.Utils import isValidPublicAddress
-from neocore.Fixed8 import Fixed8
+from neo.Core.Utils import isValidPublicAddress
+from neo.Core.Fixed8 import Fixed8
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Network.NodeLeader import NodeLeader
 from prompt_toolkit import prompt

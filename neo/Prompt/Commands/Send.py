@@ -7,7 +7,7 @@ from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_s
 from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Prompt.Commands.Invoke import gather_signatures
 from neo.Wallets.NEP5Token import NEP5Token
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 import json
 from prompt_toolkit import prompt
 import traceback

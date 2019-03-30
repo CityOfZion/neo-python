@@ -8,11 +8,11 @@ Usage:
 import binascii
 from neo.VM.OpCode import CHECKMULTISIG, CHECKSIG
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neocore.Cryptography.Crypto import bin_hash160, Crypto
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.Cryptography.Crypto import bin_hash160, Crypto
+from neo.Core.IO.Mixins import SerializableMixin
 from neo.Core.VerificationCode import VerificationCode
 from neo.Core.Helper import Helper
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
 
 
 class ContractType:

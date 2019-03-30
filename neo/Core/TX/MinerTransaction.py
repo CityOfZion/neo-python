@@ -1,7 +1,7 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
 import sys
 import binascii
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.Size import Size as s
 
 

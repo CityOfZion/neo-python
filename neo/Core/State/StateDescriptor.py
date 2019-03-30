@@ -1,8 +1,8 @@
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.Core.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 
 from enum import Enum
 from neo.Core.Size import Size as s
@@ -42,7 +42,7 @@ class StateDescriptor(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
 
         self.Type = StateType(ord(reader.ReadByte()))

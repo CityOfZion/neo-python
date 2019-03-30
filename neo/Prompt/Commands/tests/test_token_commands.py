@@ -9,8 +9,8 @@ from neo.Prompt.Commands.WalletImport import ImportToken
 from neo.Prompt.Commands.Tokens import token_get_allowance, token_send, token_history, token_mint, amount_from_string
 from neo.Prompt import Utils as PromptUtils
 import shutil
-from neocore.IO.BinaryWriter import BinaryWriter
-from neocore.Fixed8 import Fixed8
+from neo.Core.IO.BinaryWriter import BinaryWriter
+from neo.Core.Fixed8 import Fixed8
 from neo.IO.MemoryStream import StreamManager
 from mock import patch
 from neo.Prompt.PromptData import PromptData

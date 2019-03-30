@@ -17,7 +17,7 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.IO.Helper import Helper
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.VM import VMState
 from neo.VM.VMState import VMStateStr
 from neo.Settings import settings

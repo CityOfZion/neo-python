@@ -7,11 +7,11 @@ from neo.Core.State.StorageItem import StorageItem
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.AssetType import AssetType
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Cryptography.ECCurve import ECDSA
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
-from neocore.Fixed8 import Fixed8
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.ECCurve import ECDSA
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
+from neo.Core.Fixed8 import Fixed8
 from neo.VM.InteropService import StackItem
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.SmartContract.StorageContext import StorageContext

@@ -5,11 +5,11 @@ from neo.Prompt import Utils as PromptUtils
 from neo.Prompt.Commands.BuildNRun import Build, BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import TestInvokeContract, InvokeContract, test_invoke
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from prompt_toolkit import prompt
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from distutils import util
 from neo.Settings import settings

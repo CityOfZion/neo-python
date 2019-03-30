@@ -11,8 +11,8 @@ from logzero import logger
 from neo.Network.NodeLeader import NodeLeader
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
 from neo.Settings import settings
 from neo.api.utils import cors_header
 import math

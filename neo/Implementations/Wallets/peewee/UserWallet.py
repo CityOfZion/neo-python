@@ -12,12 +12,12 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.Transaction import Transaction as CoreTransaction
-from neocore.KeyPair import KeyPair as WalletKeyPair
+from neo.Core.KeyPair import KeyPair as WalletKeyPair
 from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
-from neocore.Cryptography.Crypto import Crypto
-from neocore.UInt160 import UInt160
-from neocore.Fixed8 import Fixed8
-from neocore.UInt256 import UInt256
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt256 import UInt256
 from neo.Wallets.Coin import CoinState
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \

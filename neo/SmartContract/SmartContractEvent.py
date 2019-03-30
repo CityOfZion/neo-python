@@ -1,11 +1,11 @@
-from neocore.IO.BinaryWriter import BinaryWriter
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.UInt160 import UInt160
-from neocore.BigInteger import BigInteger
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.UInt160 import UInt160
+from neo.Core.BigInteger import BigInteger
+from neo.Core.Cryptography.Crypto import Crypto
 from neo.IO.MemoryStream import StreamManager
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 import binascii
 from neo.Core.State.ContractState import ContractState
 from neo.logging import log_manager
