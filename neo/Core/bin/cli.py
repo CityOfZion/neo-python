@@ -65,7 +65,7 @@ def main():
 
     # Show the neo-python version
     parser.add_argument("--version", action="version",
-                        version="neocore v{version}".format(version=__version__))
+                        version="neo-python v{version}".format(version=__version__))
 
     parser.add_argument("--address-to-scripthash", nargs=1, metavar="address",
                         help="Convert an address to scripthash")
