@@ -5,12 +5,12 @@ from neo.SmartContract.Contract import Contract, ContractType
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.IO.MemoryStream import MemoryStream
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
 from neo.logging import log_manager
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
 
 logger = log_manager.getLogger('vm')
 
@@ -165,10 +165,14 @@ class ContractParametersContext:
             ms = MemoryStream(binascii.unhexlify(contract.Script))
             reader = BinaryReader(ms)
             numr = reader.ReadUInt8()
-            while reader.ReadUInt8() == 33:
-                ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
-                points.append(ecpoint)
-            ms.close()
+            try:
+                while reader.ReadUInt8() == 33:
+                    ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
+                    points.append(ecpoint)
+            except ValueError:
+                return False
+            finally:
+                ms.close()
 
             if pubkey not in points:
                 return False

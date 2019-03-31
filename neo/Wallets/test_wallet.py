@@ -4,10 +4,10 @@ import binascii
 
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Wallets.utils import to_aes_key
-from neocore.KeyPair import KeyPair
-from neocore.UInt160 import UInt160
+from neo.Core.KeyPair import KeyPair
+from neo.Core.UInt160 import UInt160
 from neo.SmartContract.Contract import Contract
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 from neo.Wallets.Wallet import Wallet
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Settings import ROOT_INSTALL_PATH
@@ -35,6 +35,13 @@ class WalletTestCase(NeoTestCase):
     wif = 'KzzURAp1mKdWVFRbTU2ydFqPznnUqNnU4mKLPGLnJARqqKzDCvNF'
 
     decrypted_pk = b'\xaf\xd5\xd8\x0f5\xd6\'\xb9\'\x16\xd6\xf5\xc7\xdb\x88\xea\xc7Ib\x10\xd5Zrg\xdf\xb6\xbeC\xe3\xa0\x01`\xb4\xeb\xcd\x81\xa3\xf1s\xa9\xcf2\xc8/r\xf2\xf2\xe8\x89\x0c"\xd0\nWes\x97\x17\x06\xb8\xa5\x8ej^p\x8a/d\xd7\xcc\xeedr\x91\xd1^3{\x9d"8/\x82H\xb6\x9bu\xeb\xe6\x84\xe6f\xb0m\x12&'
+
+    @classmethod
+    def tearDown(cls):
+        try:
+            os.remove("fakepath")
+        except FileNotFoundError:
+            pass
 
     def test_a(self):
 

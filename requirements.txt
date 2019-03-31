@@ -37,7 +37,6 @@ mock==2.0.0
 mpmath==1.1.0
 neo-boa==0.5.6
 neo-python-rpc==0.2.1
-neocore==0.5.6
 pbr==5.1.1
 peewee==3.8.1
 pexpect==4.6.0
@@ -54,6 +53,7 @@ Pympler==0.6
 pyparsing==2.3.1
 python-dateutil==2.7.5
 pytz==2018.9
+pycryptodome==3.7.2
 requests==2.21.0
 scrypt==0.8.6
 six==1.12.0

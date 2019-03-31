@@ -52,6 +52,14 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                 self.assertFalse(res)
                 self.assertIn("Incorrect password", mock_print.getvalue())
 
+        # test with good address but keyboard interrupt
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['export', 'wif', self.wallet_1_addr]
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Export cancelled", mock_print.getvalue())
+
         # test with good address
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[self.wallet_1_pass()]):
@@ -102,6 +110,15 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                 res = CommandWallet().execute(args)
                 self.assertFalse(res)
                 self.assertIn("Incorrect password", mock_print.getvalue())
+
+        # test with good address but keyboard interrupt
+        pw = UserWalletTestCase.wallet_1_pass()
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.WalletExport.prompt', side_effect=[pw, pw, KeyboardInterrupt]):
+                args = ['export', 'nep2', self.wallet_1_addr]
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Export cancelled", mock_print.getvalue())
 
         # test with good address and good passphrase len
         with patch('sys.stdout', new=StringIO()) as mock_print:

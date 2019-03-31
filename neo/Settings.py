@@ -11,8 +11,8 @@ import logging
 import os
 import sys
 import pip
-from neocore.Cryptography import Helper
-from neocore.Fixed8 import Fixed8
+from neo.Core.Cryptography import Helper
+from neo.Core.Fixed8 import Fixed8
 from neorpc.Client import RPCClient, NEORPCException
 from neorpc.Settings import settings as rpc_settings
 from neo import __version__

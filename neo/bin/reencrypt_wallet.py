@@ -86,8 +86,12 @@ def main():
         print('Wallet file not found')
         return
 
-    password = prompt("[new password]> ", is_password=True)
-    password_confirmation = prompt("[new password again]> ", is_password=True)
+    try:
+        password = prompt("[new password]> ", is_password=True)
+        password_confirmation = prompt("[new password again]> ", is_password=True)
+    except KeyboardInterrupt:
+        print("Re-encryption cancelled")
+        return
 
     if password != password_confirmation or len(password) < 10:
         print("Please provide matching passwords (>10 characters long)")

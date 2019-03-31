@@ -40,7 +40,8 @@ class TestVMErrors(BoaTest):
             tx, results, total_ops, engine = TestBuild(self.script, [3, ['my_arg0']], self.GetWallet1(), '0210', '07')
             self.assertTrue(len(log_context.output) > 0)
             log_msg = log_context.output[0]
-            self.assertTrue("Cannot access item at index" in log_msg and "Item is not an array or dict but of type" in log_msg)
+            # an index of 1 for an array with length one is out of bounds
+            self.assertTrue("Array index is less than zero or 1 exceeds list length 1" in log_msg)
 
     def test_invalid_appcall(self):
         with self.assertLogHandler('vm', DEBUG) as log_context:

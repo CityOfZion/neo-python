@@ -1,11 +1,11 @@
 from .StateBase import StateBase
-from neocore.Fixed8 import Fixed8
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.AssetType import AssetType
-from neocore.UInt160 import UInt160
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neo.Core.UInt160 import UInt160
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.ECCurve import EllipticCurve, ECDSA
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
 
@@ -27,7 +27,8 @@ class AssetState(StateBase):
     IsFrozen = False
 
     def Size(self):
-        return super(AssetState, self).Size() + s.uint256 + s.uint8 + GetVarSize(self.Name) + self.Amount.Size() + self.Available.Size() + s.uint8 + s.uint8 + self.Fee.Size() + s.uint160 + self.Owner.Size() + s.uint160 + s.uint160 + s.uint32 + s.uint8
+        return super(AssetState, self).Size() + s.uint256 + s.uint8 + GetVarSize(
+            self.Name) + self.Amount.Size() + self.Available.Size() + s.uint8 + s.uint8 + self.Fee.Size() + s.uint160 + self.Owner.Size() + s.uint160 + s.uint160 + s.uint32 + s.uint8
 
     def __init__(self, asset_id=None, asset_type=None, name=None, amount=Fixed8(0), available=Fixed8(0),
                  precision=0, fee_mode=0, fee=Fixed8(0), fee_addr=UInt160(data=bytearray(20)), owner=None,
@@ -99,23 +100,23 @@ class AssetState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(AssetState, self).Deserialize(reader)
         self.AssetId = reader.ReadUInt256()
-        self.AssetType = reader.ReadByte()
+        self.AssetType = ord(reader.ReadByte())
         self.Name = reader.ReadVarString()
 
         position = reader.stream.tell()
 
         try:
             self.Amount = reader.ReadFixed8()
-        except Exception as e:
+        except Exception:
             reader.stream.seek(position)
             self.Amount = reader.ReadFixed8()
 
         self.Available = reader.ReadFixed8()
-        self.Precision = reader.ReadByte()
+        self.Precision = ord(reader.ReadByte())
 
         # fee mode
         reader.ReadByte()

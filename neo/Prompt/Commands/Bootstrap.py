@@ -15,7 +15,10 @@ def BootstrapBlockchainFile(target_dir, download_location, bootstrap_name, requi
 
     if require_confirm:
         print("This will overwrite any data currently in %s.\nType 'confirm' to continue" % target_dir)
-        confirm = prompt("[confirm]> ", is_password=False)
+        try:
+            confirm = prompt("[confirm]> ", is_password=False)
+        except KeyboardInterrupt:
+            confirm = False
         if confirm == 'confirm':
             return do_bootstrap(download_location, bootstrap_name, target_dir)
     else:

@@ -2,9 +2,9 @@ from unittest import TestCase
 from neo.VM.InteropService import ByteArray, Integer, BigInteger, Boolean
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neocore.UInt256 import UInt256
-from neocore.UInt160 import UInt160
-from neocore.Cryptography.ECCurve import EllipticCurve
+from neo.Core.UInt256 import UInt256
+from neo.Core.UInt160 import UInt160
+from neo.Core.Cryptography.ECCurve import EllipticCurve
 
 
 class EventTestCase(TestCase):

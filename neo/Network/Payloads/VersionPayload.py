@@ -1,5 +1,5 @@
 import datetime
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Size import Size as s

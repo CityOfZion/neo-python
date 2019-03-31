@@ -18,7 +18,7 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from neo.IO.Helper import Helper
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
 from neo.Blockchain import GetBlockchain
 from neo.Network.NodeLeader import NodeLeader
 from neo.Network.NeoNode import NeoNode
@@ -645,10 +645,13 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(error.get('message', None), "Access denied.")
 
     def test_getbalance_neo_with_wallet(self):
-        test_wallet_path = os.path.join(mkdtemp(), "getbalance.db3")
-        self.app.wallet = UserWallet.Create(
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_1_path(),
+            WalletFixtureTestCase.wallet_1_dest()
+        )
+        self.app.wallet = UserWallet.Open(
             test_wallet_path,
-            to_aes_key('awesomepassword')
+            to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
 
         neo_id = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
@@ -657,30 +660,36 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         res = json.loads(self.app.home(mock_req))
 
         self.assertIn('Balance', res.get('result').keys())
+        self.assertEqual(res['result']['Balance'], "150.0")
         self.assertIn('Confirmed', res.get('result').keys())
+        self.assertEqual(res['result']['Confirmed'], "50.0")
 
         self.app.wallet.Close()
         self.app.wallet = None
-        os.remove(test_wallet_path)
+        os.remove(WalletFixtureTestCase.wallet_1_dest())
 
     def test_getbalance_token_with_wallet(self):
-        test_wallet_path = os.path.join(mkdtemp(), "getbalance.db3")
-        self.app.wallet = UserWallet.Create(
+        test_wallet_path = shutil.copyfile(
+            WalletFixtureTestCase.wallet_2_path(),
+            WalletFixtureTestCase.wallet_2_dest()
+        )
+        self.app.wallet = UserWallet.Open(
             test_wallet_path,
-            to_aes_key('awesomepassword')
+            to_aes_key(WalletFixtureTestCase.wallet_2_pass())
         )
 
-        fake_token_id = "fd941304d9cf36f31cd141c7c7029d81b1efa4f3"
+        fake_token_id = "NXT4"
         req = self._gen_post_rpc_req("getbalance", params=[fake_token_id])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
 
         self.assertIn('Balance', res.get('result').keys())
+        self.assertEqual(res['result']['Balance'], "1000")
         self.assertNotIn('Confirmed', res.get('result').keys())
 
         self.app.wallet.Close()
         self.app.wallet = None
-        os.remove(test_wallet_path)
+        os.remove(WalletFixtureTestCase.wallet_2_dest())
 
     def test_listaddress_no_wallet(self):
         req = self._gen_post_rpc_req("listaddress", params=[])

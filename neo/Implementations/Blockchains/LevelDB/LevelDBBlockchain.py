@@ -4,14 +4,14 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction, TransactionType
-from neocore.IO.BinaryWriter import BinaryWriter
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState
@@ -26,8 +26,8 @@ from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
-from neocore.Cryptography.Crypto import Crypto
-from neocore.BigInteger import BigInteger
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.BigInteger import BigInteger
 from neo.EventHub import events
 
 from prompt_toolkit import prompt
@@ -192,7 +192,10 @@ class LevelDBBlockchain(Blockchain):
             logger.warning("Database schema has changed from %s to %s.\n" % (version, self._sysversion))
             logger.warning("You must either resync from scratch, or use the np-bootstrap command to bootstrap the chain.")
 
-            res = prompt("Type 'continue' to erase your current database and sync from new. Otherwise this program will exit:\n> ")
+            try:
+                res = prompt("Type 'continue' to erase your current database and sync from new. Otherwise this program will exit:\n> ")
+            except KeyboardInterrupt:
+                res = False
             if res == 'continue':
 
                 with self._db.write_batch() as wb:

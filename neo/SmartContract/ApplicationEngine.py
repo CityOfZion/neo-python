@@ -1,31 +1,28 @@
 import binascii
-import sys
-from collections import deque
-from neo.VM.ExecutionEngine import ExecutionEngine
-from neo.VM import OpCode
-from neo.VM.OpCode import PACK, NEWARRAY, NEWSTRUCT, SETITEM, APPEND, CALL, APPCALL, PUSHDATA4, CAT, PUSH16, TAILCALL, \
-    SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG
-from neo.VM import VMState
-from neo.VM.ExecutionContext import ExecutionContext
-from neo.VM.InteropService import CollectionMixin, Map, Array
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Fixed8 import Fixed8
+import datetime
 
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
+
+from neo.Core.State.AccountState import AccountState
+from neo.Core.State.AssetState import AssetState
+from neo.Core.State.ContractState import ContractPropertyState
+from neo.Core.State.ContractState import ContractState
+from neo.Core.State.StorageItem import StorageItem
+from neo.Core.State.ValidatorState import ValidatorState
+from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
+from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 # used for ApplicationEngine.Run
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
-from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
-from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Core.State.ContractState import ContractState
-from neo.Core.State.AssetState import AssetState
-from neo.Core.State.AccountState import AccountState
-from neo.Core.State.ValidatorState import ValidatorState
-from neo.Core.State.StorageItem import StorageItem
-from neo.Core.State.ContractState import ContractPropertyState
-from neo.SmartContract import TriggerType
-from neo.VM.InteropService import Array
-from neocore.UInt160 import UInt160
-import datetime
 from neo.Settings import settings
+from neo.SmartContract import TriggerType
+from neo.VM import OpCode
+from neo.VM import VMState
+from neo.VM.ExecutionEngine import ExecutionEngine
+from neo.VM.InteropService import Array
+from neo.VM.OpCode import APPCALL, TAILCALL, \
+    SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('vm')
@@ -44,12 +41,6 @@ class ApplicationEngine(ExecutionEngine):
 
     max_free_ops = 500000
 
-    maxItemSize = 1024 * 1024
-    maxArraySize = 1024
-    max_shl_shr = 65535  # ushort.maxValue
-    min_shl_shr = -65535  # -ushort.maxValue
-    MaxSizeForBigInteger = 32
-
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
 
@@ -62,272 +53,8 @@ class ApplicationEngine(ExecutionEngine):
         self.testMode = testMode
         self._is_stackitem_count_strict = True
 
-    def CheckArraySize(self):
+    def CheckDynamicInvoke(self, opcode):
         cx = self.CurrentContext
-
-        opcode = cx.NextInstruction
-
-        if opcode in [PACK, NEWARRAY, NEWSTRUCT]:
-            if cx.EvaluationStack.Count == 0:
-                return False
-            size = cx.EvaluationStack.Peek().GetBigInteger()
-
-        elif opcode == SETITEM:
-            if cx.EvaluationStack.Count < 3:
-                return False
-
-            map_stackitem = cx.EvaluationStack.Peek(2)
-            if not isinstance(map_stackitem, Map):
-                return True
-
-            key = cx.EvaluationStack.Peek(1)
-            if isinstance(key, CollectionMixin):
-                return False
-
-            if map_stackitem.ContainsKey(key):
-                return True
-            size = map_stackitem.Count + 1
-
-        elif opcode == APPEND:
-            if cx.EvaluationStack.Count < 2:
-                return False
-
-            collection: Array = cx.EvaluationStack.Peek(1)
-            if not isinstance(collection, Array):
-                return False
-            size = collection.Count + 1
-        else:
-            return True
-
-        return size <= self.maxArraySize
-
-    def CheckInvocationStack(self):
-
-        maxInvocationStackSize = 1024
-        cx = self.CurrentContext
-
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
-
-        opcode = cx.NextInstruction
-
-        if opcode == CALL or opcode == APPCALL:
-            if self.InvocationStack.Count >= maxInvocationStackSize:
-                logger.debug("INVOCATION STACK TOO BIG, RETURN FALSE")
-                return False
-
-            return True
-
-        return True
-
-    def _checkBigInteger(self, value):
-        return len(value.ToByteArray()) <= self.MaxSizeForBigInteger
-
-    def CheckBigIntegers(self):
-        cx = self.CurrentContext
-        opcode = cx.NextInstruction
-
-        if opcode == OpCode.SHL:
-            ishift = cx.EvaluationStack.Peek(0).GetBigInteger()
-
-            if ishift > self.max_shl_shr or ishift < self.min_shl_shr:
-                return False
-
-            x = cx.EvaluationStack.Peek(1).GetBigInteger()
-
-            try:
-                if not self._checkBigInteger(x << ishift):
-                    return False
-            except ValueError:
-                # negative ishift throws a value error
-                return False
-
-        if opcode == OpCode.SHR:
-            ishift = cx.EvaluationStack.Peek(0).GetBigInteger()
-
-            if ishift > self.max_shl_shr or ishift < self.min_shl_shr:
-                return False
-
-            x = cx.EvaluationStack.Peek(1).GetBigInteger()
-
-            try:
-                if not self._checkBigInteger(x >> ishift):
-                    return False
-            except ValueError:
-                # negative ishift throws a value error
-                return False
-
-        if opcode == OpCode.INC:
-            x = cx.EvaluationStack.Peek().GetBigInteger()
-            if not self._checkBigInteger(x) or not self._checkBigInteger(x + 1):
-                return False
-
-        if opcode == OpCode.DEC:
-            x = cx.EvaluationStack.Peek().GetBigInteger()
-            if not self._checkBigInteger(x) or (x.Sign <= 0 and not self._checkBigInteger(x - 1)):
-                return False
-
-        if opcode == OpCode.ADD:
-            x2 = cx.EvaluationStack.Peek().GetBigInteger()
-            x1 = cx.EvaluationStack.Peek(1).GetBigInteger()
-
-            if not self._checkBigInteger(x2) or not self._checkBigInteger(x1) or not self._checkBigInteger(x1 + x2):
-                return False
-
-        if opcode == OpCode.SUB:
-            x2 = cx.EvaluationStack.Peek().GetBigInteger()
-            x1 = cx.EvaluationStack.Peek(1).GetBigInteger()
-
-            if not self._checkBigInteger(x2) or not self._checkBigInteger(x1) or not self._checkBigInteger(x1 - x2):
-                return False
-
-        if opcode == OpCode.MUL:
-            x2 = cx.EvaluationStack.Peek().GetBigInteger()
-            x1 = cx.EvaluationStack.Peek(1).GetBigInteger()
-
-            length_x1 = len(x1.ToByteArray())
-            if length_x1 > self.MaxSizeForBigInteger:
-                return False
-
-            length_x2 = len(x2.ToByteArray())
-            if length_x2 > self.MaxSizeForBigInteger:
-                return False
-
-            if length_x1 + length_x2 > self.MaxSizeForBigInteger:
-                return False
-
-        if opcode in [OpCode.DIV, OpCode.MOD]:
-            x2 = cx.EvaluationStack.Peek().GetBigInteger()
-            x1 = cx.EvaluationStack.Peek(1).GetBigInteger()
-
-            if not self._checkBigInteger(x2) or not self._checkBigInteger(x1):
-                return False
-
-        return True
-
-    def CheckItemSize(self):
-
-        cx = self.CurrentContext
-        opcode = cx.NextInstruction
-
-        if opcode == PUSHDATA4:
-
-            if cx.InstructionPointer + 4 >= len(cx.Script):
-                return False
-
-            # TODO this should be double checked.  it has been
-            # double checked and seems to work, but could possibly not work
-            position = cx.InstructionPointer + 1
-            lengthpointer = cx.Script[position:position + 4]
-            length = int.from_bytes(lengthpointer, 'little')
-
-            if length > self.maxItemSize:
-                logger.debug("ITEM IS GREATER THAN MAX ITEM SIZE!")
-                return False
-
-            return True
-
-        elif opcode == CAT:
-
-            if cx.EvaluationStack.Count < 2:
-                logger.debug("NOT ENOUGH ITEMS TO CONCAT")
-                return False
-
-            length = 0
-
-            try:
-                length = len(cx.EvaluationStack.Peek(0).GetByteArray()) + len(cx.EvaluationStack.Peek(1).GetByteArray())
-            except Exception as e:
-                logger.debug("COULD NOT GET STR LENGTH!")
-                raise e
-
-            if length > self.maxItemSize:
-                logger.debug("ITEM IS GREATER THAN MAX SIZE!!!")
-                return False
-
-            return True
-
-        return True
-
-    def CheckStackSize(self):
-        maxStackSize = 2 * 1024
-
-        size = 0
-        cx = self.CurrentContext
-        opcode = cx.NextInstruction
-
-        if opcode <= PUSH16:
-            size += 1
-        else:
-            if opcode in [OpCode.JMPIF, OpCode.JMPIFNOT, OpCode.DROP, OpCode.NIP, OpCode.EQUAL, OpCode.BOOLAND, OpCode.BOOLOR, OpCode.CHECKMULTISIG,
-                          OpCode.REVERSE, OpCode.HASKEY, OpCode.THROWIFNOT]:
-                size -= 1
-                self._is_stackitem_count_strict = False
-            elif opcode in [OpCode.XSWAP, OpCode.ROLL, OpCode.CAT, OpCode.LEFT, OpCode.RIGHT, OpCode.AND, OpCode.OR, OpCode.XOR, OpCode.ADD, OpCode.SUB,
-                            OpCode.MUL, OpCode.DIV, OpCode.SHL, OpCode.SHR, OpCode.NUMEQUAL, OpCode.NUMNOTEQUAL, OpCode.LT, OpCode.GT, OpCode.LTE, OpCode.GTE,
-                            OpCode.MIN, OpCode.MAX, OpCode.CHECKSIG, OpCode.CALL_ED, OpCode.CALL_EDT]:
-                size -= 1
-            elif opcode in [OpCode.RET, OpCode.APPCALL, OpCode.TAILCALL, OpCode.NOT, OpCode.ARRAYSIZE]:
-                self._is_stackitem_count_strict = False
-            elif opcode in [OpCode.SYSCALL, OpCode.PICKITEM, OpCode.SETITEM, OpCode.APPEND, OpCode.VALUES]:
-                size = sys.maxsize
-                self._is_stackitem_count_strict = False
-            elif opcode in [OpCode.DUPFROMALTSTACK, OpCode.DEPTH, OpCode.DUP, OpCode.OVER, OpCode.TUCK, OpCode.NEWMAP]:
-                size += 1
-            elif opcode in [OpCode.XDROP, OpCode.REMOVE]:
-                size -= 2
-                self._is_stackitem_count_strict = False
-            elif opcode in [OpCode.SUBSTR, OpCode.WITHIN, OpCode.VERIFY]:
-                size -= 2
-            elif opcode == OpCode.UNPACK:
-                size += self.CurrentContext.EvaluationStack.Peek().GetBigInteger
-                self._is_stackitem_count_strict = False
-            elif opcode in [OpCode.NEWARRAY, OpCode.NEWSTRUCT]:
-                size += self.CurrentContext.EvaluationStack.Peek().Count
-            elif opcode == OpCode.KEYS:
-                size += self.CurrentContext.EvaluationStack.Peek().Count
-                self._is_stackitem_count_strict = False
-
-        if size <= maxStackSize:
-            return True
-
-        if self._is_stackitem_count_strict:
-            return False
-
-        stack_item_list = []
-        for execution_context in self.InvocationStack.Items:  # type: ExecutionContext
-            stack_item_list += execution_context.EvaluationStack.Items + execution_context.AltStack.Items
-
-        stackitem_count = self.GetItemCount(stack_item_list)
-        if stackitem_count > maxStackSize:
-            return False
-
-        self._is_stackitem_count_strict = True
-        return True
-
-    def GetItemCount(self, items_list):  # list of StackItems
-        count = 0
-        items = deque(items_list)
-        while items:
-            stackitem = items.pop()
-            if isinstance(stackitem, Map):
-                items.extend(stackitem.Values)
-                continue
-
-            if isinstance(stackitem, Array):
-                items.extend(stackitem.GetArray())
-                continue
-            count += 1
-
-        return count
-
-    def CheckDynamicInvoke(self):
-        cx = self.CurrentContext
-
-        if cx.InstructionPointer >= len(cx.Script):
-            return True
-
-        opcode = cx.NextInstruction
 
         if opcode in [OpCode.APPCALL, OpCode.TAILCALL]:
             opreader = cx.OpReader
@@ -361,66 +88,48 @@ class ApplicationEngine(ExecutionEngine):
         else:
             return True
 
+    def PreStepInto(self, opcode):
+        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+            return True
+        self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
+        if not self.testMode and self.gas_consumed > self.gas_consumed:
+            return False
+        if self.testMode and self.ops_processed > self.max_free_ops:
+            logger.debug("Too many free operations processed")
+            return False
+        try:
+            if not self.CheckDynamicInvoke(opcode):
+                return False
+        except Exception:
+            pass
+        return True
+
     # @profile_it
     def Execute(self):
-        def loop_validation_and_stepinto():
-            while self._VMState & VMState.HALT == 0 and self._VMState & VMState.FAULT == 0:
-                if self.CurrentContext.InstructionPointer < len(self.CurrentContext.Script):
-                    try:
-                        self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
-                    except Exception as e:
-                        logger.debug("Exception calculating gas consumed %s " % e)
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.testMode and self.gas_consumed > self.gas_amount:
-                        logger.debug("NOT ENOUGH GAS")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if self.testMode and self.ops_processed > self.max_free_ops:
-                        logger.debug("Too many free operations processed")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.CheckItemSize():
-                        logger.debug("ITEM SIZE TOO BIG")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.CheckStackSize():
-                        logger.debug("STACK SIZE TOO BIG")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.CheckArraySize():
-                        logger.debug("ARRAY SIZE TOO BIG")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.CheckInvocationStack():
-                        logger.debug("INVOCATION SIZE TO BIG")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.CheckBigIntegers():
-                        logger.debug("BigIntegers check failed")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                    if not self.CheckDynamicInvoke():
-                        logger.debug("Dynamic invoke without proper contract")
-                        self._VMState |= VMState.FAULT
-                        return False
-
-                self.StepInto()
-
-        if settings.log_vm_instructions:
-            with open(self.log_file_name, 'w') as self.log_file:
+        try:
+            if settings.log_vm_instructions:
+                self.log_file = open(self.log_file_name, 'w')
                 self.write_log(str(datetime.datetime.now()))
-                loop_validation_and_stepinto()
-        else:
-            loop_validation_and_stepinto()
+
+            while True:
+                if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+                    nextOpcode = OpCode.RET
+                else:
+                    nextOpcode = self.CurrentContext.NextInstruction
+
+                if not self.PreStepInto(nextOpcode):
+                    # TODO: check with NEO is this should now be changed to not use |=
+                    self._VMState |= VMState.FAULT
+                    return False
+                self.StepInto()
+                if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
+                    break
+        except Exception:
+            self._VMState |= VMState.FAULT
+            return False
+        finally:
+            if self.log_file:
+                self.log_file.close()
 
         return not self._VMState & VMState.FAULT > 0
 

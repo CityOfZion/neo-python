@@ -1,23 +1,22 @@
-from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.VM.InteropService import InteropService
 from neo.SmartContract.Contract import Contract
 from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
 from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.Blockchain import Blockchain
-from neocore.Cryptography.Crypto import Crypto
-from neocore.BigInteger import BigInteger
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.BigInteger import BigInteger
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
 from neo.SmartContract.TriggerType import Application, Verification
 from neo.VM.InteropService import StackItem, ByteArray, Array, Map
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.Settings import settings
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
 from neo.SmartContract.Iterable.Wrapper import ArrayWrapper, MapWrapper
 from neo.SmartContract.Iterable import KeysWrapper, ValuesWrapper
@@ -346,7 +345,10 @@ class StateReader(InteropService):
             result = self.CheckWitnessHash(engine, UInt160(data=hashOrPubkey))
 
         elif len(hashOrPubkey) == 33:
-            point = ECDSA.decode_secp256r1(hashOrPubkey, unhex=False).G
+            try:
+                point = ECDSA.decode_secp256r1(hashOrPubkey, unhex=False).G
+            except ValueError:
+                return False
             result = self.CheckWitnessPubkey(engine, point)
         else:
             return False
@@ -422,7 +424,7 @@ class StateReader(InteropService):
 
         ms.flush()
 
-        if ms.tell() > ApplicationEngine.maxItemSize:
+        if ms.tell() > engine.maxItemSize:
             return False
 
         retVal = ByteArray(ms.getvalue())
@@ -647,7 +649,7 @@ class StateReader(InteropService):
         if block is None:
             return False
 
-        if len(block.FullTransactions) > ApplicationEngine.maxArraySize:
+        if len(block.FullTransactions) > engine.maxArraySize:
             return False
 
         txlist = [StackItem.FromInterface(tx) for tx in block.FullTransactions]
@@ -689,7 +691,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        if len(tx.Attributes) > ApplicationEngine.maxArraySize:
+        if len(tx.Attributes) > engine.maxArraySize:
             return False
 
         attr = [StackItem.FromInterface(attr) for attr in tx.Attributes]
@@ -701,7 +703,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        if len(tx.inputs) > ApplicationEngine.maxArraySize:
+        if len(tx.inputs) > engine.maxArraySize:
             return False
 
         inputs = [StackItem.FromInterface(input) for input in tx.inputs]
@@ -714,7 +716,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        if len(tx.outputs) > ApplicationEngine.maxArraySize:
+        if len(tx.outputs) > engine.maxArraySize:
             return False
 
         outputs = []
@@ -731,7 +733,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        if len(tx.inputs) > ApplicationEngine.maxArraySize:
+        if len(tx.inputs) > engine.maxArraySize:
             return False
 
         refs = [StackItem.FromInterface(tx.References[input]) for input in tx.inputs]
@@ -746,7 +748,7 @@ class StateReader(InteropService):
             return False
 
         outputs = Blockchain.Default().GetAllUnspent(tx.Hash)
-        if len(outputs) > ApplicationEngine.maxArraySize:
+        if len(outputs) > engine.maxArraySize:
             return False
 
         refs = [StackItem.FromInterface(unspent) for unspent in outputs]
@@ -759,7 +761,7 @@ class StateReader(InteropService):
         if tx is None:
             return False
 
-        if len(tx.scripts) > ApplicationEngine.maxArraySize:
+        if len(tx.scripts) > engine.maxArraySize:
             return False
 
         witnesses = [StackItem.FromInterface(s) for s in tx.scripts]
@@ -1000,8 +1002,9 @@ class StateReader(InteropService):
         if engine.ScriptContainer:
             tx_hash = engine.ScriptContainer.Hash
 
-        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_GET, ContractParameter(ContractParameterType.String, value='%s -> %s' % (keystr, valStr)),
-                                                          context.ScriptHash, Blockchain.Default().Height + 1, tx_hash, test_mode=engine.testMode))
+        self.events_to_dispatch.append(
+            SmartContractEvent(SmartContractEvent.STORAGE_GET, ContractParameter(ContractParameterType.String, value='%s -> %s' % (keystr, valStr)),
+                               context.ScriptHash, Blockchain.Default().Height + 1, tx_hash, test_mode=engine.testMode))
 
         return True
 

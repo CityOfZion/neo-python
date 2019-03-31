@@ -9,7 +9,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.Witness import Witness
 from neo.VM.OpCode import PUSHT
 from neo.Settings import settings
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 
 
 class GenesisBlockTestCase(VerifiableTestCase):

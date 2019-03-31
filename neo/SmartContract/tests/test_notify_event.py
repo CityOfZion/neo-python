@@ -1,10 +1,10 @@
 from unittest import TestCase
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
-from neocore.BigInteger import BigInteger
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
+from neo.Core.BigInteger import BigInteger
 from neo.IO.MemoryStream import StreamManager
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 
 

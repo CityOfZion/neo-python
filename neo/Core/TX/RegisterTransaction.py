@@ -6,9 +6,10 @@ Usage:
 """
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.AssetType import AssetType
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
-from neocore.Fixed8 import Fixed8
+from neo.Core.Size import GetVarSize, Size
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neo.Core.Fixed8 import Fixed8
 
 
 class RegisterTransaction(Transaction):
@@ -102,10 +103,10 @@ In English:
             reader (neo.IO.BinaryReader):
         """
         self.Type = TransactionType.RegisterTransaction
-        self.AssetType = reader.ReadByte()
+        self.AssetType = ord(reader.ReadByte())
         self.Name = reader.ReadVarString()
         self.Amount = reader.ReadFixed8()
-        self.Precision = reader.ReadByte()
+        self.Precision = ord(reader.ReadByte())
         self.Owner = ECDSA.Deserialize_Secp256r1(reader)
         #        self.Owner = ecdsa.G
         self.Admin = reader.ReadUInt160()
@@ -146,3 +147,13 @@ In English:
         jsn['asset'] = asset
 
         return jsn
+
+    def Size(self):
+        """
+        Get the total size in bytes of the object.
+
+        Returns:
+            int: size.
+        """
+
+        return super(RegisterTransaction, self).Size() + 2 * Size.uint8 + GetVarSize(self.Name) + self.Amount.Size() + self.Owner.Size() + self.Admin.Size 

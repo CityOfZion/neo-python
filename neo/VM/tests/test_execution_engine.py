@@ -3,7 +3,7 @@ from neo.VM.InteropService import StackItem, ByteArray
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
 from neo.VM import OpCode
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 from mock import patch
 import binascii
 from neo.Core.TX.Transaction import ContractTransaction

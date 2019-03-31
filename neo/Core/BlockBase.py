@@ -1,11 +1,11 @@
 from .Mixins import VerifiableMixin
-from neocore.Cryptography.Helper import bin_dbl_sha256
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Helper import bin_dbl_sha256
+from neo.Core.Cryptography.Crypto import Crypto
 import binascii
 from neo.Core.Helper import Helper
 from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
 from neo.Core.Size import Size as s
 
 
@@ -119,7 +119,7 @@ class BlockBase(VerifiableMixin):
         """
         self.__hash = None
         self.DeserializeUnsigned(reader)
-        byt = reader.ReadByte()
+        byt = ord(reader.ReadByte())
         if int(byt) != 1:
             raise Exception('Incorrect format')
 

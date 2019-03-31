@@ -29,7 +29,7 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
         args = ['output']
-        with patch('neo.Prompt.Commands.Config.prompt', side_effect=[1, 1, 1, "\n", "\n", "\n"]):  # tests changing the level and keeping the current level
+        with patch('neo.Prompt.Commands.Config.prompt', side_effect=[1, 1, 1, "a", "\n", "\n"]):  # tests changing the level and keeping the current level. Entering "a" has no effect.
             res = CommandConfig().execute(args)
             self.assertTrue(res)
             self.assertEqual(res['generic'], "DEBUG")
@@ -38,6 +38,13 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             self.assertEqual(res['peewee'], "ERROR")
             self.assertEqual(res['network'], "INFO")
             self.assertEqual(res['network.verbose'], "INFO")
+
+        # test with keyboard interrupt
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Config.prompt', side_effect=[KeyboardInterrupt]):
+                res = CommandConfig().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Output configuration cancelled", mock_print.getvalue())
 
     def test_config_sc_events(self):
         # test no input
