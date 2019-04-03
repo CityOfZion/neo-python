@@ -16,6 +16,7 @@ All notable changes to this project are documented in this file.
 - Fixed size calculation for `InvocationTransaction` `#919 <https://github.com/CityOfZion/neo-python/pull/919>`_
 - Update Virtual Machine to latest implementation, Add support for running official JSON test vectors `#921 <https://github.com/CityOfZion/neo-python/pull/921>`_
 - Add PICKITEM for ByteArray into VM `#923 <https://github.com/CityOfZion/neo-python/pull/923>`_
+- Fix 'gas' output type for InvocationTransaction.ToJson(): str -> int
 
 
 [0.8.4] 2019-02-14
