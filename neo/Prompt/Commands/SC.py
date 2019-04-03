@@ -9,7 +9,7 @@ from neo.Core.UInt160 import UInt160
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.Network.neonetwork.common import blocking_prompt as prompt
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from distutils import util
 from neo.Settings import settings

@@ -12,9 +12,6 @@ import aiohttp_cors
 import base58
 from aiohttp import web
 from aiohttp.helpers import MultiDict
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
 
 from neo.Core.Blockchain import Blockchain
 from neo.Core.State.AccountState import AccountState

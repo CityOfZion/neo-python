@@ -6,8 +6,8 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Prompt import Utils as PromptUtils
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
 from neo.Network.neonetwork.common import blocking_prompt as prompt
 import json
 import os
