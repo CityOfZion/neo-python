@@ -100,5 +100,5 @@ class InvocationTransaction(Transaction):
         """
         jsn = super(InvocationTransaction, self).ToJson()
         jsn['script'] = self.Script.hex()
-        jsn['gas'] = self.Gas.ToNeoJsonString()
+        jsn['gas'] = self.Gas.ToInt()
         return jsn
