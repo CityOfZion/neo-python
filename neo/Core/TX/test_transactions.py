@@ -1,7 +1,9 @@
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Core.Helper import Helper
+from neo.Core.Size import GetVarSize
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction, TransactionType
+from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.State.AssetState import AssetState
 from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.Core.IO.BinaryReader import BinaryReader
@@ -285,3 +287,51 @@ class TransactionTestCase(NeoTestCase):
 
         txjson = tx.ToJson()
         self.assertEqual(227, txjson['size'])
+
+    def test_check_invocation_tx_size(self):
+        """ See original test here
+            https://github.com/neo-project/neo/blob/master/neo.UnitTests/UT_InvocationTransaction.cs#L52-L69
+        """
+        i_tx = InvocationTransaction()
+        val = GetByteArray(32, 0x42)
+        i_tx.Script = val
+
+        self.assertEqual(i_tx.Version, 0)
+        self.assertEqual(len(i_tx.Script), 32)
+        self.assertEqual(GetVarSize(i_tx.Script), 33)
+        self.assertEqual(i_tx.Size(), 39)
+
+    def test_check_invocation_tx_ToJson(self):
+        """ See original test here
+            https://github.com/neo-project/neo/blob/master/neo.UnitTests/UT_InvocationTransaction.cs#L93-L121
+        """
+        i_tx = InvocationTransaction()
+        val = GetByteArray(32, 0x42)
+        i_tx.Script = val
+        gasVal = Fixed8.FromDecimal(42)
+        i_tx.Gas = gasVal
+
+        jsn = i_tx.ToJson()
+        self.assertTrue(jsn)
+        self.assertEqual(jsn['txid'], "0x8258b950487299376f89ad2d09598b7acbc5cde89b161b3dd73c256f9e2a94b1")
+        self.assertEqual(jsn['size'], 39)
+        self.assertEqual(jsn['type'], "InvocationTransaction")
+        self.assertEqual(jsn['version'], 0)
+        self.assertEqual(len(jsn['attributes']), 0)
+        self.assertEqual(len(jsn['vin']), 0)
+        self.assertEqual(len(jsn['vout']), 0)
+        self.assertEqual(jsn['sys_fee'], "42")
+        self.assertEqual(jsn['net_fee'], "-42")
+        self.assertEqual(len(jsn['scripts']), 0)
+        self.assertEqual(jsn['script'], "4220202020202020202020202020202020202020202020202020202020202020")
+        self.assertEqual(jsn['gas'], 42)
+
+
+def GetByteArray(length, firstByte):
+    array = bytearray(length)
+    array[0] = firstByte
+    i = 1
+    while i < length:
+        array[i] = 0x20
+        i += 1
+    return array
