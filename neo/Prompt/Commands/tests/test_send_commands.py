@@ -2,7 +2,7 @@ from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.Prompt.Commands.WalletImport import ImportToken
 from neo.Prompt.Utils import get_tx_attr_from_args
 from neo.Prompt.Commands import Send, Wallet
@@ -255,6 +255,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
                 self.assertFalse(res)
                 self.assertIn("Incorrect password", mock_print.getvalue())
+
+    def test_keyboard_interrupt(self):
+        with patch('neo.Prompt.Commands.Send.prompt', side_effect=[KeyboardInterrupt]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                PromptData.Wallet = self.GetWallet1(recreate=True)
+                args = ['send', 'neo', self.watch_addr_str, '50']
+
+                res = Wallet.CommandWallet().execute(args)
+
+                self.assertFalse(res)
+                self.assertIn("Transaction cancelled", mock_print.getvalue())
 
     @patch.object(Send, 'gather_signatures')
     def test_owners(self, mock):

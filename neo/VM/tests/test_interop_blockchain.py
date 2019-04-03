@@ -6,7 +6,7 @@ from neo.SmartContract.StateReader import StateReader
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction
 from neo.Settings import settings
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
 import os
 
 

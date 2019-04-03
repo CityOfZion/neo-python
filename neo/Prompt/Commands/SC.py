@@ -5,10 +5,11 @@ from neo.Prompt import Utils as PromptUtils
 from neo.Prompt.Commands.BuildNRun import Build, BuildAndRun, LoadAndRun
 from neo.Prompt.Commands.Invoke import TestInvokeContract, InvokeContract, test_invoke
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.SmartContract.ContractParameter import ContractParameter
+from neo.SmartContract.ContractParameterType import ContractParameterType
 from prompt_toolkit import prompt
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
 from distutils import util
 from neo.Settings import settings
@@ -163,6 +164,7 @@ class CommandSCTestInvoke(CommandBase):
         arguments, priority_fee = PromptUtils.get_fee(arguments)
         arguments, invoke_attrs = PromptUtils.get_tx_attr_from_args(arguments)
         arguments, owners = PromptUtils.get_owners_from_params(arguments)
+        arguments, return_type = PromptUtils.get_return_type_from_args(arguments)
 
         if len(arguments) < 1:
             print("Please specify the required parameters")
@@ -186,7 +188,14 @@ class CommandSCTestInvoke(CommandBase):
         tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, arguments, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
         if tx and results:
 
-            parameterized_results = [ContractParameter.ToParameter(item).ToJson() for item in results]
+            if return_type is not None:
+                try:
+                    parameterized_results = [ContractParameter.AsParameterType(ContractParameterType.FromString(return_type), item).ToJson() for item in results]
+                except ValueError:
+                    logger.debug("invalid return type")
+                    return False
+            else:
+                parameterized_results = [ContractParameter.ToParameter(item).ToJson() for item in results]
 
             print(
                 "\n-------------------------------------------------------------------------------------------------------------------------------------")
@@ -200,11 +209,15 @@ class CommandSCTestInvoke(CommandBase):
             comb_fee = p_fee + fee
             if comb_fee != fee:
                 print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invoke TX Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
-            print("Enter your password to continue and deploy this contract")
+            print("Enter your password to send this invocation to the network")
 
             tx.Attributes = invoke_attrs
 
-            passwd = prompt("[password]> ", is_password=True)
+            try:
+                passwd = prompt("[password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Invocation cancelled")
+                return False
             if not wallet.ValidatePassword(passwd):
                 return print("Incorrect password")
 
@@ -222,16 +235,17 @@ class CommandSCTestInvoke(CommandBase):
         p6 = ParameterDesc('--from-addr', 'source address to take fee funds from (if not specified, take first address in wallet)', optional=True)
         p7 = ParameterDesc('--fee', 'Attach GAS amount to give your transaction priority (> 0.001) e.g. --fee=0.01', optional=True)
         p8 = ParameterDesc('--owners', 'list of NEO addresses indicating the transaction owners e.g. --owners=[address1,address2]', optional=True)
-        p9 = ParameterDesc('--tx-attr',
-                           'a list of transaction attributes to attach to the transaction\n\n'
-                           f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
-                           f"{' ':>17} Example\n"
-                           f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
-                           f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n\n"
-                           f"{' ':>17} For more information about parameter types see\n"
-                           f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes\n", optional=True)
+        p9 = ParameterDesc('--return-type', 'override the return parameter type e.g. --return-type=02', optional=True) 
+        p10 = ParameterDesc('--tx-attr',
+                            'a list of transaction attributes to attach to the transaction\n\n'
+                            f"{' ':>17} See: http://docs.neo.org/en-us/network/network-protocol.html section 4 for a description of possible attributes\n\n"
+                            f"{' ':>17} Example\n"
+                            f"{' ':>20} --tx-attr=[{{\"usage\": <value>,\"data\":\"<remark>\"}}, ...]\n"
+                            f"{' ':>20} --tx-attr=[{{\"usage\": 0x90,\"data\":\"my brief description\"}}]\n\n"
+                            f"{' ':>17} For more information about parameter types see\n"
+                            f"{' ':>17} https://neo-python.readthedocs.io/en/latest/data-types.html#contractparametertypes\n", optional=True)
 
-        params = [p1, p2, p3, p4, p5, p6, p7, p8, p9]
+        params = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10]
         return CommandDesc('invoke', 'Call functions on the smart contract. Will prompt before sending to the network', params=params)
 
 
@@ -279,7 +293,11 @@ class CommandSCDeploy(CommandBase):
             print(str(e))
             return False
 
-        contract_script = GatherContractDetails(function_code)
+        try:
+            contract_script = GatherContractDetails(function_code)
+        except KeyboardInterrupt:
+            print("Deployment cancelled")
+            return False
         if not contract_script:
             print("Failed to generate deploy script")
             return False
@@ -299,9 +317,13 @@ class CommandSCDeploy(CommandBase):
             comb_fee = p_fee + fee
             if comb_fee != fee:
                 print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Deploy Invoke TX Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
-            print("Enter your password to continue and deploy this contract")
+            print("Enter your password to deploy this contract on the blockchain")
 
-            passwd = prompt("[password]> ", is_password=True)
+            try:
+                passwd = prompt("[password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Deployment cancelled")
+                return False
             if not wallet.ValidatePassword(passwd):
                 print("Incorrect password")
                 return False
@@ -313,7 +335,7 @@ class CommandSCDeploy(CommandBase):
             return False
 
     def command_desc(self):
-        p1 = ParameterDesc('path', 'path to the desired Python (.py) file')
+        p1 = ParameterDesc('path', 'path to the desired smart contract (.avm) file')
         p2 = ParameterDesc('storage', 'boolean input to determine if smart contract requires storage')
         p3 = ParameterDesc('dynamic_invoke', 'boolean input to determine if smart contract requires dynamic invoke')
         p4 = ParameterDesc('payable', 'boolean input to determine if smart contract is payable')

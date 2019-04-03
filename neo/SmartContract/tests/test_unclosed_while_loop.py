@@ -1,8 +1,7 @@
 from boa_test.tests.boa_test import BoaTest
 from neo.Prompt.Commands.BuildNRun import TestBuild
 from neo.VM.ExecutionEngine import ExecutionEngine
-from neo.Settings import settings
-from logging import DEBUG, INFO
+from logging import DEBUG
 import binascii
 
 

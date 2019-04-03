@@ -6,14 +6,14 @@ from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AssetState import AssetState
-from neocore.Cryptography.Crypto import Crypto
-from neocore.IO.BinaryWriter import BinaryWriter
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.IO.BinaryWriter import BinaryWriter
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
 from neo.IO.MemoryStream import StreamManager
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.SmartContract import TriggerType
 from neo.Settings import settings
 from neo.EventHub import events
@@ -58,7 +58,7 @@ class Helper:
 
         Args:
             verifiable:
-            keypair (neocore.KeyPair):
+            keypair (neo.Core.KeyPair):
 
         Returns:
             bool: True if successfully signed. False otherwise.

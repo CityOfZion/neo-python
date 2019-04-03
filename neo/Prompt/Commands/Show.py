@@ -5,8 +5,8 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Utils import get_arg
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt256 import UInt256
-from neocore.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
+from neo.Core.UInt160 import UInt160
 from neo.IO.MemoryStream import StreamManager
 from neo.Network.NodeLeader import NodeLeader
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB

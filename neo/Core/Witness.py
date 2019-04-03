@@ -1,6 +1,6 @@
 import sys
 import binascii
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 from neo.Core.Size import GetVarSize
 
 

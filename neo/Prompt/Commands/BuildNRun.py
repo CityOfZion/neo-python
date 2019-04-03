@@ -3,14 +3,14 @@ from neo.Prompt.Commands.LoadSmartContract import GatherLoadedContractParams, ge
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.Prompt.Commands.Invoke import test_deploy_and_invoke, DEFAULT_MIN_FEE
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from boa.compiler import Compiler
 import binascii
 from neo.Core.State.ContractState import ContractPropertyState
 import os
 import json
 import traceback
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 from neo.Settings import settings
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print

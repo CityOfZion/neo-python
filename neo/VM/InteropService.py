@@ -1,8 +1,10 @@
 import binascii
 from neo.VM.Mixins import EquatableMixin
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 from neo.SmartContract import StackItemType
 from neo.logging import log_manager
+
+# from neo.VM.ExecutionEngine import ExecutionEngine
 
 logger = log_manager.getLogger('vm')
 
@@ -81,7 +83,7 @@ class StackItem(EquatableMixin):
         if stype == StackItemType.ByteArray:
             return ByteArray(reader.ReadVarBytes())
         elif stype == StackItemType.Boolean:
-            return Boolean(reader.ReadByte())
+            return Boolean(ord(reader.ReadByte()))
         elif stype == StackItemType.Integer:
             return Integer(BigInteger.FromBytes(reader.ReadVarBytes(), signed=True))
         elif stype == StackItemType.Array:
@@ -131,8 +133,9 @@ class StackItem(EquatableMixin):
             return ByteArray(value)
         elif typ is list:
             return Array(value)
-
-        #        logger.debug("Could not create stack item for vaule %s %s " % (typ, value))
+        elif typ is str:
+            return ByteArray(bytearray(value.encode()))
+        # raise TypeError(f"{typ} is an invalid StackItem type")
         return value
 
 
@@ -145,7 +148,10 @@ class Array(StackItem, CollectionMixin):
 
     def __init__(self, value=None):
         if value:
-            self._array = value
+            if isinstance(value, (Array, Struct)):
+                self._array = value._array
+            else:
+                self._array = value
         else:
             self._array = []
 
@@ -296,6 +302,17 @@ class ByteArray(StackItem):
         except Exception as e:
             pass
         return self._value.hex()
+
+    def GetBoolean(self):
+        # Hardcoded due to circular imports
+        # if self._value > ExecutionEngine.MaxSizeForBigInteger:
+        if int.from_bytes(self._value, 'little') > 32:  # MaxSizeForBigInteger = 32
+            return True
+        else:
+            for b in self._value:
+                if b > 0:
+                    return True
+            return False
 
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.ByteArray)

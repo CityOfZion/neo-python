@@ -12,16 +12,17 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.TX.Transaction import Transaction as CoreTransaction
-from neocore.KeyPair import KeyPair as WalletKeyPair
+from neo.Core.KeyPair import KeyPair as WalletKeyPair
 from neo.Wallets.NEP5Token import NEP5Token as WalletNEP5Token
-from neocore.Cryptography.Crypto import Crypto
-from neocore.UInt160 import UInt160
-from neocore.Fixed8 import Fixed8
-from neocore.UInt256 import UInt256
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt256 import UInt256
 from neo.Wallets.Coin import CoinState
 from neo.Implementations.Wallets.peewee.Models import Account, Address, Coin, \
     Contract, Key, Transaction, \
     TransactionInfo, NEP5Token, NamedAddress, VINHold
+from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -460,6 +461,101 @@ class UserWallet(Wallet):
             pass
 
         return success, coins_toremove
+
+    def _get_asset_balance(self, asset_id, for_addr, watch_only=0):
+        """
+        Returns:
+            Fixed8: total balance.
+        """
+        total = Fixed8(0)
+
+        for coin in self.GetCoins():
+            if coin.Output.AssetId == asset_id and coin.Output.Address == for_addr:
+                if coin.State & CoinState.Confirmed > 0 and \
+                        coin.State & CoinState.Spent == 0 and \
+                        coin.State & CoinState.Locked == 0 and \
+                        coin.State & CoinState.Frozen == 0 and \
+                        coin.State & CoinState.WatchOnly == watch_only:
+                    total = total + coin.Output.Value
+
+        return total
+
+    def _get_asset_balances(self, address, watch_only):
+        assets = dict()
+        coin_assets = self.GetCoinAssets()
+        for asset in coin_assets:
+            bc_asset = Blockchain.Default().GetAssetState(asset.ToBytes())
+            total = self._get_asset_balance(asset, address, watch_only).value / Fixed8.D
+            assets.update({bc_asset.GetName(): total})
+        return assets
+
+    def _get_token_balances(self, address):
+
+        result = dict()
+        tokens = list(self._tokens.values())
+        for token in tokens:  # type: WalletNEP5Token
+            balance = token.GetBalance(self, address)
+            result.update({token.symbol: balance})
+        return result
+
+    def pretty_print(self, verbose=False):
+        if Blockchain.Default().Height == 0:
+            percent_synced = 0
+        else:
+            percent_synced = int(100 * self._current_height / Blockchain.Default().Height)
+
+        print(f"Path       : {self._path}")
+        print(f"Height     : {self._current_height}")
+        print(f"Sync status: {percent_synced}%")
+        print(" ")
+
+        # collect available public keys
+        pubkeys = dict()
+        for k in self.LoadKeyPairs().values():
+            pub = k.PublicKey.encode_point(True)
+            for ct in self._contracts.values():
+                if ct.PublicKeyHash == k.PublicKeyHash:
+                    pubkeys.update({ct.Address: pub.decode('utf-8')})
+
+        # build data objects
+        addresses = dict()
+        for addr in Address.select():
+            addr_str = addr.ToString()
+            addresses.update({addr_str: {
+                'public_key': pubkeys.get(addr_str, "N/A"),
+                'script_hash': addr.ScriptHash,
+                'watchonly': addr.IsWatchOnly,
+                'assets': self._get_asset_balances(addr_str, addr.IsWatchOnly),
+                'tokens': self._get_token_balances(addr_str)
+            }})
+
+        # pretty print
+        for address, data in addresses.items():
+            addr_str = address + " (watch only)" if data['watchonly'] else address
+            print(f"Address    : {addr_str}")
+            if verbose:
+                print(f"Script hash: {data['script_hash']}")
+                human_readable_scripthash = binascii.hexlify(data['script_hash']).decode()
+                print(f"{human_readable_scripthash: >53}")
+                print(f"Public key : {data['public_key']}")
+            has_balances = False
+            for asset_name, value in data['assets'].items():
+                if value > 0:
+                    symbol = f"[{asset_name}]"
+                    print(f"{symbol:<11}: {value}")
+                    has_balances = True
+            for token_name, value in data['tokens'].items():
+                if value > 0:
+                    symbol = f"[{token_name}]"
+                    print(f"{symbol:<11}: {value}")
+                    has_balances = True
+            if not has_balances:
+                print(f"{'Balances':<11}: only zero")
+            print(" ")
+
+        print("Claims:")
+        print(f"   unlocked: {self.GetAvailableClaimTotal().ToString()}")
+        print(f"   locked  : {self.GetUnavailableBonus().ToString()}")
 
     def ToJson(self, verbose=False):
         assets = self.GetCoinAssets()

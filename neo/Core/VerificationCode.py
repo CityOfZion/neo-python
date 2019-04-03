@@ -1,5 +1,5 @@
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 import binascii
 from neo.logging import log_manager
 
