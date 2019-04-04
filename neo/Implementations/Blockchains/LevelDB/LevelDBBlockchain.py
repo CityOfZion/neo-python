@@ -826,8 +826,13 @@ class LevelDBBlockchain(Blockchain):
             events.emit(event.event_type, event)
 
     def TryPersist(self, block: 'Block') -> Tuple[bool, str]:
-        if block.Index <= self._current_block_height:
+        distance = self._current_block_height - block.Index
+
+        if distance >= 0:
             return False, "Block already exists"
+
+        if distance < -1:
+            return False, f"Trying to persist block {block.Index} but expecting next block to be {self._current_block_height + 1}"
 
         try:
             self.Persist(block)

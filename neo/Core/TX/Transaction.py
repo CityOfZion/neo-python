@@ -596,7 +596,7 @@ class Transaction(InventoryMixin):
         Returns:
             bool: True if verified. False otherwise.
         """
-        logger.info("Verifying transaction: %s " % self.Hash.ToBytes())
+        logger.debug("Verifying transaction: %s " % self.Hash.ToBytes())
 
         return Helper.VerifyScripts(self)
 

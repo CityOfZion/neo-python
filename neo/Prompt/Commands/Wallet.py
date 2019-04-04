@@ -125,7 +125,7 @@ class CommandWalletCreate(CommandBase):
             return
 
         if PromptData.Wallet:
-            PromptData.Prompt.start_wallet_loop()
+            asyncio.create_task(PromptData.Wallet.sync_wallet(start_block=PromptData.Wallet._current_height))
             return PromptData.Wallet
 
     def command_desc(self):

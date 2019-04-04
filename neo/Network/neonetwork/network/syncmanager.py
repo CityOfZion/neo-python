@@ -136,7 +136,6 @@ class SyncManager(Singleton):
                 break
 
             next_header_hash = await self.ledger.header_hash_by_height(next_block_height)
-            # next_header = self.ledger.get_header_by_height(next_block_height)
             if next_header_hash == UInt256.zero():
                 # we do not have enough headers to fill the block cache. That's fine, just return
                 break
@@ -147,12 +146,7 @@ class SyncManager(Singleton):
 
         if len(hashes) > 0:
             logger.debug(f"Asking for blocks {best_block_height + 1} - {endheight} from {node.nodeid}")
-            if len(hashes) > 1:
-                await node.get_blocks(hashes[0], hashes[-1])
-            else:
-                await node.get_blocks(hashes[0])
-
-            # await node.get_data(InventoryType.block, hashes)
+            await node.get_data(InventoryType.block, hashes)
             node.nodeweight.append_new_request_time()
 
     async def persist_blocks(self) -> None:
@@ -289,17 +283,8 @@ class SyncManager(Singleton):
                 hashes.append(block_hash)
 
             if len(hashes) > 0:
-
-                # neo-cli >= 2.9.x only allows to us to `getdata` a hash once per session. We `getdata` a block after a broadcasted`inv` message to determine
-                # the best block height of the node. This means by the same we get in sync we might not be allowed to request that block again and we get a timeout
-                # this little hack increasingly looks back for a hash we might not have requested before via `getdata` and abuses the `getblocks` message for
-                # not validating if it has already send data for the hashes we request before thus we can get back in sync again.
-                extra_hash = await self.ledger.header_hash_by_height(ri_first.height - ri_first.failed_total)
-                hashes.insert(0, extra_hash)
                 logger.debug(f"Block time out for blocks {ri_first.height} - {ri_last.height}. Trying again using new node {node.nodeid} {hashes[0]}")
-                # await node.get_data(InventoryType.block, hashes)
-                if len(hashes) > 1:
-                    await node.get_blocks(hashes[0], hashes[-1])
+                await node.get_data(InventoryType.block, hashes)
                 node.nodeweight.append_new_request_time()
 
     async def on_headers_received(self, from_nodeid, headers: List[Header]) -> None:
