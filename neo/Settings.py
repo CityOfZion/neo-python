@@ -68,6 +68,8 @@ def check_depdendencies():
                 raise SystemCheckError("Required dependency %s is not installed. Please run 'pip install -e .'" % dep)
 
 
+
+
 class SettingsHolder:
     """
     This class holds all the settings. Needs to be setup with one of the
@@ -142,6 +144,17 @@ class SettingsHolder:
     def debug_storage_leveldb_path(self):
         self.check_chain_dir_exists()
         return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH))
+
+    def database_properties(self):
+        return {'blockchain': {'path': self.chain_leveldb_path,
+                               'backend': 'leveldb'},
+
+                'notification': {'path': self.notification_leveldb_path,
+                                 'backend': 'leveldb'},
+
+                'debug': {'path': self.debug_storage_leveldb_path,
+                          'backend': 'leveldb'}
+                }
 
     # Helpers
     @property

@@ -11,7 +11,7 @@ from prompt_toolkit.formatted_text import FormattedText
 from twisted.internet import reactor, task
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Storage.Implementation.DBFactory import getBlockchainDB
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Wallet import CommandWallet
@@ -298,7 +298,7 @@ def main():
         settings.set_max_peers(args.maxpeers)
 
     # Instantiate the blockchain and subscribe to notifications
-    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+    blockchain = Blockchain(getBlockchainDB())
     Blockchain.RegisterBlockchain(blockchain)
 
     # Try to set up a notification db

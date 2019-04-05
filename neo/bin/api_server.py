@@ -52,7 +52,7 @@ from twisted.web.server import Site
 
 # neo methods and modules
 from neo.Core.Blockchain import Blockchain
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Storage.Implementation.DBFactory import getBlockchainDB
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
@@ -259,7 +259,7 @@ def main():
         logger.info("Error in loop: %s " % error)
 
     # Instantiate the blockchain and subscribe to notifications
-    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+    blockchain = Blockchain(getBlockchainDB())
     Blockchain.RegisterBlockchain(blockchain)
 
     start_block_persisting()
