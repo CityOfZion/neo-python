@@ -95,14 +95,15 @@ class UserWalletTestCase(UserWalletTestCaseBase):
 
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
             with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                # test wallet create successful
-                path = UserWalletTestCase.new_wallet_dest()
-                args = ['create', path]
-                self.assertFalse(os.path.isfile(path))
-                res = CommandWallet().execute(args)
-                self.assertEqual(type(res), UserWallet)
-                self.assertTrue(os.path.isfile(path))
-                remove_new_wallet()
+                with patch('neo.Prompt.Commands.Wallet.asyncio'):
+                    # test wallet create successful
+                    path = UserWalletTestCase.new_wallet_dest()
+                    args = ['create', path]
+                    self.assertFalse(os.path.isfile(path))
+                    res = CommandWallet().execute(args)
+                    self.assertEqual(type(res), UserWallet)
+                    self.assertTrue(os.path.isfile(path))
+                    remove_new_wallet()
 
             # test wallet create with no path
             with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -114,18 +115,19 @@ class UserWalletTestCase(UserWalletTestCaseBase):
             # test wallet open with already existing path
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                    path = UserWalletTestCase.new_wallet_dest()
-                    args = ['create', path]
-                    self.assertFalse(os.path.isfile(path))
-                    res = CommandWallet().execute(args)
-                    self.assertEqual(type(res), UserWallet)
-                    self.assertTrue(os.path.isfile(path))
+                    with patch('neo.Prompt.Commands.Wallet.asyncio'):
+                        path = UserWalletTestCase.new_wallet_dest()
+                        args = ['create', path]
+                        self.assertFalse(os.path.isfile(path))
+                        res = CommandWallet().execute(args)
+                        self.assertEqual(type(res), UserWallet)
+                        self.assertTrue(os.path.isfile(path))
 
-                    res = CommandWallet().execute(args)
-                    self.assertFalse(res)
-                    self.assertTrue(os.path.isfile(path))
-                    self.assertIn("File already exists", mock_print.getvalue())
-                    remove_new_wallet()
+                        res = CommandWallet().execute(args)
+                        self.assertFalse(res)
+                        self.assertTrue(os.path.isfile(path))
+                        self.assertIn("File already exists", mock_print.getvalue())
+                        remove_new_wallet()
 
             # test wallet with different passwords
             with patch('sys.stdout', new=StringIO()) as mock_print:
