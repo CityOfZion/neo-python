@@ -1,5 +1,6 @@
 import random
 import time
+import requests
 from typing import List
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
@@ -261,6 +262,12 @@ class NodeLeader:
             seed_list: a list of host:port strings if not supplied use list from `protocol.xxx.json`
             skip_seeds: skip connecting to seed list
         """
+        if settings.SAFEMODE:  # rebuild the seedlist every time NodeLeader starts or restarts
+            if settings.is_mainnet:
+                self.DynamicSeedlist('https://raw.githubusercontent.com/CityOfZion/neo-mon/master/docs/assets/mainnet.json', ":10331", ":10332", ":10333")
+            elif settings.is_testnet:
+                self.DynamicSeedlist('https://raw.githubusercontent.com/CityOfZion/neo-mon/master/docs/assets/testnet.json', ":20331", ":20332", ":20333")
+
         if not seed_list:
             seed_list = settings.SEED_LIST
 
@@ -702,6 +709,67 @@ class NodeLeader:
                         peer.Disconnect()
         else:
             self.CurrentBlockheight = BC.Default().Height
+
+    def DynamicSeedlist(self, raw_seedlist, https_port, http_port, P2P_port):
+        s = requests.Session()
+        a = requests.adapters.HTTPAdapter(max_retries=0)
+        s.mount('http://', a)
+        s.mount('https://', a)
+
+        ret = s.get(raw_seedlist)
+        data = ret.json()
+        sites = data['sites']
+
+        def body(method):
+            return {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": method, 
+                "params": []
+            }
+
+        site_dict = {}
+        for site in sites:
+            if site['type'] == "RPC":
+                if "cityofzion" in site['url'] or "redpulse" in site['url']:
+                    port = ":443"
+                elif site['protocol'] == "https":
+                    port = https_port
+                elif site['protocol'] == "http":
+                    port = http_port
+                url = site['protocol'] + '://' + site['url'] + port
+                try:
+                    res = s.post(url=url, json=body("getversion"))
+                except requests.exceptions.ConnectionError:
+                    continue
+                if not res.status_code == 200:
+                    continue
+                version = res.json()
+                if "NEO-PYTHON" not in version['result']['useragent']:  # NEO-PYTHON 0.8.4+ employs SimplePolicy
+                    res = s.post(url=url, json=body("listplugins"))
+                    plugins = res.json()
+                    p_list = []
+                    try:
+                        for p in plugins['result']:
+                            p_list.append(p['name'])
+                    except KeyError:
+                        continue
+                    if "SimplePolicyPlugin" not in p_list:
+                        continue
+                res = s.post(url=url, json=body("getblockcount"))
+                blockheight = res.json()
+                site_dict[site['url']] = blockheight['result']
+        heights = sorted(site_dict.values(), reverse=True)
+        threshold = heights[0] - 8  # gives two minutes on average to complete the query
+        to_remove = []
+        for key, val in site_dict.items():
+            if val < threshold:
+                to_remove.append(key)
+        for site in to_remove:
+            del site_dict[site]
+        settings.SEED_LIST = []
+        for key in site_dict.keys():
+            settings.SEED_LIST.append(key + P2P_port)
 
     def clientConnectionFailed(self, err, address: Address):
         """
