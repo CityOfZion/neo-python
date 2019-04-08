@@ -1,14 +1,13 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neocore.UInt160 import UInt160
-from neocore.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
 from neo.Prompt.Commands.BuildNRun import BuildAndRun
 from neo.Wallets.utils import to_aes_key
 from neo.Settings import settings
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
-
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
 
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
@@ -34,7 +33,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet1()
 
-        arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "True", "070705", "05", "put", "key1", "b'ab'", "--from-addr=" + self.wallet_1_addr]
+        arguments = ["neo/SmartContract/tests/StorageTest.py", "True", "False", "True", "070705", "05", "put", "key1", "b'ab'",
+                     "--from-addr=" + self.wallet_1_addr]
 
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, min_fee=Fixed8.FromDecimal(.0004))
 
@@ -60,8 +60,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         expected_cost = Fixed8.FromDecimal(5.466)
         expected_fee = Fixed8.FromDecimal(.0001)
-        self.assertEqual(expected_cost, engine.GasConsumed())
-        self.assertEqual(tx.Gas, expected_fee)
+        self.assertEqual(expected_cost.value, engine.GasConsumed().value)
+        self.assertEqual(tx.Gas.value, expected_fee.value)
         self.assertEqual(bool(result), True)
 
     def test_build_contract_3(self):

@@ -5,7 +5,7 @@ from events import Events
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.AssetType import AssetType
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 from neo.Core.TX.RegisterTransaction import RegisterTransaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.IssueTransaction import IssueTransaction
@@ -15,10 +15,15 @@ from neo.Core.State.SpentCoinState import SpentCoin
 from neo.SmartContract.Contract import Contract
 from neo.Settings import settings
 from collections import Counter
-from neocore.Fixed8 import Fixed8
-from neocore.Cryptography.ECCurve import ECDSA
-from neocore.UInt256 import UInt256
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.Cryptography.ECCurve import ECDSA
+from neo.Core.UInt256 import UInt256
 from functools import lru_cache
+
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from neo.Core.State import AssetState
 
 
 class Blockchain:
@@ -301,7 +306,7 @@ class Blockchain:
     def GetAccountState(self, address):
         pass
 
-    def GetAssetState(self, assetId):
+    def GetAssetState(self, assetId) -> Optional['AssetState']:
         # abstract
         pass
 

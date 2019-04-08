@@ -4,8 +4,8 @@ from neo.Network.NeoNode import NeoNode
 from mock import patch
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
-from neocore.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from neo.SmartContract.ContractParameterContext import ContractParametersContext

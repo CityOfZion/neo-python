@@ -3,9 +3,10 @@ from neo.Core.Helper import Helper
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.State.AssetState import AssetState
-from neocore.IO.BinaryWriter import BinaryWriter
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.Fixed8 import Fixed8
+from neo.Core.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.IO.Helper import Helper as IOHelper
+from neo.Core.Fixed8 import Fixed8
 from neo.IO.MemoryStream import MemoryStream, StreamManager
 import binascii
 import os
@@ -136,6 +137,7 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(asset['name'], '[{"lang":"zh-CN","name":"TestCoin"}]')
         self.assertEqual(asset['precision'], 8)
         self.assertEqual(Fixed8.FromDecimal(settings.ALL_FEES['RegisterTransaction']), tx.SystemFee())
+        self.assertEqual(json['size'], 302)
 
     cr = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce490241400bd2e921cee90c8de1a192e61e33eb8980a3dc00c388ee9aac0712178cc8fceed8bb59788f7caf3c4dc082abcdaaa49772fda86db4ceea243bda31bcde9b8a0b3c21034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e1104182f145967cc4ee2f1c9f4e0782756dabf246d0a4fe60a035441402fe3e20c303e26c3817fed6fc7db8edde4ac62b16eee796c01c2b59e382b7ddfc82f0b36c7f7520821c7b72b9aff50ae27a016961f1ef1dade9cafa85655380f2321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
     cr2 = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce49'
@@ -273,3 +275,13 @@ class TransactionTestCase(NeoTestCase):
         res = tx.GetScriptHashesForVerifying()
 
         self.assertTrue(type(res), list)
+
+    def test_invocation_txn_size(self):
+        """ For more information about the following test read here
+            https://github.com/neo-project/neo/issues/652
+        """
+        raw_tx = b"d1015904802b530b14d5a682e81b8a840cc44b3b360cbd0f1ee6f50efd14235a717ed7ed18a43de47499c3d05b8d4a4bcf3a53c1087472616e7366657267fb1c540417067c270dee32f21023aa8b9b71abcef166fc47646b02d3f92300000000000000000120235a717ed7ed18a43de47499c3d05b8d4a4bcf3a0000014140b9234cad658c4d512bca453908a0df1c2beda49c544ec735bb492b81b4d0974ac8d66046061b3d0ce823e27c71fef1ee6a8f2fa369198ac74acedd045901d7222321030ab39b99d8675cd9bd90aaec37cba964297cc817078d33e508ab11f1d245c068ac"
+        tx = IOHelper.DeserializeTX(binascii.unhexlify(raw_tx))
+
+        txjson = tx.ToJson()
+        self.assertEqual(227, txjson['size'])

@@ -22,9 +22,9 @@ from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
     TransactionAttributeUsage
 from neo.Core.State.CoinState import CoinState
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
-from neocore.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
 from neo.Network.NodeLeader import NodeLeader
 from neo.Core.State.StorageKey import StorageKey

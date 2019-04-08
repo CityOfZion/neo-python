@@ -96,9 +96,14 @@ class PromptInterface:
     def get_bottom_toolbar(self, cli=None):
         out = []
         try:
-            return "[%s] Progress: %s/%s" % (settings.net_name,
-                                             str(Blockchain.Default().Height),
-                                             str(Blockchain.Default().HeaderHeight))
+            if PromptData.Wallet is None:
+                return "[%s] Progress: 0/%s/%s" % (settings.net_name,
+                                                   str(Blockchain.Default().Height),
+                                                   str(Blockchain.Default().HeaderHeight))
+            else:
+                return "[%s] Progress: %s/%s/%s" % (settings.net_name, str(PromptData.Wallet._current_height),
+                                                    str(Blockchain.Default().Height),
+                                                    str(Blockchain.Default().HeaderHeight))
         except Exception as e:
             pass
 

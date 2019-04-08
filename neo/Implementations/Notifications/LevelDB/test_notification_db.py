@@ -2,14 +2,14 @@ from unittest import TestCase
 from neo.Settings import settings
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neo.SmartContract.ContractParameter import ContractParameterType, ContractParameter
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
 from uuid import uuid1
 import shutil
 import os
 
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 
 
 class NotificationDBTestCase(TestCase):

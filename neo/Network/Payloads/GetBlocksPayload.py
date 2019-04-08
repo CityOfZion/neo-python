@@ -1,7 +1,7 @@
 import sys
 import binascii
-from neocore.IO.Mixins import SerializableMixin
-from neocore.UInt256 import UInt256
+from neo.Core.IO.Mixins import SerializableMixin
+from neo.Core.UInt256 import UInt256
 from neo.Core.Size import GetVarSize
 
 
@@ -37,7 +37,7 @@ class GetBlocksPayload(SerializableMixin):
         Args:
             reader (neo.IO.BinaryReader):
         """
-        self.HashStart = reader.ReadSerializableArray('neocore.UInt256.UInt256')
+        self.HashStart = reader.ReadSerializableArray('neo.Core.UInt256.UInt256')
         self.HashStop = reader.ReadUInt256()
 
     def Serialize(self, writer):

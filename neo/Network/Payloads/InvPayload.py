@@ -1,6 +1,6 @@
 import binascii
-from neocore.UInt256 import UInt256
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.UInt256 import UInt256
+from neo.Core.IO.Mixins import SerializableMixin
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
 from neo.logging import log_manager
@@ -42,7 +42,7 @@ class InvPayload(SerializableMixin):
         Args:
             reader (neo.IO.BinaryReader):
         """
-        self.Type = reader.ReadByte()
+        self.Type = ord(reader.ReadByte())
         self.Hashes = reader.ReadHashes()
 
     def Serialize(self, writer):

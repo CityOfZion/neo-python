@@ -1,5 +1,5 @@
 from .StateBase import StateBase
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.FunctionCode import FunctionCode
 from enum import IntEnum
@@ -102,14 +102,15 @@ class ContractState(StateBase):
         parameterlist_size = GetVarSize(self.Code.ParameterList)
         parameterreturntype_size = s.uint8
 
-        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
+        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(
+            self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
 
     def Deserialize(self, reader):
         """
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(ContractState, self).Deserialize(reader)
 

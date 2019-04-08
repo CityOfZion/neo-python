@@ -3,9 +3,9 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from prompt_toolkit import prompt
 from neo.Core.Helper import Helper
-from neocore.KeyPair import KeyPair
+from neo.Core.KeyPair import KeyPair
 from neo.SmartContract.Contract import Contract
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 
 
 def main():

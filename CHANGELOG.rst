@@ -5,7 +5,17 @@ All notable changes to this project are documented in this file.
 
 [0.8.5-dev] in progress
 -----------------------
+- Allow override of test invocation return type
+- Add current wallet height to bottom toolbar
 - Change class attributes of ``Transaction`` into instance attributes and fix constructor
+- Improve testing of "getbalance" RPC method
+- Support cancelling actions with ``KeyboardInterrupt``
+- Enhance output of `wallet` cli command
+- Fixed size calculation for `RegisterTransaction`
+- Support updating np-core to throw exceptions instead of logging errors `#888 <https://github.com/CityOfZion/neo-python/issues/888>`_
+- Fixed size calculation for `InvocationTransaction` `#919 <https://github.com/CityOfZion/neo-python/pull/919>`_
+- Update Virtual Machine to latest implementation, Add support for running official JSON test vectors `#921 <https://github.com/CityOfZion/neo-python/pull/921>`_
+- Add PICKITEM for ByteArray into VM `#923 <https://github.com/CityOfZion/neo-python/pull/923>`_
 - Add ``Safemode`` which restricts peers to ``SEED_LIST`` addrs only
 
 
@@ -14,7 +24,7 @@ All notable changes to this project are documented in this file.
 - Fix incorrect error handling when importing a 1 out of 2 multi-signature address `#860 <https://github.com/CityOfZion/neo-python/pull/860>`_
 - Gracefully handle invalid ``GET`` request `#863 <https://github.com/CityOfZion/neo-python/pull/863>`_
 - Implement tx size network fee calc `#869 <https://github.com/CityOfZion/neo-python/pull/869>`_
-- Fix ``config maxpeers`` to disconnect peers if limited is lower than before `#878 <https://github.com/CityOfZion/neo-python/pull/878>`_
+- Fix ``config maxpeers`` to disconnect peers if limit is lower than before `#878 <https://github.com/CityOfZion/neo-python/pull/878>`_
 - Implement the ability to attach a priority fee to applicable transactions `#880 <https://github.com/CityOfZion/neo-python/pull/880>`_
 - Fix an invalid list access error during client connection error edge case `#882 <https://github.com/CityOfZion/neo-python/pull/882>`_
 - Fix `NetworkAddressWithTime` address serialization `#897 <https://github.com/CityOfZion/neo-python/pull/897>`_

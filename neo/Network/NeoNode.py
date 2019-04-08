@@ -8,7 +8,7 @@ from twisted.internet.address import IPv4Address
 from twisted.internet.defer import CancelledError
 from twisted.internet import error
 from neo.Core.Blockchain import Blockchain as BC
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.Network.Message import Message
 from neo.IO.MemoryStream import StreamManager
 from neo.IO.Helper import Helper as IOHelper

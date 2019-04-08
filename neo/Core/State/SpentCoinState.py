@@ -1,6 +1,6 @@
 from collections import namedtuple
 from .StateBase import StateBase
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 
 
@@ -152,7 +152,7 @@ class SpentCoinState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(SpentCoinState, self).Deserialize(reader)
 
