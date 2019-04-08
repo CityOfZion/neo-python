@@ -259,10 +259,11 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         # test empty account
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
             with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                args = ['create', 'testwallet.wallet']
-                res = CommandWallet().execute(args)
-                self.assertTrue(res)
-                self.assertIsInstance(res, UserWallet)
+                with patch('neo.Prompt.Commands.Wallet.asyncio'):
+                    args = ['create', 'testwallet.wallet']
+                    res = CommandWallet().execute(args)
+                    self.assertTrue(res)
+                    self.assertIsInstance(res, UserWallet)
 
         addr = res.Addresses[0]
         args = ['account', addr]
