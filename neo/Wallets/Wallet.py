@@ -1017,7 +1017,7 @@ class Wallet:
             skip_fee_calc (bool): If true, the network fee calculation and verification will be skipped.
 
         Returns:
-            tx: (Transaction) Returns the transaction with oupdated inputs and outputs.
+            tx: (Transaction) Returns the transaction with updated inputs and outputs.
         """
 
         tx.ResetReferences()

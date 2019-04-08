@@ -141,10 +141,10 @@ class NeoNode:
                     # neo-cli broadcasts INV messages on a regular interval. We can use those as trigger to request their latest block height
                     # supported from 2.10.0.1 onwards
                     if len(inv.hashes) > 0:
-                        # m = Message(command='ping', payload=PingPayload(GetBlockchain().Height))
-                        # await self.send_message(m)
-                        self._inv_hash_for_height = inv.hashes[-1]
-                        await self.get_data(inv.type, inv.hashes)
+                        m = Message(command='ping', payload=PingPayload(GetBlockchain().Height))
+                        await self.send_message(m)
+                        # self._inv_hash_for_height = inv.hashes[-1]
+                        # await self.get_data(inv.type, inv.hashes)
                     elif inv.type == InventoryType.consensus:
                         pass
                 elif inv.type == InventoryType.tx:
