@@ -6,6 +6,7 @@ See also:
 """
 import ast
 import binascii
+import logging
 from json.decoder import JSONDecodeError
 
 import aiohttp_cors
@@ -14,18 +15,17 @@ from aiohttp import web
 from aiohttp.helpers import MultiDict
 
 from neo.Core.Blockchain import Blockchain
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.Helper import Helper
 from neo.Core.State.AccountState import AccountState
+from neo.Core.State.CoinState import CoinState
+from neo.Core.State.StorageKey import StorageKey
 from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
     ContractTransaction, TXFeeError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
     TransactionAttributeUsage
-
-from neo.Core.State.CoinState import CoinState
 from neo.Core.UInt160 import UInt160
 from neo.Core.UInt256 import UInt256
-from neo.Core.Fixed8 import Fixed8
-from neo.Core.Helper import Helper
-from neo.Core.State.StorageKey import StorageKey
 from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Network.neonetwork.network.nodemanager import NodeManager
 from neo.Prompt.Utils import get_asset_id
@@ -79,7 +79,13 @@ class JsonRpcError(Exception):
 class JsonRpcApi:
 
     def __init__(self, wallet=None):
-        self.app = web.Application()
+        stdio_handler = logging.StreamHandler()
+        stdio_handler.setLevel(logging.INFO)
+        _logger = logging.getLogger('aiohttp.access')
+        _logger.addHandler(stdio_handler)
+        _logger.setLevel(logging.DEBUG)
+
+        self.app = web.Application(logger=_logger)
         self.port = settings.RPC_PORT
         self.wallet = wallet
         self.nodemgr = NodeManager()
