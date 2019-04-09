@@ -315,6 +315,7 @@ def main():
         p2p = NetworkService()
         loop.run_until_complete(p2p.shutdown())
         loop.run_until_complete(shutdown())
+        loop.run_until_complete(loop.shutdown_asyncgens())
         loop.stop()
     finally:
         loop.close()

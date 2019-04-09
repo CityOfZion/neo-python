@@ -337,6 +337,8 @@ class NodeManager(Singleton):
         except OSError as e:
             # print(f"{host}:{port} failed to connect for reason {e}")
             pass
+        except asyncio.CancelledError:
+            pass
         except Exception as e:
             traceback.print_exc()
 

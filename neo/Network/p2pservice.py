@@ -31,7 +31,9 @@ class NetworkService(Singleton):
 
     async def shutdown(self):
         with suppress(asyncio.CancelledError):
-            await self.syncmgr.shutdown()
+            if self.syncmgr:
+                await self.syncmgr.shutdown()
 
         with suppress(asyncio.CancelledError):
-            await self.nodemgr.shutdown()
+            if self.nodemgr:
+                await self.nodemgr.shutdown()

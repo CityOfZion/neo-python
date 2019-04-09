@@ -14,7 +14,7 @@ from neo.Network.neonetwork.core.uint256 import UInt256
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('syncmanager')
-log_manager.config_stdio([('syncmanager', 10)])
+# log_manager.config_stdio([('syncmanager', 10)])
 
 if TYPE_CHECKING:
     from neo.Network.neonetwork.ledger import Ledger
@@ -91,7 +91,7 @@ class SyncManager(Singleton):
         cur_header_hash = await self.ledger.header_hash_by_height(cur_header_height)
         await node.get_headers(hash_start=cur_header_hash)
 
-        logger.debug(f"Requested headers starting at {cur_header_height + 1} from node {node.nodeid}")
+        logger.debug(f"Requested headers starting at {cur_header_height + 1} from node {node.nodeid_human}")
         node.nodeweight.append_new_request_time()
 
     async def sync_block(self) -> None:
@@ -145,7 +145,7 @@ class SyncManager(Singleton):
             self.add_block_flight_info(node.nodeid, next_block_height, next_header_hash)
 
         if len(hashes) > 0:
-            logger.debug(f"Asking for blocks {best_block_height + 1} - {endheight} from {node.nodeid}")
+            logger.debug(f"Asking for blocks {best_block_height + 1} - {endheight} from {node.nodeid_human}")
             await node.get_data(InventoryType.block, hashes)
             node.nodeweight.append_new_request_time()
 
@@ -181,7 +181,7 @@ class SyncManager(Singleton):
             # we're still good on time
             return
 
-        logger.debug(f"header timeout limit exceeded by {delta - self.HEADER_REQUEST_TIMEOUT}s for node {flight_info.node_id}")
+        logger.debug(f"header timeout limit exceeded by {delta - self.HEADER_REQUEST_TIMEOUT:.2f}s for node {flight_info.node_id}")
 
         cur_header_height = await self.ledger.cur_header_height()
         if flight_info.height <= cur_header_height:
@@ -202,7 +202,7 @@ class SyncManager(Singleton):
             return
 
         hash = await self.ledger.header_hash_by_height(flight_info.height - 1)
-        logger.debug(f"Retry requesting headers starting at {flight_info.height} from new node {node.nodeid}")
+        logger.debug(f"Retry requesting headers starting at {flight_info.height} from new node {node.nodeid_human}")
         await node.get_headers(hash_start=hash)
 
         # restart start_time of flight info or else we'll timeout too fast for the next node
@@ -283,7 +283,7 @@ class SyncManager(Singleton):
                 hashes.append(block_hash)
 
             if len(hashes) > 0:
-                logger.debug(f"Block time out for blocks {ri_first.height} - {ri_last.height}. Trying again using new node {node.nodeid} {hashes[0]}")
+                logger.debug(f"Block time out for blocks {ri_first.height} - {ri_last.height}. Trying again using new node {node.nodeid_human} {hashes[0]}")
                 await node.get_data(InventoryType.block, hashes)
                 node.nodeweight.append_new_request_time()
 

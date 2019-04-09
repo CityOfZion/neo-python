@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Optional, List, TYPE_CHECKING
 import asyncio
 from contextlib import suppress
-from neo.Network.neonetwork.common import msgrouter
+from neo.Network.neonetwork.common import msgrouter, encode_base62
 from neo.Network.neonetwork.network.nodeweight import NodeWeight
 from neo.logging import log_manager
 import binascii
@@ -35,6 +35,7 @@ class NeoNode:
 
         self.address = None
         self.nodeid = id(self)
+        self.nodeid_human = encode_base62(self.nodeid)
         self.version = None
         self.tasks = []
         self.nodeweight = NodeWeight(self.nodeid)
@@ -153,7 +154,7 @@ class NeoNode:
                 block = Block.deserialize_from_bytes(message.payload)
                 if block:
                     if self._inv_hash_for_height == block.hash and block.index > self.best_height:
-                        logger.debug(f"Updating node height from {self.best_height} to {block.index}")
+                        logger.debug(f"Updating node {self.nodeid_human} height from {self.best_height} to {block.index}")
                         self.best_height = block.index
                         self._inv_hash_for_height = None
 
@@ -166,7 +167,7 @@ class NeoNode:
             elif message.command == 'pong':
                 payload = PingPayload.deserialize_from_bytes(message.payload)
                 if payload:
-                    logger.debug(f"Updating node {self.nodeid} height from {self.best_height} to {payload.current_height}")
+                    logger.debug(f"Updating node {self.nodeid_human} height from {self.best_height} to {payload.current_height}")
                     self.best_height = payload.current_height
                     self._inv_hash_for_height = None
             elif message.command == 'getdata':
