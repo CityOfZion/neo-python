@@ -12,4 +12,3 @@ ret_default = _db.get(b'2', b'default_value')
 print(ret_1, ret_default)
 assert ret_1 == b'first'
 assert ret_default == b'default_value'
-

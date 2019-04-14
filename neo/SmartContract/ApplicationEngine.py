@@ -304,7 +304,7 @@ class ApplicationEngine(ExecutionEngine):
 
         try:
             _script = binascii.unhexlify(script)
-        except:
+        except Exception as e:
             _script = script
 
         engine.LoadScript(_script)

@@ -8,7 +8,7 @@ import shutil
 
 from neo.api.REST.RestApi import RestApi
 
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from klein.test.test_resource import requestMock
 
 

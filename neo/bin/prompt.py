@@ -12,7 +12,7 @@ from twisted.internet import reactor, task
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
 from neo.Storage.Implementation.DBFactory import getBlockchainDB
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Show import CommandShow

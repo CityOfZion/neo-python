@@ -1,6 +1,8 @@
 import plyvel
 from neo.EventHub import events
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent, NotifyType
+from neo.Storage.Implementation.DBFactory import getNotificationDB
+from neo.Storage.Interface.DBInterface import DBProperties
 from neo.Core.State.ContractState import ContractState
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
@@ -50,7 +52,7 @@ class NotificationDB:
         Closes the database if it is open
         """
         if NotificationDB.__instance:
-            NotificationDB.__instance.db.close()
+            NotificationDB.__instance.db.closeDB()
             NotificationDB.__instance = None
 
     @property
@@ -69,7 +71,7 @@ class NotificationDB:
     def __init__(self, path):
 
         try:
-            self._db = plyvel.DB(path, create_if_missing=True)
+            self._db = getNotificationDB()
             logger.info("Created Notification DB At %s " % path)
         except Exception as e:
             logger.info("Notification leveldb unavailable, you may already be running this process: %s " % e)
@@ -126,89 +128,82 @@ class NotificationDB:
         """
         if len(self._events_to_write):
 
-            addr_db = self.db.prefixed_db(NotificationPrefix.PREFIX_ADDR)
-            block_db = self.db.prefixed_db(NotificationPrefix.PREFIX_BLOCK)
-            contract_db = self.db.prefixed_db(NotificationPrefix.PREFIX_CONTRACT)
-
-            block_write_batch = block_db.write_batch()
-            contract_write_batch = contract_db.write_batch()
+            addr_db = self.db.getPrefixedDB(NotificationPrefix.PREFIX_ADDR)
+            block_db = self.db.getPrefixedDB(NotificationPrefix.PREFIX_BLOCK)
+            contract_db = self.db.getPrefixedDB(NotificationPrefix.PREFIX_CONTRACT)
 
             block_count = 0
             block_bytes = self._events_to_write[0].block_number.to_bytes(4, 'little')
 
-            for evt in self._events_to_write:  # type:NotifyEvent
+            with block_db.getBatch() as block_write_batch:
+                with contract_db.getBatch() as contract_write_batch:
+                    for evt in self._events_to_write:  # type:NotifyEvent
+                        # write the event for both or one of the addresses involved in the transfer
+                        write_both = True
+                        hash_data = evt.ToByteArray()
 
-                # write the event for both or one of the addresses involved in the transfer
-                write_both = True
-                hash_data = evt.ToByteArray()
+                        bytes_to = bytes(evt.addr_to.Data)
+                        bytes_from = bytes(evt.addr_from.Data)
 
-                bytes_to = bytes(evt.addr_to.Data)
-                bytes_from = bytes(evt.addr_from.Data)
+                        if bytes_to == bytes_from:
+                            write_both = False
 
-                if bytes_to == bytes_from:
-                    write_both = False
+                        total_bytes_to = addr_db.get(bytes_to + NotificationPrefix.PREFIX_COUNT)
+                        total_bytes_from = addr_db.get(bytes_from + NotificationPrefix.PREFIX_COUNT)
 
-                total_bytes_to = addr_db.get(bytes_to + NotificationPrefix.PREFIX_COUNT)
-                total_bytes_from = addr_db.get(bytes_from + NotificationPrefix.PREFIX_COUNT)
+                        if not total_bytes_to:
+                            total_bytes_to = b'\x00'
 
-                if not total_bytes_to:
-                    total_bytes_to = b'\x00'
+                        if not total_bytes_from:
+                            total_bytes_from = b'x\00'
 
-                if not total_bytes_from:
-                    total_bytes_from = b'x\00'
+                        addr_to_key = bytes_to + total_bytes_to
+                        addr_from_key = bytes_from + total_bytes_from
 
-                addr_to_key = bytes_to + total_bytes_to
-                addr_from_key = bytes_from + total_bytes_from
+                        with addr_db.getBatch() as b:
+                            b.put(addr_to_key, hash_data)
+                            if write_both:
+                                b.put(addr_from_key, hash_data)
+                            total_bytes_to = int.from_bytes(total_bytes_to, 'little') + 1
+                            total_bytes_from = int.from_bytes(total_bytes_from, 'little') + 1
+                            new_bytes_to = total_bytes_to.to_bytes(4, 'little')
+                            new_bytes_from = total_bytes_from.to_bytes(4, 'little')
+                            b.put(bytes_to + NotificationPrefix.PREFIX_COUNT, new_bytes_to)
+                            if write_both:
+                                b.put(bytes_from + NotificationPrefix.PREFIX_COUNT, new_bytes_from)
 
-                with addr_db.write_batch() as b:
-                    b.put(addr_to_key, hash_data)
-                    if write_both:
-                        b.put(addr_from_key, hash_data)
-                    total_bytes_to = int.from_bytes(total_bytes_to, 'little') + 1
-                    total_bytes_from = int.from_bytes(total_bytes_from, 'little') + 1
-                    new_bytes_to = total_bytes_to.to_bytes(4, 'little')
-                    new_bytes_from = total_bytes_from.to_bytes(4, 'little')
-                    b.put(bytes_to + NotificationPrefix.PREFIX_COUNT, new_bytes_to)
-                    if write_both:
-                        b.put(bytes_from + NotificationPrefix.PREFIX_COUNT, new_bytes_from)
+                        # write the event to the per-block database
+                        per_block_key = block_bytes + block_count.to_bytes(4, 'little')
+                        block_write_batch.put(per_block_key, hash_data)
+                        block_count += 1
 
-                # write the event to the per-block database
-                per_block_key = block_bytes + block_count.to_bytes(4, 'little')
-                block_write_batch.put(per_block_key, hash_data)
-                block_count += 1
-
-                # write the event to the per-contract database
-                contract_bytes = bytes(evt.contract_hash.Data)
-                count_for_contract = contract_db.get(contract_bytes + NotificationPrefix.PREFIX_COUNT)
-                if not count_for_contract:
-                    count_for_contract = b'\x00'
-                contract_event_key = contract_bytes + count_for_contract
-                contract_count_int = int.from_bytes(count_for_contract, 'little') + 1
-                new_contract_count = contract_count_int.to_bytes(4, 'little')
-                contract_write_batch.put(contract_bytes + NotificationPrefix.PREFIX_COUNT, new_contract_count)
-                contract_write_batch.put(contract_event_key, hash_data)
-
-            # finish off the per-block write batch and contract write batch
-            block_write_batch.write()
-            contract_write_batch.write()
+                        # write the event to the per-contract database
+                        contract_bytes = bytes(evt.contract_hash.Data)
+                        count_for_contract = contract_db.get(contract_bytes + NotificationPrefix.PREFIX_COUNT)
+                        if not count_for_contract:
+                            count_for_contract = b'\x00'
+                        contract_event_key = contract_bytes + count_for_contract
+                        contract_count_int = int.from_bytes(count_for_contract, 'little') + 1
+                        new_contract_count = contract_count_int.to_bytes(4, 'little')
+                        contract_write_batch.put(contract_bytes + NotificationPrefix.PREFIX_COUNT, new_contract_count)
+                        contract_write_batch.put(contract_event_key, hash_data)
 
         self._events_to_write = []
 
         if len(self._new_contracts_to_write):
 
-            token_db = self.db.prefixed_db(NotificationPrefix.PREFIX_TOKEN)
+            token_db = self.db.getPrefixedDB(NotificationPrefix.PREFIX_TOKEN)
 
             token_write_batch = token_db.write_batch()
 
-            for token_event in self._new_contracts_to_write:
-                try:
-                    hash_data = token_event.ToByteArray()  # used to fail here
-                    hash_key = token_event.contract.Code.ScriptHash().ToBytes()
-                    token_write_batch.put(hash_key, hash_data)
-                except Exception as e:
-                    logger.debug(f"Failed to write new contract, reason: {e}")
-
-            token_write_batch.write()
+            with token_db.getBatch() as token_write_batch:
+                for token_event in self._new_contracts_to_write:
+                    try:
+                        hash_data = token_event.ToByteArray()  # used to fail here
+                        hash_key = token_event.contract.Code.ScriptHash().ToBytes()
+                        token_write_batch.put(hash_key, hash_data)
+                    except Exception as e:
+                        logger.debug(f"Failed to write new contract, reason: {e}")
 
         self._new_contracts_to_write = []
 
@@ -221,10 +216,10 @@ class NotificationDB:
         Returns:
             list: a list of notifications
         """
-        blocklist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_BLOCK).snapshot()
+        blocklist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_BLOCK).createSnapshot()
         block_bytes = block_number.to_bytes(4, 'little')
         results = []
-        for val in blocklist_snapshot.iterator(prefix=block_bytes, include_key=False):
+        for val in blocklist_snapshot.openIter(DBProperties(prefix=block_bytes, include_key=False)):
             event = SmartContractEvent.FromByteArray(val)
             results.append(event)
 
@@ -246,10 +241,10 @@ class NotificationDB:
         if not isinstance(addr, UInt160):
             raise Exception("Incorrect address format")
 
-        addrlist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_ADDR).snapshot()
+        addrlist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_ADDR).createSnapshot()
         results = []
 
-        for val in addrlist_snapshot.iterator(prefix=bytes(addr.Data), include_key=False):
+        for val in addrlist_snapshot.openIter(DBProperties(prefix=bytes(addr.Data), include_key=False)):
             if len(val) > 4:
                 try:
                     event = SmartContractEvent.FromByteArray(val)
@@ -274,10 +269,10 @@ class NotificationDB:
         if not isinstance(hash, UInt160):
             raise Exception("Incorrect address format")
 
-        contractlist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_CONTRACT).snapshot()
+        contractlist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_CONTRACT).createSnapshot()
         results = []
 
-        for val in contractlist_snapshot.iterator(prefix=bytes(hash.Data), include_key=False):
+        for val in contractlist_snapshot.openIter(DBProperties(prefix=bytes(hash.Data), include_key=False)):
             if len(val) > 4:
                 try:
                     event = SmartContractEvent.FromByteArray(val)
@@ -292,9 +287,9 @@ class NotificationDB:
         Returns:
             list: A list of smart contract events with contracts that are NEP5 Tokens
         """
-        tokens_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_TOKEN).snapshot()
+        tokens_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_TOKEN).createSnapshot()
         results = []
-        for val in tokens_snapshot.iterator(include_key=False):
+        for val in tokens_snapshot.openIter(DBProperties(include_key=False)):
             event = SmartContractEvent.FromByteArray(val)
             results.append(event)
         return results
@@ -308,7 +303,7 @@ class NotificationDB:
         Returns:
             SmartContractEvent: A smart contract event with a contract that is an NEP5 Token
         """
-        tokens_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_TOKEN).snapshot()
+        tokens_snapshot = self.db.getPrefixedDB(DBProperties(NotificationPrefix.PREFIX_TOKEN)).createSnapshot()
 
         try:
             val = tokens_snapshot.get(hash.ToBytes())

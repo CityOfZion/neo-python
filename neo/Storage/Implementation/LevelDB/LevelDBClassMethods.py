@@ -84,9 +84,10 @@ def openIter(self, properties):
     # TODO start implement start and end
 
     self._iter = self._db.iterator(
-                                    prefix=properties.prefix,
-                                    include_value=properties.include_value,
-                                    include_key=properties.include_key)
+        prefix=properties.prefix,
+        include_value=properties.include_value,
+        include_key=properties.include_key)
+
     yield self._iter
     self._iter.close()
 
@@ -97,6 +98,10 @@ def getBatch(self):
         self._batch = self._db.write_batch()
         yield self._batch
         self._batch.write()
+
+
+def getPrefixedDB(self, prefix):
+    return self._db.prefixed_db(prefix)
 
 
 def closeDB(self):

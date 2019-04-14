@@ -42,3 +42,7 @@ class AbstractDBInterface(ABC):
     @abstractmethod
     def closeDB(self):
         raise NotImplementedError
+
+    @abstractmethod
+    def getPrefixedDB(self, prefix):
+        raise NotImplementedError

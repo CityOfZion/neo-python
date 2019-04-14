@@ -14,7 +14,7 @@ import os
 import shutil
 from tqdm import trange
 from prompt_toolkit import prompt
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 
 
 def main():

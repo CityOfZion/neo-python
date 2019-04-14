@@ -14,9 +14,7 @@ BC_CONST = 'blockchain'
 NOTIF_CONST = 'notification'
 DEBUG_CONST = 'debug'
 
-print('props ', settings.database_properties())
 DATABASE_PROPS = settings.database_properties()
-
 
 _blockchain_db_instance = None
 
@@ -33,6 +31,9 @@ def getBlockchainDB():
 
 
 def getNotificationDB():
+    logger.info('Creating NotificationDB')
+    NotificationDB = _dbFactory(NOTIF_CONST, DATABASE_PROPS[NOTIF_CONST])
+    _notif_db_instance = NotificationDB(DATABASE_PROPS[NOTIF_CONST]['path'])
     return _notif_db_instance
 
 
@@ -62,9 +63,9 @@ def _dbFactory(dbType, properties):
         # print(attributes)
 
         return type(
-                    properties['backend'].title()+'DBImpl'+dbType.title(),
-                    (AbstractDBInterface,),
-                    attributes)
+            properties['backend'].title() + 'DBImpl' + dbType.title(),
+            (AbstractDBInterface,),
+            attributes)
 
     # NotificationDB = _dbFactory(NOTIF_CONST, DATABASE_PROPS[NOTIF_CONST])
     # _notif_db_instance = NotificationDB(DATABASE_PROPS[NOTIF_CONST])

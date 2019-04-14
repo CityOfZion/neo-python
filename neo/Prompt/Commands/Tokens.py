@@ -10,7 +10,7 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt import Utils as PromptUtils
 from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Token
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
 from neo.Core.Utils import isValidPublicAddress
 import peewee

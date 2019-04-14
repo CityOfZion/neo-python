@@ -9,7 +9,7 @@ from klein import Klein
 from logzero import logger
 
 from neo.Network.NodeLeader import NodeLeader
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Core.Blockchain import Blockchain
 from neo.Core.UInt160 import UInt160
 from neo.Core.UInt256 import UInt256

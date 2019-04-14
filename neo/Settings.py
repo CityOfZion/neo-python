@@ -68,8 +68,6 @@ def check_depdendencies():
                 raise SystemCheckError("Required dependency %s is not installed. Please run 'pip install -e .'" % dep)
 
 
-
-
 class SettingsHolder:
     """
     This class holds all the settings. Needs to be setup with one of the
