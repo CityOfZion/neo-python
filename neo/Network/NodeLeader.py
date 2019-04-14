@@ -3,7 +3,6 @@ import time
 from typing import List
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
-from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode, HEARTBEAT_BLOCKS
@@ -542,9 +541,6 @@ class NodeLeader:
             relayed |= peer.Relay(inventory)
 
         if len(self.Peers) == 0:
-            if type(BC.Default()) is TestLevelDBBlockchain:
-                # mock a true result for tests
-                return True
 
             logger.info("no connected peers")
 

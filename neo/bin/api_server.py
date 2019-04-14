@@ -103,6 +103,7 @@ def stop_block_persisting():
 def persist_done(value):
     """persist callback. Value is unused"""
     if continue_persisting:
+        sleep(0.5)
         start_block_persisting()
     else:
         block_deferred.cancel()
@@ -155,6 +156,8 @@ def main():
     # host
     parser.add_argument("--host", action="store", type=str, help="Hostname ( for example 127.0.0.1)", default="0.0.0.0")
 
+    # rollback
+    parser.add_argument("--rollback", action="store", type=int, help="Block id to rollback the chain to")
     # Now parse
     args = parser.parse_args()
     # print(args)

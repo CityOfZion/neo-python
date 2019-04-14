@@ -5,10 +5,11 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
 from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt import Utils as PromptUtils
-from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
-from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
+from neo.Storage.Interface.DBInterface import DBInterface
+from neo.Storage.Common.CachedScriptTable import CachedScriptTable
+from neo.Storage.Common.DBPrefix import DBPrefix
+from neo.Storage.Common.DebugStorage import DebugStorage
+
 
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState
@@ -280,11 +281,11 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
 
     bc = GetBlockchain()
 
-    accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
-    assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
+    accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
+    assets = DBInterface(bc._db, DBPrefix.ST_Asset, AssetState)
+    validators = DBInterface(bc._db, DBPrefix.ST_Validator, ValidatorState)
+    contracts = DBInterface(bc._db, DBPrefix.ST_Contract, ContractState)
+    storages = DBInterface(bc._db, DBPrefix.ST_Storage, StorageItem)
 
     # if we are using a withdrawal tx, don't recreate the invocation tx
     # also, we don't want to reset the inputs / outputs
@@ -303,7 +304,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
     tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
 
     script_table = CachedScriptTable(contracts)
-    service = StateMachine(accounts, validators, assets, contracts, storages, None)
+    service = StateMachine(accounts, validators, assets, contracts, storages, None, bc)
 
     if len(outputs) < 1:
         contract = wallet.GetDefaultContract()
@@ -412,15 +413,15 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                            debug_map=None, invoke_attrs=None, owners=None):
     bc = GetBlockchain()
 
-    accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
-    assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
+    accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
+    assets = DBInterface(bc._db, DBPrefix.ST_Asset, AssetState)
+    validators = DBInterface(bc._db, DBPrefix.ST_Validator, ValidatorState)
+    contracts = DBInterface(bc._db, DBPrefix.ST_Contract, ContractState)
+    storages = DBInterface(bc._db, DBPrefix.ST_Storage, StorageItem)
 
     if settings.USE_DEBUG_STORAGE:
         debug_storage = DebugStorage.instance()
-        storages = DBCollection(debug_storage.db, DBPrefix.ST_Storage, StorageItem)
+        storages = DBInterface(debug_storage.db, DBPrefix.ST_Storage, StorageItem)
         storages.DebugStorage = True
 
     dtx = InvocationTransaction()
@@ -443,7 +444,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
     dtx.scripts = context.GetScripts()
 
     script_table = CachedScriptTable(contracts)
-    service = StateMachine(accounts, validators, assets, contracts, storages, None)
+    service = StateMachine(accounts, validators, assets, contracts, storages, None, bc)
 
     contract = wallet.GetDefaultContract()
     dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script, unhex=False))]

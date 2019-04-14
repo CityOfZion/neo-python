@@ -1,5 +1,13 @@
 import plyvel
+import threading
+
+from contextlib import contextmanager
+
+from neo.Core.Blockchain import Blockchain
+from neo.Storage.Common.DBPrefix import DBPrefix
+from neo.Storage.Interface.DBInterface import DBProperties
 from neo.logging import log_manager
+
 
 logger = log_manager.getLogger('LevelDB')
 
@@ -17,6 +25,8 @@ _snapshot = None
 
 _batch = None
 
+_lock = threading.Lock()
+
 
 @property
 def Path(self):
@@ -26,7 +36,6 @@ def Path(self):
 def _db_init(self, path):
     try:
         self._path = path
-        print('path:::: ', path)
         self._db = plyvel.DB(path, create_if_missing=True)
         logger.info("Created Blockchain DB at %s " % self._path)
     except Exception as e:
@@ -58,36 +67,36 @@ def deleteBatch(self, batch: dict):
             wb.delete(key)
 
 
+def cloneDatabase(self, clone_db):
+    db_snapshot = self.createSnapshot()
+    for key, value in db_snapshot.iterator(prefix=DBPrefix.ST_Storage, include_value=True):
+        clone_db.write(key, value)
+    return clone_db
+
+
 def createSnapshot(self):
     self._snapshot = self._db.snapshot()
     return self._snapshot
 
 
-def dropSnapshot(self):
-    self._snapshot.close()
-    self._snapshot = None
-
-
-def openIter(self, properties, start=None, end=None):
+@contextmanager
+def openIter(self, properties):
     # TODO start implement start and end
 
     self._iter = self._db.iterator(
-                                    properties.prefix,
-                                    properties.include_value)
-    return self._iter
-
-
-def getBatch(self):
-    self._batch = self._db.write_batch()
-
-
-def dropBatch(self):
-    self._batch = None
-
-
-def closeIter(self):
+                                    prefix=properties.prefix,
+                                    include_value=properties.include_value,
+                                    include_key=properties.include_key)
+    yield self._iter
     self._iter.close()
-    self._iter = None
+
+
+@contextmanager
+def getBatch(self):
+    with _lock:
+        self._batch = self._db.write_batch()
+        yield self._batch
+        self._batch.write()
 
 
 def closeDB(self):

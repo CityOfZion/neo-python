@@ -2,7 +2,7 @@ import binascii
 from neo.SmartContract.Iterable import EnumeratorBase
 from neo.logging import log_manager
 
-logger = log_manager.getLogger('DBCollection')
+logger = log_manager.getLogger('DBInterface')
 
 
 class DBProperties:
@@ -11,7 +11,7 @@ class DBProperties:
     include_value = None
     include_key = None
 
-    def __init__(self, prefix, include_value=False, include_key=True):
+    def __init__(self, prefix, include_value=True, include_key=True):
         self.prefix = prefix
         self.include_value = include_value
         self.include_key = include_key
@@ -55,6 +55,19 @@ class DBInterface(object):
         self._batch_changed = {}
 
     @property
+    def Current(self):
+        try:
+            ret = {}
+            for key, val in self.Collection.items():
+                if val is not None:
+                    ret[key] = val
+            return ret
+        except Exception as e:
+            logger.error("error getting items %s " % e)
+
+        return {}
+
+    @property
     def Keys(self):
         if not self._built_keys:
             self._BuildCollectionKeys()
@@ -62,28 +75,26 @@ class DBInterface(object):
         return self.Collection.keys()
 
     def _BuildCollectionKeys(self):
-        for key in self.DB.openIter(DBProperties(self.Prefix)):
-            key = key[1:]
-            if key not in self.Collection.keys():
-                self.Collection[key] = None
+        with self.DB.openIter(DBProperties(self.Prefix)) as iterator:
+            for key in iterator:
+                key = key[1:]
+                if key not in self.Collection.keys():
+                    self.Collection[key] = None
 
-        # clean up
-        self.DB.closeIter()
-
-    def Commit(self, destroy=True):
-
-        if self.Changed:
-            for keyval in self.Changed:
-                item = self.Collection[keyval]
-                if item:
-                    self._batch_changed[self.Prefix + keyval] = self.Collection[keyval].ToByteArray()
-            self.DB.writeBatch(self._batch_changed)
-
-        if self.Deleted:
-            self.DB.deleteBatch(self.Prefix + keyval for keyval in self.Deleted)
-            for keyval in self.Deleted:
-                self.Collection[keyval] = None
-
+    def Commit(self, wb, destroy=True):
+        for keyval in self.Changed:
+            item = self.Collection[keyval]
+            if item:
+                if not wb:
+                    self.DB.write(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+                else:
+                    wb.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+        for keyval in self.Deleted:
+            if not wb:
+                self.DB.delete(self.Prefix + keyval)
+            else:
+                wb.delete(self.Prefix + keyval)
+            self.Collection[keyval] = None
         if destroy:
             self.Destroy()
         else:
@@ -218,15 +229,16 @@ class DBInterface(object):
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
         res = {}
-        for key, val in self.DB.openIter(DBProperties(self.Prefix, include_value=True)):
-            # we want the storage item, not the raw bytes
-            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
-            # also here we need to skip the 1 byte storage prefix
-            res_key = key[21:]
-            res[res_key] = item
+        with self.DB.openIter(DBProperties(self.Prefix, include_value=True)) as iterator:
+            for key, val in iterator:
+                logger.info('in iterator %s %s ' % key, val)
+                # we want the storage item, not the raw bytes
+                item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
+                # also here we need to skip the 1 byte storage prefix
+                res_key = key[21:]
+                res[res_key] = item
 
-        # clean up 
-        self.DB.closeIter()
+        logger.info('finished')
 
         return res
 

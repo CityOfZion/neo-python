@@ -21,7 +21,8 @@ from neo.IO.MemoryStream import StreamManager
 from neo.SmartContract.Iterable.Wrapper import ArrayWrapper, MapWrapper
 from neo.SmartContract.Iterable import KeysWrapper, ValuesWrapper
 from neo.SmartContract.Iterable.ConcatenatedEnumerator import ConcatenatedEnumerator
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Storage.Common.DBPrefix import DBPrefix
+
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState

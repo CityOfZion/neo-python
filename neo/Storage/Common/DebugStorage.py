@@ -1,7 +1,7 @@
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Blockchain import GetBlockchain
-import plyvel
-from neo.Settings import settings
+from neo.Storage.Common.DBPrefix import DBPrefix
+import neo.Storage.Implementation.DBFactory as DBFactory
+from neo.Storage.Interface.DBInterface import DBProperties
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('db')
@@ -15,19 +15,15 @@ class DebugStorage:
         return self._db
 
     def reset(self):
-        for key in self._db.iterator(prefix=DBPrefix.ST_Storage, include_value=False):
+        for key in self._db.openIter(
+                DBProperties(prefix=DBPrefix.ST_Storage, include_value=False)):
             self._db.delete(key)
-
-    def clone_from_live(self):
-        clone_db = GetBlockchain()._db.snapshot()
-        for key, value in clone_db.iterator(prefix=DBPrefix.ST_Storage, include_value=True):
-            self._db.put(key, value)
 
     def __init__(self):
 
         try:
-            # TODO_MERL: generic db support
-            self._db = plyvel.DB(settings.debug_storage_leveldb_path, create_if_missing=True)
+            self._db = GetBlockchain().Default().GetDB().cloneDatabase(
+                DBFactory.getDebugStorageDB())
         except Exception as e:
             logger.info("DEBUG leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('DEBUG Leveldb Unavailable %s ' % e)
@@ -36,5 +32,4 @@ class DebugStorage:
     def instance():
         if not DebugStorage.__instance:
             DebugStorage.__instance = DebugStorage()
-            DebugStorage.__instance.clone_from_live()
         return DebugStorage.__instance

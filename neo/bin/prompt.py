@@ -26,6 +26,9 @@ from neo.UserPreferences import preferences
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print, token_style
 
+import neo.Storage.Implementation.DBFactory as DBFactory
+
+
 logger = log_manager.getLogger()
 
 
@@ -298,7 +301,7 @@ def main():
         settings.set_max_peers(args.maxpeers)
 
     # Instantiate the blockchain and subscribe to notifications
-    blockchain = Blockchain(getBlockchainDB())
+    blockchain = Blockchain(DBFactory.getBlockchainDB())
     Blockchain.RegisterBlockchain(blockchain)
 
     # Try to set up a notification db
