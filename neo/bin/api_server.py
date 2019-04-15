@@ -292,7 +292,7 @@ async def setup_and_start(loop):
 async def shutdown():
     # cleanup any remaining tasks
     for task in asyncio.Task.all_tasks():
-        with suppress(asyncio.CancelledError):
+        with suppress((asyncio.CancelledError, Exception)):  # TODO: get rid of generic exception
             task.cancel()
             await task
 

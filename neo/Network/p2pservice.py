@@ -30,10 +30,10 @@ class NetworkService(Singleton):
         task.add_done_callback(lambda _: asyncio.create_task(self.syncmgr.start()))
 
     async def shutdown(self):
-        with suppress(asyncio.CancelledError):
+        with suppress((asyncio.CancelledError)):  # TODO: get rid of generic exception as it masks an issue
             if self.syncmgr:
                 await self.syncmgr.shutdown()
 
-        with suppress(asyncio.CancelledError):
+        with suppress((asyncio.CancelledError, Exception)):  # TODO: get rid of generic exception as it masks an issue
             if self.nodemgr:
                 await self.nodemgr.shutdown()

@@ -173,40 +173,41 @@ class SyncManager(Singleton):
             # no data requests outstanding
             return
 
-        flight_info = self.header_request.most_recent_flight()
+        last_flight_info = self.header_request.most_recent_flight()
 
         now = datetime.utcnow().timestamp()
-        delta = now - flight_info.start_time
-        if now - flight_info.start_time < self.HEADER_REQUEST_TIMEOUT:
+        delta = now - last_flight_info.start_time
+        if now - last_flight_info.start_time < self.HEADER_REQUEST_TIMEOUT:
             # we're still good on time
             return
 
-        logger.debug(f"header timeout limit exceeded by {delta - self.HEADER_REQUEST_TIMEOUT:.2f}s for node {flight_info.node_id}")
+        node = self.nodemgr.get_node_by_nodeid(last_flight_info.node_id)
+        logger.debug(f"header timeout limit exceeded by {delta - self.HEADER_REQUEST_TIMEOUT:.2f}s for node {node.nodeid_human}")
 
         cur_header_height = await self.ledger.cur_header_height()
-        if flight_info.height <= cur_header_height:
+        if last_flight_info.height <= cur_header_height:
             # it has already come in in the mean time
             # reset so sync_header will request new headers
             self.header_request = None
             return
 
         # punish node that is causing header_timeout and retry using another node
-        self.header_request.mark_failed_node(flight_info.node_id)
-        self.nodemgr.add_node_timeout_count(flight_info.node_id)
+        self.header_request.mark_failed_node(last_flight_info.node_id)
+        self.nodemgr.add_node_timeout_count(last_flight_info.node_id)
 
         # retry with a new node
         node = self.nodemgr.get_node_with_min_failed_time(self.header_request)
         if node is None:
-            # only happens if there is no nodes that has data matching our needed height
+            # only happens if there are no nodes that have data matching our needed height
             self.header_request = None
             return
 
-        hash = await self.ledger.header_hash_by_height(flight_info.height - 1)
-        logger.debug(f"Retry requesting headers starting at {flight_info.height} from new node {node.nodeid_human}")
+        hash = await self.ledger.header_hash_by_height(last_flight_info.height - 1)
+        logger.debug(f"Retry requesting headers starting at {last_flight_info.height} from new node {node.nodeid_human}")
         await node.get_headers(hash_start=hash)
 
         # restart start_time of flight info or else we'll timeout too fast for the next node
-        flight_info.reset_start_time()
+        self.header_request.add_new_flight(FlightInfo(node.nodeid, last_flight_info.height))
         node.nodeweight.append_new_request_time()
 
     async def check_block_timeout(self) -> None:
@@ -298,12 +299,6 @@ class SyncManager(Singleton):
         if height != self.header_request.height:
             # received headers we did not ask for
             return
-
-        # try:
-        #     self.header_request.flights.pop(from_nodeid)
-        # except KeyError:
-        #     #received a header from a node we did not ask data from
-        #     return
 
         logger.debug(f"Headers received {headers[0].index} - {headers[-1].index}")
 

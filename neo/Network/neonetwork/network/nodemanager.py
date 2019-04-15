@@ -361,7 +361,7 @@ class NodeManager(Singleton):
                 t.cancel()
                 await t
 
-        # we need to create a new list to loop over, because `disconnect` removes ites from self.nodes
+        # we need to create a new list to loop over, because `disconnect` removes items from self.nodes
         to_disconnect = list(map(lambda n: n, self.nodes))
         for n in to_disconnect:
             await n.disconnect()

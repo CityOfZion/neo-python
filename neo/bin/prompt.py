@@ -307,7 +307,7 @@ def main():
 
     async def shutdown():
         for task in asyncio.Task.all_tasks():
-            with suppress(asyncio.CancelledError):
+            with suppress((asyncio.CancelledError, Exception)):  # TODO: get rid of generic exception
                 task.cancel()
                 await task
 
