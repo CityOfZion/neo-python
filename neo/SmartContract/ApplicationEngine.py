@@ -92,7 +92,7 @@ class ApplicationEngine(ExecutionEngine):
         if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
             return True
         self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
-        if not self.testMode and self.gas_consumed > self.gas_consumed:
+        if not self.testMode and self.gas_consumed > self.gas_amount:
             return False
         if self.testMode and self.ops_processed > self.max_free_ops:
             logger.debug("Too many free operations processed")

@@ -10,7 +10,6 @@ from neo.Core.Cryptography.ECCurve import EllipticCurve
 class EventTestCase(TestCase):
 
     def test_from_json(self):
-
         jsn = {
             'type': str(ContractParameterType.String),
             'value': 'hello'
@@ -165,7 +164,6 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.ToJson(), jsn)
 
     def test_to_parameter(self):
-
         stack_item = Integer(BigInteger(14))
 
         cp1 = ContractParameter.AsParameterType(ContractParameterType.Integer, stack_item)
@@ -195,7 +193,7 @@ class EventTestCase(TestCase):
         self.assertEqual(cp1.ToJson(), {'type': 'Boolean', 'value': False})
 
         cp1 = ContractParameter.AsParameterType(ContractParameterType.ByteArray, stack_item)
-        self.assertEqual(cp1.ToJson(), {'type': 'ByteArray', 'value': '00'})
+        self.assertEqual(cp1.ToJson(), {'type': 'ByteArray', 'value': ''})
 
         with self.assertRaises(Exception) as ctx:
             cp1 = ContractParameter.AsParameterType(ContractParameterType.Array, stack_item)

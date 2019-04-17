@@ -1,5 +1,7 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Core.FunctionCode import FunctionCode
+from neo.Core.Size import GetVarSize
+from neo.Core.Size import Size as s
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -24,6 +26,15 @@ class PublishTransaction(Transaction):
         """
         super(PublishTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.PublishTransaction
+
+    def Size(self):
+        """
+        Get the total size in bytes of the object.
+
+        Returns:
+            int: size.
+        """
+        return super(PublishTransaction, self).Size() + GetVarSize(self.Code.Script) + GetVarSize(self.Code.ParameterList) + s.uint8 + GetVarSize(self.Name) + GetVarSize(self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
 
     def DeserializeExclusiveData(self, reader):
         """

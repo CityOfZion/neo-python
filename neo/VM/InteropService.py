@@ -39,6 +39,9 @@ class StackItem(EquatableMixin):
     def GetBigInteger(self):
         return BigInteger(int.from_bytes(self.GetByteArray(), 'little', signed=True))
 
+    def GetByteLength(self):
+        return len(self.GetByteArray())
+
     def GetBoolean(self):
         for p in self.GetByteArray():
             if p > 0:
@@ -224,7 +227,7 @@ class Array(StackItem, CollectionMixin):
 
 class Boolean(StackItem):
     TRUE = bytearray([1])
-    FALSE = bytearray([0])
+    FALSE = bytearray()  # restore once https://github.com/neo-project/neo-vm/pull/132 is approved
 
     _value = None
 

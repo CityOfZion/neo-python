@@ -30,8 +30,8 @@ class ExecutionEngine:
     _vm_debugger = None
 
     MaxSizeForBigInteger = 32
-    max_shl_shr = 65535  # ushort.maxValue
-    min_shl_shr = -65535  # -ushort.maxValue
+    max_shl_shr = 256
+    min_shl_shr = -256
     maxItemSize = 1024 * 1024
     maxArraySize = 1024
     maxStackSize = 2048
@@ -65,9 +65,6 @@ class ExecutionEngine:
 
     def CheckBigInteger(self, value: 'BigInteger') -> bool:
         return len(value.ToByteArray()) <= self.MaxSizeForBigInteger
-
-    def CheckBigIntegerByteLength(self, byteLength: int) -> bool:
-        return byteLength <= self.MaxSizeForBigInteger
 
     def CheckShift(self, shift: int) -> bool:
         return shift <= self.max_shl_shr and shift >= self.min_shl_shr
@@ -288,6 +285,7 @@ class ExecutionEngine:
 
                 if rvcount > 0:
                     if context_pop.EvaluationStack.Count < rvcount:
+                        context_pop.Dispose()
                         return self.VM_FAULT_and_report(VMFault.UNKNOWN1)
 
                     if istack.Count == 0:
@@ -303,6 +301,7 @@ class ExecutionEngine:
 
                 if istack.Count == 0:
                     self._VMState = VMState.HALT
+                context_pop.Dispose()
 
             elif opcode == APPCALL or opcode == TAILCALL:
                 if self._Table is None:
@@ -466,6 +465,13 @@ class ExecutionEngine:
 
                 x = estack.Pop().GetByteArray()
 
+                len_x = len(x)
+                if index > len_x:
+                    return self.VM_FAULT_and_report(VMFault.SUBSTR_INVALID_INDEX)
+
+                if index + count > len_x:
+                    count = len_x - index
+
                 estack.PushT(x[index:count + index])
                 self.CheckStackSize(True, -2)
 
@@ -476,6 +482,7 @@ class ExecutionEngine:
                     return self.VM_FAULT_and_report(VMFault.LEFT_INVALID_COUNT)
 
                 x = estack.Pop().GetByteArray()
+
                 estack.PushT(x[:count])
                 self.CheckStackSize(True, -1)
 
@@ -486,7 +493,7 @@ class ExecutionEngine:
                     return self.VM_FAULT_and_report(VMFault.RIGHT_INVALID_COUNT)
 
                 x = estack.Pop().GetByteArray()
-                if len(x) < count:
+                if count > len(x):
                     return self.VM_FAULT_and_report(VMFault.RIGHT_UNKNOWN)
 
                 estack.PushT(x[-count:])
@@ -494,25 +501,38 @@ class ExecutionEngine:
 
             elif opcode == SIZE:
 
-                x = estack.Pop().GetByteArray()
-                estack.PushT(len(x))
+                x = estack.Pop()
+                estack.PushT(x.GetByteLength())
 
             elif opcode == INVERT:
 
                 x = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
                 estack.PushT(~x)
 
             elif opcode == AND:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 estack.PushT(x1 & x2)
                 self.CheckStackSize(True, -1)
 
             elif opcode == OR:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 | x2)
                 self.CheckStackSize(True, -1)
@@ -520,7 +540,12 @@ class ExecutionEngine:
             elif opcode == XOR:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 ^ x2)
                 self.CheckStackSize(True, -1)
@@ -551,16 +576,25 @@ class ExecutionEngine:
 
                 # Make sure to implement sign for big integer
                 x = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 estack.PushT(x.Sign)
 
             elif opcode == NEGATE:
 
                 x = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 estack.PushT(-x)
 
             elif opcode == ABS:
 
                 x = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 estack.PushT(abs(x))
 
             elif opcode == NOT:
@@ -572,6 +606,9 @@ class ExecutionEngine:
             elif opcode == NZ:
 
                 x = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 estack.PushT(x is not 0)
 
             elif opcode == ADD:
@@ -597,21 +634,26 @@ class ExecutionEngine:
             elif opcode == MUL:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()  # type: BigInteger
-                len_x1 = len(x1.ToByteArray())
-
-                if not self.CheckBigIntegerByteLength(len_x1):
+                if not self.CheckBigInteger(x1):
                     return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
-                len_x2 = len(x2.ToByteArray())
-                if not self.CheckBigIntegerByteLength(len_x1 + len_x2):
+                result = x1 * x2
+                if not self.CheckBigInteger(result):
                     return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-                estack.PushT(x1 * x2)
+
+                estack.PushT(result)
                 self.CheckStackSize(True, -1)
 
             elif opcode == DIV:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
                 if not self.CheckBigInteger(x1) or not self.CheckBigInteger(x2):
                     return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
@@ -622,7 +664,12 @@ class ExecutionEngine:
             elif opcode == MOD:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 % x2)
                 self.CheckStackSize(True, -1)
@@ -695,7 +742,12 @@ class ExecutionEngine:
             elif opcode == LT:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 < x2)
                 self.CheckStackSize(True, -1)
@@ -703,7 +755,12 @@ class ExecutionEngine:
             elif opcode == GT:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 > x2)
                 self.CheckStackSize(True, -1)
@@ -711,7 +768,12 @@ class ExecutionEngine:
             elif opcode == LTE:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 <= x2)
                 self.CheckStackSize(True, -1)
@@ -727,14 +789,25 @@ class ExecutionEngine:
             elif opcode == MIN:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 estack.PushT(min(x1, x2))
                 self.CheckStackSize(True, -1)
 
             elif opcode == MAX:
 
                 x2 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x2):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x1 = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x1):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(max(x1, x2))
                 self.CheckStackSize(True, -1)
@@ -742,8 +815,16 @@ class ExecutionEngine:
             elif opcode == WITHIN:
 
                 b = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(b):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 a = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(a):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
+
                 x = estack.Pop().GetBigInteger()
+                if not self.CheckBigInteger(x):
+                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(a <= x and x < b)
                 self.CheckStackSize(True, -2)
