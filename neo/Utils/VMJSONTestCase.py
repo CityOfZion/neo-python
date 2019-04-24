@@ -10,7 +10,7 @@ logger = log_manager.getLogger()
 
 
 class VMJSONTestCase(NeoTestCase):
-    NEO_VM_REPO_URL = "https://github.com/neo-project/neo-vm/tarball/c45330eee5a0ef47a03a7dad212318a7acaf01b5"
+    NEO_VM_REPO_URL = "https://github.com/neo-project/neo-vm/tarball/bfb68c806f52ed773ae7badff3b652e96e257c61"
     SOURCE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'vm-tests/neo-vm.tar.gz')
 
     @classmethod

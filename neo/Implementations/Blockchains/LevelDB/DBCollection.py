@@ -6,22 +6,8 @@ logger = log_manager.getLogger('db')
 
 
 class DBCollection:
-    DB = None
-    Prefix = None
-
-    ClassRef = None
-
-    Collection = {}
-
-    Changed = []
-    Deleted = []
-
     _built_keys = False
-
     DebugStorage = False
-
-    _ChangedResetState = None
-    _DeletedResetState = None
 
     def __init__(self, db, prefix, class_ref):
 

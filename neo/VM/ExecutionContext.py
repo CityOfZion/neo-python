@@ -2,19 +2,23 @@ from neo.IO.MemoryStream import StreamManager
 from neo.Core.IO.BinaryReader import BinaryReader
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.VM.OpCode import RET
+from neo.VM.Instruction import Instruction
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from neo.VM.Script import Script
 
 
 class ExecutionContext:
-    Script = None
 
-    __OpReader = None
-
-    __mstream = None
-
-    _RVCount = None
-
-    _EvaluationStack = None
-    _AltStack = None
+    def __init__(self, script: 'Script', rvcount):
+        self.instructions = {}
+        self._EvaluationStack = RandomAccessStack(name='Evaluation')
+        self._AltStack = RandomAccessStack(name='Alt')
+        self.InstructionPointer = 0
+        self.Script = script
+        self._RVCount = rvcount
+        self._script_hash = None
 
     @property
     def EvaluationStack(self):
@@ -25,43 +29,30 @@ class ExecutionContext:
         return self._AltStack
 
     @property
-    def OpReader(self):
-        return self.__OpReader
-
-    @property
-    def InstructionPointer(self):
-        return self.__OpReader.stream.tell()
-
-    @InstructionPointer.setter
-    def InstructionPointer(self, value):
-        self.__OpReader.stream.seek(value)
-
-    def SetInstructionPointer(self, value):
-        self.__OpReader.stream.seek(value)
+    def CurrentInstruction(self):
+        return self.GetInstruction(self.InstructionPointer)
 
     @property
     def NextInstruction(self):
-        index = self.__OpReader.stream.tell()
-        if index >= len(self.Script):
-            return RET
-        else:
-            return self.Script[index].to_bytes(1, 'little')
-
-    _script_hash = None
+        return self.GetInstruction(self.InstructionPointer + self.CurrentInstruction.Size)
 
     def ScriptHash(self):
-        if self._script_hash is None:
-            self._script_hash = self.crypto.Hash160(self.Script)
-        return self._script_hash
+        return self.Script.ScriptHash
 
-    def __init__(self, engine=None, script=None, rvcount=0):
-        self.Script = script
-        self.__mstream = StreamManager.GetStream(self.Script)
-        self.__OpReader = BinaryReader(self.__mstream)
-        self._EvaluationStack = RandomAccessStack(name='Evaluation')
-        self._AltStack = RandomAccessStack(name='Alt')
-        self._RVCount = rvcount
-        self.crypto = engine.Crypto
+    def GetInstruction(self, ip) -> Instruction:
+        if ip >= self.Script.Length:
+            return Instruction.RET()
+        instruction = self.instructions.get(ip, None)
+
+        if instruction is None:
+            instruction = Instruction.FromScriptAndIP(self.Script, ip)
+            self.instructions.update({ip: instruction})
+
+        return instruction
+
+    def MoveNext(self):
+        self.InstructionPointer += self.CurrentInstruction.Size
+        return self.InstructionPointer < self.Script.Length
 
     def Dispose(self):
         self.__OpReader = None

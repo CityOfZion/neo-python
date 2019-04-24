@@ -4,6 +4,7 @@ The JSON-RPC API is using the Python package 'aioHttp'
 See also:
 * http://www.jsonrpc.org/specification
 """
+import os
 import ast
 import binascii
 import logging
@@ -79,13 +80,16 @@ class JsonRpcError(Exception):
 class JsonRpcApi:
 
     def __init__(self, wallet=None):
-        stdio_handler = logging.StreamHandler()
-        stdio_handler.setLevel(logging.INFO)
-        _logger = logging.getLogger('aiohttp.access')
-        _logger.addHandler(stdio_handler)
-        _logger.setLevel(logging.DEBUG)
+        if not os.getenv("NEOPYTHON_UNITTEST"):
+            stdio_handler = logging.StreamHandler()
+            stdio_handler.setLevel(logging.INFO)
+            _logger = logging.getLogger('aiohttp.access')
+            _logger.addHandler(stdio_handler)
+            _logger.setLevel(logging.DEBUG)
 
-        self.app = web.Application(logger=_logger)
+            self.app = web.Application(logger=_logger)
+        else:
+            self.app = web.Application()
         self.port = settings.RPC_PORT
         self.wallet = wallet
         self.nodemgr = NodeManager()

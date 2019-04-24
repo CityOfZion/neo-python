@@ -275,10 +275,19 @@ class TransactionTestCase(NeoTestCase):
 
         reader = BinaryReader(ms)
         tx = Transaction.DeserializeFrom(reader)
+
+        # the net_fee calculation in short is : net_fee = inputs - outputs -system fee.
+        # For this test to be able to grab the input values we need to make the TX that it references available for this test
+        ms2 = MemoryStream(binascii.unhexlify(
+            b'80000001def3ab1c73a13e80fea34ca751c79fe8dcf68d93d91d4956818baf0b99d95818010002e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6000e8764817000000faaa0f339e0fb33f91697cbf5aac41d17921222ae72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60008997b2270000002d9a070d388aa24d9f639bc8ddf985dc473c75d70141401a07d186fdfe3f9862c873d7cd9bdcb9cc8b3f5edcf853af31addcc4476d7d4fe89385cc955a4f604c667110332c14cb2fd8f62a29569b01a572774c7f7136572321026aeca2aed2094e9622a44cf584c694554f10cdb84d4f8eeab3e28ead4e87c168ac'))
+        reader2 = BinaryReader(ms2)
+        vout_tx = Transaction.DeserializeFrom(reader2)
+
         self.assertEqual(tx.ToArray(), self.sttx)
         self.assertEqual(tx.Hash.ToBytes(), self.sttx_id)
 
-        json = tx.ToJson()
+        with patch('neo.Core.Blockchain.Blockchain.GetTransaction', return_value=(vout_tx, 0)):
+            json = tx.ToJson()
         self.assertEqual(json['size'], 191)
         self.assertEqual(json['type'], "StateTransaction")
         self.assertEqual(json['version'], 0)

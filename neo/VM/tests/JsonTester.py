@@ -10,6 +10,7 @@ from neo.Core.Cryptography.Crypto import Crypto
 from typing import Optional
 from neo.VM.VMState import VMStateStr
 from neo.VM.OpCode import ToName as OpcodeToName
+from neo.VM.OpCode import RET
 from neo.VM import InteropService
 
 
@@ -136,8 +137,14 @@ def assert_invocation_stack(istack: RandomAccessStack, result: dict, msg: str):
         actual_script_hash = binascii.hexlify(actual_context.ScriptHash()).decode()
         assert actual_script_hash == expected_script_hash, f"[{msg}] Script hash differs! Expected: {expected_script_hash} Actual: {actual_script_hash}"
 
+        opcode = RET if actual_context.InstructionPointer >= actual_context.Script.Length else actual_context.Script[actual_context.InstructionPointer]
         expected_next_instruction = expected_context['nextInstruction']
-        actual_next_instruction = OpcodeToName(actual_context.NextInstruction)
+        # hack to work around C#'s lack of having defined enum members for PUSHBYTES2-PUSHBYTES74
+        # TODO: remove this once neo-vm is updated to have human readable names for the above enum members
+        if expected_next_instruction.isdecimal():
+            expected_next_instruction = OpcodeToName(int(expected_next_instruction))
+
+        actual_next_instruction = OpcodeToName(opcode)
         assert actual_next_instruction == expected_next_instruction, f"[{msg}] Next instruction differs! Expected: {expected_next_instruction} Actual: {actual_next_instruction}"
 
         expected_ip = expected_context['instructionPointer']

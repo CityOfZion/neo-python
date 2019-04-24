@@ -4,6 +4,7 @@ from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionContext import ExecutionContext
 from neo.VM import OpCode
 from neo.VM import VMState
+from neo.VM.Script import Script
 import logging
 
 
@@ -22,7 +23,8 @@ class InteropTest(NeoTestCase):
 
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(engine=self.engine)
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
+        self.engine.InvocationStack.PushT(self.econtext)
 
     def test_interop_map1(self):
         map = Map()
@@ -72,17 +74,20 @@ class InteropTest(NeoTestCase):
         self.assertEqual(map.GetMap(), {'b': 2, 'c': 3, 'h': 9})
 
     def test_op_map1(self):
-        self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
+        self.econtext.Script._value = OpCode.NEWMAP
+        self.engine.ExecuteInstruction()
 
         self.assertEqual(len(self.econtext.EvaluationStack.Items), 1)
         self.assertIsInstance(self.econtext.EvaluationStack.Items[0], Map)
         self.assertEqual(self.econtext.EvaluationStack.Items[0].GetMap(), {})
 
     def test_op_map2(self):
-        self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
+        self.econtext.Script._value = OpCode.NEWMAP + OpCode.SETITEM
+        self.engine.ExecuteInstruction()
+
         self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
         self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
-        self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
+        self.engine.ExecuteInstruction()
 
         self.assertEqual(len(self.econtext.EvaluationStack.Items), 0)
 
@@ -91,9 +96,10 @@ class InteropTest(NeoTestCase):
 
         self.econtext.EvaluationStack.PushT(StackItem.New('myvalue'))
         self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
+        self.econtext.Script._value = OpCode.SETITEM
 
         with self.assertRaises(Exception) as context:
-            self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
+            self.engine.ExecuteInstruction()
 
         self.assertEqual(len(self.econtext.EvaluationStack.Items), 0)
         self.assertEqual(self.engine.State, VMState.BREAK)
@@ -101,10 +107,12 @@ class InteropTest(NeoTestCase):
     def test_op_map4(self):
         with self.assertLogHandler('vm', logging.DEBUG) as log_context:
             # set item should fail if these are out of order
+            self.econtext.Script._value = OpCode.NEWMAP + OpCode.SETITEM
+
             self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
-            self.engine.ExecuteOp(OpCode.NEWMAP, self.econtext)
+            self.engine.ExecuteInstruction()
             self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
-            self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
+            self.engine.ExecuteInstruction()
 
             self.assertEqual(self.engine.State, VMState.FAULT)
             self.assertTrue(len(log_context.output) > 0)
@@ -117,7 +125,8 @@ class InteropTest(NeoTestCase):
             self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
             self.econtext.EvaluationStack.PushT(StackItem.New('mykey'))
             self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
-            self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
+            self.econtext.Script._value = OpCode.SETITEM
+            self.engine.ExecuteInstruction()
 
             self.assertEqual(self.engine.State, VMState.FAULT)
 
@@ -129,7 +138,8 @@ class InteropTest(NeoTestCase):
         # we can pick an item from a dict
         self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
         self.econtext.EvaluationStack.PushT(StackItem.New('a'))
-        self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
+        self.econtext.Script._value = OpCode.PICKITEM
+        self.engine.ExecuteInstruction()
 
         self.assertEqual(len(self.econtext.EvaluationStack.Items), 1)
         self.assertEqual(self.econtext.EvaluationStack.Items[0].GetBigInteger(), 4)
@@ -139,7 +149,8 @@ class InteropTest(NeoTestCase):
             # pick item with key is collection causes error
             self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
             self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
-            self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
+            self.econtext.Script._value = OpCode.PICKITEM
+            self.engine.ExecuteInstruction()
 
             self.assertEqual(self.engine.State, VMState.FAULT)
             self.assertTrue(len(log_context.output) > 0)
@@ -150,7 +161,8 @@ class InteropTest(NeoTestCase):
             # pick item out of bounds
             self.econtext.EvaluationStack.PushT(StackItem.New('a'))
             self.econtext.EvaluationStack.PushT(StackItem.New('a'))
-            self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
+            self.econtext.Script._value = OpCode.PICKITEM
+            self.engine.ExecuteInstruction()
 
             self.assertTrue(len(log_context.output) > 0)
             log_msg = log_context.output[0]
@@ -164,7 +176,8 @@ class InteropTest(NeoTestCase):
             # pick item key not found
             self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
             self.econtext.EvaluationStack.PushT(StackItem.New('b'))
-            self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
+            self.econtext.Script._value = OpCode.PICKITEM
+            self.engine.ExecuteInstruction()
 
             self.assertEqual(self.engine.State, VMState.FAULT)
             self.assertTrue(len(log_context.output) > 0)
@@ -173,7 +186,8 @@ class InteropTest(NeoTestCase):
     def test_op_map10(self):
         # pick item key not found
         self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
-        self.engine.ExecuteOp(OpCode.KEYS, self.econtext)
+        self.econtext.Script._value = OpCode.KEYS
+        self.engine.ExecuteInstruction()
 
         self.assertIsInstance(self.econtext.EvaluationStack.Items[0], Array)
         items = self.econtext.EvaluationStack.Items[0].GetArray()
@@ -181,7 +195,8 @@ class InteropTest(NeoTestCase):
 
     def test_op_map11(self):
         self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
-        self.engine.ExecuteOp(OpCode.VALUES, self.econtext)
+        self.econtext.Script._value = OpCode.VALUES
+        self.engine.ExecuteInstruction()
 
         self.assertIsInstance(self.econtext.EvaluationStack.Items[0], Array)
         items = self.econtext.EvaluationStack.Items[0].GetArray()
@@ -190,13 +205,15 @@ class InteropTest(NeoTestCase):
     def test_op_map12(self):
         self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
         self.econtext.EvaluationStack.PushT(StackItem.New('b'))
-        self.engine.ExecuteOp(OpCode.HASKEY, self.econtext)
+        self.econtext.Script._value = OpCode.HASKEY
+        self.engine.ExecuteInstruction()
 
         self.assertEqual(self.econtext.EvaluationStack.Items[0].GetBoolean(), True)
 
     def test_op_map13(self):
         self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4), StackItem.New('b'): StackItem.New(5)}))
         self.econtext.EvaluationStack.PushT(StackItem.New('c'))
-        self.engine.ExecuteOp(OpCode.HASKEY, self.econtext)
+        self.econtext.Script._value = OpCode.HASKEY
+        self.engine.ExecuteInstruction()
 
         self.assertEqual(self.econtext.EvaluationStack.Items[0].GetBoolean(), False)

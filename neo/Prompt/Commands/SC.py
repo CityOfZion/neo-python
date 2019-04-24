@@ -186,7 +186,7 @@ class CommandSCTestInvoke(CommandBase):
                 return False
 
         tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, arguments, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
-        if tx and results:
+        if tx is not None and results is not None:
 
             if return_type is not None:
                 try:
@@ -304,7 +304,7 @@ class CommandSCDeploy(CommandBase):
             return False
 
         tx, fee, results, num_ops, engine_success = test_invoke(contract_script, wallet, [], from_addr=from_addr)
-        if tx and results:
+        if tx is not None and results is not None:
             print(
                 "\n-------------------------------------------------------------------------------------------------------------------------------------")
             print("Test deploy invoke successful")
