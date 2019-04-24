@@ -46,7 +46,7 @@ from prompt_toolkit import prompt
 import neo.Storage.Implementation.DBFactory as DBFactory
 
 
-logger = log_manager.getLogger('Blockchain')
+logger = log_manager.getLogger()
 
 
 class Blockchain:
@@ -134,7 +134,6 @@ class Blockchain:
                             StreamManager.ReleaseStream(ms)
                 except Exception as e:
                     logger.info("Could not get stored header hash list: %s " % e)
-                    self._db.closeIter()
 
                 if len(hashes):
                     hashes.sort(key=lambda x: x['k'])

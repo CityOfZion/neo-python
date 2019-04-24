@@ -1,5 +1,5 @@
 import plyvel
-import threading
+# import threading
 
 from contextlib import contextmanager
 
@@ -9,11 +9,12 @@ from neo.Storage.Interface.DBInterface import DBProperties
 from neo.logging import log_manager
 
 
-logger = log_manager.getLogger('LevelDB')
+logger = log_manager.getLogger()
 
 """Document me"""
 
 _init_method = '_db_init'
+_prefix_init_method = '_prefix_db_init'
 
 _path = None
 
@@ -21,11 +22,9 @@ _db = None
 
 _iter = None
 
-_snapshot = None
-
 _batch = None
 
-_lock = threading.Lock()
+# _lock = threading.Lock()
 
 
 @property
@@ -33,11 +32,18 @@ def Path(self):
     return self._path
 
 
+def _prefix_db_init(self, _prefixdb):
+    try:
+        self._db = _prefixdb
+    except Exception as e:
+        raise Exception("leveldb exception [ %s ]" % e)
+
+
 def _db_init(self, path):
     try:
         self._path = path
         self._db = plyvel.DB(path, create_if_missing=True)
-        logger.info("Created Blockchain DB at %s " % self._path)
+        logger.info("Created DB at %s " % self._path)
     except Exception as e:
         raise Exception("leveldb exception [ %s ]" % e)
 
@@ -53,8 +59,7 @@ def writeBatch(self, batch: dict):
 
 
 def get(self, key, default=None):
-    _value = self._db.get(key, default)
-    return _value
+    return self._db.get(key, default)
 
 
 def delete(self, key):
@@ -69,20 +74,22 @@ def deleteBatch(self, batch: dict):
 
 def cloneDatabase(self, clone_db):
     db_snapshot = self.createSnapshot()
-    for key, value in db_snapshot.iterator(prefix=DBPrefix.ST_Storage, include_value=True):
-        clone_db.write(key, value)
+    with db_snapshot.openIter(DBProperties(prefix=DBPrefix.ST_Storage, include_value=True)) as iterator:
+        for key, value in iterator:
+            clone_db.write(key, value)
     return clone_db
 
 
 def createSnapshot(self):
-    self._snapshot = self._db.snapshot()
-    return self._snapshot
+    # check if snapshot db has to be closed
+    from neo.Storage.Implementation.LevelDB.PrefixedDBFactory import internalDBFactory
+
+    SnapshotDB = internalDBFactory('Snapshot')
+    return SnapshotDB(self._db.snapshot())
 
 
 @contextmanager
 def openIter(self, properties):
-    # TODO start implement start and end
-
     self._iter = self._db.iterator(
         prefix=properties.prefix,
         include_value=properties.include_value,
@@ -94,14 +101,18 @@ def openIter(self, properties):
 
 @contextmanager
 def getBatch(self):
-    with _lock:
-        self._batch = self._db.write_batch()
-        yield self._batch
-        self._batch.write()
+    self._batch = self._db.write_batch()
+    yield self._batch
+    self._batch.write()
 
 
 def getPrefixedDB(self, prefix):
-    return self._db.prefixed_db(prefix)
+
+    # check if prefix db has to be closed
+    from neo.Storage.Implementation.LevelDB.PrefixedDBFactory import internalDBFactory
+
+    PrefixedDB = internalDBFactory('Prefixed')
+    return PrefixedDB(self._db.prefixed_db(prefix))
 
 
 def closeDB(self):

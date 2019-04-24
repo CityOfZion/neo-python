@@ -2,7 +2,7 @@ import binascii
 from neo.SmartContract.Iterable import EnumeratorBase
 from neo.logging import log_manager
 
-logger = log_manager.getLogger('DBInterface')
+logger = log_manager.getLogger()
 
 
 class DBProperties:
@@ -11,7 +11,7 @@ class DBProperties:
     include_value = None
     include_key = None
 
-    def __init__(self, prefix, include_value=True, include_key=True):
+    def __init__(self, prefix=None, include_value=True, include_key=True):
         self.prefix = prefix
         self.include_value = include_value
         self.include_key = include_key
@@ -29,6 +29,8 @@ class DBInterface(object):
 
     Changed = []
     Deleted = []
+
+    DebugStorage = False
 
     _built_keys = False
 
@@ -75,7 +77,7 @@ class DBInterface(object):
         return self.Collection.keys()
 
     def _BuildCollectionKeys(self):
-        with self.DB.openIter(DBProperties(self.Prefix)) as iterator:
+        with self.DB.openIter(DBProperties(self.Prefix, include_value=False)) as iterator:
             for key in iterator:
                 key = key[1:]
                 if key not in self.Collection.keys():
@@ -229,16 +231,13 @@ class DBInterface(object):
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
         res = {}
-        with self.DB.openIter(DBProperties(self.Prefix, include_value=True)) as iterator:
+        with self.DB.openIter(DBProperties(key_prefix, include_value=True)) as iterator:
             for key, val in iterator:
-                logger.info('in iterator %s %s ' % key, val)
                 # we want the storage item, not the raw bytes
                 item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
                 # also here we need to skip the 1 byte storage prefix
                 res_key = key[21:]
                 res[res_key] = item
-
-        logger.info('finished')
 
         return res
 

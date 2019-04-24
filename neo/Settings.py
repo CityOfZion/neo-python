@@ -145,6 +145,7 @@ class SettingsHolder:
 
     def database_properties(self):
         return {'blockchain': {'path': self.chain_leveldb_path,
+                               'skip_version_check': False,
                                'backend': 'leveldb'},
 
                 'notification': {'path': self.notification_leveldb_path,

@@ -170,7 +170,7 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
 
         # test with no NotificationDB
-        with patch('neo.Implementations.Notifications.LevelDB.NotificationDB.NotificationDB.instance', return_value=None):
+        with patch('neo.Implementations.Notifications.NotificationDB.NotificationDB.instance', return_value=None):
             args = ['notifications', wallet_1_addr]
             res = CommandShow().execute(args)
             self.assertFalse(res)

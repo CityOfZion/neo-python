@@ -24,6 +24,7 @@ logger = log_manager.getLogger('vm')
 
 class StateMachine(StateReader):
     _validators = None
+    _wb = None
 
     _contracts_created = {}
 
@@ -85,11 +86,12 @@ class StateMachine(StateReader):
         super(StateMachine, self).ExecutionCompleted(engine, success, error)
 
     def Commit(self):
-        self._accounts.Commit(self._wb, False)
-        self._validators.Commit(self._wb, False)
-        self._assets.Commit(self._wb, False)
-        self._contracts.Commit(self._wb, False)
-        self._storages.Commit(self._wb, False)
+        if self._wb is not None:
+            self._accounts.Commit(self._wb, False)
+            self._validators.Commit(self._wb, False)
+            self._assets.Commit(self._wb, False)
+            self._contracts.Commit(self._wb, False)
+            self._storages.Commit(self._wb, False)
 
     def ResetState(self):
         self._accounts.Reset()
@@ -360,8 +362,8 @@ class StateMachine(StateReader):
 
             if contract.HasStorage:
 
-                for pair in self._storages.Find(hash.ToBytes()):
-                    self._storages.Remove(pair.Key)
+                for key in self._storages.Find(hash.ToBytes()):
+                    self._storages.Remove(key)
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_DESTROY, ContractParameter(ContractParameterType.InteropInterface, contract),

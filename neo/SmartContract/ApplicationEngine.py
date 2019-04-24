@@ -302,9 +302,11 @@ class ApplicationEngine(ExecutionEngine):
             exit_on_error=exit_on_error
         )
 
-        try:
+        # maybe not the best solution
+        # but one for now
+        if not wb:
             _script = binascii.unhexlify(script)
-        except Exception as e:
+        else:
             _script = script
 
         engine.LoadScript(_script)

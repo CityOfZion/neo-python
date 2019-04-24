@@ -1,5 +1,5 @@
 from neo.Core.Blockchain import Blockchain
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Storage.Implementation.DBFactory import getBlockchainDB
 import shutil
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Settings import settings
@@ -18,7 +18,7 @@ class VerifiableTestCase(NeoTestCase):
         Blockchain.DeregisterBlockchain()
 
         os.makedirs(cls.LEVELDB_TESTPATH, exist_ok=True)
-        cls._blockchain = LevelDBBlockchain(path=cls.LEVELDB_TESTPATH, skip_version_check=True)
+        cls._blockchain = Blockchain(getBlockchainDB(cls.LEVELDB_TESTPATH), skip_version_check=True)
         Blockchain.RegisterBlockchain(cls._blockchain)
 
     @classmethod

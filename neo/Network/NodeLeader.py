@@ -541,6 +541,8 @@ class NodeLeader:
             relayed |= peer.Relay(inventory)
 
         if len(self.Peers) == 0:
+            if BC.Default().UT:
+                return True
 
             logger.info("no connected peers")
 
