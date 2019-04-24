@@ -71,7 +71,7 @@ class NotificationDB:
     def __init__(self, path):
 
         try:
-            self._db = getNotificationDB()
+            self._db = getNotificationDB(path)
             logger.info("Created Notification DB At %s " % path)
         except Exception as e:
             logger.info("Notification leveldb unavailable, you may already be running this process: %s " % e)
@@ -207,6 +207,12 @@ class NotificationDB:
 
         self._new_contracts_to_write = []
 
+        results = []
+        with block_db.openIter(DBProperties(prefix=block_bytes, include_key=False)) as iterator:
+            for val in iterator:
+                event = SmartContractEvent.FromByteArray(val)
+                results.append(event)
+
     def get_by_block(self, block_number):
         """
         Look up notifications for a block
@@ -217,11 +223,13 @@ class NotificationDB:
             list: a list of notifications
         """
         blocklist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_BLOCK).createSnapshot()
+
         block_bytes = block_number.to_bytes(4, 'little')
         results = []
-        for val in blocklist_snapshot.openIter(DBProperties(prefix=block_bytes, include_key=False)):
-            event = SmartContractEvent.FromByteArray(val)
-            results.append(event)
+        with blocklist_snapshot.openIter(DBProperties(prefix=block_bytes, include_key=False)) as iterator:
+            for val in iterator:
+                event = SmartContractEvent.FromByteArray(val)
+                results.append(event)
 
         return results
 
@@ -244,13 +252,14 @@ class NotificationDB:
         addrlist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_ADDR).createSnapshot()
         results = []
 
-        for val in addrlist_snapshot.openIter(DBProperties(prefix=bytes(addr.Data), include_key=False)):
-            if len(val) > 4:
-                try:
-                    event = SmartContractEvent.FromByteArray(val)
-                    results.append(event)
-                except Exception as e:
-                    logger.error("could not parse event: %s %s" % (e, val))
+        with addrlist_snapshot.openIter(DBProperties(prefix=bytes(addr.Data), include_key=False)) as iterator:
+            for val in iterator:
+                if len(val) > 4:
+                    try:
+                        event = SmartContractEvent.FromByteArray(val)
+                        results.append(event)
+                    except Exception as e:
+                        logger.error("could not parse event: %s %s" % (e, val))
         return results
 
     def get_by_contract(self, contract_hash):
@@ -272,13 +281,14 @@ class NotificationDB:
         contractlist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_CONTRACT).createSnapshot()
         results = []
 
-        for val in contractlist_snapshot.openIter(DBProperties(prefix=bytes(hash.Data), include_key=False)):
-            if len(val) > 4:
-                try:
-                    event = SmartContractEvent.FromByteArray(val)
-                    results.append(event)
-                except Exception as e:
-                    logger.error("could not parse event: %s %s" % (e, val))
+        with contractlist_snapshot.openIter(DBProperties(prefix=bytes(hash.Data), include_key=False)) as iterator:
+            for val in iterator:
+                if len(val) > 4:
+                    try:
+                        event = SmartContractEvent.FromByteArray(val)
+                        results.append(event)
+                    except Exception as e:
+                        logger.error("could not parse event: %s %s" % (e, val))
         return results
 
     def get_tokens(self):
@@ -289,9 +299,11 @@ class NotificationDB:
         """
         tokens_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_TOKEN).createSnapshot()
         results = []
-        for val in tokens_snapshot.openIter(DBProperties(include_key=False)):
-            event = SmartContractEvent.FromByteArray(val)
-            results.append(event)
+
+        with tokens_snapshot.openIter(DBProperties(include_key=False)) as iterator:
+            for val in iterator:
+                event = SmartContractEvent.FromByteArray(val)
+                results.append(event)
         return results
 
     def get_token(self, hash):
