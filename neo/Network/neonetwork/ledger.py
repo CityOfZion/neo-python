@@ -48,7 +48,6 @@ class Ledger:
         Returns: if successfully added
 
         """
-        # return await self.controller.add_headers(headers)
         headers = []
         success = False
         for h in network_headers:

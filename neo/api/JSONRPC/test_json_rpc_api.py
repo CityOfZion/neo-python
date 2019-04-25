@@ -24,6 +24,7 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
+from neo.Network.neonetwork.network.nodemanager import NodeManager
 
 
 class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
@@ -376,9 +377,11 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         nodemgr.reset_for_test()
 
     def test_get_version(self):
+        nodemgr = NodeManager()
         req = self._gen_post_rpc_req("getversion", params=[])
         res = json.loads(self.do_test_post("/", json=req))
         self.assertEqual(res["result"]["port"], 20332)
+        self.assertEqual(res["result"]["nonce"], nodemgr.id)
         self.assertEqual(res["result"]["useragent"], "/NEO-PYTHON:%s/" % __version__)
 
     def test_validate_address(self):

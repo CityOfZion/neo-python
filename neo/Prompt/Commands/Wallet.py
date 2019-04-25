@@ -152,7 +152,11 @@ class CommandWalletOpen(CommandBase):
             print("Wallet file not found")
             return
 
-        passwd = prompt("[password]> ", is_password=True)
+        try:
+            passwd = prompt("[password]> ", is_password=True)
+        except KeyboardInterrupt:
+            print("Wallet opening cancelled")
+            return
         password_key = to_aes_key(passwd)
 
         try:

@@ -137,6 +137,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(claim_tx, None)
         self.assertFalse(relayed)
 
+    def test_7_keyboard_interupt(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[KeyboardInterrupt]):
+                wallet = self.GetWallet1()
+
+                claim_tx, relayed = ClaimGas(wallet)
+            self.assertEqual(claim_tx, None)
+            self.assertFalse(relayed)
+            self.assertIn("Claim transaction cancelled", mock_print.getvalue())
+
     def test_block_12248_sysfee(self):
 
         fee = Blockchain.Default().GetSysFeeAmountByHeight(12248)
