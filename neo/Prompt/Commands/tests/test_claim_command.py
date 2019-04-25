@@ -114,7 +114,17 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertFalse(relayed)
 
-    def test_4_wallet_claim_ok(self):
+    def test_4_keyboard_interupt(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[KeyboardInterrupt]):
+                wallet = self.GetWallet1()
+
+                claim_tx, relayed = ClaimGas(wallet)
+            self.assertEqual(claim_tx, None)
+            self.assertFalse(relayed)
+            self.assertIn("Claim transaction cancelled", mock_print.getvalue())
+
+    def test_5_wallet_claim_ok(self):
 
         wallet = self.GetWallet1()
         nodemgr = NodeManager()
@@ -126,26 +136,16 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 self.assertIsInstance(claim_tx, ClaimTransaction)
                 self.assertTrue(relayed)
 
-    def test_5_no_wallet(self):
+    def test_6_no_wallet(self):
         with patch('neo.Prompt.Commands.Wallet.prompt', return_value=self.wallet_1_pass()):
             claim_tx, relayed = ClaimGas(None)
             self.assertEqual(claim_tx, None)
             self.assertFalse(relayed)
 
-    def test_6_no_wallet(self):
+    def test_7_no_wallet(self):
         claim_tx, relayed = ClaimGas(None)
         self.assertEqual(claim_tx, None)
         self.assertFalse(relayed)
-
-    def test_7_keyboard_interupt(self):
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[KeyboardInterrupt]):
-                wallet = self.GetWallet1()
-
-                claim_tx, relayed = ClaimGas(wallet)
-            self.assertEqual(claim_tx, None)
-            self.assertFalse(relayed)
-            self.assertIn("Claim transaction cancelled", mock_print.getvalue())
 
     def test_block_12248_sysfee(self):
 
