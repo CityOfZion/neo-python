@@ -66,6 +66,7 @@ class ApplicationEngine(ExecutionEngine):
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
         self._is_stackitem_count_strict = True
+        self.debugger = None
 
     def CheckDynamicInvoke(self):
         cx = self.CurrentContext

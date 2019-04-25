@@ -7,11 +7,13 @@ from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
 from neo.VM.RandomAccessStack import RandomAccessStack
 from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.UInt160 import UInt160
 from typing import Optional
 from neo.VM.VMState import VMStateStr
 from neo.VM.OpCode import ToName as OpcodeToName
 from neo.VM.OpCode import RET
 from neo.VM import InteropService
+from neo.VM.Debugger import Debugger
 
 
 class MessageProvider:
@@ -36,7 +38,9 @@ class ScriptTable:
         return self.data.get(script_hash, None)
 
     def Add(self, script: bytearray) -> None:
-        self.data[Crypto.Hash160(script)] = script
+        h = bytearray(Crypto.Default().Hash160(script))
+        h.reverse()
+        self.data[binascii.hexlify(h)] = script
 
 
 file_count = 0
@@ -74,10 +78,24 @@ def execute_test(data: dict):
             script_container = MessageProvider(message)
 
         # prepare script table
-        script_table = None  # there are currently no tests that load a script table so I don't know the format or key value they'll use
+        scripts = test.get("scriptTable", None)
+        script_table = None
+        if scripts:
+            script_table = ScriptTable()
+            for entry in scripts:
+                try:
+                    script = binascii.unhexlify(entry['script'][2:])
+                    script_table.Add(script)
+                except binascii.Error:
+                    print(f"Skipping test {data['category']}-{data['name']}, cannot read script data")
+                    test_count -= 1
+                    skipped_test_count += 1
+                    continue
 
         # create engine and run
         engine = ExecutionEngine(crypto=Crypto.Default(), service=service, container=script_container, table=script_table, exit_on_error=True)
+
+        debugger = Debugger(engine)
 
         # TODO: should enforce 0x<data> rule in the JSON test case
         if test['script'].startswith('0x'):
@@ -102,13 +120,13 @@ def execute_test(data: dict):
             actions = step.get('actions', [])
             for action in actions:
                 if action == "StepInto":
-                    engine.StepInto()
+                    debugger.StepInto()
                 elif action == "Execute":
-                    engine.Execute()
+                    debugger.Execute()
                 elif action == "StepOver":
-                    raise ValueError("StepOver not supported!")
+                    debugger.StepOver()
                 elif action == "StepOut":
-                    raise ValueError("StepOut not supported!")
+                    debugger.StepOut()
 
             test_name = test.get("name", "")
             msg = f"{data['category']}-{data['name']}-{test_name}-{i}"

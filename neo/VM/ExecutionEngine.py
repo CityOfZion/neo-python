@@ -10,7 +10,6 @@ from neo.VM.InteropService import Array, Struct, CollectionMixin, Map, Boolean
 from neo.Core.UInt160 import UInt160
 from neo.Settings import settings
 from neo.VM.VMFault import VMFault
-from neo.Prompt.vm_debugger import VMDebugger
 from logging import DEBUG as LOGGING_LEVEL_DEBUG
 from neo.logging import log_manager
 from typing import TYPE_CHECKING
@@ -53,7 +52,6 @@ class ExecutionEngine:
         self.ops_processed = 0
         self._debug_map = None
         self._is_write_log = settings.log_vm_instructions
-        self._breakpoints = dict()
         self._is_stackitem_count_strict = True
         self._stackitem_count = 0
 
@@ -161,22 +159,13 @@ class ExecutionEngine:
     def ExecutedScriptHashes(self):
         return self._ExecutedScriptHashes
 
-    def AddBreakPoint(self, script_hash, position):
-        ctx_breakpoints = self._breakpoints.get(script_hash, None)
-        if ctx_breakpoints is None:
-            self._breakpoints[script_hash] = set([position])
-        else:
-            # add by reference
-            ctx_breakpoints.add(position)
-
     def LoadDebugInfoForScriptHash(self, debug_map, script_hash):
         if debug_map and script_hash:
             self._debug_map = debug_map
             self._debug_map['script_hash'] = script_hash
 
     def Dispose(self):
-        while self._InvocationStack.Count > 0:
-            self._InvocationStack.Pop().Dispose()
+        self.InvocationStack.Clear()
 
     def Execute(self):
         self._VMState &= ~VMState.BREAK
@@ -308,7 +297,7 @@ class ExecutionEngine:
                 estack.CopyTo(context_new.EvaluationStack)
 
                 if opcode == TAILCALL:
-                    istack.Remove(1).Dispose()
+                    istack.Remove(1)
                 else:
                     estack.Clear()
 
@@ -984,7 +973,7 @@ class ExecutionEngine:
                     to_pick = items[index]
                     estack.PushT(to_pick)
 
-                    if not self.CheckStackSize(False, int_MaxValue):
+                    if not self.CheckStackSize(False, -1):
                         self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
 
                 elif isinstance(collection, Map):
@@ -993,7 +982,7 @@ class ExecutionEngine:
                     if success:
                         estack.PushT(value)
 
-                        if not self.CheckStackSize(False, int_MaxValue):
+                        if not self.CheckStackSize(False, -1):
                             self.VM_FAULT_and_report(VMFault.INVALID_STACKSIZE)
 
                     else:
@@ -1005,7 +994,7 @@ class ExecutionEngine:
                         self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_INDEX, index, len(byte_array))
                         return
                     estack.PushT(byte_array[index])
-                    self.CheckStackSize(False, -1)
+                    self.CheckStackSize(True, -1)
 
             elif opcode == SETITEM:
                 value = estack.Pop()
@@ -1251,7 +1240,7 @@ class ExecutionEngine:
                 estack.CopyTo(context_new.EvaluationStack, pcount)
 
                 if opcode in [CALL_ET, CALL_EDT]:
-                    istack.Remove(1).Dispose()
+                    istack.Remove(1)
                 else:
                     for i in range(0, pcount, 1):
                         estack.Pop()
@@ -1283,7 +1272,8 @@ class ExecutionEngine:
         # add break points for current script if available
         script_hash = context.ScriptHash()
         if self._debug_map and script_hash == self._debug_map['script_hash']:
-            self._breakpoints[script_hash] = set(self._debug_map['breakpoints'])
+            if self.debugger:
+                self.debugger._breakpoints[script_hash] = set(self._debug_map['breakpoints'])
 
         return context
 
@@ -1295,24 +1285,6 @@ class ExecutionEngine:
         if script is None:
             return None
         return self._LoadScriptInternal(Script.FromHash(script_hash, script), rvcount)
-
-    def RemoveBreakPoint(self, script_hash, position):
-        # test if any breakpoints exist for script hash
-        ctx = self._breakpoints.get(script_hash, None)
-        if ctx is None:
-            return False
-
-        # remove if specific bp exists
-        if position in ctx:
-            ctx.remove(position)
-        else:
-            return False
-
-        # clear set from breakpoints list if no more bp's exist for it
-        if len(ctx) == 0:
-            del self._breakpoints[script_hash]
-
-        return True
 
     def PreExecuteInstruction(self):
         # allow overriding
@@ -1342,34 +1314,11 @@ class ExecutionEngine:
             except Exception as e:
 
                 error_msg = f"COULD NOT EXECUTE OP ({self.ops_processed}): {e}"
-                traceback.print_exc()
+                # traceback.print_exc()
                 self.write_log(error_msg)
 
                 if self._exit_on_error:
                     self._VMState = VMState.FAULT
-
-            # This is how C# does it now (2019-03-25) according to
-            # https://github.com/neo-project/neo-vm/blob/0e5cb856021e288915623fe994084d97a0417373/src/neo-vm/ExecutionEngine.cs#L234
-            # but that doesn't help us set a breakpoint, so we use the old logic
-            # TODO: revisit at some point
-            if self._VMState == VMState.NONE and self._InvocationStack.Count > 0:
-                # if self._VMState & VMState.FAULT == 0 and self._InvocationStack.Count > 0:
-                script_hash = self.CurrentContext.ScriptHash()
-                bps = self._breakpoints.get(self.CurrentContext.ScriptHash(), None)
-                if bps is not None:
-                    if self.CurrentContext.InstructionPointer in bps:
-                        self._VMState = VMState.BREAK
-                        self._vm_debugger = VMDebugger(self)
-                        self._vm_debugger.start()
-
-    def StepInto(self):
-
-        if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-            logger.debug("stopping because vm state is %s " % self._VMState)
-            return
-        self.ExecuteNext()
-        if self._VMState == VMState.NONE:
-            self._VMState = VMState.BREAK
 
     def VM_FAULT_and_report(self, id, *args):
         self._VMState = VMState.FAULT
