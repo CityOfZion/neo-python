@@ -214,7 +214,12 @@ class CommandShowNodes(CommandBase):
         return out
 
     def command_desc(self):
-        return CommandDesc('nodes', 'show connected peers')
+        p1 = ParameterDesc('verbose', 'also show the number of queued, known, and bad addresses', optional=True)
+        p2 = ParameterDesc('queued', 'also list the queued addresses', optional=True)
+        p3 = ParameterDesc('known', 'also list the known addresses', optional=True)
+        p4 = ParameterDesc('bad', 'also list the bad addresses', optional=True)
+        params = [p1, p2, p3, p4]
+        return CommandDesc('nodes', 'show connected peers and their blockheight', params=params)
 
 
 class CommandShowState(CommandBase):
