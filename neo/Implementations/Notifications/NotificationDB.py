@@ -194,8 +194,6 @@ class NotificationDB:
 
             token_db = self.db.getPrefixedDB(NotificationPrefix.PREFIX_TOKEN)
 
-            token_write_batch = token_db.write_batch()
-
             with token_db.getBatch() as token_write_batch:
                 for token_event in self._new_contracts_to_write:
                     try:
@@ -206,12 +204,6 @@ class NotificationDB:
                         logger.debug(f"Failed to write new contract, reason: {e}")
 
         self._new_contracts_to_write = []
-
-        results = []
-        with block_db.openIter(DBProperties(prefix=block_bytes, include_key=False)) as iterator:
-            for val in iterator:
-                event = SmartContractEvent.FromByteArray(val)
-                results.append(event)
 
     def get_by_block(self, block_number):
         """

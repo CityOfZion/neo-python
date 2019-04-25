@@ -1,5 +1,5 @@
 import plyvel
-# import threading
+import threading
 
 from contextlib import contextmanager
 
@@ -24,7 +24,7 @@ _iter = None
 
 _batch = None
 
-# _lock = threading.Lock()
+_lock = threading.RLock()
 
 
 @property
@@ -101,9 +101,10 @@ def openIter(self, properties):
 
 @contextmanager
 def getBatch(self):
-    self._batch = self._db.write_batch()
-    yield self._batch
-    self._batch.write()
+    with _lock:
+        self._batch = self._db.write_batch()
+        yield self._batch
+        self._batch.write()
 
 
 def getPrefixedDB(self, prefix):
