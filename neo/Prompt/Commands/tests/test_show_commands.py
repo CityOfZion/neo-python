@@ -7,9 +7,10 @@ from neo.Prompt.PromptData import PromptData
 from neo.bin.prompt import PromptInterface
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from mock import patch, MagicMock
+from mock import mock, patch, MagicMock
 from neo.Network.neonetwork.network.nodemanager import NodeManager
 from neo.Network.neonetwork.network.node import NeoNode
+from neo.Network.neonetwork.common.singleton import Singleton
 from io import StringIO
 
 
@@ -212,13 +213,20 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
 
         nodemgr.reset_for_test()
 
-    def test_show_state(self):
+    @mock.patch('neo.Prompt.Commands.Show.SyncManager')
+    def test_show_state(self, mock_SyncManager):
         # setup
+        class mock_SM(Singleton):
+            def init(self):
+                self.block_cache = [1, 2, 3, 4, 5]  # simulate blocks in the block_cache
+        mock_SyncManager.return_value = mock_SM()
         PromptInterface()
 
-        args = ['state']
-        res = CommandShow().execute(args)
-        self.assertTrue(res)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['state']
+            res = CommandShow().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Block-cache length 5", mock_print.getvalue())
 
     def test_show_notifications(self):
         # setup

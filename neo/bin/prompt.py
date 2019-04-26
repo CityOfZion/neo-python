@@ -184,8 +184,21 @@ class PromptInterface:
                 # Control-D pressed: quit
                 return self.quit()
             except KeyboardInterrupt:
-                # Control-C pressed: do nothing
-                continue
+                # Control-C pressed: pause for user input
+
+                # temporarily mute stdout during user input
+                # components like `network` set at DEBUG level will spam through the console
+                # making it impractical to input user data
+                log_manager.mute_stdio()
+
+                print('Logging output muted during user input...')
+                try:
+                    result = await session.prompt(async_=True)
+                except Exception as e:
+                    logger.error("Exception handling input: %s " % e)
+
+                # and re-enable stdio
+                log_manager.unmute_stdio()
             except Exception as e:
                 logger.error("Exception handling input: %s " % e)
 
