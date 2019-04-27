@@ -19,6 +19,7 @@ class CommandConfig(CommandBase):
         self.register_sub_command(CommandConfigDebugNotify())
         self.register_sub_command(CommandConfigVMLog())
         self.register_sub_command(CommandConfigMaxpeers())
+        self.register_sub_command(CommandConfigMinpeers())
         self.register_sub_command(CommandConfigNEP8())
 
     def command_desc(self):
@@ -201,6 +202,33 @@ class CommandConfigMaxpeers(CommandBase):
     def command_desc(self):
         p1 = ParameterDesc('number', 'maximum number of nodes to connect to')
         return CommandDesc('maxpeers', 'configure number of max peers', [p1])
+
+
+class CommandConfigMinpeers(CommandBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, arguments):
+        c1 = get_arg(arguments)
+        if c1 is not None:
+            try:
+                c1 = int(c1)
+                if c1 > settings.CONNECTED_PEER_MAX:
+                    print('minpeers setting cannot be bigger than maxpeers setting')
+                    return
+                settings.set_min_peers(c1)
+            except ValueError:
+                print("Please supply a positive integer for minpeers")
+                return
+            print(f"Minpeers set to {c1}")
+            return c1
+        else:
+            print(f"Maintaining minpeers at {settings.CONNECTED_PEER_MIN}")
+            return
+
+    def command_desc(self):
+        p1 = ParameterDesc('number', 'minimum number of nodes to connect to')
+        return CommandDesc('minpeers', 'configure number of min peers', [p1])
 
 
 def start_output_config():

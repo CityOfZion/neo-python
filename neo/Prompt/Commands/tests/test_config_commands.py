@@ -142,6 +142,43 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             self.assertFalse(res)
             self.assertIn("Please supply a positive integer for maxpeers", mock_print.getvalue())
 
+    def test_config_minpeers(self):
+        # test no input and verify output confirming current minpeers
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers']
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn(f"Maintaining minpeers at {settings.CONNECTED_PEER_MIN}", mock_print.getvalue())
+
+        # test changing the number of minpeers
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers', "6"]
+            res = CommandConfig().execute(args)
+            self.assertTrue(res)
+            self.assertEqual(int(res), settings.CONNECTED_PEER_MIN)
+            self.assertIn(f"Minpeers set to {settings.CONNECTED_PEER_MIN}", mock_print.getvalue())
+
+        # test bad input
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers', "blah"]
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please supply a positive integer for minpeers", mock_print.getvalue())
+
+        # test negative number
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers', "-1"]
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please supply a positive integer for minpeers", mock_print.getvalue())
+
+        # test minpeers greater than maxpeers
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers', f"{settings.CONNECTED_PEER_MAX + 1}"]
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("minpeers setting cannot be bigger than maxpeers setting", mock_print.getvalue())
+
     def test_config_nep8(self):
         # test with missing flag argument
         with patch('sys.stdout', new=StringIO()) as mock_print:
