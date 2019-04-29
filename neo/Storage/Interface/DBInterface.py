@@ -7,10 +7,17 @@ logger = log_manager.getLogger()
 
 class DBProperties:
 
+    """
+    Description:
+    Used to pass the relevant information to
+    no.Storage.Implementation.[BACKEND].[BACKEND]DBClassMethods.openIter
+    """
+
     prefix = None
     include_value = None
     include_key = None
-
+    
+    
     def __init__(self, prefix=None, include_value=True, include_key=True):
         self.prefix = prefix
         self.include_value = include_value

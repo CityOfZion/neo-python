@@ -1,14 +1,20 @@
-from neo.Storage.Interface.AbstractDBInterface import AbstractDBInterface
+from neo.Storage.Implementation.AbstractDBImplementation import (
+    AbstractDBImplementation
+)
 from neo.Settings import settings
 from neo.logging import log_manager
 
 
-"""Module is used to access the different databases.
-Import the module and use the getters to  access the different databases.
+""" 
+Database factory module
+
+Note: Module is used to access the different database implementations.
+Import the module and use the getters to access the different databases.
 Configuration is done in neo.Settings.DATABASE_PROPS dict.
+Each getter returns an instance of the database.
+
 """
 
-# logger = log_manager.getLogger('DBFactory')
 logger = log_manager.getLogger()
 
 BC_CONST = 'blockchain'
@@ -25,6 +31,9 @@ _debug_db_instance = None
 
 
 def getBlockchainDB(path=None):
+    """
+    Returns a database instance used with the blockchain class.
+    """
 
     if not path:
         path = DATABASE_PROPS[BC_CONST]['path']
@@ -35,6 +44,9 @@ def getBlockchainDB(path=None):
 
 
 def getNotificationDB(path=None):
+    """
+    Returns a database instance used with the notification class.
+    """
 
     if not path:
         path = DATABASE_PROPS[NOTIF_CONST]['path']
@@ -45,6 +57,10 @@ def getNotificationDB(path=None):
 
 
 def getDebugStorageDB():
+    """
+    Returns a database instance used with the debug storage class.
+    """
+
     DebugStorageDB = _dbFactory(DEBUG_CONST, DATABASE_PROPS[DEBUG_CONST])
     _debug_db_instance = DebugStorageDB(DATABASE_PROPS[DEBUG_CONST]['path'])
     return _debug_db_instance
@@ -54,21 +70,21 @@ def _dbFactory(dbType, properties):
 
     if properties['backend'] == 'leveldb':
 
-        # import what's needed
+        """
+        Module implements the methods used by the dynamically generated class.
+        """
         import neo.Storage.Implementation.LevelDB.LevelDBClassMethods as functions
 
         methods = [x for x in dir(functions) if not x.startswith('__')]
 
-        # build attributes dict
+        # build the dict containing all the attributes (methods + members)
         attributes = {methods[i]: getattr(
             functions, methods[i]) for i in range(0, len(methods))}
 
         # add __init__ method
         attributes['__init__'] = attributes.pop(functions._init_method)
 
-        # print(attributes)
-
         return type(
             properties['backend'].title() + 'DBImpl' + dbType.title(),
-            (AbstractDBInterface,),
+            (AbstractDBImplementation,),
             attributes)
