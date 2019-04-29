@@ -149,7 +149,7 @@ class Blockchain:
                     logger.info("Current stored headers empty, re-creating from stored blocks...")
                     headers = []
                     logger.info('Recreate headers')
-                    with self._db.openIter(DBProperties(DBProperties(DBPrefix.DATA_Block))) as iterator:
+                    with self._db.openIter(DBProperties(DBPrefix.DATA_Block)) as iterator:
                         for key, value in iterator:
                             dbhash = bytearray(value)[8:]
                             headers.append(Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
