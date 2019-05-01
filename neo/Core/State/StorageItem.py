@@ -1,5 +1,5 @@
 from .StateBase import StateBase
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Size import GetVarSize
 
@@ -53,7 +53,7 @@ class StorageItem(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(StorageItem, self).Deserialize(reader)
         self.Value = reader.ReadVarBytes()

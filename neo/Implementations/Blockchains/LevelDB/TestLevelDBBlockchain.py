@@ -3,8 +3,8 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import TransactionType
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
 
 from neo.Core.State.UnspentCoinState import UnspentCoinState
 from neo.Core.State.AccountState import AccountState

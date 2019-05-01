@@ -1,6 +1,7 @@
 from neo.IO.MemoryStream import StreamManager
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.VM.RandomAccessStack import RandomAccessStack
+from neo.VM.OpCode import RET
 
 
 class ExecutionContext:
@@ -40,7 +41,11 @@ class ExecutionContext:
 
     @property
     def NextInstruction(self):
-        return self.Script[self.__OpReader.stream.tell()].to_bytes(1, 'little')
+        index = self.__OpReader.stream.tell()
+        if index >= len(self.Script):
+            return RET
+        else:
+            return self.Script[index].to_bytes(1, 'little')
 
     _script_hash = None
 

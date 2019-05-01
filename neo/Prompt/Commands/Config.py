@@ -43,7 +43,12 @@ class CommandConfigOutput(CommandBase):
         super().__init__()
 
     def execute(self, arguments=None):
-        return start_output_config()
+        try:
+            res = start_output_config()
+        except KeyboardInterrupt:
+            print('Output configuration cancelled')
+            return
+        return res
 
     def command_desc(self):
         return CommandDesc('output', 'configure the log output level settings')

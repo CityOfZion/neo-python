@@ -5,7 +5,7 @@ from mock import patch
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.PromptData import PromptData
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 
 
 class UserWalletTestCase(UserWalletTestCaseBase):

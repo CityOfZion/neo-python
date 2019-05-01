@@ -6,8 +6,8 @@ Usage:
 """
 from neo.Core.CoinReference import CoinReference
 from neo.Core.State.CoinState import CoinState
-from neocore.IO.Mixins import TrackableMixin
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.IO.Mixins import TrackableMixin
+from neo.Core.Cryptography.Crypto import Crypto
 
 
 class Coin(TrackableMixin):
@@ -41,7 +41,7 @@ class Coin(TrackableMixin):
         Create an instance.
 
         Args:
-            prev_hash (neocore.UInt256): (Optional if coin_reference is given) the hash of the previous transaction.
+            prev_hash (neo.Core.UInt256): (Optional if coin_reference is given) the hash of the previous transaction.
             prev_index (UInt16/int): (Optional if coin_reference is given) index of the previous transaction.
             tx_output (neo.Core.Transaction.TransactionOutput): an object representing a transaction output.
             coin_reference (neo.Core.CoinReference): (Optional if prev_hash and prev_index are given) an object representing a single UTXO / transaction input.

@@ -59,7 +59,8 @@ class TestNotifyDebugEvents(BoaTest):
         """
         settings.set_emit_notify_events_on_sc_execution_error(False)
 
-        tx, results, total_ops, engine = TestBuild(self.script, ['invalid_arg'], self.GetWallet1(), '10', '07')
+        # test should fail because we try to access index an index for a 0 length argument
+        tx, results, total_ops, engine = TestBuild(self.script, [''], self.GetWallet1(), '10', '07')
 
         self.assertFalse(self.execution_success)
         self.assertEqual(0, len(self.dispatched_events))
@@ -70,7 +71,8 @@ class TestNotifyDebugEvents(BoaTest):
         """
         settings.set_emit_notify_events_on_sc_execution_error(True)
 
-        tx, results, total_ops, engine = TestBuild(self.script, ['invalid_arg'], self.GetWallet1(), '10', '07')
+        # test should fail because we try to access index an index for a 0 length argument
+        tx, results, total_ops, engine = TestBuild(self.script, [''], self.GetWallet1(), '10', '07')
 
         self.assertFalse(self.execution_success)
         self.assertEqual(SmartContractEvent.RUNTIME_NOTIFY, self.dispatched_events[0].event_type)

@@ -1,7 +1,7 @@
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 import sys
 from neo.Core.Size import GetVarSize
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryWriter import BinaryWriter
 
 
 class HeadersPayload(SerializableMixin):

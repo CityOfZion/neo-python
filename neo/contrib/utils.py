@@ -3,7 +3,7 @@ from threading import Event
 
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import Transaction
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
 
 
 class TxNotFoundInBlockchainError(Exception):

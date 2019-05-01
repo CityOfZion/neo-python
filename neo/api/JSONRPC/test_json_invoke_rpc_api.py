@@ -17,7 +17,7 @@ from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.IO.Helper import Helper
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.VM import VMState
 from neo.VM.VMState import VMStateStr
 from neo.Settings import settings
@@ -103,7 +103,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_post_rpc_req("invoke", params=[contract_hash, jsn])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT))
         self.assertEqual(res['result']['gas_consumed'], '0.128')
         results = []
         for p in res['result']['stack']:
@@ -116,7 +116,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_get_rpc_req("invoke", params=[contract_hash, jsn])
         mock_req = mock_get_request(req)
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT))
         self.assertEqual(res['result']['gas_consumed'], '0.128')
         results = []
         for p in res['result']['stack']:
@@ -145,7 +145,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_post_rpc_req("invoke", params=[contract_hash, jsn])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT))
         results = []
         for p in res['result']['stack']:
             results.append(ContractParameter.FromJson(p))
@@ -158,7 +158,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_post_rpc_req("invokefunction", params=[contract_hash, 'symbol'])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT))
         results = []
         for p in res['result']['stack']:
             results.append(ContractParameter.FromJson(p))
@@ -174,7 +174,7 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         req = self._gen_post_rpc_req("invokefunction", params=[contract_hash, 'balanceOf', params])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT))
         results = []
         for p in res['result']['stack']:
             results.append(ContractParameter.FromJson(p))
@@ -183,12 +183,12 @@ class JsonRpcInvokeApiTestCase(BlockchainFixtureTestCase):
         self.assertEqual(results[0].Value, bytearray(b'\x00\x90\x8c\xd4v\xe2\x00'))
 
     def test_invoke_5(self):
-        test_script = "00046e616d6567c2563cdd3312230722820b1681d30fe5f6cffbb9000673796d626f6c67c2563cdd3312230722820b1681d30fe5f6cffbb90008646563696d616c7367c2563cdd3312230722820b1681d30fe5f6cffbb9" 
+        test_script = "00046e616d6567c2563cdd3312230722820b1681d30fe5f6cffbb9000673796d626f6c67c2563cdd3312230722820b1681d30fe5f6cffbb90008646563696d616c7367c2563cdd3312230722820b1681d30fe5f6cffbb9"
 
         req = self._gen_post_rpc_req("invokescript", params=[test_script])
         mock_req = mock_post_request(json.dumps(req).encode("utf-8"))
         res = json.loads(self.app.home(mock_req))
-        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT + VMState.BREAK))
+        self.assertEqual(res['result']['state'], VMStateStr(VMState.HALT))
 
         results = []
         for p in res['result']['stack']:

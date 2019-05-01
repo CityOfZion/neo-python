@@ -2,11 +2,11 @@ import binascii
 import traceback
 from decimal import Decimal
 from neo.Core.VerificationCode import VerificationCode
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Fixed8 import Fixed8
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Fixed8 import Fixed8
 from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
 from neo.Prompt import Utils as PromptUtils
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.Core.Mixins import SerializableMixin
@@ -98,6 +98,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         try:
             engine = ApplicationEngine.Run(sb.ToArray(), exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
         except Exception as e:
+            traceback.print_exc()
             pass
 
         if engine and len(engine.ResultStack.Items) == 3:
@@ -300,7 +301,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         """
         Serialize this token data to bytes
         Args:
-            writer (neocore.IO.BinaryWriter): binary writer to write serialization data to
+            writer (neo.Core.IO.BinaryWriter): binary writer to write serialization data to
 
         """
         writer.WriteVarString(self.name)
@@ -311,7 +312,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         """
         Read serialized data from byte stream
         Args:
-            reader (neocore.IO.BinaryReader): reader to read byte data from
+            reader (neo.Core.IO.BinaryReader): reader to read byte data from
         """
         self.name = reader.ReadVarString().decode('utf-8')
         self.symbol = reader.ReadVarString().decode('utf-8')

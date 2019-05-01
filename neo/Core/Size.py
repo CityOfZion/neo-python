@@ -1,7 +1,7 @@
 from enum import IntEnum, Enum
 from collections import Iterable
-from neocore.IO.Mixins import SerializableMixin
-from neocore.UIntBase import UIntBase
+from neo.Core.IO.Mixins import SerializableMixin
+from neo.Core.UIntBase import UIntBase
 
 """
 This helper class is intended to help resolve the correct calculation of network serializable objects.

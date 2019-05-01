@@ -1,5 +1,5 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
 
 
 class EnrollmentTransaction(Transaction):

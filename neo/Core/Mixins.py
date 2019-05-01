@@ -1,4 +1,4 @@
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 from abc import ABC, abstractmethod
 
 

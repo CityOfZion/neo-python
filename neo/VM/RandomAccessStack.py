@@ -1,6 +1,3 @@
-from neo.VM.InteropService import StackItem
-
-
 class RandomAccessStack:
     _list = []
     _size = 0  # cache the size for performance
@@ -66,6 +63,8 @@ class RandomAccessStack:
         return self.Remove(0)
 
     def PushT(self, item):
+        # to prevent circular import
+        from neo.VM.InteropService import StackItem
         if not type(item) is StackItem and not issubclass(type(item), StackItem):
             item = StackItem.New(item)
 
@@ -89,6 +88,7 @@ class RandomAccessStack:
         return item
 
     def Set(self, index, item):
+        from neo.VM.InteropService import StackItem
         index = int(index)
 
         if index >= self._size:

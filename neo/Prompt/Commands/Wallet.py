@@ -7,8 +7,8 @@ from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt import Utils as PromptUtils
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
 from prompt_toolkit import prompt
 import json
 import os
@@ -20,7 +20,7 @@ from neo.Prompt.Commands.WalletAddress import CommandWalletAddress
 from neo.Prompt.Commands.WalletImport import CommandWalletImport
 from neo.Prompt.Commands.WalletExport import CommandWalletExport
 from neo.logging import log_manager
-from neocore.Utils import isValidPublicAddress
+from neo.Core.Utils import isValidPublicAddress
 from neo.Prompt.PromptPrinter import prompt_print as print
 
 logger = log_manager.getLogger()
@@ -60,8 +60,8 @@ class CommandWallet(CommandBase):
             print("Please open a wallet")
             return
 
-        if not item:
-            print("Wallet %s " % json.dumps(wallet.ToJson(), indent=4))
+        if not item or item == 'verbose':
+            wallet.pretty_print(item)
             return wallet
 
         try:
@@ -94,8 +94,12 @@ class CommandWalletCreate(CommandBase):
         if PromptData.Wallet:
             PromptData.close_wallet()
 
-        passwd1 = prompt("[password]> ", is_password=True)
-        passwd2 = prompt("[password again]> ", is_password=True)
+        try:
+            passwd1 = prompt("[password]> ", is_password=True)
+            passwd2 = prompt("[password again]> ", is_password=True)
+        except KeyboardInterrupt:
+            print("Wallet creation cancelled")
+            return
 
         if passwd1 != passwd2 or len(passwd1) < 10:
             print("Please provide matching passwords that are at least 10 characters long")
@@ -147,7 +151,11 @@ class CommandWalletOpen(CommandBase):
             print("Wallet file not found")
             return
 
-        passwd = prompt("[password]> ", is_password=True)
+        try:
+            passwd = prompt("[password]> ", is_password=True)
+        except KeyboardInterrupt:
+            print("Wallet opening cancelled")
+            return
         password_key = to_aes_key(passwd)
 
         try:
@@ -203,11 +211,13 @@ class CommandWalletClaimGas(CommandBase):
             args, from_addr_str = PromptUtils.get_from_addr(args)
             args, to_addr_str = PromptUtils.get_to_addr(args)
 
-        return ClaimGas(PromptData.Wallet, True, from_addr_str, to_addr_str)
+        return ClaimGas(PromptData.Wallet, from_addr_str, to_addr_str)
 
     def command_desc(self):
         p1 = ParameterDesc('--from-addr', 'source address to claim gas from (if not specified, take first address in wallet)', optional=True)
-        p2 = ParameterDesc('--to-addr', 'destination address for claimed gas (if not specified, take first address in wallet; or, use the from address, if specified)', optional=True)
+        p2 = ParameterDesc('--to-addr',
+                           'destination address for claimed gas (if not specified, take first address in wallet; or, use the from address, if specified)',
+                           optional=True)
         return CommandDesc('claim', 'claim gas', params=[p1, p2])
 
 
@@ -275,11 +285,10 @@ class CommandWalletUnspent(CommandBase):
 #########################################################################
 
 
-def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None):
+def ClaimGas(wallet, from_addr_str=None, to_addr_str=None):
     """
     Args:
         wallet:
-        require_password:
         from_addr_str:
     Returns:
         (claim transaction, relayed status)
@@ -342,14 +351,16 @@ def ClaimGas(wallet, require_password=True, from_addr_str=None, to_addr_str=None
     print(f"Will make claim for {available_bonus.ToString()} GAS")
     print("------------------------------------------------------------------\n")
 
-    if require_password:
-        print("Enter your password to complete this claim")
+    print("Enter your password to complete this claim")
 
+    try:
         passwd = prompt("[Password]> ", is_password=True)
-
-        if not wallet.ValidatePassword(passwd):
-            print("Incorrect password")
-            return None, False
+    except KeyboardInterrupt:
+        print("Claim transaction cancelled")
+        return None, False
+    if not wallet.ValidatePassword(passwd):
+        print("Incorrect password")
+        return None, False
 
     if context.Completed:
 

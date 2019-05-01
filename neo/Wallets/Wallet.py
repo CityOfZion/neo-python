@@ -17,16 +17,16 @@ from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
-from neocore.Cryptography.Helper import scripthash_to_address
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Helper import scripthash_to_address
+from neo.Core.Cryptography.Crypto import Crypto
 from neo.Wallets.AddressState import AddressState
 from neo.Wallets.Coin import Coin
-from neocore.KeyPair import KeyPair
+from neo.Core.KeyPair import KeyPair
 from neo.Wallets import NEP5Token
 from neo.Settings import settings
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
 from neo.Core.Helper import Helper
 from neo.Wallets.utils import to_aes_key
 from neo.logging import log_manager
@@ -650,14 +650,14 @@ class Wallet:
         self._lock.acquire()
         try:
             blockcount = 0
-            while self._current_height <= Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
+            while self._current_height < Blockchain.Default().Height and (block_limit == 0 or blockcount < block_limit):
 
                 block = Blockchain.Default().GetBlockByHeight(self._current_height)
 
                 if block is not None:
                     self.ProcessNewBlock(block)
                 else:
-                    self._current_height += 1
+                    break
 
                 blockcount += 1
 
@@ -1266,6 +1266,9 @@ class Wallet:
             return False
         else:
             return True
+
+    def pretty_print(self, verbose=False):
+        pass
 
     def ToJson(self, verbose=False):
         # abstract

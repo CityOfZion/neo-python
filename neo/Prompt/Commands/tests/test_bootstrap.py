@@ -2,6 +2,8 @@ from unittest import TestCase
 from neo.Prompt.Commands.Bootstrap import BootstrapBlockchainFile
 import os
 import shutil
+from mock import patch
+from io import StringIO
 
 
 class BootstrapTestCase(TestCase):
@@ -41,3 +43,28 @@ class BootstrapTestCase(TestCase):
             BootstrapBlockchainFile(self.bootstrap_target_dir_bad, self.bootstrap_unittest_file_locations, "goodnet", require_confirm=False)
 
         self.assertFalse(os.path.exists(self.bootstrap_target_dir))
+
+    def test_4_good_bootstrap_file_good_confirm(self):
+        with patch('neo.Prompt.Commands.Bootstrap.prompt', side_effect=["confirm"]):
+            with self.assertRaises(SystemExit):
+                BootstrapBlockchainFile(self.bootstrap_target_dir, self.bootstrap_unittest_file_locations, "goodnet")
+
+        self.assertTrue(os.path.exists(self.bootstrap_target_dir))
+
+    def test_5_good_bootstrap_file_bad_confirm(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Bootstrap.prompt', side_effect=["confrim"]):
+                with self.assertRaises(SystemExit):
+                    BootstrapBlockchainFile(self.bootstrap_target_dir, self.bootstrap_unittest_file_locations, "goodnet")
+
+        self.assertFalse(os.path.exists(self.bootstrap_target_dir))
+        self.assertIn("bootstrap cancelled", mock_print.getvalue())
+
+    def test_6_good_bootstrap_file_keyboard_interrupt(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Bootstrap.prompt', side_effect=[KeyboardInterrupt]):
+                with self.assertRaises(SystemExit):
+                    BootstrapBlockchainFile(self.bootstrap_target_dir, self.bootstrap_unittest_file_locations, "goodnet")
+
+        self.assertFalse(os.path.exists(self.bootstrap_target_dir))
+        self.assertIn("bootstrap cancelled", mock_print.getvalue())
