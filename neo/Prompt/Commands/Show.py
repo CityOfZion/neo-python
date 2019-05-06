@@ -13,6 +13,7 @@ from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.Network.p2pservice import NetworkService
 from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.neonetwork.network.syncmanager import SyncManager
 import json
 import asyncio
 
@@ -214,7 +215,12 @@ class CommandShowNodes(CommandBase):
         return out
 
     def command_desc(self):
-        return CommandDesc('nodes', 'show connected peers')
+        p1 = ParameterDesc('verbose', 'also show the number of queued, known, and bad addresses', optional=True)
+        p2 = ParameterDesc('queued', 'also list the queued addresses', optional=True)
+        p3 = ParameterDesc('known', 'also list the known addresses', optional=True)
+        p4 = ParameterDesc('bad', 'also list the bad addresses', optional=True)
+        params = [p1, p2, p3, p4]
+        return CommandDesc('nodes', 'show connected peers and their blockheight', params=params)
 
 
 class CommandShowState(CommandBase):
@@ -238,8 +244,10 @@ class CommandShowState(CommandBase):
             bpm = diff / mins
             tps = Blockchain.Default().TXProcessed / secs
 
+        syncmngr = SyncManager()
+
         out = "Progress: %s / %s\n" % (height, headers)
-        out += "Block-cache length %s\n" % Blockchain.Default().BlockCacheCount
+        out += "Block-cache length %s\n" % len(syncmngr.block_cache)
         out += "Blocks since program start %s\n" % diff
         out += "Time elapsed %s mins\n" % mins
         out += "Blocks per min %s \n" % bpm
