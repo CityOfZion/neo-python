@@ -54,6 +54,7 @@ class ExecutionEngine:
         self._is_write_log = settings.log_vm_instructions
         self._is_stackitem_count_strict = True
         self._stackitem_count = 0
+        self._EntryScriptHash = None
 
     def CheckArraySize(self, length: int) -> bool:
         return length <= self.maxArraySize
@@ -146,14 +147,8 @@ class ExecutionEngine:
         return self._InvocationStack.Peek()
 
     @property
-    def CallingContext(self):
-        if self._InvocationStack.Count > 1:
-            return self.InvocationStack.Peek(1)
-        return None
-
-    @property
-    def EntryContext(self):
-        return self.InvocationStack.Peek(self.InvocationStack.Count - 1)
+    def EntryScriptHash(self):
+        return self._EntryScriptHash
 
     @property
     def ExecutedScriptHashes(self):
@@ -240,7 +235,7 @@ class ExecutionEngine:
                 if not self.CheckMaxInvocationStack():
                     return self.VM_FAULT_and_report(VMFault.CALL_EXCEED_MAX_INVOCATIONSTACK_SIZE)
 
-                context_call = self._LoadScriptInternal(context.Script)
+                context_call = self._LoadScriptInternal(context.Script, context.ScriptHash())
                 context_call.InstructionPointer = context.InstructionPointer + instruction.TokenI16
                 if context_call.InstructionPointer < 0 or context_call.InstructionPointer > context_call.Script.Length:
                     return False
@@ -290,7 +285,7 @@ class ExecutionEngine:
                 if not is_normal_call:
                     script_hash = estack.Pop().GetByteArray()
 
-                context_new = self._LoadScriptByHash(script_hash)
+                context_new = self._LoadScriptByHash(script_hash, context.ScriptHash())
                 if context_new is None:
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
@@ -431,13 +426,6 @@ class ExecutionEngine:
 
                 x = estack.Pop().GetByteArray()
 
-                len_x = len(x)
-                if index > len_x:
-                    return self.VM_FAULT_and_report(VMFault.SUBSTR_INVALID_INDEX)
-
-                if index + count > len_x:
-                    count = len_x - index
-
                 estack.PushT(x[index:count + index])
                 self.CheckStackSize(True, -2)
 
@@ -473,19 +461,12 @@ class ExecutionEngine:
             elif opcode == INVERT:
 
                 x = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
                 estack.PushT(~x)
 
             elif opcode == AND:
 
                 x2 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x2):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x1 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x1):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 & x2)
                 self.CheckStackSize(True, -1)
@@ -493,12 +474,7 @@ class ExecutionEngine:
             elif opcode == OR:
 
                 x2 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x2):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x1 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x1):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 | x2)
                 self.CheckStackSize(True, -1)
@@ -506,12 +482,7 @@ class ExecutionEngine:
             elif opcode == XOR:
 
                 x2 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x2):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x1 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x1):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 ^ x2)
                 self.CheckStackSize(True, -1)
@@ -542,24 +513,18 @@ class ExecutionEngine:
 
                 # Make sure to implement sign for big integer
                 x = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x.Sign)
 
             elif opcode == NEGATE:
 
                 x = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(-x)
 
             elif opcode == ABS:
 
                 x = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(abs(x))
 
@@ -572,8 +537,6 @@ class ExecutionEngine:
             elif opcode == NZ:
 
                 x = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x is not 0)
 
@@ -708,12 +671,7 @@ class ExecutionEngine:
             elif opcode == LT:
 
                 x2 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x2):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x1 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x1):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 < x2)
                 self.CheckStackSize(True, -1)
@@ -721,12 +679,7 @@ class ExecutionEngine:
             elif opcode == GT:
 
                 x2 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x2):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x1 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x1):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 > x2)
                 self.CheckStackSize(True, -1)
@@ -734,12 +687,7 @@ class ExecutionEngine:
             elif opcode == LTE:
 
                 x2 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x2):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x1 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x1):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(x1 <= x2)
                 self.CheckStackSize(True, -1)
@@ -755,12 +703,7 @@ class ExecutionEngine:
             elif opcode == MIN:
 
                 x2 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x2):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x1 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x1):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(min(x1, x2))
                 self.CheckStackSize(True, -1)
@@ -768,12 +711,7 @@ class ExecutionEngine:
             elif opcode == MAX:
 
                 x2 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x2):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x1 = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x1):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(max(x1, x2))
                 self.CheckStackSize(True, -1)
@@ -781,16 +719,8 @@ class ExecutionEngine:
             elif opcode == WITHIN:
 
                 b = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(b):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 a = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(a):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
-
                 x = estack.Pop().GetBigInteger()
-                if not self.CheckBigInteger(x):
-                    return self.VM_FAULT_and_report(VMFault.BIGINTEGER_EXCEED_LIMIT)
 
                 estack.PushT(a <= x and x < b)
                 self.CheckStackSize(True, -2)
@@ -1199,7 +1129,7 @@ class ExecutionEngine:
                 if estack.Count < pcount:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION)
 
-                context_call = self._LoadScriptInternal(context.Script, rvcount)
+                context_call = self._LoadScriptInternal(context.Script, context.ScriptHash(), rvcount)
                 context_call.InstructionPointer = context.InstructionPointer + instruction.TokenI16_1 + 2
 
                 if context_call.InstructionPointer < 0 or context_call.InstructionPointer > context_call.Script.Length:
@@ -1233,7 +1163,7 @@ class ExecutionEngine:
                 else:
                     script_hash = instruction.ReadBytes(2, 20)
 
-                context_new = self._LoadScriptByHash(script_hash, rvcount)
+                context_new = self._LoadScriptByHash(script_hash, context.ScriptHash(), rvcount)
                 if context_new is None:
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
@@ -1258,14 +1188,17 @@ class ExecutionEngine:
         context.MoveNext()
         return True
 
-    def LoadScript(self, script: bytearray, rvcount: int = -1) -> ExecutionContext:
+    def LoadScript(self, script: bytearray, callingScriptHash=None, rvcount: int = -1) -> ExecutionContext:
         # "raw" bytes
         new_script = Script(self.Crypto, script)
 
-        return self._LoadScriptInternal(new_script, rvcount)
+        return self._LoadScriptInternal(new_script, callingScriptHash, rvcount)
 
-    def _LoadScriptInternal(self, script: Script, rvcount=-1):
-        context = ExecutionContext(script, rvcount)
+    def _LoadScriptInternal(self, script: Script, callingScriptHash=None, rvcount=-1):
+        context = ExecutionContext(script, callingScriptHash, rvcount)
+        if self.EntryScriptHash is None:
+            self._EntryScriptHash = context.ScriptHash()
+
         self._InvocationStack.PushT(context)
         self._ExecutedScriptHashes.append(context.ScriptHash())
 
@@ -1277,14 +1210,14 @@ class ExecutionEngine:
 
         return context
 
-    def _LoadScriptByHash(self, script_hash: bytearray, rvcount=-1):
+    def _LoadScriptByHash(self, script_hash: bytearray, callingScriptHash: bytearray, rvcount=-1):
 
         if self._Table is None:
             return None
         script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
         if script is None:
             return None
-        return self._LoadScriptInternal(Script.FromHash(script_hash, script), rvcount)
+        return self._LoadScriptInternal(Script.FromHash(script_hash, script), callingScriptHash, rvcount)
 
     def PreExecuteInstruction(self):
         # allow overriding

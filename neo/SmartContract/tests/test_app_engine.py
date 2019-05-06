@@ -13,7 +13,7 @@ class TestApplicationEngine(NeoTestCase):
         self.engine = ApplicationEngine(TriggerType.Application, Mock(), Mock(), Mock(), MagicMock())
 
     def test_get_item_count(self):
-        econtext1 = ExecutionContext(Script(self.engine.Crypto, b''), 0)
+        econtext1 = ExecutionContext(Script(self.engine.Crypto, b''), b'', 0)
         # 4 items in context 1
         map = Map({'a': 1, 'b': 2, 'c': 3})
         my_int = Integer(BigInteger(1))
@@ -21,7 +21,7 @@ class TestApplicationEngine(NeoTestCase):
         econtext1.EvaluationStack.PushT(my_int)
 
         # 3 items in context 2
-        econtext2 = ExecutionContext(Script(self.engine.Crypto, b''), 0)
+        econtext2 = ExecutionContext(Script(self.engine.Crypto, b''), b'', 0)
         my_array = Array([my_int, my_int])
         econtext2.EvaluationStack.PushT(my_array)
         econtext2.AltStack.PushT(my_int)

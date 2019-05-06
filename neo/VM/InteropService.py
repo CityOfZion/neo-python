@@ -570,10 +570,13 @@ class InteropService:
 
     @staticmethod
     def GetCallingScriptHash(engine):
-        engine.CurrentContext.EvaluationStack.PushT(engine.CallingContext.ScriptHash())
+        script_hash = engine.CurrentContext.CallingScriptHash
+        if script_hash is None:
+            script_hash = b''
+        engine.CurrentContext.EvaluationStack.PushT(script_hash)
         return True
 
     @staticmethod
     def GetEntryScriptHash(engine):
-        engine.CurrentContext.EvaluationStack.PushT(engine.EntryContext.ScriptHash())
+        engine.CurrentContext.EvaluationStack.PushT(engine.EntryScriptHash)
         return True
