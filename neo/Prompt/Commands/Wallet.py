@@ -61,7 +61,7 @@ class CommandWallet(CommandBase):
             print("Please open a wallet")
             return
 
-        if not item or item == 'verbose':
+        if not item:
             wallet.pretty_print(item)
             return wallet
 

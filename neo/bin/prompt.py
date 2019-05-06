@@ -142,6 +142,7 @@ class PromptInterface:
     def quit(self):
         print('Shutting down. This may take a bit...')
         self.go_on = False
+        PromptData.close_wallet()
         raise SystemExit
 
     def help(self):
