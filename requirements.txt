@@ -2,6 +2,7 @@ aenum==2.1.2
 aiohttp==3.5.4
 aiohttp-cors==0.7.0
 astor==0.7.1
+asynctest==0.12.4
 async-timeout==3.0.1
 attrs==19.1.0
 autopep8==1.4.3
