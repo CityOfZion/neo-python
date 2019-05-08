@@ -39,17 +39,17 @@ class Ledger:
             data.reverse()
         return UInt256(data=data)
 
-    async def add_headers(self, network_headers: List['Header']) -> bool:
+    async def add_headers(self, network_headers: List['Header']) -> int:
         """
 
         Args:
             headers:
 
-        Returns: if successfully added
+        Returns: number of headers added
 
         """
         headers = []
-        success = False
+        count = 0
         for h in network_headers:
             header = IOHelper.AsSerializableWithType(h.to_array(), 'neo.Core.Header.Header')
             if header is None:
@@ -59,9 +59,9 @@ class Ledger:
             # just making sure we don't block too long while converting
             await asyncio.sleep(0.001)
         else:
-            success = self.ledger.AddHeaders(headers)
+            count = self.ledger.AddHeaders(headers)
 
-        return success
+        return count
 
     async def add_block(self, raw_block: bytes) -> bool:
         # return await self.controller.add_block(block)

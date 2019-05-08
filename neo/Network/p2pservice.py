@@ -32,7 +32,7 @@ class NetworkService(Singleton):
         self.loop.create_task(self.syncmgr.start())
 
     async def shutdown(self):
-        if self.nodemgr_task.done():
+        if self.nodemgr_task and self.nodemgr_task.done():
             # starting nodemanager can fail if a port is in use, we need to retrieve and mute this exception on shutdown
             with suppress(SystemExit):
                 self.nodemgr_task.exception()

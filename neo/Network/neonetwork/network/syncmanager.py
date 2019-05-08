@@ -15,7 +15,7 @@ from neo.Network.neonetwork.core.uint256 import UInt256
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('syncmanager')
-# log_manager.config_stdio([('syncmanager', 10)])
+log_manager.config_stdio([('syncmanager', 10)])
 
 if TYPE_CHECKING:
     from neo.Network.neonetwork.ledger import Ledger
@@ -41,6 +41,7 @@ class SyncManager(Singleton):
         self.raw_block_cache = []
         self.ledger_configured = False
         self.is_persisting = False
+        self.is_persisting_headers = False
         self.keep_running = True
         self.service_task = None
         self.persist_task = None
@@ -212,13 +213,13 @@ class SyncManager(Singleton):
 
         now = datetime.utcnow().timestamp()
         delta = now - last_flight_info.start_time
-        if now - last_flight_info.start_time < self.HEADER_REQUEST_TIMEOUT:
+        if delta < self.HEADER_REQUEST_TIMEOUT:
             # we're still good on time
             return
 
         node = self.nodemgr.get_node_by_nodeid(last_flight_info.node_id)
         if node:
-            logger.debug(f"header timeout limit exceeded by {delta - self.HEADER_REQUEST_TIMEOUT:.2f}s for node {node.nodeid_human}")
+            logger.debug(f"Header timeout limit exceeded by {delta - self.HEADER_REQUEST_TIMEOUT:.2f}s for node {node.nodeid_human}")
 
         cur_header_height = await self.ledger.cur_header_height()
         if last_flight_info.height <= cur_header_height:
@@ -324,31 +325,38 @@ class SyncManager(Singleton):
                 await node.get_data(InventoryType.block, hashes)
                 node.nodeweight.append_new_request_time()
 
-    async def on_headers_received(self, from_nodeid, headers: List[Header]) -> None:
+    async def on_headers_received(self, from_nodeid, headers: List[Header]) -> int:
         if len(headers) == 0:
-            return
+            return -1
 
         if self.header_request is None:
-            return
+            return -2
 
         height = headers[0].index
         if height != self.header_request.height:
             # received headers we did not ask for
-            return
-
+            return -3
         logger.debug(f"Headers received {headers[0].index} - {headers[-1].index}")
 
+        if self.is_persisting_headers:
+            return -4
+
+        self.is_persisting_headers = True
         cur_header_height = await self.ledger.cur_header_height()
         if height <= cur_header_height:
-            return
+            return -5
 
-        success = await self.ledger.add_headers(headers)
-        if not success:
+        count_added = await self.ledger.add_headers(headers)
+        if count_added < len(headers):
+            logger.debug(f"Failed to add all headers. Successfully added {count_added} out of {len(headers)}")
             await self.nodemgr.add_node_error_count(from_nodeid)
 
         # reset header such that the a new header sync task can be added
         self.header_request = None
-        logger.debug("finished processing headers")
+        self.is_persisting_headers = False
+        logger.debug("Finished processing headers")
+
+        return 1
 
     async def on_block_received(self, from_nodeid, block: 'Block', raw_block) -> None:
         # TODO: take out raw_block and raw_block_cache once we can serialize a full block

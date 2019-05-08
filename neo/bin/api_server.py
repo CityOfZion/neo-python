@@ -127,17 +127,17 @@ async def setup_and_start(loop):
     if not args.port_rpc and not args.port_rest:
         print("Error: specify at least one of --port-rpc / --port-rest")
         parser.print_help()
-        return
+        raise SystemExit
 
     if args.port_rpc == args.port_rest:
         print("Error: --port-rpc and --port-rest cannot be the same")
         parser.print_help()
-        return
+        raise SystemExit
 
     if args.logfile and (args.syslog or args.syslog_local):
         print("Error: Cannot only use logfile or syslog at once")
         parser.print_help()
-        return
+        raise SystemExit
 
     # Setting the datadir must come before setting the network, else the wrong path is checked at net setup.
     if args.datadir:
@@ -291,9 +291,9 @@ async def setup_and_start(loop):
 
 async def shutdown():
     # cleanup any remaining tasks
-    for task in asyncio.Task.all_tasks():
+    for task in asyncio.all_tasks():
+        task.cancel()
         with suppress(asyncio.CancelledError):
-            task.cancel()
             await task
 
 
@@ -311,7 +311,6 @@ def main():
     try:
         loop.run_forever()
     except SystemExit:
-        logger.info("Shutting down...")
         p2p = NetworkService()
         loop.run_until_complete(p2p.shutdown())
         loop.run_until_complete(shutdown())

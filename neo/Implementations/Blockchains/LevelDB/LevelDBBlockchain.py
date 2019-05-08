@@ -616,7 +616,7 @@ class LevelDBBlockchain(Blockchain):
         if len(newheaders):
             self.ProcessNewHeaders(newheaders)
 
-        return True
+        return count
 
     def ProcessNewHeaders(self, headers):
 

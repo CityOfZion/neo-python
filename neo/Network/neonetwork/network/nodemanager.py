@@ -336,10 +336,10 @@ class NodeManager(Singleton):
                 logger.debug(f"Skipping {host}, address could not be resolved: {e}")
                 return
 
-        proto = partial(NeoProtocol, nodemanager=self, quality_check=quality_check)
-        connect_coro = self.loop.create_connection(proto, host, port, family=IP4_FAMILY)
-
         try:
+            proto = partial(NeoProtocol, nodemanager=self, quality_check=quality_check)
+            connect_coro = self.loop.create_connection(proto, host, port, family=IP4_FAMILY)
+            print(f"trying to connect to: {host}:{port}")
             await asyncio.wait_for(connect_coro, timeout)
             return
         except asyncio.TimeoutError:
@@ -351,7 +351,10 @@ class NodeManager(Singleton):
         except asyncio.CancelledError:
             pass
         except Exception as e:
+            print("ohhh, some error we didn't expect happened. Please create a Github issue and share the following stacktrace so we can try to resolve it")
+            print("----------------[start of trace]----------------")
             traceback.print_exc()
+            print("----------------[end of trace]----------------")
 
         addr = f"{host}:{port}"
         with suppress(ValueError):
