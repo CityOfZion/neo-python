@@ -339,7 +339,7 @@ class NodeManager(Singleton):
         try:
             proto = partial(NeoProtocol, nodemanager=self, quality_check=quality_check)
             connect_coro = self.loop.create_connection(proto, host, port, family=IP4_FAMILY)
-            print(f"trying to connect to: {host}:{port}")
+            # print(f"trying to connect to: {host}:{port}")
             await asyncio.wait_for(connect_coro, timeout)
             return
         except asyncio.TimeoutError:
