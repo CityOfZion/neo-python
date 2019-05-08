@@ -327,8 +327,8 @@ def main():
 
     async def shutdown():
         for task in asyncio.Task.all_tasks():
-            with suppress(asyncio.CancelledError):
-                task.cancel()
+            task.cancel()
+            with suppress((asyncio.CancelledError, Exception)):
                 await task
 
     # prompt_toolkit hack for not cleaning up see: https://github.com/prompt-toolkit/python-prompt-toolkit/issues/787
@@ -343,6 +343,8 @@ def main():
             app = prompt_toolkit_get_app()
             if app.is_running:
                 app.exit()
+        with suppress((SystemExit, Exception)):
+            cli_task.exception()
         loop.run_until_complete(p2p.shutdown())
         loop.run_until_complete(shutdown())
         loop.run_until_complete(loop.shutdown_asyncgens())

@@ -293,7 +293,7 @@ async def shutdown():
     # cleanup any remaining tasks
     for task in asyncio.all_tasks():
         task.cancel()
-        with suppress(asyncio.CancelledError):
+        with suppress((asyncio.CancelledError, Exception)):
             await task
 
 

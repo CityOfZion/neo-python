@@ -70,9 +70,7 @@ class Ledger:
         if block is None:
             return False
         else:
-            header_success = self.ledger.AddHeader(block.Header)
-            if not header_success:
-                return False
+            self.ledger.AddHeader(block.Header)
 
             success, reason = self.ledger.TryPersist(block)
             if not success:
