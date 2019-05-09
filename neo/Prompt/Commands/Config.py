@@ -179,7 +179,7 @@ class CommandConfigMaxpeers(CommandBase):
             except ValueError:
                 print("Invalid argument")
                 return
-            
+
             if c1 > 10:
                 print("Max peers is limited to 10")
                 return
