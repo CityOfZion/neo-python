@@ -27,7 +27,8 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
         args = ['output']
-        with patch('neo.Prompt.Commands.Config.prompt', side_effect=[1, 1, 1, "a", "\n", "\n"]):  # tests changing the level and keeping the current level. Entering "a" has no effect.
+        with patch('neo.Prompt.Commands.Config.prompt',
+                   side_effect=[1, 1, 1, "a", "\n", "\n"]):  # tests changing the level and keeping the current level. Entering "a" has no effect.
             res = CommandConfig().execute(args)
             self.assertTrue(res)
             self.assertEqual(res['generic'], "DEBUG")
@@ -133,7 +134,7 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             args = ['maxpeers', "blah"]
             res = CommandConfig().execute(args)
             self.assertFalse(res)
-            self.assertIn("Please supply a positive integer for maxpeers", mock_print.getvalue())
+            self.assertIn("Invalid argument", mock_print.getvalue())
 
         # test negative number
         with patch('sys.stdout', new=StringIO()) as mock_print:

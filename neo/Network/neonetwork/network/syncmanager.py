@@ -46,6 +46,9 @@ class SyncManager(Singleton):
         self.service_task = None
         self.persist_task = None
         self.health_task = None
+        # check_header_timeout and on_header_received are called from separate tasks and can corrupt state when control is yielde.
+        # this lock makes sure they can't run simultaneously
+        self.header_lock = asyncio.Lock()
 
         msgrouter.on_headers += self.on_headers_received
         msgrouter.on_block += self.on_block_received
@@ -53,14 +56,12 @@ class SyncManager(Singleton):
     async def start(self) -> None:
         while not self.nodemgr.running:
             await asyncio.sleep(0.1)
-        logger.debug("Starting sync manager")
         self.service_task = asyncio.create_task(self.run_service())
         self.health_task = asyncio.create_task(self.block_health())
 
     async def shutdown(self):
         print("Shutting down sync manager...", end='')
         self.keep_running = False
-        # TODO: probably if service_task has an exception, persist_task is not cancelled. validate assumption and fix if needed
         if self.service_task:
             await self.service_task
         if self.persist_task:
@@ -205,47 +206,48 @@ class SyncManager(Singleton):
             logger.debug(traceback.format_exc())
 
     async def check_header_timeout(self) -> None:
-        if not self.header_request:
-            # no data requests outstanding
-            return
+        async with self.header_lock:
+            if not self.header_request:
+                # no data requests outstanding
+                return
 
-        last_flight_info = self.header_request.most_recent_flight()
+            last_flight_info = self.header_request.most_recent_flight()
 
-        now = datetime.utcnow().timestamp()
-        delta = now - last_flight_info.start_time
-        if delta < self.HEADER_REQUEST_TIMEOUT:
-            # we're still good on time
-            return
+            now = datetime.utcnow().timestamp()
+            delta = now - last_flight_info.start_time
+            if delta < self.HEADER_REQUEST_TIMEOUT:
+                # we're still good on time
+                return
 
-        node = self.nodemgr.get_node_by_nodeid(last_flight_info.node_id)
-        if node:
-            logger.debug(f"Header timeout limit exceeded by {delta - self.HEADER_REQUEST_TIMEOUT:.2f}s for node {node.nodeid_human}")
+            node = self.nodemgr.get_node_by_nodeid(last_flight_info.node_id)
+            if node:
+                logger.debug(f"Header timeout limit exceeded by {delta - self.HEADER_REQUEST_TIMEOUT:.2f}s for node {node.nodeid_human}")
 
-        cur_header_height = await self.ledger.cur_header_height()
-        if last_flight_info.height <= cur_header_height:
-            # it has already come in in the mean time
-            # reset so sync_header will request new headers
-            self.header_request = None
-            return
+            cur_header_height = await self.ledger.cur_header_height()
+            if last_flight_info.height <= cur_header_height:
+                # it has already come in in the mean time
+                # reset so sync_header will request new headers
+                self.header_request = None
+                return
 
-        # punish node that is causing header_timeout and retry using another node
-        self.header_request.mark_failed_node(last_flight_info.node_id)
-        await self.nodemgr.add_node_timeout_count(last_flight_info.node_id)
+            # punish node that is causing header_timeout and retry using another node
+            self.header_request.mark_failed_node(last_flight_info.node_id)
+            await self.nodemgr.add_node_timeout_count(last_flight_info.node_id)
 
-        # retry with a new node
-        node = self.nodemgr.get_node_with_min_failed_time(self.header_request)
-        if node is None:
-            # only happens if there are no nodes that have data matching our needed height
-            self.header_request = None
-            return
+            # retry with a new node
+            node = self.nodemgr.get_node_with_min_failed_time(self.header_request)
+            if node is None:
+                # only happens if there are no nodes that have data matching our needed height
+                self.header_request = None
+                return
 
-        hash = await self.ledger.header_hash_by_height(last_flight_info.height - 1)
-        logger.debug(f"Retry requesting headers starting at {last_flight_info.height} from new node {node.nodeid_human}")
-        await node.get_headers(hash_start=hash)
+            hash = await self.ledger.header_hash_by_height(last_flight_info.height - 1)
+            logger.debug(f"Retry requesting headers starting at {last_flight_info.height} from new node {node.nodeid_human}")
+            await node.get_headers(hash_start=hash)
 
-        # restart start_time of flight info or else we'll timeout too fast for the next node
-        self.header_request.add_new_flight(FlightInfo(node.nodeid, last_flight_info.height))
-        node.nodeweight.append_new_request_time()
+            # restart start_time of flight info or else we'll timeout too fast for the next node
+            self.header_request.add_new_flight(FlightInfo(node.nodeid, last_flight_info.height))
+            node.nodeweight.append_new_request_time()
 
     async def check_block_timeout(self) -> None:
         if len(self.block_requests) == 0:
@@ -341,20 +343,26 @@ class SyncManager(Singleton):
         if self.is_persisting_headers:
             return -4
 
-        self.is_persisting_headers = True
         cur_header_height = await self.ledger.cur_header_height()
         if height <= cur_header_height:
             return -5
 
-        count_added = await self.ledger.add_headers(headers)
-        if count_added < len(headers):
-            logger.debug(f"Failed to add all headers. Successfully added {count_added} out of {len(headers)}")
-            await self.nodemgr.add_node_error_count(from_nodeid)
+        async with self.header_lock:
+            self.is_persisting_headers = True
+            try:
+                count_added = await self.ledger.add_headers(headers)
+            except Exception as e:
+                print(traceback.format_exc())
 
-        # reset header such that the a new header sync task can be added
-        self.header_request = None
-        self.is_persisting_headers = False
-        logger.debug("Finished processing headers")
+            self.is_persisting_headers = False
+            if count_added < len(headers):
+                logger.debug(f"Failed to add all headers. Successfully added {count_added} out of {len(headers)}")
+                await self.nodemgr.add_node_error_count(from_nodeid)
+
+            # reset header such that the a new header sync task can be added
+            self.header_request = None
+
+            logger.debug("Finished processing headers")
 
         return 1
 

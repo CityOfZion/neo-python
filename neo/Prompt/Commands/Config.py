@@ -173,18 +173,27 @@ class CommandConfigMaxpeers(CommandBase):
     def execute(self, arguments):
         c1 = get_arg(arguments)
         if c1 is not None:
+
             try:
-                current_max = settings.CONNECTED_PEER_MAX
+                c1 = int(c1)
+            except ValueError:
+                print("Invalid argument")
+                return
+            
+            if c1 > 10:
+                print("Max peers is limited to 10")
+                return
+
+            try:
                 settings.set_max_peers(c1)
             except ValueError:
                 print("Please supply a positive integer for maxpeers")
                 return
 
-            c1 = int(c1)
-
             nodemgr = NodeManager()
             nodemgr.max_clients = c1
 
+            current_max = settings.CONNECTED_PEER_MAX
             connected_count = len(nodemgr.nodes)
             if c1 < current_max and c1 < connected_count:
                 to_remove = connected_count - c1

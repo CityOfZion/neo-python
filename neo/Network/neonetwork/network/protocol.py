@@ -33,7 +33,7 @@ class NeoProtocol(StreamReaderProtocol):
     def connection_lost(self, exc: Optional[Exception] = None) -> None:
         super().connection_lost(exc)
         if self.client:
-            self.client.connection_lost(exc)
+            asyncio.create_task(self.client.connection_lost(exc))
 
     def eof_received(self) -> bool:
         self._stream_reader.feed_eof()
@@ -74,7 +74,7 @@ class NeoProtocol(StreamReaderProtocol):
                 payload_data = await self._stream_reader.readexactly(payload_length)
                 payload, = struct.unpack('{}s'.format(payload_length), payload_data)
 
-            except asyncio.IncompleteReadError:
+            except Exception:
                 return None
 
             m = Message(magic, command.rstrip(b'\x00').decode('utf-8'), payload)
@@ -87,7 +87,7 @@ class NeoProtocol(StreamReaderProtocol):
 
         try:
             return await asyncio.wait_for(_read(), timeout)
-        except asyncio.TimeoutError:
+        except Exception:
             return None
 
     def disconnect(self) -> None:

@@ -72,7 +72,7 @@ class Ledger:
         else:
             self.ledger.AddHeader(block.Header)
 
-            success, reason = self.ledger.TryPersist(block)
+            success, reason = await self.ledger.TryPersist(block)
             if not success:
                 logger.debug(f"Failed to Persist block. Reason: {reason}")
                 return False

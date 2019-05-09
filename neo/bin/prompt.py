@@ -328,7 +328,7 @@ def main():
     async def shutdown():
         for task in asyncio.Task.all_tasks():
             task.cancel()
-            with suppress((asyncio.CancelledError, Exception)):
+            with suppress(asyncio.CancelledError):
                 await task
 
     # prompt_toolkit hack for not cleaning up see: https://github.com/prompt-toolkit/python-prompt-toolkit/issues/787

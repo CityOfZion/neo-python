@@ -1,7 +1,9 @@
 import plyvel
+import asyncio
 import binascii
 import struct
 import traceback
+import datetime
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
@@ -34,6 +36,7 @@ from neo.EventHub import events
 from typing import Tuple
 
 from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.neonetwork.common import wait_for
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('db')
@@ -188,7 +191,8 @@ class LevelDBBlockchain(Blockchain):
                         pass
 
         elif version is None:
-            self.Persist(Blockchain.GenesisBlock())
+
+            wait_for(self.Persist(Blockchain.GenesisBlock()))
             self._db.put(DBPrefix.SYS_Version, self._sysversion)
         else:
             logger.error("\n\n")
@@ -657,8 +661,7 @@ class LevelDBBlockchain(Blockchain):
     def BlockCacheCount(self):
         return len(self._block_cache)
 
-    def Persist(self, block):
-
+    async def Persist(self, block):
         self._persisting_block = block
 
         accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
@@ -678,7 +681,6 @@ class LevelDBBlockchain(Blockchain):
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
 
             for tx in block.Transactions:
-
                 wb.put(DBPrefix.DATA_Transaction + tx.Hash.ToBytes(), block.IndexBytes() + tx.ToArray())
 
                 # go through all outputs and add unspent coins to them
@@ -780,6 +782,7 @@ class LevelDBBlockchain(Blockchain):
                         service.ExecutionCompleted(engine, False, e)
 
                     to_dispatch = to_dispatch + service.events_to_dispatch
+                    await asyncio.sleep(0.001)
                 else:
 
                     if tx.Type != b'\x00' and tx.Type != 128:
@@ -825,7 +828,7 @@ class LevelDBBlockchain(Blockchain):
         for event in to_dispatch:
             events.emit(event.event_type, event)
 
-    def TryPersist(self, block: 'Block') -> Tuple[bool, str]:
+    async def TryPersist(self, block: 'Block') -> Tuple[bool, str]:
         distance = self._current_block_height - block.Index
 
         if distance >= 0:
@@ -835,7 +838,7 @@ class LevelDBBlockchain(Blockchain):
             return False, f"Trying to persist block {block.Index} but expecting next block to be {self._current_block_height + 1}"
 
         try:
-            self.Persist(block)
+            await self.Persist(block)
         except Exception as e:
             traceback.print_exc()
             return False, f"{e}"

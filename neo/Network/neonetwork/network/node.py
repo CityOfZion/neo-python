@@ -42,6 +42,8 @@ class NeoNode:
         self.best_height = 0  # track the block height of node
 
         self._inv_hash_for_height = None  # temp variable to track which hash we used for determining the nodes best height
+        self.main_task = None
+        self.disconnecting = False
 
     # connection setup and control functions
     async def connection_made(self, transport) -> None:
@@ -84,20 +86,26 @@ class NeoNode:
         else:
             logger.debug(f"Connected to {self.version.user_agent} @ {self.address}: {self.version.start_height}")
             self.nodemanager.add_connected_node(self)
-            self.tasks.append(asyncio.create_task(self.run()))
+            self.main_task = asyncio.create_task(self.run())
 
     async def disconnect(self) -> None:
+        if self.main_task:
+            self.disconnecting = True
+            await self.main_task
+
         for t in self.tasks:
+            t.cancel()
             with suppress(asyncio.CancelledError):
-                t.cancel()
                 await t
         self.nodemanager.remove_connected_node(self)
         self.protocol.disconnect()
 
-    def connection_lost(self, exc) -> None:
+    async def connection_lost(self, exc) -> None:
         logger.debug(f"{datetime.now()} Connection lost {self.address} excL {exc}")
         for t in self.tasks:
             t.cancel()
+            with suppress(asyncio.CancelledError):
+                await t
         self.nodemanager.remove_connected_node(self)
         if self.quality_check:
             self.nodemanager.quality_check_result(self.address, healthy=False)
@@ -121,9 +129,9 @@ class NeoNode:
 
     async def run(self) -> None:
         logger.debug("Waiting for a message")
-        while True:
+        while not self.disconnecting:
             # we want to always listen for an incoming message
-            message = await self.read_message(timeout=90)
+            message = await self.read_message(timeout=10)
             if not message:
                 continue
 
