@@ -13,10 +13,10 @@ logger = log_manager.getLogger()
 
 """
 Description:
-    All the methods are used within the dynamicallz generated class from the 
+    All the methods are used within the dynamically generated class from the
     database factory.
 Usage:
-    For a new database implementation all methods defined in 
+    For a new database implementation all methods defined in
     AbstractDBImplementation have to be implemented.
 """
 
@@ -44,14 +44,19 @@ _lock = threading.RLock()
 
 @property
 def Path(self):
+    """str: full path to the database"""
     return self._path
 
 
 def _prefix_db_init(self, _prefixdb):
     """
-    init method used within the internalDBFactory, slightly different from the 
+    Init method used within the internalDBFactory, slightly different from the
     init method as we don't have to open a new database but store a snapshot or
     a prefixed db.
+
+    Args:
+        _prefixdb (object): the prefixed db instance
+
     """
 
     try:
@@ -61,8 +66,17 @@ def _prefix_db_init(self, _prefixdb):
 
 
 def _db_init(self, path):
+
     """
-    init method used within the DBFactory, opens a new or existing database.
+    Init method used within the DBFactory, opens a new or existing database.
+
+    Args:
+        path (str): full path to the database directory.
+
+    Attributes:
+        path (str): full path to the database directory.
+        _db (object): the database instance
+
     """
 
     try:
@@ -87,11 +101,18 @@ def delete(self, key):
 
 def cloneDatabase(self, clone_db):
     """
-    Clones the current database into "clone_db" 
+    Clones the current database into "clone_db"
+
+    Args:
+        clone_db (object): the instance of the database to clone to.
+
+    Returns:
+        clone_db (object): returns a cloned db instance
+
     """
 
     db_snapshot = self.createSnapshot()
-    with db_snapshot.openIter(DBProperties(prefix=DBPrefix.ST_Storage, 
+    with db_snapshot.openIter(DBProperties(prefix=DBPrefix.ST_Storage,
                                            include_value=True)) as iterator:
         for key, value in iterator:
             clone_db.write(key, value)
@@ -100,11 +121,18 @@ def cloneDatabase(self, clone_db):
 
 def createSnapshot(self):
     """
-    Creates a snapshot of the current database, used for DebugStorage and 
-    NotificationDB. To keep the snapshot compatible to the current design it's 
-    created through a factory which returns basically the same class we use 
+    Creates a snapshot of the current database, used for DebugStorage and
+    NotificationDB. To keep the snapshot compatible to the current design it's
+    created through a factory which returns basically the same class we use
     for the real database and all the methods that can be used on the real db
     can also be used on the snapshot.
+
+    Args:
+        None
+
+    Returns:
+        SnapshotDB (object): a new instance of a snapshot DB.
+
     """
 
     # TODO check if snapshot db has to be closed
@@ -121,13 +149,20 @@ def openIter(self, properties):
 
     Usage:
         Due to the fact that a context manager is used the returned iterator has
-        to be used within a with block. It's then closed after it returnes from 
+        to be used within a with block. It's then closed after it returnes from
         the scope it's used in.
         Example from cloneDatabase method:
 
-        with db_snapshot.openIter(DBProperties(prefix=DBPrefix.ST_Storage, 
+        with db_snapshot.openIter(DBProperties(prefix=DBPrefix.ST_Storage,
                                                include_value=True)) as iterator:
 
+    Args:
+        properties (DBProperties): object containing the different properties
+                                   used to open an iterator.
+
+    Yields:
+        _iter (LevelDB iterator): yields an iterator which is closed after the
+                                  with block is done.
     """
 
     self._iter = self._db.iterator(
@@ -142,7 +177,7 @@ def openIter(self, properties):
 @contextmanager
 def getBatch(self):
     """
-    Yields a batch instance which can be used to perform atomic updates on the 
+    Yields a batch instance which can be used to perform atomic updates on the
     database.
     As it's used within a context, getBatch has to called within a with block.
 
@@ -154,6 +189,14 @@ def getBatch(self):
 
     If a database backend is implemented that does not support batches you have
     to implement an object that mimics a batches the behaviour.
+
+    Args:
+        None
+
+    Yields:
+        _batch (LevelDB batch): yields a new batch object which is processed after
+                         the with block is done.
+
     """
 
     with _lock:
@@ -171,8 +214,14 @@ def getPrefixedDB(self, prefix):
     A prefixed db is currently only used for the NotificationDB.
 
     If a database backend is implemented that does not support a prefixed
-    database you have to implement a data structure/class that mimics its 
+    database you have to implement a data structure/class that mimics its
     behaviour.
+
+    Args:
+        prefix (str): the prefix used to create a new prefixed DB.
+
+    Returns:
+        PrefixedDB (object): a new instance of a prefixed DB.
     """
 
     # check if prefix db has to be closed

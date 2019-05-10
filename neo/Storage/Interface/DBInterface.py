@@ -7,17 +7,22 @@ logger = log_manager.getLogger()
 
 class DBProperties:
 
-    """
-    Description:
+    """ Store the different DB properties
     Used to pass the relevant information to
     no.Storage.Implementation.[BACKEND].[BACKEND]DBClassMethods.openIter
+
+    Args:
+        prefix (str, optional): Prefix to search for.
+        include_value (bool, optional): include vale used for creating an
+                                        iterator.
+        include_key (bool, optional): include key used for creating an
+                                        iterator.
     """
 
     prefix = None
     include_value = None
     include_key = None
-    
-    
+
     def __init__(self, prefix=None, include_value=True, include_key=True):
         self.prefix = prefix
         self.include_value = include_value

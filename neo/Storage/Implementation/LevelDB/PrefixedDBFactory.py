@@ -2,6 +2,20 @@ from neo.Storage.Implementation.AbstractDBImplementation import AbstractDBImplem
 
 
 def internalDBFactory(classPrefix):
+    """ Internal database factory method used for prefixed dbs and snapshots.
+
+    The returned class is very similar the the class returned in
+    neo.Storage.Implementation.DBFactory._dbFactory but has a different
+    __init__ method.
+
+    Args:
+        classPrefix (str): Prefix to name the class appropiately.
+
+    Returns:
+        classPrefix + DBImpl (object): dynamically generated class used for
+                                       PrefixedDBs and SnapshotDBs.
+
+    """
 
     # import what's needed
     import neo.Storage.Implementation.LevelDB.LevelDBClassMethods as functions
