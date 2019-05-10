@@ -1,5 +1,6 @@
 from neo.VM import OpCode
 from typing import TYPE_CHECKING
+from functools import lru_cache
 import binascii
 
 if TYPE_CHECKING:
@@ -15,33 +16,39 @@ class Instruction:
     def __init__(self, opcode: int):
         self.OpCode = int.to_bytes(opcode, 1, 'little')
         self.Operand = bytearray()
+        self._OperandSizeTable = {}
+        self._OperandSizePrefixTable = {}
 
-        self.OperandSizeTable = {}
-        self.OperandSizePrefixTable = {}
+    @property
+    @lru_cache()
+    def OperandSizePrefixTable(self):
 
-        self.InstructionName = OpCode.ToName(self.OpCode)
+        self._OperandSizePrefixTable[OpCode.PUSHDATA1] = 1
+        self._OperandSizePrefixTable[OpCode.PUSHDATA2] = 2
+        self._OperandSizePrefixTable[OpCode.PUSHDATA4] = 4
+        self._OperandSizePrefixTable[OpCode.SYSCALL] = 1
+        return self._OperandSizePrefixTable
 
-        self.OperandSizePrefixTable = {}
-        self.OperandSizePrefixTable[OpCode.PUSHDATA1] = 1
-        self.OperandSizePrefixTable[OpCode.PUSHDATA2] = 2
-        self.OperandSizePrefixTable[OpCode.PUSHDATA4] = 4
-        self.OperandSizePrefixTable[OpCode.SYSCALL] = 1
+    @property
+    @lru_cache()
+    def OperandSizeTable(self):
 
         start = int.from_bytes(OpCode.PUSHBYTES1, 'little')
         end = int.from_bytes(OpCode.PUSHBYTES75, 'little') + 1
         for op_num in range(start, end):
-            self.OperandSizeTable[int.to_bytes(op_num, 1, 'little')] = op_num
-        self.OperandSizeTable[OpCode.JMP] = 2
-        self.OperandSizeTable[OpCode.JMPIF] = 2
-        self.OperandSizeTable[OpCode.JMPIFNOT] = 2
-        self.OperandSizeTable[OpCode.CALL] = 2
-        self.OperandSizeTable[OpCode.APPCALL] = 20
-        self.OperandSizeTable[OpCode.TAILCALL] = 20
-        self.OperandSizeTable[OpCode.CALL_I] = 4
-        self.OperandSizeTable[OpCode.CALL_E] = 22
-        self.OperandSizeTable[OpCode.CALL_ED] = 2
-        self.OperandSizeTable[OpCode.CALL_ET] = 22
-        self.OperandSizeTable[OpCode.CALL_EDT] = 2
+            self._OperandSizeTable[int.to_bytes(op_num, 1, 'little')] = op_num
+        self._OperandSizeTable[OpCode.JMP] = 2
+        self._OperandSizeTable[OpCode.JMPIF] = 2
+        self._OperandSizeTable[OpCode.JMPIFNOT] = 2
+        self._OperandSizeTable[OpCode.CALL] = 2
+        self._OperandSizeTable[OpCode.APPCALL] = 20
+        self._OperandSizeTable[OpCode.TAILCALL] = 20
+        self._OperandSizeTable[OpCode.CALL_I] = 4
+        self._OperandSizeTable[OpCode.CALL_E] = 22
+        self._OperandSizeTable[OpCode.CALL_ED] = 2
+        self._OperandSizeTable[OpCode.CALL_ET] = 22
+        self._OperandSizeTable[OpCode.CALL_EDT] = 2
+        return self._OperandSizeTable
 
     @classmethod
     def FromScriptAndIP(clss, script: 'Script', ip: int):
@@ -61,6 +68,10 @@ class Instruction:
         if (operand_size > 0):
             ins.Operand = ins.ReadExactBytes(script, ip, operand_size)
         return ins
+
+    @property
+    def InstructionName(self):
+        return OpCode.ToName(self.OpCode)
 
     @property
     def Size(self):
