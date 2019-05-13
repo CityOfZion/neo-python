@@ -30,6 +30,14 @@ class CollectionMixin:
 class StackItem(EquatableMixin):
 
     @property
+    def IsTypeMap(self):
+        return False
+
+    @property
+    def IsTypeArray(self):
+        return False
+
+    @property
     def IsStruct(self):
         return False
 
@@ -144,6 +152,10 @@ class StackItem(EquatableMixin):
 
 class Array(StackItem, CollectionMixin):
     _array = None  # a list of stack items
+
+    @property
+    def IsTypeArray(self):
+        return True
 
     @property
     def Count(self):
@@ -456,6 +468,10 @@ class Map(StackItem, CollectionMixin):
             self._dict = dict
         else:
             self._dict = {}
+
+    @property
+    def IsTypeMap(self):
+        return True
 
     @property
     def Keys(self):

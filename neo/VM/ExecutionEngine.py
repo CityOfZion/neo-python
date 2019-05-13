@@ -101,11 +101,11 @@ class ExecutionEngine:
         items = deque(items_list)
         while items:
             stackitem = items.pop()
-            if isinstance(stackitem, Map):
+            if stackitem.IsTypeMap:
                 items.extend(stackitem.Values)
                 continue
 
-            if isinstance(stackitem, Array):
+            if stackitem.IsTypeArray:
                 items.extend(stackitem.GetArray())
                 continue
             count += 1

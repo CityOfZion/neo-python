@@ -6,6 +6,23 @@ import binascii
 if TYPE_CHECKING:
     from neo.VM.Script import Script
 
+_OperandSizeTable = {}
+start = int.from_bytes(OpCode.PUSHBYTES1, 'little')
+end = int.from_bytes(OpCode.PUSHBYTES75, 'little') + 1
+for op_num in range(start, end):
+    _OperandSizeTable[int.to_bytes(op_num, 1, 'little')] = op_num
+_OperandSizeTable[OpCode.JMP] = 2
+_OperandSizeTable[OpCode.JMPIF] = 2
+_OperandSizeTable[OpCode.JMPIFNOT] = 2
+_OperandSizeTable[OpCode.CALL] = 2
+_OperandSizeTable[OpCode.APPCALL] = 20
+_OperandSizeTable[OpCode.TAILCALL] = 20
+_OperandSizeTable[OpCode.CALL_I] = 4
+_OperandSizeTable[OpCode.CALL_E] = 22
+_OperandSizeTable[OpCode.CALL_ED] = 2
+_OperandSizeTable[OpCode.CALL_ET] = 22
+_OperandSizeTable[OpCode.CALL_EDT] = 2
+
 
 class Instruction:
 
@@ -16,7 +33,7 @@ class Instruction:
     def __init__(self, opcode: int):
         self.OpCode = int.to_bytes(opcode, 1, 'little')
         self.Operand = bytearray()
-        self._OperandSizeTable = {}
+        self._OperandSizeTable = _OperandSizeTable
         self._OperandSizePrefixTable = {}
 
     @property
@@ -32,22 +49,6 @@ class Instruction:
     @property
     @lru_cache()
     def OperandSizeTable(self):
-
-        start = int.from_bytes(OpCode.PUSHBYTES1, 'little')
-        end = int.from_bytes(OpCode.PUSHBYTES75, 'little') + 1
-        for op_num in range(start, end):
-            self._OperandSizeTable[int.to_bytes(op_num, 1, 'little')] = op_num
-        self._OperandSizeTable[OpCode.JMP] = 2
-        self._OperandSizeTable[OpCode.JMPIF] = 2
-        self._OperandSizeTable[OpCode.JMPIFNOT] = 2
-        self._OperandSizeTable[OpCode.CALL] = 2
-        self._OperandSizeTable[OpCode.APPCALL] = 20
-        self._OperandSizeTable[OpCode.TAILCALL] = 20
-        self._OperandSizeTable[OpCode.CALL_I] = 4
-        self._OperandSizeTable[OpCode.CALL_E] = 22
-        self._OperandSizeTable[OpCode.CALL_ED] = 2
-        self._OperandSizeTable[OpCode.CALL_ET] = 22
-        self._OperandSizeTable[OpCode.CALL_EDT] = 2
         return self._OperandSizeTable
 
     @classmethod
