@@ -9,14 +9,14 @@ class DBProperties:
 
     """ Store the different DB properties
     Used to pass the relevant information to
-    no.Storage.Implementation.[BACKEND].[BACKEND]DBClassMethods.openIter
+    neo.Storage.Implementation.[BACKEND].[BACKEND]DBClassMethods.openIter
 
     Args:
         prefix (str, optional): Prefix to search for.
-        include_value (bool, optional): include vale used for creating an
-                                        iterator.
-        include_key (bool, optional): include key used for creating an
-                                        iterator.
+        include_value (bool, optional): used to define if the value should be
+                                        included when opening an iterator.
+        include_key (bool, optional): used to define if the key value shoud be
+                                      included when opening an iterator.
     """
 
     prefix = None

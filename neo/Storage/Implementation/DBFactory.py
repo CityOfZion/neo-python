@@ -1,9 +1,5 @@
-from neo.Storage.Implementation.AbstractDBImplementation import (
-    AbstractDBImplementation
-)
 from neo.Settings import settings
-from neo.logging import log_manager
-
+from neo.Utils.plugin import load_class_from_path
 
 """Database factory module
 
@@ -27,8 +23,6 @@ Constants:
 
 """
 
-logger = log_manager.getLogger()
-
 BC_CONST = 'blockchain'
 NOTIF_CONST = 'notification'
 DEBUG_CONST = 'debug'
@@ -50,7 +44,7 @@ def getBlockchainDB(path=None):
     if not path:
         path = DATABASE_PROPS[BC_CONST]['path']
 
-    BlockchainDB = _dbFactory(BC_CONST, DATABASE_PROPS[BC_CONST])
+    BlockchainDB = load_class_from_path(DATABASE_PROPS[BC_CONST]['backend'])
     _blockchain_db_instance = BlockchainDB(path)
     return _blockchain_db_instance
 
@@ -69,7 +63,7 @@ def getNotificationDB(path=None):
     if not path:
         path = DATABASE_PROPS[NOTIF_CONST]['path']
 
-    NotificationDB = _dbFactory(NOTIF_CONST, DATABASE_PROPS[NOTIF_CONST])
+    NotificationDB = load_class_from_path(DATABASE_PROPS[NOTIF_CONST]['backend'])
     _notif_db_instance = NotificationDB(path)
     return _notif_db_instance
 
@@ -82,41 +76,6 @@ def getDebugStorageDB():
         _debug_db_instance (object): A new debug storage instance.
     """
 
-    DebugStorageDB = _dbFactory(DEBUG_CONST, DATABASE_PROPS[DEBUG_CONST])
+    DebugStorageDB = load_class_from_path(DATABASE_PROPS[DEBUG_CONST]['backend'])
     _debug_db_instance = DebugStorageDB(DATABASE_PROPS[DEBUG_CONST]['path'])
     return _debug_db_instance
-
-
-def _dbFactory(dbType, properties):
-    """ Method to generate a database class.
-
-    Args:
-        dbType (str): Type of the database (Blockchain, Notification, Debug).
-        properties (dict): The properties defined within the settings module.
-
-    Returns:
-        New database class to instantiate a new database.
-
-
-    """
-
-    if properties['backend'] == 'leveldb':
-
-        """
-        Module implements the methods used by the dynamically generated class.
-        """
-        import neo.Storage.Implementation.LevelDB.LevelDBClassMethods as functions
-
-        methods = [x for x in dir(functions) if not x.startswith('__')]
-
-        # build the dict containing all the attributes (methods + members)
-        attributes = {methods[i]: getattr(
-            functions, methods[i]) for i in range(0, len(methods))}
-
-        # add __init__ method
-        attributes['__init__'] = attributes.pop(functions._init_method)
-
-        return type(
-            properties['backend'].title() + 'DBImpl' + dbType.title(),
-            (AbstractDBImplementation,),
-            attributes)

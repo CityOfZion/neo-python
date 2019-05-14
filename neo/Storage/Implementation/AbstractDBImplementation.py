@@ -1,17 +1,17 @@
 from abc import ABC, abstractmethod
 """
 Description:
-    Abstract class used to ensure the mandatory methods are overwritten
-    in everxy new database implementation.
+    Alternative backends can be added by implementing the required methods
+    of this abstract class.
 Usage:
     The dynamically generated class coming from the database factory inherits
-    from the abstract class, means the generated class cannot be used if not 
+    from the abstract class, means the generated class cannot be used if not
     all methods defined in this class are overwritten.
 
     If this class is extended, make sure you extend also all other database
     implementations.
 
-    For a more detailed information on the methods and how to implement a new 
+    For a more detailed information on the methods and how to implement a new
     database backend check out:
     neo.Storage.Implementation.LevelDB.LevelDBClassMethods
 """
@@ -48,9 +48,9 @@ class AbstractDBImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def closeDB(self):
+    def getPrefixedDB(self, prefix):
         raise NotImplementedError
 
     @abstractmethod
-    def getPrefixedDB(self, prefix):
+    def closeDB(self):
         raise NotImplementedError
