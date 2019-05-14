@@ -5,6 +5,8 @@ from neo.Network.neonetwork.network.node import NeoNode
 from neo.Network.neonetwork.network.message import Message
 from asyncio.streams import StreamReader, StreamReaderProtocol, StreamWriter
 from asyncio import events
+import functools
+import traceback
 
 
 class NeoProtocol(StreamReaderProtocol):
@@ -31,9 +33,11 @@ class NeoProtocol(StreamReaderProtocol):
             asyncio.create_task(self.client.connection_made(transport))
 
     def connection_lost(self, exc: Optional[Exception] = None) -> None:
-        super().connection_lost(exc)
         if self.client:
-            asyncio.create_task(self.client.connection_lost(exc))
+            task = asyncio.create_task(self.client.connection_lost(exc))
+            task.add_done_callback(lambda args: super(NeoProtocol, self).connection_lost(exc))
+        else:
+            super().connection_lost(exc)
 
     def eof_received(self) -> bool:
         self._stream_reader.feed_eof()

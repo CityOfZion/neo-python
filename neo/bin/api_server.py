@@ -291,7 +291,8 @@ async def setup_and_start(loop):
 
 async def shutdown():
     # cleanup any remaining tasks
-    for task in asyncio.all_tasks():
+    all_tasks = asyncio.all_tasks()
+    for task in all_tasks:
         task.cancel()
         with suppress((asyncio.CancelledError, Exception)):
             await task

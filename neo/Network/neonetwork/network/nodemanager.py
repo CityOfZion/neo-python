@@ -22,13 +22,12 @@ from neo.logging import log_manager
 
 logger = log_manager.getLogger('network')
 
-
-# log_manager.config_stdio([('network', 10)])
+log_manager.config_stdio([('network', 10)])
 
 
 class NodeManager(Singleton):
     PEER_QUERY_INTERVAL = 15
-    NODE_POOL_CHECK_INTERVAL = 2.5 * PEER_QUERY_INTERVAL  # this allows for enough time to get new addresses
+    NODE_POOL_CHECK_INTERVAL = 10  # 2.5 * PEER_QUERY_INTERVAL  # this allows for enough time to get new addresses
 
     ONE_MINUTE = 60
 
@@ -110,7 +109,7 @@ class NodeManager(Singleton):
             task.add_done_callback(lambda fut: self.tasks.remove(fut))
 
     async def query_peer_info(self) -> None:
-        while True:
+        while not self.shutting_down:
             logger.debug(f"Connected node count {len(self.nodes)}")
             for node in self.nodes:
                 task = asyncio.create_task(node.get_address_list())
@@ -119,7 +118,7 @@ class NodeManager(Singleton):
             await asyncio.sleep(self.PEER_QUERY_INTERVAL)
 
     async def ensure_full_node_pool(self) -> None:
-        while True:
+        while not self.shutting_down:
             self.check_open_spots_and_queue_nodes()
             await asyncio.sleep(self.NODE_POOL_CHECK_INTERVAL)
 
@@ -128,22 +127,23 @@ class NodeManager(Singleton):
 
         if open_spots > 0:
             logger.debug(f"Found {open_spots} open pool spots, trying to add nodes...")
-        for _ in range(open_spots):
-            try:
-                addr = self.known_addresses.pop(0)
-                self.queue_for_connection(addr)
-            except IndexError:
-                # oh no, we've exhausted our good addresses list
-                if len(self.nodes) < self.min_clients:
-                    if self.MAX_NODE_POOL_ERROR_COUNT != self.MAX_NODE_POOL_ERROR:
-                        # give our `query_peer_info` loop a chance to collect new addresses
-                        self.MAX_NODE_POOL_ERROR_COUNT += 1
-                        break
-                    else:
-                        # we have no other option then to retry any address we know
-                        logger.debug("Recycling old addresses")
-                        self.known_addresses = self.bad_addresses
-                        self.MAX_NODE_POOL_ERROR_COUNT = 0
+            for _ in range(open_spots):
+                try:
+                    addr = self.known_addresses.pop(0)
+                    self.queue_for_connection(addr)
+                except IndexError:
+                    # oh no, we've exhausted our good addresses list
+                    if len(self.nodes) < self.min_clients:
+                        if self.MAX_NODE_POOL_ERROR_COUNT != self.MAX_NODE_POOL_ERROR:
+                            # give our `query_peer_info` loop a chance to collect new addresses
+                            self.MAX_NODE_POOL_ERROR_COUNT += 1
+                            break
+                        else:
+                            # we have no other option then to retry any address we know
+                            logger.debug("Recycling old addresses")
+                            self.known_addresses = self.bad_addresses
+                            self.bad_addresses = []
+                            self.MAX_NODE_POOL_ERROR_COUNT = 0
 
     def add_connected_node(self, node: NeoNode) -> None:
         if node not in self.nodes and not self.shutting_down:
@@ -248,11 +248,12 @@ class NodeManager(Singleton):
         return list(map(lambda n: n.address, self.nodes))
 
     def on_addr_received(self, addr) -> None:
-        if addr in self.bad_addresses or addr in self.queued_addresses:
+        if addr in self.bad_addresses or addr in self.queued_addresses or addr in self.known_addresses:
             # we received a duplicate
             return
 
         if addr not in self.connected_addresses():
+            self.known_addresses.append(addr)
             # it's a new address, see if we can make it part of the current connection pool
             if len(self.nodes) + len(self.queued_addresses) < self.max_clients:
                 self.queue_for_connection(addr)
@@ -265,9 +266,10 @@ class NodeManager(Singleton):
     def quality_check_result(self, addr, healthy) -> None:
         if addr is None:
             logger.debug("WARNING QUALITY CHECK ADDR IS NONE!")
-        if healthy and addr not in self.known_addresses:
-            self.known_addresses.append(addr)
-        else:
+        if not healthy:
+            with suppress(ValueError):
+                self.known_addresses.remove(addr)
+
             if addr not in self.bad_addresses:
                 self.bad_addresses.append(addr)
 
@@ -327,14 +329,6 @@ class NodeManager(Singleton):
 
     async def _connect_to_node(self, address: str, quality_check=False, timeout=3) -> None:
         host, port = address.split(':')
-        if not networkutils.is_ip_address(host):
-            try:
-                # TODO: find a way to make socket.gethostbyname non-blocking as it can take very long to look up
-                #       using loop.run_in_executor was unsuccessful.
-                host = networkutils.hostname_to_ip(host)
-            except socket.gaierror as e:
-                logger.debug(f"Skipping {host}, address could not be resolved: {e}")
-                return
 
         try:
             proto = partial(NeoProtocol, nodemanager=self, quality_check=quality_check)
@@ -356,14 +350,13 @@ class NodeManager(Singleton):
             traceback.print_exc()
             print("----------------[end of trace]----------------")
 
-        addr = f"{host}:{port}"
         with suppress(ValueError):
-            self.queued_addresses.remove(addr)
-        self.bad_addresses.append(addr)
+            self.queued_addresses.remove(address)
 
-        if len(self.nodes) < settings.CONNECTED_PEER_MIN:
-            # instantly check for open spots
-            self.check_open_spots_and_queue_nodes()
+        with suppress(ValueError):
+            self.known_addresses.remove(address)
+
+        self.bad_addresses.append(address)
 
     async def shutdown(self) -> None:
         print("Shutting down node manager...", end='')
@@ -371,15 +364,18 @@ class NodeManager(Singleton):
 
         # shutdown all running tasks for this class
         # to prevent requeueing when disconnecting nodes
+        logger.debug("stopping tasks...")
         for t in self.tasks:
-            with suppress(asyncio.CancelledError):
-                t.cancel()
-                await t
+            t.cancel()
+        await asyncio.gather(*self.tasks, return_exceptions=True)
 
         # finally disconnect all existing connections
         # we need to create a new list to loop over, because `disconnect` removes items from self.nodes
         to_disconnect = list(map(lambda n: n, self.nodes))
+        disconnect_tasks = []
+        logger.debug("disconnecting nodes...")
         for n in to_disconnect:
-            await n.disconnect()
+            disconnect_tasks.append(asyncio.create_task(n.disconnect()))
+        await asyncio.gather(*disconnect_tasks, return_exceptions=True)
 
         print("DONE")

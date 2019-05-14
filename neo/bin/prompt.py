@@ -326,7 +326,8 @@ def main():
     loop.create_task(p2p.start())
 
     async def shutdown():
-        for task in asyncio.Task.all_tasks():
+        all_tasks = asyncio.all_tasks()
+        for task in all_tasks:
             task.cancel()
             with suppress(asyncio.CancelledError):
                 await task

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class SyncManager(Singleton):
-    HEADER_MAX_LOOK_AHEAD = 2000
+    HEADER_MAX_LOOK_AHEAD = 6000
     HEADER_REQUEST_TIMEOUT = 5
 
     BLOCK_MAX_CACHE_SIZE = 500
@@ -62,14 +62,9 @@ class SyncManager(Singleton):
     async def shutdown(self):
         print("Shutting down sync manager...", end='')
         self.keep_running = False
-        if self.service_task:
-            await self.service_task
-        if self.persist_task:
-            await self.persist_task
-        if self.health_task:
-            self.health_task.cancel()
-            with suppress(asyncio.CancelledError):
-                await self.health_task
+        self.block_cache = []
+        self.health_task.cancel()
+        await asyncio.gather(self.service_task, self.persist_task, self.health_task, return_exceptions=True)
 
         print("DONE")
 
@@ -78,7 +73,7 @@ class SyncManager(Singleton):
         #  we can then make smarter choices by looking at individual nodes advancing or not and dropping just those
         error_counter = 0
         last_height = await self.ledger.cur_block_height()
-        while True:
+        while self.keep_running:
             await asyncio.sleep(15)
             cur_height = await self.ledger.cur_block_height()
             if cur_height == last_height:
@@ -185,12 +180,11 @@ class SyncManager(Singleton):
 
     async def persist_blocks(self) -> None:
         self.is_persisting = True
-        while True:
+        while self.keep_running:
             try:
                 b = self.block_cache.pop(0)
                 raw_b = self.raw_block_cache.pop(0)
                 await self.ledger.add_block(raw_b)
-                # add_block currently still blocks, so we introduce a small sleep to give other events time
                 await asyncio.sleep(0.001)
             except IndexError:
                 # cache empty
@@ -402,7 +396,7 @@ class SyncManager(Singleton):
             # to avoid having the `sync_block` task request the same data again
             # this is also necessary for neo-cli nodes because they maintain a TaskSession and refuse to send recently requested data
 
-        if not self.is_in_blockcache(block.index):
+        if not self.is_in_blockcache(block.index) and self.keep_running:
             self.block_cache.append(block)
             self.raw_block_cache.append(raw_block)
 
