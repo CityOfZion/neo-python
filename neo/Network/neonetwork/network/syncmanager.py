@@ -64,7 +64,10 @@ class SyncManager(Singleton):
         self.keep_running = False
         self.block_cache = []
         self.health_task.cancel()
-        await asyncio.gather(self.service_task, self.persist_task, self.health_task, return_exceptions=True)
+        shutdown_tasks = [self.service_task, self.health_task]
+        if self.persist_task:
+            shutdown_tasks.append(self.persist_task)
+        await asyncio.gather(*shutdown_tasks, return_exceptions=True)
 
         print("DONE")
 

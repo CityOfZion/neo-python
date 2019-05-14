@@ -22,7 +22,8 @@ from neo.logging import log_manager
 
 logger = log_manager.getLogger('network')
 
-log_manager.config_stdio([('network', 10)])
+
+# log_manager.config_stdio([('network', 10)])
 
 
 class NodeManager(Singleton):
