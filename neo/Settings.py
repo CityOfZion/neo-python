@@ -118,6 +118,8 @@ class SettingsHolder:
     DEFAULT_RPC_SERVER = 'neo.api.JSONRPC.JsonRpcApi.JsonRpcApi'
     DEFAULT_REST_SERVER = 'neo.api.REST.RestApi.RestApi'
 
+    DATABASE_PROPS = None
+
     # Logging settings
     log_level = None
     log_smart_contract_events = False
@@ -144,16 +146,7 @@ class SettingsHolder:
         return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH))
 
     def database_properties(self):
-        return {'blockchain': {'path': self.chain_leveldb_path,
-                               'skip_version_check': False,
-                               'backend': 'neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl'},
-
-                'notification': {'path': self.notification_leveldb_path,
-                                 'backend': 'neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl'},
-
-                'debug': {'path': self.debug_storage_leveldb_path,
-                          'backend': 'neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl'}
-                }
+        return self.DATABASE_PROPS
 
     # Helpers
     @property
@@ -218,7 +211,6 @@ class SettingsHolder:
         self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
         config = data['ApplicationConfiguration']
-        self.LEVELDB_PATH = config['DataDirectoryPath']
         self.RPC_PORT = int(config['RPCPort'])
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
@@ -230,12 +222,15 @@ class SettingsHolder:
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
         self.USE_DEBUG_STORAGE = config.get('DebugStorage', False)
-        self.DEBUG_STORAGE_PATH = config.get('DebugStoragePath', 'Chains/debugstorage')
-        self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
         self.SERVICE_ENABLED = config.get('ServiceEnabled', self.ACCEPT_INCOMING_PEERS)
         self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
         self.REST_SERVER = config.get('RestServer', self.DEFAULT_REST_SERVER)
         self.RPC_SERVER = config.get('RPCServer', self.DEFAULT_RPC_SERVER)
+
+        self.DATABASE_PROPS = config.get('Database')
+        self.LEVELDB_PATH = self.DATABASE_PROPS['Blockchain']['DataDirectoryPath']
+        self.NOTIFICATION_DB_PATH = self.DATABASE_PROPS['Notification']['NotificationDataPath']
+        self.DEBUG_STORAGE_PATH = self.DATABASE_PROPS['DebugStorage']['DebugStoragePath']
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """

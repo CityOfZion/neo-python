@@ -189,8 +189,8 @@ class Blockchain:
             if res == 'continue':
 
                 with self._db.getBatch() as wb:
-                    with self._db.openIter() as iterator:
-                        for key, value in iterator:
+                    with self._db.openIter(DBProperties(include_value=False)) as iterator:
+                        for key in iterator:
                             wb.delete(key)
 
                 self.Persist(Blockchain.GenesisBlock())

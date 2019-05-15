@@ -23,9 +23,9 @@ Constants:
 
 """
 
-BC_CONST = 'blockchain'
-NOTIF_CONST = 'notification'
-DEBUG_CONST = 'debug'
+BC_CONST = 'Blockchain'
+NOTIF_CONST = 'Notification'
+DEBUG_CONST = 'DebugStorage'
 
 DATABASE_PROPS = settings.database_properties()
 
@@ -42,7 +42,7 @@ def getBlockchainDB(path=None):
     """
 
     if not path:
-        path = DATABASE_PROPS[BC_CONST]['path']
+        path = DATABASE_PROPS[BC_CONST]['DataDirectoryPath']
 
     BlockchainDB = load_class_from_path(DATABASE_PROPS[BC_CONST]['backend'])
     _blockchain_db_instance = BlockchainDB(path)
@@ -61,7 +61,7 @@ def getNotificationDB(path=None):
     """
 
     if not path:
-        path = DATABASE_PROPS[NOTIF_CONST]['path']
+        path = DATABASE_PROPS[NOTIF_CONST]['NotificationDataPath']
 
     NotificationDB = load_class_from_path(DATABASE_PROPS[NOTIF_CONST]['backend'])
     _notif_db_instance = NotificationDB(path)
@@ -77,5 +77,5 @@ def getDebugStorageDB():
     """
 
     DebugStorageDB = load_class_from_path(DATABASE_PROPS[DEBUG_CONST]['backend'])
-    _debug_db_instance = DebugStorageDB(DATABASE_PROPS[DEBUG_CONST]['path'])
+    _debug_db_instance = DebugStorageDB(DATABASE_PROPS[DEBUG_CONST]['DebugStoragePath'])
     return _debug_db_instance

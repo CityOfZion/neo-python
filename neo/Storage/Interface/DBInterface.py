@@ -6,17 +6,15 @@ logger = log_manager.getLogger()
 
 
 class DBProperties:
-
-    """ Store the different DB properties
-    Used to pass the relevant information to
-    neo.Storage.Implementation.[BACKEND].[BACKEND]DBClassMethods.openIter
+    """
+    Container for holding DB properties
+    Used to pass the configuration options to the DB iterator initializer.
+    neo.Storage.Implementation.[BACKEND].[BACKEND]Impl.openIter
 
     Args:
         prefix (str, optional): Prefix to search for.
-        include_value (bool, optional): used to define if the value should be
-                                        included when opening an iterator.
-        include_key (bool, optional): used to define if the key value shoud be
-                                      included when opening an iterator.
+        include_value (bool, optional): whether to include keys in the returned data
+        include_key (bool, optional): whether to include values in the returned data
     """
 
     prefix = None
