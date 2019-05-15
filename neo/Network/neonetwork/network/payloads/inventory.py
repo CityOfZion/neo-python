@@ -46,10 +46,13 @@ class InventoryPayload(BasePayload):
             inv_payload.deserialize(br)
         except ValueError:
             return None
+        finally:
+            br.cleanup()
         return inv_payload
 
     def to_array(self) -> bytearray:
         writer = BinaryWriter(stream=bytearray())
         self.serialize(writer)
-        data = writer._stream.getbuffer()
-        return bytearray(data)
+        data = bytearray(writer._stream.getbuffer())
+        writer.cleanup()
+        return data

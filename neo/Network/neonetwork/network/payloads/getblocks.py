@@ -31,10 +31,12 @@ class GetBlocksPayload(BasePayload):
         br = BinaryReader(stream=data_stream)
         block_payload = cls()
         block_payload.deserialize(br)
+        br.cleanup()
         return block_payload
 
     def to_array(self) -> bytearray:
         writer = BinaryWriter(stream=bytearray())
         self.serialize(writer)
-        data = writer._stream.getbuffer()
-        return bytearray(data)
+        data = bytearray(writer._stream.getbuffer())
+        writer.cleanup()
+        return data

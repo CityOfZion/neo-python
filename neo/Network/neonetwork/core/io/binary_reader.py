@@ -224,3 +224,7 @@ class BinaryReader(object):
             UInt160:
         """
         return UInt160(data=bytearray(self.read_bytes(20)))
+
+    def cleanup(self):
+        if self._stream:
+            self._stream.close()

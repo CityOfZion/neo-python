@@ -40,10 +40,12 @@ class HeadersPayload(BasePayload):
         br = BinaryReader(stream=data_stream)
         headers_payload = cls()
         headers_payload.deserialize(br)
+        br.cleanup()
         return headers_payload
 
     def to_array(self) -> bytearray:
         writer = BinaryWriter(stream=bytearray())
         self.serialize(writer)
-        data = writer._stream.getbuffer()
-        return bytearray(data)
+        data = bytearray(writer._stream.getbuffer())
+        writer.cleanup()
+        return data

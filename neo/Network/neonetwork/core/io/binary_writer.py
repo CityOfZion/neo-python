@@ -172,3 +172,7 @@ class BinaryWriter(object):
     def write_var_bytes(self, value: int, endian: str = "<") -> int:
         self.write_var_int(len(value), endian)
         return self.write_bytes(value)
+
+    def cleanup(self):
+        if self._stream:
+            self._stream.close()

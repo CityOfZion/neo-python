@@ -60,10 +60,13 @@ class Block(BlockBase):
             block._size = len(data_stream)
         except ValueError:
             return None
+        finally:
+            br.cleanup()
         return block
 
     def to_array(self) -> bytearray:
         writer = BinaryWriter(stream=bytearray())
         self.serialize(writer)
-        data = writer._stream.getbuffer()
-        return bytearray(data)
+        data = bytearray(writer._stream.getbuffer())
+        writer.cleanup()
+        return data
