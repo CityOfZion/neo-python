@@ -1,11 +1,11 @@
 from .StateBase import StateBase
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
-from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neo.Core.Cryptography.ECCurve import EllipticCurve, ECDSA
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 
 
 class ValidatorState(StateBase):
@@ -42,7 +42,7 @@ class ValidatorState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(ValidatorState, self).Deserialize(reader)
         self.PublicKey = ECDSA.Deserialize_Secp256r1(reader)

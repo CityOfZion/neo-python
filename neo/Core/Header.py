@@ -1,5 +1,5 @@
 from neo.Core.BlockBase import BlockBase
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Witness import Witness
 
@@ -36,7 +36,7 @@ class Header(BlockBase):
             reader (neo.IO.BinaryReader):
         """
         super(Header, self).Deserialize(reader)
-        if reader.ReadByte() != 0:
+        if ord(reader.ReadByte()) != 0:
             raise Exception('Incorrect Header Format')
 
     def Equals(self, other):

@@ -5,9 +5,9 @@ from neo.Prompt.Commands.WalletAddress import AddAlias
 from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
-from neocore.UInt160 import UInt160
-from neocore.Fixed8 import Fixed8
-from neocore.KeyPair import KeyPair
+from neo.Core.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput, TXFeeError

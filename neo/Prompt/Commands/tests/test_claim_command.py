@@ -2,12 +2,14 @@ from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Prompt.PromptPrinter import pp
 import shutil
+from mock import patch
+from io import StringIO
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -105,20 +107,30 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         wallet = self.GetWallet3()
 
-        claim_tx, relayed = ClaimGas(wallet, require_password=False)
+        claim_tx, relayed = ClaimGas(wallet)
 
         self.assertFalse(relayed)
 
-    def test_4_wallet_claim_ok(self):
+    def test_4_keyboard_interupt(self):
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[KeyboardInterrupt]):
+                wallet = self.GetWallet1()
 
-        wallet = self.GetWallet1()
+                claim_tx, relayed = ClaimGas(wallet)
+                self.assertEqual(claim_tx, None)
+                self.assertFalse(relayed)
+                self.assertIn("Claim transaction cancelled", mock_print.getvalue())
 
-        claim_tx, relayed = ClaimGas(wallet, require_password=False)
-        self.assertIsInstance(claim_tx, ClaimTransaction)
-        self.assertTrue(relayed)
+    def test_5_wallet_claim_ok(self):
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
+            wallet = self.GetWallet1()
 
-    def test_5_no_wallet(self):
-        claim_tx, relayed = ClaimGas(None, require_password=False)
+            claim_tx, relayed = ClaimGas(wallet)
+            self.assertIsInstance(claim_tx, ClaimTransaction)
+            self.assertTrue(relayed)
+
+    def test_6_no_wallet(self):
+        claim_tx, relayed = ClaimGas(None)
         self.assertEqual(claim_tx, None)
         self.assertFalse(relayed)
 

@@ -4,7 +4,7 @@ import warnings
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.Prompt.Commands.SC import CommandSC
 from neo.Prompt.PromptData import PromptData
 from mock import patch
@@ -261,7 +261,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         path_dir = 'neo/Prompt/Commands/tests/'
         Compiler.instance().load_and_save(path_dir + 'SampleSC.py', use_nep8=False)
 
-        prompt_entries = ['test_name', 'test_version', 'test_author', 'test_email', 'test_description', 'False', 'False', 'False', 'bad_pw']
+        prompt_entries = ['test_name', 'test_version', 'test_author', 'test_email', 'test_description', 'False', 'False', 'False']
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
                 with patch('neo.Prompt.Commands.SC.prompt', side_effect=['bad_passw']):
@@ -270,11 +270,23 @@ class CommandSCTestCase(WalletFixtureTestCase):
                     self.assertFalse(res)
                     self.assertTrue(mock_print.getvalue().endswith('Incorrect password\n'))
 
+        # test ok contract parameter gathering, but keyboard interrupt when entering contract details
+        path_dir = 'neo/Prompt/Commands/tests/'
+        Compiler.instance().load_and_save(path_dir + 'SampleSC.py', use_nep8=False)
+
+        prompt_entries = ['test_name', 'test_version', KeyboardInterrupt]
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
+                args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+                self.assertTrue(mock_print.getvalue().endswith('Deployment cancelled\n'))
+
         # test ok contract parameter gathering, but test_invoke failure
         path_dir = 'neo/Prompt/Commands/tests/'
         Compiler.instance().load_and_save(path_dir + 'SampleSC.py', use_nep8=False)
 
-        prompt_entries = ['test_name', 'test_version', 'test_author', 'test_email', 'test_description', 'False', 'False', 'False', 'bad_pw']
+        prompt_entries = ['test_name', 'test_version', 'test_author', 'test_email', 'test_description', 'False', 'False', 'False']
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
                 with patch('neo.Prompt.Commands.SC.test_invoke', side_effect=[(None, None, None, None, None)]):
@@ -282,6 +294,15 @@ class CommandSCTestCase(WalletFixtureTestCase):
                     res = CommandSC().execute(args)
                     self.assertFalse(res)
                     self.assertIn("Test invoke failed", mock_print.getvalue())
+
+        # test with ok contract parameter gathering, but keyboard interrupt prior to deploying
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.LoadSmartContract.prompt', side_effect=prompt_entries):
+                with patch('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                    args = ['deploy', path_dir + 'SampleSC.avm', 'True', 'False', 'False', '070502', '02']
+                    res = CommandSC().execute(args)
+                    self.assertFalse(res)
+                    self.assertTrue(mock_print.getvalue().endswith('Deployment cancelled\n'))
 
         # test with ok contract parameter gathering, but bad fee
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -367,6 +388,14 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertFalse(res)
             self.assertIn("Error testing contract invoke", mock_print.getvalue())
 
+        # test with keyboard interrupt
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'symbol', '[]']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Invocation cancelled", mock_print.getvalue())
+
         # test with negative fee
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
@@ -390,6 +419,35 @@ class CommandSCTestCase(WalletFixtureTestCase):
                 res = CommandSC().execute(args)
                 self.assertFalse(res)
                 self.assertIn("Incorrect password", mock_print.getvalue())
+
+        # test with no return-type override
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'totalSupply', '[]', '']
+                res = CommandSC().execute(args)
+                a = mock_print.getvalue()
+                self.assertIn("ByteArray", mock_print.getvalue())
+
+        # test with bad return-type override
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'totalSupply', '[]', '--return-type=99']
+                res = CommandSC().execute(args)
+                self.assertFalse(res)
+
+        # test with hex return-type override
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'totalSupply', '[]', '--return-type=02']
+                res = CommandSC().execute(args)
+                self.assertIn("Integer", mock_print.getvalue())
+
+        # test with named return-type override
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.SC.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['invoke', token_hash_str, 'totalSupply', '[]', '--return-type=Integer']
+                res = CommandSC().execute(args)
+                self.assertIn("Integer", mock_print.getvalue())
 
         # test ok
         with patch('sys.stdout', new=StringIO()) as mock_print:

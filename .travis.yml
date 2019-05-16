@@ -6,9 +6,6 @@ sudo: required
 services:
   - docker
 
-cache:
-  pip: true
-
 addons:
   apt:
     packages:
@@ -19,9 +16,8 @@ addons:
 install:
   - pip install -e .
   - pip install coveralls
-  - yes | pip uninstall neo-boa neocore
-  - pip install -e git+https://github.com/CityOfZion/neo-boa@development#egg=neo-boa
-  - pip install -e git+https://github.com/CityOfZion/neo-python-core@master#egg=neocore
+  - yes | pip uninstall neo-boa
+  - pip install -e git+https://github.com/ixje/neo-boa@development#egg=neo-boa
 
 env:
   - NEOPYTHON_UNITTEST=1

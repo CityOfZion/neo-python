@@ -106,7 +106,7 @@ class InteropTest(NeoTestCase):
             self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
             self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
 
-            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertEqual(self.engine.State, VMState.FAULT)
             self.assertTrue(len(log_context.output) > 0)
             self.assertTrue('VMFault.KEY_IS_COLLECTION' in log_context.output[0])
 
@@ -119,7 +119,7 @@ class InteropTest(NeoTestCase):
             self.econtext.EvaluationStack.PushT(StackItem.New('myVal'))
             self.engine.ExecuteOp(OpCode.SETITEM, self.econtext)
 
-            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertEqual(self.engine.State, VMState.FAULT)
 
             self.assertTrue(len(log_context.output) > 0)
             self.assertEqual(log_context.records[0].levelname, 'DEBUG')
@@ -141,22 +141,23 @@ class InteropTest(NeoTestCase):
             self.econtext.EvaluationStack.PushT(Map(dict={StackItem.New('a'): StackItem.New(4)}))
             self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
-            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertEqual(self.engine.State, VMState.FAULT)
             self.assertTrue(len(log_context.output) > 0)
             self.assertTrue('VMFault.KEY_IS_COLLECTION' in log_context.output[0])
 
     def test_op_map8(self):
         with self.assertLogHandler('vm', logging.DEBUG) as log_context:
-            # pick item on non collection causes error
+            # pick item out of bounds
             self.econtext.EvaluationStack.PushT(StackItem.New('a'))
             self.econtext.EvaluationStack.PushT(StackItem.New('a'))
             self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
             self.assertTrue(len(log_context.output) > 0)
             log_msg = log_context.output[0]
-            self.assertTrue('Cannot access item at index' in log_msg and 'Item is not an array or dict' in log_msg)
+            expected_msg = "Array index is less than zero or 97 exceeds list length 1"
+            self.assertTrue(expected_msg in log_msg)
 
-            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertEqual(self.engine.State, VMState.FAULT)
 
     def test_op_map9(self):
         with self.assertLogHandler('vm', logging.DEBUG) as log_context:
@@ -165,7 +166,7 @@ class InteropTest(NeoTestCase):
             self.econtext.EvaluationStack.PushT(StackItem.New('b'))
             self.engine.ExecuteOp(OpCode.PICKITEM, self.econtext)
 
-            self.assertEqual(self.engine.State, VMState.FAULT | VMState.BREAK)
+            self.assertEqual(self.engine.State, VMState.FAULT)
             self.assertTrue(len(log_context.output) > 0)
             self.assertTrue('VMFault.DICT_KEY_NOT_FOUND' in log_context.output[0])
 

@@ -1,5 +1,5 @@
-from neocore.IO.Mixins import SerializableMixin
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.Mixins import SerializableMixin
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Size import Size as s
 
@@ -31,12 +31,12 @@ class StateBase(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
 
         Raises:
             Exception: if the state version is incorrect.
         """
-        sv = reader.ReadByte()
+        sv = ord(reader.ReadByte())
         if sv != self.StateVersion:
             raise Exception("Incorrect State format")
 

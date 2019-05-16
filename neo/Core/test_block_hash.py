@@ -1,5 +1,5 @@
 from neo.Utils.NeoTestCase import NeoTestCase
-from neocore.Cryptography.Helper import bin_dbl_sha256
+from neo.Core.Cryptography.Helper import bin_dbl_sha256
 import binascii
 
 

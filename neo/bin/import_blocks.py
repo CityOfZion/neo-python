@@ -6,8 +6,8 @@ from neo.IO.MemoryStream import MemoryStream
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Settings import settings
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager, MemoryStream
 import argparse
 import os
@@ -97,7 +97,10 @@ def main():
             print("Will import %s of %s blocks to %s" % (total_blocks, total_blocks_available, target_dir))
             print("This will overwrite any data currently in %s and %s.\nType 'confirm' to continue" % (target_dir, notif_target_dir))
 
-            confirm = prompt("[confirm]> ", is_password=False)
+            try:
+                confirm = prompt("[confirm]> ", is_password=False)
+            except KeyboardInterrupt:
+                confirm = False
             if not confirm == 'confirm':
                 print("Cancelled operation")
                 return False

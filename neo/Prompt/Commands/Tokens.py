@@ -1,7 +1,7 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
 from neo.Wallets.NEP5Token import NEP5Token
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
 from prompt_toolkit import prompt
 from decimal import Decimal
 from neo.Core.TX.TransactionAttribute import TransactionAttribute
@@ -12,7 +12,7 @@ from neo.Prompt import Utils as PromptUtils
 from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Token
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
-from neocore.Utils import isValidPublicAddress
+from neo.Core.Utils import isValidPublicAddress
 import peewee
 import traceback
 from neo.Prompt.PromptPrinter import prompt_print as print
@@ -210,7 +210,11 @@ class CommandTokenSendFrom(CommandBase):
                     print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Transfer Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
                 print("Enter your password to send to the network")
 
-                passwd = prompt("[Password]> ", is_password=True)
+                try:
+                    passwd = prompt("[Password]> ", is_password=True)
+                except KeyboardInterrupt:
+                    print("Transaction cancelled")
+                    return False
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
                     return False
@@ -325,7 +329,11 @@ class CommandTokenApprove(CommandBase):
                     print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
                 print("Enter your password to send to the network")
 
-                passwd = prompt("[Password]> ", is_password=True)
+                try:
+                    passwd = prompt("[Password]> ", is_password=True)
+                except KeyboardInterrupt:
+                    print("Allowance approval cancelled")
+                    return False
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
                     return False
@@ -511,7 +519,11 @@ class CommandTokenRegister(CommandBase):
                     print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
                 print("Enter your password to send to the network")
 
-                passwd = prompt("[Password]> ", is_password=True)
+                try:
+                    passwd = prompt("[Password]> ", is_password=True)
+                except KeyboardInterrupt:
+                    print("Registration cancelled")
+                    return False
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
                     return False
@@ -695,7 +707,11 @@ def token_mint(token, wallet, to_addr, asset_attachments=[], fee=Fixed8.Zero(), 
                 print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
             print("Enter your password to send to the network")
 
-            passwd = prompt("[Password]> ", is_password=True)
+            try:
+                passwd = prompt("[Password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Token mint cancelled")
+                return False
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
                 return False
@@ -732,7 +748,11 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, fee=Fixed
                 print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Transfer Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
             print("Enter your password to send to the network")
 
-            passwd = prompt("[Password]> ", is_password=True)
+            try:
+                passwd = prompt("[Password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Transfer cancelled")
+                return False
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
                 return False

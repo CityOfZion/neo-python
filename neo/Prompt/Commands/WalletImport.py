@@ -4,11 +4,11 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.LoadSmartContract import ImportContractAddr
 from neo.Prompt import Utils as PromptUtils
-from neocore.KeyPair import KeyPair
+from neo.Core.KeyPair import KeyPair
 from prompt_toolkit import prompt
-from neocore.Utils import isValidPublicAddress
-from neocore.UInt160 import UInt160
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Utils import isValidPublicAddress
+from neo.Core.UInt160 import UInt160
+from neo.Core.Cryptography.Crypto import Crypto
 from neo.SmartContract.Contract import Contract
 from neo.Core.Blockchain import Blockchain
 from neo.Wallets import NEP5Token

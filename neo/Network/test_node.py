@@ -5,7 +5,7 @@ from mock import patch
 from neo.Network.Payloads.VersionPayload import VersionPayload
 from neo.Network.Message import Message
 from neo.IO.MemoryStream import StreamManager
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.Network.NodeLeader import NodeLeader
 from twisted.test import proto_helpers
 

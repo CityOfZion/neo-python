@@ -17,10 +17,10 @@ from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.Core.CoinReference import CoinReference
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neocore.Fixed8 import Fixed8
-from neocore.UInt256 import UInt256
-from neocore.UInt160 import UInt160
-from neocore.KeyPair import KeyPair
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt256 import UInt256
+from neo.Core.UInt160 import UInt160
+from neo.Core.KeyPair import KeyPair
 from neo import Blockchain
 from base58 import b58decode
 from neo.VM.ScriptBuilder import ScriptBuilder

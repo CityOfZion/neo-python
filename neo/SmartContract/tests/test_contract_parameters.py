@@ -2,15 +2,14 @@ from unittest import TestCase
 from neo.VM.InteropService import ByteArray, Integer, BigInteger, Boolean
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neocore.UInt256 import UInt256
-from neocore.UInt160 import UInt160
-from neocore.Cryptography.ECCurve import EllipticCurve
+from neo.Core.UInt256 import UInt256
+from neo.Core.UInt160 import UInt160
+from neo.Core.Cryptography.ECCurve import EllipticCurve
 
 
 class EventTestCase(TestCase):
 
     def test_from_json(self):
-
         jsn = {
             'type': str(ContractParameterType.String),
             'value': 'hello'
@@ -165,7 +164,6 @@ class EventTestCase(TestCase):
         self.assertEqual(cp.ToJson(), jsn)
 
     def test_to_parameter(self):
-
         stack_item = Integer(BigInteger(14))
 
         cp1 = ContractParameter.AsParameterType(ContractParameterType.Integer, stack_item)
@@ -195,7 +193,7 @@ class EventTestCase(TestCase):
         self.assertEqual(cp1.ToJson(), {'type': 'Boolean', 'value': False})
 
         cp1 = ContractParameter.AsParameterType(ContractParameterType.ByteArray, stack_item)
-        self.assertEqual(cp1.ToJson(), {'type': 'ByteArray', 'value': '00'})
+        self.assertEqual(cp1.ToJson(), {'type': 'ByteArray', 'value': ''})
 
         with self.assertRaises(Exception) as ctx:
             cp1 = ContractParameter.AsParameterType(ContractParameterType.Array, stack_item)

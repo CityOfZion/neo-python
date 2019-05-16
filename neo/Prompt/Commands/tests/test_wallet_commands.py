@@ -2,7 +2,7 @@ from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Blockchain import Blockchain
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Wallet import ShowUnspentCoins
@@ -102,41 +102,60 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                 remove_new_wallet()
 
             # test wallet create with no path
-            args = ['create']
-            res = CommandWallet().execute(args)
-            self.assertFalse(res)
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['create']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
+                self.assertIn("Please specify a path", mock_print.getvalue())
 
             # test wallet open with already existing path
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                path = UserWalletTestCase.new_wallet_dest()
-                args = ['create', path]
-                self.assertFalse(os.path.isfile(path))
-                res = CommandWallet().execute(args)
-                self.assertEqual(type(res), UserWallet)
-                self.assertTrue(os.path.isfile(path))
-
-                res = CommandWallet().execute(args)
-                self.assertFalse(res)
-                self.assertTrue(os.path.isfile(path))
-                remove_new_wallet()
-
-            # test wallet with different passwords
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "bad"]):
-                path = UserWalletTestCase.new_wallet_dest()
-                args = ['create', path]
-                self.assertFalse(os.path.isfile(path))
-                res = CommandWallet().execute(args)
-                self.assertFalse(res)
-                self.assertFalse(os.path.isfile(path))
-
-            # test wallet create unsuccessful
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                with patch('neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Create', side_effect=[Exception('test exception')]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
                     path = UserWalletTestCase.new_wallet_dest()
                     args = ['create', path]
+                    self.assertFalse(os.path.isfile(path))
+                    res = CommandWallet().execute(args)
+                    self.assertEqual(type(res), UserWallet)
+                    self.assertTrue(os.path.isfile(path))
+
+                    res = CommandWallet().execute(args)
+                    self.assertFalse(res)
+                    self.assertTrue(os.path.isfile(path))
+                    self.assertIn("File already exists", mock_print.getvalue())
+                    remove_new_wallet()
+
+            # test wallet with different passwords
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "bad"]):
+                    path = UserWalletTestCase.new_wallet_dest()
+                    args = ['create', path]
+                    self.assertFalse(os.path.isfile(path))
                     res = CommandWallet().execute(args)
                     self.assertFalse(res)
                     self.assertFalse(os.path.isfile(path))
+                    self.assertIn("Please provide matching passwords that are at least 10 characters long", mock_print.getvalue())
+
+            # test wallet with keyboard interrupt
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", KeyboardInterrupt]):
+                    path = UserWalletTestCase.new_wallet_dest()
+                    args = ['create', path]
+                    self.assertFalse(os.path.isfile(path))
+                    res = CommandWallet().execute(args)
+                    self.assertFalse(res)
+                    self.assertFalse(os.path.isfile(path))
+                    self.assertIn("Wallet creation cancelled", mock_print.getvalue())
+
+            # test wallet create unsuccessful
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
+                    with patch('neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Create', side_effect=[Exception('test exception')]):
+                        path = UserWalletTestCase.new_wallet_dest()
+                        args = ['create', path]
+                        res = CommandWallet().execute(args)
+                        self.assertFalse(res)
+                        self.assertFalse(os.path.isfile(path))
+                        self.assertIn("Exception creating wallet", mock_print.getvalue())
 
             # test wallet create exception after creation
             with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
@@ -148,15 +167,17 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                     self.assertFalse(os.path.isfile(path))
 
             # test wallet create exception after creation with file deletion failure
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                with patch('neo.Wallets.Wallet.Wallet.GetKey', side_effect=[Exception('test exception')]):
-                    with patch('os.remove', side_effect=[Exception('test exception')]):
-                        path = UserWalletTestCase.new_wallet_dest()
-                        args = ['create', path]
-                        res = CommandWallet().execute(args)
-                        self.assertFalse(res)
-                        self.assertTrue(os.path.isfile(path))
-                    remove_new_wallet()
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
+                    with patch('neo.Wallets.Wallet.Wallet.GetKey', side_effect=[Exception('test exception')]):
+                        with patch('os.remove', side_effect=[Exception('test exception')]):
+                            path = UserWalletTestCase.new_wallet_dest()
+                            args = ['create', path]
+                            res = CommandWallet().execute(args)
+                            self.assertFalse(res)
+                            self.assertTrue(os.path.isfile(path))
+                            self.assertIn("Could not remove", mock_print.getvalue())
+                        remove_new_wallet()
 
     def test_wallet_open(self):
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
@@ -172,27 +193,43 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                 self.assertEqual(type(res), UserWallet)
 
             # test wallet open with no path; this will also close the open wallet
-            args = ['open']
-
-            res = CommandWallet().execute(args)
-
-            self.assertFalse(res)
-
-            # test wallet open with bad path
-            args = ['open', 'badpath']
-
-            res = CommandWallet().execute(args)
-
-            self.assertFalse(res)
-
-        # test wallet open unsuccessful
-        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
-            with patch('neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Open', side_effect=[Exception('test exception')]):
-                args = ['open', 'fixtures/testwallet.db3']
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['open']
 
                 res = CommandWallet().execute(args)
 
                 self.assertFalse(res)
+                self.assertIn("Please specify the required parameter", mock_print.getvalue())
+
+            # test wallet open with bad path
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['open', 'badpath']
+
+                res = CommandWallet().execute(args)
+
+                self.assertFalse(res)
+                self.assertIn("Wallet file not found", mock_print.getvalue())
+
+        # test wallet open unsuccessful
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
+                with patch('neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Open', side_effect=[Exception('test exception')]):
+                    args = ['open', 'fixtures/testwallet.db3']
+
+                    res = CommandWallet().execute(args)
+
+                    self.assertFalse(res)
+                    self.assertIn("Could not open wallet", mock_print.getvalue())
+
+        # test wallet open with keyboard interrupt
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[KeyboardInterrupt]):
+                args = ['open', self.wallet_1_dest()]
+
+                res = CommandWallet().execute(args)
+
+                self.assertFalse(res)
+                self.assertIn("Wallet opening cancelled", mock_print.getvalue())
 
     def test_wallet_close(self):
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):

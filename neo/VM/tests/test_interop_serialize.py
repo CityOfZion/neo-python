@@ -3,7 +3,7 @@ from neo.VM.InteropService import Struct, StackItem, Array, Boolean, Map
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
 from neo.SmartContract.StateReader import StateReader
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Blockchain import Blockchain
 import logging
