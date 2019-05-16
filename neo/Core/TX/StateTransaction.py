@@ -28,15 +28,6 @@ class StateTransaction(Transaction):
 
         self.Type = TransactionType.StateTransaction
 
-    def NetworkFee(self):
-        """
-        Get the network fee for a claim transaction.
-
-        Returns:
-            Fixed8: currently fixed to 0.
-        """
-        return Fixed8(0)
-
     def SystemFee(self):
         amount = Fixed8.Zero()
         for d in self.Descriptors:

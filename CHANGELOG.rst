@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file.
 - Allow override of test invocation return type
 - Add current wallet height to bottom toolbar
 - Change class attributes of ``Transaction`` into instance attributes and fix constructor
+- Fix sys_fee calculation in block persist.
 - Improve testing of "getbalance" RPC method
 - Support cancelling actions with ``KeyboardInterrupt``
 - Enhance output of `wallet` cli command
