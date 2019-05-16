@@ -44,7 +44,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 res = Wallet.CommandWallet().execute(args)
 
                 self.assertTrue(res)
-                self.assertIn("Sending with fee: 0.0", mock_print.getvalue())
+                self.assertIn("Sending with fee: 0", mock_print.getvalue())
 
     def test_send_gas(self):
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -55,7 +55,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 res = Wallet.CommandWallet().execute(args)
 
                 self.assertTrue(res)
-                self.assertIn("Sending with fee: 0.0", mock_print.getvalue())
+                self.assertIn("Sending with fee: 0", mock_print.getvalue())
 
     def test_send_with_fee_and_from_addr(self):
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -382,7 +382,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 res = Wallet.CommandWallet().execute(args)
 
                 self.assertTrue(res)  # verify successful tx
-                self.assertIn("Sending with fee: 0.0", mock_print.getvalue())
+                self.assertIn("Sending with fee: 0", mock_print.getvalue())
                 json_res = res.ToJson()
 
                 # check for 2 transfers

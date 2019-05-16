@@ -87,7 +87,7 @@ class BinaryReaderTestCase(TestCase):
         self.assertEqual(str(x), "3237383139333738323933373839313738333231")
 
         x = get_br(b"\x01\x02\x0345678").ReadFixed8()
-        self.assertEqual(str(x), "40507659919.768295")
+        self.assertEqual(str(x), "40507659919.76829529")
 
         self.assertEqual(get_br(b"\x0212345567898765434567890987").ReadHashes(), ['3738393039383736353433343536373839383736353534333231', ''])
 
