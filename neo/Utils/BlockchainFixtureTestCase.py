@@ -3,6 +3,8 @@ import requests
 import shutil
 import os
 import neo
+import struct
+
 from contextlib import contextmanager
 from neo.Utils.NeoTestCase import NeoTestCase
 from neo.Storage.Implementation.DBFactory import getBlockchainDB
@@ -40,8 +42,8 @@ def MonkeyPatchPersist(self, block):
     contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
     storages = DBInterface(self._db, DBPrefix.ST_Storage, StorageItem)
 
-    amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
-    amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
+    amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + (block.TotalFees().value / Fixed8.D)
+    amount_sysfee_bytes = struct.pack("<d", amount_sysfee)
 
     with self._db.getBatch() as wb:
         for tx in block.Transactions:
@@ -190,11 +192,11 @@ def MonkeyPatchRun(script, container=None, exit_on_error=False, gas=Fixed8.Zero(
 
 
 class BlockchainFixtureTestCase(NeoTestCase):
-    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v8.tar.gz'
-    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v8.tar.gz')
+    FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/fixtures_v10.tar.gz'
+    FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/fixtures_v10.tar.gz')
 
-    N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixtures_v8.tar.gz'
-    N_FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/notif_fixtures_v8.tar.gz')
+    N_FIXTURE_REMOTE_LOC = 'https://s3.us-east-2.amazonaws.com/cityofzion/fixtures/notif_fixtures_v10.tar.gz'
+    N_FIXTURE_FILENAME = os.path.join(settings.DATA_DIR_PATH, 'Chains/notif_fixtures_v10.tar.gz')
     N_NOTIFICATION_DB_NAME = os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_notifications')
 
     _blockchain = None
@@ -297,7 +299,7 @@ class BlockchainFixtureTestCase(NeoTestCase):
         # tear down Blockchain DB
         Blockchain.Default().DeregisterBlockchain()
         if cls._blockchain is not None:
-            cls._blockchain.UT = False 
+            cls._blockchain.UT = False
             cls._blockchain.Dispose()
 
         shutil.rmtree(cls.leveldb_testpath())

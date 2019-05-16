@@ -183,7 +183,7 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(json['sys_fee'], "0")
         self.assertEqual(json['net_fee'], "0")
         self.assertEqual(json['scripts'][0]['invocation'], "")
-        self.assertEqual(json['scripts'][0]['verification'], "51")      
+        self.assertEqual(json['scripts'][0]['verification'], "51")
 
     cr = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce490241400bd2e921cee90c8de1a192e61e33eb8980a3dc00c388ee9aac0712178cc8fceed8bb59788f7caf3c4dc082abcdaaa49772fda86db4ceea243bda31bcde9b8a0b3c21034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e1104182f145967cc4ee2f1c9f4e0782756dabf246d0a4fe60a035441402fe3e20c303e26c3817fed6fc7db8edde4ac62b16eee796c01c2b59e382b7ddfc82f0b36c7f7520821c7b72b9aff50ae27a016961f1ef1dade9cafa85655380f2321034b44ed9c8a88fb2497b6b57206cc08edd42c5614bd1fee790e5b795dee0f4e11ac'
     cr2 = b'800001f012e99481e4bb93e59088e7baa6e6b58be8af9502f8e0bc69b6af579e69a56d3d3d559759cdb848cb55b54531afc6e3322c85badf08002c82c09c5b49d10cd776c8679789ba98d0b0236f0db4dc67695a1eb920a646b9000001cd5e195b9235a31b7423af5e6937a660f7e7e62524710110b847bab41721090c0061c2540cd1220067f97110a66136d38badc7b9f88eab013027ce49'
@@ -275,10 +275,19 @@ class TransactionTestCase(NeoTestCase):
 
         reader = BinaryReader(ms)
         tx = Transaction.DeserializeFrom(reader)
+
+        # the net_fee calculation in short is : net_fee = inputs - outputs -system fee.
+        # For this test to be able to grab the input values we need to make the TX that it references available for this test
+        ms2 = MemoryStream(binascii.unhexlify(
+            b'80000001def3ab1c73a13e80fea34ca751c79fe8dcf68d93d91d4956818baf0b99d95818010002e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c6000e8764817000000faaa0f339e0fb33f91697cbf5aac41d17921222ae72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60008997b2270000002d9a070d388aa24d9f639bc8ddf985dc473c75d70141401a07d186fdfe3f9862c873d7cd9bdcb9cc8b3f5edcf853af31addcc4476d7d4fe89385cc955a4f604c667110332c14cb2fd8f62a29569b01a572774c7f7136572321026aeca2aed2094e9622a44cf584c694554f10cdb84d4f8eeab3e28ead4e87c168ac'))
+        reader2 = BinaryReader(ms2)
+        vout_tx = Transaction.DeserializeFrom(reader2)
+
         self.assertEqual(tx.ToArray(), self.sttx)
         self.assertEqual(tx.Hash.ToBytes(), self.sttx_id)
 
-        json = tx.ToJson()
+        with patch('neo.Core.Blockchain.Blockchain.GetTransaction', return_value=(vout_tx, 0)):
+            json = tx.ToJson()
         self.assertEqual(json['size'], 191)
         self.assertEqual(json['type'], "StateTransaction")
         self.assertEqual(json['version'], 0)

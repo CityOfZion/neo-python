@@ -1,5 +1,7 @@
 import pytz
 import binascii
+import struct
+
 from itertools import groupby
 from datetime import datetime
 from events import Events
@@ -612,7 +614,7 @@ class Blockchain:
             hash = hash.ToBytes()
         try:
             value = self._db.get(DBPrefix.DATA_Block + hash)[0:8]
-            amount = int.from_bytes(value, 'little', signed=False)
+            amount = struct.unpack("<d", value)[0]
             return amount
         except Exception as e:
             logger.debug("Could not get sys fee: %s " % e)
@@ -963,8 +965,8 @@ class Blockchain:
         validators = DBInterface(self._db, DBPrefix.ST_Validator, ValidatorState)
         contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
 
-        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + block.TotalFees().value
-        amount_sysfee_bytes = amount_sysfee.to_bytes(8, 'little')
+        amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + (block.TotalFees().value / Fixed8.D)
+        amount_sysfee_bytes = struct.pack("<d", amount_sysfee)
 
         with self._db.getBatch() as wb:
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())

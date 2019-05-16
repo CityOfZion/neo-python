@@ -103,7 +103,7 @@ def stop_block_persisting():
 def persist_done(value):
     """persist callback. Value is unused"""
     if continue_persisting:
-        sleep(0.5)
+        sleep(0.1)
         start_block_persisting()
     else:
         block_deferred.cancel()

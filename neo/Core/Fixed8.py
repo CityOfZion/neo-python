@@ -133,7 +133,14 @@ class Fixed8:
         return int(self.value / Fixed8.D)
 
     def ToString(self):
-        return str(self.value / Fixed8.D)
+        value = self.value / Fixed8.D
+        if value < 0:
+            return f"{value:.08g}"
+        else:
+            res = f"{value:.08f}".rstrip("0")
+            if res.endswith("."):
+                res = res.rstrip(".")
+            return res
 
     def ToNeoJsonString(self):
         strval = self.ToString()
