@@ -4,7 +4,6 @@ from neo.Core.IO.Mixins import SerializableMixin
 
 
 class UIntBase(SerializableMixin):
-    Data = bytearray()
     __hash = None
 
     def __init__(self, num_bytes, data=None):

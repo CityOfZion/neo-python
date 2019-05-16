@@ -4,12 +4,13 @@ import io
 from typing import Union, Any
 from neo.Network.neonetwork.core.uint256 import UInt256
 from neo.Network.neonetwork.core.uint160 import UInt160
+from neo.IO.MemoryStream import StreamManager
 
 
 class BinaryReader(object):
     """A convenience class for reading data from byte streams"""
 
-    def __init__(self, stream: Union[io.BytesIO, bytes, bytearray]) -> None:
+    def __init__(self, stream: Union[bytes, bytearray]) -> None:
         """
         Create an instance.
 
@@ -17,11 +18,7 @@ class BinaryReader(object):
             stream (BytesIO, bytearray): a stream to operate on.
         """
         super(BinaryReader, self).__init__()
-
-        if isinstance(stream, (bytearray, bytes)):
-            self._stream = io.BytesIO(stream)
-        else:
-            self._stream = stream
+        self._stream = StreamManager.GetStream(stream)
 
     def _unpack(self, fmt, length=1) -> Any:
         """
@@ -227,4 +224,4 @@ class BinaryReader(object):
 
     def cleanup(self):
         if self._stream:
-            self._stream.close()
+            StreamManager.ReleaseStream(self._stream)

@@ -9,13 +9,6 @@ class BinaryReaderTest(unittest.TestCase):
         x = BinaryReader(stream=bytearray(data))
         self.assertTrue(data, x._stream.getvalue())
 
-    def test_initialization_with_bytesio(self):
-        stream = io.BytesIO()
-        data = b'\xaa\xbb'
-        stream.write(data)
-        x = BinaryReader(stream=stream)
-        self.assertTrue(data, x._stream.getvalue())
-
     def test_reading_bytes(self):
         data = b'\xaa\xbb\xCC'
         x = BinaryReader(stream=bytearray(data))

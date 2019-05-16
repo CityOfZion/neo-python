@@ -100,6 +100,6 @@ class Message(SerializableMixin):
     def to_array(self) -> bytearray:
         writer = BinaryWriter(stream=bytearray())
         self.serialize(writer)
-        data = bytearray(writer._stream.getbuffer())
+        data = bytearray(writer._stream.getvalue())
         writer.cleanup()
         return data

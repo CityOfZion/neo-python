@@ -172,6 +172,8 @@ class NeoNode:
 
                 if header_payload and len(header_payload.headers) > 0:
                     await msgrouter.on_headers(self.nodeid, header_payload.headers)
+                    del header_payload
+
             elif message.command == 'pong':
                 payload = PingPayload.deserialize_from_bytes(message.payload)
                 if payload:

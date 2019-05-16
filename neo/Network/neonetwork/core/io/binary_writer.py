@@ -2,12 +2,13 @@ import struct
 import binascii
 import io
 from typing import Union
+from neo.IO.MemoryStream import StreamManager
 
 
 class BinaryWriter(object):
     """A convenience class for writing data from byte streams"""
 
-    def __init__(self, stream: Union[io.BytesIO, bytearray]) -> None:
+    def __init__(self, stream: Union[bytearray, bytes]) -> None:
         """
         Create an instance.
 
@@ -15,11 +16,7 @@ class BinaryWriter(object):
             stream: a stream to operate on.
         """
         super(BinaryWriter, self).__init__()
-
-        if isinstance(stream, bytearray):
-            self._stream = io.BytesIO(stream)
-        else:
-            self._stream = stream
+        self._stream = StreamManager.GetStream(stream)
 
     def write_bytes(self, value: bytes, unhex: bool = True) -> int:
         """
@@ -175,4 +172,4 @@ class BinaryWriter(object):
 
     def cleanup(self):
         if self._stream:
-            self._stream.close()
+            StreamManager.ReleaseStream(self._stream)

@@ -23,8 +23,9 @@ class BlockBase(SerializableMixin):
     def hash(self):
         writer = BinaryWriter(stream=bytearray())
         self.serialize_unsigned(writer)
-        hash_data = writer._stream.getbuffer()
+        hash_data = writer._stream.getvalue()
         hash = hashlib.sha256(hashlib.sha256(hash_data).digest()).digest()
+        writer.cleanup()
         return UInt256(data=hash)
 
     def serialize(self, writer: 'BinaryWriter') -> None:
@@ -72,6 +73,6 @@ class BlockBase(SerializableMixin):
     def to_array(self) -> bytearray:
         writer = BinaryWriter(stream=bytearray())
         self.serialize(writer)
-        data = bytearray(writer._stream.getbuffer())
+        data = bytearray(writer._stream.getvalue())
         writer.cleanup()
         return data
