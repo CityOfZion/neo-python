@@ -11,27 +11,12 @@ from neo.Core.Size import GetVarSize
 
 
 class AssetState(StateBase):
-    AssetId = None
-    AssetType = None
-    Name = None
-    Amount = Fixed8(0)
-    Available = Fixed8(0)
-    Precision = 0
-    FeeMode = 0
-    Fee = Fixed8(0)
-    FeeAddress = None
-    Owner = None
-    Admin = None
-    Issuer = None
-    Expiration = None
-    IsFrozen = False
-
     def Size(self):
         return super(AssetState, self).Size() + s.uint256 + s.uint8 + GetVarSize(
             self.Name) + self.Amount.Size() + self.Available.Size() + s.uint8 + s.uint8 + self.Fee.Size() + s.uint160 + self.Owner.Size() + s.uint160 + s.uint160 + s.uint32 + s.uint8
 
-    def __init__(self, asset_id=None, asset_type=None, name=None, amount=Fixed8(0), available=Fixed8(0),
-                 precision=0, fee_mode=0, fee=Fixed8(0), fee_addr=UInt160(data=bytearray(20)), owner=None,
+    def __init__(self, asset_id=None, asset_type=None, name=None, amount=None, available=None,
+                 precision=0, fee_mode=0, fee=None, fee_addr=None, owner=None,
                  admin=None, issuer=None, expiration=None, is_frozen=False):
         """
         Create an instance.
@@ -56,12 +41,12 @@ class AssetState(StateBase):
         self.AssetType = asset_type
         self.Name = name
 
-        self.Amount = amount
-        self.Available = available
+        self.Amount = Fixed8(0) if amount is None else amount
+        self.Available = Fixed8(0) if available is None else available
         self.Precision = precision
         self.FeeMode = fee_mode
-        self.Fee = fee
-        self.FeeAddress = fee_addr
+        self.Fee = Fixed8(0) if fee is None else fee
+        self.FeeAddress = UInt160(data=bytearray(20)) if fee_addr is None else fee_addr
 
         if owner is not None and type(owner) is not EllipticCurve.ECPoint:
             raise Exception("Owner must be ECPoint Instance")

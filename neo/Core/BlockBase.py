@@ -10,40 +10,19 @@ from neo.Core.Size import Size as s
 
 
 class BlockBase(VerifiableMixin):
-    #  <summary>
-    #  区块版本
-    #  </summary>
-    Version = 0
-    #  <summary>
-    #  前一个区块的散列值
-    #  </summary>
-    PrevHash = 0  # UInt256
-    #  <summary>
-    #  该区块中所有交易的Merkle树的根
-    #  </summary>
-    MerkleRoot = 0  # UInt256
-    #  <summary>
-    #  时间戳
-    #  </summary>
-    Timestamp = None
-    #  <summary>
-    #  区块高度
-    #  </summary>
-    Index = 0
+    def __init__(self):
 
-    ConsensusData = None
-    #  <summary>
-    #  下一个区块的记账合约的散列值
-    #  </summary>
-    NextConsensus = None  # UInt160
-    #  <summary>
-    #  用于验证该区块的脚本
-    #  </summary>
-    Script = None
+        self.Version = 0
+        self.PrevHash = 0  # UInt256
+        self.MerkleRoot = 0  # UInt256
+        self.Timestamp = None
+        self.Index = 0
 
-    __hash = None
-
-    __htbs = None
+        self.ConsensusData = None
+        self.NextConsensus = None  # UInt160
+        self.Script = None
+        self.__hash = None
+        self.__htbs = None
 
     @property
     def Hash(self):

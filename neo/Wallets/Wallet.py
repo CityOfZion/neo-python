@@ -36,22 +36,6 @@ logger = log_manager.getLogger()
 
 
 class Wallet:
-    AddressVersion = None
-
-    _path = ''
-    _iv = None
-    _master_key = None
-    _keys = {}  # holds keypairs
-    _contracts = {}  # holds Contracts
-    _tokens = {}  # holds references to NEP5 tokens
-    _watch_only = []  # holds set of hashes
-    _coins = {}  # holds Coin References
-
-    _current_height = 0
-
-    _vin_exclude = None
-
-    _lock = None  # allows locking for threads that may need to access the DB concurrently (e.g. ProcessBlocks and Rebuild)
 
     @property
     def WalletHeight(self):
@@ -67,7 +51,10 @@ class Wallet:
             passwordKey (aes_key): A password that has been converted to aes key with neo.Wallets.utils.to_aes_key
             create (bool): Whether to create the wallet or simply open.
         """
-
+        self._tokens = {}  # holds references to NEP5 tokens
+        self._watch_only = []  # holds set of hashes
+        self._current_height = 0
+        self._vin_exclude = None
         self.AddressVersion = settings.ADDRESS_VERSION
         self._path = path
         self._lock = RLock()

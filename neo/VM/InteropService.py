@@ -10,8 +10,10 @@ logger = log_manager.getLogger('vm')
 
 
 class CollectionMixin:
-    IsSynchronized = False
-    SyncRoot = None
+
+    def __init__(self):
+        self.IsSynchronized = False
+        self.SyncRoot = None
 
     @property
     def Count(self):
@@ -151,7 +153,6 @@ class StackItem(EquatableMixin):
 
 
 class Array(StackItem, CollectionMixin):
-    _array = None  # a list of stack items
 
     @property
     def IsTypeArray(self):
@@ -241,8 +242,6 @@ class Boolean(StackItem):
     TRUE = bytearray([1])
     FALSE = bytearray()  # restore once https://github.com/neo-project/neo-vm/pull/132 is approved
 
-    _value = None
-
     def __init__(self, value):
         self._value = value
 
@@ -282,7 +281,6 @@ class Boolean(StackItem):
 
 
 class ByteArray(StackItem):
-    _value = None
 
     def __init__(self, value):
         self._value = value
@@ -341,7 +339,6 @@ class ByteArray(StackItem):
 
 
 class Integer(StackItem):
-    _value = None
 
     def __init__(self, value):
         if type(value) is not BigInteger:
@@ -381,7 +378,6 @@ class Integer(StackItem):
 
 
 class InteropInterface(StackItem):
-    _object = None
 
     def __init__(self, value):
         self._object = value
@@ -461,7 +457,6 @@ class Struct(Array):
 
 
 class Map(StackItem, CollectionMixin):
-    _dict = None
 
     def __init__(self, dict=None):
         if dict:
@@ -556,7 +551,6 @@ class Map(StackItem, CollectionMixin):
 
 
 class InteropService:
-    _dictionary = {}
 
     def __init__(self):
         self._dictionary = {}

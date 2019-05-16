@@ -11,8 +11,6 @@ import math
 
 
 class Fixed8:
-    value = 0
-
     D = 100000000
 
     """docstring for Fixed8"""

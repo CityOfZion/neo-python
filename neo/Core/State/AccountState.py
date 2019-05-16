@@ -11,11 +11,6 @@ from neo.Core.Size import GetVarSize
 
 
 class AccountState(StateBase):
-    ScriptHash = None
-    IsFrozen = False
-    Votes = []
-    Balances = {}
-
     def __init__(self, script_hash=None, is_frozen=False, votes=None, balances=None):
         """
         Create an instance.

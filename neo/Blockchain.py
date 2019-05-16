@@ -18,11 +18,6 @@ def GetSystemShare():
     return Blockchain.SystemShare()
 
 
-def GetStateReader():
-    from neo.SmartContract.StateReader import StateReader
-    return StateReader()
-
-
 def GetStateMachine():
     from neo.SmartContract.StateMachine import StateMachine
     from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection

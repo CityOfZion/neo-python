@@ -1,6 +1,6 @@
 from base58 import b58decode
 import binascii
-from neo.Blockchain import GetBlockchain, GetStateReader, GetStateMachine
+from neo.Blockchain import GetBlockchain, GetStateMachine
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -194,6 +194,7 @@ class Helper:
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
                 verification = sb.ms.getvalue()
+                sb.ms.Cleanup()
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:

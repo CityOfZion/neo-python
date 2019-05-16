@@ -44,14 +44,6 @@ HASH_ANT_STORAGE_PUT = hash("AntShares.Storage.Put")
 class ApplicationEngine(ExecutionEngine):
     ratio = 100000
     gas_free = 10 * 100000000
-    gas_amount = 0
-    gas_consumed = 0
-    testMode = False
-
-    Trigger = None
-
-    invocation_args = None
-
     max_free_ops = 500000
 
     def GasConsumed(self):
@@ -67,6 +59,8 @@ class ApplicationEngine(ExecutionEngine):
         self.testMode = testMode
         self._is_stackitem_count_strict = True
         self.debugger = None
+        self.gas_consumed = 0
+        self.invocation_args = None
 
     def CheckDynamicInvoke(self):
         cx = self.CurrentContext

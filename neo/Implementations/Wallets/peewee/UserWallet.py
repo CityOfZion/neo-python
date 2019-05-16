@@ -31,12 +31,6 @@ logger = log_manager.getLogger()
 class UserWallet(Wallet):
     Version = None
 
-    __dbaccount = None
-
-    _aliases = None
-
-    _db = None
-
     def __init__(self, path, passwordKey, create):
 
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)

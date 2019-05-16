@@ -8,7 +8,7 @@ import struct
 import binascii
 from neo.VM.OpCode import PUSHDATA1, PUSHDATA2, PUSHDATA4, PUSHF, PUSHT, PACK, PUSH0, PUSH1, PUSHM1, PUSHBYTES75, \
     APPCALL, TAILCALL, SYSCALL
-from neo.IO.MemoryStream import MemoryStream
+from neo.IO.MemoryStream import StreamManager
 from neo.Core.BigInteger import BigInteger
 
 
@@ -17,7 +17,7 @@ class ScriptBuilder:
 
     def __init__(self):
         super(ScriptBuilder, self).__init__()
-        self.ms = MemoryStream()  # MemoryStream
+        self.ms = StreamManager.GetStream()  # MemoryStream
 
     def WriteUInt16(self, value, endian="<"):
         return self.pack('%sH' % endian, value)

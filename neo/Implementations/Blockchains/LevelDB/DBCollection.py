@@ -6,10 +6,10 @@ logger = log_manager.getLogger('db')
 
 
 class DBCollection:
-    _built_keys = False
-    DebugStorage = False
 
     def __init__(self, db, prefix, class_ref):
+        self._built_keys = False
+        self.DebugStorage = False
 
         self.DB = db
 

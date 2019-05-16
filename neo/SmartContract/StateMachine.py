@@ -30,11 +30,6 @@ logger = log_manager.getLogger('vm')
 
 
 class StateMachine(StateReader):
-    _validators = None
-    _wb = None
-
-    _contracts_created = {}
-
     def __init__(self, accounts, validators, assets, contracts, storages, wb):
 
         super(StateMachine, self).__init__()
@@ -45,6 +40,7 @@ class StateMachine(StateReader):
         self._contracts = contracts
         self._storages = storages
         self._wb = wb
+        self._contracts_created = {}
 
         # checks for testing purposes
         if accounts is not None:

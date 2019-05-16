@@ -29,18 +29,6 @@ logger = log_manager.getLogger('vm')
 
 
 class StateReader(InteropService):
-    notifications = None
-
-    events_to_dispatch = []
-
-    __Instance = None
-
-    _hashes_for_verifying = None
-
-    _accounts = None
-    _assets = None
-    _contracts = None
-    _storages = None
 
     @property
     def Accounts(self):
@@ -66,12 +54,6 @@ class StateReader(InteropService):
             self._storages = Blockchain.Default().GetStates(DBPrefix.ST_Storage, StorageItem)
         return self._storages
 
-    @staticmethod
-    def Instance():
-        if StateReader.__Instance is None:
-            StateReader.__Instance = StateReader()
-        return StateReader.__Instance
-
     def RegisterWithPrice(self, method, func, price):
         self._dictionary[method] = func
         self.prices.update({hash(method): price})
@@ -83,6 +65,11 @@ class StateReader(InteropService):
         self.notifications = []
         self.events_to_dispatch = []
         self.prices = {}
+        self._hashes_for_verifying = None
+        self._accounts = None
+        self._assets = None
+        self._contracts = None
+        self._storages = None
 
         # TODO: move ExecutionEngine calls here as well from /neo/VM/InteropService/
 

@@ -5,9 +5,6 @@ from neo.IO.MemoryStream import StreamManager
 
 
 class SpentCoinItem:
-    index = None
-    height = None
-
     def __init__(self, index, height):
         """
         Create an instance.
@@ -21,10 +18,6 @@ class SpentCoinItem:
 
 
 class SpentCoin:
-    Output = None
-    StartHeight = None
-    EndHeight = None
-
     @property
     def Value(self):
         """
@@ -74,14 +67,6 @@ class SpentCoin:
 
 
 class SpentCoinState(StateBase):
-    Output = None
-    StartHeight = None
-    EndHeight = None
-
-    TransactionHash = None
-    TransactionHeight = None
-    Items = []
-
     def __init__(self, hash=None, height=None, items=None):
         """
         Create an instance.
@@ -97,6 +82,10 @@ class SpentCoinState(StateBase):
             self.Items = []
         else:
             self.Items = items
+
+        self.Output = None
+        self.StartHeight = None
+        self.EndHeight = None
 
     def HasIndex(self, index):
         """
