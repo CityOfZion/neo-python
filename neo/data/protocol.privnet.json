@@ -25,8 +25,6 @@
     }
   },
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "Chains/privnet",
-    "NotificationDataPath": "Chains/privnet_notif",
     "RPCPort": 20332,
     "NodePort": 20333,
     "WsPort": 20334,
@@ -45,10 +43,10 @@
     "Database": {
         "Blockchain": {
             "skip_version_check": false,
-            "DataDirectoryPath": "Chains/SC234",
+            "DataDirectoryPath": "Chains/privnet",
             "backend": "neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl"},
         "Notification": {
-            "NotificationDataPath": "Chains/Test_Notif",
+            "NotificationDataPath": "Chains/privnet_notif",
             "backend": "neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl"},
         "DebugStorage": {
             "DebugStoragePath": "Chains/debugstorage",

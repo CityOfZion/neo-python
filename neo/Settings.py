@@ -231,7 +231,7 @@ class SettingsHolder:
         self.RPC_SERVER = config.get('RPCServer', self.DEFAULT_RPC_SERVER)
 
         self.DATABASE_PROPS = config.get('Database')
-        self.LEVELDB_PATH = self.DATABASE_PROPS['Blockchain'].get('DataDirectoryPath', 'Chains/SC234')
+        self.LEVELDB_PATH = self.DATABASE_PROPS['Blockchain'].get('DataDirectoryPath', '-testChains/SC234')
         self.NOTIFICATION_DB_PATH = self.DATABASE_PROPS['Notification'].get('NotificationDataPath', 'Chains/notification_data')
         self.DEBUG_STORAGE_PATH = self.DATABASE_PROPS['DebugStorage'].get('DebugStoragePath', 'Chains/debugstorage')
 
