@@ -19,6 +19,7 @@ All notable changes to this project are documented in this file.
 - Add PICKITEM for ByteArray into VM `#923 <https://github.com/CityOfZion/neo-python/pull/923>`_
 - Improve Connection Failure Handling in NodeLeader `#915 <https://github.com/CityOfZion/neo-python/issues/915>`_
 - Improve transaction coverage and fix `PublishTransaction.Size()` `#929 <https://github.com/CityOfZion/neo-python/issues/929>`_
+- Align ``Fixed8`` ``ToString()`` output with C# `#941 <https://github.com/CityOfZion/neo-python/pull/941>`_
 
 
 [0.8.4] 2019-02-14
