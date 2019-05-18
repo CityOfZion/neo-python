@@ -245,7 +245,7 @@ class Transaction(InventoryMixin):
         self.Attributes = [] if attributes is None else attributes
         self.scripts = [] if scripts is None else scripts
         self.InventoryType = 0x01  # InventoryType TX 0x01
-        self.__references = None
+        self._references = None
         self.Type = None
         self.raw_tx = False
         self.withdraw_hold = None
@@ -297,7 +297,7 @@ class Transaction(InventoryMixin):
 
     def ResetReferences(self):
         """Reset local stored references."""
-        self.__references = None
+        self._references = None
 
     def ResetHashData(self):
         """Reset local stored hash data."""
@@ -323,7 +323,7 @@ class Transaction(InventoryMixin):
                 Key (UInt256): input PrevHash
                 Value (TransactionOutput): object.
         """
-        if self.__references is None:
+        if self._references is None:
 
             refs = {}
 
@@ -335,9 +335,9 @@ class Transaction(InventoryMixin):
                     for input in group:
                         refs[input] = tx.outputs[input.PrevIndex]
 
-            self.__references = refs
+            self._references = refs
 
-        return self.__references
+        return self._references
 
     def Size(self):
         """

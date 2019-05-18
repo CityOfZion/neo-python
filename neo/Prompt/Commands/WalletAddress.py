@@ -268,8 +268,8 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
     try:
         passwd = prompt("[Password]> ", is_password=True)
     except KeyboardInterrupt:
-            print("Splitting cancelled")
-            return
+        print("Splitting cancelled")
+        return
     if not wallet.ValidatePassword(passwd):
         print("incorrect password")
         return
