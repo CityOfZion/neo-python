@@ -192,6 +192,16 @@ class SettingsHolder:
                     sys.exit(-1)
             return value
 
+        def update_db_dict(db_dict):
+            for key in db_dict:
+                if key == 'Blockchain':
+                    db_dict[key]['DataDirectoryPath'] = self.chain_leveldb_path
+                if key == 'Notification':
+                    db_dict[key]['NotificationDataPath'] = self.notification_leveldb_path
+                if key == 'DebugStorage':
+                    db_dict[key]['DebugStoragePath'] = self.debug_storage_leveldb_path
+            return db_dict
+
         if not self.DATA_DIR_PATH:
             # Setup default data dir
             self.set_data_dir(None)
@@ -230,10 +240,10 @@ class SettingsHolder:
         self.REST_SERVER = config.get('RestServer', self.DEFAULT_REST_SERVER)
         self.RPC_SERVER = config.get('RPCServer', self.DEFAULT_RPC_SERVER)
 
-        self.DATABASE_PROPS = config.get('Database')
-        self.LEVELDB_PATH = self.DATABASE_PROPS['Blockchain'].get('DataDirectoryPath', 'Chains/SC234')
-        self.NOTIFICATION_DB_PATH = self.DATABASE_PROPS['Notification'].get('NotificationDataPath', 'Chains/notification_data')
-        self.DEBUG_STORAGE_PATH = self.DATABASE_PROPS['DebugStorage'].get('DebugStoragePath', 'Chains/debugstorage')
+        self.LEVELDB_PATH = config['Database']['Blockchain'].get('DataDirectoryPath', 'Chains/SC234')
+        self.NOTIFICATION_DB_PATH = config['Database']['Notification'].get('NotificationDataPath', 'Chains/notification_data')
+        self.DEBUG_STORAGE_PATH = config['Database']['DebugStorage'].get('DebugStoragePath', 'Chains/debugstorage')
+        self.DATABASE_PROPS = update_db_dict(config['Database'])
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """
