@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 class ExecutionContext:
 
-    def __init__(self, script: 'Script', callingScriptHash: bytearray, rvcount: int):
+    def __init__(self, script: 'Script', rvcount: int):
         self.instructions = {}
         self._EvaluationStack = RandomAccessStack(name='Evaluation')
         self._AltStack = RandomAccessStack(name='Alt')
@@ -19,7 +19,6 @@ class ExecutionContext:
         self.Script = script
         self._RVCount = rvcount
         self._script_hash = None
-        self.CallingScriptHash = callingScriptHash
 
     @property
     def EvaluationStack(self):

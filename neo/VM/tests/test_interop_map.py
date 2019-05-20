@@ -23,7 +23,7 @@ class InteropTest(NeoTestCase):
 
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), b'', 0)
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
         self.engine.InvocationStack.PushT(self.econtext)
 
     def test_interop_map1(self):

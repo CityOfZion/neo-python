@@ -31,7 +31,7 @@ class BlockchainInteropTest(BlockchainFixtureTestCase):
 
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), b'', 0)
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
         self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader = StateReader()
 

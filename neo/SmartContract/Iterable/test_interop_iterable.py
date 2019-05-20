@@ -12,7 +12,7 @@ from neo.SmartContract.StateMachine import StateMachine
 class InteropSerializeDeserializeTestCase(TestCase):
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), b'', 0)
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
         self.engine.InvocationStack.PushT(self.econtext)
 
         self.service = StateMachine(None, None, None, None, None, None)

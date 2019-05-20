@@ -147,8 +147,14 @@ class ExecutionEngine:
         return self._InvocationStack.Peek()
 
     @property
-    def EntryScriptHash(self):
-        return self._EntryScriptHash
+    def CallingContext(self):
+        if self._InvocationStack.Count > 1:
+            return self.InvocationStack.Peek(1)
+        return None
+
+    @property
+    def EntryContext(self):
+        return self.InvocationStack.Peek(self.InvocationStack.Count - 1)
 
     @property
     def ExecutedScriptHashes(self):
@@ -235,7 +241,7 @@ class ExecutionEngine:
                 if not self.CheckMaxInvocationStack():
                     return self.VM_FAULT_and_report(VMFault.CALL_EXCEED_MAX_INVOCATIONSTACK_SIZE)
 
-                context_call = self._LoadScriptInternal(context.Script, context.ScriptHash())
+                context_call = self._LoadScriptInternal(context.Script)
                 context_call.InstructionPointer = context.InstructionPointer + instruction.TokenI16
                 if context_call.InstructionPointer < 0 or context_call.InstructionPointer > context_call.Script.Length:
                     return False
@@ -285,7 +291,7 @@ class ExecutionEngine:
                 if not is_normal_call:
                     script_hash = estack.Pop().GetByteArray()
 
-                context_new = self._LoadScriptByHash(script_hash, context.ScriptHash())
+                context_new = self._LoadScriptByHash(script_hash)
                 if context_new is None:
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
@@ -1129,7 +1135,7 @@ class ExecutionEngine:
                 if estack.Count < pcount:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN_STACKISOLATION)
 
-                context_call = self._LoadScriptInternal(context.Script, context.ScriptHash(), rvcount)
+                context_call = self._LoadScriptInternal(context.Script, rvcount)
                 context_call.InstructionPointer = context.InstructionPointer + instruction.TokenI16_1 + 2
 
                 if context_call.InstructionPointer < 0 or context_call.InstructionPointer > context_call.Script.Length:
@@ -1163,7 +1169,7 @@ class ExecutionEngine:
                 else:
                     script_hash = instruction.ReadBytes(2, 20)
 
-                context_new = self._LoadScriptByHash(script_hash, context.ScriptHash(), rvcount)
+                context_new = self._LoadScriptByHash(script_hash, rvcount)
                 if context_new is None:
                     return self.VM_FAULT_and_report(VMFault.INVALID_CONTRACT, script_hash)
 
@@ -1188,17 +1194,14 @@ class ExecutionEngine:
         context.MoveNext()
         return True
 
-    def LoadScript(self, script: bytearray, callingScriptHash=None, rvcount: int = -1) -> ExecutionContext:
+    def LoadScript(self, script: bytearray, rvcount: int = -1) -> ExecutionContext:
         # "raw" bytes
         new_script = Script(self.Crypto, script)
 
-        return self._LoadScriptInternal(new_script, callingScriptHash, rvcount)
+        return self._LoadScriptInternal(new_script, rvcount)
 
-    def _LoadScriptInternal(self, script: Script, callingScriptHash=None, rvcount=-1):
-        context = ExecutionContext(script, callingScriptHash, rvcount)
-        if self.EntryScriptHash is None:
-            self._EntryScriptHash = context.ScriptHash()
-
+    def _LoadScriptInternal(self, script: Script, rvcount=-1):
+        context = ExecutionContext(script, rvcount)
         self._InvocationStack.PushT(context)
         self._ExecutedScriptHashes.append(context.ScriptHash())
 
@@ -1210,14 +1213,14 @@ class ExecutionEngine:
 
         return context
 
-    def _LoadScriptByHash(self, script_hash: bytearray, callingScriptHash: bytearray, rvcount=-1):
+    def _LoadScriptByHash(self, script_hash: bytearray, rvcount=-1):
 
         if self._Table is None:
             return None
         script = self._Table.GetScript(UInt160(data=script_hash).ToBytes())
         if script is None:
             return None
-        return self._LoadScriptInternal(Script.FromHash(script_hash, script), callingScriptHash, rvcount)
+        return self._LoadScriptInternal(Script.FromHash(script_hash, script), rvcount)
 
     def PreExecuteInstruction(self):
         # allow overriding
