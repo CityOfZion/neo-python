@@ -4,7 +4,7 @@ from neo.Core.TX.Transaction import ContractTransaction
 from neo.SmartContract.Contract import Contract, ContractType
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.IO.MemoryStream import StreamManager
+from neo.IO.MemoryStream import StreamManager, MemoryStream
 from neo.Core.IO.BinaryReader import BinaryReader
 from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode

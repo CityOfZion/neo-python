@@ -549,6 +549,13 @@ class Map(StackItem, CollectionMixin):
     def GetByteArray(self):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._dict))
 
+    @classmethod
+    def FromDictionary(cls, dictionary: dict):
+        data = {}
+        for k, v in dictionary.items():
+            data[StackItem.New(k)] = StackItem.New(v)
+        return cls(data)
+
 
 class InteropService:
 

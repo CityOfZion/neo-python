@@ -15,7 +15,7 @@ class TestApplicationEngine(NeoTestCase):
     def test_get_item_count(self):
         econtext1 = ExecutionContext(Script(self.engine.Crypto, b''), b'', 0)
         # 4 items in context 1
-        map = Map({'a': 1, 'b': 2, 'c': 3})
+        map = Map.FromDictionary({'a': 1, 'b': 2, 'c': 3})
         my_int = Integer(BigInteger(1))
         econtext1.EvaluationStack.PushT(map)
         econtext1.EvaluationStack.PushT(my_int)
