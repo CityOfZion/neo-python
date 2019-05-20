@@ -108,6 +108,9 @@ class StateReader(InteropService):
         if context is None:
             return False
 
+        if type(context) != StorageContext:
+            return False
+
         contract = self.Contracts.TryGet(context.ScriptHash.ToBytes())
 
         if contract is not None:
