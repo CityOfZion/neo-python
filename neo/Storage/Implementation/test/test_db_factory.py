@@ -160,7 +160,6 @@ class LevelDBTest(TestCase):
                 pass
         self.assertTrue('Either key or value have to be true' in str(context.exception))
 
-
     def test_batch(self):
 
         self._db.write(b'00001.x', b'x')

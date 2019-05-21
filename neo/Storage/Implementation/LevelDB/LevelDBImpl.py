@@ -104,4 +104,3 @@ class LevelDBSnapshot(LevelDBImpl):
             self._db = _prefixdb
         except Exception as e:
             raise Exception("leveldb exception [ %s ]" % e)
-
