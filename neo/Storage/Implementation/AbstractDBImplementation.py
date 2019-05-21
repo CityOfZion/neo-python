@@ -79,9 +79,10 @@ class AbstractDBImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def cloneDatabase(self, clone_db):
+    def cloneDatabaseStorage(self, clone_storage):
         """
-        Clones the current database into "clone_db"
+        Clones the Smart Contract storages of the current database
+        into "clone_storage"
 
         Args:
             clone_db (object): the instance of the database to clone to.
@@ -96,11 +97,8 @@ class AbstractDBImplementation(ABC):
     @abstractmethod
     def createSnapshot(self):
         """
-        Creates a snapshot of the current database, used for DebugStorage and
-        NotificationDB. To keep the snapshot compatible to the current design it's
-        created through a factory which returns basically the same class we use
-        for the real database and all the methods that can be used on the real db
-        can also be used on the snapshot.
+        Creates a read-only snapshot of the current database, used for
+        DebugStorage and NotificationDB
 
         Args:
             None
@@ -121,7 +119,7 @@ class AbstractDBImplementation(ABC):
             Due to the fact that a context manager is used the returned iterator has
             to be used within a with block. It's then closed after it returnes from
             the scope it's used in.
-            Example from cloneDatabase method:
+            Example from cloneDatabaseStorage method:
 
             with db_snapshot.openIter(DBProperties(prefix=DBPrefix.ST_Storage,
                                                    include_value=True)) as iterator:

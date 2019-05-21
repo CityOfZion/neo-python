@@ -6,7 +6,6 @@ from contextlib import contextmanager
 from neo.Storage.Implementation.AbstractDBImplementation import (
     AbstractDBImplementation
 )
-from neo.Utils.plugin import load_class_from_path
 from neo.Storage.Common.DBPrefix import DBPrefix
 from neo.Storage.Interface.DBInterface import DBProperties
 from neo.logging import log_manager
@@ -52,17 +51,16 @@ class LevelDBImpl(AbstractDBImplementation):
     def delete(self, key):
         self._db.delete(key)
 
-    def cloneDatabase(self, clone_db):
+    def cloneDatabaseStorage(self, clone_storage):
         db_snapshot = self.createSnapshot()
         with db_snapshot.openIter(DBProperties(prefix=DBPrefix.ST_Storage,
                                                include_value=True)) as iterator:
             for key, value in iterator:
-                clone_db.write(key, value)
-        return clone_db
+                clone_storage.write(key, value)
+        return clone_storage
 
     def createSnapshot(self):
-        SnapshotDB = load_class_from_path('neo.Storage.Implementation.LevelDB.LevelDBSnapshot.LevelDBSnapshot')
-        return SnapshotDB(self._db.snapshot())
+        return LevelDBSnapshot(self._db.snapshot())
 
     @contextmanager
     def openIter(self, properties):
@@ -83,8 +81,27 @@ class LevelDBImpl(AbstractDBImplementation):
             _batch.write()
 
     def getPrefixedDB(self, prefix):
-        PrefixedDB = load_class_from_path('neo.Storage.Implementation.LevelDB.LevelDBSnapshot.LevelDBSnapshot')
-        return PrefixedDB(self._db.prefixed_db(prefix))
+        return LevelDBSnapshot(self._db.prefixed_db(prefix))
 
     def closeDB(self):
         self._db.close()
+
+
+class LevelDBSnapshot(LevelDBImpl):
+
+    def __init__(self, _prefixdb):
+        """
+        Init method used with a snapshotDB or prefixedDB, slightly different from the
+        init method as we don't have to open a new database but store a snapshot or
+        a prefixed db.
+
+        Args:
+            _prefixdb (object): the prefixed db instance
+
+        """
+
+        try:
+            self._db = _prefixdb
+        except Exception as e:
+            raise Exception("leveldb exception [ %s ]" % e)
+

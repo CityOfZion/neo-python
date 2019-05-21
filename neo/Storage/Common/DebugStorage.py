@@ -24,7 +24,7 @@ class DebugStorage:
     def __init__(self):
 
         try:
-            self._db = GetBlockchain().Default().GetDB().cloneDatabase(
+            self._db = GetBlockchain().Default().GetDB().cloneDatabaseStorage(
                 DBFactory.getDebugStorageDB())
         except Exception as e:
             logger.info("DEBUG leveldb unavailable, you may already be running this process: %s " % e)

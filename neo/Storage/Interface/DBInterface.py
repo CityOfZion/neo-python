@@ -17,11 +17,11 @@ class DBProperties:
         include_key (bool, optional): whether to include values in the returned data
     """
 
-    prefix = None
-    include_value = None
-    include_key = None
-
     def __init__(self, prefix=None, include_value=True, include_key=True):
+
+        if not include_value and not include_key:
+            raise Exception('Either key or value have to be true')
+
         self.prefix = prefix
         self.include_value = include_value
         self.include_key = include_key

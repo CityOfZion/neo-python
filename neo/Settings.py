@@ -240,7 +240,7 @@ class SettingsHolder:
         self.REST_SERVER = config.get('RestServer', self.DEFAULT_REST_SERVER)
         self.RPC_SERVER = config.get('RPCServer', self.DEFAULT_RPC_SERVER)
 
-        self.LEVELDB_PATH = config['Database']['Blockchain'].get('DataDirectoryPath', 'Chains/SC234')
+        self.LEVELDB_PATH = config['Database']['Blockchain'].get('DataDirectoryPath', 'Chains/Main')
         self.NOTIFICATION_DB_PATH = config['Database']['Notification'].get('NotificationDataPath', 'Chains/notification_data')
         self.DEBUG_STORAGE_PATH = config['Database']['DebugStorage'].get('DebugStoragePath', 'Chains/debugstorage')
         self.DATABASE_PROPS = update_db_dict(config['Database'])
