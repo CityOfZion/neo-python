@@ -160,7 +160,7 @@ class LevelDBBlockchain(Blockchain):
                 if self._stored_header_count == 0:
                     logger.info("Current stored headers empty, re-creating from stored blocks...")
                     headers = []
-                    with self._db.iterator(prefix=DBPrefix.DATA_Block):
+                    with self._db.iterator(prefix=DBPrefix.DATA_Block) as it:
                         for key, value in it:
                             dbhash = bytearray(value)[8:]
                             headers.append(Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))

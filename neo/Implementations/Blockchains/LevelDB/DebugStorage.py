@@ -15,7 +15,7 @@ class DebugStorage:
         return self._db
 
     def reset(self):
-        with self._db.iterator(prefix=DBPrefix.ST_Storage, include_value=False):
+        with self._db.iterator(prefix=DBPrefix.ST_Storage, include_value=False) as it:
             for key in it:
                 self._db.delete(key)
 
