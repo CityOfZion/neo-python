@@ -294,12 +294,14 @@ class StateReader(InteropService):
         try:
             stack_item.Serialize(writer)
         except Exception as e:
+            StreamManager.ReleaseStream(ms)
             logger.error("Cannot serialize item %s: %s " % (stack_item, e))
             return False
 
         ms.flush()
 
         if ms.tell() > engine.maxItemSize:
+            StreamManager.ReleaseStream(ms)
             return False
 
         retVal = ByteArray(ms.getvalue())
@@ -320,6 +322,8 @@ class StateReader(InteropService):
             # can't deserialize type
             logger.error("%s " % e)
             return False
+        finally:
+            StreamManager.ReleaseStream(ms)
         return True
 
     def Blockchain_GetHeight(self, engine: ExecutionEngine):

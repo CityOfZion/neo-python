@@ -230,7 +230,7 @@ class ScriptBuilder:
     def ToArray(self, cleanup=True):
         retval = self.ms.ToArray()
         if cleanup:
-            self.ms.Cleanup()
+            StreamManager.ReleaseStream(self.ms)
             self.ms = None
 
         return retval

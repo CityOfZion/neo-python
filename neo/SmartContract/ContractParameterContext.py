@@ -158,7 +158,7 @@ class ContractParametersContext:
             except ValueError:
                 return False
             finally:
-                ms.Cleanup()
+                StreamManager.ReleaseStream(ms)
 
             if pubkey not in points:
                 return False
@@ -279,7 +279,7 @@ class ContractParametersContext:
                 ms = StreamManager.GetStream(binascii.unhexlify(parsed['hex']))
                 r = BinaryReader(ms)
                 verifiable.DeserializeUnsigned(r)
-                ms.Cleanup()
+                StreamManager.ReleaseStream(ms)
                 context = ContractParametersContext(verifiable, isMultiSig=isMultiSig)
                 for key, value in parsed['items'].items():
                     if "0x" in key:
