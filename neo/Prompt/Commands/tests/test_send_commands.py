@@ -47,11 +47,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                     PromptData.Wallet = self.GetWallet1(recreate=True)
                     args = ['send', 'neo', self.watch_addr_str, '50']
-
                     res = Wallet.CommandWallet().execute(args)
 
                     self.assertTrue(res)
-                    self.assertIn("Sending with fee: 0.0", mock_print.getvalue())
+                    self.assertIn("Sending with fee: 0", mock_print.getvalue())
 
     def test_send_gas(self):
         nodemgr = NodeManager()
@@ -63,11 +62,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                     PromptData.Wallet = self.GetWallet1(recreate=True)
                     args = ['send', 'gas', self.watch_addr_str, '5']
-
                     res = Wallet.CommandWallet().execute(args)
 
                     self.assertTrue(res)
-                    self.assertIn("Sending with fee: 0.0", mock_print.getvalue())
+                    self.assertIn("Sending with fee: 0", mock_print.getvalue())
 
     def test_send_with_fee_and_from_addr(self):
         nodemgr = NodeManager()
@@ -425,11 +423,10 @@ class UserWalletTestCase(WalletFixtureTestCase):
                            side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
                     PromptData.Wallet = self.GetWallet1(recreate=True)
                     args = ['sendmany', '2']
-
                     res = Wallet.CommandWallet().execute(args)
 
                     self.assertTrue(res)  # verify successful tx
-                    self.assertIn("Sending with fee: 0.0", mock_print.getvalue())
+                    self.assertIn("Sending with fee: 0", mock_print.getvalue())
                     json_res = res.ToJson()
 
                     # check for 2 transfers

@@ -210,7 +210,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         addr_str = 'AK2nJJpJr6o664CWJKi1QRXjqeic2zRp8y'
         req = self._gen_post_rpc_req("getaccountstate", params=[addr_str])
         res = json.loads(self.do_test_post("/", json=req))
-        self.assertEqual(res['result']['balances'][0]['value'], '99989900.0')
+        self.assertEqual(res['result']['balances'][0]['value'], '99989900')
         self.assertEqual(res['result']['balances'][0]['asset'], '0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'),
         self.assertEqual(res['result']['address'], addr_str)
 
@@ -614,7 +614,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         req = self._gen_post_rpc_req("getbalance", params=[neo_id])
         res = json.loads(self.do_test_post("/", json=req))
         self.assertIn('Balance', res.get('result').keys())
-        self.assertEqual(res['result']['Balance'], "150.0")
+        self.assertEqual(res['result']['Balance'], "150")
         self.assertIn('Confirmed', res.get('result').keys())
         self.assertEqual(res['result']['Confirmed'], "50.0")
 

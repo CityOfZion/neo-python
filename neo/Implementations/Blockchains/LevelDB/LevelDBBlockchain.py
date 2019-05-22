@@ -3,7 +3,6 @@ import asyncio
 import binascii
 import struct
 import traceback
-import datetime
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
@@ -31,7 +30,6 @@ from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 from neo.Core.Cryptography.Crypto import Crypto
-from neo.Core.BigInteger import BigInteger
 from neo.EventHub import events
 from typing import Tuple
 
