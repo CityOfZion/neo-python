@@ -136,13 +136,14 @@ class LevelDBBlockchain(Blockchain):
 
                 hashes = []
                 try:
-                    for key, value in self._db.iterator(prefix=DBPrefix.IX_HeaderHashList):
-                        ms = StreamManager.GetStream(value)
-                        reader = BinaryReader(ms)
-                        hlist = reader.Read2000256List()
-                        key = int.from_bytes(key[-4:], 'little')
-                        hashes.append({'k': key, 'v': hlist})
-                        StreamManager.ReleaseStream(ms)
+                    with self._db.iterator(prefix=DBPrefix.IX_HeaderHashList) as it:
+                        for key, value in it:
+                            ms = StreamManager.GetStream(value)
+                            reader = BinaryReader(ms)
+                            hlist = reader.Read2000256List()
+                            key = int.from_bytes(key[-4:], 'little')
+                            hashes.append({'k': key, 'v': hlist})
+                            StreamManager.ReleaseStream(ms)
                 except Exception as e:
                     logger.info("Could not get stored header hash list: %s " % e)
 
@@ -159,9 +160,10 @@ class LevelDBBlockchain(Blockchain):
                 if self._stored_header_count == 0:
                     logger.info("Current stored headers empty, re-creating from stored blocks...")
                     headers = []
-                    for key, value in self._db.iterator(prefix=DBPrefix.DATA_Block):
-                        dbhash = bytearray(value)[8:]
-                        headers.append(Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
+                    with self._db.iterator(prefix=DBPrefix.DATA_Block):
+                        for key, value in it:
+                            dbhash = bytearray(value)[8:]
+                            headers.append(Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
 
                     headers.sort(key=lambda h: h.Index)
                     for h in headers:
@@ -204,8 +206,9 @@ class LevelDBBlockchain(Blockchain):
             if res == 'continue':
 
                 with self._db.write_batch() as wb:
-                    for key, value in self._db.iterator():
-                        wb.delete(key)
+                    with self._db.iterator() as it:
+                        for key, value in it:
+                            wb.delete(key)
 
                 self.Persist(Blockchain.GenesisBlock())
                 self._db.put(DBPrefix.SYS_Version, self._sysversion)

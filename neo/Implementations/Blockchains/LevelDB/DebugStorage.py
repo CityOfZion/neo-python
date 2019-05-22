@@ -15,13 +15,15 @@ class DebugStorage:
         return self._db
 
     def reset(self):
-        for key in self._db.iterator(prefix=DBPrefix.ST_Storage, include_value=False):
-            self._db.delete(key)
+        with self._db.iterator(prefix=DBPrefix.ST_Storage, include_value=False):
+            for key in it:
+                self._db.delete(key)
 
     def clone_from_live(self):
         clone_db = GetBlockchain()._db.snapshot()
-        for key, value in clone_db.iterator(prefix=DBPrefix.ST_Storage, include_value=True):
-            self._db.put(key, value)
+        with clone_db.iterator(prefix=DBPrefix.ST_Storage, include_value=True) as it:
+            for key, value in it:
+                self._db.put(key, value)
 
     def __init__(self):
 
