@@ -39,14 +39,13 @@ class SyncManager(Singleton):
         self.ledger = None
         self.block_cache = []
         self.raw_block_cache = []
-        self.ledger_configured = False
-        self.is_persisting = False
+        self.is_persisting_blocks = False
         self.is_persisting_headers = False
         self.keep_running = True
         self.service_task = None
         self.persist_task = None
         self.health_task = None
-        # check_header_timeout and on_header_received are called from separate tasks and can corrupt state when control is yielde.
+        # check_header_timeout and on_header_received are called from separate tasks and can corrupt state when control is yielded.
         # this lock makes sure they can't run simultaneously
         self.header_lock = asyncio.Lock()
 
@@ -99,7 +98,7 @@ class SyncManager(Singleton):
     async def sync(self) -> None:
         await self.sync_header()
         await self.sync_block()
-        if not self.is_persisting:
+        if not self.is_persisting_blocks:
             self.persist_task = asyncio.create_task(self.persist_blocks())
 
     async def sync_header(self) -> None:
@@ -182,7 +181,7 @@ class SyncManager(Singleton):
             node.nodeweight.append_new_request_time()
 
     async def persist_blocks(self) -> None:
-        self.is_persisting = True
+        self.is_persisting_blocks = True
         while self.keep_running:
             try:
                 b = self.block_cache.pop(0)
@@ -192,7 +191,7 @@ class SyncManager(Singleton):
             except IndexError:
                 # cache empty
                 break
-        self.is_persisting = False
+        self.is_persisting_blocks = False
 
     async def check_timeout(self) -> None:
         task1 = asyncio.create_task(self.check_header_timeout())
