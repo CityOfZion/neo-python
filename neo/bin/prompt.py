@@ -261,7 +261,10 @@ def main():
                         help="Absolute path to use for database directories")
 
     # peers
-    parser.add_argument("--maxpeers", action="store", default=5,
+    parser.add_argument("--minpeers", action="store", type=int,
+                        help="Min peers to use for P2P Joining")
+
+    parser.add_argument("--maxpeers", action="store", type=int, default=5,
                         help="Max peers to use for P2P Joining")
 
     # Show the neo-python version
@@ -302,8 +305,45 @@ def main():
     if args.verbose:
         settings.set_log_smart_contract_events(True)
 
-    if args.maxpeers:
-        settings.set_max_peers(args.maxpeers)
+    def set_min_peers(num_peers) -> bool:
+        try:
+            settings.set_min_peers(num_peers)
+            print("Minpeers set to ", num_peers)
+            return True
+        except ValueError:
+            print("Please supply a positive integer for minpeers")
+            return False
+
+    def set_max_peers(num_peers) -> bool:
+        try:
+            settings.set_max_peers(num_peers)
+            print("Maxpeers set to ", num_peers)
+            return True
+        except ValueError:
+            print("Please supply a positive integer for maxpeers")
+            return False
+
+    minpeers = args.minpeers
+    maxpeers = args.maxpeers
+
+    if minpeers and maxpeers:
+        if minpeers > maxpeers:
+            print("minpeers setting cannot be bigger than maxpeers setting")
+            return
+        if not set_min_peers(minpeers) or not set_max_peers(maxpeers):
+            return
+    elif minpeers:
+        if not set_min_peers(minpeers):
+            return
+        if minpeers > settings.CONNECTED_PEER_MAX:
+            if not set_max_peers(minpeers):
+                return
+    elif maxpeers:
+        if not set_max_peers(maxpeers):
+            return
+        if maxpeers < settings.CONNECTED_PEER_MIN:
+            if not set_min_peers(maxpeers):
+                return
 
     loop = asyncio.get_event_loop()
     # put prompt_toolkit on top of asyncio to avoid blocking
