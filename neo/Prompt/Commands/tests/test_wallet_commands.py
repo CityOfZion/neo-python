@@ -251,10 +251,37 @@ class UserWalletTestCase(UserWalletTestCaseBase):
 
         self.OpenWallet1()
 
-        # test wallet close with open wallet
-        args = ['verbose']
-        res = CommandWallet().execute(args)
-        self.assertTrue(res)
+        # first test normal wallet printing
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertNotIn("Script hash", mock_print.getvalue())
+            self.assertNotIn("Public key", mock_print.getvalue())
+
+        # now test wallet verbose with open wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['verbose']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Script hash", mock_print.getvalue())
+            self.assertIn("Public key", mock_print.getvalue())
+
+        # also test "v"
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['v']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Script hash", mock_print.getvalue())
+            self.assertIn("Public key", mock_print.getvalue())
+
+        # and "--v"
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['--v']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Script hash", mock_print.getvalue())
+            self.assertIn("Public key", mock_print.getvalue())
 
     def test_wallet_claim_1(self):
         # test with no wallet

@@ -61,7 +61,7 @@ class CommandWallet(CommandBase):
             print("Please open a wallet")
             return
 
-        if not item or item == 'verbose':
+        if not item:
             wallet.pretty_print(item)
             return wallet
 
@@ -190,8 +190,9 @@ class CommandWalletVerbose(CommandBase):
         super().__init__()
 
     def execute(self, arguments=None):
-        print("Wallet %s " % json.dumps(PromptData.Wallet.ToJson(verbose=True), indent=4))
-        return True
+        wallet = PromptData.Wallet
+        wallet.pretty_print(verbose=True)
+        return wallet
 
     def command_desc(self):
         return CommandDesc('verbose', 'show additional wallet details')
