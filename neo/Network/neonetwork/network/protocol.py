@@ -5,7 +5,6 @@ from neo.Network.neonetwork.network.node import NeoNode
 from neo.Network.neonetwork.network.message import Message
 from asyncio.streams import StreamReader, StreamReaderProtocol, StreamWriter
 from asyncio import events
-import functools
 import traceback
 
 
@@ -52,23 +51,23 @@ class NeoProtocol(StreamReaderProtocol):
             self._stream_writer.write(message.to_array())
             await self._stream_writer.drain()
         except ConnectionResetError:
-            print("connection reset")
+            # print("connection reset")
             self.connection_lost(ConnectionResetError)
-            self.disconnect()
         except ConnectionError:
-            print("connection error")
+            # print("connection error")
             self.connection_lost(ConnectionError)
-            self.disconnect()
         except asyncio.CancelledError:
-            print("task cancelled, closing connection")
+            # print("task cancelled, closing connection")
             self.connection_lost(asyncio.CancelledError)
-            self.disconnect()
         except Exception as e:
+            # print(f"***** woah what happened here?! {traceback.format_exc()}")
             self.connection_lost()
-            print(f"***** woah what happened here?! {str(e)}")
-            self.disconnect()
 
     async def read_message(self, timeout: int = 30) -> Message:
+        if timeout == 0:
+            # avoid memleak. See: https://bugs.python.org/issue37042
+            timeout = None
+
         async def _read():
             try:
                 message_header = await self._stream_reader.readexactly(24)
@@ -79,16 +78,17 @@ class NeoProtocol(StreamReaderProtocol):
                 payload, = struct.unpack('{}s'.format(payload_length), payload_data)
 
             except Exception:
+                # ensures we break out of the main run() loop of Node, which triggers a disconnect callback to clean up
+                self.client.disconnecting = True
                 return None
 
             m = Message(magic, command.rstrip(b'\x00').decode('utf-8'), payload)
 
             if checksum != m.get_checksum(payload):
-                print("Message checksum incorrect")
+                logger.debug("Message checksum incorrect")
                 return None
             else:
                 return m
-
         try:
             return await asyncio.wait_for(_read(), timeout)
         except Exception:

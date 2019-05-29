@@ -114,7 +114,7 @@ class LevelDBBlockchain(Blockchain):
         self.TXProcessed = 0
 
         try:
-            self._db = plyvel.DB(self._path, create_if_missing=True)
+            self._db = plyvel.DB(self._path, create_if_missing=True, max_open_files=100, lru_cache_size=10 * 1024 * 1024)
             logger.info("Created Blockchain DB at %s " % self._path)
         except Exception as e:
             logger.info("leveldb unavailable, you may already be running this process: %s " % e)
@@ -662,8 +662,6 @@ class LevelDBBlockchain(Blockchain):
         return len(self._block_cache)
 
     async def Persist(self, block):
-        self._persisting_block = block
-
         accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, DBPrefix.ST_SpentCoin, SpentCoinState)
@@ -821,7 +819,6 @@ class LevelDBBlockchain(Blockchain):
 
             wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
             self._current_block_height = block.Index
-            self._persisting_block = None
 
             self.TXProcessed += len(block.Transactions)
 

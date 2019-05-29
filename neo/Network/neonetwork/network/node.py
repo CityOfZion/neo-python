@@ -18,6 +18,7 @@ from contextlib import suppress
 from neo.Network.neonetwork.common import msgrouter, encode_base62
 from neo.Network.neonetwork.network.nodeweight import NodeWeight
 from neo.logging import log_manager
+from neo.Settings import settings
 import binascii
 
 logger = log_manager.getLogger('network')
@@ -42,7 +43,7 @@ class NeoNode:
         self.best_height = 0  # track the block height of node
 
         self._inv_hash_for_height = None  # temp variable to track which hash we used for determining the nodes best height
-        self.main_task = None
+        self.main_task = None  # type: asyncio.Task
         self.disconnecting = False
 
     # connection setup and control functions
@@ -52,16 +53,15 @@ class NeoNode:
 
         if not ipfilter.is_allowed(addr_tuple[0]):
             await self.disconnect()
+            return
 
-        # storing the task in case the connection is lost before it finishes the task, this allows us to cancel the task
         task = asyncio.create_task(self.do_handshake())
-        self.tasks.append(task)
-        with suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(task, timeout=2)
-            self.tasks.remove(task)
+        self.tasks.append(task)  # storing the task in case the connection is lost before it finishes the task, this allows us to cancel the task
+        await task
+        self.tasks.remove(task)
 
     async def do_handshake(self) -> None:
-        send_version = Message(command='version', payload=VersionPayload(port=10333, userAgent="NEOPYTHON-PLUS-0.0.1"))
+        send_version = Message(command='version', payload=VersionPayload(port=settings.NODE_PORT, userAgent=settings.VERSION_NAME))
         await self.send_message(send_version)
 
         m = await self.read_message(timeout=3)
@@ -83,15 +83,17 @@ class NeoNode:
 
         if self.quality_check:
             self.nodemanager.quality_check_result(self.address, healthy=True)
+            await self.disconnect()
+            return
         else:
             logger.debug(f"Connected to {self.version.user_agent} @ {self.address}: {self.version.start_height}")
             self.nodemanager.add_connected_node(self)
             self.main_task = asyncio.create_task(self.run())
+            # when we break out of the run loop, we should make sure we disconnect
+            self.main_task.add_done_callback(lambda _: asyncio.create_task(self.disconnect()))
 
     async def disconnect(self) -> None:
-        if self.main_task:
-            self.disconnecting = True
-            await self.main_task
+        self.disconnecting = True
 
         for t in self.tasks:
             t.cancel()
@@ -102,11 +104,9 @@ class NeoNode:
 
     async def connection_lost(self, exc) -> None:
         logger.debug(f"{datetime.now()} Connection lost {self.address} excL {exc}")
-        for t in self.tasks:
-            t.cancel()
-            with suppress(asyncio.CancelledError):
-                await t
-        self.nodemanager.remove_connected_node(self)
+
+        await self.disconnect()
+
         if self.quality_check:
             self.nodemanager.quality_check_result(self.address, healthy=False)
 
@@ -124,14 +124,17 @@ class NeoNode:
         # update nodes height indicator
         self.best_height = self.version.start_height
 
-        # print("verification OK")
         return True
 
     async def run(self) -> None:
+        """
+        Main loop
+        """
         logger.debug("Waiting for a message")
         while not self.disconnecting:
             # we want to always listen for an incoming message
-            message = await self.read_message(timeout=10)
+
+            message = await self.read_message(timeout=0)
             if not message:
                 continue
 
@@ -144,7 +147,7 @@ class NeoNode:
             elif message.command == 'inv':
                 inv = InventoryPayload.deserialize_from_bytes(message.payload)
                 if not inv:
-                    return
+                    continue
 
                 if inv.type == InventoryType.block:
                     # neo-cli broadcasts INV messages on a regular interval. We can use those as trigger to request their latest block height
@@ -183,7 +186,7 @@ class NeoNode:
             elif message.command == 'getdata':
                 inv = InventoryPayload.deserialize_from_bytes(message.payload)
                 if not inv:
-                    return
+                    continue
 
                 for h in inv.hashes:
                     item = self.nodemanager.relay_cache.try_get(h)
@@ -275,7 +278,7 @@ class NeoNode:
     async def send_message(self, message: Message) -> None:
         await self.protocol.send_message(message)
 
-    async def read_message(self, timeout: int = 30) -> Message:
+    async def read_message(self, timeout: int = 30) -> Optional[Message]:
         return await self.protocol.read_message(timeout)
 
     def __eq__(self, other):
@@ -283,3 +286,6 @@ class NeoNode:
             return self.address == other.address and self.nodeid == other.nodeid
         else:
             return False
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} at {hex(id(self))}> {self.nodeid_human}"

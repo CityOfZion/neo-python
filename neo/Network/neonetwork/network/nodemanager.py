@@ -20,9 +20,8 @@ from neo.Network.neonetwork.network.requestinfo import RequestInfo
 from neo.Settings import settings
 from neo.logging import log_manager
 
+
 logger = log_manager.getLogger('network')
-
-
 # log_manager.config_stdio([('network', 10)])
 
 
@@ -209,7 +208,7 @@ class NodeManager(Singleton):
             node.nodeweight.timeout_count += 1
 
             if node.nodeweight.timeout_count > self.MAX_TIMEOUT_COUNT:
-                # print(f"Disconnecting node {node.nodeid} Reason: max timeout count threshold exceeded")
+                logger.debug(f"Disconnecting node {node.nodeid} Reason: max timeout count threshold exceeded")
                 await self.replace_node(node)
 
     def get_node_with_min_failed_time(self, ri: RequestInfo) -> Optional[NeoNode]:

@@ -71,79 +71,8 @@ class HeadersReceivedSyncMgrTestCase(BlockchainFixtureTestCase, asynctest.TestCa
             self.assertGreater(len(log_context.output), 0)
             self.assertTrue("Headers received 2 - 2" in log_context.output[0])
 
-    async def test_headers_failed_to_add(self):
-        """
-        We supply 2 headers with the same index/height
-        The first should be added, the second rejected
-
-        Note: actually writes data to the fixture DB
-        """
-        self.syncmgr.ledger = Ledger()
-        self.syncmgr.nodemgr.add_node_error_count = asynctest.CoroutineMock()
-
-        height = 12357
-        node_id = 123
-
-        self.syncmgr.header_request = RequestInfo(height)
-        self.syncmgr.header_request.add_new_flight(FlightInfo(node_id, height))
-
-        fake_uint256 = UInt256(data=bytearray(32))
-        fake_uint160 = UInt160(data=bytearray(20))
-        not_used = object()
-        header = Header(fake_uint256, fake_uint256, 0, height, 0, fake_uint160, not_used)
-
-        with asynctest.patch('neo.Core.Blockchain.Blockchain.AddHeaders', return_value=0):
-            with self.assertLogHandler('syncmanager', DEBUG) as log_context:
-                await self.syncmgr.on_headers_received(123, [header, header])
-                self.assertGreater(len(log_context.output), 1)
-                self.assertIn("Failed to add all headers. Successfully added 1 out of 2", log_context.output[-2])
-
 
 class HeadersReceivedSyncMgrTestCase2(BlockchainFixtureTestCase, asynctest.TestCase):
-    """
-    For the final test we need to use a new fixture
-    """
-
-    @classmethod
-    def leveldb_testpath(self):
-        return os.path.join(settings.DATA_DIR_PATH, 'fixtures/test_chain')
-
-    def setUp(self) -> None:
-        # we have to override the singleton behaviour or our coroutine mocks will persist
-        with asynctest.patch('neo.Network.neonetwork.network.syncmanager.SyncManager.__new__', return_value=object.__new__(SyncManager)):
-            self.syncmgr = SyncManager()
-            self.syncmgr.init(asynctest.MagicMock)
-            self.syncmgr.reset()
-
-    async def test_headers_add_ok(self):
-        """
-        We supply 2 headers with the same index/height
-        The first should be added, the second rejected
-        """
-        self.syncmgr.ledger = Ledger()
-        self.syncmgr.nodemgr.add_node_error_count = asynctest.CoroutineMock()
-
-        height = 12357
-        node_id = 123
-
-        self.syncmgr.header_request = RequestInfo(height)
-        self.syncmgr.header_request.add_new_flight(FlightInfo(node_id, height))
-
-        fake_uint256 = UInt256(data=bytearray(32))
-        fake_uint160 = UInt160(data=bytearray(20))
-        not_used = object()
-        header1 = Header(fake_uint256, fake_uint256, 0, height, 0, fake_uint160, not_used)
-        header2 = Header(fake_uint256, fake_uint256, 0, height + 1, 0, fake_uint160, not_used)
-
-        with asynctest.patch('neo.Core.Blockchain.Blockchain.AddHeaders', return_value=0):
-            with self.assertLogHandler('syncmanager', DEBUG) as log_context:
-                await self.syncmgr.on_headers_received(123, [header1, header2])
-                self.assertGreater(len(log_context.output), 1)
-                self.assertNotIn("Failed to add all headers. Successfully added 1 out of 2", log_context.output[-2])
-                self.assertFalse(self.syncmgr.nodemgr.add_node_error_count.called)
-
-
-class HeadersReceivedSyncMgrTestCase3(BlockchainFixtureTestCase, asynctest.TestCase):
     """
     For the final test we need to use a new fixture
     """
@@ -197,6 +126,6 @@ class HeadersReceivedSyncMgrTestCase3(BlockchainFixtureTestCase, asynctest.TestC
 
         # assert that only the first one gets fully processed, the rest not
         success = 1
-        already_persisting = -4
-        expected_results = [success, already_persisting, already_persisting, already_persisting, already_persisting]
+        already_exist = -4
+        expected_results = [success, already_exist, already_exist, already_exist, already_exist]
         self.assertEqual(results, expected_results)
