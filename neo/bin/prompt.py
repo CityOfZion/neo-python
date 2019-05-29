@@ -27,7 +27,7 @@ from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print, token_style
-from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 

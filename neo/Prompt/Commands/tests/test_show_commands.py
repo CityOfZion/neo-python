@@ -8,9 +8,9 @@ from neo.bin.prompt import PromptInterface
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from mock import mock, patch, MagicMock
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-from neo.Network.neonetwork.network.node import NeoNode
-from neo.Network.neonetwork.common.singleton import Singleton
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
+from neo.Network.common.singleton import Singleton
 from io import StringIO
 
 

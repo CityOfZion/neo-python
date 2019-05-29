@@ -10,7 +10,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.Settings import settings
 from neo.logging import log_manager
-from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 

@@ -11,8 +11,8 @@ from mock import patch
 from io import StringIO
 from boa.compiler import Compiler
 from neo.Settings import settings
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-from neo.Network.neonetwork.network.node import NeoNode
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
 
 
 class CommandSCTestCase(WalletFixtureTestCase):
@@ -456,7 +456,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
         nodemgr = NodeManager()
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.SC.prompt', side_effect=[self.wallet_3_pass()]):
                     args = ['invoke', token_hash_str, 'symbol', '[]', '--fee=0.001']

@@ -1,7 +1,7 @@
 import pytz
 from itertools import groupby
 from datetime import datetime
-from neo.Network.neonetwork.common import Events
+from neo.Network.common import Events
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.AssetType import AssetType
@@ -19,7 +19,7 @@ from neo.Core.Fixed8 import Fixed8
 from neo.Core.Cryptography.ECCurve import ECDSA
 from neo.Core.UInt256 import UInt256
 from functools import lru_cache
-from neo.Network.neonetwork.common import msgrouter
+from neo.Network.common import msgrouter
 
 from typing import TYPE_CHECKING, Optional
 

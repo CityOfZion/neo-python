@@ -13,8 +13,8 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput, TXFeeError
 from mock import patch
 import binascii
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-from neo.Network.neonetwork.network.node import NeoNode
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -189,7 +189,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(presult, self.wallet_1_script_hash.Data)
 
     def test_9_send_neo_tx(self):
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             wallet = self.GetWallet1()
 
             tx = ContractTransaction()

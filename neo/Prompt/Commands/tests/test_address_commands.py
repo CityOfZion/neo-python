@@ -7,9 +7,8 @@ from neo.Core.TX.Transaction import ContractTransaction
 from neo.Core.Fixed8 import Fixed8
 from mock import patch
 from io import StringIO
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-from neo.Network.neonetwork.network.node import NeoNode
-import os
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
 
 
 class UserWalletTestCase(UserWalletTestCaseBase):
@@ -113,7 +112,7 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         nodemgr = NodeManager()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             # bad inputs
             tx = SplitUnspentCoin(None, self.NEO, addr, 0, 2)
             self.assertEqual(tx, None)
@@ -273,7 +272,7 @@ class UserWalletSplitTestCase(UserWalletTestCaseBase):
         nodemgr.nodes = [NeoNode(object, object)]
 
         with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[self.wallet_1_pass()]):
-            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(False)):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(False)):
                 with patch('sys.stdout', new=StringIO()) as mock_print:
                     args = ['address', 'split', self.wallet_1_addr, 'neo', '0', '2']
                     res = CommandWallet().execute(args)
@@ -285,7 +284,7 @@ class UserWalletSplitTestCase(UserWalletTestCaseBase):
 
         # test wallet split neo successful
         with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[self.wallet_1_pass()]):
-            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
                 args = ['address', 'split', self.wallet_1_addr, 'neo', '0', '2']
                 tx = CommandWallet().execute(args)
                 self.assertIsInstance(tx, ContractTransaction)
@@ -293,7 +292,7 @@ class UserWalletSplitTestCase(UserWalletTestCaseBase):
 
         # test wallet split gas successful
         with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[self.wallet_1_pass()]):
-            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
                 args = ['address', 'split', self.wallet_1_addr, 'gas', '0', '3']
                 tx = CommandWallet().execute(args)
                 self.assertIsInstance(tx, ContractTransaction)

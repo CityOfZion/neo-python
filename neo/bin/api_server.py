@@ -33,7 +33,7 @@ from logging.handlers import SysLogHandler
 
 import logzero
 from logzero import logger
-from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.common import blocking_prompt as prompt
 from aiohttp import web
 from signal import SIGINT
 

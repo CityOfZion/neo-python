@@ -11,11 +11,9 @@ from neo.IO.MemoryStream import StreamManager
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
-from neo.Network.p2pservice import NetworkService
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-from neo.Network.neonetwork.network.syncmanager import SyncManager
+from neo.Network.nodemanager import NodeManager
+from neo.Network.syncmanager import SyncManager
 import json
-import asyncio
 
 logger = log_manager.getLogger()
 

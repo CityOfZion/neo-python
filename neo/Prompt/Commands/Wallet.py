@@ -8,7 +8,7 @@ from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Core.Fixed8 import Fixed8
 from neo.Core.UInt160 import UInt160
-from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.common import blocking_prompt as prompt
 import json
 import os
 import asyncio
@@ -22,7 +22,7 @@ from neo.Prompt.Commands.WalletExport import CommandWalletExport
 from neo.logging import log_manager
 from neo.Core.Utils import isValidPublicAddress
 from neo.Prompt.PromptPrinter import prompt_print as print
-from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 

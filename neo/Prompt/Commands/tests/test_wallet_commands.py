@@ -7,9 +7,8 @@ from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Wallet import ShowUnspentCoins
 from neo.Prompt.PromptData import PromptData
-from neo.Prompt.PromptPrinter import pp
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-from neo.Network.neonetwork.network.node import NeoNode
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
 import os
 import shutil
 import asyncio
@@ -306,7 +305,7 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         nodemgr = NodeManager()
         nodemgr.nodes = [NeoNode(object, object)]
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
-            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
                 args = ['claim']
                 claim_tx, relayed = CommandWallet().execute(args)
                 self.assertIsInstance(claim_tx, ClaimTransaction)
@@ -351,7 +350,7 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         nodemgr.nodes = [NeoNode(object, object)]
 
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
-            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
                 args = ['claim', '--from-addr=' + self.wallet_1_addr]
                 claim_tx, relayed = CommandWallet().execute(args)
                 self.assertIsInstance(claim_tx, ClaimTransaction)
@@ -387,7 +386,7 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         nodemgr.nodes = [NeoNode(object, object)]
 
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
-            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
                 args = ['claim', '--to-addr=' + self.watch_addr_str]
                 claim_tx, relayed = CommandWallet().execute(args)
                 self.assertIsInstance(claim_tx, ClaimTransaction)
@@ -405,7 +404,7 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         nodemgr.nodes = [NeoNode(object, object)]
 
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
-            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
                 args = ['claim', '--from-addr=' + self.wallet_1_addr, '--to-addr=' + self.wallet_2_addr]
                 claim_tx, relayed = CommandWallet().execute(args)
                 self.assertIsInstance(claim_tx, ClaimTransaction)

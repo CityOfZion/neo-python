@@ -30,11 +30,11 @@ from neo.Core.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
-from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.common import blocking_prompt as prompt
 from copy import deepcopy
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
-from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 

@@ -1,7 +1,7 @@
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt import Utils as PromptUtils
 from neo.Prompt.PromptData import PromptData
-from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.common import blocking_prompt as prompt
 from neo.Prompt.PromptPrinter import prompt_print as print
 
 

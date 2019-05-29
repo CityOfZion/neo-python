@@ -10,7 +10,7 @@ from neo.Core.UInt256 import UInt256
 
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.nodemanager import NodeManager
 from neo.Settings import settings
 from neo.api.utils import json_response
 

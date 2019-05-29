@@ -1,11 +1,11 @@
 import asyncio
 import logging
 
-from neo.Network.neonetwork.common.singleton import Singleton
-from neo.Network.neonetwork.ledger import Ledger
-from neo.Network.neonetwork.network.message import Message
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-from neo.Network.neonetwork.network.syncmanager import SyncManager
+from neo.Network.common.singleton import Singleton
+from neo.Network.ledger import Ledger
+from neo.Network.message import Message
+from neo.Network.nodemanager import NodeManager
+from neo.Network.syncmanager import SyncManager
 from neo.Settings import settings
 
 from contextlib import suppress

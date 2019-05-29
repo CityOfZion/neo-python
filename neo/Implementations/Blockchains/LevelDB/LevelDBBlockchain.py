@@ -33,8 +33,8 @@ from neo.Core.Cryptography.Crypto import Crypto
 from neo.EventHub import events
 from typing import Tuple
 
-from neo.Network.neonetwork.common import blocking_prompt as prompt
-from neo.Network.neonetwork.common import wait_for
+from neo.Network.common import blocking_prompt as prompt
+from neo.Network.common import wait_for
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('db')

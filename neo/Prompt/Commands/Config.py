@@ -1,13 +1,13 @@
-from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.common import blocking_prompt as prompt
 from neo.logging import log_manager
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.Utils import get_arg
 from neo.Settings import settings
 from neo.Prompt.PromptPrinter import prompt_print as print
 from distutils import util
-from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.nodemanager import NodeManager
 import logging
-from neo.Network.neonetwork.common import wait_for
+from neo.Network.common import wait_for
 
 
 class CommandConfig(CommandBase):

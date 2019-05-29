@@ -3,7 +3,6 @@ Run only these tests:
 
     $ python -m unittest neo.api.JSONRPC.test_json_rpc_api
 """
-import asyncio
 import binascii
 import json
 import os
@@ -18,13 +17,13 @@ from neo import __version__
 from neo.Blockchain import GetBlockchain
 from neo.IO.Helper import Helper
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from neo.Network.neonetwork.network.node import NeoNode
+from neo.Network.node import NeoNode
 from neo.Settings import ROOT_INSTALL_PATH, settings
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Wallets.utils import to_aes_key
 from neo.api.JSONRPC.JsonRpcApi import JsonRpcApi
-from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.nodemanager import NodeManager
 
 
 class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
@@ -504,7 +503,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
 
     def test_send_raw_tx(self):
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             nodemgr = self.api_server.nodemgr
             nodemgr.reset_for_test()
             nodemgr.nodes = [NeoNode(object(), object())]
@@ -516,7 +515,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
             nodemgr.reset_for_test()
 
     def test_send_raw_tx_bad(self):
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             nodemgr = self.api_server.nodemgr
             nodemgr.reset_for_test()
             nodemgr.nodes = [NeoNode(object(), object())]
@@ -528,7 +527,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
             nodemgr.reset_for_test()
 
     def test_send_raw_tx_bad_2(self):
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             nodemgr = self.api_server.nodemgr
             nodemgr.reset_for_test()
             nodemgr.nodes = [NeoNode(object(), object())]

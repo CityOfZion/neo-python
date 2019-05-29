@@ -28,7 +28,7 @@ from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
 from neo.Core.UInt160 import UInt160
 from neo.Core.UInt256 import UInt256
 from neo.Implementations.Wallets.peewee.Models import Account
-from neo.Network.neonetwork.network.nodemanager import NodeManager
+from neo.Network.nodemanager import NodeManager
 from neo.Prompt.Utils import get_asset_id
 from neo.Settings import settings
 from neo.SmartContract.ApplicationEngine import ApplicationEngine

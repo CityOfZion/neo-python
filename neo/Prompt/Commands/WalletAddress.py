@@ -6,15 +6,12 @@ from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Core.Utils import isValidPublicAddress
 from neo.Core.Fixed8 import Fixed8
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.common import blocking_prompt as prompt
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import ContractTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Prompt.PromptPrinter import prompt_print as print
-from neo.Network.neonetwork.common import wait_for
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-
-import sys
+from neo.Network.nodemanager import NodeManager
 
 
 class CommandWalletAddress(CommandBase):

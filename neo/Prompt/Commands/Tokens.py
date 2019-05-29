@@ -1,8 +1,7 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
-from neo.Wallets.NEP5Token import NEP5Token
 from neo.Core.Fixed8 import Fixed8
 from neo.Core.UInt160 import UInt160
-from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.common import blocking_prompt as prompt
 from decimal import Decimal
 from neo.Core.TX.TransactionAttribute import TransactionAttribute
 import binascii

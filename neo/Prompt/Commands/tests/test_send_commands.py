@@ -9,11 +9,9 @@ from neo.Prompt.Commands import Send, Wallet
 from neo.Prompt.PromptData import PromptData
 import shutil
 from mock import patch
-from neo.Network.neonetwork.network.node import NeoNode
-from neo.Network.neonetwork.network.nodemanager import NodeManager
-import json
+from neo.Network.node import NeoNode
+from neo.Network.nodemanager import NodeManager
 from io import StringIO
-from neo.Prompt.PromptPrinter import pp
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -42,7 +40,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                     PromptData.Wallet = self.GetWallet1(recreate=True)
@@ -57,7 +55,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                     PromptData.Wallet = self.GetWallet1(recreate=True)
@@ -72,7 +70,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                     PromptData.Wallet = self.GetWallet1(recreate=True)
@@ -217,7 +215,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('neo.Prompt.Commands.Tokens.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                 with patch('sys.stdout', new=StringIO()) as mock_print:
                     PromptData.Wallet = self.GetWallet1(recreate=True)
@@ -306,7 +304,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                 PromptData.Wallet = self.GetWallet1(recreate=True)
                 args = ['send', 'gas', self.watch_addr_str, '2', '--tx-attr={"usage":241,"data":"This is a remark"}']
@@ -322,7 +320,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                 PromptData.Wallet = self.GetWallet1(recreate=True)
                 args = ['send', 'gas', self.watch_addr_str, '2',
@@ -338,7 +336,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                 PromptData.Wallet = self.GetWallet1(recreate=True)
                 args = ['send', 'gas', self.watch_addr_str, '2', '--tx-attr=[{"usa:241"data":his is a remark"}]']
@@ -388,7 +386,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
         with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(False)):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(False)):
                 with patch('sys.stdout', new=StringIO()) as mock_print:
                     PromptData.Wallet = self.GetWallet1(recreate=True)
                     args = ['send', 'gas', self.watch_addr_str, '2']
@@ -417,7 +415,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Send.prompt',
                            side_effect=["neo", self.watch_addr_str, "1", "gas", self.watch_addr_str, "1", UserWalletTestCase.wallet_1_pass()]):
@@ -441,7 +439,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         nodemgr.reset_for_test()
         nodemgr.nodes = [NeoNode(object, object)]
 
-        with patch('neo.Network.neonetwork.network.node.NeoNode.relay', return_value=self.async_return(True)):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Send.prompt',
                            side_effect=["neo", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1", "gas", "AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK", "1",

@@ -12,7 +12,7 @@ from neo.logging import log_manager
 from neo.Wallets import NEP5Token
 from neo.Core.Cryptography.Crypto import Crypto
 from typing import TYPE_CHECKING
-from neo.Network.neonetwork.common import blocking_prompt as prompt
+from neo.Network.common import blocking_prompt as prompt
 
 if TYPE_CHECKING:
     from neo.Wallets.Wallet import Wallet
