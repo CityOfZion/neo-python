@@ -46,6 +46,7 @@ def main():
 
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+    Blockchain.DeregisterBlockchain()
     Blockchain.RegisterBlockchain(blockchain)
 
     chain = Blockchain.Default()
