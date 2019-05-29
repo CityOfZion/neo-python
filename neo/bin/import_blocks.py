@@ -18,7 +18,12 @@ from neo.Implementations.Notifications.LevelDB.NotificationDB import Notificatio
 import asyncio
 
 
-async def main():
+def main():
+    # needed for console scripts
+    asyncio.run(_main())
+
+
+async def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
                         help="use MainNet instead of the default TestNet")
@@ -58,7 +63,8 @@ async def main():
         settings.log_smart_contract_events = True
 
     if not args.input:
-        raise Exception("Please specify an input path")
+        print("Please specify an input path")
+        return
     file_path = args.input
 
     append = False
@@ -90,6 +96,7 @@ async def main():
 
         if append:
             blockchain = LevelDBBlockchain(settings.chain_leveldb_path, skip_header_check=True)
+            Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 
             start_block = Blockchain.Default().Height
@@ -117,6 +124,7 @@ async def main():
 
             # Instantiate the blockchain and subscribe to notifications
             blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+            Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 
         chain = Blockchain.Default()
@@ -143,6 +151,7 @@ async def main():
 
             # add
             if block.Index > start_block:
+                chain.AddHeaders([block.Header])
                 await chain.TryPersist(block)
 
             # reset blockheader
@@ -184,4 +193,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
