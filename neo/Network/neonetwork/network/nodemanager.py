@@ -187,7 +187,7 @@ class NodeManager(Singleton):
         if node.address not in self.bad_addresses:
             self.bad_addresses.append(node.address)
 
-        await node.disconnect()
+        asyncio.create_task(node.disconnect())
 
         with suppress(IndexError):
             addr = self.known_addresses.pop(0)

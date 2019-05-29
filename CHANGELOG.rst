@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file.
 - Allow override of test invocation return type
 - Add current wallet height to bottom toolbar
 - Change class attributes of ``Transaction`` into instance attributes and fix constructor
+- Fix sys_fee calculation in block persist.
 - Improve testing of "getbalance" RPC method
 - Support cancelling actions with ``KeyboardInterrupt``
 - Enhance output of `wallet` cli command
@@ -18,6 +19,7 @@ All notable changes to this project are documented in this file.
 - Add PICKITEM for ByteArray into VM `#923 <https://github.com/CityOfZion/neo-python/pull/923>`_
 - Improve Connection Failure Handling in NodeLeader `#915 <https://github.com/CityOfZion/neo-python/issues/915>`_
 - Improve transaction coverage and fix `PublishTransaction.Size()` `#929 <https://github.com/CityOfZion/neo-python/issues/929>`_
+- Align ``Fixed8`` ``ToString()`` output with C# `#941 <https://github.com/CityOfZion/neo-python/pull/941>`_
 
 
 [0.8.4] 2019-02-14

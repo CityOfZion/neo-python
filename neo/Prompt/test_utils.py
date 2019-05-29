@@ -250,7 +250,6 @@ class TestInputParser(TestCase):
 
         # test ContractParameterType.PublicKey with bad public key
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="blah") as fake_prompt:
-
             result, abort = Utils.gather_param(0, ContractParameterType.PublicKey)
             self.assertIsNone(result)
             self.assertTrue(abort)
