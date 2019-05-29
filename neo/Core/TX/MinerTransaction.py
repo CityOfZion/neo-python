@@ -6,7 +6,6 @@ from neo.Core.Size import Size as s
 
 
 class MinerTransaction(Transaction):
-    Nonce = None
 
     def __init__(self, *args, **kwargs):
         """
@@ -18,6 +17,7 @@ class MinerTransaction(Transaction):
         """
         super(MinerTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.MinerTransaction
+        self.Nonce = None
 
     def NetworkFee(self):
         """

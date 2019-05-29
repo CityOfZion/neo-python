@@ -6,24 +6,10 @@ logger = log_manager.getLogger('db')
 
 
 class DBCollection:
-    DB = None
-    Prefix = None
-
-    ClassRef = None
-
-    Collection = {}
-
-    Changed = []
-    Deleted = []
-
-    _built_keys = False
-
-    DebugStorage = False
-
-    _ChangedResetState = None
-    _DeletedResetState = None
 
     def __init__(self, db, prefix, class_ref):
+        self._built_keys = False
+        self.DebugStorage = False
 
         self.DB = db
 
@@ -59,10 +45,11 @@ class DBCollection:
         return {}
 
     def _BuildCollectionKeys(self):
-        for key in self.DB.iterator(prefix=self.Prefix, include_value=False):
-            key = key[1:]
-            if key not in self.Collection.keys():
-                self.Collection[key] = None
+        with self.DB.iterator(prefix=self.Prefix, include_value=False) as it:
+            for key in it:
+                key = key[1:]
+                if key not in self.Collection.keys():
+                    self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
 
@@ -216,12 +203,13 @@ class DBCollection:
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
         res = {}
-        for key, val in self.DB.iterator(prefix=key_prefix):
-            # we want the storage item, not the raw bytes
-            item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
-            # also here we need to skip the 1 byte storage prefix
-            res_key = key[21:]
-            res[res_key] = item
+        with self.DB.iterator(prefix=key_prefix) as it:
+            for key, val in it:
+                # we want the storage item, not the raw bytes
+                item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
+                # also here we need to skip the 1 byte storage prefix
+                res_key = key[21:]
+                res[res_key] = item
         return res
 
     def Destroy(self):

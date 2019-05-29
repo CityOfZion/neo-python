@@ -1,18 +1,16 @@
 """
-Minimal NEO node with custom code in a background thread.
+Minimal NEO node with custom code in a background task.
 
 It will log events from all smart contracts on the blockchain
 as they are seen in the received blocks.
 """
-import threading
-from time import sleep
+import asyncio
 
 from logzero import logger
-from twisted.internet import reactor, task
 
-from neo.Network.NodeLeader import NodeLeader
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Network.p2pservice import NetworkService
 from neo.Settings import settings
 
 
@@ -21,16 +19,11 @@ from neo.Settings import settings
 # settings.set_logfile("/tmp/logfile.log", max_bytes=1e7, backup_count=3)
 
 
-def custom_background_code():
-    """ Custom code run in a background thread.
-
-    This function is run in a daemonized thread, which means it can be instantly killed at any
-    moment, whenever the main thread quits. If you need more safety, don't use a  daemonized
-    thread and handle exiting this thread in another way (eg. with signals and events).
-    """
+async def custom_background_code():
+    """ Custom code run in the background."""
     while True:
         logger.info("Block %s / %s", str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
-        sleep(15)
+        await asyncio.sleep(15)
 
 
 def main():
@@ -40,18 +33,17 @@ def main():
     # Setup the blockchain
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
-    dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-    dbloop.start(.1)
-    NodeLeader.Instance().Start()
 
-    # Start a thread with custom code
-    d = threading.Thread(target=custom_background_code)
-    d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
-    d.start()
+    loop = asyncio.get_event_loop()
+    # Start a reoccurring task with custom code
+    loop.create_task(custom_background_code())
+    p2p = NetworkService()
+    loop.create_task(p2p.start())
 
-    # Run all the things (blocking call)
-    reactor.run()
-    logger.info("Shutting down.")
+    # block from here on
+    loop.run_forever()
+
+    # have a look at the other examples for handling graceful shutdown.
 
 
 if __name__ == "__main__":

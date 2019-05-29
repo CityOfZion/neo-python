@@ -52,17 +52,6 @@ class SmartContractEvent(SerializableMixin):
     CONTRACT_MIGRATED = "SmartContract.Contract.Migrate"
     CONTRACT_DESTROY = "SmartContract.Contract.Destroy"
 
-    event_type = None
-    event_payload = None  # type:ContractParameter
-    contract_hash = None
-    block_number = None
-    tx_hash = None
-    execution_success = None
-    test_mode = None
-
-    contract = None
-    token = None
-
     def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False, test_mode=False):
 
         if event_payload and not isinstance(event_payload, ContractParameter):
@@ -76,6 +65,7 @@ class SmartContractEvent(SerializableMixin):
         self.execution_success = execution_success
         self.test_mode = test_mode
         self.token = None
+        self.contract = None
 
         if not self.event_payload:
             self.event_payload = ContractParameter(ContractParameterType.Array, value=[])

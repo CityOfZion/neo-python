@@ -17,17 +17,6 @@ class ContractPropertyState(IntEnum):
 
 
 class ContractState(StateBase):
-    Code = None
-    ContractProperties = None
-    Name = None
-    CodeVersion = None
-    Author = None
-    Email = None
-    Description = None
-
-    _is_nep5 = None
-    _nep_token = None
-
     @property
     def HasStorage(self):
         """
@@ -83,6 +72,9 @@ class ContractState(StateBase):
             email (bytes):
             description (bytes):
         """
+        self._is_nep5 = None
+        self._nep_token = None
+
         self.Code = code
         self.ContractProperties = contract_properties
         self.Name = name

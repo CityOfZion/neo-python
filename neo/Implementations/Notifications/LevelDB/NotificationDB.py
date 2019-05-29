@@ -224,9 +224,10 @@ class NotificationDB:
         blocklist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_BLOCK).snapshot()
         block_bytes = block_number.to_bytes(4, 'little')
         results = []
-        for val in blocklist_snapshot.iterator(prefix=block_bytes, include_key=False):
-            event = SmartContractEvent.FromByteArray(val)
-            results.append(event)
+        with blocklist_snapshot.iterator(prefix=block_bytes, include_key=False) as it:
+            for val in it:
+                event = SmartContractEvent.FromByteArray(val)
+                results.append(event)
 
         return results
 
@@ -249,13 +250,14 @@ class NotificationDB:
         addrlist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_ADDR).snapshot()
         results = []
 
-        for val in addrlist_snapshot.iterator(prefix=bytes(addr.Data), include_key=False):
-            if len(val) > 4:
-                try:
-                    event = SmartContractEvent.FromByteArray(val)
-                    results.append(event)
-                except Exception as e:
-                    logger.error("could not parse event: %s %s" % (e, val))
+        with addrlist_snapshot.iterator(prefix=bytes(addr.Data), include_key=False) as it:
+            for val in it:
+                if len(val) > 4:
+                    try:
+                        event = SmartContractEvent.FromByteArray(val)
+                        results.append(event)
+                    except Exception as e:
+                        logger.error("could not parse event: %s %s" % (e, val))
         return results
 
     def get_by_contract(self, contract_hash):
@@ -277,13 +279,14 @@ class NotificationDB:
         contractlist_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_CONTRACT).snapshot()
         results = []
 
-        for val in contractlist_snapshot.iterator(prefix=bytes(hash.Data), include_key=False):
-            if len(val) > 4:
-                try:
-                    event = SmartContractEvent.FromByteArray(val)
-                    results.append(event)
-                except Exception as e:
-                    logger.error("could not parse event: %s %s" % (e, val))
+        with contractlist_snapshot.iterator(prefix=bytes(hash.Data), include_key=False) as it:
+            for val in it:
+                if len(val) > 4:
+                    try:
+                        event = SmartContractEvent.FromByteArray(val)
+                        results.append(event)
+                    except Exception as e:
+                        logger.error("could not parse event: %s %s" % (e, val))
         return results
 
     def get_tokens(self):
@@ -294,9 +297,10 @@ class NotificationDB:
         """
         tokens_snapshot = self.db.prefixed_db(NotificationPrefix.PREFIX_TOKEN).snapshot()
         results = []
-        for val in tokens_snapshot.iterator(include_key=False):
-            event = SmartContractEvent.FromByteArray(val)
-            results.append(event)
+        with tokens_snapshot.iterator(include_key=False) as it:
+            for val in it:
+                event = SmartContractEvent.FromByteArray(val)
+                results.append(event)
         return results
 
     def get_token(self, hash):

@@ -2,8 +2,6 @@ import os
 from neo.Settings import settings
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Prompt.Commands.Config import CommandConfig
-from neo.Network.NodeLeader import NodeLeader, NeoNode
-from neo.Network.address import Address
 from mock import patch
 from io import StringIO
 from neo.Prompt.PromptPrinter import pp
@@ -29,7 +27,8 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
         args = ['output']
-        with patch('neo.Prompt.Commands.Config.prompt', side_effect=[1, 1, 1, "a", "\n", "\n"]):  # tests changing the level and keeping the current level. Entering "a" has no effect.
+        with patch('neo.Prompt.Commands.Config.prompt',
+                   side_effect=[1, 1, 1, "a", "\n", "\n"]):  # tests changing the level and keeping the current level. Entering "a" has no effect.
             res = CommandConfig().execute(args)
             self.assertTrue(res)
             self.assertEqual(res['generic'], "DEBUG")
@@ -37,7 +36,6 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             self.assertEqual(res['db'], "DEBUG")
             self.assertEqual(res['peewee'], "ERROR")
             self.assertEqual(res['network'], "INFO")
-            self.assertEqual(res['network.verbose'], "INFO")
 
         # test with keyboard interrupt
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -115,59 +113,6 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         res = CommandConfig().execute(args)
         self.assertFalse(res)
 
-    def test_config_node_requests(self):
-        # test no input
-        args = ['node-requests']
-        res = CommandConfig().execute(args)
-        self.assertFalse(res)
-
-        # test updating block request size
-        # first make sure we have a predictable state
-        NodeLeader.Instance().Reset()
-        leader = NodeLeader.Instance()
-        leader.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
-        leader.DEAD_ADDRS = ["127.0.0.1:20335"]
-
-        # test slow setting
-        args = ['node-requests', 'slow']
-        res = CommandConfig().execute(args)
-        self.assertTrue(res)
-
-        # test normal setting
-        args = ['node-requests', 'normal']
-        res = CommandConfig().execute(args)
-        self.assertTrue(res)
-
-        # test fast setting
-        args = ['node-requests', 'fast']
-        res = CommandConfig().execute(args)
-        self.assertTrue(res)
-
-        # test bad setting
-        args = ['node-requests', 'blah']
-        res = CommandConfig().execute(args)
-        self.assertFalse(res)
-
-        # test custom setting
-        args = ['node-requests', '20', '6000']
-        res = CommandConfig().execute(args)
-        self.assertTrue(res)
-
-        # test bad custom input
-        args = ['node-requests', '20', 'blah']
-        res = CommandConfig().execute(args)
-        self.assertFalse(res)
-
-        # test bad custom setting: breqmax should be greater than breqpart
-        args = ['node-requests', '20', '10']
-        res = CommandConfig().execute(args)
-        self.assertFalse(res)
-
-        # test another bad custom setting: breqpart should not exceed 500
-        args = ['node-requests', '600', '5000']
-        res = CommandConfig().execute(args)
-        self.assertFalse(res)
-
     def test_config_maxpeers(self):
         # test no input and verify output confirming current maxpeers
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -189,7 +134,7 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             args = ['maxpeers', "blah"]
             res = CommandConfig().execute(args)
             self.assertFalse(res)
-            self.assertIn("Please supply a positive integer for maxpeers", mock_print.getvalue())
+            self.assertIn("Invalid argument", mock_print.getvalue())
 
         # test negative number
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -198,43 +143,42 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             self.assertFalse(res)
             self.assertIn("Please supply a positive integer for maxpeers", mock_print.getvalue())
 
-        # test if the new maxpeers < settings.CONNECTED_PEER_MAX
-        # first make sure we have a predictable state
-        NodeLeader.Instance().Reset()
-        leader = NodeLeader.Instance()
-        addr1 = Address("127.0.0.1:20333")
-        addr2 = Address("127.0.0.1:20334")
-        leader.ADDRS = [addr1, addr2]
-        leader.DEAD_ADDRS = [Address("127.0.0.1:20335")]
-        test_node = NeoNode()
-        test_node.host = "127.0.0.1"
-        test_node.port = 20333
-        test_node.address = Address("127.0.0.1:20333")
-        test_node2 = NeoNode()
-        test_node2.host = "127.0.0.1"
-        test_node2.port = 20333
-        test_node2.address = Address("127.0.0.1:20334")
-        leader.Peers = [test_node, test_node2]
+    def test_config_minpeers(self):
+        # test no input and verify output confirming current minpeers
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers']
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn(f"Maintaining minpeers at {settings.CONNECTED_PEER_MIN}", mock_print.getvalue())
 
-        with patch("neo.Network.NeoNode.NeoNode.Disconnect") as mock_disconnect:
-            # first test if the number of connected peers !< new maxpeers
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                args = ['maxpeers', "4"]
-                res = CommandConfig().execute(args)
-                self.assertTrue(res)
-                self.assertEqual(len(leader.Peers), 2)
-                self.assertFalse(mock_disconnect.called)
-                self.assertIn(f"Maxpeers set to {settings.CONNECTED_PEER_MAX}", mock_print.getvalue())
+        # test changing the number of minpeers
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers', "6"]
+            res = CommandConfig().execute(args)
+            self.assertTrue(res)
+            self.assertEqual(int(res), settings.CONNECTED_PEER_MIN)
+            self.assertIn(f"Minpeers set to {settings.CONNECTED_PEER_MIN}", mock_print.getvalue())
 
-            # now test if the number of connected peers < new maxpeers
-            with patch('sys.stdout', new=StringIO()) as mock_print:
-                args = ['maxpeers', "1"]
-                res = CommandConfig().execute(args)
-                self.assertTrue(res)
-                self.assertEqual(len(leader.Peers), 1)
-                self.assertEqual(leader.Peers[0].address, test_node.address)
-                self.assertTrue(mock_disconnect.called)
-                self.assertIn(f"Maxpeers set to {settings.CONNECTED_PEER_MAX}", mock_print.getvalue())
+        # test bad input
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers', "blah"]
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please supply a positive integer for minpeers", mock_print.getvalue())
+
+        # test negative number
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers', "-1"]
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Please supply a positive integer for minpeers", mock_print.getvalue())
+
+        # test minpeers greater than maxpeers
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['minpeers', f"{settings.CONNECTED_PEER_MAX + 1}"]
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("minpeers setting cannot be bigger than maxpeers setting", mock_print.getvalue())
 
     def test_config_nep8(self):
         # test with missing flag argument

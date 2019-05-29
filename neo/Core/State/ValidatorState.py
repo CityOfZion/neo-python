@@ -9,10 +9,6 @@ from neo.Core.Fixed8 import Fixed8
 
 
 class ValidatorState(StateBase):
-    PublicKey = None  # ECPoint
-    Registered = False  # bool
-    Votes = Fixed8.Zero()
-
     def __init__(self, pub_key=None):
         """
         Create an instance.
@@ -27,6 +23,8 @@ class ValidatorState(StateBase):
             raise Exception("Pubkey must be ECPoint Instance")
 
         self.PublicKey = pub_key
+        self.Registered = False
+        self.Votes = Fixed8.Zero()
 
     def Size(self):
         """

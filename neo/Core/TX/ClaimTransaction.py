@@ -10,8 +10,6 @@ logger = log_manager.getLogger()
 
 
 class ClaimTransaction(Transaction):
-    Claims = set()
-
     def Size(self):
         """
         Get the total size in bytes of the object.
@@ -32,6 +30,7 @@ class ClaimTransaction(Transaction):
         super(ClaimTransaction, self).__init__(*args, **kwargs)
 
         self.Type = TransactionType.ClaimTransaction
+        self.Claims = set()
 
     def NetworkFee(self):
         """

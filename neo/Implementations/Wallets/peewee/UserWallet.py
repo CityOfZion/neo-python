@@ -31,12 +31,6 @@ logger = log_manager.getLogger()
 class UserWallet(Wallet):
     Version = None
 
-    __dbaccount = None
-
-    _aliases = None
-
-    _db = None
-
     def __init__(self, path, passwordKey, create):
 
         super(UserWallet, self).__init__(path, passwordKey=passwordKey, create=create)
@@ -75,6 +69,8 @@ class UserWallet(Wallet):
         if self._db:
             self._db.close()
             self._db = None
+
+        Blockchain.Default().PersistCompleted.on_change -= self.ProcessNewBlock
 
     @staticmethod
     def Open(path, password):
@@ -573,7 +569,6 @@ class UserWallet(Wallet):
         addresses = []
         has_watch_addr = False
         for addr in Address.select():
-            logger.info("Script hash %s %s" % (addr.ScriptHash, type(addr.ScriptHash)))
             addr_str = Crypto.ToAddress(UInt160(data=addr.ScriptHash))
             acct = Blockchain.Default().GetAccountState(addr_str)
             token_balances = self.TokenBalancesForAddress(addr_str)

@@ -30,7 +30,7 @@
         logger.info("I log for generic components like the prompt or Util classes")
 
         network_logger = log_manager.getLogger('network')
-        logger.info("I log for network classes like NodeLeader and NeoNode")
+        logger.info("I log for network classes like NeoNode and SyncManager")
 
         # since network classes can be very active and verbose, we might want to raise the level to just show ERROR or above
         logconfig = ('network', logging.ERROR) # a tuple of (`component name`, `log level`)
