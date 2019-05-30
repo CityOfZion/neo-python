@@ -324,6 +324,21 @@ class BigIntegerTestCase(TestCase):
         self.assertEqual(left_shift, 8)
         self.assertIsInstance(left_shift, BigInteger)
 
+    def test_negative_shifting(self):
+        # C#'s BigInteger changes a left shift with a negative shift index,
+        # to a right shift with a positive index.
+
+        b1 = BigInteger(8)
+        b2 = BigInteger(-3)
+        # shift against BigInteger
+        self.assertEqual(1, b1 << b2)
+        # shift against integer
+        self.assertEqual(1, b1 << -3)
+
+        # the same as above but for right shift
+        self.assertEqual(64, b1 >> b2)
+        self.assertEqual(64, b1 >> -3)
+
 
 class UIntBaseTestCase(TestCase):
     def test_initialization(self):
