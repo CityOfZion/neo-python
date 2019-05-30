@@ -1,12 +1,13 @@
 import pytz
+import asyncio
 import binascii
 import struct
+import traceback
 
 from itertools import groupby
 from datetime import datetime
-from events import Events
-from functools import lru_cache
 
+from neo.Network.common import Events
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.AssetType import AssetType
@@ -26,8 +27,6 @@ from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem, SpentCo
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.IO.BinaryReader import BinaryReader
-# from neo.SmartContract.StateMachine import StateMachine
-from neo.EventHub import events
 from neo.IO.MemoryStream import StreamManager
 from neo.logging import log_manager
 from neo.Settings import settings
@@ -38,12 +37,15 @@ from neo.Core.UInt160 import UInt160
 from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.SmartContract.Contract import Contract
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
-from neo.SmartContract import TriggerType
 from neo.Storage.Common.DBPrefix import DBPrefix
-from neo.Storage.Common.CachedScriptTable import CachedScriptTable
 from neo.Storage.Interface.DBInterface import DBInterface, DBProperties
 from neo.VM.OpCode import PUSHF, PUSHT
-from prompt_toolkit import prompt
+from functools import lru_cache
+from neo.Network.common import msgrouter
+
+from neo.Network.common import blocking_prompt as prompt
+from neo.Network.common import wait_for
+from typing import Tuple
 
 import neo.Storage.Implementation.DBFactory as DBFactory
 
@@ -89,7 +91,7 @@ class Blockchain:
 
     BlockSearchTries = 0
 
-    _sysversion = b'schema v.0.6.9'
+    _sysversion = b'schema v.0.8.5'
 
     CACHELIM = 4000
     CMISSLIM = 5
@@ -126,8 +128,8 @@ class Blockchain:
 
                 hashes = []
                 try:
-                    with self._db.openIter(DBProperties(DBPrefix.IX_HeaderHashList)) as iterator:
-                        for key, value in iterator:
+                    with self._db.openIter(DBProperties(DBPrefix.IX_HeaderHashList)) as it:
+                        for key, value in it:
                             ms = StreamManager.GetStream(value)
                             reader = BinaryReader(ms)
                             hlist = reader.Read2000256List()
@@ -151,8 +153,8 @@ class Blockchain:
                     logger.info("Current stored headers empty, re-creating from stored blocks...")
                     headers = []
                     logger.info('Recreate headers')
-                    with self._db.openIter(DBProperties(DBPrefix.DATA_Block)) as iterator:
-                        for key, value in iterator:
+                    with self._db.openIter(DBProperties(DBPrefix.DATA_Block)) as it:
+                        for key, value in it:
                             dbhash = bytearray(value)[8:]
                             headers.append(Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
 
@@ -180,7 +182,7 @@ class Blockchain:
                         pass
 
         elif version is None:
-            self.Persist(Blockchain.GenesisBlock())
+            wait_for(self.Persist(Blockchain.GenesisBlock()))
             self._db.write(DBPrefix.SYS_Version, self._sysversion)
         else:
             logger.error("\n\n")
@@ -191,11 +193,11 @@ class Blockchain:
             if res == 'continue':
 
                 with self._db.getBatch() as wb:
-                    with self._db.openIter(DBProperties(include_value=False)) as iterator:
-                        for key in iterator:
+                    with self._db.openIter(DBProperties(include_value=False)) as it:
+                        for key in it:
                             wb.delete(key)
 
-                self.Persist(Blockchain.GenesisBlock())
+                wait_for(self.Persist(Blockchain.GenesisBlock()))
                 self._db.write(DBPrefix.SYS_Version, self._sysversion)
 
             else:
@@ -358,7 +360,7 @@ class Blockchain:
             self.OnPersistCompleted(block)
 
     def AddHeader(self, header):
-        self.AddHeaders([header])
+        return self.AddHeaders([header])
 
     def AddHeaders(self, headers):
         newheaders = []
@@ -383,7 +385,7 @@ class Blockchain:
         if len(newheaders):
             self.ProcessNewHeaders(newheaders)
 
-        return True
+        return count
 
     def ProcessNewHeaders(self, headers):
         lastheader = headers[-1]
@@ -943,6 +945,7 @@ class Blockchain:
 
     def OnPersistCompleted(self, block):
         self.PersistCompleted.on_change(block)
+        msgrouter.on_block_persisted(block)
 
     @property
     def BlockCacheCount(self):
@@ -954,7 +957,7 @@ class Blockchain:
     def Resume(self):
         self._paused = False
 
-    def Persist(self, block):
+    async def Persist(self, block):
 
         self._persisting_block = block
 
@@ -1054,6 +1057,7 @@ class Blockchain:
                     contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
                 elif tx.Type == TransactionType.InvocationTransaction:
                     ApplicationEngine.Run(tx.Script, tx, False, tx.Gas, False, wb)
+                    await asyncio.sleep(0.001)
                 else:
 
                     if tx.Type != b'\x00' and tx.Type != 128:
@@ -1093,48 +1097,22 @@ class Blockchain:
 
         # logger.info('done with block %d ' % block.Index)
 
-    def PersistBlocks(self, limit=None):
-        ctr = 0
-        if not self._paused:
-            while not self._disposed:
+    async def TryPersist(self, block: 'Block') -> Tuple[bool, str]:
+        distance = self._current_block_height - block.Index
 
-                if len(self._header_index) <= self._current_block_height + 1:
-                    break
+        if distance >= 0:
+            return False, "Block already exists"
 
-                hash = self._header_index[self._current_block_height + 1]
+        if distance < -1:
+            return False, f"Trying to persist block {block.Index} but expecting next block to be {self._current_block_height + 1}"
 
-                if hash not in self._block_cache:
-                    self.BlockSearchTries += 1
-                    break
+        try:
+            await self.Persist(block)
+        except Exception as e:
+            traceback.print_exc()
+            return False, f"{e}"
 
-                self.BlockSearchTries = 0
-                block = self._block_cache[hash]
-
-                try:
-                    # logger.info('persist block: %d', block.Index)
-                    if self._previous_blockid is not None and self._previous_blockid + 1 != block.Index:
-                        logger.info('block jump prev: %d current: %d')
-                    if self._previous_blockid is None:
-                        self._previous_blockid = block.Index
-
-                    self.Persist(block)
-
-                    self._previous_blockid = block.Index
-                    del self._block_cache[hash]
-                except Exception as e:
-                    logger.info(f"Could not persist block {block.Index} reason: {e}")
-                    raise e
-
-                try:
-                    self.OnPersistCompleted(block)
-                except Exception as e:
-                    logger.debug(f"Failed to broadcast OnPersistCompleted event, reason: {e}")
-                    raise e
-
-                ctr += 1
-                # give the reactor the opportunity to preempt
-                if limit and ctr == limit:
-                    break
+        return True, ""
 
     def Dispose(self):
         self._db.closeDB()

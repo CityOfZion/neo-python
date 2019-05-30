@@ -4,10 +4,6 @@ from neo.Core.UInt256 import UInt256
 
 
 class MerkleTreeNode(object):
-    Hash = None
-    Parent = None
-    LeftChild = None
-    RightChild = None
 
     def __init__(self, hash=None):
         """
@@ -17,6 +13,9 @@ class MerkleTreeNode(object):
             hash (bytes):
         """
         self.Hash = hash
+        self.Parent = None
+        self.LeftChild = None
+        self.RightChild = None
 
     def IsLeaf(self):
         """

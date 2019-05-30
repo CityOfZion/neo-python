@@ -7,9 +7,11 @@ from neo.Core.TX.ClaimTransaction import ClaimTransaction
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Wallet import ShowUnspentCoins
 from neo.Prompt.PromptData import PromptData
-from neo.Prompt.PromptPrinter import pp
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
 import os
 import shutil
+import asyncio
 from mock import patch
 from io import StringIO
 
@@ -92,14 +94,15 @@ class UserWalletTestCase(UserWalletTestCaseBase):
 
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
             with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                # test wallet create successful
-                path = UserWalletTestCase.new_wallet_dest()
-                args = ['create', path]
-                self.assertFalse(os.path.isfile(path))
-                res = CommandWallet().execute(args)
-                self.assertEqual(type(res), UserWallet)
-                self.assertTrue(os.path.isfile(path))
-                remove_new_wallet()
+                with patch('neo.Prompt.Commands.Wallet.asyncio'):
+                    # test wallet create successful
+                    path = UserWalletTestCase.new_wallet_dest()
+                    args = ['create', path]
+                    self.assertFalse(os.path.isfile(path))
+                    res = CommandWallet().execute(args)
+                    self.assertEqual(type(res), UserWallet)
+                    self.assertTrue(os.path.isfile(path))
+                    remove_new_wallet()
 
             # test wallet create with no path
             with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -111,18 +114,19 @@ class UserWalletTestCase(UserWalletTestCaseBase):
             # test wallet open with already existing path
             with patch('sys.stdout', new=StringIO()) as mock_print:
                 with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                    path = UserWalletTestCase.new_wallet_dest()
-                    args = ['create', path]
-                    self.assertFalse(os.path.isfile(path))
-                    res = CommandWallet().execute(args)
-                    self.assertEqual(type(res), UserWallet)
-                    self.assertTrue(os.path.isfile(path))
+                    with patch('neo.Prompt.Commands.Wallet.asyncio'):
+                        path = UserWalletTestCase.new_wallet_dest()
+                        args = ['create', path]
+                        self.assertFalse(os.path.isfile(path))
+                        res = CommandWallet().execute(args)
+                        self.assertEqual(type(res), UserWallet)
+                        self.assertTrue(os.path.isfile(path))
 
-                    res = CommandWallet().execute(args)
-                    self.assertFalse(res)
-                    self.assertTrue(os.path.isfile(path))
-                    self.assertIn("File already exists", mock_print.getvalue())
-                    remove_new_wallet()
+                        res = CommandWallet().execute(args)
+                        self.assertFalse(res)
+                        self.assertTrue(os.path.isfile(path))
+                        self.assertIn("File already exists", mock_print.getvalue())
+                        remove_new_wallet()
 
             # test wallet with different passwords
             with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -180,83 +184,63 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                         remove_new_wallet()
 
     def test_wallet_open(self):
-        with patch('neo.Prompt.PromptData.PromptData.Prompt'):
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+        loop = asyncio.get_event_loop()
+
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            async def run_test():
                 if self._wallet1 is None:
                     shutil.copyfile(self.wallet_1_path(), self.wallet_1_dest())
 
                 # test wallet open successful
                 args = ['open', self.wallet_1_dest()]
-
                 res = CommandWallet().execute(args)
-
                 self.assertEqual(type(res), UserWallet)
 
-            # test wallet open with no path; this will also close the open wallet
-            with patch('sys.stdout', new=StringIO()) as mock_print:
+                # test wallet open with no path; this will also close the open wallet
                 args = ['open']
-
                 res = CommandWallet().execute(args)
-
                 self.assertFalse(res)
-                self.assertIn("Please specify the required parameter", mock_print.getvalue())
 
-            # test wallet open with bad path
-            with patch('sys.stdout', new=StringIO()) as mock_print:
+                # test wallet open with bad path
                 args = ['open', 'badpath']
-
                 res = CommandWallet().execute(args)
-
                 self.assertFalse(res)
-                self.assertIn("Wallet file not found", mock_print.getvalue())
+
+            loop.run_until_complete(run_test())
 
         # test wallet open unsuccessful
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
-                with patch('neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Open', side_effect=[Exception('test exception')]):
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword"]):
+            with patch('neo.Implementations.Wallets.peewee.UserWallet.UserWallet.Open', side_effect=[Exception('test exception')]):
+                async def run_test():
                     args = ['open', 'fixtures/testwallet.db3']
-
                     res = CommandWallet().execute(args)
-
                     self.assertFalse(res)
-                    self.assertIn("Could not open wallet", mock_print.getvalue())
 
-        # test wallet open with keyboard interrupt
-        with patch('sys.stdout', new=StringIO()) as mock_print:
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[KeyboardInterrupt]):
-                args = ['open', self.wallet_1_dest()]
-
-                res = CommandWallet().execute(args)
-
-                self.assertFalse(res)
-                self.assertIn("Wallet opening cancelled", mock_print.getvalue())
+                loop.run_until_complete(run_test())
 
     def test_wallet_close(self):
-        with patch('neo.Prompt.PromptData.PromptData.Prompt'):
-            # test wallet close with no wallet
-            args = ['close']
+        loop = asyncio.get_event_loop()
+        # test wallet close with no wallet
+        args = ['close']
+        res = CommandWallet().execute(args)
+        self.assertFalse(res)
 
-            res = CommandWallet().execute(args)
-
-            self.assertFalse(res)
-
-            # test wallet close with open wallet
-            with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+        # test wallet close with open wallet
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[self.wallet_1_pass()]):
+            async def run_test():
                 if self._wallet1 is None:
                     shutil.copyfile(self.wallet_1_path(), self.wallet_1_dest())
 
                 args = ['open', self.wallet_1_dest()]
-
                 res = CommandWallet().execute(args)
-
                 self.assertEqual(type(res), UserWallet)
 
                 # now close the open wallet manually
                 args = ['close']
-
                 res = CommandWallet().execute(args)
-
                 self.assertTrue(res)
+
+            loop.run_until_complete(run_test())
 
     def test_wallet_verbose(self):
         # test wallet verbose with no wallet opened
@@ -266,10 +250,37 @@ class UserWalletTestCase(UserWalletTestCaseBase):
 
         self.OpenWallet1()
 
-        # test wallet close with open wallet
-        args = ['verbose']
-        res = CommandWallet().execute(args)
-        self.assertTrue(res)
+        # first test normal wallet printing
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertNotIn("Script hash", mock_print.getvalue())
+            self.assertNotIn("Public key", mock_print.getvalue())
+
+        # now test wallet verbose with open wallet
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['verbose']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Script hash", mock_print.getvalue())
+            self.assertIn("Public key", mock_print.getvalue())
+
+        # also test "v"
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['v']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Script hash", mock_print.getvalue())
+            self.assertIn("Public key", mock_print.getvalue())
+
+        # and "--v"
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['--v']
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Script hash", mock_print.getvalue())
+            self.assertIn("Public key", mock_print.getvalue())
 
     def test_wallet_claim_1(self):
         # test with no wallet
@@ -291,14 +302,18 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                 self.assertIn("Incorrect password", mock_print.getvalue())
 
         # test successful
+        nodemgr = NodeManager()
+        nodemgr.nodes = [NeoNode(object, object)]
         with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
-            args = ['claim']
-            claim_tx, relayed = CommandWallet().execute(args)
-            self.assertIsInstance(claim_tx, ClaimTransaction)
-            self.assertTrue(relayed)
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+                args = ['claim']
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertIsInstance(claim_tx, ClaimTransaction)
+                self.assertTrue(relayed)
 
-            json_tx = claim_tx.ToJson()
-            self.assertEqual(json_tx['vout'][0]['address'], self.wallet_1_addr)
+                json_tx = claim_tx.ToJson()
+                self.assertEqual(json_tx['vout'][0]['address'], self.wallet_1_addr)
+        nodemgr.reset_for_test()
 
         # test nothing to claim anymore
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -331,14 +346,19 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                 self.assertIn("Address format error", mock_print.getvalue())
 
         # successful test with --from-addr
-        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
-            args = ['claim', '--from-addr=' + self.wallet_1_addr]
-            claim_tx, relayed = CommandWallet().execute(args)
-            self.assertIsInstance(claim_tx, ClaimTransaction)
-            self.assertTrue(relayed)
+        nodemgr = NodeManager()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-            json_tx = claim_tx.ToJson()
-            self.assertEqual(json_tx['vout'][0]['address'], self.wallet_1_addr)
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+                args = ['claim', '--from-addr=' + self.wallet_1_addr]
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertIsInstance(claim_tx, ClaimTransaction)
+                self.assertTrue(relayed)
+
+                json_tx = claim_tx.ToJson()
+                self.assertEqual(json_tx['vout'][0]['address'], self.wallet_1_addr)
+        nodemgr.reset_for_test()
 
     def test_wallet_claim_3(self):
         self.OpenWallet1()
@@ -362,47 +382,67 @@ class UserWalletTestCase(UserWalletTestCaseBase):
                 self.assertIn("Not correct Address, wrong length", mock_print.getvalue())
 
         # test with --to-addr
-        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
-            args = ['claim', '--to-addr=' + self.watch_addr_str]
-            claim_tx, relayed = CommandWallet().execute(args)
-            self.assertIsInstance(claim_tx, ClaimTransaction)
-            self.assertTrue(relayed)
+        nodemgr = NodeManager()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-            json_tx = claim_tx.ToJson()
-            self.assertEqual(json_tx['vout'][0]['address'], self.watch_addr_str)  # note how the --to-addr supercedes the default change address
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_1_pass()]):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+                args = ['claim', '--to-addr=' + self.watch_addr_str]
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertIsInstance(claim_tx, ClaimTransaction)
+                self.assertTrue(relayed)
+
+                json_tx = claim_tx.ToJson()
+                self.assertEqual(json_tx['vout'][0]['address'], self.watch_addr_str)  # note how the --to-addr supercedes the default change address
+        nodemgr.reset_for_test()
 
     def test_wallet_claim_4(self):
         self.OpenWallet2()
 
         # test with --from-addr and --to-addr
-        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
-            args = ['claim', '--from-addr=' + self.wallet_1_addr, '--to-addr=' + self.wallet_2_addr]
-            claim_tx, relayed = CommandWallet().execute(args)
-            self.assertIsInstance(claim_tx, ClaimTransaction)
-            self.assertTrue(relayed)
+        nodemgr = NodeManager()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-            json_tx = claim_tx.ToJson()
-            self.assertEqual(json_tx['vout'][0]['address'], self.wallet_2_addr)  # note how the --to-addr also supercedes the from address if both are specified
+        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[WalletFixtureTestCase.wallet_2_pass()]):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+                args = ['claim', '--from-addr=' + self.wallet_1_addr, '--to-addr=' + self.wallet_2_addr]
+                claim_tx, relayed = CommandWallet().execute(args)
+                self.assertIsInstance(claim_tx, ClaimTransaction)
+                self.assertTrue(relayed)
+
+                json_tx = claim_tx.ToJson()
+                self.assertEqual(json_tx['vout'][0]['address'],
+                                 self.wallet_2_addr)  # note how the --to-addr also supercedes the from address if both are specified
+        nodemgr.reset_for_test()
 
     def test_wallet_rebuild(self):
-        with patch('neo.Prompt.PromptData.PromptData.Prompt'):
-            # test wallet rebuild with no wallet open
-            args = ['rebuild']
-            res = CommandWallet().execute(args)
-            self.assertFalse(res)
+        with patch('neo.Wallets.Wallet.Wallet.sync_wallet', new_callable=self.new_async_mock) as mocked_sync_wallet:
+            loop = asyncio.get_event_loop()
 
-            self.OpenWallet1()
-            PromptData.Wallet._current_height = 12345
+            async def run_test():
+                # test wallet rebuild with no wallet open
+                args = ['rebuild']
+                res = CommandWallet().execute(args)
+                self.assertFalse(res)
 
-            # test wallet rebuild with no argument
-            args = ['rebuild']
-            CommandWallet().execute(args)
-            self.assertEqual(PromptData.Wallet._current_height, 0)
+                self.OpenWallet1()
 
-            # test wallet rebuild with start block
-            args = ['rebuild', '42']
-            CommandWallet().execute(args)
-            self.assertEqual(PromptData.Wallet._current_height, 42)
+                # test wallet rebuild with no argument
+                args = ['rebuild']
+                task = CommandWallet().execute(args)
+
+                # "rebuild" creates a task to start syncing
+                # we have to wait for it to have started before we can assert the call status
+                await asyncio.gather(task)
+                mocked_sync_wallet.assert_called_with(0, rebuild=True)
+
+                # test wallet rebuild with start block
+                args = ['rebuild', '42']
+                task = CommandWallet().execute(args)
+                await asyncio.gather(task)
+                mocked_sync_wallet.assert_called_with(42, rebuild=True)
+
+            loop.run_until_complete(run_test())
 
     def test_wallet_unspent(self):
         # test wallet unspent with no wallet open

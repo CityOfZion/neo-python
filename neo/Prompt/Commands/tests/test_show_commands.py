@@ -5,11 +5,13 @@ from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.PromptData import PromptData
 from neo.bin.prompt import PromptInterface
-from neo.Network.NodeLeader import NodeLeader, NeoNode
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
-from mock import patch
-from neo.Network.address import Address
+from mock import mock, patch, MagicMock
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
+from neo.Network.common.singleton import Singleton
+from io import StringIO
 
 
 class CommandShowTestCase(BlockchainFixtureTestCase):
@@ -122,48 +124,109 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         self.assertTrue(res)
 
     def test_show_nodes(self):
-        # query nodes with no NodeLeader.Instance()
-        with patch('neo.Network.NodeLeader.NodeLeader.Instance'):
-            args = ['nodes']
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+
+        # test "nodes" with no nodes connected
+        args = ['nodes']
+        with patch('sys.stdout', new=StringIO()) as mock_print:
             res = CommandShow().execute(args)
             self.assertFalse(res)
+            self.assertIn('No nodes connected yet', mock_print.getvalue())
+
+        # test "nodes verbose" with no nodes connected
+        args = ['nodes', 'verbose']
+        res = CommandShow().execute(args)
+        self.assertIn('Addresses in queue: 0', res)
+        self.assertIn('Known addresses: 0', res)
+        self.assertIn('Bad addresses: 0', res)
+
+        # test "nodes queued" with no nodes connected
+        args = ['nodes', 'queued']
+        res = CommandShow().execute(args)
+        self.assertIn('No queued addresses', res)
+
+        # test "nodes known" with no nodes connected
+        args = ['nodes', 'known']
+        res = CommandShow().execute(args)
+        self.assertIn('No known addresses other than connect peers', res)
+
+        # test "nodes bad" with no nodes connected
+        args = ['nodes', 'bad']
+        res = CommandShow().execute(args)
+        self.assertIn('No bad addresses', res)
 
         # query nodes with connected peers
         # first make sure we have a predictable state
-        NodeLeader.Instance().Reset()
-        leader = NodeLeader.Instance()
-        addr1 = Address("127.0.0.1:20333")
-        addr2 = Address("127.0.0.1:20334")
-        leader.ADDRS = [addr1, addr2]
-        leader.DEAD_ADDRS = [Address("127.0.0.1:20335")]
-        test_node = NeoNode()
-        test_node.host = "127.0.0.1"
-        test_node.port = 20333
-        test_node.address = Address("127.0.0.1:20333")
-        leader.Peers = [test_node]
+        node1 = NeoNode(object, object)
+        node2 = NeoNode(object, object)
+        node1.address = "127.0.0.1:20333"
+        node2.address = "127.0.0.1:20334"
+        node1.best_height = 1025
+        node2.best_height = 1026
+        node1.version = MagicMock()
+        node2.version = MagicMock()
+        node1.version.user_agent = "test_user_agent"
+        node2.version.user_agent = "test_user_agent"
 
-        # now show nodes
-        with patch('neo.Network.NeoNode.NeoNode.Name', return_value="test name"):
-            args = ['nodes']
-            res = CommandShow().execute(args)
-            self.assertTrue(res)
-            self.assertIn('Total Connected: 1', res)
-            self.assertIn('Peer 0', res)
+        nodemgr.nodes = [node1, node2]
 
-            # now use "node"
-            args = ['node']
-            res = CommandShow().execute(args)
-            self.assertTrue(res)
-            self.assertIn('Total Connected: 1', res)
-            self.assertIn('Peer 0', res)
+        queued_address = "127.0.0.1:20335"
+        known_address = "127.0.0.1:20336"
+        bad_address = "127.0.0.1:20337"
 
-    def test_show_state(self):
+        nodemgr.queued_addresses.append(queued_address)
+        nodemgr.known_addresses.append(known_address)
+        nodemgr.bad_addresses.append(bad_address)
+
+        # now use "node"
+        args = ['node']
+        res = CommandShow().execute(args)
+        self.assertIn("Connected: 2", res)
+        self.assertIn("Peer 1", res)
+        self.assertIn("1025", res)
+
+        # test "nodes verbose" with queued, known, and bad addresses
+        args = ['nodes', 'verbose']
+        res = CommandShow().execute(args)
+        self.assertIn("Addresses in queue: 1", res)
+        self.assertIn("Known addresses: 1", res)
+        self.assertIn("Bad addresses: 1", res)
+
+        # test "nodes queued" with queued, known, and bad addresses
+        args = ['nodes', 'queued']
+        res = CommandShow().execute(args)
+        self.assertIn("Queued addresses:", res)
+        self.assertIn(queued_address, res)
+
+        # test "nodes known" with queued, known, and bad addresses
+        args = ['nodes', 'known']
+        res = CommandShow().execute(args)
+        self.assertIn("Known addresses:", res)
+        self.assertIn(known_address, res)
+
+        # test "nodes bad" with queued, known, and bad addresses
+        args = ['nodes', 'bad']
+        res = CommandShow().execute(args)
+        self.assertIn("Bad addresses:", res)
+        self.assertIn(bad_address, res)
+
+        nodemgr.reset_for_test()
+
+    @mock.patch('neo.Prompt.Commands.Show.SyncManager')
+    def test_show_state(self, mock_SyncManager):
         # setup
+        class mock_SM(Singleton):
+            def init(self):
+                self.block_cache = [1, 2, 3, 4, 5]  # simulate blocks in the block_cache
+        mock_SyncManager.return_value = mock_SM()
         PromptInterface()
 
-        args = ['state']
-        res = CommandShow().execute(args)
-        self.assertTrue(res)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['state']
+            res = CommandShow().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Block-cache length 5", mock_print.getvalue())
 
     def test_show_notifications(self):
         # setup
@@ -264,10 +327,12 @@ class CommandShowTestCase(BlockchainFixtureTestCase):
         # test empty account
         with patch('neo.Prompt.PromptData.PromptData.Prompt'):
             with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=["testpassword", "testpassword"]):
-                args = ['create', 'testwallet.wallet']
-                res = CommandWallet().execute(args)
-                self.assertTrue(res)
-                self.assertIsInstance(res, UserWallet)
+                with patch('neo.Prompt.Commands.Wallet.asyncio'):
+                    with patch('neo.Wallets.Wallet.Wallet.sync_wallet'):
+                        args = ['create', 'testwallet.wallet']
+                        res = CommandWallet().execute(args)
+                        self.assertTrue(res)
+                        self.assertIsInstance(res, UserWallet)
 
         addr = res.Addresses[0]
         args = ['account', addr]

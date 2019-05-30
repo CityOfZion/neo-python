@@ -11,13 +11,6 @@ from neo.Core.Cryptography.Crypto import Crypto
 
 
 class Coin(TrackableMixin):
-    Output = None
-    Reference = None
-
-    _address = None
-    _state = CoinState.Unconfirmed
-    _transaction = None
-
     @staticmethod
     def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed, transaction=None):
         """
@@ -47,6 +40,10 @@ class Coin(TrackableMixin):
             coin_reference (neo.Core.CoinReference): (Optional if prev_hash and prev_index are given) an object representing a single UTXO / transaction input.
             state (neo.Core.State.CoinState):
         """
+
+        self._address = None
+        self._transaction = None
+
         if prev_hash and prev_index:
             self.Reference = CoinReference(prev_hash, prev_index)
         elif coin_reference:

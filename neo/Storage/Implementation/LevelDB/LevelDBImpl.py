@@ -37,7 +37,9 @@ class LevelDBImpl(AbstractDBImplementation):
     def __init__(self, path):
         try:
             self._path = path
-            self._db = plyvel.DB(path, create_if_missing=True)
+            self._db = plyvel.DB(self._path, create_if_missing=True,
+                                 max_open_files=100,
+                                 lru_cache_size=10 * 1024 * 1024)
             logger.info("Created DB at %s " % self._path)
         except Exception as e:
             raise Exception("leveldb exception [ %s ]" % e)

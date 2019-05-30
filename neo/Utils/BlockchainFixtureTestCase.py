@@ -1,9 +1,11 @@
 import tarfile
 import requests
 import shutil
+import binascii
 import os
 import neo
 import struct
+import asyncio
 
 from contextlib import contextmanager
 from neo.Utils.NeoTestCase import NeoTestCase
@@ -16,7 +18,6 @@ from neo.Core.Fixed8 import Fixed8
 from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Settings import settings
 from neo.logging import log_manager
-from neo.Network.NodeLeader import NodeLeader
 from neo.Storage.Common.CachedScriptTable import CachedScriptTable
 from neo.Core.State.CoinState import CoinState
 from neo.Core.State.AccountState import AccountState
@@ -28,6 +29,7 @@ from neo.Core.State.ContractState import ContractState
 from neo.Core.State.StorageItem import StorageItem
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.TX.Transaction import Transaction, TransactionType
+from neo.Network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 
@@ -222,6 +224,9 @@ class BlockchainFixtureTestCase(NeoTestCase):
         Blockchain.Persist = cls._old_persist
         ApplicationEngine.Run = cls._old_run
 
+    def __init__(self, *args, **kwargs):
+        super(BlockchainFixtureTestCase, self).__init__(*args, **kwargs)
+
     @classmethod
     def leveldb_testpath(cls):
         return 'Override Me!'
@@ -233,8 +238,14 @@ class BlockchainFixtureTestCase(NeoTestCase):
 
         super(BlockchainFixtureTestCase, cls).setUpClass()
 
-        NodeLeader.Instance().Reset()
-        NodeLeader.Instance().Setup()
+        # for some reason during testing asyncio.get_event_loop() fails and does not create a new one if needed. This is the workaround
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
 
         # setup Blockchain DB
         if not os.path.exists(cls.FIXTURE_FILENAME):

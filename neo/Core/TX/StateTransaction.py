@@ -4,7 +4,6 @@ from neo.Core.Size import GetVarSize
 
 
 class StateTransaction(Transaction):
-    Descriptors = None
 
     def Size(self):
         """
@@ -27,6 +26,7 @@ class StateTransaction(Transaction):
         super(StateTransaction, self).__init__(*args, **kwargs)
 
         self.Type = TransactionType.StateTransaction
+        self.Descriptors = None
 
     def SystemFee(self):
         amount = Fixed8.Zero()

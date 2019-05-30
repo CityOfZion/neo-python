@@ -2,7 +2,6 @@
 
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Block import Block
-from neo.IO.MemoryStream import MemoryStream
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
 from neo.Settings import settings
@@ -15,9 +14,15 @@ import shutil
 from tqdm import trange
 from prompt_toolkit import prompt
 from neo.Implementations.Notifications.NotificationDB import NotificationDB
+import asyncio
 
 
 def main():
+    # needed for console scripts
+    asyncio.run(_main())
+
+
+async def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
                         help="use MainNet instead of the default TestNet")
@@ -57,7 +62,8 @@ def main():
         settings.log_smart_contract_events = True
 
     if not args.input:
-        raise Exception("Please specify an input path")
+        print("Please specify an input path")
+        return
     file_path = args.input
 
     append = False
@@ -89,6 +95,7 @@ def main():
 
         if append:
             blockchain = LevelDBBlockchain(settings.chain_leveldb_path, skip_header_check=True)
+            Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 
             start_block = Blockchain.Default().Height
@@ -116,6 +123,7 @@ def main():
 
             # Instantiate the blockchain and subscribe to notifications
             blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+            Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 
         chain = Blockchain.Default()
@@ -142,7 +150,8 @@ def main():
 
             # add
             if block.Index > start_block:
-                chain.AddBlockDirectly(block, do_persist_complete=store_notifications)
+                chain.AddHeaders([block.Header])
+                await chain.TryPersist(block)
 
             # reset blockheader
             block._header = None

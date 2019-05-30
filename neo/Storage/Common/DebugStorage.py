@@ -17,8 +17,8 @@ class DebugStorage:
     def reset(self):
         with self._db.openIter(
                 DBProperties(prefix=DBPrefix.ST_Storage,
-                             include_value=False)) as iterator:
-            for key in iterator:
+                             include_value=False)) as it:
+            for key in it:
                 self._db.delete(key)
 
     def __init__(self):

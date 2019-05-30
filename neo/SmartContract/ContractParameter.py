@@ -10,9 +10,6 @@ import binascii
 class ContractParameter:
     """Contract Parameter used for parsing parameters sent to and from smart contract invocations"""
 
-    Type = None
-    Value = None
-
     def __init__(self, type, value):
         """
 

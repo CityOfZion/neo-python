@@ -105,7 +105,8 @@ class SettingsHolder:
     DEBUG_STORAGE_PATH = 'Chains/debugstorage'
 
     ACCEPT_INCOMING_PEERS = False
-    CONNECTED_PEER_MAX = 20
+    CONNECTED_PEER_MAX = 10
+    CONNECTED_PEER_MIN = 4
 
     SERVICE_ENABLED = True
 
@@ -126,7 +127,7 @@ class SettingsHolder:
     # Logging settings
     log_level = None
     log_smart_contract_events = False
-    log_vm_instructions = False
+    log_vm_instructions = True
 
     # Emit Notify events when smart contract execution failed. Use for debugging purposes only.
     emit_notify_events_on_sc_execution_error = False
@@ -296,6 +297,13 @@ class SettingsHolder:
         maxpeers = int(num_peers)
         if maxpeers > 0:
             self.CONNECTED_PEER_MAX = maxpeers
+        else:
+            raise ValueError
+
+    def set_min_peers(self, num_peers):
+        minpeers = int(num_peers)
+        if minpeers > 0:
+            self.CONNECTED_PEER_MIN = minpeers
         else:
             raise ValueError
 

@@ -3,7 +3,6 @@ import json
 from neo.Blockchain import GetBlockchain
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
-from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt import Utils as PromptUtils
 from neo.Storage.Interface.DBInterface import DBInterface
 from neo.Storage.Common.CachedScriptTable import CachedScriptTable
@@ -32,16 +31,18 @@ from neo.Core.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
 from copy import deepcopy
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
+from neo.Network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 
 from neo.Core.Cryptography.ECCurve import ECDSA
 from neo.Core.UInt160 import UInt160
 from neo.VM.OpCode import PACK
+from neo.VM.Debugger import Debugger
 
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
@@ -78,9 +79,8 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
             relayed = False
 
-            #            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
-
-            relayed = NodeLeader.Instance().Relay(wallet_tx)
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
@@ -141,7 +141,8 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
 
             wallet_tx.scripts = context.GetScripts()
 
-            relayed = NodeLeader.Instance().Relay(wallet_tx)
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
@@ -410,7 +411,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
 
 def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                            from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
-                           debug_map=None, invoke_attrs=None, owners=None):
+                           debug_map=None, invoke_attrs=None, owners=None, enable_debugger=False):
     bc = GetBlockchain()
 
     accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
@@ -465,8 +466,11 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
     # first we will execute the test deploy
     # then right after, we execute the test invoke
-
-    d_success = engine.Execute()
+    if enable_debugger:
+        debugger = Debugger(engine)
+        d_success = debugger.Execute()
+    else:
+        d_success = engine.Execute()
 
     if d_success:
 
@@ -594,7 +598,11 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         engine.LoadScript(itx.Script)
         engine.LoadDebugInfoForScriptHash(debug_map, shash.Data)
 
-        i_success = engine.Execute()
+        if enable_debugger:
+            debugger = Debugger(engine)
+            i_success = debugger.Execute()
+        else:
+            i_success = engine.Execute()
 
         service.ExecutionCompleted(engine, i_success)
         to_dispatch = to_dispatch + service.events_to_dispatch

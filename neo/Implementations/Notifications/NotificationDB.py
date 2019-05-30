@@ -218,8 +218,8 @@ class NotificationDB:
 
         block_bytes = block_number.to_bytes(4, 'little')
         results = []
-        with blocklist_snapshot.openIter(DBProperties(prefix=block_bytes, include_key=False)) as iterator:
-            for val in iterator:
+        with blocklist_snapshot.openIter(DBProperties(prefix=block_bytes, include_key=False)) as it:
+            for val in it:
                 event = SmartContractEvent.FromByteArray(val)
                 results.append(event)
 
@@ -244,8 +244,8 @@ class NotificationDB:
         addrlist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_ADDR).createSnapshot()
         results = []
 
-        with addrlist_snapshot.openIter(DBProperties(prefix=bytes(addr.Data), include_key=False)) as iterator:
-            for val in iterator:
+        with addrlist_snapshot.openIter(DBProperties(prefix=bytes(addr.Data), include_key=False)) as it:
+            for val in it:
                 if len(val) > 4:
                     try:
                         event = SmartContractEvent.FromByteArray(val)
@@ -273,8 +273,8 @@ class NotificationDB:
         contractlist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_CONTRACT).createSnapshot()
         results = []
 
-        with contractlist_snapshot.openIter(DBProperties(prefix=bytes(hash.Data), include_key=False)) as iterator:
-            for val in iterator:
+        with contractlist_snapshot.openIter(DBProperties(prefix=bytes(hash.Data), include_key=False)) as it:
+            for val in it:
                 if len(val) > 4:
                     try:
                         event = SmartContractEvent.FromByteArray(val)
@@ -292,8 +292,8 @@ class NotificationDB:
         tokens_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_TOKEN).createSnapshot()
         results = []
 
-        with tokens_snapshot.openIter(DBProperties(include_key=False)) as iterator:
-            for val in iterator:
+        with tokens_snapshot.openIter(DBProperties(include_key=False)) as it:
+            for val in it:
                 event = SmartContractEvent.FromByteArray(val)
                 results.append(event)
         return results
@@ -307,7 +307,7 @@ class NotificationDB:
         Returns:
             SmartContractEvent: A smart contract event with a contract that is an NEP5 Token
         """
-        tokens_snapshot = self.db.getPrefixedDB(DBProperties(NotificationPrefix.PREFIX_TOKEN)).createSnapshot()
+        tokens_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_TOKEN).createSnapshot()
 
         try:
             val = tokens_snapshot.get(hash.ToBytes())

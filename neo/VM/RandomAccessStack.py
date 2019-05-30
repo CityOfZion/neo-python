@@ -1,8 +1,4 @@
 class RandomAccessStack:
-    _list = []
-    _size = 0  # cache the size for performance
-
-    _name = 'Stack'
 
     def __init__(self, name='Stack'):
         self._list = []

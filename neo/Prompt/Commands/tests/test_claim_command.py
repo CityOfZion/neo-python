@@ -6,7 +6,8 @@ from neo.Core.UInt160 import UInt160
 from neo.Prompt.Commands.Wallet import ClaimGas
 from neo.Core.Fixed8 import Fixed8
 from neo.Core.TX.ClaimTransaction import ClaimTransaction
-from neo.Prompt.PromptPrinter import pp
+from neo.Network.node import NeoNode
+from neo.Network.nodemanager import NodeManager
 import shutil
 from mock import patch
 from io import StringIO
@@ -117,19 +118,29 @@ class UserWalletTestCase(WalletFixtureTestCase):
                 wallet = self.GetWallet1()
 
                 claim_tx, relayed = ClaimGas(wallet)
-                self.assertEqual(claim_tx, None)
-                self.assertFalse(relayed)
-                self.assertIn("Claim transaction cancelled", mock_print.getvalue())
+            self.assertEqual(claim_tx, None)
+            self.assertFalse(relayed)
+            self.assertIn("Claim transaction cancelled", mock_print.getvalue())
 
     def test_5_wallet_claim_ok(self):
-        with patch('neo.Prompt.Commands.Wallet.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
-            wallet = self.GetWallet1()
 
-            claim_tx, relayed = ClaimGas(wallet)
-            self.assertIsInstance(claim_tx, ClaimTransaction)
-            self.assertTrue(relayed)
+        wallet = self.GetWallet1()
+        nodemgr = NodeManager()
+        nodemgr.nodes = [NeoNode(object, object)]
+
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+            with patch('neo.Prompt.Commands.Wallet.prompt', return_value=self.wallet_1_pass()):
+                claim_tx, relayed = ClaimGas(wallet)
+                self.assertIsInstance(claim_tx, ClaimTransaction)
+                self.assertTrue(relayed)
 
     def test_6_no_wallet(self):
+        with patch('neo.Prompt.Commands.Wallet.prompt', return_value=self.wallet_1_pass()):
+            claim_tx, relayed = ClaimGas(None)
+            self.assertEqual(claim_tx, None)
+            self.assertFalse(relayed)
+
+    def test_7_no_wallet(self):
         claim_tx, relayed = ClaimGas(None)
         self.assertEqual(claim_tx, None)
         self.assertFalse(relayed)

@@ -7,6 +7,7 @@ from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction
 from neo.Settings import settings
 from neo.Core.UInt256 import UInt256
+from neo.VM.Script import Script
 import os
 
 
@@ -30,7 +31,8 @@ class BlockchainInteropTest(BlockchainFixtureTestCase):
 
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(engine=self.engine)
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader = StateReader()
 
     def test_interop_getblock(self):

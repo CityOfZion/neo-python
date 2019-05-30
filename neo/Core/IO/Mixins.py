@@ -20,5 +20,6 @@ class SerializableMixin(object):
 
 class TrackableMixin(object):
 
-    Key = None
-    TrackingState = None
+    def __init__(self):
+        self.Key = None
+        self.TrackingState = None

@@ -10,7 +10,6 @@ from neo.Prompt.vm_debugger import VMDebugger, DebugContext
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
-
     wallet_1_script_hash = UInt160(data=b'\x1c\xc9\xc0\\\xef\xff\xe6\xcd\xd7\xb1\x82\x81j\x91R\xec!\x8d.\xc0')
 
     wallet_1_addr = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
@@ -38,14 +37,12 @@ class UserWalletTestCase(WalletFixtureTestCase):
         return cls._wallet1
 
     def test_debug_contract_1(self):
-
         wallet = self.GetWallet1()
 
         arguments = ["neo/SmartContract/tests/BreakpointTest.py", "True", "False", "True", "02", "01", "1", ]
         dbg = VMDebugger
-#        dbg.end = MagicMock(return_value=None)
         dbg.start = MagicMock(return_value=None)
-        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, min_fee=Fixed8.FromDecimal(.0004))
+        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, min_fee=Fixed8.FromDecimal(.0004), enable_debugger=True)
 
         debugger = engine._vm_debugger
         context = debugger.get_context()
@@ -62,9 +59,8 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         arguments = ["neo/SmartContract/tests/BreakpointTest.py", "True", "False", "True", "02", "01", "4", ]
         dbg = VMDebugger
-        #        dbg.end = MagicMock(return_value=None)
         dbg.start = MagicMock(return_value=None)
-        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, min_fee=Fixed8.FromDecimal(.0004))
+        tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False, min_fee=Fixed8.FromDecimal(.0004), enable_debugger=True)
 
         debugger = engine._vm_debugger
         context = debugger.get_context()
