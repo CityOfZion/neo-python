@@ -11,11 +11,13 @@ import json
 import traceback
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
-from logzero import logger
 from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.Core.Blockchain import Blockchain
 from neo.Network.nodemanager import NodeManager
 from neo.Network.common import blocking_prompt as prompt
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class CommandWalletSend(CommandBase):

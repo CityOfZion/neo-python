@@ -31,7 +31,9 @@ All notable changes to this project are documented in this file.
 - Various code cleaning updates
 - Ensure LevelDB iterators are close, ensure all ``MemoryStream`` usages go through ``StreamManger`` and are closed.
 - Fix ``np-import`` not importing headers ahead of block persisting potentially unexpected VM execution results
+- Fix undesired debug statement printing
 - Extend ``pretty_print`` to include address aliases
+
 
 [0.8.4] 2019-02-14
 ------------------
