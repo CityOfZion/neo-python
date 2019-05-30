@@ -7,7 +7,6 @@ Usage:
 import sys
 from itertools import groupby
 import binascii
-from logzero import logger
 from neo.Core.UInt160 import UInt160
 from neo.Blockchain import GetBlockchain
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
@@ -27,6 +26,9 @@ from neo.Core.AssetType import AssetType
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
 from neo.Settings import settings
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class TransactionResult(EquatableMixin):
