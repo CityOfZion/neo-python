@@ -29,7 +29,6 @@ class DBProperties:
 
 class DBInterface(object):
 
-
     def __init__(self, db, prefix, class_ref):
         self._built_keys = False
         self.DebugStorage = False
