@@ -69,7 +69,7 @@ class NodeManager(Singleton):
 
     async def start(self):
         host = 'localhost'
-        port = 8888  # settings.NODE_PORT
+        port = settings.NODE_PORT
         proto = partial(NeoProtocol, nodemanager=self)
 
         try:
