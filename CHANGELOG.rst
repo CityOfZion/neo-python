@@ -33,6 +33,7 @@ All notable changes to this project are documented in this file.
 - Fix ``np-import`` not importing headers ahead of block persisting potentially unexpected VM execution results
 - Fix undesired debug statement printing
 - Add negative bitwise shifting support for ``BigInteger`` to match C#
+- Fix ``config maxpeers`` and update tests
 
 
 [0.8.4] 2019-02-14
