@@ -2,6 +2,8 @@ import os
 from neo.Settings import settings
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Prompt.Commands.Config import CommandConfig
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
 from mock import patch
 from io import StringIO
 from neo.Prompt.PromptPrinter import pp
@@ -114,11 +116,15 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
         self.assertFalse(res)
 
     def test_config_maxpeers(self):
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+
         # test no input and verify output confirming current maxpeers
         with patch('sys.stdout', new=StringIO()) as mock_print:
             args = ['maxpeers']
             res = CommandConfig().execute(args)
             self.assertFalse(res)
+            self.assertEqual(settings.CONNECTED_PEER_MAX, 10)
             self.assertIn(f"Maintaining maxpeers at {settings.CONNECTED_PEER_MAX}", mock_print.getvalue())
 
         # test changing the number of maxpeers
@@ -126,8 +132,16 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             args = ['maxpeers', "6"]
             res = CommandConfig().execute(args)
             self.assertTrue(res)
+            self.assertEqual(settings.CONNECTED_PEER_MAX, 6)
             self.assertEqual(int(res), settings.CONNECTED_PEER_MAX)
             self.assertIn(f"Maxpeers set to {settings.CONNECTED_PEER_MAX}", mock_print.getvalue())
+
+        # test trying to set maxpeers > 10
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['maxpeers', "12"]
+            res = CommandConfig().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Max peers is limited to 10", mock_print.getvalue())
 
         # test bad input
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -142,6 +156,48 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             res = CommandConfig().execute(args)
             self.assertFalse(res)
             self.assertIn("Please supply a positive integer for maxpeers", mock_print.getvalue())
+
+        # test if the new maxpeers < settings.CONNECTED_PEER_MAX
+        # first make sure we have a predictable state
+        node1 = NeoNode(object, object)
+        node2 = NeoNode(object, object)
+        node1.address = "127.0.0.1:20333"
+        node2.address = "127.0.0.1:20334"
+
+        nodemgr.nodes = [node1, node2]
+        nodemgr.loop = object
+
+        with patch("neo.Network.node.NeoNode.disconnect") as mock_disconnect:
+            # first test if the number of connected peers !< new maxpeers
+            self.assertEqual(nodemgr.max_clients, 6)  # verifying the current number of maxpeers
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['maxpeers', "4"]
+                res = CommandConfig().execute(args)
+                self.assertTrue(res)
+                self.assertEqual(nodemgr.max_clients, 4)
+                self.assertFalse(mock_disconnect.called)
+                self.assertEqual(settings.CONNECTED_PEER_MAX, 4)
+                self.assertIn(f"Maxpeers set to {settings.CONNECTED_PEER_MAX}", mock_print.getvalue())
+
+            # now test if the number of connected peers < new maxpeers and < current minpeers
+            self.assertEqual(settings.CONNECTED_PEER_MIN, 4)  # verifying the current minpeers value
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                with patch('neo.Prompt.Commands.Config.wait_for'):
+                    args = ['maxpeers', "1"]
+                    res = CommandConfig().execute(args)
+                    self.assertTrue(res)
+                    self.assertEqual(nodemgr.max_clients, 1)
+                    self.assertTrue(mock_disconnect.called)
+                    self.assertEqual(settings.CONNECTED_PEER_MAX, 1)
+                    self.assertIn(f"Maxpeers set to {settings.CONNECTED_PEER_MAX}", mock_print.getvalue())
+
+                    self.assertEqual(settings.CONNECTED_PEER_MIN, 1)
+                    self.assertIn(f"Minpeers set to {settings.CONNECTED_PEER_MIN}", mock_print.getvalue())
+
+        # reset for future tests
+        nodemgr.reset_for_test()
+        nodemgr.loop = None
+        settings.set_max_peers(10)
 
     def test_config_minpeers(self):
         # test no input and verify output confirming current minpeers
