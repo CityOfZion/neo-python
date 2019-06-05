@@ -193,7 +193,7 @@ class StateReader(InteropService):
 
     def Runtime_GetTrigger(self, engine):
 
-        engine.CurrentContext.EvaluationStack.PushT(engine.Trigger)
+        engine.CurrentContext.EvaluationStack.PushT(int.from_bytes(engine.Trigger, 'little'))
 
         return True
 
