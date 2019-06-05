@@ -527,9 +527,8 @@ class UserWallet(Wallet):
 
         aliases = dict()
         alia = NamedAddress.select()
-        if len(alia):
-            for n in alia:
-                aliases[n.Title] = n.ToString()
+        for n in alia:
+            aliases[n.Title] = n.ToString()
 
         # pretty print
         for address, data in addresses.items():
