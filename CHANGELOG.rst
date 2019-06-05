@@ -35,6 +35,7 @@ All notable changes to this project are documented in this file.
 - Add negative bitwise shifting support for ``BigInteger`` to match C#
 - Include address aliases in ``wallet`` command output
 - Fix ``config maxpeers`` and update tests
+- Fix error while parsing list arguments from prompt for smart contract test invocations
 
 
 [0.8.4] 2019-02-14
