@@ -1,4 +1,3 @@
-import asyncio
 from neo.Network.common import blocking_prompt as prompt
 from neo.logging import log_manager
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
@@ -8,6 +7,7 @@ from neo.Prompt.PromptPrinter import prompt_print as print
 from distutils import util
 from neo.Network.nodemanager import NodeManager
 import logging
+from neo.Network.common import wait_for
 
 
 class CommandConfig(CommandBase):
@@ -201,13 +201,9 @@ class CommandConfigMaxpeers(CommandBase):
             connected_count = len(nodemgr.nodes)
             if current_max < connected_count:
                 to_remove = connected_count - c1
-                r_list = []
-                i = 1
                 for _ in range(to_remove):
-                    r_list.append(nodemgr.nodes[-i])
-                    i += 1
-                for node in r_list:
-                    asyncio.run_coroutine_threadsafe(node.disconnect(), nodemgr.loop)  # need to avoid it being labelled as dead/bad
+                    last_connected_node = nodemgr.nodes[-1]
+                    wait_for(last_connected_node.disconnect())  # need to avoid it being labelled as dead/bad
 
             print(f"Maxpeers set to {c1}")
             return c1

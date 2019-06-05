@@ -182,7 +182,7 @@ class CommandConfigTestCase(BlockchainFixtureTestCase):
             # now test if the number of connected peers < new maxpeers and < current minpeers
             self.assertEqual(settings.CONNECTED_PEER_MIN, 4)  # verifying the current minpeers value
             with patch('sys.stdout', new=StringIO()) as mock_print:
-                with patch('neo.Prompt.Commands.Config.asyncio'):
+                with patch('neo.Prompt.Commands.Config.wait_for'):
                     args = ['maxpeers', "1"]
                     res = CommandConfig().execute(args)
                     self.assertTrue(res)
