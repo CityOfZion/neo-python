@@ -525,8 +525,16 @@ class UserWallet(Wallet):
                 'tokens': self._get_token_balances(addr_str)
             }})
 
+        aliases = dict()
+        alia = NamedAddress.select()
+        for n in alia:
+            aliases[n.Title] = n.ToString()
+
         # pretty print
         for address, data in addresses.items():
+            for title, addr in aliases.items():
+                if address == addr:
+                    print(f"Alias      : {title}")
             addr_str = address + " (watch only)" if data['watchonly'] else address
             print(f"Address    : {addr_str}")
             if verbose:
