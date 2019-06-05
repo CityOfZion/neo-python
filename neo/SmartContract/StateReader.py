@@ -279,11 +279,13 @@ class StateReader(InteropService):
 
     def Runtime_GetCurrentTime(self, engine: ExecutionEngine):
         BC = GetBlockchain()
+        print(BC)
         header = BC.GetHeaderByHeight(BC.Height)
+        print(header, GetBlockchain().SECONDS_PER_BLOCK)
         if header is None:
-            header = Blockchain.GenesisBlock()
+            header = GetBlockchain().GenesisBlock()
 
-        engine.CurrentContext.EvaluationStack.PushT(header.Timestamp + Blockchain.SECONDS_PER_BLOCK)
+        engine.CurrentContext.EvaluationStack.PushT(header.Timestamp + GetBlockchain().SECONDS_PER_BLOCK)
         return True
 
     def Runtime_Serialize(self, engine: ExecutionEngine):

@@ -127,7 +127,7 @@ class SettingsHolder:
     # Logging settings
     log_level = None
     log_smart_contract_events = False
-    log_vm_instructions = True
+    log_vm_instructions = False
 
     # Emit Notify events when smart contract execution failed. Use for debugging purposes only.
     emit_notify_events_on_sc_execution_error = False

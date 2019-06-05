@@ -1065,7 +1065,7 @@ class Blockchain:
                 elif tx.Type == TransactionType.InvocationTransaction:
 
                     script_table = CachedScriptTable(contracts)
-                    service = StateMachine(accounts, validators, assets, contracts, storages, wb)
+                    service = StateMachine(accounts, validators, assets, contracts, storages, wb, self)
 
                     engine = ApplicationEngine(
                         trigger_type=TriggerType.Application,
