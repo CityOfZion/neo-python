@@ -36,6 +36,7 @@ All notable changes to this project are documented in this file.
 - Include address aliases in ``wallet`` command output
 - Fix ``config maxpeers`` and update tests
 - Fix error while parsing list arguments from prompt for smart contract test invocations
+- Fix ``Runtime.GetTrigger`` and ``Transaction.GetType`` syscalls pushing wrong StackItem type
 
 
 [0.8.4] 2019-02-14

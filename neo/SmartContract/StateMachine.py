@@ -302,9 +302,9 @@ class StateMachine(StateReader):
             return False
 
         if isinstance(tx.Type, bytes):
-            engine.CurrentContext.EvaluationStack.PushT(tx.Type)
+            engine.CurrentContext.EvaluationStack.PushT(int.from_bytes(tx.Type, 'little'))
         else:
-            engine.CurrentContext.EvaluationStack.PushT(tx.Type.to_bytes(1, 'little'))
+            engine.CurrentContext.EvaluationStack.PushT(tx.Type)
         return True
 
     def Transaction_GetAttributes(self, engine: ExecutionEngine):
