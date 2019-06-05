@@ -2,8 +2,8 @@
 
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Block import Block
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Storage.Implementation.DBFactory import getBlockchainDB
+from neo.Storage.Common.DBPrefix import DBPrefix
 from neo.Settings import settings
 from neo.Core.IO.BinaryReader import BinaryReader
 from neo.Core.IO.BinaryWriter import BinaryWriter
@@ -94,7 +94,7 @@ async def _main():
         notif_target_dir = os.path.join(settings.DATA_DIR_PATH, settings.NOTIFICATION_DB_PATH)
 
         if append:
-            blockchain = LevelDBBlockchain(settings.chain_leveldb_path, skip_header_check=True)
+            blockchain = Blockchain(getBlockchainDB(settings.chain_leveldb_path), skip_header_check=True)
             Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 
@@ -122,7 +122,7 @@ async def _main():
                 return False
 
             # Instantiate the blockchain and subscribe to notifications
-            blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+            blockchain = Blockchain(getBlockchainDB(settings.chain_leveldb_path))
             Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 

@@ -35,13 +35,18 @@ from neo.Core.Cryptography.ECCurve import ECDSA
 from neo.Core.UInt256 import UInt256
 from neo.Core.UInt160 import UInt160
 from neo.Core.IO.BinaryWriter import BinaryWriter
+
+from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.Contract import Contract
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.Storage.Common.DBPrefix import DBPrefix
+from neo.Storage.Common.CachedScriptTable import CachedScriptTable
 from neo.Storage.Interface.DBInterface import DBInterface, DBProperties
+from neo.SmartContract import TriggerType
 from neo.VM.OpCode import PUSHF, PUSHT
 from functools import lru_cache
 from neo.Network.common import msgrouter
+from neo.EventHub import events
 
 from neo.Network.common import blocking_prompt as prompt
 from neo.Network.common import wait_for
@@ -967,9 +972,11 @@ class Blockchain:
         assets = DBInterface(self._db, DBPrefix.ST_Asset, AssetState)
         validators = DBInterface(self._db, DBPrefix.ST_Validator, ValidatorState)
         contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
+        storages = DBInterface(self._db, DBPrefix.ST_Storage, StorageItem)
 
         amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + (block.TotalFees().value / Fixed8.D)
         amount_sysfee_bytes = struct.pack("<d", amount_sysfee)
+        to_dispatch = []
 
         with self._db.getBatch() as wb:
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
@@ -1056,8 +1063,31 @@ class Blockchain:
 
                     contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
                 elif tx.Type == TransactionType.InvocationTransaction:
-                    ApplicationEngine.Run(tx.Script, tx, False, tx.Gas, False, wb)
+
+                    script_table = CachedScriptTable(contracts)
+                    service = StateMachine(accounts, validators, assets, contracts, storages, wb)
+
+                    engine = ApplicationEngine(
+                        trigger_type=TriggerType.Application,
+                        container=tx,
+                        table=script_table,
+                        service=service,
+                        gas=tx.Gas,
+                        testMode=False
+                    )
+
+                    engine.LoadScript(tx.Script)
+
+                    try:
+                        success = engine.Execute()
+                        service.ExecutionCompleted(engine, success)
+
+                    except Exception as e:
+                        service.ExecutionCompleted(engine, False, e)
+
+                    to_dispatch = to_dispatch + service.events_to_dispatch
                     await asyncio.sleep(0.001)
+
                 else:
 
                     if tx.Type != b'\x00' and tx.Type != 128:
@@ -1095,7 +1125,8 @@ class Blockchain:
 
             self.TXProcessed += len(block.Transactions)
 
-        # logger.info('done with block %d ' % block.Index)
+        for event in to_dispatch:
+            events.emit(event.event_type, event)
 
     async def TryPersist(self, block: 'Block') -> Tuple[bool, str]:
         distance = self._current_block_height - block.Index
@@ -1124,7 +1155,7 @@ class Blockchain:
         Register the default block chain instance.
 
         Args:
-            blockchain: a blockchain instance. E.g. neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain
+            blockchain: a blockchain instance. E.g. neo.Storage.Implementation.LevelDB.LevelDBImpl
         """
         if Blockchain._instance is None:
             Blockchain._instance = blockchain

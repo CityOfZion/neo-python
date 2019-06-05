@@ -12,7 +12,7 @@ from neo.Core.UInt160 import UInt160
 from neo.Core.UInt256 import UInt256
 from neo.Core.State.AccountState import AccountState
 from neo.Core.Fixed8 import Fixed8
-from neo.Core.Blockchain import Blockchain
+from neo.Blockchain import GetBlockchain
 from neo.VM.InteropService import StackItem
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.SmartContract.StorageContext import StorageContext
@@ -250,7 +250,7 @@ class StateMachine(StateReader):
         return True
 
     def Blockchain_GetValidators(self, engine: ExecutionEngine):
-        validators = Blockchain.Default().GetValidators()
+        validators = GetBlockchain().GetValidators()
 
         items = [StackItem(validator.encode_point(compressed=True)) for validator in validators]
 
@@ -262,7 +262,7 @@ class StateMachine(StateReader):
         data = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
         asset = None
 
-        if Blockchain.Default() is not None:
+        if GetBlockchain() is not None:
             asset = self.Assets.TryGet(UInt256(data=data))
         if asset is None:
             return False
@@ -369,7 +369,7 @@ class StateMachine(StateReader):
         if tx is None:
             return False
 
-        outputs = Blockchain.Default().GetAllUnspent(tx.Hash)
+        outputs = GetBlockchain().GetAllUnspent(tx.Hash)
         if len(outputs) > engine.maxArraySize:
             return False
 
