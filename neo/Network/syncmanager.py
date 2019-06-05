@@ -58,8 +58,16 @@ class SyncManager(Singleton):
         print("Shutting down sync manager...", end='')
         self.keep_running = False
         self.block_cache = []
-        self.health_task.cancel()
-        shutdown_tasks = [self.service_task, self.health_task]
+        shutdown_tasks = []
+
+        # start up errors can cause the tasks to not have been assigned,
+        # so we must validate their presence before feeding them to `gather`
+        if self.service_task:
+            shutdown_tasks.append(self.service_task)
+
+        if self.health_task:
+            shutdown_tasks.append(self.health_task)
+
         if self.persist_task:
             shutdown_tasks.append(self.persist_task)
         await asyncio.gather(*shutdown_tasks, return_exceptions=True)
