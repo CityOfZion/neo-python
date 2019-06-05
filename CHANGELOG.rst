@@ -32,6 +32,7 @@ All notable changes to this project are documented in this file.
 - Ensure LevelDB iterators are close, ensure all ``MemoryStream`` usages go through ``StreamManger`` and are closed.
 - Fix ``np-import`` not importing headers ahead of block persisting potentially unexpected VM execution results
 - Fix undesired debug statement printing
+- Add negative bitwise shifting support for ``BigInteger`` to match C#
 - Extend ``pretty_print`` to include address aliases
 
 
