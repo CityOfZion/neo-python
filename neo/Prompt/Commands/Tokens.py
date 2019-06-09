@@ -1,8 +1,7 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
-from neo.Wallets.NEP5Token import NEP5Token
 from neo.Core.Fixed8 import Fixed8
 from neo.Core.UInt160 import UInt160
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
 from decimal import Decimal
 from neo.Core.TX.TransactionAttribute import TransactionAttribute
 import binascii
@@ -197,7 +196,7 @@ class CommandTokenSendFrom(CommandBase):
             logger.error(traceback.format_exc())
             return False
 
-        if tx and results:
+        if tx is not None and results is not None:
             vm_result = results[0].GetBigInteger()
             if vm_result == 1:
                 print("\n-----------------------------------------------------------")
@@ -318,7 +317,7 @@ class CommandTokenApprove(CommandBase):
 
         tx, fee, results = token.Approve(wallet, from_addr, to_addr, decimal_amount)
 
-        if tx and results:
+        if tx is not None and results is not None:
             if results[0].GetBigInteger() == 1:
                 print("\n-----------------------------------------------------------")
                 print(f"Approve allowance of {amount} {token.symbol} from {from_addr} to {to_addr}")
@@ -453,7 +452,7 @@ class CommandTokenMint(CommandBase):
                 logger.debug("invalid fee")
                 return False
 
-        return token_mint(token, wallet, to_addr, asset_attachments=asset_attachments, fee=fee, invoke_attrs=invoke_attrs)        
+        return token_mint(token, wallet, to_addr, asset_attachments=asset_attachments, fee=fee, invoke_attrs=invoke_attrs)
 
     def command_desc(self):
         p1 = ParameterDesc('symbol', 'token symbol or script hash')
@@ -508,8 +507,8 @@ class CommandTokenRegister(CommandBase):
 
         tx, fee, results = token.CrowdsaleRegister(wallet, addr_list)
 
-        if tx and results:
-            if results[0].GetBigInteger() > 0:
+        if tx is not None and results is not None:
+            if len(results) > 0 and results[0].GetBigInteger() > 0:
                 print("\n-----------------------------------------------------------")
                 print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
                 print("Invocation Fee: %s " % (fee.value / Fixed8.D))
@@ -676,7 +675,7 @@ def token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False):
 
     tx, fee, results = token.Allowance(wallet, from_addr, to_addr)
 
-    if tx and results:
+    if tx is not None and results is not None:
         allowance = results[0].GetBigInteger()
         if verbose:
             print("%s allowance for %s from %s : %s " % (token.symbol, from_addr, to_addr, allowance))
@@ -696,8 +695,8 @@ def token_mint(token, wallet, to_addr, asset_attachments=[], fee=Fixed8.Zero(), 
 
     tx, fee, results = token.Mint(wallet, to_addr, asset_attachments, invoke_attrs=invoke_attrs)
 
-    if tx and results:
-        if results[0] is not None:
+    if tx is not None and results is not None:
+        if len(results) > 0 and results[0] is not None:
             print("\n-----------------------------------------------------------")
             print(f"[{token.symbol}] Will mint tokens to address: {to_addr}")
             print(f"Invocation Fee: {fee.value / Fixed8.D}")

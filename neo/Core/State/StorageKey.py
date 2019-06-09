@@ -4,8 +4,6 @@ from neo.Core.BigInteger import BigInteger
 
 
 class StorageKey():
-    ScriptHash = None
-    Key = None
 
     def __init__(self, script_hash=None, key=None):
         """

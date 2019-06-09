@@ -6,6 +6,7 @@ Usage:
 """
 import traceback
 import hashlib
+import asyncio
 from itertools import groupby
 from base58 import b58decode
 from decimal import Decimal
@@ -35,22 +36,6 @@ logger = log_manager.getLogger()
 
 
 class Wallet:
-    AddressVersion = None
-
-    _path = ''
-    _iv = None
-    _master_key = None
-    _keys = {}  # holds keypairs
-    _contracts = {}  # holds Contracts
-    _tokens = {}  # holds references to NEP5 tokens
-    _watch_only = []  # holds set of hashes
-    _coins = {}  # holds Coin References
-
-    _current_height = 0
-
-    _vin_exclude = None
-
-    _lock = None  # allows locking for threads that may need to access the DB concurrently (e.g. ProcessBlocks and Rebuild)
 
     @property
     def WalletHeight(self):
@@ -66,7 +51,10 @@ class Wallet:
             passwordKey (aes_key): A password that has been converted to aes key with neo.Wallets.utils.to_aes_key
             create (bool): Whether to create the wallet or simply open.
         """
-
+        self._tokens = {}  # holds references to NEP5 tokens
+        self._watch_only = []  # holds set of hashes
+        self._current_height = 0
+        self._vin_exclude = None
         self.AddressVersion = settings.ADDRESS_VERSION
         self._path = path
         self._lock = RLock()
@@ -1016,7 +1004,7 @@ class Wallet:
             skip_fee_calc (bool): If true, the network fee calculation and verification will be skipped.
 
         Returns:
-            tx: (Transaction) Returns the transaction with oupdated inputs and outputs.
+            tx: (Transaction) Returns the transaction with updated inputs and outputs.
         """
 
         tx.ResetReferences()
@@ -1111,7 +1099,8 @@ class Wallet:
             if req_fee < settings.LOW_PRIORITY_THRESHOLD:
                 req_fee = settings.LOW_PRIORITY_THRESHOLD
             if fee < req_fee:
-                raise TXFeeError(f'Transaction cancelled. The tx size ({tx.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
+                raise TXFeeError(
+                    f'Transaction cancelled. The tx size ({tx.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
 
         return tx
 
@@ -1269,6 +1258,22 @@ class Wallet:
 
     def pretty_print(self, verbose=False):
         pass
+
+    async def sync_wallet(self, start_block, rebuild=False):
+        Blockchain.Default().PersistCompleted.on_change -= self.ProcessNewBlock
+
+        if rebuild:
+            self.Rebuild(start_block)
+        while True:
+            # trying with 100, might need to lower if processing takes too long
+            self.ProcessBlocks(block_limit=100)
+
+            if self.IsSynced:
+                break
+            # give some time to other tasks
+            await asyncio.sleep(0.05)
+
+        Blockchain.Default().PersistCompleted.on_change += self.ProcessNewBlock
 
     def ToJson(self, verbose=False):
         # abstract

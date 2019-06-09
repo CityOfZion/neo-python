@@ -5,7 +5,6 @@ from neo.Core.Size import GetVarSize
 
 
 class StorageItem(StateBase):
-    Value = None
 
     def __init__(self, value=None):
         """

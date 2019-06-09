@@ -1,5 +1,5 @@
 import importlib
-from .MemoryStream import MemoryStream, StreamManager
+from .MemoryStream import StreamManager
 from neo.Core.IO.BinaryReader import BinaryReader
 from neo.Core.TX.Transaction import Transaction
 from neo.logging import log_manager
@@ -49,9 +49,9 @@ class Helper:
         Returns:
             neo.Core.TX.Transaction:
         """
-        mstream = MemoryStream(buffer)
+        mstream = StreamManager.GetStream(buffer)
         reader = BinaryReader(mstream)
 
         tx = Transaction.DeserializeFrom(reader)
-
+        mstream.Cleanup()
         return tx

@@ -6,14 +6,12 @@ from neo.Implementations.Wallets.peewee.Models import Account
 from neo.Core.Utils import isValidPublicAddress
 from neo.Core.Fixed8 import Fixed8
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Network.NodeLeader import NodeLeader
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import ContractTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Prompt.PromptPrinter import prompt_print as print
-
-import sys
+from neo.Network.nodemanager import NodeManager
 
 
 class CommandWalletAddress(CommandBase):
@@ -277,7 +275,9 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
     if ctx.Completed:
         contract_tx.scripts = ctx.GetScripts()
 
-        relayed = NodeLeader.Instance().Relay(contract_tx)
+        nodemgr = NodeManager()
+        # this blocks, consider moving this wallet function to async instead
+        relayed = nodemgr.relay(contract_tx)
 
         if relayed:
             wallet.SaveTransaction(contract_tx)

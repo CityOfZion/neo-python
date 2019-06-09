@@ -105,7 +105,8 @@ class SettingsHolder:
     DEBUG_STORAGE_PATH = 'Chains/debugstorage'
 
     ACCEPT_INCOMING_PEERS = False
-    CONNECTED_PEER_MAX = 20
+    CONNECTED_PEER_MAX = 10
+    CONNECTED_PEER_MIN = 4
 
     SERVICE_ENABLED = True
 
@@ -276,6 +277,13 @@ class SettingsHolder:
         maxpeers = int(num_peers)
         if maxpeers > 0:
             self.CONNECTED_PEER_MAX = maxpeers
+        else:
+            raise ValueError
+
+    def set_min_peers(self, num_peers):
+        minpeers = int(num_peers)
+        if minpeers > 0:
+            self.CONNECTED_PEER_MIN = minpeers
         else:
             raise ValueError
 

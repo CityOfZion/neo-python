@@ -20,12 +20,6 @@ NEP_FLAG = bytearray([0xe0])
 
 
 class KeyPair(object):
-    PublicKeyHash = None
-
-    PublicKey = None
-
-    PrivateKey = None
-
     def setup_curve(self):
         """
         Setup the Elliptic curve parameters.
@@ -52,6 +46,9 @@ class KeyPair(object):
                 if the input `priv_key` length is 32 but the public key still could not be determined
         """
         self.setup_curve()
+        self.PublicKeyHash = None
+        self.PublicKey = None
+        self.PrivateKey = None
 
         length = len(priv_key)
 

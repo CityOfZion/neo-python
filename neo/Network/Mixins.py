@@ -1,11 +1,11 @@
-
 from neo.Core.Mixins import VerifiableMixin
 
 
 class InventoryMixin(VerifiableMixin):
 
-    Hash = None
-    InventoryType = None
+    def __init__(self):
+        super(InventoryMixin, self).__init__()
+        self.InventoryType = None
 
     def Verify(self):
         pass

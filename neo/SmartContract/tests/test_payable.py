@@ -6,7 +6,6 @@ import binascii
 
 
 class SmartContractPayable(WalletFixtureTestCase):
-
     _wallet1 = None
     _path = "neo/SmartContract/tests/PayableTest.avm"
 
@@ -21,7 +20,7 @@ class SmartContractPayable(WalletFixtureTestCase):
         Result [{'type': 'Boolean', 'value': True}]
         """
 
-        wallet = self.GetWallet1()
+        wallet = self.GetWallet1(recreate=True)
 
         arguments = [self._path, "False", "False", "True", "07", "01", "payable"]
 

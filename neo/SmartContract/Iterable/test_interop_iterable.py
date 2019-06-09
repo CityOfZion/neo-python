@@ -1,22 +1,21 @@
 from unittest import TestCase
-from neo.VM.InteropService import Struct, StackItem, Array, Boolean, Map
+from neo.VM.InteropService import StackItem, Array, Map
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
-from neo.SmartContract.StateReader import StateReader
-from neo.SmartContract.Iterable import Iterator, KeysWrapper, ValuesWrapper
+from neo.VM.Script import Script
+from neo.SmartContract.Iterable import KeysWrapper, ValuesWrapper
 from neo.SmartContract.Iterable.Wrapper import ArrayWrapper, MapWrapper
 from neo.SmartContract.Iterable.ConcatenatedEnumerator import ConcatenatedEnumerator
+from neo.SmartContract.StateMachine import StateMachine
 
 
 class InteropSerializeDeserializeTestCase(TestCase):
-    engine = None
-    econtext = None
-    state_reader = None
-
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(engine=self.engine)
-        self.state_reader = StateReader()
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
+        self.engine.InvocationStack.PushT(self.econtext)
+
+        self.service = StateMachine(None, None, None, None, None, None)
 
     def test_iter_array(self):
         my_array = Array([StackItem.New(12),
@@ -26,7 +25,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
                           ])
         self.econtext.EvaluationStack.PushT(my_array)
         self.engine.InvocationStack.PushT(self.econtext)
-        self.state_reader.Enumerator_Create(self.engine)
+        self.service.Enumerator_Create(self.engine)
 
         iterable = self.econtext.EvaluationStack.Peek(0).GetInterface()
 
@@ -54,7 +53,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
         self.econtext.EvaluationStack.PushT(my_map)
         self.engine.InvocationStack.PushT(self.econtext)
 
-        self.state_reader.Iterator_Create(self.engine)
+        self.service.Iterator_Create(self.engine)
 
         iterable = self.econtext.EvaluationStack.Peek(0).GetInterface()
 
@@ -80,9 +79,9 @@ class InteropSerializeDeserializeTestCase(TestCase):
                           ])
         self.econtext.EvaluationStack.PushT(my_array)
         self.engine.InvocationStack.PushT(self.econtext)
-        self.state_reader.Enumerator_Create(self.engine)
+        self.service.Enumerator_Create(self.engine)
 
-        create_iterkeys = self.state_reader.Iterator_Keys(self.engine)
+        create_iterkeys = self.service.Iterator_Keys(self.engine)
 
         self.assertEqual(create_iterkeys, True)
 
@@ -104,9 +103,9 @@ class InteropSerializeDeserializeTestCase(TestCase):
                           ])
         self.econtext.EvaluationStack.PushT(my_array)
         self.engine.InvocationStack.PushT(self.econtext)
-        self.state_reader.Enumerator_Create(self.engine)
+        self.service.Enumerator_Create(self.engine)
 
-        create_itervalues = self.state_reader.Iterator_Values(self.engine)
+        create_itervalues = self.service.Iterator_Values(self.engine)
 
         self.assertEqual(create_itervalues, True)
 
@@ -131,13 +130,13 @@ class InteropSerializeDeserializeTestCase(TestCase):
 
         self.econtext.EvaluationStack.PushT(my_array2)
         self.engine.InvocationStack.PushT(self.econtext)
-        self.state_reader.Enumerator_Create(self.engine)
+        self.service.Enumerator_Create(self.engine)
 
         self.econtext.EvaluationStack.PushT(my_array)
 
-        self.state_reader.Enumerator_Create(self.engine)
+        self.service.Enumerator_Create(self.engine)
 
-        result = self.state_reader.Enumerator_Concat(self.engine)
+        result = self.service.Enumerator_Concat(self.engine)
 
         self.assertEqual(result, True)
 
@@ -160,7 +159,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
         self.econtext.EvaluationStack.PushT(my_item)
         self.engine.InvocationStack.PushT(self.econtext)
 
-        result = self.state_reader.Enumerator_Create(self.engine)
+        result = self.service.Enumerator_Create(self.engine)
 
         self.assertEqual(result, False)
         self.assertEqual(self.econtext.EvaluationStack.Count, 0)
@@ -169,7 +168,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
         my_item = StackItem.New(12)
         self.econtext.EvaluationStack.PushT(my_item)
         self.engine.InvocationStack.PushT(self.econtext)
-        result = self.state_reader.Iterator_Create(self.engine)
+        result = self.service.Iterator_Create(self.engine)
 
         self.assertEqual(result, False)
         self.assertEqual(self.econtext.EvaluationStack.Count, 0)
@@ -179,7 +178,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
         self.econtext.EvaluationStack.PushT(my_item)
         self.engine.InvocationStack.PushT(self.econtext)
 
-        result = self.state_reader.Iterator_Key(self.engine)
+        result = self.service.Iterator_Key(self.engine)
 
         self.assertEqual(result, False)
         self.assertEqual(self.econtext.EvaluationStack.Count, 0)
@@ -189,7 +188,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
         self.econtext.EvaluationStack.PushT(my_item)
         self.engine.InvocationStack.PushT(self.econtext)
 
-        result = self.state_reader.Iterator_Values(self.engine)
+        result = self.service.Iterator_Values(self.engine)
 
         self.assertEqual(result, False)
         self.assertEqual(self.econtext.EvaluationStack.Count, 0)
@@ -199,7 +198,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
         my_item = StackItem.New(12)
         self.econtext.EvaluationStack.PushT(my_item)
         self.engine.InvocationStack.PushT(self.econtext)
-        result = self.state_reader.Iterator_Keys(self.engine)
+        result = self.service.Iterator_Keys(self.engine)
 
         self.assertEqual(result, False)
         self.assertEqual(self.econtext.EvaluationStack.Count, 0)

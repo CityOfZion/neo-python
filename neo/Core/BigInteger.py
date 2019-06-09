@@ -54,10 +54,20 @@ class BigInteger(int):
         return BigInteger(super(BigInteger, self).__floordiv__(*args, **kwargs))
 
     def __rshift__(self, *args, **kwargs):
-        return BigInteger(super(BigInteger, self).__rshift__(*args, **kwargs))
+        shift = args[0]
+        if shift < 0:
+            shift = abs(shift)
+            return BigInteger(super(BigInteger, self).__lshift__(shift, **kwargs))
+        else:
+            return BigInteger(super(BigInteger, self).__rshift__(*args, **kwargs))
 
     def __lshift__(self, *args, **kwargs):
-        return BigInteger(super(BigInteger, self).__lshift__(*args, **kwargs))
+        shift = args[0]
+        if shift < 0:
+            shift = abs(shift)
+            return BigInteger(super(BigInteger, self).__rshift__(shift, **kwargs))
+        else:
+            return BigInteger(super(BigInteger, self).__lshift__(*args, **kwargs))
 
 
 ZERO = BigInteger(0)

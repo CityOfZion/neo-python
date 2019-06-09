@@ -5,15 +5,6 @@ from neo.SmartContract.ContractParameterType import ContractParameterType, ToNam
 
 
 class FunctionCode(SerializableMixin):
-    Script = bytearray()
-
-    ParameterList = bytearray()
-
-    ReturnType = None
-
-    _scriptHash = None
-
-    ContractProperties = None
 
     @property
     def ReturnTypeBigInteger(self):
@@ -53,6 +44,7 @@ class FunctionCode(SerializableMixin):
         return self.ContractProperties & ContractPropertyState.Payable > 0
 
     def __init__(self, script=None, param_list=None, return_type=255, contract_properties=0):
+        self._scriptHash = None
         self.Script = script
         if param_list is None:
             self.ParameterList = []

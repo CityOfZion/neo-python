@@ -17,21 +17,6 @@ logger = log_manager.getLogger()
 
 
 class Block(BlockBase, InventoryMixin):
-    #  < summary >
-    #  交易列表
-    #  < / summary >
-    Transactions = []
-
-    #  < summary >
-    #  该区块的区块头
-    #  < / summary >
-
-    _header = None
-
-    __is_trimmed = False
-    #  < summary >
-    #  资产清单的类型
-    #  < / summary >
     InventoryType = InventoryType.Block
 
     def __init__(self, prevHash=None, timestamp=None, index=None,
@@ -59,6 +44,8 @@ class Block(BlockBase, InventoryMixin):
         self.ConsensusData = consensusData
         self.NextConsensus = nextConsensus
         self.Script = script
+        self._header = None
+        self.__is_trimmed = False
 
         if transactions:
             self.Transactions = transactions
@@ -232,7 +219,8 @@ class Block(BlockBase, InventoryMixin):
         for tx_hash in reader.ReadHashes():
             tx = bc.GetTransaction(tx_hash)[0]
             if not tx:
-                raise Exception("Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
+                raise Exception(
+                    "Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
             tx_list.append(tx)
 
         if len(tx_list) < 1:
