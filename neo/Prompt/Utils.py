@@ -8,11 +8,11 @@ from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAt
 from neo.SmartContract.ContractParameter import ContractParameterType
 from neo.Core.Cryptography.ECCurve import ECDSA
 from decimal import Decimal
-from prompt_toolkit.shortcuts import PromptSession
 from neo.logging import log_manager
 from neo.Wallets import NEP5Token
 from neo.Core.Cryptography.Crypto import Crypto
 from typing import TYPE_CHECKING
+from neo.Network.common import blocking_prompt as prompt
 
 if TYPE_CHECKING:
     from neo.Wallets.Wallet import Wallet
@@ -217,12 +217,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True, parse_addr=Tr
     # first, we'll try to parse an array
     try:
         items = eval(p, {"__builtins__": {'list': list}}, {})
-        if len(items) > 0 and type(items) is list:
-
-            parsed = []
-            for item in items:
-                parsed.append(parse_param(item, wallet, parse_addr=parse_addr))
-            return parsed
+        return items
 
     except Exception as e:
         #        print("Could not eval items as array %s " % e)
@@ -309,10 +304,7 @@ def string_from_fixed8(amount, decimals):
 
 
 def get_input_prompt(message):
-    from neo.bin.prompt import PromptInterface
-
-    return PromptSession(completer=PromptInterface.prompt_completer,
-                         history=PromptInterface.history).prompt(message)
+    return prompt(message)
 
 
 def gather_param(index, param_type, do_continue=True):

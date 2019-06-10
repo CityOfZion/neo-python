@@ -52,7 +52,7 @@ def Build(arguments):
     return contract_script
 
 
-def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True):
+def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True, enable_debugger=False):
     arguments, from_addr = get_from_addr(arguments)
     arguments, invoke_attrs = get_tx_attr_from_args(arguments)
     arguments, owners = get_owners_from_params(arguments)
@@ -69,7 +69,7 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invoca
 
         return DoRun(contract_script, arguments, wallet, path, verbose,
                      from_addr, min_fee, invocation_test_mode,
-                     debug_map=debug_map, invoke_attrs=invoke_attrs, owners=owners)
+                     debug_map=debug_map, invoke_attrs=invoke_attrs, owners=owners, enable_debugger=enable_debugger)
     else:
         print('Please check the path to your Python (.py) file to compile')
         return None, None, None, None
@@ -77,7 +77,7 @@ def BuildAndRun(arguments, wallet, verbose=True, min_fee=DEFAULT_MIN_FEE, invoca
 
 def DoRun(contract_script, arguments, wallet, path, verbose=True,
           from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
-          debug_map=None, invoke_attrs=None, owners=None):
+          debug_map=None, invoke_attrs=None, owners=None, enable_debugger=False):
     if not wallet:
         print("Please open a wallet to test build contract")
         return None, None, None, None
@@ -92,7 +92,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
 
     tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr,
                                                            min_fee, invocation_test_mode, debug_map=debug_map,
-                                                           invoke_attrs=invoke_attrs, owners=owners)
+                                                           invoke_attrs=invoke_attrs, owners=owners, enable_debugger=enable_debugger)
     i_args.reverse()
 
     return_type_results = []
@@ -104,7 +104,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
     except Exception:
         raise TypeError
 
-    if tx and result:
+    if tx is not None and result is not None:
         if verbose:
             print("\n-----------------------------------------------------------")
             print("Calling %s with arguments %s " % (path, [item for item in reversed(engine.invocation_args)]))

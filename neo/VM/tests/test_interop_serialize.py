@@ -6,6 +6,8 @@ from neo.SmartContract.StateReader import StateReader
 from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Blockchain import Blockchain
+from neo.VM.Script import Script
+from neo.Core.Cryptography.Crypto import Crypto
 import logging
 
 
@@ -15,8 +17,9 @@ class InteropSerializeDeserializeTestCase(NeoTestCase):
     state_reader = None
 
     def setUp(self):
-        self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(engine=self.engine)
+        self.engine = ExecutionEngine(crypto=Crypto.Default())
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
+        self.engine.InvocationStack.PushT(self.econtext)
         self.state_reader = StateReader()
 
     def test_serialize_struct(self):

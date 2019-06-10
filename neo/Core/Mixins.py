@@ -9,15 +9,18 @@ class ClonableMixin(ABC):
 
 
 class CodeMixin:
-    scripts = []
-    parameter_list = []
-    return_type = None
-    script_hash = None
+    def __init__(self):
+        self.scripts = []
+        self.parameter_list = []
+        self.return_type = None
+        self.script_hash = None
 
 
 class VerifiableMixin(ABC, SerializableMixin):
 
-    scripts = []
+    def __init__(self):
+        super(VerifiableMixin, self).__init__()
+        self.scripts = []
 
     # <summary>
     # 反序列化未签名的数据

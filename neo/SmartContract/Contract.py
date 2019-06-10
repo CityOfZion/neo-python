@@ -24,10 +24,6 @@ class ContractType:
 class Contract(SerializableMixin, VerificationCode):
     """docstring for Contract"""
 
-    PublicKeyHash = None
-
-    _address = None
-
     @property
     def Address(self):
         if self._address is None:

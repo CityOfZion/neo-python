@@ -1,7 +1,7 @@
 import pytz
 from itertools import groupby
 from datetime import datetime
-from events import Events
+from neo.Network.common import Events
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.AssetType import AssetType
@@ -19,6 +19,7 @@ from neo.Core.Fixed8 import Fixed8
 from neo.Core.Cryptography.ECCurve import ECDSA
 from neo.Core.UInt256 import UInt256
 from functools import lru_cache
+from neo.Network.common import msgrouter
 
 from typing import TYPE_CHECKING, Optional
 
@@ -454,6 +455,7 @@ class Blockchain:
 
     def OnPersistCompleted(self, block):
         self.PersistCompleted.on_change(block)
+        msgrouter.on_block_persisted(block)
 
     def BlockCacheCount(self):
         pass

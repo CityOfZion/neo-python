@@ -10,8 +10,6 @@ from neo.Blockchain import GetSystemCoin, GetSystemShare
 
 
 class IssueTransaction(Transaction):
-    Nonce = None
-
     """docstring for IssueTransaction"""
 
     def __init__(self, *args, **kwargs):
@@ -24,6 +22,7 @@ class IssueTransaction(Transaction):
         """
         super(IssueTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.IssueTransaction  # 0x40
+        self.Nonce = None
 
     def SystemFee(self):
         """

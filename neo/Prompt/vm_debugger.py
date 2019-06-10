@@ -1,4 +1,4 @@
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
 from neo.Prompt.InputParser import InputParser
 from neo.SmartContract.ContractParameter import ContractParameter
 from neo.SmartContract.ContractParameterType import ContractParameterType
@@ -180,7 +180,12 @@ class VMDebugger:
                         value = self.engine.AltStack.Items[-1].GetArray()[idx]
                         param = ContractParameter.ToParameter(value)
                         print("\n")
-                        print('%s = %s [%s]' % (command, json.dumps(param.Value.ToJson(), indent=4) if param.Type == ContractParameterType.InteropInterface else param.Value, param.Type))
+
+                        if param.Type == ContractParameterType.InteropInterface:
+                            cmd_value = json.dumps(param.Value.ToJson(), indent=4)
+                        else:
+                            cmd_value = param.Value
+                        print(f"{command} = {cmd_value} [{param.Type}]")
                         print("\n")
                     except Exception as e:
                         logger.error("Could not lookup item %s: %s " % (command, e))

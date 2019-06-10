@@ -1,6 +1,6 @@
 from base58 import b58decode
 import binascii
-from neo.Blockchain import GetBlockchain, GetStateReader
+from neo.Blockchain import GetBlockchain, GetStateMachine
 from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
 from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
 from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
@@ -194,35 +194,36 @@ class Helper:
                 sb = ScriptBuilder()
                 sb.EmitAppCall(hashes[i].Data)
                 verification = sb.ms.getvalue()
+                sb.ms.Cleanup()
             else:
                 verification_hash = Crypto.ToScriptHash(verification, unhex=False)
                 if hashes[i] != verification_hash:
                     logger.debug(f"hash {hashes[i]} does not match verification hash {verification_hash}")
                     return False
 
-            state_reader = GetStateReader()
+            service = GetStateMachine()
             script_table = CachedScriptTable(DBCollection(blockchain._db, DBPrefix.ST_Contract, ContractState))
 
-            engine = ApplicationEngine(TriggerType.Verification, verifiable, script_table, state_reader, Fixed8.Zero())
+            engine = ApplicationEngine(TriggerType.Verification, verifiable, script_table, service, Fixed8.Zero())
             engine.LoadScript(verification)
             invocation = verifiable.Scripts[i].InvocationScript
             engine.LoadScript(invocation)
 
             try:
                 success = engine.Execute()
-                state_reader.ExecutionCompleted(engine, success)
+                service.ExecutionCompleted(engine, success)
             except Exception as e:
-                state_reader.ExecutionCompleted(engine, False, e)
+                service.ExecutionCompleted(engine, False, e)
 
             if engine.ResultStack.Count != 1 or not engine.ResultStack.Pop().GetBoolean():
-                Helper.EmitServiceEvents(state_reader)
+                Helper.EmitServiceEvents(service)
                 if engine.ResultStack.Count > 0:
                     logger.debug(f"Result stack failure! Count: {engine.ResultStack.Count} bool value: {engine.ResultStack.Pop().GetBoolean()}")
                 else:
                     logger.debug(f"Result stack failure! Count: {engine.ResultStack.Count}")
                 return False
 
-            Helper.EmitServiceEvents(state_reader)
+            Helper.EmitServiceEvents(service)
 
         return True
 

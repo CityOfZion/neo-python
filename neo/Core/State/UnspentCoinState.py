@@ -9,8 +9,6 @@ from neo.Core.State.CoinState import CoinState
 
 
 class UnspentCoinState(StateBase):
-    Items = None
-
     def __init__(self, items=None):
         """
         Create an instance.

@@ -22,51 +22,52 @@ from neo.VM import VMState
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.InteropService import Array
 from neo.VM.OpCode import APPCALL, TAILCALL, \
-    SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG
+    SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG, VERIFY
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('vm')
+
+HASH_NEO_ASSET_CREATE = hash("Neo.Asset.Create")
+HASH_ANT_ASSET_CREATE = hash("AntShares.Asset.Create")
+HASH_NEO_ASSET_RENEW = hash("Neo.Asset.Renew")
+HASH_ANT_ASSET_RENEW = hash("AntShares.Asset.Renew")
+HASH_NEO_CONTRACT_CREATE = hash("Neo.Contract.Create")
+HASH_NEO_CONTRACT_MIGRATE = hash("Neo.Contract.Migrate")
+HASH_ANT_CONTRACT_CREATE = hash("AntShares.Contract.Create")
+HASH_ANT_CONTRACT_MIGRATE = hash("AntShares.Contract.Migrate")
+HASH_SYSTEM_STORAGE_PUT = hash("System.Storage.Put")
+HASH_SYSTEM_STORAGE_PUTEX = hash("System.Storage.PutEx")
+HASH_NEO_STORAGE_PUT = hash("Neo.Storage.Put")
+HASH_ANT_STORAGE_PUT = hash("AntShares.Storage.Put")
 
 
 class ApplicationEngine(ExecutionEngine):
     ratio = 100000
     gas_free = 10 * 100000000
-    gas_amount = 0
-    gas_consumed = 0
-    testMode = False
-
-    Trigger = None
-
-    invocation_args = None
-
     max_free_ops = 500000
 
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
 
-    def __init__(self, trigger_type, container, table, service, gas, testMode=False, exit_on_error=False):
+    def __init__(self, trigger_type, container, table, service, gas, testMode=False, exit_on_error=True):
 
         super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=table, service=service, exit_on_error=exit_on_error)
 
+        self.service = service
         self.Trigger = trigger_type
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
         self._is_stackitem_count_strict = True
+        self.debugger = None
+        self.gas_consumed = 0
+        self.invocation_args = None
 
-    def CheckDynamicInvoke(self, opcode):
+    def CheckDynamicInvoke(self):
         cx = self.CurrentContext
+        opcode = cx.CurrentInstruction.OpCode
 
         if opcode in [OpCode.APPCALL, OpCode.TAILCALL]:
-            opreader = cx.OpReader
-            # read the current position of the stream
-            start_pos = opreader.stream.tell()
-
-            # normal app calls are stored in the op reader
-            # we read ahead past the next instruction 1 the next 20 bytes
-            script_hash = opreader.ReadBytes(21)[1:]
-
-            # then reset the position
-            opreader.stream.seek(start_pos)
+            script_hash = cx.CurrentInstruction.Operand
 
             for b in script_hash:
                 # if any of the bytes are greater than 0, this is a normal app call
@@ -88,8 +89,8 @@ class ApplicationEngine(ExecutionEngine):
         else:
             return True
 
-    def PreStepInto(self, opcode):
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
+    def PreExecuteInstruction(self):
+        if self.CurrentContext.InstructionPointer >= self.CurrentContext.Script.Length:
             return True
         self.gas_consumed = self.gas_consumed + (self.GetPrice() * self.ratio)
         if not self.testMode and self.gas_consumed > self.gas_amount:
@@ -98,45 +99,15 @@ class ApplicationEngine(ExecutionEngine):
             logger.debug("Too many free operations processed")
             return False
         try:
-            if not self.CheckDynamicInvoke(opcode):
+            if not self.CheckDynamicInvoke():
                 return False
         except Exception:
             pass
         return True
 
-    # @profile_it
-    def Execute(self):
-        try:
-            if settings.log_vm_instructions:
-                self.log_file = open(self.log_file_name, 'w')
-                self.write_log(str(datetime.datetime.now()))
-
-            while True:
-                if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script):
-                    nextOpcode = OpCode.RET
-                else:
-                    nextOpcode = self.CurrentContext.NextInstruction
-
-                if not self.PreStepInto(nextOpcode):
-                    # TODO: check with NEO is this should now be changed to not use |=
-                    self._VMState |= VMState.FAULT
-                    return False
-                self.StepInto()
-                if self._VMState & VMState.HALT > 0 or self._VMState & VMState.FAULT > 0:
-                    break
-        except Exception:
-            self._VMState |= VMState.FAULT
-            return False
-        finally:
-            if self.log_file:
-                self.log_file.close()
-
-        return not self._VMState & VMState.FAULT > 0
-
     def GetPrice(self):
 
-        opcode = self.CurrentContext.NextInstruction
-
+        opcode = self.CurrentContext.CurrentInstruction.OpCode
         if opcode <= NOP:
             return 0
 
@@ -148,7 +119,7 @@ class ApplicationEngine(ExecutionEngine):
             return 10
         elif opcode in [HASH160, HASH256]:
             return 20
-        elif opcode == CHECKSIG:
+        elif opcode in [CHECKSIG, VERIFY]:
             return 100
         elif opcode == CHECKMULTISIG:
             if self.CurrentContext.EvaluationStack.Count == 0:
@@ -169,75 +140,21 @@ class ApplicationEngine(ExecutionEngine):
             return 1
 
     def GetPriceForSysCall(self):
+        instruction = self.CurrentContext.CurrentInstruction
+        api_hash = instruction.TokenU32 if len(instruction.Operand) == 4 else hash(instruction.TokenString)
 
-        if self.CurrentContext.InstructionPointer >= len(self.CurrentContext.Script) - 3:
-            return 1
+        price = self.service.GetPrice(api_hash)
 
-        length = self.CurrentContext.Script[self.CurrentContext.InstructionPointer + 1]
+        if price > 0:
+            return price
 
-        if self.CurrentContext.InstructionPointer > len(self.CurrentContext.Script) - length - 2:
-            return 1
-
-        strbytes = self.CurrentContext.Script[self.CurrentContext.InstructionPointer + 2:length + self.CurrentContext.InstructionPointer + 2]
-
-        api_name = strbytes.decode('utf-8')
-
-        api = api_name.replace('Antshares.', 'Neo.')
-        api = api.replace('System.', 'Neo.')
-
-        if api == "Neo.Runtime.CheckWitness":
-            return 200
-
-        elif api == "Neo.Blockchain.GetHeader":
-            return 100
-
-        elif api == "Neo.Blockchain.GetBlock":
-            return 200
-
-        elif api == "Neo.Blockchain.GetTransaction":
-            return 100
-
-        elif api == "Neo.Blockchain.GetTransactionHeight":
-            return 100
-
-        elif api == "Neo.Blockchain.GetAccount":
-            return 100
-
-        elif api == "Neo.Blockchain.GetValidators":
-            return 200
-
-        elif api == "Neo.Blockchain.GetAsset":
-            return 100
-
-        elif api == "Neo.Blockchain.GetContract":
-            return 100
-
-        elif api == "Neo.Transaction.GetReferences":
-            return 200
-
-        elif api == "Neo.Transaction.GetWitnesses":
-            return 200
-
-        elif api == "Neo.Transaction.GetUnspentCoins":
-            return 200
-
-        elif api in ["Neo.Witness.GetInvocationScript", "Neo.Witness.GetVerificationScript"]:
-            return 100
-
-        elif api == "Neo.Account.SetVotes":
-            return 1000
-
-        elif api == "Neo.Validator.Register":
-            return int(1000 * 100000000 / self.ratio)
-
-        elif api == "Neo.Asset.Create":
+        if api_hash == HASH_NEO_ASSET_CREATE or api_hash == HASH_ANT_ASSET_CREATE:
             return int(5000 * 100000000 / self.ratio)
 
-        elif api == "Neo.Asset.Renew":
+        if api_hash == HASH_ANT_ASSET_RENEW or api_hash == HASH_ANT_ASSET_RENEW:
             return int(self.CurrentContext.EvaluationStack.Peek(1).GetBigInteger() * 5000 * 100000000 / self.ratio)
 
-        elif api == "Neo.Contract.Create" or api == "Neo.Contract.Migrate":
-
+        if api_hash == HASH_NEO_CONTRACT_CREATE or api_hash == HASH_NEO_CONTRACT_MIGRATE or api_hash == HASH_ANT_CONTRACT_CREATE or api_hash == HASH_ANT_CONTRACT_MIGRATE:
             fee = int(100 * 100000000 / self.ratio)  # 100 gas for contract with no storage no dynamic invoke
 
             contract_properties = self.CurrentContext.EvaluationStack.Peek(3).GetBigInteger()
@@ -250,21 +167,15 @@ class ApplicationEngine(ExecutionEngine):
 
             return fee
 
-        elif api == "Neo.Storage.Get":
-            return 100
-
-        elif api == "Neo.Storage.Put":
+        if api_hash == HASH_SYSTEM_STORAGE_PUT or api_hash == HASH_SYSTEM_STORAGE_PUTEX or api_hash == HASH_NEO_STORAGE_PUT or api_hash == HASH_ANT_STORAGE_PUT:
             l1 = len(self.CurrentContext.EvaluationStack.Peek(1).GetByteArray())
             l2 = len(self.CurrentContext.EvaluationStack.Peek(2).GetByteArray())
             return (int((l1 + l2 - 1) / 1024) + 1) * 1000
 
-        elif api == "Neo.Storage.Delete":
-            return 100
-
         return 1
 
     @staticmethod
-    def Run(script, container=None, exit_on_error=False, gas=Fixed8.Zero(), test_mode=True):
+    def Run(script, container=None, exit_on_error=True, gas=Fixed8.Zero(), test_mode=True):
         """
         Runs a script in a test invoke environment
 

@@ -1,6 +1,8 @@
 import plyvel
+import asyncio
 import binascii
 import struct
+import traceback
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Header import Header
 from neo.Core.Block import Block
@@ -28,10 +30,11 @@ from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 from neo.Core.Cryptography.Crypto import Crypto
-from neo.Core.BigInteger import BigInteger
 from neo.EventHub import events
+from typing import Tuple
 
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
+from neo.Network.common import wait_for
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('db')
@@ -53,7 +56,7 @@ class LevelDBBlockchain(Blockchain):
 
     # this is the version of the database
     # should not be updated for network version changes
-    _sysversion = b'schema v.0.6.9'
+    _sysversion = b'schema v.0.8.5'
 
     _persisting_block = None
 
@@ -109,7 +112,7 @@ class LevelDBBlockchain(Blockchain):
         self.TXProcessed = 0
 
         try:
-            self._db = plyvel.DB(self._path, create_if_missing=True)
+            self._db = plyvel.DB(self._path, create_if_missing=True, max_open_files=100, lru_cache_size=10 * 1024 * 1024)
             logger.info("Created Blockchain DB at %s " % self._path)
         except Exception as e:
             logger.info("leveldb unavailable, you may already be running this process: %s " % e)
@@ -133,13 +136,14 @@ class LevelDBBlockchain(Blockchain):
 
                 hashes = []
                 try:
-                    for key, value in self._db.iterator(prefix=DBPrefix.IX_HeaderHashList):
-                        ms = StreamManager.GetStream(value)
-                        reader = BinaryReader(ms)
-                        hlist = reader.Read2000256List()
-                        key = int.from_bytes(key[-4:], 'little')
-                        hashes.append({'k': key, 'v': hlist})
-                        StreamManager.ReleaseStream(ms)
+                    with self._db.iterator(prefix=DBPrefix.IX_HeaderHashList) as it:
+                        for key, value in it:
+                            ms = StreamManager.GetStream(value)
+                            reader = BinaryReader(ms)
+                            hlist = reader.Read2000256List()
+                            key = int.from_bytes(key[-4:], 'little')
+                            hashes.append({'k': key, 'v': hlist})
+                            StreamManager.ReleaseStream(ms)
                 except Exception as e:
                     logger.info("Could not get stored header hash list: %s " % e)
 
@@ -156,9 +160,10 @@ class LevelDBBlockchain(Blockchain):
                 if self._stored_header_count == 0:
                     logger.info("Current stored headers empty, re-creating from stored blocks...")
                     headers = []
-                    for key, value in self._db.iterator(prefix=DBPrefix.DATA_Block):
-                        dbhash = bytearray(value)[8:]
-                        headers.append(Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
+                    with self._db.iterator(prefix=DBPrefix.DATA_Block) as it:
+                        for key, value in it:
+                            dbhash = bytearray(value)[8:]
+                            headers.append(Header.FromTrimmedData(binascii.unhexlify(dbhash), 0))
 
                     headers.sort(key=lambda h: h.Index)
                     for h in headers:
@@ -186,7 +191,8 @@ class LevelDBBlockchain(Blockchain):
                         pass
 
         elif version is None:
-            self.Persist(Blockchain.GenesisBlock())
+
+            wait_for(self.Persist(Blockchain.GenesisBlock()))
             self._db.put(DBPrefix.SYS_Version, self._sysversion)
         else:
             logger.error("\n\n")
@@ -200,8 +206,9 @@ class LevelDBBlockchain(Blockchain):
             if res == 'continue':
 
                 with self._db.write_batch() as wb:
-                    for key, value in self._db.iterator():
-                        wb.delete(key)
+                    with self._db.iterator() as it:
+                        for key, value in it:
+                            wb.delete(key)
 
                 self.Persist(Blockchain.GenesisBlock())
                 self._db.put(DBPrefix.SYS_Version, self._sysversion)
@@ -589,7 +596,7 @@ class LevelDBBlockchain(Blockchain):
         return None
 
     def AddHeader(self, header):
-        self.AddHeaders([header])
+        return self.AddHeaders([header])
 
     def AddHeaders(self, headers):
 
@@ -614,7 +621,7 @@ class LevelDBBlockchain(Blockchain):
         if len(newheaders):
             self.ProcessNewHeaders(newheaders)
 
-        return True
+        return count
 
     def ProcessNewHeaders(self, headers):
 
@@ -655,10 +662,7 @@ class LevelDBBlockchain(Blockchain):
     def BlockCacheCount(self):
         return len(self._block_cache)
 
-    def Persist(self, block):
-
-        self._persisting_block = block
-
+    async def Persist(self, block):
         accounts = DBCollection(self._db, DBPrefix.ST_Account, AccountState)
         unspentcoins = DBCollection(self._db, DBPrefix.ST_Coin, UnspentCoinState)
         spentcoins = DBCollection(self._db, DBPrefix.ST_SpentCoin, SpentCoinState)
@@ -676,7 +680,6 @@ class LevelDBBlockchain(Blockchain):
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
 
             for tx in block.Transactions:
-
                 wb.put(DBPrefix.DATA_Transaction + tx.Hash.ToBytes(), block.IndexBytes() + tx.ToArray())
 
                 # go through all outputs and add unspent coins to them
@@ -778,6 +781,7 @@ class LevelDBBlockchain(Blockchain):
                         service.ExecutionCompleted(engine, False, e)
 
                     to_dispatch = to_dispatch + service.events_to_dispatch
+                    await asyncio.sleep(0.001)
                 else:
 
                     if tx.Type != b'\x00' and tx.Type != 128:
@@ -816,12 +820,28 @@ class LevelDBBlockchain(Blockchain):
 
             wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
             self._current_block_height = block.Index
-            self._persisting_block = None
 
             self.TXProcessed += len(block.Transactions)
 
         for event in to_dispatch:
             events.emit(event.event_type, event)
+
+    async def TryPersist(self, block: 'Block') -> Tuple[bool, str]:
+        distance = self._current_block_height - block.Index
+
+        if distance >= 0:
+            return False, "Block already exists"
+
+        if distance < -1:
+            return False, f"Trying to persist block {block.Index} but expecting next block to be {self._current_block_height + 1}"
+
+        try:
+            await self.Persist(block)
+        except Exception as e:
+            traceback.print_exc()
+            return False, f"{e}"
+
+        return True, ""
 
     def PersistBlocks(self, limit=None):
         ctr = 0

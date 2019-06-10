@@ -5,9 +5,6 @@ from neo.Core.Size import GetVarSize
 
 
 class CoinReference(SerializableMixin):
-    PrevHash = None
-
-    PrevIndex = None
 
     def __init__(self, prev_hash=None, prev_index=None):
         """
