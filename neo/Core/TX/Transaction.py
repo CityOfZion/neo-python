@@ -221,6 +221,7 @@ class Transaction(InventoryMixin):
     Version = 0
     InventoryType = InventoryType.TX
     MAX_TX_ATTRIBUTES = 16
+    MAX_TX_SIZE = 102400
 
     def __init__(self, inputs=None, outputs=None, attributes=None, scripts=None):
         """
@@ -590,6 +591,19 @@ class Transaction(InventoryMixin):
             bool: True if verified. False otherwise.
         """
         logger.debug("Verifying transaction: %s " % self.Hash.ToBytes())
+
+        # SimplePolicyPlugin
+        if self.Size() > self.MAX_TX_SIZE:
+            logger.debug(f'Maximum transaction size exceeded: {self.Size()} > {self.MAX_TX_SIZE}')
+            return False
+        fee = self.NetworkFee()
+        if self.Size() > settings.MAX_FREE_TX_SIZE and not self.Type == b'\x02':  # Claim Transactions are High Priority
+            req_fee = Fixed8.FromDecimal(settings.FEE_PER_EXTRA_BYTE * (self.Size() - settings.MAX_FREE_TX_SIZE))
+            if req_fee < settings.LOW_PRIORITY_THRESHOLD:
+                req_fee = settings.LOW_PRIORITY_THRESHOLD
+            if fee < req_fee:
+                logger.debug(f'The tx size ({self.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
+                return False
 
         return Helper.VerifyScripts(self)
 
