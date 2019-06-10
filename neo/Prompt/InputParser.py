@@ -12,7 +12,7 @@ class InputParser:
                     if x != ']':
                         break
                     command_parts[n - 1] = command_parts[n - 1] + i
-                    command_parts.pop(-1)
+                    command_parts.pop(n)
                     break
             return command_parts[0], command_parts[1:]
         return None, None
