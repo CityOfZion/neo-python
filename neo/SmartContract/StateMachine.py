@@ -890,7 +890,7 @@ class StateMachine(StateReader):
             iterator = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Iterator)
         except TypeError:
             return False
-        
+
         if iterator is None:
             return False
 
