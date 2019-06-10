@@ -38,6 +38,7 @@ All notable changes to this project are documented in this file.
 - Fix error while parsing list arguments from prompt for smart contract test invocations
 - Fix ``Runtime.GetTrigger`` and ``Transaction.GetType`` syscalls pushing wrong StackItem type
 - Update handling of default cause for ``PICKITEM`` instruction
+- Fix parsing nested lists `#954 <https://github.com/CityOfZion/neo-python/issues/954>`_
 
 
 [0.8.4] 2019-02-14
