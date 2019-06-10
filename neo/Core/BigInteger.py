@@ -19,7 +19,20 @@ class BigInteger(int):
             return b'\x00'
 
         if self < 0:
-            return self.to_bytes(1 + ((self.bit_length() + 7) // 8), byteorder='little', signed=True)
+            highbyte = 0xff
+            data = self.to_bytes(1 + ((self.bit_length() + 7) // 8), byteorder='little', signed=signed)
+
+            msb = len(data) - 1
+            for i, b in enumerate(data[::-1]):
+                if b != highbyte:
+                    msb = i
+                    break
+
+            needExtraByte = (data[msb] & 0x80) == (highbyte & 0x80)
+            if needExtraByte:
+                return data
+            else:
+                return data[:-1]
 
         try:
             return self.to_bytes((self.bit_length() + 7) // 8, byteorder='little', signed=signed)
