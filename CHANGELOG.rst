@@ -41,6 +41,7 @@ All notable changes to this project are documented in this file.
 - Fix ``InteropService.GetInterface`` not validating types correctly
 - Speed up `np-import` when appending blocks
 - Fix ``BigInteger.ToByteArray()`` for some negative values to return too many bytes
+- Implement SimplePolicyPlugin for transactions sent to a node `#960 <https://github.com/CityOfZion/neo-python/issues/960>`_
 - Fix transaction deserialization not setting correct type for ``ContractTransaction``
 
 
