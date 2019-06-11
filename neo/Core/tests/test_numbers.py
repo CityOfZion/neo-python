@@ -280,6 +280,14 @@ class BigIntegerTestCase(TestCase):
         b4ba = b4.ToByteArray()
         self.assertEqual(b4ba, b'\x00')
 
+        b5 = BigInteger(-146)
+        b5ba = b5.ToByteArray()
+        self.assertEqual(b'\x6e\xff', b5ba)
+
+        b6 = BigInteger(-48335248028225339427907476932896373492484053930)
+        b6ba = b6.ToByteArray()
+        self.assertEqual(20, len(b6ba))
+
     def test_big_integer_frombytes(self):
         b1 = BigInteger(8972340892734890723)
         ba = b1.ToByteArray()

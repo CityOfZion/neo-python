@@ -399,8 +399,14 @@ class InteropInterface(StackItem):
     def GetByteArray(self):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._object))
 
-    def GetInterface(self):
-        return self._object
+    def GetInterface(self, interface_type=None):
+        if interface_type is None:
+            return self._object
+        else:
+            if issubclass(type(self._object), interface_type):
+                return self._object
+            else:
+                return None
 
     def Serialize(self, writer):
         raise Exception('Not supported- Cannot serialize Interop Interface %s %s ' % (type(self), self._object))
