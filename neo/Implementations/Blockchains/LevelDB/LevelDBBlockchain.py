@@ -784,7 +784,7 @@ class LevelDBBlockchain(Blockchain):
                     await asyncio.sleep(0.001)
                 else:
 
-                    if tx.Type != b'\x00' and tx.Type != 128:
+                    if tx.Type != b'\x00' and tx.Type != b'\x80':
                         logger.info("TX Not Found %s " % tx.Type)
 
             # do save all the accounts, unspent, coins, validators, assets, etc
