@@ -261,7 +261,7 @@ class Boolean(StackItem):
         return self._value == other._value
 
     def GetBigInteger(self):
-        return 1 if self._value else 0
+        return BigInteger(1) if self._value else BigInteger(0)
 
     def GetBoolean(self):
         return self._value
@@ -274,7 +274,7 @@ class Boolean(StackItem):
 
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.Boolean)
-        writer.WriteByte(self.GetBigInteger())
+        writer.WriteByte(self.GetBoolean())
 
     def __str__(self):
         return str(self._value)

@@ -82,6 +82,11 @@ class BinaryWriter(object):
             self.stream.write(value.encode('utf-8'))
         elif type(value) is int:
             self.stream.write(bytes([value]))
+        elif type(value) is bool:
+            if value:
+                self.stream.write(bytes([1]))
+            else:
+                self.stream.write(bytes([0]))
 
     def WriteBytes(self, value, unhex=True):
         """
