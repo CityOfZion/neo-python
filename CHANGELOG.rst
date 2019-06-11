@@ -39,6 +39,8 @@ All notable changes to this project are documented in this file.
 - Fix ``Runtime.GetTrigger`` and ``Transaction.GetType`` syscalls pushing wrong StackItem type
 - Update handling of default cause for ``PICKITEM`` instruction
 - Fix ``InteropService.GetInterface`` not validating types correctly
+- Speed up `np-import` when appending blocks
+- Fix ``BigInteger.ToByteArray()`` for some negative values to return too many bytes
 
 
 [0.8.4] 2019-02-14
