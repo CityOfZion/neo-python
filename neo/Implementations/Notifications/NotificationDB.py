@@ -72,7 +72,6 @@ class NotificationDB:
 
         try:
             self._db = getNotificationDB(path)
-            logger.info("Created Notification DB At %s " % path)
         except Exception as e:
             logger.info("Notification leveldb unavailable, you may already be running this process: %s " % e)
             raise Exception('Notification Leveldb Unavailable %s ' % e)

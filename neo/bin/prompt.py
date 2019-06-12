@@ -354,7 +354,7 @@ def main():
     use_asyncio_event_loop()
 
     # Instantiate the blockchain and subscribe to notifications
-    blockchain = Blockchain(DBFactory.getBlockchainDB())
+    blockchain = Blockchain(DBFactory.getBlockchainDB(settings.chain_leveldb_path))
     Blockchain.RegisterBlockchain(blockchain)
 
     # Try to set up a notification db
