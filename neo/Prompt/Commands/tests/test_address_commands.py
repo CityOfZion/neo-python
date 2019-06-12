@@ -97,6 +97,14 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         res = CommandWallet().execute(args)
         self.assertFalse(res)
 
+        # verify wallet has no aliases
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = [""]
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertEqual(len(PromptData.Wallet.NamedAddr), 0)
+            self.assertNotIn("Alias", mock_print.getvalue())
+
         # test wallet alias successful
         self.assertNotIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
 
@@ -104,6 +112,12 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         res = CommandWallet().execute(args)
         self.assertTrue(res)
         self.assertIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
+
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = [""]
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Alias      : mine", mock_print.getvalue())
 
     def test_6_split_unspent(self):
         wallet = self.GetWallet1(recreate=True)

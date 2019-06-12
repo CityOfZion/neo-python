@@ -4,6 +4,9 @@ from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
 from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
 from neo.Blockchain import GetBlockchain
+from neo.Core.BlockBase import BlockBase
+from neo.Core.Block import Block
+from neo.Core.TX.Transaction import Transaction
 from neo.Core.Cryptography.Crypto import Crypto
 from neo.Core.BigInteger import BigInteger
 from neo.Core.UInt160 import UInt160
@@ -193,7 +196,7 @@ class StateReader(InteropService):
 
     def Runtime_GetTrigger(self, engine):
 
-        engine.CurrentContext.EvaluationStack.PushT(engine.Trigger)
+        engine.CurrentContext.EvaluationStack.PushT(int.from_bytes(engine.Trigger, 'little'))
 
         return True
 
@@ -434,28 +437,28 @@ class StateReader(InteropService):
         return True
 
     def Header_GetIndex(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.Index)
         return True
 
     def Header_GetHash(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.Hash.ToArray())
         return True
 
     def Header_GetPrevHash(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.PrevHash.ToArray())
         return True
 
     def Header_GetTimestamp(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.Timestamp)
@@ -463,14 +466,14 @@ class StateReader(InteropService):
         return True
 
     def Block_GetTransactionCount(self, engine: ExecutionEngine):
-        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Block)
         if block is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(len(block.Transactions))
         return True
 
     def Block_GetTransactions(self, engine: ExecutionEngine):
-        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Block)
         if block is None:
             return False
 
@@ -482,7 +485,7 @@ class StateReader(InteropService):
         return True
 
     def Block_GetTransaction(self, engine: ExecutionEngine):
-        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Block)
         index = engine.CurrentContext.EvaluationStack.Pop().GetBigInteger()
 
         if block is None or index < 0 or index > len(block.Transactions):
@@ -493,7 +496,7 @@ class StateReader(InteropService):
         return True
 
     def Transaction_GetHash(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
         if tx is None:
             return False
 
@@ -517,7 +520,7 @@ class StateReader(InteropService):
         return True
 
     def StorageContext_AsReadOnly(self, engine: ExecutionEngine):
-        context = engine.CurrentContext.EvaluationStack.Pop.GetInterface()
+        context = engine.CurrentContext.EvaluationStack.Pop.GetInterface(StorageContext)
 
         if context is None:
             return False
@@ -532,9 +535,8 @@ class StateReader(InteropService):
         context = None
         try:
             item = engine.CurrentContext.EvaluationStack.Pop()
-            context = item.GetInterface()
+            context = item.GetInterface(StorageContext)
         except Exception as e:
-            logger.error("could not get storage context %s " % e)
             return False
 
         if not self.CheckStorageContext(context):
@@ -571,9 +573,8 @@ class StateReader(InteropService):
 
         context = None
         try:
-            context = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+            context = engine.CurrentContext.EvaluationStack.Pop().GetInterface(StorageContext)
         except Exception as e:
-            logger.error("Storage Context Not found on stack")
             return False
 
         if not self.CheckStorageContext(context):
@@ -607,7 +608,7 @@ class StateReader(InteropService):
 
     def Contract_GetStorageContext(self, engine):
 
-        contract = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        contract = engine.CurrentContext.EvaluationStack.Pop().GetInterface(ContractState)
 
         shash = contract.Code.ScriptHash()
 
@@ -650,7 +651,7 @@ class StateReader(InteropService):
 
     def Storage_Delete(self, engine: ExecutionEngine):
 
-        context = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        context = engine.CurrentContext.EvaluationStack.Pop().GetInterface(StorageContext)
 
         if not self.CheckStorageContext(context):
             return False

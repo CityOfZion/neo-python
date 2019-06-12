@@ -37,11 +37,11 @@ class TestVMErrors(BoaTest):
 
     def test_invalid_type_indexing(self):
         with self.assertLogHandler('vm', DEBUG) as log_context:
-            tx, results, total_ops, engine = TestBuild(self.script, [3, ['my_arg0']], self.GetWallet1(), '0210', '07')
+            tx, results, total_ops, engine = TestBuild(self.script, [3, [1]], self.GetWallet1(), '0210', '07')
             self.assertTrue(len(log_context.output) > 0)
             log_msg = log_context.output[0]
             # an index of 1 for an array with length one is out of bounds
-            self.assertTrue("Array index is less than zero or 1 exceeds list length 1" in log_msg)
+            self.assertTrue("Item is not an Array or Map but of type" in log_msg)
 
     def test_invalid_appcall(self):
         with self.assertLogHandler('vm', DEBUG) as log_context:

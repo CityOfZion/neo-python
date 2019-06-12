@@ -924,13 +924,7 @@ class ExecutionEngine:
                     else:
                         return self.VM_FAULT_and_report(VMFault.DICT_KEY_NOT_FOUND, key, collection.Keys)
                 else:
-                    byte_array = collection.GetByteArray()
-                    index = key.GetBigInteger()
-                    if index < 0 or index >= len(byte_array):
-                        self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_INDEX, index, len(byte_array))
-                        return
-                    estack.PushT(byte_array[index])
-                    self.CheckStackSize(True, -1)
+                    return self.VM_FAULT_and_report(VMFault.PICKITEM_INVALID_TYPE, key, collection)
 
             elif opcode == SETITEM:
                 value = estack.Pop()
@@ -1290,7 +1284,7 @@ class ExecutionEngine:
         elif id == VMFault.PICKITEM_INVALID_TYPE:
             index = args[0]
             item = args[1]
-            error_msg = "Cannot access item at index {}. Item is not an array or dict but of type: {}".format(index, type(item))
+            error_msg = "Cannot access item at index {}. Item is not an Array or Map but of type: {}".format(index, type(item))
 
         elif id == VMFault.PICKITEM_NEGATIVE_INDEX:
             error_msg = "Attempting to access an array using a negative index"

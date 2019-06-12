@@ -33,6 +33,17 @@ All notable changes to this project are documented in this file.
 - Fix ``np-import`` not importing headers ahead of block persisting potentially unexpected VM execution results
 - Fix undesired debug statement printing
 - Add negative bitwise shifting support for ``BigInteger`` to match C#
+- Include address aliases in ``wallet`` command output
+- Fix ``config maxpeers`` and update tests
+- Fix error while parsing list arguments from prompt for smart contract test invocations
+- Fix ``Runtime.GetTrigger`` and ``Transaction.GetType`` syscalls pushing wrong StackItem type
+- Update handling of default cause for ``PICKITEM`` instruction
+- Fix ``InteropService.GetInterface`` not validating types correctly
+- Speed up `np-import` when appending blocks
+- Fix ``BigInteger.ToByteArray()`` for some negative values to return too many bytes
+- Implement SimplePolicyPlugin for transactions sent to a node `#960 <https://github.com/CityOfZion/neo-python/issues/960>`_
+- Fix transaction deserialization not setting correct type for ``ContractTransaction``
+- Fix ``GetBigInteger()`` return value of ``Boolean`` ``StackItem`` to return correct type
 
 
 [0.8.4] 2019-02-14

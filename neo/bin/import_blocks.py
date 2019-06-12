@@ -93,13 +93,25 @@ async def _main():
         target_dir = os.path.join(settings.DATA_DIR_PATH, settings.LEVELDB_PATH)
         notif_target_dir = os.path.join(settings.DATA_DIR_PATH, settings.NOTIFICATION_DB_PATH)
 
+        stream = MemoryStream()
+        reader = BinaryReader(stream)
+        block = Block()
+        length_ba = bytearray(4)
+        ctr = 0
+
         if append:
-            blockchain = Blockchain(getBlockchainDB(settings.chain_leveldb_path), skip_header_check=True)
+            blockchain = Blockchain(getBlockchainDB(settings.chain_leveldb_path), skip_header_check=False)
             Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 
             start_block = Blockchain.Default().Height
             print("Starting import at %s " % start_block)
+
+            for _ in trange(start_block + 1, desc='Skipping blocks', unit='Block'):
+                file_input.readinto(length_ba)
+                block_len = int.from_bytes(length_ba, 'little')
+                file_input.seek(block_len, 1)
+                ctr += 1
         else:
             print("Will import %s of %s blocks to %s" % (total_blocks, total_blocks_available, target_dir))
             print("This will overwrite any data currently in %s and %s.\nType 'confirm' to continue" % (target_dir, notif_target_dir))
@@ -131,12 +143,7 @@ async def _main():
         if store_notifications:
             NotificationDB.instance().start()
 
-        stream = MemoryStream()
-        reader = BinaryReader(stream)
-        block = Block()
-        length_ba = bytearray(4)
-
-        for index in trange(total_blocks, desc='Importing Blocks', unit=' Block'):
+        for index in trange(total_blocks, desc='Importing Blocks', unit=' Block', initial=ctr):
             # set stream data
             file_input.readinto(length_ba)
             block_len = int.from_bytes(length_ba, 'little')

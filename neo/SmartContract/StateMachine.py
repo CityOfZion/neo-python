@@ -1,4 +1,13 @@
 import sys
+from neo.Core.BlockBase import BlockBase
+from neo.Core.TX.Transaction import Transaction, TransactionOutput
+from neo.Core.TX.TransactionAttribute import TransactionAttribute
+from neo.Core.TX.InvocationTransaction import InvocationTransaction
+from neo.Core.CoinReference import CoinReference
+from neo.SmartContract.Iterable import Enumerator, Iterator
+
+import neo.Core.State
+
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.FunctionCode import FunctionCode
@@ -270,46 +279,46 @@ class StateMachine(StateReader):
         return True
 
     def Header_GetVersion(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.Version)
         return True
 
     def Header_GetMerkleRoot(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.MerkleRoot.ToArray())
         return True
 
     def Header_GetConsensusData(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.ConsensusData)
         return True
 
     def Header_GetNextConsensus(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.NextConsensus.ToArray())
         return True
 
     def Transaction_GetType(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
         if tx is None:
             return False
 
         if isinstance(tx.Type, bytes):
-            engine.CurrentContext.EvaluationStack.PushT(tx.Type)
+            engine.CurrentContext.EvaluationStack.PushT(int.from_bytes(tx.Type, 'little'))
         else:
-            engine.CurrentContext.EvaluationStack.PushT(tx.Type.to_bytes(1, 'little'))
+            engine.CurrentContext.EvaluationStack.PushT(tx.Type)
         return True
 
     def Transaction_GetAttributes(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
         if tx is None:
             return False
 
@@ -321,7 +330,7 @@ class StateMachine(StateReader):
         return True
 
     def Transaction_GetInputs(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
         if tx is None:
             return False
 
@@ -333,7 +342,7 @@ class StateMachine(StateReader):
         return True
 
     def Transaction_GetOutputs(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
 
         if tx is None:
             return False
@@ -350,7 +359,7 @@ class StateMachine(StateReader):
         return True
 
     def Transaction_GetReferences(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
 
         if tx is None:
             return False
@@ -364,7 +373,7 @@ class StateMachine(StateReader):
         return True
 
     def Transaction_GetUnspentCoins(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
 
         if tx is None:
             return False
@@ -378,7 +387,7 @@ class StateMachine(StateReader):
         return True
 
     def Transaction_GetWitnesses(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
 
         if tx is None:
             return False
@@ -391,13 +400,14 @@ class StateMachine(StateReader):
         return True
 
     def InvocationTransaction_GetScript(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(InvocationTransaction)
         if tx is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(tx.Script)
         return True
 
     def Witness_GetVerificationScript(self, engine: ExecutionEngine):
+        # TODO: create witness wrapper
         witness = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
         if witness is None:
             return False
@@ -405,28 +415,28 @@ class StateMachine(StateReader):
         return True
 
     def Attribute_GetUsage(self, engine: ExecutionEngine):
-        attr = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        attr = engine.CurrentContext.EvaluationStack.Pop().GetInterface(TransactionAttribute)
         if attr is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(attr.Usage)
         return True
 
     def Attribute_GetData(self, engine: ExecutionEngine):
-        attr = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        attr = engine.CurrentContext.EvaluationStack.Pop().GetInterface(TransactionAttribute)
         if attr is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(attr.Data)
         return True
 
     def Input_GetHash(self, engine: ExecutionEngine):
-        input = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        input = engine.CurrentContext.EvaluationStack.Pop().GetInterface(CoinReference)
         if input is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(input.PrevHash.ToArray())
         return True
 
     def Input_GetIndex(self, engine: ExecutionEngine):
-        input = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        input = engine.CurrentContext.EvaluationStack.Pop().GetInterface(CoinReference)
         if input is None:
             return False
 
@@ -434,7 +444,7 @@ class StateMachine(StateReader):
         return True
 
     def Output_GetAssetId(self, engine: ExecutionEngine):
-        output = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        output = engine.CurrentContext.EvaluationStack.Pop().GetInterface(TransactionOutput)
 
         if output is None:
             return False
@@ -443,7 +453,7 @@ class StateMachine(StateReader):
         return True
 
     def Output_GetValue(self, engine: ExecutionEngine):
-        output = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        output = engine.CurrentContext.EvaluationStack.Pop().GetInterface(TransactionOutput)
         if output is None:
             return False
 
@@ -451,7 +461,7 @@ class StateMachine(StateReader):
         return True
 
     def Output_GetScriptHash(self, engine: ExecutionEngine):
-        output = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        output = engine.CurrentContext.EvaluationStack.Pop().GetInterface(TransactionOutput)
 
         if output is None:
             return False
@@ -460,14 +470,14 @@ class StateMachine(StateReader):
         return True
 
     def Account_GetScriptHash(self, engine: ExecutionEngine):
-        account = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        account = engine.CurrentContext.EvaluationStack.Pop().GetInterface(AccountState)
         if account is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(account.ScriptHash.ToArray())
         return True
 
     def Account_GetVotes(self, engine: ExecutionEngine):
-        account = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        account = engine.CurrentContext.EvaluationStack.Pop().GetInterface(AccountState)
         if account is None:
             return False
 
@@ -476,7 +486,7 @@ class StateMachine(StateReader):
         return True
 
     def Account_GetBalance(self, engine: ExecutionEngine):
-        account = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        account = engine.CurrentContext.EvaluationStack.Pop().GetInterface(AccountState)
         assetId = UInt256(data=engine.CurrentContext.EvaluationStack.Pop().GetByteArray())
 
         if account is None:
@@ -569,7 +579,7 @@ class StateMachine(StateReader):
 
     def Asset_Renew(self, engine: ExecutionEngine):
 
-        current_asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        current_asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
 
         if current_asset is None:
             return False
@@ -598,56 +608,56 @@ class StateMachine(StateReader):
         return True
 
     def Asset_GetAssetId(self, engine: ExecutionEngine):
-        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(asset.AssetId.ToArray())
         return True
 
     def Asset_GetAssetType(self, engine: ExecutionEngine):
-        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(asset.AssetType)
         return True
 
     def Asset_GetAmount(self, engine: ExecutionEngine):
-        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(asset.Amount.GetData())
         return True
 
     def Asset_GetAvailable(self, engine: ExecutionEngine):
-        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(asset.Available.GetData())
         return True
 
     def Asset_GetPrecision(self, engine: ExecutionEngine):
-        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(asset.Precision)
         return True
 
     def Asset_GetOwner(self, engine: ExecutionEngine):
-        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(asset.Owner.EncodePoint(True))
         return True
 
     def Asset_GetAdmin(self, engine: ExecutionEngine):
-        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(asset.Admin.ToArray())
         return True
 
     def Asset_GetIssuer(self, engine: ExecutionEngine):
-        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        asset = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.State.AssetState.AssetState)
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(asset.Issuer.ToArray())
@@ -779,21 +789,21 @@ class StateMachine(StateReader):
         return self.Contract_Destroy(engine)
 
     def Contract_GetScript(self, engine: ExecutionEngine):
-        contract = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        contract = engine.CurrentContext.EvaluationStack.Pop().GetInterface(ContractState)
         if contract is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(contract.Code.Script)
         return True
 
     def Contract_IsPayable(self, engine: ExecutionEngine):
-        contract = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        contract = engine.CurrentContext.EvaluationStack.Pop().GetInterface(ContractState)
         if contract is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(contract.Payable)
         return True
 
     def Storage_Find(self, engine: ExecutionEngine):
-        context = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        context = engine.CurrentContext.EvaluationStack.Pop().GetInterface(StorageContext)
         if context is None:
             return False
 
@@ -817,14 +827,14 @@ class StateMachine(StateReader):
         return False
 
     def Enumerator_Next(self, engine: ExecutionEngine):
-        item = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        item = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Enumerator)
         if item is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(item.Next())
         return True
 
     def Enumerator_Value(self, engine: ExecutionEngine):
-        item = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        item = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Enumerator)
         if item is None:
             return False
 
@@ -832,11 +842,11 @@ class StateMachine(StateReader):
         return True
 
     def Enumerator_Concat(self, engine: ExecutionEngine):
-        item1 = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        item1 = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Enumerator)
         if item1 is None:
             return False
 
-        item2 = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        item2 = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Enumerator)
         if item2 is None:
             return False
 
@@ -853,7 +863,11 @@ class StateMachine(StateReader):
         return False
 
     def Iterator_Key(self, engine: ExecutionEngine):
-        iterator = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        try:
+            iterator = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Iterator)
+        except TypeError:
+            return False
+
         if iterator is None:
             return False
 
@@ -861,7 +875,11 @@ class StateMachine(StateReader):
         return True
 
     def Iterator_Keys(self, engine: ExecutionEngine):
-        iterator = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        try:
+            iterator = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Iterator)
+        except TypeError:
+            return False
+
         if iterator is None:
             return False
         wrapper = StackItem.FromInterface(KeysWrapper(iterator))
@@ -869,7 +887,11 @@ class StateMachine(StateReader):
         return True
 
     def Iterator_Values(self, engine: ExecutionEngine):
-        iterator = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        try:
+            iterator = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Iterator)
+        except TypeError:
+            return False
+
         if iterator is None:
             return False
 
@@ -878,11 +900,11 @@ class StateMachine(StateReader):
         return True
 
     def Iterator_Concat(self, engine: ExecutionEngine):
-        item1 = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        item1 = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Iterator)
         if item1 is None:
             return False
 
-        item2 = engine.CurrentContext.EvaluationStack.Pop().GetInterface()
+        item2 = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Iterator)
         if item2 is None:
             return False
 
