@@ -25,10 +25,10 @@ class BigInteger(int):
             msb = len(data) - 1
             for i, b in enumerate(data[::-1]):
                 if b != highbyte:
-                    msb = i
+                    msb -= i
                     break
 
-            needExtraByte = (data[msb] & 0x80) == (highbyte & 0x80)
+            needExtraByte = (data[msb] & 0x80) != (highbyte & 0x80)
             if needExtraByte:
                 return data
             else:
