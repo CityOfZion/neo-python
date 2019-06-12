@@ -10,7 +10,6 @@ import neo.Core.State
 
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AssetState import AssetState
-from neo.Core.Blockchain import Blockchain
 from neo.Core.FunctionCode import FunctionCode
 from neo.Core.State.StorageItem import StorageItem
 from neo.Core.State.StorageKey import StorageKey
@@ -22,6 +21,7 @@ from neo.Core.UInt160 import UInt160
 from neo.Core.UInt256 import UInt256
 from neo.Core.State.AccountState import AccountState
 from neo.Core.Fixed8 import Fixed8
+from neo.Blockchain import GetBlockchain
 from neo.VM.InteropService import StackItem
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.SmartContract.StorageContext import StorageContext
@@ -39,7 +39,7 @@ logger = log_manager.getLogger('vm')
 
 
 class StateMachine(StateReader):
-    def __init__(self, accounts, validators, assets, contracts, storages, wb):
+    def __init__(self, accounts, validators, assets, contracts, storages, wb, chain):
 
         super(StateMachine, self).__init__()
 
@@ -49,6 +49,7 @@ class StateMachine(StateReader):
         self._contracts = contracts
         self._storages = storages
         self._wb = wb
+        self._chain = chain
         self._contracts_created = {}
 
         # checks for testing purposes
@@ -258,7 +259,7 @@ class StateMachine(StateReader):
         return True
 
     def Blockchain_GetValidators(self, engine: ExecutionEngine):
-        validators = Blockchain.Default().GetValidators()
+        validators = GetBlockchain().GetValidators()
 
         items = [StackItem(validator.encode_point(compressed=True)) for validator in validators]
 
@@ -270,7 +271,7 @@ class StateMachine(StateReader):
         data = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
         asset = None
 
-        if Blockchain.Default() is not None:
+        if GetBlockchain() is not None:
             asset = self.Assets.TryGet(UInt256(data=data))
         if asset is None:
             return False
@@ -377,7 +378,7 @@ class StateMachine(StateReader):
         if tx is None:
             return False
 
-        outputs = Blockchain.Default().GetAllUnspent(tx.Hash)
+        outputs = GetBlockchain().GetAllUnspent(tx.Hash)
         if len(outputs) > engine.maxArraySize:
             return False
 
@@ -564,7 +565,7 @@ class StateMachine(StateReader):
             asset_id=tx.Hash, asset_type=asset_type, name=name, amount=amount,
             available=Fixed8.Zero(), precision=precision, fee_mode=0, fee=Fixed8.Zero(),
             fee_addr=UInt160(), owner=owner, admin=admin, issuer=issuer,
-            expiration=Blockchain.Default().Height + 1 + 2000000, is_frozen=False
+            expiration=self._chain.Height + 1 + 2000000, is_frozen=False
         )
 
         asset = self._assets.ReplaceOrAdd(tx.Hash.ToBytes(), new_asset)
@@ -587,8 +588,8 @@ class StateMachine(StateReader):
 
         asset = self._assets.GetAndChange(current_asset.AssetId.ToBytes())
 
-        if asset.Expiration < Blockchain.Default().Height + 1:
-            asset.Expiration = Blockchain.Default().Height + 1
+        if asset.Expiration < self._chain.Height + 1:
+            asset.Expiration = self._chain.Height + 1
 
         try:
 
@@ -713,7 +714,7 @@ class StateMachine(StateReader):
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_CREATED, ContractParameter(ContractParameterType.InteropInterface, contract),
-                               hash, Blockchain.Default().Height + 1,
+                               hash, self._chain.Height + 1,
                                engine.ScriptContainer.Hash if engine.ScriptContainer else None,
                                test_mode=engine.testMode))
         return True
@@ -781,7 +782,7 @@ class StateMachine(StateReader):
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_MIGRATED, ContractParameter(ContractParameterType.InteropInterface, contract),
-                               hash, Blockchain.Default().Height + 1,
+                               hash, self._chain.Height + 1,
                                engine.ScriptContainer.Hash if engine.ScriptContainer else None,
                                test_mode=engine.testMode))
 

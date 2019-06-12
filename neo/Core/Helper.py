@@ -1,9 +1,9 @@
-from base58 import b58decode
 import binascii
+from base58 import b58decode
 from neo.Blockchain import GetBlockchain, GetStateMachine
-from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Storage.Interface.DBInterface import DBInterface
+from neo.Storage.Common.CachedScriptTable import CachedScriptTable
+from neo.Storage.Common.DBPrefix import DBPrefix
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.AssetState import AssetState
 from neo.Core.Cryptography.Crypto import Crypto
@@ -202,7 +202,7 @@ class Helper:
                     return False
 
             service = GetStateMachine()
-            script_table = CachedScriptTable(DBCollection(blockchain._db, DBPrefix.ST_Contract, ContractState))
+            script_table = CachedScriptTable(DBInterface(blockchain._db, DBPrefix.ST_Contract, ContractState))
 
             engine = ApplicationEngine(TriggerType.Verification, verifiable, script_table, service, Fixed8.Zero())
             engine.LoadScript(verification)

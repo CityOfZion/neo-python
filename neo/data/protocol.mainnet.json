@@ -43,8 +43,6 @@
     }
   },
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "Chains/Main",
-    "NotificationDataPath": "Chains/Main_Notif",
     "RPCPort": 10332,
     "NodePort": 10333,
     "WsPort": 10334,
@@ -59,6 +57,18 @@
     "AcceptIncomingPeers": false,
     "CompilerNep8": false,
     "RestServer": "neo.api.REST.RestApi.RestApi",
-    "RPCServer": "neo.api.JSONRPC.JsonRpcApi.JsonRpcApi"
+    "RPCServer": "neo.api.JSONRPC.JsonRpcApi.JsonRpcApi",
+    "Database": {
+        "Blockchain": {
+            "skip_version_check": false,
+            "DataDirectoryPath": "Chains/Main",
+            "backend": "neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl"},
+        "Notification": {
+            "NotificationDataPath": "Chains/Main_Notif",
+            "backend": "neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl"},
+        "DebugStorage": {
+            "DebugStoragePath": "Chains/debugstorage",
+            "backend": "neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl"}
+    }
   }
 }

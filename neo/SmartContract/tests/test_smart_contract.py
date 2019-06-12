@@ -45,6 +45,8 @@ class SmartContractTest(BlockchainFixtureTestCase):
 
         block = Helper.AsSerializableWithType(hexdata, 'neo.Core.Block.Block')
 
-        result = self._blockchain.Persist(block)
+        result = False
+        with BlockchainFixtureTestCase.MPPersist():
+            result = self._blockchain.Persist(block)
 
         self.assertTrue(result)

@@ -119,6 +119,11 @@ class SettingsHolder:
     DEFAULT_RPC_SERVER = 'neo.api.JSONRPC.JsonRpcApi.JsonRpcApi'
     DEFAULT_REST_SERVER = 'neo.api.REST.RestApi.RestApi'
 
+    DATABASE_PROPS = None
+    BC_DB = None
+    NOTIF_DB = None
+    DEBUG_DB = None
+
     # Logging settings
     log_level = None
     log_smart_contract_events = False
@@ -143,6 +148,9 @@ class SettingsHolder:
     def debug_storage_leveldb_path(self):
         self.check_chain_dir_exists()
         return os.path.abspath(os.path.join(self.DATA_DIR_PATH, self.DEBUG_STORAGE_PATH))
+
+    def database_properties(self):
+        return self.DATABASE_PROPS
 
     # Helpers
     @property
@@ -185,6 +193,16 @@ class SettingsHolder:
                     sys.exit(-1)
             return value
 
+        def update_db_dict(db_dict):
+            for key in db_dict:
+                if key == 'Blockchain':
+                    db_dict[key]['DataDirectoryPath'] = self.chain_leveldb_path
+                if key == 'Notification':
+                    db_dict[key]['NotificationDataPath'] = self.notification_leveldb_path
+                if key == 'DebugStorage':
+                    db_dict[key]['DebugStoragePath'] = self.debug_storage_leveldb_path
+            return db_dict
+
         if not self.DATA_DIR_PATH:
             # Setup default data dir
             self.set_data_dir(None)
@@ -207,7 +225,6 @@ class SettingsHolder:
         self.REGISTER_TX_FEE = fees['RegisterTransaction']
 
         config = data['ApplicationConfiguration']
-        self.LEVELDB_PATH = config['DataDirectoryPath']
         self.RPC_PORT = int(config['RPCPort'])
         self.NODE_PORT = int(config['NodePort'])
         self.WS_PORT = config['WsPort']
@@ -219,12 +236,15 @@ class SettingsHolder:
         Helper.ADDRESS_VERSION = self.ADDRESS_VERSION
 
         self.USE_DEBUG_STORAGE = config.get('DebugStorage', False)
-        self.DEBUG_STORAGE_PATH = config.get('DebugStoragePath', 'Chains/debugstorage')
-        self.NOTIFICATION_DB_PATH = config.get('NotificationDataPath', 'Chains/notification_data')
         self.SERVICE_ENABLED = config.get('ServiceEnabled', self.ACCEPT_INCOMING_PEERS)
         self.COMPILER_NEP_8 = config.get('CompilerNep8', False)
         self.REST_SERVER = config.get('RestServer', self.DEFAULT_REST_SERVER)
         self.RPC_SERVER = config.get('RPCServer', self.DEFAULT_RPC_SERVER)
+
+        self.LEVELDB_PATH = config['Database']['Blockchain'].get('DataDirectoryPath', 'Chains/Main')
+        self.NOTIFICATION_DB_PATH = config['Database']['Notification'].get('NotificationDataPath', 'Chains/notification_data')
+        self.DEBUG_STORAGE_PATH = config['Database']['DebugStorage'].get('DebugStoragePath', 'Chains/debugstorage')
+        self.DATABASE_PROPS = update_db_dict(config['Database'])
 
     def setup_mainnet(self):
         """ Load settings from the mainnet JSON config file """

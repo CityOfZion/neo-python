@@ -8,7 +8,7 @@ from neo.Core.Blockchain import Blockchain
 from neo.Core.UInt256 import UInt256
 from neo.Core.UInt160 import UInt160
 from neo.IO.MemoryStream import StreamManager
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.Network.nodemanager import NodeManager
