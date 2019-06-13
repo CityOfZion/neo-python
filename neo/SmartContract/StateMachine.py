@@ -702,7 +702,14 @@ class StateMachine(StateReader):
         contract = self._contracts.TryGet(hash.ToBytes())
 
         if contract is None:
-            code = FunctionCode(script=script, param_list=param_list, return_type=return_type, contract_properties=contract_properties)
+            try:
+                code = FunctionCode(script=script, param_list=param_list, return_type=return_type, contract_properties=contract_properties)
+            except ValueError:
+                # exception is caused by an invalid `return_type`. neo-cli accepts this , but we throw an exception
+                # this is a dirty hack to work around the VM state difference that it causes until neo-cli hopefully fixes it
+                # see https://github.com/neo-project/neo/issues/827
+                code = FunctionCode(script=script, param_list=param_list, contract_properties=contract_properties)
+                code.ReturnType = return_type
 
             contract = ContractState(code, contract_properties, name, code_version, author, email, description)
 

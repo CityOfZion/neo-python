@@ -11,14 +11,14 @@ All notable changes to this project are documented in this file.
 - Fix sys_fee calculation in block persist.
 - Improve testing of "getbalance" RPC method
 - Support cancelling actions with ``KeyboardInterrupt``
-- Enhance output of `wallet` cli command
-- Fixed size calculation for `RegisterTransaction`
+- Enhance output of ``wallet`` cli command
+- Fixed size calculation for ``RegisterTransaction``
 - Support updating np-core to throw exceptions instead of logging errors `#888 <https://github.com/CityOfZion/neo-python/issues/888>`_
-- Fixed size calculation for `InvocationTransaction` `#919 <https://github.com/CityOfZion/neo-python/pull/919>`_
+- Fixed size calculation for ``InvocationTransaction`` `#919 <https://github.com/CityOfZion/neo-python/pull/919>`_
 - Update Virtual Machine to latest implementation, Add support for running official JSON test vectors `#921 <https://github.com/CityOfZion/neo-python/pull/921>`_ `#932 <https://github.com/CityOfZion/neo-python/pull/932>`_
 - Add PICKITEM for ByteArray into VM `#923 <https://github.com/CityOfZion/neo-python/pull/923>`_
 - Improve Connection Failure Handling in NodeLeader `#915 <https://github.com/CityOfZion/neo-python/issues/915>`_
-- Improve transaction coverage and fix `PublishTransaction.Size()` `#929 <https://github.com/CityOfZion/neo-python/issues/929>`_
+- Improve transaction coverage and fix ``PublishTransaction.Size()`` `#929 <https://github.com/CityOfZion/neo-python/issues/929>`_
 - Align ``Fixed8`` ``ToString()`` output with C# `#941 <https://github.com/CityOfZion/neo-python/pull/941>`_
 - Move from using ``Twisted`` to ``asyncio`` as event driven framework `#934 <https://github.com/CityOfZion/neo-python/pull/934>`_
 - Add new networking code
@@ -39,11 +39,12 @@ All notable changes to this project are documented in this file.
 - Fix ``Runtime.GetTrigger`` and ``Transaction.GetType`` syscalls pushing wrong StackItem type
 - Update handling of default cause for ``PICKITEM`` instruction
 - Fix ``InteropService.GetInterface`` not validating types correctly
-- Speed up `np-import` when appending blocks
+- Speed up ``np-import`` when appending blocks
 - Fix ``BigInteger.ToByteArray()`` for some negative values to return too many bytes
 - Implement SimplePolicyPlugin for transactions sent to a node `#960 <https://github.com/CityOfZion/neo-python/issues/960>`_
 - Fix transaction deserialization not setting correct type for ``ContractTransaction``
 - Fix ``GetBigInteger()`` return value of ``Boolean`` ``StackItem`` to return correct type
+- Add workaround for ``Neo.Contract.Create`` SYSCALl accepting invalid ``ContractParameterType``'s until neo-cli fixes it to keep same state
 
 
 [0.8.4] 2019-02-14
