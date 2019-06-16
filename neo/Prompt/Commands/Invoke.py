@@ -162,8 +162,7 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None,
-                       parse_params=True, from_addr=None,
+def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None,
                        min_fee=DEFAULT_MIN_FEE, invoke_attrs=None, owners=None):
     BC = GetBlockchain()
 
@@ -189,30 +188,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
         sb = ScriptBuilder()
 
         for p in params:
-
-            if parse_params:
-                item = PromptUtils.parse_param(p, wallet, parse_addr=parse_addresses)
-            else:
-                item = p
-            if type(item) is list:
-                item.reverse()
-                listlength = len(item)
-                for listitem in item:
-                    subitem = PromptUtils.parse_param(listitem, wallet, parse_addr=parse_addresses)
-                    if type(subitem) is list:
-                        subitem.reverse()
-                        for listitem2 in subitem:
-                            subsub = PromptUtils.parse_param(listitem2, wallet, parse_addr=parse_addresses)
-                            sb.push(subsub)
-                        sb.push(len(subitem))
-                        sb.Emit(PACK)
-                    else:
-                        sb.push(subitem)
-
-                sb.push(listlength)
-                sb.Emit(PACK)
-            else:
-                sb.push(item)
+            process_params(sb, p, wallet, parse_addresses)
 
         sb.EmitAppCall(contract.Code.ScriptHash().Data)
 
@@ -506,26 +482,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         sb = ScriptBuilder()
 
         for p in invoke_args:
-            item = PromptUtils.parse_param(p, wallet, parse_addr=no_parse_addresses)
-            if type(item) is list:
-                item.reverse()
-                listlength = len(item)
-                for listitem in item:
-                    subitem = PromptUtils.parse_param(listitem, wallet, parse_addr=no_parse_addresses)
-                    if type(subitem) is list:
-                        subitem.reverse()
-                        for listitem2 in subitem:
-                            subsub = PromptUtils.parse_param(listitem2, wallet, parse_addr=no_parse_addresses)
-                            sb.push(subsub)
-                        sb.push(len(subitem))
-                        sb.Emit(PACK)
-                    else:
-                        sb.push(subitem)
-
-                sb.push(listlength)
-                sb.Emit(PACK)
-            else:
-                sb.push(item)
+            process_params(sb, p, wallet, no_parse_addresses)
 
         sb.EmitAppCall(shash.Data)
         out = sb.ToArray()
@@ -688,3 +645,16 @@ def gather_signatures(context, itx, owners):
     else:
         print("Could not finish signatures")
         return False
+
+
+def process_params(sb, param, wallet, no_parse_addresses):
+    item = PromptUtils.parse_param(param, wallet, parse_addr=no_parse_addresses)
+    if type(item) is list:
+        item.reverse()
+        listlength = len(item)
+        for listitem in item:
+            process_params(sb, listitem, wallet, no_parse_addresses)
+        sb.push(listlength)
+        sb.Emit(PACK)
+    else:
+        sb.push(item)
