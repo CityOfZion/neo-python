@@ -23,6 +23,8 @@ class SmartContractTest2(BlockchainFixtureTestCase):
 
         self.assertIsNotNone(json)
 
-        result = self._blockchain.Persist(block)
+        result = False
+        with BlockchainFixtureTestCase.MPPersist():
+            result = self._blockchain.Persist(block)
 
         self.assertTrue(result)

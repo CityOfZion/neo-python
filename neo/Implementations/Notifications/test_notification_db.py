@@ -8,7 +8,7 @@ from uuid import uuid1
 import shutil
 import os
 
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Core.BigInteger import BigInteger
 
 
