@@ -282,9 +282,7 @@ class StateReader(InteropService):
 
     def Runtime_GetCurrentTime(self, engine: ExecutionEngine):
         BC = GetBlockchain()
-        print(BC)
         header = BC.GetHeaderByHeight(BC.Height)
-        print(header, GetBlockchain().SECONDS_PER_BLOCK)
         if header is None:
             header = GetBlockchain().GenesisBlock()
 
