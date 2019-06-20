@@ -46,6 +46,7 @@ All notable changes to this project are documented in this file.
 - Fix ``GetBigInteger()`` return value of ``Boolean`` ``StackItem`` to return correct type
 - Add workaround for ``Neo.Contract.Create`` SYSCALl accepting invalid ``ContractParameterType``'s until neo-cli fixes it to keep same state
 - Fix parsing nested lists `#954 <https://github.com/CityOfZion/neo-python/issues/954>`_
+- Fix clearing storage manipulations on failed invocation transaction execution
 
 
 [0.8.4] 2019-02-14

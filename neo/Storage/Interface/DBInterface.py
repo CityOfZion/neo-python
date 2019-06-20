@@ -18,7 +18,6 @@ class DBProperties:
     """
 
     def __init__(self, prefix=None, include_value=True, include_key=True):
-
         if not include_value and not include_key:
             raise Exception('Either key or value have to be true')
 
@@ -43,8 +42,8 @@ class DBInterface(object):
         self.Changed = []
         self.Deleted = []
 
-        self._ChangedResetState = None
-        self._DeletedResetState = None
+        self._ChangedResetState = []
+        self._DeletedResetState = []
 
         self._batch_changed = {}
 
@@ -94,15 +93,15 @@ class DBInterface(object):
         else:
             self.Changed = []
             self.Deleted = []
-            self._ChangedResetState = None
-            self._DeletedResetState = None
+            self._ChangedResetState = []
+            self._DeletedResetState = []
 
     def Reset(self):
-        self.Changed = self._ChangedResetState
-        self.Deleted = self._DeletedResetState
+        self.Changed = []
+        self.Deleted = []
 
-        self._ChangedResetState = None
-        self._DeletedResetState = None
+        self._ChangedResetState = []
+        self._DeletedResetState = []
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
