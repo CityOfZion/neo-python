@@ -49,6 +49,8 @@ class CommandSCTestCase(WalletFixtureTestCase):
         try:
             os.remove("neo/Prompt/Commands/tests/SampleSC.avm")
             os.remove("neo/Prompt/Commands/tests/SampleSC.debug.json")
+            os.remove("neo/Prompt/Commands/tests/ParseListTest.avm")
+            os.remove("neo/Prompt/Commands/tests/ParseListTest.debug.json")
         except FileNotFoundError:  # expected during test_sc
             pass
 
@@ -154,6 +156,15 @@ class CommandSCTestCase(WalletFixtureTestCase):
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertIsNone(tx)
             self.assertIn("Test invoke failed", mock_print.getvalue())
+
+        # test parsing nested lists
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['build_run', 'neo/Prompt/Commands/tests/ParseListTest.py', 'False', 'False', 'False', '0210', '01', '3', '["notused",["notused",["helloworld"]]]']
+            tx, result, total_ops, engine = CommandSC().execute(args)
+            self.assertTrue(tx)
+            self.assertEqual(str(result[0]), 'True')
+            self.assertIn("Test deploy invoke successful", mock_print.getvalue())
 
     def test_sc_loadrun(self):
         warnings.filterwarnings('ignore', category=ResourceWarning)  # filters warnings about unclosed files
