@@ -217,12 +217,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True, parse_addr=Tr
     # first, we'll try to parse an array
     try:
         items = eval(p, {"__builtins__": {'list': list}}, {})
-        if len(items) > 0 and type(items) is list:
-
-            parsed = []
-            for item in items:
-                parsed.append(parse_param(item, wallet, parse_addr=parse_addr))
-            return parsed
+        return items
 
     except Exception as e:
         #        print("Could not eval items as array %s " % e)

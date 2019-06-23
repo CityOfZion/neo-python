@@ -261,7 +261,7 @@ class Boolean(StackItem):
         return self._value == other._value
 
     def GetBigInteger(self):
-        return 1 if self._value else 0
+        return BigInteger(1) if self._value else BigInteger(0)
 
     def GetBoolean(self):
         return self._value
@@ -274,7 +274,7 @@ class Boolean(StackItem):
 
     def Serialize(self, writer):
         writer.WriteByte(StackItemType.Boolean)
-        writer.WriteByte(self.GetBigInteger())
+        writer.WriteByte(self.GetBoolean())
 
     def __str__(self):
         return str(self._value)
@@ -399,8 +399,14 @@ class InteropInterface(StackItem):
     def GetByteArray(self):
         raise Exception("Not supported- Cant get byte array for item %s %s " % (type(self), self._object))
 
-    def GetInterface(self):
-        return self._object
+    def GetInterface(self, interface_type=None):
+        if interface_type is None:
+            return self._object
+        else:
+            if issubclass(type(self._object), interface_type):
+                return self._object
+            else:
+                return None
 
     def Serialize(self, writer):
         raise Exception('Not supported- Cannot serialize Interop Interface %s %s ' % (type(self), self._object))

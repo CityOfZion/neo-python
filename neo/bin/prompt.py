@@ -14,8 +14,8 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.application import get_app as prompt_toolkit_get_app
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Storage.Implementation.DBFactory import getBlockchainDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Search import CommandSearch
@@ -28,6 +28,9 @@ from neo.UserPreferences import preferences
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print, token_style
 from neo.Network.nodemanager import NodeManager
+
+import neo.Storage.Implementation.DBFactory as DBFactory
+
 
 logger = log_manager.getLogger()
 
@@ -351,7 +354,7 @@ def main():
     use_asyncio_event_loop()
 
     # Instantiate the blockchain and subscribe to notifications
-    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+    blockchain = Blockchain(DBFactory.getBlockchainDB(settings.chain_leveldb_path))
     Blockchain.RegisterBlockchain(blockchain)
 
     # Try to set up a notification db

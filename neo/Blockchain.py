@@ -20,8 +20,8 @@ def GetSystemShare():
 
 def GetStateMachine():
     from neo.SmartContract.StateMachine import StateMachine
-    from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
-    from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+    from neo.Storage.Interface.DBInterface import DBInterface
+    from neo.Storage.Common.DBPrefix import DBPrefix
     from neo.Core.State.AccountState import AccountState
     from neo.Core.State.AssetState import AssetState
     from neo.Core.State.ValidatorState import ValidatorState
@@ -30,13 +30,13 @@ def GetStateMachine():
 
     bc = GetBlockchain()
 
-    accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
-    assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
+    accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
+    assets = DBInterface(bc._db, DBPrefix.ST_Asset, AssetState)
+    validators = DBInterface(bc._db, DBPrefix.ST_Validator, ValidatorState)
+    contracts = DBInterface(bc._db, DBPrefix.ST_Contract, ContractState)
+    storages = DBInterface(bc._db, DBPrefix.ST_Storage, StorageItem)
 
-    return StateMachine(accounts, validators, assets, contracts, storages, None)
+    return StateMachine(accounts, validators, assets, contracts, storages, None, bc)
 
 
 def GetConsensusAddress(validators):

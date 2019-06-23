@@ -45,6 +45,16 @@ class TestInputParser(TestCase):
         self.assertEqual(command, "this")
         self.assertEqual(arguments, ["is", "\"a", "simple", "test"])
 
+    def test_nested_lists(self):
+        command, arguments = self.input_parser.parse_input('sc build_run sc.py False False False 0210 01 2 ["notused",["helloworld"]]')
+        self.assertEqual(command, "sc")
+        self.assertEqual(arguments, ['build_run', 'sc.py', 'False', 'False', 'False', '0210', '01', '2', '["notused",["helloworld"]]'])
+
+    def test_nested_lists_2(self):
+        command, arguments = self.input_parser.parse_input('test ["notused",["helloworld", 1, ["a", 1]]]')
+        self.assertEqual(command, "test")
+        self.assertEqual(arguments, ['["notused",["helloworld", 1, ["a", 1]]]'])
+
     def test_python_bytearrays(self):
         command, arguments = self.input_parser.parse_input("testinvoke bytearray(b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)') b'\xaf\x12\xa8h{\x14\x94\x8b\xc4\xa0\x08\x12\x8aU\nci[\xc1\xa5'")
         self.assertEqual(command, "testinvoke")

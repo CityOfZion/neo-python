@@ -204,7 +204,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'transferFrom',
                        [PromptUtils.parse_param(from_addr, wallet), PromptUtils.parse_param(to_addr, wallet), PromptUtils.parse_param(amount)]]
 
-        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args)
 
         return tx, fee, results
 
@@ -226,7 +226,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'allowance',
                        [PromptUtils.parse_param(owner_addr, wallet), PromptUtils.parse_param(requestor_addr, wallet)]]
 
-        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args)
 
         return tx, fee, results
 
@@ -249,7 +249,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'approve',
                        [PromptUtils.parse_param(owner_addr, wallet), PromptUtils.parse_param(requestor_addr, wallet), PromptUtils.parse_param(amount)]]
 
-        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args)
 
         return tx, fee, results
 
@@ -272,7 +272,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         invoke_args = invoke_args + attachment_args
 
-        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True, from_addr=mint_to_addr, invoke_attrs=invoke_attrs)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, from_addr=mint_to_addr, invoke_attrs=invoke_attrs)
 
         return tx, fee, results
 
@@ -293,7 +293,7 @@ class NEP5Token(VerificationCode, SerializableMixin):
         invoke_args = [self.ScriptHash.ToString(), 'crowdsale_register',
                        [PromptUtils.parse_param(p, wallet) for p in register_addresses]]
 
-        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, None, True, from_addr)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, invoke_args, from_addr=from_addr)
 
         return tx, fee, results
 

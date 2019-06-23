@@ -439,6 +439,88 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(jsn['script'], "4220202020202020202020202020202020202020202020202020202020202020")
         self.assertEqual(jsn['gas'], "42")
 
+    vtx = b"8000000e4737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0d004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0c004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0b004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0a004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c09004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c08004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c07004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c06004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c05004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c04004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c03004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c02004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c01004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0000089b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500bd522a0200000019ae118ef7951731c342d26bbac954c56e8b35d2014140bb549a10e43a86314f2a14046ff486cb1b88857c2cec7bef5a3689490653a9550035ce164ae7adc3ab5b518915c85fef9f4d180dffbb287bd4e399d2e9fdfbd3232103cfb3ad2685ad402dd5122ab83dc1d6a026e8363c905a2c73668825ad2f922d39ac"
+    vtx_id = b"af3750da9d8e809fd3980e3d553885726f5c330827fadeaf8af3bbeef1ed3a79"
+
+    def test_verify_exceeds_free_tx_size_less_low_priority_threshhold(self):
+        ms = MemoryStream(binascii.unhexlify(self.vtx))
+        reader = BinaryReader(ms)
+        tx = Transaction.DeserializeFrom(reader)
+
+        self.assertEqual(tx.ToArray(), self.vtx)
+        self.assertEqual(tx.Hash.ToBytes(), self.vtx_id)
+
+        res = tx.Verify([tx])
+        self.assertFalse(res)
+
+        tx_size = tx.Size()
+        self.assertGreater(tx_size, settings.MAX_FREE_TX_SIZE)
+
+        req_fee = Fixed8.FromDecimal(settings.FEE_PER_EXTRA_BYTE * (tx_size - settings.MAX_FREE_TX_SIZE))
+        self.assertLess(req_fee, settings.LOW_PRIORITY_THRESHOLD)
+
+        n_fee = tx.NetworkFee()
+        self.assertEqual(n_fee.ToString(), '0')
+        self.assertLess(n_fee, req_fee)
+
+    vvtx = b"8000000e4737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0d004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0c004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0b004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c0a004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c09004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c08004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c07004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c06004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c05004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c04004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c03004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c02004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c01004737dd0e5247a06ff89160add627a3b614abc76b49eae68f23c5bddc64379d4c00000b9b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f5050000000019ae118ef7951731c342d26bbac954c56e8b35d29b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500fb661e0200000019ae118ef7951731c342d26bbac954c56e8b35d2e72d286979ee6cb1b7e65dfddfb2e384100b8d148e7758de42e4168b71792c60963de9a80b00000019ae118ef7951731c342d26bbac954c56e8b35d2014140cfbd4ab2822922e8b6941c0c1ed562344dd50e475ca52a88d828d0ed5ab5ca946f11277bf359b1114c94f38662e7a1a65bf9b67b0c6454a620d484eadddfcd58232103cfb3ad2685ad402dd5122ab83dc1d6a026e8363c905a2c73668825ad2f922d39ac"    
+    vvtx_id = b"5dccca550ae3e0d52e95a72c5b84b034a3cd4ee6e24cce1f15d85695e2c32209"
+
+    def test_verify_exceeds_free_tx_size_greater_low_priority_threshold(self):
+        ms = MemoryStream(binascii.unhexlify(self.vvtx))
+        reader = BinaryReader(ms)
+        tx = Transaction.DeserializeFrom(reader)
+        tx._network_fee = Fixed8.FromDecimal(0.001)
+
+        self.assertEqual(tx.ToArray(), self.vvtx)
+        self.assertEqual(tx.Hash.ToBytes(), self.vvtx_id)
+
+        res = tx.Verify([tx])
+        self.assertFalse(res)
+
+        tx_size = tx.Size()
+        self.assertGreater(tx_size, settings.MAX_FREE_TX_SIZE)
+
+        req_fee = Fixed8.FromDecimal(settings.FEE_PER_EXTRA_BYTE * (tx_size - settings.MAX_FREE_TX_SIZE))
+        self.assertGreater(req_fee, settings.LOW_PRIORITY_THRESHOLD)
+
+        n_fee = tx.NetworkFee()
+        self.assertEqual(n_fee.ToString(), "0.001")
+        self.assertLess(n_fee, req_fee)
+
+    def test_verify_exceeds_max_tx_size(self):
+        ms = MemoryStream(binascii.unhexlify(self.vvtx))
+        reader = BinaryReader(ms)
+        tx = Transaction.DeserializeFrom(reader)
+        tx._network_fee = Fixed8.FromDecimal(0.001)
+
+        self.assertEqual(tx.ToArray(), self.vvtx)
+        self.assertEqual(tx.Hash.ToBytes(), self.vvtx_id)
+
+        with patch("neo.Core.TX.Transaction.Transaction.Size", return_value=(Transaction.MAX_TX_SIZE + 1)):
+            res = tx.Verify([tx])
+            self.assertFalse(res)
+
+            tx_size = tx.Size()
+            self.assertGreater(tx_size, Transaction.MAX_TX_SIZE)
+
+    def test_verify_claim_tx_high_priority(self):
+        ms = MemoryStream(binascii.unhexlify(self.cltx))
+        reader = BinaryReader(ms)
+        tx = Transaction.DeserializeFrom(reader)
+
+        self.assertEqual(tx.ToArray(), self.cltx)
+        self.assertEqual(tx.Hash.ToBytes(), self.cltx_id)
+
+        with patch("neo.Core.TX.Transaction.Transaction.Size", return_value=(settings.MAX_FREE_TX_SIZE + 1)):
+            with patch('neo.Core.Helper.Helper.VerifyScripts', return_value=True):  # we are not testing VerifyScripts
+                with patch('neo.Core.Blockchain.Blockchain.CalculateBonusIgnoreClaimed', return_value=Fixed8.FromDecimal(0.30551243)):
+                    res = tx.Verify([tx])
+                    self.assertTrue(res)
+
+                    tx_size = tx.Size()
+                    self.assertGreater(tx_size, settings.MAX_FREE_TX_SIZE)
+
 
 def GetByteArray(length, firstByte):
     array = bytearray(length)

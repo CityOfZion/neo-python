@@ -2,10 +2,31 @@ import binascii
 from neo.SmartContract.Iterable import EnumeratorBase
 from neo.logging import log_manager
 
-logger = log_manager.getLogger('db')
+logger = log_manager.getLogger()
 
 
-class DBCollection:
+class DBProperties:
+    """
+    Container for holding DB properties
+    Used to pass the configuration options to the DB iterator initializer.
+    neo.Storage.Implementation.[BACKEND].[BACKEND]Impl.openIter
+
+    Args:
+        prefix (str, optional): Prefix to search for.
+        include_value (bool, optional): whether to include keys in the returned data
+        include_key (bool, optional): whether to include values in the returned data
+    """
+
+    def __init__(self, prefix=None, include_value=True, include_key=True):
+        if not include_value and not include_key:
+            raise Exception('Either key or value have to be true')
+
+        self.prefix = prefix
+        self.include_value = include_value
+        self.include_key = include_key
+
+
+class DBInterface(object):
 
     def __init__(self, db, prefix, class_ref):
         self._built_keys = False
@@ -21,15 +42,10 @@ class DBCollection:
         self.Changed = []
         self.Deleted = []
 
-        self._ChangedResetState = None
-        self._DeletedResetState = None
+        self._ChangedResetState = []
+        self._DeletedResetState = []
 
-    @property
-    def Keys(self):
-        if not self._built_keys:
-            self._BuildCollectionKeys()
-
-        return self.Collection.keys()
+        self._batch_changed = {}
 
     @property
     def Current(self):
@@ -44,20 +60,26 @@ class DBCollection:
 
         return {}
 
+    @property
+    def Keys(self):
+        if not self._built_keys:
+            self._BuildCollectionKeys()
+
+        return self.Collection.keys()
+
     def _BuildCollectionKeys(self):
-        with self.DB.iterator(prefix=self.Prefix, include_value=False) as it:
+        with self.DB.openIter(DBProperties(self.Prefix, include_value=False)) as it:
             for key in it:
                 key = key[1:]
                 if key not in self.Collection.keys():
                     self.Collection[key] = None
 
     def Commit(self, wb, destroy=True):
-
         for keyval in self.Changed:
             item = self.Collection[keyval]
             if item:
                 if not wb:
-                    self.DB.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
+                    self.DB.write(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
                 else:
                     wb.put(self.Prefix + keyval, self.Collection[keyval].ToByteArray())
         for keyval in self.Deleted:
@@ -71,15 +93,15 @@ class DBCollection:
         else:
             self.Changed = []
             self.Deleted = []
-            self._ChangedResetState = None
-            self._DeletedResetState = None
+            self._ChangedResetState = []
+            self._DeletedResetState = []
 
     def Reset(self):
-        self.Changed = self._ChangedResetState
-        self.Deleted = self._DeletedResetState
+        self.Changed = []
+        self.Deleted = []
 
-        self._ChangedResetState = None
-        self._DeletedResetState = None
+        self._ChangedResetState = []
+        self._DeletedResetState = []
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
 
@@ -123,9 +145,6 @@ class DBCollection:
         self.Add(keyval, item)
 
         return item
-
-    def GetItemBy(self, keyval):
-        return self.GetAndChange(keyval)
 
     def TryGet(self, keyval):
 
@@ -203,7 +222,7 @@ class DBCollection:
     def Find(self, key_prefix):
         key_prefix = self.Prefix + key_prefix
         res = {}
-        with self.DB.iterator(prefix=key_prefix) as it:
+        with self.DB.openIter(DBProperties(key_prefix, include_value=True)) as it:
             for key, val in it:
                 # we want the storage item, not the raw bytes
                 item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value

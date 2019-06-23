@@ -187,6 +187,9 @@ class CommandConfigMaxpeers(CommandBase):
 
             try:
                 settings.set_max_peers(c1)
+                if c1 < settings.CONNECTED_PEER_MIN:
+                    settings.set_min_peers(c1)
+                    print(f"Minpeers set to {c1}")
             except ValueError:
                 print("Please supply a positive integer for maxpeers")
                 return
@@ -196,7 +199,7 @@ class CommandConfigMaxpeers(CommandBase):
 
             current_max = settings.CONNECTED_PEER_MAX
             connected_count = len(nodemgr.nodes)
-            if c1 < current_max and c1 < connected_count:
+            if current_max < connected_count:
                 to_remove = connected_count - c1
                 for _ in range(to_remove):
                     last_connected_node = nodemgr.nodes[-1]

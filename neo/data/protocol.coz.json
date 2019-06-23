@@ -28,8 +28,6 @@
     }
   },
   "ApplicationConfiguration": {
-    "DataDirectoryPath": "Chains/coznet",
-    "NotificationDataPath": "Chains/coz_notif",
     "RPCPort": 20332,
     "NodePort": 20333,
     "WsPort": 20334,
@@ -43,6 +41,18 @@
     "DebugStorage": 1,
     "CompilerNep8": false,
     "BootstrapName": "fauxnet",
-    "BootstrapFiles": "this_does_not_exist_for_this_network"
+    "BootstrapFiles": "this_does_not_exist_for_this_network",
+    "Database": {
+        "Blockchain": {
+            "skip_version_check": false,
+            "DataDirectoryPath": "Chains/coznet",
+            "backend": "neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl"},
+        "Notification": {
+            "NotificationDataPath": "Chains/coz_notif",
+            "backend": "neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl"},
+        "DebugStorage": {
+            "DebugStoragePath": "Chains/debugstorage",
+            "backend": "neo.Storage.Implementation.LevelDB.LevelDBImpl.LevelDBImpl"}
+    }
   }
 }

@@ -269,8 +269,8 @@ class BigIntegerTestCase(TestCase):
 
         b2 = BigInteger(-100)
         b2ba = b2.ToByteArray()
-        integer2 = BigInteger.from_bytes(b2ba, 'little')
-        self.assertEqual(integer2, 65436)
+        integer2 = BigInteger.from_bytes(b2ba, 'little', signed=True)
+        self.assertEqual(integer2, -100)
 
         b3 = BigInteger(128)
         b3ba = b3.ToByteArray()
@@ -279,6 +279,18 @@ class BigIntegerTestCase(TestCase):
         b4 = BigInteger(0)
         b4ba = b4.ToByteArray()
         self.assertEqual(b4ba, b'\x00')
+
+        b5 = BigInteger(-146)
+        b5ba = b5.ToByteArray()
+        self.assertEqual(b'\x6e\xff', b5ba)
+
+        b6 = BigInteger(-48335248028225339427907476932896373492484053930)
+        b6ba = b6.ToByteArray()
+        self.assertEqual(20, len(b6ba))
+
+        b7 = BigInteger(-399990000)
+        b7ba = b7.ToByteArray()
+        self.assertEqual(b'\x10\xa3\x28\xe8', b7ba)
 
     def test_big_integer_frombytes(self):
         b1 = BigInteger(8972340892734890723)
