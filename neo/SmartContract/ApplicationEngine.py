@@ -12,7 +12,6 @@ from neo.Core.State.ContractState import ContractState
 from neo.Core.State.StorageItem import StorageItem
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Storage.Common.CachedScriptTable import CachedScriptTable
-from neo.Storage.Interface.DBInterface import DBInterface
 
 # used for ApplicationEngine.Run
 from neo.Storage.Common.DBPrefix import DBPrefix
@@ -25,6 +24,7 @@ from neo.VM.InteropService import Array
 from neo.VM.OpCode import APPCALL, TAILCALL, \
     SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG, VERIFY
 from neo.logging import log_manager
+from neo.SmartContract.StateMachine import StateMachine
 
 logger = log_manager.getLogger('vm')
 
@@ -50,14 +50,13 @@ class ApplicationEngine(ExecutionEngine):
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
 
-    def __init__(self, trigger_type, container, table, service, gas, testMode=False, exit_on_error=True):
+    def __init__(self, trigger_type, container, snapshot, gas, testMode=False, exit_on_error=True):
 
-        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=table, service=service, exit_on_error=exit_on_error)
+        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=snapshot, service=StateMachine(trigger_type, snapshot), exit_on_error=exit_on_error)
 
-        self.service = service
-        self.Trigger = trigger_type
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
+        self.snapshot = snapshot
         self._is_stackitem_count_strict = True
         self.debugger = None
         self.gas_consumed = 0
@@ -144,7 +143,7 @@ class ApplicationEngine(ExecutionEngine):
         instruction = self.CurrentContext.CurrentInstruction
         api_hash = instruction.TokenU32 if len(instruction.Operand) == 4 else hash(instruction.TokenString)
 
-        price = self.service.GetPrice(api_hash)
+        price = self._Service.GetPrice(api_hash)
 
         if price > 0:
             return price
@@ -194,6 +193,9 @@ class ApplicationEngine(ExecutionEngine):
 
         bc = Blockchain.Default()
 
+        raise NotImplementedError("Need to update this to use a snapshot instead of direct access")
+
+        from neo.Storage.Interface.DBInterface import DBInterface
         accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
         assets = DBInterface(bc._db, DBPrefix.ST_Asset, AssetState)
         validators = DBInterface(bc._db, DBPrefix.ST_Validator, ValidatorState)

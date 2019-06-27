@@ -233,8 +233,10 @@ class ExecutionEngine:
                         fValue = not fValue
                 if fValue:
                     context.InstructionPointer = offset
+                    context.ins = context.GetInstruction(context.InstructionPointer)
                 else:
                     context.InstructionPointer += 3
+                    context.ins = context.GetInstruction(context.InstructionPointer)
                 return True
 
             elif opcode == CALL:
@@ -1232,6 +1234,7 @@ class ExecutionEngine:
 
             try:
                 instruction = self.CurrentContext.CurrentInstruction
+
                 if self._is_write_log:
                     self.write_log("{} {} {}".format(self.ops_processed, instruction.InstructionName, self.CurrentContext.InstructionPointer))
 

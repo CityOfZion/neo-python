@@ -107,7 +107,11 @@ async def _main():
             start_block = Blockchain.Default().Height
             print("Starting import at %s " % start_block)
 
-            for _ in trange(start_block + 1, desc='Skipping blocks', unit='Block'):
+            if args.totalblocks:
+                # total_blocks = start_block + args.totalblocks - 1
+                total_blocks = args.totalblocks
+
+            for _ in trange(start_block, desc='Skipping blocks', unit='Block'):
                 file_input.readinto(length_ba)
                 block_len = int.from_bytes(length_ba, 'little')
                 file_input.seek(block_len, 1)
@@ -138,12 +142,14 @@ async def _main():
             Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 
+            start_block = Blockchain.Default().Height
+
         chain = Blockchain.Default()
 
         if store_notifications:
             NotificationDB.instance().start()
 
-        for index in trange(total_blocks, desc='Importing Blocks', unit=' Block', initial=ctr):
+        if start_block == 0:
             # set stream data
             file_input.readinto(length_ba)
             block_len = int.from_bytes(length_ba, 'little')
@@ -167,33 +173,60 @@ async def _main():
             # reset stream
             reader.stream.Cleanup()
 
-    print("Wrote blocks.  Now writing headers")
+        for index in trange(total_blocks, desc='Importing Blocks', unit=' Block', initial=ctr):
+            # set stream data
+            file_input.readinto(length_ba)
+            block_len = int.from_bytes(length_ba, 'little')
 
-    chain = Blockchain.Default()
+            reader.stream.write(file_input.read(block_len))
+            reader.stream.seek(0)
 
-    # reset header hash list
-    chain._db.delete(DBPrefix.IX_HeaderHashList)
+            # get block
+            block.DeserializeForImport(reader)
+            header_hash_list.append(block.Hash.ToBytes())
 
-    total = len(header_hash_list)
+            # if block.Index > 942371:
+            #     break
 
-    chain._header_index = header_hash_list
+            # add
+            if block.Index >= start_block:
+                chain.AddHeaders([block.Header])
+                await chain.TryPersist(block)
 
-    print("storing header hash list...")
+            # reset blockheader
+            block._header = None
+            block.__hash = None
 
-    while total - 2000 >= chain._stored_header_count:
-        ms = StreamManager.GetStream()
-        w = BinaryWriter(ms)
-        headers_to_write = chain._header_index[chain._stored_header_count:chain._stored_header_count + 2000]
-        w.Write2000256List(headers_to_write)
-        out = ms.ToArray()
-        StreamManager.ReleaseStream(ms)
-        with chain._db.write_batch() as wb:
-            wb.put(DBPrefix.IX_HeaderHashList + chain._stored_header_count.to_bytes(4, 'little'), out)
+            # reset stream
+            reader.stream.Cleanup()
 
-        chain._stored_header_count += 2000
-
-    last_index = len(header_hash_list)
-    chain._db.put(DBPrefix.SYS_CurrentHeader, header_hash_list[-1] + last_index.to_bytes(4, 'little'))
+    # print("Wrote blocks.  Now writing headers")
+    #
+    # chain = Blockchain.Default()
+    #
+    # # reset header hash list
+    # chain._db.delete(DBPrefix.IX_HeaderHashList)
+    #
+    # total = len(header_hash_list)
+    #
+    # chain._header_index = header_hash_list
+    #
+    # print("storing header hash list...")
+    #
+    # while total - 2000 >= chain._stored_header_count:
+    #     ms = StreamManager.GetStream()
+    #     w = BinaryWriter(ms)
+    #     headers_to_write = chain._header_index[chain._stored_header_count:chain._stored_header_count + 2000]
+    #     w.Write2000256List(headers_to_write)
+    #     out = ms.ToArray()
+    #     StreamManager.ReleaseStream(ms)
+    #     with chain._db.write_batch() as wb:
+    #         wb.put(DBPrefix.IX_HeaderHashList + chain._stored_header_count.to_bytes(4, 'little'), out)
+    #
+    #     chain._stored_header_count += 2000
+    #
+    # last_index = len(header_hash_list)
+    # chain._db.put(DBPrefix.SYS_CurrentHeader, header_hash_list[-1] + last_index.to_bytes(4, 'little'))
 
     print("Imported %s blocks to %s " % (total_blocks, target_dir))
 

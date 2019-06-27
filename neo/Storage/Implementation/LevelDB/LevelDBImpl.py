@@ -1,13 +1,15 @@
 import plyvel
 import threading
 
+
 from contextlib import contextmanager
 
 from neo.Storage.Implementation.AbstractDBImplementation import (
     AbstractDBImplementation
 )
 from neo.Storage.Common.DBPrefix import DBPrefix
-from neo.Storage.Interface.DBInterface import DBProperties
+from neo.Storage.Interface.DBProperties import DBProperties
+import neo.Storage.Implementation.LevelDB.LevelDBSnapshot
 from neo.logging import log_manager
 
 
@@ -62,7 +64,7 @@ class LevelDBImpl(AbstractDBImplementation):
         return clone_storage
 
     def createSnapshot(self):
-        return LevelDBSnapshot(self._db.snapshot())
+        return neo.Storage.Implementation.LevelDB.LevelDBSnapshot.LevelDBSnapshot(self._db)
 
     @contextmanager
     def openIter(self, properties):
@@ -83,26 +85,8 @@ class LevelDBImpl(AbstractDBImplementation):
             _batch.write()
 
     def getPrefixedDB(self, prefix):
-        return LevelDBSnapshot(self._db.prefixed_db(prefix))
+        return neo.Storage.Implementation.LevelDB.LevelDBSnapshot.LevelDBSnapshot(self._db.prefixed_db(prefix))
 
     def closeDB(self):
         self._db.close()
 
-
-class LevelDBSnapshot(LevelDBImpl):
-
-    def __init__(self, _prefixdb):
-        """
-        Init method used with a snapshotDB or prefixedDB, slightly different from the
-        init method as we don't have to open a new database but store a snapshot or
-        a prefixed db.
-
-        Args:
-            _prefixdb (object): the prefixed db instance
-
-        """
-
-        try:
-            self._db = _prefixdb
-        except Exception as e:
-            raise Exception("leveldb exception [ %s ]" % e)

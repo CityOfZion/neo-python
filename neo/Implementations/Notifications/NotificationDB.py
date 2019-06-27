@@ -2,7 +2,7 @@ import plyvel
 from neo.EventHub import events
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent, NotifyType
 from neo.Storage.Implementation.DBFactory import getNotificationDB
-from neo.Storage.Interface.DBInterface import DBProperties
+from neo.Storage.Interface.DBProperties import DBProperties
 from neo.Core.State.ContractState import ContractState
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain

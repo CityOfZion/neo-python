@@ -89,7 +89,7 @@ In English:
 
         return super(RegisterTransaction, self).SystemFee()
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot):
         """Get ScriptHash From SignatureContract"""
         # hashes = {}
         # super(RegisterTransaction, self).getScriptHashesForVerifying()
@@ -138,7 +138,7 @@ In English:
 
         asset = {
             'type': self.AssetType,
-            'name': self.Name.decode('utf-8'),
+            'name': self.Name, #.decode('utf-8'),
             'amount': self.Amount.value,
             'precision': self.Precision if type(self.Precision) is int else self.Precision.decode('utf-8'),
             'owner': self.Owner.ToString(),

@@ -89,3 +89,9 @@ class ValidatorState(StateBase):
         return {
             'pubkey': self.PublicKey.ToString()
         }
+
+    def Clone(self):
+        vs = ValidatorState(self.PublicKey)
+        vs.Registered = self.Registered
+        vs.Votes = self.Votes
+        return vs

@@ -3,12 +3,18 @@ import asyncio
 import binascii
 import struct
 import traceback
+import os
+import json
+from neo.VM.VMState import VMStateStr
+from contextlib import suppress
+from neo.VM import InteropService
 
 from itertools import groupby
 from datetime import datetime
+from neo.Storage.Common.DataCache import TrackState
 
 from neo.Network.common import Events
-from neo.Core.Block import Block
+import neo.Core.Block
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Core.AssetType import AssetType
 from neo.Core.Cryptography.Crypto import Crypto
@@ -41,7 +47,8 @@ from neo.SmartContract.Contract import Contract
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.Storage.Common.DBPrefix import DBPrefix
 from neo.Storage.Common.CachedScriptTable import CachedScriptTable
-from neo.Storage.Interface.DBInterface import DBInterface, DBProperties
+from neo.Storage.Interface.DBInterface import DBInterface
+from neo.Storage.Interface.DBProperties import DBProperties
 from neo.SmartContract import TriggerType
 from neo.VM.OpCode import PUSHF, PUSHT
 from functools import lru_cache
@@ -93,6 +100,8 @@ class Blockchain:
     _persisting_block = None
 
     TXProcessed = 0
+
+    dump_cache = []
 
     BlockSearchTries = 0
 
@@ -254,7 +263,7 @@ class Blockchain:
                                    amount, precision, owner, admin)
 
     @staticmethod
-    def GenesisBlock() -> Block:
+    def GenesisBlock():
         """
         Create the GenesisBlock.
 
@@ -284,7 +293,7 @@ class Blockchain:
 
         it = IssueTransaction([], [output], [], [script])
 
-        return Block(prev_hash, timestamp, index, consensus_data,
+        return neo.Core.Block.Block(prev_hash, timestamp, index, consensus_data,
                      next_consensus, script,
                      [mt, Blockchain.SystemShare(), Blockchain.SystemCoin(), it],
                      True)
@@ -395,7 +404,7 @@ class Blockchain:
     def ProcessNewHeaders(self, headers):
         lastheader = headers[-1]
         hashes = [h.Hash.ToBytes() for h in headers]
-        self._header_index = self._header_index + hashes
+        self._header_index.extend(hashes)
 
         if lastheader is not None:
             self.OnAddHeader(lastheader)
@@ -404,8 +413,8 @@ class Blockchain:
 
         hHash = header.Hash.ToBytes()
 
-        if hHash not in self._header_index:
-            self._header_index.append(hHash)
+        # if hHash not in self._header_index:
+        #     self._header_index.append(hHash)
 
         with self._db.getBatch() as wb:
             while header.Index - 2000 >= self._stored_header_count:
@@ -676,7 +685,7 @@ class Blockchain:
             out = bytearray(self._db.get(DBPrefix.DATA_Block + hash))
             out = out[8:]
             outhex = binascii.unhexlify(out)
-            return Block.FromTrimmedData(outhex)
+            return neo.Core.Block.Block.FromTrimmedData(outhex)
         except Exception as e:
             logger.info("Could not get block %s " % e)
         return None
@@ -962,162 +971,170 @@ class Blockchain:
     def Resume(self):
         self._paused = False
 
+    def StackItemToJson(self, item):
+        if isinstance(item, InteropService.Boolean):
+            return {"type": "Boolean", "value": item.GetBoolean()}
+        elif isinstance(item, InteropService.Integer):
+            return {"type": "Integer", "value": str(item.GetBigInteger())}
+        elif isinstance(item, InteropService.ByteArray):
+            return {"type": "ByteArray", "value": binascii.hexlify(item.GetByteArray()).decode()}
+        elif isinstance(item, InteropService.Array):
+            array_items = []
+            for i in item.GetArray():
+                array_items.append(self.StackItemToJson(i))
+            return {"type": "Array", "value": array_items}
+        elif isinstance(item, InteropService.Map):
+            map_items = {}
+            for k, v in item.GetEnumerator():
+                map_items.update({binascii.hexlify(k.GetByteArray()).decode(): self.StackItemToJson(v)})
+            return {"type": "Map", "value": map_items}
+        elif isinstance(item, InteropService.InteropInterface):
+            obj = item.GetInterface()
+            return {"type": "Interop", "value": str(obj.__class__.__name__)}
+
     async def Persist(self, block):
 
         self._persisting_block = block
 
-        accounts = DBInterface(self._db, DBPrefix.ST_Account, AccountState)
-        unspentcoins = DBInterface(self._db, DBPrefix.ST_Coin, UnspentCoinState)
-        spentcoins = DBInterface(self._db, DBPrefix.ST_SpentCoin, SpentCoinState)
-        assets = DBInterface(self._db, DBPrefix.ST_Asset, AssetState)
-        validators = DBInterface(self._db, DBPrefix.ST_Validator, ValidatorState)
-        contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
-        storages = DBInterface(self._db, DBPrefix.ST_Storage, StorageItem)
+        snapshot = self._db.createSnapshot()
+        snapshot.PersistingBlock = block
 
         amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + (block.TotalFees().value / Fixed8.D)
         amount_sysfee_bytes = struct.pack("<d", amount_sysfee)
         to_dispatch = []
 
+        dump_entry = {
+            "index": block.Index,
+            "tx_count": len(block.Transactions),
+            "tx": [],
+            "storage": []
+        }
+
+        execution_results = []
+
         with self._db.getBatch() as wb:
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
 
-            for tx in block.Transactions:
+            for tx_idx, tx in enumerate(block.Transactions):
+                with self._db.getBatch() as tx_wb:
+                    tx_wb.put(DBPrefix.DATA_Transaction + tx.Hash.ToBytes(), block.IndexBytes() + tx.ToArray())
 
-                wb.put(DBPrefix.DATA_Transaction + tx.Hash.ToBytes(), block.IndexBytes() + tx.ToArray())
+                    # go through all outputs and add unspent coins to them
 
-                # go through all outputs and add unspent coins to them
+                    unspentcoinstate = UnspentCoinState.FromTXOutputsConfirmed(tx.outputs)
+                    snapshot.UnspentCoins.Add(tx.Hash.ToBytes(), unspentcoinstate)
 
-                unspentcoinstate = UnspentCoinState.FromTXOutputsConfirmed(tx.outputs)
-                unspentcoins.Add(tx.Hash.ToBytes(), unspentcoinstate)
+                    # go through all the accounts in the tx outputs
+                    for output in tx.outputs:
+                        account = snapshot.Accounts.GetAndChange(output.AddressBytes, lambda: AccountState(output.ScriptHash))
 
-                # go through all the accounts in the tx outputs
-                for output in tx.outputs:
-                    account = accounts.GetAndChange(output.AddressBytes, AccountState(output.ScriptHash))
+                        if account.HasBalance(output.AssetId):
+                            account.AddToBalance(output.AssetId, output.Value)
+                        else:
+                            account.SetBalanceFor(output.AssetId, output.Value)
 
-                    if account.HasBalance(output.AssetId):
-                        account.AddToBalance(output.AssetId, output.Value)
+                    # go through all tx inputs
+                    unique_tx_input_hashes = []
+                    for input in tx.inputs:
+                        if input.PrevHash not in unique_tx_input_hashes:
+                            unique_tx_input_hashes.append(input.PrevHash)
+                    if block.Index == 74:
+                        print("yo")
+                    for txhash in unique_tx_input_hashes:
+                        prevTx, height = self.GetTransaction(txhash.ToBytes())
+                        coin_refs_by_hash = [coinref for coinref in tx.inputs if
+                                             coinref.PrevHash.ToBytes() == txhash.ToBytes()]
+                        for input in coin_refs_by_hash:
+
+                            snapshot.UnspentCoins.GetAndChange(input.PrevHash.ToBytes()).Items[input.PrevIndex] |= CoinState.Spent
+
+                            if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
+                                sc = snapshot.SpentCoins.GetAndChange(input.PrevHash.ToBytes(),
+                                                             lambda: SpentCoinState(input.PrevHash, height, []))
+                                sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
+
+                            output = prevTx.outputs[input.PrevIndex]
+                            acct = snapshot.Accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes,
+                                                         AccountState(output.ScriptHash))
+                            assetid = prevTx.outputs[input.PrevIndex].AssetId
+                            acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
+
+                    # do a whole lotta stuff with tx here...
+                    if tx.Type == TransactionType.RegisterTransaction:
+                        asset = AssetState(tx.Hash, tx.AssetType, tx.Name, tx.Amount,
+                                           Fixed8(0), tx.Precision, Fixed8(0),
+                                           Fixed8(0), UInt160(data=bytearray(20)),
+                                           tx.Owner, tx.Admin, tx.Admin,
+                                           block.Index + 2 * 2000000, False)
+
+                        snapshot.Assets.Add(tx.Hash.ToBytes(), asset)
+
+                    elif tx.Type == TransactionType.IssueTransaction:
+
+                        txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
+                        for result in txresults:
+                            asset = snapshot.Assets.GetAndChange(result.AssetId.ToBytes())
+                            asset.Available = asset.Available - result.Amount
+
+                    elif tx.Type == TransactionType.ClaimTransaction:
+                        for input in tx.Claims:
+
+                            sc = snapshot.SpentCoins.TryGet(input.PrevHash.ToBytes())
+                            if sc and sc.HasIndex(input.PrevIndex):
+                                sc.DeleteIndex(input.PrevIndex)
+                                snapshot.SpentCoins.GetAndChange(input.PrevHash.ToBytes())
+
+                    elif tx.Type == TransactionType.EnrollmentTransaction:
+                        snapshot.Validators.GetAndChange(tx.PublicKey.ToBytes(), lambda: ValidatorState(pub_key=tx.PublicKey))
+                    elif tx.Type == TransactionType.StateTransaction:
+                        # @TODO Implement persistence for State Descriptors
+                        pass
+
+                    elif tx.Type == TransactionType.PublishTransaction:
+                        create_contract_state = lambda: ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
+                                                 tx.Author, tx.Email, tx.Description)
+
+                        snapshot.Contracts.GetOrAdd(tx.Code.ScriptHash().ToBytes(), create_contract_state)
+                    elif tx.Type == TransactionType.InvocationTransaction:
+
+                        if block.Index == 1163835: #1115070: #373761
+                            if tx_idx == 46:
+                                print("yo")
+
+                        engine = ApplicationEngine(TriggerType.Application, tx, snapshot.Clone(), tx.Gas)
+                        engine.LoadScript(tx.Script)
+
+                        try:
+                            success = engine.Execute()
+                            if success:
+                                engine._Service.Commit()
+                                dump_entry["storage"] = self.get_storage_json(snapshot)
+
+
+                        except Exception as e:
+                            traceback.print_exc()
+
+                        invoc_results = {
+                            "vmstate": VMStateStr(engine.State),
+                            "gas_consumed": str(engine.gas_consumed / Fixed8.D),
+                            "result_stack": []
+                        }
+
+
+                        for item in engine.ResultStack.Items:
+                            invoc_results["result_stack"].append(self.StackItemToJson(item))
+                        execution_results.append(invoc_results)
+
+                        to_dispatch = to_dispatch + engine._Service.events_to_dispatch
+                        await asyncio.sleep(0.001)
+
                     else:
-                        account.SetBalanceFor(output.AssetId, output.Value)
 
-                # go through all tx inputs
-                unique_tx_input_hashes = []
-                for input in tx.inputs:
-                    if input.PrevHash not in unique_tx_input_hashes:
-                        unique_tx_input_hashes.append(input.PrevHash)
+                        if tx.Type != b'\x00' and tx.Type != b'\x80':
+                            logger.info("TX Not Found %s " % tx.Type)
 
-                for txhash in unique_tx_input_hashes:
-                    prevTx, height = self.GetTransaction(txhash.ToBytes())
-                    coin_refs_by_hash = [coinref for coinref in tx.inputs if
-                                         coinref.PrevHash.ToBytes() == txhash.ToBytes()]
-                    for input in coin_refs_by_hash:
-
-                        uns = unspentcoins.GetAndChange(input.PrevHash.ToBytes())
-                        uns.OrEqValueForItemAt(input.PrevIndex, CoinState.Spent)
-
-                        if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                            sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(),
-                                                         SpentCoinState(input.PrevHash, height, []))
-                            sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
-
-                        output = prevTx.outputs[input.PrevIndex]
-                        acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes,
-                                                     AccountState(output.ScriptHash))
-                        assetid = prevTx.outputs[input.PrevIndex].AssetId
-                        acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
-
-                # do a whole lotta stuff with tx here...
-                if tx.Type == TransactionType.RegisterTransaction:
-                    asset = AssetState(tx.Hash, tx.AssetType, tx.Name, tx.Amount,
-                                       Fixed8(0), tx.Precision, Fixed8(0),
-                                       Fixed8(0), UInt160(data=bytearray(20)),
-                                       tx.Owner, tx.Admin, tx.Admin,
-                                       block.Index + 2 * 2000000, False)
-
-                    assets.Add(tx.Hash.ToBytes(), asset)
-
-                elif tx.Type == TransactionType.IssueTransaction:
-
-                    txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
-                    for result in txresults:
-                        asset = assets.GetAndChange(result.AssetId.ToBytes())
-                        asset.Available = asset.Available - result.Amount
-
-                elif tx.Type == TransactionType.ClaimTransaction:
-                    for input in tx.Claims:
-
-                        sc = spentcoins.TryGet(input.PrevHash.ToBytes())
-                        if sc and sc.HasIndex(input.PrevIndex):
-                            sc.DeleteIndex(input.PrevIndex)
-                            spentcoins.GetAndChange(input.PrevHash.ToBytes())
-
-                elif tx.Type == TransactionType.EnrollmentTransaction:
-                    newvalidator = ValidatorState(pub_key=tx.PublicKey)
-                    validators.GetAndChange(tx.PublicKey.ToBytes(), newvalidator)
-                elif tx.Type == TransactionType.StateTransaction:
-                    # @TODO Implement persistence for State Descriptors
-                    pass
-
-                elif tx.Type == TransactionType.PublishTransaction:
-                    contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
-                                             tx.Author, tx.Email, tx.Description)
-
-                    contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
-                elif tx.Type == TransactionType.InvocationTransaction:
-
-                    script_table = CachedScriptTable(contracts)
-                    service = StateMachine(accounts, validators, assets, contracts, storages, wb, self)
-
-                    engine = ApplicationEngine(
-                        trigger_type=TriggerType.Application,
-                        container=tx,
-                        table=script_table,
-                        service=service,
-                        gas=tx.Gas,
-                        testMode=False
-                    )
-
-                    engine.LoadScript(tx.Script)
-
-                    try:
-                        success = engine.Execute()
-                        service.ExecutionCompleted(engine, success)
-
-                    except Exception as e:
-                        service.ExecutionCompleted(engine, False, e)
-
-                    to_dispatch = to_dispatch + service.events_to_dispatch
-                    await asyncio.sleep(0.001)
-
-                else:
-
-                    if tx.Type != b'\x00' and tx.Type != b'\x80':
-                        logger.info("TX Not Found %s " % tx.Type)
-
-            # do save all the accounts, unspent, coins, validators, assets, etc
-            # now sawe the current sys block
-
-            # filter out accounts to delete then commit
-            for key, account in accounts.Current.items():
-                if not account.IsFrozen and len(account.Votes) == 0 and account.AllBalancesZeroOrLess():
-                    accounts.Remove(key)
-
-            accounts.Commit(wb)
-
-            # filte out unspent coins to delete then commit
-            for key, unspent in unspentcoins.Current.items():
-                if unspent.IsAllSpent:
-                    unspentcoins.Remove(key)
-            unspentcoins.Commit(wb)
-
-            # filter out spent coins to delete then commit to db
-            for key, spent in spentcoins.Current.items():
-                if len(spent.Items) == 0:
-                    spentcoins.Remove(key)
-
-            spentcoins.Commit(wb)
-            validators.Commit(wb)
-            assets.Commit(wb)
-            contracts.Commit(wb)
+            snapshot.Commit()
+            snapshot.Dispose()
 
             wb.put(DBPrefix.SYS_CurrentBlock, block.Hash.ToBytes() + block.IndexBytes())
             self._current_block_height = block.Index
@@ -1125,10 +1142,71 @@ class Blockchain:
 
             self.TXProcessed += len(block.Transactions)
 
+        for tx in block.Transactions:
+            tx_json = tx.ToJson()
+            tx_entry = {}
+            tx_entry["id"] = tx_json["txid"]
+            tx_entry["type"] = tx_json["type"]
+            tx_entry["size"] = tx_json["size"]
+            tx_entry["sys_fee"] = tx_json["sys_fee"]
+            tx_entry["net_fee"] = tx_json["net_fee"]
+
+            if tx_json["type"] == "InvocationTransaction":
+                tx_entry["execution_result"] = execution_results.pop(0)
+            dump_entry["tx"].append(tx_entry)
+
+        self.dump_cache.append(dump_entry)
+
+        if len(self.dump_cache) > 0:
+            if block.Index % 1000 == 0:
+                dirPath = "./Storage"
+
+                with suppress(FileExistsError):
+                    os.mkdir(dirPath)
+
+                sub_dir = f"BlockStorage_{(int(((block.Index - 1) / 100000)) + 1) * 100000}"
+                with suppress(FileExistsError):
+                    os.mkdir(f"{dirPath}/{sub_dir}")
+
+                filepath = f"{dirPath}/{sub_dir}/dump-block-{block.Index}.json"
+                with open(filepath, 'w+') as f:
+                    try:
+                        json.dump(self.dump_cache, f, indent=4)
+                    except:
+                        pprint(self.dump_cache)
+                        print(f"block that trigger error {Block.Index}")
+                        raise
+                    self.dump_cache.clear()
+
+
         for event in to_dispatch:
             events.emit(event.event_type, event)
 
-    async def TryPersist(self, block: 'Block') -> Tuple[bool, str]:
+    def get_storage_json(self, snapshot):
+        result = []
+        for trackable in snapshot.Storages.GetChangeSet():
+            if trackable.State == TrackState.ADDED:
+                entry = {
+                    "state": "Added",
+                    "key": binascii.hexlify(trackable.Key).decode('utf-8'),
+                    "value": binascii.hexlify(trackable.Item.Value).decode("utf-8")
+                }
+            elif trackable.State == TrackState.CHANGED:
+                entry = {
+                    "state": "Changed",
+                    "key": binascii.hexlify(trackable.Key).decode('utf-8'),
+                    "value": binascii.hexlify(trackable.Item.Value).decode("utf-8")
+                }
+            elif trackable.State == TrackState.DELETED:
+                entry = {
+                    "state": "Deleted",
+                    "key": binascii.hexlify(trackable.Key).decode('utf-8')
+                }
+            result.append(entry)
+        return result
+
+
+    async def TryPersist(self, block) -> Tuple[bool, str]:
         distance = self._current_block_height - block.Index
 
         if distance >= 0:

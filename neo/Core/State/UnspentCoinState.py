@@ -118,3 +118,9 @@ class UnspentCoinState(StateBase):
         for item in self.Items:
             byt = item.to_bytes(1, 'little')
             writer.WriteByte(byt)
+
+    def Clone(self):
+        new_items = []
+        for i in self.Items:
+            new_items.append(i.Clone())
+        return UnspentCoinState(items=new_items)

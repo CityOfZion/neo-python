@@ -44,7 +44,7 @@ class IssueTransaction(Transaction):
 
         return super(IssueTransaction, self).SystemFee()
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot):
         pass
 
     def DeserializeExclusiveData(self, reader):

@@ -67,7 +67,7 @@ class ClaimTransaction(Transaction):
         if len(self.Claims) == 0:
             raise Exception('Format Exception')
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot):
         """
         Get a list of script hashes for verifying transactions.
 
@@ -80,7 +80,7 @@ class ClaimTransaction(Transaction):
         hashes = super(ClaimTransaction, self).GetScriptHashesForVerifying()
 
         for hash, group in groupby(self.Claims, lambda x: x.PrevHash):
-            tx, height = Blockchain.Default().GetTransaction(hash)
+            tx = snapshot.GetTransaction(hash)
 
             if tx is None:
                 raise Exception("Invalid Claim Operation")

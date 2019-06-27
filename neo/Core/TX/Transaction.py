@@ -19,7 +19,7 @@ from neo.Core.IO.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.IO.BinaryReader import BinaryReader
 from neo.Core.Mixins import EquatableMixin
-from neo.Core.Helper import Helper
+import neo.Core.Helper
 from neo.Core.Witness import Witness
 from neo.Core.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
@@ -248,6 +248,10 @@ class Transaction(InventoryMixin):
         self.__htbs = None
         self.__height = 0
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__} at {hex(id(self))}> {self.Hash.ToString()}"
+
+
     @property
     def Hash(self):
         """
@@ -269,7 +273,7 @@ class Transaction(InventoryMixin):
         Returns:
             bytes:
         """
-        return Helper.GetHashData(self)
+        return neo.Core.Helper.Helper.GetHashData(self)
 
     def GetMessage(self):
         """
@@ -527,7 +531,7 @@ class Transaction(InventoryMixin):
         Returns:
             bytes:
         """
-        return Helper.ToArray(self)
+        return neo.Core.Helper.Helper.ToArray(self)
 
     def Serialize(self, writer):
         """
@@ -608,7 +612,7 @@ class Transaction(InventoryMixin):
                 logger.debug(f'The tx size ({self.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
                 return False
 
-        return Helper.VerifyScripts(self)
+        return neo.Core.Helper.Helper.VerifyScripts(self)
 
     #        logger.info("return true for now ...")
     #        return True
@@ -683,7 +687,7 @@ class Transaction(InventoryMixin):
     #                    return False
     #
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot):
         """
         Get a list of script hashes for verifying transactions.
 
@@ -709,9 +713,9 @@ class Transaction(InventoryMixin):
 
         for key, group in groupby(self.outputs, lambda p: p.AssetId):
             if self.raw_tx:
-                asset = Helper.StaticAssetState(key)
+                asset = neo.Core.Helper.Helper.StaticAssetState(key)
             else:
-                asset = GetBlockchain().GetAssetState(key.ToBytes())
+                asset = snapshot.Assets.TryGet(key.ToBytes())
             if asset is None:
                 raise Exception("Invalid operation")
 

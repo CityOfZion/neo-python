@@ -1,5 +1,6 @@
 import sys
-from neo.Core.BlockBase import BlockBase
+import neo.Core.BlockBase
+# from neo.Core.BlockBase import BlockBase
 from neo.Core.TX.Transaction import Transaction, TransactionOutput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
@@ -39,30 +40,30 @@ logger = log_manager.getLogger('vm')
 
 
 class StateMachine(StateReader):
-    def __init__(self, accounts, validators, assets, contracts, storages, wb, chain):
+    def __init__(self, trigger, snapshot):
 
-        super(StateMachine, self).__init__()
+        super(StateMachine, self).__init__(trigger, snapshot)
 
-        self._accounts = accounts
-        self._validators = validators
-        self._assets = assets
-        self._contracts = contracts
-        self._storages = storages
-        self._wb = wb
-        self._chain = chain
+        # self._accounts = accounts
+        # self._validators = validators
+        # self._assets = assets
+        # self._contracts = contracts
+        # self._storages = storages
+        # self._wb = wb
+        # self._chain = chain
         self._contracts_created = {}
 
         # checks for testing purposes
-        if accounts is not None:
-            self._accounts.MarkForReset()
-        if validators is not None:
-            self._validators.MarkForReset()
-        if assets is not None:
-            self._assets.MarkForReset()
-        if contracts is not None:
-            self._contracts.MarkForReset()
-        if storages is not None:
-            self._storages.MarkForReset()
+        # if accounts is not None:
+        #     self._accounts.MarkForReset()
+        # if validators is not None:
+        #     self._validators.MarkForReset()
+        # if assets is not None:
+        #     self._assets.MarkForReset()
+        # if contracts is not None:
+        #     self._contracts.MarkForReset()
+        # if storages is not None:
+        #     self._storages.MarkForReset()
 
         self.RegisterWithPrice("Neo.Runtime.GetTrigger", self.Runtime_GetTrigger, 1)
         self.RegisterWithPrice("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness, 200)
@@ -229,12 +230,13 @@ class StateMachine(StateReader):
         super(StateMachine, self).ExecutionCompleted(engine, success, error)
 
     def Commit(self):
-        if self._wb is not None:
-            self._accounts.Commit(self._wb, False)
-            self._validators.Commit(self._wb, False)
-            self._assets.Commit(self._wb, False)
-            self._contracts.Commit(self._wb, False)
-            self._storages.Commit(self._wb, False)
+        self.Snapshot.Commit()
+        # if self._wb is not None:
+        #     self._accounts.Commit(self._wb, False)
+        #     self._validators.Commit(self._wb, False)
+        #     self._assets.Commit(self._wb, False)
+        #     self._contracts.Commit(self._wb, False)
+        #     self._storages.Commit(self._wb, False)
 
     def ResetState(self):
         self._accounts.Reset()
@@ -254,12 +256,12 @@ class StateMachine(StateReader):
         hash = UInt160(data=engine.CurrentContext.EvaluationStack.Pop().GetByteArray())
         address = Crypto.ToAddress(hash).encode('utf-8')
 
-        account = self.Accounts.GetOrAdd(address, new_instance=AccountState(script_hash=hash))
+        account = self.Snapshot.Accounts.GetOrAdd(address, lambda: AccountState(script_hash=hash))
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(account))
         return True
 
     def Blockchain_GetValidators(self, engine: ExecutionEngine):
-        validators = GetBlockchain().GetValidators()
+        validators = self.Snapshot.GetValidators()
 
         items = [StackItem(validator.encode_point(compressed=True)) for validator in validators]
 
@@ -272,35 +274,35 @@ class StateMachine(StateReader):
         asset = None
 
         if GetBlockchain() is not None:
-            asset = self.Assets.TryGet(UInt256(data=data))
+            asset = self.Snapshot.Assets.TryGet(UInt256(data=data))
         if asset is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(asset))
         return True
 
     def Header_GetVersion(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.BlockBase.BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.Version)
         return True
 
     def Header_GetMerkleRoot(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.BlockBase.BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.MerkleRoot.ToArray())
         return True
 
     def Header_GetConsensusData(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.BlockBase.BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.ConsensusData)
         return True
 
     def Header_GetNextConsensus(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.BlockBase.BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.NextConsensus.ToArray())
@@ -565,14 +567,10 @@ class StateMachine(StateReader):
             asset_id=tx.Hash, asset_type=asset_type, name=name, amount=amount,
             available=Fixed8.Zero(), precision=precision, fee_mode=0, fee=Fixed8.Zero(),
             fee_addr=UInt160(), owner=owner, admin=admin, issuer=issuer,
-            expiration=self._chain.Height + 1 + 2000000, is_frozen=False
+            expiration=GetBlockchain().Height + 1 + 2000000, is_frozen=False
         )
 
-        asset = self._assets.ReplaceOrAdd(tx.Hash.ToBytes(), new_asset)
-
-        # print("*****************************************************")
-        # print("CREATED ASSET %s " % tx.Hash.ToBytes())
-        # print("*****************************************************")
+        asset = self.Snapshot.Assets.GetOrAdd(tx.Hash.ToBytes(), lambda: new_asset)
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(asset))
 
         return True
@@ -586,10 +584,10 @@ class StateMachine(StateReader):
 
         years = engine.CurrentContext.EvaluationStack.Pop().GetBigInteger()
 
-        asset = self._assets.GetAndChange(current_asset.AssetId.ToBytes())
+        asset = self.Snapshot.Assets.GetAndChange(current_asset.AssetId.ToBytes())
 
-        if asset.Expiration < self._chain.Height + 1:
-            asset.Expiration = self._chain.Height + 1
+        if asset.Expiration < self.Snapshot.Height + 1:
+            asset.Expiration = self.Snapshot.Height + 1
 
         try:
 
@@ -699,7 +697,7 @@ class StateMachine(StateReader):
 
         hash = Crypto.ToScriptHash(script, unhex=False)
 
-        contract = self._contracts.TryGet(hash.ToBytes())
+        contract = self.Snapshot.Contracts.TryGet(hash.ToBytes())
 
         if contract is None:
             try:
@@ -713,7 +711,7 @@ class StateMachine(StateReader):
 
             contract = ContractState(code, contract_properties, name, code_version, author, email, description)
 
-            self._contracts.GetAndChange(code.ScriptHash().ToBytes(), contract)
+            self.Snapshot.Contracts.Add(code.ScriptHash().ToBytes(), contract)
 
             self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
 
@@ -721,7 +719,7 @@ class StateMachine(StateReader):
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_CREATED, ContractParameter(ContractParameterType.InteropInterface, contract),
-                               hash, self._chain.Height + 1,
+                               hash, GetBlockchain().Height + 1,
                                engine.ScriptContainer.Hash if engine.ScriptContainer else None,
                                test_mode=engine.testMode))
         return True
@@ -765,7 +763,7 @@ class StateMachine(StateReader):
 
         hash = Crypto.ToScriptHash(script, unhex=False)
 
-        contract = self._contracts.TryGet(hash.ToBytes())
+        contract = self.Snapshot.Contracts.TryGet(hash.ToBytes())
 
         if contract is None:
 
@@ -775,7 +773,7 @@ class StateMachine(StateReader):
                                      name=name, version=version, author=author,
                                      email=email, description=description)
 
-            self._contracts.Add(hash.ToBytes(), contract)
+            self.Snapshot.Contracts.Add(hash.ToBytes(), contract)
 
             self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
 
@@ -783,13 +781,13 @@ class StateMachine(StateReader):
                 for key, val in self._storages.Find(engine.CurrentContext.ScriptHash()).items():
                     key = StorageKey(script_hash=hash, key=key)
                     item = StorageItem(val)
-                    self._storages.Add(key.ToArray(), item)
+                    self.Snapshot.Contracts.Add(key.ToArray(), item)
 
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_MIGRATED, ContractParameter(ContractParameterType.InteropInterface, contract),
-                               hash, self._chain.Height + 1,
+                               hash, GetBlockchain().Height + 1,
                                engine.ScriptContainer.Hash if engine.ScriptContainer else None,
                                test_mode=engine.testMode))
 
@@ -820,7 +818,7 @@ class StateMachine(StateReader):
         prefix = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
         prefix = context.ScriptHash.ToArray() + prefix
 
-        iterator = self.Storages.TryFind(prefix)
+        iterator = self.Snapshot.Storages.TryFind(prefix)
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(iterator))
 
         return True

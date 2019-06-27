@@ -578,6 +578,7 @@ class InteropService:
     def Invoke(self, method, engine):
         if method not in self._dictionary.keys():
             logger.debug("method %s not found" % method)
+            return False
         func = self._dictionary[method]
         return func(engine)
 
