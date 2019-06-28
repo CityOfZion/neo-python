@@ -24,6 +24,7 @@ from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
+from neo.SmartContract.ContractParameter import ContractParameterType
 from neo.SmartContract.Contract import Contract
 from neo.Core.Cryptography.Helper import scripthash_to_address
 from neo.Core.Cryptography.Crypto import Crypto
@@ -170,12 +171,10 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None,
     contract = BC.GetContract(args[0])
 
     if contract:
-        #
         params = args[1:] if len(args) > 1 else []
 
         params, neo_to_attach, gas_to_attach = PromptUtils.get_asset_attachments(params)
         params, parse_addresses = PromptUtils.get_parse_addresses(params)
-        params.reverse()
 
         if '--i' in params:
             params = []
@@ -185,6 +184,15 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None,
                     return None, None, None, None, False
                 params.append(param)
             params.reverse()
+        else:
+            i_args = []
+            for index, iarg in enumerate(contract.Code.ParameterList):
+                param, abort = PromptUtils.verify_params(ContractParameterType(iarg), params[index])
+                if abort:
+                    return None, None, None, None, False
+                i_args.append(param)
+            i_args.reverse()
+            params = i_args
 
         sb = ScriptBuilder()
 
@@ -468,17 +476,23 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         invoke_args, neo_to_attach, gas_to_attach = PromptUtils.get_asset_attachments(invoke_args)
         invoke_args, no_parse_addresses = PromptUtils.get_parse_addresses(invoke_args)
 
-        invoke_args.reverse()
-
         if '--i' in invoke_args:
             invoke_args = []
             for index, iarg in enumerate(contract_state.Code.ParameterList):
                 param, abort = PromptUtils.gather_param(index, iarg)
                 if abort:
                     return None, [], 0, None
-                else:
-                    invoke_args.append(param)
+                invoke_args.append(param)
             invoke_args.reverse()
+        else:
+            i_args = []
+            for index, iarg in enumerate(contract_state.Code.ParameterList):
+                param, abort = PromptUtils.verify_params(ContractParameterType(iarg), invoke_args[index])
+                if abort:
+                    return None, [], 0, None
+                i_args.append(param)
+            i_args.reverse()
+            invoke_args = i_args
 
         sb = ScriptBuilder()
 
