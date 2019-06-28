@@ -328,9 +328,8 @@ def verify_params(ptype, param):
         return res, False
 
     elif ptype == ContractParameterType.Array:
-        res = eval(param)
-        if isinstance(res, list):
-            return res, False
+        if isinstance(param, list):
+            return param, False
         raise Exception("Please provide a list")
     else:
         raise Exception("Unknown param type %s " % ptype.name)
