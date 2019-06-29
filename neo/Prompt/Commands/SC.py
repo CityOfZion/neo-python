@@ -185,7 +185,8 @@ class CommandSCTestInvoke(CommandBase):
                 logger.debug("invalid fee")
                 return False
 
-        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, arguments, from_addr=from_addr, invoke_attrs=invoke_attrs, owners=owners)
+        tx, fee, results, num_ops, engine_success = TestInvokeContract(wallet, arguments, from_addr=from_addr, invoke_attrs=invoke_attrs,
+                                                                       owners=owners, user_entry=True)
         if tx is not None and results is not None:
 
             if return_type is not None:

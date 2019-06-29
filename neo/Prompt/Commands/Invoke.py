@@ -164,8 +164,8 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None,
-                       min_fee=DEFAULT_MIN_FEE, invoke_attrs=None, owners=None):
+def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None, min_fee=DEFAULT_MIN_FEE,
+                       invoke_attrs=None, owners=None, user_entry=False):
     BC = GetBlockchain()
 
     contract = BC.GetContract(args[0])
@@ -184,15 +184,21 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None,
                     return None, None, None, None, False
                 params.append(param)
             params.reverse()
+        elif user_entry:
+            try:
+                i_args = []
+                for index, iarg in enumerate(contract.Code.ParameterList):
+                    param, abort = PromptUtils.verify_params(ContractParameterType(iarg), params[index])
+                    if abort:
+                        return None, None, None, None, False
+                    i_args.append(param)
+                i_args.reverse()
+                params = i_args
+            except IndexError:
+                print(f"Check params. {len(contract.Code.ParameterList)} params specified and only {len(params)} given.")
+                return None, None, None, None, False
         else:
-            i_args = []
-            for index, iarg in enumerate(contract.Code.ParameterList):
-                param, abort = PromptUtils.verify_params(ContractParameterType(iarg), params[index])
-                if abort:
-                    return None, None, None, None, False
-                i_args.append(param)
-            i_args.reverse()
-            params = i_args
+            params.reverse()
 
         sb = ScriptBuilder()
 
@@ -393,9 +399,10 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
     return None, None, None, None, False
 
 
-def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
-                           from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
-                           debug_map=None, invoke_attrs=None, owners=None, enable_debugger=False):
+def test_deploy_and_invoke(deploy_script, invoke_args, wallet, from_addr=None,
+                           min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
+                           debug_map=None, invoke_attrs=None, owners=None,
+                           enable_debugger=False, user_entry=False):
     bc = GetBlockchain()
 
     accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
@@ -484,15 +491,21 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                     return None, [], 0, None
                 invoke_args.append(param)
             invoke_args.reverse()
+        elif user_entry:
+            try:
+                i_args = []
+                for index, iarg in enumerate(contract_state.Code.ParameterList):
+                    param, abort = PromptUtils.verify_params(ContractParameterType(iarg), invoke_args[index])
+                    if abort:
+                        return None, [], 0, None
+                    i_args.append(param)
+                i_args.reverse()
+                invoke_args = i_args
+            except IndexError:
+                print(f"Check params. {len(contract_state.Code.ParameterList)} params specified and only {len(invoke_args)} given.")
+                return None, [], 0, None
         else:
-            i_args = []
-            for index, iarg in enumerate(contract_state.Code.ParameterList):
-                param, abort = PromptUtils.verify_params(ContractParameterType(iarg), invoke_args[index])
-                if abort:
-                    return None, [], 0, None
-                i_args.append(param)
-            i_args.reverse()
-            invoke_args = i_args
+            invoke_args.reverse()
 
         sb = ScriptBuilder()
 
