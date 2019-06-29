@@ -128,6 +128,15 @@ class CommandSCTestCase(WalletFixtureTestCase):
             self.assertFalse(tx)
             self.assertIn("run `sc build_run help` to see supported queries", mock_print.getvalue())
 
+        # test too few args
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy',
+                    ]  # missing third param
+            tx, result, total_ops, engine = CommandSC().execute(args)
+            self.assertFalse(tx)
+            self.assertIn("Check params. 3 params specified and only 2 given.", mock_print.getvalue())
+
         # test successful build and run
         PromptData.Wallet = self.GetWallet1(recreate=True)
         with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -401,6 +410,13 @@ class CommandSCTestCase(WalletFixtureTestCase):
             res = CommandSC().execute(args)
             self.assertFalse(res)
             self.assertIn("Error testing contract invoke", mock_print.getvalue())
+
+        # test too few args
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['invoke', token_hash_str, 'name']  # missing second arg
+            res = CommandSC().execute(args)
+            self.assertFalse(res)
+            self.assertIn("Check params. 2 params specified and only 1 given.", mock_print.getvalue())
 
         # test with keyboard interrupt
         with patch('sys.stdout', new=StringIO()) as mock_print:
