@@ -111,7 +111,6 @@ class DBInterface(object):
 
         return item
 
-
         item = self.TryGet(keyval)
 
         if item is None:
@@ -201,7 +200,7 @@ class DBInterface(object):
             if not found:
                 self.tracking.append({"state": "Added", "key": binascii.hexlify(keyval).decode(), "value": item.ToByteArray().decode()})
             else:
-                self.tracking.append({"state": "Changed", "key": binascii.hexlify(keyval).decode(),"value": item.ToByteArray().decode()})
+                self.tracking.append({"state": "Changed", "key": binascii.hexlify(keyval).decode(), "value": item.ToByteArray().decode()})
 
         self.Collection[keyval] = item
         self.MarkChanged(keyval)

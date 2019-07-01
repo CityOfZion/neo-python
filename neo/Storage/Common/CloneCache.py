@@ -13,11 +13,8 @@ class CloneCache(DataCache):
         self.innerCache.Delete(key)
 
     def FindInternal(self, key_prefix):
-        res = {}
-        for k,v in self.innerCache.Find(key_prefix).items():
-            res.update({k, v.Clone()})
-
-        return res
+        for k, v in self.innerCache.Find(key_prefix):
+            yield k, v.Clone()
 
     def GetInternal(self, key):
         return self.innerCache[key].Clone()

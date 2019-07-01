@@ -16,18 +16,18 @@ from neo.Core.State.TransactionState import TransactionState
 class LevelDBSnapshot(neo.Storage.Common.Snapshot.Snapshot):
 
     def __init__(self, _db):
-            self.db = _db
-            self.snapshot = _db.snapshot()
-            self.batch = _db.write_batch()
-            self.Blocks = LevelDBCache(_db, self.batch, DBPrefix.DATA_Block, BlockState)
-            self.Transactions = LevelDBCache(_db, self.batch, DBPrefix.DATA_Transaction, TransactionState)
-            self.Accounts = LevelDBCache(_db, self.batch, DBPrefix.ST_Account, AccountState)
-            self.UnspentCoins = LevelDBCache(_db, self.batch, DBPrefix.ST_Coin, UnspentCoinState)
-            self.SpentCoins = LevelDBCache(_db, self.batch, DBPrefix.ST_SpentCoin, SpentCoinState)
-            self.Assets = LevelDBCache(_db, self.batch, DBPrefix.ST_Asset, AssetState)
-            self.Validators = LevelDBCache(_db, self.batch, DBPrefix.ST_Validator, ValidatorState)
-            self.Contracts = LevelDBCache(_db, self.batch, DBPrefix.ST_Contract, ContractState)
-            self.Storages = LevelDBCache(_db, self.batch, DBPrefix.ST_Storage, StorageItem)
+        self.db = _db  # type: LevelDBImpl
+        self.snapshot = self.db._db.snapshot()
+        self.batch = self.db._db.write_batch()
+        self.Blocks = LevelDBCache(self.db, self.batch, DBPrefix.DATA_Block, BlockState)
+        self.Transactions = LevelDBCache(self.db, self.batch, DBPrefix.DATA_Transaction, TransactionState)
+        self.Accounts = LevelDBCache(self.db, self.batch, DBPrefix.ST_Account, AccountState)
+        self.UnspentCoins = LevelDBCache(self.db, self.batch, DBPrefix.ST_Coin, UnspentCoinState)
+        self.SpentCoins = LevelDBCache(self.db, self.batch, DBPrefix.ST_SpentCoin, SpentCoinState)
+        self.Assets = LevelDBCache(self.db, self.batch, DBPrefix.ST_Asset, AssetState)
+        self.Validators = LevelDBCache(self.db, self.batch, DBPrefix.ST_Validator, ValidatorState)
+        self.Contracts = LevelDBCache(self.db, self.batch, DBPrefix.ST_Contract, ContractState)
+        self.Storages = LevelDBCache(self.db, self.batch, DBPrefix.ST_Storage, StorageItem)
 
     def Commit(self):
         super(LevelDBSnapshot, self).Commit()

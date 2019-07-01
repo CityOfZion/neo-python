@@ -64,7 +64,7 @@ class LevelDBImpl(AbstractDBImplementation):
         return clone_storage
 
     def createSnapshot(self):
-        return neo.Storage.Implementation.LevelDB.LevelDBSnapshot.LevelDBSnapshot(self._db)
+        return neo.Storage.Implementation.LevelDB.LevelDBSnapshot.LevelDBSnapshot(self)
 
     @contextmanager
     def openIter(self, properties):
@@ -89,4 +89,3 @@ class LevelDBImpl(AbstractDBImplementation):
 
     def closeDB(self):
         self._db.close()
-

@@ -21,7 +21,7 @@ class DataCache:
 
     def __getitem__(self, key):
 
-        trackable = self.dictionary.get(key, None) # type: Trackable
+        trackable = self.dictionary.get(key, None)  # type: Trackable
         if trackable is not None:
             if trackable.State == TrackState.DELETED:
                 raise KeyError
@@ -31,7 +31,7 @@ class DataCache:
         return trackable.Item
 
     def Add(self, key, value):
-        trackable = self.dictionary.get(key, None) # type: Trackable
+        trackable = self.dictionary.get(key, None)  # type: Trackable
         if trackable is not None and trackable.State != TrackState.DELETED:
             raise ValueError("Value already exists")
 
@@ -42,11 +42,11 @@ class DataCache:
 
         self.dictionary.update({key: trackable})
 
-    def AddInternal(self,key, value):
+    def AddInternal(self, key, value):
         raise NotImplementedError()
 
     def Commit(self):
-        for trackable in self.dictionary.values(): # type: Trackable
+        for trackable in self.dictionary.values():  # type: Trackable
             if trackable.State == TrackState.ADDED:
                 self.AddInternal(trackable.Key, trackable.Item)
             elif trackable.State == TrackState.CHANGED:
@@ -57,13 +57,12 @@ class DataCache:
     def UpdateInternal(self, key, value):
         raise NotImplementedError()
 
-
     def CreateSnapshot(self):
         from neo.Storage.Common.CloneCache import CloneCache
         return CloneCache(self)
 
     def Delete(self, key):
-        trackable = self.dictionary.get(key, None) # type: Trackable
+        trackable = self.dictionary.get(key, None)  # type: Trackable
         if trackable is not None:
             if trackable.State == TrackState.ADDED:
                 self.dictionary.pop(key)
@@ -84,41 +83,23 @@ class DataCache:
             if trackable.State != TrackState.DELETED and predicate_func(trackable.Key, trackable.Item):
                 trackable.State = TrackState.DELETED
 
-    def Find(self, key_prefix = None):
+    def Find(self, key_prefix=None):
         if key_prefix is None:
             key_prefix = b''
 
         for k, v in self.FindInternal(key_prefix):
             if k not in self.dictionary:
                 yield k, v
+
         for k, v in self.dictionary.items():
             if v.State != TrackState.DELETED and (key_prefix is None or key_prefix in k):
                 yield k, v.Item
 
-        #
-        #
-        #
-        # candidates = {}
-        # for keyval in self.Collection.keys():
-        #     # See if we find a partial match in the keys that not have been committed yet, excluding those that are to be deleted
-        #     if key_prefix in keyval and keyval not in self.Deleted:
-        #         candidates[keyval[20:]] = self.Collection[keyval].Value
-        #
-        # db_results = self.Find(key_prefix)
-        #
-        # # {**x, **y} merges two dictionaries, with the values of y overwriting the vals of x
-        # # withouth this merge, you sometimes get 2 results for each key
-        # # then take the dict and make a list of tuples
-        # final_collection = [(k, v) for k, v in {**db_results, **candidates}.items()]
-        #
-        # return EnumeratorBase(iter(final_collection))
-
-
-    def FindInternal(self, key_prefix):
+    def FindInternal(self, key_prefix) -> dict:
         # should be equal to DBInterface.Find
         raise NotImplementedError()
 
-    def GetAndChange(self, key, factory = None):
+    def GetAndChange(self, key, factory=None):
         # neo-cli used this very confusing naming. It is actually more close to GetOrCreate
         trackable = self.dictionary.get(key, None)
         if trackable is not None:

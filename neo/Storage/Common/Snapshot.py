@@ -15,7 +15,7 @@ class Snapshot:
         self.Contracts = DataCache()
         self.Storages = DataCache()
 
-    def CalculateBonus(self, inputs, ignoreClaimed = True):  # -> Fixed8
+    def CalculateBonus(self, inputs, ignoreClaimed=True):  # -> Fixed8
         raise NotImplementedError()
 
     def CalculateBonusToHeight(self, inputs, height_end):  # -> Fixed8
@@ -45,7 +45,6 @@ class Snapshot:
 
     def GetScript(self, script_hash):
         return self.Contracts[script_hash].Code.Script
-        # raise NotImplementedError("see CachedScriptTable.py for implementation")
 
     def GetUnclaimed(self, hash):  # should be uint256
         raise NotImplementedError()
@@ -55,4 +54,3 @@ class Snapshot:
 
     def GetValidatorsFromTx(self, others):
         raise NotImplementedError()
-

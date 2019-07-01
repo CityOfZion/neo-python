@@ -28,16 +28,21 @@ class LevelDBCache(DataCache):
             self.batch.delete(self.prefix + key)
 
     def FindInternal(self, key_prefix):
-        key_prefix = self.prefix + key_prefix
+        intermediate_prefix = bytearray(binascii.unhexlify(key_prefix))
+        intermediate_prefix.reverse()
+        key_prefix = self.prefix + intermediate_prefix
         res = {}
-        with self.DB.openIter(DBProperties(key_prefix, include_value=True)) as it:
+        with self.db.openIter(DBProperties(key_prefix, include_value=True)) as it:
             for key, val in it:
                 # we want the storage item, not the raw bytes
-                item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val)).Value
+                item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val))
                 # also here we need to skip the 1 byte storage prefix
                 res_key = key[21:]
                 res[res_key] = item
-        return res
+
+        # yielding outside of iterator to make sure the db iterator is closed
+        for k, v in res.items():
+            yield k, v
 
     def GetInternal(self, key):
         result = self.TryGetInternal(key)
@@ -45,7 +50,6 @@ class LevelDBCache(DataCache):
             raise ValueError("Key not found in DB!")
 
         return result
-        # return self.db.get(self.prefix + key)
 
     def TryGetInternal(self, key):
         data = self.db.get(self.prefix + key)

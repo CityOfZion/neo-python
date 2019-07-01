@@ -293,10 +293,7 @@ class Blockchain:
 
         it = IssueTransaction([], [output], [], [script])
 
-        return neo.Core.Block.Block(prev_hash, timestamp, index, consensus_data,
-                     next_consensus, script,
-                     [mt, Blockchain.SystemShare(), Blockchain.SystemCoin(), it],
-                     True)
+        return neo.Core.Block.Block(prev_hash, timestamp, index, consensus_data, next_consensus, script, [mt, Blockchain.SystemShare(), Blockchain.SystemCoin(), it], True)
 
     def GetDB(self):
         if self._db is not None:
@@ -1049,13 +1046,11 @@ class Blockchain:
                             snapshot.UnspentCoins.GetAndChange(input.PrevHash.ToBytes()).Items[input.PrevIndex] |= CoinState.Spent
 
                             if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                                sc = snapshot.SpentCoins.GetAndChange(input.PrevHash.ToBytes(),
-                                                             lambda: SpentCoinState(input.PrevHash, height, []))
+                                sc = snapshot.SpentCoins.GetAndChange(input.PrevHash.ToBytes(), lambda: SpentCoinState(input.PrevHash, height, []))
                                 sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
 
                             output = prevTx.outputs[input.PrevIndex]
-                            acct = snapshot.Accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes,
-                                                         AccountState(output.ScriptHash))
+                            acct = snapshot.Accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes, AccountState(output.ScriptHash))
                             assetid = prevTx.outputs[input.PrevIndex].AssetId
                             acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
@@ -1091,13 +1086,14 @@ class Blockchain:
                         pass
 
                     elif tx.Type == TransactionType.PublishTransaction:
-                        create_contract_state = lambda: ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
+                        def create_contract_state():
+                            return ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
                                                  tx.Author, tx.Email, tx.Description)
 
                         snapshot.Contracts.GetOrAdd(tx.Code.ScriptHash().ToBytes(), create_contract_state)
                     elif tx.Type == TransactionType.InvocationTransaction:
 
-                        if block.Index == 1163835: #1115070: #373761
+                        if block.Index == 1279345:  # 1279091:
                             if tx_idx == 46:
                                 print("yo")
 
@@ -1110,7 +1106,6 @@ class Blockchain:
                                 engine._Service.Commit()
                                 dump_entry["storage"] = self.get_storage_json(snapshot)
 
-
                         except Exception as e:
                             traceback.print_exc()
 
@@ -1119,7 +1114,6 @@ class Blockchain:
                             "gas_consumed": str(engine.gas_consumed / Fixed8.D),
                             "result_stack": []
                         }
-
 
                         for item in engine.ResultStack.Items:
                             invoc_results["result_stack"].append(self.StackItemToJson(item))
@@ -1172,12 +1166,10 @@ class Blockchain:
                 with open(filepath, 'w+') as f:
                     try:
                         json.dump(self.dump_cache, f, indent=4)
-                    except:
-                        pprint(self.dump_cache)
+                    except Exception:
                         print(f"block that trigger error {Block.Index}")
                         raise
                     self.dump_cache.clear()
-
 
         for event in to_dispatch:
             events.emit(event.event_type, event)
@@ -1204,7 +1196,6 @@ class Blockchain:
                 }
             result.append(entry)
         return result
-
 
     async def TryPersist(self, block) -> Tuple[bool, str]:
         distance = self._current_block_height - block.Index

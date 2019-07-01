@@ -1,5 +1,6 @@
 from neo.Storage.Common.Snapshot import Snapshot
 
+
 class CloneSnapshot(Snapshot):
 
     def __init__(self, snapshot):

@@ -27,6 +27,7 @@ from neo.logging import log_manager
 
 logger = log_manager.getLogger('vm')
 
+
 class StateReader(InteropService):
 
     def RegisterWithPrice(self, method, func, price):
@@ -564,11 +565,9 @@ class StateReader(InteropService):
 
         value = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
-        # new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
         item = self.Snapshot.Storages.GetAndChange(storage_key.ToArray(), lambda: StorageItem())
         item.Value = value
-
 
         keystr = key
         valStr = bytearray(item.Value)
@@ -615,8 +614,9 @@ class StateReader(InteropService):
 
             if contract.HasStorage:
 
-                for pair in self.Snapshot.Storages.Find(hash.ToBytes()):
-                    self.Snapshot.Storages.Delete(pair.Key)
+                for k, v in self.Snapshot.Storages.Find(hash.ToBytes()):
+                    storage_key = StorageKey(script_hash=hash, key=k)
+                    self.Snapshot.Storages.Delete(storage_key.ToArray())
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_DESTROY, ContractParameter(ContractParameterType.InteropInterface, contract),
