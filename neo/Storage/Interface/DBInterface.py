@@ -76,7 +76,6 @@ class DBInterface(object):
             self.Deleted = []
             self._ChangedResetState = []
             self._DeletedResetState = []
-            self.tracking = []
 
     def Reset(self):
         self.Changed = []
@@ -84,7 +83,6 @@ class DBInterface(object):
 
         self._ChangedResetState = []
         self._DeletedResetState = []
-        self.tracking = []
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
         if keyval in self.Collection:
