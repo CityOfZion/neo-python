@@ -200,34 +200,6 @@ async def _main():
             # reset stream
             reader.stream.Cleanup()
 
-    # print("Wrote blocks.  Now writing headers")
-    #
-    # chain = Blockchain.Default()
-    #
-    # # reset header hash list
-    # chain._db.delete(DBPrefix.IX_HeaderHashList)
-    #
-    # total = len(header_hash_list)
-    #
-    # chain._header_index = header_hash_list
-    #
-    # print("storing header hash list...")
-    #
-    # while total - 2000 >= chain._stored_header_count:
-    #     ms = StreamManager.GetStream()
-    #     w = BinaryWriter(ms)
-    #     headers_to_write = chain._header_index[chain._stored_header_count:chain._stored_header_count + 2000]
-    #     w.Write2000256List(headers_to_write)
-    #     out = ms.ToArray()
-    #     StreamManager.ReleaseStream(ms)
-    #     with chain._db.write_batch() as wb:
-    #         wb.put(DBPrefix.IX_HeaderHashList + chain._stored_header_count.to_bytes(4, 'little'), out)
-    #
-    #     chain._stored_header_count += 2000
-    #
-    # last_index = len(header_hash_list)
-    # chain._db.put(DBPrefix.SYS_CurrentHeader, header_hash_list[-1] + last_index.to_bytes(4, 'little'))
-
     print("Imported %s blocks to %s " % (total_blocks, target_dir))
 
 

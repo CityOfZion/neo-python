@@ -61,7 +61,6 @@ from typing import Tuple
 
 import neo.Storage.Implementation.DBFactory as DBFactory
 
-
 logger = log_manager.getLogger()
 
 
@@ -100,8 +99,6 @@ class Blockchain:
     _persisting_block = None
 
     TXProcessed = 0
-
-    dump_cache = []
 
     BlockSearchTries = 0
 
@@ -293,12 +290,13 @@ class Blockchain:
 
         it = IssueTransaction([], [output], [], [script])
 
-        return neo.Core.Block.Block(prev_hash, timestamp, index, consensus_data, next_consensus, script, [mt, Blockchain.SystemShare(), Blockchain.SystemCoin(), it], True)
+        return neo.Core.Block.Block(prev_hash, timestamp, index, consensus_data, next_consensus, script,
+                                    [mt, Blockchain.SystemShare(), Blockchain.SystemCoin(), it], True)
 
     def GetDB(self):
         if self._db is not None:
             return self._db
-        raise('Database not defined')
+        raise ('Database not defined')
 
     @staticmethod
     def Default() -> 'Blockchain':
@@ -409,9 +407,6 @@ class Blockchain:
     def OnAddHeader(self, header):
 
         hHash = header.Hash.ToBytes()
-
-        # if hHash not in self._header_index:
-        #     self._header_index.append(hHash)
 
         with self._db.getBatch() as wb:
             while header.Index - 2000 >= self._stored_header_count:
@@ -754,9 +749,6 @@ class Blockchain:
             for key in it:
                 keys.append(key[1:])  # remove prefix byte
 
-        # contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
-        # keys = contracts.Keys
-
         query = query.casefold()
 
         for item in keys:
@@ -962,14 +954,6 @@ class Blockchain:
         hash = self.GetBlockHash(height)
         return self.GetSysFeeAmount(hash)
 
-    # def GetVotes(self, transactions):
-    #     # abstract
-    #     pass
-
-    # def IsDoubleSpend(self, tx):
-    #     # abstract
-    #     pass
-
     def OnPersistCompleted(self, block):
         self.PersistCompleted.on_change(block)
         msgrouter.on_block_persisted(block)
@@ -984,27 +968,6 @@ class Blockchain:
     def Resume(self):
         self._paused = False
 
-    def StackItemToJson(self, item):
-        if isinstance(item, InteropService.Boolean):
-            return {"type": "Boolean", "value": item.GetBoolean()}
-        elif isinstance(item, InteropService.Integer):
-            return {"type": "Integer", "value": str(item.GetBigInteger())}
-        elif isinstance(item, InteropService.ByteArray):
-            return {"type": "ByteArray", "value": binascii.hexlify(item.GetByteArray()).decode()}
-        elif isinstance(item, InteropService.Array):
-            array_items = []
-            for i in item.GetArray():
-                array_items.append(self.StackItemToJson(i))
-            return {"type": "Array", "value": array_items}
-        elif isinstance(item, InteropService.Map):
-            map_items = {}
-            for k, v in item.GetEnumerator():
-                map_items.update({binascii.hexlify(k.GetByteArray()).decode(): self.StackItemToJson(v)})
-            return {"type": "Map", "value": map_items}
-        elif isinstance(item, InteropService.InteropInterface):
-            obj = item.GetInterface()
-            return {"type": "Interop", "value": str(obj.__class__.__name__)}
-
     async def Persist(self, block):
 
         self._persisting_block = block
@@ -1015,15 +978,6 @@ class Blockchain:
         amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + (block.TotalFees().value / Fixed8.D)
         amount_sysfee_bytes = struct.pack("<d", amount_sysfee)
         to_dispatch = []
-
-        dump_entry = {
-            "index": block.Index,
-            "tx_count": len(block.Transactions),
-            "tx": [],
-            "storage": []
-        }
-
-        execution_results = []
 
         with self._db.getBatch() as wb:
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
@@ -1107,10 +1061,6 @@ class Blockchain:
                         snapshot.Contracts.GetOrAdd(tx.Code.ScriptHash().ToBytes(), create_contract_state)
                     elif tx.Type == TransactionType.InvocationTransaction:
 
-                        if block.Index == 1279345:  # 1279091:
-                            if tx_idx == 46:
-                                print("yo")
-
                         engine = ApplicationEngine(TriggerType.Application, tx, snapshot.Clone(), tx.Gas)
                         engine.LoadScript(tx.Script)
 
@@ -1119,28 +1069,16 @@ class Blockchain:
                             if success:
                                 engine._Service.Commit()
                                 engine._Service.ExecutionCompleted(engine, success)
-                                dump_entry["storage"] = self.get_storage_json(snapshot)
                             else:
                                 engine._Service.ExecutionCompleted(engine, False)
 
                         except Exception as e:
                             traceback.print_exc()
 
-                        invoc_results = {
-                            "vmstate": VMStateStr(engine.State),
-                            "gas_consumed": str(engine.gas_consumed / Fixed8.D),
-                            "result_stack": []
-                        }
-
-                        for item in engine.ResultStack.Items:
-                            invoc_results["result_stack"].append(self.StackItemToJson(item))
-                        execution_results.append(invoc_results)
-
                         to_dispatch = to_dispatch + engine._Service.events_to_dispatch
                         await asyncio.sleep(0.001)
 
                     else:
-
                         if tx.Type != b'\x00' and tx.Type != b'\x80':
                             logger.info("TX Not Found %s " % tx.Type)
 
@@ -1153,66 +1091,8 @@ class Blockchain:
 
             self.TXProcessed += len(block.Transactions)
 
-        for tx in block.Transactions:
-            tx_json = tx.ToJson()
-            tx_entry = {}
-            tx_entry["id"] = tx_json["txid"]
-            tx_entry["type"] = tx_json["type"]
-            tx_entry["size"] = tx_json["size"]
-            tx_entry["sys_fee"] = tx_json["sys_fee"]
-            tx_entry["net_fee"] = tx_json["net_fee"]
-
-            if tx_json["type"] == "InvocationTransaction":
-                tx_entry["execution_result"] = execution_results.pop(0)
-            dump_entry["tx"].append(tx_entry)
-
-        self.dump_cache.append(dump_entry)
-
-        if len(self.dump_cache) > 0:
-            if block.Index % 1000 == 0:
-                dirPath = "./Storage"
-
-                with suppress(FileExistsError):
-                    os.mkdir(dirPath)
-
-                sub_dir = f"BlockStorage_{(int(((block.Index - 1) / 100000)) + 1) * 100000}"
-                with suppress(FileExistsError):
-                    os.mkdir(f"{dirPath}/{sub_dir}")
-
-                filepath = f"{dirPath}/{sub_dir}/dump-block-{block.Index}.json"
-                with open(filepath, 'w+') as f:
-                    try:
-                        json.dump(self.dump_cache, f, indent=4)
-                    except Exception:
-                        print(f"block that trigger error {Block.Index}")
-                        raise
-                    self.dump_cache.clear()
-
         for event in to_dispatch:
             events.emit(event.event_type, event)
-
-    def get_storage_json(self, snapshot):
-        result = []
-        for trackable in snapshot.Storages.GetChangeSet():
-            if trackable.State == TrackState.ADDED:
-                entry = {
-                    "state": "Added",
-                    "key": binascii.hexlify(trackable.Key).decode('utf-8'),
-                    "value": binascii.hexlify(trackable.Item.Value).decode("utf-8")
-                }
-            elif trackable.State == TrackState.CHANGED:
-                entry = {
-                    "state": "Changed",
-                    "key": binascii.hexlify(trackable.Key).decode('utf-8'),
-                    "value": binascii.hexlify(trackable.Item.Value).decode("utf-8")
-                }
-            elif trackable.State == TrackState.DELETED:
-                entry = {
-                    "state": "Deleted",
-                    "key": binascii.hexlify(trackable.Key).decode('utf-8')
-                }
-            result.append(entry)
-        return result
 
     async def TryPersist(self, block) -> Tuple[bool, str]:
         distance = self._current_block_height - block.Index

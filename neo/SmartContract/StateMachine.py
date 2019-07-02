@@ -1,6 +1,5 @@
 import sys
 import neo.Core.BlockBase
-# from neo.Core.BlockBase import BlockBase
 from neo.Core.TX.Transaction import Transaction, TransactionOutput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
@@ -751,7 +750,7 @@ class StateMachine(StateReader):
                     key = StorageKey(script_hash=hash, key=key)
                     to_add.append((key.ToArray(), item))
 
-                for k,v in to_add:
+                for k, v in to_add:
                     self.Snapshot.Storages.Add(k, v)
 
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(contract))
