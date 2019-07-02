@@ -77,10 +77,10 @@ class ClaimTransaction(Transaction):
         Returns:
             list: of UInt160 type script hashes.
         """
-        hashes = super(ClaimTransaction, self).GetScriptHashesForVerifying()
+        hashes = super(ClaimTransaction, self).GetScriptHashesForVerifying(snapshot)
 
         for hash, group in groupby(self.Claims, lambda x: x.PrevHash):
-            tx = snapshot.GetTransaction(hash)
+            tx, height = snapshot.GetTransaction(hash)
 
             if tx is None:
                 raise Exception("Invalid Claim Operation")
@@ -120,7 +120,7 @@ class ClaimTransaction(Transaction):
 
         return json
 
-    def Verify(self, mempool):
+    def Verify(self, snapshot, mempool):
         """
         Verify the transaction.
 
@@ -130,7 +130,7 @@ class ClaimTransaction(Transaction):
         Returns:
             bool: True if verified. False otherwise.
         """
-        if not super(ClaimTransaction, self).Verify(mempool):
+        if not super(ClaimTransaction, self).Verify(snapshot, mempool):
             return False
 
         # wat does this do

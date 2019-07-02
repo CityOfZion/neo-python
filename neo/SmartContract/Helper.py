@@ -1,4 +1,11 @@
 from neo.logging import log_manager
+from neo.Blockchain import GetBlockchain
+from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.Core.Fixed8 import Fixed8
+import neo.SmartContract
+from neo.SmartContract import TriggerType
+from neo.EventHub import events
+from neo.Core.Cryptography.Crypto import Crypto
 
 logger = log_manager.getLogger()
 
@@ -41,22 +48,21 @@ class Helper:
                     logger.debug(f"hash {hashes[i]} does not match verification hash {verification_hash}")
                     return False
 
-            service = GetStateMachine()
-            script_table = CachedScriptTable(DBInterface(blockchain._db, DBPrefix.ST_Contract, ContractState))
-
-            engine = ApplicationEngine(TriggerType.Verification, verifiable, script_table, service, Fixed8.Zero())
+            engine = neo.SmartContract.ApplicationEngine.ApplicationEngine(TriggerType.Verification, verifiable, snapshot, Fixed8.Zero())
             engine.LoadScript(verification)
             invocation = verifiable.Scripts[i].InvocationScript
             engine.LoadScript(invocation)
 
             try:
                 success = engine.Execute()
-                service.ExecutionCompleted(engine, success)
+                engine._Service.ExecutionCompleted(engine, success)
             except Exception as e:
-                service.ExecutionCompleted(engine, False, e)
+                engine._Service.ExecutionCompleted(engine, False, e)
 
             if engine.ResultStack.Count != 1 or not engine.ResultStack.Pop().GetBoolean():
-                Helper.EmitServiceEvents(service)
+                for event in engine._Service.events_to_dispatch:
+                    events.emit(event.event_type, event)
+
                 if engine.ResultStack.Count > 0:
                     logger.debug(
                         f"Result stack failure! Count: {engine.ResultStack.Count} bool value: {engine.ResultStack.Pop().GetBoolean()}")
@@ -64,6 +70,7 @@ class Helper:
                     logger.debug(f"Result stack failure! Count: {engine.ResultStack.Count}")
                 return False
 
-            Helper.EmitServiceEvents(service)
+            for event in engine._Service.events_to_dispatch:
+                events.emit(event.event_type, event)
 
         return True

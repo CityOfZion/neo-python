@@ -44,7 +44,10 @@ class Snapshot:
         self.Storages.Commit()
 
     def GetScript(self, script_hash):
-        return self.Contracts[script_hash].Code.Script
+        try:
+            return self.Contracts[script_hash].Code.Script
+        except ValueError:
+            return None
 
     def GetUnclaimed(self, hash):  # should be uint256
         raise NotImplementedError()

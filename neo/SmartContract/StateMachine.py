@@ -35,6 +35,7 @@ from neo.SmartContract.StateReader import StateReader
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neo.EventHub import SmartContractEvent
 from neo.logging import log_manager
+from neo.SmartContract.Iterable.StorageIterator import StorageIterator
 
 logger = log_manager.getLogger('vm')
 
@@ -43,27 +44,7 @@ class StateMachine(StateReader):
     def __init__(self, trigger, snapshot):
 
         super(StateMachine, self).__init__(trigger, snapshot)
-
-        # self._accounts = accounts
-        # self._validators = validators
-        # self._assets = assets
-        # self._contracts = contracts
-        # self._storages = storages
-        # self._wb = wb
-        # self._chain = chain
         self._contracts_created = {}
-
-        # checks for testing purposes
-        # if accounts is not None:
-        #     self._accounts.MarkForReset()
-        # if validators is not None:
-        #     self._validators.MarkForReset()
-        # if assets is not None:
-        #     self._assets.MarkForReset()
-        # if contracts is not None:
-        #     self._contracts.MarkForReset()
-        # if storages is not None:
-        #     self._storages.MarkForReset()
 
         self.RegisterWithPrice("Neo.Runtime.GetTrigger", self.Runtime_GetTrigger, 1)
         self.RegisterWithPrice("Neo.Runtime.CheckWitness", self.Runtime_CheckWitness, 200)
@@ -220,23 +201,10 @@ class StateMachine(StateReader):
         self.RegisterWithPrice("Neo.Storage.Delete", self.Storage_Delete, 100)
 
     def ExecutionCompleted(self, engine, success, error=None):
-
-        # commit storages right away
-        if success:
-            self.Commit()
-        else:
-            self.ResetState()
-
         super(StateMachine, self).ExecutionCompleted(engine, success, error)
 
     def Commit(self):
         self.Snapshot.Commit()
-        # if self._wb is not None:
-        #     self._accounts.Commit(self._wb, False)
-        #     self._validators.Commit(self._wb, False)
-        #     self._assets.Commit(self._wb, False)
-        #     self._contracts.Commit(self._wb, False)
-        #     self._storages.Commit(self._wb, False)
 
     def ResetState(self):
         self._accounts.Reset()
@@ -778,10 +746,13 @@ class StateMachine(StateReader):
             self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
 
             if contract.HasStorage:
-                for key, val in self._storages.Find(engine.CurrentContext.ScriptHash()).items():
+                to_add = []
+                for key, item in self.Snapshot.Storages.Find(engine.CurrentContext.ScriptHash()):
                     key = StorageKey(script_hash=hash, key=key)
-                    item = StorageItem(val)
-                    self.Snapshot.Contracts.Add(key.ToArray(), item)
+                    to_add.append((key.ToArray(), item))
+
+                for k,v in to_add:
+                    self.Snapshot.Storages.Add(k, v)
 
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(contract))
 
@@ -818,7 +789,8 @@ class StateMachine(StateReader):
         prefix = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
         prefix = context.ScriptHash.ToArray() + prefix
 
-        iterator = self.Snapshot.Storages.TryFind(prefix)
+        enum = self.Snapshot.Storages.Find(prefix)
+        iterator = StorageIterator(enum)
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(iterator))
 
         return True

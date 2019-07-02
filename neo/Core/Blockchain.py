@@ -723,10 +723,12 @@ class Blockchain:
         return asset
 
     def ShowAllAssets(self):
+        res = []
+        with self._db.openIter(DBProperties(DBPrefix.ST_Asset, include_value=False)) as it:
+            for key in it:
+                res.append(key[1:])  # remove prefix byte
 
-        assets = DBInterface(self._db, DBPrefix.ST_Asset, AssetState)
-        keys = assets.Keys
-        return keys
+        return res
 
     def GetTransaction(self, hash):
         if type(hash) is str:
@@ -745,14 +747,21 @@ class Blockchain:
 
     def SearchContracts(self, query):
         res = []
-        contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
-        keys = contracts.Keys
+
+        snapshot = self._db.createSnapshot()
+        keys = []
+        with self._db.openIter(DBProperties(DBPrefix.ST_Contract, include_value=False)) as it:
+            for key in it:
+                keys.append(key[1:])  # remove prefix byte
+
+        # contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
+        # keys = contracts.Keys
 
         query = query.casefold()
 
         for item in keys:
 
-            contract = contracts.TryGet(keyval=item)
+            contract = snapshot.Contracts.TryGet(item)
             try:
                 if query in contract.Name.decode('utf-8').casefold():
                     res.append(contract)
@@ -769,8 +778,11 @@ class Blockchain:
 
     def ShowAllContracts(self):
 
-        contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
-        keys = contracts.Keys
+        keys = []
+        with self._db.openIter(DBProperties(DBPrefix.ST_Contract, include_value=False)) as it:
+            for key in it:
+                keys.append(key[1:])  # remove prefix byte
+
         return keys
 
     def GetContract(self, hash):
@@ -853,8 +865,12 @@ class Blockchain:
 
     def SearchAssetState(self, query):
         res = []
-        assets = DBInterface(self._db, DBPrefix.ST_Asset, AssetState)
-        keys = assets.Keys
+
+        snapshot = self._db.createSnapshot()
+        keys = []
+        with self._db.openIter(DBProperties(DBPrefix.ST_Asset, include_value=False)) as it:
+            for key in it:
+                keys.append(key[1:])  # remove prefix byte
 
         if query.lower() == "neo":
             query = "AntShare"
@@ -863,7 +879,7 @@ class Blockchain:
             query = "AntCoin"
 
         for item in keys:
-            asset = assets.TryGet(keyval=item)
+            asset = snapshot.Assets.TryGet(item)
             if query in asset.Name.decode('utf-8'):
                 res.append(asset)
             elif query in Crypto.ToAddress(asset.Issuer):
@@ -1035,8 +1051,6 @@ class Blockchain:
                     for input in tx.inputs:
                         if input.PrevHash not in unique_tx_input_hashes:
                             unique_tx_input_hashes.append(input.PrevHash)
-                    if block.Index == 74:
-                        print("yo")
                     for txhash in unique_tx_input_hashes:
                         prevTx, height = self.GetTransaction(txhash.ToBytes())
                         coin_refs_by_hash = [coinref for coinref in tx.inputs if
@@ -1104,7 +1118,10 @@ class Blockchain:
                             success = engine.Execute()
                             if success:
                                 engine._Service.Commit()
+                                engine._Service.ExecutionCompleted(engine, success)
                                 dump_entry["storage"] = self.get_storage_json(snapshot)
+                            else:
+                                engine._Service.ExecutionCompleted(engine, False)
 
                         except Exception as e:
                             traceback.print_exc()

@@ -93,7 +93,7 @@ class DataCache:
 
         for k, v in self.dictionary.items():
             if v.State != TrackState.DELETED and (key_prefix is None or key_prefix in k):
-                yield k, v.Item
+                yield k[20:], v.Item
 
     def FindInternal(self, key_prefix) -> dict:
         # should be equal to DBInterface.Find

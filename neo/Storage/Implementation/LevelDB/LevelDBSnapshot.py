@@ -11,11 +11,15 @@ from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.StorageItem import StorageItem
 from neo.Core.State.TransactionState import TransactionState
+from neo.Core.TX.Transaction import Transaction
+import binascii
+from neo.Core.UInt256 import UInt256
 
 
 class LevelDBSnapshot(neo.Storage.Common.Snapshot.Snapshot):
 
     def __init__(self, _db):
+        super(LevelDBSnapshot, self).__init__()
         self.db = _db  # type: LevelDBImpl
         self.snapshot = self.db._db.snapshot()
         self.batch = self.db._db.write_batch()
@@ -38,3 +42,23 @@ class LevelDBSnapshot(neo.Storage.Common.Snapshot.Snapshot):
 
     def Clone(self):
         return neo.Storage.Common.CloneSnapshot.CloneSnapshot(self)
+
+    def GetTransaction(self, hash):
+        if type(hash) is str:
+            hash = hash.encode('utf-8')
+        elif type(hash) is UInt256:
+            hash = hash.ToBytes()
+
+        # TODO: should first look in cache
+        # tx = self.Transactions.TryGet(hash)
+        # if tx is not None:
+        #     return tx
+
+        out = self.db.get(DBPrefix.DATA_Transaction + hash)
+        if out is not None:
+            out = bytearray(out)
+            height = int.from_bytes(out[:4], 'little')
+            out = out[4:]
+            outhex = binascii.unhexlify(out)
+            return Transaction.DeserializeFromBufer(outhex, 0), height
+        return None, -1

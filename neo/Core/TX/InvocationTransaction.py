@@ -75,7 +75,7 @@ class InvocationTransaction(Transaction):
         if self.Version >= 1:
             writer.WriteFixed8(self.Gas)
 
-    def Verify(self, mempool):
+    def Verify(self, snapshot, mempool):
         """
         Verify the transaction.
 
@@ -87,7 +87,7 @@ class InvocationTransaction(Transaction):
         """
         if self.Gas.value % 100000000 != 0:
             return False
-        return super(InvocationTransaction, self).Verify(mempool)
+        return super(InvocationTransaction, self).Verify(snapshot, mempool)
 
     def ToJson(self):
         """

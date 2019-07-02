@@ -15,6 +15,7 @@ import binascii
 import os
 from neo.Settings import settings
 from mock import patch
+from neo.Blockchain import GetBlockchain
 
 
 class TransactionTestCase(NeoTestCase):
@@ -153,7 +154,7 @@ class TransactionTestCase(NeoTestCase):
         asset = json['asset']
 
         self.assertEqual(asset['admin'], 'ARFe4mTKRTETerRoMsyzBXoPt2EKBvBXFX')
-        self.assertEqual(asset['name'], '[{"lang":"zh-CN","name":"TestCoin"}]')
+        self.assertEqual(asset['name'], b'[{"lang":"zh-CN","name":"TestCoin"}]')
         self.assertEqual(asset['precision'], 8)
         self.assertEqual(Fixed8.FromDecimal(settings.ALL_FEES['RegisterTransaction']), tx.SystemFee())
         self.assertEqual(json['size'], 302)
@@ -328,8 +329,9 @@ class TransactionTestCase(NeoTestCase):
         reader = BinaryReader(ms)
         tx = Transaction.DeserializeFrom(reader)
 
+        snapshot = GetBlockchain()._db.createSnapshot()
         with self.assertRaises(Exception) as e:
-            tx.GetScriptHashesForVerifying()
+            tx.GetScriptHashesForVerifying(snapshot)
 
         self.assertTrue("Invalid operation" in str(e.exception))
 
@@ -339,8 +341,9 @@ class TransactionTestCase(NeoTestCase):
         tx = Transaction.DeserializeFrom(reader)
         tx.raw_tx = True
 
+        snapshot = GetBlockchain()._db.createSnapshot()
         with self.assertRaises(Exception) as e:
-            tx.GetScriptHashesForVerifying()
+            tx.GetScriptHashesForVerifying(snapshot)
 
         self.assertTrue("Invalid operation" in str(e.exception))
 
@@ -357,8 +360,9 @@ class TransactionTestCase(NeoTestCase):
         mock_asset = AssetState()
         mock_asset.AssetType = 0x80
 
-        with patch("neo.Core.TX.Transaction.Helper.StaticAssetState", return_value=mock_asset):
-            res = tx.GetScriptHashesForVerifying()
+        snapshot = GetBlockchain()._db.createSnapshot()
+        with patch("neo.Core.Helper.Helper.StaticAssetState", return_value=mock_asset):
+            res = tx.GetScriptHashesForVerifying(snapshot)
 
         self.assertTrue(type(res), list)
         self.assertEqual(res[0], Helper.AddrStrToScriptHash("AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3"))
@@ -373,7 +377,8 @@ class TransactionTestCase(NeoTestCase):
         tx = Transaction.DeserializeFrom(reader)
         tx.raw_tx = True
 
-        res = tx.GetScriptHashesForVerifying()
+        snapshot = GetBlockchain()._db.createSnapshot()
+        res = tx.GetScriptHashesForVerifying(snapshot)
 
         self.assertTrue(type(res), list)
 
@@ -383,7 +388,7 @@ class TransactionTestCase(NeoTestCase):
         tx = Transaction.DeserializeFrom(reader)
         tx.raw_tx = True
 
-        res = tx.GetScriptHashesForVerifying()
+        res = tx.GetScriptHashesForVerifying(snapshot)
 
         self.assertTrue(type(res), list)
 
@@ -393,7 +398,12 @@ class TransactionTestCase(NeoTestCase):
         """
         raw_tx = b"d1015904802b530b14d5a682e81b8a840cc44b3b360cbd0f1ee6f50efd14235a717ed7ed18a43de47499c3d05b8d4a4bcf3a53c1087472616e7366657267fb1c540417067c270dee32f21023aa8b9b71abcef166fc47646b02d3f92300000000000000000120235a717ed7ed18a43de47499c3d05b8d4a4bcf3a0000014140b9234cad658c4d512bca453908a0df1c2beda49c544ec735bb492b81b4d0974ac8d66046061b3d0ce823e27c71fef1ee6a8f2fa369198ac74acedd045901d7222321030ab39b99d8675cd9bd90aaec37cba964297cc817078d33e508ab11f1d245c068ac"
         raw_tx_id = b"c4bb9b638da2e5f4a88ffcc4cb1d4f6693e7f19b7f78d242068254a6c77721f9"  # see https://neoscan.io/transaction/C4BB9B638DA2E5F4A88FFCC4CB1D4F6693E7F19B7F78D242068254A6C77721F9
-        tx = IOHelper.DeserializeTX(binascii.unhexlify(raw_tx))
+
+        mstream = StreamManager.GetStream(binascii.unhexlify(raw_tx))
+        reader = BinaryReader(mstream)
+
+        tx = Transaction.DeserializeFrom(reader)
+        mstream.Cleanup()
 
         self.assertEqual(tx.ToArray(), raw_tx)
         self.assertEqual(tx.Hash.ToBytes(), raw_tx_id)
@@ -450,7 +460,8 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(tx.ToArray(), self.vtx)
         self.assertEqual(tx.Hash.ToBytes(), self.vtx_id)
 
-        res = tx.Verify([tx])
+        snapshot = GetBlockchain()._db.createSnapshot()
+        res = tx.Verify(snapshot, [tx])
         self.assertFalse(res)
 
         tx_size = tx.Size()
@@ -475,7 +486,8 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(tx.ToArray(), self.vvtx)
         self.assertEqual(tx.Hash.ToBytes(), self.vvtx_id)
 
-        res = tx.Verify([tx])
+        snapshot = GetBlockchain()._db.createSnapshot()
+        res = tx.Verify(snapshot, [tx])
         self.assertFalse(res)
 
         tx_size = tx.Size()
@@ -497,8 +509,10 @@ class TransactionTestCase(NeoTestCase):
         self.assertEqual(tx.ToArray(), self.vvtx)
         self.assertEqual(tx.Hash.ToBytes(), self.vvtx_id)
 
+        snapshot = GetBlockchain()._db.createSnapshot()
+
         with patch("neo.Core.TX.Transaction.Transaction.Size", return_value=(Transaction.MAX_TX_SIZE + 1)):
-            res = tx.Verify([tx])
+            res = tx.Verify(snapshot, [tx])
             self.assertFalse(res)
 
             tx_size = tx.Size()
@@ -511,11 +525,12 @@ class TransactionTestCase(NeoTestCase):
 
         self.assertEqual(tx.ToArray(), self.cltx)
         self.assertEqual(tx.Hash.ToBytes(), self.cltx_id)
+        snapshot = GetBlockchain()._db.createSnapshot()
 
         with patch("neo.Core.TX.Transaction.Transaction.Size", return_value=(settings.MAX_FREE_TX_SIZE + 1)):
-            with patch('neo.Core.Helper.Helper.VerifyScripts', return_value=True):  # we are not testing VerifyScripts
+            with patch('neo.SmartContract.Helper.Helper.VerifyWitnesses', return_value=True):  # we are not testing VerifyScripts
                 with patch('neo.Core.Blockchain.Blockchain.CalculateBonusIgnoreClaimed', return_value=Fixed8.FromDecimal(0.30551243)):
-                    res = tx.Verify([tx])
+                    res = tx.Verify(snapshot, [tx])
                     self.assertTrue(res)
 
                     tx_size = tx.Size()

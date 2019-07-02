@@ -11,6 +11,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.Core.Mixins import SerializableMixin
 from neo.logging import log_manager
+from neo.Blockchain import GetBlockchain
 
 logger = log_manager.getLogger()
 
@@ -94,9 +95,10 @@ class NEP5Token(VerificationCode, SerializableMixin):
         sb.EmitAppCallWithOperation(self.ScriptHash, 'symbol')
         sb.EmitAppCallWithOperation(self.ScriptHash, 'decimals')
 
+        snapshot = GetBlockchain().Default()._db.createSnapshot().Clone()
         engine = None
         try:
-            engine = ApplicationEngine.Run(sb.ToArray(), exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
+            engine = ApplicationEngine.Run(snapshot, sb.ToArray(), exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
         except Exception as e:
             traceback.print_exc()
             pass

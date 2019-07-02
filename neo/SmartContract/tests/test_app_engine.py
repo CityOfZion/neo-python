@@ -10,7 +10,9 @@ from neo.VM.Script import Script
 class TestApplicationEngine(NeoTestCase):
 
     def setUp(self):
-        self.engine = ApplicationEngine(TriggerType.Application, Mock(), Mock(), Mock(), MagicMock())
+        gas_mock = MagicMock()
+        gas_mock.value.return_value = 0
+        self.engine = ApplicationEngine(TriggerType.Application, Mock(), Mock(), gas_mock, MagicMock())
 
     def test_get_item_count(self):
         econtext1 = ExecutionContext(Script(self.engine.Crypto, b''), 0)

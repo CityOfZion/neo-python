@@ -8,7 +8,7 @@ import json
 import os
 import shutil
 from tempfile import mkdtemp
-from unittest import SkipTest
+from unittest import SkipTest, skip
 
 from aiohttp.test_utils import AioHTTPTestCase
 from mock import patch
@@ -358,6 +358,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         self.assertTrue('error' in res)
         self.assertEqual(res['error']['message'], 'Unknown contract')
 
+    @skip("outdated compared to neo-cli")
     def test_get_raw_mempool(self):
         nodemgr = self.api_server.nodemgr
         nodemgr.reset_for_test()

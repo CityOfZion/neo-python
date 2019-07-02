@@ -289,6 +289,7 @@ class ExecutionEngine:
                 for b in script_hash:
                     if b > 0:
                         is_normal_call = True
+                        break
 
                 if not is_normal_call:
                     script_hash = estack.Pop().GetByteArray()

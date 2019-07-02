@@ -91,7 +91,7 @@ class StateTransaction(Transaction):
 
         return json
 
-    def Verify(self, mempool):
+    def Verify(self, snapshot, mempool):
         """
         Verify the transaction.
 
@@ -106,4 +106,4 @@ class StateTransaction(Transaction):
             if not descriptor.Verify():
                 return False
 
-        return super(StateTransaction, self).Verify(mempool)
+        return super(StateTransaction, self).Verify(snapshot, mempool)

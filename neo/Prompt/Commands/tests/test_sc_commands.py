@@ -143,7 +143,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
                 args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '070502', '02', '--i']
                 tx, result, total_ops, engine = CommandSC().execute(args)
                 self.assertTrue(tx)
-                self.assertEqual(str(result[0]), '0')
+                self.assertEqual(str(result[0]), '-3')  # because previously we re-used storage, now with the snapshots build each run is clean
                 self.assertIn("Test deploy invoke successful", mock_print.getvalue())
 
         # test invoke failure (SampleSC requires three inputs)

@@ -27,6 +27,7 @@ from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
 from neo.Settings import settings
 from neo.logging import log_manager
+import neo.SmartContract.Helper as SCHelper
 
 logger = log_manager.getLogger()
 
@@ -586,7 +587,7 @@ class Transaction(InventoryMixin):
         jsn["scripts"] = [script.ToJson() for script in self.scripts]
         return jsn
 
-    def Verify(self, mempool):
+    def Verify(self, snapshot, mempool):
         """
         Verify the transaction.
 
@@ -611,7 +612,8 @@ class Transaction(InventoryMixin):
                 logger.debug(f'The tx size ({self.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
                 return False
 
-        return neo.Core.Helper.Helper.VerifyScripts(self)
+        return SCHelper.Helper.VerifyWitnesses(self, snapshot)
+        # return neo.Core.Helper.Helper.VerifyScripts(self)
 
     #        logger.info("return true for now ...")
     #        return True

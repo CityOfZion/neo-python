@@ -4,6 +4,7 @@ import binascii
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.Core.IO.BinaryReader import BinaryReader
+from contextlib import suppress
 
 
 class LevelDBCache(DataCache):
@@ -28,7 +29,11 @@ class LevelDBCache(DataCache):
             self.batch.delete(self.prefix + key)
 
     def FindInternal(self, key_prefix):
-        intermediate_prefix = bytearray(binascii.unhexlify(key_prefix))
+        try:
+            intermediate_prefix = bytearray(binascii.unhexlify(key_prefix))
+        except binascii.Error:
+            intermediate_prefix = bytearray(key_prefix)
+
         intermediate_prefix.reverse()
         key_prefix = self.prefix + intermediate_prefix
         res = {}
