@@ -34,7 +34,6 @@ class LevelDBCache(DataCache):
         except binascii.Error:
             intermediate_prefix = bytearray(key_prefix)
 
-        intermediate_prefix.reverse()
         key_prefix = self.prefix + intermediate_prefix
         res = {}
         with self.db.openIter(DBProperties(key_prefix, include_value=True)) as it:
