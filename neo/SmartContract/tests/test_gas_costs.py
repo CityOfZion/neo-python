@@ -127,7 +127,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
         tx, result, total_ops, engine = BuildAndRun(arguments, wallet, False)
 
         expected_cost = Fixed8.FromDecimal(15.466)
-        expected_gas = Fixed8.FromDecimal(6.0)
+        expected_gas = Fixed8.FromDecimal(5.466)
         self.assertEqual(expected_cost, engine.GasConsumed())
         self.assertEqual(tx.Gas, expected_gas)
 
