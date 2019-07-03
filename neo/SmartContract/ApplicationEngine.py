@@ -1,30 +1,19 @@
 import binascii
-import datetime
-
 from neo.Core.Cryptography.Crypto import Crypto
 from neo.Core.Fixed8 import Fixed8
 from neo.Core.UInt160 import UInt160
-
-from neo.Core.State.AccountState import AccountState
-from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ContractState import ContractPropertyState
-from neo.Core.State.ContractState import ContractState
-from neo.Core.State.StorageItem import StorageItem
-from neo.Core.State.ValidatorState import ValidatorState
-from neo.Storage.Common.CachedScriptTable import CachedScriptTable
-from neo.Storage.Interface.DBInterface import DBInterface
 
 # used for ApplicationEngine.Run
-from neo.Storage.Common.DBPrefix import DBPrefix
-from neo.Settings import settings
 from neo.SmartContract import TriggerType
 from neo.VM import OpCode
-from neo.VM import VMState
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.InteropService import Array
 from neo.VM.OpCode import APPCALL, TAILCALL, \
     SYSCALL, NOP, SHA256, SHA1, HASH160, HASH256, CHECKSIG, CHECKMULTISIG, VERIFY
 from neo.logging import log_manager
+from neo.SmartContract.StateMachine import StateMachine
+from neo.EventHub import events
 
 logger = log_manager.getLogger('vm')
 
@@ -50,14 +39,13 @@ class ApplicationEngine(ExecutionEngine):
     def GasConsumed(self):
         return Fixed8(self.gas_consumed)
 
-    def __init__(self, trigger_type, container, table, service, gas, testMode=False, exit_on_error=True):
+    def __init__(self, trigger_type, container, snapshot, gas, testMode=False, exit_on_error=True):
 
-        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=table, service=service, exit_on_error=exit_on_error)
+        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=snapshot, service=StateMachine(trigger_type, snapshot), exit_on_error=exit_on_error)
 
-        self.service = service
-        self.Trigger = trigger_type
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
+        self.snapshot = snapshot
         self._is_stackitem_count_strict = True
         self.debugger = None
         self.gas_consumed = 0
@@ -144,7 +132,7 @@ class ApplicationEngine(ExecutionEngine):
         instruction = self.CurrentContext.CurrentInstruction
         api_hash = instruction.TokenU32 if len(instruction.Operand) == 4 else hash(instruction.TokenString)
 
-        price = self.service.GetPrice(api_hash)
+        price = self._Service.GetPrice(api_hash)
 
         if price > 0:
             return price
@@ -176,7 +164,7 @@ class ApplicationEngine(ExecutionEngine):
         return 1
 
     @staticmethod
-    def Run(script, container=None, exit_on_error=False, gas=Fixed8.Zero(), test_mode=True, wb=None):
+    def Run(snapshot, script, container=None, exit_on_error=False, gas=Fixed8.Zero(), test_mode=True, wb=None):
         """
         Runs a script in a test invoke environment
 
@@ -188,30 +176,7 @@ class ApplicationEngine(ExecutionEngine):
             ApplicationEngine
         """
 
-        from neo.Core.Blockchain import Blockchain
-        from neo.SmartContract.StateMachine import StateMachine
-        from neo.EventHub import events
-
-        bc = Blockchain.Default()
-
-        accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
-        assets = DBInterface(bc._db, DBPrefix.ST_Asset, AssetState)
-        validators = DBInterface(bc._db, DBPrefix.ST_Validator, ValidatorState)
-        contracts = DBInterface(bc._db, DBPrefix.ST_Contract, ContractState)
-        storages = DBInterface(bc._db, DBPrefix.ST_Storage, StorageItem)
-
-        script_table = CachedScriptTable(contracts)
-        service = StateMachine(accounts, validators, assets, contracts, storages, wb, bc)
-
-        engine = ApplicationEngine(
-            trigger_type=TriggerType.Application,
-            container=container,
-            table=script_table,
-            service=service,
-            gas=gas,
-            testMode=test_mode,
-            exit_on_error=exit_on_error
-        )
+        engine = ApplicationEngine(TriggerType.Application, container, snapshot, gas, test_mode)
 
         # maybe not the best solution
         # but one for now
@@ -221,16 +186,9 @@ class ApplicationEngine(ExecutionEngine):
             _script = script
 
         engine.LoadScript(_script)
+        engine.Execute()
 
-        try:
-            success = engine.Execute()
-            engine.testMode = True
-            service.ExecutionCompleted(engine, success)
-        except Exception as e:
-            engine.testMode = True
-            service.ExecutionCompleted(engine, False, e)
-
-        for event in service.events_to_dispatch:
+        for event in engine._Service.events_to_dispatch:
             events.emit(event.event_type, event)
 
         return engine

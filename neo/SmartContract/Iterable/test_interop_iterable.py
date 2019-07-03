@@ -15,7 +15,7 @@ class InteropSerializeDeserializeTestCase(TestCase):
         self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
         self.engine.InvocationStack.PushT(self.econtext)
 
-        self.service = StateMachine(None, None, None, None, None, None, None)
+        self.service = StateMachine(None, None)
 
     def test_iter_array(self):
         my_array = Array([StackItem.New(12),

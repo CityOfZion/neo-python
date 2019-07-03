@@ -1,7 +1,7 @@
 from neo.Blockchain import GetBlockchain
 from neo.Storage.Common.DBPrefix import DBPrefix
 import neo.Storage.Implementation.DBFactory as DBFactory
-from neo.Storage.Interface.DBInterface import DBProperties
+from neo.Storage.Interface.DBProperties import DBProperties
 from neo.logging import log_manager
 
 logger = log_manager.getLogger('db')

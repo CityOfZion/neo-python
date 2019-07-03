@@ -256,14 +256,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
     if from_addr is not None:
         from_addr = PromptUtils.lookup_addr_str(wallet, from_addr)
 
-    bc = GetBlockchain()
-
-    accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
-    assets = DBInterface(bc._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBInterface(bc._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBInterface(bc._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBInterface(bc._db, DBPrefix.ST_Storage, StorageItem)
-
     # if we are using a withdrawal tx, don't recreate the invocation tx
     # also, we don't want to reset the inputs / outputs
     # since those were already calculated
@@ -279,9 +271,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
     tx.scripts = []
     tx.Script = binascii.unhexlify(script)
     tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
-
-    script_table = CachedScriptTable(contracts)
-    service = StateMachine(accounts, validators, assets, contracts, storages, None, bc)
 
     if len(outputs) < 1:
         contract = wallet.GetDefaultContract()
@@ -313,14 +302,12 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
         wallet_tx.scripts = context.GetScripts()
     else:
         logger.warning("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
-    #        if not gather_signatures(context, wallet_tx, owners):
-    #            return None, [], 0, None
 
+    snapshot = GetBlockchain()._db.createSnapshot().Clone()
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
         container=wallet_tx,
-        table=script_table,
-        service=service,
+        snapshot=snapshot,
         gas=wallet_tx.Gas,
         testMode=True
     )
@@ -329,17 +316,16 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
 
     try:
         success = engine.Execute()
+        engine._Service.ExecutionCompleted(engine, success)
 
-        service.ExecutionCompleted(engine, success)
-
-        for event in service.events_to_dispatch:
+        for event in engine._Service.events_to_dispatch:
             events.emit(event.event_type, event)
 
         if success:
 
             # this will be removed in favor of neo.EventHub
-            if len(service.notifications) > 0:
-                for n in service.notifications:
+            if len(engine._Service.notifications) > 0:
+                for n in engine._Service.notifications:
                     Blockchain.Default().OnNotify(n)
 
             # print("Used %s Gas " % engine.GasConsumed().ToString())
@@ -380,21 +366,14 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
             return wallet_tx, min_fee, [], engine.ops_processed, success
 
     except Exception as e:
-        service.ExecutionCompleted(engine, False, e)
+        engine._Service.ExecutionCompleted(engine, False, e)
 
     return None, None, None, None, False
 
 
 def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                            from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
-                           debug_map=None, invoke_attrs=None, owners=None, enable_debugger=False):
-    bc = GetBlockchain()
-
-    accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
-    assets = DBInterface(bc._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBInterface(bc._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBInterface(bc._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBInterface(bc._db, DBPrefix.ST_Storage, StorageItem)
+                           debug_map=None, invoke_attrs=None, owners=None, enable_debugger=False, snapshot=None):
 
     if settings.USE_DEBUG_STORAGE:
         debug_storage = DebugStorage.instance()
@@ -420,20 +399,18 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
     wallet.Sign(context)
     dtx.scripts = context.GetScripts()
 
-    script_table = CachedScriptTable(contracts)
-    service = StateMachine(accounts, validators, assets, contracts, storages, None, bc)
-
     contract = wallet.GetDefaultContract()
     dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script, unhex=False))]
     dtx.Attributes = make_unique_script_attr(dtx.Attributes)
 
     to_dispatch = []
 
+    if snapshot is None:
+        snapshot = GetBlockchain()._db.createSnapshot().Clone()
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
         container=dtx,
-        table=script_table,
-        service=service,
+        snapshot=snapshot,
         gas=dtx.Gas,
         testMode=True
     )
@@ -447,6 +424,15 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         d_success = debugger.Execute()
     else:
         d_success = engine.Execute()
+
+    # the old setup provided the same StateMachine object to the ApplicationEngine for deploy and invoke
+    # this allowed for a single dispatch of events at the end of the function. Now a new StateMachine is automatically
+    # created when creating an ApplicationEngine, thus we have to dispatch events after the deploy to not lose them as
+    # testcases expect them
+    to_dispatch = to_dispatch + engine._Service.events_to_dispatch
+    for event in to_dispatch:
+        events.emit(event.event_type, event)
+    to_dispatch = []
 
     if d_success:
 
@@ -537,16 +523,11 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             itx.scripts = context.GetScripts()
         else:
             logger.warn("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
-        #            if not gather_signatures(context, itx, owners):
-        #                return None, [], 0, None
-
-        #        print("gathered signatures %s " % itx.scripts)
 
         engine = ApplicationEngine(
             trigger_type=TriggerType.Application,
             container=itx,
-            table=script_table,
-            service=service,
+            snapshot=snapshot,
             gas=itx.Gas,
             testMode=invocation_test_mode
         )
@@ -561,17 +542,16 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         else:
             i_success = engine.Execute()
 
-        service.ExecutionCompleted(engine, i_success)
-        to_dispatch = to_dispatch + service.events_to_dispatch
+        engine._Service.ExecutionCompleted(engine, i_success)
+        to_dispatch = to_dispatch + engine._Service.events_to_dispatch
 
         for event in to_dispatch:
             events.emit(event.event_type, event)
 
         if i_success:
-            service.TestCommit()
-            if len(service.notifications) > 0:
+            if len(engine._Service.notifications) > 0:
 
-                for n in service.notifications:
+                for n in engine._Service.notifications:
                     Blockchain.Default().OnNotify(n)
 
             logger.info("Used %s Gas " % engine.GasConsumed().ToString())
@@ -595,7 +575,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
     else:
         print("error executing deploy contract.....")
 
-    service.ExecutionCompleted(engine, False, 'error')
+    # service.ExecutionCompleted(engine, False, 'error')
 
     return None, [], 0, None
 

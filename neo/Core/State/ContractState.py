@@ -207,3 +207,6 @@ class ContractState(StateBase):
             jsn['token'] = self._nep_token.ToJson()
 
         return jsn
+
+    def Clone(self):
+        return ContractState(code=self.Code, contract_properties=self.ContractProperties, name=self.Name, version=self.CodeVersion, author=self.Author, email=self.Email, description=self.Description)

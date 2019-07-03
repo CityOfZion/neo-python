@@ -17,6 +17,7 @@ class StorageItem(StateBase):
             self.Value = bytearray(0)
         else:
             self.Value = value
+        self.IsConstant = False
 
     def Clone(self):
         """

@@ -2,6 +2,7 @@ from collections import namedtuple
 from .StateBase import StateBase
 from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
+from copy import deepcopy
 
 
 class SpentCoinItem:
@@ -86,6 +87,10 @@ class SpentCoinState(StateBase):
         self.Output = None
         self.StartHeight = None
         self.EndHeight = None
+
+    def Clone(self):
+        items_copy = deepcopy(self.Items)
+        return SpentCoinState(hash=self.TransactionHash, height=self.TransactionHeight, items=items_copy)
 
     def HasIndex(self, index):
         """

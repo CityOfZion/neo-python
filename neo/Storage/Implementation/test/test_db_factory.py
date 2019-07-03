@@ -57,7 +57,7 @@ class LevelDBTest(TestCase):
         self._db.write(b'00002.y', b'y')
         self._db.write(b'00002.z', b'z')
 
-        from neo.Storage.Interface.DBInterface import DBProperties
+        from neo.Storage.Interface.DBProperties import DBProperties
 
         '''
             Has to be converted as leveldb returns a custom iterator object, 
@@ -171,7 +171,7 @@ class LevelDBTest(TestCase):
         self._db.write(b'00002.y', b'y')
         self._db.write(b'00002.z', b'z')
 
-        from neo.Storage.Interface.DBInterface import DBProperties
+        from neo.Storage.Interface.DBProperties import DBProperties
 
         with self._db.getBatch() as batch:
             batch.put(b'00001.x', b'batch_x')

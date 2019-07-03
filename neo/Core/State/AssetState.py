@@ -182,3 +182,6 @@ class AssetState(StateBase):
             'expiration': self.Expiration,
             'is_frozen': self.IsFrozen
         }
+
+    def Clone(self):
+        return AssetState(asset_id=self.AssetId, asset_type=self.AssetType, name=self.Name, amount=self.Amount, available=self.Available, precision=self.Precision, fee=self.Fee, fee_addr=self.FeeAddress, owner=self.Owner, admin=self.Admin, issuer=self.Issuer, expiration=self.Expiration, is_frozen=self.IsFrozen)

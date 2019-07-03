@@ -24,7 +24,8 @@ class MemPool(Singleton):
         if BC.Default().ContainsTransaction(tx.Hash):
             return False
 
-        if not tx.Verify(self.pool.values()):
+        snapshot = BC.Default()._db.createSnapshot()
+        if not tx.Verify(snapshot, self.pool.values()):
             logger.error("Verifying tx result... failed")
             return False
 

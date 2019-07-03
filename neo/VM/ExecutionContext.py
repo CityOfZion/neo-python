@@ -19,6 +19,7 @@ class ExecutionContext:
         self.Script = script
         self._RVCount = rvcount
         self._script_hash = None
+        self.ins = None
 
     @property
     def EvaluationStack(self):
@@ -30,7 +31,10 @@ class ExecutionContext:
 
     @property
     def CurrentInstruction(self):
-        return self.GetInstruction(self.InstructionPointer)
+        if self.ins is None:
+            return self.GetInstruction(self.InstructionPointer)
+        else:
+            return self.ins
 
     @property
     def NextInstruction(self):
@@ -52,6 +56,7 @@ class ExecutionContext:
 
     def MoveNext(self):
         self.InstructionPointer += self.CurrentInstruction.Size
+        self.ins = self.GetInstruction(self.InstructionPointer)
         return self.InstructionPointer < self.Script.Length
 
     def Dispose(self):
