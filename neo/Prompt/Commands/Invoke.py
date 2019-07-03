@@ -385,7 +385,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
 
 def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                            from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
-                           debug_map=None, invoke_attrs=None, owners=None, enable_debugger=False, snapshot=None):
+                           debug_map=None, invoke_attrs=None, owners=None, enable_debugger=False, snapshot=None, user_entry=False):
 
     if settings.USE_DEBUG_STORAGE:
         debug_storage = DebugStorage.instance()
