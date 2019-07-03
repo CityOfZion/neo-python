@@ -48,6 +48,7 @@ All notable changes to this project are documented in this file.
 - Fix parsing nested lists `#954 <https://github.com/CityOfZion/neo-python/issues/954>`_
 - Fix clearing storage manipulations on failed invocation transaction execution
 - Port caching layer from neo-cli
+- Fix ``Contract_Migrate`` sycall
 
 
 [0.8.4] 2019-02-14

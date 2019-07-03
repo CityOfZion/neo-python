@@ -261,13 +261,12 @@ class StateReader(InteropService):
         return True
 
     def Runtime_GetCurrentTime(self, engine: ExecutionEngine):
-        BC = GetBlockchain()
-        header = BC.GetHeaderByHeight(BC.Height)
-
-        if header is None:
-            header = GetBlockchain().GenesisBlock()
-
-        engine.CurrentContext.EvaluationStack.PushT(header.Timestamp + GetBlockchain().SECONDS_PER_BLOCK)
+        if self.Snapshot.PersistingBlock is None:
+            BC = GetBlockchain()
+            header = BC.GetHeaderByHeight(BC.Height)
+            engine.CurrentContext.EvaluationStack.PushT(header.Timestamp + GetBlockchain().SECONDS_PER_BLOCK)
+        else:
+            engine.CurrentContext.EvaluationStack.PushT(self.Snapshot.PersistingBlock.Timestamp)
         return True
 
     def Runtime_Serialize(self, engine: ExecutionEngine):
@@ -614,8 +613,14 @@ class StateReader(InteropService):
 
             if contract.HasStorage:
 
-                for k, v in self.Snapshot.Storages.Find(hash.ToBytes()):
+                to_del = []
+                for k, v in self.Snapshot.Storages.Find(hash.ToArray()):
                     storage_key = StorageKey(script_hash=hash, key=k)
+                    # Snapshot.Storages.Delete() modifies the underlying dictionary of the cache we'd be iterating
+                    # over using Storages.Find. We therefore need to postpone deletion
+                    to_del.append(storage_key)
+
+                for storage_key in to_del:
                     self.Snapshot.Storages.Delete(storage_key.ToArray())
 
         self.events_to_dispatch.append(
