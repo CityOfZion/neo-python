@@ -22,7 +22,7 @@ from neo.Storage.Common.CachedScriptTable import CachedScriptTable
 from neo.Core.State.CoinState import CoinState
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.UnspentCoinState import UnspentCoinState
-from neo.Core.State.SpentCoinState import SpentCoinState
+from neo.Core.State.SpentCoinState import SpentCoinState, SpentCoinItem
 from neo.Core.State.AssetState import AssetState
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.Core.State.ContractState import ContractState
@@ -30,32 +30,29 @@ from neo.Core.State.StorageItem import StorageItem
 from neo.Core.State.ValidatorState import ValidatorState
 from neo.Core.TX.Transaction import Transaction, TransactionType
 from neo.Network.nodemanager import NodeManager
+from neo.SmartContract import TriggerType
+from neo.Core.UInt160 import UInt160
 
 logger = log_manager.getLogger()
 
 
-def MonkeyPatchPersist(self, block):
+def MonkeyPatchPersist(self, block, snapshot=None):
 
-    accounts = DBInterface(self._db, DBPrefix.ST_Account, AccountState)
-    unspentcoins = DBInterface(self._db, DBPrefix.ST_Coin, UnspentCoinState)
-    spentcoins = DBInterface(self._db, DBPrefix.ST_SpentCoin, SpentCoinState)
-    assets = DBInterface(self._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBInterface(self._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBInterface(self._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBInterface(self._db, DBPrefix.ST_Storage, StorageItem)
+    if snapshot is None:
+        snapshot = self._db.createSnapshot()
+        snapshot.PersistingBlock = block
 
     amount_sysfee = self.GetSysFeeAmount(block.PrevHash) + (block.TotalFees().value / Fixed8.D)
     amount_sysfee_bytes = struct.pack("<d", amount_sysfee)
 
     with self._db.getBatch() as wb:
         for tx in block.Transactions:
-
             unspentcoinstate = UnspentCoinState.FromTXOutputsConfirmed(tx.outputs)
-            unspentcoins.Add(tx.Hash.ToBytes(), unspentcoinstate)
+            snapshot.UnspentCoins.Add(tx.Hash.ToBytes(), unspentcoinstate)
 
             # go through all the accounts in the tx outputs
             for output in tx.outputs:
-                account = accounts.GetAndChange(output.AddressBytes, AccountState(output.ScriptHash))
+                account = snapshot.Accounts.GetAndChange(output.AddressBytes, lambda: AccountState(output.ScriptHash))
 
                 if account.HasBalance(output.AssetId):
                     account.AddToBalance(output.AssetId, output.Value)
@@ -74,17 +71,14 @@ def MonkeyPatchPersist(self, block):
                                      coinref.PrevHash.ToBytes() == txhash.ToBytes()]
                 for input in coin_refs_by_hash:
 
-                    uns = unspentcoins.GetAndChange(input.PrevHash.ToBytes())
-                    uns.OrEqValueForItemAt(input.PrevIndex, CoinState.Spent)
+                    snapshot.UnspentCoins.GetAndChange(input.PrevHash.ToBytes()).Items[input.PrevIndex] |= CoinState.Spent
 
                     if prevTx.outputs[input.PrevIndex].AssetId.ToBytes() == Blockchain.SystemShare().Hash.ToBytes():
-                        sc = spentcoins.GetAndChange(input.PrevHash.ToBytes(),
-                                                     SpentCoinState(input.PrevHash, height, []))
+                        sc = snapshot.SpentCoins.GetAndChange(input.PrevHash.ToBytes(), lambda: SpentCoinState(input.PrevHash, height, []))
                         sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
 
                     output = prevTx.outputs[input.PrevIndex]
-                    acct = accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes,
-                                                 AccountState(output.ScriptHash))
+                    acct = snapshot.Accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes, AccountState(output.ScriptHash))
                     assetid = prevTx.outputs[input.PrevIndex].AssetId
                     acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 
@@ -95,27 +89,27 @@ def MonkeyPatchPersist(self, block):
                                    Fixed8(0), tx.Precision, Fixed8(0), Fixed8(0), UInt160(data=bytearray(20)),
                                    tx.Owner, tx.Admin, tx.Admin, block.Index + 2 * 2000000, False)
 
-                assets.Add(tx.Hash.ToBytes(), asset)
+                snapshot.Assets.Add(tx.Hash.ToBytes(), asset)
 
             elif tx.Type == TransactionType.IssueTransaction:
 
                 txresults = [result for result in tx.GetTransactionResults() if result.Amount.value < 0]
                 for result in txresults:
-                    asset = assets.GetAndChange(result.AssetId.ToBytes())
+                    asset = snapshot.Assets.GetAndChange(result.AssetId.ToBytes())
                     asset.Available = asset.Available - result.Amount
 
             elif tx.Type == TransactionType.ClaimTransaction:
 
                 for input in tx.Claims:
 
-                    sc = spentcoins.TryGet(input.PrevHash.ToBytes())
+                    sc = snapshot.SpentCoins.TryGet(input.PrevHash.ToBytes())
                     if sc and sc.HasIndex(input.PrevIndex):
                         sc.DeleteIndex(input.PrevIndex)
-                        spentcoins.GetAndChange(input.PrevHash.ToBytes())
+                        snapshot.SpentCoins.GetAndChange(input.PrevHash.ToBytes())
 
             elif tx.Type == TransactionType.EnrollmentTransaction:
 
-                validator = validators.GetAndChange(tx.PublicKey, ValidatorState(pub_key=tx.PublicKey))
+                snapshot.Validators.GetAndChange(tx.PublicKey.ToBytes(), lambda: ValidatorState(pub_key=tx.PublicKey))
                 #                        logger.info("VALIDATOR %s " % validator.ToJson())
 
             elif tx.Type == TransactionType.StateTransaction:
@@ -123,47 +117,28 @@ def MonkeyPatchPersist(self, block):
                 pass
 
             elif tx.Type == TransactionType.PublishTransaction:
+                def create_contract_state():
+                    return ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion, tx.Author, tx.Email, tx.Description)
 
-                contract = ContractState(tx.Code, tx.NeedStorage, tx.Name, tx.CodeVersion,
-                                         tx.Author, tx.Email, tx.Description)
-
-                contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), contract)
+                snapshot.Contracts.GetAndChange(tx.Code.ScriptHash().ToBytes(), create_contract_state)
 
             elif tx.Type == TransactionType.InvocationTransaction:
-                return ApplicationEngine.Run(tx.Script, tx, False, tx.Gas, True, wb)
+                return ApplicationEngine.Run(TriggerType.Application, tx, snapshot.Clone(), tx.Gas, True, wb)
 
 
-def MonkeyPatchRun(script, container=None, exit_on_error=False, gas=Fixed8.Zero(), test_mode=True, wb=None):
-
-    from neo.Core.Blockchain import Blockchain
-    from neo.SmartContract.StateMachine import StateMachine
-    from neo.EventHub import events
-    from neo.SmartContract import TriggerType
-
-    bc = Blockchain.Default()
-
-    accounts = DBInterface(bc._db, DBPrefix.ST_Account, AccountState)
-    assets = DBInterface(bc._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBInterface(bc._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBInterface(bc._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBInterface(bc._db, DBPrefix.ST_Storage, StorageItem)
-
-    script_table = CachedScriptTable(contracts)
-    service = StateMachine(accounts, validators, assets, contracts, storages, wb, bc)
-
+def MonkeyPatchRun(trigger_type, tx, snapshot, gas, test_mode=True, wb=None):
     engine = ApplicationEngine(
-        trigger_type=TriggerType.Application,
-        container=container,
-        table=script_table,
-        service=service,
+        trigger_type=trigger_type,
+        container=tx,
+        snapshot=snapshot,
         gas=gas,
         testMode=test_mode
     )
 
     try:
-        _script = binascii.unhexlify(script)
+        _script = binascii.unhexlify(tx.Script)
     except Exception as e:
-        _script = script
+        _script = tx.Script
 
     engine.LoadScript(_script)
 
@@ -182,14 +157,14 @@ def MonkeyPatchRun(script, container=None, exit_on_error=False, gas=Fixed8.Zero(
             return True
         else:
             engine.testMode = True
-            service.ExecutionCompleted(engine, success)
+            engine._Service.ExecutionCompleted(engine, success)
     except Exception as e:
         # service.ExecutionCompleted(self, False, e)
         if test_mode:
             return False
         else:
             engine.testMode = True
-            service.ExecutionCompleted(engine, False, e)
+            engine._Service.ExecutionCompleted(engine, False, e)
     return engine
 
 

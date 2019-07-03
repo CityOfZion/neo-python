@@ -9,6 +9,8 @@ from neo.Core.Blockchain import Blockchain
 from neo.VM.Script import Script
 from neo.Core.Cryptography.Crypto import Crypto
 import logging
+from neo.SmartContract import TriggerType
+from neo.Blockchain import GetBlockchain
 
 
 class InteropSerializeDeserializeTestCase(NeoTestCase):
@@ -20,7 +22,8 @@ class InteropSerializeDeserializeTestCase(NeoTestCase):
         self.engine = ExecutionEngine(crypto=Crypto.Default())
         self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
         self.engine.InvocationStack.PushT(self.econtext)
-        self.state_reader = StateReader()
+        snapshot = GetBlockchain()._db.createSnapshot()
+        self.state_reader = StateReader(TriggerType.Application, snapshot)
 
     def test_serialize_struct(self):
         my_struct = Struct([StackItem.New(12),

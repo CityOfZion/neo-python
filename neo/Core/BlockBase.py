@@ -7,6 +7,7 @@ from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
 from neo.Core.UInt256 import UInt256
 from neo.Core.Size import Size as s
+from neo.SmartContract.Helper import Helper as SCHelper
 
 
 class BlockBase(VerifiableMixin):
@@ -23,6 +24,7 @@ class BlockBase(VerifiableMixin):
         self.Script = None
         self.__hash = None
         self.__htbs = None
+        self.currentSnapshot = None
 
     @property
     def Hash(self):
@@ -145,7 +147,7 @@ class BlockBase(VerifiableMixin):
         """
         return Helper.GetHashData(self)
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot):
         """
         Get the script hash used for verification.
 
@@ -165,7 +167,7 @@ class BlockBase(VerifiableMixin):
             else:
                 raise Exception('Invalid Verification script')
 
-        prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
+        prev_header = snapshot.GetHeader(self.PrevHash.ToBytes())
         if prev_header is None:
             raise Exception('Invalid operation')
         return [prev_header.NextConsensus]
@@ -204,23 +206,15 @@ class BlockBase(VerifiableMixin):
         json["script"] = '' if not self.Script else self.Script.ToJson()
         return json
 
-    def Verify(self):
+    def Verify(self, snapshot):
         """
         Verify block using the verification script.
 
         Returns:
             bool: True if valid. False otherwise.
         """
-        if not self.Hash.ToBytes() == GetGenesis().Hash.ToBytes():
-            return False
-
-        bc = GetBlockchain()
-
-        if not bc.ContainsBlock(self.Index):
-            return False
-
         if self.Index > 0:
-            prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
+            prev_header = snapshot.GetHeader(self.PrevHash.ToBytes())
 
             if prev_header is None:
                 return False
@@ -232,7 +226,7 @@ class BlockBase(VerifiableMixin):
                 return False
 
         # this should be done to actually verify the block
-        if not Helper.VerifyScripts(self):
+        if not SCHelper.VerifyWitnesses(self, snapshot):
             return False
 
         return True

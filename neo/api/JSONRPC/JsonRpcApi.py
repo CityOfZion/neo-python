@@ -37,6 +37,7 @@ from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
 from neo.api.utils import json_response
+from neo.Blockchain import GetBlockchain
 
 
 class JsonRpcError(Exception):
@@ -259,7 +260,8 @@ class JsonRpcApi:
             return contract.ToJson()
 
         elif method == "getrawmempool":
-            return list(map(lambda hash: f"{hash.To0xString()}", self.nodemgr.mempool.pool.keys()))
+            raise JsonRpcError(-100, "Not supported")
+            # return list(map(lambda hash: f"{hash.To0xString()}", self.nodemgr.mempool.pool.keys()))
 
         elif method == "getversion":
             return {
@@ -434,8 +436,8 @@ class JsonRpcApi:
         return Helper.ToArray(block).decode('utf-8')
 
     def get_invoke_result(self, script):
-
-        appengine = ApplicationEngine.Run(script=script)
+        snapshot = GetBlockchain()._db.createSnapshot()
+        appengine = ApplicationEngine.Run(snapshot, script=script)
         return {
             "script": script.decode('utf-8'),
             "state": VMStateStr(appengine.State),

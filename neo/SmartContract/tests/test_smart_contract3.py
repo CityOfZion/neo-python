@@ -10,6 +10,7 @@ from neo.Core.State.AssetState import AssetState
 from neo.Core.UInt256 import UInt256
 from neo.Core.Cryptography.Crypto import Crypto
 from neo.Settings import settings
+from neo.Core.State.UnspentCoinState import UnspentCoinState
 
 
 class SmartContractTest3(BlockchainFixtureTestCase):
@@ -32,14 +33,18 @@ class SmartContractTest3(BlockchainFixtureTestCase):
         self.assertEqual(block.Index, self.contract_block_index)
 
         result = False
+
+        # we have to add the UnspentCoin this block is referring to
+        snapshot = Blockchain.Default()._db.createSnapshot()
+        snapshot.PersistingBlock = block
+        snapshot.UnspentCoins.Add(b'aa2051096e7be45ed991279a1a4c2678eb886690829a2729f4caa82192ff7f34', UnspentCoinState.FromTXOutputsConfirmed([0]))
+
         with BlockchainFixtureTestCase.MPPersist():
-            result = Blockchain.Default().Persist(block)
+            result = Blockchain.Default().Persist(block, snapshot)
 
         self.assertTrue(result)
 
-        contracts = DBInterface(Blockchain.Default()._db, DBPrefix.ST_Contract, ContractState)
-
-        contract_added = contracts.TryGet(self.contract_hash)
+        contract_added = snapshot.Contracts.TryGet(self.contract_hash)
 
         self.assertIsNotNone(contract_added)
 
@@ -74,16 +79,18 @@ class SmartContractTest3(BlockchainFixtureTestCase):
 
         self.assertEqual(block.Index, self.asset_create_index)
 
+        snapshot = Blockchain.Default()._db.createSnapshot()
+        snapshot.PersistingBlock = block
+        snapshot.UnspentCoins.Add(b'aa2051096e7be45ed991279a1a4c2678eb886690829a2729f4caa82192ff7f34', UnspentCoinState.FromTXOutputsConfirmed([0]))
+
         result = False
         with BlockchainFixtureTestCase.MPPersist():
-            result = Blockchain.Default().Persist(block)
+            result = Blockchain.Default().Persist(block, snapshot)
 
         self.assertTrue(result)
 
         # now the asset that was created should be there
-        assets = DBInterface(Blockchain.Default()._db, DBPrefix.ST_Asset, AssetState)
-
-        newasset = assets.TryGet(self.asset_create_id)
+        newasset = snapshot.Assets.TryGet(self.asset_create_id)
 
         self.assertIsNotNone(newasset)
 

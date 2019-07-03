@@ -11,6 +11,7 @@ from neo.VM import OpCode
 from neo.Core.Witness import Witness
 from neo.logging import log_manager
 from neo.Core.Cryptography.ECCurve import ECDSA
+from neo.Blockchain import GetBlockchain
 
 logger = log_manager.getLogger('vm')
 
@@ -73,7 +74,7 @@ class ContractParametersContext:
     def __init__(self, verifiable, isMultiSig=False):
 
         self.Verifiable = verifiable
-        self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
+        self.ScriptHashes = verifiable.GetScriptHashesForVerifying(GetBlockchain()._db.createSnapshot())
         self.ContextItems = {}
         self.IsMultiSig = isMultiSig
 

@@ -11,7 +11,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Core.Cryptography.Crypto import bin_hash160, Crypto
 from neo.Core.IO.Mixins import SerializableMixin
 from neo.Core.VerificationCode import VerificationCode
-from neo.Core.Helper import Helper
+import neo.Core.Helper
 from neo.Core.Cryptography.ECCurve import ECDSA
 
 
@@ -180,7 +180,7 @@ class Contract(SerializableMixin, VerificationCode):
         return binascii.hexlify(bin_hash160(redeem))
 
     def ToArray(self):
-        return Helper.ToArray(self)
+        return neo.Core.Helper.Helper.ToArray(self)
 
     def ToJson(self):
         jsn = {}

@@ -9,6 +9,7 @@ from neo.Settings import settings
 from neo.EventHub import events
 from neo.Core.State.ContractState import ContractState
 import os
+from neo.Blockchain import GetBlockchain
 
 
 class ContractMigrateTestCase(WalletFixtureTestCase):
@@ -25,7 +26,7 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
     def setUpClass(cls):
         super(ContractMigrateTestCase, cls).setUpClass()
         settings.log_smart_contract_events = True
-        settings.USE_DEBUG_STORAGE = True
+        settings.USE_DEBUG_STORAGE = False
 
     @classmethod
     def tearDownClass(cls):
@@ -55,7 +56,8 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
         output = Compiler.instance().load('%s/MigrateTest1.py' % os.path.dirname(__file__)).default
         script = output.write()
 
-        tx, results, total_ops, engine = TestBuild(script, ['store_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
+        snapshot = GetBlockchain()._db.createSnapshot()
+        tx, results, total_ops, engine = TestBuild(script, ['store_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05', snapshot=snapshot)
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].GetBoolean(), True)
@@ -66,14 +68,14 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
         script_table = engine._Table
         self.assertIsNotNone(script_table.GetScript(created_hash))
 
-        tx, results, total_ops, engine = TestBuild(script, ['get_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
+        tx, results, total_ops, engine = TestBuild(script, ['get_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05', snapshot=snapshot)
 
         self.assertEqual(len(results), 1)
         mylist = results[0].GetArray()
 
         self.assertEqual([item.GetByteArray() for item in mylist], [bytearray(b'\x01'), bytearray(b'abc'), bytearray(b'\x01\x02\x03')])
 
-        tx, results, total_ops, engine = TestBuild(script, ['do_destroy', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
+        tx, results, total_ops, engine = TestBuild(script, ['do_destroy', bytearray(b'\x10')], self.GetWallet1(), '0705', '05', snapshot=snapshot)
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].GetBoolean(), True)
@@ -97,9 +99,11 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
         events.on(SmartContractEvent.CONTRACT_CREATED, on_created)
         events.on(SmartContractEvent.CONTRACT_MIGRATED, on_migrated)
 
+        snapshot = GetBlockchain()._db.createSnapshot()
+
         output = Compiler.instance().load('%s/MigrateTest1.py' % os.path.dirname(__file__)).default
         script = output.write()
-        tx, results, total_ops, engine = TestBuild(script, ['store_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05')
+        tx, results, total_ops, engine = TestBuild(script, ['store_data', bytearray(b'\x10')], self.GetWallet1(), '0705', '05', snapshot=snapshot)
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].GetBoolean(), True)
@@ -111,7 +115,7 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
         self.assertIsNotNone(script_table.GetScript(created_hash))
 
         migrateScript = Compiler.instance().load('%s/MigrateTest2.py' % os.path.dirname(__file__)).default.write()
-        tx, results, total_ops, engine = TestBuild(script, ['do_migrate', migrateScript], self.GetWallet1(), '0705', '05')
+        tx, results, total_ops, engine = TestBuild(script, ['do_migrate', migrateScript], self.GetWallet1(), '0705', '05', snapshot=snapshot)
 
         self.assertEqual(len(results), 1)
         new_contract = results[0].GetInterface()
@@ -131,14 +135,14 @@ class ContractMigrateTestCase(WalletFixtureTestCase):
 
         # now make sure the new contract has the same storage
 
-        tx, results, total_ops, engine = TestBuild(migrateScript, ['i1'], self.GetWallet1(), '07', '05')
+        tx, results, total_ops, engine = TestBuild(migrateScript, ['i1'], self.GetWallet1(), '07', '05', snapshot=snapshot)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].GetByteArray(), bytearray(b'\x01'))
 
-        tx, results, total_ops, engine = TestBuild(migrateScript, ['s2'], self.GetWallet1(), '07', '05')
+        tx, results, total_ops, engine = TestBuild(migrateScript, ['s2'], self.GetWallet1(), '07', '05', snapshot=snapshot)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].GetByteArray(), bytearray(b'hello world'))
 
-        tx, results, total_ops, engine = TestBuild(migrateScript, ['i4'], self.GetWallet1(), '07', '05')
+        tx, results, total_ops, engine = TestBuild(migrateScript, ['i4'], self.GetWallet1(), '07', '05', snapshot=snapshot)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].GetBigInteger(), 400000000000)

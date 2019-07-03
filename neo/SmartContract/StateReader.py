@@ -1,12 +1,13 @@
 from neo.VM.InteropService import InteropService
 from neo.SmartContract.Contract import Contract
 from neo.SmartContract.NotifyEventArgs import NotifyEventArgs
-from neo.SmartContract.StorageContext import StorageContext
 from neo.Core.State.StorageKey import StorageKey
 from neo.Blockchain import GetBlockchain
-from neo.Core.BlockBase import BlockBase
-from neo.Core.Block import Block
-from neo.Core.TX.Transaction import Transaction
+import neo.Core.BlockBase
+import neo.Core.Block
+import neo.Core.TX.Transaction
+import neo.SmartContract.StorageContext
+import neo.SmartContract.TriggerType as TriggerType
 from neo.Core.Cryptography.Crypto import Crypto
 from neo.Core.BigInteger import BigInteger
 from neo.Core.UInt160 import UInt160
@@ -14,17 +15,13 @@ from neo.Core.UInt256 import UInt256
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
 from neo.Core.Cryptography.ECCurve import ECDSA
-from neo.SmartContract.TriggerType import Application, Verification
 from neo.VM.InteropService import StackItem, ByteArray, Array, Map
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.Settings import settings
 from neo.Core.IO.BinaryReader import BinaryReader
 from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
-from neo.Storage.Common.DBPrefix import DBPrefix
 from neo.Core.State.ContractState import ContractState
-from neo.Core.State.AccountState import AccountState
-from neo.Core.State.AssetState import AssetState
 from neo.Core.State.StorageItem import StorageItem
 from neo.logging import log_manager
 
@@ -33,37 +30,15 @@ logger = log_manager.getLogger('vm')
 
 class StateReader(InteropService):
 
-    @property
-    def Accounts(self):
-        if not self._accounts:
-            self._accounts = GetBlockchain().GetStates(DBPrefix.ST_Account, AccountState)
-        return self._accounts
-
-    @property
-    def Assets(self):
-        if not self._assets:
-            self._assets = GetBlockchain().GetStates(DBPrefix.ST_Asset, AssetState)
-        return self._assets
-
-    @property
-    def Contracts(self):
-        if not self._contracts:
-            self._contracts = GetBlockchain().GetStates(DBPrefix.ST_Contract, ContractState)
-        return self._contracts
-
-    @property
-    def Storages(self):
-        if not self._storages:
-            self._storages = GetBlockchain().GetStates(DBPrefix.ST_Storage, StorageItem)
-        return self._storages
-
     def RegisterWithPrice(self, method, func, price):
         self._dictionary[method] = func
         self.prices.update({hash(method): price})
 
-    def __init__(self):
+    def __init__(self, trigger_type, snapshot):
 
         super(StateReader, self).__init__()
+        self.Trigger = trigger_type
+        self.Snapshot = snapshot
 
         self.notifications = []
         self.events_to_dispatch = []
@@ -111,10 +86,10 @@ class StateReader(InteropService):
         if context is None:
             return False
 
-        if type(context) != StorageContext:
+        if type(context) != neo.SmartContract.StorageContext.StorageContext:
             return False
 
-        contract = self.Contracts.TryGet(context.ScriptHash.ToBytes())
+        contract = self.Snapshot.Contracts.TryGet(context.ScriptHash.ToBytes())
 
         if contract is not None:
             if contract.HasStorage:
@@ -159,7 +134,7 @@ class StateReader(InteropService):
                                                            notify_event_args.ScriptHash, height, tx_hash,
                                                            success, engine.testMode))
 
-            if engine.Trigger == Application:
+            if self.Trigger == TriggerType.Application:
                 self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.EXECUTION_SUCCESS, payload, entry_script,
                                                                   height, tx_hash, success, engine.testMode))
             else:
@@ -179,7 +154,7 @@ class StateReader(InteropService):
             if engine._InvocationStack.Count > 1:
                 [payload.Value.append(ContractParameter.ToParameter(item)) for item in engine.CurrentContext.EvaluationStack.Items]
 
-            if engine.Trigger == Application:
+            if self.Trigger == TriggerType.Application:
                 self.events_to_dispatch.append(
                     SmartContractEvent(SmartContractEvent.EXECUTION_FAIL, payload,
                                        entry_script, height, tx_hash, success, engine.testMode))
@@ -196,7 +171,7 @@ class StateReader(InteropService):
 
     def Runtime_GetTrigger(self, engine):
 
-        engine.CurrentContext.EvaluationStack.PushT(int.from_bytes(engine.Trigger, 'little'))
+        engine.CurrentContext.EvaluationStack.PushT(int.from_bytes(self.Trigger, 'little'))
 
         return True
 
@@ -206,7 +181,7 @@ class StateReader(InteropService):
 
         if self._hashes_for_verifying is None:
             container = engine.ScriptContainer
-            self._hashes_for_verifying = container.GetScriptHashesForVerifying()
+            self._hashes_for_verifying = container.GetScriptHashesForVerifying(self.Snapshot)
 
         return True if hash in self._hashes_for_verifying else False
 
@@ -260,7 +235,12 @@ class StateReader(InteropService):
         return True
 
     def Runtime_Log(self, engine: ExecutionEngine):
-        message = engine.CurrentContext.EvaluationStack.Pop().GetString()
+        item = engine.CurrentContext.EvaluationStack.Pop()
+        # will raise an exception for types that don't support it
+        item.GetByteArray()
+
+        # if we pass we can call the convenience method to pretty print the data
+        message = item.GetString()
 
         hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
@@ -283,6 +263,7 @@ class StateReader(InteropService):
     def Runtime_GetCurrentTime(self, engine: ExecutionEngine):
         BC = GetBlockchain()
         header = BC.GetHeaderByHeight(BC.Height)
+
         if header is None:
             header = GetBlockchain().GenesisBlock()
 
@@ -427,7 +408,7 @@ class StateReader(InteropService):
 
     def Blockchain_GetContract(self, engine: ExecutionEngine):
         hash = UInt160(data=engine.CurrentContext.EvaluationStack.Pop().GetByteArray())
-        contract = self.Contracts.TryGet(hash.ToBytes())
+        contract = self.Snapshot.Contracts.TryGet(hash.ToBytes())
         if contract is None:
             engine.CurrentContext.EvaluationStack.PushT(bytearray(0))
         else:
@@ -435,28 +416,28 @@ class StateReader(InteropService):
         return True
 
     def Header_GetIndex(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.BlockBase.BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.Index)
         return True
 
     def Header_GetHash(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.BlockBase.BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.Hash.ToArray())
         return True
 
     def Header_GetPrevHash(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.BlockBase.BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.PrevHash.ToArray())
         return True
 
     def Header_GetTimestamp(self, engine: ExecutionEngine):
-        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(BlockBase)
+        header = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.BlockBase.BlockBase)
         if header is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(header.Timestamp)
@@ -464,14 +445,14 @@ class StateReader(InteropService):
         return True
 
     def Block_GetTransactionCount(self, engine: ExecutionEngine):
-        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Block)
+        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.Block.Block)
         if block is None:
             return False
         engine.CurrentContext.EvaluationStack.PushT(len(block.Transactions))
         return True
 
     def Block_GetTransactions(self, engine: ExecutionEngine):
-        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Block)
+        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.Block.Block)
         if block is None:
             return False
 
@@ -483,7 +464,7 @@ class StateReader(InteropService):
         return True
 
     def Block_GetTransaction(self, engine: ExecutionEngine):
-        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Block)
+        block = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.Block.Block)
         index = engine.CurrentContext.EvaluationStack.Pop().GetBigInteger()
 
         if block is None or index < 0 or index > len(block.Transactions):
@@ -494,7 +475,7 @@ class StateReader(InteropService):
         return True
 
     def Transaction_GetHash(self, engine: ExecutionEngine):
-        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(Transaction)
+        tx = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.Core.TX.Transaction.Transaction)
         if tx is None:
             return False
 
@@ -503,7 +484,7 @@ class StateReader(InteropService):
 
     def Storage_GetContext(self, engine: ExecutionEngine):
         hash = UInt160(data=engine.CurrentContext.ScriptHash())
-        context = StorageContext(script_hash=hash)
+        context = neo.SmartContract.StorageContext.StorageContext(script_hash=hash)
 
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(context))
 
@@ -511,20 +492,20 @@ class StateReader(InteropService):
 
     def Storage_GetReadOnlyContext(self, engine: ExecutionEngine):
         hash = UInt160(data=engine.CurrentContext.ScriptHash())
-        context = StorageContext(script_hash=hash, read_only=True)
+        context = neo.SmartContract.StorageContext.StorageContext(script_hash=hash, read_only=True)
 
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(context))
 
         return True
 
     def StorageContext_AsReadOnly(self, engine: ExecutionEngine):
-        context = engine.CurrentContext.EvaluationStack.Pop.GetInterface(StorageContext)
+        context = engine.CurrentContext.EvaluationStack.Pop.GetInterface(neo.SmartContract.StorageContext.StorageContext)
 
         if context is None:
             return False
 
         if not context.IsReadOnly:
-            context = StorageContext(script_hash=context.ScriptHash, read_only=True)
+            context = neo.SmartContract.StorageContext.StorageContext(script_hash=context.ScriptHash, read_only=True)
 
         engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(context))
         return True
@@ -533,7 +514,7 @@ class StateReader(InteropService):
         context = None
         try:
             item = engine.CurrentContext.EvaluationStack.Pop()
-            context = item.GetInterface(StorageContext)
+            context = item.GetInterface(neo.SmartContract.StorageContext.StorageContext)
         except Exception as e:
             return False
 
@@ -542,7 +523,7 @@ class StateReader(InteropService):
 
         key = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        item = self.Storages.TryGet(storage_key.ToArray())
+        item = self.Snapshot.Storages.TryGet(storage_key.ToArray())
 
         keystr = key
 
@@ -571,7 +552,7 @@ class StateReader(InteropService):
 
         context = None
         try:
-            context = engine.CurrentContext.EvaluationStack.Pop().GetInterface(StorageContext)
+            context = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.SmartContract.StorageContext.StorageContext)
         except Exception as e:
             return False
 
@@ -584,9 +565,9 @@ class StateReader(InteropService):
 
         value = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
 
-        new_item = StorageItem(value=value)
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-        item = self._storages.ReplaceOrAdd(storage_key.ToArray(), new_item)
+        item = self.Snapshot.Storages.GetAndChange(storage_key.ToArray(), lambda: StorageItem())
+        item.Value = value
 
         keystr = key
         valStr = bytearray(item.Value)
@@ -615,7 +596,7 @@ class StateReader(InteropService):
             created = self._contracts_created[shash.ToBytes()]
 
             if created == UInt160(data=engine.CurrentContext.ScriptHash()):
-                context = StorageContext(script_hash=shash)
+                context = neo.SmartContract.StorageContext.StorageContext(script_hash=shash)
                 engine.CurrentContext.EvaluationStack.PushT(StackItem.FromInterface(context))
 
                 return True
@@ -625,16 +606,17 @@ class StateReader(InteropService):
     def Contract_Destroy(self, engine):
         hash = UInt160(data=engine.CurrentContext.ScriptHash())
 
-        contract = self._contracts.TryGet(hash.ToBytes())
+        contract = self.Snapshot.Contracts.TryGet(hash.ToBytes())
 
         if contract is not None:
 
-            self._contracts.Remove(hash.ToBytes())
+            self.Snapshot.Contracts.Delete(hash.ToBytes())
 
             if contract.HasStorage:
 
-                for pair in self._storages.Find(hash.ToBytes()):
-                    self._storages.Remove(pair.Key)
+                for k, v in self.Snapshot.Storages.Find(hash.ToBytes()):
+                    storage_key = StorageKey(script_hash=hash, key=k)
+                    self.Snapshot.Storages.Delete(storage_key.ToArray())
 
         self.events_to_dispatch.append(
             SmartContractEvent(SmartContractEvent.CONTRACT_DESTROY, ContractParameter(ContractParameterType.InteropInterface, contract),
@@ -648,29 +630,31 @@ class StateReader(InteropService):
         return False
 
     def Storage_Delete(self, engine: ExecutionEngine):
+        if self.Trigger != TriggerType.Application and self.Trigger != TriggerType.ApplicationR:
+            return False
 
-        context = engine.CurrentContext.EvaluationStack.Pop().GetInterface(StorageContext)
-
+        context = engine.CurrentContext.EvaluationStack.Pop().GetInterface(neo.SmartContract.StorageContext.StorageContext)
         if not self.CheckStorageContext(context):
+            return False
+        if context.IsReadOnly:
             return False
 
         key = engine.CurrentContext.EvaluationStack.Pop().GetByteArray()
-
         storage_key = StorageKey(script_hash=context.ScriptHash, key=key)
-
-        keystr = key
-        if len(key) == 20:
-            keystr = Crypto.ToAddress(UInt160(data=key))
 
         if type(engine) == ExecutionEngine:
             test_mode = False
         else:
             test_mode = engine.testMode
-        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_DELETE, ContractParameter(ContractParameterType.String, keystr),
+        self.events_to_dispatch.append(SmartContractEvent(SmartContractEvent.STORAGE_DELETE, ContractParameter(ContractParameterType.String, key),
                                                           context.ScriptHash, GetBlockchain().Height + 1,
                                                           engine.ScriptContainer.Hash if engine.ScriptContainer else None,
                                                           test_mode=test_mode))
 
-        self._storages.Remove(storage_key.ToArray())
+        item = self.Snapshot.Storages.TryGet(storage_key.ToArray())
+        if item and item.IsConstant:
+            return False
+
+        self.Snapshot.Storages.Delete(storage_key.ToArray())
 
         return True

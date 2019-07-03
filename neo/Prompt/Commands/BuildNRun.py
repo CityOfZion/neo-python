@@ -123,7 +123,7 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
         return tx, result, None, None
 
 
-def TestBuild(script, invoke_args, wallet, plist='05', ret='05', dynamic=False, invoke_attrs=None, owners=None):
+def TestBuild(script, invoke_args, wallet, plist='05', ret='05', dynamic=False, invoke_attrs=None, owners=None, snapshot=None):
     properties = ContractPropertyState.HasStorage
 
     if dynamic:
@@ -134,4 +134,4 @@ def TestBuild(script, invoke_args, wallet, plist='05', ret='05', dynamic=False, 
 
     script = generate_deploy_script(script, contract_properties=int(properties), parameter_list=plist, return_type=BigInteger.FromBytes(ret))
 
-    return test_deploy_and_invoke(script, invoke_args, wallet, invoke_attrs=invoke_attrs, owners=owners)
+    return test_deploy_and_invoke(script, invoke_args, wallet, invoke_attrs=invoke_attrs, owners=owners, snapshot=snapshot)

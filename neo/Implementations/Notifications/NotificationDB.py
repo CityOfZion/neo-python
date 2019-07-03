@@ -2,7 +2,7 @@ import plyvel
 from neo.EventHub import events
 from neo.SmartContract.SmartContractEvent import SmartContractEvent, NotifyEvent, NotifyType
 from neo.Storage.Implementation.DBFactory import getNotificationDB
-from neo.Storage.Interface.DBInterface import DBProperties
+from neo.Storage.Interface.DBProperties import DBProperties
 from neo.Core.State.ContractState import ContractState
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
@@ -217,7 +217,7 @@ class NotificationDB:
 
         block_bytes = block_number.to_bytes(4, 'little')
         results = []
-        with blocklist_snapshot.openIter(DBProperties(prefix=block_bytes, include_key=False)) as it:
+        with blocklist_snapshot.db.openIter(DBProperties(prefix=block_bytes, include_key=False)) as it:
             for val in it:
                 event = SmartContractEvent.FromByteArray(val)
                 results.append(event)
@@ -243,7 +243,7 @@ class NotificationDB:
         addrlist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_ADDR).createSnapshot()
         results = []
 
-        with addrlist_snapshot.openIter(DBProperties(prefix=bytes(addr.Data), include_key=False)) as it:
+        with addrlist_snapshot.db.openIter(DBProperties(prefix=bytes(addr.Data), include_key=False)) as it:
             for val in it:
                 if len(val) > 4:
                     try:
@@ -272,7 +272,7 @@ class NotificationDB:
         contractlist_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_CONTRACT).createSnapshot()
         results = []
 
-        with contractlist_snapshot.openIter(DBProperties(prefix=bytes(hash.Data), include_key=False)) as it:
+        with contractlist_snapshot.db.openIter(DBProperties(prefix=bytes(hash.Data), include_key=False)) as it:
             for val in it:
                 if len(val) > 4:
                     try:
@@ -291,7 +291,7 @@ class NotificationDB:
         tokens_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_TOKEN).createSnapshot()
         results = []
 
-        with tokens_snapshot.openIter(DBProperties(include_key=False)) as it:
+        with tokens_snapshot.db.openIter(DBProperties(include_key=False)) as it:
             for val in it:
                 event = SmartContractEvent.FromByteArray(val)
                 results.append(event)
@@ -309,7 +309,7 @@ class NotificationDB:
         tokens_snapshot = self.db.getPrefixedDB(NotificationPrefix.PREFIX_TOKEN).createSnapshot()
 
         try:
-            val = tokens_snapshot.get(hash.ToBytes())
+            val = tokens_snapshot.db.get(hash.ToBytes())
             if val:
                 event = SmartContractEvent.FromByteArray(val)
                 return event

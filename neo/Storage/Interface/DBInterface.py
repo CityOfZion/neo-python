@@ -5,27 +5,6 @@ from neo.logging import log_manager
 logger = log_manager.getLogger()
 
 
-class DBProperties:
-    """
-    Container for holding DB properties
-    Used to pass the configuration options to the DB iterator initializer.
-    neo.Storage.Implementation.[BACKEND].[BACKEND]Impl.openIter
-
-    Args:
-        prefix (str, optional): Prefix to search for.
-        include_value (bool, optional): whether to include keys in the returned data
-        include_key (bool, optional): whether to include values in the returned data
-    """
-
-    def __init__(self, prefix=None, include_value=True, include_key=True):
-        if not include_value and not include_key:
-            raise Exception('Either key or value have to be true')
-
-        self.prefix = prefix
-        self.include_value = include_value
-        self.include_key = include_key
-
-
 class DBInterface(object):
 
     def __init__(self, db, prefix, class_ref):
@@ -46,6 +25,8 @@ class DBInterface(object):
         self._DeletedResetState = []
 
         self._batch_changed = {}
+
+        self.tracking = []
 
     @property
     def Current(self):
@@ -104,6 +85,29 @@ class DBInterface(object):
         self._DeletedResetState = []
 
     def GetAndChange(self, keyval, new_instance=None, debug_item=False):
+        if keyval in self.Collection:
+            # if deleted in this batch, we now add again and mark it changed
+            if keyval in self.Deleted:
+                if new_instance is None:
+                    item = self.ClassRef()
+                else:
+                    item = new_instance
+                self.Deleted.remove(keyval)
+
+                self.Add(keyval, item)
+        # if not deleted
+        else:
+            # first test if we have something in the DB
+            key = self.DB.get(self.Prefix + keyval)
+            if key is not None:
+                # get the itme from the DB
+                item = self._GetItem(keyval)
+                self.MarkChanged(keyval)
+            else:
+                # create item and add
+                self.Add(keyval, item)
+
+        return item
 
         item = self.TryGet(keyval)
 
@@ -155,7 +159,7 @@ class DBInterface(object):
             item = self.Collection[keyval]
             if item is None:
                 item = self._GetItem(keyval)
-            self.MarkChanged(keyval)
+            # self.MarkChanged(keyval)
             return item
 
         # otherwise, chekc in the database
@@ -163,7 +167,7 @@ class DBInterface(object):
 
         # if the key is there, get the item
         if key is not None:
-            self.MarkChanged(keyval)
+            # self.MarkChanged(keyval)
 
             item = self._GetItem(keyval)
 
@@ -188,12 +192,22 @@ class DBInterface(object):
         return None
 
     def Add(self, keyval, item):
+        if self.Prefix == b'\x70':  # Storage Prefix
+            found = self.DB.get(self.Prefix + keyval) is not None
+
+            if not found:
+                self.tracking.append({"state": "Added", "key": binascii.hexlify(keyval).decode(), "value": item.ToByteArray().decode()})
+            else:
+                self.tracking.append({"state": "Changed", "key": binascii.hexlify(keyval).decode(), "value": item.ToByteArray().decode()})
+
         self.Collection[keyval] = item
         self.MarkChanged(keyval)
 
     def Remove(self, keyval):
         if keyval not in self.Deleted:
             self.Deleted.append(keyval)
+            if self.Prefix == b'\x70':  # Storage Prefix
+                self.tracking.append({"state": "Deleted", "key": binascii.hexlify(keyval).decode(), "value": ""})
 
     def MarkForReset(self):
         self._ChangedResetState = self.Changed
@@ -236,8 +250,9 @@ class DBInterface(object):
         self.Collection = None
         self.ClassRef = None
         self.Prefix = None
-        self.Deleted = None
-        self.Changed = None
-        self._ChangedResetState = None
-        self._DeletedResetState = None
+        self.Deleted = []
+        self.Changed = []
+        self._ChangedResetState = []
+        self._DeletedResetState = []
         logger = None
+        self.tracking = []

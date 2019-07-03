@@ -31,7 +31,7 @@ class Block(BlockBase, InventoryMixin):
             index (int): block height.
             consensusData (int): uint64.
             nextConsensus (UInt160):
-            script (neo.Core.Witness): script used to verify the block.
+            script (neo.Core.Witness.Witness): script used to verify the block.
             transactions (list): of neo.Core.TX.Transaction.Transaction objects.
             build_root (bool): flag indicating whether to rebuild the merkle root.
         """
@@ -45,6 +45,7 @@ class Block(BlockBase, InventoryMixin):
         self.NextConsensus = nextConsensus
         self.Script = script
         self._header = None
+
         self.__is_trimmed = False
 
         if transactions:
@@ -290,45 +291,3 @@ class Block(BlockBase, InventoryMixin):
         retVal = ms.ToArray()
         StreamManager.ReleaseStream(ms)
         return retVal
-
-    def Verify(self, completely=False):
-        """
-        Verify the integrity of the block.
-
-        Args:
-            completely: (Not functional at this time).
-
-        Returns:
-            bool: True if valid. False otherwise.
-        """
-        res = super(Block, self).Verify()
-        if not res:
-            return False
-
-        from neo.Blockchain import GetBlockchain, GetConsensusAddress
-
-        # first TX has to be a miner transaction. other tx after that cant be miner tx
-        if self.Transactions[0].Type != TransactionType.MinerTransaction:
-            return False
-        for tx in self.Transactions[1:]:
-            if tx.Type == TransactionType.MinerTransaction:
-                return False
-
-        if completely:
-            bc = GetBlockchain()
-
-            if self.NextConsensus != GetConsensusAddress(bc.GetValidators(self.Transactions).ToArray()):
-                return False
-
-            for tx in self.Transactions:
-                if not tx.Verify():
-                    pass
-            logger.error("Blocks cannot be fully validated at this moment.  please pass completely=False")
-            raise NotImplementedError()
-            # do this below!
-            # foreach(Transaction tx in Transactions)
-            # if (!tx.Verify(Transactions.Where(p = > !p.Hash.Equals(tx.Hash)))) return false;
-            # Transaction tx_gen = Transactions.FirstOrDefault(p= > p.Type == TransactionType.MinerTransaction);
-            # if (tx_gen?.Outputs.Sum(p = > p.Value) != CalculateNetFee(Transactions)) return false;
-
-        return True
