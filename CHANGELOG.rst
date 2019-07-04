@@ -49,6 +49,7 @@ All notable changes to this project are documented in this file.
 - Fix clearing storage manipulations on failed invocation transaction execution
 - Port caching layer from neo-cli
 - Fix ``Contract_Migrate`` sycall
+- Fix ``BigInteger`` modulo for negative divisor values
 
 
 [0.8.4] 2019-02-14
