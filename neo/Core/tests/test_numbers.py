@@ -317,6 +317,15 @@ class BigIntegerTestCase(TestCase):
         c2_unsigned = BigInteger.FromBytes(c1_bytes, signed=False)
         self.assertEqual(c2_unsigned.Sign, 1)
 
+    def test_big_integer_modulo(self):
+        b1 = BigInteger(860593)
+        b2 = BigInteger(-201)
+        self.assertEqual(112, b1 % b2)
+
+        b1 = BigInteger(20195283520469175757)
+        b2 = BigInteger(1048576)
+        self.assertEqual(888269, b1 % b2)
+
     def test_dunder_methods(self):
         b1 = BigInteger(1)
         b2 = BigInteger(2)

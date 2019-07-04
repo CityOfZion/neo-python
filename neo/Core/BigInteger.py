@@ -1,3 +1,6 @@
+from math import fmod
+
+
 class BigInteger(int):
     @property
     def Sign(self):
@@ -46,7 +49,11 @@ class BigInteger(int):
         return BigInteger(super(BigInteger, self).__add__(*args, **kwargs))
 
     def __mod__(self, *args, **kwargs):  # real signature unknown
-        return BigInteger(super(BigInteger, self).__mod__(*args, **kwargs))
+        # C# uses different logic from Python
+        if args[0] < 0:
+            return fmod(self, args[0])
+        else:
+            return BigInteger(super(BigInteger, self).__mod__(*args, **kwargs))
 
     def __mul__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__mul__(*args, **kwargs))
