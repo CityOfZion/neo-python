@@ -278,7 +278,7 @@ class StateReader(InteropService):
             stack_item.Serialize(writer)
         except Exception as e:
             StreamManager.ReleaseStream(ms)
-            logger.error("Cannot serialize item %s: %s " % (stack_item, e))
+            logger.debug("Cannot serialize item %s: %s " % (stack_item, e))
             return False
 
         ms.flush()
@@ -303,7 +303,7 @@ class StateReader(InteropService):
             engine.CurrentContext.EvaluationStack.PushT(stack_item)
         except ValueError as e:
             # can't deserialize type
-            logger.error("%s " % e)
+            logger.debug("%s " % e)
             return False
         finally:
             StreamManager.ReleaseStream(ms)
