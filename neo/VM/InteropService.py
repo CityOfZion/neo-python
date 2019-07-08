@@ -213,7 +213,7 @@ class Array(StackItem, CollectionMixin):
         raise Exception("Not Supported")
 
     def GetBoolean(self):
-        return len(self._array) > 0
+        return True
 
     def GetByteArray(self):
         logger.debug("Trying to get bytearray integer %s " % self)
