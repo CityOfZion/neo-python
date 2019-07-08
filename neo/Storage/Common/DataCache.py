@@ -88,7 +88,7 @@ class DataCache:
             key_prefix = b''
 
         for k, v in self.FindInternal(key_prefix):
-            if k not in self.dictionary:
+            if bytes(key_prefix + k) not in self.dictionary:
                 yield k, v
 
         for k, v in self.dictionary.items():
