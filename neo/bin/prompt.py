@@ -4,16 +4,18 @@ import argparse
 import datetime
 import os
 import traceback
+import asyncio
+import termios
+import sys
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_formatted_text, PromptSession
 from prompt_toolkit.formatted_text import FormattedText
-from twisted.internet import reactor, task
+from prompt_toolkit.application import get_app as prompt_toolkit_get_app
 from neo import __version__
 from neo.Core.Blockchain import Blockchain
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
-from neo.Network.NodeLeader import NodeLeader
+from neo.Storage.Implementation.DBFactory import getBlockchainDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Prompt.Commands.Wallet import CommandWallet
 from neo.Prompt.Commands.Show import CommandShow
 from neo.Prompt.Commands.Search import CommandSearch
@@ -25,8 +27,16 @@ from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print, token_style
+from neo.Network.nodemanager import NodeManager
+
+import neo.Storage.Implementation.DBFactory as DBFactory
+
 
 logger = log_manager.getLogger()
+
+from prompt_toolkit.eventloop import use_asyncio_event_loop
+from neo.Network.p2pservice import NetworkService
+from contextlib import suppress
 
 
 class PromptFileHistory(FileHistory):
@@ -84,6 +94,8 @@ class PromptInterface:
     start_height = None
     start_dt = None
 
+    prompt_session = None
+
     def __init__(self, history_filename=None):
         PromptData.Prompt = self
         if history_filename:
@@ -96,9 +108,14 @@ class PromptInterface:
     def get_bottom_toolbar(self, cli=None):
         out = []
         try:
-            return "[%s] Progress: %s/%s" % (settings.net_name,
-                                             str(Blockchain.Default().Height),
-                                             str(Blockchain.Default().HeaderHeight))
+            if PromptData.Wallet is None:
+                return "[%s] Progress: 0/%s/%s" % (settings.net_name,
+                                                   str(Blockchain.Default().Height),
+                                                   str(Blockchain.Default().HeaderHeight))
+            else:
+                return "[%s] Progress: %s/%s/%s" % (settings.net_name, str(PromptData.Wallet._current_height),
+                                                    str(Blockchain.Default().Height),
+                                                    str(Blockchain.Default().HeaderHeight))
         except Exception as e:
             pass
 
@@ -129,9 +146,7 @@ class PromptInterface:
         print('Shutting down. This may take a bit...')
         self.go_on = False
         PromptData.close_wallet()
-        Blockchain.Default().Dispose()
-        NodeLeader.Instance().Shutdown()
-        reactor.stop()
+        raise SystemExit
 
     def help(self):
         prompt_print(f"\nCommands:")
@@ -140,26 +155,13 @@ class PromptInterface:
             prompt_print(f"   {command_group:<15} - {command.command_desc().short_help}")
         prompt_print(f"\nRun 'COMMAND help' for more information on a command.")
 
-    def start_wallet_loop(self):
-        if self.wallet_loop_deferred:
-            self.stop_wallet_loop()
-        self.walletdb_loop = task.LoopingCall(PromptData.Wallet.ProcessBlocks)
-        self.wallet_loop_deferred = self.walletdb_loop.start(1)
-        self.wallet_loop_deferred.addErrback(self.on_looperror)
-
-    def stop_wallet_loop(self):
-        self.wallet_loop_deferred.cancel()
-        self.wallet_loop_deferred = None
-        if self.walletdb_loop and self.walletdb_loop.running:
-            self.walletdb_loop.stop()
-
     def on_looperror(self, err):
         logger.debug("On DB loop error! %s " % err)
 
-    def run(self):
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop_deferred = dbloop.start(.1)
-        dbloop_deferred.addErrback(self.on_looperror)
+    async def run(self):
+        nodemgr = NodeManager()
+        while not nodemgr.running:
+            await asyncio.sleep(0.1)
 
         tokens = [("class:neo", 'NEO'), ("class:default", ' cli. Type '),
                   ("class:command", '\'help\' '), ("class:default", 'to get started')]
@@ -168,24 +170,39 @@ class PromptInterface:
 
         print('\n')
 
+        session = PromptSession("neo> ",
+                                completer=self.get_completer(),
+                                history=self.history,
+                                bottom_toolbar=self.get_bottom_toolbar,
+                                style=token_style,
+                                refresh_interval=3,
+                                )
+        self.prompt_session = session
+        result = ""
+
         while self.go_on:
-
-            session = PromptSession("neo> ",
-                                    completer=self.get_completer(),
-                                    history=self.history,
-                                    bottom_toolbar=self.get_bottom_toolbar,
-                                    style=token_style,
-                                    refresh_interval=3,
-                                    )
-
+            # with patch_stdout():
             try:
-                result = session.prompt()
+                result = await session.prompt(async_=True)
             except EOFError:
                 # Control-D pressed: quit
                 return self.quit()
             except KeyboardInterrupt:
-                # Control-C pressed: do nothing
-                continue
+                # Control-C pressed: pause for user input
+
+                # temporarily mute stdout during user input
+                # components like `network` set at DEBUG level will spam through the console
+                # making it impractical to input user data
+                log_manager.mute_stdio()
+
+                print('Logging output muted during user input...')
+                try:
+                    result = await session.prompt(async_=True)
+                except Exception as e:
+                    logger.error("Exception handling input: %s " % e)
+
+                # and re-enable stdio
+                log_manager.unmute_stdio()
             except Exception as e:
                 logger.error("Exception handling input: %s " % e)
 
@@ -248,7 +265,10 @@ def main():
                         help="Absolute path to use for database directories")
 
     # peers
-    parser.add_argument("--maxpeers", action="store", default=5,
+    parser.add_argument("--minpeers", action="store", type=int,
+                        help="Min peers to use for P2P Joining")
+
+    parser.add_argument("--maxpeers", action="store", type=int, default=5,
                         help="Max peers to use for P2P Joining")
 
     # Show the neo-python version
@@ -289,11 +309,52 @@ def main():
     if args.verbose:
         settings.set_log_smart_contract_events(True)
 
-    if args.maxpeers:
-        settings.set_max_peers(args.maxpeers)
+    def set_min_peers(num_peers) -> bool:
+        try:
+            settings.set_min_peers(num_peers)
+            print("Minpeers set to ", num_peers)
+            return True
+        except ValueError:
+            print("Please supply a positive integer for minpeers")
+            return False
+
+    def set_max_peers(num_peers) -> bool:
+        try:
+            settings.set_max_peers(num_peers)
+            print("Maxpeers set to ", num_peers)
+            return True
+        except ValueError:
+            print("Please supply a positive integer for maxpeers")
+            return False
+
+    minpeers = args.minpeers
+    maxpeers = args.maxpeers
+
+    if minpeers and maxpeers:
+        if minpeers > maxpeers:
+            print("minpeers setting cannot be bigger than maxpeers setting")
+            return
+        if not set_min_peers(minpeers) or not set_max_peers(maxpeers):
+            return
+    elif minpeers:
+        if not set_min_peers(minpeers):
+            return
+        if minpeers > settings.CONNECTED_PEER_MAX:
+            if not set_max_peers(minpeers):
+                return
+    elif maxpeers:
+        if not set_max_peers(maxpeers):
+            return
+        if maxpeers < settings.CONNECTED_PEER_MIN:
+            if not set_min_peers(maxpeers):
+                return
+
+    loop = asyncio.get_event_loop()
+    # put prompt_toolkit on top of asyncio to avoid blocking
+    use_asyncio_event_loop()
 
     # Instantiate the blockchain and subscribe to notifications
-    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+    blockchain = Blockchain(DBFactory.getBlockchainDB(settings.chain_leveldb_path))
     Blockchain.RegisterBlockchain(blockchain)
 
     # Try to set up a notification db
@@ -304,19 +365,45 @@ def main():
     fn_prompt_history = os.path.join(settings.DATA_DIR_PATH, '.prompt.py.history')
     cli = PromptInterface(fn_prompt_history)
 
+    cli_task = loop.create_task(cli.run())
+    p2p = NetworkService()
+    loop.create_task(p2p.start())
+
+    async def shutdown():
+        all_tasks = asyncio.all_tasks()
+        for task in all_tasks:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+    # prompt_toolkit hack for not cleaning up see: https://github.com/prompt-toolkit/python-prompt-toolkit/issues/787
+    old_attrs = termios.tcgetattr(sys.stdin)
+
+    try:
+        loop.run_forever()
+    except SystemExit:
+        pass
+    finally:
+        with suppress(asyncio.InvalidStateError):
+            app = prompt_toolkit_get_app()
+            if app.is_running:
+                app.exit()
+        with suppress((SystemExit, Exception)):
+            cli_task.exception()
+        loop.run_until_complete(p2p.shutdown())
+        loop.run_until_complete(shutdown())
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.stop()
+        loop.close()
+
     # Run things
-
-    reactor.callInThread(cli.run)
-
-    NodeLeader.Instance().Start()
-
-    # reactor.run() is blocking, until `quit()` is called which stops the reactor.
-    reactor.run()
 
     # After the reactor is stopped, gracefully shutdown the database.
     NotificationDB.close()
     Blockchain.Default().Dispose()
-    NodeLeader.Instance().Shutdown()
+
+    # clean up prompt_toolkit mess, see above
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, old_attrs)
 
 
 if __name__ == "__main__":

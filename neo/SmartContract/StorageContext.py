@@ -3,11 +3,7 @@ from neo.VM.Mixins import InteropMixin
 
 class StorageContext(InteropMixin):
 
-    ScriptHash = None
-    IsReadOnly = False
-
     def __init__(self, script_hash, read_only=False):
-
         self.ScriptHash = script_hash
         self.IsReadOnly = read_only
 

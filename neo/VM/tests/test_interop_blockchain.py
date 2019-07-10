@@ -6,8 +6,11 @@ from neo.SmartContract.StateReader import StateReader
 from neo.Core.Block import Block
 from neo.Core.TX.Transaction import Transaction
 from neo.Settings import settings
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
+from neo.VM.Script import Script
 import os
+from neo.Blockchain import GetBlockchain
+from neo.SmartContract import TriggerType
 
 
 class StringIn(str):
@@ -30,8 +33,10 @@ class BlockchainInteropTest(BlockchainFixtureTestCase):
 
     def setUp(self):
         self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(engine=self.engine)
-        self.state_reader = StateReader()
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
+        self.engine.InvocationStack.PushT(self.econtext)
+        snapshot = GetBlockchain()._db.createSnapshot()
+        self.state_reader = StateReader(TriggerType.Application, snapshot)
 
     def test_interop_getblock(self):
         height = StackItem.New(9369)

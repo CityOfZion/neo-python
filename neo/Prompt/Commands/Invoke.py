@@ -3,12 +3,12 @@ import json
 from neo.Blockchain import GetBlockchain
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.InteropService import InteropInterface
-from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt import Utils as PromptUtils
-from neo.Implementations.Blockchains.LevelDB.DBCollection import DBCollection
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
-from neo.Implementations.Blockchains.LevelDB.CachedScriptTable import CachedScriptTable
-from neo.Implementations.Blockchains.LevelDB.DebugStorage import DebugStorage
+from neo.Storage.Interface.DBInterface import DBInterface
+from neo.Storage.Common.CachedScriptTable import CachedScriptTable
+from neo.Storage.Common.DBPrefix import DBPrefix
+from neo.Storage.Common.DebugStorage import DebugStorage
+
 
 from neo.Core.State.AccountState import AccountState
 from neo.Core.State.AssetState import AssetState
@@ -25,22 +25,24 @@ from neo.SmartContract import TriggerType
 from neo.SmartContract.StateMachine import StateMachine
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.SmartContract.Contract import Contract
-from neocore.Cryptography.Helper import scripthash_to_address
-from neocore.Cryptography.Crypto import Crypto
-from neocore.Fixed8 import Fixed8
+from neo.Core.Cryptography.Helper import scripthash_to_address
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.Fixed8 import Fixed8
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
 from neo.EventHub import events
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
 from copy import deepcopy
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
+from neo.Network.nodemanager import NodeManager
 
 logger = log_manager.getLogger()
 
-from neocore.Cryptography.ECCurve import ECDSA
-from neocore.UInt160 import UInt160
+from neo.Core.Cryptography.ECCurve import ECDSA
+from neo.Core.UInt160 import UInt160
 from neo.VM.OpCode import PACK
+from neo.VM.Debugger import Debugger
 
 DEFAULT_MIN_FEE = Fixed8.FromDecimal(.0001)
 
@@ -77,9 +79,8 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
             relayed = False
 
-            #            print("SENDING TX: %s " % json.dumps(wallet_tx.ToJson(), indent=4))
-
-            relayed = NodeLeader.Instance().Relay(wallet_tx)
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
@@ -140,7 +141,8 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
 
             wallet_tx.scripts = context.GetScripts()
 
-            relayed = NodeLeader.Instance().Relay(wallet_tx)
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
@@ -161,8 +163,7 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
     return False
 
 
-def TestInvokeContract(wallet, args, withdrawal_tx=None,
-                       parse_params=True, from_addr=None,
+def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None,
                        min_fee=DEFAULT_MIN_FEE, invoke_attrs=None, owners=None):
     BC = GetBlockchain()
 
@@ -188,30 +189,7 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None,
         sb = ScriptBuilder()
 
         for p in params:
-
-            if parse_params:
-                item = PromptUtils.parse_param(p, wallet, parse_addr=parse_addresses)
-            else:
-                item = p
-            if type(item) is list:
-                item.reverse()
-                listlength = len(item)
-                for listitem in item:
-                    subitem = PromptUtils.parse_param(listitem, wallet, parse_addr=parse_addresses)
-                    if type(subitem) is list:
-                        subitem.reverse()
-                        for listitem2 in subitem:
-                            subsub = PromptUtils.parse_param(listitem2, wallet, parse_addr=parse_addresses)
-                            sb.push(subsub)
-                        sb.push(len(subitem))
-                        sb.Emit(PACK)
-                    else:
-                        sb.push(subitem)
-
-                sb.push(listlength)
-                sb.Emit(PACK)
-            else:
-                sb.push(item)
+            process_params(sb, p, wallet, parse_addresses)
 
         sb.EmitAppCall(contract.Code.ScriptHash().Data)
 
@@ -278,14 +256,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
     if from_addr is not None:
         from_addr = PromptUtils.lookup_addr_str(wallet, from_addr)
 
-    bc = GetBlockchain()
-
-    accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
-    assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
-
     # if we are using a withdrawal tx, don't recreate the invocation tx
     # also, we don't want to reset the inputs / outputs
     # since those were already calculated
@@ -301,9 +271,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
     tx.scripts = []
     tx.Script = binascii.unhexlify(script)
     tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
-
-    script_table = CachedScriptTable(contracts)
-    service = StateMachine(accounts, validators, assets, contracts, storages, None)
 
     if len(outputs) < 1:
         contract = wallet.GetDefaultContract()
@@ -335,14 +302,12 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
         wallet_tx.scripts = context.GetScripts()
     else:
         logger.warning("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
-    #        if not gather_signatures(context, wallet_tx, owners):
-    #            return None, [], 0, None
 
+    snapshot = GetBlockchain()._db.createSnapshot().Clone()
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
         container=wallet_tx,
-        table=script_table,
-        service=service,
+        snapshot=snapshot,
         gas=wallet_tx.Gas,
         testMode=True
     )
@@ -351,20 +316,19 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
 
     try:
         success = engine.Execute()
+        engine._Service.ExecutionCompleted(engine, success)
 
-        service.ExecutionCompleted(engine, success)
-
-        for event in service.events_to_dispatch:
+        for event in engine._Service.events_to_dispatch:
             events.emit(event.event_type, event)
 
         if success:
 
             # this will be removed in favor of neo.EventHub
-            if len(service.notifications) > 0:
-                for n in service.notifications:
+            if len(engine._Service.notifications) > 0:
+                for n in engine._Service.notifications:
                     Blockchain.Default().OnNotify(n)
 
-            print("Used %s Gas " % engine.GasConsumed().ToString())
+            # print("Used %s Gas " % engine.GasConsumed().ToString())
 
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
             consumed = consumed.Ceil()
@@ -402,25 +366,18 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
             return wallet_tx, min_fee, [], engine.ops_processed, success
 
     except Exception as e:
-        service.ExecutionCompleted(engine, False, e)
+        engine._Service.ExecutionCompleted(engine, False, e)
 
     return None, None, None, None, False
 
 
 def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                            from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
-                           debug_map=None, invoke_attrs=None, owners=None):
-    bc = GetBlockchain()
-
-    accounts = DBCollection(bc._db, DBPrefix.ST_Account, AccountState)
-    assets = DBCollection(bc._db, DBPrefix.ST_Asset, AssetState)
-    validators = DBCollection(bc._db, DBPrefix.ST_Validator, ValidatorState)
-    contracts = DBCollection(bc._db, DBPrefix.ST_Contract, ContractState)
-    storages = DBCollection(bc._db, DBPrefix.ST_Storage, StorageItem)
+                           debug_map=None, invoke_attrs=None, owners=None, enable_debugger=False, snapshot=None):
 
     if settings.USE_DEBUG_STORAGE:
         debug_storage = DebugStorage.instance()
-        storages = DBCollection(debug_storage.db, DBPrefix.ST_Storage, StorageItem)
+        storages = DBInterface(debug_storage.db, DBPrefix.ST_Storage, StorageItem)
         storages.DebugStorage = True
 
     dtx = InvocationTransaction()
@@ -442,20 +399,18 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
     wallet.Sign(context)
     dtx.scripts = context.GetScripts()
 
-    script_table = CachedScriptTable(contracts)
-    service = StateMachine(accounts, validators, assets, contracts, storages, None)
-
     contract = wallet.GetDefaultContract()
     dtx.Attributes = [TransactionAttribute(usage=TransactionAttributeUsage.Script, data=Crypto.ToScriptHash(contract.Script, unhex=False))]
     dtx.Attributes = make_unique_script_attr(dtx.Attributes)
 
     to_dispatch = []
 
+    if snapshot is None:
+        snapshot = GetBlockchain()._db.createSnapshot().Clone()
     engine = ApplicationEngine(
         trigger_type=TriggerType.Application,
         container=dtx,
-        table=script_table,
-        service=service,
+        snapshot=snapshot,
         gas=dtx.Gas,
         testMode=True
     )
@@ -464,8 +419,20 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
     # first we will execute the test deploy
     # then right after, we execute the test invoke
+    if enable_debugger:
+        debugger = Debugger(engine)
+        d_success = debugger.Execute()
+    else:
+        d_success = engine.Execute()
 
-    d_success = engine.Execute()
+    # the old setup provided the same StateMachine object to the ApplicationEngine for deploy and invoke
+    # this allowed for a single dispatch of events at the end of the function. Now a new StateMachine is automatically
+    # created when creating an ApplicationEngine, thus we have to dispatch events after the deploy to not lose them as
+    # testcases expect them
+    to_dispatch = to_dispatch + engine._Service.events_to_dispatch
+    for event in to_dispatch:
+        events.emit(event.event_type, event)
+    to_dispatch = []
 
     if d_success:
 
@@ -502,26 +469,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         sb = ScriptBuilder()
 
         for p in invoke_args:
-            item = PromptUtils.parse_param(p, wallet, parse_addr=no_parse_addresses)
-            if type(item) is list:
-                item.reverse()
-                listlength = len(item)
-                for listitem in item:
-                    subitem = PromptUtils.parse_param(listitem, wallet, parse_addr=no_parse_addresses)
-                    if type(subitem) is list:
-                        subitem.reverse()
-                        for listitem2 in subitem:
-                            subsub = PromptUtils.parse_param(listitem2, wallet, parse_addr=no_parse_addresses)
-                            sb.push(subsub)
-                        sb.push(len(subitem))
-                        sb.Emit(PACK)
-                    else:
-                        sb.push(subitem)
-
-                sb.push(listlength)
-                sb.Emit(PACK)
-            else:
-                sb.push(item)
+            process_params(sb, p, wallet, no_parse_addresses)
 
         sb.EmitAppCall(shash.Data)
         out = sb.ToArray()
@@ -575,16 +523,11 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             itx.scripts = context.GetScripts()
         else:
             logger.warn("Not gathering signatures for test build.  For a non-test invoke that would occur here.")
-        #            if not gather_signatures(context, itx, owners):
-        #                return None, [], 0, None
-
-        #        print("gathered signatures %s " % itx.scripts)
 
         engine = ApplicationEngine(
             trigger_type=TriggerType.Application,
             container=itx,
-            table=script_table,
-            service=service,
+            snapshot=snapshot,
             gas=itx.Gas,
             testMode=invocation_test_mode
         )
@@ -593,19 +536,22 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
         engine.LoadScript(itx.Script)
         engine.LoadDebugInfoForScriptHash(debug_map, shash.Data)
 
-        i_success = engine.Execute()
+        if enable_debugger:
+            debugger = Debugger(engine)
+            i_success = debugger.Execute()
+        else:
+            i_success = engine.Execute()
 
-        service.ExecutionCompleted(engine, i_success)
-        to_dispatch = to_dispatch + service.events_to_dispatch
+        engine._Service.ExecutionCompleted(engine, i_success)
+        to_dispatch = to_dispatch + engine._Service.events_to_dispatch
 
         for event in to_dispatch:
             events.emit(event.event_type, event)
 
         if i_success:
-            service.TestCommit()
-            if len(service.notifications) > 0:
+            if len(engine._Service.notifications) > 0:
 
-                for n in service.notifications:
+                for n in engine._Service.notifications:
                     Blockchain.Default().OnNotify(n)
 
             logger.info("Used %s Gas " % engine.GasConsumed().ToString())
@@ -629,7 +575,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
     else:
         print("error executing deploy contract.....")
 
-    service.ExecutionCompleted(engine, False, 'error')
+    # service.ExecutionCompleted(engine, False, 'error')
 
     return None, [], 0, None
 
@@ -660,6 +606,10 @@ def gather_signatures(context, itx, owners):
             else:
                 print("Public Key does not match address %s " % next_addr)
 
+        except ValueError:
+            # expected from ECDSA if public key is invalid
+            print(f"Invalid public key: {items[0]}")
+            do_exit = True
         except EOFError:
             # Control-D pressed: quit
             do_exit = True
@@ -676,3 +626,16 @@ def gather_signatures(context, itx, owners):
     else:
         print("Could not finish signatures")
         return False
+
+
+def process_params(sb, param, wallet, no_parse_addresses):
+    item = PromptUtils.parse_param(param, wallet, parse_addr=no_parse_addresses)
+    if type(item) is list:
+        item.reverse()
+        listlength = len(item)
+        for listitem in item:
+            process_params(sb, listitem, wallet, no_parse_addresses)
+        sb.push(listlength)
+        sb.Emit(PACK)
+    else:
+        sb.push(item)

@@ -1,10 +1,8 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
 
 
 class EnrollmentTransaction(Transaction):
-    PublicKey = None
-    _script_hash = None
 
     def __init__(self, *args, **kwargs):
         """
@@ -16,6 +14,8 @@ class EnrollmentTransaction(Transaction):
         """
         super(EnrollmentTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.EnrollmentTransaction
+        self.PublicKey = None
+        self._script_hash = None
 
     def Size(self):
         """

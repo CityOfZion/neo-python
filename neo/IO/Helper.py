@@ -1,7 +1,6 @@
 import importlib
-from .MemoryStream import MemoryStream, StreamManager
-from neocore.IO.BinaryReader import BinaryReader
-from neo.Core.TX.Transaction import Transaction
+from .MemoryStream import StreamManager
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.logging import log_manager
 
 logger = log_manager.getLogger()
@@ -37,21 +36,3 @@ class Helper:
             StreamManager.ReleaseStream(mstream)
 
         return None
-
-    @staticmethod
-    def DeserializeTX(buffer):
-        """
-        Deserialize the stream into a Transaction object.
-
-        Args:
-            buffer (BytesIO): stream to deserialize the Transaction from.
-
-        Returns:
-            neo.Core.TX.Transaction:
-        """
-        mstream = MemoryStream(buffer)
-        reader = BinaryReader(mstream)
-
-        tx = Transaction.DeserializeFrom(reader)
-
-        return tx

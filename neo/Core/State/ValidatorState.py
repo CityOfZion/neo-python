@@ -1,18 +1,14 @@
 from .StateBase import StateBase
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
-from neocore.Cryptography.ECCurve import EllipticCurve, ECDSA
+from neo.Core.Cryptography.ECCurve import EllipticCurve, ECDSA
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 
 
 class ValidatorState(StateBase):
-    PublicKey = None  # ECPoint
-    Registered = False  # bool
-    Votes = Fixed8.Zero()
-
     def __init__(self, pub_key=None):
         """
         Create an instance.
@@ -27,6 +23,8 @@ class ValidatorState(StateBase):
             raise Exception("Pubkey must be ECPoint Instance")
 
         self.PublicKey = pub_key
+        self.Registered = False
+        self.Votes = Fixed8.Zero()
 
     def Size(self):
         """
@@ -42,7 +40,7 @@ class ValidatorState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(ValidatorState, self).Deserialize(reader)
         self.PublicKey = ECDSA.Deserialize_Secp256r1(reader)
@@ -91,3 +89,9 @@ class ValidatorState(StateBase):
         return {
             'pubkey': self.PublicKey.ToString()
         }
+
+    def Clone(self):
+        vs = ValidatorState(self.PublicKey)
+        vs.Registered = self.Registered
+        vs.Votes = self.Votes
+        return vs

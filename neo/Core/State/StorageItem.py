@@ -1,11 +1,10 @@
 from .StateBase import StateBase
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Size import GetVarSize
 
 
 class StorageItem(StateBase):
-    Value = None
 
     def __init__(self, value=None):
         """
@@ -18,6 +17,7 @@ class StorageItem(StateBase):
             self.Value = bytearray(0)
         else:
             self.Value = value
+        self.IsConstant = False
 
     def Clone(self):
         """
@@ -53,7 +53,7 @@ class StorageItem(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(StorageItem, self).Deserialize(reader)
         self.Value = reader.ReadVarBytes()

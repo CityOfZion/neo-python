@@ -1,7 +1,7 @@
 from unittest import TestCase
-from neocore.BigInteger import BigInteger
-from neocore.UInt160 import UInt160
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.BigInteger import BigInteger
+from neo.Core.UInt160 import UInt160
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.Core.FunctionCode import FunctionCode
 from neo.IO.MemoryStream import StreamManager
 

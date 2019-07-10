@@ -3,13 +3,63 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.8.5-dev] in progress
+-----------------------
+- Allow override of test invocation return type
+- Add current wallet height to bottom toolbar
+- Change class attributes of ``Transaction`` into instance attributes and fix constructor
+- Fix sys_fee calculation in block persist.
+- Improve testing of "getbalance" RPC method
+- Support cancelling actions with ``KeyboardInterrupt``
+- Enhance output of ``wallet`` cli command
+- Fixed size calculation for ``RegisterTransaction``
+- Support updating np-core to throw exceptions instead of logging errors `#888 <https://github.com/CityOfZion/neo-python/issues/888>`_
+- Fixed size calculation for ``InvocationTransaction`` `#919 <https://github.com/CityOfZion/neo-python/pull/919>`_
+- Update Virtual Machine to latest implementation, Add support for running official JSON test vectors `#921 <https://github.com/CityOfZion/neo-python/pull/921>`_ `#932 <https://github.com/CityOfZion/neo-python/pull/932>`_
+- Add PICKITEM for ByteArray into VM `#923 <https://github.com/CityOfZion/neo-python/pull/923>`_
+- Improve Connection Failure Handling in NodeLeader `#915 <https://github.com/CityOfZion/neo-python/issues/915>`_
+- Improve transaction coverage and fix ``PublishTransaction.Size()`` `#929 <https://github.com/CityOfZion/neo-python/issues/929>`_
+- Align ``Fixed8`` ``ToString()`` output with C# `#941 <https://github.com/CityOfZion/neo-python/pull/941>`_
+- Move from using ``Twisted`` to ``asyncio`` as event driven framework `#934 <https://github.com/CityOfZion/neo-python/pull/934>`_
+- Add new networking code
+- Add IP Filtering
+- Tighten smart contract storage context validation
+- Update VM to 2.4.3 (Also updates ``ApplicationEngine``, ``StateReader``  and ``StateMachine``)
+- Add support for new Ping/Pong network payload
+- Add neo-vm JSON test support + add new Debugger wrapping class
+- Various VM performance updates
+- Various code cleaning updates
+- Ensure LevelDB iterators are close, ensure all ``MemoryStream`` usages go through ``StreamManger`` and are closed.
+- Fix ``np-import`` not importing headers ahead of block persisting potentially unexpected VM execution results
+- Fix undesired debug statement printing
+- Add negative bitwise shifting support for ``BigInteger`` to match C#
+- Include address aliases in ``wallet`` command output
+- Fix ``config maxpeers`` and update tests
+- Fix error while parsing list arguments from prompt for smart contract test invocations
+- Fix ``Runtime.GetTrigger`` and ``Transaction.GetType`` syscalls pushing wrong StackItem type
+- Update handling of default cause for ``PICKITEM`` instruction
+- Fix ``InteropService.GetInterface`` not validating types correctly
+- Speed up ``np-import`` when appending blocks
+- Fix ``BigInteger.ToByteArray()`` for some negative values to return too many bytes
+- Implement SimplePolicyPlugin for transactions sent to a node `#960 <https://github.com/CityOfZion/neo-python/issues/960>`_
+- Fix transaction deserialization not setting correct type for ``ContractTransaction``
+- Fix ``GetBigInteger()`` return value of ``Boolean`` ``StackItem`` to return correct type
+- Add workaround for ``Neo.Contract.Create`` SYSCALl accepting invalid ``ContractParameterType``'s until neo-cli fixes it to keep same state
+- Fix parsing nested lists `#954 <https://github.com/CityOfZion/neo-python/issues/954>`_
+- Fix clearing storage manipulations on failed invocation transaction execution
+- Port caching layer from neo-cli
+- Fix ``Contract_Migrate`` sycall
+- Fix ``BigInteger`` modulo for negative divisor values
+- Fix ``GetBoolean()`` for ``Array`` stackitem
+- Fix ``BigInteger`` division for negative dividend values
+
 
 [0.8.4] 2019-02-14
 ------------------
 - Fix incorrect error handling when importing a 1 out of 2 multi-signature address `#860 <https://github.com/CityOfZion/neo-python/pull/860>`_
 - Gracefully handle invalid ``GET`` request `#863 <https://github.com/CityOfZion/neo-python/pull/863>`_
 - Implement tx size network fee calc `#869 <https://github.com/CityOfZion/neo-python/pull/869>`_
-- Fix ``config maxpeers`` to disconnect peers if limited is lower than before `#878 <https://github.com/CityOfZion/neo-python/pull/878>`_
+- Fix ``config maxpeers`` to disconnect peers if limit is lower than before `#878 <https://github.com/CityOfZion/neo-python/pull/878>`_
 - Implement the ability to attach a priority fee to applicable transactions `#880 <https://github.com/CityOfZion/neo-python/pull/880>`_
 - Fix an invalid list access error during client connection error edge case `#882 <https://github.com/CityOfZion/neo-python/pull/882>`_
 - Fix `NetworkAddressWithTime` address serialization `#897 <https://github.com/CityOfZion/neo-python/pull/897>`_

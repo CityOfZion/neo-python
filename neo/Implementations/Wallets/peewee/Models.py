@@ -1,8 +1,8 @@
 from peewee import Model, CharField, BooleanField, ForeignKeyField, IntegerField, DateTimeField, BlobField, AutoField
 from .PWDatabase import PWDatabase
-from neocore.Cryptography.Crypto import Crypto
-from neocore.UInt256 import UInt256
-from neocore.UInt160 import UInt160
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.UInt256 import UInt256
+from neo.Core.UInt160 import UInt160
 import binascii
 from neo.Wallets.Coin import CoinReference
 from neo.Blockchain import GetBlockchain

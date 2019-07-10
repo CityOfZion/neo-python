@@ -1,5 +1,5 @@
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 import binascii
 from neo.logging import log_manager
 
@@ -7,14 +7,6 @@ logger = log_manager.getLogger()
 
 
 class VerificationCode:
-    Script = None
-
-    ParameterList = None
-
-    ReturnType = ContractParameterType.Boolean
-
-    _scriptHash = None
-
     @property
     def ScriptHash(self):
 
@@ -31,3 +23,5 @@ class VerificationCode:
     def __init__(self, script=None, param_list=None):
         self.Script = script
         self.ParameterList = param_list
+        self.ReturnType = ContractParameterType.Boolean
+        self._scriptHash = None

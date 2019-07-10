@@ -1,6 +1,6 @@
 import sys
 from neo.Settings import settings
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
 import requests
 from tqdm import tqdm
 import tarfile
@@ -15,7 +15,10 @@ def BootstrapBlockchainFile(target_dir, download_location, bootstrap_name, requi
 
     if require_confirm:
         print("This will overwrite any data currently in %s.\nType 'confirm' to continue" % target_dir)
-        confirm = prompt("[confirm]> ", is_password=False)
+        try:
+            confirm = prompt("[confirm]> ", is_password=False)
+        except KeyboardInterrupt:
+            confirm = False
         if confirm == 'confirm':
             return do_bootstrap(download_location, bootstrap_name, target_dir)
     else:

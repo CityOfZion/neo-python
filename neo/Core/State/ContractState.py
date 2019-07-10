@@ -1,5 +1,5 @@
 from .StateBase import StateBase
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.FunctionCode import FunctionCode
 from enum import IntEnum
@@ -17,17 +17,6 @@ class ContractPropertyState(IntEnum):
 
 
 class ContractState(StateBase):
-    Code = None
-    ContractProperties = None
-    Name = None
-    CodeVersion = None
-    Author = None
-    Email = None
-    Description = None
-
-    _is_nep5 = None
-    _nep_token = None
-
     @property
     def HasStorage(self):
         """
@@ -83,6 +72,9 @@ class ContractState(StateBase):
             email (bytes):
             description (bytes):
         """
+        self._is_nep5 = None
+        self._nep_token = None
+
         self.Code = code
         self.ContractProperties = contract_properties
         self.Name = name
@@ -102,14 +94,15 @@ class ContractState(StateBase):
         parameterlist_size = GetVarSize(self.Code.ParameterList)
         parameterreturntype_size = s.uint8
 
-        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
+        return super(ContractState, self).Size() + script_size + parameterlist_size + parameterreturntype_size + s.uint8 + GetVarSize(self.Name) + GetVarSize(
+            self.CodeVersion) + GetVarSize(self.Author) + GetVarSize(self.Email) + GetVarSize(self.Description)
 
     def Deserialize(self, reader):
         """
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(ContractState, self).Deserialize(reader)
 
@@ -214,3 +207,6 @@ class ContractState(StateBase):
             jsn['token'] = self._nep_token.ToJson()
 
         return jsn
+
+    def Clone(self):
+        return ContractState(code=self.Code, contract_properties=self.ContractProperties, name=self.Name, version=self.CodeVersion, author=self.Author, email=self.Email, description=self.Description)

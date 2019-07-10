@@ -1,21 +1,23 @@
 from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction, TXFeeError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Network.NodeLeader import NodeLeader
 from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args, \
     get_owners_from_params, get_fee, get_change_addr, get_asset_amount
 from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Prompt.Commands.Invoke import gather_signatures
 from neo.Wallets.NEP5Token import NEP5Token
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 import json
-from prompt_toolkit import prompt
 import traceback
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
-from logzero import logger
 from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.Core.Blockchain import Blockchain
+from neo.Network.nodemanager import NodeManager
+from neo.Network.common import blocking_prompt as prompt
+from neo.logging import log_manager
+
+logger = log_manager.getLogger()
 
 
 class CommandWalletSend(CommandBase):
@@ -280,8 +282,11 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         print(" ")
         print("Enter your password to send to the network")
 
-        # password prompt
-        passwd = prompt("[Password]> ", is_password=True)
+        try:
+            passwd = prompt("[Password]> ", is_password=True)
+        except KeyboardInterrupt:
+            print("Transaction cancelled")
+            return
         if not wallet.ValidatePassword(passwd):
             print("Incorrect password")
             return
@@ -317,8 +322,8 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         if context.Completed:
 
             tx.scripts = context.GetScripts()
-            relayed = NodeLeader.Instance().Relay(tx)
-
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(tx)
             if relayed:
                 wallet.SaveTransaction(tx)
 
@@ -361,7 +366,8 @@ def parse_and_sign(wallet, jsn):
 
             print("will send tx: %s " % json.dumps(tx.ToJson(), indent=4))
 
-            relayed = NodeLeader.Instance().Relay(tx)
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(tx)
 
             if relayed:
                 print("Relayed Tx: %s " % tx.Hash.ToString())

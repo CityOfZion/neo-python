@@ -1,11 +1,11 @@
-from neocore.IO.BinaryWriter import BinaryWriter
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.UInt160 import UInt160
-from neocore.BigInteger import BigInteger
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.UInt160 import UInt160
+from neo.Core.BigInteger import BigInteger
+from neo.Core.Cryptography.Crypto import Crypto
 from neo.IO.MemoryStream import StreamManager
 from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 import binascii
 from neo.Core.State.ContractState import ContractState
 from neo.logging import log_manager
@@ -52,17 +52,6 @@ class SmartContractEvent(SerializableMixin):
     CONTRACT_MIGRATED = "SmartContract.Contract.Migrate"
     CONTRACT_DESTROY = "SmartContract.Contract.Destroy"
 
-    event_type = None
-    event_payload = None  # type:ContractParameter
-    contract_hash = None
-    block_number = None
-    tx_hash = None
-    execution_success = None
-    test_mode = None
-
-    contract = None
-    token = None
-
     def __init__(self, event_type, event_payload, contract_hash, block_number, tx_hash, execution_success=False, test_mode=False):
 
         if event_payload and not isinstance(event_payload, ContractParameter):
@@ -76,6 +65,7 @@ class SmartContractEvent(SerializableMixin):
         self.execution_success = execution_success
         self.test_mode = test_mode
         self.token = None
+        self.contract = None
 
         if not self.event_payload:
             self.event_payload = ContractParameter(ContractParameterType.Array, value=[])

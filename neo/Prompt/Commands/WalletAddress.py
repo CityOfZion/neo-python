@@ -3,17 +3,15 @@ from neo.Prompt.PromptData import PromptData
 from neo.Prompt import Utils as PromptUtils
 from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Implementations.Wallets.peewee.Models import Account
-from neocore.Utils import isValidPublicAddress
-from neocore.Fixed8 import Fixed8
+from neo.Core.Utils import isValidPublicAddress
+from neo.Core.Fixed8 import Fixed8
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Network.NodeLeader import NodeLeader
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
 from neo.Core.Blockchain import Blockchain
 from neo.Core.TX.Transaction import ContractTransaction
 from neo.Core.TX.Transaction import TransactionOutput
 from neo.Prompt.PromptPrinter import prompt_print as print
-
-import sys
+from neo.Network.nodemanager import NodeManager
 
 
 class CommandWalletAddress(CommandBase):
@@ -218,7 +216,7 @@ def AddAlias(wallet, addr, title):
         return False
 
 
-def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Zero(), prompt_passwd=True):
+def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Zero()):
     """
     Split unspent asset vins into several vouts
 
@@ -229,7 +227,6 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
         index (int): index of the unspent vin to split
         divisions (int): number of vouts to create
         fee (Fixed8): A fee to be attached to the Transaction for network processing purposes.
-        prompt_passwd (bool): prompt password before processing the transaction
 
     Returns:
         neo.Core.TX.Transaction.ContractTransaction: contract transaction created
@@ -266,16 +263,21 @@ def SplitUnspentCoin(wallet, asset_id, from_addr, index, divisions, fee=Fixed8.Z
     wallet.Sign(ctx)
 
     print("Splitting: %s " % json.dumps(contract_tx.ToJson(), indent=4))
-    if prompt_passwd:
+    try:
         passwd = prompt("[Password]> ", is_password=True)
-        if not wallet.ValidatePassword(passwd):
-            print("incorrect password")
-            return
+    except KeyboardInterrupt:
+        print("Splitting cancelled")
+        return
+    if not wallet.ValidatePassword(passwd):
+        print("incorrect password")
+        return
 
     if ctx.Completed:
         contract_tx.scripts = ctx.GetScripts()
 
-        relayed = NodeLeader.Instance().Relay(contract_tx)
+        nodemgr = NodeManager()
+        # this blocks, consider moving this wallet function to async instead
+        relayed = nodemgr.relay(contract_tx)
 
         if relayed:
             wallet.SaveTransaction(contract_tx)

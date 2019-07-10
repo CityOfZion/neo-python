@@ -1,13 +1,10 @@
 import sys
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
 
 
 class CoinReference(SerializableMixin):
-    PrevHash = None
-
-    PrevIndex = None
 
     def __init__(self, prev_hash=None, prev_index=None):
         """

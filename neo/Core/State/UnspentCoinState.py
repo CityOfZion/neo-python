@@ -1,7 +1,7 @@
 import sys
 from .StateBase import StateBase
 from .CoinState import CoinState
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
@@ -9,8 +9,6 @@ from neo.Core.State.CoinState import CoinState
 
 
 class UnspentCoinState(StateBase):
-    Items = None
-
     def __init__(self, items=None):
         """
         Create an instance.
@@ -77,14 +75,14 @@ class UnspentCoinState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(UnspentCoinState, self).Deserialize(reader)
 
         blen = reader.ReadVarInt()
         self.Items = [0] * blen
         for i in range(0, blen):
-            self.Items[i] = int.from_bytes(reader.ReadByte(do_ord=False), 'little')
+            self.Items[i] = int.from_bytes(reader.ReadByte(), 'little')
 
     @staticmethod
     def DeserializeFromDB(buffer):
@@ -120,3 +118,9 @@ class UnspentCoinState(StateBase):
         for item in self.Items:
             byt = item.to_bytes(1, 'little')
             writer.WriteByte(byt)
+
+    def Clone(self):
+        new_items = []
+        for i in self.Items:
+            new_items.append(i.Clone())
+        return UnspentCoinState(items=new_items)

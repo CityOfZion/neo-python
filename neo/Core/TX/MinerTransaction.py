@@ -1,12 +1,11 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
 import sys
 import binascii
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.Size import Size as s
 
 
 class MinerTransaction(Transaction):
-    Nonce = None
 
     def __init__(self, *args, **kwargs):
         """
@@ -18,6 +17,7 @@ class MinerTransaction(Transaction):
         """
         super(MinerTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.MinerTransaction
+        self.Nonce = None
 
     def NetworkFee(self):
         """

@@ -1,10 +1,9 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.Size import GetVarSize
 
 
 class StateTransaction(Transaction):
-    Descriptors = None
 
     def Size(self):
         """
@@ -27,15 +26,7 @@ class StateTransaction(Transaction):
         super(StateTransaction, self).__init__(*args, **kwargs)
 
         self.Type = TransactionType.StateTransaction
-
-    def NetworkFee(self):
-        """
-        Get the network fee for a claim transaction.
-
-        Returns:
-            Fixed8: currently fixed to 0.
-        """
-        return Fixed8(0)
+        self.Descriptors = None
 
     def SystemFee(self):
         amount = Fixed8.Zero()
@@ -57,7 +48,7 @@ class StateTransaction(Transaction):
 
         self.Descriptors = reader.ReadSerializableArray('neo.Core.State.StateDescriptor.StateDescriptor')
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot):
         """
         Get a list of script hashes for verifying transactions.
 
@@ -100,7 +91,7 @@ class StateTransaction(Transaction):
 
         return json
 
-    def Verify(self, mempool):
+    def Verify(self, snapshot, mempool):
         """
         Verify the transaction.
 
@@ -115,4 +106,4 @@ class StateTransaction(Transaction):
             if not descriptor.Verify():
                 return False
 
-        return super(StateTransaction, self).Verify(mempool)
+        return super(StateTransaction, self).Verify(snapshot, mempool)

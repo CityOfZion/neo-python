@@ -7,19 +7,18 @@ and several more. See the documentation here:
 
 http://neo-python.readthedocs.io/en/latest/smartcontracts.html
 """
-import threading
-from time import sleep
+import asyncio
+from contextlib import suppress
+from signal import SIGINT
 
 from logzero import logger
-from twisted.internet import reactor, task
 
-from neo.contrib.smartcontract import SmartContract
-from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
-from neo.Network.NodeLeader import NodeLeader
 from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Network.p2pservice import NetworkService
 from neo.Settings import settings
-
+from neo.SmartContract.ContractParameter import ContractParameter, ContractParameterType
+from neo.contrib.smartcontract import SmartContract
 
 # If you want the log messages to also be saved in a logfile, enable the
 # next line. This configures a logfile with max 10 MB and 3 rotations:
@@ -44,41 +43,64 @@ def sc_notify(event):
     logger.info("- payload part 1: %s", event.event_payload.Value[0].Value.decode("utf-8"))
 
 
-def custom_background_code():
-    """ Custom code run in a background thread. Prints the current block height.
-
-    This function is run in a daemonized thread, which means it can be instantly killed at any
-    moment, whenever the main thread quits. If you need more safety, don't use a  daemonized
-    thread and handle exiting this thread in another way (eg. with signals and events).
-    """
+async def custom_background_code():
+    """ Custom code run in a background thread. Prints the current block height."""
     while True:
         logger.info("Block %s / %s", str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
-        sleep(15)
+        await asyncio.sleep(15)
 
 
-def main():
+async def setup_and_start(loop):
     # Use TestNet
     settings.setup_testnet()
 
     # Setup the blockchain
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
-    dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-    dbloop.start(.1)
-    NodeLeader.Instance().Start()
+
+    p2p = NetworkService()
+    loop.create_task(p2p.start())
+    bg_task = loop.create_task(custom_background_code())
 
     # Disable smart contract events for external smart contracts
     settings.set_log_smart_contract_events(False)
 
-    # Start a thread with custom code
-    d = threading.Thread(target=custom_background_code)
-    d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
-    d.start()
-
     # Run all the things (blocking call)
     logger.info("Everything setup and running. Waiting for events...")
-    reactor.run()
-    logger.info("Shutting down.")
+    return bg_task
+
+
+async def shutdown():
+    # cleanup any remaining tasks
+    for task in asyncio.Task.all_tasks():
+        with suppress(asyncio.CancelledError):
+            task.cancel()
+            await task
+
+
+def system_exit():
+    raise SystemExit
+
+
+def main():
+    loop = asyncio.get_event_loop()
+
+    # because a KeyboardInterrupt is so violent it can shutdown the DB in an unpredictable state.
+    loop.add_signal_handler(SIGINT, system_exit)
+    main_task = loop.create_task(setup_and_start(loop))
+
+    try:
+        loop.run_forever()
+    except SystemExit:
+        logger.info("Shutting down...")
+        p2p = NetworkService()
+        loop.run_until_complete(p2p.shutdown())
+        loop.run_until_complete(shutdown())
+        loop.stop()
+    finally:
+        loop.close()
+
+    Blockchain.Default().Dispose()
 
 
 if __name__ == "__main__":

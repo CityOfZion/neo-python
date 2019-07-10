@@ -1,13 +1,10 @@
 from neo.Core.TX.Transaction import Transaction, TransactionType
 import sys
-from neocore.Fixed8 import Fixed8
-from neo.Core.Size import GetVarSize
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.Size import GetVarSize, Size
 
 
 class InvocationTransaction(Transaction):
-    Script = None
-    Gas = None
-
     def SystemFee(self):
         """
         Get the system fee.
@@ -28,6 +25,7 @@ class InvocationTransaction(Transaction):
         super(InvocationTransaction, self).__init__(*args, **kwargs)
         self.Gas = Fixed8(0)
         self.Type = TransactionType.InvocationTransaction
+        self.Script = None
 
     def Size(self):
         """
@@ -36,7 +34,10 @@ class InvocationTransaction(Transaction):
         Returns:
             int: size.
         """
-        return super(InvocationTransaction, self).Size() + GetVarSize(self.Script)
+
+        sizeGas = Size.uint64 if self.Version >= 1 else 0
+
+        return super(InvocationTransaction, self).Size() + GetVarSize(self.Script) + sizeGas
 
     def DeserializeExclusiveData(self, reader):
         """
@@ -74,7 +75,7 @@ class InvocationTransaction(Transaction):
         if self.Version >= 1:
             writer.WriteFixed8(self.Gas)
 
-    def Verify(self, mempool):
+    def Verify(self, snapshot, mempool):
         """
         Verify the transaction.
 
@@ -86,7 +87,7 @@ class InvocationTransaction(Transaction):
         """
         if self.Gas.value % 100000000 != 0:
             return False
-        return super(InvocationTransaction, self).Verify(mempool)
+        return super(InvocationTransaction, self).Verify(snapshot, mempool)
 
     def ToJson(self):
         """

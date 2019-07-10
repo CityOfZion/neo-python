@@ -4,10 +4,11 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt.Commands.WalletAddress import SplitUnspentCoin, CreateAddress
 from neo.Core.TX.Transaction import ContractTransaction
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from mock import patch
 from io import StringIO
-import os
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
 
 
 class UserWalletTestCase(UserWalletTestCaseBase):
@@ -96,6 +97,14 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         res = CommandWallet().execute(args)
         self.assertFalse(res)
 
+        # verify wallet has no aliases
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = [""]
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertEqual(len(PromptData.Wallet.NamedAddr), 0)
+            self.assertNotIn("Alias", mock_print.getvalue())
+
         # test wallet alias successful
         self.assertNotIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
 
@@ -104,35 +113,45 @@ class UserWalletTestCase(UserWalletTestCaseBase):
         self.assertTrue(res)
         self.assertIn('mine', [n.Title for n in PromptData.Wallet.NamedAddr])
 
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = [""]
+            res = CommandWallet().execute(args)
+            self.assertTrue(res)
+            self.assertIn("Alias      : mine", mock_print.getvalue())
+
     def test_6_split_unspent(self):
-        # os.environ["NEOPYTHON_UNITTEST"] = "1"
         wallet = self.GetWallet1(recreate=True)
         addr = wallet.ToScriptHash('AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3')
 
-        # # bad inputs
-        # tx = SplitUnspentCoin(None, self.NEO, addr, 0, 2)
-        # self.assertEqual(tx, None)
-        #
-        # tx = SplitUnspentCoin(wallet, self.NEO, addr, 3, 2)
-        # self.assertEqual(tx, None)
-        #
-        # tx = SplitUnspentCoin(wallet, 'bla', addr, 0, 2)
-        # self.assertEqual(tx, None)
+        nodemgr = NodeManager()
+        nodemgr.nodes = [NeoNode(object, object)]
 
-        # should be ok
-        tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 2, prompt_passwd=False)
-        self.assertIsNotNone(tx)
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+            # bad inputs
+            tx = SplitUnspentCoin(None, self.NEO, addr, 0, 2)
+            self.assertEqual(tx, None)
 
-        # # rebuild wallet and try with non-even amount of neo, should be split into integer values of NEO
-        # wallet = self.GetWallet1(True)
-        # tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 3, prompt_passwd=False)
-        # self.assertIsNotNone(tx)
-        # self.assertEqual([Fixed8.FromDecimal(17), Fixed8.FromDecimal(17), Fixed8.FromDecimal(16)], [item.Value for item in tx.outputs])
-        #
-        # # try with gas
-        # wallet = self.GetWallet1(True)
-        # tx = SplitUnspentCoin(wallet, self.GAS, addr, 0, 3, prompt_passwd=False)
-        # self.assertIsNotNone(tx)
+            tx = SplitUnspentCoin(wallet, self.NEO, addr, 3, 2)
+            self.assertEqual(tx, None)
+
+            tx = SplitUnspentCoin(wallet, 'bla', addr, 0, 2)
+            self.assertEqual(tx, None)
+
+            # should be ok
+            with patch('neo.Prompt.Commands.WalletAddress.prompt', return_value=self.wallet_1_pass()):
+                tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 2)
+                self.assertIsNotNone(tx)
+
+                # rebuild wallet and try with non-even amount of neo, should be split into integer values of NEO
+                wallet = self.GetWallet1(True)
+                tx = SplitUnspentCoin(wallet, self.NEO, addr, 0, 3)
+                self.assertIsNotNone(tx)
+                self.assertEqual([Fixed8.FromDecimal(17), Fixed8.FromDecimal(17), Fixed8.FromDecimal(16)], [item.Value for item in tx.outputs])
+
+                # try with gas
+                wallet = self.GetWallet1(True)
+                tx = SplitUnspentCoin(wallet, self.GAS, addr, 0, 3)
+                self.assertIsNotNone(tx)
 
     def test_7_create_address(self):
         # no wallet
@@ -245,6 +264,14 @@ class UserWalletSplitTestCase(UserWalletTestCaseBase):
                 self.assertIsNone(res)
                 self.assertIn("incorrect password", mock_print.getvalue())
 
+        # test wallet split with keyboard interrupt
+        with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[KeyboardInterrupt]):
+            with patch('sys.stdout', new=StringIO()) as mock_print:
+                args = ['address', 'split', self.wallet_1_addr, 'neo', '0', '2']
+                res = CommandWallet().execute(args)
+                self.assertIsNone(res)
+                self.assertIn("Splitting cancelled", mock_print.getvalue())
+
         # test wallet split with fee bigger than the outputs
         with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[self.wallet_1_pass()]):
             with patch('sys.stdout', new=StringIO()) as mock_print:
@@ -253,27 +280,36 @@ class UserWalletSplitTestCase(UserWalletTestCaseBase):
                 self.assertIsNone(res)
                 self.assertIn("Fee could not be subtracted from outputs", mock_print.getvalue())
 
-        # test wallet split with error during tx relay
+        # # test wallet split with error during tx relay
+        nodemgr = NodeManager()
+        nodemgr.reset_for_test()
+        nodemgr.nodes = [NeoNode(object, object)]
+
         with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[self.wallet_1_pass()]):
-            with patch('neo.Network.NodeLeader.NodeLeader.Relay', side_effect=[None]):
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(False)):
                 with patch('sys.stdout', new=StringIO()) as mock_print:
                     args = ['address', 'split', self.wallet_1_addr, 'neo', '0', '2']
                     res = CommandWallet().execute(args)
                     self.assertIsNone(res)
                     self.assertIn("Could not relay tx", mock_print.getvalue())
 
+        # we have to clear the mempool because the previous test alread put a TX with the same hash in the mempool and so it will not try to relay again
+        nodemgr.mempool.reset()
+
         # test wallet split neo successful
         with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[self.wallet_1_pass()]):
-            args = ['address', 'split', self.wallet_1_addr, 'neo', '0', '2']
-            tx = CommandWallet().execute(args)
-            self.assertTrue(tx)
-            self.assertIsInstance(tx, ContractTransaction)
-            self.assertEqual([Fixed8.FromDecimal(25), Fixed8.FromDecimal(25)], [item.Value for item in tx.outputs])
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+                args = ['address', 'split', self.wallet_1_addr, 'neo', '0', '2']
+                tx = CommandWallet().execute(args)
+                self.assertIsInstance(tx, ContractTransaction)
+                self.assertEqual([Fixed8.FromDecimal(25), Fixed8.FromDecimal(25)], [item.Value for item in tx.outputs])
 
         # test wallet split gas successful
         with patch('neo.Prompt.Commands.WalletAddress.prompt', side_effect=[self.wallet_1_pass()]):
-            args = ['address', 'split', self.wallet_1_addr, 'gas', '0', '3']
-            tx = CommandWallet().execute(args)
-            self.assertTrue(tx)
-            self.assertIsInstance(tx, ContractTransaction)
-            self.assertEqual(len(tx.outputs), 3)
+            with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+                args = ['address', 'split', self.wallet_1_addr, 'gas', '0', '3']
+                tx = CommandWallet().execute(args)
+                self.assertIsInstance(tx, ContractTransaction)
+                self.assertEqual(len(tx.outputs), 3)
+
+        nodemgr.reset_for_test()

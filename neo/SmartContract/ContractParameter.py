@@ -1,17 +1,14 @@
 from neo.SmartContract.ContractParameterType import ContractParameterType
 from neo.VM.InteropService import StackItem, Array, ByteArray, Struct, Boolean, Integer, InteropInterface
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
-from neocore.BigInteger import BigInteger
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.UInt160 import UInt160
+from neo.Core.UInt256 import UInt256
+from neo.Core.BigInteger import BigInteger
+from neo.Core.Cryptography.ECCurve import ECDSA
 import binascii
 
 
 class ContractParameter:
     """Contract Parameter used for parsing parameters sent to and from smart contract invocations"""
-
-    Type = None
-    Value = None
 
     def __init__(self, type, value):
         """
