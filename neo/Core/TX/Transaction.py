@@ -688,7 +688,7 @@ class Transaction(InventoryMixin):
     #                    return False
     #
 
-    def GetScriptHashesForVerifying(self, snapshot):
+    def GetScriptHashesForVerifying(self, snapshot=None):
         """
         Get a list of script hashes for verifying transactions.
 
