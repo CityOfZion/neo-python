@@ -52,6 +52,7 @@ All notable changes to this project are documented in this file.
 - Fix ``BigInteger`` modulo for negative divisor values
 - Fix ``GetBoolean()`` for ``Array`` stackitem
 - Fix ``BigInteger`` division for negative dividend values
+- Add functionality for RawTransaction class
 
 
 [0.8.4] 2019-02-14
