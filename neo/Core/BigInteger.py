@@ -71,7 +71,10 @@ class BigInteger(int):
         return BigInteger(super(BigInteger, self).__floordiv__(*args, **kwargs))
 
     def __truediv__(self, *args, **kwargs):  # real signature unknown
-        return BigInteger(super(BigInteger, self).__floordiv__(*args, **kwargs))
+        if self < 0:
+            return BigInteger(super(BigInteger, self).__truediv__(*args, **kwargs))
+        else:
+            return BigInteger(super(BigInteger, self).__floordiv__(*args, **kwargs))
 
     def __rshift__(self, *args, **kwargs):
         shift = args[0]

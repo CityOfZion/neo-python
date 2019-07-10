@@ -251,6 +251,37 @@ class BigIntegerTestCase(TestCase):
         self.assertEqual(b3, 99975899)
         self.assertEqual(b4, b3)
 
+    def test_big_integer_div_rounding(self):
+        b1 = BigInteger(1)
+        b2 = BigInteger(2)
+        self.assertEqual(0, b1 / b2)  # 0.5 -> 0
+
+        b1 = BigInteger(2)
+        b2 = BigInteger(3)
+        self.assertEqual(0, b1 / b2)  # 0.66 -> 0
+
+        b1 = BigInteger(5)
+        b2 = BigInteger(4)
+        self.assertEqual(1, b1 / b2)  # 1.25 -> 1
+
+        b1 = BigInteger(5)
+        b2 = BigInteger(3)
+        self.assertEqual(1, b1 / b2)  # 1.66 -> 1
+
+        b1 = BigInteger(-1)
+        b2 = BigInteger(3)
+        self.assertEqual(0, b1 / b2)  # -0.33 -> 0
+
+        b1 = BigInteger(-5)
+        b2 = BigInteger(3)
+        self.assertEqual(-1, b1 / b2)  # -1.66 -> -1
+
+    def test_big_integer_div_block1473972(self):
+        b1 = BigInteger(-11001000000)
+        b2 = BigInteger(86400)
+        result = b1 / b2
+        self.assertEqual(-127326, result)
+
     def test_big_integer_float(self):
         b1 = BigInteger(5505.001)
         b2 = BigInteger(55055.999)
