@@ -147,6 +147,8 @@ class ApplicationEngine(ExecutionEngine):
             fee = int(100 * 100000000 / self.ratio)  # 100 gas for contract with no storage no dynamic invoke
 
             contract_properties = self.CurrentContext.EvaluationStack.Peek(3).GetBigInteger()
+            if contract_properties < 0 or contract_properties > 0xff:
+                raise ValueError("Invalid contract properties")
 
             if contract_properties & ContractPropertyState.HasStorage > 0:
                 fee += int(400 * 100000000 / self.ratio)  # if contract has storage, we add 400 gas
