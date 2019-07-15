@@ -74,7 +74,10 @@ class ContractParametersContext:
     def __init__(self, verifiable, isMultiSig=False):
 
         self.Verifiable = verifiable
-        self.ScriptHashes = verifiable.GetScriptHashesForVerifying(GetBlockchain()._db.createSnapshot())
+        if verifiable.raw_tx:
+            self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
+        else:
+            self.ScriptHashes = verifiable.GetScriptHashesForVerifying(GetBlockchain()._db.createSnapshot())
         self.ContextItems = {}
         self.IsMultiSig = isMultiSig
 
