@@ -694,10 +694,14 @@ class Transaction(InventoryMixin):
 
         Raises:
             Exception: if there are no valid assets in the transaction.
+            ValueError: if a snapshot object is not provided for regular transactions. RawTx is exempt from this check.
 
         Returns:
             list: of UInt160 type script hashes.
         """
+        if snapshot is None and not self.raw_tx:
+            raise ValueError("Snapshot cannot be None for regular transaction types")
+
         if not self.References and len(self.Attributes) < 1:
             return []
 
