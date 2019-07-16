@@ -15,7 +15,10 @@ def main():
                         help="Bootstrap notification database")
 
     parser.add_argument("-s", "--skipconfirm", action="store_true", default=False,
-                        help="Bypass warning about overwritting data in {}".format(settings.LEVELDB_PATH))
+                        help="Bypass warning about overwriting data in {}".format(settings.LEVELDB_PATH))
+
+    parser.add_argument("-k", "--keep-bootstrap-file", action="store_true", default=False,
+                        help="Keep the downloaded bootstrap file when finished")
 
     # Where to store stuff
     parser.add_argument("--datadir", action="store",
@@ -31,6 +34,11 @@ def main():
         require_confirm = False
     else:
         require_confirm = True
+
+    if args.keep_bootstrap_file:
+        keep_bootstrap_file = True
+    else:
+        keep_bootstrap_file = False
 
     # Setting the datadir must come before setting the network, else the wrong path is checked at net setup.
     if args.datadir:
@@ -48,7 +56,7 @@ def main():
         bootstrap_name += "_notif"
         destination_path = settings.notification_leveldb_path
 
-    BootstrapBlockchainFile(destination_path, settings.BOOTSTRAP_LOCATIONS, bootstrap_name, require_confirm)
+    BootstrapBlockchainFile(destination_path, settings.BOOTSTRAP_LOCATIONS, bootstrap_name, require_confirm, not keep_bootstrap_file)
 
 
 if __name__ == "__main__":
