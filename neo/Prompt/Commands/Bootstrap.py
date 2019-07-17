@@ -8,7 +8,7 @@ import shutil
 import os
 
 
-def BootstrapBlockchainFile(target_dir, download_location, bootstrap_name, require_confirm=True):
+def BootstrapBlockchainFile(target_dir, download_location, bootstrap_name, require_confirm=True, delete_bootstrap_file=True):
     if download_location is None:
         print("no bootstrap location file specified. Please update your configuration file.")
         sys.exit(0)
@@ -20,20 +20,21 @@ def BootstrapBlockchainFile(target_dir, download_location, bootstrap_name, requi
         except KeyboardInterrupt:
             confirm = False
         if confirm == 'confirm':
-            return do_bootstrap(download_location, bootstrap_name, target_dir)
+            return do_bootstrap(download_location, bootstrap_name, target_dir, delete_bootstrap_file=delete_bootstrap_file)
     else:
 
         return do_bootstrap(download_location,
                             bootstrap_name,
                             target_dir,
                             tmp_file_name=os.path.join(settings.DATA_DIR_PATH, 'btest.tar.gz'),
-                            tmp_chain_name='btestchain')
+                            tmp_chain_name='btestchain',
+                            delete_bootstrap_file=delete_bootstrap_file)
 
     print("bootstrap cancelled")
     sys.exit(0)
 
 
-def do_bootstrap(download_location, bootstrap_name, destination_dir, tmp_file_name=None, tmp_chain_name='tmpchain'):
+def do_bootstrap(download_location, bootstrap_name, destination_dir, tmp_file_name=None, tmp_chain_name='tmpchain', delete_bootstrap_file=True):
     if tmp_file_name is None:
         tmp_file_name = os.path.join(settings.DATA_DIR_PATH, 'bootstrap.tar.gz')
 
@@ -99,6 +100,10 @@ def do_bootstrap(download_location, bootstrap_name, destination_dir, tmp_file_na
         print("cleaning up %s " % tmp_chain_name)
         if os.path.exists(tmp_chain_name):
             shutil.rmtree(tmp_chain_name)
+
+        if delete_bootstrap_file and os.path.exists(tmp_file_name):
+            print("removing temp bootstrap file %s " % tmp_file_name)
+            os.remove(tmp_file_name)
 
     if success:
         print("Successfully downloaded bootstrap chain!")

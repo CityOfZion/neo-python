@@ -272,7 +272,9 @@ np-bootstrap Usage
       -c CONFIG, --config CONFIG
                             Use a specific config file
       -n, --notifications   Bootstrap notification database
-      -s, --skipconfirm     Bypass warning about overwritting data in Chains/SC234
+      -s, --skipconfirm     Bypass warning about overwriting data in Chains
+      -k, --keep-bootstrap-file
+                            Keep the downloaded bootstrap file
       --datadir DATADIR     Absolute path to use for database directories
 
 Bootrapping Testnet
