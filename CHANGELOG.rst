@@ -55,6 +55,7 @@ All notable changes to this project are documented in this file.
 - Add functionality for RawTransaction class
 - Fix ``GetPriceForSysCall()`` for a ``Neo.Contract.Create`` syscall with invalid contract properties
 - Updated ``np-bootstrap`` to delete the downloaded bootstrap file by default `#986 <https://github.com/CityOfZion/neo-python/pull/986>`_
+- Fix ``Remove()`` behaviour for ``Map`` and ``Array`` types to be inline with C#
 
 
 [0.8.4] 2019-02-14

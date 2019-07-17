@@ -187,7 +187,11 @@ class Array(StackItem, CollectionMixin):
         return self._array.index(item)
 
     def Remove(self, item):
-        return self._array.remove(item)
+        try:
+            self._array.remove(item)
+            return True
+        except ValueError:
+            return False
 
     def RemoveAt(self, index):
         return self._array.pop(index)
@@ -496,8 +500,11 @@ class Map(StackItem, CollectionMixin):
         self._dict[key] = value
 
     def Remove(self, key):
-        del self._dict[key]
-        return True
+        try:
+            del self._dict[key]
+            return True
+        except KeyError:
+            return False
 
     def Clear(self):
         self._dict = {}
