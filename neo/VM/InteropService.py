@@ -1,3 +1,4 @@
+import hashlib
 import binascii
 from neo.VM.Mixins import EquatableMixin
 from neo.Core.BigInteger import BigInteger
@@ -580,13 +581,18 @@ class InteropService:
         self.Register("System.ExecutionEngine.GetEntryScriptHash", self.GetEntryScriptHash)
 
     def Register(self, method, func):
-        self._dictionary[method] = func
+        hashed_method = int.from_bytes(hashlib.sha256(method.encode()).digest()[:4], 'little', signed=False)
+        self._dictionary[hashed_method] = func
 
     def Invoke(self, method, engine):
-        if method not in self._dictionary.keys():
+        if len(method) == 4:
+            hashed_method = int.from_bytes(method, 'little', signed=False)
+        else:
+            hashed_method = int.from_bytes(hashlib.sha256(method).digest()[:4], 'little', signed=False)
+        if hashed_method not in self._dictionary.keys():
             logger.debug("method %s not found" % method)
             return False
-        func = self._dictionary[method]
+        func = self._dictionary[hashed_method]
         return func(engine)
 
     @staticmethod

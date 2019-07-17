@@ -24,6 +24,7 @@ from neo.IO.MemoryStream import StreamManager
 from neo.Core.State.ContractState import ContractState
 from neo.Core.State.StorageItem import StorageItem
 from neo.logging import log_manager
+import hashlib
 
 logger = log_manager.getLogger('vm')
 
@@ -31,8 +32,9 @@ logger = log_manager.getLogger('vm')
 class StateReader(InteropService):
 
     def RegisterWithPrice(self, method, func, price):
-        self._dictionary[method] = func
-        self.prices.update({hash(method): price})
+        hashed_method = int.from_bytes(hashlib.sha256(method.encode()).digest()[:4], 'little', signed=False)
+        self._dictionary[hashed_method] = func
+        self.prices.update({hashed_method: price})
 
     def __init__(self, trigger_type, snapshot):
 
