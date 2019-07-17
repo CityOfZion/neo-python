@@ -311,9 +311,7 @@ class ExecutionEngine:
                 if len(instruction.Operand) > 252:
                     return False
 
-                call = instruction.Operand.decode('ascii')
-                self.write_log(call)
-                if not self._Service.Invoke(call, self):
+                if not self._Service.Invoke(instruction.Operand, self):
                     return self.VM_FAULT_and_report(VMFault.SYSCALL_ERROR, instruction.Operand)
 
                 if not self.CheckStackSize(False, int_MaxValue):
@@ -1237,6 +1235,14 @@ class ExecutionEngine:
                 instruction = self.CurrentContext.CurrentInstruction
 
                 if self._is_write_log:
+                    if instruction.InstructionName == "SYSCALL":
+                        if len(instruction.Operand) > 4:
+                            call = instruction.Operand.decode('ascii')
+                            self.write_log("{} {} {} {}".format(self.ops_processed, instruction.InstructionName, call, self.CurrentContext.InstructionPointer))
+                        else:
+                            self.write_log("{} {} {} {}".format(self.ops_processed, instruction.InstructionName, instruction.TokenU32,
+                                                                self.CurrentContext.InstructionPointer))
+                else:
                     self.write_log("{} {} {}".format(self.ops_processed, instruction.InstructionName, self.CurrentContext.InstructionPointer))
 
                 if not self.PreExecuteInstruction():

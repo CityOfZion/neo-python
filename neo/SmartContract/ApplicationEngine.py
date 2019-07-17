@@ -1,4 +1,5 @@
 import binascii
+import hashlib
 from neo.Core.Cryptography.Crypto import Crypto
 from neo.Core.Fixed8 import Fixed8
 from neo.Core.UInt160 import UInt160
@@ -17,18 +18,23 @@ from neo.EventHub import events
 
 logger = log_manager.getLogger('vm')
 
-HASH_NEO_ASSET_CREATE = hash("Neo.Asset.Create")
-HASH_ANT_ASSET_CREATE = hash("AntShares.Asset.Create")
-HASH_NEO_ASSET_RENEW = hash("Neo.Asset.Renew")
-HASH_ANT_ASSET_RENEW = hash("AntShares.Asset.Renew")
-HASH_NEO_CONTRACT_CREATE = hash("Neo.Contract.Create")
-HASH_NEO_CONTRACT_MIGRATE = hash("Neo.Contract.Migrate")
-HASH_ANT_CONTRACT_CREATE = hash("AntShares.Contract.Create")
-HASH_ANT_CONTRACT_MIGRATE = hash("AntShares.Contract.Migrate")
-HASH_SYSTEM_STORAGE_PUT = hash("System.Storage.Put")
-HASH_SYSTEM_STORAGE_PUTEX = hash("System.Storage.PutEx")
-HASH_NEO_STORAGE_PUT = hash("Neo.Storage.Put")
-HASH_ANT_STORAGE_PUT = hash("AntShares.Storage.Put")
+
+def interop_hash(method):
+    return int.from_bytes(hashlib.sha256(method.encode()).digest()[:4], 'little', signed=False)
+
+
+HASH_NEO_ASSET_CREATE = interop_hash("Neo.Asset.Create")
+HASH_ANT_ASSET_CREATE = interop_hash("AntShares.Asset.Create")
+HASH_NEO_ASSET_RENEW = interop_hash("Neo.Asset.Renew")
+HASH_ANT_ASSET_RENEW = interop_hash("AntShares.Asset.Renew")
+HASH_NEO_CONTRACT_CREATE = interop_hash("Neo.Contract.Create")
+HASH_NEO_CONTRACT_MIGRATE = interop_hash("Neo.Contract.Migrate")
+HASH_ANT_CONTRACT_CREATE = interop_hash("AntShares.Contract.Create")
+HASH_ANT_CONTRACT_MIGRATE = interop_hash("AntShares.Contract.Migrate")
+HASH_SYSTEM_STORAGE_PUT = interop_hash("System.Storage.Put")
+HASH_SYSTEM_STORAGE_PUTEX = interop_hash("System.Storage.PutEx")
+HASH_NEO_STORAGE_PUT = interop_hash("Neo.Storage.Put")
+HASH_ANT_STORAGE_PUT = interop_hash("AntShares.Storage.Put")
 
 
 class ApplicationEngine(ExecutionEngine):
@@ -41,7 +47,8 @@ class ApplicationEngine(ExecutionEngine):
 
     def __init__(self, trigger_type, container, snapshot, gas, testMode=False, exit_on_error=True):
 
-        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=snapshot, service=StateMachine(trigger_type, snapshot), exit_on_error=exit_on_error)
+        super(ApplicationEngine, self).__init__(container=container, crypto=Crypto.Default(), table=snapshot, service=StateMachine(trigger_type, snapshot),
+                                                exit_on_error=exit_on_error)
 
         self.gas_amount = self.gas_free + gas.value
         self.testMode = testMode
@@ -130,7 +137,7 @@ class ApplicationEngine(ExecutionEngine):
 
     def GetPriceForSysCall(self):
         instruction = self.CurrentContext.CurrentInstruction
-        api_hash = instruction.TokenU32 if len(instruction.Operand) == 4 else hash(instruction.TokenString)
+        api_hash = instruction.TokenU32 if len(instruction.Operand) == 4 else interop_hash(instruction.TokenString)
 
         price = self._Service.GetPrice(api_hash)
 
