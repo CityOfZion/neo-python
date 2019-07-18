@@ -775,6 +775,6 @@ class ContractTransaction(Transaction):
         self.Type = TransactionType.ContractTransaction
 
 
-class TXFeeError(Exception):
-    """Provide user-friendly feedback for transaction fee errors."""
+class TXError(Exception):
+    """Provide user-friendly feedback for transaction errors."""
     pass

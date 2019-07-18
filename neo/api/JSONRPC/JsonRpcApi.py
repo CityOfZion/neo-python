@@ -22,7 +22,7 @@ from neo.Core.State.AccountState import AccountState
 from neo.Core.State.CoinState import CoinState
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
-    ContractTransaction, TXFeeError
+    ContractTransaction, TXError
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
     TransactionAttributeUsage
 from neo.Core.UInt160 import UInt160
@@ -623,8 +623,6 @@ class JsonRpcApi:
         except ValueError:
             # if not enough unspents while fully synced
             raise JsonRpcError(-300, "Insufficient funds")
-        except TXFeeError as e:
-            raise JsonRpcError(-300, e)
 
         if tx is None:
             # if not enough unspents while not being fully synced
@@ -640,9 +638,15 @@ class JsonRpcApi:
         self.wallet.Sign(context)
         if context.Completed:
             tx.scripts = context.GetScripts()
-            self.wallet.SaveTransaction(tx)
-            self.nodemgr.relay(tx)
-            return tx.ToJson()
+            try:
+                relayed = self.nodemgr.relay(tx)
+            except TXError as e:
+                raise JsonRpcError(-32602, e)
+            if relayed:
+                self.wallet.SaveTransaction(tx)
+                return tx.ToJson()
+            else:
+                raise JsonRpcError(-32602, "Invalid params")
         else:
             return context.ToJson()
 

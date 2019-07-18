@@ -8,7 +8,8 @@ from functools import partial
 from socket import AF_INET as IP4_FAMILY
 from typing import Optional, List
 
-from neo.Core.TX.Transaction import Transaction as OrigTransaction
+from neo.Core.TX.Transaction import Transaction as OrigTransaction, TXError
+from neo.Core.Fixed8 import Fixed8
 from neo.Network.common import msgrouter, wait_for
 from neo.Network.common.singleton import Singleton
 from neo.Network import utils as networkutils
@@ -294,6 +295,19 @@ class NodeManager(Singleton):
 
     def relay(self, inventory) -> bool:
         if type(inventory) is OrigTransaction or issubclass(type(inventory), OrigTransaction):
+            # verify the maximum tx size is not exceeded
+            if inventory.Size() > OrigTransaction.MAX_TX_SIZE:
+                raise TXError(f"Transaction cancelled. The tx size ({inventory.Size()}) exceeds the maximum tx size ({OrigTransaction.MAX_TX_SIZE}).") 
+
+            # calculate and verify the required network fee for the tx
+            fee = inventory.NetworkFee()
+            if inventory.Size() > settings.MAX_FREE_TX_SIZE and not inventory.Type == b'\x02':  # Claim Transactions are High Priority
+                req_fee = Fixed8.FromDecimal(settings.FEE_PER_EXTRA_BYTE * (inventory.Size() - settings.MAX_FREE_TX_SIZE))
+                if req_fee < settings.LOW_PRIORITY_THRESHOLD:
+                    req_fee = settings.LOW_PRIORITY_THRESHOLD
+                if fee < req_fee:
+                    raise TXError(f'Transaction cancelled. The tx size ({inventory.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
+
             success = self.mempool.add_transaction(inventory)
             if not success:
                 return False
