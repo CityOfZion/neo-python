@@ -57,6 +57,7 @@ All notable changes to this project are documented in this file.
 - Updated ``np-bootstrap`` to delete the downloaded bootstrap file by default `#986 <https://github.com/CityOfZion/neo-python/pull/986>`_
 - Fix ``Remove()`` behaviour for ``Map`` and ``Array`` types to be inline with C#
 - Add support for compressed syscalls
+- Fix NEP-5 token send operation in ``np-prompt`` to properly handle token ``decimals``/scale `#990 <https://github.com/CityOfZion/neo-python/pull/990>`_
 
 
 [0.8.4] 2019-02-14
