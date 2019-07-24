@@ -537,7 +537,7 @@ class ExecutionEngine:
 
             elif opcode == NOT:
 
-                x = estack.Pop().GetBigInteger()
+                x = estack.Pop().GetBoolean()
                 estack.PushT(not x)
                 self.CheckStackSize(False, 0)
 
