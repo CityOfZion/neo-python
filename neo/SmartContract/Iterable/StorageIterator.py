@@ -14,6 +14,7 @@ class StorageIterator(Iterator):
     def Next(self):
         try:
             self.key, self.value = next(self.enumerator)
+            self.key = self.key[20:]
         except StopIteration:
             return False
         return True
