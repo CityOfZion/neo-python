@@ -59,6 +59,7 @@ All notable changes to this project are documented in this file.
 - Add support for compressed syscalls
 - Fix NEP-5 token send operation in ``np-prompt`` to properly handle token ``decimals``/scale `#990 <https://github.com/CityOfZion/neo-python/pull/990>`_
 - Fix ``NOT`` VM instruction
+- Fix StackItem deserialization for ``Boolean`` VM type
 
 
 [0.8.4] 2019-02-14
