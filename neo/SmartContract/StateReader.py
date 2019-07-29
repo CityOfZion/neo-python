@@ -617,7 +617,7 @@ class StateReader(InteropService):
 
                 to_del = []
                 for k, v in self.Snapshot.Storages.Find(hash.ToArray()):
-                    storage_key = StorageKey(script_hash=hash, key=k)
+                    storage_key = StorageKey(script_hash=hash, key=k[20:])
                     # Snapshot.Storages.Delete() modifies the underlying dictionary of the cache we'd be iterating
                     # over using Storages.Find. We therefore need to postpone deletion
                     to_del.append(storage_key)
