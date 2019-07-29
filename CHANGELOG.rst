@@ -61,6 +61,7 @@ All notable changes to this project are documented in this file.
 - Fix ``NOT`` VM instruction
 - Fix StackItem deserialization for ``Boolean`` VM type
 - Update ``CheckDynamicInvoke`` to operate on snapshots
+- Fix ``Contract.Destroy`` not always deleting storage
 
 
 [0.8.4] 2019-02-14
