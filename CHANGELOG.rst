@@ -62,6 +62,7 @@ All notable changes to this project are documented in this file.
 - Fix StackItem deserialization for ``Boolean`` VM type
 - Update ``CheckDynamicInvoke`` to operate on snapshots
 - Fix ``Contract.Destroy`` not always deleting storage
+- Fix ``Equals()`` of ``ByteArray``
 
 
 [0.8.4] 2019-02-14
