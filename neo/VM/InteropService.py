@@ -300,7 +300,10 @@ class ByteArray(StackItem):
         if other is self:
             return True
 
-        return self._value == other._value
+        try:
+            return self._value == other.GetByteArray()
+        except Exception:
+            return False
 
     def GetBigInteger(self):
         try:
