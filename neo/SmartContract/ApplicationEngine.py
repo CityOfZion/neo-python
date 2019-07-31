@@ -79,7 +79,7 @@ class ApplicationEngine(ExecutionEngine):
             return current_contract_state.HasDynamicInvoke
         elif opcode in [OpCode.CALL_ED, OpCode.CALL_EDT]:
             current = UInt160(data=cx.ScriptHash())
-            current_contract_state = self._Table.GetContractState(current.ToBytes())
+            current_contract_state = self.snapshot.Contracts[current.ToBytes()]
             return current_contract_state.HasDynamicInvoke
 
         else:
