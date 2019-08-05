@@ -97,7 +97,7 @@ class StackItem(EquatableMixin):
         if stype == StackItemType.ByteArray:
             return ByteArray(reader.ReadVarBytes())
         elif stype == StackItemType.Boolean:
-            return Boolean(ord(reader.ReadByte()))
+            return Boolean(bool(ord(reader.ReadByte())))
         elif stype == StackItemType.Integer:
             return Integer(BigInteger.FromBytes(reader.ReadVarBytes(), signed=True))
         elif stype == StackItemType.Array:
@@ -300,7 +300,10 @@ class ByteArray(StackItem):
         if other is self:
             return True
 
-        return self._value == other._value
+        try:
+            return self._value == other.GetByteArray()
+        except Exception:
+            return False
 
     def GetBigInteger(self):
         try:

@@ -58,6 +58,12 @@ All notable changes to this project are documented in this file.
 - Fix ``Remove()`` behaviour for ``Map`` and ``Array`` types to be inline with C#
 - Add support for compressed syscalls
 - Validate SimplePolicy for signed transactions
+- Fix NEP-5 token send operation in ``np-prompt`` to properly handle token ``decimals``/scale `#990 <https://github.com/CityOfZion/neo-python/pull/990>`_
+- Fix ``NOT`` VM instruction
+- Fix StackItem deserialization for ``Boolean`` VM type
+- Update ``CheckDynamicInvoke`` to operate on snapshots
+- Fix ``Contract.Destroy`` not always deleting storage
+- Fix ``Equals()`` of ``ByteArray``
 
 
 [0.8.4] 2019-02-14

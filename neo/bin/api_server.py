@@ -99,7 +99,7 @@ async def setup_and_start(loop):
     group_logging = parser.add_argument_group(title="Logging options")
     group_logging.add_argument("--logfile", action="store", type=str, help="Logfile")
     group_logging.add_argument("--syslog", action="store_true", help="Log to syslog instead of to log file ('user' is the default facility)")
-    group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7), metavar="[0-7]",
+    group_logging.add_argument("--syslog-local", action="store", type=int, choices=range(0, 7 + 1), metavar="[0-7]",
                                help="Log to a local syslog facility instead of 'user'. Value must be between 0 and 7 (e.g. 0 for 'local0').")
     group_logging.add_argument("--disable-stderr", action="store_true", help="Disable stderr logger")
 
@@ -107,10 +107,10 @@ async def setup_and_start(loop):
     parser.add_argument("--datadir", action="store",
                         help="Absolute path to use for database directories")
     # peers
-    parser.add_argument("--minpeers", action="store", type=int,
+    parser.add_argument("--minpeers", action="store", type=int, choices=range(1, 10 + 1), metavar="[1-10]",
                         help="Min peers to use for P2P Joining")
 
-    parser.add_argument("--maxpeers", action="store", type=int,
+    parser.add_argument("--maxpeers", action="store", type=int, choices=range(1, 10 + 1), metavar="[1-10]",
                         help="Max peers to use for P2P Joining")
 
     # If a wallet should be opened

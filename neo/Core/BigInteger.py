@@ -1,4 +1,4 @@
-from math import fmod
+from decimal import Decimal, localcontext
 
 
 class BigInteger(int):
@@ -49,11 +49,12 @@ class BigInteger(int):
         return BigInteger(super(BigInteger, self).__add__(*args, **kwargs))
 
     def __mod__(self, *args, **kwargs):  # real signature unknown
-        # C# uses different logic from Python
-        if args[0] < 0:
-            return fmod(self, args[0])
-        else:
-            return BigInteger(super(BigInteger, self).__mod__(*args, **kwargs))
+        with localcontext() as ctx:
+            ctx.prec = 100
+            d1 = Decimal(self)
+            d2 = Decimal(args[0])
+            res = int(d1 % d2)
+        return BigInteger(res)
 
     def __mul__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__mul__(*args, **kwargs))

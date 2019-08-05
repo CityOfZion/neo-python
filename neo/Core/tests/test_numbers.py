@@ -357,6 +357,13 @@ class BigIntegerTestCase(TestCase):
         b2 = BigInteger(1048576)
         self.assertEqual(888269, b1 % b2)
 
+        b1 = BigInteger(-18224909727634776050312394179610579601844989529623334093909233530432892596607)
+        b2 = BigInteger(14954691977398614017)
+        self.assertEqual(-3100049211437790421, b1 % b2)
+
+        b3 = BigInteger.from_bytes(bytearray(b'+K\x05\xbe\xaai\xfa\xd4'), 'little', signed=True)
+        self.assertEqual(b3, b1 % b2)
+
     def test_dunder_methods(self):
         b1 = BigInteger(1)
         b2 = BigInteger(2)

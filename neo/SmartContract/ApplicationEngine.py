@@ -73,13 +73,13 @@ class ApplicationEngine(ExecutionEngine):
             # if this is a dynamic app call, we will arrive here
             # get the current executing script hash
             current = UInt160(data=cx.ScriptHash())
-            current_contract_state = self._Table.GetContractState(current.ToBytes())
+            current_contract_state = self.snapshot.Contracts[current.ToBytes()]
 
             # if current contract state cant do dynamic calls, return False
             return current_contract_state.HasDynamicInvoke
         elif opcode in [OpCode.CALL_ED, OpCode.CALL_EDT]:
             current = UInt160(data=cx.ScriptHash())
-            current_contract_state = self._Table.GetContractState(current.ToBytes())
+            current_contract_state = self.snapshot.Contracts[current.ToBytes()]
             return current_contract_state.HasDynamicInvoke
 
         else:

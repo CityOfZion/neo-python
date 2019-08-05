@@ -609,7 +609,9 @@ def token_send(wallet, token_str, from_addr, to_addr, amount, fee=Fixed8.Zero(),
         if not isinstance(attr, TransactionAttribute):
             raise ValueError(f"{attr} is not a valid transaction attribute")
 
-    return do_token_transfer(token, wallet, from_addr, to_addr, amount, fee=fee, tx_attributes=user_tx_attributes)
+    decimal_amount = amount_from_string(token, amount)
+
+    return do_token_transfer(token, wallet, from_addr, to_addr, decimal_amount, fee=fee, tx_attributes=user_tx_attributes)
 
 
 def test_token_send_from(wallet, token_str, from_addr, to_addr, amount):

@@ -751,7 +751,7 @@ class StateMachine(StateReader):
             if contract.HasStorage:
                 to_add = []
                 for key, item in self.Snapshot.Storages.Find(cur_hash.ToArray()):
-                    key = StorageKey(script_hash=hash, key=key)
+                    key = StorageKey(script_hash=hash, key=key[20:])
                     to_add.append((key.ToArray(), item))
 
                 for k, v in to_add:
