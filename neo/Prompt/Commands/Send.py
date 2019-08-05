@@ -1,4 +1,4 @@
-from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction, TXError
+from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args, \

@@ -18,7 +18,7 @@ from neo.Core.State.StorageItem import StorageItem
 
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
-from neo.Core.TX.Transaction import TransactionOutput, TXError
+from neo.Core.TX.Transaction import TransactionOutput
 
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType

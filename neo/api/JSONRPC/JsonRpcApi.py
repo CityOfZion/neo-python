@@ -22,7 +22,7 @@ from neo.Core.State.AccountState import AccountState
 from neo.Core.State.CoinState import CoinState
 from neo.Core.State.StorageKey import StorageKey
 from neo.Core.TX.Transaction import Transaction, TransactionOutput, \
-    ContractTransaction, TXError
+    ContractTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, \
     TransactionAttributeUsage
 from neo.Core.UInt160 import UInt160

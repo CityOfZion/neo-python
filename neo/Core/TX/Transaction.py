@@ -773,8 +773,3 @@ class ContractTransaction(Transaction):
         """
         super(ContractTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.ContractTransaction
-
-
-class TXError(Exception):
-    """Provide user-friendly feedback for transaction errors."""
-    pass
