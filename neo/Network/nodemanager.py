@@ -20,9 +20,7 @@ from neo.Network.requestinfo import RequestInfo
 from neo.Settings import settings
 from neo.logging import log_manager
 
-
 logger = log_manager.getLogger('network')
-# log_manager.config_stdio([('network', 10)])
 
 
 class NodeManager(Singleton):

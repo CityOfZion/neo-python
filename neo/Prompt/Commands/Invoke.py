@@ -18,7 +18,7 @@ from neo.Core.State.StorageItem import StorageItem
 
 from neo.Core.TX.InvocationTransaction import InvocationTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
-from neo.Core.TX.Transaction import TransactionOutput, TXFeeError
+from neo.Core.TX.Transaction import TransactionOutput
 
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.SmartContract import TriggerType
@@ -36,6 +36,7 @@ from copy import deepcopy
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.Network.nodemanager import NodeManager
+from neo.Core.Utils import validate_simple_policy
 
 logger = log_manager.getLogger()
 
@@ -56,9 +57,6 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
     except ValueError:
         print("Insufficient funds")
         return False
-    except TXFeeError as e:
-        print(e)
-        return False
 
     if wallet_tx:
 
@@ -77,7 +75,10 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
             wallet_tx.scripts = context.GetScripts()
 
-            relayed = False
+            passed, reason = validate_simple_policy(wallet_tx)
+            if not passed:
+                print(reason)
+                return False
 
             nodemgr = NodeManager()
             relayed = nodemgr.relay(wallet_tx)
@@ -105,9 +106,6 @@ def InvokeWithTokenVerificationScript(wallet, tx, token, fee=Fixed8.Zero(), invo
         wallet_tx = wallet.MakeTransaction(tx=tx, fee=fee, use_standard=True)
     except ValueError:
         print("Insufficient funds")
-        return False
-    except TXFeeError as e:
-        print(e)
         return False
 
     if wallet_tx:
@@ -282,7 +280,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
         wallet_tx = tx
     else:
         try:
-            wallet_tx = wallet.MakeTransaction(tx=tx, from_addr=from_addr, skip_fee_calc=True)
+            wallet_tx = wallet.MakeTransaction(tx=tx, from_addr=from_addr)
         except ValueError:
             pass
 
@@ -349,14 +347,6 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
             wallet_tx.outputs = outputs
             wallet_tx.Attributes = [] if invoke_attrs is None else deepcopy(invoke_attrs)
 
-            # calculate the required network fee for the tx and compare to fee
-            if wallet_tx.Size() > settings.MAX_FREE_TX_SIZE:
-                req_fee = Fixed8.FromDecimal(settings.FEE_PER_EXTRA_BYTE * (wallet_tx.Size() - settings.MAX_FREE_TX_SIZE))
-                if req_fee < settings.LOW_PRIORITY_THRESHOLD:
-                    req_fee = settings.LOW_PRIORITY_THRESHOLD
-                if net_fee < req_fee:
-                    net_fee = req_fee
-
             return wallet_tx, net_fee, engine.ResultStack.Items, engine.ops_processed, success
 
         # this allows you to to test invocations that fail
@@ -392,7 +382,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
     try:
         dtx = wallet.MakeTransaction(tx=dtx, from_addr=from_addr)
-    except (ValueError, TXFeeError):
+    except (ValueError):
         pass
 
     context = ContractParametersContext(dtx)
@@ -506,7 +496,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
 
         try:
             itx = wallet.MakeTransaction(tx=itx, from_addr=from_addr)
-        except (ValueError, TXFeeError):
+        except (ValueError):
             pass
 
         context = ContractParametersContext(itx)
