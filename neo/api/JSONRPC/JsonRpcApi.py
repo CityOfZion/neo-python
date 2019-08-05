@@ -38,6 +38,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.VM.VMState import VMStateStr
 from neo.api.utils import json_response
 from neo.Blockchain import GetBlockchain
+from neo.Core.Utils import validate_simple_policy
 
 
 class JsonRpcError(Exception):
@@ -638,10 +639,11 @@ class JsonRpcApi:
         self.wallet.Sign(context)
         if context.Completed:
             tx.scripts = context.GetScripts()
-            try:
-                relayed = self.nodemgr.relay(tx)
-            except TXError as e:
-                raise JsonRpcError(-32602, e)
+            passed, reason = validate_simple_policy(tx)
+            if not passed:
+                raise JsonRpcError(-32602, reason)
+
+            relayed = self.nodemgr.relay(tx)
             if relayed:
                 self.wallet.SaveTransaction(tx)
                 return tx.ToJson()

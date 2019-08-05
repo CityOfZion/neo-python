@@ -7,6 +7,7 @@ from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Prompt.Commands.Invoke import gather_signatures
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Core.Fixed8 import Fixed8
+from neo.Core.Utils import validate_simple_policy
 import json
 import traceback
 from neo.Prompt.PromptData import PromptData
@@ -319,12 +320,14 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         if context.Completed:
 
             tx.scripts = context.GetScripts()
-            nodemgr = NodeManager()
-            try:
-                relayed = nodemgr.relay(tx)
-            except TXError as e:
-                print(e)
+
+            passed, reason = validate_simple_policy(tx)
+            if not passed:
+                print(reason)
                 return
+
+            nodemgr = NodeManager()
+            relayed = nodemgr.relay(tx)
 
             if relayed:
                 wallet.SaveTransaction(tx)

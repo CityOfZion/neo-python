@@ -260,10 +260,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
                                   mock_print.getvalue())  # notice the required fee is equal to the low priority threshold
 
     def test_transaction_size_2(self):
-        nodemgr = NodeManager()
-        nodemgr.reset_for_test()
-        nodemgr.nodes = [NeoNode(object, object)]
-
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                 with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=1411):  # returns a size of 1411
@@ -277,10 +273,6 @@ class UserWalletTestCase(WalletFixtureTestCase):
                                   mock_print.getvalue())  # the required fee is equal to (1411-1024) * 0.0001 (FEE_PER_EXTRA_BYTE) = 0.00387
 
     def test_transaction_size_3(self):
-        nodemgr = NodeManager()
-        nodemgr.reset_for_test()
-        nodemgr.nodes = [NeoNode(object, object)]
-
         with patch('sys.stdout', new=StringIO()) as mock_print:
             with patch('neo.Prompt.Commands.Send.prompt', side_effect=[UserWalletTestCase.wallet_1_pass()]):
                 with patch('neo.Core.TX.Transaction.Transaction.Size', return_value=102401):  # returns a size of 102401

@@ -36,6 +36,7 @@ from copy import deepcopy
 from neo.logging import log_manager
 from neo.Prompt.PromptPrinter import prompt_print as print
 from neo.Network.nodemanager import NodeManager
+from neo.Core.Utils import validate_simple_policy
 
 logger = log_manager.getLogger()
 
@@ -74,14 +75,13 @@ def InvokeContract(wallet, tx, fee=Fixed8.Zero(), from_addr=None, owners=None):
 
             wallet_tx.scripts = context.GetScripts()
 
-            relayed = False
+            passed, reason = validate_simple_policy(wallet_tx)
+            if not passed:
+                print(reason)
+                return False
 
             nodemgr = NodeManager()
-            try:
-                relayed = nodemgr.relay(wallet_tx)
-            except TXError as e:
-                print(e)
-                return False
+            relayed = nodemgr.relay(wallet_tx)
 
             if relayed:
                 print("Relayed Tx: %s " % wallet_tx.Hash.ToString())
