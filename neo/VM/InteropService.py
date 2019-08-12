@@ -438,6 +438,12 @@ class InteropInterface(StackItem):
             pass
         return "IOp Interface Item"
 
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
+
 
 class Struct(Array):
 
