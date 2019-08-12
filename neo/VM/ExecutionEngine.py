@@ -99,13 +99,25 @@ class ExecutionEngine:
     def GetItemCount(self, items_list):  # list of StackItems
         count = 0
         items = deque(items_list)
+        counted = []
         while items:
             stackitem = items.pop()
+
             if stackitem.IsTypeMap:
+                if stackitem in counted:
+                    continue
+
+                counted.append(stackitem)
+
                 items.extend(stackitem.Values)
                 continue
 
             if stackitem.IsTypeArray:
+                if stackitem in counted:
+                    continue
+
+                counted.append(stackitem)
+
                 items.extend(stackitem.GetArray())
                 continue
             count += 1
