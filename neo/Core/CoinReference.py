@@ -58,16 +58,14 @@ class CoinReference(SerializableMixin):
         """
         if other is None:
             return False
+        if type(other) is not CoinReference:
+            return False
         if other.PrevHash.ToBytes() == self.PrevHash.ToBytes() and other.PrevIndex == self.PrevIndex:
             return True
         return False
 
     def __eq__(self, other):
-        if other is None:
-            return False
-        if other.PrevHash.ToBytes() == self.PrevHash.ToBytes() and other.PrevIndex == self.PrevIndex:
-            return True
-        return False
+        return self.Equals(other)
 
     def __hash__(self):
         return int.from_bytes(self.PrevHash.Data + bytearray(self.PrevIndex), 'little')

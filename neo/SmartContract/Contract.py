@@ -148,6 +148,9 @@ class Contract(SerializableMixin, VerificationCode):
             return False
         return self.ScriptHash == other.ScriptHash
 
+    def __eq__(self, other):
+        return self.Equals(other)
+
     def ToScriptHash(self):
         return Crypto.Hash160(self.ScriptHash)
 
