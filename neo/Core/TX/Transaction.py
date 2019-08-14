@@ -520,9 +520,12 @@ class Transaction(InventoryMixin):
         self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
 
     def Equals(self, other):
-        if other is None or other is not self:
+        if other is None or other is not self or not isinstance(other, Transaction):
             return False
         return self.Hash == other.Hash
+
+    def __eq__(self, other):
+        return self.Equals(other)
 
     def ToArray(self):
         """

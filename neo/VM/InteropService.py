@@ -242,6 +242,12 @@ class Array(StackItem, CollectionMixin):
     def __str__(self):
         return "Array: %s" % [str(item) for item in self._array]
 
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
+
 
 class Boolean(StackItem):
     TRUE = bytearray([1])
@@ -283,6 +289,12 @@ class Boolean(StackItem):
 
     def __str__(self):
         return str(self._value)
+
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
 
 
 class ByteArray(StackItem):
@@ -426,6 +438,12 @@ class InteropInterface(StackItem):
             pass
         return "IOp Interface Item"
 
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
+
 
 class Struct(Array):
 
@@ -468,6 +486,9 @@ class Struct(Array):
 
     def __str__(self):
         return "Struct: %s " % self._array
+
+    def __hash__(self):
+        return id(self)
 
 
 class Map(StackItem, CollectionMixin):
@@ -540,6 +561,9 @@ class Map(StackItem, CollectionMixin):
 
     def __eq__(self, other):
         return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
 
     def __str__(self):
         return self.GetString()

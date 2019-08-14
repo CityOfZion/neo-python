@@ -209,22 +209,14 @@ class InteropSerializeDeserializeTestCase(NeoTestCase):
         self.assertEqual(deserialized, map2)
 
     def test_cant_serialize_iop_item(self):
-        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
-            genesis = Blockchain.GenesisBlock()
-            self.econtext.EvaluationStack.PushT(StackItem.FromInterface(genesis))
-            self.engine.InvocationStack.PushT(self.econtext)
-            cant_do = self.state_reader.Runtime_Serialize(self.engine)
-            self.assertEqual(cant_do, False)
-            self.assertTrue(len(log_context.output) > 0)
-            expected_msg = 'Cannot serialize item IOp Interface: <neo.Core.Block.Block object'
-            self.assertTrue(expected_msg in log_context.output[0])
+        genesis = Blockchain.GenesisBlock()
+        self.econtext.EvaluationStack.PushT(StackItem.FromInterface(genesis))
+        self.engine.InvocationStack.PushT(self.econtext)
+        cant_do = self.state_reader.Runtime_Serialize(self.engine)
+        self.assertEqual(cant_do, False)
 
     def test_cant_deserialize_item(self):
-        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
-            self.econtext.EvaluationStack.PushT(StackItem.New(b'abc'))
-            self.engine.InvocationStack.PushT(self.econtext)
-            success = self.state_reader.Runtime_Deserialize(self.engine)
-            self.assertFalse(success)
-            self.assertTrue(len(log_context.output) > 0)
-            expected_msg = 'Could not deserialize stack item with type:'
-            self.assertTrue(expected_msg in log_context.output[0])
+        self.econtext.EvaluationStack.PushT(StackItem.New(b'abc'))
+        self.engine.InvocationStack.PushT(self.econtext)
+        success = self.state_reader.Runtime_Deserialize(self.engine)
+        self.assertFalse(success)

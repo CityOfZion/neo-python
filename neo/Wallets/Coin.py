@@ -99,12 +99,15 @@ class Coin(TrackableMixin):
         Returns:
             True if object is equal to self. False otherwise.
         """
-        if other is None or other is not self:
+        if other is None or other is not self or type(other) is not Coin:
             return False
         return True
 
     def __hash__(self):
         return int.from_bytes(self.Reference.PrevHash.Data + bytearray(self.Reference.PrevIndex), 'little')
+
+    def __eq__(self, other):
+        return self.Equals(other)
 
     def RefToBytes(self):
         vin_index = bytearray(self.Reference.PrevIndex.to_bytes(1, 'little'))
