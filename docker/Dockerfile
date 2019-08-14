@@ -24,7 +24,7 @@
 #
 # Once you are inside the container, you can start neo-python with `np-prompt` (using -p to connect to a private net).
 # To update neo-python, just run `git pull` and `pip install -e .`
-FROM ubuntu:17.10
+FROM ubuntu:18.04
 
 # Branch can be overwritten with --build-arg, eg: `--build-arg branch=development`
 ARG branch=master
