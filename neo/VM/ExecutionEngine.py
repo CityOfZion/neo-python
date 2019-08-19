@@ -456,7 +456,10 @@ class ExecutionEngine:
 
                 x = estack.Pop().GetByteArray()
 
-                estack.PushT(x[:count])
+                if count >= len(x):
+                    estack.PushT(x)
+                else:
+                    estack.PushT(x[:count])
                 self.CheckStackSize(True, -1)
 
             elif opcode == RIGHT:
@@ -469,7 +472,11 @@ class ExecutionEngine:
                 if count > len(x):
                     return self.VM_FAULT_and_report(VMFault.RIGHT_UNKNOWN)
 
-                estack.PushT(x[-count:])
+                if count == len(x):
+                    estack.PushT(x)
+                else:
+                    offset = len(x) - count
+                    estack.PushT(x[offset:offset + count])
                 self.CheckStackSize(True, -1)
 
             elif opcode == SIZE:
