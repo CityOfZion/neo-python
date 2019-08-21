@@ -21,7 +21,7 @@ install:
   - pip install -e .
   - pip install coveralls
   - yes | pip uninstall neo-boa
-  - pip install -e git+https://github.com/ixje/neo-boa@development#egg=neo-boa
+  - pip install -e git+https://github.com/CityOfZion/neo-boa@e90588f5755b909f5d7d9ff0d39f7e1e3e3cdb88#egg=neo-boa
 
 env:
   - NEOPYTHON_UNITTEST=1
