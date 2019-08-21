@@ -1,6 +1,6 @@
 import sys
 from neo.Settings import settings
-from neo.Network.common import blocking_prompt as prompt
+from prompt_toolkit import prompt
 import requests
 from tqdm import tqdm
 import tarfile
