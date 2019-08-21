@@ -7,31 +7,32 @@ Usage:
 import sys
 from itertools import groupby
 import binascii
-from logzero import logger
-from neocore.UInt160 import UInt160
+from neo.Core.UInt160 import UInt160
 from neo.Blockchain import GetBlockchain
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 
 from neo.Network.InventoryType import InventoryType
 from neo.Network.Mixins import InventoryMixin
-from neocore.Cryptography.Crypto import Crypto
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.Cryptography.Crypto import Crypto
+from neo.Core.IO.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.Core.Mixins import EquatableMixin
-from neo.Core.Helper import Helper
+import neo.Core.Helper
 from neo.Core.Witness import Witness
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
 from neo.Settings import settings
+from neo.logging import log_manager
+import neo.SmartContract.Helper as SCHelper
+
+logger = log_manager.getLogger()
 
 
 class TransactionResult(EquatableMixin):
-    AssetId = None
-    Amount = Fixed8(0)
 
     def __init__(self, asset_id, amount):
         """
@@ -78,10 +79,6 @@ class TransactionType:
 
 
 class TransactionOutput(SerializableMixin, EquatableMixin):
-    Value = None  # should be fixed 8
-    ScriptHash = None
-    AssetId = None
-
     """docstring for TransactionOutput"""
 
     def __init__(self, AssetId=None, Value=None, script_hash=None):
@@ -168,9 +165,6 @@ class TransactionOutput(SerializableMixin, EquatableMixin):
 class TransactionInput(SerializableMixin, EquatableMixin):
     """docstring for TransactionInput"""
 
-    PrevHash = None
-    PrevIndex = None
-
     def __init__(self, prevHash=None, prevIndex=None):
         """
         Create an instance.
@@ -225,39 +219,12 @@ class TransactionInput(SerializableMixin, EquatableMixin):
 
 
 class Transaction(InventoryMixin):
-    Type = None
-
     Version = 0
-
-    Attributes = []
-
-    inputs = []
-
-    outputs = []
-
-    scripts = []
-
-    __system_fee = None
-    _network_fee = None
-
     InventoryType = InventoryType.TX
-
-    __hash = None
-    __htbs = None
-
-    __height = 0
-
-    __references = None
-
     MAX_TX_ATTRIBUTES = 16
+    MAX_TX_SIZE = 102400
 
-    withdraw_hold = None
-
-    raw_tx = False
-
-    """docstring for Transaction"""
-
-    def __init__(self, inputs=[], outputs=[], attributes=[], scripts=[]):
+    def __init__(self, inputs=None, outputs=None, attributes=None, scripts=None):
         """
         Create an instance.
         Args:
@@ -267,12 +234,23 @@ class Transaction(InventoryMixin):
             scripts:
         """
         super(Transaction, self).__init__()
-        self.inputs = inputs
-        self.outputs = outputs
-        self.Attributes = attributes
-        self.scripts = scripts
+        self.inputs = [] if inputs is None else inputs
+        self.outputs = [] if outputs is None else outputs
+        self.Attributes = [] if attributes is None else attributes
+        self.scripts = [] if scripts is None else scripts
         self.InventoryType = 0x01  # InventoryType TX 0x01
-        self.__references = None
+        self._references = None
+        self.Type = None
+        self.raw_tx = False
+        self.withdraw_hold = None
+        self._network_fee = None
+        self.__system_fee = None
+        self.__hash = None
+        self.__htbs = None
+        self.__height = 0
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} at {hex(id(self))}> {self.Hash.ToString()}"
 
     @property
     def Hash(self):
@@ -295,7 +273,7 @@ class Transaction(InventoryMixin):
         Returns:
             bytes:
         """
-        return Helper.GetHashData(self)
+        return neo.Core.Helper.Helper.GetHashData(self)
 
     def GetMessage(self):
         """
@@ -317,7 +295,7 @@ class Transaction(InventoryMixin):
 
     def ResetReferences(self):
         """Reset local stored references."""
-        self.__references = None
+        self._references = None
 
     def ResetHashData(self):
         """Reset local stored hash data."""
@@ -343,7 +321,7 @@ class Transaction(InventoryMixin):
                 Key (UInt256): input PrevHash
                 Value (TransactionOutput): object.
         """
-        if self.__references is None:
+        if self._references is None:
 
             refs = {}
 
@@ -355,9 +333,9 @@ class Transaction(InventoryMixin):
                     for input in group:
                         refs[input] = tx.outputs[input.PrevIndex]
 
-            self.__references = refs
+            self._references = refs
 
-        return self.__references
+        return self._references
 
     def Size(self):
         """
@@ -425,7 +403,7 @@ class Transaction(InventoryMixin):
         """
         self.DeserializeUnsigned(reader)
 
-        self.scripts = reader.ReadSerializableArray()
+        self.scripts = reader.ReadSerializableArray('neo.Core.Witness.Witness')
         self.OnDeserialized()
 
     def DeserializeExclusiveData(self, reader):
@@ -461,7 +439,7 @@ class Transaction(InventoryMixin):
         Returns:
             Transaction:
         """
-        ttype = reader.ReadByte()
+        ttype = ord(reader.ReadByte())
         tx = None
 
         from neo.Core.TX.RegisterTransaction import RegisterTransaction
@@ -472,6 +450,7 @@ class Transaction(InventoryMixin):
         from neo.Core.TX.InvocationTransaction import InvocationTransaction
         from neo.Core.TX.EnrollmentTransaction import EnrollmentTransaction
         from neo.Core.TX.StateTransaction import StateTransaction
+        from neo.Core.TX.Transaction import ContractTransaction
 
         if ttype == int.from_bytes(TransactionType.RegisterTransaction, 'little'):
             tx = RegisterTransaction()
@@ -489,6 +468,8 @@ class Transaction(InventoryMixin):
             tx = EnrollmentTransaction()
         elif ttype == int.from_bytes(TransactionType.StateTransaction, 'little'):
             tx = StateTransaction()
+        elif ttype == int.from_bytes(TransactionType.ContractTransaction, 'little'):
+            tx = ContractTransaction()
         else:
             tx = Transaction()
             tx.Type = ttype
@@ -519,7 +500,7 @@ class Transaction(InventoryMixin):
         Raises:
             Exception: if transaction type is incorrect.
         """
-        txtype = reader.ReadByte()
+        txtype = ord(reader.ReadByte())
         if txtype != int.from_bytes(self.Type, 'little'):
             raise Exception('incorrect type {}, wanted {}'.format(txtype, int.from_bytes(self.Type, 'little')))
         self.DeserializeUnsignedWithoutType(reader)
@@ -531,7 +512,7 @@ class Transaction(InventoryMixin):
         Args:
             reader (neo.IO.BinaryReader):
         """
-        self.Version = reader.ReadByte()
+        self.Version = ord(reader.ReadByte())
         self.DeserializeExclusiveData(reader)
         self.Attributes = reader.ReadSerializableArray('neo.Core.TX.TransactionAttribute.TransactionAttribute',
                                                        max=self.MAX_TX_ATTRIBUTES)
@@ -539,9 +520,12 @@ class Transaction(InventoryMixin):
         self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
 
     def Equals(self, other):
-        if other is None or other is not self:
+        if other is None or other is not self or not isinstance(other, Transaction):
             return False
         return self.Hash == other.Hash
+
+    def __eq__(self, other):
+        return self.Equals(other)
 
     def ToArray(self):
         """
@@ -550,7 +534,7 @@ class Transaction(InventoryMixin):
         Returns:
             bytes:
         """
-        return Helper.ToArray(self)
+        return neo.Core.Helper.Helper.ToArray(self)
 
     def Serialize(self, writer):
         """
@@ -606,7 +590,7 @@ class Transaction(InventoryMixin):
         jsn["scripts"] = [script.ToJson() for script in self.scripts]
         return jsn
 
-    def Verify(self, mempool):
+    def Verify(self, snapshot, mempool):
         """
         Verify the transaction.
 
@@ -616,9 +600,23 @@ class Transaction(InventoryMixin):
         Returns:
             bool: True if verified. False otherwise.
         """
-        logger.info("Verifying transaction: %s " % self.Hash.ToBytes())
+        logger.debug("Verifying transaction: %s " % self.Hash.ToBytes())
 
-        return Helper.VerifyScripts(self)
+        # SimplePolicyPlugin
+        if self.Size() > self.MAX_TX_SIZE:
+            logger.debug(f'Maximum transaction size exceeded: {self.Size()} > {self.MAX_TX_SIZE}')
+            return False
+        fee = self.NetworkFee()
+        if self.Size() > settings.MAX_FREE_TX_SIZE and not self.Type == b'\x02':  # Claim Transactions are High Priority
+            req_fee = Fixed8.FromDecimal(settings.FEE_PER_EXTRA_BYTE * (self.Size() - settings.MAX_FREE_TX_SIZE))
+            if req_fee < settings.LOW_PRIORITY_THRESHOLD:
+                req_fee = settings.LOW_PRIORITY_THRESHOLD
+            if fee < req_fee:
+                logger.debug(f'The tx size ({self.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
+                return False
+
+        return SCHelper.Helper.VerifyWitnesses(self, snapshot)
+        # return neo.Core.Helper.Helper.VerifyScripts(self)
 
     #        logger.info("return true for now ...")
     #        return True
@@ -693,16 +691,20 @@ class Transaction(InventoryMixin):
     #                    return False
     #
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot=None):
         """
         Get a list of script hashes for verifying transactions.
 
         Raises:
             Exception: if there are no valid assets in the transaction.
+            ValueError: if a snapshot object is not provided for regular transactions. RawTx is exempt from this check.
 
         Returns:
             list: of UInt160 type script hashes.
         """
+        if snapshot is None and not self.raw_tx:
+            raise ValueError("Snapshot cannot be None for regular transaction types")
+
         if not self.References and len(self.Attributes) < 1:
             return []
 
@@ -719,9 +721,9 @@ class Transaction(InventoryMixin):
 
         for key, group in groupby(self.outputs, lambda p: p.AssetId):
             if self.raw_tx:
-                asset = Helper.StaticAssetState(key)
+                asset = neo.Core.Helper.Helper.StaticAssetState(key)
             else:
-                asset = GetBlockchain().GetAssetState(key.ToBytes())
+                asset = snapshot.Assets.TryGet(key.ToBytes())
             if asset is None:
                 raise Exception("Invalid operation")
 
@@ -774,8 +776,3 @@ class ContractTransaction(Transaction):
         """
         super(ContractTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.ContractTransaction
-
-
-class TXFeeError(Exception):
-    """Provide user-friendly feedback for transaction fee errors."""
-    pass

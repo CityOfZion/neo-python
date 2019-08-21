@@ -2,6 +2,7 @@ import binascii
 from neo.IO.Helper import Helper
 from neo.Utils.BlockchainFixtureTestCase import BlockchainFixtureTestCase
 from neo.Settings import settings
+from neo.Core.State.UnspentCoinState import UnspentCoinState
 import os
 
 
@@ -23,6 +24,13 @@ class SmartContractTest2(BlockchainFixtureTestCase):
 
         self.assertIsNotNone(json)
 
-        result = self._blockchain.Persist(block)
+        snapshot = self._blockchain._db.createSnapshot()
+        snapshot.PersistingBlock = block
+        snapshot.UnspentCoins.Add(b'aa2051096e7be45ed991279a1a4c2678eb886690829a2729f4caa82192ff7f34',
+                                  UnspentCoinState.FromTXOutputsConfirmed([0]))
+
+        result = False
+        with BlockchainFixtureTestCase.MPPersist():
+            result = self._blockchain.Persist(block, snapshot)
 
         self.assertTrue(result)

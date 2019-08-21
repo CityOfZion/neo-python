@@ -1,13 +1,14 @@
 language: python
-python:
-  - "3.6"
+
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
 
 sudo: required
 services:
   - docker
-
-cache:
-  pip: true
 
 addons:
   apt:
@@ -19,9 +20,8 @@ addons:
 install:
   - pip install -e .
   - pip install coveralls
-  - yes | pip uninstall neo-boa neocore
-  - pip install -e git+https://github.com/CityOfZion/neo-boa@development#egg=neo-boa
-  - pip install -e git+https://github.com/CityOfZion/neo-python-core@master#egg=neocore
+  - yes | pip uninstall neo-boa
+  - pip install -e git+https://github.com/CityOfZion/neo-boa@e90588f5755b909f5d7d9ff0d39f7e1e3e3cdb88#egg=neo-boa
 
 env:
   - NEOPYTHON_UNITTEST=1

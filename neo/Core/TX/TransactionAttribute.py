@@ -4,8 +4,8 @@ Description:
 Usage:
     from neo.Core.TX.TransactionAttribute import TransactionAttribute
 """
-from neocore.IO.Mixins import SerializableMixin
-from neocore.UIntBase import UIntBase
+from neo.Core.IO.Mixins import SerializableMixin
+from neo.Core.UIntBase import UIntBase
 from neo.Core.Size import Size as s
 from neo.Core.Size import GetVarSize
 from neo.logging import log_manager
@@ -84,7 +84,7 @@ class TransactionAttribute(SerializableMixin):
         Args:
             reader (neo.IO.BinaryReader):
         """
-        usage = reader.ReadByte()
+        usage = ord(reader.ReadByte())
         self.Usage = usage
 
         if usage == TransactionAttributeUsage.ContractHash or usage == TransactionAttributeUsage.Vote or \
@@ -99,7 +99,7 @@ class TransactionAttribute(SerializableMixin):
 
         elif usage == TransactionAttributeUsage.DescriptionUrl:
 
-            self.Data = reader.ReadBytes(reader.ReadByte())
+            self.Data = reader.ReadBytes(ord(reader.ReadByte()))
 
         elif usage == TransactionAttributeUsage.Description or usage >= TransactionAttributeUsage.Remark:
             self.Data = reader.ReadVarBytes(max=self.MAX_ATTR_DATA_SIZE)

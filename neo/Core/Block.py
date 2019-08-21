@@ -2,13 +2,13 @@ from neo.Network.Mixins import InventoryMixin
 from neo.Network.InventoryType import InventoryType
 from neo.Core.BlockBase import BlockBase
 from neo.Core.TX.Transaction import Transaction, TransactionType
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.IO.MemoryStream import StreamManager
-from neocore.Cryptography.MerkleTree import MerkleTree
+from neo.Core.Cryptography.MerkleTree import MerkleTree
 from neo.Core.Header import Header
 from neo.Core.Witness import Witness
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Blockchain import GetBlockchain
 from neo.Core.Size import GetVarSize
 from neo.logging import log_manager
@@ -17,21 +17,6 @@ logger = log_manager.getLogger()
 
 
 class Block(BlockBase, InventoryMixin):
-    #  < summary >
-    #  交易列表
-    #  < / summary >
-    Transactions = []
-
-    #  < summary >
-    #  该区块的区块头
-    #  < / summary >
-
-    _header = None
-
-    __is_trimmed = False
-    #  < summary >
-    #  资产清单的类型
-    #  < / summary >
     InventoryType = InventoryType.Block
 
     def __init__(self, prevHash=None, timestamp=None, index=None,
@@ -46,7 +31,7 @@ class Block(BlockBase, InventoryMixin):
             index (int): block height.
             consensusData (int): uint64.
             nextConsensus (UInt160):
-            script (neo.Core.Witness): script used to verify the block.
+            script (neo.Core.Witness.Witness): script used to verify the block.
             transactions (list): of neo.Core.TX.Transaction.Transaction objects.
             build_root (bool): flag indicating whether to rebuild the merkle root.
         """
@@ -59,6 +44,9 @@ class Block(BlockBase, InventoryMixin):
         self.ConsensusData = consensusData
         self.NextConsensus = nextConsensus
         self.Script = script
+        self._header = None
+
+        self.__is_trimmed = False
 
         if transactions:
             self.Transactions = transactions
@@ -203,7 +191,12 @@ class Block(BlockBase, InventoryMixin):
             return False
         if other is self:
             return True
+        if type(other) is not Block:
+            return False
         return self.Hash == other.Hash
+
+    def __eq__(self, other):
+        return self.Equals(other)
 
     @staticmethod
     def FromTrimmedData(byts):
@@ -232,7 +225,8 @@ class Block(BlockBase, InventoryMixin):
         for tx_hash in reader.ReadHashes():
             tx = bc.GetTransaction(tx_hash)[0]
             if not tx:
-                raise Exception("Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
+                raise Exception(
+                    "Could not find transaction!\n Are you running code against a valid Blockchain instance?\n Tests that accesses transactions or size of a block but inherit from NeoTestCase instead of BlockchainFixtureTestCase will not work.")
             tx_list.append(tx)
 
         if len(tx_list) < 1:
@@ -302,45 +296,3 @@ class Block(BlockBase, InventoryMixin):
         retVal = ms.ToArray()
         StreamManager.ReleaseStream(ms)
         return retVal
-
-    def Verify(self, completely=False):
-        """
-        Verify the integrity of the block.
-
-        Args:
-            completely: (Not functional at this time).
-
-        Returns:
-            bool: True if valid. False otherwise.
-        """
-        res = super(Block, self).Verify()
-        if not res:
-            return False
-
-        from neo.Blockchain import GetBlockchain, GetConsensusAddress
-
-        # first TX has to be a miner transaction. other tx after that cant be miner tx
-        if self.Transactions[0].Type != TransactionType.MinerTransaction:
-            return False
-        for tx in self.Transactions[1:]:
-            if tx.Type == TransactionType.MinerTransaction:
-                return False
-
-        if completely:
-            bc = GetBlockchain()
-
-            if self.NextConsensus != GetConsensusAddress(bc.GetValidators(self.Transactions).ToArray()):
-                return False
-
-            for tx in self.Transactions:
-                if not tx.Verify():
-                    pass
-            logger.error("Blocks cannot be fully validated at this moment.  please pass completely=False")
-            raise NotImplementedError()
-            # do this below!
-            # foreach(Transaction tx in Transactions)
-            # if (!tx.Verify(Transactions.Where(p = > !p.Hash.Equals(tx.Hash)))) return false;
-            # Transaction tx_gen = Transactions.FirstOrDefault(p= > p.Type == TransactionType.MinerTransaction);
-            # if (tx_gen?.Outputs.Sum(p = > p.Value) != CalculateNetFee(Transactions)) return false;
-
-        return True

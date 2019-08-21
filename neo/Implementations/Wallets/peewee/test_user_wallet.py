@@ -5,14 +5,16 @@ from neo.Prompt.Commands.WalletAddress import AddAlias
 from neo.Prompt.Utils import parse_param, lookup_addr_str
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Helper import Helper
-from neocore.UInt160 import UInt160
-from neocore.Fixed8 import Fixed8
-from neocore.KeyPair import KeyPair
+from neo.Core.UInt160 import UInt160
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.KeyPair import KeyPair
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
-from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput, TXFeeError
-from neo.Network.NodeLeader import NodeLeader
+from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
+from mock import patch
 import binascii
+from neo.Network.nodemanager import NodeManager
+from neo.Network.node import NeoNode
 
 
 class UserWalletTestCase(WalletFixtureTestCase):
@@ -65,7 +67,7 @@ class UserWalletTestCase(WalletFixtureTestCase):
 
         self.assertEqual(neo_balance_should_be, neo_balance)
 
-        self.assertEqual(wallet.WalletHeight, 12351)
+        self.assertEqual(wallet.WalletHeight, 12357)
 
     def test_2_transactions(self):
 
@@ -187,20 +189,23 @@ class UserWalletTestCase(WalletFixtureTestCase):
         self.assertEqual(presult, self.wallet_1_script_hash.Data)
 
     def test_9_send_neo_tx(self):
+        with patch('neo.Network.node.NeoNode.relay', return_value=self.async_return(True)):
+            wallet = self.GetWallet1()
 
-        wallet = self.GetWallet1()
+            tx = ContractTransaction()
+            tx.outputs = [TransactionOutput(Blockchain.SystemShare().Hash, Fixed8.FromDecimal(10.0), self.import_watch_addr)]
 
-        tx = ContractTransaction()
-        tx.outputs = [TransactionOutput(Blockchain.SystemShare().Hash, Fixed8.FromDecimal(10.0), self.import_watch_addr)]
+            try:
+                tx = wallet.MakeTransaction(tx)
+            except (ValueError):
+                pass
 
-        try:
-            tx = wallet.MakeTransaction(tx)
-        except (ValueError, TXFeeError):
-            pass
+            cpc = ContractParametersContext(tx)
+            wallet.Sign(cpc)
+            tx.scripts = cpc.GetScripts()
 
-        cpc = ContractParametersContext(tx)
-        wallet.Sign(cpc)
-        tx.scripts = cpc.GetScripts()
-
-        result = NodeLeader.Instance().Relay(tx)
-        self.assertEqual(result, True)
+            nodemgr = NodeManager()
+            # we need at least 1 node for relay to be mocked
+            nodemgr.nodes = [NeoNode(object, object)]
+            result = nodemgr.relay(tx)
+            self.assertEqual(result, True)

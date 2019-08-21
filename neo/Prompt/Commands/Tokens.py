@@ -1,8 +1,7 @@
 from neo.Prompt.Commands.Invoke import InvokeContract, InvokeWithTokenVerificationScript
-from neo.Wallets.NEP5Token import NEP5Token
-from neocore.Fixed8 import Fixed8
-from neocore.UInt160 import UInt160
-from prompt_toolkit import prompt
+from neo.Core.Fixed8 import Fixed8
+from neo.Core.UInt160 import UInt160
+from neo.Network.common import blocking_prompt as prompt
 from decimal import Decimal
 from neo.Core.TX.TransactionAttribute import TransactionAttribute
 import binascii
@@ -10,9 +9,9 @@ from neo.Prompt.CommandBase import CommandBase, CommandDesc, ParameterDesc
 from neo.Prompt.PromptData import PromptData
 from neo.Prompt import Utils as PromptUtils
 from neo.Implementations.Wallets.peewee.Models import NEP5Token as ModelNEP5Token
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Core.TX.TransactionAttribute import TransactionAttributeUsage
-from neocore.Utils import isValidPublicAddress
+from neo.Core.Utils import isValidPublicAddress
 import peewee
 import traceback
 from neo.Prompt.PromptPrinter import prompt_print as print
@@ -197,7 +196,7 @@ class CommandTokenSendFrom(CommandBase):
             logger.error(traceback.format_exc())
             return False
 
-        if tx and results:
+        if tx is not None and results is not None:
             vm_result = results[0].GetBigInteger()
             if vm_result == 1:
                 print("\n-----------------------------------------------------------")
@@ -210,7 +209,11 @@ class CommandTokenSendFrom(CommandBase):
                     print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Transfer Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
                 print("Enter your password to send to the network")
 
-                passwd = prompt("[Password]> ", is_password=True)
+                try:
+                    passwd = prompt("[Password]> ", is_password=True)
+                except KeyboardInterrupt:
+                    print("Transaction cancelled")
+                    return False
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
                     return False
@@ -314,7 +317,7 @@ class CommandTokenApprove(CommandBase):
 
         tx, fee, results = token.Approve(wallet, from_addr, to_addr, decimal_amount)
 
-        if tx and results:
+        if tx is not None and results is not None:
             if results[0].GetBigInteger() == 1:
                 print("\n-----------------------------------------------------------")
                 print(f"Approve allowance of {amount} {token.symbol} from {from_addr} to {to_addr}")
@@ -325,7 +328,11 @@ class CommandTokenApprove(CommandBase):
                     print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
                 print("Enter your password to send to the network")
 
-                passwd = prompt("[Password]> ", is_password=True)
+                try:
+                    passwd = prompt("[Password]> ", is_password=True)
+                except KeyboardInterrupt:
+                    print("Allowance approval cancelled")
+                    return False
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
                     return False
@@ -445,7 +452,7 @@ class CommandTokenMint(CommandBase):
                 logger.debug("invalid fee")
                 return False
 
-        return token_mint(token, wallet, to_addr, asset_attachments=asset_attachments, fee=fee, invoke_attrs=invoke_attrs)        
+        return token_mint(token, wallet, to_addr, asset_attachments=asset_attachments, fee=fee, invoke_attrs=invoke_attrs)
 
     def command_desc(self):
         p1 = ParameterDesc('symbol', 'token symbol or script hash')
@@ -500,8 +507,8 @@ class CommandTokenRegister(CommandBase):
 
         tx, fee, results = token.CrowdsaleRegister(wallet, addr_list)
 
-        if tx and results:
-            if results[0].GetBigInteger() > 0:
+        if tx is not None and results is not None:
+            if len(results) > 0 and results[0].GetBigInteger() > 0:
                 print("\n-----------------------------------------------------------")
                 print("[%s] Will register addresses for crowdsale: %s " % (token.symbol, register_addr))
                 print("Invocation Fee: %s " % (fee.value / Fixed8.D))
@@ -511,7 +518,11 @@ class CommandTokenRegister(CommandBase):
                     print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
                 print("Enter your password to send to the network")
 
-                passwd = prompt("[Password]> ", is_password=True)
+                try:
+                    passwd = prompt("[Password]> ", is_password=True)
+                except KeyboardInterrupt:
+                    print("Registration cancelled")
+                    return False
                 if not wallet.ValidatePassword(passwd):
                     print("incorrect password")
                     return False
@@ -598,7 +609,9 @@ def token_send(wallet, token_str, from_addr, to_addr, amount, fee=Fixed8.Zero(),
         if not isinstance(attr, TransactionAttribute):
             raise ValueError(f"{attr} is not a valid transaction attribute")
 
-    return do_token_transfer(token, wallet, from_addr, to_addr, amount, fee=fee, tx_attributes=user_tx_attributes)
+    decimal_amount = amount_from_string(token, amount)
+
+    return do_token_transfer(token, wallet, from_addr, to_addr, decimal_amount, fee=fee, tx_attributes=user_tx_attributes)
 
 
 def test_token_send_from(wallet, token_str, from_addr, to_addr, amount):
@@ -664,7 +677,7 @@ def token_get_allowance(wallet, token_str, from_addr, to_addr, verbose=False):
 
     tx, fee, results = token.Allowance(wallet, from_addr, to_addr)
 
-    if tx and results:
+    if tx is not None and results is not None:
         allowance = results[0].GetBigInteger()
         if verbose:
             print("%s allowance for %s from %s : %s " % (token.symbol, from_addr, to_addr, allowance))
@@ -684,8 +697,8 @@ def token_mint(token, wallet, to_addr, asset_attachments=[], fee=Fixed8.Zero(), 
 
     tx, fee, results = token.Mint(wallet, to_addr, asset_attachments, invoke_attrs=invoke_attrs)
 
-    if tx and results:
-        if results[0] is not None:
+    if tx is not None and results is not None:
+        if len(results) > 0 and results[0] is not None:
             print("\n-----------------------------------------------------------")
             print(f"[{token.symbol}] Will mint tokens to address: {to_addr}")
             print(f"Invocation Fee: {fee.value / Fixed8.D}")
@@ -695,7 +708,11 @@ def token_mint(token, wallet, to_addr, asset_attachments=[], fee=Fixed8.Zero(), 
                 print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Invocation Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
             print("Enter your password to send to the network")
 
-            passwd = prompt("[Password]> ", is_password=True)
+            try:
+                passwd = prompt("[Password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Token mint cancelled")
+                return False
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
                 return False
@@ -732,7 +749,11 @@ def do_token_transfer(token, wallet, from_address, to_address, amount, fee=Fixed
                 print(f"Priority Fee ({p_fee.value / Fixed8.D}) + Transfer Fee ({fee.value / Fixed8.D}) = {comb_fee.value / Fixed8.D}\n")
             print("Enter your password to send to the network")
 
-            passwd = prompt("[Password]> ", is_password=True)
+            try:
+                passwd = prompt("[Password]> ", is_password=True)
+            except KeyboardInterrupt:
+                print("Transfer cancelled")
+                return False
             if not wallet.ValidatePassword(passwd):
                 print("incorrect password")
                 return False

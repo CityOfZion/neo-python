@@ -6,18 +6,11 @@ Usage:
 """
 from neo.Core.CoinReference import CoinReference
 from neo.Core.State.CoinState import CoinState
-from neocore.IO.Mixins import TrackableMixin
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.IO.Mixins import TrackableMixin
+from neo.Core.Cryptography.Crypto import Crypto
 
 
 class Coin(TrackableMixin):
-    Output = None
-    Reference = None
-
-    _address = None
-    _state = CoinState.Unconfirmed
-    _transaction = None
-
     @staticmethod
     def CoinFromRef(coin_ref, tx_output, state=CoinState.Unconfirmed, transaction=None):
         """
@@ -41,12 +34,16 @@ class Coin(TrackableMixin):
         Create an instance.
 
         Args:
-            prev_hash (neocore.UInt256): (Optional if coin_reference is given) the hash of the previous transaction.
+            prev_hash (neo.Core.UInt256): (Optional if coin_reference is given) the hash of the previous transaction.
             prev_index (UInt16/int): (Optional if coin_reference is given) index of the previous transaction.
             tx_output (neo.Core.Transaction.TransactionOutput): an object representing a transaction output.
             coin_reference (neo.Core.CoinReference): (Optional if prev_hash and prev_index are given) an object representing a single UTXO / transaction input.
             state (neo.Core.State.CoinState):
         """
+
+        self._address = None
+        self._transaction = None
+
         if prev_hash and prev_index:
             self.Reference = CoinReference(prev_hash, prev_index)
         elif coin_reference:
@@ -102,12 +99,15 @@ class Coin(TrackableMixin):
         Returns:
             True if object is equal to self. False otherwise.
         """
-        if other is None or other is not self:
+        if other is None or other is not self or type(other) is not Coin:
             return False
         return True
 
     def __hash__(self):
         return int.from_bytes(self.Reference.PrevHash.Data + bytearray(self.Reference.PrevIndex), 'little')
+
+    def __eq__(self, other):
+        return self.Equals(other)
 
     def RefToBytes(self):
         vin_index = bytearray(self.Reference.PrevIndex.to_bytes(1, 'little'))

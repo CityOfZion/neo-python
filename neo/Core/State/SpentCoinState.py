@@ -1,13 +1,11 @@
 from collections import namedtuple
 from .StateBase import StateBase
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
+from copy import deepcopy
 
 
 class SpentCoinItem:
-    index = None
-    height = None
-
     def __init__(self, index, height):
         """
         Create an instance.
@@ -21,10 +19,6 @@ class SpentCoinItem:
 
 
 class SpentCoin:
-    Output = None
-    StartHeight = None
-    EndHeight = None
-
     @property
     def Value(self):
         """
@@ -74,14 +68,6 @@ class SpentCoin:
 
 
 class SpentCoinState(StateBase):
-    Output = None
-    StartHeight = None
-    EndHeight = None
-
-    TransactionHash = None
-    TransactionHeight = None
-    Items = []
-
     def __init__(self, hash=None, height=None, items=None):
         """
         Create an instance.
@@ -97,6 +83,14 @@ class SpentCoinState(StateBase):
             self.Items = []
         else:
             self.Items = items
+
+        self.Output = None
+        self.StartHeight = None
+        self.EndHeight = None
+
+    def Clone(self):
+        items_copy = deepcopy(self.Items)
+        return SpentCoinState(hash=self.TransactionHash, height=self.TransactionHeight, items=items_copy)
 
     def HasIndex(self, index):
         """
@@ -152,7 +146,7 @@ class SpentCoinState(StateBase):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
         super(SpentCoinState, self).Deserialize(reader)
 

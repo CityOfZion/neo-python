@@ -98,3 +98,5 @@ withdraw_wallet2.db3
 notification_server.py
 neo-privnet.wallet
 .mypy_cache
+venv3.7
+neo/VM/tests/Tests

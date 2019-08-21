@@ -1,4 +1,4 @@
-.. image:: http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png
+.. image:: https://raw.githubusercontent.com/CityOfZion/visual-identity/develop/_CoZ%20Branding/_Logo/_Logo%20icon/_PNG%20200x178px/CoZ_Icon_DARKBLUE_200x178px.png
     :alt: CoZ logo
 
 neo-python
@@ -27,7 +27,7 @@ Overview
 What does it currently do
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  This project aims to be a full port of the original C# `NEO
+-  This project aims to be an alternative implementation for the original C# `NEO
    project <https://github.com/neo-project>`_
 -  Run a Python based P2P node
 -  Interactive CLI for configuring node and inspecting blockchain
@@ -64,7 +64,7 @@ Get help or give help
 -  Open a new
    `issue <https://github.com/CityOfZion/neo-python/issues/new>`_ if
    you encounter a problem.
--  Or ping **@localhuman**, **@metachris** or **@ixje** on the `NEO
+-  Or ping **@ixje** on the `NEO
    Discord <https://discord.gg/R8v48YA>`_.
 -  Pull requests welcome. Have a look at the issue list for ideas.
    You can help with wallet functionality, writing tests or documentation,
@@ -77,8 +77,7 @@ neo-python has two System dependencies (everything else is covered with
 ``pip``):
 
 -  `LevelDB <https://github.com/google/leveldb>`_
--  `Python
-   3.6 <https://www.python.org/downloads/release/python-366/>`_ or `Python 3.7 <https://www.python.org/downloads/release/python-370/>`_ (3.5 and below is not supported)
+-  `Python 3.7 <https://www.python.org/downloads/release/python-373/>`_ (3.6 and below is not supported)
 
 We have published a Youtube
 `video <https://www.youtube.com/watch?v=ZZXz261AXrM>`_ to help get you
@@ -110,63 +109,19 @@ OSX
 
     brew install leveldb
 
-Ubuntu/Debian 16.10+
+Ubuntu/Debian 18.04+
 ^^^^^^^^^^^^^^^^^^^^
 
-Ubuntu starting at 16.10 supports Python 3.6+ in the official repositories.
-
-First, ensure Ubuntu is fully up-to-date with this:
-
-::
-
-   sudo apt-get update && sudo apt-get upgrade
-
-You can install Python 3.7 and all the system dependencies like this:
-
-::
-
-   sudo apt-get install python3.7 python3.7-dev python3.7-venv python3-pip libleveldb-dev libssl-dev g++
-
-
-Or, you can install Python 3.6 and all the system dependencies like this:
-
-::
-
-    sudo apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
-
-Older Ubuntu versions (eg. 16.04)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For older Ubuntu versions you'll need to use an external repository like
-Felix Krull's deadsnakes PPA at
-https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa (read more
-`here <https://askubuntu.com/questions/865554/how-do-i-install-python-3-6-using-apt-get>`__).
-
-(The use of the third-party software links in this documentation is done
-at your own discretion and risk and with agreement that you will be
-solely responsible for any damage to your computer system or loss of
-data that results from such activities.)
-
-::
-
-    apt-get install software-properties-common python-software-properties
-    add-apt-repository ppa:deadsnakes/ppa
-    apt-get update
-    apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
+At the time of writing this message Ubuntu's package manager only lists Python `3.7.0`. Variously memory leaks have been addressed
+since and it is recommended to run Python `3.7.3` or newer. Read `this Ubuntu guide <https://linuxize.com/post/how-to-install-python-3-7-on-ubuntu-18-04/>`_ on how to add an alternative PPA to your sources list to install from
+or how to compile the latest version manually.
 
 Centos/Redhat/Fedora
 ^^^^^^^^^^^^^^^^^^^^
 
-::
+Note: - Not tested -
 
-    # Install Python 3.6:
-    yum install -y centos-release-scl
-    yum install -y rh-python36
-    scl enable rh-python36 bash
-
-    # Install dependencies:
-    yum install -y epel-release
-    yum install -y readline-devel leveldb-devel libffi-devel gcc-c++ redhat-rpm-config gcc python-devel openssl-devel
+Please correct the REAMDE if there are issues. Install Python `3.7.3` following `this CentOS guide <https://tecadmin.net/install-python-3-7-on-centos/>`_.
 
 Windows
 ^^^^^^^
@@ -182,14 +137,13 @@ Help needed for running natively. Installing the Python package plyvel seems to 
 compiler support tied to Visual Studio and libraries. Refer to
 `documentation <https://neo-python.readthedocs.io/en/latest/installwindows.html>`__.
 
-Python 3.6+
+Python 3.7+
 ~~~~~~~~~~~
 
-neo-python is compatible with **Python 3.6 and later**.
+neo-python is compatible with **Python 3.7 and later**.
 
-On \*nix systems, install Python 3.6 or Python 3.7 via your package manager, or
-download an installation package from the `official
-homepage <https://www.python.org/downloads/>`__.
+On \*nix systems, install Python Python 3.7 via your package manager, or
+download an installation package from the `official homepage <https://www.python.org/downloads/>`__.
 
 
 Install
@@ -214,10 +168,6 @@ could lead to version conflicts.
     python3.7 -m venv venv
     source venv/bin/activate
 
-    # create virtual environment using Python 3.6 and activate
-    python3.6 -m venv venv
-    source venv/bin/activate
-
     # install the package in an editable form
     (venv) pip install wheel -e .
 
@@ -231,10 +181,6 @@ could lead to version conflicts.
 
     # create virtual environment using Python 3.7 and activate or skip to the next step for Python 3.6
     python3.7 -m venv venv
-    source venv/bin/activate
-
-    # create virtual environment using Python 3.6 and activate
-    python3.6 -m venv venv
     source venv/bin/activate
 
     (venv) pip install wheel neo-python
@@ -326,7 +272,9 @@ np-bootstrap Usage
       -c CONFIG, --config CONFIG
                             Use a specific config file
       -n, --notifications   Bootstrap notification database
-      -s, --skipconfirm     Bypass warning about overwritting data in Chains/SC234
+      -s, --skipconfirm     Bypass warning about overwriting data in Chains
+      -k, --keep-bootstrap-file
+                            Keep the downloaded bootstrap file
       --datadir DATADIR     Absolute path to use for database directories
 
 Bootrapping Testnet
@@ -473,7 +421,7 @@ Troubleshooting
 If you run into problems, check these things before ripping out your
 hair:
 
--  Double-check that you are using Python 3.6.x or Python 3.7.x
+-  Double-check that you are using Python 3.7.x
 -  Update the project dependencies (``pip install -e .``)
 -  If you encounter any problems, please take a look at the
    `installation

@@ -2,22 +2,25 @@
 
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Block import Block
-from neo.IO.MemoryStream import MemoryStream
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
-from neo.Implementations.Blockchains.LevelDB.DBPrefix import DBPrefix
+from neo.Storage.Implementation.DBFactory import getBlockchainDB
 from neo.Settings import settings
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import StreamManager, MemoryStream
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.IO.MemoryStream import MemoryStream
 import argparse
 import os
 import shutil
 from tqdm import trange
 from prompt_toolkit import prompt
-from neo.Implementations.Notifications.LevelDB.NotificationDB import NotificationDB
+from neo.Implementations.Notifications.NotificationDB import NotificationDB
+import asyncio
 
 
 def main():
+    # needed for console scripts
+    asyncio.run(_main())
+
+
+async def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mainnet", action="store_true", default=False,
                         help="use MainNet instead of the default TestNet")
@@ -57,7 +60,8 @@ def main():
         settings.log_smart_contract_events = True
 
     if not args.input:
-        raise Exception("Please specify an input path")
+        print("Please specify an input path")
+        return
     file_path = args.input
 
     append = False
@@ -87,17 +91,36 @@ def main():
         target_dir = os.path.join(settings.DATA_DIR_PATH, settings.LEVELDB_PATH)
         notif_target_dir = os.path.join(settings.DATA_DIR_PATH, settings.NOTIFICATION_DB_PATH)
 
+        stream = MemoryStream()
+        reader = BinaryReader(stream)
+        block = Block()
+        length_ba = bytearray(4)
+        ctr = 0
+
         if append:
-            blockchain = LevelDBBlockchain(settings.chain_leveldb_path, skip_header_check=True)
+            blockchain = Blockchain(getBlockchainDB(settings.chain_leveldb_path), skip_header_check=False)
+            Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
 
             start_block = Blockchain.Default().Height
             print("Starting import at %s " % start_block)
+
+            if args.totalblocks:
+                total_blocks = args.totalblocks
+
+            for _ in trange(start_block, desc='Skipping blocks', unit='Block'):
+                file_input.readinto(length_ba)
+                block_len = int.from_bytes(length_ba, 'little')
+                file_input.seek(block_len, 1)
+                ctr += 1
         else:
             print("Will import %s of %s blocks to %s" % (total_blocks, total_blocks_available, target_dir))
             print("This will overwrite any data currently in %s and %s.\nType 'confirm' to continue" % (target_dir, notif_target_dir))
 
-            confirm = prompt("[confirm]> ", is_password=False)
+            try:
+                confirm = prompt("[confirm]> ", is_password=False)
+            except KeyboardInterrupt:
+                confirm = False
             if not confirm == 'confirm':
                 print("Cancelled operation")
                 return False
@@ -112,20 +135,18 @@ def main():
                 return False
 
             # Instantiate the blockchain and subscribe to notifications
-            blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+            blockchain = Blockchain(getBlockchainDB(settings.chain_leveldb_path))
+            Blockchain.DeregisterBlockchain()
             Blockchain.RegisterBlockchain(blockchain)
+
+            start_block = Blockchain.Default().Height
 
         chain = Blockchain.Default()
 
         if store_notifications:
             NotificationDB.instance().start()
 
-        stream = MemoryStream()
-        reader = BinaryReader(stream)
-        block = Block()
-        length_ba = bytearray(4)
-
-        for index in trange(total_blocks, desc='Importing Blocks', unit=' Block'):
+        if start_block == 0:
             # set stream data
             file_input.readinto(length_ba)
             block_len = int.from_bytes(length_ba, 'little')
@@ -139,7 +160,8 @@ def main():
 
             # add
             if block.Index > start_block:
-                chain.AddBlockDirectly(block, do_persist_complete=store_notifications)
+                chain.AddHeaders([block.Header])
+                await chain.TryPersist(block)
 
             # reset blockheader
             block._header = None
@@ -148,33 +170,29 @@ def main():
             # reset stream
             reader.stream.Cleanup()
 
-    print("Wrote blocks.  Now writing headers")
+        for index in trange(total_blocks, desc='Importing Blocks', unit=' Block', initial=ctr):
+            # set stream data
+            file_input.readinto(length_ba)
+            block_len = int.from_bytes(length_ba, 'little')
 
-    chain = Blockchain.Default()
+            reader.stream.write(file_input.read(block_len))
+            reader.stream.seek(0)
 
-    # reset header hash list
-    chain._db.delete(DBPrefix.IX_HeaderHashList)
+            # get block
+            block.DeserializeForImport(reader)
+            header_hash_list.append(block.Hash.ToBytes())
 
-    total = len(header_hash_list)
+            # add
+            if block.Index >= start_block:
+                chain.AddHeaders([block.Header])
+                await chain.TryPersist(block)
 
-    chain._header_index = header_hash_list
+            # reset blockheader
+            block._header = None
+            block.__hash = None
 
-    print("storing header hash list...")
-
-    while total - 2000 >= chain._stored_header_count:
-        ms = StreamManager.GetStream()
-        w = BinaryWriter(ms)
-        headers_to_write = chain._header_index[chain._stored_header_count:chain._stored_header_count + 2000]
-        w.Write2000256List(headers_to_write)
-        out = ms.ToArray()
-        StreamManager.ReleaseStream(ms)
-        with chain._db.write_batch() as wb:
-            wb.put(DBPrefix.IX_HeaderHashList + chain._stored_header_count.to_bytes(4, 'little'), out)
-
-        chain._stored_header_count += 2000
-
-    last_index = len(header_hash_list)
-    chain._db.put(DBPrefix.SYS_CurrentHeader, header_hash_list[-1] + last_index.to_bytes(4, 'little'))
+            # reset stream
+            reader.stream.Cleanup()
 
     print("Imported %s blocks to %s " % (total_blocks, target_dir))
 

@@ -1,11 +1,9 @@
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 import mmh3
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 
 
 class StorageKey():
-    ScriptHash = None
-    Key = None
 
     def __init__(self, script_hash=None, key=None):
         """

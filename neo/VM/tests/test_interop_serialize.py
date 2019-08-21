@@ -3,10 +3,14 @@ from neo.VM.InteropService import Struct, StackItem, Array, Boolean, Map
 from neo.VM.ExecutionEngine import ExecutionEngine
 from neo.VM.ExecutionEngine import ExecutionContext
 from neo.SmartContract.StateReader import StateReader
-from neocore.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryReader import BinaryReader
 from neo.IO.MemoryStream import StreamManager
 from neo.Core.Blockchain import Blockchain
+from neo.VM.Script import Script
+from neo.Core.Cryptography.Crypto import Crypto
 import logging
+from neo.SmartContract import TriggerType
+from neo.Blockchain import GetBlockchain
 
 
 class InteropSerializeDeserializeTestCase(NeoTestCase):
@@ -15,9 +19,11 @@ class InteropSerializeDeserializeTestCase(NeoTestCase):
     state_reader = None
 
     def setUp(self):
-        self.engine = ExecutionEngine()
-        self.econtext = ExecutionContext(engine=self.engine)
-        self.state_reader = StateReader()
+        self.engine = ExecutionEngine(crypto=Crypto.Default())
+        self.econtext = ExecutionContext(Script(self.engine.Crypto, b''), 0)
+        self.engine.InvocationStack.PushT(self.econtext)
+        snapshot = GetBlockchain()._db.createSnapshot()
+        self.state_reader = StateReader(TriggerType.Application, snapshot)
 
     def test_serialize_struct(self):
         my_struct = Struct([StackItem.New(12),
@@ -203,22 +209,14 @@ class InteropSerializeDeserializeTestCase(NeoTestCase):
         self.assertEqual(deserialized, map2)
 
     def test_cant_serialize_iop_item(self):
-        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
-            genesis = Blockchain.GenesisBlock()
-            self.econtext.EvaluationStack.PushT(StackItem.FromInterface(genesis))
-            self.engine.InvocationStack.PushT(self.econtext)
-            cant_do = self.state_reader.Runtime_Serialize(self.engine)
-            self.assertEqual(cant_do, False)
-            self.assertTrue(len(log_context.output) > 0)
-            expected_msg = 'Cannot serialize item IOp Interface: <neo.Core.Block.Block object'
-            self.assertTrue(expected_msg in log_context.output[0])
+        genesis = Blockchain.GenesisBlock()
+        self.econtext.EvaluationStack.PushT(StackItem.FromInterface(genesis))
+        self.engine.InvocationStack.PushT(self.econtext)
+        cant_do = self.state_reader.Runtime_Serialize(self.engine)
+        self.assertEqual(cant_do, False)
 
     def test_cant_deserialize_item(self):
-        with self.assertLogHandler('vm', logging.DEBUG) as log_context:
-            self.econtext.EvaluationStack.PushT(StackItem.New(b'abc'))
-            self.engine.InvocationStack.PushT(self.econtext)
-            success = self.state_reader.Runtime_Deserialize(self.engine)
-            self.assertFalse(success)
-            self.assertTrue(len(log_context.output) > 0)
-            expected_msg = 'Could not deserialize stack item with type:'
-            self.assertTrue(expected_msg in log_context.output[0])
+        self.econtext.EvaluationStack.PushT(StackItem.New(b'abc'))
+        self.engine.InvocationStack.PushT(self.econtext)
+        success = self.state_reader.Runtime_Deserialize(self.engine)
+        self.assertFalse(success)

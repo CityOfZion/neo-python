@@ -1,12 +1,9 @@
-import sys
 import binascii
-from neocore.IO.Mixins import SerializableMixin
+from neo.Core.IO.Mixins import SerializableMixin
 from neo.Core.Size import GetVarSize
 
 
 class Witness(SerializableMixin):
-    InvocationScript = None
-    VerificationScript = None
 
     def __init__(self, invocation_script=None, verification_script=None):
         try:
@@ -36,17 +33,10 @@ class Witness(SerializableMixin):
         self.VerificationScript = reader.ReadVarBytes()
 
     def Serialize(self, writer):
-        #        logger.info("Serializing Witnes.....")
-        #        logger.info("INVOCATION %s " % self.InvocationScript)
         writer.WriteVarBytes(self.InvocationScript)
-        #        logger.info("writer after invocation %s " % writer.stream.ToArray())
-        #        logger.info("Now wringi verificiation script %s " % self.VerificationScript)
         writer.WriteVarBytes(self.VerificationScript)
 
-    #        logger.info("Wrote verification script %s " % writer.stream.ToArray())
-
     def ToJson(self):
-        #        logger.info("invocation %s " % self.InvocationScript)
         data = {
             'invocation': self.InvocationScript.hex(),
             'verification': self.VerificationScript.hex()

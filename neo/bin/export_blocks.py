@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from neo.Settings import settings
-from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Storage.Implementation.DBFactory import getBlockchainDB
 from neo.Core.Blockchain import Blockchain
 import argparse
 from tqdm import trange
@@ -45,7 +45,8 @@ def main():
     file_path = args.output
 
     # Instantiate the blockchain and subscribe to notifications
-    blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
+    blockchain = Blockchain(getBlockchainDB(settings.chain_leveldb_path))
+    Blockchain.DeregisterBlockchain()
     Blockchain.RegisterBlockchain(blockchain)
 
     chain = Blockchain.Default()

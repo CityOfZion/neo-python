@@ -1,49 +1,30 @@
 from .Mixins import VerifiableMixin
-from neocore.Cryptography.Helper import bin_dbl_sha256
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Helper import bin_dbl_sha256
+from neo.Core.Cryptography.Crypto import Crypto
 import binascii
 from neo.Core.Helper import Helper
 from neo.Blockchain import GetBlockchain, GetGenesis
 from neo.Core.Witness import Witness
-from neocore.UInt256 import UInt256
+from neo.Core.UInt256 import UInt256
 from neo.Core.Size import Size as s
+from neo.SmartContract.Helper import Helper as SCHelper
 
 
 class BlockBase(VerifiableMixin):
-    #  <summary>
-    #  区块版本
-    #  </summary>
-    Version = 0
-    #  <summary>
-    #  前一个区块的散列值
-    #  </summary>
-    PrevHash = 0  # UInt256
-    #  <summary>
-    #  该区块中所有交易的Merkle树的根
-    #  </summary>
-    MerkleRoot = 0  # UInt256
-    #  <summary>
-    #  时间戳
-    #  </summary>
-    Timestamp = None
-    #  <summary>
-    #  区块高度
-    #  </summary>
-    Index = 0
+    def __init__(self):
 
-    ConsensusData = None
-    #  <summary>
-    #  下一个区块的记账合约的散列值
-    #  </summary>
-    NextConsensus = None  # UInt160
-    #  <summary>
-    #  用于验证该区块的脚本
-    #  </summary>
-    Script = None
+        self.Version = 0
+        self.PrevHash = 0  # UInt256
+        self.MerkleRoot = 0  # UInt256
+        self.Timestamp = None
+        self.Index = 0
 
-    __hash = None
-
-    __htbs = None
+        self.ConsensusData = None
+        self.NextConsensus = None  # UInt160
+        self.Script = None
+        self.__hash = None
+        self.__htbs = None
+        self.currentSnapshot = None
 
     @property
     def Hash(self):
@@ -119,7 +100,7 @@ class BlockBase(VerifiableMixin):
         """
         self.__hash = None
         self.DeserializeUnsigned(reader)
-        byt = reader.ReadByte()
+        byt = ord(reader.ReadByte())
         if int(byt) != 1:
             raise Exception('Incorrect format')
 
@@ -166,7 +147,7 @@ class BlockBase(VerifiableMixin):
         """
         return Helper.GetHashData(self)
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot):
         """
         Get the script hash used for verification.
 
@@ -186,7 +167,7 @@ class BlockBase(VerifiableMixin):
             else:
                 raise Exception('Invalid Verification script')
 
-        prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
+        prev_header = snapshot.GetHeader(self.PrevHash.ToBytes())
         if prev_header is None:
             raise Exception('Invalid operation')
         return [prev_header.NextConsensus]
@@ -225,23 +206,15 @@ class BlockBase(VerifiableMixin):
         json["script"] = '' if not self.Script else self.Script.ToJson()
         return json
 
-    def Verify(self):
+    def Verify(self, snapshot):
         """
         Verify block using the verification script.
 
         Returns:
             bool: True if valid. False otherwise.
         """
-        if not self.Hash.ToBytes() == GetGenesis().Hash.ToBytes():
-            return False
-
-        bc = GetBlockchain()
-
-        if not bc.ContainsBlock(self.Index):
-            return False
-
         if self.Index > 0:
-            prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())
+            prev_header = snapshot.GetHeader(self.PrevHash.ToBytes())
 
             if prev_header is None:
                 return False
@@ -253,7 +226,7 @@ class BlockBase(VerifiableMixin):
                 return False
 
         # this should be done to actually verify the block
-        if not Helper.VerifyScripts(self):
+        if not SCHelper.VerifyWitnesses(self, snapshot):
             return False
 
         return True

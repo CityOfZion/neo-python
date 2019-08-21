@@ -3,12 +3,12 @@ from neo.Prompt.Utils import parse_param
 from neo.Core.FunctionCode import FunctionCode
 from neo.Core.State.ContractState import ContractPropertyState
 from neo.SmartContract.ContractParameterType import ContractParameterType
-from prompt_toolkit import prompt
+from neo.Network.common import blocking_prompt as prompt
 import json
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Core.Blockchain import Blockchain
 from neo.SmartContract.Contract import Contract
-from neocore.BigInteger import BigInteger
+from neo.Core.BigInteger import BigInteger
 from neo.Prompt.PromptPrinter import prompt_print as print
 
 

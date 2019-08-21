@@ -1,6 +1,6 @@
 from itertools import groupby
 from neo.Core.TX.Transaction import TransactionType, Transaction
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
 from neo.Core.Size import GetVarSize
@@ -10,8 +10,6 @@ logger = log_manager.getLogger()
 
 
 class ClaimTransaction(Transaction):
-    Claims = set()
-
     def Size(self):
         """
         Get the total size in bytes of the object.
@@ -32,6 +30,7 @@ class ClaimTransaction(Transaction):
         super(ClaimTransaction, self).__init__(*args, **kwargs)
 
         self.Type = TransactionType.ClaimTransaction
+        self.Claims = set()
 
     def NetworkFee(self):
         """
@@ -68,7 +67,7 @@ class ClaimTransaction(Transaction):
         if len(self.Claims) == 0:
             raise Exception('Format Exception')
 
-    def GetScriptHashesForVerifying(self):
+    def GetScriptHashesForVerifying(self, snapshot):
         """
         Get a list of script hashes for verifying transactions.
 
@@ -78,10 +77,10 @@ class ClaimTransaction(Transaction):
         Returns:
             list: of UInt160 type script hashes.
         """
-        hashes = super(ClaimTransaction, self).GetScriptHashesForVerifying()
+        hashes = super(ClaimTransaction, self).GetScriptHashesForVerifying(snapshot)
 
         for hash, group in groupby(self.Claims, lambda x: x.PrevHash):
-            tx, height = Blockchain.Default().GetTransaction(hash)
+            tx, height = snapshot.GetTransaction(hash)
 
             if tx is None:
                 raise Exception("Invalid Claim Operation")
@@ -121,7 +120,7 @@ class ClaimTransaction(Transaction):
 
         return json
 
-    def Verify(self, mempool):
+    def Verify(self, snapshot, mempool):
         """
         Verify the transaction.
 
@@ -131,7 +130,7 @@ class ClaimTransaction(Transaction):
         Returns:
             bool: True if verified. False otherwise.
         """
-        if not super(ClaimTransaction, self).Verify(mempool):
+        if not super(ClaimTransaction, self).Verify(snapshot, mempool):
             return False
 
         # wat does this do

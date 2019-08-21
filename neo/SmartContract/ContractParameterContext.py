@@ -4,21 +4,19 @@ from neo.Core.TX.Transaction import ContractTransaction
 from neo.SmartContract.Contract import Contract, ContractType
 from neo.SmartContract.ContractParameterType import ContractParameterType, ToName
 from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.IO.MemoryStream import MemoryStream
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.IO.MemoryStream import StreamManager, MemoryStream
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.VM import OpCode
 from neo.Core.Witness import Witness
 from neo.logging import log_manager
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
+from neo.Blockchain import GetBlockchain
 
 logger = log_manager.getLogger('vm')
 
 
 class ContractParamater:
-    Type = None
-    Value = None
-
     def __init__(self, type):
         if isinstance(type, ContractParameterType):
             self.Type = type
@@ -26,6 +24,7 @@ class ContractParamater:
             self.Type = ContractParameterType(type)
         else:
             raise Exception("Invalid Contract Parameter Type %s. Must be ContractParameterType or int" % type)
+        self.Value = None
 
     def ToJson(self):
         jsn = {}
@@ -34,13 +33,9 @@ class ContractParamater:
 
 
 class ContextItem:
-    Script = None
-    ContractParameters = None
-    Signatures = None
-
-    IsCustomContract = False
 
     def __init__(self, contract):
+        self.Signatures = None
         self.Script = contract.Script
         self.ContractParameters = []
         for b in bytearray(contract.ParameterList):
@@ -76,18 +71,13 @@ class ContextItem:
 
 
 class ContractParametersContext:
-    Verifiable = None
-
-    ScriptHashes = None
-
-    ContextItems = None
-
-    IsMultiSig = None
-
     def __init__(self, verifiable, isMultiSig=False):
 
         self.Verifiable = verifiable
-        self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
+        if verifiable.raw_tx:
+            self.ScriptHashes = verifiable.GetScriptHashesForVerifying()
+        else:
+            self.ScriptHashes = verifiable.GetScriptHashesForVerifying(GetBlockchain()._db.createSnapshot())
         self.ContextItems = {}
         self.IsMultiSig = isMultiSig
 
@@ -162,13 +152,17 @@ class ContractParametersContext:
             ecdsa = ECDSA.secp256r1()
             points = []
             temp = binascii.unhexlify(contract.Script)
-            ms = MemoryStream(binascii.unhexlify(contract.Script))
+            ms = StreamManager.GetStream(binascii.unhexlify(contract.Script))
             reader = BinaryReader(ms)
             numr = reader.ReadUInt8()
-            while reader.ReadUInt8() == 33:
-                ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
-                points.append(ecpoint)
-            ms.close()
+            try:
+                while reader.ReadUInt8() == 33:
+                    ecpoint = ecdsa.ec.decode_from_hex(binascii.hexlify(reader.ReadBytes(33)).decode())
+                    points.append(ecpoint)
+            except ValueError:
+                return False
+            finally:
+                StreamManager.ReleaseStream(ms)
 
             if pubkey not in points:
                 return False
@@ -286,9 +280,10 @@ class ContractParametersContext:
             parsed = json.loads(jsn)
             if parsed['type'] == 'Neo.Core.ContractTransaction':
                 verifiable = ContractTransaction()
-                ms = MemoryStream(binascii.unhexlify(parsed['hex']))
+                ms = StreamManager.GetStream(binascii.unhexlify(parsed['hex']))
                 r = BinaryReader(ms)
                 verifiable.DeserializeUnsigned(r)
+                StreamManager.ReleaseStream(ms)
                 context = ContractParametersContext(verifiable, isMultiSig=isMultiSig)
                 for key, value in parsed['items'].items():
                     if "0x" in key:

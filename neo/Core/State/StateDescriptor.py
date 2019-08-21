@@ -1,8 +1,8 @@
-from neocore.IO.BinaryReader import BinaryReader
-from neocore.IO.BinaryWriter import BinaryWriter
+from neo.Core.IO.BinaryReader import BinaryReader
+from neo.Core.IO.BinaryWriter import BinaryWriter
 from neo.Core.Mixins import SerializableMixin
 from neo.IO.MemoryStream import StreamManager
-from neocore.Fixed8 import Fixed8
+from neo.Core.Fixed8 import Fixed8
 
 from enum import Enum
 from neo.Core.Size import Size as s
@@ -15,17 +15,20 @@ class StateType(Enum):
 
 
 class StateDescriptor(SerializableMixin):
-    Type = None
-    Key = None  # byte[]
-    Field = None  # string
-    Value = None  # byte[]
+
+    def __init__(self):
+        super().__init__()
+        self.Type = None
+        self.Key = None  # byte[]
+        self.Field = None  # string
+        self.Value = None  # byte[]
 
     @property
     def SystemFee(self):
-        if self.Type == StateType.Account:
-            return Fixed8.Zero()
-        elif self.Type == StateType.Validator:
+        if self.Type == StateType.Validator:
             return self.GetSystemFee_Validator()
+        else:
+            return Fixed8.Zero()
 
     def Size(self):
         """
@@ -42,10 +45,10 @@ class StateDescriptor(SerializableMixin):
         Deserialize full object.
 
         Args:
-            reader (neocore.IO.BinaryReader):
+            reader (neo.Core.IO.BinaryReader):
         """
 
-        self.Type = StateType(reader.ReadByte())
+        self.Type = StateType(ord(reader.ReadByte()))
 
         self.Key = reader.ReadVarBytes(max=100)
         self.Field = reader.ReadVarString(max=32).decode('utf-8')
@@ -145,8 +148,8 @@ class StateDescriptor(SerializableMixin):
         raise Exception("Invalid State Descriptor")
 
     def VerifyAccountState(self):
-        # @TODO
-        # Implement VerifyAccount State
+        # TODO
+        #  Implement VerifyAccount State
         raise NotImplementedError()
 
     def VerifyValidatorState(self):

@@ -1,18 +1,18 @@
 import binascii
-from neocore.BigInteger import BigInteger
-from neocore.Fixed8 import Fixed8
+from neo.Core.BigInteger import BigInteger
+from neo.Core.Fixed8 import Fixed8
 from neo.Core.Helper import Helper
 from neo.Core.Blockchain import Blockchain
 from neo.Wallets.Coin import CoinState
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameter import ContractParameterType
-from neocore.Cryptography.ECCurve import ECDSA
+from neo.Core.Cryptography.ECCurve import ECDSA
 from decimal import Decimal
-from prompt_toolkit.shortcuts import PromptSession
 from neo.logging import log_manager
 from neo.Wallets import NEP5Token
-from neocore.Cryptography.Crypto import Crypto
+from neo.Core.Cryptography.Crypto import Crypto
 from typing import TYPE_CHECKING
+from neo.Network.common import blocking_prompt as prompt
 
 if TYPE_CHECKING:
     from neo.Wallets.Wallet import Wallet
@@ -148,6 +148,15 @@ def get_to_addr(params):
     return params, to_addr
 
 
+def get_return_type_from_args(params):
+    return_type = None
+    for item in params:
+        if '--return-type' in item:
+            params.remove(item)
+            return_type = item.replace('--return-type=', '')
+    return params, return_type
+
+
 def get_fee(params):
     fee = None
     for item in params:
@@ -208,12 +217,7 @@ def parse_param(p, wallet=None, ignore_int=False, prefer_hex=True, parse_addr=Tr
     # first, we'll try to parse an array
     try:
         items = eval(p, {"__builtins__": {'list': list}}, {})
-        if len(items) > 0 and type(items) is list:
-
-            parsed = []
-            for item in items:
-                parsed.append(parse_param(item, wallet, parse_addr=parse_addr))
-            return parsed
+        return items
 
     except Exception as e:
         #        print("Could not eval items as array %s " % e)
@@ -300,10 +304,7 @@ def string_from_fixed8(amount, decimals):
 
 
 def get_input_prompt(message):
-    from neo.bin.prompt import PromptInterface
-
-    return PromptSession(completer=PromptInterface.prompt_completer,
-                         history=PromptInterface.history).prompt(message)
+    return prompt(message)
 
 
 def gather_param(index, param_type, do_continue=True):
@@ -312,6 +313,9 @@ def gather_param(index, param_type, do_continue=True):
 
     try:
         result = get_input_prompt(prompt_message)
+    except KeyboardInterrupt:
+        print("Input cancelled")
+        return None, True
     except Exception as e:
         print(str(e))
         # no results, abort True
@@ -326,7 +330,10 @@ def gather_param(index, param_type, do_continue=True):
         elif ptype == ContractParameterType.Boolean:
             return bool(result), False
         elif ptype == ContractParameterType.PublicKey:
-            return ECDSA.decode_secp256r1(result).G, False
+            try:
+                return ECDSA.decode_secp256r1(result).G, False
+            except ValueError:
+                return None, True
         elif ptype == ContractParameterType.ByteArray:
             if isinstance(result, str) and len(result) == 34 and result[0] == 'A':
                 return Helper.AddrStrToScriptHash(result).Data, False
