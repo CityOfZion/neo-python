@@ -21,7 +21,7 @@ mmh3==2.5.1
 mock==2.0.0
 mpmath==1.1.0
 multidict==4.5.2
-git+https://github.com/ixje/neo-boa@830319c16ceeb2e127230391d80fa2b5c707fdbc#egg=neo-boa
+git+https://github.com/CityOfZion/neo-boa@e722a64d0d6e80543fd015dbd5cfa12d1b27ee07#egg=neo-boa
 neo-python-rpc==0.2.1
 pbr==5.1.3
 peewee==3.9.2
