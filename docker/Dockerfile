@@ -30,12 +30,13 @@ FROM ubuntu:18.04
 ARG branch=master
 
 # Install dependencies
+RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y \
     wget \
     git-core \
-    python3.6 \
-    python3.6-dev \
-    python3.6-venv \
+    python3.7 \
+    python3.7-dev \
+    python3.7-venv \
     python3-pip \
     libleveldb-dev \
     libssl-dev \
