@@ -52,7 +52,7 @@ WORKDIR neo-python
 RUN git checkout $branch
 
 # Install the dependencies
-RUN pip3 install -e .
+CMD pip3 install -e .
 
 # Download the privnet wallet, to have it handy for easy experimenting
 RUN wget https://s3.amazonaws.com/neo-experiments/neo-privnet.wallet
