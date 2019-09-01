@@ -33,7 +33,7 @@ class TestInputParser(TestCase):
     def test_unmatched_brackets(self):
         command, arguments = self.input_parser.parse_input("this [is \"a simple\" test")
         self.assertEqual(command, "this")
-        self.assertEqual(arguments, ["[is", "\"a simple\"", "test"])
+        self.assertEqual(arguments, ["[is \"a simple\" test"])
 
     def test_unmatched_single_quotes(self):
         command, arguments = self.input_parser.parse_input("this is 'a simple test")
@@ -48,12 +48,12 @@ class TestInputParser(TestCase):
     def test_nested_lists(self):
         command, arguments = self.input_parser.parse_input('sc build_run sc.py False False False 0210 01 2 ["notused",["helloworld"]]')
         self.assertEqual(command, "sc")
-        self.assertEqual(arguments, ['build_run', 'sc.py', 'False', 'False', 'False', '0210', '01', '2', '["notused",["helloworld"]]'])
+        self.assertEqual(arguments, ['build_run', 'sc.py', 'False', 'False', 'False', '0210', '01', '2', '["notused",["helloworld"] ]'])
 
     def test_nested_lists_2(self):
         command, arguments = self.input_parser.parse_input('test ["notused",["helloworld", 1, ["a", 1]]]')
         self.assertEqual(command, "test")
-        self.assertEqual(arguments, ['["notused",["helloworld", 1, ["a", 1]]]'])
+        self.assertEqual(arguments, ['["notused",["helloworld", 1, ["a", 1] ]]'])
 
     def test_python_bytearrays(self):
         command, arguments = self.input_parser.parse_input("testinvoke bytearray(b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)') b'\xaf\x12\xa8h{\x14\x94\x8b\xc4\xa0\x08\x12\x8aU\nci[\xc1\xa5'")
@@ -64,3 +64,8 @@ class TestInputParser(TestCase):
         command, arguments = self.input_parser.parse_input("testinvoke f8d448b227991cf07cb96a6f9c0322437f1599b9 transfer [bytearray(b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)'), bytearray(b'\xaf\x12\xa8h{\x14\x94\x8b\xc4\xa0\x08\x12\x8aU\nci[\xc1\xa5'), 1000]")
         self.assertEqual(command, "testinvoke")
         self.assertEqual(arguments, ["f8d448b227991cf07cb96a6f9c0322437f1599b9", "transfer", "[bytearray(b'S\xefB\xc8\xdf!^\xbeZ|z\xe8\x01\xcb\xc3\xac/\xacI)'), bytearray(b'\xaf\x12\xa8h{\x14\x94\x8b\xc4\xa0\x08\x12\x8aU\nci[\xc1\xa5'), 1000]"])
+
+    def test_attribute_spacing(self):
+        command, arguments = self.input_parser.parse_input('wallet send neo Ae7bSUtT5Qvpkh7473q9FsxT4tSv5KK6dt 100 --tx-attr=[{"usage": 0x90,"data":"my brief description"}]')
+        self.assertEqual(command, "wallet")
+        self.assertEqual(arguments, ['send', 'neo', 'Ae7bSUtT5Qvpkh7473q9FsxT4tSv5KK6dt', '100', '--tx-attr=[{"usage": 0x90,"data":"my brief description"}]'])
