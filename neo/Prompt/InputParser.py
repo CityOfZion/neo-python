@@ -11,6 +11,7 @@ class InputParser:
             return command_parts[0], command_parts[1:]
         return None, None
 
+
 def merge_items(command_parts):
     s = 0
     f = 0
