@@ -66,6 +66,7 @@ All notable changes to this project are documented in this file.
 - Fix ``Equals()`` of ``ByteArray``
 - Fix max recursion depth exception when counting certain VM StackItems that point to themselves
 - Fix ``RIGHT`` opcode for 0 count edge case
+- Fix parsing spaces
 
 
 [0.8.4] 2019-02-14
