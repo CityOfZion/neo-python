@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 [0.9.1-dev] In progress
 -----------------------
 - Reformat wallet verbose output to include big-endian scripthash
-
+- Fix network syncing against neo-cli ``2.10.3`` clients
 
 [0.9.0] 2019-08-21
 ------------------
