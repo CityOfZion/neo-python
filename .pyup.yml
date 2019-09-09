@@ -17,3 +17,7 @@ schedule: "every week"
 # default: True
 # allowed: True, False
 search: True
+
+# set the default branch
+# default: empty, the default branch on GitHub
+branch: development
