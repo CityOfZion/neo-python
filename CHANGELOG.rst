@@ -3,8 +3,15 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.8.5-dev] in progress
+[0.9.1-dev] In progress
 -----------------------
+- Reformat wallet verbose output to include big-endian scripthash
+- Fix network syncing against neo-cli ``2.10.3`` clients
+- Update Python requirements
+
+
+[0.9.0] 2019-08-21
+------------------
 - Allow override of test invocation return type
 - Add current wallet height to bottom toolbar
 - Change class attributes of ``Transaction`` into instance attributes and fix constructor
