@@ -343,6 +343,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
             # print("Used %s Gas " % engine.GasConsumed().ToString())
 
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
+            consumed = consumed.Ceil()
 
             net_fee = None
             tx_gas = None
@@ -572,6 +573,7 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             logger.info("Used %s Gas " % engine.GasConsumed().ToString())
 
             consumed = engine.GasConsumed() - Fixed8.FromDecimal(10)
+            consumed = consumed.Ceil()
 
             if consumed <= Fixed8.Zero():
                 consumed = min_fee
