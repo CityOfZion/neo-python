@@ -18,6 +18,7 @@ class GetBlocksPayload(BasePayload):
         writer.write_var_int(length)
         for hash in self.hash_start:
             writer.write_uint256(hash)
+        writer.write_uint256(self.hash_stop)
 
     def deserialize(self, reader: 'BinaryReader') -> None:
         """ Deserialize object. """
