@@ -13,18 +13,18 @@ class InputParser:
 
 
 def merge_items(command_parts):
-    s = 0
-    f = 0
-    for n, i in enumerate(command_parts):
-        for x in i:
+    start = 0
+    finish = 0
+    for i, part in enumerate(command_parts):
+        for x in part:
             if x == '[':
-                s += 1
+                start += 1
             if x == ']':
-                f += 1
-        if s != f:
+                finish += 1
+        if start != finish:
             try:
-                command_parts[n] = command_parts[n] + " " + command_parts[n + 1]
-                command_parts.pop(n + 1)
+                command_parts[i] = command_parts[i] + " " + command_parts[i + 1]
+                command_parts.pop(i + 1)
                 merge_items(command_parts)
             except IndexError:
                 pass
